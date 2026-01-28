@@ -351,7 +351,7 @@ export default function CreatorLive() {
   const [error, setError] = useState<string>("");
 
   const [wantMicOn, setWantMicOn] = useState(true);
-  const [wantCamOn, setWantCamOn] = useState(false);
+  const [wantCamOn, setWantCamOn] = useState(true);
 
   const [connect, setConnect] = useState(false);
 
@@ -363,7 +363,7 @@ export default function CreatorLive() {
       // Force mic permission prompt as part of user gesture (mobile reliability)
       if (typeof navigator !== "undefined" && navigator.mediaDevices?.getUserMedia) {
         try {
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: wantCamOn });
           stream.getTracks().forEach((t) => t.stop());
         } catch {
           throw new Error(
@@ -522,3 +522,4 @@ export default function CreatorLive() {
     </LiveKitRoom>
   );
 }
+
