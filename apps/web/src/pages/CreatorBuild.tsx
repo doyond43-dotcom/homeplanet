@@ -4,7 +4,7 @@ import { supabase } from "../lib/supabaseClient";
 import { ensureProject } from "../data/ensureProject";
 import { useProjectStore } from "../state/projectStore";
 import { BuildPreview } from "../components/BuildPreview";
-import VoiceDictationButton, { VoiceDictationButton as VoiceDictationButtonNamed } from "../components/VoiceDictationButton";
+import VoiceDictationButton from "../components/VoiceDictationButton";
 import {
   getActiveProjectId as getActiveProjectIdLocal,
   setActiveProjectId as setActiveProjectIdLocal,
@@ -138,14 +138,6 @@ export default function CreatorBuild() {
   const lastTitleRef = useRef<string>("");
 
   const autoName = useMemo(() => inferNameFromText(idea), [idea]);
-
-  // ----- Voice Dictation (robust wiring) -----
-  // Supports either: export default VoiceDictationButton OR export const VoiceDictationButton
-  const VoiceDictationButtonAny: any =
-    (VoiceDictation as any).default ??
-    (VoiceDictation as any).VoiceDictationButton ??
-    (VoiceDictation as any).VoiceDictation ??
-    null;
 
   function appendFromVoice(chunk: any) {
     const cleaned = String(chunk ?? "").trim();
@@ -422,18 +414,11 @@ export default function CreatorBuild() {
           >
             <div style={{ opacity: 0.65, fontSize: 12 }}>Speak it 🎤</div>
 
-            {VoiceDictationButtonAny ? (
-              <VoiceDictationButtonAny
-                onFinal={appendFromVoice}
-                onText={appendFromVoice}
-                onTranscript={appendFromVoice}
-                onResult={appendFromVoice}
-              />
-            ) : (
-              <div style={{ opacity: 0.6, fontSize: 12 }}>
-                Mic not supported in this browser
-              </div>
-            )}
+            <VoiceDictationButton
+  onFinal={appendFromVoice}
+  onText={appendFromVoice}
+  onTranscript={appendFromVoice}
+/>
           </div>
 
           <textarea
@@ -504,6 +489,7 @@ export default function CreatorBuild() {
     </div>
   );
 }
+
 
 
 
