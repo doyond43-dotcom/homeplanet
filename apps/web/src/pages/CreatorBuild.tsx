@@ -4,7 +4,8 @@ import { supabase } from "../lib/supabaseClient";
 import { ensureProject } from "../data/ensureProject";
 import { useProjectStore } from "../state/projectStore";
 import { BuildPreview } from "../components/BuildPreview";
-import * as VoiceDictation from "../components/VoiceDictationButton";import {
+import * as VoiceDictation from "../components/VoiceDictationButton";
+import {
   getActiveProjectId as getActiveProjectIdLocal,
   setActiveProjectId as setActiveProjectIdLocal,
 } from "../lib/projectsStore";
@@ -18,31 +19,33 @@ function inferNameFromText(input: string): string {
   const s = String(input || "").trim();
   if (!s) return "Untitled Site";
 
-  // Grab first sentence-ish chunk
-  const firstLine = s.split("\n").map((x) => x.trim()).filter(Boolean)[0] || s;
-  const firstSentence = firstLine.split(/[.!?]/).map((x) => x.trim()).filter(Boolean)[0] || firstLine;
+  const firstLine = s
+    .split("\n")
+    .map((x) => x.trim())
+    .filter(Boolean)[0] || s;
 
-  // Common patterns: "called X", "named X", "I'm X", "we are X"
-  const called = firstSentence.match(/\b(called|named)\s+([A-Za-z0-9&'".\- ]{2,60})/i);
+  const firstSentence =
+    firstLine.split(/[.!?]/).map((x) => x.trim()).filter(Boolean)[0] || firstLine;
+
+  const called = firstSentence.match(
+    /\b(called|named)\s+([A-Za-z0-9&'".\- ]{2,60})/i
+  );
   if (called?.[2]) return called[2].trim().replace(/^["'“”]+|["'“”]+$/g, "");
 
-  // If they start with a brand-like phrase
-  const brandish = firstSentence.replace(/^i\s+(run|own|have|started)\s+/i, "").trim();
+  const brandish = firstSentence
+    .replace(/^i\s+(run|own|have|started)\s+/i, "")
+    .trim();
   const cleaned = brandish.replace(/^a\s+|an\s+|the\s+/i, "").trim();
 
-  // Keep it short and title-ish
   const title = cleaned.slice(0, 56).trim();
   return title ? title.replace(/^["'“”]+|["'“”]+$/g, "") : "Untitled Site";
 }
 
-// Turn plain English into the existing “structured” format BuildPreview already expects.
-// This gives us the holy-shit moment without rewriting the renderer today.
+// Plain English -> structured BuildPreview format
 function generateStructuredBuild(input: string): string {
   const raw = String(input || "").trim();
-
   const name = inferNameFromText(raw);
 
-  // Simple heuristic sections
   const locationMatch = raw.match(/\b(in|based in|located in)\s+([A-Za-z .,'-]{2,40})/i);
   const location = locationMatch?.[2]?.trim();
 
@@ -74,7 +77,11 @@ function generateStructuredBuild(input: string): string {
     "Export-ready artifact",
   ];
 
-  const contactBits = [email ? `Email: ${email}` : "", phone ? `Phone: ${phone}` : "", location ? `Location: ${location}` : ""]
+  const contactBits = [
+    email ? `Email: ${email}` : "",
+    phone ? `Phone: ${phone}` : "",
+    location ? `Location: ${location}` : "",
+  ]
     .filter(Boolean)
     .join("\n");
 
@@ -103,43 +110,58 @@ ${contactBits || "Add your email / phone / location to make this real."}
 
 export default function CreatorBuild() {
   const navigate = useNavigate();
-  const { activeProjectId, setActiveProjectId, hydrateActiveFromStorage } = useProjectStore();
+  const { activeProjectId, setActiveProjectId, hydrateActiveFromStorage } =
+    useProjectStore();
 
   // Human input (non-technical)
   const [idea, setIdea] = useState<string>(
     "I run a Tampa-based dance studio that teaches hip hop and contemporary classes for kids and adults. Booking online. Contact: hello@movetampa.com"
   );
 
-  // Generated “build text” that powers the existing preview + autosave
-  const [buildText, setBuildText] = useState<string>(() => generateStructuredBuild(
-    "I run a Tampa-based dance studio that teaches hip hop and contemporary classes for kids and adults. Booking online. Contact: hello@movetampa.com"
-  ));
+  // Generated “build text” that powers the preview + autosave
+  const [buildText, setBuildText] = useState<string>(() =>
+    generateStructuredBuild(
+      "I run a Tampa-based dance studio that teaches hip hop and contemporary classes for kids and adults. Booking online. Contact: hello@movetampa.com"
+    )
+  );
 
-  // Preview should jump / refresh on “Build My Site”
+  // Force preview “jump” on Build button (holy-shit moment)
   const [buildVersion, setBuildVersion] = useState<number>(1);
 
-  const [status, setStatus] = useState<"idle" | "creating" | "saving" | "saved" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "creating" | "saving" | "saved" | "error">(
+    "idle"
+  );
   const [err, setErr] = useState<string | null>(null);
-
-// ---------- Voice Dictation ----------
-function appendFromVoice(chunk: any) {
-  const cleaned = String(chunk ?? "").trim();
-  if (!cleaned) return;
-
-  setText((prev) => {
-    const sep = prev && !prev.endsWith("\n") ? "\n" : "";
-    const next = `${prev}${sep}${cleaned}\n`;
-    scheduleSave(next);
-    return next;
-  });
-}
-// ------------------------------------
 
   const creatingRef = useRef<Promise<string> | null>(null);
   const saveTimer = useRef<number | null>(null);
   const lastTitleRef = useRef<string>("");
 
   const autoName = useMemo(() => inferNameFromText(idea), [idea]);
+
+  // ----- Voice Dictation (robust wiring) -----
+  // Supports either: export default VoiceDictationButton OR export const VoiceDictationButton
+  const VoiceDictationButtonAny: any =
+    (VoiceDictation as any).default ??
+    (VoiceDictation as any).VoiceDictationButton ??
+    (VoiceDictation as any).VoiceDictation ??
+    null;
+
+  function appendFromVoice(chunk: any) {
+    const cleaned = String(chunk ?? "").trim();
+    if (!cleaned) return;
+
+    // Append into IDEA (human box), then regenerate build text, then autosave
+    setIdea((prev) => {
+      const sep = prev && !prev.endsWith("\n") ? "\n" : "";
+      const nextIdea = `${prev}${sep}${cleaned}`;
+      const nextBuild = generateStructuredBuild(nextIdea);
+      setBuildText(nextBuild);
+      scheduleSave(nextBuild, nextIdea);
+      return nextIdea;
+    });
+  }
+  // ------------------------------------------
 
   // Hydrate active project from BOTH:
   // - zustand store
@@ -182,10 +204,9 @@ function appendFromVoice(chunk: any) {
 
     const row = data as DraftRow | null;
     if (row?.body != null) {
-      // Draft body is the structured buildText
       setBuildText(row.body);
 
-      // Best-effort: also back-fill the idea box from the “About:” section if present
+      // Back-fill idea from About: section if present
       const m = row.body.match(/About:\s*([\s\S]*?)\n\nBenefits:/i);
       if (m?.[1]) setIdea(m[1].trim());
 
@@ -228,7 +249,10 @@ function appendFromVoice(chunk: any) {
     setStatus("saving");
     const { error } = await supabase
       .from("project_drafts")
-      .upsert({ project_id: projectId, owner_id: authData.user.id, body }, { onConflict: "project_id" });
+      .upsert(
+        { project_id: projectId, owner_id: authData.user.id, body },
+        { onConflict: "project_id" }
+      );
 
     if (error) throw error;
 
@@ -301,13 +325,30 @@ function appendFromVoice(chunk: any) {
     (activeProjectId ? "auto-saved" : "start typing");
 
   return (
-    <div style={{ padding: 18, maxWidth: 1200, margin: "0 auto" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 14 }}>
+  <div style={{ padding: 18, maxWidth: 1200, margin: "0 auto" }}>
+    <div style={{
+      marginBottom: 12,
+      padding: "10px 12px",
+      borderRadius: 14,
+      border: "2px solid rgba(0,255,150,0.55)",
+      background: "rgba(0,255,150,0.14)",
+      color: "white",
+      fontWeight: 900
+    }}>
+      MIC BUILD ACTIVE ✅ (CreatorBuild.tsx)
+    </div>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 12,
+          marginBottom: 14,
+        }}
+      >
         <div>
           <h1 style={{ fontSize: 22, margin: 0 }}>Creator</h1>
-          <div style={{ opacity: 0.65, fontSize: 12 }}>
-            Describe → Build → Preview
-          </div>
+          <div style={{ opacity: 0.65, fontSize: 12 }}>Describe → Build → Preview</div>
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -330,34 +371,61 @@ function appendFromVoice(chunk: any) {
       </div>
 
       {err && (
-        <div style={{ padding: 12, borderRadius: 12, border: "1px solid rgba(255,255,255,0.14)", marginBottom: 12 }}>
+        <div
+          style={{
+            padding: 12,
+            borderRadius: 12,
+            border: "1px solid rgba(255,255,255,0.14)",
+            marginBottom: 12,
+          }}
+        >
           <div style={{ fontWeight: 800, marginBottom: 6 }}>Save error</div>
           <div style={{ opacity: 0.85, fontSize: 13 }}>{err}</div>
         </div>
       )}
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, alignItems: "start" }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: 14,
+          alignItems: "start",
+        }}
+      >
         <div>
           <div style={{ fontSize: 18, fontWeight: 900, marginBottom: 6 }}>
             Describe your business or idea
           </div>
           <div style={{ opacity: 0.75, fontSize: 12, marginBottom: 10 }}>
-            Type a few sentences — we’ll turn it into a site.
+            Type a few sentences — or tap the mic — we’ll turn it into a site.
           </div>
 
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-  <div style={{ opacity: 0.65, fontSize: 12 }}>
-    Describe your business — or speak it 🎤
-  </div>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 8,
+              gap: 10,
+            }}
+          >
+            <div style={{ opacity: 0.65, fontSize: 12 }}>Speak it 🎤</div>
 
-  <VoiceDictationButton
-    onFinal={appendFromVoice}
-    onText={appendFromVoice}
-    onTranscript={appendFromVoice}
-  />
-</div>
+            {VoiceDictationButtonAny ? (
+              <VoiceDictationButtonAny
+                onFinal={appendFromVoice}
+                onText={appendFromVoice}
+                onTranscript={appendFromVoice}
+                onResult={appendFromVoice}
+              />
+            ) : (
+              <div style={{ opacity: 0.6, fontSize: 12 }}>
+                Mic not supported in this browser
+              </div>
+            )}
+          </div>
 
-<textarea
+          <textarea
             id="creator-idea"
             name="creator-idea"
             value={idea}
@@ -365,7 +433,6 @@ function appendFromVoice(chunk: any) {
               const nextIdea = e.target.value;
               setIdea(nextIdea);
 
-              // Keep build text in sync, but do not steal the wow moment (button still matters)
               const nextBuild = generateStructuredBuild(nextIdea);
               setBuildText(nextBuild);
               scheduleSave(nextBuild, nextIdea);
@@ -389,7 +456,6 @@ function appendFromVoice(chunk: any) {
           <div style={{ display: "flex", gap: 10, alignItems: "center", marginTop: 12, flexWrap: "wrap" }}>
             <button
               onClick={() => {
-                // Generate + force preview to “jump” (holy-shit moment)
                 const nextBuild = generateStructuredBuild(idea);
                 setBuildText(nextBuild);
                 setBuildVersion((v) => v + 1);
@@ -427,6 +493,7 @@ function appendFromVoice(chunk: any) {
     </div>
   );
 }
+
 
 
 
