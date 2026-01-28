@@ -7,7 +7,7 @@ type Props = {
   disabled?: boolean;
 };
 
-type SR = SpeechRecognition & {
+type SR = any & {
   continuous: boolean;
   interimResults: boolean;
   lang: string;
@@ -36,7 +36,7 @@ export function VoiceDictationButton({ onText, onFinal, onTranscript, disabled }
     rec.interimResults = true;
     rec.lang = "en-US";
 
-    rec.onresult = (e: SpeechRecognitionEvent) => {
+    rec.onresult = (e: any) => {
       let finalText = "";
 
       for (let i = e.resultIndex; i < e.results.length; i++) {
@@ -135,3 +135,4 @@ export function VoiceDictationButton({ onText, onFinal, onTranscript, disabled }
 }
 
 export default VoiceDictationButton;
+
