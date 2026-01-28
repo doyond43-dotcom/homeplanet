@@ -1,4 +1,22 @@
-﻿/* ---- Dark Guard (wins against accidental light CSS) ---- */
+﻿html, body, #root {
+  height: 100%;
+  min-height: 100%;
+  background: #0b0b10;
+}
+
+body {
+  margin: 0;
+  overflow-x: hidden;
+}
+
+/* iOS Safari viewport correctness */
+@supports (height: 100dvh) {
+  #root {
+    min-height: 100dvh;
+  }
+}
+
+/* ---- Dark Guard (wins against accidental light CSS) ---- */
 html, body, #root {
   background-color: var(--bg-main) !important;
   color: var(--text-main) !important;
