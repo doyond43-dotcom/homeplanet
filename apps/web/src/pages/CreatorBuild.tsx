@@ -4,7 +4,7 @@ import { supabase } from "../lib/supabaseClient";
 import { ensureProject } from "../data/ensureProject";
 import { useProjectStore } from "../state/projectStore";
 import { BuildPreview } from "../components/BuildPreview";
-import {
+import * as VoiceDictation from "../components/VoiceDictationButton";import {
   getActiveProjectId as getActiveProjectIdLocal,
   setActiveProjectId as setActiveProjectIdLocal,
 } from "../lib/projectsStore";
@@ -401,3 +401,4 @@ export default function CreatorBuild() {
     </div>
   );
 }
+
