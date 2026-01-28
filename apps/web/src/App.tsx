@@ -14,8 +14,9 @@ import SimpleDocPage from "./pages/SimpleDocPage";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ResetPassword from "./pages/ResetPassword";
-import CreatorLive from ".\/pages\/CreatorLive";
-import LiveRoom from ".\/pages\/LiveRoom";
+
+import CreatorLive from "./pages/CreatorLive";
+import LiveViewer from "./pages/LiveViewer";
 
 import { RequireAuth } from "./auth/RequireAuth";
 
@@ -24,16 +25,25 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route element={<AppShell />}>
-          {/* Public auth routes (MUST be reachable) */}
+          {/* -----------------------------
+              Public auth routes
+          ----------------------------- */}
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route
+            path="/forgot"
+            element={<Navigate to="/reset-password" replace />}
+          />
 
+          {/* -----------------------------
+              Public live viewer (NO auth)
+          ----------------------------- */}
+          <Route path="/live/:room" element={<LiveViewer />} />
 
-          {/* Public live viewer */}
-          <Route path="/live/:room" element={<LiveRoom />} />
-          <Route path="/forgot" element={<Navigate to="/reset-password" replace />} />
-          {/* Core */}
+          {/* -----------------------------
+              Core
+          ----------------------------- */}
           <Route path="/" element={<CoreHome />} />
           <Route
             path="/core/doctrine"
@@ -54,7 +64,9 @@ export default function App() {
             }
           />
 
-          {/* Protected app routes */}
+          {/* -----------------------------
+              Protected app routes
+          ----------------------------- */}
           <Route
             path="/planet/creator/release/:releaseId"
             element={
@@ -63,6 +75,7 @@ export default function App() {
               </RequireAuth>
             }
           />
+
           <Route
             path="/planet/:planetId"
             element={
@@ -71,6 +84,7 @@ export default function App() {
               </RequireAuth>
             }
           />
+
           <Route
             path="/planet/creator/projects"
             element={
@@ -79,6 +93,7 @@ export default function App() {
               </RequireAuth>
             }
           />
+
           <Route
             path="/planet/creator/build"
             element={
@@ -87,6 +102,7 @@ export default function App() {
               </RequireAuth>
             }
           />
+
           <Route
             path="/planet/:planetId/:cityId"
             element={
@@ -96,10 +112,6 @@ export default function App() {
             }
           />
 
-          {/* Default */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Route>
-
           <Route
             path="/planet/creator/live"
             element={
@@ -108,11 +120,11 @@ export default function App() {
               </RequireAuth>
             }
           />
+
+          {/* Default */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );
 }
-
-
-
-
