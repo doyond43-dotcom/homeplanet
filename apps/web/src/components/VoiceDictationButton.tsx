@@ -1,9 +1,13 @@
 ﻿import { useEffect, useMemo, useRef, useState } from "react";
 
 type Props = {
-  onText?: (chunk: string) => void;        // optional
-  onFinal?: (final: string) => void;       // optional
-  onTranscript?: (chunk: string) => void;  // optional (alias)
+  // Final-only output (recommended)
+  onFinal?: (final: string) => void;
+
+  // Optional: if you still want interim text later, we can add it back safely
+  onText?: (chunk: string) => void;        // treated as final in this implementation
+  onTranscript?: (chunk: string) => void;  // alias
+
   disabled?: boolean;
 };
 
@@ -11,14 +15,25 @@ type SR = any & {
   continuous: boolean;
   interimResults: boolean;
   lang: string;
+  maxAlternatives?: number;
+  start: () => void;
+  stop: () => void;
+  abort?: () => void;
+  onresult: ((e: any) => void) | null;
+  onerror: ((e: any) => void) | null;
+  onend: (() => void) | null;
 };
 
-export function VoiceDictationButton({ onText, onFinal, onTranscript, disabled }: Props) {
+export function VoiceDictationButton({ onFinal, onText, onTranscript, disabled }: Props) {
   const [supported, setSupported] = useState(true);
   const [listening, setListening] = useState(false);
   const [err, setErr] = useState<string>("");
 
   const recRef = useRef<SR | null>(null);
+
+  // Dedup + stability
+  const lastFinalRef = useRef<string>("");
+  const lastEmitAtRef = useRef<number>(0);
 
   const SpeechRecognitionCtor = useMemo(() => {
     const w = window as any;
@@ -32,35 +47,38 @@ export function VoiceDictationButton({ onText, onFinal, onTranscript, disabled }
     }
 
     const rec: SR = new SpeechRecognitionCtor();
-    rec.continuous = true;
-    rec.interimResults = true;
+    rec.continuous = true;        // keep running until you stop
+    rec.interimResults = false;   // IMPORTANT: prevents “double typing”
     rec.lang = "en-US";
+    rec.maxAlternatives = 1;
 
     rec.onresult = (e: any) => {
+      // Build final transcript from this event
       let finalText = "";
 
       for (let i = e.resultIndex; i < e.results.length; i++) {
         const r = e.results[i];
         const t = String(r?.[0]?.transcript ?? "");
-
-        if (r.isFinal) {
-          finalText += t;
-        } else {
-          // interim chunk
-          const chunk = t.trim();
-          if (chunk) {
-            onText?.(chunk + " ");
-            onTranscript?.(chunk + " ");
-          }
-        }
+        if (r?.isFinal) finalText += t;
       }
 
-      const cleanedFinal = finalText.trim();
-      if (cleanedFinal) {
-        onFinal?.(cleanedFinal + " ");
-        onText?.(cleanedFinal + " ");
-        onTranscript?.(cleanedFinal + " ");
-      }
+      const cleaned = finalText.trim();
+      if (!cleaned) return;
+
+      // Dedupe identical repeats (Chrome sometimes repeats finals)
+      const now = Date.now();
+      const sameAsLast = cleaned === lastFinalRef.current;
+      const tooSoon = now - lastEmitAtRef.current < 900; // ms
+
+      if (sameAsLast && tooSoon) return;
+
+      lastFinalRef.current = cleaned;
+      lastEmitAtRef.current = now;
+
+      const out = cleaned + " ";
+      onFinal?.(out);
+      onText?.(out);
+      onTranscript?.(out);
     };
 
     rec.onerror = (e: any) => {
@@ -68,7 +86,9 @@ export function VoiceDictationButton({ onText, onFinal, onTranscript, disabled }
       setListening(false);
     };
 
-    rec.onend = () => setListening(false);
+    rec.onend = () => {
+      setListening(false);
+    };
 
     recRef.current = rec;
 
@@ -76,20 +96,25 @@ export function VoiceDictationButton({ onText, onFinal, onTranscript, disabled }
       try { rec.stop(); } catch {}
       recRef.current = null;
     };
-  }, [SpeechRecognitionCtor, onText, onFinal, onTranscript]);
+  }, [SpeechRecognitionCtor, onFinal, onText, onTranscript]);
 
   const toggle = async () => {
     setErr("");
-    if (!recRef.current) return;
+    const rec = recRef.current;
+    if (!rec) return;
 
     if (listening) {
-      try { recRef.current.stop(); } catch {}
+      try { rec.stop(); } catch {}
       setListening(false);
       return;
     }
 
+    // reset dedupe when starting fresh
+    lastFinalRef.current = "";
+    lastEmitAtRef.current = 0;
+
     try {
-      recRef.current.start();
+      rec.start();
       setListening(true);
     } catch (e: any) {
       setErr(e?.message || "Could not start mic");
@@ -135,4 +160,3 @@ export function VoiceDictationButton({ onText, onFinal, onTranscript, disabled }
 }
 
 export default VoiceDictationButton;
-
