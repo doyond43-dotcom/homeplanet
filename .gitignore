@@ -1,18 +1,7 @@
 ﻿node_modules/
 dist/
 build/
-.cache/
-.vite/
 .DS_Store
-*.log
-
-# env (never commit secrets)
 .env
 .env.*
-!.env.example
-
-# vercel
 .vercel/
-
-# TS build info
-*.tsbuildinfo
