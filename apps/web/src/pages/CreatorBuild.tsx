@@ -121,6 +121,20 @@ export default function CreatorBuild() {
   const [status, setStatus] = useState<"idle" | "creating" | "saving" | "saved" | "error">("idle");
   const [err, setErr] = useState<string | null>(null);
 
+// ---------- Voice Dictation ----------
+function appendFromVoice(chunk: any) {
+  const cleaned = String(chunk ?? "").trim();
+  if (!cleaned) return;
+
+  setText((prev) => {
+    const sep = prev && !prev.endsWith("\n") ? "\n" : "";
+    const next = `${prev}${sep}${cleaned}\n`;
+    scheduleSave(next);
+    return next;
+  });
+}
+// ------------------------------------
+
   const creatingRef = useRef<Promise<string> | null>(null);
   const saveTimer = useRef<number | null>(null);
   const lastTitleRef = useRef<string>("");
@@ -331,7 +345,19 @@ export default function CreatorBuild() {
             Type a few sentences — we’ll turn it into a site.
           </div>
 
-          <textarea
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+  <div style={{ opacity: 0.65, fontSize: 12 }}>
+    Describe your business — or speak it 🎤
+  </div>
+
+  <VoiceDictationButton
+    onFinal={appendFromVoice}
+    onText={appendFromVoice}
+    onTranscript={appendFromVoice}
+  />
+</div>
+
+<textarea
             id="creator-idea"
             name="creator-idea"
             value={idea}
@@ -401,4 +427,5 @@ export default function CreatorBuild() {
     </div>
   );
 }
+
 
