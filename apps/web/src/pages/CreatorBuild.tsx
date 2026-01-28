@@ -335,6 +335,17 @@ export default function CreatorBuild() {
       color: "white",
       fontWeight: 900
     }}>
+      BUILD STAMP ✅ MIC PATCH SHOULD BE HERE (CreatorBuild.tsx)
+    </div>
+    <div style={{
+      marginBottom: 12,
+      padding: "10px 12px",
+      borderRadius: 14,
+      border: "2px solid rgba(0,255,150,0.55)",
+      background: "rgba(0,255,150,0.14)",
+      color: "white",
+      fontWeight: 900
+    }}>
       MIC BUILD ACTIVE ✅ (CreatorBuild.tsx)
     </div>
       <div
@@ -493,6 +504,7 @@ export default function CreatorBuild() {
     </div>
   );
 }
+
 
 
 
