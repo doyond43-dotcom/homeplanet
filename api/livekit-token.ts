@@ -1,48 +1,47 @@
 ﻿import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { AccessToken } from "livekit-server-sdk";
 
-/**
- * /api/livekit-token
- * Adds CORS support so localhost dev can call the deployed endpoint.
- */
+// CORS: allow localhost dev + production + common Vercel preview URLs
+function getAllowedOrigin(req: VercelRequest): string | null {
+  const origin = String(req.headers.origin || "").trim();
+  if (!origin) return null;
 
-const ALLOWED_ORIGINS = new Set<string>([
-  "http://localhost:5173",
-  "http://127.0.0.1:5173",
-  "https://www.homeplanet.city",
-  "https://homeplanet.city",
-]);
+  const exactAllow = new Set<string>([
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://www.homeplanet.city",
+    "https://homeplanet.city",
+  ]);
 
-function applyCors(req: VercelRequest, res: VercelResponse) {
-  const origin = String(req.headers.origin || "");
+  if (exactAllow.has(origin)) return origin;
 
-  // Allow known origins + Vercel preview deployments (*.vercel.app)
-  const isVercelPreview =
-    origin.endsWith(".vercel.app") && origin.startsWith("https://");
+  // Allow Vercel preview domains (adjust if you want stricter)
+  // Examples: https://homeplanet-abc123.vercel.app
+  //           https://homeplanet-git-branchname-doyond43-dotcom.vercel.app
+  if (/^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin)) return origin;
 
-  if (ALLOWED_ORIGINS.has(origin) || isVercelPreview) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-    res.setHeader("Vary", "Origin"); // important when reflecting origin
-  }
-
-  res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.setHeader("Access-Control-Max-Age", "86400");
+  return null;
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // ✅ Always apply CORS headers (even on errors)
-  applyCors(req, res);
+  // --- CORS preflight + headers ---
+  const allowedOrigin = getAllowedOrigin(req);
+  if (allowedOrigin) {
+    res.setHeader("Access-Control-Allow-Origin", allowedOrigin);
+    res.setHeader("Vary", "Origin");
+  }
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  // no credentials needed here, so we do NOT set Allow-Credentials
 
-  // ✅ Handle preflight
   if (req.method === "OPTIONS") {
     return res.status(204).end();
   }
 
-  // Optional: lock to GET only
-  if (req.method !== "GET") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
+  // avoid caching tokens
+  res.setHeader("Cache-Control", "no-store");
 
   try {
     const livekitUrl = process.env.LIVEKIT_URL;
