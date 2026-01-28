@@ -1,0 +1,62 @@
+﻿import { useEffect, useMemo, useState } from "react";
+import { useParams } from "react-router-dom";
+import { LiveKitRoom, GridLayout, ParticipantTile, ControlBar } from "@livekit/components-react";
+import "@livekit/components-styles";
+
+function randId() {
+  return "viewer_" + Math.random().toString(16).slice(2);
+}
+
+export default function LiveRoom() {
+  const { room } = useParams();
+  const [token, setToken] = useState<string | null>(null);
+  const [url, setUrl] = useState<string | null>(null);
+  const identity = useMemo(() => randId(), []);
+
+  useEffect(() => {
+    if (!room) return;
+
+    (async () => {
+      const qs = new URLSearchParams({
+        room,
+        identity,
+        name: "Viewer",
+        role: "viewer",
+      });
+
+      const r = await fetch(`/api/livekit-token?${qs.toString()}`);
+      const j = await r.json();
+      if (!r.ok) throw new Error(j?.error ?? "token failed");
+      setToken(j.token);
+      setUrl(j.url);
+    })().catch((e) => console.warn("live token error", e));
+  }, [room, identity]);
+
+  if (!room) return <div>Missing room.</div>;
+  if (!token || !url) return <div style={{ opacity: 0.8 }}>Loading live stream…</div>;
+
+  return (
+    <div style={{ padding: 18 }}>
+      <h2 style={{ marginTop: 0 }}>Live: {room}</h2>
+
+      <LiveKitRoom
+        token={token}
+        serverUrl={url}
+        connect={true}
+        video={false}
+        audio={false}
+        data-lk-theme="default"
+        style={{ height: "70vh" }}
+      >
+        <GridLayout style={{ height: "100%" }}>
+          <ParticipantTile />
+        </GridLayout>
+        <ControlBar variation="minimal" />
+      </LiveKitRoom>
+
+      <div style={{ marginTop: 10, fontSize: 13, opacity: 0.75 }}>
+        Anyone with this link can watch.
+      </div>
+    </div>
+  );
+}

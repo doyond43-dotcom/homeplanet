@@ -1,0 +1,11 @@
+﻿{
+  "files": [],
+  "references": [
+    { "path": "packages/core" },
+    { "path": "packages/auth" },
+    { "path": "packages/enforcement" },
+    { "path": "packages/framework" },
+    { "path": "packages/commands" },
+    { "path": "examples/canonical-flow-demo" }
+  ]
+}

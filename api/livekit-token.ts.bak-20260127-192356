@@ -1,0 +1,46 @@
+﻿import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { AccessToken } from "livekit-server-sdk";
+
+export default function handler(req: VercelRequest, res: VercelResponse) {
+  try {
+    const LIVEKIT_URL = process.env.LIVEKIT_URL;
+    const LIVEKIT_API_KEY = process.env.LIVEKIT_API_KEY;
+    const LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET;
+
+    if (!LIVEKIT_URL || !LIVEKIT_API_KEY || !LIVEKIT_API_SECRET) {
+      return res.status(500).json({ error: "Missing LIVEKIT_URL / LIVEKIT_API_KEY / LIVEKIT_API_SECRET" });
+    }
+
+    const room = (req.query.room as string) || "";
+    const identity = (req.query.identity as string) || "";
+    const name = (req.query.name as string) || identity || "guest";
+    const role = (req.query.role as string) || "viewer";
+
+    if (!room) return res.status(400).json({ error: "Missing room" });
+    if (!identity) return res.status(400).json({ error: "Missing identity" });
+
+    const at = new AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET, {
+      identity,
+      name,
+      ttl: 60 * 60, // 1 hour
+    });
+
+    // Minimal perms:
+    // - viewers: can join + subscribe
+    // - host: can publish audio/video
+    at.addGrant({
+      room,
+      roomJoin: true,
+      canSubscribe: true,
+      canPublish: role === "host",
+      canPublishData: role === "host",
+    });
+
+    return res.status(200).json({
+      token: at.toJwt(),
+      url: LIVEKIT_URL,
+    });
+  } catch (e: any) {
+    return res.status(500).json({ error: e?.message ?? "token error" });
+  }
+}

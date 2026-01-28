@@ -1,0 +1,15 @@
+﻿{
+  "name": "@homeplanet/commands",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@homeplanet/core": "0.0.1",
+    "@homeplanet/auth": "0.0.1",
+    "@homeplanet/framework": "0.0.1"
+  }
+}

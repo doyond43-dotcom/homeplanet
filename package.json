@@ -1,0 +1,24 @@
+{
+    "name": "homeplanet",
+    "private": true,
+    "workspaces": [
+        "packages/*",
+        "apps/*"
+    ],
+    "scripts": {
+        "clean": "powershell -NoProfile -Command \"Remove-Item -Recurse -Force packages\\core\\dist,packages\\auth\\dist,packages\\enforcement\\dist,packages\\framework\\dist,packages\\commands\\dist,examples\\canonical-flow-demo\\dist -ErrorAction SilentlyContinue\"",
+        "build": "tsc -b",
+        "test:commands": "node ./packages/commands/tests/smoke.mjs",
+        "demo": "npm run build && node ./examples/canonical-flow-demo/dist/authz-demo.js",
+        "clean:deep": "powershell -NoProfile -Command \"Get-ChildItem -Recurse -Filter *.tsbuildinfo | Remove-Item -Force -ErrorAction SilentlyContinue; Remove-Item -Recurse -Force -ErrorAction SilentlyContinue packages\\core\\dist,packages\\auth\\dist,packages\\enforcement\\dist,packages\\framework\\dist,packages\\commands\\dist,examples\\canonical-flow-demo\\dist; $targets=@('packages\\core','packages\\auth','packages\\enforcement','packages\\framework','packages\\commands','examples\\canonical-flow-demo'); foreach($t in $targets){ Remove-Item -Force -ErrorAction SilentlyContinue (Join-Path $t 'src\\*.js'),(Join-Path $t 'src\\*.js.map'),(Join-Path $t 'src\\*.d.ts'),(Join-Path $t 'src\\*.d.ts.map') }\""
+    },
+    "devDependencies": {
+        "typescript": "^5.5.4"
+    },
+    "dependencies": {
+        "@livekit/components-react": "^2.9.19",
+        "@vercel/node": "^5.5.28",
+        "livekit-client": "^2.17.0",
+        "livekit-server-sdk": "^2.15.0"
+    }
+}

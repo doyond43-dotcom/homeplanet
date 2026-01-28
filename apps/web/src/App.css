@@ -1,0 +1,256 @@
+﻿/* ============================================================
+   HomePlanet — Calm Core (0.1.0-calm-core)
+   Single-source CSS (no duplicate hpWrap/hpTitle rules)
+   ============================================================ */
+
+:root{
+  --card: rgba(0,0,0,0.35);
+  --border: rgba(255,255,255,0.10);
+  --muted: rgba(255,255,255,0.72);
+  --faint: rgba(255,255,255,0.55);
+}
+
+/* Prevent horizontal clipping on mobile */
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+}
+
+/* Main layout wrapper */
+.hpWrap{
+  width: 100%;
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 32px 14px 48px;
+  box-sizing: border-box;
+  text-align: center;
+
+  /* ---- Mobile-safe layering guard ----
+     If any vignette/gradient overlays exist elsewhere,
+     ensure they can’t sit above the real UI on iOS Safari. */
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* If you ever add hpWrap overlays, keep them behind UI */
+.hpWrap::before,
+.hpWrap::after{
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Force real UI above any overlay layer */
+.hpWrap > *{
+  position: relative;
+  z-index: 1;
+}
+
+/* Big title */
+.hpTitle{
+  margin: 0 0 10px;
+  font-size: clamp(42px, 10vw, 72px);
+  line-height: 1.05;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+
+.hpSub{
+  margin-top: 8px;
+  opacity: 0.85;
+  font-size: 14px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.hpMeta{
+  margin-top: 6px;
+  opacity: 0.55;
+  font-size: 12px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.hpRow{
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--muted);
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.hpCard{
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  text-align: left;
+  max-width: 100%;
+  box-sizing: border-box;
+
+  /* Keep cards centered as a block */
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.hpCardTitle{
+  font-size: 12px;
+  letter-spacing: 0.4px;
+  color: var(--faint);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.hpNowGrid{
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.hpNowLine{
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.hpKey{ color: var(--faint); }
+.hpVal{ color: var(--muted); }
+
+.hpFeed{
+  display: grid;
+  gap: 8px;
+  max-height: 280px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.hpItem{
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.hpLeft{
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.hpSig{
+  font-weight: 700;
+  opacity: 0.92;
+  overflow-wrap: anywhere;
+}
+
+.hpSev{
+  font-size: 12px;
+  opacity: 0.55;
+}
+
+.hpTime{
+  font-size: 12px;
+  opacity: 0.55;
+  white-space: nowrap;
+}
+
+.hpDot{
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+  opacity: 0.9;
+}
+
+.hpDotWrap{
+  display: flex;
+  align-items: center;
+}
+
+.hpActions{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.hpBtn{
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  cursor: pointer;
+  width: min(420px, 92vw);
+
+  /* Guarantee button centering everywhere (Residents + Actions) */
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.hpBtnGhost{
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.15);
+  color: #fff;
+  cursor: pointer;
+  opacity: 0.85;
+}
+
+/* Login page centering */
+.hpAuthPage {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px 16px;
+}
+
+@media (max-width: 640px) {
+  .hpWrap { padding-top: 20px; }
+  .hpAuthPage { padding-top: 28px; }
+}
+
+@media (max-width: 420px) {
+  body { font-size: 14px; }
+}
+
+/* ============================================================
+   CalmCore Heartbeat
+   - Default: CalmCore Heartbeat
+   - Quiet Mode: Quiet Heartbeat (slower, softer)
+   ============================================================ */
+
+@keyframes calmcore-heartbeat {
+  0%   { opacity: 0.55; box-shadow: 0 0 0 rgba(255,255,255,0.0); }
+  50%  { opacity: 0.95; box-shadow: 0 0 8px rgba(255,255,255,0.18); }
+  100% { opacity: 0.55; box-shadow: 0 0 0 rgba(255,255,255,0.0); }
+}
+
+/* Presence dot heartbeat (default mode) */
+.hpDot {
+  animation: calmcore-heartbeat 5.5s ease-in-out infinite;
+}
+
+/* Quiet Mode = slower + calmer heartbeat */
+.hpWrap.quiet .hpDot {
+  animation-duration: 9s;
+  box-shadow: none;
+}
+

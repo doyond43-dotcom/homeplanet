@@ -1,0 +1,87 @@
+﻿/* ---- Dark Guard (wins against accidental light CSS) ---- */
+html, body, #root {
+  background-color: var(--bg-main) !important;
+  color: var(--text-main) !important;
+}
+/* ======================================================
+   HomePlanet — Global Dark Lock (Vite)
+   ====================================================== */
+
+:root {
+  color-scheme: dark;
+
+  --bg-main: #0b0e11;
+  --bg-panel: #14181d;
+  --bg-muted: #1c2127;
+
+  --text-main: #e6e6e6;
+  --text-muted: #9aa3ad;
+
+  --presence-ok: #7dd3fc;
+  --presence-low: #60a5fa;
+  --presence-med: #fbbf24;
+  --presence-high: #f97316;
+  --presence-critical: #ef4444;
+}
+
+html,
+body {
+  background-color: var(--bg-main) !important;
+  color: var(--text-main);
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+#root {
+  min-height: 100vh;
+  background-color: var(--bg-main);
+}
+
+
+/* --- Mobile canvas fix: prevent white bleed below content --- */
+html, body, #root {
+  height: 100%;
+  min-height: 100%;
+  background: #07090c;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh; /* iOS/modern browsers */
+  background: #07090c;
+}
+
+
+/* ---------- GLOBAL MOBILE CANVAS FIX ---------- */
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: #05060a;
+  min-height: 100%;
+  overscroll-behavior-y: none;
+}
+
+#root {
+  min-height: 100dvh;
+  background: #05060a;
+  display: flex;
+  flex-direction: column;
+}
+
+/* catch any outer layout shell */
+.app-shell,
+.page-shell,
+.main-layout,
+.layout-root {
+  min-height: 100dvh;
+  background: #05060a;
+}
+
+/* last-resort safety net */
+body > div {
+  background: #05060a;
+}
+

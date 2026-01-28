@@ -1,0 +1,171 @@
+﻿import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  createProject,
+  deleteProject,
+  getActiveProjectId,
+  listProjects,
+  renameProject,
+  setActiveProjectId,
+  subscribeProjects,
+  type HPProject,
+} from "../lib/projectsStore";
+
+const pageWrap: React.CSSProperties = {
+  maxWidth: 980,
+  margin: "0 auto",
+  padding: "26px 16px",
+  color: "#fff",
+};
+
+const card: React.CSSProperties = {
+  borderRadius: 18,
+  border: "1px solid rgba(255,255,255,0.10)",
+  background: "rgba(0,0,0,0.35)",
+  padding: 14,
+};
+
+const row: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: 12,
+  padding: "12px 12px",
+  borderRadius: 14,
+  border: "1px solid rgba(255,255,255,0.10)",
+  background: "rgba(255,255,255,0.04)",
+};
+
+const btn: React.CSSProperties = {
+  padding: "10px 12px",
+  borderRadius: 12,
+  border: "1px solid rgba(255,255,255,0.18)",
+  background: "rgba(255,255,255,0.06)",
+  color: "#fff",
+  cursor: "pointer",
+  fontWeight: 600,
+};
+
+const input: React.CSSProperties = {
+  width: "100%",
+  borderRadius: 12,
+  border: "1px solid rgba(255,255,255,0.18)",
+  background: "rgba(255,255,255,0.05)",
+  color: "#fff",
+  padding: "10px 12px",
+  outline: "none",
+};
+
+export default function CreatorProjects() {
+  const nav = useNavigate();
+
+  const [tick, setTick] = useState(0); // re-render on store events
+  useEffect(() => subscribeProjects(() => setTick((t) => t + 1)), []);
+
+  const projects = useMemo(() => listProjects(), [tick]);
+  const activeId = useMemo(() => getActiveProjectId(), [tick]);
+
+  const [name, setName] = useState("");
+
+  function onCreate() {
+    const p = createProject(name);
+    setName("");
+    // send user straight to the build page (Creator City)
+    nav("/creator/build");
+  }
+
+  function onOpen(p: HPProject) {
+    setActiveProjectId(p.id);
+    nav("/creator/build");
+  }
+
+  return (
+    <div style={pageWrap}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12 }}>
+        <div>
+          <h2 style={{ margin: 0 }}>Creator Projects</h2>
+          <div style={{ opacity: 0.7, marginTop: 6 }}>
+            Canonical registry (v1). This is the single source of truth for Creator City projects.
+          </div>
+        </div>
+
+        <button style={btn} onClick={() => nav("/")}>Home</button>
+      </div>
+
+      <div style={{ height: 14 }} />
+
+      <div style={card}>
+        <div style={{ fontWeight: 700, marginBottom: 10 }}>Create a project</div>
+        <div style={{ display: "grid", gap: 10 }}>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            style={input}
+            placeholder="Example: Creator flow that actually works"
+          />
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <button style={btn} onClick={onCreate}>Create + Open</button>
+            <button style={{ ...btn, opacity: 0.85 }} onClick={() => nav("/creator/build")}>
+              Go to Build (uses active project)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ height: 14 }} />
+
+      <div style={card}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+          <div style={{ fontWeight: 700 }}>Projects</div>
+          <div style={{ opacity: 0.7, fontSize: 12 }}>count: {projects.length}</div>
+        </div>
+
+        <div style={{ height: 10 }} />
+
+        {projects.length === 0 ? (
+          <div style={{ opacity: 0.7 }}>No projects yet. Create one above.</div>
+        ) : (
+          <div style={{ display: "grid", gap: 10 }}>
+            {projects.map((p) => (
+              <div key={p.id} style={row}>
+                <div style={{ display: "grid", gap: 4 }}>
+                  <div style={{ fontWeight: 800 }}>
+                    {p.name}{" "}
+                    {activeId === p.id ? (
+                      <span style={{ marginLeft: 8, fontSize: 12, opacity: 0.75 }}>(active)</span>
+                    ) : null}
+                  </div>
+                  <div style={{ fontSize: 12, opacity: 0.6 }}>
+                    {new Date(p.updatedAt || p.createdAt).toLocaleString()}
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                  <button style={btn} onClick={() => onOpen(p)}>Open</button>
+                  <button
+                    style={{ ...btn, opacity: 0.9 }}
+                    onClick={() => {
+                      const next = prompt("Rename project:", p.name);
+                      if (next != null) renameProject(p.id, next);
+                    }}
+                  >
+                    Rename
+                  </button>
+                  <button
+                    style={{ ...btn, opacity: 0.9 }}
+                    onClick={() => {
+                      const ok = confirm(`Delete "${p.name}"?`);
+                      if (ok) deleteProject(p.id);
+                    }}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

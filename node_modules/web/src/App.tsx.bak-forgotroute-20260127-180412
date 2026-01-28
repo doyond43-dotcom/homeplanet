@@ -1,0 +1,99 @@
+﻿import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AppShell } from "./layout/AppShell";
+
+import CoreHome from "./pages/CoreHome";
+import PlanetOverview from "./pages/PlanetOverview";
+import CityPage from "./pages/CityPage";
+
+import CreatorProjects from "./pages/CreatorProjects";
+import CreatorBuild from "./pages/CreatorBuild";
+import ReleaseViewer from "./pages/ReleaseViewer";
+
+import SimpleDocPage from "./pages/SimpleDocPage";
+
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import ResetPassword from "./pages/ResetPassword";
+
+import { RequireAuth } from "./auth/RequireAuth";
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route element={<AppShell />}>
+          {/* Public auth routes (MUST be reachable) */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+
+          {/* Core */}
+          <Route path="/" element={<CoreHome />} />
+          <Route
+            path="/core/doctrine"
+            element={
+              <SimpleDocPage
+                title="Doctrine"
+                body="HomePlanet doctrine lives here. Next: render the canonical doctrine + excerpts."
+              />
+            }
+          />
+          <Route
+            path="/core/binder"
+            element={
+              <SimpleDocPage
+                title="Binder Map"
+                body="HomePlanet binder map lives here. Next: show volumes + quick links."
+              />
+            }
+          />
+
+          {/* Protected app routes */}
+          <Route
+            path="/planet/creator/release/:releaseId"
+            element={
+              <RequireAuth>
+                <ReleaseViewer />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/planet/:planetId"
+            element={
+              <RequireAuth>
+                <PlanetOverview />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/planet/creator/projects"
+            element={
+              <RequireAuth>
+                <CreatorProjects />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/planet/creator/build"
+            element={
+              <RequireAuth>
+                <CreatorBuild />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/planet/:planetId/:cityId"
+            element={
+              <RequireAuth>
+                <CityPage />
+              </RequireAuth>
+            }
+          />
+
+          {/* Default */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  );
+}

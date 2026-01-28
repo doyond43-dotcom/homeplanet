@@ -1,0 +1,18 @@
+﻿{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "outDir": "dist",
+    "rootDir": "src"
+  },
+  "include": ["src"],
+  "references": [
+    { "path": "../../packages/core" },
+    { "path": "../../packages/auth" },
+    { "path": "../../packages/enforcement" },
+    { "path": "../../packages/framework" },
+    { "path": "../../packages/commands" }
+  ]
+}

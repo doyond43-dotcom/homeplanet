@@ -1,0 +1,46 @@
+﻿import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { AccessToken } from "livekit-server-sdk";
+
+export default function handler(req: VercelRequest, res: VercelResponse) {
+  try {
+    const livekitUrl = process.env.LIVEKIT_URL;
+    const apiKey = process.env.LIVEKIT_API_KEY;
+    const apiSecret = process.env.LIVEKIT_API_SECRET;
+
+    if (!livekitUrl || !apiKey || !apiSecret) {
+      return res.status(500).json({
+        error: "Missing LIVEKIT env vars",
+        missing: {
+          LIVEKIT_URL: !livekitUrl,
+          LIVEKIT_API_KEY: !apiKey,
+          LIVEKIT_API_SECRET: !apiSecret,
+        },
+      });
+    }
+
+    const room = String(req.query.room || "").trim();
+    const identity = String(req.query.identity || "").trim() || `user_${Math.random().toString(36).slice(2)}`;
+    const name = String(req.query.name || "").trim() || identity;
+    const role = String(req.query.role || "").trim(); // "host" | "viewer" | ""
+
+    if (!room) return res.status(400).json({ error: "Missing room" });
+
+    const isHost = role === "host";
+
+    const at = new AccessToken(apiKey, apiSecret, { identity, name });
+    at.addGrant({
+      room,
+      roomJoin: true,
+      canPublish: isHost,
+      canSubscribe: true,
+      canPublishData: isHost,
+    });
+
+    // CRITICAL: return a JWT STRING (not the AccessToken object)
+    const token = at.toJwt();
+
+    return res.status(200).json({ token, url: livekitUrl });
+  } catch (err: any) {
+    return res.status(500).json({ error: "Token generation failed", detail: String(err?.message || err) });
+  }
+}

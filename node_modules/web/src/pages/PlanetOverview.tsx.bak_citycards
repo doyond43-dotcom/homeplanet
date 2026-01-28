@@ -1,0 +1,28 @@
+﻿import { useParams } from "react-router-dom";
+
+import React from "react";
+import { PLANETS } from "../planet/planetMap";
+
+export default function PlanetOverview() {
+  const { planetId } = useParams();
+  const planet = PLANETS.find((p) => p.id === planetId);
+
+  return (
+    <div>
+      <h1 style={{ fontSize: 24, margin: 0 }}>
+        🌍 Planet: {planet?.label ?? planetId}
+      </h1>
+      <p style={{ marginTop: 10, color: "rgba(255,255,255,0.70)", lineHeight: 1.5 }}>
+        {planet?.subtitle ?? "Resident system overview."}
+      </p>
+
+      <div style={{ marginTop: 14, borderRadius: 18, border: "1px solid rgba(255,255,255,0.10)", padding: 14, background: "rgba(255,255,255,0.03)" }}>
+        <div style={{ fontWeight: 800 }}>Cities</div>
+        <div style={{ marginTop: 8, color: "rgba(255,255,255,0.65)" }}>
+          {planet?.cities?.map((c) => c.label).join(" • ") ?? "No cities defined."}
+        </div>
+      </div>
+    </div>
+  );
+}
+
