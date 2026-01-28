@@ -1,32 +1,54 @@
 ﻿import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { AccessToken } from "livekit-server-sdk";
 
-// CORS: allow localhost dev + production + common Vercel preview URLs
+/**
+ * Normalize origins like:
+ *  - "https://www.homeplanet.city/" -> "https://www.homeplanet.city"
+ *  - "HTTP://LOCALHOST:5173" -> "http://localhost:5173"
+ */
+function normalizeOrigin(origin: string): string {
+  return origin.trim().replace(/\/$/, "").toLowerCase();
+}
+
+function isAllowedOrigin(originRaw: string): boolean {
+  const origin = normalizeOrigin(originRaw);
+
+  // Allow localhost / 127.0.0.1 on any port (dev)
+  if (/^http:\/\/localhost:\d+$/i.test(origin)) return true;
+  if (/^http:\/\/127\.0\.0\.1:\d+$/i.test(origin)) return true;
+
+  // Allow production domains
+  if (origin === "https://homeplanet.city") return true;
+  if (origin === "https://www.homeplanet.city") return true;
+
+  // Allow Vercel previews: https://something.vercel.app
+  if (/^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin)) return true;
+
+  return false;
+}
+
 function getAllowedOrigin(req: VercelRequest): string | null {
-  const origin = String(req.headers.origin || "").trim();
-  if (!origin) return null;
+  const originRaw = String(req.headers.origin || "").trim();
+  if (!originRaw) return null;
+  if (!isAllowedOrigin(originRaw)) return null;
+  // Return the original origin (but trimmed) so the browser sees an exact match
+  return originRaw.trim().replace(/\/$/, "");
+}
 
-  const exactAllow = new Set<string>([
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "https://www.homeplanet.city",
-    "https://homeplanet.city",
-  ]);
+function q1(v: unknown): string {
+  // Vercel can give string | string[] | undefined
+  if (Array.isArray(v)) return String(v[0] ?? "");
+  return String(v ?? "");
+}
 
-  if (exactAllow.has(origin)) return origin;
-
-  // Allow Vercel preview domains (adjust if you want stricter)
-  // Examples: https://homeplanet-abc123.vercel.app
-  //           https://homeplanet-git-branchname-doyond43-dotcom.vercel.app
-  if (/^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin)) return origin;
-
-  return null;
+function jsonBody(req: VercelRequest): any {
+  // @vercel/node parses JSON body when sent correctly
+  // but this keeps us safe if it's undefined.
+  return (req as any).body ?? {};
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // --- CORS preflight + headers ---
+  // --- CORS ---
   const allowedOrigin = getAllowedOrigin(req);
   if (allowedOrigin) {
     res.setHeader("Access-Control-Allow-Origin", allowedOrigin);
@@ -34,7 +56,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  // no credentials needed here, so we do NOT set Allow-Credentials
+  res.setHeader("Access-Control-Max-Age", "86400"); // 24h preflight cache
 
   if (req.method === "OPTIONS") {
     return res.status(204).end();
@@ -59,14 +81,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    const room = String(req.query.room || "").trim();
-    const identity =
-      String(req.query.identity || "").trim() ||
-      `user_${Math.random().toString(36).slice(2)}`;
-    const name = String(req.query.name || "").trim() || identity;
-    const role = String(req.query.role || "").trim(); // "host" | "viewer" | ""
+    // Support both querystring AND JSON body
+    const body = jsonBody(req);
+
+    const room = (q1(req.query.room) || String(body.room || "")).trim();
+    const identityRaw = (q1(req.query.identity) || String(body.identity || "")).trim();
+    const nameRaw = (q1(req.query.name) || String(body.name || "")).trim();
+    const role = (q1(req.query.role) || String(body.role || "")).trim(); // "host" | "viewer" | ""
 
     if (!room) return res.status(400).json({ error: "Missing room" });
+
+    const identity =
+      identityRaw ||
+      `user_${Math.random().toString(36).slice(2)}_${Date.now().toString(36)}`;
+
+    const name = nameRaw || identity;
 
     const isHost = role === "host";
 
@@ -79,7 +108,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       canPublishData: isHost,
     });
 
-    // IMPORTANT: in your SDK version, toJwt() is async
     const token = await at.toJwt();
 
     return res.status(200).json({ token, url: livekitUrl });
@@ -90,3 +118,4 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
   }
 }
+
