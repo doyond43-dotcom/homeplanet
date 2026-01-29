@@ -1,5 +1,6 @@
-﻿import React, { useMemo } from "react";
-import { Link, useParams } from "react-router-dom";
+﻿@'
+import React, { useMemo } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { PLANETS } from "../planet/planetMap";
 
 type City = { id: string; label: string; desc?: string };
@@ -24,6 +25,71 @@ function pickBuildCityId(_planetId: string, cities: City[]) {
   return hit ?? (cities[0]?.id ?? "projects");
 }
 
+/**
+ * Mobile Safari fix:
+ * Some iOS setups will "highlight" Link cards but never fire navigation
+ * (usually due to touch/click synthesis getting blocked by overlays/filters).
+ *
+ * This component forces navigation on touch/pointer as a fallback.
+ */
+function NavCard(props: {
+  to: string;
+  style?: React.CSSProperties;
+  children: React.ReactNode;
+  debugName?: string;
+}) {
+  const navigate = useNavigate();
+
+  const go = () => {
+    try {
+      navigate(props.to);
+    } catch (e) {
+      // last-resort: full navigation
+      window.location.href = props.to;
+    }
+  };
+
+  return (
+    <Link
+      to={props.to}
+      style={{
+        ...(props.style ?? {}),
+        // Force card to be tappable even if something weird is happening
+        pointerEvents: "auto",
+        cursor: "pointer",
+        touchAction: "manipulation",
+        WebkitTapHighlightColor: "transparent" as any,
+      }}
+      onClick={(e) => {
+        // Prefer normal Link behavior, but if iOS "click" is being swallowed,
+        // the handlers below will still navigate.
+        // NOTE: do NOT preventDefault here unless we have to.
+        if (props.debugName) console.log("🟢 click:", props.debugName, "->", props.to);
+      }}
+      onPointerUp={() => {
+        if (props.debugName) console.log("🟣 pointerUp:", props.debugName, "->", props.to);
+        go();
+      }}
+      onTouchEnd={(e) => {
+        // iOS: touchend is the most reliable "user intent" event.
+        if (props.debugName) console.log("🟠 touchEnd:", props.debugName, "->", props.to);
+        e.preventDefault(); // prevents ghost/double click + ensures our nav wins
+        go();
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          go();
+        }
+      }}
+      role="link"
+      tabIndex={0}
+    >
+      {props.children}
+    </Link>
+  );
+}
+
 export default function PlanetOverview() {
   const { planetId } = useParams();
   const planet = PLANETS.find((p) => p.id === planetId);
@@ -46,9 +112,10 @@ export default function PlanetOverview() {
     title: "🏗 Build",
     subtitle: "Create → release → evolve",
     desc: "This is the gravity well. Everything begins here.",
-    to: planet.id === "creator"
-      ? "/planet/creator/build" // primary path: Build
-      : `/planet/${planet.id}/${buildCityId}`,
+    to:
+      planet.id === "creator"
+        ? "/planet/creator/build" // primary path: Build
+        : `/planet/${planet.id}/${buildCityId}`,
   };
 
   const secondaryCities = cities
@@ -62,6 +129,9 @@ export default function PlanetOverview() {
 
   const pageStyle: React.CSSProperties = {
     padding: 0,
+    // Helps iOS: ensure the page itself can receive touches cleanly
+    pointerEvents: "auto",
+    touchAction: "manipulation",
   };
 
   const shellCard: React.CSSProperties = {
@@ -93,6 +163,9 @@ export default function PlanetOverview() {
     color: "rgba(255,255,255,0.92)",
     boxShadow: "0 14px 44px rgba(0,0,0,0.35)",
     backdropFilter: "blur(10px)",
+    WebkitBackdropFilter: "blur(10px)",
+    // critical: never let this card become non-interactive
+    pointerEvents: "auto",
   };
 
   const featuredCard: React.CSSProperties = {
@@ -126,7 +199,13 @@ export default function PlanetOverview() {
   const kSub: React.CSSProperties = { marginTop: 8, color: "rgba(255,255,255,0.70)", lineHeight: 1.5 };
 
   return (
-    <div style={pageStyle}>
+    <div
+      style={pageStyle}
+      onClickCapture={() => {
+        // If you open Safari remote inspector, you’ll see this proving taps reach the page.
+        console.log("✅ PlanetOverview tap reached");
+      }}
+    >
       <div style={shellCard}>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
           <div>
@@ -146,7 +225,7 @@ export default function PlanetOverview() {
         <div style={{ marginTop: 14 }}>
           <div style={grid as any}>
             {/* Featured / Build */}
-            <Link to={featured.to} style={featuredCard}>
+            <NavCard to={featured.to} style={featuredCard} debugName="Featured/Build">
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
                 <div>
                   <h2 style={kTitle}>{featured.title}</h2>
@@ -170,27 +249,27 @@ export default function PlanetOverview() {
                 </div>
               </div>
               <div style={kSub}>{featured.desc}</div>
-            </Link>
+            </NavCard>
 
             {/* Secondary / Cities */}
             <div style={stack}>
-              <div style={{ fontWeight: 900, color: "rgba(255,255,255,0.85)", marginLeft: 2 }}>
-                Cities
-              </div>
+              <div style={{ fontWeight: 900, color: "rgba(255,255,255,0.85)", marginLeft: 2 }}>Cities</div>
 
               {secondaryCities.length === 0 ? (
-                <div style={{
-                  borderRadius: 18,
-                  border: "1px dashed rgba(255,255,255,0.14)",
-                  background: "rgba(255,255,255,0.02)",
-                  padding: 14,
-                  color: "rgba(255,255,255,0.65)",
-                }}>
+                <div
+                  style={{
+                    borderRadius: 18,
+                    border: "1px dashed rgba(255,255,255,0.14)",
+                    background: "rgba(255,255,255,0.02)",
+                    padding: 14,
+                    color: "rgba(255,255,255,0.65)",
+                  }}
+                >
                   No other cities yet. Build is the entry point.
                 </div>
               ) : (
                 secondaryCities.slice(0, 6).map((c) => (
-                  <Link key={c.id} to={c.to} style={smallCard}>
+                  <NavCard key={c.id} to={c.to} style={smallCard} debugName={`City/${c.id}`}>
                     <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center" }}>
                       <div style={{ fontWeight: 950 }}>{c.title}</div>
                       <div style={{ opacity: 0.65, fontWeight: 900 }}>→</div>
@@ -200,7 +279,7 @@ export default function PlanetOverview() {
                         {c.subtitle}
                       </div>
                     ) : null}
-                  </Link>
+                  </NavCard>
                 ))
               )}
             </div>
@@ -210,6 +289,7 @@ export default function PlanetOverview() {
     </div>
   );
 }
+'@ | Set-Content .\src\pages\PlanetOverview.tsx -Encoding UTF8
 
 
 
