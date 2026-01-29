@@ -21,22 +21,38 @@ function pickBuildCityId(_planetId: string, cities: City[]) {
   return hit ?? (cities[0]?.id ?? "projects");
 }
 
+/**
+ * TapLink: "cannot fail" navigation
+ * - tries SPA navigate()
+ * - also hard redirects (window.location.assign) so mobile ALWAYS moves
+ */
 function TapLink(props: { to: string; style?: React.CSSProperties; children: React.ReactNode }) {
   const navigate = useNavigate();
   const lastNavRef = useRef<number>(0);
 
   const go = useCallback(
     (e?: any) => {
+      // IMPORTANT: do NOT preventDefault on iOS touch chains (can suppress follow-up navigation)
       try {
-        e?.preventDefault?.();
         e?.stopPropagation?.();
       } catch {}
 
       const now = Date.now();
-      if (now - lastNavRef.current < 450) return; // prevent double-fire
+      if (now - lastNavRef.current < 450) return; // debounce double-fire
       lastNavRef.current = now;
 
-      navigate(props.to);
+      // 1) Try SPA
+      try {
+        navigate(props.to);
+      } catch {}
+
+      // 2) Force hard-nav (this is the "no bullshit" part)
+      // Small timeout lets SPA win if it works, otherwise browser navigates anyway.
+      setTimeout(() => {
+        try {
+          if (typeof window !== "undefined") window.location.assign(props.to);
+        } catch {}
+      }, 0);
     },
     [navigate, props.to]
   );
@@ -47,6 +63,8 @@ function TapLink(props: { to: string; style?: React.CSSProperties; children: Rea
       onClick={go}
       onTouchEnd={go}
       onPointerUp={go}
+      role="link"
+      tabIndex={0}
       style={{
         ...props.style,
         WebkitTapHighlightColor: "transparent",
