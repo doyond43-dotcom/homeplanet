@@ -2,14 +2,14 @@
 import { calmSection, calmSurface, calmWrap } from "../ui/calmShell";
 
 /**
- * BookFlow â€” Calm, step-by-step book creation flow
+ * BookFlow — Calm, step-by-step book creation flow
  * v0.2.1 (HomePlanet Calm Core)
  *
  * Goals:
  * - No backend writes yet
  * - Calm, obvious navigation
  * - Real "Begin writing" step (no alert)
- * - Draft persists locally (localStorage) so users donâ€™t lose work
+ * - Draft persists locally (localStorage) so users don’t lose work
  */
 
 type Step = 1 | 2 | 3 | 4;
@@ -103,29 +103,27 @@ export default function BookFlow() {
         {/* Calm section container (same standard as AnchorTest) */}
         <div style={calmSection}>
           <div style={stepHeaderStyle}>
+            {/* left side is non-interactive */}
             <span style={{ opacity: 0.7 }}>Step {step} of 4</span>
 
-            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            {/* right side must remain clickable even though header is pointerEvents:none */}
+            <div style={headerControlsStyle}>
               {savedTick && (
                 <span style={{ fontSize: 12, opacity: 0.7, whiteSpace: "nowrap" }}>
-                  Saved âœ…
+                  Saved ✅
                 </span>
               )}
 
               <button style={btnGhostStyle} onClick={saveLocal} title="Save locally on this device">
                 Save draft
               </button>
-              <button
-                style={btnGhostStyle}
-                onClick={resetAll}
-                title="Clear local draft + start over"
-              >
+              <button style={btnGhostStyle} onClick={resetAll} title="Clear local draft + start over">
                 Reset
               </button>
             </div>
           </div>
 
-          {/* STEP 1 â€” Title */}
+          {/* STEP 1 — Title */}
           {step === 1 && (
             <div>
               <label style={labelStyle}>Book title</label>
@@ -144,7 +142,7 @@ export default function BookFlow() {
             </div>
           )}
 
-          {/* STEP 2 â€” Author */}
+          {/* STEP 2 — Author */}
           {step === 2 && (
             <div>
               <label style={labelStyle}>Author name</label>
@@ -166,7 +164,7 @@ export default function BookFlow() {
             </div>
           )}
 
-          {/* STEP 3 â€” Intent */}
+          {/* STEP 3 — Intent */}
           {step === 3 && (
             <div>
               <label style={labelStyle}>What is this book for?</label>
@@ -197,17 +195,17 @@ export default function BookFlow() {
             </div>
           )}
 
-          {/* STEP 4 â€” Writing */}
+          {/* STEP 4 — Writing */}
           {step === 4 && (
             <div>
               <div style={miniMetaStyle}>
                 <div>
                   <div style={miniKeyStyle}>Title</div>
-                  <div style={miniValStyle}>{title || "â€”"}</div>
+                  <div style={miniValStyle}>{title || "—"}</div>
                 </div>
                 <div>
                   <div style={miniKeyStyle}>Author</div>
-                  <div style={miniValStyle}>{author || "â€”"}</div>
+                  <div style={miniValStyle}>{author || "—"}</div>
                 </div>
                 <div>
                   <div style={miniKeyStyle}>Words</div>
@@ -236,11 +234,7 @@ export default function BookFlow() {
                   Back
                 </button>
 
-                <button
-                  style={btnStyle}
-                  onClick={() => saveLocal()}
-                  title="Saves only to this device (localStorage)"
-                >
+                <button style={btnStyle} onClick={() => saveLocal()} title="Saves only to this device (localStorage)">
                   Save
                 </button>
 
@@ -250,7 +244,7 @@ export default function BookFlow() {
               </div>
 
               <div style={intentBoxStyle}>
-                <b>Intent:</b> <span style={{ opacity: 0.9 }}>{intent || "â€”"}</span>
+                <b>Intent:</b> <span style={{ opacity: 0.9 }}>{intent || "—"}</span>
               </div>
             </div>
           )}
@@ -268,18 +262,28 @@ const stepHeaderStyle: React.CSSProperties = {
   position: "sticky",
   top: 0,
   zIndex: 20,
+
+  // IMPORTANT:
+  // Header itself should NOT intercept taps (prevents “dead zones” on mobile)
   pointerEvents: "none",
-  pointerEvents: "none",
+
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
   marginBottom: 14,
   paddingBottom: 10,
 
-  // This prevents the header from becoming â€œunclickableâ€ due to overlap
   background: "rgba(0,0,0,0.25)",
   backdropFilter: "blur(6px)",
   borderBottom: "1px solid rgba(255,255,255,0.06)",
+};
+
+// Re-enable clicking on the actual buttons (child of pointerEvents:none parent)
+const headerControlsStyle: React.CSSProperties = {
+  display: "flex",
+  gap: 10,
+  alignItems: "center",
+  pointerEvents: "auto",
 };
 
 const labelStyle: React.CSSProperties = {
@@ -308,6 +312,8 @@ const btnStyle: React.CSSProperties = {
   background: "rgba(255,255,255,0.15)",
   color: "#fff",
   cursor: "pointer",
+  WebkitTapHighlightColor: "transparent",
+  touchAction: "manipulation",
 };
 
 const btnGhostStyle: React.CSSProperties = {
@@ -346,6 +352,3 @@ const intentBoxStyle: React.CSSProperties = {
   overflowWrap: "anywhere",
   wordBreak: "break-word",
 };
-
-
-

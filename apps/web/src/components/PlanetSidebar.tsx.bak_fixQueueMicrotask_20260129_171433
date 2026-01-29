@@ -70,7 +70,7 @@ export function PlanetSidebar(props: { witnessMode: boolean; onToggleWitnessMode
       } catch {}
 
       // Hard fallback: if router didn’t update path, force location change
-      setTimeout(() => {
+      queueMicrotask(() => {
         if (window.location.pathname !== to) {
           window.location.assign(to);
         }
@@ -230,6 +230,5 @@ export function PlanetSidebar(props: { witnessMode: boolean; onToggleWitnessMode
     </aside>
   );
 }
-
 
 

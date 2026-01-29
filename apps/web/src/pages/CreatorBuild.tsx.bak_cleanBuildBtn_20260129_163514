@@ -100,29 +100,18 @@ export default function CreatorBuild() {
   
   const [isBuilding, setIsBuilding] = useState(false);
 
-    const fireBuild = useCallback((e?: any) => {
-    try {
-      e?.preventDefault?.();
-      e?.stopPropagation?.();
-    } catch {}
-
+  const fireBuild = useCallback(async () => {
     if (isBuilding) return;
     setIsBuilding(true);
-
     try {
-      const nextBuild = generateStructuredBuild(idea);
-      setBuildText(nextBuild);
-      setBuildVersion((v) => v + 1);
-      scheduleSave(nextBuild, idea);
-
       console.log("✅ Build My Site fired");
+      // TODO: call your real build action here
     } catch (err) {
       console.error("❌ Build failed:", err);
     } finally {
-      // small release so iOS can finish tap dispatch cleanly
-      setTimeout(() => setIsBuilding(false), 0);
+      setIsBuilding(false);
     }
-  }, [isBuilding, idea]);
+  }, [isBuilding]);
 // --- Responsive layout (mobile = 1 column) ---
   const [isNarrow, setIsNarrow] = useState(() => (typeof window !== "undefined" ? window.innerWidth < 900 : true));
 
@@ -451,11 +440,12 @@ export default function CreatorBuild() {
 
           <div style={{ display: "flex", gap: 10, alignItems: "center", marginTop: 12, flexWrap: "wrap" }}>
             <button
-              type="button"
-              onClick={(e) => fireBuild(e)}
-              onPointerUp={(e) => fireBuild(e)}
-              onTouchEnd={(e) => fireBuild(e)}
-              disabled={isBuilding}
+              onClick={() => {
+                const nextBuild = generateStructuredBuild(idea);
+                setBuildText(nextBuild);
+                setBuildVersion((v) => v + 1);
+                scheduleSave(nextBuild, idea);
+              }}
               style={{
                 height: 46,
                 padding: "0 16px",
@@ -465,12 +455,9 @@ export default function CreatorBuild() {
                 color: "black",
                 fontWeight: 900,
                 cursor: "pointer",
-                touchAction: "manipulation",
-                WebkitTapHighlightColor: "transparent",
-                opacity: isBuilding ? 0.7 : 1,
               }}
             >
-              {isBuilding ? "Building…" : "Build My Site"}
+              Build My Site
             </button>
 
             <div style={{ fontSize: 12, opacity: 0.75 }}>
@@ -488,7 +475,6 @@ export default function CreatorBuild() {
     </div>
   );
 }
-
 
 
 

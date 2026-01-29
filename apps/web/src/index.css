@@ -103,3 +103,51 @@ body > div {
   background: #05060a;
 }
 
+/* --- iOS full-bleed black background + tap sanity --- */
+html, body, #root { height: 100%; background: #000; }
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: #000;
+  overscroll-behavior: none;
+}
+#root {
+  min-height: 100dvh;
+  background: #000;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Make iOS taps behave */
+* { -webkit-tap-highlight-color: transparent; }
+a, button { touch-action: manipulation; }
+/* ---------------------------------------------------- */
+
+
+/* === HomePlanet: iOS full-bleed background fix === */
+:root { color-scheme: dark; background: #000; }
+
+html, body, #root {
+  height: 100%;
+  min-height: 100%;
+  background: #000 !important;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh; /* iOS modern viewport */
+  background: #000 !important;
+  overflow-x: hidden;
+}
+
+/* Ensure the app root paints the entire viewport (including iOS safe area) */
+#root {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: #000 !important;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Optional: remove iOS tap flash */
+* { -webkit-tap-highlight-color: transparent; }
+/* === end fix === */

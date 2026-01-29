@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState , useCallback } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import { ensureProject } from "../data/ensureProject";
@@ -100,29 +100,18 @@ export default function CreatorBuild() {
   
   const [isBuilding, setIsBuilding] = useState(false);
 
-    const fireBuild = useCallback((e?: any) => {
-    try {
-      e?.preventDefault?.();
-      e?.stopPropagation?.();
-    } catch {}
-
+  const fireBuild = useCallback(async () => {
     if (isBuilding) return;
     setIsBuilding(true);
-
     try {
-      const nextBuild = generateStructuredBuild(idea);
-      setBuildText(nextBuild);
-      setBuildVersion((v) => v + 1);
-      scheduleSave(nextBuild, idea);
-
       console.log("✅ Build My Site fired");
+      // TODO: call your real build action here
     } catch (err) {
       console.error("❌ Build failed:", err);
     } finally {
-      // small release so iOS can finish tap dispatch cleanly
-      setTimeout(() => setIsBuilding(false), 0);
+      setIsBuilding(false);
     }
-  }, [isBuilding, idea]);
+  }, [isBuilding]);
 // --- Responsive layout (mobile = 1 column) ---
   const [isNarrow, setIsNarrow] = useState(() => (typeof window !== "undefined" ? window.innerWidth < 900 : true));
 
@@ -334,144 +323,14 @@ export default function CreatorBuild() {
         <div style={{ display: "flex", gap: 10, alignItems: "center", marginTop: 10 }}>
           <button
             type="button"
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(-1); }}
-            onPointerUp={(e) => { e.preventDefault(); e.stopPropagation(); navigate(-1); }}
-            onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); navigate(-1); }}
-            style={{ touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}
-          >
-            ← Back
-          </button>
-
-          <button
-            type="button"
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.print(); }}
-            onPointerUp={(e) => { e.preventDefault(); e.stopPropagation(); window.print(); }}
-            onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); window.print(); }}
-            style={{ touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}
-          >
-            Print / Save PDF
-          </button>
-        </div>
-      </div>
-
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: 12,
-          marginBottom: 14,
-        }}
-      >
-        <div>
-          <h1 style={{ fontSize: 22, margin: 0 }}>Creator</h1>
-          <div style={{ opacity: 0.65, fontSize: 12 }}>Describe → Build → Preview</div>
-        </div>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ opacity: 0.75, fontSize: 12 }}>{statusLabel}</div>
-
-          <button
-            onClick={() => navigate("/planet/creator/projects")}
-            style={{
-              padding: "10px 12px",
-              borderRadius: 12,
-              border: "1px solid rgba(255,255,255,0.16)",
-              background: "rgba(255,255,255,0.06)",
-              cursor: "pointer",
-              fontWeight: 800,
-            }}
-          >
-            Projects
-          </button>
-        </div>
-      </div>
-
-      {err && (
-        <div
-          style={{
-            padding: 12,
-            borderRadius: 12,
-            border: "1px solid rgba(255,255,255,0.14)",
-            marginBottom: 12,
-          }}
-        >
-          <div style={{ fontWeight: 800, marginBottom: 6 }}>Save error</div>
-          <div style={{ opacity: 0.85, fontSize: 13 }}>{err}</div>
-        </div>
-      )}
-
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: isNarrow ? "1fr" : "1fr 1fr",
-          gap: 14,
-          alignItems: "start",
-        }}
-      >
-        <div>
-          <div style={{ fontSize: 18, fontWeight: 900, marginBottom: 6 }}>Describe your business or idea</div>
-          <div style={{ opacity: 0.75, fontSize: 12, marginBottom: 10 }}>
-            Type a few sentences — or tap the mic — we’ll turn it into a site.
-          </div>
-
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, gap: 10 }}>
-            <div style={{ opacity: 0.65, fontSize: 12 }}>Speak it 🎤</div>
-
-            <VoiceDictationButton onFinal={appendFromVoice} onText={appendFromVoice} onTranscript={appendFromVoice} />
-          </div>
-
-          <textarea
-            id="creator-idea"
-            name="creator-idea"
-            value={idea}
-            onChange={(e) => {
-              const nextIdea = e.target.value;
-              setIdea(nextIdea);
-
-              const nextBuild = generateStructuredBuild(nextIdea);
-              setBuildText(nextBuild);
-              scheduleSave(nextBuild, nextIdea);
-            }}
-            placeholder="Example: I run a Tampa-based dance studio teaching hip hop & contemporary for kids and adults. Booking online. Contact: hello@..."
-            style={{
-              width: "100%",
-              minHeight: 280,
-              padding: 14,
-              borderRadius: 14,
-              border: "1px solid rgba(255,255,255,0.12)",
-              background: "rgba(255,255,255,0.03)",
-              outline: "none",
-              fontSize: 15,
-              lineHeight: 1.5,
-              color: "rgba(255,255,255,0.92)",
-              caretColor: "rgba(255,255,255,0.92)",
-            }}
-          />
-
-          <div style={{ display: "flex", gap: 10, alignItems: "center", marginTop: 12, flexWrap: "wrap" }}>
-            <button
-              type="button"
-              onClick={(e) => fireBuild(e)}
-              onPointerUp={(e) => fireBuild(e)}
-              onTouchEnd={(e) => fireBuild(e)}
-              disabled={isBuilding}
-              style={{
-                height: 46,
-                padding: "0 16px",
-                borderRadius: 14,
-                border: "none",
-                background: "white",
-                color: "black",
-                fontWeight: 900,
-                cursor: "pointer",
-                touchAction: "manipulation",
-                WebkitTapHighlightColor: "transparent",
-                opacity: isBuilding ? 0.7 : 1,
-              }}
-            >
-              {isBuilding ? "Building…" : "Build My Site"}
-            </button>
+            onClick={() =
+                type="button"
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); fireBuild(); }}
+                onPointerUp={(e) => { e.preventDefault(); e.stopPropagation(); fireBuild(); }}
+                onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); fireBuild(); }}
+                style={{ touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}
+                disabled={isBuilding}
+              >{isBuilding ? "Building…" : "Build My Site"}</button>
 
             <div style={{ fontSize: 12, opacity: 0.75 }}>
               <span style={{ fontWeight: 900 }}>{autoName}</span> <span style={{ opacity: 0.85 }}>• Auto-generated — rename anytime.</span>
@@ -488,7 +347,4 @@ export default function CreatorBuild() {
     </div>
   );
 }
-
-
-
 
