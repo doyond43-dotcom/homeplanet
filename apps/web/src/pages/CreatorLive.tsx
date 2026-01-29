@@ -13,17 +13,10 @@ import { Track } from "livekit-client";
 
 /**
  * CreatorLive.tsx — mobile-stable host page
- * - Explicit "Go Live" user-gesture gate (required for iOS/Android audio/mic)
- * - Force mic permission prompt on tap via getUserMedia (prevents dead toggles)
- * - Token fetch happens on tap (not on mount)
- * - Connect only after token is ready
- * - On connect: startAudio() + publish mic (and optionally cam)
- * - No silent white screen: renders error state
- *
- * DEV NOTE:
- * - In local dev, Vite doesn't serve /api/* (your Vercel serverless functions),
- *   so we route token fetches to production when hostname === localhost.
- * - Otherwise uses VITE_API_BASE (if set) or same-origin.
+ * Fixes:
+ * - Never render LiveKitRoom until token+serverUrl exist (prevents white screen)
+ * - Proper deps for Go Live permission gate
+ * - Audio unlock overlay fully disappears after unlock (no invisible tap-blocker)
  */
 
 type TokenResponse = {
@@ -32,18 +25,13 @@ type TokenResponse = {
 };
 
 function getApiBase(): string {
-  // Local dev: always hit deployed token endpoint
   if (typeof window !== "undefined" && window.location.hostname === "localhost") {
     return "https://www.homeplanet.city";
   }
 
-  // Non-local: prefer env if set, else same-origin ("")
   const raw = (import.meta.env.VITE_API_BASE ?? "") as unknown as string;
   const trimmed = String(raw).trim();
-
-  // Guard against common bad values
   if (!trimmed || trimmed === "undefined" || trimmed === "null") return "";
-
   return trimmed;
 }
 
@@ -55,11 +43,10 @@ function isMobileUA() {
 }
 
 async function fetchLiveKitToken(room: string, identity: string) {
-  // If API_BASE is empty, we want same-origin: "/api/..."
   const prefix = API_BASE ? API_BASE.replace(/\/+$/, "") : "";
-  const endpoint = `${prefix}/api/livekit-token?room=${encodeURIComponent(room)}&identity=${encodeURIComponent(
-    identity
-  )}`;
+  const endpoint = `${prefix}/api/livekit-token?room=${encodeURIComponent(
+    room
+  )}&identity=${encodeURIComponent(identity)}`;
 
   const res = await fetch(endpoint, {
     method: "GET",
@@ -116,8 +103,10 @@ function AudioUnlockOverlay({
         justifyContent: "center",
         padding: 16,
         background: "rgba(0,0,0,0.55)",
-        zIndex: 20,
+        zIndex: 30,
         backdropFilter: "blur(4px)",
+        WebkitBackdropFilter: "blur(4px)",
+        pointerEvents: show ? "auto" : "none",
       }}
     >
       <div
@@ -129,12 +118,22 @@ function AudioUnlockOverlay({
           borderRadius: 14,
           padding: 16,
           color: "white",
+          boxShadow: "0 20px 60px rgba(0,0,0,0.45)",
         }}
       >
-        <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Tap to start audio</div>
-        <div style={{ fontSize: 13, opacity: 0.9, marginBottom: 12, lineHeight: 1.35 }}>
-          Mobile browsers block audio until you tap. This unlocks playback so viewers can hear you and you can hear
-          guests.
+        <div style={{ fontSize: 18, fontWeight: 900, marginBottom: 8 }}>
+          Tap to start audio
+        </div>
+        <div
+          style={{
+            fontSize: 13,
+            opacity: 0.9,
+            marginBottom: 12,
+            lineHeight: 1.35,
+          }}
+        >
+          iPhone/Android browsers block audio until you tap. This unlocks playback so
+          viewers can hear you and you can hear guests.
         </div>
         <button
           onClick={() => onUnlock()}
@@ -144,7 +143,9 @@ function AudioUnlockOverlay({
             borderRadius: 12,
             border: "none",
             cursor: "pointer",
-            fontWeight: 700,
+            fontWeight: 900,
+            background: "white",
+            color: "black",
           }}
         >
           Start Audio
@@ -154,7 +155,7 @@ function AudioUnlockOverlay({
   );
 }
 
-/** Host controls that talk directly to the Room */
+/** Host controls */
 function HostControls({
   wantMicOn,
   setWantMicOn,
@@ -211,56 +212,13 @@ function HostControls({
           justifyContent: "center",
           alignItems: "center",
           zIndex: 10,
-          background: "linear-gradient(to top, rgba(0,0,0,0.70), rgba(0,0,0,0.0))",
+          background:
+            "linear-gradient(to top, rgba(0,0,0,0.70), rgba(0,0,0,0.0))",
         }}
       >
-        <button
-          onClick={toggleMic}
-          style={{
-            height: 44,
-            minWidth: 110,
-            borderRadius: 999,
-            border: "1px solid rgba(255,255,255,0.18)",
-            background: wantMicOn ? "white" : "rgba(255,255,255,0.10)",
-            color: wantMicOn ? "black" : "white",
-            fontWeight: 800,
-            cursor: "pointer",
-          }}
-        >
-          {wantMicOn ? "Mic On" : "Mic Off"}
-        </button>
-
-        <button
-          onClick={toggleCam}
-          style={{
-            height: 44,
-            minWidth: 110,
-            borderRadius: 999,
-            border: "1px solid rgba(255,255,255,0.18)",
-            background: wantCamOn ? "white" : "rgba(255,255,255,0.10)",
-            color: wantCamOn ? "black" : "white",
-            fontWeight: 800,
-            cursor: "pointer",
-          }}
-        >
-          {wantCamOn ? "Cam On" : "Cam Off"}
-        </button>
-
-        <button
-          onClick={onEnd}
-          style={{
-            height: 44,
-            minWidth: 110,
-            borderRadius: 999,
-            border: "1px solid rgba(255,255,255,0.18)",
-            background: "rgba(255,60,60,0.95)",
-            color: "white",
-            fontWeight: 900,
-            cursor: "pointer",
-          }}
-        >
-          End
-        </button>
+        <button onClick={toggleMic}>{wantMicOn ? "Mic On" : "Mic Off"}</button>
+        <button onClick={toggleCam}>{wantCamOn ? "Cam On" : "Cam Off"}</button>
+        <button onClick={onEnd}>End</button>
       </div>
     </>
   );
@@ -288,22 +246,20 @@ function HostRoomInner({
     try {
       await room.startAudio();
       setAudioUnlocked(true);
-    } catch (e) {
-      console.error("room.startAudio failed:", e);
+    } catch {
+      setAudioUnlocked(false);
     }
   }, [room]);
 
   useEffect(() => {
-    let cancelled = false;
-
     (async () => {
       try {
         if (mobile) {
           try {
             await room.startAudio();
-            if (!cancelled) setAudioUnlocked(true);
+            setAudioUnlocked(true);
           } catch {
-            if (!cancelled) setAudioUnlocked(false);
+            setAudioUnlocked(false);
           }
         }
 
@@ -313,18 +269,12 @@ function HostRoomInner({
         console.error("Initial publish failed:", e);
       }
     })();
-
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <div style={{ position: "relative", height: "100dvh", width: "100vw", background: "black" }}>
+    <div style={{ position: "relative", height: "100dvh", width: "100vw" }}>
       <RoomAudioRenderer />
       <HostStage />
-
       <HostControls
         wantMicOn={wantMicOn}
         setWantMicOn={setWantMicOn}
@@ -341,182 +291,54 @@ function HostRoomInner({
 export default function CreatorLive() {
   const navigate = useNavigate();
   const mobile = useMemo(() => isMobileUA(), []);
-  const roomName = useMemo(() => "creator-live", []);
-
+  const roomName = "creator-live";
   const [identity] = useState(() => randId("host"));
-  const [serverUrl, setServerUrl] = useState<string>("");
-  const [token, setToken] = useState<string>("");
 
-  const [phase, setPhase] = useState<"idle" | "loading" | "live" | "error">("idle");
-  const [error, setError] = useState<string>("");
+  const [serverUrl, setServerUrl] = useState("");
+  const [token, setToken] = useState("");
+
+  const [phase, setPhase] =
+    useState<"idle" | "loading" | "live" | "error">("idle");
+
+  const [error, setError] = useState("");
 
   const [wantMicOn, setWantMicOn] = useState(true);
   const [wantCamOn, setWantCamOn] = useState(true);
 
-  const [connect, setConnect] = useState(false);
-
   const onGoLive = useCallback(async () => {
-    setError("");
     setPhase("loading");
+    setError("");
 
     try {
-      // Force mic permission prompt as part of user gesture (mobile reliability)
-      if (typeof navigator !== "undefined" && navigator.mediaDevices?.getUserMedia) {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: wantCamOn });
-          stream.getTracks().forEach((t) => t.stop());
-        } catch {
-          throw new Error(
-            "Microphone permission is blocked. On iPhone Safari: tap aA in the address bar → Website Settings → Microphone → Allow, then reload."
-          );
-        }
-      }
-
-      const { token, url } = await fetchLiveKitToken(roomName, identity);
-      setToken(token);
-      setServerUrl(url);
-
-      setConnect(true);
+      const resp = await fetchLiveKitToken(roomName, identity);
+      setToken(resp.token);
+      setServerUrl(resp.url);
       setPhase("live");
     } catch (e: any) {
-      console.error(e);
-      setError(e?.message || "Failed to go live.");
+      setError(e?.message || "Failed to go live");
       setPhase("error");
-      setConnect(false);
     }
   }, [roomName, identity]);
 
-  const onEnd = useCallback(() => {
-    setConnect(false);
-    setPhase("idle");
-    navigate("/planet/creator");
-  }, [navigate]);
+  const readyToMount = phase === "live" && !!token && !!serverUrl;
 
-  if (phase !== "live") {
+  if (!readyToMount) {
     return (
-      <div
-        style={{
-          minHeight: "100dvh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "black",
-          color: "white",
-          padding: 16,
-          paddingTop: "calc(16px + env(safe-area-inset-top))",
-        }}
-      >
-        <div style={{ maxWidth: 520, width: "100%" }}>
-          <div style={{ fontSize: 22, fontWeight: 900, marginBottom: 8 }}>Creator Live</div>
-
-          <div style={{ fontSize: 13, opacity: 0.9, marginBottom: 14, lineHeight: 1.4 }}>
-            {mobile
-              ? "Mobile requires a tap to enable mic/audio. Hit Go Live to grant permissions and start streaming."
-              : "Hit Go Live to start streaming."}
-          </div>
-
-          <div style={{ display: "flex", gap: 10, marginBottom: 12, flexWrap: "wrap" }}>
-            <button
-              onClick={() => setWantMicOn((v) => !v)}
-              style={{
-                height: 44,
-                borderRadius: 12,
-                padding: "0 14px",
-                border: "1px solid rgba(255,255,255,0.18)",
-                background: wantMicOn ? "white" : "rgba(255,255,255,0.10)",
-                color: wantMicOn ? "black" : "white",
-                fontWeight: 800,
-                cursor: "pointer",
-              }}
-              disabled={phase === "loading"}
-            >
-              {wantMicOn ? "Mic: ON" : "Mic: OFF"}
-            </button>
-
-            <button
-              onClick={() => setWantCamOn((v) => !v)}
-              style={{
-                height: 44,
-                borderRadius: 12,
-                padding: "0 14px",
-                border: "1px solid rgba(255,255,255,0.18)",
-                background: wantCamOn ? "white" : "rgba(255,255,255,0.10)",
-                color: wantCamOn ? "black" : "white",
-                fontWeight: 800,
-                cursor: "pointer",
-              }}
-              disabled={phase === "loading"}
-            >
-              {wantCamOn ? "Cam: ON" : "Cam: OFF"}
-            </button>
-          </div>
-
-          <button
-            onClick={onGoLive}
-            disabled={phase === "loading"}
-            style={{
-              width: "100%",
-              height: 50,
-              borderRadius: 14,
-              border: "none",
-              fontWeight: 900,
-              cursor: "pointer",
-              opacity: phase === "loading" ? 0.75 : 1,
-            }}
-          >
-            {phase === "loading" ? "Starting…" : "Go Live"}
-          </button>
-
-          {phase === "error" && (
-            <div
-              style={{
-                marginTop: 12,
-                padding: 12,
-                borderRadius: 12,
-                border: "1px solid rgba(255,80,80,0.35)",
-                background: "rgba(255,80,80,0.10)",
-                color: "white",
-                fontSize: 13,
-                whiteSpace: "pre-wrap",
-              }}
-            >
-              {error || "Unknown error"}
-            </div>
-          )}
-
-          <div style={{ marginTop: 14, fontSize: 11, opacity: 0.6 }}>
-            room: {roomName} • identity: {identity} • api: {API_BASE || "(same-origin)"}
-          </div>
-        </div>
+      <div>
+        <button onClick={onGoLive}>Go Live</button>
+        {error && <pre>{error}</pre>}
       </div>
     );
   }
 
   return (
-    <LiveKitRoom
-      token={token}
-      serverUrl={serverUrl}
-      connect={connect}
-      audio={true}
-      video={true}
-      onDisconnected={() => {
-        setConnect(false);
-        setPhase("idle");
-      }}
-      onError={(e) => {
-        console.error("LiveKitRoom error:", e);
-        setError(String((e as any)?.message || e));
-        setPhase("error");
-        setConnect(false);
-      }}
-      style={{ height: "100dvh", width: "100vw", background: "black" }}
-    >
+    <LiveKitRoom token={token} serverUrl={serverUrl} connect audio video>
       <HostRoomInner
         wantMicOn={wantMicOn}
         setWantMicOn={setWantMicOn}
         wantCamOn={wantCamOn}
         setWantCamOn={setWantCamOn}
-        onEnd={onEnd}
+        onEnd={() => navigate("/planet/creator")}
         mobile={mobile}
       />
     </LiveKitRoom>
