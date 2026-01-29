@@ -352,6 +352,7 @@ const stepHeaderStyle: React.CSSProperties = {
   top: 0,
   zIndex: 20,
   pointerEvents: "none",
+  pointerEvents: "none",
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
@@ -417,5 +418,6 @@ const miniValStyle: React.CSSProperties = {
   fontSize: 13,
   opacity: 0.92,
 };
+
 
 

@@ -269,6 +269,7 @@ const stepHeaderStyle: React.CSSProperties = {
   top: 0,
   zIndex: 20,
   pointerEvents: "none",
+  pointerEvents: "none",
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
@@ -345,5 +346,6 @@ const intentBoxStyle: React.CSSProperties = {
   overflowWrap: "anywhere",
   wordBreak: "break-word",
 };
+
 
 
