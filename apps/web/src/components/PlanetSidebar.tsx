@@ -56,6 +56,7 @@ export function PlanetSidebar({ witnessMode, onToggleWitnessMode }: Props) {
       borderRight: "1px solid rgba(255,255,255,0.10)",
       background: "linear-gradient(180deg, rgba(10,10,14,0.95), rgba(10,10,14,0.85))",
       backdropFilter: "blur(10px)",
+      pointerEvents: open ? "auto" : "none",
     }}>
       <div style={{
         padding: "10px 12px",
@@ -216,4 +217,5 @@ export function PlanetSidebar({ witnessMode, onToggleWitnessMode }: Props) {
     </aside>
   );
 }
+
 
