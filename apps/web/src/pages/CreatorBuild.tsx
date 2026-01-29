@@ -19,22 +19,19 @@ function inferNameFromText(input: string): string {
   const s = String(input || "").trim();
   if (!s) return "Untitled Site";
 
-  const firstLine = s
-    .split("\n")
-    .map((x) => x.trim())
-    .filter(Boolean)[0] || s;
+  const firstLine =
+    s
+      .split("\n")
+      .map((x) => x.trim())
+      .filter(Boolean)[0] || s;
 
   const firstSentence =
     firstLine.split(/[.!?]/).map((x) => x.trim()).filter(Boolean)[0] || firstLine;
 
-  const called = firstSentence.match(
-    /\b(called|named)\s+([A-Za-z0-9&'".\- ]{2,60})/i
-  );
+  const called = firstSentence.match(/\b(called|named)\s+([A-Za-z0-9&'".\- ]{2,60})/i);
   if (called?.[2]) return called[2].trim().replace(/^["'“”]+|["'“”]+$/g, "");
 
-  const brandish = firstSentence
-    .replace(/^i\s+(run|own|have|started)\s+/i, "")
-    .trim();
+  const brandish = firstSentence.replace(/^i\s+(run|own|have|started)\s+/i, "").trim();
   const cleaned = brandish.replace(/^a\s+|an\s+|the\s+/i, "").trim();
 
   const title = cleaned.slice(0, 56).trim();
@@ -60,22 +57,11 @@ function generateStructuredBuild(input: string): string {
   const wantsShop = /\b(shop|store|buy|order)\b/i.test(raw);
 
   const cta =
-    (wantsBook && "Book Now") ||
-    (wantsShop && "Shop Now") ||
-    (wantsQuote && "Get a Quote") ||
-    "Contact";
+    (wantsBook && "Book Now") || (wantsShop && "Shop Now") || (wantsQuote && "Get a Quote") || "Contact";
 
-  const benefits = [
-    "Launch a clean site in seconds",
-    "One link you own (no platform risk)",
-    "Update anytime — always saved",
-  ];
+  const benefits = ["Launch a clean site in seconds", "One link you own (no platform risk)", "Update anytime — always saved"];
 
-  const proof = [
-    "Auto-saved draft",
-    "Auto-generated page title",
-    "Export-ready artifact",
-  ];
+  const proof = ["Auto-saved draft", "Auto-generated page title", "Export-ready artifact"];
 
   const contactBits = [
     email ? `Email: ${email}` : "",
@@ -110,8 +96,18 @@ ${contactBits || "Add your email / phone / location to make this real."}
 
 export default function CreatorBuild() {
   const navigate = useNavigate();
-  const { activeProjectId, setActiveProjectId, hydrateActiveFromStorage } =
-    useProjectStore();
+
+  // --- Responsive layout (mobile = 1 column) ---
+  const [isNarrow, setIsNarrow] = useState(() => (typeof window !== "undefined" ? window.innerWidth < 900 : true));
+
+  useEffect(() => {
+    const onResize = () => setIsNarrow(window.innerWidth < 900);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+  // --------------------------------------------
+
+  const { activeProjectId, setActiveProjectId, hydrateActiveFromStorage } = useProjectStore();
 
   // Human input (non-technical)
   const [idea, setIdea] = useState<string>(
@@ -128,9 +124,7 @@ export default function CreatorBuild() {
   // Force preview “jump” on Build button (holy-shit moment)
   const [buildVersion, setBuildVersion] = useState<number>(1);
 
-  const [status, setStatus] = useState<"idle" | "creating" | "saving" | "saved" | "error">(
-    "idle"
-  );
+  const [status, setStatus] = useState<"idle" | "creating" | "saving" | "saved" | "error">("idle");
   const [err, setErr] = useState<string | null>(null);
 
   const creatingRef = useRef<Promise<string> | null>(null);
@@ -143,7 +137,6 @@ export default function CreatorBuild() {
     const cleaned = String(chunk ?? "").trim();
     if (!cleaned) return;
 
-    // Append into IDEA (human box), then regenerate build text, then autosave
     setIdea((prev) => {
       const sep = prev && !prev.endsWith("\n") ? "\n" : "";
       const nextIdea = `${prev}${sep}${cleaned}`;
@@ -153,7 +146,6 @@ export default function CreatorBuild() {
       return nextIdea;
     });
   }
-  // ------------------------------------------
 
   // Hydrate active project from BOTH:
   // - zustand store
@@ -186,11 +178,7 @@ export default function CreatorBuild() {
   }
 
   async function loadDraft(projectId: string) {
-    const { data, error } = await supabase
-      .from("project_drafts")
-      .select("project_id, body")
-      .eq("project_id", projectId)
-      .maybeSingle();
+    const { data, error } = await supabase.from("project_drafts").select("project_id, body").eq("project_id", projectId).maybeSingle();
 
     if (error) throw error;
 
@@ -198,7 +186,6 @@ export default function CreatorBuild() {
     if (row?.body != null) {
       setBuildText(row.body);
 
-      // Back-fill idea from About: section if present
       const m = row.body.match(/About:\s*([\s\S]*?)\n\nBenefits:/i);
       if (m?.[1]) setIdea(m[1].trim());
 
@@ -211,23 +198,14 @@ export default function CreatorBuild() {
       const nextTitle = inferNameFromText(ideaText);
       if (!nextTitle || nextTitle === lastTitleRef.current) return;
 
-      const { data: proj, error: readErr } = await supabase
-        .from("projects")
-        .select("title")
-        .eq("id", projectId)
-        .maybeSingle();
-
+      const { data: proj, error: readErr } = await supabase.from("projects").select("title").eq("id", projectId).maybeSingle();
       if (readErr) return;
 
       const currentTitle = (proj?.title ?? "").trim();
       const isUntitled = !currentTitle || currentTitle.toLowerCase().includes("untitled");
       if (!isUntitled) return;
 
-      const { error: upErr } = await supabase
-        .from("projects")
-        .update({ title: nextTitle })
-        .eq("id", projectId);
-
+      const { error: upErr } = await supabase.from("projects").update({ title: nextTitle }).eq("id", projectId);
       if (!upErr) lastTitleRef.current = nextTitle;
     } catch {
       // best-effort only
@@ -241,10 +219,7 @@ export default function CreatorBuild() {
     setStatus("saving");
     const { error } = await supabase
       .from("project_drafts")
-      .upsert(
-        { project_id: projectId, owner_id: authData.user.id, body },
-        { onConflict: "project_id" }
-      );
+      .upsert({ project_id: projectId, owner_id: authData.user.id, body }, { onConflict: "project_id" });
 
     if (error) throw error;
 
@@ -317,29 +292,21 @@ export default function CreatorBuild() {
     (activeProjectId ? "auto-saved" : "start typing");
 
   return (
-  <div style={{ padding: 18, maxWidth: 1200, margin: "0 auto" }}>
-    <div style={{
-      marginBottom: 12,
-      padding: "10px 12px",
-      borderRadius: 14,
-      border: "2px solid rgba(0,255,150,0.55)",
-      background: "rgba(0,255,150,0.14)",
-      color: "white",
-      fontWeight: 900
-    }}>
-      BUILD STAMP ✅ MIC PATCH SHOULD BE HERE (CreatorBuild.tsx)
-    </div>
-    <div style={{
-      marginBottom: 12,
-      padding: "10px 12px",
-      borderRadius: 14,
-      border: "2px solid rgba(0,255,150,0.55)",
-      background: "rgba(0,255,150,0.14)",
-      color: "white",
-      fontWeight: 900
-    }}>
-      MIC BUILD ACTIVE ✅ (CreatorBuild.tsx)
-    </div>
+    <div style={{ padding: 18, maxWidth: 1200, margin: "0 auto" }}>
+      <div
+        style={{
+          marginBottom: 12,
+          padding: "10px 12px",
+          borderRadius: 14,
+          border: "2px solid rgba(0,255,150,0.55)",
+          background: "rgba(0,255,150,0.14)",
+          color: "white",
+          fontWeight: 900,
+        }}
+      >
+        MIC BUILD ACTIVE ✅ (CreatorBuild.tsx)
+      </div>
+
       <div
         style={{
           display: "flex",
@@ -396,29 +363,15 @@ export default function CreatorBuild() {
         }}
       >
         <div>
-          <div style={{ fontSize: 18, fontWeight: 900, marginBottom: 6 }}>
-            Describe your business or idea
-          </div>
+          <div style={{ fontSize: 18, fontWeight: 900, marginBottom: 6 }}>Describe your business or idea</div>
           <div style={{ opacity: 0.75, fontSize: 12, marginBottom: 10 }}>
             Type a few sentences — or tap the mic — we’ll turn it into a site.
           </div>
 
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: 8,
-              gap: 10,
-            }}
-          >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, gap: 10 }}>
             <div style={{ opacity: 0.65, fontSize: 12 }}>Speak it 🎤</div>
 
-            <VoiceDictationButton
-  onFinal={appendFromVoice}
-  onText={appendFromVoice}
-  onTranscript={appendFromVoice}
-/>
+            <VoiceDictationButton onFinal={appendFromVoice} onText={appendFromVoice} onTranscript={appendFromVoice} />
           </div>
 
           <textarea
@@ -472,14 +425,11 @@ export default function CreatorBuild() {
             </button>
 
             <div style={{ fontSize: 12, opacity: 0.75 }}>
-              <span style={{ fontWeight: 900 }}>{autoName}</span>{" "}
-              <span style={{ opacity: 0.85 }}>• Auto-generated — rename anytime.</span>
+              <span style={{ fontWeight: 900 }}>{autoName}</span> <span style={{ opacity: 0.85 }}>• Auto-generated — rename anytime.</span>
             </div>
           </div>
 
-          <div style={{ marginTop: 10, opacity: 0.65, fontSize: 12 }}>
-            Active Project ID: {activeProjectId ?? "none yet"}
-          </div>
+          <div style={{ marginTop: 10, opacity: 0.65, fontSize: 12 }}>Active Project ID: {activeProjectId ?? "none yet"}</div>
         </div>
 
         <div>
@@ -489,11 +439,3 @@ export default function CreatorBuild() {
     </div>
   );
 }
-
-
-
-
-
-
-
-
