@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState , useCallback } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import { ensureProject } from "../data/ensureProject";
@@ -97,33 +97,7 @@ ${contactBits || "Add your email / phone / location to make this real."}
 export default function CreatorBuild() {
   const navigate = useNavigate();
 
-  
-  const [isBuilding, setIsBuilding] = useState(false);
-
-    const fireBuild = useCallback((e?: any) => {
-    try {
-      e?.preventDefault?.();
-      e?.stopPropagation?.();
-    } catch {}
-
-    if (isBuilding) return;
-    setIsBuilding(true);
-
-    try {
-      const nextBuild = generateStructuredBuild(idea);
-      setBuildText(nextBuild);
-      setBuildVersion((v) => v + 1);
-      scheduleSave(nextBuild, idea);
-
-      console.log("✅ Build My Site fired");
-    } catch (err) {
-      console.error("❌ Build failed:", err);
-    } finally {
-      // small release so iOS can finish tap dispatch cleanly
-      setTimeout(() => setIsBuilding(false), 0);
-    }
-  }, [isBuilding, idea]);
-// --- Responsive layout (mobile = 1 column) ---
+  // --- Responsive layout (mobile = 1 column) ---
   const [isNarrow, setIsNarrow] = useState(() => (typeof window !== "undefined" ? window.innerWidth < 900 : true));
 
   useEffect(() => {
@@ -331,27 +305,6 @@ export default function CreatorBuild() {
         }}
       >
         MIC BUILD ACTIVE ✅ (CreatorBuild.tsx)
-        <div style={{ display: "flex", gap: 10, alignItems: "center", marginTop: 10 }}>
-          <button
-            type="button"
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(-1); }}
-            onPointerUp={(e) => { e.preventDefault(); e.stopPropagation(); navigate(-1); }}
-            onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); navigate(-1); }}
-            style={{ touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}
-          >
-            ← Back
-          </button>
-
-          <button
-            type="button"
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.print(); }}
-            onPointerUp={(e) => { e.preventDefault(); e.stopPropagation(); window.print(); }}
-            onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); window.print(); }}
-            style={{ touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}
-          >
-            Print / Save PDF
-          </button>
-        </div>
       </div>
 
       <div
@@ -451,11 +404,12 @@ export default function CreatorBuild() {
 
           <div style={{ display: "flex", gap: 10, alignItems: "center", marginTop: 12, flexWrap: "wrap" }}>
             <button
-              type="button"
-              onClick={(e) => fireBuild(e)}
-              onPointerUp={(e) => fireBuild(e)}
-              onTouchEnd={(e) => fireBuild(e)}
-              disabled={isBuilding}
+              onClick={() => {
+                const nextBuild = generateStructuredBuild(idea);
+                setBuildText(nextBuild);
+                setBuildVersion((v) => v + 1);
+                scheduleSave(nextBuild, idea);
+              }}
               style={{
                 height: 46,
                 padding: "0 16px",
@@ -465,12 +419,9 @@ export default function CreatorBuild() {
                 color: "black",
                 fontWeight: 900,
                 cursor: "pointer",
-                touchAction: "manipulation",
-                WebkitTapHighlightColor: "transparent",
-                opacity: isBuilding ? 0.7 : 1,
               }}
             >
-              {isBuilding ? "Building…" : "Build My Site"}
+              Build My Site
             </button>
 
             <div style={{ fontSize: 12, opacity: 0.75 }}>
@@ -488,7 +439,3 @@ export default function CreatorBuild() {
     </div>
   );
 }
-
-
-
-
