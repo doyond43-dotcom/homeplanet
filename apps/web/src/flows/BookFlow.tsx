@@ -1,15 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { calmSection, calmSurface, calmWrap } from "../ui/calmShell";
 
 /**
- * BookFlow — Calm, step-by-step book creation flow
+ * BookFlow â€” Calm, step-by-step book creation flow
  * v0.2.1 (HomePlanet Calm Core)
  *
  * Goals:
  * - No backend writes yet
  * - Calm, obvious navigation
  * - Real "Begin writing" step (no alert)
- * - Draft persists locally (localStorage) so users don’t lose work
+ * - Draft persists locally (localStorage) so users donâ€™t lose work
  */
 
 type Step = 1 | 2 | 3 | 4;
@@ -108,7 +108,7 @@ export default function BookFlow() {
             <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
               {savedTick && (
                 <span style={{ fontSize: 12, opacity: 0.7, whiteSpace: "nowrap" }}>
-                  Saved ✅
+                  Saved âœ…
                 </span>
               )}
 
@@ -125,7 +125,7 @@ export default function BookFlow() {
             </div>
           </div>
 
-          {/* STEP 1 — Title */}
+          {/* STEP 1 â€” Title */}
           {step === 1 && (
             <div>
               <label style={labelStyle}>Book title</label>
@@ -144,7 +144,7 @@ export default function BookFlow() {
             </div>
           )}
 
-          {/* STEP 2 — Author */}
+          {/* STEP 2 â€” Author */}
           {step === 2 && (
             <div>
               <label style={labelStyle}>Author name</label>
@@ -166,7 +166,7 @@ export default function BookFlow() {
             </div>
           )}
 
-          {/* STEP 3 — Intent */}
+          {/* STEP 3 â€” Intent */}
           {step === 3 && (
             <div>
               <label style={labelStyle}>What is this book for?</label>
@@ -197,17 +197,17 @@ export default function BookFlow() {
             </div>
           )}
 
-          {/* STEP 4 — Writing */}
+          {/* STEP 4 â€” Writing */}
           {step === 4 && (
             <div>
               <div style={miniMetaStyle}>
                 <div>
                   <div style={miniKeyStyle}>Title</div>
-                  <div style={miniValStyle}>{title || "—"}</div>
+                  <div style={miniValStyle}>{title || "â€”"}</div>
                 </div>
                 <div>
                   <div style={miniKeyStyle}>Author</div>
-                  <div style={miniValStyle}>{author || "—"}</div>
+                  <div style={miniValStyle}>{author || "â€”"}</div>
                 </div>
                 <div>
                   <div style={miniKeyStyle}>Words</div>
@@ -250,7 +250,7 @@ export default function BookFlow() {
               </div>
 
               <div style={intentBoxStyle}>
-                <b>Intent:</b> <span style={{ opacity: 0.9 }}>{intent || "—"}</span>
+                <b>Intent:</b> <span style={{ opacity: 0.9 }}>{intent || "â€”"}</span>
               </div>
             </div>
           )}
@@ -268,13 +268,14 @@ const stepHeaderStyle: React.CSSProperties = {
   position: "sticky",
   top: 0,
   zIndex: 20,
+  pointerEvents: "none",
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
   marginBottom: 14,
   paddingBottom: 10,
 
-  // This prevents the header from becoming “unclickable” due to overlap
+  // This prevents the header from becoming â€œunclickableâ€ due to overlap
   background: "rgba(0,0,0,0.25)",
   backdropFilter: "blur(6px)",
   borderBottom: "1px solid rgba(255,255,255,0.06)",
@@ -344,4 +345,5 @@ const intentBoxStyle: React.CSSProperties = {
   overflowWrap: "anywhere",
   wordBreak: "break-word",
 };
+
 

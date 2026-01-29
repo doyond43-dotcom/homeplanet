@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import AnchorTestScreen from "./AnchorTestScreen";
 
 /**
- * AppFlow — Calm, step-by-step app creation flow
+ * AppFlow â€” Calm, step-by-step app creation flow
  * v0.1 (HomePlanet Calm Core)
  *
  * Goals:
@@ -95,7 +95,7 @@ export const appSpec: AppSpec = {
 }
 
 export default function AppFlow() {
-  // ✅ TEMP: Render AnchorTest while we test it
+  // âœ… TEMP: Render AnchorTest while we test it
   // Remove these 2 lines later to return to the builder flow.
   return <AnchorTestScreen />;
 
@@ -281,11 +281,11 @@ export default function AppFlow() {
             <div style={miniMetaStyle}>
               <div>
                 <div style={miniKeyStyle}>Name</div>
-                <div style={miniValStyle}>{safeTrim(name) || "—"}</div>
+                <div style={miniValStyle}>{safeTrim(name) || "â€”"}</div>
               </div>
               <div>
                 <div style={miniKeyStyle}>Audience</div>
-                <div style={miniValStyle}>{safeTrim(audience) || "—"}</div>
+                <div style={miniValStyle}>{safeTrim(audience) || "â€”"}</div>
               </div>
               <div>
                 <div style={miniKeyStyle}>Mode</div>
@@ -351,6 +351,7 @@ const stepHeaderStyle: React.CSSProperties = {
   position: "sticky",
   top: 0,
   zIndex: 20,
+  pointerEvents: "none",
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
@@ -416,4 +417,5 @@ const miniValStyle: React.CSSProperties = {
   fontSize: 13,
   opacity: 0.92,
 };
+
 
