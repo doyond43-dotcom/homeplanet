@@ -1,4 +1,4 @@
-Ôªøimport { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState , useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import { ensureProject } from "../data/ensureProject";
@@ -29,13 +29,13 @@ function inferNameFromText(input: string): string {
     firstLine.split(/[.!?]/).map((x) => x.trim()).filter(Boolean)[0] || firstLine;
 
   const called = firstSentence.match(/\b(called|named)\s+([A-Za-z0-9&'".\- ]{2,60})/i);
-  if (called?.[2]) return called[2].trim().replace(/^["'‚Äú‚Äù]+|["'‚Äú‚Äù]+$/g, "");
+  if (called?.[2]) return called[2].trim().replace(/^["'ìî]+|["'ìî]+$/g, "");
 
   const brandish = firstSentence.replace(/^i\s+(run|own|have|started)\s+/i, "").trim();
   const cleaned = brandish.replace(/^a\s+|an\s+|the\s+/i, "").trim();
 
   const title = cleaned.slice(0, 56).trim();
-  return title ? title.replace(/^["'‚Äú‚Äù]+|["'‚Äú‚Äù]+$/g, "") : "Untitled Site";
+  return title ? title.replace(/^["'ìî]+|["'ìî]+$/g, "") : "Untitled Site";
 }
 
 // Plain English -> structured BuildPreview format
@@ -43,61 +43,71 @@ function generateStructuredBuild(input: string): string {
   const raw = String(input || "").trim();
   const name = inferNameFromText(raw);
 
-  const locationMatch = raw.match(/\b(in|based in|located in)\s+([A-Za-z .,'-]{2,40})/i);
-  const location = locationMatch?.[2]?.trim();
+  const grab = (re: RegExp) => raw.match(re)?.[1]?.trim();
 
-  const emailMatch = raw.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
-  const email = emailMatch?.[0];
+  const location = grab(/\b(?:in|based in|located in)\s+([A-Za-z .,'-]{2,40})/i);
 
-  const phoneMatch = raw.match(/\b(\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}\b/);
-  const phone = phoneMatch?.[0];
+  const email = raw.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0];
+  const phone = raw.match(/\b(\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}\b/)?.[0];
 
   const wantsBook = /\b(book|booking|schedule|appointment|reserve)\b/i.test(raw);
   const wantsQuote = /\b(quote|estimate|pricing|price)\b/i.test(raw);
   const wantsShop = /\b(shop|store|buy|order)\b/i.test(raw);
 
   const cta =
-    (wantsBook && "Book Now") || (wantsShop && "Shop Now") || (wantsQuote && "Get a Quote") || "Contact";
-
-  const benefits = ["Launch a clean site in seconds", "One link you own (no platform risk)", "Update anytime ‚Äî always saved"];
-
-  const proof = ["Auto-saved draft", "Auto-generated page title", "Export-ready artifact"];
-
-  const contactBits = [
-    email ? `Email: ${email}` : "",
-    phone ? `Phone: ${phone}` : "",
-    location ? `Location: ${location}` : "",
-  ]
-    .filter(Boolean)
-    .join("\n");
+    (wantsBook && "View Schedule") ||
+    (wantsShop && "Shop") ||
+    (wantsQuote && "Get a Quote") ||
+    "Contact";
 
   return `H1: ${name}
-Subheadline: Built from your description ‚Äî ready to share
+
+Subheadline: Built from your description ó ready to share
 
 About:
-${raw || "Describe your business and what you want customers to do."}
+${raw || "Describe what you do, who it's for, and what you want customers to do."}
 
-Benefits:
-- ${benefits[0]}
-- ${benefits[1]}
-- ${benefits[2]}
+Services:
+- Classes
+- Private lessons
+- Events
 
-Proof:
-- ${proof[0]}
-- ${proof[1]}
-- ${proof[2]}
+Products:
+- Merchandise
+- Gift cards
 
 CTA: ${cta}
 
 Contact:
-${contactBits || "Add your email / phone / location to make this real."}
+${[
+    location ? `Location: ${location}` : "Location:",
+    phone ? `Phone: ${phone}` : "Phone:",
+    email ? `Email: ${email}` : "Email:",
+    "Instagram:",
+    "Website:",
+  ].join("\n")}
 `;
 }
 
 export default function CreatorBuild() {
   const navigate = useNavigate();
 
-  // --- Responsive layout (mobile = 1 column) ---
+  
+  const [isBuilding, setIsBuilding] = useState(false);
+
+  const fireBuild = useCallback(async () => {
+    if (isBuilding) return;
+    setIsBuilding(true);
+    try {
+      console.log("? Build My Site fired");
+      // TODO: call your real build action here
+    } catch (err) {
+      console.error("? Build failed:", err);
+    } finally {
+      setIsBuilding(false);
+    }
+  }, [isBuilding]);
+// --- Responsive layout (mobile = 1 column) ---
   const [isNarrow, setIsNarrow] = useState(() => (typeof window !== "undefined" ? window.innerWidth < 900 : true));
 
   useEffect(() => {
@@ -114,14 +124,14 @@ export default function CreatorBuild() {
     "I run a Tampa-based dance studio that teaches hip hop and contemporary classes for kids and adults. Booking online. Contact: hello@movetampa.com"
   );
 
-  // Generated ‚Äúbuild text‚Äù that powers the preview + autosave
+  // Generated ìbuild textî that powers the preview + autosave
   const [buildText, setBuildText] = useState<string>(() =>
     generateStructuredBuild(
       "I run a Tampa-based dance studio that teaches hip hop and contemporary classes for kids and adults. Booking online. Contact: hello@movetampa.com"
     )
   );
 
-  // Force preview ‚Äújump‚Äù on Build button (holy-shit moment)
+  // Force preview ìjumpî on Build button (holy-shit moment)
   const [buildVersion, setBuildVersion] = useState<number>(1);
 
   const [status, setStatus] = useState<"idle" | "creating" | "saving" | "saved" | "error">("idle");
@@ -285,9 +295,9 @@ export default function CreatorBuild() {
   }, []);
 
   const statusLabel =
-    (status === "creating" && "creating‚Ä¶") ||
-    (status === "saving" && "saving‚Ä¶") ||
-    (status === "saved" && "saved ‚úì") ||
+    (status === "creating" && "creatingÖ") ||
+    (status === "saving" && "savingÖ") ||
+    (status === "saved" && "saved ?") ||
     (status === "error" && "error") ||
     (activeProjectId ? "auto-saved" : "start typing");
 
@@ -304,7 +314,28 @@ export default function CreatorBuild() {
           fontWeight: 900,
         }}
       >
-        MIC BUILD ACTIVE ‚úÖ (CreatorBuild.tsx)
+        MIC BUILD ACTIVE ? (CreatorBuild.tsx)
+        <div style={{ display: "flex", gap: 10, alignItems: "center", marginTop: 10 }}>
+          <button
+            type="button"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(-1); }}
+            onPointerUp={(e) => { e.preventDefault(); e.stopPropagation(); navigate(-1); }}
+            onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); navigate(-1); }}
+            style={{ touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}
+          >
+            ? Back
+          </button>
+
+          <button
+            type="button"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.print(); }}
+            onPointerUp={(e) => { e.preventDefault(); e.stopPropagation(); window.print(); }}
+            onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); window.print(); }}
+            style={{ touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}
+          >
+            Print / Save PDF
+          </button>
+        </div>
       </div>
 
       <div
@@ -318,7 +349,7 @@ export default function CreatorBuild() {
       >
         <div>
           <h1 style={{ fontSize: 22, margin: 0 }}>Creator</h1>
-          <div style={{ opacity: 0.65, fontSize: 12 }}>Describe ‚Üí Build ‚Üí Preview</div>
+          <div style={{ opacity: 0.65, fontSize: 12 }}>Describe ? Build ? Preview</div>
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -365,11 +396,11 @@ export default function CreatorBuild() {
         <div>
           <div style={{ fontSize: 18, fontWeight: 900, marginBottom: 6 }}>Describe your business or idea</div>
           <div style={{ opacity: 0.75, fontSize: 12, marginBottom: 10 }}>
-            Type a few sentences ‚Äî or tap the mic ‚Äî we‚Äôll turn it into a site.
+            Type a few sentences ó or tap the mic ó weíll turn it into a site.
           </div>
 
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, gap: 10 }}>
-            <div style={{ opacity: 0.65, fontSize: 12 }}>Speak it üé§</div>
+            <div style={{ opacity: 0.65, fontSize: 12 }}>Speak it ??</div>
 
             <VoiceDictationButton onFinal={appendFromVoice} onText={appendFromVoice} onTranscript={appendFromVoice} />
           </div>
@@ -425,7 +456,7 @@ export default function CreatorBuild() {
             </button>
 
             <div style={{ fontSize: 12, opacity: 0.75 }}>
-              <span style={{ fontWeight: 900 }}>{autoName}</span> <span style={{ opacity: 0.85 }}>‚Ä¢ Auto-generated ‚Äî rename anytime.</span>
+              <span style={{ fontWeight: 900 }}>{autoName}</span> <span style={{ opacity: 0.85 }}>ï Auto-generated ó rename anytime.</span>
             </div>
           </div>
 
@@ -439,3 +470,6 @@ export default function CreatorBuild() {
     </div>
   );
 }
+
+
+
