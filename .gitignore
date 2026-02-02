@@ -5,3 +5,8 @@ build/
 .env
 .env.*
 .vercel/
+_local_backups/
+**/*.bak_*
+**/*.BAK_*
+**/*.BACKUP_*
+_*dump.txt
