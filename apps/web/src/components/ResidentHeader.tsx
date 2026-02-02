@@ -99,11 +99,11 @@ const linkBtn: CSSProperties = {
   padding: "8px 10px",
   borderRadius: 999,
   border: "1px solid rgba(255,255,255,0.16)",
-  background: "transparent",
+  background: "rgba(255,255,255,0.06)",
   color: "#fff",
   textDecoration: "none",
   fontSize: 12,
-  opacity: 0.88,
+  opacity: 0.9,
   whiteSpace: "nowrap",
 };
 
@@ -126,3 +126,4 @@ const subStyle: CSSProperties = {
   textOverflow: "ellipsis",
   maxWidth: 520,
 };
+

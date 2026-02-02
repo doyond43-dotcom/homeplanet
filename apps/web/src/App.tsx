@@ -1,29 +1,25 @@
 ﻿import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppShell } from "./layout/AppShell";
-
+import CreatorStudio from "./pages/CreatorStudio";
 import CoreHome from "./pages/CoreHome";
 import PlanetOverview from "./pages/PlanetOverview";
 import CityPage from "./pages/CityPage";
-
 import CreatorProjects from "./pages/CreatorProjects";
 import CreatorBuild from "./pages/CreatorBuild";
 import ReleaseViewer from "./pages/ReleaseViewer";
-
 import SimpleDocPage from "./pages/SimpleDocPage";
-
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ResetPassword from "./pages/ResetPassword";
-
 import CreatorLive from "./pages/CreatorLive";
 import LiveViewer from "./pages/LiveViewer";
-
 import { RequireAuth } from "./auth/RequireAuth";
-
+import PublicPage from "./routes/PublicPage";
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/c/:slug" element={<PublicPage />} />
         <Route element={<AppShell />}>
           {/* -----------------------------
               Public auth routes
@@ -124,7 +120,13 @@ export default function App() {
           {/* Default */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
+        <Route path="/planet/creator/studio" element={<CreatorStudio />} />
+        <Route path="/planet/creator/studio/:mode" element={<CreatorStudio />} />
       </Routes>
     </BrowserRouter>
   );
 }
+
+
+
+

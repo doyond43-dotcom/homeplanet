@@ -1,14 +1,12 @@
-import { useEffect, useMemo, useRef, useState , useCallback } from "react";
+Ôªøimport { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import { ensureProject } from "../data/ensureProject";
 import { useProjectStore } from "../state/projectStore";
 import { BuildPreview } from "../components/BuildPreview";
 import VoiceDictationButton from "../components/VoiceDictationButton";
-import {
-  getActiveProjectId as getActiveProjectIdLocal,
-  setActiveProjectId as setActiveProjectIdLocal,
-} from "../lib/projectsStore";
+import { getActiveProjectId as getActiveProjectIdLocal,
+  setActiveProjectId as setActiveProjectIdLocal } from "../lib/projectsStore";
 
 type DraftRow = {
   project_id: string;
@@ -29,13 +27,13 @@ function inferNameFromText(input: string): string {
     firstLine.split(/[.!?]/).map((x) => x.trim()).filter(Boolean)[0] || firstLine;
 
   const called = firstSentence.match(/\b(called|named)\s+([A-Za-z0-9&'".\- ]{2,60})/i);
-  if (called?.[2]) return called[2].trim().replace(/^["'ìî]+|["'ìî]+$/g, "");
+  if (called?.[2]) return called[2].trim().replace(/^["'‚Äú‚Äù]+|["'‚Äú‚Äù]+$/g, "");
 
   const brandish = firstSentence.replace(/^i\s+(run|own|have|started)\s+/i, "").trim();
   const cleaned = brandish.replace(/^a\s+|an\s+|the\s+/i, "").trim();
 
   const title = cleaned.slice(0, 56).trim();
-  return title ? title.replace(/^["'ìî]+|["'ìî]+$/g, "") : "Untitled Site";
+  return title ? title.replace(/^["'‚Äú‚Äù]+|["'‚Äú‚Äù]+$/g, "") : "Untitled Site";
 }
 
 // Plain English -> structured BuildPreview format
@@ -47,7 +45,7 @@ function generateStructuredBuild(input: string): string {
 
   const location = grab(/\b(?:in|based in|located in)\s+([A-Za-z .,'-]{2,40})/i);
 
-  const email = raw.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0];
+  const email = raw.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{ 2 }/i)?.[0];
   const phone = raw.match(/\b(\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}\b/)?.[0];
 
   const wantsBook = /\b(book|booking|schedule|appointment|reserve)\b/i.test(raw);
@@ -62,7 +60,7 @@ function generateStructuredBuild(input: string): string {
 
   return `H1: ${name}
 
-Subheadline: Built from your description ó ready to share
+Subheadline: Built from your description ‚Äî ready to share
 
 About:
 ${raw || "Describe what you do, who it's for, and what you want customers to do."}
@@ -91,22 +89,6 @@ ${[
 
 export default function CreatorBuild() {
   const navigate = useNavigate();
-
-  
-  const [isBuilding, setIsBuilding] = useState(false);
-
-  const fireBuild = useCallback(async () => {
-    if (isBuilding) return;
-    setIsBuilding(true);
-    try {
-      console.log("? Build My Site fired");
-      // TODO: call your real build action here
-    } catch (err) {
-      console.error("? Build failed:", err);
-    } finally {
-      setIsBuilding(false);
-    }
-  }, [isBuilding]);
 // --- Responsive layout (mobile = 1 column) ---
   const [isNarrow, setIsNarrow] = useState(() => (typeof window !== "undefined" ? window.innerWidth < 900 : true));
 
@@ -124,14 +106,14 @@ export default function CreatorBuild() {
     "I run a Tampa-based dance studio that teaches hip hop and contemporary classes for kids and adults. Booking online. Contact: hello@movetampa.com"
   );
 
-  // Generated ìbuild textî that powers the preview + autosave
+  // Generated ‚Äúbuild text‚Äù that powers the preview + autosave
   const [buildText, setBuildText] = useState<string>(() =>
     generateStructuredBuild(
       "I run a Tampa-based dance studio that teaches hip hop and contemporary classes for kids and adults. Booking online. Contact: hello@movetampa.com"
     )
   );
 
-  // Force preview ìjumpî on Build button (holy-shit moment)
+  // Force preview ‚Äújump‚Äù on Build button (holy-shit moment)
   const [buildVersion, setBuildVersion] = useState<number>(1);
 
   const [status, setStatus] = useState<"idle" | "creating" | "saving" | "saved" | "error">("idle");
@@ -295,38 +277,50 @@ export default function CreatorBuild() {
   }, []);
 
   const statusLabel =
-    (status === "creating" && "creatingÖ") ||
-    (status === "saving" && "savingÖ") ||
+    (status === "creating" && "creating‚Ä¶") ||
+    (status === "saving" && "saving‚Ä¶") ||
     (status === "saved" && "saved ?") ||
     (status === "error" && "error") ||
     (activeProjectId ? "auto-saved" : "start typing");
 
-  return (
+  
+
+  // Shared HP pill + soft card styles (Back + Projects match, add breathing room)
+  const hpPill: any = { height: 40,
+    padding: "0 12px",
+    borderRadius: 999,
+    border: "1px solid rgba(255,255,255,0.16)",
+    background: "rgba(255,255,255,0.06)",
+    color: "white",
+    cursor: "pointer",
+    fontWeight: 900,
+    fontSize: 12,
+    letterSpacing: 0.2,
+    whiteSpace: "nowrap",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center" };
+
+  const hpCard: any = { padding: 14,
+    borderRadius: 18,
+    border: "1px solid rgba(255,255,255,0.10)",
+    background: "rgba(0,0,0,0.22)",
+    boxShadow: "0 10px 30px rgba(0,0,0,0.25)",
+    minWidth: 0 };return (
     <div style={{ padding: 18, maxWidth: 1200, margin: "0 auto" }}>
       <div
-        style={{
+        style={ {
           marginBottom: 12,
           padding: "10px 12px",
           borderRadius: 14,
           border: "2px solid rgba(0,255,150,0.55)",
           background: "rgba(0,255,150,0.14)",
           color: "white",
-          fontWeight: 900,
-        }}
+          fontWeight: 900 }}
       >
         MIC BUILD ACTIVE ? (CreatorBuild.tsx)
         <div style={{ display: "flex", gap: 10, alignItems: "center", marginTop: 10 }}>
-          <button
-            type="button"
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(-1); }}
-            onPointerUp={(e) => { e.preventDefault(); e.stopPropagation(); navigate(-1); }}
-            onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); navigate(-1); }}
-            style={{ touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}
-          >
-            ? Back
-          </button>
-
-          <button
+<button
             type="button"
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.print(); }}
             onPointerUp={(e) => { e.preventDefault(); e.stopPropagation(); window.print(); }}
@@ -339,46 +333,55 @@ export default function CreatorBuild() {
       </div>
 
       <div
-        style={{
+        style={ {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
           gap: 12,
-          marginBottom: 14,
-        }}
+          marginBottom: 14 }}
       >
         <div>
           <h1 style={{ fontSize: 22, margin: 0 }}>Creator</h1>
           <div style={{ opacity: 0.65, fontSize: 12 }}>Describe ? Build ? Preview</div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
           <div style={{ opacity: 0.75, fontSize: 12 }}>{statusLabel}</div>
 
           <button
-            onClick={() => navigate("/planet/creator/projects")}
-            style={{
-              padding: "10px 12px",
-              borderRadius: 12,
-              border: "1px solid rgba(255,255,255,0.16)",
-              background: "rgba(255,255,255,0.06)",
-              cursor: "pointer",
-              fontWeight: 800,
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              navigate(-1);
             }}
+            style={hpPill}
+            title="Back"
+          >
+            ‚Üê Back
+          </button>
+
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              navigate("/planet/creator/projects");
+            }}
+            style={hpPill}
           >
             Projects
           </button>
         </div>
       </div>
 
-      {err && (
+      { err && (
         <div
           style={{
             padding: 12,
             borderRadius: 12,
             border: "1px solid rgba(255,255,255,0.14)",
-            marginBottom: 12,
-          }}
+            marginBottom: 12 }}
         >
           <div style={{ fontWeight: 800, marginBottom: 6 }}>Save error</div>
           <div style={{ opacity: 0.85, fontSize: 13 }}>{err}</div>
@@ -386,23 +389,22 @@ export default function CreatorBuild() {
       )}
 
       <div
-        style={{
+        style={ {
           display: "grid",
           gridTemplateColumns: isNarrow ? "1fr" : "1fr 1fr",
-          gap: 14,
-          alignItems: "start",
-        }}
+          gap: 18,
+          alignItems: "start" }}
       >
-        <div>
+        <div style={hpCard}>
           <div style={{ fontSize: 18, fontWeight: 900, marginBottom: 6 }}>Describe your business or idea</div>
           <div style={{ opacity: 0.75, fontSize: 12, marginBottom: 10 }}>
-            Type a few sentences ó or tap the mic ó weíll turn it into a site.
+            Type a few sentences ‚Äî or tap the mic ‚Äî we‚Äôll turn it into a site.
           </div>
 
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, gap: 10 }}>
             <div style={{ opacity: 0.65, fontSize: 12 }}>Speak it ??</div>
 
-            <VoiceDictationButton onFinal={appendFromVoice} onText={appendFromVoice} onTranscript={appendFromVoice} />
+            <VoiceDictationButton onFinal={appendFromVoice} />
           </div>
 
           <textarea
@@ -418,7 +420,7 @@ export default function CreatorBuild() {
               scheduleSave(nextBuild, nextIdea);
             }}
             placeholder="Example: I run a Tampa-based dance studio teaching hip hop & contemporary for kids and adults. Booking online. Contact: hello@..."
-            style={{
+            style={ {
               width: "100%",
               minHeight: 280,
               padding: 14,
@@ -429,19 +431,27 @@ export default function CreatorBuild() {
               fontSize: 15,
               lineHeight: 1.5,
               color: "rgba(255,255,255,0.92)",
-              caretColor: "rgba(255,255,255,0.92)",
-            }}
+              caretColor: "rgba(255,255,255,0.92)" }}
           />
 
           <div style={{ display: "flex", gap: 10, alignItems: "center", marginTop: 12, flexWrap: "wrap" }}>
             <button
-              onClick={() => {
+              onClick={async () => {
                 const nextBuild = generateStructuredBuild(idea);
                 setBuildText(nextBuild);
                 setBuildVersion((v) => v + 1);
-                scheduleSave(nextBuild, idea);
+
+                try {
+                  const pid = await ensureActiveBuildProject();
+                  setActiveProjectIdLocal(pid);
+                  await saveDraft(pid, nextBuild, idea);
+                } catch {
+                  // best-effort; still allow studio
+                }
+
+                navigate("/planet/creator/studio");
               }}
-              style={{
+              style={ {
                 height: 46,
                 padding: "0 16px",
                 borderRadius: 14,
@@ -449,27 +459,33 @@ export default function CreatorBuild() {
                 background: "white",
                 color: "black",
                 fontWeight: 900,
-                cursor: "pointer",
-              }}
+                cursor: "pointer" }}
             >
-              Build My Site
+              Launch Creator Studio
             </button>
 
             <div style={{ fontSize: 12, opacity: 0.75 }}>
-              <span style={{ fontWeight: 900 }}>{autoName}</span> <span style={{ opacity: 0.85 }}>ï Auto-generated ó rename anytime.</span>
+              <span style={{ fontWeight: 900 }}>{autoName}</span> <span style={{ opacity: 0.85 }}>‚Ä¢ Auto-generated ‚Äî rename anytime.</span>
             </div>
           </div>
 
           <div style={{ marginTop: 10, opacity: 0.65, fontSize: 12 }}>Active Project ID: {activeProjectId ?? "none yet"}</div>
         </div>
 
-        <div>
+        <div style={hpCard}>
           <BuildPreview key={buildVersion} text={buildText} projectId={activeProjectId} />
         </div>
       </div>
     </div>
   );
 }
+
+
+
+
+
+
+
 
 
 

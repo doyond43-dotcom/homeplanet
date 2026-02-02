@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState, useCallback, useEffect } from "react";
+Ôªøimport React, { useMemo, useRef, useState, useCallback, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { PLANETS } from "../planet/planetMap";
 
@@ -16,13 +16,13 @@ function normalizeCities(input: any): City[] {
 }
 
 /**
- * PlanetSidebar ó OS navigation spine (flex-safe; no overlays)
+ * PlanetSidebar ‚Äî OS navigation spine (flex-safe; no overlays)
  * Adds:
  * - Collapsed / Expanded states (system-level, not page-level)
  * - Crisp pill controls that match Creator Build
  * Keeps:
  * - iOS-safe single-event navigation
- * - Hard fallback if router doesnít update path
+ * - Hard fallback if router doesn‚Äôt update path
  */
 export function PlanetSidebar(props: { witnessMode: boolean; onToggleWitnessMode: () => void }) {
   const { witnessMode, onToggleWitnessMode } = props;
@@ -100,7 +100,7 @@ export function PlanetSidebar(props: { witnessMode: boolean; onToggleWitnessMode
 
   const planets = useMemo(() => (PLANETS as any[]) ?? [], []);
 
-  // Sidebar shell ó IMPORTANT: flex-safe; no fixed overlays; cannot cover <main>
+  // Sidebar shell ‚Äî IMPORTANT: flex-safe; no fixed overlays; cannot cover <main>
   const shell: React.CSSProperties = {
     position: "sticky",
     top: 0,
@@ -175,14 +175,14 @@ export function PlanetSidebar(props: { witnessMode: boolean; onToggleWitnessMode
 
   const caret: React.CSSProperties = { opacity: 0.70, fontWeight: 900 };
 
-  // Shared nav props ó single event to avoid duplicate toggles on iOS
+  // Shared nav props ‚Äî single event to avoid duplicate toggles on iOS
   const tapSafeNavProps = (to: string) => ({
     onClick: (e: any) => go(to, e),
   });
 
   return (
     <aside style={shell}>
-      {/* Top ìspineî header */}
+      {/* Top ‚Äúspine‚Äù header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 10 }}>
         <div style={{ minWidth: 0 }}>
           <div style={title}>{collapsed ? "HP" : "HomePlanet"}</div>
@@ -204,7 +204,7 @@ export function PlanetSidebar(props: { witnessMode: boolean; onToggleWitnessMode
           }}
           title={collapsed ? "Expand" : "Collapse"}
         >
-          {collapsed ? "?" : "Collapse"}
+          {collapsed ? "‚ñ∏" : "Collapse"}
         </button>
       </div>
 
@@ -254,7 +254,7 @@ export function PlanetSidebar(props: { witnessMode: boolean; onToggleWitnessMode
                   ) : null}
                 </div>
 
-                {!collapsed ? <div style={caret}>{isOpen ? "?" : "?"}</div> : null}
+                {!collapsed ? <div style={caret}>{isOpen ? "‚ñæ" : "‚ñ∏"}</div> : null}
               </button>
 
               {/* Expanded content */}
@@ -266,7 +266,7 @@ export function PlanetSidebar(props: { witnessMode: boolean; onToggleWitnessMode
                     return (
                       <button type="button" {...tapSafeNavProps(to)} style={{ ...subRow, ...activeGlow(isActive(to)) }}>
                         <div style={{ fontWeight: 900 }}>Overview</div>
-                        <div style={caret}>?</div>
+                        <div style={caret}></div>
                       </button>
                     );
                   })()}
@@ -280,7 +280,7 @@ export function PlanetSidebar(props: { witnessMode: boolean; onToggleWitnessMode
                           <div style={{ fontWeight: 900 }}>{c.label}</div>
                           {c.desc ? <div style={{ fontSize: 12, opacity: 0.70, marginTop: 2 }}>{c.desc}</div> : null}
                         </div>
-                        <div style={caret}>?</div>
+                        <div style={caret}></div>
                       </button>
                     );
                   })}
@@ -299,4 +299,5 @@ export function PlanetSidebar(props: { witnessMode: boolean; onToggleWitnessMode
     </aside>
   );
 }
+
 

@@ -34,7 +34,7 @@ type Parsed = {
 
 function safeText(x: any) {
   return String(x ?? "")
-    .replace(/\uFFFD/g, "—") // replace “ ”
+    .replace(/\uFFFD/g, "Ã¢â‚¬”")
     .replace(/\r\n/g, "\n")
     .trim();
 }
@@ -61,18 +61,17 @@ function linesToList(s: string) {
     .split("\n")
     .map((x) => x.trim())
     .filter(Boolean)
-    .map((x) => x.replace(/^[-•]\s*/, "").trim())
+    .map((x) => x.replace(/^[-Ã¢â‚¬Â¢]\s*/, "").trim())
     .filter(Boolean);
 }
 
-// If "About" contains extra “schedule-like” lines, split it:
+// If "About" contains extra Ã¢â‚¬Å“schedule-likeÃ¢â‚¬Â lines, split it:
 // - First paragraph stays About
 // - Short leftover lines become Offers when Offers is empty
 function splitAboutForOffer(aboutRaw: string) {
   const lines = safeText(aboutRaw).split("\n").map((x) => x.trim()).filter(Boolean);
   if (lines.length <= 3) return { about: safeText(aboutRaw), offerFromAbout: [] as string[] };
 
-  // Keep the first 1–2 “long” lines as about, push the rest to offer
   const aboutLines: string[] = [];
   const rest: string[] = [];
 
@@ -84,7 +83,7 @@ function splitAboutForOffer(aboutRaw: string) {
 
   const about = aboutLines.length ? aboutLines.join("\n") : lines.slice(0, 2).join("\n");
   const offerFromAbout = rest
-    .map((x) => x.replace(/^[-•]\s*/, "").trim())
+    .map((x) => x.replace(/^[-Ã¢â‚¬Â¢]\s*/, "").trim())
     .filter(Boolean)
     .slice(0, 10);
 
@@ -95,7 +94,7 @@ function parseBuild(text: string): Parsed {
   const raw = safeText(text);
 
   const h1 = pickLine(raw, "H1") || "Your Business";
-  const subheadline = pickLine(raw, "Subheadline") || "Built from your description — ready to share";
+  const subheadline = pickLine(raw, "Subheadline") || "Built from your description Ã¢â‚¬” ready to share";
 
   const aboutSection = pickSection(raw, "About") || "";
   const goal = linesToList(pickSection(raw, "Goal"));
@@ -111,45 +110,33 @@ function parseBuild(text: string): Parsed {
   const instagramInline = pickLine(raw, "Instagram") || "";
   const websiteInline = pickLine(raw, "Website") || "";
 
-  const location =
-    pickLine(contactBlock, "Location") ||
-    pickLine(raw, "Location") ||
-    "";
-  const hours =
-    pickLine(contactBlock, "Hours") ||
-    pickLine(raw, "Hours") ||
-    "";
+  const location = pickLine(contactBlock, "Location") || pickLine(raw, "Location") || "";
+  const hours = pickLine(contactBlock, "Hours") || pickLine(raw, "Hours") || "";
 
   const email = pickLine(contactBlock, "Email") || emailInline;
   const phone = pickLine(contactBlock, "Phone") || phoneInline;
   const instagram = pickLine(contactBlock, "Instagram") || instagramInline;
   const website = pickLine(contactBlock, "Website") || websiteInline;
 
-  // ✅ Accept "Offer:" OR "Services:" (your generator currently uses Services)
+  // Accept flexible headings (generator variants)
   const offerSection = pickSection(raw, "Offer") || pickSection(raw, "Services") || "";
   const productsSection =
-  pickSection(raw, "Products") ||
-  pickSection(raw, "Merch") ||
-  pickSection(raw, "Merchandise") ||
-  pickSection(raw, "Shop") ||
-  "";
+    pickSection(raw, "Products") ||
+    pickSection(raw, "Merch") ||
+    pickSection(raw, "Merchandise") ||
+    pickSection(raw, "Shop") ||
+    "";
   const testimonialsSection =
-  pickSection(raw, "Testimonials") ||
-  pickSection(raw, "Reviews") ||
-  pickSection(raw, "Feedback") ||
-  "";
+    pickSection(raw, "Testimonials") || pickSection(raw, "Reviews") || pickSection(raw, "Feedback") || "";
   const policiesSection =
-  pickSection(raw, "Policies") ||
-  pickSection(raw, "Rules") ||
-  pickSection(raw, "Terms") ||
-  "";
+    pickSection(raw, "Policies") || pickSection(raw, "Rules") || pickSection(raw, "Terms") || "";
 
   let offer = linesToList(offerSection);
   const products = linesToList(productsSection);
   const testimonials = linesToList(testimonialsSection);
   const policies = linesToList(policiesSection);
 
-  // If offers is empty but About has extra “schedule-like” lines, treat those as offers
+  // If offers is empty but About has extra Ã¢â‚¬Å“schedule-likeÃ¢â‚¬Â lines, treat those as offers
   const { about, offerFromAbout } = splitAboutForOffer(aboutSection);
   if (!offer.length && offerFromAbout.length) offer = offerFromAbout;
 
@@ -189,8 +176,13 @@ function Chip({ children, onClick }: { children: React.ReactNode; onClick?: () =
         gap: 8,
         padding: "6px 10px",
         borderRadius: 999,
-        background: "rgba(0,0,0,0.06)",
-        border: "1px solid rgba(0,0,0,0.08)",
+
+        // Ã°Å¸”Â¥ readability fix for "Scan:" pill
+        background: "rgba(0,0,0,0.10)",
+        border: "1px solid rgba(0,0,0,0.18)",
+        color: "rgba(0,0,0,0.90)",
+        boxShadow: "0 8px 20px rgba(0,0,0,0.10)",
+
         fontSize: 12,
         fontWeight: 800,
         cursor: onClick ? "pointer" : "default",
@@ -246,7 +238,7 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
 }
 
 function List({ items }: { items: string[] }) {
-  if (!items?.length) return <div style={{ opacity: 0.55, color: "black" }}>—</div>;
+  if (!items?.length) return <div style={{ opacity: 0.55, color: "black" }}>Ã¢â‚¬”</div>;
   return (
     <ul style={{ margin: 0, paddingLeft: 16, lineHeight: 1.5, color: "black" }}>
       {items.map((x, i) => (
@@ -262,12 +254,10 @@ export function BuildPreview({ text, projectId }: Props) {
   const parsed = useMemo(() => parseBuild(text), [text]);
 
   // Prefer a real URL format (so QR scanners recognize it)
-  const shareUrl = projectId
-    ? `https://homeplanet.city/p/${String(projectId).slice(0, 8)}`
-    : `https://homeplanet.city`;
+  const shareUrl = projectId ? `https://homeplanet.city/p/${String(projectId).slice(0, 8)}` : `https://homeplanet.city`;
 
-  // ✅ REAL QR (no npm installs). Google Chart QR generator:
-  const qrImg = `https://chart.googleapis.com/chart?cht=qr&chs=180x180&chl=${encodeURIComponent(shareUrl)}`;
+  // Real QR image via Google Chart (no npm install needed)
+  const qrImg = `https://chart.googleapis.com/chart?cht=qr&chs=240x240&chl=${encodeURIComponent(shareUrl)}`;
 
   const copyShare = async () => {
     try {
@@ -286,7 +276,7 @@ export function BuildPreview({ text, projectId }: Props) {
         padding: 12,
       }}
     >
-      {/* “User site” surface */}
+      {/* Ã¢â‚¬Å“User siteÃ¢â‚¬Â surface */}
       <div
         style={{
           borderRadius: 20,
@@ -303,9 +293,7 @@ export function BuildPreview({ text, projectId }: Props) {
                 {parsed.h1}
               </div>
 
-              <div style={{ marginTop: 8, fontSize: 14, opacity: 0.75, color: "black" }}>
-                {parsed.subheadline}
-              </div>
+              <div style={{ marginTop: 8, fontSize: 14, opacity: 0.75, color: "black" }}>{parsed.subheadline}</div>
 
               <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 12 }}>
                 <Btn tone="primary">{parsed.ctaPrimary}</Btn>
@@ -327,25 +315,31 @@ export function BuildPreview({ text, projectId }: Props) {
             >
               <div
                 style={{
+                  width: 140,
                   height: 140,
+                  margin: "0 auto",
                   borderRadius: 12,
-                  border: "1px solid rgba(0,0,0,0.10)",
+                  border: "1px solid rgba(0,0,0,0.12)",
                   background: "white",
+                  overflow: "hidden",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  overflow: "hidden",
                 }}
               >
                 <img
                   src={qrImg}
-                  alt="QR"
+                  alt={`QR for ${shareUrl}`}
+                  onError={(e) => {
+                    // Hide broken image icon cleanly if Google blocks / fails
+                    try {
+                      (e.currentTarget as HTMLImageElement).style.display = "none";
+                    } catch {}
+                  }}
                   style={{ width: "100%", height: "100%", objectFit: "cover" }}
                 />
               </div>
-              <div style={{ marginTop: 8, fontSize: 11, opacity: 0.7, color: "black" }}>
-                Scan to book / share
-              </div>
+              <div style={{ marginTop: 8, fontSize: 11, opacity: 0.7, color: "black" }}>Scan to book / share</div>
             </div>
           </div>
         </div>
@@ -361,7 +355,7 @@ export function BuildPreview({ text, projectId }: Props) {
           >
             <Card title="About">
               <div style={{ fontSize: 14, color: "black", lineHeight: 1.5, opacity: 0.92, whiteSpace: "pre-wrap" }}>
-                {parsed.about || "Describe what you do, who it’s for, and what you want customers to do."}
+                {parsed.about || "Describe what you do, who itÃ¢â‚¬â„¢s for, and what you want customers to do."}
               </div>
 
               {!!parsed.goal.length && (
@@ -380,7 +374,7 @@ export function BuildPreview({ text, projectId }: Props) {
                   <b>Location:</b> {parsed.location || "Add your city"}
                 </div>
                 <div>
-                  <b>Hours:</b> {parsed.hours || "Mon–Fri 9am–6pm"}
+                  <b>Hours:</b> {parsed.hours || "MonÃ¢â‚¬“Fri 9amÃ¢â‚¬“6pm"}
                 </div>
                 <div>
                   <b>Phone:</b> {parsed.contact.phone || "Add phone"}
@@ -389,10 +383,10 @@ export function BuildPreview({ text, projectId }: Props) {
                   <b>Email:</b> {parsed.contact.email || "Add email"}
                 </div>
                 <div>
-                  <b>Instagram:</b> {parsed.contact.instagram || "—"}
+                  <b>Instagram:</b> {parsed.contact.instagram || "Ã¢â‚¬”"}
                 </div>
                 <div>
-                  <b>Website:</b> {parsed.contact.website || "—"}
+                  <b>Website:</b> {parsed.contact.website || "Ã¢â‚¬”"}
                 </div>
               </div>
 
@@ -407,9 +401,7 @@ export function BuildPreview({ text, projectId }: Props) {
             <Card title="Offers / Services">
               <List
                 items={
-                  parsed.offer.length
-                    ? parsed.offer
-                    : ["$19 Trial Class (first time)", "Memberships / packs / private lessons", "Events / workshops"]
+                  parsed.offer.length ? parsed.offer : ["$19 Trial Class (first time)", "Memberships / packs / private lessons", "Events / workshops"]
                 }
               />
             </Card>
@@ -417,9 +409,7 @@ export function BuildPreview({ text, projectId }: Props) {
             <Card title="Products / Merch">
               <List
                 items={
-                  parsed.products.length
-                    ? parsed.products
-                    : ["Studio Tee — $24", "Hoodie — $45", "Water Bottle — $16", "Class Pack (5) — $79"]
+                  parsed.products.length ? parsed.products : ["Studio Tee Ã¢â‚¬” $24", "Hoodie Ã¢â‚¬” $45", "Water Bottle Ã¢â‚¬” $16", "Class Pack (5) Ã¢â‚¬” $79"]
                 }
               />
             </Card>
@@ -427,9 +417,7 @@ export function BuildPreview({ text, projectId }: Props) {
             <Card title="Testimonials">
               <List
                 items={
-                  parsed.testimonials.length
-                    ? parsed.testimonials
-                    : ["“Best studio in town.” — Customer", "“Great vibe and flexible schedule.” — Customer"]
+                  parsed.testimonials.length ? parsed.testimonials : ["Ã¢â‚¬Å“Best studio in town.Ã¢â‚¬Â Ã¢â‚¬” Customer", "Ã¢â‚¬Å“Great vibe and flexible schedule.Ã¢â‚¬Â Ã¢â‚¬” Customer"]
                 }
               />
             </Card>
@@ -437,9 +425,7 @@ export function BuildPreview({ text, projectId }: Props) {
             <Card title="Policies">
               <List
                 items={
-                  parsed.policies.length
-                    ? parsed.policies
-                    : ["Arrive 10 minutes early for first class", "12-hour cancellation policy", "Guardian pickup required for kids"]
+                  parsed.policies.length ? parsed.policies : ["Arrive 10 minutes early for first class", "12-hour cancellation policy", "Guardian pickup required for kids"]
                 }
               />
             </Card>
@@ -449,12 +435,8 @@ export function BuildPreview({ text, projectId }: Props) {
         {/* Footer */}
         <div style={{ padding: 14, background: "white", borderTop: "1px solid rgba(0,0,0,0.08)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-            <div style={{ fontSize: 12, opacity: 0.75, color: "black" }}>
-              {parsed.footer || `${parsed.h1} • Built with HomePlanet`}
-            </div>
-            <div style={{ fontSize: 12, opacity: 0.65, color: "black" }}>
-              {projectId ? `Project: ${String(projectId).slice(0, 8)}` : ""}
-            </div>
+            <div style={{ fontSize: 12, opacity: 0.75, color: "black" }}>{parsed.footer || `${parsed.h1} Ã¢â‚¬Â¢ Built with HomePlanet`}</div>
+            <div style={{ fontSize: 12, opacity: 0.65, color: "black" }}>{projectId ? `Project: ${String(projectId).slice(0, 8)}` : ""}</div>
           </div>
         </div>
       </div>
@@ -463,5 +445,3 @@ export function BuildPreview({ text, projectId }: Props) {
 }
 
 export default BuildPreview;
-
-

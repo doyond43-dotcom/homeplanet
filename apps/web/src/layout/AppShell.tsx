@@ -20,16 +20,17 @@ export function AppShell() {
         />
 
         <main style={{
-          flex: 1,
-          padding: 22,
-        }}>
+  flex: 1,
+  minWidth: 0,
+  padding: 22,
+}}>
           <div style={{
             maxWidth: 1100,
             margin: "0 auto",
             borderRadius: 22,
             border: "1px solid rgba(255,255,255,0.10)",
             background: "rgba(255,255,255,0.03)",
-            padding: 18,
+            padding: 22,
             boxShadow: "0 12px 40px rgba(0,0,0,0.35)",
           }}>
             <Outlet context={{ witnessMode }} />
@@ -39,3 +40,6 @@ export function AppShell() {
     </div>
   );
 }
+
+
+

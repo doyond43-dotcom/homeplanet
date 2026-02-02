@@ -85,7 +85,7 @@ export default function CreatorProjects() {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 14 }}>
         <div>
           <h1 style={{ fontSize: 22, margin: 0 }}>Creator Projects</h1>
-          <div style={{ opacity: 0.65, fontSize: 12 }}>
+          <div style={{ opacity: 0.82, fontSize: 12 }}>
             Canonical registry (projects table)
           </div>
         </div>
@@ -96,8 +96,9 @@ export default function CreatorProjects() {
             style={{
               padding: "10px 12px",
               borderRadius: 12,
-              border: "1px solid rgba(255,255,255,0.16)",
-              background: "rgba(255,255,255,0.06)",
+              border: "1px solid rgba(255,255,255,0.28)",
+              background: "rgba(0,0,0,0.45)",
+              color: "white",
               cursor: "pointer",
               fontWeight: 800
             }}
@@ -110,8 +111,9 @@ export default function CreatorProjects() {
             style={{
               padding: "10px 12px",
               borderRadius: 12,
-              border: "1px solid rgba(255,255,255,0.16)",
-              background: "rgba(255,255,255,0.10)",
+              border: "1px solid rgba(255,255,255,0.28)",
+              background: "rgba(0,0,0,0.45)",
+              color: "white",
               cursor: "pointer",
               fontWeight: 900
             }}
@@ -124,14 +126,14 @@ export default function CreatorProjects() {
       {loading && <div style={{ opacity: 0.8 }}>Loading…</div>}
 
       {!loading && err && (
-        <div style={{ padding: 12, borderRadius: 12, border: "1px solid rgba(255,255,255,0.14)" }}>
+        <div style={{ padding: 12, borderRadius: 12, border: "1px solid rgba(255,255,255,0.24)" }}>
           <div style={{ fontWeight: 700, marginBottom: 6 }}>Could not load projects</div>
           <div style={{ opacity: 0.8, fontSize: 13 }}>{err}</div>
         </div>
       )}
 
       {!loading && !err && active.length === 0 && (
-        <div style={{ padding: 14, borderRadius: 14, border: "1px solid rgba(255,255,255,0.12)" }}>
+        <div style={{ padding: 14, borderRadius: 14, border: "1px solid rgba(255,255,255,0.24)" }}>
           <div style={{ fontWeight: 700, marginBottom: 6 }}>No projects yet.</div>
           <div style={{ opacity: 0.8, fontSize: 13, marginBottom: 12 }}>
             Create your first canonical build project.
@@ -142,8 +144,9 @@ export default function CreatorProjects() {
             style={{
               padding: "10px 12px",
               borderRadius: 12,
-              border: "1px solid rgba(255,255,255,0.16)",
-              background: "rgba(255,255,255,0.06)",
+              border: "1px solid rgba(255,255,255,0.28)",
+              background: "rgba(0,0,0,0.45)",
+              color: "white",
               cursor: "pointer",
               fontWeight: 900
             }}
@@ -167,8 +170,9 @@ export default function CreatorProjects() {
                 textAlign: "left",
                 padding: 14,
                 borderRadius: 14,
-                border: "1px solid rgba(255,255,255,0.12)",
-                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.24)",
+                background: "rgba(255,255,255,0.12)",
+                  color: "rgba(255,255,255,0.92)",
                 cursor: "pointer",
               }}
             >
@@ -176,16 +180,16 @@ export default function CreatorProjects() {
                 <div style={{ fontWeight: 800 }}>
                   {p.title?.trim() ? p.title : "Untitled"}
                 </div>
-                <div style={{ opacity: 0.65, fontSize: 12 }}>
+                <div style={{ opacity: 0.82, fontSize: 12 }}>
                   {p.kind}
                 </div>
               </div>
 
-              <div style={{ opacity: 0.65, fontSize: 12, marginTop: 6 }}>
+              <div style={{ opacity: 0.82, fontSize: 12, marginTop: 6 }}>
                 {p.id}
               </div>
 
-              <div style={{ opacity: 0.5, fontSize: 11, marginTop: 4 }}>
+              <div style={{ opacity: 0.82, fontSize: 11, marginTop: 4 }}>
                 Click to open
               </div>
             </button>
@@ -195,5 +199,13 @@ export default function CreatorProjects() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
 
 
