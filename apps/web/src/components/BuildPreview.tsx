@@ -32,9 +32,18 @@ type Parsed = {
   footer: string;
 };
 
+function fixMojibake(input: string) {
+  return input
+    .replace(/\uFFFD/g, "")
+    .replace(/Ã¢â‚¬Å“|Ã¢â‚¬â€�/g, '"')
+    .replace(/Ã¢â‚¬â„¢/g, "'")
+    .replace(/Ã¢â‚¬â€œ|Ã¢â‚¬â€�/g, "-")
+    .replace(/Ã¢â‚¬Â/g, "")
+    .replace(/Â/g, "");
+}
 function safeText(x: any) {
   return String(x ?? "")
-    .replace(/\uFFFD/g, "Ã¢â‚¬”")
+    .replace(/\uFFFD/g, "ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ã¢â‚¬Â")
     .replace(/\r\n/g, "\n")
     .trim();
 }
@@ -61,11 +70,11 @@ function linesToList(s: string) {
     .split("\n")
     .map((x) => x.trim())
     .filter(Boolean)
-    .map((x) => x.replace(/^[-Ã¢â‚¬Â¢]\s*/, "").trim())
+    .map((x) => x.replace(/^[-ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¢]\s*/, "").trim())
     .filter(Boolean);
 }
 
-// If "About" contains extra Ã¢â‚¬Å“schedule-likeÃ¢â‚¬Â lines, split it:
+// If "About" contains extra ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“schedule-likeÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â lines, split it:
 // - First paragraph stays About
 // - Short leftover lines become Offers when Offers is empty
 function splitAboutForOffer(aboutRaw: string) {
@@ -83,7 +92,7 @@ function splitAboutForOffer(aboutRaw: string) {
 
   const about = aboutLines.length ? aboutLines.join("\n") : lines.slice(0, 2).join("\n");
   const offerFromAbout = rest
-    .map((x) => x.replace(/^[-Ã¢â‚¬Â¢]\s*/, "").trim())
+    .map((x) => x.replace(/^[-ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¢]\s*/, "").trim())
     .filter(Boolean)
     .slice(0, 10);
 
@@ -94,7 +103,7 @@ function parseBuild(text: string): Parsed {
   const raw = safeText(text);
 
   const h1 = pickLine(raw, "H1") || "Your Business";
-  const subheadline = pickLine(raw, "Subheadline") || "Built from your description Ã¢â‚¬” ready to share";
+  const subheadline = pickLine(raw, "Subheadline") || "Built from your description ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ã¢â‚¬Â ready to share";
 
   const aboutSection = pickSection(raw, "About") || "";
   const goal = linesToList(pickSection(raw, "Goal"));
@@ -132,11 +141,26 @@ function parseBuild(text: string): Parsed {
     pickSection(raw, "Policies") || pickSection(raw, "Rules") || pickSection(raw, "Terms") || "";
 
   let offer = linesToList(offerSection);
-  const products = linesToList(productsSection);
+  // Pull in Services/Products from the Services editor (localStorage)
+  const servicesLS =
+    typeof window !== "undefined" ? (localStorage.getItem("hp_creator_services_services") ?? "") : "";
+  const productsLS =
+    typeof window !== "undefined" ? (localStorage.getItem("hp_creator_services_products") ?? "") : "";
+
+  const servicesFromLS = linesToList(servicesLS);
+  const productsFromLS = linesToList(productsLS);
+
+  if (servicesFromLS.length) {
+    offer = Array.from(new Set([...offer, ...servicesFromLS]));
+  }
+  if (productsFromLS.length) {
+    products = Array.from(new Set([...products, ...productsFromLS]));
+  }
+let products = linesToList(productsSection);
   const testimonials = linesToList(testimonialsSection);
   const policies = linesToList(policiesSection);
 
-  // If offers is empty but About has extra Ã¢â‚¬Å“schedule-likeÃ¢â‚¬Â lines, treat those as offers
+  // If offers is empty but About has extra ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“schedule-likeÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â lines, treat those as offers
   const { about, offerFromAbout } = splitAboutForOffer(aboutSection);
   if (!offer.length && offerFromAbout.length) offer = offerFromAbout;
 
@@ -177,7 +201,7 @@ function Chip({ children, onClick }: { children: React.ReactNode; onClick?: () =
         padding: "6px 10px",
         borderRadius: 999,
 
-        // Ã°Å¸”Â¥ readability fix for "Scan:" pill
+        // ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ã¢â‚¬ÂÃƒâ€šÃ‚Â¥ readability fix for "Scan:" pill
         background: "rgba(0,0,0,0.10)",
         border: "1px solid rgba(0,0,0,0.18)",
         color: "rgba(0,0,0,0.90)",
@@ -238,7 +262,7 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
 }
 
 function List({ items }: { items: string[] }) {
-  if (!items?.length) return <div style={{ opacity: 0.55, color: "black" }}>Ã¢â‚¬”</div>;
+  if (!items?.length) return <div style={{ opacity: 0.55, color: "black" }}>ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ã¢â‚¬Â</div>;
   return (
     <ul style={{ margin: 0, paddingLeft: 16, lineHeight: 1.5, color: "black" }}>
       {items.map((x, i) => (
@@ -276,7 +300,7 @@ export function BuildPreview({ text, projectId }: Props) {
         padding: 12,
       }}
     >
-      {/* Ã¢â‚¬Å“User siteÃ¢â‚¬Â surface */}
+      {/* ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“User siteÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â surface */}
       <div
         style={{
           borderRadius: 20,
@@ -355,7 +379,7 @@ export function BuildPreview({ text, projectId }: Props) {
           >
             <Card title="About">
               <div style={{ fontSize: 14, color: "black", lineHeight: 1.5, opacity: 0.92, whiteSpace: "pre-wrap" }}>
-                {parsed.about || "Describe what you do, who itÃ¢â‚¬â„¢s for, and what you want customers to do."}
+                {parsed.about || "Describe what you do, who itÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s for, and what you want customers to do."}
               </div>
 
               {!!parsed.goal.length && (
@@ -374,7 +398,7 @@ export function BuildPreview({ text, projectId }: Props) {
                   <b>Location:</b> {parsed.location || "Add your city"}
                 </div>
                 <div>
-                  <b>Hours:</b> {parsed.hours || "MonÃ¢â‚¬“Fri 9amÃ¢â‚¬“6pm"}
+                  <b>Hours:</b> {parsed.hours || "MonÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ã¢â‚¬Å“Fri 9amÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ã¢â‚¬Å“6pm"}
                 </div>
                 <div>
                   <b>Phone:</b> {parsed.contact.phone || "Add phone"}
@@ -383,10 +407,10 @@ export function BuildPreview({ text, projectId }: Props) {
                   <b>Email:</b> {parsed.contact.email || "Add email"}
                 </div>
                 <div>
-                  <b>Instagram:</b> {parsed.contact.instagram || "Ã¢â‚¬”"}
+                  <b>Instagram:</b> {parsed.contact.instagram || "ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ã¢â‚¬Â"}
                 </div>
                 <div>
-                  <b>Website:</b> {parsed.contact.website || "Ã¢â‚¬”"}
+                  <b>Website:</b> {parsed.contact.website || "ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ã¢â‚¬Â"}
                 </div>
               </div>
 
@@ -409,7 +433,7 @@ export function BuildPreview({ text, projectId }: Props) {
             <Card title="Products / Merch">
               <List
                 items={
-                  parsed.products.length ? parsed.products : ["Studio Tee Ã¢â‚¬” $24", "Hoodie Ã¢â‚¬” $45", "Water Bottle Ã¢â‚¬” $16", "Class Pack (5) Ã¢â‚¬” $79"]
+                  parsed.products.length ? parsed.products : ["Studio Tee ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ã¢â‚¬Â $24", "Hoodie ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ã¢â‚¬Â $45", "Water Bottle ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ã¢â‚¬Â $16", "Class Pack (5) ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ã¢â‚¬Â $79"]
                 }
               />
             </Card>
@@ -417,7 +441,7 @@ export function BuildPreview({ text, projectId }: Props) {
             <Card title="Testimonials">
               <List
                 items={
-                  parsed.testimonials.length ? parsed.testimonials : ["Ã¢â‚¬Å“Best studio in town.Ã¢â‚¬Â Ã¢â‚¬” Customer", "Ã¢â‚¬Å“Great vibe and flexible schedule.Ã¢â‚¬Â Ã¢â‚¬” Customer"]
+                  parsed.testimonials.length ? parsed.testimonials : ["ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“Best studio in town.ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ã¢â‚¬Â Customer", "ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“Great vibe and flexible schedule.ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ã¢â‚¬Â Customer"]
                 }
               />
             </Card>
@@ -435,7 +459,7 @@ export function BuildPreview({ text, projectId }: Props) {
         {/* Footer */}
         <div style={{ padding: 14, background: "white", borderTop: "1px solid rgba(0,0,0,0.08)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-            <div style={{ fontSize: 12, opacity: 0.75, color: "black" }}>{parsed.footer || `${parsed.h1} Ã¢â‚¬Â¢ Built with HomePlanet`}</div>
+            <div style={{ fontSize: 12, opacity: 0.75, color: "black" }}>{parsed.footer || `${parsed.h1} ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¢ Built with HomePlanet`}</div>
             <div style={{ fontSize: 12, opacity: 0.65, color: "black" }}>{projectId ? `Project: ${String(projectId).slice(0, 8)}` : ""}</div>
           </div>
         </div>
