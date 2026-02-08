@@ -1,6 +1,7 @@
 ﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
+import { normalizeStringsDeep } from "../lib/text/normalizeText";
 import { ensureProject } from "../data/ensureProject";
 import { useProjectStore } from "../state/projectStore";
 import { BuildPreview } from "../components/BuildPreview";
@@ -45,7 +46,7 @@ function generateStructuredBuild(input: string): string {
 
   const location = grab(/\b(?:in|based in|located in)\s+([A-Za-z .,'-]{2,40})/i);
 
-  const email = raw.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{ 2 }/i)?.[0];
+  const email = raw.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2}/i)?.[0];
   const phone = raw.match(/\b(\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}\b/)?.[0];
 
   const wantsBook = /\b(book|booking|schedule|appointment|reserve)\b/i.test(raw);
@@ -95,6 +96,56 @@ export default function CreatorBuild() {
   useEffect(() => {
     const onResize = () => setIsNarrow(window.innerWidth < 900);
     window.addEventListener("resize", onResize);
+  // --- Ghost repair + hard reset helpers (must be inside CreatorBuild scope) ---
+  const DEFAULT_IDEA =
+    "I run a Tampa-based dance studio that teaches hip hop and contemporary classes for kids and adults. Booking online. Contact: hello@movetampa.com";
+
+  async function repairGhostsAndSave() {
+    try {
+      setErr(null);
+      const pid = await ensureActiveBuildProject();
+      setActiveProjectIdLocal(pid);
+
+      const fixedIdea  = normalizeStringsDeep(idea);
+      const fixedBuild = normalizeStringsDeep(buildText);
+
+      setIdea(fixedIdea);
+      setBuildText(fixedBuild);
+
+      await saveDraft(pid, fixedBuild, fixedIdea);
+
+      setBuildVersion((v) => v + 1); // force preview refresh
+    } catch (e: any) {
+      setErr(e?.message ?? String(e));
+      setStatus("error");
+    }
+  }
+
+  async function resetBuildFresh() {
+    try {
+      setErr(null);
+      const pid = await ensureActiveBuildProject();
+      setActiveProjectIdLocal(pid);
+
+      const nextIdea  = DEFAULT_IDEA;
+      const nextBuild = generateStructuredBuild(nextIdea);
+
+      const fixedIdea  = normalizeStringsDeep(nextIdea);
+      const fixedBuild = normalizeStringsDeep(nextBuild);
+
+      setIdea(fixedIdea);
+      setBuildText(fixedBuild);
+
+      await saveDraft(pid, fixedBuild, fixedIdea);
+
+      setBuildVersion((v) => v + 1); // force preview refresh
+    } catch (e: any) {
+      setErr(e?.message ?? String(e));
+      setStatus("error");
+    }
+  }
+  // ---------------------------------------------------------------------------
+
     return () => window.removeEventListener("resize", onResize);
   }, []);
   // --------------------------------------------
@@ -133,8 +184,9 @@ export default function CreatorBuild() {
       const sep = prev && !prev.endsWith("\n") ? "\n" : "";
       const nextIdea = `${prev}${sep}${cleaned}`;
       const nextBuild = generateStructuredBuild(nextIdea);
-      setBuildText(nextBuild);
-      scheduleSave(nextBuild, nextIdea);
+const fixedBuild = normalizeStringsDeep(nextBuild);
+setBuildText(fixedBuild);
+scheduleSave(fixedBuild, nextIdea);
       return nextIdea;
     });
   }
@@ -176,12 +228,13 @@ export default function CreatorBuild() {
 
     const row = data as DraftRow | null;
     if (row?.body != null) {
-      setBuildText(row.body);
+      const fixedBody = normalizeStringsDeep(row.body);
+setBuildText(fixedBody);
 
-      const m = row.body.match(/About:\s*([\s\S]*?)\n\nBenefits:/i);
+      const m = fixedBody.match(/About:\s*([\s\S]*?)\n\nBenefits:/i);
       if (m?.[1]) setIdea(m[1].trim());
 
-      lastTitleRef.current = inferNameFromText(m?.[1] || row.body);
+      lastTitleRef.current = inferNameFromText(m?.[1] || fixedBody);
     }
   }
 
@@ -235,6 +288,8 @@ export default function CreatorBuild() {
         }
       }
     })();
+  // --- Ghost repair + hard reset helpers (must be inside CreatorBuild scope) ---
+
 
     return () => {
       cancelled = true;
@@ -323,13 +378,51 @@ export default function CreatorBuild() {
 <button
             type="button"
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.print(); }}
-            onPointerUp={(e) => { e.preventDefault(); e.stopPropagation(); window.print(); }}
-            onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); window.print(); }}
-            style={{ touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}
+style={{ touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}
           >
             Print / Save PDF
           </button>
-        </div>
+        
+<button
+  type="button"
+  onClick={(e) => { e.preventDefault(); e.stopPropagation(); void repairGhostsAndSave(); }}
+style={{
+    marginLeft: 10,
+    height: 40,
+    padding: "0 12px",
+    borderRadius: 12,
+    border: "1px solid rgba(255,255,255,0.16)",
+    background: "rgba(255,255,255,0.06)",
+    color: "white",
+    cursor: "pointer",
+    fontWeight: 900,
+    fontSize: 12
+  }}
+  title="Fix ghost characters by rewriting cleaned text back into Supabase"
+>
+  Repair ghosts & save
+</button>
+
+<button
+  type="button"
+  onClick={(e) => { e.preventDefault(); e.stopPropagation(); void resetBuildFresh(); }}
+style={{
+    marginLeft: 10,
+    height: 40,
+    padding: "0 12px",
+    borderRadius: 12,
+    border: "1px solid rgba(255,120,120,0.35)",
+    background: "rgba(255,80,80,0.14)",
+    color: "white",
+    cursor: "pointer",
+    fontWeight: 900,
+    fontSize: 12
+  }}
+  title="Nuclear option: regenerate from idea and overwrite the stored draft (ignores any corrupted saved snapshot)"
+>
+  Reset build fresh
+</button>
+</div>
       </div>
 
       <div
@@ -416,8 +509,9 @@ export default function CreatorBuild() {
               setIdea(nextIdea);
 
               const nextBuild = generateStructuredBuild(nextIdea);
-              setBuildText(nextBuild);
-              scheduleSave(nextBuild, nextIdea);
+const fixedBuild = normalizeStringsDeep(nextBuild);
+setBuildText(fixedBuild);
+scheduleSave(fixedBuild, nextIdea);
             }}
             placeholder="Example: I run a Tampa-based dance studio teaching hip hop & contemporary for kids and adults. Booking online. Contact: hello@..."
             style={ {
