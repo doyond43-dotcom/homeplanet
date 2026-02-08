@@ -6,8 +6,10 @@ import { ensureProject } from "../data/ensureProject";
 import { useProjectStore } from "../state/projectStore";
 import { BuildPreview } from "../components/BuildPreview";
 import VoiceDictationButton from "../components/VoiceDictationButton";
-import { getActiveProjectId as getActiveProjectIdLocal,
-  setActiveProjectId as setActiveProjectIdLocal } from "../lib/projectsStore";
+import {
+  getActiveProjectId as getActiveProjectIdLocal,
+  setActiveProjectId as setActiveProjectIdLocal,
+} from "../lib/projectsStore";
 
 type DraftRow = {
   project_id: string;
@@ -53,11 +55,7 @@ function generateStructuredBuild(input: string): string {
   const wantsQuote = /\b(quote|estimate|pricing|price)\b/i.test(raw);
   const wantsShop = /\b(shop|store|buy|order)\b/i.test(raw);
 
-  const cta =
-    (wantsBook && "View Schedule") ||
-    (wantsShop && "Shop") ||
-    (wantsQuote && "Get a Quote") ||
-    "Contact";
+  const cta = (wantsBook && "View Schedule") || (wantsShop && "Shop") || (wantsQuote && "Get a Quote") || "Contact";
 
   return `H1: ${name}
 
@@ -90,65 +88,15 @@ ${[
 
 export default function CreatorBuild() {
   const navigate = useNavigate();
-// --- Responsive layout (mobile = 1 column) ---
+
+  // --- Responsive layout (mobile = 1 column) ---
   const [isNarrow, setIsNarrow] = useState(() => (typeof window !== "undefined" ? window.innerWidth < 900 : true));
 
   useEffect(() => {
     const onResize = () => setIsNarrow(window.innerWidth < 900);
     window.addEventListener("resize", onResize);
-  // --- Ghost repair + hard reset helpers (must be inside CreatorBuild scope) ---
-  const DEFAULT_IDEA =
-    "I run a Tampa-based dance studio that teaches hip hop and contemporary classes for kids and adults. Booking online. Contact: hello@movetampa.com";
-
-  async function repairGhostsAndSave() {
-    try {
-      setErr(null);
-      const pid = await ensureActiveBuildProject();
-      setActiveProjectIdLocal(pid);
-
-      const fixedIdea  = normalizeStringsDeep(idea);
-      const fixedBuild = normalizeStringsDeep(buildText);
-
-      setIdea(fixedIdea);
-      setBuildText(fixedBuild);
-
-      await saveDraft(pid, fixedBuild, fixedIdea);
-
-      setBuildVersion((v) => v + 1); // force preview refresh
-    } catch (e: any) {
-      setErr(e?.message ?? String(e));
-      setStatus("error");
-    }
-  }
-
-  async function resetBuildFresh() {
-    try {
-      setErr(null);
-      const pid = await ensureActiveBuildProject();
-      setActiveProjectIdLocal(pid);
-
-      const nextIdea  = DEFAULT_IDEA;
-      const nextBuild = generateStructuredBuild(nextIdea);
-
-      const fixedIdea  = normalizeStringsDeep(nextIdea);
-      const fixedBuild = normalizeStringsDeep(nextBuild);
-
-      setIdea(fixedIdea);
-      setBuildText(fixedBuild);
-
-      await saveDraft(pid, fixedBuild, fixedIdea);
-
-      setBuildVersion((v) => v + 1); // force preview refresh
-    } catch (e: any) {
-      setErr(e?.message ?? String(e));
-      setStatus("error");
-    }
-  }
-  // ---------------------------------------------------------------------------
-
     return () => window.removeEventListener("resize", onResize);
   }, []);
-  // --------------------------------------------
 
   const { activeProjectId, setActiveProjectId, hydrateActiveFromStorage } = useProjectStore();
 
@@ -164,7 +112,7 @@ export default function CreatorBuild() {
     )
   );
 
-  // Force preview “jump” on Build button (holy-shit moment)
+  // Force preview refresh
   const [buildVersion, setBuildVersion] = useState<number>(1);
 
   const [status, setStatus] = useState<"idle" | "creating" | "saving" | "saved" | "error">("idle");
@@ -183,10 +131,13 @@ export default function CreatorBuild() {
     setIdea((prev) => {
       const sep = prev && !prev.endsWith("\n") ? "\n" : "";
       const nextIdea = `${prev}${sep}${cleaned}`;
+
       const nextBuild = generateStructuredBuild(nextIdea);
-const fixedBuild = normalizeStringsDeep(nextBuild);
-setBuildText(fixedBuild);
-scheduleSave(fixedBuild, nextIdea);
+      const fixedBuild = normalizeStringsDeep(nextBuild);
+
+      setBuildText(fixedBuild);
+      scheduleSave(fixedBuild, nextIdea);
+
       return nextIdea;
     });
   }
@@ -222,16 +173,21 @@ scheduleSave(fixedBuild, nextIdea);
   }
 
   async function loadDraft(projectId: string) {
-    const { data, error } = await supabase.from("project_drafts").select("project_id, body").eq("project_id", projectId).maybeSingle();
+    const { data, error } = await supabase
+      .from("project_drafts")
+      .select("project_id, body")
+      .eq("project_id", projectId)
+      .maybeSingle();
 
     if (error) throw error;
 
     const row = data as DraftRow | null;
     if (row?.body != null) {
       const fixedBody = normalizeStringsDeep(row.body);
-setBuildText(fixedBody);
+      setBuildText(fixedBody);
 
-      const m = fixedBody.match(/About:\s*([\s\S]*?)\n\nBenefits:/i);
+      // Extract the About block from our structured template
+      const m = fixedBody.match(/About:\s*([\s\S]*?)\n\n(?:Services:|Products:|CTA:|Contact:)/i);
       if (m?.[1]) setIdea(m[1].trim());
 
       lastTitleRef.current = inferNameFromText(m?.[1] || fixedBody);
@@ -262,6 +218,7 @@ setBuildText(fixedBody);
     if (!authData?.user) throw new Error("Not authenticated");
 
     setStatus("saving");
+
     const { error } = await supabase
       .from("project_drafts")
       .upsert({ project_id: projectId, owner_id: authData.user.id, body }, { onConflict: "project_id" });
@@ -274,6 +231,7 @@ setBuildText(fixedBody);
     window.setTimeout(() => setStatus("idle"), 650);
   }
 
+  // Load the draft when activeProjectId is present
   useEffect(() => {
     let cancelled = false;
 
@@ -288,8 +246,6 @@ setBuildText(fixedBody);
         }
       }
     })();
-  // --- Ghost repair + hard reset helpers (must be inside CreatorBuild scope) ---
-
 
     return () => {
       cancelled = true;
@@ -298,6 +254,7 @@ setBuildText(fixedBody);
 
   function scheduleSave(nextBuildText: string, ideaText: string) {
     if (saveTimer.current) window.clearTimeout(saveTimer.current);
+
     saveTimer.current = window.setTimeout(async () => {
       try {
         setErr(null);
@@ -331,17 +288,66 @@ setBuildText(fixedBody);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // --- Ghost repair + hard reset helpers (dev-only but safe) ---
+  const DEFAULT_IDEA =
+    "I run a Tampa-based dance studio that teaches hip hop and contemporary classes for kids and adults. Booking online. Contact: hello@movetampa.com";
+
+  async function repairGhostsAndSave() {
+    try {
+      setErr(null);
+      const pid = await ensureActiveBuildProject();
+      setActiveProjectIdLocal(pid);
+
+      const fixedIdea = normalizeStringsDeep(idea);
+      const fixedBuild = normalizeStringsDeep(buildText);
+
+      setIdea(fixedIdea);
+      setBuildText(fixedBuild);
+
+      await saveDraft(pid, fixedBuild, fixedIdea);
+
+      setBuildVersion((v) => v + 1); // force preview refresh
+    } catch (e: any) {
+      setErr(e?.message ?? String(e));
+      setStatus("error");
+    }
+  }
+
+  async function resetBuildFresh() {
+    try {
+      setErr(null);
+      const pid = await ensureActiveBuildProject();
+      setActiveProjectIdLocal(pid);
+
+      const nextIdea = DEFAULT_IDEA;
+      const nextBuild = generateStructuredBuild(nextIdea);
+
+      const fixedIdea = normalizeStringsDeep(nextIdea);
+      const fixedBuild = normalizeStringsDeep(nextBuild);
+
+      setIdea(fixedIdea);
+      setBuildText(fixedBuild);
+
+      await saveDraft(pid, fixedBuild, fixedIdea);
+
+      setBuildVersion((v) => v + 1); // force preview refresh
+    } catch (e: any) {
+      setErr(e?.message ?? String(e));
+      setStatus("error");
+    }
+  }
+  // ------------------------------------------------------------
+
   const statusLabel =
     (status === "creating" && "creating…") ||
     (status === "saving" && "saving…") ||
-    (status === "saved" && "saved ?") ||
+    (status === "saved" && "saved ✓") ||
     (status === "error" && "error") ||
     (activeProjectId ? "auto-saved" : "start typing");
 
-  
-
-  // Shared HP pill + soft card styles (Back + Projects match, add breathing room)
-  const hpPill: any = { height: 40,
+  // Shared HP pill + soft card styles
+  const hpPill: any = {
+    height: 40,
     padding: "0 12px",
     borderRadius: 999,
     border: "1px solid rgba(255,255,255,0.16)",
@@ -354,88 +360,99 @@ setBuildText(fixedBody);
     whiteSpace: "nowrap",
     display: "inline-flex",
     alignItems: "center",
-    justifyContent: "center" };
+    justifyContent: "center",
+  };
 
-  const hpCard: any = { padding: 14,
+  const hpCard: any = {
+    padding: 14,
     borderRadius: 18,
     border: "1px solid rgba(255,255,255,0.10)",
     background: "rgba(0,0,0,0.22)",
     boxShadow: "0 10px 30px rgba(0,0,0,0.25)",
-    minWidth: 0 };return (
+    minWidth: 0,
+  };
+
+  return (
     <div style={{ padding: 18, maxWidth: 1200, margin: "0 auto" }}>
       <div
-        style={ {
+        style={{
           marginBottom: 12,
           padding: "10px 12px",
           borderRadius: 14,
           border: "2px solid rgba(0,255,150,0.55)",
           background: "rgba(0,255,150,0.14)",
           color: "white",
-          fontWeight: 900 }}
+          fontWeight: 900,
+        }}
       >
-        MIC BUILD ACTIVE ? (CreatorBuild.tsx)
-        <div style={{ display: "flex", gap: 10, alignItems: "center", marginTop: 10 }}>
-<button
+        MIC BUILD ACTIVE ✓ (CreatorBuild.tsx)
+        <div style={{ display: "flex", gap: 10, alignItems: "center", marginTop: 10, flexWrap: "wrap" }}>
+          <button
             type="button"
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.print(); }}
-style={{ touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              window.print();
+            }}
+            style={{ touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}
           >
             Print / Save PDF
           </button>
-        
-<button
-  type="button"
-  onClick={(e) => { e.preventDefault(); e.stopPropagation(); void repairGhostsAndSave(); }}
-style={{
-    marginLeft: 10,
-    height: 40,
-    padding: "0 12px",
-    borderRadius: 12,
-    border: "1px solid rgba(255,255,255,0.16)",
-    background: "rgba(255,255,255,0.06)",
-    color: "white",
-    cursor: "pointer",
-    fontWeight: 900,
-    fontSize: 12
-  }}
-  title="Fix ghost characters by rewriting cleaned text back into Supabase"
->
-  Repair ghosts & save
-</button>
 
-<button
-  type="button"
-  onClick={(e) => { e.preventDefault(); e.stopPropagation(); void resetBuildFresh(); }}
-style={{
-    marginLeft: 10,
-    height: 40,
-    padding: "0 12px",
-    borderRadius: 12,
-    border: "1px solid rgba(255,120,120,0.35)",
-    background: "rgba(255,80,80,0.14)",
-    color: "white",
-    cursor: "pointer",
-    fontWeight: 900,
-    fontSize: 12
-  }}
-  title="Nuclear option: regenerate from idea and overwrite the stored draft (ignores any corrupted saved snapshot)"
->
-  Reset build fresh
-</button>
-</div>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              void repairGhostsAndSave();
+            }}
+            style={{
+              marginLeft: 10,
+              height: 40,
+              padding: "0 12px",
+              borderRadius: 12,
+              border: "1px solid rgba(255,255,255,0.16)",
+              background: "rgba(255,255,255,0.06)",
+              color: "white",
+              cursor: "pointer",
+              fontWeight: 900,
+              fontSize: 12,
+            }}
+            title="Fix ghost characters by rewriting cleaned text back into Supabase"
+          >
+            Repair ghosts &amp; save
+          </button>
+
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              void resetBuildFresh();
+            }}
+            style={{
+              marginLeft: 10,
+              height: 40,
+              padding: "0 12px",
+              borderRadius: 12,
+              border: "1px solid rgba(255,120,120,0.35)",
+              background: "rgba(255,80,80,0.14)",
+              color: "white",
+              cursor: "pointer",
+              fontWeight: 900,
+              fontSize: 12,
+            }}
+            title="Nuclear option: regenerate from idea and overwrite the stored draft"
+          >
+            Reset build fresh
+          </button>
+        </div>
       </div>
 
-      <div
-        style={ {
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: 12,
-          marginBottom: 14 }}
-      >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 14 }}>
         <div>
           <h1 style={{ fontSize: 22, margin: 0 }}>Creator</h1>
-          <div style={{ opacity: 0.65, fontSize: 12 }}>Describe ? Build ? Preview</div>
+          <div style={{ opacity: 0.65, fontSize: 12 }}>Describe • Build • Preview</div>
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
@@ -468,13 +485,14 @@ style={{
         </div>
       </div>
 
-      { err && (
+      {err && (
         <div
           style={{
             padding: 12,
             borderRadius: 12,
             border: "1px solid rgba(255,255,255,0.14)",
-            marginBottom: 12 }}
+            marginBottom: 12,
+          }}
         >
           <div style={{ fontWeight: 800, marginBottom: 6 }}>Save error</div>
           <div style={{ opacity: 0.85, fontSize: 13 }}>{err}</div>
@@ -482,11 +500,12 @@ style={{
       )}
 
       <div
-        style={ {
+        style={{
           display: "grid",
           gridTemplateColumns: isNarrow ? "1fr" : "1fr 1fr",
           gap: 18,
-          alignItems: "start" }}
+          alignItems: "start",
+        }}
       >
         <div style={hpCard}>
           <div style={{ fontSize: 18, fontWeight: 900, marginBottom: 6 }}>Describe your business or idea</div>
@@ -495,8 +514,7 @@ style={{
           </div>
 
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, gap: 10 }}>
-            <div style={{ opacity: 0.65, fontSize: 12 }}>Speak it ??</div>
-
+            <div style={{ opacity: 0.65, fontSize: 12 }}>Speak it</div>
             <VoiceDictationButton onFinal={appendFromVoice} />
           </div>
 
@@ -509,12 +527,13 @@ style={{
               setIdea(nextIdea);
 
               const nextBuild = generateStructuredBuild(nextIdea);
-const fixedBuild = normalizeStringsDeep(nextBuild);
-setBuildText(fixedBuild);
-scheduleSave(fixedBuild, nextIdea);
+              const fixedBuild = normalizeStringsDeep(nextBuild);
+
+              setBuildText(fixedBuild);
+              scheduleSave(fixedBuild, nextIdea);
             }}
             placeholder="Example: I run a Tampa-based dance studio teaching hip hop & contemporary for kids and adults. Booking online. Contact: hello@..."
-            style={ {
+            style={{
               width: "100%",
               minHeight: 280,
               padding: 14,
@@ -525,27 +544,30 @@ scheduleSave(fixedBuild, nextIdea);
               fontSize: 15,
               lineHeight: 1.5,
               color: "rgba(255,255,255,0.92)",
-              caretColor: "rgba(255,255,255,0.92)" }}
+              caretColor: "rgba(255,255,255,0.92)",
+            }}
           />
 
           <div style={{ display: "flex", gap: 10, alignItems: "center", marginTop: 12, flexWrap: "wrap" }}>
             <button
               onClick={async () => {
                 const nextBuild = generateStructuredBuild(idea);
-                setBuildText(nextBuild);
+                const fixedBuild = normalizeStringsDeep(nextBuild);
+
+                setBuildText(fixedBuild);
                 setBuildVersion((v) => v + 1);
 
                 try {
                   const pid = await ensureActiveBuildProject();
                   setActiveProjectIdLocal(pid);
-                  await saveDraft(pid, nextBuild, idea);
+                  await saveDraft(pid, fixedBuild, idea);
                 } catch {
                   // best-effort; still allow studio
                 }
 
                 navigate("/planet/creator/studio");
               }}
-              style={ {
+              style={{
                 height: 46,
                 padding: "0 16px",
                 borderRadius: 14,
@@ -553,17 +575,21 @@ scheduleSave(fixedBuild, nextIdea);
                 background: "white",
                 color: "black",
                 fontWeight: 900,
-                cursor: "pointer" }}
+                cursor: "pointer",
+              }}
             >
               Launch Creator Studio
             </button>
 
             <div style={{ fontSize: 12, opacity: 0.75 }}>
-              <span style={{ fontWeight: 900 }}>{autoName}</span> <span style={{ opacity: 0.85 }}>• Auto-generated — rename anytime.</span>
+              <span style={{ fontWeight: 900 }}>{autoName}</span>{" "}
+              <span style={{ opacity: 0.85 }}>• Auto-generated — rename anytime.</span>
             </div>
           </div>
 
-          <div style={{ marginTop: 10, opacity: 0.65, fontSize: 12 }}>Active Project ID: {activeProjectId ?? "none yet"}</div>
+          <div style={{ marginTop: 10, opacity: 0.65, fontSize: 12 }}>
+            Active Project ID: {activeProjectId ?? "none yet"}
+          </div>
         </div>
 
         <div style={hpCard}>
@@ -573,13 +599,4 @@ scheduleSave(fixedBuild, nextIdea);
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
 
