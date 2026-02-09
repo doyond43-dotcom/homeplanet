@@ -14,13 +14,22 @@ import CreatorLive from "./pages/CreatorLive";
 import LiveViewer from "./pages/LiveViewer";
 import { RequireAuth } from "./auth/RequireAuth";
 import PublicPage from "./routes/PublicPage";
+import ReceiptPage from "./routes/ReceiptPage";
+import Authorize from "./routes/Authorize";
 import HomePlanetDashboard from "./pages/HomePlanetDashboard";
 import HomePlanetLanding from "./pages/HomePlanetLanding";
+
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* -----------------------------
+            Public QR / intake + auth + receipt
+        ----------------------------- */}
         <Route path="/c/:slug" element={<PublicPage />} />
+        <Route path="/r/:receipt" element={<ReceiptPage />} />
+        <Route path="/authorize/:receipt" element={<Authorize />} />
+
         <Route element={<AppShell />}>
           {/* -----------------------------
               Public auth routes
@@ -28,10 +37,7 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-          <Route
-            path="/forgot"
-            element={<Navigate to="/reset-password" replace />}
-          />
+          <Route path="/forgot" element={<Navigate to="/reset-password" replace />} />
 
           {/* -----------------------------
               Public live viewer (NO auth)
@@ -122,6 +128,7 @@ export default function App() {
           {/* Default */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
+
         <Route path="/planet/creator/studio" element={<CreatorStudio />} />
         <Route path="/planet/creator/studio/:mode" element={<CreatorStudio />} />
       </Routes>
