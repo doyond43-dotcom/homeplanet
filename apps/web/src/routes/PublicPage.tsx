@@ -171,7 +171,6 @@ export default function PublicPage() {
     }
 
     const insertBase: any = {
-      public_page_id: page.id,
       slug: page.slug,
       payload,
     };
@@ -389,3 +388,5 @@ export default function PublicPage() {
     </div>
   );
 }
+
+
