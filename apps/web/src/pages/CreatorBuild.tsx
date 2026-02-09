@@ -593,10 +593,11 @@ export default function CreatorBuild() {
         </div>
 
         <div style={hpCard}>
-          <BuildPreview key={buildVersion} text={buildText} projectId={activeProjectId} />
+          <BuildPreview key={buildVersion} rawText={buildText} projectId={activeProjectId} />
         </div>
       </div>
     </div>
   );
 }
+
 

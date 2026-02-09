@@ -1,4 +1,4 @@
-ï»¿import { Outlet } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import { useMemo, useState } from "react";
 import { PlanetSidebar } from "../components/PlanetSidebar";
 
@@ -36,6 +36,15 @@ export function AppShell() {
             <Outlet context={{ witnessMode }} />
           </div>
         </main>
+      {/* Atlas balance spacer — keeps the stage centered on the MONITOR */}
+      <div
+        aria-hidden="true"
+        style={{
+          width: "var(--atlasW, 320px)",
+          flex: "0 0 var(--atlasW, 320px)",
+          pointerEvents: "none",
+        }}
+      />
       </div>
     </div>
   );

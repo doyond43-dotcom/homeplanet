@@ -1,4 +1,4 @@
-ï»¿html, body, #root {
+html, body, #root {
   height: 100%;
   min-height: 100%;
   background: #0b0b10;
@@ -22,7 +22,7 @@ html, body, #root {
   color: var(--text-main) !important;
 }
 /* ======================================================
-   HomePlanet â€” Global Dark Lock (Vite)
+   HomePlanet — Global Dark Lock (Vite)
    ====================================================== */
 
 :root {
@@ -151,3 +151,179 @@ body {
 /* Optional: remove iOS tap flash */
 * { -webkit-tap-highlight-color: transparent; }
 /* === end fix === */
+
+/* HOMEPLANET_GLOBAL_BASE */
+html, body {
+  height: 100%;
+  background: #070707;
+  color: rgba(255,255,255,0.92);
+}
+
+#root {
+  min-height: 100%;
+  background: #070707;
+}
+ /* HP_CORE_PANEL_V2 — atrium (cosmic + clear) */
+.hp-core-panel{
+  position: relative;
+
+  /* breathing room */
+  width: min(980px, 100%);
+  margin: 0 auto 96px;
+  padding: 72px 56px;
+
+  border-radius: 28px;
+
+  /* calmer glass */
+  background: linear-gradient(
+    180deg,
+    rgba(10,14,24,0.78),
+    rgba(30,35,70,0.18),
+    rgba(8,10,18,0.88)
+  );
+
+  /* soft frame */
+  box-shadow:
+    0 0 0 1px rgba(140,160,255,0.12),
+    0 18px 70px rgba(0,0,0,0.55),
+    0 0 120px rgba(120,140,255,0.16);
+
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  overflow: hidden;
+}
+
+/* subtle nebula + center glow */
+.hp-core-panel::before{
+  content: "";
+  position: absolute;
+  inset: -2px;
+  pointer-events: none;
+
+  background:
+    radial-gradient(circle at 50% 32%, rgba(160,180,255,0.16), rgba(0,0,0,0) 62%),
+    radial-gradient(circle at 18% 18%, rgba(255,120,200,0.08), rgba(0,0,0,0) 55%),
+    radial-gradient(circle at 82% 22%, rgba(120,200,255,0.08), rgba(0,0,0,0) 55%);
+}
+
+/* keep content above the glow */
+.hp-core-panel > *{
+  position: relative;
+}
+  /* HP_STAGE_V1 — hard-center the HomePlanet stage */
+  .hp-stage{
+    width: min(1100px, 100%);
+    margin: 0 auto;
+  }
+
+/* ================================
+   HP_ARRIVAL_LAYER_V1 — Arrival
+================================ */
+
+.hp-arrival{
+  margin-top: 20px;
+  margin-bottom: 34px;
+  max-width: 880px;
+}
+
+.hp-arrival-title{
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: .2px;
+  color: rgba(235,240,255,.95);
+
+  text-shadow:
+    0 0 20px rgba(130,160,255,.35),
+    0 0 60px rgba(80,120,255,.25);
+}
+
+.hp-arrival-sub{
+  margin-top: 10px;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: rgba(190,205,255,.72);
+}
+
+ /* ================================
+    HP_CORE_HALO_V1 — Arrival Halo
+ ================================= */
+
+ .hp-arrival{
+   position: relative;
+   padding-top: 42px;
+ }
+
+ .hp-arrival::before{
+   content: "";
+   position: absolute;
+   top: -120px;
+   left: 50%;
+   transform: translateX(-50%);
+   width: 900px;
+   height: 480px;
+
+   background:
+     radial-gradient(
+       ellipse at center,
+       rgba(120,160,255,0.18) 0%,
+       rgba(80,120,255,0.10) 35%,
+       rgba(20,40,80,0.05) 60%,
+       rgba(0,0,0,0) 75%
+     );
+
+   filter: blur(40px);
+   pointer-events: none;
+   z-index: 0;
+ }
+
+ .hp-arrival > *{
+   position: relative;
+   z-index: 1;
+ }
+
+ /* ================================
+    HP_EXPLORER_TONE_V1 — Explorer warmth
+ ================================= */
+
+ .hp-explorer-stage{
+   min-height: 100vh;
+   padding: 46px 28px 70px;
+   background: radial-gradient(900px 520px at 52% 10%,
+     rgba(130,160,255,0.14),
+     rgba(0,0,0,0) 60%
+   );
+ }
+
+ /* Make the main dashboard panel feel like Core */
+ .hp-explorer-stage > div{
+   max-width: 1100px;
+   margin: 0 auto;
+   border-radius: 26px;
+   border: 1px solid rgba(255,255,255,0.10);
+   background: rgba(0,0,0,0.40);
+   box-shadow:
+     0 0 0 1px rgba(140,160,255,0.08),
+     0 0 90px rgba(120,140,255,0.10);
+ }
+
+ /* ================================
+    HP_EXPLORER_CITYROW_V1 — Explorer city row interactions
+ ================================ */
+
+.hp-cityRow[data-live="true"]{
+  transition: transform 140ms ease, border-color 140ms ease, background 140ms ease, box-shadow 140ms ease;
+}
+
+.hp-cityRow[data-live="true"]:hover{
+  border-color: rgba(140,160,255,0.28);
+  background: rgba(20,25,45,0.30);
+  box-shadow: 0 0 22px rgba(120,150,255,0.10);
+  transform: translateY(-1px);
+}
+
+.hp-cityRow[data-live="true"]:focus-visible{
+  outline: 2px solid rgba(140,160,255,0.45);
+  outline-offset: 2px;
+}

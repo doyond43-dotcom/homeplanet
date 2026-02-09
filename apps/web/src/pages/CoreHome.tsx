@@ -1,11 +1,21 @@
-﻿import { useOutletContext } from "react-router-dom";
+import { useOutletContext } from "react-router-dom";
 
 export default function CoreHome() {
   const ctx = useOutletContext() as { witnessMode?: boolean } | undefined;
 
   return (
-    <div>
+    <div className="hp-core-panel">
       <h1 style={{ fontSize: 26, margin: 0 }}>HomePlanet Core</h1>
+
+<div className="hp-arrival">
+  <div className="hp-arrival-title">
+    The planetary operating system for proof, identity, and real-world systems.
+  </div>
+
+  <div className="hp-arrival-sub">
+    Every planet, city, and orbit exists to preserve truth at the moment it happens.
+  </div>
+</div>
       <p style={{ marginTop: 10, color: "rgba(255,255,255,0.70)", lineHeight: 1.5 }}>
         This is the planetary operating system shell. Planets (Residents) live in the sidebar. Telemetry is a lens,
         not a destination. Presence is anchored at inception.

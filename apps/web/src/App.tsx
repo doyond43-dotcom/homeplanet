@@ -1,7 +1,6 @@
 ﻿import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppShell } from "./layout/AppShell";
 import CreatorStudio from "./pages/CreatorStudio";
-import CoreHome from "./pages/CoreHome";
 import PlanetOverview from "./pages/PlanetOverview";
 import CityPage from "./pages/CityPage";
 import CreatorProjects from "./pages/CreatorProjects";
@@ -15,6 +14,8 @@ import CreatorLive from "./pages/CreatorLive";
 import LiveViewer from "./pages/LiveViewer";
 import { RequireAuth } from "./auth/RequireAuth";
 import PublicPage from "./routes/PublicPage";
+import HomePlanetDashboard from "./pages/HomePlanetDashboard";
+import HomePlanetLanding from "./pages/HomePlanetLanding";
 export default function App() {
   return (
     <BrowserRouter>
@@ -40,7 +41,8 @@ export default function App() {
           {/* -----------------------------
               Core
           ----------------------------- */}
-          <Route path="/" element={<CoreHome />} />
+          <Route path="/" element={<HomePlanetLanding />} />
+          <Route path="/explorer" element={<HomePlanetDashboard />} />
           <Route
             path="/core/doctrine"
             element={
@@ -126,6 +128,7 @@ export default function App() {
     </BrowserRouter>
   );
 }
+
 
 
 

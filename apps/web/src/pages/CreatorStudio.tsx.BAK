@@ -1,11 +1,12 @@
-﻿import { useEffect, useMemo, useState } from "react";
+﻿import * as React from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import CreatorServices from "./CreatorServices";
-import IntakeViewerPanel from "../components/IntakeViewerPanel";
 import { useProjectStore } from "../state/projectStore";
 import { supabase } from "../lib/supabase";
 
+import { BackPill } from "../components/BackPill";
 type StudioMode = {
   key: string;
   title: string;
@@ -36,7 +37,276 @@ function genSlug(len: number): string {
   return out;
 }
 
-function QRCodeImg({ value, size = 240 }: { value: string; size?: number }) {
+type IntakeRow = {
+  id: string;
+  created_at: string;
+  slug: string | null;
+  project_id: string;
+  payload: any;
+};
+
+function prettyTime(ts?: string) {
+  if (!ts) return "";
+  const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) return ts;
+  return d.toLocaleString();
+}
+
+function safeStr(v: any) {
+  if (v === null || v === undefined) return "";
+  return String(v);
+}
+
+function IntakeViewerPanel({ projectId, slug }: { projectId: string | null | undefined; slug?: string | null }) {
+  const [rows, setRows] = React.useState<IntakeRow[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const [err, setErr] = React.useState<string | null>(null);
+  const [expandedId, setExpandedId] = React.useState<string | null>(null);
+
+  const seenIdsRef = React.useRef<Set<string>>(new Set());
+
+  React.useEffect(() => {
+    if (!projectId && !slug) return;
+    const channel = supabase
+      .channel("intake-submissions:" + String(projectId ?? slug ?? "none"))
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "public_intake_submissions",
+          filter: slug ? ("slug=eq." + slug) : ("project_id=eq." + projectId),
+        },
+        (payload) => {
+          const row = payload.new as any;
+          const id = String(row?.id ?? "");
+          if (id && seenIdsRef.current.has(id)) return;
+          if (id) seenIdsRef.current.add(id);
+
+          setRows((prev) => {
+            if (id && prev?.some((x) => String((x as any)?.id ?? "") === id)) return prev;
+            return [row as any, ...(prev ?? [])];
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [projectId, slug]);
+
+  const load = React.useCallback(async () => {
+    if (!projectId && !slug) return;
+    setLoading(true);
+    setErr(null);
+    try {
+      const base = supabase
+        .from("public_intake_submissions")
+        .select("id,created_at,slug,project_id,payload")
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      const { data, error } = slug
+        ? await base.eq("slug", slug)
+        : await base.eq("project_id", projectId);
+
+      if (error) throw error;
+      setRows((data as any) ?? []);
+    } catch (e: any) {
+      setErr(e?.message ?? String(e));
+    } finally {
+      setLoading(false);
+    }
+  }, [projectId, slug]);
+
+  React.useEffect(() => {
+    load();
+  }, [load]);
+
+  const headerNote = slug ? `slug: ${slug}` : "";
+
+  return (
+    <div
+      style={{
+        marginTop: 14,
+        border: "1px solid rgba(255,255,255,0.12)",
+        borderRadius: 14,
+        padding: 14,
+        background: "rgba(255,255,255,0.03)",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+        <div style={{ fontWeight: 700, fontSize: 16, color: "white" }}>Intake</div>
+        <div style={{ opacity: 0.65, fontSize: 12, color: "rgba(255,255,255,0.85)" }}>
+          {rows.length} {rows.length === 1 ? "submission" : "submissions"} {headerNote ? `- ${headerNote}` : ""}
+        </div>
+
+        <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
+          <button
+            onClick={load}
+            style={{
+              padding: "6px 10px",
+              borderRadius: 10,
+              border: "1px solid rgba(255,255,255,0.12)",
+              background: "rgba(255,255,255,0.04)",
+              cursor: "pointer",
+              color: "white",
+              fontWeight: 800,
+            }}
+          >
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      {loading && (
+        <div style={{ marginTop: 10, opacity: 0.75, fontSize: 13, color: "rgba(255,255,255,0.85)" }}>
+          Loading...
+        </div>
+      )}
+
+      {err && (
+        <div
+          style={{
+            marginTop: 10,
+            padding: 10,
+            borderRadius: 10,
+            border: "1px solid rgba(255,80,80,0.35)",
+            background: "rgba(255,80,80,0.08)",
+            color: "rgba(255,200,200,0.95)",
+            fontSize: 13,
+          }}
+        >
+          Intake load failed: {err}
+        </div>
+      )}
+
+      {!loading && !err && rows.length === 0 && (
+        <div style={{ marginTop: 10, opacity: 0.7, fontSize: 13, color: "rgba(255,255,255,0.85)" }}>
+          No submissions yet. Open the public link in incognito and submit a test, then hit Refresh.
+        </div>
+      )}
+
+      <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 10 }}>
+        {rows.map((r) => {
+          const p = r.payload || {};
+          const name = safeStr(p.name || p.full_name || p.fullName);
+          const email = safeStr(p.email);
+          const phone = safeStr(p.phone);
+          const contact = safeStr(p.preferred_contact || p.preferredContact);
+          const address = safeStr(p.address);
+          const message = safeStr(p.message || p.issue || p.request);
+
+          const isOpen = expandedId === r.id;
+
+          return (
+            <div
+              key={r.id}
+              style={{
+                border: "1px solid rgba(255,255,255,0.10)",
+                borderRadius: 12,
+                padding: 12,
+                background: "rgba(0,0,0,0.15)",
+                color: "rgba(255,255,255,0.9)",
+              }}
+            >
+              <div style={{ display: "flex", gap: 10, alignItems: "baseline" }}>
+                <div style={{ fontWeight: 800 }}>{name || email || phone || "Submission"}</div>
+                <div style={{ opacity: 0.65, fontSize: 12 }}>{prettyTime(r.created_at)}</div>
+                <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
+                  <button
+                    onClick={() => setExpandedId(isOpen ? null : r.id)}
+                    style={{
+                      padding: "6px 10px",
+                      borderRadius: 10,
+                      border: "1px solid rgba(255,255,255,0.12)",
+                      background: "rgba(255,255,255,0.04)",
+                      cursor: "pointer",
+                      color: "white",
+                      fontWeight: 800,
+                    }}
+                  >
+                    {isOpen ? "Hide" : "View"}
+                  </button>
+
+                  <button
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(JSON.stringify(r.payload ?? {}, null, 2));
+                        alert("Payload copied");
+                      } catch {}
+                    }}
+                    style={{
+                      padding: "6px 10px",
+                      borderRadius: 10,
+                      border: "1px solid rgba(255,255,255,0.12)",
+                      background: "rgba(255,255,255,0.04)",
+                      cursor: "pointer",
+                      color: "white",
+                      fontWeight: 800,
+                    }}
+                  >
+                    Copy JSON
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ marginTop: 8, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <div style={{ fontSize: 13 }}>
+                  <div style={{ opacity: 0.6, fontSize: 12 }}>Email</div>
+                  <div>{email || "-"}</div>
+                </div>
+                <div style={{ fontSize: 13 }}>
+                  <div style={{ opacity: 0.6, fontSize: 12 }}>Phone</div>
+                  <div>{phone || "-"}</div>
+                </div>
+                <div style={{ fontSize: 13 }}>
+                  <div style={{ opacity: 0.6, fontSize: 12 }}>Preferred</div>
+                  <div>{contact || "-"}</div>
+                </div>
+                <div style={{ fontSize: 13 }}>
+                  <div style={{ opacity: 0.6, fontSize: 12 }}>Address</div>
+                  <div>{address || "-"}</div>
+                </div>
+              </div>
+
+              {message && (
+                <div style={{ marginTop: 10, fontSize: 13 }}>
+                  <div style={{ opacity: 0.6, fontSize: 12 }}>Request</div>
+                  <div style={{ whiteSpace: "pre-wrap" }}>{message}</div>
+                </div>
+              )}
+
+              {isOpen && (
+                <pre
+                  style={{
+                    marginTop: 10,
+                    padding: 10,
+                    borderRadius: 10,
+                    border: "1px solid rgba(255,255,255,0.10)",
+                    background: "rgba(255,255,255,0.03)",
+                    overflowX: "auto",
+                    fontSize: 12,
+                    lineHeight: 1.35,
+                  }}
+                >
+{JSON.stringify(
+  { id: r.id, created_at: r.created_at, slug: r.slug, project_id: r.project_id, payload: r.payload },
+  null,
+  2
+)}
+                </pre>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function QRCode({ value, size = 260 }: { value: string; size?: number }) {
   const src =
     "https://api.qrserver.com/v1/create-qr-code/?size=" +
     `${size}x${size}` +
@@ -46,7 +316,7 @@ function QRCodeImg({ value, size = 240 }: { value: string; size?: number }) {
   return <img src={src} width={size} height={size} style={{ borderRadius: 14, display: "block" }} alt="QR code" />;
 }
 
-function StudioSurface({ mode, onBack, onBuild }: { mode: string; onBack: () => void; onBuild: () => void }) {
+function StudioSurface({ mode, onBack, onBuild }: { mode: string; onBack?: () => void; onBuild?: () => void }) {
   const store: any = useProjectStore();
   const activeProjectId: string | null = store?.activeProjectId ?? null;
 
@@ -196,7 +466,6 @@ function StudioSurface({ mode, onBack, onBuild }: { mode: string; onBack: () => 
 
     async function ensureSlug() {
       setSlugErr(null);
-
       if (!activeProjectId) {
         setSlugPhase("no-project");
         setSlugErr("activeProjectId is missing");
@@ -312,136 +581,11 @@ function StudioSurface({ mode, onBack, onBuild }: { mode: string; onBack: () => 
     } catch {}
   }
 
-  const PRINT_CSS = `
-@media print {
-  body { background: #fff !important; color: #000 !important; }
-  * { box-shadow: none !important; text-shadow: none !important; }
-  a, a:visited { color: #000 !important; text-decoration: none !important; }
-
-  body * { visibility: hidden !important; }
-  #print-surface, #print-surface * { visibility: visible !important; }
-
-  #print-surface {
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
-    width: 8.5in !important;
-    max-width: 8.5in !important;
-    padding: 0.5in !important;
-    background: #fff !important;
-    color: #000 !important;
-    display: block !important;
-  }
-
-  #print-surface > * { break-inside: avoid !important; }
-
-  input, textarea, select {
-    background: #fff !important;
-    color: #000 !important;
-    border: 1px solid #000 !important;
-  }
-
-  [style*="background"] { background: transparent !important; }
-  [style*="border"] { border-color: #000 !important; }
-
-  @page { size: Letter; margin: 0.5in; }
-}
-`;
-  // ===== Intake: real submission wiring (mirrors PublicPage.tsx) =====
-  const normalizeStringsDeep = (v: any): any => {
-    if (typeof v === "string") return v.trim();
-    if (Array.isArray(v)) return v.map(normalizeStringsDeep);
-    if (v && typeof v === "object") {
-      const out: any = {};
-      for (const k of Object.keys(v)) out[k] = normalizeStringsDeep((v as any)[k]);
-      return out;
-    }
-    return v;
-  };
-
-  const [intakeDraft, setIntakeDraft] = useState({
-    full_name: "",
-    phone: "",
-    email: "",
-    preferred_contact: "",
-    help_request: "",
-    address: "",
-    best_time: "",
-  });
-
-  const [intakeSaving, setIntakeSaving] = useState(false);
-  const [intakeError, setIntakeError] = useState<string | null>(null);
-  const [intakeSuccess, setIntakeSuccess] = useState<string | null>(null);
-
-  const submitIntake = async () => {
-    if (!slug) {
-      setIntakeError("Slug is not ready yet. Wait one second and try again.");
-      return;
-    }
-
-    setIntakeSaving(true);
-    setIntakeError(null);
-    setIntakeSuccess(null);
-
-    const minimalOk =
-      intakeDraft.full_name.trim() ||
-      intakeDraft.phone.trim() ||
-      intakeDraft.email.trim() ||
-      intakeDraft.help_request.trim();
-
-    if (!minimalOk) {
-      setIntakeSaving(false);
-      setIntakeError("Add at least a name/phone/email or a short description, then submit.");
-      return;
-    }
-
-    const { data: pageRow, error: pageErr } = await supabase
-      .from("public_pages")
-      .select("id, slug")
-      .eq("slug", slug)
-      .maybeSingle();
-
-    if (pageErr || !pageRow?.id) {
-      setIntakeSaving(false);
-      setIntakeError(pageErr?.message || "Could not resolve public page id for this slug.");
-      return;
-    }
-
-    const insert = {
-      slug: slug,
-      payload: normalizeStringsDeep(intakeDraft),
-    };
-
-    const { error } = await supabase.from("public_intake_submissions").insert(insert);
-
-    if (error) {
-      setIntakeSaving(false);
-      setIntakeError(error.message || "Failed to submit intake.");
-      return;
-    }
-
-    setIntakeSaving(false);
-    setIntakeSuccess("Submitted successfully.");
-
-    setIntakeDraft({
-      full_name: "",
-      phone: "",
-      email: "",
-      preferred_contact: "",
-      help_request: "",
-      address: "",
-      best_time: "",
-    });
-  };
-  // ===== End Intake wiring =====
-
-return (
+  return (
     <div style={shell}>
-      <style>{PRINT_CSS}</style>
-
       <div style={{ marginBottom: 14, color: "white" }}>
         <div style={{ margin: 0, fontSize: 18, fontWeight: 950 }}>
-          {isIntake ? "Scan to Submit Intake" : `Creator Studio - ${mode}`}
+          {isIntake ? "Online Intake (QR) - MVP Surface" : `Creator Studio - ${mode}`}
         </div>
         <div style={{ marginTop: 6, fontSize: 12, opacity: 0.85 }}>
           Project: <span style={{ fontWeight: 900 }}>{activeProjectId ? activeProjectId.slice(0, 8) : "none"}</span>
@@ -454,7 +598,7 @@ return (
         <div id="print-surface" style={{ display: "grid", gridTemplateColumns: "1.35fr 0.9fr", gap: 16, alignItems: "stretch" }}>
           <div style={panel}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-              <div style={{ fontWeight: 950, color: "white" }}>Scan to Submit Intake</div>
+              <div style={{ fontWeight: 950, color: "white" }}>Intake Form (starter)</div>
               <div style={{ fontSize: 11, opacity: 0.8, color: "rgba(255,255,255,0.85)" }}>replace fields per industry</div>
             </div>
 
@@ -463,7 +607,7 @@ return (
             <div style={row2}>
               <div>
                 <div style={label}>Full name</div>
-                <input style={input} placeholder="Customer name" value={intakeDraft.full_name} onChange={(e) => setIntakeDraft((d) => ({ ...d, full_name: e.target.value }))} />
+                <input style={input} placeholder="Customer name" />
               </div>
               <div>
                 <div style={label}>Phone</div>
@@ -476,11 +620,11 @@ return (
             <div style={row2}>
               <div>
                 <div style={label}>Email</div>
-                <input style={input} placeholder="email@example.com" value={intakeDraft.email} onChange={(e) => setIntakeDraft((d) => ({ ...d, email: e.target.value }))} />
+                <input style={input} placeholder="email@example.com" />
               </div>
               <div>
                 <div style={label}>Preferred contact</div>
-                <input style={input} placeholder="Text / Call / Email" value={intakeDraft.preferred_contact} onChange={(e) => setIntakeDraft((d) => ({ ...d, preferred_contact: e.target.value }))} />
+                <input style={input} placeholder="Text / Call / Email" />
               </div>
             </div>
 
@@ -488,7 +632,7 @@ return (
 
             <div>
               <div style={label}>What do you need help with?</div>
-              <textarea style={textarea} placeholder="Describe the issue / request..." value={intakeDraft.help_request} onChange={(e) => setIntakeDraft((d) => ({ ...d, help_request: e.target.value }))} />
+              <textarea style={textarea} placeholder="Describe the issue / request..." />
             </div>
 
             <div style={{ height: 12 }} />
@@ -496,21 +640,20 @@ return (
             <div style={row2}>
               <div>
                 <div style={label}>Address (optional)</div>
-                <input style={input} placeholder="City, State" value={intakeDraft.address} onChange={(e) => setIntakeDraft((d) => ({ ...d, address: e.target.value }))} />
+                <input style={input} placeholder="City, State" />
               </div>
               <div>
                 <div style={label}>Best time</div>
-                <input style={input} placeholder="Morning / Afternoon / Evening" value={intakeDraft.best_time} onChange={(e) => setIntakeDraft((d) => ({ ...d, best_time: e.target.value }))} />
+                <input style={input} placeholder="Morning / Afternoon / Evening" />
               </div>
             </div>
 
             <hr style={hr} />
 
-            <button type="button" style={primary} onClick={submitIntake}>
-              Submit Intake
+            <button type="button" style={primary} onClick={() => alert("Submit wiring next")}>
+              Submit Intake (wire next)
             </button>
-          
-</div>
+          </div>
 
           <div style={panel}>
             <div style={{ fontWeight: 950, color: "white" }}>Share (QR + Link)</div>
@@ -527,15 +670,15 @@ return (
             <div style={qrBox}>
               <div style={{ background: "white", padding: 14, borderRadius: 14, display: "inline-flex" }}>
                 {publicUrl ? (
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                    <QRCodeImg value={publicUrl} size={240} />
-                    <div style={{ marginTop: 8, fontSize: 11, color: "black", textAlign: "center", wordBreak: "break-all" }}>
-                      Scan or visit:<br /><strong>{publicUrl}</strong>
-                    </div>
-                  </div>
-                ) : (
-                  <div style={{ color: "rgba(0,0,0,0.7)", fontSize: 12, padding: 12 }}>Generating link...</div>
-                )}
+  <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+    <QRCode value={publicUrl} size={240} />
+    <div style={{ marginTop: 8, fontSize: 11, color: "black", textAlign: "center", wordBreak: "break-all" }}>
+      Scan or visit:<br /><strong>{publicUrl}</strong>
+    </div>
+  </div>
+) : (
+  <div style={{ color: "rgba(0,0,0,0.7)", fontSize: 12, padding: 12 }}>Generating link...</div>
+)}
               </div>
             </div>
 
@@ -546,28 +689,25 @@ return (
 
             <div style={{ height: 12 }} />
 
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-              <button type="button" style={pill} onClick={copyUrl}>
-                Copy link
-              </button>
-              
-<button type="button" style={pill} onClick={onBack} title="Back to Studio">
-                Studio
-              </button>
-              
-<button type="button" style={pill} onClick={onBuild} title="Back to Build">
-                Build
-              </button>
-              
-<button type="button" style={primary} onClick={() => window.print()} title="Print / Save PDF">
-                Print / Save PDF
-              </button>
-            
-</div>
+            <button type="button" style={pill} onClick={copyUrl}>
+              Copy link
+            </button>
+
+            <IntakeViewerPanel projectId={activeProjectId} slug={slug} />
 
             <div style={{ height: 12 }} />
 
-            <IntakeViewerPanel projectId={activeProjectId} slug={slug} />
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <button type="button" style={pill} onClick={onBack} title="Back to Studio">
+                Studio
+              </button>
+              <button type="button" style={pill} onClick={onBuild} title="Back to Build">
+                Build
+              </button>
+              <button type="button" style={primary} onClick={() => window.print()} title="Print / Save PDF">
+                Print / Save PDF
+              </button>
+            </div>
           </div>
         </div>
       ) : (
@@ -585,7 +725,7 @@ return (
 export default function CreatorStudio() {
   const nav = useNavigate();
   const [hoverKey, setHoverKey] = useState<string | null>(null);
-  const { mode } = useParams<{ mode?: string }>();
+const { mode } = useParams<{ mode?: string }>();
 
   const modes = useMemo<StudioMode[]>(
     () => [
@@ -635,21 +775,70 @@ export default function CreatorStudio() {
   };
 
   const card: any = {
-    padding: 16,
-    borderRadius: 18,
-    border: "1px solid rgba(90,160,255,0.18)",
-    background: "linear-gradient(180deg, rgba(40,80,140,0.06), rgba(0,0,0,0.45))",
-    cursor: "pointer",
-    transition: "transform .22s ease, box-shadow .22s ease, border-color .22s ease, background .22s ease",
-    boxShadow: "0 8px 22px rgba(0,0,0,0.45)",
-  };
+  padding: 16,
+  borderRadius: 18,
+  border: "1px solid rgba(90,160,255,0.18)",
+  background: "linear-gradient(180deg, rgba(40,80,140,0.06), rgba(0,0,0,0.45))",
+  cursor: "pointer",
+  transition: "transform .22s ease, box-shadow .22s ease, border-color .22s ease, background .22s ease",
+  boxShadow: "0 8px 22px rgba(0,0,0,0.45)",
+};
 
-  const cardHover: any = {
-    transform: "translateY(-2px)",
-    boxShadow: "0 14px 34px rgba(0,0,0,0.65)",
-    border: "1px solid rgba(120,190,255,0.32)",
-    background: "linear-gradient(180deg, rgba(55,105,190,0.10), rgba(0,0,0,0.55))",
-  };
+  const PRINT_CSS = `
+@media print {
+  body { background: #fff !important; color: #000 !important; }
+  * { box-shadow: none !important; text-shadow: none !important; }
+  a, a:visited { color: #000 !important; text-decoration: none !important; }
+
+  /* Hide everything by default */
+  body * { visibility: hidden !important; }
+
+  /* Only show our print surface */
+  #print-surface, #print-surface * { visibility: visible !important; }
+
+  /* Position print surface at top-left */
+  #print-surface {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 8.5in !important;
+    max-width: 8.5in !important;
+    padding: 0.5in !important;
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  /* Force print surface to be a normal document flow */
+  #print-surface {
+    display: block !important;
+  }
+  #print-surface > * {
+    break-inside: avoid !important;
+  }
+
+  /* Make inputs/fields printable */
+  input, textarea, select {
+    background: #fff !important;
+    color: #000 !important;
+    border: 1px solid #000 !important;
+  }
+
+  /* Kill dark gradients/borders inside print */
+  [style*="background"] { background: transparent !important; }
+  [style*="border"] { border-color: #000 !important; }
+
+  @page { size: Letter; margin: 0.5in; }
+}
+`
+
+
+const cardHover: any = {
+  transform: "translateY(-2px)",
+  boxShadow: "0 14px 34px rgba(0,0,0,0.65)",
+  border: "1px solid rgba(120,190,255,0.32)",
+  background: "linear-gradient(180deg, rgba(55,105,190,0.10), rgba(0,0,0,0.55))",
+};
+
 
   const title: any = { fontSize: 16, fontWeight: 950, margin: 0, letterSpacing: 0.2, color: "rgba(255,255,255,0.96)" };
   const desc: any = { fontSize: 12, opacity: 0.84, marginTop: 8, lineHeight: 1.35, color: "rgba(255,255,255,0.84)" };
@@ -668,19 +857,16 @@ export default function CreatorStudio() {
             </div>
 
             <div style={{ display: "flex", gap: 10 }}>
+              <BackPill onClick={() => nav("/planet/creator/studio")} label="Studio" variant="primary" />
+              <BackPill onClick={() => nav("/planet/creator/build")} label="Build" showArrow={false} variant="build" />
               <button type="button" style={hpPill} onClick={() => window.print()} title="Print / Save PDF">
                 Print / Save PDF
               </button>
-            
-</div>
+            </div>
           </div>
         </div>
 
-        <StudioSurface
-          mode={mode}
-          onBack={() => nav("/planet/creator/studio")}
-          onBuild={() => nav("/planet/creator/build")}
-        />
+        <StudioSurface mode={mode} onBack={() => nav("/planet/creator/studio")} onBuild={() => nav("/planet/creator/build")} />
       </div>
     );
   }
@@ -693,6 +879,11 @@ export default function CreatorStudio() {
             <h1 style={{ fontSize: 22, margin: 0 }}>Creator Studio</h1>
             <div style={{ opacity: 0.7, fontSize: 12, marginTop: 4 }}>Choose what you are making, then customize and export print-ready.</div>
           </div>
+
+          <div style={{ display: "flex", gap: 10 }}>
+            <BackPill onClick={() => nav(-1)} label="Back" variant="primary" />
+            <BackPill onClick={() => nav("/planet/creator/build")} label="Build" showArrow={false} variant="build" />
+          </div>
         </div>
       </div>
 
@@ -700,7 +891,7 @@ export default function CreatorStudio() {
         {modes.map((m) => (
           <div
             key={m.key}
-            style={hoverKey === m.key ? { ...card, ...cardHover } : card}
+style={hoverKey === m.key ? { ...card, ...cardHover } : card}
             onMouseEnter={() => setHoverKey(m.key)}
             onMouseLeave={() => setHoverKey(null)}
             onFocus={() => setHoverKey(m.key)}
@@ -723,6 +914,30 @@ export default function CreatorStudio() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

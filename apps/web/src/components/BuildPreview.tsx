@@ -1,5 +1,4 @@
-﻿import React from "react";
-import { normalizeStringsDeep } from "../lib/text/normalizeText";
+﻿import { normalizeStringsDeep } from "../lib/text/normalizeText";
 
 type Props = {
   rawText: string;
