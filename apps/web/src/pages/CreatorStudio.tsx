@@ -368,12 +368,11 @@ function StudioSurface({ mode, onBack, onBuild }: { mode: string; onBack: () => 
     address: "",
     best_time: "",
   });
-
-  const [intakeSaving, setIntakeSaving] = useState(false);
-  const [intakeError, setIntakeError] = useState<string | null>(null);
-  const [intakeSuccess, setIntakeSuccess] = useState<string | null>(null);
-
-  const submitIntake = async () => {
+  
+  const [, setIntakeSaving] = useState(false);
+  const [, setIntakeError] = useState<string | null>(null);
+  const [, setIntakeSuccess] = useState<string | null>(null);
+const submitIntake = async () => {
     if (!slug) {
       setIntakeError("Slug is not ready yet. Wait one second and try again.");
       return;
@@ -723,6 +722,9 @@ export default function CreatorStudio() {
     </div>
   );
 }
+
+
+
 
 
 

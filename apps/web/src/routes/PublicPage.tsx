@@ -184,7 +184,7 @@ export default function PublicPage() {
   return (
     <div style={{ padding: 16, maxWidth: 900 }}>
       <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 6 }}>
-        {null || "Public Intake"}
+        {"Public Intake"}
       </div>
 
 
@@ -229,6 +229,7 @@ export default function PublicPage() {
     </div>
   );
 }
+
 
 
 

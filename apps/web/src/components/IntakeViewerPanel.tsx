@@ -31,6 +31,28 @@ function prettyTime(iso: any) {
   }
 }
 
+function shouldHideName(name: string): boolean {
+  const n = safeStr(name).toLowerCase();
+  if (!n) return false;
+
+  return (
+    n.includes("fuck") ||
+    n.includes("shit") ||
+    n.includes("cunt") ||
+    n.includes("bitch") ||
+    n.includes("asshole") ||
+    n.includes("test customer") ||
+    n.includes("dummy") ||
+    n.includes("asdf") ||
+    n.includes("qwerty")
+  );
+}
+
+function shouldShowRow(row: any): boolean {
+  const p = (row as any)?.payload || {};
+  const name = safeStr(p.name || p.full_name || p.fullName);
+  return !shouldHideName(name);
+}
 export default function IntakeViewerPanel({
   projectId,
   slug,
@@ -340,7 +362,7 @@ export default function IntakeViewerPanel({
       )}
 
       <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 10 }}>
-        {rows.map((r: any) => {
+        {rows.filter(shouldShowRow).map((r: any) => {
           const p = (r as any).payload || {};
           const name = safeStr(p.name || p.full_name || p.fullName);
           const email = safeStr(p.email);
@@ -490,3 +512,4 @@ export default function IntakeViewerPanel({
     </div>
   );
 }
+
