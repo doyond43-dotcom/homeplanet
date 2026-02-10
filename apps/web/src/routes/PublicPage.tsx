@@ -324,26 +324,43 @@ export default function PublicPage() {
       payload,
     };
 
-    // Try returning receipt_id if the column exists; fallback to id-only.
+    // NOTE:
+    // We MUST NOT use `.select(...)` on the insert for anon/public,
+    // because that adds `?select=` to the request, which requires anon SELECT
+    // and triggers: "new row violates row-level security policy".
+    //
+    // So we do:
+    // 1) insert with returning: "minimal" (no row readback)
+    // 2) generate a client receipt_id (presence-first proof token)
+    // 3) show that receipt immediately (receipt-ready UX)
+    //
+    // If you later want server-generated receipts, add a Postgres trigger to set receipt_id,
+    // AND add an anon SELECT policy scoped to that receipt only.
     try {
-      const { data, error } = await supabase
+      // Generate a client-side receipt ID so we never need anon SELECT to show a receipt.
+      const clientReceipt =
+        (globalThis as any)?.crypto?.randomUUID?.() ||
+        `rcpt_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+
+      const insertWithClientReceipt = {
+        ...insertBase,
+        receipt_id: clientReceipt, // safe even if column doesn't exist (will error) -> fallback below
+      };
+
+      // Try insert including receipt_id (if column exists).
+      const { error } = await supabase
         .from("public_intake_submissions")
-        .insert(insertBase)
-        .select("id, receipt_id, created_at")
-        .single();
+        .insert(insertWithClientReceipt as any, { returning: "minimal" });
 
       if (error) throw error;
 
-      const r = String((data as any)?.receipt_id ?? (data as any)?.id ?? "");
-      if (r) {
-        setReceipt(r);
-        try {
-          window.localStorage.setItem("last_receipt_id", r);
-        } catch {}
-      }
+      // Success: we can show the client receipt immediately.
+      setReceipt(String(clientReceipt));
+      try {
+        window.localStorage.setItem("last_receipt_id", String(clientReceipt));
+      } catch {}
 
-      const ts = String((data as any)?.created_at ?? safeNowIso());
-      setSavedAt(ts || safeNowIso());
+      setSavedAt(safeNowIso());
 
       try {
         setLastPayloadJson(JSON.stringify(payload, null, 2));
@@ -355,25 +372,26 @@ export default function PublicPage() {
       setSuccess("Request logged.");
       return;
     } catch (e: any) {
+      // If receipt_id column doesn't exist (or other insert error),
+      // fallback to inserting ONLY slug + payload.
       try {
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from("public_intake_submissions")
-          .insert(insertBase)
-          .select("id, created_at")
-          .single();
+          .insert(insertBase as any, { returning: "minimal" });
 
         if (error) throw error;
 
-        const r = String((data as any)?.id ?? "");
-        if (r) {
-          setReceipt(r);
-          try {
-            window.localStorage.setItem("last_receipt_id", r);
-          } catch {}
-        }
+        // Fallback receipt (client-only token)
+        const clientReceipt =
+          (globalThis as any)?.crypto?.randomUUID?.() ||
+          `rcpt_${Date.now()}_${Math.random().toString(16).slice(2)}`;
 
-        const ts = String((data as any)?.created_at ?? safeNowIso());
-        setSavedAt(ts || safeNowIso());
+        setReceipt(String(clientReceipt));
+        try {
+          window.localStorage.setItem("last_receipt_id", String(clientReceipt));
+        } catch {}
+
+        setSavedAt(safeNowIso());
 
         try {
           setLastPayloadJson(JSON.stringify(payload, null, 2));

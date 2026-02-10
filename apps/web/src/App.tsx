@@ -18,18 +18,23 @@ import ReceiptPage from "./routes/ReceiptPage";
 import Authorize from "./routes/Authorize";
 import HomePlanetDashboard from "./pages/HomePlanetDashboard";
 import HomePlanetLanding from "./pages/HomePlanetLanding";
+import PressKitTaylorCreek from "./routes/PressKitTaylorCreek";
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* -----------------------------
+                {/* -----------------------------
             Public QR / intake + auth + receipt
         ----------------------------- */}
         <Route path="/c/:slug" element={<PublicPage />} />
         <Route path="/r/:receipt" element={<ReceiptPage />} />
         <Route path="/authorize/:receipt" element={<Authorize />} />
 
+
+
+        
+        <Route path="/press/taylor-creek" element={<PressKitTaylorCreek />} />
         <Route element={<AppShell />}>
           {/* -----------------------------
               Public auth routes
@@ -135,6 +140,10 @@ export default function App() {
     </BrowserRouter>
   );
 }
+
+
+
+
 
 
 
