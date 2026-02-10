@@ -168,7 +168,7 @@ export default function PressKitTaylorCreek() {
 FOR IMMEDIATE RELEASE
 
 Local Auto Repair Shop Launches Public Proof System for Service Requests and Receipts
-[CITY, STATE] — [DATE]
+Okeechobee, FL — February 10, 2026
 
 Taylor Creek Auto Repair has launched a public-facing system that allows customers, inspectors, and reporters to submit service requests, receive instant receipts, and download timestamped PDF records—before any work begins.
 
@@ -298,3 +298,4 @@ const codeStyle: React.CSSProperties = {
   padding: "2px 6px",
   borderRadius: 8,
 };
+
