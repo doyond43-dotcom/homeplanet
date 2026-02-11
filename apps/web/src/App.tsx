@@ -26,17 +26,15 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-                {/* -----------------------------
+        {/* -----------------------------
             Public QR / intake + auth + receipt
         ----------------------------- */}
         <Route path="/c/:slug" element={<TenantPublicPage />} />
         <Route path="/r/:receipt" element={<ReceiptPage />} />
         <Route path="/authorize/:receipt" element={<Authorize />} />
 
-
-
-        
         <Route path="/press/taylor-creek" element={<PressKitTaylorCreek />} />
+
         <Route element={<AppShell />}>
           {/* -----------------------------
               Public auth routes
@@ -131,18 +129,19 @@ export default function App() {
               </RequireAuth>
             }
           />
-
-          {/* Default */}
-          <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
 
         <Route path="/planet/creator/studio" element={<CreatorStudio />} />
         <Route path="/planet/creator/studio/:mode" element={<CreatorStudio />} />
         <Route path="/taylor-creek" element={<TaylorCreekSite />} />
+
+        {/* Default (MUST be last) */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );
 }
+
 
 
 
