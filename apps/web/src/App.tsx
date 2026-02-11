@@ -14,11 +14,13 @@ import CreatorLive from "./pages/CreatorLive";
 import LiveViewer from "./pages/LiveViewer";
 import { RequireAuth } from "./auth/RequireAuth";
 import PublicPage from "./routes/PublicPage";
+import TenantPublicPage from "./routes/TenantPublicPage";
 import ReceiptPage from "./routes/ReceiptPage";
 import Authorize from "./routes/Authorize";
 import HomePlanetDashboard from "./pages/HomePlanetDashboard";
 import HomePlanetLanding from "./pages/HomePlanetLanding";
 import PressKitTaylorCreek from "./routes/PressKitTaylorCreek";
+import TaylorCreekSite from "./routes/TaylorCreekSite";
 
 export default function App() {
   return (
@@ -27,7 +29,7 @@ export default function App() {
                 {/* -----------------------------
             Public QR / intake + auth + receipt
         ----------------------------- */}
-        <Route path="/c/:slug" element={<PublicPage />} />
+        <Route path="/c/:slug" element={<TenantPublicPage />} />
         <Route path="/r/:receipt" element={<ReceiptPage />} />
         <Route path="/authorize/:receipt" element={<Authorize />} />
 
@@ -136,10 +138,13 @@ export default function App() {
 
         <Route path="/planet/creator/studio" element={<CreatorStudio />} />
         <Route path="/planet/creator/studio/:mode" element={<CreatorStudio />} />
+        <Route path="/taylor-creek" element={<TaylorCreekSite />} />
       </Routes>
     </BrowserRouter>
   );
 }
+
+
 
 
 

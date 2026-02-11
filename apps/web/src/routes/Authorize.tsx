@@ -252,7 +252,7 @@ export default function Authorize() {
 
     const row: any = {
       auth_receipt: authR,
-      intake_receipt,
+      intakeReceipt,
       slug,
       amount_cap: Number(String(cap).replace(/[^0-9.]/g, "")) || 0,
       created_at_client: ts,
@@ -400,3 +400,4 @@ export default function Authorize() {
     </div>
   );
 }
+

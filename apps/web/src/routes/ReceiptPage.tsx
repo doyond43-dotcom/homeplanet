@@ -18,14 +18,6 @@ function trimOrEmpty(v: any) {
   }
 }
 
-function safePretty(v: any) {
-  try {
-    return JSON.stringify(v, null, 2);
-  } catch {
-    return "";
-  }
-}
-
 export default function ReceiptPage() {
   const params = useParams();
   const receipt = (params as any)?.receipt || "";
@@ -173,3 +165,5 @@ export default function ReceiptPage() {
     </div>
   );
 }
+
+

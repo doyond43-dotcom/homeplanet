@@ -1,0 +1,29 @@
+﻿HOMEPLANET MILESTONE: Public Intake Alias Live
+CapturedAtLocal: 02/10/2026 13:04:51
+CapturedAtUTC:   2026-02-10T18:04:52.0271213Z
+
+SUPABASE_URL = https://kcmcssyyopmvqglsddyw.supabase.co
+ANON_KEY_FIRST12 = eyJhbGciOiJI
+
+Public Pages (pmqf6bn1gs + taylor-creek):
+{
+    "value":  [
+                  {
+                      "slug":  "pmqf6bn1gs",
+                      "mode":  "intake",
+                      "created_at":  "2026-02-01T16:50:22.515645+00:00"
+                  },
+                  {
+                      "slug":  "taylor-creek",
+                      "mode":  "intake_alias",
+                      "created_at":  "2026-02-10T17:54:48.937913+00:00"
+                  }
+              ],
+    "Count":  2
+}
+
+Live URL checks:
+GET https://www.homeplanet.city/c/pmqf6bn1gs => 200
+GET https://www.homeplanet.city/c/taylor-creek => 200
+
+Saved: MILESTONE_public_intake_alias_live_20260210_130451.txt

@@ -171,7 +171,7 @@ function approxBytesFromDataUrl(dataUrl: string) {
   const idx = dataUrl.indexOf(",");
   if (idx < 0) return dataUrl.length;
   const b64 = dataUrl.slice(idx + 1);
-  // base64 bytes ≈ (len * 3/4) - padding
+  // base64 bytes ˜ (len * 3/4) - padding
   const pad = b64.endsWith("==") ? 2 : b64.endsWith("=") ? 1 : 0;
   return Math.max(0, Math.floor((b64.length * 3) / 4) - pad);
 }
@@ -205,7 +205,13 @@ export default function PublicPage() {
   const [lastPayloadJson, setLastPayloadJson] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<string | null>(null);
 
-  const normalizedSlug = useMemo(() => String(slug || "").trim(), [slug]);
+  const normalizedSlug = useMemo(() => {
+  return String(slug || "")
+    .trim()
+    .replace(/^c\//i, "")
+    .replace(/^\/+/, "").replace(/\/+$/, "")
+    .toLowerCase();
+}, [slug]);
 
   useEffect(() => {
     let alive = true;
@@ -977,7 +983,7 @@ export default function PublicPage() {
                 </div>
               </div>
               <div style={{ ...styles.pill, background: "rgba(34,197,94,0.18)", borderColor: "rgba(34,197,94,0.35)" }}>
-                Logged ✅
+                Logged ?
               </div>
             </div>
 
@@ -1040,3 +1046,6 @@ export default function PublicPage() {
     </div>
   );
 }
+
+
+

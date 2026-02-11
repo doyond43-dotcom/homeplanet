@@ -1,11 +1,10 @@
-import * as React from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+﻿import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 export default function PressKitTaylorCreek() {
   const nav = useNavigate();
   const [sp] = useSearchParams();
 
-  const slug = (sp.get("slug") || "taylor-creek").trim();
+  const slug = (sp.get("slug") || "pmqf6bn1gs").trim();
 
   const goIntake = () => nav(`/c/${encodeURIComponent(slug)}`);
 
@@ -46,3 +45,4 @@ export default function PressKitTaylorCreek() {
     </div>
   );
 }
+
