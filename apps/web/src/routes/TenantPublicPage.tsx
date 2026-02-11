@@ -1,5 +1,4 @@
-﻿import * as React from "react";
-import { useParams } from "react-router-dom";
+﻿import { useParams } from "react-router-dom";
 import PublicPage from "./PublicPage";
 import { getTenantTheme } from "./tenantThemes";
 import { TenantShell } from "../components/TenantShell";

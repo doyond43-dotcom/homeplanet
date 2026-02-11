@@ -1,5 +1,4 @@
-﻿import * as React from "react";
-import type { TenantTheme } from "../routes/tenantThemes";
+﻿import type { TenantTheme } from "../routes/tenantThemes";
 
 export function TenantHeader({ theme }: { theme: TenantTheme }) {
   return (

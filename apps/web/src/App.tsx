@@ -13,7 +13,6 @@ import ResetPassword from "./pages/ResetPassword";
 import CreatorLive from "./pages/CreatorLive";
 import LiveViewer from "./pages/LiveViewer";
 import { RequireAuth } from "./auth/RequireAuth";
-import PublicPage from "./routes/PublicPage";
 import TenantPublicPage from "./routes/TenantPublicPage";
 import ReceiptPage from "./routes/ReceiptPage";
 import Authorize from "./routes/Authorize";

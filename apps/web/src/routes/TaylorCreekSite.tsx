@@ -1,5 +1,4 @@
-﻿import * as React from "react";
-import { Link } from "react-router-dom";
+﻿import { Link } from "react-router-dom";
 
 export default function TaylorCreekSite() {
   return (
@@ -253,20 +252,19 @@ export default function TaylorCreekSite() {
           ))}
         </section>
 
-        {/* Footer */}
-        <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-slate-500 border-t border-slate-900 pt-6">
+                {/* Footer */}
+        <footer className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-slate-500 border-t border-slate-900 pt-6">
           <div>© {new Date().getFullYear()} Taylor Creek Auto Repair</div>
-          <div className="flex gap-4">
+          <nav className="flex gap-4">
             <Link to="/c/taylor-creek" className="hover:text-slate-300">
-              Service request
+              Start request
             </Link>
             <Link to="/press/taylor-creek" className="hover:text-slate-300">
               Press kit
             </Link>
-          </div>
-        </div>
+          </nav>
+        </footer>
       </div>
     </div>
   );
 }
-

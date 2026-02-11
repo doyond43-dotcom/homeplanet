@@ -356,7 +356,7 @@ export default function PublicPage() {
       // Try insert including receipt_id (if column exists).
       const { error } = await supabase
         .from("public_intake_submissions")
-        .insert(insertWithClientReceipt as any, { returning: "minimal" });
+        .insert(insertWithClientReceipt as any);
 
       if (error) throw error;
 
@@ -383,7 +383,7 @@ export default function PublicPage() {
       try {
         const { error } = await supabase
           .from("public_intake_submissions")
-          .insert(insertBase as any, { returning: "minimal" });
+          .insert(insertBase as any);
 
         if (error) throw error;
 
@@ -1046,6 +1046,4 @@ export default function PublicPage() {
     </div>
   );
 }
-
-
 
