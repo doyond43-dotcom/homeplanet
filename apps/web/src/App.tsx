@@ -18,6 +18,10 @@ import ReceiptPage from "./routes/ReceiptPage";
 import Authorize from "./routes/Authorize";
 import HomePlanetDashboard from "./pages/HomePlanetDashboard";
 import HomePlanetLanding from "./pages/HomePlanetLanding";
+
+import PlanetsRegistry from "./pages/PlanetsRegistry";
+
+import MLS from "./pages/MLS";
 import PressKitTaylorCreek from "./routes/PressKitTaylorCreek";
 import TaylorCreekSite from "./routes/TaylorCreekSite";
 
@@ -133,6 +137,8 @@ export default function App() {
         <Route path="/planet/creator/studio" element={<CreatorStudio />} />
         <Route path="/planet/creator/studio/:mode" element={<CreatorStudio />} />
         <Route path="/taylor-creek" element={<TaylorCreekSite />} />
+        <Route path="/planets" element={<PlanetsRegistry />} />
+        <Route path="/mls" element={<MLS />} />
 
         {/* Default (MUST be last) */}
         <Route path="*" element={<Navigate to="/" replace />} />
@@ -140,6 +146,8 @@ export default function App() {
     </BrowserRouter>
   );
 }
+
+
 
 
 
