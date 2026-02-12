@@ -1,5 +1,6 @@
 ﻿import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppShell } from "./layout/AppShell";
+
 import CreatorStudio from "./pages/CreatorStudio";
 import PlanetOverview from "./pages/PlanetOverview";
 import CityPage from "./pages/CityPage";
@@ -12,58 +13,66 @@ import Signup from "./pages/Signup";
 import ResetPassword from "./pages/ResetPassword";
 import CreatorLive from "./pages/CreatorLive";
 import LiveViewer from "./pages/LiveViewer";
+import HomePlanetDashboard from "./pages/HomePlanetDashboard";
+import HomePlanetLanding from "./pages/HomePlanetLanding";
+import PlanetsRegistry from "./pages/PlanetsRegistry";
+
 import { RequireAuth } from "./auth/RequireAuth";
+
 import TenantPublicPage from "./routes/TenantPublicPage";
 import ReceiptPage from "./routes/ReceiptPage";
 import Authorize from "./routes/Authorize";
-import HomePlanetDashboard from "./pages/HomePlanetDashboard";
-import HomePlanetLanding from "./pages/HomePlanetLanding";
 
-import PlanetsRegistry from "./pages/PlanetsRegistry";
+import PressKitTaylorCreek from "./routes/PressKitTaylorCreek";
+import TaylorCreekSite from "./routes/TaylorCreekSite";
 
 import MLS from "./pages/MLS";
 import MLSLanding from "./pages/MLSLanding";
-import PressKitTaylorCreek from "./routes/PressKitTaylorCreek";
-import TaylorCreekSite from "./routes/TaylorCreekSite";
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
         {/* -----------------------------
-            Public QR / intake + auth + receipt
+            Public QR / intake + receipt + authorize
         ----------------------------- */}
         <Route path="/c/:slug" element={<TenantPublicPage />} />
         <Route path="/r/:receipt" element={<ReceiptPage />} />
         <Route path="/authorize/:receipt" element={<Authorize />} />
 
         {/* -----------------------------
-            Public marketing / press / one-pagers (PRIORITY)
+            Public marketing / press / one-pagers
         ----------------------------- */}
         <Route path="/press/taylor-creek" element={<PressKitTaylorCreek />} />
-        <Route path="/taylor-creek" element={<TaylorCreekSite />} />
 
+        {/* -----------------------------
+            Standalone public routes (outside AppShell)
+            These must behave like /taylor-creek (stable, non-loop)
+        ----------------------------- */}
+        <Route path="/planet/creator/studio" element={<CreatorStudio />} />
+        <Route path="/planet/creator/studio/:mode" element={<CreatorStudio />} />
+
+        <Route path="/taylor-creek" element={<TaylorCreekSite />} />
         <Route path="/planets" element={<PlanetsRegistry />} />
+
+        {/* MLS: full landing + minimal fallback */}
         <Route path="/mls" element={<MLSLanding />} />
         <Route path="/mls-min" element={<MLS />} />
 
+        {/* -----------------------------
+            AppShell wrapper routes
+        ----------------------------- */}
         <Route element={<AppShell />}>
-          {/* -----------------------------
-              Public auth routes
-          ----------------------------- */}
+          {/* Public auth routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/forgot" element={<Navigate to="/reset-password" replace />} />
 
-          {/* -----------------------------
-              Public live viewer (NO auth)
-          ----------------------------- */}
+          {/* Public live viewer (NO auth) */}
           <Route path="/live/:room" element={<LiveViewer />} />
 
-          {/* -----------------------------
-              Core
-          ----------------------------- */}
+          {/* Core */}
           <Route path="/" element={<HomePlanetLanding />} />
           <Route path="/explorer" element={<HomePlanetDashboard />} />
 
@@ -86,9 +95,7 @@ export default function App() {
             }
           />
 
-          {/* -----------------------------
-              Protected app routes
-          ----------------------------- */}
+          {/* Protected app routes */}
           <Route
             path="/planet/creator/release/:releaseId"
             element={
@@ -97,7 +104,6 @@ export default function App() {
               </RequireAuth>
             }
           />
-
           <Route
             path="/planet/:planetId"
             element={
@@ -106,7 +112,6 @@ export default function App() {
               </RequireAuth>
             }
           />
-
           <Route
             path="/planet/creator/projects"
             element={
@@ -115,7 +120,6 @@ export default function App() {
               </RequireAuth>
             }
           />
-
           <Route
             path="/planet/creator/build"
             element={
@@ -124,7 +128,6 @@ export default function App() {
               </RequireAuth>
             }
           />
-
           <Route
             path="/planet/:planetId/:cityId"
             element={
@@ -133,7 +136,6 @@ export default function App() {
               </RequireAuth>
             }
           />
-
           <Route
             path="/planet/creator/live"
             element={
@@ -144,16 +146,13 @@ export default function App() {
           />
         </Route>
 
-        {/* Creator Studio routes (outside shell by design) */}
-        <Route path="/planet/creator/studio" element={<CreatorStudio />} />
-        <Route path="/planet/creator/studio/:mode" element={<CreatorStudio />} />
-
         {/* Default (MUST be last) */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );
 }
+
 
 
 
