@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+﻿import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppShell } from "./layout/AppShell";
 import CreatorStudio from "./pages/CreatorStudio";
 import PlanetOverview from "./pages/PlanetOverview";
@@ -155,7 +155,7 @@ export default function App() {
         <Route path="/planet/creator/studio/:mode" element={<CreatorStudio />} />
 
         {/* Default (MUST be last) */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<div style={{padding:24,fontFamily:"system-ui"}}><h1 style={{fontSize:28,margin:0}}>404</h1><p style={{margin:"12px 0"}}>No route matched.</p><p style={{opacity:.8,margin:0}}>Current path: <code>{window.location.pathname}{window.location.search}{window.location.hash}</code></p><p style={{opacity:.7,marginTop:12}}>If you expected /mls, then the click is not landing on /mls (or it is being altered).</p><p style={{marginTop:16}}><a href="/planets">Back to Planets</a></p></div>} />
       </Routes>
     </BrowserRouter>
   );
