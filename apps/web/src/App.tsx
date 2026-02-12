@@ -1,18 +1,17 @@
 ﻿import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import MLSLanding from "./pages/MLSLanding";
-import HomePlanetDashboard from "./pages/HomePlanetDashboard";
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Root */}
-        <Route path="/" element={<HomePlanetDashboard />} />
+        {/* Main = MLS (so root works even if /mls is weird) */}
+        <Route path="/" element={<MLSLanding />} />
 
-        {/* MLS public page */}
+        {/* Explicit MLS route */}
         <Route path="/mls" element={<MLSLanding />} />
 
-        {/* Fallback – redirect anything unknown to home */}
+        {/* Anything else goes home */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
