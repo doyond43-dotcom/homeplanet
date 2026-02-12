@@ -21,6 +21,7 @@ import HomePlanetLanding from "./pages/HomePlanetLanding";
 import PressKitTaylorCreek from "./routes/PressKitTaylorCreek";
 import TaylorCreekSite from "./routes/TaylorCreekSite";
 import MLSLanding from "./pages/MLSLanding";
+import SystemRegistry from "./pages/SystemRegistry";
 
 export default function App() {
   return (
@@ -54,6 +55,9 @@ export default function App() {
           ----------------------------- */}
           <Route path="/" element={<HomePlanetLanding />} />
           <Route path="/explorer" element={<HomePlanetDashboard />} />
+
+          {/* Stable system hub (distinct from Explorer) */}
+          <Route path="/core/registry" element={<SystemRegistry />} />
 
           {/* MLS (isolated; does not affect root/core) */}
           <Route path="/mls" element={<MLSLanding />} />
