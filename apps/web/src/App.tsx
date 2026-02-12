@@ -139,7 +139,8 @@ export default function App() {
         <Route path="/planet/creator/studio/:mode" element={<CreatorStudio />} />
         <Route path="/taylor-creek" element={<TaylorCreekSite />} />
         <Route path="/planets" element={<PlanetsRegistry />} />
-        <Route path="/mls" element={<MLSLanding />} />
+        <Route path="/mls" element={<MLSLanding />} />        <Route path="/mls-min" element={<MLS />} />
+
 
         {/* Default (MUST be last) */}
         <Route path="*" element={<Navigate to="/" replace />} />
