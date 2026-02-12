@@ -43,16 +43,10 @@ export default function App() {
         <Route path="/press/taylor-creek" element={<PressKitTaylorCreek />} />
         <Route path="/taylor-creek" element={<TaylorCreekSite />} />
 
-        {/* MLS must behave like /taylor-creek: stable, public, non-loop */}
+        <Route path="/planets" element={<PlanetsRegistry />} />
         <Route path="/mls" element={<MLSLanding />} />
         <Route path="/mls-min" element={<MLS />} />
 
-        {/* Public index */}
-        <Route path="/planets" element={<PlanetsRegistry />} />
-
-        {/* -----------------------------
-            Layout shell routes
-        ----------------------------- */}
         <Route element={<AppShell />}>
           {/* -----------------------------
               Public auth routes
@@ -160,6 +154,8 @@ export default function App() {
     </BrowserRouter>
   );
 }
+
+
 
 
 
