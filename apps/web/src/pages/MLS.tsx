@@ -1,4 +1,4 @@
-﻿export default function MLS() {
+﻿const MLS = () => {
   return (
     <div style={{minHeight:"100vh", background:"#060916", color:"#EAF0FF", padding:"28px", fontFamily:"system-ui, -apple-system, Segoe UI, Roboto, sans-serif"}}>
       <div style={{maxWidth:720, margin:"0 auto"}}>
@@ -26,4 +26,6 @@
       </div>
     </div>
   );
-}
+};
+
+export default MLS;
