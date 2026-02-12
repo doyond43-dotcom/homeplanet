@@ -1,4 +1,4 @@
-﻿import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppShell } from "./layout/AppShell";
 import CreatorStudio from "./pages/CreatorStudio";
 import PlanetOverview from "./pages/PlanetOverview";
@@ -37,8 +37,22 @@ export default function App() {
         <Route path="/r/:receipt" element={<ReceiptPage />} />
         <Route path="/authorize/:receipt" element={<Authorize />} />
 
+        {/* -----------------------------
+            Public marketing / press / one-pagers (PRIORITY)
+        ----------------------------- */}
         <Route path="/press/taylor-creek" element={<PressKitTaylorCreek />} />
+        <Route path="/taylor-creek" element={<TaylorCreekSite />} />
 
+        {/* MLS must behave like /taylor-creek: stable, public, non-loop */}
+        <Route path="/mls" element={<MLS />} />
+        <Route path="/mls-min" element={<MLS />} />
+
+        {/* Public index */}
+        <Route path="/planets" element={<PlanetsRegistry />} />
+
+        {/* -----------------------------
+            Layout shell routes
+        ----------------------------- */}
         <Route element={<AppShell />}>
           {/* -----------------------------
               Public auth routes
@@ -58,6 +72,7 @@ export default function App() {
           ----------------------------- */}
           <Route path="/" element={<HomePlanetLanding />} />
           <Route path="/explorer" element={<HomePlanetDashboard />} />
+
           <Route
             path="/core/doctrine"
             element={
@@ -135,12 +150,9 @@ export default function App() {
           />
         </Route>
 
+        {/* Creator Studio routes (outside shell by design) */}
         <Route path="/planet/creator/studio" element={<CreatorStudio />} />
         <Route path="/planet/creator/studio/:mode" element={<CreatorStudio />} />
-        <Route path="/taylor-creek" element={<TaylorCreekSite />} />
-        <Route path="/planets" element={<PlanetsRegistry />} />
-        <Route path="/mls" element={<MLSLanding />} />        <Route path="/mls-min" element={<MLS />} />
-
 
         {/* Default (MUST be last) */}
         <Route path="*" element={<Navigate to="/" replace />} />
