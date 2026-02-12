@@ -1,6 +1,4 @@
-﻿import { Link } from "react-router-dom";
-
-type Status =
+﻿type Status =
   | "Live"
   | "Structured"
   | "Concept Locked"
@@ -81,13 +79,16 @@ export default function PlanetsRegistry() {
               <p className="mt-3 text-sm text-slate-400">
                 Origin Concept: Chelsea Rule • Captured: October 2025 (approx.)
               </p>
-              <Link
-                to="/mls"
+              <a
+                href="/mls"
                 className="inline-block mt-4 text-sm text-sky-400 hover:underline"
+                onClick={(e) => e.stopPropagation()}
               >
                 View Concept →
-              </Link>
-            </div><PlanetCard
+              </a>
+            </div>
+
+<PlanetCard
               name="Civic / Proof Infrastructure"
               mission="Convert real-world submissions into timestamped, dispute-resistant records."
               status="Live"
@@ -129,12 +130,13 @@ export default function PlanetsRegistry() {
               <p className="mt-3 text-sm text-slate-400">
                 Gold Tier Local Service Provenance pilot node.
               </p>
-              <Link
-                to="/taylor-creek"
+              <a
+                href="/taylor-creek"
                 className="inline-block mt-4 text-sm text-sky-400 hover:underline"
+                onClick={(e) => e.stopPropagation()}
               >
                 View City →
-              </Link>
+              </a>
             </div>
           </div>
         </section>
@@ -142,4 +144,8 @@ export default function PlanetsRegistry() {
     </div>
   );
 }
+
+
+
+
 
