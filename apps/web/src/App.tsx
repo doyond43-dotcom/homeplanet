@@ -22,6 +22,7 @@ import HomePlanetLanding from "./pages/HomePlanetLanding";
 import PlanetsRegistry from "./pages/PlanetsRegistry";
 
 import MLS from "./pages/MLS";
+import MLSLanding from "./pages/MLSLanding";
 import PressKitTaylorCreek from "./routes/PressKitTaylorCreek";
 import TaylorCreekSite from "./routes/TaylorCreekSite";
 
@@ -138,7 +139,7 @@ export default function App() {
         <Route path="/planet/creator/studio/:mode" element={<CreatorStudio />} />
         <Route path="/taylor-creek" element={<TaylorCreekSite />} />
         <Route path="/planets" element={<PlanetsRegistry />} />
-        <Route path="/mls" element={<MLS />} />
+        <Route path="/mls" element={<MLSLanding />} />
 
         {/* Default (MUST be last) */}
         <Route path="*" element={<Navigate to="/" replace />} />
