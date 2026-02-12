@@ -20,6 +20,7 @@ import HomePlanetDashboard from "./pages/HomePlanetDashboard";
 import HomePlanetLanding from "./pages/HomePlanetLanding";
 import PressKitTaylorCreek from "./routes/PressKitTaylorCreek";
 import TaylorCreekSite from "./routes/TaylorCreekSite";
+import MLSLanding from "./pages/MLSLanding";
 
 export default function App() {
   return (
@@ -53,6 +54,10 @@ export default function App() {
           ----------------------------- */}
           <Route path="/" element={<HomePlanetLanding />} />
           <Route path="/explorer" element={<HomePlanetDashboard />} />
+
+          {/* MLS (isolated; does not affect root/core) */}
+          <Route path="/mls" element={<MLSLanding />} />
+
           <Route
             path="/core/doctrine"
             element={
@@ -132,6 +137,8 @@ export default function App() {
 
         <Route path="/planet/creator/studio" element={<CreatorStudio />} />
         <Route path="/planet/creator/studio/:mode" element={<CreatorStudio />} />
+
+        {/* Public standalone pages (non-AppShell) */}
         <Route path="/taylor-creek" element={<TaylorCreekSite />} />
 
         {/* Default (MUST be last) */}
