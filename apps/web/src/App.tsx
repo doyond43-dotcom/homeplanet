@@ -1,4 +1,4 @@
-﻿import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+﻿import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppShell } from "./layout/AppShell";
 import CreatorStudio from "./pages/CreatorStudio";
 import PlanetOverview from "./pages/PlanetOverview";
@@ -23,7 +23,7 @@ import TaylorCreekSite from "./routes/TaylorCreekSite";
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <Routes>
         {/* -----------------------------
             Public QR / intake + auth + receipt
@@ -137,7 +137,7 @@ export default function App() {
         {/* Default (MUST be last) */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 
