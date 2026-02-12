@@ -44,7 +44,7 @@ export default function App() {
         <Route path="/taylor-creek" element={<TaylorCreekSite />} />
 
         {/* MLS must behave like /taylor-creek: stable, public, non-loop */}
-        <Route path="/mls" element={<MLS />} />
+        <Route path="/mls" element={<MLSLanding />} />
         <Route path="/mls-min" element={<MLS />} />
 
         {/* Public index */}
@@ -155,11 +155,13 @@ export default function App() {
         <Route path="/planet/creator/studio/:mode" element={<CreatorStudio />} />
 
         {/* Default (MUST be last) */}
-        <Route path="*" element={<div style={{padding:24,fontFamily:"system-ui"}}><h1 style={{fontSize:28,margin:0}}>404</h1><p style={{margin:"12px 0"}}>No route matched.</p><p style={{opacity:.8,margin:0}}>Current path: <code>{window.location.pathname}{window.location.search}{window.location.hash}</code></p><p style={{opacity:.7,marginTop:12}}>If you expected /mls, then the click is not landing on /mls (or it is being altered).</p><p style={{marginTop:16}}><a href="/planets">Back to Planets</a></p></div>} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );
 }
+
+
 
 
 
