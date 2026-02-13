@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState, useCallback, useEffect } from "react";
+Ôªøimport React, { useMemo, useRef, useState, useCallback, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { PLANETS } from "../planet/planetMap";
 
@@ -15,21 +15,14 @@ function normalizeCities(input: any): City[] {
     .filter((c) => c.id);
 }
 
-// HashRouter-safe: if we ever hard-navigate, do it using a # route so the server never 404s.
-function asHashHref(to: string): string {
-  // to should already start with "/" in this codebase
-  const path = to.startsWith("/") ? to : `/${to}`;
-  return `${window.location.origin}/#${path}`;
-}
-
 /**
- * PlanetSidebar ó OS navigation spine (flex-safe; no overlays)
+ * PlanetSidebar ‚Äî OS navigation spine (flex-safe; no overlays)
  * Adds:
  * - Collapsed / Expanded states (system-level, not page-level)
  * - Crisp pill controls that match Creator Build
  * Keeps:
  * - iOS-safe single-event navigation
- * - Hard fallback if router doesnít update path
+ * - Hard fallback if router doesn‚Äôt update path
  */
 export function PlanetSidebar(props: { witnessMode: boolean; onToggleWitnessMode: () => void }) {
   const { witnessMode, onToggleWitnessMode } = props;
@@ -39,14 +32,14 @@ export function PlanetSidebar(props: { witnessMode: boolean; onToggleWitnessMode
   const navigate = useNavigate();
   const location = useLocation();
 
-  /* ARRIVAL_SIDEBAR_SOFT_V1 ó soften Atlas on first load, then reveal */
+  
+  /* ARRIVAL_SIDEBAR_SOFT_V1 ‚Äî soften Atlas on first load, then reveal */
   const [arrivalSoft, setArrivalSoft] = useState<boolean>(true);
   useEffect(() => {
     const t = window.setTimeout(() => setArrivalSoft(false), 450);
     return () => window.clearTimeout(t);
   }, []);
-
-  // Collapsed / expanded (sidebar state)
+// Collapsed / expanded (sidebar state)
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     try {
       return window.innerWidth < 900; // default collapsed on narrow screens
@@ -55,6 +48,7 @@ export function PlanetSidebar(props: { witnessMode: boolean; onToggleWitnessMode
     }
   });
 
+  
   // Publish Atlas width for perfect centering of the stage
   useEffect(() => {
     try {
@@ -62,8 +56,7 @@ export function PlanetSidebar(props: { witnessMode: boolean; onToggleWitnessMode
       document.documentElement.style.setProperty("--atlasW", w);
     } catch {}
   }, [collapsed]);
-
-  useEffect(() => {
+useEffect(() => {
     const onResize = () => {
       // Auto-collapse when narrow; don't auto-expand when wide (keeps user intent)
       if (window.innerWidth < 900) setCollapsed(true);
@@ -72,14 +65,14 @@ export function PlanetSidebar(props: { witnessMode: boolean; onToggleWitnessMode
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  useEffect(() => {
-    try {
-      // Publish Atlas width so the rest of the UI can visually balance the stage.
-      document.documentElement.style.setProperty("--atlas-w", collapsed ? "84px" : "320px");
-    } catch {}
-  }, [collapsed]);
-
-  // which planet sections are expanded
+  
+useEffect(() => {
+  try {
+    // Publish Atlas width so the rest of the UI can visually balance the stage.
+    document.documentElement.style.setProperty("--atlas-w", collapsed ? "84px" : "320px");
+  } catch {}
+}, [collapsed]);
+// which planet sections are expanded
   const [open, setOpen] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
     for (const p of PLANETS as any[]) initial[String(p.id)] = false;
@@ -88,27 +81,18 @@ export function PlanetSidebar(props: { witnessMode: boolean; onToggleWitnessMode
 
   const lastNavRef = useRef<number>(0);
 
-  // With HashRouter, location.pathname will still be "/" for many pages.
-  // So use location.hash to determine active route correctly.
-  const currentRoute = (() => {
-    const h = (location.hash ?? "").trim();
-    if (h.startsWith("#/")) return h.slice(1); // "/taylor-creek"
-    if (h === "#") return "/";
-    return location.pathname || "/";
-  })();
-
-  const isActive = (to: string) => currentRoute === to;
-  const isUnder = (prefix: string) => currentRoute === prefix || currentRoute.startsWith(prefix + "/");
+  const isActive = (to: string) => location.pathname === to;
+  const isUnder = (prefix: string) => location.pathname === prefix || location.pathname.startsWith(prefix + "/");
 
   const activeGlow = (on: boolean): React.CSSProperties =>
-    on
-      ? {
-          border: "1px solid rgba(0,255,180,0.45)",
-          background: "rgba(0,255,180,0.22)",
-          color: "white",
-          boxShadow: "0 10px 28px rgba(0,0,0,0.38)",
-        }
-      : {};
+  on
+    ? {
+        border: "1px solid rgba(0,255,180,0.45)",
+        background: "rgba(0,255,180,0.22)",
+        color: "white",
+        boxShadow: "0 10px 28px rgba(0,0,0,0.38)",
+      }
+    : {};
 
   const go = useCallback(
     (to: string, e?: any) => {
@@ -121,26 +105,25 @@ export function PlanetSidebar(props: { witnessMode: boolean; onToggleWitnessMode
       if (now - lastNavRef.current < 350) return; // prevent double-fire
       lastNavRef.current = now;
 
-      if (currentRoute === to) return;
+      if (location.pathname === to) return;
 
       try {
         navigate(to);
       } catch {}
 
       setTimeout(() => {
-        // If React Router didn't update (rare iOS double-tap edge cases), hard-navigate SAFELY via hash.
-        const desired = `#${to.startsWith("/") ? to : `/${to}`}`;
-        if ((window.location.hash || "#/") !== desired) {
-          window.location.assign(asHashHref(to));
+        if (window.location.pathname !== to) {
+          const safeTo = (to || "").includes("/#/") ? ("/" + (to.split("/#/")[1] || "").replace(/^\/+/, "")) : to;
+window.location.assign(safeTo);
         }
-      }, 0);
+      });
     },
-    [navigate, currentRoute]
+    [navigate, location.pathname]
   );
 
   const planets = useMemo(() => (PLANETS as any[]) ?? [], []);
 
-  // Sidebar shell ó IMPORTANT: flex-safe; no fixed overlays; cannot cover <main>
+  // Sidebar shell ‚Äî IMPORTANT: flex-safe; no fixed overlays; cannot cover <main>
   const shell: React.CSSProperties = {
     position: "sticky",
     top: 0,
@@ -162,7 +145,7 @@ export function PlanetSidebar(props: { witnessMode: boolean; onToggleWitnessMode
     WebkitTapHighlightColor: "transparent",
   };
 
-  // ARRIVAL_SIDEBAR_SOFT_V1 ó visual only (no layout shift)
+  // ARRIVAL_SIDEBAR_SOFT_V1 ‚Äî visual only (no layout shift)
   (shell as any).transition = "opacity 420ms ease, filter 420ms ease";
   if (arrivalSoft) {
     (shell as any).opacity = 0.72;
@@ -171,6 +154,7 @@ export function PlanetSidebar(props: { witnessMode: boolean; onToggleWitnessMode
     (shell as any).opacity = 1;
     (shell as any).filter = "none";
   }
+
 
   const title: React.CSSProperties = { margin: 0, fontSize: 16, fontWeight: 950 };
   const subtitle: React.CSSProperties = { marginTop: 4, fontSize: 12, color: "rgba(255,255,255,0.70)" };
@@ -225,26 +209,15 @@ export function PlanetSidebar(props: { witnessMode: boolean; onToggleWitnessMode
 
   const caret: React.CSSProperties = { opacity: 0.70, fontWeight: 900 };
 
-  // Shared nav props ó single event to avoid duplicate toggles on iOS
+  // Shared nav props ‚Äî single event to avoid duplicate toggles on iOS
   const tapSafeNavProps = (to: string) => ({
     onClick: (e: any) => go(to, e),
   });
 
   return (
     <aside style={shell}>
-      {/* Top ìspineî header */}
-      <div
-        style={{
-          /* HP_STAGE_WRAP_V1 */ display: "flex",
-          width: "100%",
-          maxWidth: 1480,
-          margin: "0 auto",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 10,
-          marginBottom: 10,
-        }}
-      >
+      {/* Top ‚Äúspine‚Äù header */}
+      <div style={{ /* HP_STAGE_WRAP_V1 */ display: "flex", width: "100%", maxWidth: 1480, margin: "0 auto",alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 10 }}>
         <div style={{ minWidth: 0 }}>
           <div style={title}>{collapsed ? "AT" : "Atlas"}</div>
           {!collapsed ? <div style={subtitle}>Planetary Index</div> : null}
@@ -304,16 +277,7 @@ export function PlanetSidebar(props: { witnessMode: boolean; onToggleWitnessMode
                 }}
                 title={planetLabel}
               >
-                <div
-                  style={{
-                    /* HP_STAGE_WRAP_V1 */ display: "flex",
-                    width: "100%",
-                    maxWidth: 1480,
-                    margin: "0 auto",
-                    flexDirection: "column",
-                    alignItems: collapsed ? "center" : "flex-start",
-                  }}
-                >
+                <div style={{ /* HP_STAGE_WRAP_V1 */ display: "flex", width: "100%", maxWidth: 1480, margin: "0 auto",flexDirection: "column", alignItems: collapsed ? "center" : "flex-start" }}>
                   <div style={{ fontWeight: 950, letterSpacing: 0.2 }}>
                     {collapsed ? planetLabel.slice(0, 2).toUpperCase() : planetLabel}
                   </div>
@@ -345,21 +309,8 @@ export function PlanetSidebar(props: { witnessMode: boolean; onToggleWitnessMode
                   {cities.slice(0, 12).map((c) => {
                     const to = `/planet/${planetId}/${c.id}`;
                     return (
-                      <button
-                        key={c.id}
-                        type="button"
-                        {...tapSafeNavProps(to)}
-                        style={{ ...subRow, ...activeGlow(isActive(to)) }}
-                      >
-                        <div
-                          style={{
-                            /* HP_STAGE_WRAP_V1 */ display: "flex",
-                            width: "100%",
-                            maxWidth: 1480,
-                            margin: "0 auto",
-                            flexDirection: "column",
-                          }}
-                        >
+                      <button key={c.id} type="button" {...tapSafeNavProps(to)} style={{ ...subRow, ...activeGlow(isActive(to)) }}>
+                        <div style={{ /* HP_STAGE_WRAP_V1 */ display: "flex", width: "100%", maxWidth: 1480, margin: "0 auto",flexDirection: "column" }}>
                           <div style={{ fontWeight: 900 }}>{c.label}</div>
                           {c.desc ? <div style={{ fontSize: 12, opacity: 0.70, marginTop: 2 }}>{c.desc}</div> : null}
                         </div>
@@ -382,5 +333,6 @@ export function PlanetSidebar(props: { witnessMode: boolean; onToggleWitnessMode
     </aside>
   );
 }
+
 
 
