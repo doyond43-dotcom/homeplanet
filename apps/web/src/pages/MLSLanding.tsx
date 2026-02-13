@@ -82,7 +82,9 @@ function typeToHumanLine(t: SignalType) {
 const BUILD_MARKER = "BUILD_MARKER_20260213_064411";
 
 export default function MLSLanding() {
-  console.log(''+BUILD_MARKER);
+  // Keep marker visible + in console so we KNOW what build is live
+  console.log("" + BUILD_MARKER);
+
   const navigate = useNavigate();
 
   // Seed one “Today” example so it feels alive immediately (delete later)
@@ -128,6 +130,19 @@ export default function MLSLanding() {
     setDetails("");
   };
 
+  // HARD-WIRED NAV (fixes “buttons do nothing” even if navigate gets swallowed by overlay/event issues)
+  const go = (to: string) => {
+    try {
+      navigate(to);
+    } catch {}
+    // hard fallback if router doesn’t move (seen on some edge cases)
+    window.setTimeout(() => {
+      try {
+        if (window.location.pathname !== to) window.location.assign(to);
+      } catch {}
+    }, 50);
+  };
+
   const shell: React.CSSProperties = {
     minHeight: "100vh",
     padding: "40px 22px 60px",
@@ -153,8 +168,7 @@ export default function MLSLanding() {
 
   const inner: React.CSSProperties = {
     padding: 34,
-    background:
-      "radial-gradient(900px 520px at 50% 0%, rgba(90,140,255,0.10), rgba(0,0,0,0) 62%)",
+    background: "radial-gradient(900px 520px at 50% 0%, rgba(90,140,255,0.10), rgba(0,0,0,0) 62%)",
   };
 
   const topKicker: React.CSSProperties = {
@@ -196,6 +210,7 @@ export default function MLSLanding() {
     fontWeight: 900,
     cursor: "pointer",
     userSelect: "none",
+    pointerEvents: "auto",
   };
 
   const grid: React.CSSProperties = {
@@ -259,6 +274,7 @@ export default function MLSLanding() {
     fontWeight: 950,
     cursor: "pointer",
     userSelect: "none",
+    pointerEvents: "auto",
   };
 
   const todayCard: React.CSSProperties = {
@@ -291,162 +307,183 @@ export default function MLSLanding() {
 
   return (
     <>
-    <div style={{position:'fixed',top:8,right:12,zIndex:99999,fontSize:12,fontWeight:900,padding:'6px 10px',borderRadius:10,background:'rgba(0,0,0,0.75)',border:'1px solid rgba(255,255,255,0.25)',color:'white'}}>{'BUILD_MARKER_UI: '+BUILD_MARKER}</div>
+      {/* Visible marker so we can prove production deploy */}
+      <div
+        style={{
+          position: "fixed",
+          top: 8,
+          right: 12,
+          zIndex: 99999,
+          fontSize: 12,
+          fontWeight: 900,
+          padding: "6px 10px",
+          borderRadius: 10,
+          background: "rgba(0,0,0,0.75)",
+          border: "1px solid rgba(255,255,255,0.25)",
+          color: "white",
+          pointerEvents: "none",
+        }}
+      >
+        {"BUILD_MARKER_UI: " + BUILD_MARKER}
+      </div>
 
-    <div style={shell}>
-      <div style={stage}>
-        <div style={panel}>
-          <div style={inner}>
-            <div style={topKicker}>HOMEPLANET / MLS</div>
-            <div style={h1}>Today</div>
-            <div style={lead}>Everyone sees the same plan.</div>
+      <div style={shell}>
+        <div style={stage}>
+          <div style={panel}>
+            <div style={inner}>
+              <div style={topKicker}>HOMEPLANET / MLS</div>
+              <div style={h1}>Today</div>
+              <div style={lead}>Everyone sees the same plan.</div>
 
-            <div style={pillRow}>
-              <button type="button" style={pillBtn} onClick={() => navigate("/core/registry")}>
-                Back to Registry
-              </button>
-              <button type="button" style={pillBtn} onClick={() => navigate("/press/taylor-creek")}>
-                Press Kit (control)
-              </button>
-              <button type="button" style={pillBtn} onClick={() => navigate("/taylor-creek")}>
-                Taylor Creek (control)
-              </button>
-            </div>
+              <div style={pillRow}>
+                <button type="button" style={pillBtn} onClick={() => go("/core/registry")}>
+                  Back to Registry
+                </button>
+                <button type="button" style={pillBtn} onClick={() => go("/press/taylor-creek")}>
+                  Press Kit (control)
+                </button>
+                <button type="button" style={pillBtn} onClick={() => go("/taylor-creek")}>
+                  Taylor Creek (control)
+                </button>
+              </div>
 
-            <div style={grid}>
-              <div style={{ display: "grid", gap: 16 }}>
-                <div>
-                  <div style={{ fontSize: 14, fontWeight: 950, marginBottom: 10, opacity: 0.9 }}>Today</div>
+              <div style={grid}>
+                <div style={{ display: "grid", gap: 16 }}>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 950, marginBottom: 10, opacity: 0.9 }}>Today</div>
 
-                  {latest ? (
-                    <div style={todayCard}>
-                      <div style={row}>
-                        <div style={{ fontSize: 18, fontWeight: 950 }}>What changed</div>
-                        <div style={badge}>Recorded</div>
-                      </div>
-
-                      <div style={{ marginTop: 10, display: "grid", gap: 8 }}>
-                        <div style={{ fontWeight: 950, opacity: 0.9 }}>{typeToHumanLine(latest.type)}</div>
-
-                        <div>
-                          <span style={{ opacity: 0.74, fontWeight: 900 }}>Who:</span>{" "}
-                          <span style={{ fontWeight: 950 }}>{latest.child}</span>
+                    {latest ? (
+                      <div style={todayCard}>
+                        <div style={row}>
+                          <div style={{ fontSize: 18, fontWeight: 950 }}>What changed</div>
+                          <div style={badge}>Recorded</div>
                         </div>
 
-                        {latest.details ? <div style={soft}>{latest.details}</div> : <div style={soft}>(no details yet)</div>}
-                        <div style={{ opacity: 0.62, fontSize: 12 }}>{formatTimeLocal(latest.createdAtISO)}</div>
+                        <div style={{ marginTop: 10, display: "grid", gap: 8 }}>
+                          <div style={{ fontWeight: 950, opacity: 0.9 }}>{typeToHumanLine(latest.type)}</div>
+
+                          <div>
+                            <span style={{ opacity: 0.74, fontWeight: 900 }}>Who:</span>{" "}
+                            <span style={{ fontWeight: 950 }}>{latest.child}</span>
+                          </div>
+
+                          {latest.details ? (
+                            <div style={soft}>{latest.details}</div>
+                          ) : (
+                            <div style={soft}>(no details yet)</div>
+                          )}
+
+                          <div style={{ opacity: 0.62, fontSize: 12 }}>{formatTimeLocal(latest.createdAtISO)}</div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={card}>No updates yet.</div>
+                    )}
+                  </div>
+
+                  <div style={card}>
+                    <div style={cardTitle}>Update the day</div>
+                    <div style={divider} />
+
+                    <div style={{ display: "grid", gap: 12 }}>
+                      <div>
+                        <div style={label}>Who</div>
+                        <input
+                          style={input}
+                          value={child}
+                          onChange={(e) => setChild(e.target.value)}
+                          placeholder="Child name"
+                          autoComplete="off"
+                        />
+                      </div>
+
+                      <div>
+                        <div style={label}>What happened</div>
+                        <select style={input} value={type} onChange={(e) => setType(e.target.value as SignalType)}>
+                          {SIGNAL_TYPES.map((t) => (
+                            <option key={t} value={t}>
+                              {t}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <div style={label}>Anything they should know</div>
+                        <textarea
+                          style={textarea}
+                          value={details}
+                          onChange={(e) => setDetails(e.target.value)}
+                          placeholder="Short note. Keep it real-life simple."
+                        />
+                      </div>
+
+                      <button type="button" style={primaryBtn} onClick={confirm}>
+                        Confirm
+                      </button>
+
+                      <div style={{ fontSize: 12, opacity: 0.62, lineHeight: 1.4 }}>
+                        No switching apps. No re-entering. Just mark what changed.
                       </div>
                     </div>
-                  ) : (
-                    <div style={card}>No updates yet.</div>
-                  )}
+                  </div>
                 </div>
 
-                <div style={card}>
-                  <div style={cardTitle}>Update the day</div>
-                  <div style={divider} />
+                <div style={{ display: "grid", gap: 16 }}>
+                  <div style={card}>
+                    <div style={cardTitle}>Earlier today</div>
+                    <div style={divider} />
 
-                  <div style={{ display: "grid", gap: 12 }}>
-                    <div>
-                      <div style={label}>Who</div>
-                      <input
-                        style={input}
-                        value={child}
-                        onChange={(e) => setChild(e.target.value)}
-                        placeholder="Child name"
-                        autoComplete="off"
-                      />
-                    </div>
-
-                    <div>
-                      <div style={label}>What happened</div>
-                      <select style={input} value={type} onChange={(e) => setType(e.target.value as SignalType)}>
-                        {SIGNAL_TYPES.map((t) => (
-                          <option key={t} value={t}>
-                            {t}
-                          </option>
+                    {timeline.length ? (
+                      <div style={{ display: "grid", gap: 10 }}>
+                        {timeline.map((ev) => (
+                          <div
+                            key={ev.id}
+                            style={{
+                              borderRadius: 14,
+                              border: "1px solid rgba(255,255,255,0.10)",
+                              background: "rgba(255,255,255,0.04)",
+                              padding: 12,
+                            }}
+                          >
+                            <div style={row}>
+                              <div style={{ fontWeight: 950 }}>{typeToHumanLine(ev.type)}</div>
+                              <div style={{ opacity: 0.6, fontSize: 12 }}>{formatDateTimeLocal(ev.createdAtISO)}</div>
+                            </div>
+                            <div style={{ marginTop: 6, opacity: 0.84 }}>
+                              <span style={{ opacity: 0.7, fontWeight: 900 }}>Who:</span>{" "}
+                              <span style={{ fontWeight: 950 }}>{ev.child}</span>
+                            </div>
+                            {ev.details ? <div style={{ marginTop: 6, opacity: 0.78 }}>{ev.details}</div> : null}
+                          </div>
                         ))}
-                      </select>
-                    </div>
+                      </div>
+                    ) : (
+                      <div style={{ opacity: 0.65 }}>Nothing recorded yet.</div>
+                    )}
+                  </div>
 
-                    <div>
-                      <div style={label}>Anything they should know</div>
-                      <textarea
-                        style={textarea}
-                        value={details}
-                        onChange={(e) => setDetails(e.target.value)}
-                        placeholder="Short note. Keep it real-life simple."
-                      />
-                    </div>
-
-                    <button type="button" style={primaryBtn} onClick={confirm}>
-                      Confirm
-                    </button>
-
-                    <div style={{ fontSize: 12, opacity: 0.62, lineHeight: 1.4 }}>
-                      No switching apps. No re-entering. Just mark what changed.
+                  <div style={card}>
+                    <div style={cardTitle}>Nothing resets.</div>
+                    <div style={divider} />
+                    <div style={{ fontSize: 13, opacity: 0.78, lineHeight: 1.5 }}>
+                      Everyone stays aligned — the day updates in one place.
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div style={{ display: "grid", gap: 16 }}>
-                <div style={card}>
-                  <div style={cardTitle}>Earlier today</div>
-                  <div style={divider} />
-
-                  {timeline.length ? (
-                    <div style={{ display: "grid", gap: 10 }}>
-                      {timeline.map((ev) => (
-                        <div
-                          key={ev.id}
-                          style={{
-                            borderRadius: 14,
-                            border: "1px solid rgba(255,255,255,0.10)",
-                            background: "rgba(255,255,255,0.04)",
-                            padding: 12,
-                          }}
-                        >
-                          <div style={row}>
-                            <div style={{ fontWeight: 950 }}>{typeToHumanLine(ev.type)}</div>
-                            <div style={{ opacity: 0.6, fontSize: 12 }}>{formatDateTimeLocal(ev.createdAtISO)}</div>
-                          </div>
-                          <div style={{ marginTop: 6, opacity: 0.84 }}>
-                            <span style={{ opacity: 0.7, fontWeight: 900 }}>Who:</span>{" "}
-                            <span style={{ fontWeight: 950 }}>{ev.child}</span>
-                          </div>
-                          {ev.details ? <div style={{ marginTop: 6, opacity: 0.78 }}>{ev.details}</div> : null}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div style={{ opacity: 0.65 }}>Nothing recorded yet.</div>
-                  )}
-                </div>
-
-                <div style={card}>
-                  <div style={cardTitle}>Nothing resets.</div>
-                  <div style={divider} />
-                  <div style={{ fontSize: 13, opacity: 0.78, lineHeight: 1.5 }}>
-                    Everyone stays aligned — the day updates in one place.
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div style={{ marginTop: 18, opacity: 0.6, fontSize: 12 }}>
-              Nothing resets. Everyone stays aligned.
+              <div style={{ marginTop: 18, opacity: 0.6, fontSize: 12 }}>Nothing resets. Everyone stays aligned.</div>
             </div>
           </div>
         </div>
       </div>
-    </div>
     </>
   );
 }
 
-
 // BUILD_MARKER_20260212_232227
+
 
 
 
