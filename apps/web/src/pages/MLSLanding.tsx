@@ -290,8 +290,9 @@ export default function MLSLanding() {
   const soft: React.CSSProperties = { opacity: 0.78 };
 
   return (
-    <div style={{position:'fixed',top:8,right:12,zIndex:99999,fontSize:12,fontWeight:900,padding:'6px 10px',borderRadius:10,background:'rgba(0,0,0,0.75)',border:'1px solid rgba(255,255,255,0.25)',color:'white'}}>{'BUILD_MARKER_UI: '+BUILD_MARKER}</div>,
-    
+    <>
+    <div style={{position:'fixed',top:8,right:12,zIndex:99999,fontSize:12,fontWeight:900,padding:'6px 10px',borderRadius:10,background:'rgba(0,0,0,0.75)',border:'1px solid rgba(255,255,255,0.25)',color:'white'}}>{'BUILD_MARKER_UI: '+BUILD_MARKER}</div>
+
     <div style={shell}>
       <div style={stage}>
         <div style={panel}>
@@ -440,10 +441,13 @@ export default function MLSLanding() {
         </div>
       </div>
     </div>
+    </>
   );
 }
 
 
 // BUILD_MARKER_20260212_232227
+
+
 
 
