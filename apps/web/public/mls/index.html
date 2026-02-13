@@ -1,12 +1,20 @@
 ﻿<!doctype html>
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>MLS</title>
+    <meta name="robots" content="noindex" />
+    <title>HomePlanet MLS</title>
+
+    <script>
+      // Legacy /public/mls shell → always bounce into the real React app.
+      // Root (/#/) is mapped to MLSLanding, so this is the safest target.
+      (function () {
+        var target = "/#/";
+        if (window.location.search) target += window.location.search;
+        window.location.replace(target);
+      })();
+    </script>
   </head>
-  <body style="font-family: system-ui; padding: 24px;">
-    <h1>MLS WORKING</h1>
-    <p>If you see this page, the correct directory is deployed.</p>
-  </body>
+  <body></body>
 </html>
