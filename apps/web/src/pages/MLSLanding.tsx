@@ -16,7 +16,7 @@ type SignalEvent = {
   child: string;
   type: SignalType;
   details: string;
-  createdAtISO: string; // stable ordering
+  createdAtISO: string;
 };
 
 function nowISO() {
@@ -58,10 +58,31 @@ const SIGNAL_TYPES: SignalType[] = [
   "Other",
 ];
 
+function typeToHumanLine(t: SignalType) {
+  switch (t) {
+    case "Pickup Change":
+      return "Pickup plan changed";
+    case "Dropoff Change":
+      return "Dropoff plan changed";
+    case "Late Notice":
+      return "Running late";
+    case "Absent":
+      return "Absent today";
+    case "Early Release":
+      return "Early release";
+    case "Approved Person Update":
+      return "Approved person updated";
+    case "School Note":
+      return "Note to school";
+    default:
+      return "Update";
+  }
+}
+
 export default function MLSLanding() {
   const navigate = useNavigate();
 
-  // Seed one “Today” example so it feels alive immediately (you can delete later)
+  // Seed one “Today” example so it feels alive immediately (delete later)
   const [events, setEvents] = useState<SignalEvent[]>(() => [
     {
       id: `seed_${Date.now()}`,
@@ -87,7 +108,7 @@ export default function MLSLanding() {
     return sorted;
   }, [events]);
 
-  const recordSignal = () => {
+  const confirm = () => {
     const trimmedChild = (child || "").trim() || "Child";
     const trimmedDetails = (details || "").trim();
 
@@ -99,7 +120,7 @@ export default function MLSLanding() {
       createdAtISO: nowISO(),
     };
 
-    // Instant continuity: append + clear input (no “success” modal)
+    // Instant continuity: append + clear input (no modal)
     setEvents((prev) => [ev, ...prev]);
     setDetails("");
   };
@@ -271,10 +292,8 @@ export default function MLSLanding() {
         <div style={panel}>
           <div style={inner}>
             <div style={topKicker}>HOMEPLANET / MLS</div>
-            <div style={h1}>Parenting Signal</div>
-            <div style={lead}>
-              A shared truth timeline between parent, child, and authority. The user stays in one place — life reorganizes around them.
-            </div>
+            <div style={h1}>Today</div>
+            <div style={lead}>Everyone sees the same plan.</div>
 
             <div style={pillRow}>
               <button type="button" style={pillBtn} onClick={() => navigate("/core/registry")}>
@@ -296,31 +315,34 @@ export default function MLSLanding() {
                   {latest ? (
                     <div style={todayCard}>
                       <div style={row}>
-                        <div style={{ fontSize: 18, fontWeight: 950 }}>{latest.type}</div>
+                        <div style={{ fontSize: 18, fontWeight: 950 }}>What changed</div>
                         <div style={badge}>Recorded</div>
                       </div>
 
                       <div style={{ marginTop: 10, display: "grid", gap: 8 }}>
+                        <div style={{ fontWeight: 950, opacity: 0.9 }}>{typeToHumanLine(latest.type)}</div>
+
                         <div>
-                          <span style={{ opacity: 0.74, fontWeight: 900 }}>Child:</span>{" "}
+                          <span style={{ opacity: 0.74, fontWeight: 900 }}>Who:</span>{" "}
                           <span style={{ fontWeight: 950 }}>{latest.child}</span>
                         </div>
+
                         {latest.details ? <div style={soft}>{latest.details}</div> : <div style={soft}>(no details yet)</div>}
                         <div style={{ opacity: 0.62, fontSize: 12 }}>{formatTimeLocal(latest.createdAtISO)}</div>
                       </div>
                     </div>
                   ) : (
-                    <div style={card}>No signals yet.</div>
+                    <div style={card}>No updates yet.</div>
                   )}
                 </div>
 
                 <div style={card}>
-                  <div style={cardTitle}>Create Signal</div>
+                  <div style={cardTitle}>Update the day</div>
                   <div style={divider} />
 
                   <div style={{ display: "grid", gap: 12 }}>
                     <div>
-                      <div style={label}>Child</div>
+                      <div style={label}>Who</div>
                       <input
                         style={input}
                         value={child}
@@ -331,7 +353,7 @@ export default function MLSLanding() {
                     </div>
 
                     <div>
-                      <div style={label}>Type</div>
+                      <div style={label}>What happened</div>
                       <select style={input} value={type} onChange={(e) => setType(e.target.value as SignalType)}>
                         {SIGNAL_TYPES.map((t) => (
                           <option key={t} value={t}>
@@ -342,21 +364,21 @@ export default function MLSLanding() {
                     </div>
 
                     <div>
-                      <div style={label}>Details</div>
+                      <div style={label}>Anything they should know</div>
                       <textarea
                         style={textarea}
                         value={details}
                         onChange={(e) => setDetails(e.target.value)}
-                        placeholder="What changed? Who’s picking up? Any note for authority?"
+                        placeholder="Short note. Keep it real-life simple."
                       />
                     </div>
 
-                    <button type="button" style={primaryBtn} onClick={recordSignal}>
-                      Record Signal
+                    <button type="button" style={primaryBtn} onClick={confirm}>
+                      Confirm
                     </button>
 
                     <div style={{ fontSize: 12, opacity: 0.62, lineHeight: 1.4 }}>
-                      Continuity rule: recording should feel like marking reality — not submitting a form.
+                      No switching apps. No re-entering. Just mark what changed.
                     </div>
                   </div>
                 </div>
@@ -364,7 +386,7 @@ export default function MLSLanding() {
 
               <div style={{ display: "grid", gap: 16 }}>
                 <div style={card}>
-                  <div style={cardTitle}>Timeline</div>
+                  <div style={cardTitle}>Earlier today</div>
                   <div style={divider} />
 
                   {timeline.length ? (
@@ -380,11 +402,11 @@ export default function MLSLanding() {
                           }}
                         >
                           <div style={row}>
-                            <div style={{ fontWeight: 950 }}>{ev.type}</div>
+                            <div style={{ fontWeight: 950 }}>{typeToHumanLine(ev.type)}</div>
                             <div style={{ opacity: 0.6, fontSize: 12 }}>{formatDateTimeLocal(ev.createdAtISO)}</div>
                           </div>
                           <div style={{ marginTop: 6, opacity: 0.84 }}>
-                            <span style={{ opacity: 0.7, fontWeight: 900 }}>Child:</span>{" "}
+                            <span style={{ opacity: 0.7, fontWeight: 900 }}>Who:</span>{" "}
                             <span style={{ fontWeight: 950 }}>{ev.child}</span>
                           </div>
                           {ev.details ? <div style={{ marginTop: 6, opacity: 0.78 }}>{ev.details}</div> : null}
@@ -392,26 +414,22 @@ export default function MLSLanding() {
                       ))}
                     </div>
                   ) : (
-                    <div style={{ opacity: 0.65 }}>No signals saved yet.</div>
+                    <div style={{ opacity: 0.65 }}>Nothing recorded yet.</div>
                   )}
                 </div>
 
                 <div style={card}>
-                  <div style={cardTitle}>What this demonstrates</div>
+                  <div style={cardTitle}>Nothing resets.</div>
                   <div style={divider} />
                   <div style={{ fontSize: 13, opacity: 0.78, lineHeight: 1.5 }}>
-                    <div style={{ fontWeight: 950, opacity: 0.92 }}>User stays put.</div>
-                    <div>Events appear in the same space without “switching apps”.</div>
-                    <div style={{ marginTop: 10 }}>
-                      Next step later: persist events to Supabase and render the real ordered truth timeline.
-                    </div>
+                    Everyone stays aligned — the day updates in one place.
                   </div>
                 </div>
               </div>
             </div>
 
             <div style={{ marginTop: 18, opacity: 0.6, fontSize: 12 }}>
-              MLS is isolated and cannot break core. Keep it fast, interruption-friendly, and “one place” feeling.
+              Nothing resets. Everyone stays aligned.
             </div>
           </div>
         </div>
@@ -419,3 +437,4 @@ export default function MLSLanding() {
     </div>
   );
 }
+
