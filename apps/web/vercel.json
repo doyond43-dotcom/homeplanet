@@ -1,9 +1,11 @@
 ﻿{
-  "rewrites": [
-    { "source": "/press/:path*", "destination": "/index.html" },
-    { "source": "/city/:path*",  "destination": "/index.html" },
-    { "source": "/planet/:path*","destination": "/index.html" },
-    { "source": "/mls/:path*",   "destination": "/index.html" },
-    { "source": "/:path*",       "destination": "/index.html" }
+  "version": 2,
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/press(?:/.*)?",  "dest": "/index.html" },
+    { "src": "/city(?:/.*)?",   "dest": "/index.html" },
+    { "src": "/planet(?:/.*)?", "dest": "/index.html" },
+    { "src": "/mls(?:/.*)?",    "dest": "/index.html" },
+    { "src": "/.*",             "dest": "/index.html" }
   ]
 }
