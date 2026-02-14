@@ -1,5 +1,9 @@
-{
+﻿{
   "rewrites": [
-    { "source": "/:path*", "destination": "/index.html" }
+    { "source": "/press/:path*", "destination": "/index.html" },
+    { "source": "/city/:path*",  "destination": "/index.html" },
+    { "source": "/planet/:path*","destination": "/index.html" },
+    { "source": "/mls/:path*",   "destination": "/index.html" },
+    { "source": "/:path*",       "destination": "/index.html" }
   ]
 }
