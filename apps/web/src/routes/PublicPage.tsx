@@ -4,6 +4,9 @@ import { useParams } from "react-router-dom";
 // IMPORTANT: Adjust this import if your supabase client lives elsewhere.
 import { supabase } from "../lib/supabase";
 
+// NEW: allow this page to delegate to the real global 404
+import NotFound from "../pages/NotFound";
+
 type PublicPageRow = {
   id: string;
   slug: string;
@@ -185,6 +188,9 @@ export default function PublicPage() {
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState<PublicPageRow | null>(null);
 
+  // If slug is invalid or not found, render the global 404 (NOT the intake error card)
+  const [notFound, setNotFound] = useState(false);
+
   // form draft (real fields)
   const [draft, setDraft] = useState({
     name: "",
@@ -206,12 +212,13 @@ export default function PublicPage() {
   const [savedAt, setSavedAt] = useState<string | null>(null);
 
   const normalizedSlug = useMemo(() => {
-  return String(slug || "")
-    .trim()
-    .replace(/^c\//i, "")
-    .replace(/^\/+/, "").replace(/\/+$/, "")
-    .toLowerCase();
-}, [slug]);
+    return String(slug || "")
+      .trim()
+      .replace(/^c\//i, "")
+      .replace(/^\/+/, "")
+      .replace(/\/+$/, "")
+      .toLowerCase();
+  }, [slug]);
 
   useEffect(() => {
     let alive = true;
@@ -219,14 +226,16 @@ export default function PublicPage() {
     async function run() {
       setLoading(true);
       setError(null);
+      setNotFound(false);
       setSuccess(null);
       setReceipt(null);
       setLastPayloadJson(null);
       setSavedAt(null);
 
       if (!normalizedSlug) {
+        // Missing slug should be a real 404 in the world model
         setLoading(false);
-        setError("Missing public page identifier (slug).");
+        setNotFound(true);
         return;
       }
 
@@ -245,8 +254,9 @@ export default function PublicPage() {
       }
 
       if (!data) {
+        // Unknown slug should show the global NotFound page (not an intake error card)
         setLoading(false);
-        setError("Public page not found.");
+        setNotFound(true);
         return;
       }
 
@@ -709,6 +719,11 @@ export default function PublicPage() {
     );
   }
 
+  // If slug was missing or not found, show the global 404 page
+  if (notFound) {
+    return <NotFound />;
+  }
+
   if (error) {
     return (
       <div style={styles.page}>
@@ -983,7 +998,7 @@ export default function PublicPage() {
                 </div>
               </div>
               <div style={{ ...styles.pill, background: "rgba(34,197,94,0.18)", borderColor: "rgba(34,197,94,0.35)" }}>
-                Logged ?
+                Logged ✓
               </div>
             </div>
 

@@ -1,22 +1,47 @@
-﻿import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+﻿import { BrowserRouter, Routes, Route } from "react-router-dom";
+
 import MLSLanding from "./pages/MLSLanding";
+import PressPage from "./routes/PressPage";
+import PublicPage from "./routes/PublicPage";
+import CityRoutes from "./routes/CityRoutes";
+import NotFound from "./pages/NotFound";
+
+/**
+ * HomePlanet World Router
+ * Order matters:
+ * 1) specific locations
+ * 2) dynamic slug
+ * 3) true 404
+ */
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Main = MLS (so root works even if /mls is weird) */}
-        <Route path="/" element={<MLSLanding />} />
 
-        {/* Explicit MLS route */}
+        {/* Home (neutral entry — NOT MLS) */}
+        <Route path="/" element={<div style={{padding:24}}>HomePlanet</div>} />
+
+        {/* Control Layer */}
         <Route path="/mls" element={<MLSLanding />} />
 
-        {/* Anything else goes home */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        {/* Public Trust Layer */}
+        <Route path="/press/:slug" element={<PressPage />} />
+
+        {/* Geography Layer */}
+        <Route path="/city/*" element={<CityRoutes />} />
+
+        {/* Action Layer (tenant intake) */}
+        <Route path="/:slug" element={<PublicPage />} />
+
+        {/* True 404 — must be last */}
+        <Route path="*" element={<NotFound />} />
+
       </Routes>
     </BrowserRouter>
   );
 }
+
 
 
 
