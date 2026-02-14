@@ -7,12 +7,7 @@
       "config": { "distDir": "dist" }
     }
   ],
-  "routes": [
-    { "handle": "filesystem" },
-    { "src": "/press(?:/.*)?",  "dest": "/index.html" },
-    { "src": "/city(?:/.*)?",   "dest": "/index.html" },
-    { "src": "/planet(?:/.*)?", "dest": "/index.html" },
-    { "src": "/mls(?:/.*)?",    "dest": "/index.html" },
-    { "src": "/.*",             "dest": "/index.html" }
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/" }
   ]
 }
