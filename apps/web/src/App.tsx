@@ -1,4 +1,5 @@
 ﻿import { BrowserRouter, Routes, Route } from "react-router-dom";
+import TaylorCreekSite from "./routes/TaylorCreekSite";
 
 import MLSLanding from "./pages/MLSLanding";
 import PressPage from "./routes/PressPage";
@@ -24,6 +25,7 @@ export default function App() {
 
         {/* Control Layer */}
         <Route path="/mls" element={<MLSLanding />} />
+            <Route path="/taylor-creek" element={<TaylorCreekSite />} />
 
         {/* Public Trust Layer */}
         <Route path="/press/:slug" element={<PressPage />} />
@@ -41,6 +43,7 @@ export default function App() {
     </BrowserRouter>
   );
 }
+
 
 
 

@@ -2,7 +2,7 @@
 
 export default function TaylorCreekSite() {
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="min-h-screen bg-slate-950 text-slate-100" style={{ minHeight: "100vh", background: "#070707", color: "rgba(255,255,255,0.92)" }}>
       {/* Top bar */}
       <div className="border-b border-slate-800 bg-slate-950/70 backdrop-blur">
         <div className="mx-auto max-w-6xl px-4 py-4 flex items-center justify-between gap-3">
@@ -268,3 +268,4 @@ export default function TaylorCreekSite() {
     </div>
   );
 }
+
