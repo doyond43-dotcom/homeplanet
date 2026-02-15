@@ -82,8 +82,8 @@ function buildForWhatSummary(items: string[]) {
   // Compact, human-readable summary for the single for_what column
   if (!items.length) return "";
   if (items.length === 1) return items[0];
-  // join with " • " so it reads nice in the event list
-  return items.join(" • ");
+  // join with " ”¢ " so it reads nice in the event list
+  return items.join(" ”¢ ");
 }
 
 function buildNotesBlob(lineItems: string[], extraNotes: string) {
@@ -299,7 +299,7 @@ export default function RecordPaymentPanel() {
     if (structural.includes(token)) {
       setLineItemDraft(`${base}${delim}${token}`);
     } else {
-      // parts that read better as “ — Pads & Rotors”
+      // parts that read better as “ — Pads & Rotors”
       setLineItemDraft(`${base}${delim}${token}`);
     }
   }
@@ -356,7 +356,7 @@ export default function RecordPaymentPanel() {
       user_id: userId,
       kind: "payment_event",
       source_event_id: inserted.id,
-      title: `Payment: ${inserted.amount} • ${inserted.who}`,
+      title: `Payment: ${inserted.amount} ”¢ ${inserted.who}`,
       body: binderBody,
     };
 
@@ -387,12 +387,12 @@ export default function RecordPaymentPanel() {
 
   return (
     <div style={{ ...cardStyle, marginTop: 14 }}>
-      <div style={sectionTitleStyle}>Payment → Event → Binder Artifact (Supabase)</div>
+      <div style={sectionTitleStyle}>Payment â†’ Event â†’ Binder Artifact (Supabase)</div>
 
       {err && <div style={errBox}>{err}</div>}
 
       {loading ? (
-        <div style={{ fontSize: 12, opacity: 0.7 }}>Loading…</div>
+        <div style={{ fontSize: 12, opacity: 0.7 }}>Loading”¦</div>
       ) : (
         <>
           <div style={{ display: "grid", gap: 10 }}>
@@ -405,7 +405,7 @@ export default function RecordPaymentPanel() {
                 style={input}
                 inputMode="decimal"
               />
-              <div style={tipStyle}>Tip: type 250 → saves as 250.00</div>
+              <div style={tipStyle}>Tip: type 250 â†’ saves as 250.00</div>
             </Field>
 
             <Field label="From / Who">
@@ -480,7 +480,7 @@ export default function RecordPaymentPanel() {
 
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
               <button type="button" style={btn} onClick={saveEvent} disabled={!canSave}>
-                {saving ? "Saving…" : "Save Payment Event"}
+                {saving ? "Saving”¦" : "Save Payment Event"}
               </button>
             </div>
           </div>
@@ -496,11 +496,11 @@ export default function RecordPaymentPanel() {
                   <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
                     <div>
                       <div style={{ fontSize: 13, fontWeight: 600 }}>
-                        {e.amount} • {e.who}
+                        {e.amount} ”¢ {e.who}
                       </div>
                       <div style={{ fontSize: 12, opacity: 0.7 }}>{e.for_what}</div>
                       <div style={{ fontSize: 12, opacity: 0.55 }}>
-                        {formatLocalFromIso(e.created_at)} • {e.method}
+                        {formatLocalFromIso(e.created_at)} ”¢ {e.method}
                       </div>
                     </div>
 

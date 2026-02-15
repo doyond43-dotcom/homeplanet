@@ -175,7 +175,7 @@ const styles: Record<string, React.CSSProperties> = {
     marginTop: 4,
   },
 
-  // One simple section (the “calm card”)
+  // One simple section (the “calm card”)
   section: {
     padding: 22, // BIG, obvious
     borderRadius: 14,

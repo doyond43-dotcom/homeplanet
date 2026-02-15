@@ -32,7 +32,7 @@ function pickPhrases(text: string): string[] {
   // Calm heuristic extraction:
   // - Uses the last ~1200 chars (recent context)
   // - Splits on punctuation/newlines
-  // - Keeps short phrases that look like “claims/definitions”
+  // - Keeps short phrases that look like “claims/definitions”
   const t = (text ?? "").trim();
   if (!t) return [];
 
@@ -45,10 +45,10 @@ function pickPhrases(text: string): string[] {
   const phrases: string[] = [];
   for (const p of parts) {
     // Remove leading bullets / numbering
-    const cleaned = p.replace(/^[-*•\d)+\]]+\s*/g, "").trim();
+    const cleaned = p.replace(/^[-*”¢\d)+\]]+\s*/g, "").trim();
     if (!cleaned) continue;
 
-    // Prefer “sentence-like” or “definition-like” fragments
+    // Prefer “sentence-like” or “definition-like” fragments
     const wordCount = cleaned.split(/\s+/).filter(Boolean).length;
     if (wordCount < 4 || wordCount > 12) continue;
 

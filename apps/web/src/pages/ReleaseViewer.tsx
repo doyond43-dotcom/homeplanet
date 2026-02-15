@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
 type Artifact = {
@@ -71,7 +71,7 @@ export default function ReleaseViewer() {
       </h1>
 
       <div style={{ color: "rgba(255,255,255,0.65)", marginBottom: 16 }}>
-        Released: {fmt(release.createdAt)} â€¢ Release ID: {release.id}
+        Released: {fmt(release.createdAt)} ”¢ Release ID: {release.id}
       </div>
 
       <div
@@ -125,7 +125,7 @@ export default function ReleaseViewer() {
               color: "rgba(255,255,255,0.55)",
             }}
           >
-            Presence Anchor: {fmt(a.createdAt)} â€¢ Artifact ID: {a.id}
+            Presence Anchor: {fmt(a.createdAt)} ”¢ Artifact ID: {a.id}
           </div>
         </div>
       ))}

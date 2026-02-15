@@ -75,7 +75,7 @@ function typeToHumanLine(t: SignalType) {
   }
 }
 
-const BUILD_MARKER = "BUILD_MARKER_UTC_20260215_042418";
+const BUILD_MARKER = "BUILD_MARKER_UTC_20260215_044414";
 
 export default function MLSLanding() {
   console.log("" + BUILD_MARKER);
@@ -87,7 +87,7 @@ export default function MLSLanding() {
       id: `seed_${Date.now()}`,
       child: "Chelsea",
       type: "Pickup Change",
-      details: "After school Ã¢â‚¬â€ Aunt picking up",
+      details: "After school ÃƒÆ’Ã‚Â¢ÃƒÂ¢â€Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â Aunt picking up",
       createdAtISO: nowISO(),
     },
   ]);

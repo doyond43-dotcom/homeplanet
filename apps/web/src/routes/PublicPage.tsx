@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 
 // IMPORTANT: Adjust this import if your supabase client lives elsewhere.
@@ -17,7 +17,7 @@ type PublicPageRow = {
 // -----------------------------
 function fixMojibakeOnce(input: string): string {
   if (!input) return input;
-  const looksCorrupted = /Ã.|â€™|â€œ|â€|â€“|â€”|â€¦|Â /u.test(input);
+  const looksCorrupted = /Ã.|’|“|”|–|—|”¦|Â /u.test(input);
   if (!looksCorrupted) return input;
 
   try {

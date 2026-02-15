@@ -111,7 +111,7 @@ export default function AnchorFlow() {
                     opacity: 0.85
                   }}
                 >
-                  🔒 {h.label}
+                  ðŸ”’ {h.label}
                 </div>
               ))}
             </div>

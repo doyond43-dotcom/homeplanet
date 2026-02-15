@@ -1,8 +1,8 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AnchorTestScreen from "./AnchorTestScreen";
 
 /**
- * AppFlow â€” Calm, step-by-step app creation flow
+ * AppFlow — Calm, step-by-step app creation flow
  * v0.1 (HomePlanet Calm Core)
  *
  * Goals:
@@ -281,11 +281,11 @@ export default function AppFlow() {
             <div style={miniMetaStyle}>
               <div>
                 <div style={miniKeyStyle}>Name</div>
-                <div style={miniValStyle}>{safeTrim(name) || "â€”"}</div>
+                <div style={miniValStyle}>{safeTrim(name) || "—"}</div>
               </div>
               <div>
                 <div style={miniKeyStyle}>Audience</div>
-                <div style={miniValStyle}>{safeTrim(audience) || "â€”"}</div>
+                <div style={miniValStyle}>{safeTrim(audience) || "—"}</div>
               </div>
               <div>
                 <div style={miniKeyStyle}>Mode</div>
