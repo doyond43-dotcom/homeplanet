@@ -1,5 +1,26 @@
-﻿import React, { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+
+
+function useMediaQuery(query: string) {
+  const get = () => (typeof window !== "undefined" ? window.matchMedia(query).matches : false);
+  const [matches, setMatches] = React.useState(get);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const m = window.matchMedia(query);
+    const onChange = () => setMatches(m.matches);
+    onChange();
+    if (m.addEventListener) m.addEventListener("change", onChange);
+    else m.addListener(onChange);
+    return () => {
+      if (m.removeEventListener) m.removeEventListener("change", onChange);
+      else m.removeListener(onChange);
+    };
+  }, [query]);
+
+  return matches;
+}
 
 type SignalType =
   | "Pickup Change"
@@ -86,14 +107,15 @@ export default function MLSLanding() {
   console.log("" + BUILD_MARKER);
 
   const navigate = useNavigate();
+  const isMobile = useMediaQuery("(max-width: 740px)");
 
-  // Seed one “Today” example so it feels alive immediately (delete later)
+// Seed one â€œTodayâ€ example so it feels alive immediately (delete later)
   const [events, setEvents] = useState<SignalEvent[]>(() => [
     {
       id: `seed_${Date.now()}`,
       child: "Chelsea",
       type: "Pickup Change",
-      details: "After school — Aunt picking up",
+      details: "After school â€” Aunt picking up",
       createdAtISO: nowISO(),
     },
   ]);
@@ -130,12 +152,12 @@ export default function MLSLanding() {
     setDetails("");
   };
 
-  // HARD-WIRED NAV (fixes “buttons do nothing” even if navigate gets swallowed by overlay/event issues)
+  // HARD-WIRED NAV (fixes â€œbuttons do nothingâ€ even if navigate gets swallowed by overlay/event issues)
   const go = (to: string) => {
     try {
       navigate(to);
     } catch {}
-    // hard fallback if router doesn’t move (seen on some edge cases)
+    // hard fallback if router doesnâ€™t move (seen on some edge cases)
     window.setTimeout(() => {
       try {
         if (window.location.pathname !== to) window.location.assign(to);
@@ -145,7 +167,7 @@ export default function MLSLanding() {
 
   const shell: React.CSSProperties = {
     minHeight: "100vh",
-    padding: "40px 22px 60px",
+    padding: isMobile ? "18px 14px 26px" : "40px 22px 60px",
     display: "flex",
     justifyContent: "center",
     background:
@@ -167,7 +189,7 @@ export default function MLSLanding() {
   };
 
   const inner: React.CSSProperties = {
-    padding: 34,
+    padding: isMobile ? 16 : 34,
     background: "radial-gradient(900px 520px at 50% 0%, rgba(90,140,255,0.10), rgba(0,0,0,0) 62%)",
   };
 
@@ -180,7 +202,7 @@ export default function MLSLanding() {
 
   const h1: React.CSSProperties = {
     margin: "10px 0 10px",
-    fontSize: 52,
+    fontSize: isMobile ? 34 : 52,
     lineHeight: 1.03,
     fontWeight: 950,
   };
@@ -215,7 +237,7 @@ export default function MLSLanding() {
 
   const grid: React.CSSProperties = {
     display: "grid",
-    gridTemplateColumns: "1.15fr 0.85fr",
+    gridTemplateColumns: isMobile ? "1fr" : "1.15fr 0.85fr",
     gap: 16,
   };
 
@@ -467,7 +489,7 @@ export default function MLSLanding() {
                     <div style={cardTitle}>Nothing resets.</div>
                     <div style={divider} />
                     <div style={{ fontSize: 13, opacity: 0.78, lineHeight: 1.5 }}>
-                      Everyone stays aligned — the day updates in one place.
+                      Everyone stays aligned â€” the day updates in one place.
                     </div>
                   </div>
                 </div>
