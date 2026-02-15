@@ -1,4 +1,5 @@
-﻿import React, { useMemo, useState } from "react";
+﻿import React, { useEffect, useMemo, useRef, useState } from "react";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 function useMediaQuery(query: string) {
   const get = () =>
@@ -10,11 +11,11 @@ function useMediaQuery(query: string) {
     const m = window.matchMedia(query);
     const onChange = () => setMatches(m.matches);
     onChange();
-    if (m.addEventListener) m.addEventListener("change", onChange);
-    else m.addListener(onChange);
+    if ((m as any).addEventListener) (m as any).addEventListener("change", onChange);
+    else (m as any).addListener(onChange);
     return () => {
-      if (m.removeEventListener) m.removeEventListener("change", onChange);
-      else m.removeListener(onChange);
+      if ((m as any).removeEventListener) (m as any).removeEventListener("change", onChange);
+      else (m as any).removeListener(onChange);
     };
   }, [query]);
 
@@ -33,10 +34,11 @@ type SignalType =
 
 type SignalEvent = {
   id: string;
+  family_key: string;
   child: string;
   type: SignalType;
   details: string;
-  createdAtISO: string;
+  created_at: string; // timestamptz from Supabase
 };
 
 function nowISO() {
@@ -55,11 +57,7 @@ function formatTimeLocal(iso: string) {
 function formatDateLocal(iso: string) {
   try {
     const d = new Date(iso);
-    return d.toLocaleDateString([], {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-    });
+    return d.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
   } catch {
     return "";
   }
@@ -68,11 +66,7 @@ function formatDateLocal(iso: string) {
 function formatDayHeaderLocal(iso: string) {
   try {
     const d = new Date(iso);
-    return d.toLocaleDateString([], {
-      weekday: "long",
-      month: "long",
-      day: "numeric",
-    });
+    return d.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
   } catch {
     return "Today";
   }
@@ -111,20 +105,25 @@ function typeToHumanLine(t: SignalType) {
 }
 
 /**
- * IMPORTANT:
- * - Keep UTF-8 NO BOM writes
- * - Never reintroduce encoding hacks
- * - Marker is your deploy truth
+ * DEMO NOTES:
+ * - This file is the deploy truth for /mls
+ * - UTF-8 NO BOM only
+ * - Build marker is your verification stamp
  */
-const BUILD_MARKER = "BUILD_MARKER_UTC_20260215_070800";
+const BUILD_MARKER = "BUILD_MARKER_UTC_20260215_090500";
 
-/**
- * Local persistence keys (safe, no backend yet)
- * - Events survive refresh
- * - Draft inputs survive refresh
- */
-const STORAGE_KEY_EVENTS = "homeplanet.mls.events.v1";
-const STORAGE_KEY_DRAFT = "homeplanet.mls.draft.v1";
+// DEMO family key (shared across all devices for now)
+const DEMO_FAMILY_KEY = "demo";
+
+function getSupabase(): SupabaseClient | null {
+  const url = (import.meta as any).env?.VITE_SUPABASE_URL as string | undefined;
+  const key = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY as string | undefined;
+  if (!url || !key) return null;
+  return createClient(url, key, {
+    auth: { persistSession: false },
+    realtime: { params: { eventsPerSecond: 10 } },
+  });
+}
 
 const pageBg: React.CSSProperties = {
   minHeight: "100vh",
@@ -240,6 +239,7 @@ const dayTitle: React.CSSProperties = {
   margin: 0,
   letterSpacing: 0.2,
 };
+
 const dayMeta: React.CSSProperties = {
   marginTop: 6,
   fontSize: 13,
@@ -278,6 +278,7 @@ const k: React.CSSProperties = {
   letterSpacing: 1.1,
   textTransform: "uppercase",
 };
+
 const v: React.CSSProperties = {
   fontWeight: 900,
   fontSize: 15,
@@ -326,6 +327,7 @@ const momentTop: React.CSSProperties = {
 };
 
 const momentType: React.CSSProperties = { fontWeight: 950, fontSize: 14 };
+
 const momentTime: React.CSSProperties = {
   opacity: 0.72,
   fontWeight: 900,
@@ -338,6 +340,7 @@ const momentWho: React.CSSProperties = {
   opacity: 0.86,
   fontSize: 13,
 };
+
 const momentDetails: React.CSSProperties = {
   marginTop: 6,
   fontWeight: 850,
@@ -384,6 +387,24 @@ const primaryBtn: React.CSSProperties = {
 
 const btnDisabled: React.CSSProperties = { opacity: 0.5, cursor: "not-allowed" };
 
+const bannerErr: React.CSSProperties = {
+  marginTop: 12,
+  borderRadius: 14,
+  border: "1px solid rgba(255,80,80,0.35)",
+  background: "rgba(255,80,80,0.10)",
+  padding: "10px 12px",
+  fontWeight: 850,
+};
+
+const bannerOk: React.CSSProperties = {
+  marginTop: 12,
+  borderRadius: 14,
+  border: "1px solid rgba(34,197,94,0.35)",
+  background: "rgba(34,197,94,0.12)",
+  padding: "10px 12px",
+  fontWeight: 850,
+};
+
 const quickDockWrap: React.CSSProperties = {
   position: "fixed",
   left: 0,
@@ -420,181 +441,225 @@ const dockHint: React.CSSProperties = {
   lineHeight: 1.25,
 };
 
+function uniqById(list: SignalEvent[]) {
+  const m = new Map<string, SignalEvent>();
+  for (const e of list) m.set(e.id, e);
+  return Array.from(m.values()).sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+}
+
 export default function MLSLanding() {
   console.log("" + BUILD_MARKER);
 
   const isNarrow = useMediaQuery("(max-width: 860px)");
   const isMobile = useMediaQuery("(max-width: 740px)");
 
-  // Load timeline from localStorage (if present), else seed demo
-  const [events, setEvents] = useState<SignalEvent[]>(() => {
-    try {
-      if (typeof window !== "undefined") {
-        const raw = window.localStorage.getItem(STORAGE_KEY_EVENTS);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed)) return parsed as SignalEvent[];
-        }
-      }
-    } catch {
-      // ignore
-    }
+  const sbRef = useRef<SupabaseClient | null>(null);
+  if (!sbRef.current) sbRef.current = getSupabase();
 
-    return [
-      {
-        id: "seed_" + String(Date.now()),
-        child: "Chelsea",
-        type: "Pickup Change",
-        details: "After school — Aunt picking up",
-        createdAtISO: nowISO(),
-      },
-    ];
-  });
-
+  const [events, setEvents] = useState<SignalEvent[]>([]);
   const [child, setChild] = useState("Chelsea");
   const [type, setType] = useState<SignalType>("Pickup Change");
   const [details, setDetails] = useState("");
 
-  // Restore draft inputs once
-  React.useEffect(() => {
-    try {
-      if (typeof window === "undefined") return;
-      const raw = window.localStorage.getItem(STORAGE_KEY_DRAFT);
-      if (!raw) return;
-      const d = JSON.parse(raw) as Partial<{
-        child: string;
-        type: SignalType;
-        details: string;
-      }>;
-      if (typeof d.child === "string") setChild(d.child);
-      if (typeof d.type === "string") setType(d.type as SignalType);
-      if (typeof d.details === "string") setDetails(d.details);
-    } catch {
-      // ignore
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Persist draft inputs
-  React.useEffect(() => {
-    try {
-      if (typeof window === "undefined") return;
-      window.localStorage.setItem(
-        STORAGE_KEY_DRAFT,
-        JSON.stringify({ child, type, details })
-      );
-    } catch {
-      // ignore
-    }
-  }, [child, type, details]);
-
-  // Persist events
-  React.useEffect(() => {
-    try {
-      if (typeof window === "undefined") return;
-      window.localStorage.setItem(STORAGE_KEY_EVENTS, JSON.stringify(events));
-    } catch {
-      // ignore
-    }
-  }, [events]);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState<string | null>(null);
+  const [ok, setOk] = useState<string | null>(null);
 
   const latest = useMemo(() => {
     if (!events.length) return null;
-    return [...events].sort((a, b) =>
-      a.createdAtISO < b.createdAtISO ? 1 : -1
-    )[0];
+    return [...events].sort((a, b) => (a.created_at < b.created_at ? 1 : -1))[0];
   }, [events]);
 
   const dayLabel = useMemo(() => formatDayHeaderLocal(nowISO()), []);
   const lastUpdated = latest
-    ? `${formatDateLocal(latest.createdAtISO)} • ${formatTimeLocal(
-        latest.createdAtISO
-      )}`
+    ? `${formatDateLocal(latest.created_at)} • ${formatTimeLocal(latest.created_at)}`
     : "No updates yet";
-
-  const confirm = () => {
-    const d = (details || "").trim();
-    if (!d) return;
-
-    const ev: SignalEvent = {
-      id: String(Date.now()) + "_" + Math.random().toString(16).slice(2),
-      child: (child || "").trim() || "Child",
-      type,
-      details: d,
-      createdAtISO: nowISO(),
-    };
-
-    setEvents((prev) => [ev, ...prev]);
-    setDetails("");
-  };
 
   const layoutGrid: React.CSSProperties = isNarrow
     ? { ...grid2, gridTemplateColumns: "1fr" }
     : grid2;
 
   const timeline = useMemo(() => {
-    const sorted = [...events].sort((a, b) =>
-      a.createdAtISO < b.createdAtISO ? 1 : -1
-    );
+    const sorted = [...events].sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
     return sorted.slice(0, 12);
   }, [events]);
 
   const canConfirm = (details || "").trim().length > 0;
 
+  async function loadLatest() {
+    const sb = sbRef.current;
+    if (!sb) {
+      setErr("Missing VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY");
+      setLoading(false);
+      return;
+    }
+
+    setErr(null);
+    setLoading(true);
+
+    const { data, error } = await sb
+      .from("mls_events")
+      .select("id,family_key,child,type,details,created_at")
+      .eq("family_key", DEMO_FAMILY_KEY)
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (error) {
+      setErr(error.message);
+      setLoading(false);
+      return;
+    }
+
+    setEvents(uniqById((data || []) as SignalEvent[]));
+    setLoading(false);
+  }
+
+  async function insertEvent(payload: {
+    child: string;
+    type: SignalType;
+    details: string;
+  }) {
+    const sb = sbRef.current;
+    if (!sb) return;
+
+    setErr(null);
+    setOk(null);
+
+    const { error } = await sb.from("mls_events").insert([
+      {
+        family_key: DEMO_FAMILY_KEY,
+        child: payload.child,
+        type: payload.type,
+        details: payload.details,
+      },
+    ]);
+
+    if (error) {
+      setErr(error.message);
+      return;
+    }
+
+    setOk("Saved ✓");
+  }
+
+  async function clearDay() {
+    const sb = sbRef.current;
+    if (!sb) return;
+
+    setErr(null);
+    setOk(null);
+
+    const { error } = await sb.from("mls_events").delete().eq("family_key", DEMO_FAMILY_KEY);
+    if (error) {
+      setErr(error.message);
+      return;
+    }
+
+    setEvents([]);
+    setOk("Cleared ✓");
+  }
+
+  async function resetDemo() {
+    setErr(null);
+    setOk(null);
+
+    await clearDay();
+    await insertEvent({
+      child: "Chelsea",
+      type: "Pickup Change",
+      details: "After school — Aunt picking up",
+    });
+  }
+
+  async function anchorDay() {
+    await insertEvent({
+      child: (child || "").trim() || "Child",
+      type: "Other",
+      details: "Day anchored — plan acknowledged",
+    });
+  }
+
+  async function confirm() {
+    const d = (details || "").trim();
+    if (!d) return;
+
+    await insertEvent({
+      child: (child || "").trim() || "Child",
+      type,
+      details: d,
+    });
+
+    setDetails("");
+  }
+
+  useEffect(() => {
+    loadLatest();
+
+    const sb = sbRef.current;
+    if (!sb) return;
+
+    // Realtime insert listener
+    const channel = sb
+      .channel("mls_events_demo")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "mls_events" },
+        (payload) => {
+          const row = payload.new as SignalEvent;
+          if (!row || row.family_key !== DEMO_FAMILY_KEY) return;
+          setEvents((prev) => uniqById([row, ...prev]));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      try {
+        sb.removeChannel(channel);
+      } catch {
+        // ignore
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div style={pageBg}>
-      {/* Build marker overlay */}
       <div style={buildMarkerOverlay}>{"BUILD_MARKER_UI: " + BUILD_MARKER}</div>
 
       <div style={shell}>
-        {/* Header */}
         <div style={topBar}>
           <div>
             <div style={brandTag}>HOMEPLANET / MLS</div>
             <div style={h1}>Day Alignment</div>
-            <p style={sub}>
-              Everyone sees the same plan — the day stays in one place.
-            </p>
+            <p style={sub}>Everyone sees the same plan — the day stays in one place.</p>
           </div>
 
           <div style={btnRow}>
-            <button
-              style={btnGhost}
-              onClick={() => (window.location.href = "/")}
-            >
+            <button style={btnGhost} onClick={() => (window.location.href = "/")}>
               Back to Registry
             </button>
-            <button
-              style={btnGhost}
-              onClick={() => alert("Press Kit (control) — coming next")}
-            >
+            <button style={btnGhost} onClick={() => alert("Press Kit (control) — coming next")}>
               Press Kit (control)
             </button>
-            <button
-              style={btnGhost}
-              onClick={() => alert("Taylor Creek (control) — coming next")}
-            >
+            <button style={btnGhost} onClick={() => alert("Taylor Creek (control) — coming next")}>
               Taylor Creek (control)
             </button>
           </div>
         </div>
 
-        {/* Main */}
         <div style={layoutGrid}>
-          {/* Left column */}
           <div style={{ display: "grid", gap: 14 }}>
-            {/* Day Anchor */}
             <div style={{ ...dayCard, ...pad }}>
               <div style={dayTop}>
                 <div>
                   <p style={dayTitle}>{dayLabel}</p>
                   <div style={dayMeta}>Last aligned: {lastUpdated}</div>
                 </div>
-                <div style={statusPill}>{latest ? "Aligned" : "Waiting"}</div>
+                <div style={statusPill}>{latest ? "Aligned" : loading ? "Loading" : "Waiting"}</div>
               </div>
 
               <div style={bigLine}>
-                {latest ? typeToHumanLine(latest.type) : "No changes recorded yet"}
+                {latest ? typeToHumanLine(latest.type) : loading ? "Loading…" : "No changes recorded yet"}
               </div>
 
               {latest ? (
@@ -607,93 +672,37 @@ export default function MLSLanding() {
 
                   <div style={k}>Recorded</div>
                   <div style={v}>
-                    {formatDateLocal(latest.createdAtISO)} •{" "}
-                    {formatTimeLocal(latest.createdAtISO)}
+                    {formatDateLocal(latest.created_at)} • {formatTimeLocal(latest.created_at)}
                   </div>
                 </div>
               ) : (
                 <div style={note}>
-                  Start with one literal sentence. This becomes the shared truth
-                  everyone can point to.
+                  Start with one literal sentence. This becomes the shared truth everyone can point to.
                 </div>
               )}
 
               <div style={divider} />
 
-              <div
-                style={{
-                  marginTop: 12,
-                  display: "flex",
-                  gap: 10,
-                  flexWrap: "wrap",
-                }}
-              >
-                <button
-                  style={btnGhost}
-                  onClick={() => {
-                    const seed: SignalEvent = {
-                      id: "anchor_" + String(Date.now()),
-                      child: (child || "").trim() || "Child",
-                      type: "Other",
-                      details: "Day anchored — plan acknowledged",
-                      createdAtISO: nowISO(),
-                    };
-                    setEvents((p) => [seed, ...p]);
-                  }}
-                >
+              <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
+                <button style={btnGhost} onClick={anchorDay}>
                   Anchor Day
                 </button>
-
-                <button
-                  style={btnGhost}
-                  onClick={() => {
-                    const reset: SignalEvent = {
-                      id: "reset_" + String(Date.now()),
-                      child: "Chelsea",
-                      type: "Pickup Change",
-                      details: "After school — Aunt picking up",
-                      createdAtISO: nowISO(),
-                    };
-                    setEvents([reset]);
-                    try {
-                      if (typeof window !== "undefined") {
-                        window.localStorage.setItem(
-                          STORAGE_KEY_EVENTS,
-                          JSON.stringify([reset])
-                        );
-                      }
-                    } catch {
-                      // ignore
-                    }
-                  }}
-                >
+                <button style={btnGhost} onClick={resetDemo}>
                   Reset Demo
                 </button>
-
-                <button
-                  style={btnGhost}
-                  onClick={() => {
-                    setEvents([]);
-                    try {
-                      if (typeof window !== "undefined") {
-                        window.localStorage.removeItem(STORAGE_KEY_EVENTS);
-                      }
-                    } catch {
-                      // ignore
-                    }
-                  }}
-                >
+                <button style={btnGhost} onClick={clearDay}>
                   Clear Day
                 </button>
               </div>
 
               <div style={note}>
-                Presence-first: capture the change first. Structure comes after.
-                No hacks. No rewriting history.
+                Presence-first: capture the change first. Structure comes after. No hacks. No rewriting history.
               </div>
+
+              {err ? <div style={bannerErr}>Error: {err}</div> : null}
+              {ok ? <div style={bannerOk}>{ok}</div> : null}
             </div>
 
-            {/* Timeline */}
             <div style={{ ...timelineCard, ...pad }}>
               <p style={sectionTitle}>TIMELINE</p>
               <div style={timelineList}>
@@ -702,8 +711,7 @@ export default function MLSLanding() {
                     <div style={momentTop}>
                       <div style={momentType}>{typeToHumanLine(e.type)}</div>
                       <div style={momentTime}>
-                        {formatDateLocal(e.createdAtISO)} •{" "}
-                        {formatTimeLocal(e.createdAtISO)}
+                        {formatDateLocal(e.created_at)} • {formatTimeLocal(e.created_at)}
                       </div>
                     </div>
                     <div style={momentWho}>Who: {e.child}</div>
@@ -712,22 +720,12 @@ export default function MLSLanding() {
                 ))}
               </div>
 
-              <div
-                style={{
-                  marginTop: 10,
-                  fontSize: 12,
-                  opacity: 0.66,
-                  fontWeight: 750,
-                  lineHeight: 1.25,
-                }}
-              >
-                The user stays in one place. The day reorganizes around the
-                newest truth.
+              <div style={{ marginTop: 10, fontSize: 12, opacity: 0.66, fontWeight: 750, lineHeight: 1.25 }}>
+                The user stays in one place. The day reorganizes around the newest truth.
               </div>
             </div>
           </div>
 
-          {/* Right column: desktop form */}
           {!isMobile && (
             <div style={{ ...card, ...pad }}>
               <p style={sectionTitle}>RECORD A CHANGE</p>
@@ -740,11 +738,7 @@ export default function MLSLanding() {
                   placeholder="Who (guardian / child / contact)"
                 />
 
-                <select
-                  style={inputBase}
-                  value={type}
-                  onChange={(e) => setType(e.target.value as SignalType)}
-                >
+                <select style={inputBase} value={type} onChange={(e) => setType(e.target.value as SignalType)}>
                   {SIGNAL_TYPES.map((t) => (
                     <option key={t} value={t}>
                       {t}
@@ -767,14 +761,7 @@ export default function MLSLanding() {
                   Confirm
                 </button>
 
-                <div
-                  style={{
-                    opacity: 0.66,
-                    fontWeight: 750,
-                    fontSize: 12,
-                    lineHeight: 1.3,
-                  }}
-                >
+                <div style={{ opacity: 0.66, fontWeight: 750, fontSize: 12, lineHeight: 1.3 }}>
                   Tip: one sentence. No storytelling. Just the plan change.
                 </div>
               </div>
@@ -783,23 +770,13 @@ export default function MLSLanding() {
         </div>
       </div>
 
-      {/* Mobile quick dock */}
       {isMobile && (
         <div style={quickDockWrap}>
           <div style={quickDock}>
             <div style={dockGrid}>
-              <input
-                style={inputBase}
-                value={child}
-                onChange={(e) => setChild(e.target.value)}
-                placeholder="Who"
-              />
+              <input style={inputBase} value={child} onChange={(e) => setChild(e.target.value)} placeholder="Who" />
 
-              <select
-                style={inputBase}
-                value={type}
-                onChange={(e) => setType(e.target.value as SignalType)}
-              >
+              <select style={inputBase} value={type} onChange={(e) => setType(e.target.value as SignalType)}>
                 {SIGNAL_TYPES.map((t) => (
                   <option key={t} value={t}>
                     {t}
@@ -814,22 +791,18 @@ export default function MLSLanding() {
                 placeholder="What changed"
               />
 
-              <button
-                style={{ ...primaryBtn, ...(canConfirm ? null : btnDisabled) }}
-                onClick={confirm}
-                disabled={!canConfirm}
-              >
+              <button style={{ ...primaryBtn, ...(canConfirm ? null : btnDisabled) }} onClick={confirm} disabled={!canConfirm}>
                 Confirm
               </button>
             </div>
 
-            <div style={dockHint}>
-              Mobile rule: stay on one screen. The day updates around you.
-            </div>
+            <div style={dockHint}>Mobile rule: stay on one screen. The day updates around you.</div>
           </div>
         </div>
       )}
     </div>
   );
 }
+
+
 
