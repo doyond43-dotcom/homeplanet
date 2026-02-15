@@ -84,7 +84,7 @@ function typeToHumanLine(t: SignalType) {
   }
 }
 
-const BUILD_MARKER = "BUILD_MARKER_UTC_20260215_051917";
+const BUILD_MARKER = "BUILD_MARKER_UTC_20260215_052019";
 
 const pageBg: React.CSSProperties = {
   minHeight: "100vh",
@@ -245,10 +245,10 @@ export default function MLSLanding() {
 
   const [events, setEvents] = useState<SignalEvent[]>(() => [
     {
-      id: seed_,
+      id: "seed_" + String(Date.now()),
       child: "Chelsea",
       type: "Pickup Change",
-      details: "After school â€” Aunt picking up",
+      details: "After school Ã¢â‚¬â€ Aunt picking up",
       createdAtISO: nowISO(),
     },
   ]);
@@ -324,10 +324,10 @@ export default function MLSLanding() {
             <button style={pillBtn} onClick={() => (window.location.href = "/")}>
               Back to Registry
             </button>
-            <button style={pillBtn} onClick={() => alert("Press Kit (control) â€” coming next")}>
+            <button style={pillBtn} onClick={() => alert("Press Kit (control) Ã¢â‚¬â€ coming next")}>
               Press Kit (control)
             </button>
-            <button style={pillBtn} onClick={() => alert("Taylor Creek (control) â€” coming next")}>
+            <button style={pillBtn} onClick={() => alert("Taylor Creek (control) Ã¢â‚¬â€ coming next")}>
               Taylor Creek (control)
             </button>
           </div>
@@ -353,7 +353,7 @@ export default function MLSLanding() {
 
                 <div style={k}>When</div>
                 <div style={v}>
-                  {formatDateLocal(latest.createdAtISO)} â€¢ {formatTimeLocal(latest.createdAtISO)}
+                  {formatDateLocal(latest.createdAtISO)} Ã¢â‚¬Â¢ {formatTimeLocal(latest.createdAtISO)}
                 </div>
               </div>
             )}
@@ -395,7 +395,7 @@ export default function MLSLanding() {
                 <div style={eventTop}>
                   <div style={eventType}>{typeToHumanLine(e.type)}</div>
                   <div style={eventMeta}>
-                    {formatDateLocal(e.createdAtISO)} â€¢ {formatTimeLocal(e.createdAtISO)}
+                    {formatDateLocal(e.createdAtISO)} Ã¢â‚¬Â¢ {formatTimeLocal(e.createdAtISO)}
                   </div>
                 </div>
                 <div style={{ fontWeight: 900, opacity: 0.85 }}>Who: {e.child}</div>
