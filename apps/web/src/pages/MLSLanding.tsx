@@ -1,7 +1,8 @@
-import React, { useMemo, useState } from "react";
+﻿import React, { useMemo, useState } from "react";
 
 function useMediaQuery(query: string) {
-  const get = () => (typeof window !== "undefined" ? window.matchMedia(query).matches : false);
+  const get = () =>
+    typeof window !== "undefined" ? window.matchMedia(query).matches : false;
   const [matches, setMatches] = React.useState(get);
 
   React.useEffect(() => {
@@ -54,7 +55,11 @@ function formatTimeLocal(iso: string) {
 function formatDateLocal(iso: string) {
   try {
     const d = new Date(iso);
-    return d.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
+    return d.toLocaleDateString([], {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    });
   } catch {
     return "";
   }
@@ -73,14 +78,22 @@ const SIGNAL_TYPES: SignalType[] = [
 
 function typeToHumanLine(t: SignalType) {
   switch (t) {
-    case "Pickup Change": return "Pickup plan changed";
-    case "Dropoff Change": return "Dropoff plan changed";
-    case "Late Notice": return "Running late";
-    case "Absent": return "Absent today";
-    case "Early Release": return "Early release";
-    case "Approved Person Update": return "Approved person updated";
-    case "School Note": return "Note to school";
-    default: return "Update";
+    case "Pickup Change":
+      return "Pickup plan changed";
+    case "Dropoff Change":
+      return "Dropoff plan changed";
+    case "Late Notice":
+      return "Running late";
+    case "Absent":
+      return "Absent today";
+    case "Early Release":
+      return "Early release";
+    case "Approved Person Update":
+      return "Approved person updated";
+    case "School Note":
+      return "Note to school";
+    default:
+      return "Update";
   }
 }
 
@@ -161,11 +174,25 @@ const heroCard: React.CSSProperties = {
   border: "1px solid rgba(84,220,170,0.28)",
 };
 
-const heroHeadline: React.CSSProperties = { fontSize: 30, fontWeight: 950, margin: "0 0 10px" };
+const heroHeadline: React.CSSProperties = {
+  fontSize: 30,
+  fontWeight: 950,
+  margin: "0 0 10px",
+};
 
-const smallLabel: React.CSSProperties = { fontSize: 12, letterSpacing: 1.2, opacity: 0.7, fontWeight: 900 };
+const smallLabel: React.CSSProperties = {
+  fontSize: 12,
+  letterSpacing: 1.2,
+  opacity: 0.7,
+  fontWeight: 900,
+};
 
-const kv: React.CSSProperties = { display: "grid", gridTemplateColumns: "110px 1fr", gap: 10, marginTop: 10 };
+const kv: React.CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "110px 1fr",
+  gap: 10,
+  marginTop: 10,
+};
 
 const k: React.CSSProperties = { opacity: 0.7, fontWeight: 800 };
 const v: React.CSSProperties = { fontWeight: 900 };
@@ -182,7 +209,13 @@ const timeChip: React.CSSProperties = {
 
 const sideCard: React.CSSProperties = { ...card };
 
-const sectionTitle: React.CSSProperties = { fontSize: 14, fontWeight: 950, letterSpacing: 1.2, opacity: 0.78, margin: 0 };
+const sectionTitle: React.CSSProperties = {
+  fontSize: 14,
+  fontWeight: 950,
+  letterSpacing: 1.2,
+  opacity: 0.78,
+  margin: 0,
+};
 
 const inputBase: React.CSSProperties = {
   width: "100%",
@@ -248,7 +281,7 @@ export default function MLSLanding() {
       id: "seed_" + String(Date.now()),
       child: "Chelsea",
       type: "Pickup Change",
-      details: "After school Ã¢â‚¬â€ Aunt picking up",
+      details: "After school — Aunt picking up",
       createdAtISO: nowISO(),
     },
   ]);
@@ -278,13 +311,9 @@ export default function MLSLanding() {
     setDetails("");
   };
 
-  const grid = isMobile
-    ? { ...heroGrid, gridTemplateColumns: "1fr" }
-    : heroGrid;
+  const grid = isMobile ? { ...heroGrid, gridTemplateColumns: "1fr" } : heroGrid;
 
-  const list = isMobile
-    ? { ...listGrid, gridTemplateColumns: "1fr" }
-    : listGrid;
+  const list = isMobile ? { ...listGrid, gridTemplateColumns: "1fr" } : listGrid;
 
   return (
     <div style={pageBg}>
@@ -324,10 +353,10 @@ export default function MLSLanding() {
             <button style={pillBtn} onClick={() => (window.location.href = "/")}>
               Back to Registry
             </button>
-            <button style={pillBtn} onClick={() => alert("Press Kit (control) Ã¢â‚¬â€ coming next")}>
+            <button style={pillBtn} onClick={() => alert("Press Kit (control) — coming next")}>
               Press Kit (control)
             </button>
-            <button style={pillBtn} onClick={() => alert("Taylor Creek (control) Ã¢â‚¬â€ coming next")}>
+            <button style={pillBtn} onClick={() => alert("Taylor Creek (control) — coming next")}>
               Taylor Creek (control)
             </button>
           </div>
@@ -335,10 +364,19 @@ export default function MLSLanding() {
 
         <div style={grid}>
           <div style={{ ...heroCard, ...cardPad }}>
-            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 14 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                justifyContent: "space-between",
+                gap: 14,
+              }}
+            >
               <div>
                 <div style={smallLabel}>WHAT CHANGED</div>
-                <div style={heroHeadline}>{latest ? typeToHumanLine(latest.type) : "No updates yet"}</div>
+                <div style={heroHeadline}>
+                  {latest ? typeToHumanLine(latest.type) : "No updates yet"}
+                </div>
               </div>
               <div style={timeChip}>{latest ? "Recorded" : "Waiting"}</div>
             </div>
@@ -353,7 +391,7 @@ export default function MLSLanding() {
 
                 <div style={k}>When</div>
                 <div style={v}>
-                  {formatDateLocal(latest.createdAtISO)} Ã¢â‚¬Â¢ {formatTimeLocal(latest.createdAtISO)}
+                  {formatDateLocal(latest.createdAtISO)} • {formatTimeLocal(latest.createdAtISO)}
                 </div>
               </div>
             )}
@@ -362,8 +400,17 @@ export default function MLSLanding() {
           <div style={{ ...sideCard, ...cardPad }}>
             <p style={sectionTitle}>RECORD A CHANGE</p>
             <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
-              <input style={inputBase} value={child} onChange={(e) => setChild(e.target.value)} placeholder="Who (guardian)" />
-              <select style={selectBase} value={type} onChange={(e) => setType(e.target.value as SignalType)}>
+              <input
+                style={inputBase}
+                value={child}
+                onChange={(e) => setChild(e.target.value)}
+                placeholder="Who (guardian)"
+              />
+              <select
+                style={selectBase}
+                value={type}
+                onChange={(e) => setType(e.target.value as SignalType)}
+              >
                 {SIGNAL_TYPES.map((t) => (
                   <option key={t} value={t}>
                     {t}
@@ -395,7 +442,7 @@ export default function MLSLanding() {
                 <div style={eventTop}>
                   <div style={eventType}>{typeToHumanLine(e.type)}</div>
                   <div style={eventMeta}>
-                    {formatDateLocal(e.createdAtISO)} Ã¢â‚¬Â¢ {formatTimeLocal(e.createdAtISO)}
+                    {formatDateLocal(e.createdAtISO)} • {formatTimeLocal(e.createdAtISO)}
                   </div>
                 </div>
                 <div style={{ fontWeight: 900, opacity: 0.85 }}>Who: {e.child}</div>
