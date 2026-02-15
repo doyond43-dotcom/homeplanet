@@ -84,7 +84,7 @@ function typeToHumanLine(t: SignalType) {
   }
 }
 
-const BUILD_MARKER = "BUILD_MARKER_UTC_20260215_051721";
+const BUILD_MARKER = "BUILD_MARKER_UTC_20260215_051917";
 
 const pageBg: React.CSSProperties = {
   minHeight: "100vh",
@@ -248,7 +248,7 @@ export default function MLSLanding() {
       id: seed_,
       child: "Chelsea",
       type: "Pickup Change",
-      details: "After school — Aunt picking up",
+      details: "After school â€” Aunt picking up",
       createdAtISO: nowISO(),
     },
   ]);
@@ -267,7 +267,7 @@ export default function MLSLanding() {
     if (!d) return;
 
     const ev: SignalEvent = {
-      id: ${Date.now()}_,
+      id: String(Date.now()) + "_" + Math.random().toString(16).slice(2),
       child: (child || "").trim() || "Child",
       type,
       details: d,
@@ -324,10 +324,10 @@ export default function MLSLanding() {
             <button style={pillBtn} onClick={() => (window.location.href = "/")}>
               Back to Registry
             </button>
-            <button style={pillBtn} onClick={() => alert("Press Kit (control) — coming next")}>
+            <button style={pillBtn} onClick={() => alert("Press Kit (control) â€” coming next")}>
               Press Kit (control)
             </button>
-            <button style={pillBtn} onClick={() => alert("Taylor Creek (control) — coming next")}>
+            <button style={pillBtn} onClick={() => alert("Taylor Creek (control) â€” coming next")}>
               Taylor Creek (control)
             </button>
           </div>
@@ -353,7 +353,7 @@ export default function MLSLanding() {
 
                 <div style={k}>When</div>
                 <div style={v}>
-                  {formatDateLocal(latest.createdAtISO)} • {formatTimeLocal(latest.createdAtISO)}
+                  {formatDateLocal(latest.createdAtISO)} â€¢ {formatTimeLocal(latest.createdAtISO)}
                 </div>
               </div>
             )}
@@ -395,7 +395,7 @@ export default function MLSLanding() {
                 <div style={eventTop}>
                   <div style={eventType}>{typeToHumanLine(e.type)}</div>
                   <div style={eventMeta}>
-                    {formatDateLocal(e.createdAtISO)} • {formatTimeLocal(e.createdAtISO)}
+                    {formatDateLocal(e.createdAtISO)} â€¢ {formatTimeLocal(e.createdAtISO)}
                   </div>
                 </div>
                 <div style={{ fontWeight: 900, opacity: 0.85 }}>Who: {e.child}</div>
