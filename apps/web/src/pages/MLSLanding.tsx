@@ -1,4 +1,4 @@
-ï»¿import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 function useMediaQuery(query: string) {
@@ -38,12 +38,8 @@ type SignalEvent = {
   child: string;
   type: SignalType;
   details: string;
-  created_at: string; // timestamptz from Supabase
+  created_at: string; // timestamptz
 };
-
-function nowISO() {
-  return new Date().toISOString();
-}
 
 function formatTimeLocal(iso: string) {
   try {
@@ -63,9 +59,9 @@ function formatDateLocal(iso: string) {
   }
 }
 
-function formatDayHeaderLocal(iso: string) {
+function formatDayHeaderLocal() {
   try {
-    const d = new Date(iso);
+    const d = new Date();
     return d.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
   } catch {
     return "Today";
@@ -100,20 +96,22 @@ function typeToHumanLine(t: SignalType) {
     case "School Note":
       return "Note to school";
     default:
-      return "Update";
+      return "Update recorded";
   }
 }
 
 /**
- * DEMO NOTES:
- * - This file is the deploy truth for /mls
- * - UTF-8 NO BOM only
+ * DEPLOY TRUTH for /mls
+ * - UTF-8 NO BOM
  * - Build marker is your verification stamp
  */
-const BUILD_MARKER = "BUILD_MARKER_UTC_20260215_090500";
+const BUILD_MARKER = "BUILD_MARKER_UTC_20260215_093500";
 
-// DEMO family key (shared across all devices for now)
-const DEMO_FAMILY_KEY = "demo";
+/**
+ * PERMANENT PUBLIC DEMO BOARD KEY
+ * Everyone sees the same board. Refresh never changes identity.
+ */
+const PUBLIC_DEMO_FAMILY_KEY = "demo_public";
 
 function getSupabase(): SupabaseClient | null {
   const url = (import.meta as any).env?.VITE_SUPABASE_URL as string | undefined;
@@ -125,23 +123,38 @@ function getSupabase(): SupabaseClient | null {
   });
 }
 
+/* -------------------- HOMEPLANET VISUAL PHYSICS --------------------
+   Key fix: the WHOLE PAGE lives inside a big cosmic glass shell.
+-------------------------------------------------------------------- */
+
 const pageBg: React.CSSProperties = {
   minHeight: "100vh",
   background:
-    "radial-gradient(900px 520px at 50% -10%, rgba(130,160,255,0.22), rgba(0,0,0,0) 60%), #070707",
+    "radial-gradient(1200px 740px at 50% -18%, rgba(130,160,255,0.30), rgba(0,0,0,0) 58%), radial-gradient(980px 620px at 18% 22%, rgba(34,197,94,0.10), rgba(0,0,0,0) 62%), #070707",
   color: "rgba(255,255,255,0.92)",
 };
 
-const shell: React.CSSProperties = {
-  maxWidth: 1060,
+const vignette: React.CSSProperties = {
+  position: "fixed",
+  inset: 0,
+  pointerEvents: "none",
+  background:
+    "radial-gradient(1200px 700px at 50% 10%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.42) 78%, rgba(0,0,0,0.82) 100%)",
+  zIndex: 0,
+};
+
+const container: React.CSSProperties = {
+  maxWidth: 1180,
   margin: "0 auto",
-  padding: "22px 16px 120px",
+  padding: "26px 16px 140px",
+  position: "relative",
+  zIndex: 1,
 };
 
 const buildMarkerOverlay: React.CSSProperties = {
   position: "fixed",
-  top: 10,
-  left: 10,
+  top: 12,
+  right: 12,
   zIndex: 99999,
   fontSize: 12,
   fontWeight: 950,
@@ -157,33 +170,82 @@ const buildMarkerOverlay: React.CSSProperties = {
   whiteSpace: "nowrap",
 };
 
+const shellOuter: React.CSSProperties = {
+  position: "relative",
+  borderRadius: 30,
+  overflow: "hidden",
+  border: "1px solid rgba(255,255,255,0.10)",
+  background: "rgba(0,0,0,0.38)",
+  boxShadow: "0 30px 120px rgba(0,0,0,0.78)",
+  backdropFilter: "blur(12px)",
+  WebkitBackdropFilter: "blur(12px)",
+};
+
+const shellGlow: React.CSSProperties = {
+  position: "absolute",
+  inset: -140,
+  pointerEvents: "none",
+  borderRadius: 44,
+  background:
+    "radial-gradient(980px 560px at 20% 10%, rgba(130,160,255,0.34), rgba(130,160,255,0.12) 42%, rgba(0,0,0,0) 72%), radial-gradient(900px 640px at 78% 16%, rgba(34,197,94,0.10), rgba(0,0,0,0) 66%)",
+  filter: "blur(34px)",
+  opacity: 0.95,
+  zIndex: 0,
+};
+
+const shellSheen: React.CSSProperties = {
+  position: "absolute",
+  inset: 0,
+  pointerEvents: "none",
+  background:
+    "linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0) 22%), linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0) 18%, rgba(255,255,255,0.04) 70%, rgba(255,255,255,0))",
+  opacity: 0.9,
+  zIndex: 1,
+};
+
+const shellNoise: React.CSSProperties = {
+  position: "absolute",
+  inset: 0,
+  pointerEvents: "none",
+  background:
+    "radial-gradient(900px 320px at 18% 0%, rgba(255,255,255,0.05), rgba(0,0,0,0) 62%), radial-gradient(1200px 420px at 70% 120%, rgba(255,255,255,0.04), rgba(0,0,0,0) 66%)",
+  opacity: 0.55,
+  zIndex: 1,
+};
+
+const shellInner: React.CSSProperties = {
+  position: "relative",
+  zIndex: 2,
+  padding: "28px 26px 30px",
+};
+
 const topBar: React.CSSProperties = {
   display: "flex",
-  alignItems: "center",
+  alignItems: "flex-start",
   justifyContent: "space-between",
-  gap: 12,
-  marginBottom: 14,
+  gap: 16,
+  marginBottom: 18,
 };
 
 const brandTag: React.CSSProperties = {
   letterSpacing: 2,
   fontSize: 12,
   fontWeight: 950,
-  opacity: 0.6,
+  opacity: 0.62,
 };
 
 const h1: React.CSSProperties = {
-  fontSize: 40,
-  lineHeight: 1.05,
-  margin: "6px 0 4px",
-  fontWeight: 950,
+  fontSize: 48,
+  lineHeight: 1.0,
+  margin: "6px 0 6px",
+  fontWeight: 980,
 };
 
 const sub: React.CSSProperties = {
   fontSize: 15,
   opacity: 0.72,
   margin: 0,
-  fontWeight: 750,
+  fontWeight: 780,
 };
 
 const btnRow: React.CSSProperties = {
@@ -191,6 +253,7 @@ const btnRow: React.CSSProperties = {
   gap: 10,
   flexWrap: "wrap",
   justifyContent: "flex-end",
+  paddingTop: 6,
 };
 
 const btnGhost: React.CSSProperties = {
@@ -201,30 +264,108 @@ const btnGhost: React.CSSProperties = {
   color: "rgba(255,255,255,0.92)",
   fontWeight: 900,
   cursor: "pointer",
+  boxShadow: "0 10px 24px rgba(0,0,0,0.35) inset",
 };
 
 const grid2: React.CSSProperties = {
   display: "grid",
   gridTemplateColumns: "1.08fr 0.92fr",
-  gap: 14,
+  gap: 16,
   alignItems: "start",
-};
-
-const card: React.CSSProperties = {
-  borderRadius: 18,
-  border: "1px solid rgba(255,255,255,0.12)",
-  background: "rgba(0,0,0,0.35)",
-  boxShadow: "0 18px 60px rgba(0,0,0,0.55)",
 };
 
 const pad: React.CSSProperties = { padding: 16 };
 
-const dayCard: React.CSSProperties = {
-  ...card,
-  background:
-    "linear-gradient(180deg, rgba(20,80,130,0.26), rgba(0,0,0,0.18)), rgba(0,0,0,0.35)",
-  border: "1px solid rgba(130,160,255,0.22)",
+const glassCardBase: React.CSSProperties = {
+  position: "relative",
+  overflow: "hidden",
+  borderRadius: 22,
+  border: "1px solid rgba(255,255,255,0.12)",
+  background: "rgba(0,0,0,0.30)",
+  boxShadow: "0 18px 60px rgba(0,0,0,0.60)",
+  backdropFilter: "blur(10px)",
+  WebkitBackdropFilter: "blur(10px)",
 };
+
+const glassInner: React.CSSProperties = { position: "relative", zIndex: 3 };
+
+const glassEdgeSheen: React.CSSProperties = {
+  position: "absolute",
+  inset: 0,
+  borderRadius: 22,
+  pointerEvents: "none",
+  background:
+    "linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0) 28%), linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0) 22%, rgba(255,255,255,0.04) 70%, rgba(255,255,255,0))",
+  opacity: 0.9,
+  zIndex: 2,
+};
+
+const glassNoise: React.CSSProperties = {
+  position: "absolute",
+  inset: 0,
+  pointerEvents: "none",
+  borderRadius: 22,
+  background:
+    "radial-gradient(700px 280px at 20% 0%, rgba(255,255,255,0.06), rgba(0,0,0,0) 60%), radial-gradient(900px 360px at 60% 120%, rgba(255,255,255,0.04), rgba(0,0,0,0) 62%)",
+  opacity: 0.55,
+  zIndex: 1,
+};
+
+function CosmicCard(props: {
+  children: React.ReactNode;
+  emitter?: "green" | "blue" | "neutral";
+  style?: React.CSSProperties;
+}) {
+  const emitter = props.emitter ?? "neutral";
+
+  const glow: React.CSSProperties =
+    emitter === "green"
+      ? {
+          position: "absolute",
+          inset: -110,
+          pointerEvents: "none",
+          borderRadius: 32,
+          background:
+            "radial-gradient(520px 300px at 18% 18%, rgba(34,197,94,0.36), rgba(34,197,94,0.12) 40%, rgba(130,160,255,0.12) 62%, rgba(0,0,0,0) 78%), radial-gradient(600px 380px at 78% 14%, rgba(130,160,255,0.16), rgba(0,0,0,0) 66%)",
+          filter: "blur(26px)", // PATCH: tighten glow (less smoke) while keeping energy
+          opacity: 1, // PATCH: keep the restored life
+          zIndex: 0,
+        }
+      : emitter === "blue"
+      ? {
+          position: "absolute",
+          inset: -110,
+          pointerEvents: "none",
+          borderRadius: 32,
+          background:
+            "radial-gradient(700px 420px at 22% 14%, rgba(130,160,255,0.34), rgba(130,160,255,0.12) 46%, rgba(0,0,0,0) 76%), radial-gradient(820px 560px at 70% 30%, rgba(34,197,94,0.10), rgba(0,0,0,0) 68%)",
+          filter: "blur(30px)",
+          opacity: 0.92,
+          zIndex: 0,
+        }
+      : {
+          position: "absolute",
+          inset: -110,
+          pointerEvents: "none",
+          borderRadius: 32,
+          background:
+            "radial-gradient(720px 420px at 22% 16%, rgba(255,255,255,0.08), rgba(0,0,0,0) 74%), radial-gradient(900px 620px at 72% 10%, rgba(130,160,255,0.14), rgba(0,0,0,0) 70%)",
+          filter: "blur(30px)",
+          opacity: 0.86,
+          zIndex: 0,
+        };
+
+  return (
+    <div style={{ ...glassCardBase, ...(props.style || {}) }}>
+      <div style={glow} />
+      <div style={glassNoise} />
+      <div style={glassEdgeSheen} />
+      <div style={glassInner}>{props.children}</div>
+    </div>
+  );
+}
+
+/* -------------------- TYPO + LAYOUT -------------------- */
 
 const dayTop: React.CSSProperties = {
   display: "flex",
@@ -295,8 +436,6 @@ const note: React.CSSProperties = {
   opacity: 0.86,
   lineHeight: 1.35,
 };
-
-const timelineCard: React.CSSProperties = { ...card };
 
 const sectionTitle: React.CSSProperties = {
   fontSize: 12,
@@ -470,9 +609,9 @@ export default function MLSLanding() {
     return [...events].sort((a, b) => (a.created_at < b.created_at ? 1 : -1))[0];
   }, [events]);
 
-  const dayLabel = useMemo(() => formatDayHeaderLocal(nowISO()), []);
+  const dayLabel = useMemo(() => formatDayHeaderLocal(), []);
   const lastUpdated = latest
-    ? `${formatDateLocal(latest.created_at)} â€¢ ${formatTimeLocal(latest.created_at)}`
+    ? `${formatDateLocal(latest.created_at)} • ${formatTimeLocal(latest.created_at)}`
     : "No updates yet";
 
   const layoutGrid: React.CSSProperties = isNarrow
@@ -485,6 +624,8 @@ export default function MLSLanding() {
   }, [events]);
 
   const canConfirm = (details || "").trim().length > 0;
+
+  const FAMILY_KEY = PUBLIC_DEMO_FAMILY_KEY;
 
   async function loadLatest() {
     const sb = sbRef.current;
@@ -500,7 +641,7 @@ export default function MLSLanding() {
     const { data, error } = await sb
       .from("mls_events")
       .select("id,family_key,child,type,details,created_at")
-      .eq("family_key", DEMO_FAMILY_KEY)
+      .eq("family_key", FAMILY_KEY)
       .order("created_at", { ascending: false })
       .limit(50);
 
@@ -514,24 +655,19 @@ export default function MLSLanding() {
     setLoading(false);
   }
 
-  async function insertEvent(payload: {
-    child: string;
-    type: SignalType;
-    details: string;
-  }) {
+  async function insertEvent(payload: { child: string; type: SignalType; details: string }) {
     const sb = sbRef.current;
     if (!sb) return;
 
     setErr(null);
     setOk(null);
 
+    const cleanChild = (payload.child || "").trim() || "Someone";
+    const cleanDetails = (payload.details || "").trim();
+    if (!cleanDetails) return;
+
     const { error } = await sb.from("mls_events").insert([
-      {
-        family_key: DEMO_FAMILY_KEY,
-        child: payload.child,
-        type: payload.type,
-        details: payload.details,
-      },
+      { family_key: FAMILY_KEY, child: cleanChild, type: payload.type, details: cleanDetails },
     ]);
 
     if (error) {
@@ -539,57 +675,52 @@ export default function MLSLanding() {
       return;
     }
 
-    setOk("Saved âœ“");
+    setOk("Today updated ?");
   }
 
-  async function clearDay() {
+  async function clearToday() {
     const sb = sbRef.current;
     if (!sb) return;
 
     setErr(null);
     setOk(null);
 
-    const { error } = await sb.from("mls_events").delete().eq("family_key", DEMO_FAMILY_KEY);
+    const { error } = await sb.from("mls_events").delete().eq("family_key", FAMILY_KEY);
     if (error) {
       setErr(error.message);
       return;
     }
 
     setEvents([]);
-    setOk("Cleared âœ“");
+    setOk("Cleared ?");
   }
 
-  async function resetDemo() {
-    setErr(null);
-    setOk(null);
-
-    await clearDay();
+  async function showExample() {
+    await clearToday();
     await insertEvent({
       child: "Chelsea",
       type: "Pickup Change",
-      details: "After school â€” Aunt picking up",
+      details: "After school — Aunt picking up",
     });
+    await loadLatest();
   }
 
-  async function anchorDay() {
+  async function startToday() {
     await insertEvent({
-      child: (child || "").trim() || "Child",
+      child: (child || "").trim() || "Chelsea",
       type: "Other",
-      details: "Day anchored â€” plan acknowledged",
+      details: "Today started — board is active",
     });
+    await loadLatest();
   }
 
   async function confirm() {
     const d = (details || "").trim();
     if (!d) return;
 
-    await insertEvent({
-      child: (child || "").trim() || "Child",
-      type,
-      details: d,
-    });
-
+    await insertEvent({ child: (child || "").trim() || "Chelsea", type, details: d });
     setDetails("");
+    await loadLatest();
   }
 
   useEffect(() => {
@@ -598,15 +729,14 @@ export default function MLSLanding() {
     const sb = sbRef.current;
     if (!sb) return;
 
-    // Realtime insert listener
     const channel = sb
-      .channel("mls_events_demo")
+      .channel("mls_events_public_demo")
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "mls_events" },
         (payload) => {
           const row = payload.new as SignalEvent;
-          if (!row || row.family_key !== DEMO_FAMILY_KEY) return;
+          if (!row || row.family_key !== FAMILY_KEY) return;
           setEvents((prev) => uniqById([row, ...prev]));
         }
       )
@@ -624,149 +754,156 @@ export default function MLSLanding() {
 
   return (
     <div style={pageBg}>
-      <div style={buildMarkerOverlay}>{"BUILD_MARKER_UI: " + BUILD_MARKER}</div>
+      <div style={vignette} />
+      <div style={buildMarkerOverlay}>{"BUILD_MARKER_UI: " + BUILD_MARKER + " • key=" + FAMILY_KEY}</div>
 
-      <div style={shell}>
-        <div style={topBar}>
-          <div>
-            <div style={brandTag}>HOMEPLANET / MLS</div>
-            <div style={h1}>Day Alignment</div>
-            <p style={sub}>Everyone sees the same plan â€” the day stays in one place.</p>
-          </div>
+      <div style={container}>
+        {/* BIG HOMEPLANET SHELL (this is the missing vibe) */}
+        <div style={shellOuter}>
+          <div style={shellGlow} />
+          <div style={shellNoise} />
+          <div style={shellSheen} />
 
-          <div style={btnRow}>
-            <button style={btnGhost} onClick={() => (window.location.href = "/")}>
-              Back to Registry
-            </button>
-            <button style={btnGhost} onClick={() => alert("Press Kit (control) â€” coming next")}>
-              Press Kit (control)
-            </button>
-            <button style={btnGhost} onClick={() => alert("Taylor Creek (control) â€” coming next")}>
-              Taylor Creek (control)
-            </button>
-          </div>
-        </div>
-
-        <div style={layoutGrid}>
-          <div style={{ display: "grid", gap: 14 }}>
-            <div style={{ ...dayCard, ...pad }}>
-              <div style={dayTop}>
-                <div>
-                  <p style={dayTitle}>{dayLabel}</p>
-                  <div style={dayMeta}>Last aligned: {lastUpdated}</div>
-                </div>
-                <div style={statusPill}>{latest ? "Aligned" : loading ? "Loading" : "Waiting"}</div>
+          <div style={shellInner}>
+            <div style={topBar}>
+              <div>
+                <div style={brandTag}>HOMEPLANET / TODAY</div>
+                <div style={h1}>Today</div>
+                <p style={sub}>Everyone sees the same plan.</p>
               </div>
 
-              <div style={bigLine}>
-                {latest ? typeToHumanLine(latest.type) : loading ? "Loadingâ€¦" : "No changes recorded yet"}
-              </div>
-
-              {latest ? (
-                <div style={kv}>
-                  <div style={k}>Who</div>
-                  <div style={v}>{latest.child}</div>
-
-                  <div style={k}>Details</div>
-                  <div style={v}>{latest.details}</div>
-
-                  <div style={k}>Recorded</div>
-                  <div style={v}>
-                    {formatDateLocal(latest.created_at)} â€¢ {formatTimeLocal(latest.created_at)}
-                  </div>
-                </div>
-              ) : (
-                <div style={note}>
-                  Start with one literal sentence. This becomes the shared truth everyone can point to.
-                </div>
-              )}
-
-              <div style={divider} />
-
-              <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
-                <button style={btnGhost} onClick={anchorDay}>
-                  Anchor Day
+              <div style={btnRow}>
+                <button style={btnGhost} onClick={() => (window.location.href = "/")}>
+                  Back to Registry
                 </button>
-                <button style={btnGhost} onClick={resetDemo}>
-                  Reset Demo
+                <button style={btnGhost} onClick={() => alert("Press Kit (control) — coming next")}>
+                  Press Kit (control)
                 </button>
-                <button style={btnGhost} onClick={clearDay}>
-                  Clear Day
+                <button style={btnGhost} onClick={() => alert("Taylor Creek (control) — coming next")}>
+                  Taylor Creek (control)
                 </button>
               </div>
-
-              <div style={note}>
-                Presence-first: capture the change first. Structure comes after. No hacks. No rewriting history.
-              </div>
-
-              {err ? <div style={bannerErr}>Error: {err}</div> : null}
-              {ok ? <div style={bannerOk}>{ok}</div> : null}
             </div>
 
-            <div style={{ ...timelineCard, ...pad }}>
-              <p style={sectionTitle}>TIMELINE</p>
-              <div style={timelineList}>
-                {timeline.map((e) => (
-                  <div key={e.id} style={momentRow}>
-                    <div style={momentTop}>
-                      <div style={momentType}>{typeToHumanLine(e.type)}</div>
-                      <div style={momentTime}>
-                        {formatDateLocal(e.created_at)} â€¢ {formatTimeLocal(e.created_at)}
+            <div style={layoutGrid}>
+              <div style={{ display: "grid", gap: 16 }}>
+                {/* TODAY CARD */}
+                <CosmicCard emitter="green" style={{ ...pad }}>
+                  <div style={dayTop}>
+                    <div>
+                      <p style={dayTitle}>{dayLabel}</p>
+                      <div style={dayMeta}>Last update: {lastUpdated}</div>
+                    </div>
+                    <div style={statusPill}>{latest ? "Recorded" : loading ? "Loading" : "No updates"}</div>
+                  </div>
+
+                  <div style={bigLine}>
+                    {latest ? typeToHumanLine(latest.type) : loading ? "Loading…" : "Nothing recorded yet"}
+                  </div>
+
+                  {latest ? (
+                    <div style={kv}>
+                      <div style={k}>Who</div>
+                      <div style={v}>{latest.child}</div>
+
+                      <div style={k}>Details</div>
+                      <div style={v}>{latest.details}</div>
+
+                      <div style={k}>Recorded</div>
+                      <div style={v}>
+                        {formatDateLocal(latest.created_at)} • {formatTimeLocal(latest.created_at)}
                       </div>
                     </div>
-                    <div style={momentWho}>Who: {e.child}</div>
-                    <div style={momentDetails}>{e.details}</div>
+                  ) : (
+                    <div style={note}>Write one real sentence. This becomes what everyone goes by.</div>
+                  )}
+
+                  <div style={divider} />
+
+                  <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
+                    <button style={btnGhost} onClick={startToday}>
+                      Start Today
+                    </button>
+                    <button style={btnGhost} onClick={showExample}>
+                      Show Example
+                    </button>
+                    <button style={btnGhost} onClick={clearToday}>
+                      Clear Today
+                    </button>
                   </div>
-                ))}
+
+                  <div style={note}>
+                    Presence-first: capture the change first. Structure comes after. No hacks. No rewriting history.
+                  </div>
+
+                  {err ? <div style={bannerErr}>Error: {err}</div> : null}
+                  {ok ? <div style={bannerOk}>{ok}</div> : null}
+                </CosmicCard>
+
+                {/* TIMELINE */}
+                <CosmicCard emitter="blue" style={{ ...pad }}>
+                  <p style={sectionTitle}>TIMELINE</p>
+
+                  <div style={timelineList}>
+                    {timeline.map((e) => (
+                      <div key={e.id} style={momentRow}>
+                        <div style={momentTop}>
+                          <div style={momentType}>{typeToHumanLine(e.type)}</div>
+                          <div style={momentTime}>
+                            {formatDateLocal(e.created_at)} • {formatTimeLocal(e.created_at)}
+                          </div>
+                        </div>
+                        <div style={momentWho}>Who: {e.child}</div>
+                        <div style={momentDetails}>{e.details}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div style={{ marginTop: 10, fontSize: 12, opacity: 0.66, fontWeight: 750, lineHeight: 1.25 }}>
+                    Everyone checks here. Nobody has to ask again.
+                  </div>
+                </CosmicCard>
               </div>
 
-              <div style={{ marginTop: 10, fontSize: 12, opacity: 0.66, fontWeight: 750, lineHeight: 1.25 }}>
-                The user stays in one place. The day reorganizes around the newest truth.
-              </div>
+              {/* UPDATE PANEL */}
+              {!isMobile && (
+                <CosmicCard emitter="neutral" style={{ ...pad }}>
+                  <p style={sectionTitle}>UPDATE TODAY</p>
+
+                  <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
+                    <input style={inputBase} value={child} onChange={(e) => setChild(e.target.value)} placeholder="Who" />
+
+                    <select style={inputBase} value={type} onChange={(e) => setType(e.target.value as SignalType)}>
+                      {SIGNAL_TYPES.map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
+                    </select>
+
+                    <textarea
+                      style={textAreaBase}
+                      value={details}
+                      onChange={(e) => setDetails(e.target.value)}
+                      placeholder="What changed?"
+                    />
+
+                    <button
+                      style={{ ...primaryBtn, ...(canConfirm ? null : btnDisabled) }}
+                      onClick={confirm}
+                      disabled={!canConfirm}
+                    >
+                      Confirm
+                    </button>
+
+                    <div style={{ opacity: 0.66, fontWeight: 750, fontSize: 12, lineHeight: 1.3 }}>
+                      One sentence. Just what’s happening.
+                    </div>
+                  </div>
+                </CosmicCard>
+              )}
             </div>
           </div>
-
-          {!isMobile && (
-            <div style={{ ...card, ...pad }}>
-              <p style={sectionTitle}>RECORD A CHANGE</p>
-
-              <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
-                <input
-                  style={inputBase}
-                  value={child}
-                  onChange={(e) => setChild(e.target.value)}
-                  placeholder="Who (guardian / child / contact)"
-                />
-
-                <select style={inputBase} value={type} onChange={(e) => setType(e.target.value as SignalType)}>
-                  {SIGNAL_TYPES.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-
-                <textarea
-                  style={textAreaBase}
-                  value={details}
-                  onChange={(e) => setDetails(e.target.value)}
-                  placeholder="Details (short, literal, dispute-ready)"
-                />
-
-                <button
-                  style={{ ...primaryBtn, ...(canConfirm ? null : btnDisabled) }}
-                  onClick={confirm}
-                  disabled={!canConfirm}
-                >
-                  Confirm
-                </button>
-
-                <div style={{ opacity: 0.66, fontWeight: 750, fontSize: 12, lineHeight: 1.3 }}>
-                  Tip: one sentence. No storytelling. Just the plan change.
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
@@ -784,12 +921,7 @@ export default function MLSLanding() {
                 ))}
               </select>
 
-              <input
-                style={inputBase}
-                value={details}
-                onChange={(e) => setDetails(e.target.value)}
-                placeholder="What changed"
-              />
+              <input style={inputBase} value={details} onChange={(e) => setDetails(e.target.value)} placeholder="What changed" />
 
               <button style={{ ...primaryBtn, ...(canConfirm ? null : btnDisabled) }} onClick={confirm} disabled={!canConfirm}>
                 Confirm
@@ -803,6 +935,5 @@ export default function MLSLanding() {
     </div>
   );
 }
-
 
 
