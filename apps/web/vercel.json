@@ -1,4 +1,12 @@
-{
+﻿{
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [{ "type": "host", "value": "www.homeplanet.city" }],
+      "destination": "https://homeplanet.city/$1",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]
