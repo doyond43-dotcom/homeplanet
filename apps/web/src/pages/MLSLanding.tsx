@@ -75,7 +75,7 @@ function typeToHumanLine(t: SignalType) {
   }
 }
 
-const BUILD_MARKER = "BUILD_MARKER_20260213_FIXED_UTF8";
+const BUILD_MARKER = "BUILD_MARKER_UTC_20260215_042206";
 
 export default function MLSLanding() {
   console.log("" + BUILD_MARKER);
