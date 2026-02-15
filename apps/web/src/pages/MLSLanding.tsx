@@ -109,13 +109,13 @@ export default function MLSLanding() {
   const navigate = useNavigate();
   const isMobile = useMediaQuery("(max-width: 740px)");
 
-// Seed one ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œTodayÃƒÂ¢Ã¢â€šÂ¬Ã‚Â example so it feels alive immediately (delete later)
+// Seed one ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“TodayÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â example so it feels alive immediately (delete later)
   const [events, setEvents] = useState<SignalEvent[]>(() => [
     {
       id: `seed_${Date.now()}`,
       child: "Chelsea",
       type: "Pickup Change",
-      details: "After school ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Aunt picking up",
+      details: "After school ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â Aunt picking up",
       createdAtISO: nowISO(),
     },
   ]);
@@ -143,7 +143,7 @@ export default function MLSLanding() {
       id: `${Date.now()}_${Math.random().toString(16).slice(2)}`,
       child: trimmedChild,
       type,
-      details: trimmedDetails,
+      details: decodeURIComponent(escape(trimmedDetails)),
       createdAtISO: nowISO(),
     };
 
@@ -152,12 +152,12 @@ export default function MLSLanding() {
     setDetails("");
   };
 
-  // HARD-WIRED NAV (fixes ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œbuttons do nothingÃƒÂ¢Ã¢â€šÂ¬Ã‚Â even if navigate gets swallowed by overlay/event issues)
+  // HARD-WIRED NAV (fixes ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“buttons do nothingÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â even if navigate gets swallowed by overlay/event issues)
   const go = (to: string) => {
     try {
       navigate(to);
     } catch {}
-    // hard fallback if router doesnÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢t move (seen on some edge cases)
+    // hard fallback if router doesnÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢t move (seen on some edge cases)
     window.setTimeout(() => {
       try {
         if (window.location.pathname !== to) window.location.assign(to);
@@ -489,7 +489,7 @@ export default function MLSLanding() {
                     <div style={cardTitle}>Nothing resets.</div>
                     <div style={divider} />
                     <div style={{ fontSize: 13, opacity: 0.78, lineHeight: 1.5 }}>
-                      Everyone stays aligned ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the day updates in one place.
+                      Everyone stays aligned ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â the day updates in one place.
                     </div>
                   </div>
                 </div>
