@@ -4,3 +4,9 @@
 
 /* Optional: keep the page from flashing white before Tailwind loads */
 html, body { background: #070707; }
+
+/* PATCH: allow pages (like /taylor-creek) to scroll */
+html, body { height: 100%; }
+body { overflow-y: auto; }
+#root { min-height: 100%; }
+

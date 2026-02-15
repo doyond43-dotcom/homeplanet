@@ -1,43 +1,37 @@
-﻿import { BrowserRouter, Routes, Route } from "react-router-dom";
-import TaylorCreekSite from "./routes/TaylorCreekSite";
+﻿import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import MLSLanding from "./pages/MLSLanding";
-import PressPage from "./routes/PressPage";
+import TaylorCreekSite from "./routes/TaylorCreekSite";
 import PublicPage from "./routes/PublicPage";
-import CityRoutes from "./routes/CityRoutes";
-import NotFound from "./pages/NotFound";
 
-/**
- * HomePlanet World Router
- * Order matters:
- * 1) specific locations
- * 2) dynamic slug
- * 3) true 404
- */
+/*
+  HomePlanet Routing Layer
+  ------------------------
+  /taylor-creek        -> marketing / info page
+  /c/:slug             -> customer intake page
+  /live/:slug          -> shop live dashboard
+*/
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
 
-        {/* Home (neutral entry — NOT MLS) */}
-        <Route path="/" element={<div style={{padding:24}}>HomePlanet</div>} />
-
-        {/* Control Layer */}
+        {/* Main Pages */}
+        <Route path="/" element={<Navigate to="/taylor-creek" replace />} />
         <Route path="/mls" element={<MLSLanding />} />
-            <Route path="/taylor-creek" element={<TaylorCreekSite />} />
 
-        {/* Public Trust Layer */}
-        <Route path="/press/:slug" element={<PressPage />} />
+        {/* Shop marketing page */}
+        <Route path="/taylor-creek" element={<TaylorCreekSite />} />
 
-        {/* Geography Layer */}
-        <Route path="/city/*" element={<CityRoutes />} />
+        {/* PUBLIC CUSTOMER INTAKE */}
+        <Route path="/c/:slug" element={<PublicPage />} />
 
-        {/* Action Layer (tenant intake) */}
-        <Route path="/:slug" element={<PublicPage />} />
+        {/* LIVE SHOP VIEW */}
+        <Route path="/live/:slug" element={<TaylorCreekSite />} />
 
-        {/* True 404 — must be last */}
-        <Route path="*" element={<NotFound />} />
+        {/* fallback */}
+        <Route path="*" element={<div style={{padding:40}}>404 — Location not found<br/>This place doesn't exist on HomePlanet yet.</div>} />
 
       </Routes>
     </BrowserRouter>

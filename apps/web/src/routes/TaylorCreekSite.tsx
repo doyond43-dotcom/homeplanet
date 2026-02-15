@@ -1,8 +1,29 @@
 ﻿import { Link } from "react-router-dom";
 
+const SHOP_PHONE_DISPLAY = "(863) 467-2221";
+const SHOP_PHONE_TEL = "+18634672221";
+const SHOP_ADDRESS_LINE = "3826 US-441, Okeechobee, FL 34974";
+const MAPS_URL = "https://www.google.com/maps/search/?api=1&query=Taylor+Creek+Autorepair+inc+3826+US-441+Okeechobee+FL+34974";
+
+async function copyToClipboard(text: string) {
+  try {
+    await navigator.clipboard.writeText(text);
+    alert(`Copied: ${text}`);
+  } catch {
+    // Fallback (older browsers)
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    document.body.removeChild(ta);
+    alert(`Copied: ${text}`);
+  }
+}
+
 export default function TaylorCreekSite() {
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100" style={{ minHeight: "100vh", background: "#070707", color: "rgba(255,255,255,0.92)" }}>
+    <div className="min-h-screen bg-slate-950 text-slate-100">
       {/* Top bar */}
       <div className="border-b border-slate-800 bg-slate-950/70 backdrop-blur">
         <div className="mx-auto max-w-6xl px-4 py-4 flex items-center justify-between gap-3">
@@ -39,7 +60,6 @@ export default function TaylorCreekSite() {
       <div className="mx-auto max-w-6xl px-4 py-12 space-y-10">
         {/* HERO */}
         <section className="rounded-3xl border border-slate-800 bg-slate-900/30 p-6 md:p-10 shadow">
-          {/* Hero-only “steel” texture + subtle HomePlanet glow */}
           <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/45">
             {/* subtle blue system glow */}
             <div
@@ -82,7 +102,6 @@ export default function TaylorCreekSite() {
               <div className="grid md:grid-cols-[1fr_360px] gap-10">
                 {/* Left */}
                 <div>
-                  {/* Proof badges */}
                   <div className="flex flex-wrap gap-2 mb-6">
                     {["Receipt-ready", "Timestamped", "Verified intake", "Public lookup"].map((t) => (
                       <span
@@ -96,9 +115,7 @@ export default function TaylorCreekSite() {
 
                   <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
                     Honest repairs. Clear communication.{" "}
-                    <span className="block mt-1 text-red-500">
-                      Receipt-ready proof.
-                    </span>
+                    <span className="block mt-1 text-red-500">Receipt-ready proof.</span>
                   </h1>
 
                   <p className="mt-4 text-slate-300 max-w-2xl">
@@ -107,22 +124,31 @@ export default function TaylorCreekSite() {
                   </p>
 
                   <div className="mt-7 flex flex-wrap gap-3">
-                    <Link
-                      to="/c/taylor-creek"
+                    {/* SAFEST NAV: hard href so it always works */}
+                    <a
+                      href="/c/taylor-creek"
                       className="inline-flex items-center justify-center rounded-xl bg-red-600 px-6 py-3 font-semibold hover:bg-red-500 transition shadow-sm"
                     >
                       Start a service request
-                    </Link>
-
-                    <a
-                      href="tel:+10000000000"
-                      className="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-950/40 px-6 py-3 font-semibold hover:bg-slate-900 transition"
-                    >
-                      Call the shop
                     </a>
 
                     <a
-                      href="https://www.google.com/maps/search/?api=1&query=Taylor+Creek+Auto+Repair+Okeechobee+FL"
+                      href={`tel:${SHOP_PHONE_TEL}`}
+                      className="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-950/40 px-6 py-3 font-semibold hover:bg-slate-900 transition"
+                    >
+                      Call the shop <span className="ml-2 text-slate-300 text-sm">{SHOP_PHONE_DISPLAY}</span>
+                    </a>
+
+                    <button
+                      type="button"
+                      onClick={() => copyToClipboard(SHOP_PHONE_DISPLAY)}
+                      className="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-950/40 px-6 py-3 font-semibold hover:bg-slate-900 transition"
+                    >
+                      Copy number
+                    </button>
+
+                    <a
+                      href={MAPS_URL}
                       target="_blank"
                       rel="noreferrer"
                       className="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-950/40 px-6 py-3 font-semibold hover:bg-slate-900 transition"
@@ -135,7 +161,6 @@ export default function TaylorCreekSite() {
                     Powered by HomePlanet • Presence-First Intake • Receipt + record at submission (not after).
                   </div>
 
-                  {/* Presence-first note (kept subtle + “HomePlanet”) */}
                   <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-950/40 px-4 py-3 text-sm text-slate-200 flex items-start gap-3">
                     <span className="mt-2 inline-block h-2 w-2 rounded-full bg-sky-300/80" />
                     <div>
@@ -169,8 +194,8 @@ export default function TaylorCreekSite() {
                         NODE CONTACT
                       </div>
                       <div className="mt-2 text-sm text-slate-300 space-y-1">
-                        <div>Phone: (000) 000-0000</div>
-                        <div>Address: Okeechobee, FL</div>
+                        <div>Phone: {SHOP_PHONE_DISPLAY}</div>
+                        <div>Address: {SHOP_ADDRESS_LINE}</div>
                       </div>
                       <div className="mt-3 text-xs text-slate-500">
                         Safe placeholders — swap with real details anytime.
@@ -193,9 +218,8 @@ export default function TaylorCreekSite() {
           </div>
         </section>
 
-        {/* FEATURE CARDS (make these feel like “nodes”, not generic cards) */}
+        {/* FEATURE CARDS */}
         <section className="grid md:grid-cols-3 gap-5">
-          {/* red rail */}
           <div className="relative rounded-2xl border border-slate-800 bg-slate-950/45 p-6 overflow-hidden">
             <div
               aria-hidden
@@ -208,7 +232,6 @@ export default function TaylorCreekSite() {
             </p>
           </div>
 
-          {/* blue rail */}
           <div className="relative rounded-2xl border border-slate-800 bg-slate-950/45 p-6 overflow-hidden">
             <div
               aria-hidden
@@ -221,7 +244,6 @@ export default function TaylorCreekSite() {
             </p>
           </div>
 
-          {/* amber rail */}
           <div className="relative rounded-2xl border border-slate-800 bg-slate-950/45 p-6 overflow-hidden">
             <div
               aria-hidden
@@ -242,30 +264,21 @@ export default function TaylorCreekSite() {
             ["Brakes & Suspension", "Safety-critical systems handled with clear notes and verification."],
             ["Maintenance", "Oil, fluids, inspections, and longevity care."],
           ].map(([title, body]) => (
-            <div
-              key={title}
-              className="rounded-2xl border border-slate-800 bg-slate-950/45 p-6"
-            >
+            <div key={title} className="rounded-2xl border border-slate-800 bg-slate-950/45 p-6">
               <div className="text-sm font-semibold">{title}</div>
               <p className="mt-2 text-sm text-slate-300">{body}</p>
             </div>
           ))}
         </section>
 
-                {/* Footer */}
         <footer className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-slate-500 border-t border-slate-900 pt-6">
           <div>© {new Date().getFullYear()} Taylor Creek Auto Repair</div>
           <nav className="flex gap-4">
-            <Link to="/c/taylor-creek" className="hover:text-slate-300">
-              Start request
-            </Link>
-            <Link to="/press/taylor-creek" className="hover:text-slate-300">
-              Press kit
-            </Link>
+            <a href="/c/taylor-creek" className="hover:text-slate-300">Start request</a>
+            <Link to="/press/taylor-creek" className="hover:text-slate-300">Press kit</Link>
           </nav>
         </footer>
       </div>
     </div>
   );
 }
-
