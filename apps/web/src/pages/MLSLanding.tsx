@@ -109,13 +109,13 @@ export default function MLSLanding() {
   const navigate = useNavigate();
   const isMobile = useMediaQuery("(max-width: 740px)");
 
-// Seed one â€œTodayâ€ example so it feels alive immediately (delete later)
+// Seed one ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œTodayÃƒÂ¢Ã¢â€šÂ¬Ã‚Â example so it feels alive immediately (delete later)
   const [events, setEvents] = useState<SignalEvent[]>(() => [
     {
       id: `seed_${Date.now()}`,
       child: "Chelsea",
       type: "Pickup Change",
-      details: "After school â€” Aunt picking up",
+      details: "After school ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Aunt picking up",
       createdAtISO: nowISO(),
     },
   ]);
@@ -152,12 +152,12 @@ export default function MLSLanding() {
     setDetails("");
   };
 
-  // HARD-WIRED NAV (fixes â€œbuttons do nothingâ€ even if navigate gets swallowed by overlay/event issues)
+  // HARD-WIRED NAV (fixes ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œbuttons do nothingÃƒÂ¢Ã¢â€šÂ¬Ã‚Â even if navigate gets swallowed by overlay/event issues)
   const go = (to: string) => {
     try {
       navigate(to);
     } catch {}
-    // hard fallback if router doesnâ€™t move (seen on some edge cases)
+    // hard fallback if router doesnÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢t move (seen on some edge cases)
     window.setTimeout(() => {
       try {
         if (window.location.pathname !== to) window.location.assign(to);
@@ -177,7 +177,7 @@ export default function MLSLanding() {
 
   const stage: React.CSSProperties = {
     width: "100%",
-    maxWidth: 1120,
+    maxWidth: isMobile ? "100%" : 1120,
   };
 
   const panel: React.CSSProperties = {
@@ -185,7 +185,7 @@ export default function MLSLanding() {
     border: "1px solid rgba(255,255,255,0.12)",
     background: "rgba(255,255,255,0.04)",
     boxShadow: "0 28px 90px rgba(0,0,0,0.55)",
-    overflow: "hidden",
+    overflow: "visible",
   };
 
   const inner: React.CSSProperties = {
@@ -489,7 +489,7 @@ export default function MLSLanding() {
                     <div style={cardTitle}>Nothing resets.</div>
                     <div style={divider} />
                     <div style={{ fontSize: 13, opacity: 0.78, lineHeight: 1.5 }}>
-                      Everyone stays aligned â€” the day updates in one place.
+                      Everyone stays aligned ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the day updates in one place.
                     </div>
                   </div>
                 </div>
