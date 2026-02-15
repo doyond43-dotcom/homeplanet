@@ -118,6 +118,14 @@ function typeToHumanLine(t: SignalType) {
  */
 const BUILD_MARKER = "BUILD_MARKER_UTC_20260215_070800";
 
+/**
+ * Local persistence keys (safe, no backend yet)
+ * - Events survive refresh
+ * - Draft inputs survive refresh
+ */
+const STORAGE_KEY_EVENTS = "homeplanet.mls.events.v1";
+const STORAGE_KEY_DRAFT = "homeplanet.mls.draft.v1";
+
 const pageBg: React.CSSProperties = {
   minHeight: "100vh",
   background:
@@ -418,19 +426,77 @@ export default function MLSLanding() {
   const isNarrow = useMediaQuery("(max-width: 860px)");
   const isMobile = useMediaQuery("(max-width: 740px)");
 
-  const [events, setEvents] = useState<SignalEvent[]>(() => [
-    {
-      id: "seed_" + String(Date.now()),
-      child: "Chelsea",
-      type: "Pickup Change",
-      details: "After school — Aunt picking up",
-      createdAtISO: nowISO(),
-    },
-  ]);
+  // Load timeline from localStorage (if present), else seed demo
+  const [events, setEvents] = useState<SignalEvent[]>(() => {
+    try {
+      if (typeof window !== "undefined") {
+        const raw = window.localStorage.getItem(STORAGE_KEY_EVENTS);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) return parsed as SignalEvent[];
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    return [
+      {
+        id: "seed_" + String(Date.now()),
+        child: "Chelsea",
+        type: "Pickup Change",
+        details: "After school — Aunt picking up",
+        createdAtISO: nowISO(),
+      },
+    ];
+  });
 
   const [child, setChild] = useState("Chelsea");
   const [type, setType] = useState<SignalType>("Pickup Change");
   const [details, setDetails] = useState("");
+
+  // Restore draft inputs once
+  React.useEffect(() => {
+    try {
+      if (typeof window === "undefined") return;
+      const raw = window.localStorage.getItem(STORAGE_KEY_DRAFT);
+      if (!raw) return;
+      const d = JSON.parse(raw) as Partial<{
+        child: string;
+        type: SignalType;
+        details: string;
+      }>;
+      if (typeof d.child === "string") setChild(d.child);
+      if (typeof d.type === "string") setType(d.type as SignalType);
+      if (typeof d.details === "string") setDetails(d.details);
+    } catch {
+      // ignore
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Persist draft inputs
+  React.useEffect(() => {
+    try {
+      if (typeof window === "undefined") return;
+      window.localStorage.setItem(
+        STORAGE_KEY_DRAFT,
+        JSON.stringify({ child, type, details })
+      );
+    } catch {
+      // ignore
+    }
+  }, [child, type, details]);
+
+  // Persist events
+  React.useEffect(() => {
+    try {
+      if (typeof window === "undefined") return;
+      window.localStorage.setItem(STORAGE_KEY_EVENTS, JSON.stringify(events));
+    } catch {
+      // ignore
+    }
+  }, [events]);
 
   const latest = useMemo(() => {
     if (!events.length) return null;
@@ -441,7 +507,9 @@ export default function MLSLanding() {
 
   const dayLabel = useMemo(() => formatDayHeaderLocal(nowISO()), []);
   const lastUpdated = latest
-    ? `${formatDateLocal(latest.createdAtISO)} • ${formatTimeLocal(latest.createdAtISO)}`
+    ? `${formatDateLocal(latest.createdAtISO)} • ${formatTimeLocal(
+        latest.createdAtISO
+      )}`
     : "No updates yet";
 
   const confirm = () => {
@@ -484,17 +552,28 @@ export default function MLSLanding() {
           <div>
             <div style={brandTag}>HOMEPLANET / MLS</div>
             <div style={h1}>Day Alignment</div>
-            <p style={sub}>Everyone sees the same plan — the day stays in one place.</p>
+            <p style={sub}>
+              Everyone sees the same plan — the day stays in one place.
+            </p>
           </div>
 
           <div style={btnRow}>
-            <button style={btnGhost} onClick={() => (window.location.href = "/")}>
+            <button
+              style={btnGhost}
+              onClick={() => (window.location.href = "/")}
+            >
               Back to Registry
             </button>
-            <button style={btnGhost} onClick={() => alert("Press Kit (control) — coming next")}>
+            <button
+              style={btnGhost}
+              onClick={() => alert("Press Kit (control) — coming next")}
+            >
               Press Kit (control)
             </button>
-            <button style={btnGhost} onClick={() => alert("Taylor Creek (control) — coming next")}>
+            <button
+              style={btnGhost}
+              onClick={() => alert("Taylor Creek (control) — coming next")}
+            >
               Taylor Creek (control)
             </button>
           </div>
@@ -514,7 +593,9 @@ export default function MLSLanding() {
                 <div style={statusPill}>{latest ? "Aligned" : "Waiting"}</div>
               </div>
 
-              <div style={bigLine}>{latest ? typeToHumanLine(latest.type) : "No changes recorded yet"}</div>
+              <div style={bigLine}>
+                {latest ? typeToHumanLine(latest.type) : "No changes recorded yet"}
+              </div>
 
               {latest ? (
                 <div style={kv}>
@@ -526,18 +607,27 @@ export default function MLSLanding() {
 
                   <div style={k}>Recorded</div>
                   <div style={v}>
-                    {formatDateLocal(latest.createdAtISO)} • {formatTimeLocal(latest.createdAtISO)}
+                    {formatDateLocal(latest.createdAtISO)} •{" "}
+                    {formatTimeLocal(latest.createdAtISO)}
                   </div>
                 </div>
               ) : (
                 <div style={note}>
-                  Start with one literal sentence. This becomes the shared truth everyone can point to.
+                  Start with one literal sentence. This becomes the shared truth
+                  everyone can point to.
                 </div>
               )}
 
               <div style={divider} />
 
-              <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <div
+                style={{
+                  marginTop: 12,
+                  display: "flex",
+                  gap: 10,
+                  flexWrap: "wrap",
+                }}
+              >
                 <button
                   style={btnGhost}
                   onClick={() => {
@@ -565,14 +655,41 @@ export default function MLSLanding() {
                       createdAtISO: nowISO(),
                     };
                     setEvents([reset]);
+                    try {
+                      if (typeof window !== "undefined") {
+                        window.localStorage.setItem(
+                          STORAGE_KEY_EVENTS,
+                          JSON.stringify([reset])
+                        );
+                      }
+                    } catch {
+                      // ignore
+                    }
                   }}
                 >
                   Reset Demo
                 </button>
+
+                <button
+                  style={btnGhost}
+                  onClick={() => {
+                    setEvents([]);
+                    try {
+                      if (typeof window !== "undefined") {
+                        window.localStorage.removeItem(STORAGE_KEY_EVENTS);
+                      }
+                    } catch {
+                      // ignore
+                    }
+                  }}
+                >
+                  Clear Day
+                </button>
               </div>
 
               <div style={note}>
-                Presence-first: capture the change first. Structure comes after. No hacks. No rewriting history.
+                Presence-first: capture the change first. Structure comes after.
+                No hacks. No rewriting history.
               </div>
             </div>
 
@@ -585,7 +702,8 @@ export default function MLSLanding() {
                     <div style={momentTop}>
                       <div style={momentType}>{typeToHumanLine(e.type)}</div>
                       <div style={momentTime}>
-                        {formatDateLocal(e.createdAtISO)} • {formatTimeLocal(e.createdAtISO)}
+                        {formatDateLocal(e.createdAtISO)} •{" "}
+                        {formatTimeLocal(e.createdAtISO)}
                       </div>
                     </div>
                     <div style={momentWho}>Who: {e.child}</div>
@@ -594,8 +712,17 @@ export default function MLSLanding() {
                 ))}
               </div>
 
-              <div style={{ marginTop: 10, fontSize: 12, opacity: 0.66, fontWeight: 750, lineHeight: 1.25 }}>
-                The user stays in one place. The day reorganizes around the newest truth.
+              <div
+                style={{
+                  marginTop: 10,
+                  fontSize: 12,
+                  opacity: 0.66,
+                  fontWeight: 750,
+                  lineHeight: 1.25,
+                }}
+              >
+                The user stays in one place. The day reorganizes around the
+                newest truth.
               </div>
             </div>
           </div>
@@ -613,7 +740,11 @@ export default function MLSLanding() {
                   placeholder="Who (guardian / child / contact)"
                 />
 
-                <select style={inputBase} value={type} onChange={(e) => setType(e.target.value as SignalType)}>
+                <select
+                  style={inputBase}
+                  value={type}
+                  onChange={(e) => setType(e.target.value as SignalType)}
+                >
                   {SIGNAL_TYPES.map((t) => (
                     <option key={t} value={t}>
                       {t}
@@ -636,7 +767,14 @@ export default function MLSLanding() {
                   Confirm
                 </button>
 
-                <div style={{ opacity: 0.66, fontWeight: 750, fontSize: 12, lineHeight: 1.3 }}>
+                <div
+                  style={{
+                    opacity: 0.66,
+                    fontWeight: 750,
+                    fontSize: 12,
+                    lineHeight: 1.3,
+                  }}
+                >
                   Tip: one sentence. No storytelling. Just the plan change.
                 </div>
               </div>
@@ -650,9 +788,18 @@ export default function MLSLanding() {
         <div style={quickDockWrap}>
           <div style={quickDock}>
             <div style={dockGrid}>
-              <input style={inputBase} value={child} onChange={(e) => setChild(e.target.value)} placeholder="Who" />
+              <input
+                style={inputBase}
+                value={child}
+                onChange={(e) => setChild(e.target.value)}
+                placeholder="Who"
+              />
 
-              <select style={inputBase} value={type} onChange={(e) => setType(e.target.value as SignalType)}>
+              <select
+                style={inputBase}
+                value={type}
+                onChange={(e) => setType(e.target.value as SignalType)}
+              >
                 {SIGNAL_TYPES.map((t) => (
                   <option key={t} value={t}>
                     {t}
@@ -676,10 +823,13 @@ export default function MLSLanding() {
               </button>
             </div>
 
-            <div style={dockHint}>Mobile rule: stay on one screen. The day updates around you.</div>
+            <div style={dockHint}>
+              Mobile rule: stay on one screen. The day updates around you.
+            </div>
           </div>
         </div>
       )}
     </div>
   );
 }
+
