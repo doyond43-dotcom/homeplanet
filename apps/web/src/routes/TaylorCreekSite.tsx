@@ -114,14 +114,16 @@ export default function TaylorCreekSite() {
                   </div>
 
                   <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
-                    Honest repairs. Clear communication.{" "}
-                    <span className="block mt-1 text-red-500">Receipt-ready proof.</span>
-                  </h1>
+  You’re checking in your vehicle
+  <span className="block mt-2 text-slate-300 text-lg md:text-xl font-semibold">
+    This creates your service record
+  </span>
+</h1>
 
                   <p className="mt-4 text-slate-300 max-w-2xl">
-                    Submit a service request in under a minute. Add a photo if needed.
-                    You’ll get a receipt ID and a clean, time-ordered intake record you can reference later.
-                  </p>
+  Tell the shop what you need before you talk to the mechanic. Add a photo if it helps.
+  You’ll get a receipt number and a clean, time-ordered intake record you can reference later.
+</p>
 
                   <div className="mt-7 flex flex-wrap gap-3">
                     {/* SAFEST NAV: hard href so it always works */}
@@ -157,7 +159,11 @@ export default function TaylorCreekSite() {
                     </a>
                   </div>
 
-                  <div className="mt-5 text-xs text-slate-500">
+<div className="mt-3 text-xs text-slate-400">
+  Takes about 20 seconds • You’ll get a receipt number
+</div>
+
+<div className="mt-5 text-xs text-slate-500">
                     Powered by HomePlanet • Presence-First Intake • Receipt + record at submission (not after).
                   </div>
 
@@ -282,3 +288,4 @@ export default function TaylorCreekSite() {
     </div>
   );
 }
+
