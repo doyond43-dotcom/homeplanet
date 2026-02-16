@@ -1,0 +1,7 @@
+﻿{
+  "rewrites": [
+    { "source": "/live/:slug", "destination": "/index.html" },
+    { "source": "/c/:slug", "destination": "/index.html" },
+    { "source": "/:path*", "destination": "/index.html" }
+  ]
+}
