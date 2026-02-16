@@ -1,14 +1,8 @@
 ﻿{
-  "routes": [
-    {
-      "src": "^/live/([^/]+)$",
-      "headers": { "cache-control": "no-store" },
-      "status": 308,
-      "dest": "/c/$1"
-    },
-    {
-      "src": "^(?!/assets/|/api/|/favicon.ico|/robots.txt|/sitemap.xml).*",
-      "dest": "/index.html"
-    }
+  "redirects": [
+    { "source": "/live/:slug", "destination": "/c/:slug", "permanent": true }
+  ],
+  "rewrites": [
+    { "source": "/:path*", "destination": "/index.html" }
   ]
 }
