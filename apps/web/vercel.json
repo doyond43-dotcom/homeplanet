@@ -1,11 +1,6 @@
-﻿{
-  "rewrites": [
-    { "source": "/live/:slug", "destination": "/index.html" },
-    { "source": "/live/:slug/:rest*", "destination": "/index.html" },
-
-    { "source": "/c/:slug", "destination": "/index.html" },
-    { "source": "/c/:slug/:rest*", "destination": "/index.html" },
-
-    { "source": "/:path*", "destination": "/index.html" }
+{
+  "routes": [
+    { "src": "^/live/(.*)", "dest": "/index.html" },
+    { "src": "^(?!.*\\.).*$", "dest": "/index.html" }
   ]
 }
