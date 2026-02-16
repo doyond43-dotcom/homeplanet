@@ -1,8 +1,0 @@
-﻿{
-  "redirects": [
-    { "source": "/live/:slug", "destination": "/c/:slug", "permanent": true }
-  ],
-  "rewrites": [
-    { "source": "/:path*", "destination": "/index.html" }
-  ]
-}
