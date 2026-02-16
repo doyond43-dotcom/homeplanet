@@ -125,42 +125,22 @@ export default function TaylorCreekSite() {
   You’ll get a receipt number and a clean, time-ordered intake record you can reference later.
 </p>
 
-                  <div className="mt-7 flex flex-wrap gap-3">
-                    {/* SAFEST NAV: hard href so it always works */}
-                    <a
-                      href="/c/taylor-creek"
-                      className="inline-flex items-center justify-center rounded-xl bg-red-600 px-6 py-3 font-semibold hover:bg-red-500 transition shadow-sm"
-                    >
-                      Start a service request
-                    </a>
+                  <div className="mt-7">
+  {/* SAFEST NAV: hard href so it always works */}
+  <a
+    href="/c/taylor-creek"
+    className="inline-flex items-center justify-center rounded-xl bg-red-600 px-6 py-3 font-semibold hover:bg-red-500 transition shadow-sm"
+  >
+    Start check-in
+  </a>
 
-                    <a
-                      href={`tel:${SHOP_PHONE_TEL}`}
-                      className="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-950/40 px-6 py-3 font-semibold hover:bg-slate-900 transition"
-                    >
-                      Call the shop <span className="ml-2 text-slate-300 text-sm">{SHOP_PHONE_DISPLAY}</span>
-                    </a>
+  <div className="mt-3 text-xs text-slate-400">
+    Takes about 20 seconds • You’ll get a receipt number
+  </div>
 
-                    <button
-                      type="button"
-                      onClick={() => copyToClipboard(SHOP_PHONE_DISPLAY)}
-                      className="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-950/40 px-6 py-3 font-semibold hover:bg-slate-900 transition"
-                    >
-                      Copy number
-                    </button>
-
-                    <a
-                      href={MAPS_URL}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-950/40 px-6 py-3 font-semibold hover:bg-slate-900 transition"
-                    >
-                      Get directions
-                    </a>
-                  </div>
-
-<div className="mt-3 text-xs text-slate-400">
-  Takes about 20 seconds • You’ll get a receipt number
+  <div className="mt-2 text-xs text-slate-500">
+    Need to call or get directions? See <a href="#node-contact" className="underline hover:text-slate-300">Contact</a>.
+  </div>
 </div>
 
 <div className="mt-5 text-xs text-slate-500">
@@ -178,7 +158,7 @@ export default function TaylorCreekSite() {
 
                 {/* Right */}
                 <aside className="space-y-4">
-                  <div className="rounded-2xl border border-slate-800 bg-slate-950/45 p-5">
+                  <div id="node-contact" className="rounded-2xl border border-slate-800 bg-slate-950/45 p-5">
                     <div className="text-xs tracking-wider text-slate-400 font-semibold">
                       OPERATING HOURS
                     </div>
@@ -288,4 +268,5 @@ export default function TaylorCreekSite() {
     </div>
   );
 }
+
 
