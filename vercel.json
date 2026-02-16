@@ -1,8 +1,14 @@
 ﻿{
-  "redirects": [
-    { "source": "/live/:path*", "destination": "/c/:path*", "permanent": false }
-  ],
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+  "routes": [
+    {
+      "src": "^/live/([^/]+)$",
+      "headers": { "cache-control": "no-store" },
+      "status": 308,
+      "dest": "/c/$1"
+    },
+    {
+      "src": "^(?!/assets/|/api/|/favicon.ico|/robots.txt|/sitemap.xml).*",
+      "dest": "/index.html"
+    }
   ]
 }
