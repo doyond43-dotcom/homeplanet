@@ -1,6 +1,6 @@
 ﻿{
   "redirects": [
-    { "source": "/live/(.*)", "destination": "/c/$1", "permanent": false }
+    { "source": "/live/:path*", "destination": "/c/:path*", "permanent": false }
   ],
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }

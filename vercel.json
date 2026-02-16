@@ -1,11 +1,6 @@
-{
-  "version": 2,
-  "builds": [
-    {
-      "src": "apps/web/package.json",
-      "use": "@vercel/static-build",
-      "config": { "distDir": "dist" }
-    }
+﻿{
+  "redirects": [
+    { "source": "/live/:path*", "destination": "/c/:path*", "permanent": false }
   ],
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
