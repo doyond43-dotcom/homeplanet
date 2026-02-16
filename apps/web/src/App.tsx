@@ -1,4 +1,5 @@
 ﻿import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import LiveAlias from "./routes/LiveAlias";
 
 import MLSLanding from "./pages/MLSLanding";
 import TaylorCreekSite from "./routes/TaylorCreekSite";
@@ -37,6 +38,7 @@ export default function App() {
     </BrowserRouter>
   );
 }
+
 
 
 
