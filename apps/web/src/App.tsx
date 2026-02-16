@@ -34,10 +34,12 @@ export default function App() {
         {/* fallback */}
         <Route path="*" element={<div style={{padding:40}}>404 — Location not found<br/>This place doesn't exist on HomePlanet yet.</div>} />
 
+              <Route path="/live/:slug" element={<LiveAlias />} />
       </Routes>
     </BrowserRouter>
   );
 }
+
 
 
 
