@@ -1,8 +1,7 @@
 ﻿{
-  "redirects": [
-    { "source": "/live/:path*", "destination": "/c/:path*", "permanent": false }
-  ],
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+  "routes": [
+    { "src": "^/live/(.*)$", "status": 302, "headers": { "Location": "/c/$1" } },
+    { "handle": "filesystem" },
+    { "src": "^(.*)$", "dest": "/index.html" }
   ]
 }
