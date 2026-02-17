@@ -1,4 +1,5 @@
 ﻿import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import LiveIntakeBoard from "./routes/LiveIntakeBoard";
 
 import AtmosphereDemoStrip from "./atmosphere/AtmosphereDemoStrip";
 import LiveAlias from "./routes/LiveAlias";
@@ -21,7 +22,9 @@ export default function App() {
       <AtmosphereDemoStrip />
 <Routes>
 
-        {/* Main Pages */}
+        
+        <Route path="/live/:slug/board" element={<LiveIntakeBoard />} />
+{/* Main Pages */}
         <Route path="/" element={<Navigate to="/taylor-creek" replace />} />
         <Route path="/mls" element={<MLSLanding />} />
 
@@ -42,6 +45,7 @@ export default function App() {
     </BrowserRouter>
   );
 }
+
 
 
 
