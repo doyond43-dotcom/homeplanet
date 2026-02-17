@@ -1,4 +1,6 @@
 ﻿import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+
+import AtmosphereDemoStrip from "./atmosphere/AtmosphereDemoStrip";
 import LiveAlias from "./routes/LiveAlias";
 
 import MLSLanding from "./pages/MLSLanding";
@@ -16,7 +18,8 @@ import PublicPage from "./routes/PublicPage";
 export default function App() {
   return (
     <BrowserRouter>
-      <Routes>
+      <AtmosphereDemoStrip />
+<Routes>
 
         {/* Main Pages */}
         <Route path="/" element={<Navigate to="/taylor-creek" replace />} />
@@ -39,6 +42,7 @@ export default function App() {
     </BrowserRouter>
   );
 }
+
 
 
 
