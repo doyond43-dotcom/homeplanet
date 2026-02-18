@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 
 // IMPORTANT: Adjust this import if your supabase client lives elsewhere.
@@ -95,6 +95,7 @@ async function copyText(text: string) {
 
 function formatPreviewSentence(d: {
   name: string;
+  vehicle: string;
   phone: string;
   email: string;
   preferred_contact: string;
@@ -103,6 +104,7 @@ function formatPreviewSentence(d: {
   message: string;
 }) {
   const who = trimOrEmpty(d.name) || "New customer";
+  const vehicle = trimOrEmpty(d.vehicle);
   const pref = trimOrEmpty(d.preferred_contact) || "Text";
   const when = trimOrEmpty(d.best_time);
   const where = trimOrEmpty(d.address);
@@ -117,8 +119,10 @@ function formatPreviewSentence(d: {
 
   const parts: string[] = [];
   parts.push(`${who} — prefers ${pref.toLowerCase()}`);
+  if (vehicle) parts.push(`vehicle: ${vehicle}`);
   if (when) parts.push(`best time: ${when.toLowerCase()}`);
   if (where) parts.push(`location: ${where}`);
+
   return {
     title: who,
     request,
@@ -194,6 +198,7 @@ export default function PublicPage() {
   // form draft (real fields)
   const [draft, setDraft] = useState({
     name: "",
+    vehicle: "",
     phone: "",
     email: "",
     preferred_contact: "Text",
@@ -278,6 +283,7 @@ export default function PublicPage() {
   const buildPayload = () => {
     const payload: any = {
       name: trimOrEmpty(draft.name),
+      vehicle: trimOrEmpty(draft.vehicle),
       phone: trimOrEmpty(draft.phone),
       email: trimOrEmpty(draft.email),
       preferred_contact: trimOrEmpty(draft.preferred_contact),
@@ -302,10 +308,11 @@ export default function PublicPage() {
 
   const canSubmit = useMemo(() => {
     const name = trimOrEmpty(draft.name);
+    const vehicle = trimOrEmpty(draft.vehicle);
     const phone = trimOrEmpty(draft.phone);
     const email = trimOrEmpty(draft.email);
     const msg = trimOrEmpty(draft.message);
-    return !!name || !!phone || !!email || !!msg;
+    return !!name || !!vehicle || !!phone || !!email || !!msg;
   }, [draft]);
 
   const preview = useMemo(() => formatPreviewSentence(draft), [draft]);
@@ -325,13 +332,14 @@ export default function PublicPage() {
 
     const hasAny =
       !!trimOrEmpty((payload as any).name) ||
+      !!trimOrEmpty((payload as any).vehicle) ||
       !!trimOrEmpty((payload as any).phone) ||
       !!trimOrEmpty((payload as any).email) ||
       !!trimOrEmpty((payload as any).message);
 
     if (!hasAny) {
       setSaving(false);
-      setError("Add at least a name/phone/email or a short message, then submit.");
+      setError("Add at least a name/vehicle/phone/email or a short message, then submit.");
       return;
     }
 
@@ -832,6 +840,16 @@ export default function PublicPage() {
             </div>
 
             <div>
+              <div style={styles.label}>Vehicle (optional)</div>
+              <input
+                value={draft.vehicle}
+                onChange={(e) => setField("vehicle", e.target.value)}
+                placeholder="Year / Make / Model (ex: 2016 Honda Civic)"
+                style={styles.input}
+              />
+            </div>
+
+            <div>
               <div style={styles.label}>Phone</div>
               <input
                 value={draft.phone}
@@ -1026,6 +1044,7 @@ export default function PublicPage() {
                     `Slug: ${page?.slug}\n` +
                     `Saved: ${savedAt ?? ""}\n` +
                     `Name: ${trimOrEmpty(draft.name)}\n` +
+                    `Vehicle: ${trimOrEmpty(draft.vehicle)}\n` +
                     `Phone: ${trimOrEmpty(draft.phone)}\n` +
                     `Email: ${trimOrEmpty(draft.email)}\n` +
                     `Preferred: ${trimOrEmpty(draft.preferred_contact)}\n` +

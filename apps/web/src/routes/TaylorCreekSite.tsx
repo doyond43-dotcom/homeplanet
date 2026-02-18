@@ -3,7 +3,12 @@
 const SHOP_PHONE_DISPLAY = "(863) 467-2221";
 const SHOP_PHONE_TEL = "+18634672221";
 const SHOP_ADDRESS_LINE = "3826 US-441, Okeechobee, FL 34974";
-const MAPS_URL = "https://www.google.com/maps/search/?api=1&query=Taylor+Creek+Autorepair+inc+3826+US-441+Okeechobee+FL+34974";
+const MAPS_URL =
+  "https://www.google.com/maps/search/?api=1&query=Taylor+Creek+Autorepair+inc+3826+US-441+Okeechobee+FL+34974";
+
+// Routes (hard href = safest in case router gets weird)
+const CHECKIN_HREF = "/c/taylor-creek";
+const BOARD_HREF = "/live/taylor-creek/board";
 
 async function copyToClipboard(text: string) {
   try {
@@ -21,7 +26,19 @@ async function copyToClipboard(text: string) {
   }
 }
 
+function isAdminMode() {
+  try {
+    const url = new URL(window.location.href);
+    const v = (url.searchParams.get("admin") || "").toLowerCase().trim();
+    return v === "1" || v === "true" || v === "yes" || v === "on";
+  } catch {
+    return false;
+  }
+}
+
 export default function TaylorCreekSite() {
+  const adminMode = isAdminMode();
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       {/* Top bar */}
@@ -114,64 +131,129 @@ export default function TaylorCreekSite() {
                   </div>
 
                   <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
-  You’re checking in your vehicle
-  <span className="block mt-2 text-slate-300 text-lg md:text-xl font-semibold">
-    This creates your service record
-  </span>
-</h1>
+                    You’re checking in your vehicle
+                    <span className="block mt-2 text-slate-300 text-lg md:text-xl font-semibold">
+                      This creates your service record
+                    </span>
+                  </h1>
 
                   <p className="mt-4 text-slate-300 max-w-2xl">
-  Tell the shop what you need before you talk to the mechanic. Add a photo if it helps.
-  You’ll get a receipt number and a clean, time-ordered intake record you can reference later.
-</p>
+                    Tell the shop what you need before you talk to the mechanic. Add a photo if it
+                    helps. You’ll get a receipt number and a clean, time-ordered intake record you
+                    can reference later.
+                  </p>
 
-                  <div className="mt-7">
-  {/* SAFEST NAV: hard href so it always works */}
-  <a
-    href="/c/taylor-creek"
-    className="inline-flex items-center justify-center rounded-xl bg-red-600 px-6 py-3 font-semibold hover:bg-red-500 transition shadow-sm"
-  >
-    Start check-in
-  </a>
+                  <div className="mt-7 flex flex-wrap gap-3">
+                    {/* SAFEST NAV: hard href so it always works */}
+                    <a
+                      href={CHECKIN_HREF}
+                      className="inline-flex items-center justify-center rounded-xl bg-red-600 px-6 py-3 font-semibold hover:bg-red-500 transition shadow-sm"
+                    >
+                      Start check-in
+                    </a>
 
-  <div className="mt-3 text-xs text-slate-400">
-    Takes about 20 seconds • You’ll get a receipt number
-  </div>
+                    {/* SHOP-ONLY: Board link hidden unless ?admin=1 */}
+                    {adminMode ? (
+                      <a
+                        href={BOARD_HREF}
+                        className="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-950/50 px-6 py-3 font-semibold text-slate-100 hover:bg-slate-900/60 transition"
+                        title="Shop live intake board"
+                      >
+                        Open Live Board
+                      </a>
+                    ) : null}
+                  </div>
 
-  <div className="mt-2 text-xs text-slate-500">
-    Need to call or get directions? See <a href="#node-contact" className="underline hover:text-slate-300">Contact</a>.
-  </div>
-</div>
+                  <div className="mt-3 text-xs text-slate-400">
+                    Takes about 20 seconds • You’ll get a receipt number
+                    {adminMode ? (
+                      <span className="ml-2 text-slate-500">
+                        • Admin mode on (board button visible)
+                      </span>
+                    ) : null}
+                  </div>
 
-<div className="mt-5 text-xs text-slate-500">
-                    Powered by HomePlanet • Presence-First Intake • Receipt + record at submission (not after).
+                  {/* ✅ NEW: Receipt instruction line (behavior design) */}
+                  <div className="mt-1 text-xs text-slate-500">
+                    Show your receipt at the front desk, or keep it for your records.
+                  </div>
+
+                  <div className="mt-2 text-xs text-slate-500">
+                    Need to call or get directions? See{" "}
+                    <a href="#node-contact" className="underline hover:text-slate-300">
+                      Contact
+                    </a>
+                    .
+                  </div>
+
+                  {adminMode ? (
+                    <div className="mt-3 rounded-2xl border border-slate-800 bg-slate-950/40 px-4 py-3 text-xs text-slate-300">
+                      <div className="font-semibold text-slate-200">Shop shortcuts</div>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(window.location.origin + BOARD_HREF)}
+                          className="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-950/50 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-900/60 transition"
+                        >
+                          Copy board link
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(window.location.origin + CHECKIN_HREF)}
+                          className="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-950/50 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-900/60 transition"
+                        >
+                          Copy check-in link
+                        </button>
+                      </div>
+                      <div className="mt-2 text-slate-500">
+                        Tip: add <span className="font-mono">?admin=1</span> to show the board button
+                        on this page.
+                      </div>
+                    </div>
+                  ) : null}
+
+                  <div className="mt-5 text-xs text-slate-500">
+                    Powered by HomePlanet • Presence-First Intake • Receipt + record at submission
+                    (not after).
                   </div>
 
                   <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-950/40 px-4 py-3 text-sm text-slate-200 flex items-start gap-3">
                     <span className="mt-2 inline-block h-2 w-2 rounded-full bg-sky-300/80" />
                     <div>
-                      <span className="font-semibold">Presence-First:</span>{" "}
-                      your request is anchored at submission — before edits, confusion, or “we never got it.”
+                      <span className="font-semibold">Presence-First:</span> your request is
+                      anchored at submission — before edits, confusion, or “we never got it.”
                     </div>
+                  </div>
+
+                  {/* VEHICLE CALLOUT */}
+                  <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-950/35 px-4 py-3 text-sm text-slate-300">
+                    <span className="font-semibold text-slate-200">Tip:</span> Adding vehicle details
+                    (year/make/model) helps the shop triage faster and prevents “which car?” mixups.
                   </div>
                 </div>
 
                 {/* Right */}
                 <aside className="space-y-4">
-                  <div id="node-contact" className="rounded-2xl border border-slate-800 bg-slate-950/45 p-5">
+                  <div
+                    id="node-contact"
+                    className="rounded-2xl border border-slate-800 bg-slate-950/45 p-5"
+                  >
                     <div className="text-xs tracking-wider text-slate-400 font-semibold">
                       OPERATING HOURS
                     </div>
 
                     <div className="mt-3 space-y-1 text-sm text-slate-300">
                       <div className="flex justify-between">
-                        <span>Mon–Fri</span><span>8:00am – 5:00pm</span>
+                        <span>Mon–Fri</span>
+                        <span>8:00am – 5:00pm</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Saturday</span><span>By appointment</span>
+                        <span>Saturday</span>
+                        <span>By appointment</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Sunday</span><span>Closed</span>
+                        <span>Sunday</span>
+                        <span>Closed</span>
                       </div>
                     </div>
 
@@ -179,10 +261,46 @@ export default function TaylorCreekSite() {
                       <div className="text-xs tracking-wider text-slate-400 font-semibold">
                         NODE CONTACT
                       </div>
+
                       <div className="mt-2 text-sm text-slate-300 space-y-1">
                         <div>Phone: {SHOP_PHONE_DISPLAY}</div>
                         <div>Address: {SHOP_ADDRESS_LINE}</div>
                       </div>
+
+                      <div className="mt-4 grid grid-cols-2 gap-2">
+                        <a
+                          href={`tel:${SHOP_PHONE_TEL}`}
+                          className="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-950/50 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-900/60 transition"
+                        >
+                          Call
+                        </a>
+
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(SHOP_PHONE_TEL)}
+                          className="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-950/50 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-900/60 transition"
+                        >
+                          Copy phone
+                        </button>
+
+                        <a
+                          href={MAPS_URL}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-950/50 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-900/60 transition"
+                        >
+                          Directions
+                        </a>
+
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(SHOP_ADDRESS_LINE)}
+                          className="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-950/50 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-900/60 transition"
+                        >
+                          Copy address
+                        </button>
+                      </div>
+
                       <div className="mt-3 text-xs text-slate-500">
                         Safe placeholders — swap with real details anytime.
                       </div>
@@ -190,12 +308,10 @@ export default function TaylorCreekSite() {
                   </div>
 
                   <div className="rounded-2xl border border-slate-800 bg-slate-950/45 p-5">
-                    <div className="text-sm font-semibold text-slate-200">
-                      Proof-ready workflow
-                    </div>
+                    <div className="text-sm font-semibold text-slate-200">Proof-ready workflow</div>
                     <p className="mt-2 text-sm text-slate-300">
-                      Photos + notes become a single, time-ordered record.
-                      Cleaner approvals. Fewer disputes. Easier follow-ups.
+                      Photos + notes become a single, time-ordered record. Cleaner approvals. Fewer
+                      disputes. Easier follow-ups.
                     </p>
                   </div>
                 </aside>
@@ -210,7 +326,10 @@ export default function TaylorCreekSite() {
             <div
               aria-hidden
               className="absolute left-0 top-0 h-full w-[2px]"
-              style={{ background: "linear-gradient(to bottom, rgba(239,68,68,0.0), rgba(239,68,68,0.8), rgba(239,68,68,0.0))" }}
+              style={{
+                background:
+                  "linear-gradient(to bottom, rgba(239,68,68,0.0), rgba(239,68,68,0.8), rgba(239,68,68,0.0))",
+              }}
             />
             <div className="text-sm font-semibold">Submit → Receipt → PDF</div>
             <p className="mt-2 text-sm text-slate-300">
@@ -222,7 +341,10 @@ export default function TaylorCreekSite() {
             <div
               aria-hidden
               className="absolute left-0 top-0 h-full w-[2px]"
-              style={{ background: "linear-gradient(to bottom, rgba(56,189,248,0.0), rgba(56,189,248,0.85), rgba(56,189,248,0.0))" }}
+              style={{
+                background:
+                  "linear-gradient(to bottom, rgba(56,189,248,0.0), rgba(56,189,248,0.85), rgba(56,189,248,0.0))",
+              }}
             />
             <div className="text-sm font-semibold">Public Lookup Enabled</div>
             <p className="mt-2 text-sm text-slate-300">
@@ -234,7 +356,10 @@ export default function TaylorCreekSite() {
             <div
               aria-hidden
               className="absolute left-0 top-0 h-full w-[2px]"
-              style={{ background: "linear-gradient(to bottom, rgba(251,191,36,0.0), rgba(251,191,36,0.85), rgba(251,191,36,0.0))" }}
+              style={{
+                background:
+                  "linear-gradient(to bottom, rgba(251,191,36,0.0), rgba(251,191,36,0.85), rgba(251,191,36,0.0))",
+              }}
             />
             <div className="text-sm font-semibold">Gold Tier Node</div>
             <p className="mt-2 text-sm text-slate-300">
@@ -260,13 +385,16 @@ export default function TaylorCreekSite() {
         <footer className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-slate-500 border-t border-slate-900 pt-6">
           <div>© {new Date().getFullYear()} Taylor Creek Auto Repair</div>
           <nav className="flex gap-4">
-            <a href="/c/taylor-creek" className="hover:text-slate-300">Start request</a>
-            <Link to="/press/taylor-creek" className="hover:text-slate-300">Press kit</Link>
+            <a href={CHECKIN_HREF} className="hover:text-slate-300">
+              Start request
+            </a>
+            <Link to="/press/taylor-creek" className="hover:text-slate-300">
+              Press kit
+            </Link>
           </nav>
         </footer>
       </div>
     </div>
   );
 }
-
 
