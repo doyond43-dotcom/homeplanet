@@ -1,4 +1,4 @@
-﻿import { BrowserRouter, Routes, Route } from "react-router-dom";
+﻿import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import LiveIntakeBoard from "./routes/LiveIntakeBoard";
 import LiveAlias from "./routes/LiveAlias";
@@ -13,7 +13,7 @@ import CityRoutes from "./routes/CityRoutes";
 /*
   HomePlanet Routing Layer
   ------------------------
-  /                   -> planet index (cities)
+  /                   -> redirect to /city (planet index)
   /city/*             -> city navigation
   /taylor-creek       -> shop marketing page
   /c/:slug            -> customer intake page
@@ -26,10 +26,11 @@ export default function App() {
       <AtmosphereDemoStrip />
 
       <Routes>
+        {/* ROOT: always go to Cities index */}
+        <Route path="/" element={<Navigate to="/city" replace />} />
 
-        {/* ROOT PLANET INDEX */}
-        <Route index element={<CityRoutes />} />
-        <Route path="/" element={<CityRoutes />} />
+        {/* City index + navigation */}
+        <Route path="/city" element={<CityRoutes />} />
         <Route path="/city/*" element={<CityRoutes />} />
 
         {/* MLS */}
@@ -58,7 +59,6 @@ export default function App() {
             </div>
           }
         />
-
       </Routes>
     </BrowserRouter>
   );
