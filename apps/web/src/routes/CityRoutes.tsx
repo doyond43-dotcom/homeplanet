@@ -1,5 +1,4 @@
 ﻿import { Routes, Route, useParams, Link } from "react-router-dom";
-import TaylorCreekSite from "./TaylorCreekSite";
 
 function CityIndex() {
   const cities = [
@@ -44,6 +43,7 @@ function CityIndex() {
 }
 
 function CityPlaceholder() {
+  // Works for /city/* (splat). If this renders on root by accident, clean will be "".
   const { "*": citySlug } = useParams();
   const clean = (citySlug || "").split("/")[0];
 
@@ -63,12 +63,14 @@ function CityPlaceholder() {
 export default function CityRoutes() {
   return (
     <Routes>
+      {/* /  OR  /city  */}
       <Route index element={<CityIndex />} />
-      {/* IMPORTANT: no leading slash here (relative route) */}
-      <Route path="taylor-creek" element={<TaylorCreekSite />} />
+
+      {/* /city/<anything> */}
       <Route path="*" element={<CityPlaceholder />} />
     </Routes>
   );
 }
+
 
 
