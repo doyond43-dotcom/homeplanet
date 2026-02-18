@@ -1,6 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from "react";
-
-type DemoAtom = {
+﻿type DemoAtom = {
   id: string;
   type: "moving_beacon";
   label: string;

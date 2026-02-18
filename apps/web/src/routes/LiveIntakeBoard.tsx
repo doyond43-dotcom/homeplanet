@@ -1,5 +1,4 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
+﻿import { createClient } from "@supabase/supabase-js";
 import { useParams } from "react-router-dom";
 
 type Row = {
