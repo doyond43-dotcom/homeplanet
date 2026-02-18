@@ -1,31 +1,37 @@
-﻿import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+﻿import { BrowserRouter, Routes, Route } from "react-router-dom";
+
 import LiveIntakeBoard from "./routes/LiveIntakeBoard";
+import LiveAlias from "./routes/LiveAlias";
 
 import AtmosphereDemoStrip from "./atmosphere/AtmosphereDemoStrip";
-import LiveAlias from "./routes/LiveAlias";
 
 import MLSLanding from "./pages/MLSLanding";
 import TaylorCreekSite from "./routes/TaylorCreekSite";
 import PublicPage from "./routes/PublicPage";
+import CityRoutes from "./routes/CityRoutes";
 
 /*
   HomePlanet Routing Layer
   ------------------------
-  /taylor-creek        -> marketing / info page
-  /c/:slug             -> customer intake page
-  /live/:slug          -> shop live dashboard
+  /                   -> planet index (cities)
+  /city/*             -> city navigation
+  /taylor-creek       -> shop marketing page
+  /c/:slug            -> customer intake page
+  /live/:slug/board   -> shop live dashboard
 */
 
 export default function App() {
   return (
     <BrowserRouter>
       <AtmosphereDemoStrip />
-<Routes>
 
-        
-        <Route path="/live/:slug/board" element={<LiveIntakeBoard />} />
-{/* Main Pages */}
-        <Route path="/" element={<Navigate to="/taylor-creek" replace />} />
+      <Routes>
+
+        {/* PLANET ROOT (FIXED) */}
+        <Route path="/" element={<CityRoutes />} />
+        <Route path="/city/*" element={<CityRoutes />} />
+
+        {/* MLS */}
         <Route path="/mls" element={<MLSLanding />} />
 
         {/* Shop marketing page */}
@@ -34,17 +40,29 @@ export default function App() {
         {/* PUBLIC CUSTOMER INTAKE */}
         <Route path="/c/:slug" element={<PublicPage />} />
 
-        {/* LIVE SHOP VIEW */}
-        <Route path="/live/:slug" element={<TaylorCreekSite />} />
+        {/* LIVE SHOP BOARD */}
+        <Route path="/live/:slug/board" element={<LiveIntakeBoard />} />
+
+        {/* LIVE ALIAS (auto redirect to /c/:slug) */}
+        <Route path="/live/:slug" element={<LiveAlias />} />
 
         {/* fallback */}
-        <Route path="*" element={<div style={{padding:40}}>404 — Location not found<br/>This place doesn't exist on HomePlanet yet.</div>} />
-
-              <Route path="/live/:slug" element={<LiveAlias />} />
+        <Route
+          path="*"
+          element={
+            <div style={{ padding: 40 }}>
+              404 — Location not found
+              <br />
+              This place doesn't exist on HomePlanet yet.
+            </div>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );
 }
+
+
 
 
 

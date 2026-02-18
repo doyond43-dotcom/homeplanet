@@ -17,7 +17,7 @@ function CityIndex() {
     <div style={{ padding: 24 }}>
       <h1 style={{ fontSize: 28, marginBottom: 10 }}>Cities</h1>
       <p style={{ opacity: 0.7, marginBottom: 20 }}>
-        Geography layer â€” navigation map of HomePlanet
+        Geography layer — navigation map of HomePlanet
       </p>
 
       <div style={{ display: "grid", gap: 10, maxWidth: 420 }}>
@@ -45,7 +45,6 @@ function CityIndex() {
 
 function CityPlaceholder() {
   const { "*": citySlug } = useParams();
-
   const clean = (citySlug || "").split("/")[0];
 
   return (
@@ -55,7 +54,7 @@ function CityPlaceholder() {
       </h1>
 
       <p style={{ opacity: 0.7 }}>
-        City placeholder â€” routing anchor only. No features being added.
+        City placeholder — routing anchor only. No features being added.
       </p>
     </div>
   );
@@ -65,8 +64,9 @@ export default function CityRoutes() {
   return (
     <Routes>
       <Route index element={<CityIndex />} />
-          <Route path="/taylor-creek" element={<TaylorCreekSite />} />
-          <Route path="*" element={<CityPlaceholder />} />
+      {/* IMPORTANT: no leading slash here (relative route) */}
+      <Route path="taylor-creek" element={<TaylorCreekSite />} />
+      <Route path="*" element={<CityPlaceholder />} />
     </Routes>
   );
 }
