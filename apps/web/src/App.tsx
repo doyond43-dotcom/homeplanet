@@ -27,7 +27,8 @@ export default function App() {
 
       <Routes>
 
-        {/* PLANET ROOT (FIXED) */}
+        {/* ROOT PLANET INDEX */}
+        <Route index element={<CityRoutes />} />
         <Route path="/" element={<CityRoutes />} />
         <Route path="/city/*" element={<CityRoutes />} />
 
@@ -57,6 +58,7 @@ export default function App() {
             </div>
           }
         />
+
       </Routes>
     </BrowserRouter>
   );
