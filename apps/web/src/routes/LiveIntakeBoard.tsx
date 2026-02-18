@@ -1,4 +1,5 @@
-﻿import { createClient } from "@supabase/supabase-js";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
+import { createClient } from "@supabase/supabase-js";
 import { useParams } from "react-router-dom";
 
 type Row = {
@@ -231,3 +232,5 @@ export default function LiveIntakeBoard() {
     </div>
   );
 }
+
+

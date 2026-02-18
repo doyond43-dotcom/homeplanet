@@ -1,4 +1,5 @@
-﻿type DemoAtom = {
+﻿import { useEffect, useMemo, useState } from "react";
+type DemoAtom = {
   id: string;
   type: "moving_beacon";
   label: string;
@@ -165,3 +166,5 @@ export default function AtmosphereDemoStrip() {
     </div>
   );
 }
+
+
