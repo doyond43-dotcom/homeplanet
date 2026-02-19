@@ -128,7 +128,6 @@ export default function LiveIntakeBoard() {
     }
 
     setRows((prev) => {
-      // merge to avoid UI “jump” if realtime already added some rows
       const merged = new Map<string, Row>();
       for (const r of prev) merged.set(r.id, r);
       for (const r of data ?? []) merged.set(r.id, r);
@@ -154,14 +153,12 @@ export default function LiveIntakeBoard() {
       .limit(1);
 
     if (error) {
-      // don’t flip the UI red for drift-check errors; just note connection might be flaky
       setConnected(false);
       return;
     }
 
     const dbNewest = (data?.[0] as any)?.created_at ?? null;
     if (dbNewest && localNewest && dbNewest !== localNewest) {
-      // only resync if we actually diverged
       loadLatest("Resyncing…");
     }
 
@@ -171,7 +168,6 @@ export default function LiveIntakeBoard() {
   }
 
   useEffect(() => {
-    // initial load whenever slug changes
     setRows([]);
     setConnected(false);
     setLastErr(null);
@@ -234,22 +230,16 @@ export default function LiveIntakeBoard() {
         if (s === "SUBSCRIBED") {
           setConnected(true);
           setLastErr(null);
-          // quick sync after subscribe in case we missed while switching routes
           loadLatest("Syncing…");
         }
         if (s === "TIMED_OUT" || s === "CHANNEL_ERROR") {
           setConnected(false);
           setStatus("Reconnecting…");
-          // immediate attempt to recover correctness
           loadLatest("Resyncing…");
         }
       });
 
-    // Heartbeat drift-check:
-    // - keeps TV correct without hammering the DB
-    // - full refresh only when we detect divergence
     const heartbeat = window.setInterval(() => {
-      // if we haven’t had a full sync in a while, do drift check
       const age = Date.now() - lastFullSyncAtRef.current;
       if (age > 10_000) driftCheck();
     }, 20_000);
@@ -261,16 +251,15 @@ export default function LiveIntakeBoard() {
       } catch {}
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shopSlug, supabase, rows.length]); // rows.length is safe here; does not recreate channel constantly
+  }, [shopSlug, supabase, rows.length]);
 
   const newest = rows[0];
 
   return (
-    // ✅ FULL SCREEN (TV/monitor friendly) — no hard width cap
-    <div className="h-screen w-screen bg-slate-950 text-slate-100 p-4 md:p-6">
-      <div className="w-full h-full max-w-none mx-auto">
-        {/* Keep your existing card, just let it grow */}
-        <div className="h-full rounded-2xl border border-slate-800 bg-slate-950/40 p-5 md:p-6">
+    // ✅ FULL SCREEN + NO PAGE SCROLLBAR (TV/monitor friendly)
+    <div className="h-screen w-screen overflow-hidden bg-slate-950 text-slate-100 p-4 md:p-6">
+      <div className="w-full h-full max-w-none mx-auto flex flex-col">
+        <div className="h-full rounded-2xl border border-slate-800 bg-slate-950/40 p-5 md:p-6 flex flex-col overflow-hidden">
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div className="text-lg font-bold">
               {connected ? status : "Reconnecting…"}{" "}
@@ -290,10 +279,9 @@ export default function LiveIntakeBoard() {
           {!newest ? (
             <div className="text-slate-400 mt-4">No arrivals yet.</div>
           ) : (
-            <div className="mt-5">
+            <div className="mt-5 flex flex-col min-h-0">
               <div className="text-xs text-slate-400 font-semibold">Newest arrival</div>
               <div className="mt-2 rounded-2xl border border-slate-800 bg-slate-900/30 p-4">
-                {/* Optional TV readability (safe): */}
                 <div className="text-2xl md:text-3xl font-bold">
                   {extractSummary(newest.payload).vehicle}
                 </div>
@@ -304,26 +292,29 @@ export default function LiveIntakeBoard() {
               </div>
 
               <div className="mt-4 text-xs text-slate-400 font-semibold">Recent</div>
-              {/* ✅ Let recent list use space, but scroll instead of shrinking everything */}
-              <div className="mt-2 space-y-2 max-h-[55vh] overflow-auto pr-1">
-                {rows.slice(0, 8).map((r) => {
-                  const s = extractSummary(r.payload);
-                  return (
-                    <div
-                      key={r.id}
-                      className="rounded-xl border border-slate-800 bg-slate-950/30 px-3 py-2"
-                    >
-                      <div className="flex items-center justify-between gap-3 flex-wrap">
-                        <div className="text-sm font-semibold text-slate-100">
-                          {s.vehicle}{" "}
-                          <span className="text-slate-400 font-normal">— {s.name}</span>
+
+              {/* ✅ No page scroll. List becomes internal scroller only if needed (usually won’t). */}
+              <div className="mt-2 space-y-2 flex-1 min-h-0 overflow-hidden">
+                <div className="h-full overflow-auto pr-1">
+                  {rows.slice(0, 8).map((r) => {
+                    const s = extractSummary(r.payload);
+                    return (
+                      <div
+                        key={r.id}
+                        className="rounded-xl border border-slate-800 bg-slate-950/30 px-3 py-2"
+                      >
+                        <div className="flex items-center justify-between gap-3 flex-wrap">
+                          <div className="text-sm font-semibold text-slate-100">
+                            {s.vehicle}{" "}
+                            <span className="text-slate-400 font-normal">— {s.name}</span>
+                          </div>
+                          <div className="text-xs text-slate-500">{formatTime(r.created_at)}</div>
                         </div>
-                        <div className="text-xs text-slate-500">{formatTime(r.created_at)}</div>
+                        <div className="text-xs text-slate-300 mt-1">{s.message}</div>
                       </div>
-                      <div className="text-xs text-slate-300 mt-1">{s.message}</div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             </div>
           )}
