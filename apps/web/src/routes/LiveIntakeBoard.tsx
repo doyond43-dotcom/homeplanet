@@ -1,4 +1,5 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
+﻿// apps/web/src/routes/LiveIntakeBoard.tsx
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useParams } from "react-router-dom";
 
@@ -63,6 +64,23 @@ function mergeDelete(prev: Row[], id: string, limit = 25) {
   return prev.filter((r) => r.id !== id).slice(0, limit);
 }
 
+function truthyKeys(obj: any) {
+  try {
+    if (!obj || typeof obj !== "object") return [];
+    return Object.keys(obj).filter((k) => obj[k] != null && String(obj[k]).trim() !== "");
+  } catch {
+    return [];
+  }
+}
+
+function prettyJson(x: any) {
+  try {
+    return JSON.stringify(x, null, 2);
+  } catch {
+    return String(x);
+  }
+}
+
 export default function LiveIntakeBoard() {
   const { slug } = useParams();
   const shopSlug = (slug ?? "").trim();
@@ -71,6 +89,9 @@ export default function LiveIntakeBoard() {
   const [status, setStatus] = useState("Starting…");
   const [connected, setConnected] = useState(false);
   const [lastErr, setLastErr] = useState<string | null>(null);
+
+  // ✅ ticket detail drawer state (this is what makes taps "do something")
+  const [openRow, setOpenRow] = useState<Row | null>(null);
 
   const lastBeepRef = useRef<number>(0);
   const inFlightLoadRef = useRef(false);
@@ -108,6 +129,14 @@ export default function LiveIntakeBoard() {
         ctx.close();
       }, 120);
     } catch {}
+  }
+
+  function openTicket(r: Row) {
+    setOpenRow(r);
+  }
+
+  function closeTicket() {
+    setOpenRow(null);
   }
 
   async function loadLatest(reason: string) {
@@ -188,6 +217,7 @@ export default function LiveIntakeBoard() {
     setRows([]);
     setConnected(false);
     setLastErr(null);
+    setOpenRow(null);
     loadLatest("Loading…");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shopSlug]);
@@ -277,6 +307,8 @@ export default function LiveIntakeBoard() {
 
   const newest = rows[0];
 
+  const openSummary = openRow ? extractSummary(openRow.payload) : null;
+
   return (
     // ✅ FULL SCREEN (TV/monitor friendly)
     <div className="h-screen w-screen bg-slate-950 text-slate-100 p-4 md:p-6 overflow-hidden">
@@ -311,10 +343,14 @@ export default function LiveIntakeBoard() {
             <div className="mt-5">
               <div className="text-xs text-slate-400 font-semibold">Newest arrival</div>
 
-              <div
-                className="mt-2 rounded-2xl border border-slate-800 bg-slate-900/30 p-4"
+              {/* ✅ CLICK/TAP ENABLED */}
+              <button
+                type="button"
+                onClick={() => openTicket(newest)}
+                className="mt-2 w-full text-left rounded-2xl border border-slate-800 bg-slate-900/30 p-4 active:scale-[0.99] transition"
                 style={{
                   boxShadow: "0 0 0 1px rgba(148,163,184,.20), 0 0 30px rgba(59,130,246,.14)",
+                  WebkitTapHighlightColor: "transparent",
                 }}
               >
                 <div className="flex items-start justify-between gap-3">
@@ -331,8 +367,9 @@ export default function LiveIntakeBoard() {
                 <div className="text-slate-200 mt-1">{extractSummary(newest.payload).message}</div>
                 <div className="text-sm text-slate-400 mt-2">
                   {extractSummary(newest.payload).name} • {formatTime(newest.created_at)}
+                  <span className="ml-2 text-xs text-slate-500">(tap for details)</span>
                 </div>
-              </div>
+              </button>
 
               <div className="mt-4 text-xs text-slate-400 font-semibold">Recent</div>
 
@@ -341,15 +378,17 @@ export default function LiveIntakeBoard() {
                 {rows.slice(0, 8).map((r) => {
                   const s = extractSummary(r.payload);
                   return (
-                    <div
+                    <button
                       key={r.id}
-                      className="rounded-xl border border-slate-800 bg-slate-950/30 px-3 py-2"
+                      type="button"
+                      onClick={() => openTicket(r)}
+                      className="w-full text-left rounded-xl border border-slate-800 bg-slate-950/30 px-3 py-2 active:scale-[0.99] transition"
+                      style={{ WebkitTapHighlightColor: "transparent" }}
                     >
                       <div className="flex items-center justify-between gap-3">
                         <div className="min-w-0">
                           <div className="text-sm font-semibold text-slate-100 truncate">
-                            {s.vehicle}{" "}
-                            <span className="text-slate-400 font-normal">— {s.name}</span>
+                            {s.vehicle} <span className="text-slate-400 font-normal">— {s.name}</span>
                           </div>
                         </div>
 
@@ -363,7 +402,7 @@ export default function LiveIntakeBoard() {
                       </div>
 
                       <div className="text-xs text-slate-300 mt-1">{s.message}</div>
-                    </div>
+                    </button>
                   );
                 })}
               </div>
@@ -376,6 +415,116 @@ export default function LiveIntakeBoard() {
           </div>
         </div>
       </div>
+
+      {/* =========================
+          TICKET DETAIL DRAWER
+          (minimal + fast, no overdesign)
+         ========================= */}
+      {openRow ? (
+        <div
+          className="fixed inset-0 z-50"
+          role="dialog"
+          aria-modal="true"
+          onMouseDown={(e) => {
+            // click outside closes
+            if (e.target === e.currentTarget) closeTicket();
+          }}
+          onTouchStart={(e) => {
+            // tap outside closes (mobile)
+            if (e.target === e.currentTarget) closeTicket();
+          }}
+        >
+          <div className="absolute inset-0 bg-black/60" />
+          <div className="absolute right-0 top-0 h-full w-full sm:w-[520px] bg-slate-950 border-l border-slate-800 shadow-2xl">
+            <div className="h-full flex flex-col">
+              <div className="p-4 border-b border-slate-800 flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-sm text-slate-400 font-semibold">Ticket details</div>
+                  <div className="text-xl font-bold truncate">{openSummary?.vehicle}</div>
+                  <div className="text-sm text-slate-400 mt-1">
+                    {openSummary?.name} • {formatTime(openRow.created_at)} •{" "}
+                    <span className="text-slate-200 font-semibold">{ageShort(openRow.created_at)}</span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={closeTicket}
+                  className="shrink-0 rounded-lg border border-slate-700 bg-slate-900/50 px-3 py-2 text-sm text-slate-200 hover:bg-slate-900"
+                >
+                  Close
+                </button>
+              </div>
+
+              <div className="p-4 flex-1 overflow-auto">
+                <div className="rounded-xl border border-slate-800 bg-slate-900/20 p-3">
+                  <div className="text-xs text-slate-400 font-semibold">Customer message</div>
+                  <div className="mt-1 text-sm text-slate-200 whitespace-pre-wrap">{openSummary?.message}</div>
+                </div>
+
+                <div className="mt-3 grid grid-cols-1 gap-3">
+                  <div className="rounded-xl border border-slate-800 bg-slate-950/30 p-3">
+                    <div className="text-xs text-slate-400 font-semibold">Proof (parts photos)</div>
+                    <div className="mt-1 text-sm text-slate-300">
+                      Placeholder for: <span className="text-slate-200 font-semibold">old part</span> +{" "}
+                      <span className="text-slate-200 font-semibold">new part</span> images (timestamped).
+                    </div>
+                    <div className="mt-2 flex gap-2">
+                      <button
+                        type="button"
+                        className="rounded-lg border border-slate-700 bg-slate-900/40 px-3 py-2 text-sm text-slate-200"
+                        onClick={() => alert("Next step: wire up upload to storage + link to ticket")}
+                      >
+                        Upload photo
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded-lg border border-slate-700 bg-slate-900/40 px-3 py-2 text-sm text-slate-200"
+                        onClick={() => alert("Next step: download proof bundle (zip/pdf)")}
+                      >
+                        Download proof
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-slate-800 bg-slate-950/30 p-3">
+                    <div className="text-xs text-slate-400 font-semibold">Receipt</div>
+                    <div className="mt-1 text-sm text-slate-300">
+                      Minimal now: print a receipt view after payment.
+                    </div>
+                    <div className="mt-2">
+                      <button
+                        type="button"
+                        className="rounded-lg border border-slate-700 bg-slate-900/40 px-3 py-2 text-sm text-slate-200"
+                        onClick={() => window.print()}
+                      >
+                        Print receipt
+                      </button>
+                    </div>
+                  </div>
+
+                  <details className="rounded-xl border border-slate-800 bg-slate-950/30 p-3">
+                    <summary className="cursor-pointer text-xs text-slate-400 font-semibold">
+                      Raw payload (debug)
+                    </summary>
+                    <div className="mt-2 text-xs text-slate-300">
+                      Keys:{" "}
+                      <span className="text-slate-200 font-semibold">{truthyKeys(openRow.payload).join(", ") || "none"}</span>
+                    </div>
+                    <pre className="mt-2 text-xs text-slate-200 overflow-auto whitespace-pre-wrap break-words">
+                      {prettyJson(openRow.payload)}
+                    </pre>
+                  </details>
+                </div>
+              </div>
+
+              <div className="p-4 border-t border-slate-800 text-xs text-slate-500">
+                Ticket ID: <span className="text-slate-300">{openRow.id}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
