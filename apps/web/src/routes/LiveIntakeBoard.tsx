@@ -33,6 +33,26 @@ function formatTime(iso: string) {
   return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
+// Small “age badge” to avoid overdoing it
+function formatAge(iso: string, nowMs: number) {
+  const d = new Date(iso);
+  const t = d.getTime();
+  if (Number.isNaN(t)) return "";
+  const diff = Math.max(0, nowMs - t);
+
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m`;
+
+  const hrs = Math.floor(mins / 60);
+  const remM = mins % 60;
+  if (hrs < 24) return remM > 0 ? `${hrs}h ${remM}m` : `${hrs}h`;
+
+  const days = Math.floor(hrs / 24);
+  const remH = hrs % 24;
+  return remH > 0 ? `${days}d ${remH}h` : `${days}d`;
+}
+
 // --- deterministic merge helpers (ops-safe) ---
 function sortDescByCreatedAt(a: Row, b: Row) {
   return (b.created_at || "").localeCompare(a.created_at || "");
@@ -57,6 +77,12 @@ export default function LiveIntakeBoard() {
   const [status, setStatus] = useState("Starting…");
   const [connected, setConnected] = useState(false);
   const [lastErr, setLastErr] = useState<string | null>(null);
+
+  // Glow: last inserted row id (clears after a few seconds)
+  const [highlightId, setHighlightId] = useState<string | null>(null);
+
+  // For “age badge” updates (tick every minute)
+  const [nowMs, setNowMs] = useState<number>(() => Date.now());
 
   const lastBeepRef = useRef<number>(0);
   const inFlightLoadRef = useRef(false);
@@ -128,6 +154,7 @@ export default function LiveIntakeBoard() {
     }
 
     setRows((prev) => {
+      // merge to avoid UI “jump” if realtime already added some rows
       const merged = new Map<string, Row>();
       for (const r of prev) merged.set(r.id, r);
       for (const r of data ?? []) merged.set(r.id, r);
@@ -153,6 +180,7 @@ export default function LiveIntakeBoard() {
       .limit(1);
 
     if (error) {
+      // don’t flip the UI red for drift-check errors; just note connection might be flaky
       setConnected(false);
       return;
     }
@@ -168,12 +196,19 @@ export default function LiveIntakeBoard() {
   }
 
   useEffect(() => {
+    // initial load whenever slug changes
     setRows([]);
     setConnected(false);
     setLastErr(null);
     loadLatest("Loading…");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shopSlug]);
+
+  // Age ticker (lightweight)
+  useEffect(() => {
+    const t = window.setInterval(() => setNowMs(Date.now()), 60_000);
+    return () => window.clearInterval(t);
+  }, []);
 
   useEffect(() => {
     if (!supabase || !shopSlug) return;
@@ -194,10 +229,16 @@ export default function LiveIntakeBoard() {
         },
         (evt) => {
           const row = evt.new as Row;
+
           setRows((prev) => mergeUpsert(prev, row, 25));
+
+          // glow the new row (and newest card) for a few seconds
+          setHighlightId(row.id);
+          window.setTimeout(() => setHighlightId(null), 4200);
+
           setStatus("New arrival");
           softBeep();
-          setTimeout(() => setStatus("Listening…"), 1200);
+          window.setTimeout(() => setStatus("Listening…"), 1200);
         }
       )
       .on(
@@ -256,10 +297,10 @@ export default function LiveIntakeBoard() {
   const newest = rows[0];
 
   return (
-    // ✅ FULL SCREEN + NO PAGE SCROLLBAR (TV/monitor friendly)
+    // FULL SCREEN (TV/monitor friendly)
     <div className="h-screen w-screen overflow-hidden bg-slate-950 text-slate-100 p-4 md:p-6">
-      <div className="w-full h-full max-w-none mx-auto flex flex-col">
-        <div className="h-full rounded-2xl border border-slate-800 bg-slate-950/40 p-5 md:p-6 flex flex-col overflow-hidden">
+      <div className="w-full h-full max-w-none mx-auto overflow-hidden">
+        <div className="h-full rounded-2xl border border-slate-800 bg-slate-950/40 p-5 md:p-6 overflow-hidden">
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div className="text-lg font-bold">
               {connected ? status : "Reconnecting…"}{" "}
@@ -279,56 +320,67 @@ export default function LiveIntakeBoard() {
           {!newest ? (
             <div className="text-slate-400 mt-4">No arrivals yet.</div>
           ) : (
-            <div className="mt-5 flex flex-col min-h-0">
+            <div className="mt-5">
               <div className="text-xs text-slate-400 font-semibold">Newest arrival</div>
-              <div className="mt-2 rounded-2xl border border-slate-800 bg-slate-900/30 p-4">
-                <div className="text-2xl md:text-3xl font-bold">
-                  {extractSummary(newest.payload).vehicle}
-                </div>
+
+              <div
+                className={`mt-2 rounded-2xl border p-4 transition-all duration-700
+                ${
+                  highlightId === newest.id
+                    ? "border-cyan-400/70 bg-slate-900/40 shadow-[0_0_35px_rgba(34,211,238,0.35)]"
+                    : "border-slate-800 bg-slate-900/30"
+                }`}
+              >
+                <div className="text-2xl md:text-3xl font-bold">{extractSummary(newest.payload).vehicle}</div>
                 <div className="text-slate-200 mt-1">{extractSummary(newest.payload).message}</div>
+
                 <div className="text-sm text-slate-400 mt-2">
                   {extractSummary(newest.payload).name} • {formatTime(newest.created_at)}
+                  <span className="text-slate-500"> • {formatAge(newest.created_at, nowMs)}</span>
                 </div>
               </div>
 
               <div className="mt-4 text-xs text-slate-400 font-semibold">Recent</div>
 
-              {/* ✅ No page scroll. List becomes internal scroller only if needed (usually won’t). */}
-              <div className="mt-2 space-y-2 flex-1 min-h-0 overflow-hidden">
-                <div className="h-full overflow-auto pr-1">
-                  {rows.slice(0, 8).map((r) => {
-                    const s = extractSummary(r.payload);
-                    return (
-                      <div
-                        key={r.id}
-                        className="rounded-xl border border-slate-800 bg-slate-950/30 px-3 py-2"
-                      >
-                        <div className="flex items-center justify-between gap-3 flex-wrap">
-                          <div className="text-sm font-semibold text-slate-100">
-                            {s.vehicle}{" "}
-                            <span className="text-slate-400 font-normal">— {s.name}</span>
-                          </div>
-                          <div className="text-xs text-slate-500">{formatTime(r.created_at)}</div>
+              {/* scroll inside the list ONLY (no page scrollbar) */}
+              <div className="mt-2 space-y-2 max-h-[55vh] overflow-auto pr-1">
+                {rows.slice(0, 8).map((r) => {
+                  const s = extractSummary(r.payload);
+                  return (
+                    <div
+                      key={r.id}
+                      className={`rounded-xl border px-3 py-2 transition-all duration-700
+                      ${
+                        highlightId === r.id
+                          ? "border-cyan-400/70 bg-slate-900/40 shadow-[0_0_20px_rgba(34,211,238,0.25)]"
+                          : "border-slate-800 bg-slate-950/30"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-3 flex-wrap">
+                        <div className="text-sm font-semibold text-slate-100">
+                          {s.vehicle} <span className="text-slate-400 font-normal">— {s.name}</span>
                         </div>
-                        <div className="text-xs text-slate-300 mt-1">{s.message}</div>
+
+                        <div className="text-xs text-slate-500">
+                          {formatTime(r.created_at)}
+                          <span className="text-slate-600"> · {formatAge(r.created_at, nowMs)}</span>
+                        </div>
                       </div>
-                    );
-                  })}
-                </div>
+
+                      <div className="text-xs text-slate-300 mt-1">{s.message}</div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
 
           <div className="text-xs text-slate-500 mt-4">
             Tip: keep this tab open. Submit from{" "}
-            <span className="text-slate-300">/c/{shopSlug}</span> and you should see the row appear
-            within 1–5 seconds.
+            <span className="text-slate-300">/c/{shopSlug}</span> and you should see the row appear within 1–5 seconds.
           </div>
         </div>
       </div>
     </div>
   );
 }
-
-
-
