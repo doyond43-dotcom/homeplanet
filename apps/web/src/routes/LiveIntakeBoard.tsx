@@ -213,12 +213,13 @@ export default function LiveIntakeBoard() {
     if (stage === "done") setActive(null);
 
     // ✅ Correct RPC payload for DB signature:
-    // set_job_stage(p_shop_slug text, p_submission_id uuid, p_employee_code text, p_stage text)
+    // set_job_stage(p_shop_slug text, p_submission_id uuid, p_employee_code text, p_stage_to text, p_note text)
     const res = (await (supabase as any).rpc("set_job_stage", {
       p_shop_slug: shopSlug,
       p_submission_id: row.id,
       p_employee_code: code,
-      p_stage: stage,
+      p_stage_to: stage,
+      p_note: employeeName.trim() ? `by ${employeeName.trim()}` : null,
     })) as any;
 
     setBusy(false);
