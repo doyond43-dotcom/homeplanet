@@ -75,20 +75,8 @@ function mergeDelete(prev: Row[], id: string, limit = 25) {
   return prev.filter((r) => r.id !== id).slice(0, limit);
 }
 
-function isQuickJob(payload: any) {
-  const p = payload ?? {};
-  const txt = `${p.message ?? ""} ${p.notes ?? ""} ${p.problem ?? ""}`.toLowerCase();
-  // simple heuristic: words that usually mean fast
-  return /oil|tire|flat|battery|jump|wiper|bulb|light|inspection|rotate|patch|plug/.test(txt);
-}
-
 function getPartsProof(payload: any): { oldUrl?: string; newUrl?: string; label?: string } {
   const p = payload ?? {};
-  // Supports a few possible shapes without breaking
-  // Example possibilities:
-  // payload.parts_proof = { old: 'url', new: 'url' }
-  // payload.parts = { old_photo_url, new_photo_url }
-  // payload.old_part_photo, payload.new_part_photo
   const oldUrl =
     p?.parts_proof?.old ||
     p?.parts?.old_photo_url ||
@@ -119,7 +107,7 @@ export default function LiveIntakeBoard() {
   const [connected, setConnected] = useState(false);
   const [lastErr, setLastErr] = useState<string | null>(null);
 
-  // ✅ selection + drawer
+  // selection + drawer
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const lastBeepRef = useRef<number>(0);
@@ -208,7 +196,6 @@ export default function LiveIntakeBoard() {
     setStatus("Listening…");
   }
 
-  // lightweight drift check: if the DB has a newer created_at than our newest, full sync.
   async function driftCheck() {
     if (!supabase || !shopSlug) return;
 
@@ -227,16 +214,11 @@ export default function LiveIntakeBoard() {
     }
 
     const dbNewest = (data?.[0] as any)?.created_at ?? null;
-    if (dbNewest && localNewest && dbNewest !== localNewest) {
-      loadLatest("Resyncing…");
-    }
-    if (dbNewest && !localNewest) {
-      loadLatest("Loading…");
-    }
+    if (dbNewest && localNewest && dbNewest !== localNewest) loadLatest("Resyncing…");
+    if (dbNewest && !localNewest) loadLatest("Loading…");
   }
 
   useEffect(() => {
-    // initial load whenever slug changes
     setRows([]);
     setConnected(false);
     setLastErr(null);
@@ -256,12 +238,7 @@ export default function LiveIntakeBoard() {
       .channel(`intake:${shopSlug}`)
       .on(
         "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "public_intake_submissions",
-          filter: `slug=eq.${shopSlug}`,
-        },
+        { event: "INSERT", schema: "public", table: "public_intake_submissions", filter: `slug=eq.${shopSlug}` },
         (evt) => {
           const row = evt.new as Row;
           setRows((prev) => mergeUpsert(prev, row, 25));
@@ -272,12 +249,7 @@ export default function LiveIntakeBoard() {
       )
       .on(
         "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "public_intake_submissions",
-          filter: `slug=eq.${shopSlug}`,
-        },
+        { event: "UPDATE", schema: "public", table: "public_intake_submissions", filter: `slug=eq.${shopSlug}` },
         (evt) => {
           const row = evt.new as Row;
           setRows((prev) => mergeUpsert(prev, row, 25));
@@ -285,12 +257,7 @@ export default function LiveIntakeBoard() {
       )
       .on(
         "postgres_changes",
-        {
-          event: "DELETE",
-          schema: "public",
-          table: "public_intake_submissions",
-          filter: `slug=eq.${shopSlug}`,
-        },
+        { event: "DELETE", schema: "public", table: "public_intake_submissions", filter: `slug=eq.${shopSlug}` },
         (evt) => {
           const oldRow = evt.old as Partial<Row>;
           if (oldRow?.id) setRows((prev) => mergeDelete(prev, oldRow.id as string, 25));
@@ -298,11 +265,7 @@ export default function LiveIntakeBoard() {
         }
       )
       .subscribe((s) => {
-        if (s === "SUBSCRIBED") {
-          setConnected(true);
-          setLastErr(null);
-          loadLatest("Syncing…");
-        }
+        if (s === "SUBSCRIBED") loadLatest("Syncing…");
         if (s === "TIMED_OUT" || s === "CHANNEL_ERROR") {
           setConnected(false);
           setStatus("Reconnecting…");
@@ -315,9 +278,7 @@ export default function LiveIntakeBoard() {
       if (age > 10_000) driftCheck();
     }, 20_000);
 
-    const ticker = window.setInterval(() => {
-      bump((x) => (x + 1) % 10_000);
-    }, 15_000);
+    const ticker = window.setInterval(() => bump((x) => (x + 1) % 10_000), 15_000);
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setSelectedId(null);
@@ -335,19 +296,16 @@ export default function LiveIntakeBoard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shopSlug, supabase, rows.length, selectedId]);
 
-  const newest = rows[0];
-
-  const quickRows = rows.filter((r) => isQuickJob(r.payload));
-  const longRows = rows.filter((r) => !isQuickJob(r.payload));
+  const newest = rows[0] ?? null;
 
   function openRow(r: Row) {
     setSelectedId(r.id);
   }
 
   function printReceipt(r: Row) {
-    // Minimal: print a simple text receipt via browser print
     const s = extractSummary(r.payload);
     const proof = getPartsProof(r.payload);
+
     const html = `
       <html>
         <head><title>Receipt - ${s.vehicle}</title></head>
@@ -383,6 +341,7 @@ export default function LiveIntakeBoard() {
         </body>
       </html>
     `;
+
     const w = window.open("", "_blank", "noopener,noreferrer");
     if (!w) return;
     w.document.open();
@@ -447,89 +406,44 @@ export default function LiveIntakeBoard() {
                 <div className="text-xs text-slate-500 mt-1">Click to open details</div>
               </button>
 
-              <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <div className="text-xs text-slate-400 font-semibold">Quick jobs</div>
-                  <div className="mt-2 space-y-2 max-h-[45vh] overflow-auto pr-1">
-                    {quickRows.slice(0, 12).map((r) => {
-                      const s = extractSummary(r.payload);
-                      const active = selectedId === r.id;
-                      return (
-                        <button
-                          key={r.id}
-                          type="button"
-                          onClick={() => openRow(r)}
-                          className={[
-                            "w-full text-left rounded-xl border bg-slate-950/30 px-3 py-2 transition cursor-pointer",
-                            active
-                              ? "border-emerald-400/40 bg-emerald-500/10"
-                              : "border-slate-800 hover:border-slate-600",
-                          ].join(" ")}
-                        >
-                          <div className="flex items-center justify-between gap-3">
-                            <div className="min-w-0">
-                              <div className="text-sm font-semibold text-slate-100 truncate">
-                                {s.vehicle} <span className="text-slate-400 font-normal">— {s.name}</span>
-                              </div>
-                            </div>
+              <div className="mt-5">
+                <div className="text-xs text-slate-400 font-semibold">Recent</div>
 
-                            <div className="flex items-center gap-2 shrink-0">
-                              <div className="rounded-full border border-slate-700 bg-slate-950/60 px-2 py-0.5 text-[11px] text-slate-200 font-semibold">
-                                {ageShort(r.created_at)}
-                              </div>
-                              <div className="text-xs text-slate-500">{formatTime(r.created_at)}</div>
+                <div className="mt-2 space-y-2 max-h-[50vh] overflow-auto pr-1">
+                  {rows.slice(0, 18).map((r) => {
+                    const s = extractSummary(r.payload);
+                    const active = selectedId === r.id;
+
+                    return (
+                      <button
+                        key={r.id}
+                        type="button"
+                        onClick={() => openRow(r)}
+                        className={[
+                          "w-full text-left rounded-xl border bg-slate-950/30 px-3 py-2 transition cursor-pointer",
+                          active ? "border-blue-400/40 bg-blue-500/10" : "border-slate-800 hover:border-slate-600",
+                        ].join(" ")}
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="text-sm font-semibold text-slate-100 truncate">
+                              {s.vehicle} <span className="text-slate-400 font-normal">— {s.name}</span>
                             </div>
+                            <div className="text-xs text-slate-300 mt-1 truncate">{s.message}</div>
                           </div>
 
-                          <div className="text-xs text-slate-300 mt-1">{s.message}</div>
-                        </button>
-                      );
-                    })}
-                    {quickRows.length === 0 ? (
-                      <div className="text-xs text-slate-500 mt-2">No quick jobs detected yet.</div>
-                    ) : null}
-                  </div>
-                </div>
-
-                <div>
-                  <div className="text-xs text-slate-400 font-semibold">Longer jobs</div>
-                  <div className="mt-2 space-y-2 max-h-[45vh] overflow-auto pr-1">
-                    {longRows.slice(0, 12).map((r) => {
-                      const s = extractSummary(r.payload);
-                      const active = selectedId === r.id;
-                      return (
-                        <button
-                          key={r.id}
-                          type="button"
-                          onClick={() => openRow(r)}
-                          className={[
-                            "w-full text-left rounded-xl border bg-slate-950/30 px-3 py-2 transition cursor-pointer",
-                            active ? "border-blue-400/40 bg-blue-500/10" : "border-slate-800 hover:border-slate-600",
-                          ].join(" ")}
-                        >
-                          <div className="flex items-center justify-between gap-3">
-                            <div className="min-w-0">
-                              <div className="text-sm font-semibold text-slate-100 truncate">
-                                {s.vehicle} <span className="text-slate-400 font-normal">— {s.name}</span>
-                              </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <div className="rounded-full border border-slate-700 bg-slate-950/60 px-2 py-0.5 text-[11px] text-slate-200 font-semibold">
+                              {ageShort(r.created_at)}
                             </div>
-
-                            <div className="flex items-center gap-2 shrink-0">
-                              <div className="rounded-full border border-slate-700 bg-slate-950/60 px-2 py-0.5 text-[11px] text-slate-200 font-semibold">
-                                {ageShort(r.created_at)}
-                              </div>
-                              <div className="text-xs text-slate-500">{formatTime(r.created_at)}</div>
-                            </div>
+                            <div className="text-xs text-slate-500">{formatTime(r.created_at)}</div>
                           </div>
+                        </div>
+                      </button>
+                    );
+                  })}
 
-                          <div className="text-xs text-slate-300 mt-1">{s.message}</div>
-                        </button>
-                      );
-                    })}
-                    {longRows.length === 0 ? (
-                      <div className="text-xs text-slate-500 mt-2">No longer jobs yet.</div>
-                    ) : null}
-                  </div>
+                  {rows.length === 0 ? <div className="text-xs text-slate-500 mt-2">No rows yet.</div> : null}
                 </div>
               </div>
             </div>
@@ -542,10 +456,9 @@ export default function LiveIntakeBoard() {
         </div>
       </div>
 
-      {/* ✅ Drawer overlay (pointer-safe + production-safe) */}
+      {/* Drawer overlay (pointer-safe + production-safe) */}
       {selectedRow ? (
         <div className="fixed inset-0 z-50">
-          {/* Backdrop: explicit click/tap target that closes */}
           <button
             type="button"
             aria-label="Close details"
@@ -554,7 +467,6 @@ export default function LiveIntakeBoard() {
             onPointerDown={() => setSelectedId(null)}
           />
 
-          {/* Desktop: right drawer. Mobile: bottom sheet */}
           <div
             className="absolute inset-x-0 bottom-0 md:inset-y-0 md:right-0 md:left-auto w-full md:w-[520px]"
             onPointerDown={(e) => e.stopPropagation()}
@@ -577,7 +489,6 @@ export default function LiveIntakeBoard() {
                 </button>
               </div>
 
-              {/* Quick meta */}
               <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
                 <div className="rounded-lg border border-slate-800 bg-slate-950/40 p-2">
                   <div className="text-slate-500">Age</div>
@@ -589,7 +500,6 @@ export default function LiveIntakeBoard() {
                 </div>
               </div>
 
-              {/* Notes */}
               <div className="mt-4">
                 <div className="text-xs text-slate-400 font-semibold">Notes / Problem</div>
                 <div className="mt-2 rounded-xl border border-slate-800 bg-slate-950/30 p-3 text-sm text-slate-200 whitespace-pre-wrap">
@@ -597,7 +507,6 @@ export default function LiveIntakeBoard() {
                 </div>
               </div>
 
-              {/* Vehicle fields */}
               <div className="mt-4">
                 <div className="text-xs text-slate-400 font-semibold">Vehicle Details</div>
                 <div className="mt-2 rounded-xl border border-slate-800 bg-slate-950/30 p-3 text-sm text-slate-200">
@@ -611,16 +520,11 @@ export default function LiveIntakeBoard() {
                       s.phone ? `Phone: ${s.phone}` : null,
                     ].filter(Boolean);
 
-                    return lines.length ? (
-                      lines.map((t) => <div key={t as string}>{t}</div>)
-                    ) : (
-                      <div className="text-slate-500">—</div>
-                    );
+                    return lines.length ? lines.map((t) => <div key={t as string}>{t}</div>) : <div className="text-slate-500">—</div>;
                   })()}
                 </div>
               </div>
 
-              {/* Parts proof */}
               <div className="mt-4">
                 <div className="text-xs text-slate-400 font-semibold">Parts Proof</div>
                 <div className="mt-2 rounded-xl border border-slate-800 bg-slate-950/30 p-3">
@@ -650,6 +554,7 @@ export default function LiveIntakeBoard() {
                                 <div className="text-sm text-slate-500">—</div>
                               )}
                             </div>
+
                             <div className="rounded-lg border border-slate-800 bg-slate-950/40 p-2">
                               <div className="text-xs text-slate-500 mb-1">New part</div>
                               {proof.newUrl ? (
@@ -673,7 +578,6 @@ export default function LiveIntakeBoard() {
                 </div>
               </div>
 
-              {/* Actions */}
               <div className="mt-5 flex items-center gap-2">
                 <button
                   type="button"
