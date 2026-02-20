@@ -1,35 +1,51 @@
 ﻿// apps/web/src/App.tsx
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 
 import PublicPage from "./routes/PublicPage";
 import LiveShopTV from "./routes/LiveShopTV";
 import LiveIntakeBoard from "./routes/LiveIntakeBoard";
 import LiveAlias from "./routes/LiveAlias";
 
+/**
+ * LiveShell prevents /live/:slug from hijacking subroutes.
+ * Now:
+ *   /live/:slug           -> TV
+ *   /live/:slug/staff     -> Employee board
+ *   /live/:slug/board     -> (legacy link) -> TV
+ */
+function LiveShell() {
+  return <Outlet />;
+}
+
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Canonical routes */}
+
+        {/* Canonical public page */}
         <Route path="/c/:slug" element={<PublicPage />} />
 
-        {/* TV screen (big display) */}
-        <Route path="/live/:slug/board" element={<LiveShopTV />} />
+        {/* LIVE SYSTEM — nested so routes stop fighting */}
+        <Route path="/live/:slug" element={<LiveShell />}>
+          {/* Default: TV display */}
+          <Route index element={<LiveShopTV />} />
 
-        {/* Employee dashboard (interactive staff) */}
-        <Route path="/live/:slug/staff" element={<LiveIntakeBoard />} />
+          {/* Staff interactive dashboard */}
+          <Route path="staff" element={<LiveIntakeBoard />} />
 
-        {/* Optional helper: /live/:slug goes to TV */}
-        <Route path="/live/:slug" element={<LiveShopTV />} />
+          {/* Backwards compatibility (old QR codes) */}
+          <Route path="board" element={<LiveShopTV />} />
+        </Route>
 
-        {/* Optional helper redirect to /c/:slug */}
+        {/* Alias helper */}
         <Route path="/go/:slug" element={<LiveAlias />} />
 
-        {/* Home -> you can choose where it goes. For now, send home to a safe place. */}
+        {/* Home */}
         <Route path="/" element={<Navigate to="/c/taylor-creek" replace />} />
 
-        {/* Catch-all */}
+        {/* Catch all */}
         <Route path="*" element={<Navigate to="/c/taylor-creek" replace />} />
+
       </Routes>
     </BrowserRouter>
   );
