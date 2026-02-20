@@ -433,9 +433,7 @@ export default function LiveIntakeBoard() {
                 }}
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div className="text-2xl md:text-3xl font-bold">
-                    {extractSummary(newest.payload).vehicle}
-                  </div>
+                  <div className="text-2xl md:text-3xl font-bold">{extractSummary(newest.payload).vehicle}</div>
 
                   <div className="shrink-0 rounded-full border border-slate-700 bg-slate-950/60 px-2 py-1 text-xs text-slate-200 font-semibold">
                     {ageShort(newest.created_at)}
@@ -463,14 +461,15 @@ export default function LiveIntakeBoard() {
                           onClick={() => openRow(r)}
                           className={[
                             "w-full text-left rounded-xl border bg-slate-950/30 px-3 py-2 transition cursor-pointer",
-                            active ? "border-emerald-400/40 bg-emerald-500/10" : "border-slate-800 hover:border-slate-600",
+                            active
+                              ? "border-emerald-400/40 bg-emerald-500/10"
+                              : "border-slate-800 hover:border-slate-600",
                           ].join(" ")}
                         >
                           <div className="flex items-center justify-between gap-3">
                             <div className="min-w-0">
                               <div className="text-sm font-semibold text-slate-100 truncate">
-                                {s.vehicle}{" "}
-                                <span className="text-slate-400 font-normal">— {s.name}</span>
+                                {s.vehicle} <span className="text-slate-400 font-normal">— {s.name}</span>
                               </div>
                             </div>
 
@@ -511,8 +510,7 @@ export default function LiveIntakeBoard() {
                           <div className="flex items-center justify-between gap-3">
                             <div className="min-w-0">
                               <div className="text-sm font-semibold text-slate-100 truncate">
-                                {s.vehicle}{" "}
-                                <span className="text-slate-400 font-normal">— {s.name}</span>
+                                {s.vehicle} <span className="text-slate-400 font-normal">— {s.name}</span>
                               </div>
                             </div>
 
@@ -538,25 +536,29 @@ export default function LiveIntakeBoard() {
           )}
 
           <div className="text-xs text-slate-500 mt-4">
-            Tip: keep this tab open. Submit from <span className="text-slate-300">/c/{shopSlug}</span>{" "}
-            and you should see the row appear within 1–5 seconds.
+            Tip: keep this tab open. Submit from <span className="text-slate-300">/c/{shopSlug}</span> and you should see
+            the row appear within 1–5 seconds.
           </div>
         </div>
       </div>
 
-      {/* ✅ Drawer overlay */}
+      {/* ✅ Drawer overlay (pointer-safe + production-safe) */}
       {selectedRow ? (
-        <div
-          className="fixed inset-0 z-50"
-          onMouseDown={(e) => {
-            // click outside closes
-            if (e.target === e.currentTarget) setSelectedId(null);
-          }}
-        >
-          <div className="absolute inset-0 bg-black/50" />
+        <div className="fixed inset-0 z-50">
+          {/* Backdrop: explicit click/tap target that closes */}
+          <button
+            type="button"
+            aria-label="Close details"
+            className="absolute inset-0 bg-black/50"
+            style={{ cursor: "default" }}
+            onPointerDown={() => setSelectedId(null)}
+          />
 
           {/* Desktop: right drawer. Mobile: bottom sheet */}
-          <div className="absolute inset-x-0 bottom-0 md:inset-y-0 md:right-0 md:left-auto w-full md:w-[520px]">
+          <div
+            className="absolute inset-x-0 bottom-0 md:inset-y-0 md:right-0 md:left-auto w-full md:w-[520px]"
+            onPointerDown={(e) => e.stopPropagation()}
+          >
             <div className="h-[85vh] md:h-full bg-slate-950 border border-slate-800 md:border-l-slate-800 rounded-t-2xl md:rounded-none p-4 md:p-5 overflow-auto">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
@@ -608,7 +610,12 @@ export default function LiveIntakeBoard() {
                       s.mileage ? `Mileage: ${s.mileage}` : null,
                       s.phone ? `Phone: ${s.phone}` : null,
                     ].filter(Boolean);
-                    return lines.length ? lines.map((t) => <div key={t as string}>{t}</div>) : <div className="text-slate-500">—</div>;
+
+                    return lines.length ? (
+                      lines.map((t) => <div key={t as string}>{t}</div>)
+                    ) : (
+                      <div className="text-slate-500">—</div>
+                    );
                   })()}
                 </div>
               </div>
