@@ -184,6 +184,8 @@ export default function LiveIntakeBoard() {
     setErr(null);
 
     const nowIso = new Date().toISOString();
+
+    // optimistic UI update
     setRows((prev) =>
       prev
         .map((r) =>
@@ -202,10 +204,10 @@ export default function LiveIntakeBoard() {
 
     if (stage === "done") setActive(null);
 
-    // ✅ Use the NEW unambiguous RPC (prevents overload + signature mismatch hell)
+    // ✅ MUST match Postgres function parameter NAMES
     const res = (await (supabase as any).rpc("hp_set_job_stage", {
       p_shop_slug: shopSlug,
-      p_job_id: row.id,
+      p_job_id: row.id, // <-- IMPORTANT: UUID from public_intake_submissions.id
       p_employee_code: code,
       p_stage: stage,
     })) as any;
