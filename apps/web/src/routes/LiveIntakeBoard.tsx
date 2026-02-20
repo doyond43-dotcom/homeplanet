@@ -36,7 +36,7 @@ function safeText(x: unknown, max = 140): string {
   return s.length > max ? s.slice(0, max - 1) + "…" : s;
 }
 
-function stageColor(stage: string) {
+function stageColor(p_stage: string) {
   switch (stage) {
     case "diagnosing":
       return "text-blue-300";
@@ -152,7 +152,7 @@ export default function LiveIntakeBoard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase, shopSlug]);
 
-  async function setJobStage(row: Row, stage: JobStage) {
+  async function setJobStage(row: Row, p_stage: JobStage) {
     if (!supabase) return;
 
     if (!shopSlug) {
