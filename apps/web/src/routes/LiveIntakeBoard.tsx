@@ -11,7 +11,6 @@ type Row = {
   slug: string;
   payload: any;
 
-  // New workflow system (real)
   current_stage: JobStage | null;
   stage_updated_at?: string | null;
   stage_updated_by_employee_code?: string | null;
@@ -66,6 +65,7 @@ export default function LiveIntakeBoard() {
     const url = (import.meta as any).env?.VITE_SUPABASE_URL;
     const key = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY;
     if (!url || !key) return null;
+
     return createClient(url, key, {
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
       realtime: { params: { eventsPerSecond: 10 } },
@@ -84,7 +84,6 @@ export default function LiveIntakeBoard() {
 
   const inFlightRef = useRef(false);
 
-  // Keep localStorage in sync
   useEffect(() => {
     if (!shopSlug) return;
     localStorage.setItem(storageKey, employeeCode || "");
@@ -126,7 +125,6 @@ export default function LiveIntakeBoard() {
     setRows((data as any) || []);
   }
 
-  // REALTIME scoped to slug (submissions + stage events)
   useEffect(() => {
     load("initial");
 
@@ -162,9 +160,6 @@ export default function LiveIntakeBoard() {
       return;
     }
 
-    // ✅ OPTION A:
-    // - Clicking a job card is free
-    // - First time they try to change a stage, require employee code (then store it)
     let code = employeeCode.trim();
 
     if (!code) {
@@ -176,11 +171,9 @@ export default function LiveIntakeBoard() {
         return;
       }
 
-      // Persist to this device for this shop slug
       setEmployeeCode(code);
       localStorage.setItem(storageKey, code);
 
-      // If name empty, we can optionally set it to the code (nice for quick testing)
       if (!employeeName.trim()) {
         setEmployeeName(code);
         localStorage.setItem(nameKey, code);
@@ -190,7 +183,6 @@ export default function LiveIntakeBoard() {
     setBusy(true);
     setErr(null);
 
-    // Optimistic UI: move immediately
     const nowIso = new Date().toISOString();
     setRows((prev) =>
       prev
@@ -205,46 +197,37 @@ export default function LiveIntakeBoard() {
               }
             : r
         )
-        // If moved to done, remove from list immediately
         .filter((r) => r.current_stage !== "done")
     );
 
-    // Close drawer immediately if done
     if (stage === "done") setActive(null);
 
-    // ✅ Correct RPC payload for DB signature:
-    // set_job_stage(p_shop_slug text, p_submission_id uuid, p_employee_code text, p_stage_to text, p_note text)
-    const res = (await (supabase as any).rpc("set_job_stage", {
+    // ✅ Use the NEW unambiguous RPC (prevents overload + signature mismatch hell)
+    const res = (await (supabase as any).rpc("hp_set_job_stage", {
       p_shop_slug: shopSlug,
       p_submission_id: row.id,
       p_employee_code: code,
-      p_stage_to: stage,
-      p_note: employeeName.trim() ? `by ${employeeName.trim()}` : null,
+      p_stage: stage,
     })) as any;
 
     setBusy(false);
 
     if (res?.error) {
       setErr(res.error.message || String(res.error));
-      // Truth wins: reload from server
       await load("rpc-error-refresh");
       return;
     }
 
-    // Keep it simple: reload (prevents any drift)
     await load("stage-update");
   }
 
-  // Split columns (quick vs longer jobs)
   const quickRows = rows.filter((r) => isQuickJob(r.payload));
   const longRows = rows.filter((r) => !isQuickJob(r.payload));
 
-  // Employee gate UI (we keep it, but stage-change still enforces code if empty)
   const employeeReady = !!employeeCode.trim();
 
   return (
     <div className="h-screen bg-slate-950 text-white flex flex-col">
-      {/* TOP BAR */}
       <div className="border-b border-slate-800 px-6 py-4 flex items-center justify-between gap-4">
         <div className="min-w-0">
           <div className="text-lg font-bold">Employee Board</div>
@@ -295,10 +278,8 @@ export default function LiveIntakeBoard() {
         </div>
       ) : (
         <div className="flex-1 flex overflow-hidden">
-          {/* LIST: expands to full width when drawer closed */}
           <div className={(active ? "w-2/3" : "w-full") + " p-6 overflow-y-auto"}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Quick */}
               <div>
                 <div className="text-xs text-slate-400 font-semibold mb-2">Quick jobs</div>
                 <div className="space-y-3">
@@ -344,7 +325,6 @@ export default function LiveIntakeBoard() {
                 </div>
               </div>
 
-              {/* Longer */}
               <div>
                 <div className="text-xs text-slate-400 font-semibold mb-2">Longer jobs</div>
                 <div className="space-y-3">
@@ -392,7 +372,6 @@ export default function LiveIntakeBoard() {
             </div>
           </div>
 
-          {/* DRAWER */}
           {active ? (
             <div className="w-1/3 border-l border-slate-800 bg-slate-900 p-6 overflow-y-auto">
               <div className="flex items-start justify-between gap-3">
