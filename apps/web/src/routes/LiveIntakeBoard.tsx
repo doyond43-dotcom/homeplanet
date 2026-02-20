@@ -157,6 +157,11 @@ export default function LiveIntakeBoard() {
   async function setJobStage(row: Row, stage: JobStage) {
     if (!supabase) return;
 
+    if (!shopSlug) {
+      setErr("Missing shop slug in URL. Open /live/<slug>/board and try again.");
+      return;
+    }
+
     // ✅ OPTION A:
     // - Clicking a job card is free
     // - First time they try to change a stage, require employee code (then store it)
@@ -207,13 +212,13 @@ export default function LiveIntakeBoard() {
     // Close drawer immediately if done
     if (stage === "done") setActive(null);
 
-    // ✅ Fix for Vercel TS2339: don't destructure { error } from rpc()
+    // ✅ Correct RPC payload for DB signature:
+    // set_job_stage(p_shop_slug text, p_submission_id uuid, p_employee_code text, p_stage text)
     const res = (await (supabase as any).rpc("set_job_stage", {
-      p_slug: shopSlug,
+      p_shop_slug: shopSlug,
       p_submission_id: row.id,
       p_employee_code: code,
-      p_stage_to: stage,
-      p_note: employeeName.trim() ? `by ${employeeName.trim()}` : null,
+      p_stage: stage,
     })) as any;
 
     setBusy(false);
@@ -391,7 +396,9 @@ export default function LiveIntakeBoard() {
             <div className="w-1/3 border-l border-slate-800 bg-slate-900 p-6 overflow-y-auto">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <h2 className="text-2xl font-bold mb-1 truncate">{safeText(active.payload?.vehicle || "Vehicle", 60)}</h2>
+                  <h2 className="text-2xl font-bold mb-1 truncate">
+                    {safeText(active.payload?.vehicle || "Vehicle", 60)}
+                  </h2>
                   <div className="text-sm text-slate-300">{safeText(active.payload?.name || "Customer", 60)}</div>
                   <div className="text-xs text-slate-500 mt-1">{formatTime(active.created_at)}</div>
                 </div>
