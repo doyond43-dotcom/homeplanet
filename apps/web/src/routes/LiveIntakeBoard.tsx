@@ -289,8 +289,8 @@ export default function LiveIntakeBoard() {
         </div>
       ) : (
         <div className="flex-1 flex overflow-hidden">
-          {/* LIST: two columns */}
-          <div className="w-2/3 p-6 overflow-y-auto">
+          {/* LIST: expands to full width when drawer closed */}
+          <div className={(active ? "w-2/3" : "w-full") + " p-6 overflow-y-auto"}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Quick */}
               <div>
