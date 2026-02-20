@@ -205,7 +205,7 @@ export default function LiveIntakeBoard() {
     // ✅ Use the NEW unambiguous RPC (prevents overload + signature mismatch hell)
     const res = (await (supabase as any).rpc("hp_set_job_stage", {
       p_shop_slug: shopSlug,
-      p_submission_id: row.id,
+      p_job_id: row.id,
       p_employee_code: code,
       p_stage: stage,
     })) as any;
@@ -427,3 +427,4 @@ export default function LiveIntakeBoard() {
     </div>
   );
 }
+
