@@ -1,103 +1,139 @@
 ﻿// LiveIntakeBoard.tsx
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useParams } from "react-router-dom";
+
+type WorkflowStage = "new" | "diagnosing" | "waiting_parts" | "repairing" | "done";
 
 type Row = {
   id: string;
   created_at: string;
   slug: string;
   payload: any;
-  status: "new" | "in_progress" | "done";
+  status: string | null;
+  workflow_stage: string | null;
+
+  // Optional attribution columns (safe if present)
+  employee_code?: string | null;
+  employee_name?: string | null;
+  status_changed_at?: string | null;
+  stage_changed_at?: string | null;
 };
 
-type Employee = {
-  id: string;
-  shop_slug: string;
-  employee_code: string;
-  display_name: string;
-  active: boolean;
-  created_at?: string;
-};
+const STAGES: { key: WorkflowStage; label: string; help: string }[] = [
+  { key: "new", label: "New", help: "Customer arrived, not started yet" },
+  { key: "diagnosing", label: "Diagnosing", help: "Inspection / diagnosis in progress" },
+  { key: "waiting_parts", label: "Waiting Parts", help: "Blocked waiting on parts" },
+  { key: "repairing", label: "Repairing", help: "Repair work underway" },
+  { key: "done", label: "Done", help: "Completed (removes from board)" },
+];
 
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL!,
-  import.meta.env.VITE_SUPABASE_ANON_KEY!
-);
+function isQuickJob(payload: any) {
+  const p = payload ?? {};
+  const txt = `${p.message ?? ""} ${p.notes ?? ""} ${p.problem ?? ""}`.toLowerCase();
+  return /oil|tire|flat|battery|jump|wiper|bulb|light|inspection|rotate|patch|plug/.test(txt);
+}
+
+function safeText(x: unknown, max = 140): string {
+  const s = (typeof x === "string" ? x : JSON.stringify(x ?? "")).replace(/\s+/g, " ").trim();
+  if (!s) return "";
+  return s.length > max ? s.slice(0, max - 1) + "…" : s;
+}
+
+function stageColor(stage: string) {
+  switch (stage) {
+    case "new":
+      return "text-yellow-300";
+    case "diagnosing":
+      return "text-blue-300";
+    case "waiting_parts":
+      return "text-orange-300";
+    case "repairing":
+      return "text-emerald-300";
+    case "done":
+      return "text-green-300";
+    default:
+      return "text-slate-300";
+  }
+}
+
+function formatTime(iso: string) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}
 
 export default function LiveIntakeBoard() {
   const { slug } = useParams();
   const shopSlug = (slug ?? "").trim();
 
+  const supabase = useMemo(() => {
+    const url = (import.meta as any).env?.VITE_SUPABASE_URL;
+    const key = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY;
+    if (!url || !key) return null;
+    return createClient(url, key, {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+      realtime: { params: { eventsPerSecond: 10 } },
+    });
+  }, []);
+
+  const storageKey = useMemo(() => `hp_employee_code:${shopSlug || "no-slug"}`, [shopSlug]);
+  const nameKey = useMemo(() => `hp_employee_name:${shopSlug || "no-slug"}`, [shopSlug]);
+
+  const [employeeCode, setEmployeeCode] = useState<string>(() => localStorage.getItem(storageKey) || "");
+  const [employeeName, setEmployeeName] = useState<string>(() => localStorage.getItem(nameKey) || "");
   const [rows, setRows] = useState<Row[]>([]);
   const [active, setActive] = useState<Row | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
-  // Employee identity (no login yet; code-based)
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [employee, setEmployee] = useState<Employee | null>(null);
-  const [employeeCodeInput, setEmployeeCodeInput] = useState("");
-  const [empErr, setEmpErr] = useState<string | null>(null);
+  const inFlightRef = useRef(false);
 
-  const canWork = useMemo(() => !!employee, [employee]);
-
-  // LOAD ROWS
-  async function load() {
+  // Keep localStorage in sync
+  useEffect(() => {
     if (!shopSlug) return;
+    localStorage.setItem(storageKey, employeeCode || "");
+    localStorage.setItem(nameKey, employeeName || "");
+  }, [employeeCode, employeeName, shopSlug, storageKey, nameKey]);
+
+  async function load(reason = "load") {
+    if (!supabase || !shopSlug) return;
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
+
+    setErr(null);
 
     const { data, error } = await supabase
       .from("public_intake_submissions")
-      .select("*")
+      .select(
+        "id, created_at, slug, payload, status, workflow_stage, employee_code, employee_name, status_changed_at, stage_changed_at"
+      )
       .eq("slug", shopSlug)
-      .neq("status", "done")
+      .neq("workflow_stage", "done")
       .order("created_at", { ascending: false });
 
+    inFlightRef.current = false;
+
     if (error) {
-      // keep silent-ish; you can surface if you want
-      setRows([]);
+      setErr(`[${reason}] ${error.message || String(error)}`);
       return;
     }
 
     setRows((data as any) || []);
   }
 
-  // LOAD EMPLOYEES + AUTO-RESTORE CODE
-  async function loadEmployees() {
-    if (!shopSlug) return;
-
-    const { data, error } = await supabase
-      .from("shop_employees")
-      .select("id, shop_slug, employee_code, display_name, active, created_at")
-      .eq("shop_slug", shopSlug)
-      .eq("active", true)
-      .order("created_at", { ascending: true });
-
-    if (error) {
-      setEmployees([]);
-      setEmpErr(error.message || "Failed to load employees");
-      return;
-    }
-
-    const list = (data as any as Employee[]) ?? [];
-    setEmployees(list);
-
-    const saved = localStorage.getItem("hp_employee_code");
-    if (saved) {
-      const found = list.find((e) => e.employee_code === saved);
-      if (found) setEmployee(found);
-    }
-  }
-
-  // REALTIME + INITIAL LOAD
+  // REALTIME scoped to slug
   useEffect(() => {
-    load();
-    loadEmployees();
+    load("initial");
+
+    if (!supabase || !shopSlug) return;
 
     const channel = supabase
-      .channel(`board:${shopSlug || "no-slug"}`)
+      .channel(`board:${shopSlug}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "public_intake_submissions" },
-        () => load()
+        { event: "*", schema: "public", table: "public_intake_submissions", filter: `slug=eq.${shopSlug}` },
+        () => load("realtime")
       )
       .subscribe();
 
@@ -107,198 +143,261 @@ export default function LiveIntakeBoard() {
       } catch {}
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shopSlug]);
+  }, [supabase, shopSlug]);
 
-  // EMPLOYEE PICK
-  function pickEmployee() {
-    setEmpErr(null);
-    const code = employeeCodeInput.trim();
+  async function updateRow(id: string, patch: Record<string, any>) {
+    if (!supabase) return;
 
-    if (!code) {
-      setEmpErr("Enter a code.");
+    // Try with full patch; if DB column missing, retry without that column.
+    const tryUpdate = async (p: Record<string, any>) =>
+      supabase.from("public_intake_submissions").update(p as any).eq("id", id);
+
+    // First attempt
+    let res = await tryUpdate(patch);
+    if (!res.error) return res;
+
+    const msg = (res.error.message || "").toLowerCase();
+
+    // If specific optional columns don't exist, strip them and retry
+    const optionalCols = ["employee_code", "employee_name", "status_changed_at", "stage_changed_at"];
+    let stripped = { ...patch };
+    let changed = false;
+
+    for (const c of optionalCols) {
+      if (msg.includes(c.toLowerCase()) && msg.includes("does not exist")) {
+        delete stripped[c];
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      res = await tryUpdate(stripped);
+    }
+
+    return res;
+  }
+
+  async function setWorkflowStage(row: Row, stage: WorkflowStage) {
+    if (!employeeCode.trim()) {
+      setErr("Enter employee code first.");
       return;
     }
 
-    const found = employees.find((e) => e.employee_code === code);
-    if (!found) {
-      setEmpErr("Invalid employee code.");
+    setBusy(true);
+    setErr(null);
+
+    const patch: Record<string, any> = {
+      workflow_stage: stage,
+      employee_code: employeeCode.trim(),
+      employee_name: employeeName.trim() || null,
+      stage_changed_at: new Date().toISOString(),
+    };
+
+    const { error } = await updateRow(row.id, patch);
+
+    setBusy(false);
+
+    if (error) {
+      setErr(error.message || String(error));
       return;
     }
-
-    localStorage.setItem("hp_employee_code", found.employee_code);
-    setEmployee(found);
-  }
-
-  function clearEmployee() {
-    localStorage.removeItem("hp_employee_code");
-    setEmployee(null);
-    setEmployeeCodeInput("");
-    setEmpErr(null);
-  }
-
-  // UPDATE STATUS (stamps employee attribution)
-  async function setStatus(row: Row, status: Row["status"]) {
-    if (!canWork) return;
-
-    await supabase
-      .from("public_intake_submissions")
-      .update({
-        status,
-        handled_by_employee_id: employee?.id ?? null,
-        handled_by_employee_name: employee?.display_name ?? null,
-        handled_by_employee_code: employee?.employee_code ?? null,
-        status_updated_at: new Date().toISOString(),
-      })
-      .eq("id", row.id);
 
     setActive(null);
+    load("stage-update");
   }
 
+  // Split columns (what you wanted earlier)
+  const quickRows = rows.filter((r) => isQuickJob(r.payload));
+  const longRows = rows.filter((r) => !isQuickJob(r.payload));
+
+  // Employee gate UI (simple + fast)
+  const employeeReady = !!employeeCode.trim();
+
   return (
-    <div className="h-screen bg-slate-950 text-white flex">
-      {/* EMPLOYEE CODE MODAL */}
-      {!employee && (
-        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-6">
-          <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 p-6">
-            <div className="text-2xl font-extrabold">Employee Code</div>
-            <div className="text-sm text-slate-300 mt-1">
-              Enter your code to work this board. This stamps every action to you.
+    <div className="h-screen bg-slate-950 text-white flex flex-col">
+      {/* TOP BAR */}
+      <div className="border-b border-slate-800 px-6 py-4 flex items-center justify-between gap-4">
+        <div className="min-w-0">
+          <div className="text-lg font-bold">Employee Board</div>
+          <div className="text-xs text-slate-400 truncate">/live/{shopSlug || "no-slug"}/board</div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <input
+            value={employeeCode}
+            onChange={(e) => setEmployeeCode(e.target.value)}
+            placeholder="Employee code"
+            className="w-40 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-blue-400"
+          />
+          <input
+            value={employeeName}
+            onChange={(e) => setEmployeeName(e.target.value)}
+            placeholder="Name (optional)"
+            className="w-48 hidden md:block rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-blue-400"
+          />
+          <button
+            type="button"
+            onClick={() => load("manual-refresh")}
+            className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm hover:border-slate-500"
+          >
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      {err ? (
+        <div className="mx-6 mt-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          {err}
+        </div>
+      ) : null}
+
+      {!employeeReady ? (
+        <div className="p-6">
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-6 max-w-xl">
+            <div className="text-xl font-bold">Enter employee code to continue</div>
+            <div className="text-sm text-slate-300 mt-2">
+              This makes every stage change attributable — so your timestamp record actually means something.
             </div>
+            <div className="text-xs text-slate-500 mt-3">Stored locally on this device for this shop slug.</div>
+          </div>
+        </div>
+      ) : (
+        <div className="flex-1 flex overflow-hidden">
+          {/* LIST: two columns */}
+          <div className="w-2/3 p-6 overflow-y-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Quick */}
+              <div>
+                <div className="text-xs text-slate-400 font-semibold mb-2">Quick jobs</div>
+                <div className="space-y-3">
+                  {quickRows.map((r) => {
+                    const stage = (r.workflow_stage || "new") as string;
+                    const vehicle = safeText(r.payload?.vehicle || "Vehicle", 48);
+                    const name = safeText(r.payload?.name || "Customer", 40);
+                    const message = safeText(r.payload?.message || "", 140);
+                    return (
+                      <div
+                        key={r.id}
+                        onClick={() => setActive(r)}
+                        className="cursor-pointer rounded-xl border border-slate-800 bg-slate-900 p-4 hover:border-blue-400"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="font-bold text-lg">{vehicle}</div>
+                          <div className={"text-xs font-semibold " + stageColor(stage)}>
+                            {STAGES.find((s) => s.key === stage)?.label ?? stage}
+                          </div>
+                        </div>
+                        <div className="text-sm text-slate-300">{name}</div>
+                        <div className="text-xs text-slate-400 mt-1">{message}</div>
 
-            <div className="mt-4">
-              <input
-                className="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 text-lg tracking-widest text-center outline-none focus:border-blue-500"
-                placeholder="e.g. 1111"
-                value={employeeCodeInput}
-                onChange={(e) => setEmployeeCodeInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") pickEmployee();
-                }}
-              />
-
-              {empErr && (
-                <div className="mt-3 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
-                  {empErr}
+                        <div className="mt-2 text-[11px] text-slate-500 flex items-center justify-between">
+                          <span>{formatTime(r.created_at)}</span>
+                          {(r.employee_code || r.employee_name) && (
+                            <span className="text-slate-400">
+                              Last:{" "}
+                              <span className="text-slate-200 font-semibold">
+                                {r.employee_name ? r.employee_name : "Employee"} {r.employee_code ? `(${r.employee_code})` : ""}
+                              </span>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {quickRows.length === 0 ? <div className="text-sm text-slate-500">No quick jobs yet.</div> : null}
                 </div>
-              )}
+              </div>
 
-              <button
-                className="mt-4 w-full rounded-xl bg-emerald-600 hover:bg-emerald-500 px-4 py-3 font-bold"
-                onClick={pickEmployee}
-              >
-                Start Shift
-              </button>
+              {/* Longer */}
+              <div>
+                <div className="text-xs text-slate-400 font-semibold mb-2">Longer jobs</div>
+                <div className="space-y-3">
+                  {longRows.map((r) => {
+                    const stage = (r.workflow_stage || "new") as string;
+                    const vehicle = safeText(r.payload?.vehicle || "Vehicle", 48);
+                    const name = safeText(r.payload?.name || "Customer", 40);
+                    const message = safeText(r.payload?.message || "", 140);
+                    return (
+                      <div
+                        key={r.id}
+                        onClick={() => setActive(r)}
+                        className="cursor-pointer rounded-xl border border-slate-800 bg-slate-900 p-4 hover:border-blue-400"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="font-bold text-lg">{vehicle}</div>
+                          <div className={"text-xs font-semibold " + stageColor(stage)}>
+                            {STAGES.find((s) => s.key === stage)?.label ?? stage}
+                          </div>
+                        </div>
+                        <div className="text-sm text-slate-300">{name}</div>
+                        <div className="text-xs text-slate-400 mt-1">{message}</div>
 
-              <div className="mt-4 text-xs text-slate-400">
-                Active employees for <span className="text-slate-200 font-semibold">/{shopSlug || "no-slug"}</span>:{" "}
-                {employees.length ? employees.map((e) => e.display_name).join(", ") : "none loaded"}
+                        <div className="mt-2 text-[11px] text-slate-500 flex items-center justify-between">
+                          <span>{formatTime(r.created_at)}</span>
+                          {(r.employee_code || r.employee_name) && (
+                            <span className="text-slate-400">
+                              Last:{" "}
+                              <span className="text-slate-200 font-semibold">
+                                {r.employee_name ? r.employee_name : "Employee"} {r.employee_code ? `(${r.employee_code})` : ""}
+                              </span>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {longRows.length === 0 ? <div className="text-sm text-slate-500">No longer jobs yet.</div> : null}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
 
-      {/* LIST */}
-      <div className="w-2/3 p-6 space-y-3 overflow-y-auto">
-        <div className="flex items-center justify-between mb-2">
-          <div className="text-sm text-slate-300">
-            Staff board: <span className="text-slate-100 font-semibold">/{shopSlug || "no-slug"}</span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {employee ? (
-              <>
-                <div className="text-xs rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-slate-200">
-                  Employee: <span className="font-semibold">{employee.display_name}</span>{" "}
-                  <span className="text-slate-400">({employee.employee_code})</span>
+          {/* DRAWER */}
+          {active ? (
+            <div className="w-1/3 border-l border-slate-800 bg-slate-900 p-6 overflow-y-auto">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h2 className="text-2xl font-bold mb-1 truncate">{safeText(active.payload?.vehicle || "Vehicle", 60)}</h2>
+                  <div className="text-sm text-slate-300">{safeText(active.payload?.name || "Customer", 60)}</div>
+                  <div className="text-xs text-slate-500 mt-1">{formatTime(active.created_at)}</div>
                 </div>
                 <button
-                  className="text-xs rounded-full border border-slate-700 bg-slate-900 px-3 py-1 hover:border-slate-500"
-                  onClick={clearEmployee}
-                  title="Switch employee"
+                  className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm hover:border-slate-500"
+                  onClick={() => setActive(null)}
                 >
-                  Switch
+                  Close
                 </button>
-              </>
-            ) : (
-              <div className="text-xs text-slate-400">Waiting for employee code…</div>
-            )}
-          </div>
-        </div>
+              </div>
 
-        {rows.map((r) => (
-          <div
-            key={r.id}
-            onClick={() => setActive(r)}
-            className="cursor-pointer rounded-xl border border-slate-800 bg-slate-900 p-4 hover:border-blue-400"
-          >
-            <div className="font-bold text-lg">{r.payload?.vehicle || "Vehicle"}</div>
-            <div className="text-sm text-slate-300">{r.payload?.name || "Customer"}</div>
-            <div className="text-xs text-slate-400 mt-1">{r.payload?.message}</div>
+              <div className="text-sm text-slate-300 mt-4 rounded-xl border border-slate-800 bg-slate-950/30 p-3 whitespace-pre-wrap">
+                {active.payload?.message || "No message"}
+              </div>
 
-            <div className="mt-2 text-xs">
-              Status:
-              <span
-                className={
-                  r.status === "new"
-                    ? "text-yellow-400"
-                    : r.status === "in_progress"
-                    ? "text-blue-400"
-                    : "text-green-400"
-                }
-              >
-                {" "}
-                {r.status}
-              </span>
+              <div className="text-xs text-slate-400 mt-5 mb-2">Set Stage (stamped to employee code)</div>
+
+              <div className="grid grid-cols-1 gap-2">
+                {STAGES.map((s) => (
+                  <button
+                    key={s.key}
+                    disabled={busy}
+                    className={[
+                      "w-full p-3 rounded-xl border text-left",
+                      "border-slate-700 bg-slate-800/40 hover:bg-slate-800/70",
+                      busy ? "opacity-60 cursor-not-allowed" : "",
+                    ].join(" ")}
+                    onClick={() => setWorkflowStage(active, s.key)}
+                  >
+                    <div className={"font-semibold " + stageColor(s.key)}>{s.label}</div>
+                    <div className="text-[11px] text-slate-400">{s.help}</div>
+                  </button>
+                ))}
+              </div>
+
+              <div className="text-xs text-slate-500 mt-4">
+                Active employee: <span className="text-slate-200 font-semibold">{employeeName || "Employee"} ({employeeCode})</span>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
-
-      {/* DRAWER */}
-      {active && (
-        <div className="w-1/3 border-l border-slate-800 bg-slate-900 p-6">
-          <h2 className="text-2xl font-bold mb-2">{active.payload?.vehicle}</h2>
-          <div className="text-sm text-slate-300 mb-6">{active.payload?.message}</div>
-
-          {!employee && (
-            <div className="mb-4 rounded-xl border border-yellow-500/30 bg-yellow-500/10 px-3 py-2 text-sm text-yellow-200">
-              Enter employee code to take actions.
-            </div>
-          )}
-
-          <div className="space-y-3">
-            {active.status === "new" && (
-              <button
-                disabled={!canWork}
-                className={`w-full p-3 rounded-xl ${
-                  canWork ? "bg-blue-600 hover:bg-blue-700" : "bg-slate-700 cursor-not-allowed"
-                }`}
-                onClick={() => setStatus(active, "in_progress")}
-              >
-                Start Job
-              </button>
-            )}
-
-            {active.status !== "done" && (
-              <button
-                disabled={!canWork}
-                className={`w-full p-3 rounded-xl ${
-                  canWork ? "bg-green-600 hover:bg-green-700" : "bg-slate-700 cursor-not-allowed"
-                }`}
-                onClick={() => setStatus(active, "done")}
-              >
-                Finish Job
-              </button>
-            )}
-
-            <button
-              className="w-full bg-slate-700 hover:bg-slate-600 p-3 rounded-xl"
-              onClick={() => setActive(null)}
-            >
-              Close
-            </button>
-          </div>
+          ) : null}
         </div>
       )}
     </div>
