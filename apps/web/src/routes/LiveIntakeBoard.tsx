@@ -1,27 +1,24 @@
-﻿// LiveIntakeBoard.tsx
+﻿// apps/web/src/routes/LiveIntakeBoard.tsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useParams } from "react-router-dom";
 
-type WorkflowStage = "new" | "diagnosing" | "waiting_parts" | "repairing" | "done";
+type JobStage = "diagnosing" | "waiting_parts" | "repairing" | "done";
 
 type Row = {
-  id: string;
+  id: string; // uuid
   created_at: string;
   slug: string;
   payload: any;
-  status: string | null;
-  workflow_stage: string | null;
 
-  // Optional attribution columns (safe if present)
-  employee_code?: string | null;
-  employee_name?: string | null;
-  status_changed_at?: string | null;
-  stage_changed_at?: string | null;
+  // New workflow system (real)
+  current_stage: JobStage | null;
+  stage_updated_at?: string | null;
+  stage_updated_by_employee_code?: string | null;
+  handled_by_employee_code?: string | null;
 };
 
-const STAGES: { key: WorkflowStage; label: string; help: string }[] = [
-  { key: "new", label: "New", help: "Customer arrived, not started yet" },
+const STAGES: { key: JobStage; label: string; help: string }[] = [
   { key: "diagnosing", label: "Diagnosing", help: "Inspection / diagnosis in progress" },
   { key: "waiting_parts", label: "Waiting Parts", help: "Blocked waiting on parts" },
   { key: "repairing", label: "Repairing", help: "Repair work underway" },
@@ -42,8 +39,6 @@ function safeText(x: unknown, max = 140): string {
 
 function stageColor(stage: string) {
   switch (stage) {
-    case "new":
-      return "text-yellow-300";
     case "diagnosing":
       return "text-blue-300";
     case "waiting_parts":
@@ -106,10 +101,19 @@ export default function LiveIntakeBoard() {
     const { data, error } = await supabase
       .from("public_intake_submissions")
       .select(
-        "id, created_at, slug, payload, status, workflow_stage, employee_code, employee_name, status_changed_at, stage_changed_at"
+        [
+          "id",
+          "created_at",
+          "slug",
+          "payload",
+          "current_stage",
+          "stage_updated_at",
+          "stage_updated_by_employee_code",
+          "handled_by_employee_code",
+        ].join(",")
       )
       .eq("slug", shopSlug)
-      .neq("workflow_stage", "done")
+      .neq("current_stage", "done")
       .order("created_at", { ascending: false });
 
     inFlightRef.current = false;
@@ -122,7 +126,7 @@ export default function LiveIntakeBoard() {
     setRows((data as any) || []);
   }
 
-  // REALTIME scoped to slug
+  // REALTIME scoped to slug (submissions + stage events)
   useEffect(() => {
     load("initial");
 
@@ -133,7 +137,12 @@ export default function LiveIntakeBoard() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "public_intake_submissions", filter: `slug=eq.${shopSlug}` },
-        () => load("realtime")
+        () => load("realtime:intake")
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "job_stage_events", filter: `slug=eq.${shopSlug}` },
+        () => load("realtime:events")
       )
       .subscribe();
 
@@ -145,39 +154,8 @@ export default function LiveIntakeBoard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase, shopSlug]);
 
-  async function updateRow(id: string, patch: Record<string, any>) {
+  async function setJobStage(row: Row, stage: JobStage) {
     if (!supabase) return;
-
-    // Try with full patch; if DB column missing, retry without that column.
-    const tryUpdate = async (p: Record<string, any>) =>
-      supabase.from("public_intake_submissions").update(p as any).eq("id", id);
-
-    // First attempt
-    let res = await tryUpdate(patch);
-    if (!res.error) return res;
-
-    const msg = (res.error.message || "").toLowerCase();
-
-    // If specific optional columns don't exist, strip them and retry
-    const optionalCols = ["employee_code", "employee_name", "status_changed_at", "stage_changed_at"];
-    let stripped = { ...patch };
-    let changed = false;
-
-    for (const c of optionalCols) {
-      if (msg.includes(c.toLowerCase()) && msg.includes("does not exist")) {
-        delete stripped[c];
-        changed = true;
-      }
-    }
-
-    if (changed) {
-      res = await tryUpdate(stripped);
-    }
-
-    return res;
-  }
-
-  async function setWorkflowStage(row: Row, stage: WorkflowStage) {
     if (!employeeCode.trim()) {
       setErr("Enter employee code first.");
       return;
@@ -186,27 +164,51 @@ export default function LiveIntakeBoard() {
     setBusy(true);
     setErr(null);
 
-    const patch: Record<string, any> = {
-      workflow_stage: stage,
-      employee_code: employeeCode.trim(),
-      employee_name: employeeName.trim() || null,
-      stage_changed_at: new Date().toISOString(),
-    };
+    // Optimistic UI: move immediately
+    const nowIso = new Date().toISOString();
+    setRows((prev) =>
+      prev
+        .map((r) =>
+          r.id === row.id
+            ? {
+                ...r,
+                current_stage: stage,
+                stage_updated_at: nowIso,
+                stage_updated_by_employee_code: employeeCode.trim(),
+                handled_by_employee_code: employeeCode.trim(),
+              }
+            : r
+        )
+        // If moved to done, remove from list immediately
+        .filter((r) => r.current_stage !== "done")
+    );
 
-    const { error } = await updateRow(row.id, patch);
+    // Close drawer immediately if done
+    if (stage === "done") setActive(null);
+
+    // ✅ Fix for Vercel TS2339: don't destructure { error } from rpc()
+    const res = (await (supabase as any).rpc("set_job_stage", {
+      p_slug: shopSlug,
+      p_submission_id: row.id,
+      p_employee_code: employeeCode.trim(),
+      p_stage_to: stage,
+      p_note: employeeName.trim() ? `by ${employeeName.trim()}` : null,
+    })) as any;
 
     setBusy(false);
 
-    if (error) {
-      setErr(error.message || String(error));
+    if (res?.error) {
+      setErr(res.error.message || String(res.error));
+      // Truth wins: reload from server
+      await load("rpc-error-refresh");
       return;
     }
 
-    setActive(null);
-    load("stage-update");
+    // Keep it simple: reload (prevents any drift)
+    await load("stage-update");
   }
 
-  // Split columns (what you wanted earlier)
+  // Split columns (quick vs longer jobs)
   const quickRows = rows.filter((r) => isQuickJob(r.payload));
   const longRows = rows.filter((r) => !isQuickJob(r.payload));
 
@@ -256,7 +258,7 @@ export default function LiveIntakeBoard() {
           <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-6 max-w-xl">
             <div className="text-xl font-bold">Enter employee code to continue</div>
             <div className="text-sm text-slate-300 mt-2">
-              This makes every stage change attributable — so your timestamp record actually means something.
+              This makes every stage change attributable — and writes an immutable event stamp for proof.
             </div>
             <div className="text-xs text-slate-500 mt-3">Stored locally on this device for this shop slug.</div>
           </div>
@@ -271,10 +273,13 @@ export default function LiveIntakeBoard() {
                 <div className="text-xs text-slate-400 font-semibold mb-2">Quick jobs</div>
                 <div className="space-y-3">
                   {quickRows.map((r) => {
-                    const stage = (r.workflow_stage || "new") as string;
+                    const stage = (r.current_stage || "diagnosing") as string;
                     const vehicle = safeText(r.payload?.vehicle || "Vehicle", 48);
                     const name = safeText(r.payload?.name || "Customer", 40);
                     const message = safeText(r.payload?.message || "", 140);
+                    const lastBy = r.stage_updated_by_employee_code || r.handled_by_employee_code || null;
+                    const lastAt = r.stage_updated_at || null;
+
                     return (
                       <div
                         key={r.id}
@@ -292,11 +297,12 @@ export default function LiveIntakeBoard() {
 
                         <div className="mt-2 text-[11px] text-slate-500 flex items-center justify-between">
                           <span>{formatTime(r.created_at)}</span>
-                          {(r.employee_code || r.employee_name) && (
+                          {lastBy && (
                             <span className="text-slate-400">
                               Last:{" "}
                               <span className="text-slate-200 font-semibold">
-                                {r.employee_name ? r.employee_name : "Employee"} {r.employee_code ? `(${r.employee_code})` : ""}
+                                {lastBy}
+                                {lastAt ? ` @ ${formatTime(lastAt)}` : ""}
                               </span>
                             </span>
                           )}
@@ -313,10 +319,13 @@ export default function LiveIntakeBoard() {
                 <div className="text-xs text-slate-400 font-semibold mb-2">Longer jobs</div>
                 <div className="space-y-3">
                   {longRows.map((r) => {
-                    const stage = (r.workflow_stage || "new") as string;
+                    const stage = (r.current_stage || "diagnosing") as string;
                     const vehicle = safeText(r.payload?.vehicle || "Vehicle", 48);
                     const name = safeText(r.payload?.name || "Customer", 40);
                     const message = safeText(r.payload?.message || "", 140);
+                    const lastBy = r.stage_updated_by_employee_code || r.handled_by_employee_code || null;
+                    const lastAt = r.stage_updated_at || null;
+
                     return (
                       <div
                         key={r.id}
@@ -334,11 +343,12 @@ export default function LiveIntakeBoard() {
 
                         <div className="mt-2 text-[11px] text-slate-500 flex items-center justify-between">
                           <span>{formatTime(r.created_at)}</span>
-                          {(r.employee_code || r.employee_name) && (
+                          {lastBy && (
                             <span className="text-slate-400">
                               Last:{" "}
                               <span className="text-slate-200 font-semibold">
-                                {r.employee_name ? r.employee_name : "Employee"} {r.employee_code ? `(${r.employee_code})` : ""}
+                                {lastBy}
+                                {lastAt ? ` @ ${formatTime(lastAt)}` : ""}
                               </span>
                             </span>
                           )}
@@ -373,7 +383,7 @@ export default function LiveIntakeBoard() {
                 {active.payload?.message || "No message"}
               </div>
 
-              <div className="text-xs text-slate-400 mt-5 mb-2">Set Stage (stamped to employee code)</div>
+              <div className="text-xs text-slate-400 mt-5 mb-2">Set Stage (provably stamped to employee code)</div>
 
               <div className="grid grid-cols-1 gap-2">
                 {STAGES.map((s) => (
@@ -385,7 +395,7 @@ export default function LiveIntakeBoard() {
                       "border-slate-700 bg-slate-800/40 hover:bg-slate-800/70",
                       busy ? "opacity-60 cursor-not-allowed" : "",
                     ].join(" ")}
-                    onClick={() => setWorkflowStage(active, s.key)}
+                    onClick={() => setJobStage(active, s.key)}
                   >
                     <div className={"font-semibold " + stageColor(s.key)}>{s.label}</div>
                     <div className="text-[11px] text-slate-400">{s.help}</div>
@@ -394,7 +404,10 @@ export default function LiveIntakeBoard() {
               </div>
 
               <div className="text-xs text-slate-500 mt-4">
-                Active employee: <span className="text-slate-200 font-semibold">{employeeName || "Employee"} ({employeeCode})</span>
+                Active employee:{" "}
+                <span className="text-slate-200 font-semibold">
+                  {employeeName || "Employee"} ({employeeCode})
+                </span>
               </div>
             </div>
           ) : null}
