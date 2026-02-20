@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useParams } from "react-router-dom";
 
@@ -21,7 +21,8 @@ function extractSummary(payload: any) {
   return {
     name: safeText(p.name || p.customer_name || p.first_name || p.full_name || "", 28) || "New customer",
     vehicle:
-      safeText(p.vehicle || p.car || p.make_model || p.vehicle_info || p.vehicleText || "", 42) || "Vehicle not specified",
+      safeText(p.vehicle || p.car || p.make_model || p.vehicle_info || p.vehicleText || "", 42) ||
+      "Vehicle not specified",
     message: safeText(p.message || p.notes || p.problem || p.issue || "", 160) || "No message provided",
   };
 }
@@ -85,6 +86,60 @@ export default function LiveShopTV() {
     });
   }, []);
 
+  // ✅ HARD TV SCROLL LOCK (body/html + wheel/touch/keys)
+  useEffect(() => {
+    const doc = document.documentElement;
+    const body = document.body;
+
+    const prevDocOverflow = doc.style.overflow;
+    const prevBodyOverflow = body.style.overflow;
+    const prevDocOverscroll = (doc.style as any).overscrollBehavior;
+    const prevBodyOverscroll = (body.style as any).overscrollBehavior;
+
+    doc.style.overflow = "hidden";
+    body.style.overflow = "hidden";
+    (doc.style as any).overscrollBehavior = "none";
+    (body.style as any).overscrollBehavior = "none";
+
+    const stopWheel = (e: WheelEvent) => {
+      e.preventDefault();
+    };
+    const stopTouch = (e: TouchEvent) => {
+      e.preventDefault();
+    };
+    const stopKeys = (e: KeyboardEvent) => {
+      const k = e.key;
+      // keys that commonly scroll pages
+      if (
+        k === "ArrowUp" ||
+        k === "ArrowDown" ||
+        k === "PageUp" ||
+        k === "PageDown" ||
+        k === "Home" ||
+        k === "End" ||
+        k === " " ||
+        k === "Spacebar"
+      ) {
+        e.preventDefault();
+      }
+    };
+
+    window.addEventListener("wheel", stopWheel, { passive: false });
+    window.addEventListener("touchmove", stopTouch, { passive: false });
+    window.addEventListener("keydown", stopKeys, { passive: false });
+
+    return () => {
+      window.removeEventListener("wheel", stopWheel as any);
+      window.removeEventListener("touchmove", stopTouch as any);
+      window.removeEventListener("keydown", stopKeys as any);
+
+      doc.style.overflow = prevDocOverflow;
+      body.style.overflow = prevBodyOverflow;
+      (doc.style as any).overscrollBehavior = prevDocOverscroll ?? "";
+      (body.style as any).overscrollBehavior = prevBodyOverscroll ?? "";
+    };
+  }, []);
+
   async function loadLatest(reason: string) {
     if (!supabase) {
       setStatus("Waiting for env…");
@@ -145,36 +200,6 @@ export default function LiveShopTV() {
     if (dbNewest && localNewest && dbNewest !== localNewest) loadLatest("Resyncing…");
     if (dbNewest && !localNewest) loadLatest("Loading…");
   }
-
-  // ✅ TV MODE: prevent all scrolling (wheel/touch/arrow keys)
-  useEffect(() => {
-    const prevent = (e: Event) => e.preventDefault();
-
-    const onKey = (e: KeyboardEvent) => {
-      const keys = ["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " ", "Spacebar"];
-      if (keys.includes(e.key)) {
-        e.preventDefault();
-      }
-    };
-
-    // lock document scrolling
-    const prevOverflow = document.documentElement.style.overflow;
-    const prevBodyOverflow = document.body.style.overflow;
-    document.documentElement.style.overflow = "hidden";
-    document.body.style.overflow = "hidden";
-
-    window.addEventListener("wheel", prevent, { passive: false });
-    window.addEventListener("touchmove", prevent, { passive: false });
-    window.addEventListener("keydown", onKey, { passive: false } as any);
-
-    return () => {
-      document.documentElement.style.overflow = prevOverflow;
-      document.body.style.overflow = prevBodyOverflow;
-      window.removeEventListener("wheel", prevent as any);
-      window.removeEventListener("touchmove", prevent as any);
-      window.removeEventListener("keydown", onKey as any);
-    };
-  }, []);
 
   useEffect(() => {
     setRows([]);
@@ -247,12 +272,9 @@ export default function LiveShopTV() {
 
   const newest = rows[0] ?? null;
 
-  // ✅ show a fixed number so there is never a need to scroll
-  const recent = rows.slice(0, 8);
-
   return (
     <div className="h-screen w-screen bg-slate-950 text-slate-100 p-6 overflow-hidden">
-      <div className="w-full h-full max-w-none mx-auto overflow-hidden">
+      <div className="w-full h-full max-w-none mx-auto">
         <div
           className="h-full rounded-2xl border border-slate-800 bg-slate-950/40 p-6 overflow-hidden"
           style={{
@@ -302,9 +324,9 @@ export default function LiveShopTV() {
               <div className="mt-6">
                 <div className="text-xs text-slate-400 font-semibold">Recent</div>
 
-                {/* ✅ NO scrolling in TV mode */}
+                {/* ✅ NO SCROLL: fixed list area, clipped */}
                 <div className="mt-2 space-y-2 overflow-hidden">
-                  {recent.map((r) => {
+                  {rows.slice(0, 8).map((r) => {
                     const s = extractSummary(r.payload);
                     return (
                       <div key={r.id} className="rounded-xl border border-slate-800 bg-slate-950/30 px-4 py-3">
