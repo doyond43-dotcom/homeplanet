@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useParams } from "react-router-dom";
 
@@ -62,12 +62,6 @@ function mergeDelete(prev: Row[], id: string, limit = 30) {
   return prev.filter((r) => r.id !== id).slice(0, limit);
 }
 
-function isQuickJob(payload: any) {
-  const p = payload ?? {};
-  const txt = `${p.message ?? ""} ${p.notes ?? ""} ${p.problem ?? ""}`.toLowerCase();
-  return /oil|tire|flat|battery|jump|wiper|bulb|light|inspection|rotate|patch|plug/.test(txt);
-}
-
 export default function LiveShopTV() {
   const { slug } = useParams();
   const shopSlug = (slug ?? "").trim();
@@ -125,13 +119,7 @@ export default function LiveShopTV() {
       return;
     }
 
-    setRows((prev) => {
-      const merged = new Map<string, Row>();
-      for (const r of prev) merged.set(r.id, r);
-      for (const r of data ?? []) merged.set(r.id, r);
-      return Array.from(merged.values()).sort(sortDescByCreatedAt).slice(0, 30);
-    });
-
+    setRows(() => (data ?? []).slice().sort(sortDescByCreatedAt).slice(0, 30));
     lastFullSyncAtRef.current = Date.now();
     setConnected(true);
     setStatus("Listening…");
@@ -229,8 +217,6 @@ export default function LiveShopTV() {
   }, [shopSlug, supabase, rows.length]);
 
   const newest = rows[0] ?? null;
-  const quickRows = rows.filter((r) => isQuickJob(r.payload));
-  const longRows = rows.filter((r) => !isQuickJob(r.payload));
 
   return (
     <div className="h-screen w-screen bg-slate-950 text-slate-100 p-6 overflow-hidden">
@@ -281,57 +267,29 @@ export default function LiveShopTV() {
                 </div>
               </div>
 
-              <div className="mt-6 grid grid-cols-2 gap-4 h-[48vh]">
-                <div className="h-full">
-                  <div className="text-xs text-slate-400 font-semibold">Quick jobs</div>
-                  <div className="mt-2 space-y-2 h-full overflow-auto pr-1">
-                    {quickRows.slice(0, 18).map((r) => {
-                      const s = extractSummary(r.payload);
-                      return (
-                        <div key={r.id} className="rounded-xl border border-slate-800 bg-slate-950/30 px-4 py-3">
-                          <div className="flex items-center justify-between gap-3">
-                            <div className="min-w-0">
-                              <div className="text-base font-semibold text-slate-100 truncate">
-                                {s.vehicle} <span className="text-slate-400 font-normal">— {s.name}</span>
-                              </div>
-                              <div className="text-sm text-slate-300 mt-1 truncate">{s.message}</div>
+              <div className="mt-6">
+                <div className="text-xs text-slate-400 font-semibold">Recent</div>
+                <div className="mt-2 space-y-2 max-h-[52vh] overflow-auto pr-1">
+                  {rows.slice(0, 18).map((r) => {
+                    const s = extractSummary(r.payload);
+                    return (
+                      <div key={r.id} className="rounded-xl border border-slate-800 bg-slate-950/30 px-4 py-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="text-base font-semibold text-slate-100 truncate">
+                              {s.vehicle} <span className="text-slate-400 font-normal">— {s.name}</span>
                             </div>
-                            <div className="shrink-0 text-sm text-slate-400">
-                              <span className="mr-2">{ageShort(r.created_at)}</span>
-                              {formatTime(r.created_at)}
-                            </div>
+                            <div className="text-sm text-slate-300 mt-1 truncate">{s.message}</div>
+                          </div>
+                          <div className="shrink-0 text-sm text-slate-400">
+                            <span className="mr-2">{ageShort(r.created_at)}</span>
+                            {formatTime(r.created_at)}
                           </div>
                         </div>
-                      );
-                    })}
-                    {quickRows.length === 0 ? <div className="text-sm text-slate-500 mt-2">No quick jobs yet.</div> : null}
-                  </div>
-                </div>
-
-                <div className="h-full">
-                  <div className="text-xs text-slate-400 font-semibold">Longer jobs</div>
-                  <div className="mt-2 space-y-2 h-full overflow-auto pr-1">
-                    {longRows.slice(0, 18).map((r) => {
-                      const s = extractSummary(r.payload);
-                      return (
-                        <div key={r.id} className="rounded-xl border border-slate-800 bg-slate-950/30 px-4 py-3">
-                          <div className="flex items-center justify-between gap-3">
-                            <div className="min-w-0">
-                              <div className="text-base font-semibold text-slate-100 truncate">
-                                {s.vehicle} <span className="text-slate-400 font-normal">— {s.name}</span>
-                              </div>
-                              <div className="text-sm text-slate-300 mt-1 truncate">{s.message}</div>
-                            </div>
-                            <div className="shrink-0 text-sm text-slate-400">
-                              <span className="mr-2">{ageShort(r.created_at)}</span>
-                              {formatTime(r.created_at)}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                    {longRows.length === 0 ? <div className="text-sm text-slate-500 mt-2">No longer jobs yet.</div> : null}
-                  </div>
+                      </div>
+                    );
+                  })}
+                  {rows.length === 0 ? <div className="text-sm text-slate-500 mt-2">No rows yet.</div> : null}
                 </div>
               </div>
             </div>
