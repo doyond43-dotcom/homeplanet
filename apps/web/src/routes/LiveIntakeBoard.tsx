@@ -156,9 +156,30 @@ export default function LiveIntakeBoard() {
 
   async function setJobStage(row: Row, stage: JobStage) {
     if (!supabase) return;
-    if (!employeeCode.trim()) {
-      setErr("Enter employee code first.");
-      return;
+
+    // ✅ OPTION A:
+    // - Clicking a job card is free
+    // - First time they try to change a stage, require employee code (then store it)
+    let code = employeeCode.trim();
+
+    if (!code) {
+      const input = window.prompt("Enter your mechanic code (initials or 4-digit PIN):", "");
+      code = (input || "").trim();
+
+      if (!code) {
+        setErr("Stage change cancelled — employee code required.");
+        return;
+      }
+
+      // Persist to this device for this shop slug
+      setEmployeeCode(code);
+      localStorage.setItem(storageKey, code);
+
+      // If name empty, we can optionally set it to the code (nice for quick testing)
+      if (!employeeName.trim()) {
+        setEmployeeName(code);
+        localStorage.setItem(nameKey, code);
+      }
     }
 
     setBusy(true);
@@ -174,8 +195,8 @@ export default function LiveIntakeBoard() {
                 ...r,
                 current_stage: stage,
                 stage_updated_at: nowIso,
-                stage_updated_by_employee_code: employeeCode.trim(),
-                handled_by_employee_code: employeeCode.trim(),
+                stage_updated_by_employee_code: code,
+                handled_by_employee_code: code,
               }
             : r
         )
@@ -190,7 +211,7 @@ export default function LiveIntakeBoard() {
     const res = (await (supabase as any).rpc("set_job_stage", {
       p_slug: shopSlug,
       p_submission_id: row.id,
-      p_employee_code: employeeCode.trim(),
+      p_employee_code: code,
       p_stage_to: stage,
       p_note: employeeName.trim() ? `by ${employeeName.trim()}` : null,
     })) as any;
@@ -212,7 +233,7 @@ export default function LiveIntakeBoard() {
   const quickRows = rows.filter((r) => isQuickJob(r.payload));
   const longRows = rows.filter((r) => !isQuickJob(r.payload));
 
-  // Employee gate UI (simple + fast)
+  // Employee gate UI (we keep it, but stage-change still enforces code if empty)
   const employeeReady = !!employeeCode.trim();
 
   return (
@@ -261,6 +282,9 @@ export default function LiveIntakeBoard() {
               This makes every stage change attributable — and writes an immutable event stamp for proof.
             </div>
             <div className="text-xs text-slate-500 mt-3">Stored locally on this device for this shop slug.</div>
+            <div className="text-xs text-slate-500 mt-2">
+              (You can also skip this and just change a stage — it will prompt you the first time.)
+            </div>
           </div>
         </div>
       ) : (
@@ -406,7 +430,7 @@ export default function LiveIntakeBoard() {
               <div className="text-xs text-slate-500 mt-4">
                 Active employee:{" "}
                 <span className="text-slate-200 font-semibold">
-                  {employeeName || "Employee"} ({employeeCode})
+                  {employeeName || "Employee"} ({employeeCode || "—"})
                 </span>
               </div>
             </div>

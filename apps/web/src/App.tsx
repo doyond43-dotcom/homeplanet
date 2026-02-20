@@ -1,70 +1,35 @@
-﻿import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+﻿// apps/web/src/App.tsx
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
+import PublicPage from "./routes/PublicPage";
+import LiveShopTV from "./routes/LiveShopTV";
 import LiveIntakeBoard from "./routes/LiveIntakeBoard";
 import LiveAlias from "./routes/LiveAlias";
-import LiveShopTV from "./routes/LiveShopTV";
-
-import AtmosphereDemoStrip from "./atmosphere/AtmosphereDemoStrip";
-
-import MLSLanding from "./pages/MLSLanding";
-import TaylorCreekSite from "./routes/TaylorCreekSite";
-import PublicPage from "./routes/PublicPage";
-import CityRoutes from "./routes/CityRoutes";
-
-/*
-  HomePlanet Routing Layer
-  ------------------------
-  /                   -> redirect to /city (planet index)
-  /city/*             -> city navigation
-  /taylor-creek       -> shop marketing page
-  /c/:slug            -> customer intake page (QR)
-  /live/:slug         -> TV board (public display)
-  /live/:slug/board   -> staff board (clickable rows + drawer)
-  /go/:slug           -> alias redirect to /c/:slug (optional helper)
-*/
 
 export default function App() {
   return (
     <BrowserRouter>
-      <AtmosphereDemoStrip />
-
       <Routes>
-        {/* ROOT: always go to Cities index */}
-        <Route path="/" element={<Navigate to="/city" replace />} />
-
-        {/* City index + navigation */}
-        <Route path="/city" element={<CityRoutes />} />
-        <Route path="/city/*" element={<CityRoutes />} />
-
-        {/* MLS */}
-        <Route path="/mls" element={<MLSLanding />} />
-
-        {/* Shop marketing page */}
-        <Route path="/taylor-creek" element={<TaylorCreekSite />} />
-
-        {/* PUBLIC CUSTOMER INTAKE (QR CODE TARGET) */}
+        {/* Canonical routes */}
         <Route path="/c/:slug" element={<PublicPage />} />
 
-        {/* STAFF BOARD (internal use) */}
-        <Route path="/live/:slug/board" element={<LiveIntakeBoard />} />
+        {/* TV screen (big display) */}
+        <Route path="/live/:slug/board" element={<LiveShopTV />} />
 
-        {/* TV BOARD (public display) */}
+        {/* Employee dashboard (interactive staff) */}
+        <Route path="/live/:slug/staff" element={<LiveIntakeBoard />} />
+
+        {/* Optional helper: /live/:slug goes to TV */}
         <Route path="/live/:slug" element={<LiveShopTV />} />
 
-        {/* OPTIONAL: alias redirect to intake (keeps old "live-as-intake" idea without breaking TV) */}
+        {/* Optional helper redirect to /c/:slug */}
         <Route path="/go/:slug" element={<LiveAlias />} />
 
-        {/* fallback */}
-        <Route
-          path="*"
-          element={
-            <div style={{ padding: 40 }}>
-              404 — Location not found
-              <br />
-              This place doesn't exist on HomePlanet yet.
-            </div>
-          }
-        />
+        {/* Home -> you can choose where it goes. For now, send home to a safe place. */}
+        <Route path="/" element={<Navigate to="/c/taylor-creek" replace />} />
+
+        {/* Catch-all */}
+        <Route path="*" element={<Navigate to="/c/taylor-creek" replace />} />
       </Routes>
     </BrowserRouter>
   );
