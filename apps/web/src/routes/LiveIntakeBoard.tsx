@@ -64,7 +64,6 @@ function isUuid(v: unknown) {
 }
 
 function formatSupabaseError(e: any) {
-  // Supabase / PostgREST errors often include: message, details, hint, code
   if (!e) return "Unknown error";
   if (typeof e === "string") return e;
 
@@ -74,7 +73,6 @@ function formatSupabaseError(e: any) {
   const hint = e.hint ? `hint=${e.hint}` : "";
   const parts = [code, msg, details, hint].filter(Boolean);
 
-  // Fall back to JSON if nothing formatted
   return parts.length ? parts.join(" | ") : safeText(e, 400);
 }
 
@@ -114,6 +112,18 @@ export default function LiveIntakeBoard() {
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  // keep refs so realtime handlers never use stale state
+  const rowsRef = useRef<Row[]>([]);
+  const activeIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    rowsRef.current = rows;
+  }, [rows]);
+
+  useEffect(() => {
+    activeIdRef.current = active?.id ?? null;
+  }, [active]);
+
   const inFlightRef = useRef(false);
 
   useEffect(() => {
@@ -121,6 +131,32 @@ export default function LiveIntakeBoard() {
     localStorage.setItem(storageKey, employeeCode || "");
     localStorage.setItem(nameKey, employeeName || "");
   }, [employeeCode, employeeName, shopSlug, storageKey, nameKey]);
+
+  function upsertRow(next: Row) {
+    setRows((prev) => {
+      // remove done
+      if ((next.current_stage || "diagnosing") === "done") {
+        return prev.filter((r) => r.id !== next.id);
+      }
+
+      const i = prev.findIndex((r) => r.id === next.id);
+      if (i === -1) {
+        // new row at top
+        return [next, ...prev];
+      }
+      const copy = prev.slice();
+      copy[i] = { ...copy[i], ...next };
+      // keep newest-first sort stable on created_at
+      copy.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      return copy;
+    });
+
+    // if drawer is open for same job, keep it in sync too
+    const activeId = activeIdRef.current;
+    if (activeId && activeId === next.id) {
+      setActive((prev) => (prev ? { ...prev, ...next } : prev));
+    }
+  }
 
   async function load(reason = "load") {
     if (!supabase || !shopSlug) return;
@@ -154,52 +190,116 @@ export default function LiveIntakeBoard() {
       return;
     }
 
-    setRows((data as any) || []);
+    const nextRows = ((data as any) || []) as Row[];
+    setRows(nextRows);
+
+    // keep active in sync if still exists
+    const activeId = activeIdRef.current;
+    if (activeId) {
+      const found = nextRows.find((r) => r.id === activeId) || null;
+      if (found) setActive(found);
+    }
   }
 
-  // ✅ Realtime + ✅ Heartbeat fallback (iPad/Safari-safe)
+  // ✅ Realtime-first + ✅ low-frequency heartbeat fallback (iPad/Safari-safe, NOT chatty)
   useEffect(() => {
     if (!supabase || !shopSlug) return;
 
     let mounted = true;
+    let heartbeatMs = 20000; // SAFETY NET (was 3000, too much)
+    let lastRealtimeAt = 0;
+    let subStatus = "INIT";
 
-    const safeLoad = async (why: string) => {
-      if (!mounted) return;
-      await load(why);
+    const setSubStatus = (s: string) => {
+      subStatus = s;
+      // if we’re not fully subscribed, temporarily poll faster so the board still feels alive
+      heartbeatMs = s === "SUBSCRIBED" ? 20000 : 5000;
     };
 
     // initial load
     load("initial");
 
+    // debounce “load” if we choose to use it (we mostly won’t)
+    let loadTimer: number | null = null;
+    const scheduleLoad = (why: string) => {
+      if (!mounted) return;
+      if (loadTimer) window.clearTimeout(loadTimer);
+      loadTimer = window.setTimeout(() => {
+        load(why);
+      }, 250);
+    };
+
     const channel = supabase
       .channel(`board:${shopSlug}`, {
-        // helps iOS + gives us subscribe status logs
         config: { broadcast: { ack: true }, presence: { key: shopSlug } },
       })
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "public_intake_submissions", filter: `slug=eq.${shopSlug}` },
-        (payload) => {
-          console.log("Realtime:intake", payload);
-          safeLoad("realtime:intake");
+        (p: any) => {
+          lastRealtimeAt = Date.now();
+
+          // Apply updates locally (NO full reload flood)
+          const eventType = p.eventType as "INSERT" | "UPDATE" | "DELETE";
+          if (eventType === "DELETE") {
+            const oldId = p.old?.id;
+            if (oldId) {
+              setRows((prev) => prev.filter((r) => r.id !== oldId));
+              if (activeIdRef.current === oldId) setActive(null);
+            }
+            return;
+          }
+
+          const next = (p.new ?? null) as Row | null;
+          if (next && next.slug === shopSlug) {
+            upsertRow(next);
+          } else {
+            // fallback if payload is weird
+            scheduleLoad("realtime:fallback");
+          }
         }
       )
+      // If you have a stage event table, cool, but don’t spam full loads on it.
+      // Instead, just nudge a refresh (debounced) because the truth lives on public_intake_submissions anyway.
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "job_stage_events", filter: `slug=eq.${shopSlug}` },
-        (payload) => {
-          console.log("Realtime:events", payload);
-          safeLoad("realtime:events");
+        () => {
+          lastRealtimeAt = Date.now();
+          scheduleLoad("realtime:stage-event");
         }
       )
       .subscribe((status) => {
         console.log("Realtime status:", status);
+        setSubStatus(String(status));
       });
 
-    // Heartbeat fallback: if mobile sleeps the socket, we still sync within 3s.
-    const poll = window.setInterval(() => {
-      if (document.visibilityState === "visible") load("heartbeat");
-    }, 3000);
+    const tick = async () => {
+      if (!mounted) return;
+
+      // If the tab is hidden, don’t poll. iOS will pause timers anyway.
+      if (document.visibilityState !== "visible") return;
+
+      // If realtime is working (recent event), don’t poll at all.
+      // We only want heartbeat to catch “socket asleep” cases.
+      const since = Date.now() - lastRealtimeAt;
+      if (subStatus === "SUBSCRIBED" && lastRealtimeAt && since < 15000) return;
+
+      await load("heartbeat");
+    };
+
+    let pollId: number | null = null;
+    const armPoll = () => {
+      if (pollId) window.clearInterval(pollId);
+      pollId = window.setInterval(tick, heartbeatMs);
+    };
+    armPoll();
+
+    // re-arm poll if subscription state changes (faster when not subscribed)
+    const statusWatcher = window.setInterval(() => {
+      // heartbeatMs may change when setSubStatus runs; re-arm to apply it
+      armPoll();
+    }, 2000);
 
     const onVis = () => {
       if (document.visibilityState === "visible") load("focus");
@@ -208,8 +308,13 @@ export default function LiveIntakeBoard() {
 
     return () => {
       mounted = false;
-      window.clearInterval(poll);
+
+      if (loadTimer) window.clearTimeout(loadTimer);
+      if (pollId) window.clearInterval(pollId);
+      window.clearInterval(statusWatcher);
+
       document.removeEventListener("visibilitychange", onVis);
+
       try {
         supabase.removeChannel(channel);
       } catch {}
@@ -259,25 +364,18 @@ export default function LiveIntakeBoard() {
     const nowIso = new Date().toISOString();
 
     // snapshot for rollback
-    const prevRows = rows;
+    const prevRows = rowsRef.current;
 
     // optimistic UI
-    setRows((prev) =>
-      prev
-        .map((r) =>
-          r.id === row.id
-            ? {
-                ...r,
-                current_stage: stage,
-                stage_updated_at: nowIso,
-                stage_updated_by_employee_code: code,
-                handled_by_employee_code: code,
-              }
-            : r
-        )
-        .filter((r) => r.current_stage !== "done")
-    );
+    const optimistic: Row = {
+      ...row,
+      current_stage: stage,
+      stage_updated_at: nowIso,
+      stage_updated_by_employee_code: code,
+      handled_by_employee_code: code,
+    };
 
+    upsertRow(optimistic);
     if (stage === "done") setActive(null);
 
     try {
@@ -298,7 +396,8 @@ export default function LiveIntakeBoard() {
         return;
       }
 
-      // truth refresh (also helps if any row changed order)
+      // DO NOT force-load on success; realtime will update everyone.
+      // But do a light refresh once to guarantee ordering is correct if needed.
       await load("stage-update");
     } catch (e: any) {
       setBusy(false);
