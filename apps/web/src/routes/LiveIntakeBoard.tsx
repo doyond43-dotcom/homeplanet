@@ -1,7 +1,7 @@
 ﻿// apps/web/src/routes/LiveIntakeBoard.tsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { useLocation, useParams, useNavigate } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import WorkOrderDrawer from "./WorkOrderDrawer";
 import PrintWorkOrder from "./PrintWorkOrder";
 
@@ -83,7 +83,6 @@ export default function LiveIntakeBoard() {
   const shopSlug = (slug ?? "").trim();
 
   const loc = useLocation();
-  const nav = useNavigate();
 
   // ✅ PRINT MODE (router-bypass): /live/<slug>/staff?print=<jobId>
   const printId = useMemo(() => {
@@ -100,8 +99,6 @@ export default function LiveIntakeBoard() {
   useEffect(() => {
     if (!printId) return;
 
-    // If print payload already exists, duplicate it into an id-scoped key too
-    // (safe no-op if PrintWorkOrder only uses "printWorkOrder")
     try {
       const raw = sessionStorage.getItem("printWorkOrder");
       if (raw) {
