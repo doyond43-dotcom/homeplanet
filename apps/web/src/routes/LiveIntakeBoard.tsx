@@ -3,177 +3,519 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useParams } from "react-router-dom";
 
-/* ---------- types ---------- */
-
 type JobStage = "diagnosing" | "waiting_parts" | "repairing" | "done";
 
 type Row = {
-  id: string;
+  id: string; // uuid
   created_at: string;
   slug: string;
   payload: any;
+
   current_stage: JobStage | null;
   stage_updated_at?: string | null;
   stage_updated_by_employee_code?: string | null;
   handled_by_employee_code?: string | null;
 };
 
-/* ---------- constants ---------- */
-
-const STAGES = [
+const STAGES: { key: JobStage; label: string; help: string }[] = [
   { key: "diagnosing", label: "Diagnosing", help: "Inspection / diagnosis in progress" },
   { key: "waiting_parts", label: "Waiting Parts", help: "Blocked waiting on parts" },
   { key: "repairing", label: "Repairing", help: "Repair work underway" },
   { key: "done", label: "Done", help: "Completed (removes from board)" },
-] as const;
-
-/* ---------- helpers ---------- */
+];
 
 function isQuickJob(payload: any) {
-  const txt = `${payload?.message ?? ""} ${payload?.notes ?? ""} ${payload?.problem ?? ""}`.toLowerCase();
+  const p = payload ?? {};
+  const txt = `${p.message ?? ""} ${p.notes ?? ""} ${p.problem ?? ""}`.toLowerCase();
   return /oil|tire|flat|battery|jump|wiper|bulb|light|inspection|rotate|patch|plug/.test(txt);
 }
 
 function safeText(x: unknown, max = 140): string {
   const s = (typeof x === "string" ? x : JSON.stringify(x ?? "")).replace(/\s+/g, " ").trim();
+  if (!s) return "";
   return s.length > max ? s.slice(0, max - 1) + "…" : s;
+}
+
+function stageColor(stage: string) {
+  switch (stage) {
+    case "diagnosing":
+      return "text-blue-300";
+    case "waiting_parts":
+      return "text-orange-300";
+    case "repairing":
+      return "text-emerald-300";
+    case "done":
+      return "text-green-300";
+    default:
+      return "text-slate-300";
+  }
 }
 
 function formatTime(iso: string) {
   const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? iso : d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
+// Basic UUID sanity check (prevents "invalid input syntax for type uuid" mystery 400s)
 function isUuid(v: unknown) {
-  return typeof v === "string" &&
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
+  if (typeof v !== "string") return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
 }
 
-/* ---------- component ---------- */
+function formatSupabaseError(e: any) {
+  // Supabase / PostgREST errors often include: message, details, hint, code
+  if (!e) return "Unknown error";
+  if (typeof e === "string") return e;
+
+  const code = e.code ? `code=${e.code}` : "";
+  const msg = e.message ? `message=${e.message}` : "";
+  const details = e.details ? `details=${e.details}` : "";
+  const hint = e.hint ? `hint=${e.hint}` : "";
+  const parts = [code, msg, details, hint].filter(Boolean);
+
+  // Fall back to JSON if nothing formatted
+  return parts.length ? parts.join(" | ") : safeText(e, 400);
+}
 
 export default function LiveIntakeBoard() {
   const { slug } = useParams();
   const shopSlug = (slug ?? "").trim();
 
-  const supabase = useMemo(() => {
-    const url = import.meta.env.VITE_SUPABASE_URL;
-    const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
-    if (!url || !key) return null;
-    return createClient(url, key, { realtime: { params: { eventsPerSecond: 10 } } });
+  const buildTag = useMemo(() => {
+    const env = (import.meta as any).env ?? {};
+    return (
+      env.VITE_VERCEL_GIT_COMMIT_SHA ||
+      env.VITE_GIT_COMMIT_SHA ||
+      env.VERCEL_GIT_COMMIT_SHA ||
+      env.GIT_COMMIT_SHA ||
+      "dev"
+    );
   }, []);
 
+  const supabase = useMemo(() => {
+    const url = (import.meta as any).env?.VITE_SUPABASE_URL;
+    const key = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY;
+    if (!url || !key) return null;
+
+    return createClient(url, key, {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+      realtime: { params: { eventsPerSecond: 10 } },
+    });
+  }, []);
+
+  const storageKey = useMemo(() => `hp_employee_code:${shopSlug || "no-slug"}`, [shopSlug]);
+  const nameKey = useMemo(() => `hp_employee_name:${shopSlug || "no-slug"}`, [shopSlug]);
+
+  const [employeeCode, setEmployeeCode] = useState<string>(() => localStorage.getItem(storageKey) || "");
+  const [employeeName, setEmployeeName] = useState<string>(() => localStorage.getItem(nameKey) || "");
   const [rows, setRows] = useState<Row[]>([]);
   const [active, setActive] = useState<Row | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
-  const inFlight = useRef(false);
+  const inFlightRef = useRef(false);
 
-  /* ---------- load ---------- */
+  useEffect(() => {
+    if (!shopSlug) return;
+    localStorage.setItem(storageKey, employeeCode || "");
+    localStorage.setItem(nameKey, employeeName || "");
+  }, [employeeCode, employeeName, shopSlug, storageKey, nameKey]);
 
   async function load(reason = "load") {
-    if (!supabase || !shopSlug || inFlight.current) return;
-    inFlight.current = true;
+    if (!supabase || !shopSlug) return;
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
 
-    const { data } = await supabase
+    setErr(null);
+
+    const { data, error } = await supabase
       .from("public_intake_submissions")
-      .select("*")
+      .select(
+        [
+          "id",
+          "created_at",
+          "slug",
+          "payload",
+          "current_stage",
+          "stage_updated_at",
+          "stage_updated_by_employee_code",
+          "handled_by_employee_code",
+        ].join(",")
+      )
       .eq("slug", shopSlug)
       .neq("current_stage", "done")
       .order("created_at", { ascending: false });
 
-    inFlight.current = false;
+    inFlightRef.current = false;
+
+    if (error) {
+      setErr(`[${reason}] ${formatSupabaseError(error)}`);
+      return;
+    }
+
     setRows((data as any) || []);
   }
 
-  /* ---------- REALTIME + HEARTBEAT FIX ---------- */
-
+  // ✅ Realtime + ✅ Heartbeat fallback (iPad/Safari-safe)
   useEffect(() => {
     if (!supabase || !shopSlug) return;
 
     let mounted = true;
 
-    const refresh = async (reason: string) => {
+    const safeLoad = async (why: string) => {
       if (!mounted) return;
-      await load(reason);
+      await load(why);
     };
 
-    // initial
+    // initial load
     load("initial");
 
     const channel = supabase
       .channel(`board:${shopSlug}`, {
+        // helps iOS + gives us subscribe status logs
         config: { broadcast: { ack: true }, presence: { key: shopSlug } },
       })
-
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "public_intake_submissions", filter: `slug=eq.${shopSlug}` },
         (payload) => {
-          console.log("Realtime intake:", payload);
-          refresh("realtime:intake");
+          console.log("Realtime:intake", payload);
+          safeLoad("realtime:intake");
         }
       )
-
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "job_stage_events", filter: `slug=eq.${shopSlug}` },
         (payload) => {
-          console.log("Realtime stage:", payload);
-          refresh("realtime:stage");
+          console.log("Realtime:events", payload);
+          safeLoad("realtime:events");
         }
       )
+      .subscribe((status) => {
+        console.log("Realtime status:", status);
+      });
 
-      .subscribe((status) => console.log("Realtime status:", status));
-
-    // heartbeat fallback (fixes iPad/Safari sleep sockets)
-    const poll = setInterval(() => {
+    // Heartbeat fallback: if mobile sleeps the socket, we still sync within 3s.
+    const poll = window.setInterval(() => {
       if (document.visibilityState === "visible") load("heartbeat");
     }, 3000);
 
-    const focusRefresh = () => {
+    const onVis = () => {
       if (document.visibilityState === "visible") load("focus");
     };
-    document.addEventListener("visibilitychange", focusRefresh);
+    document.addEventListener("visibilitychange", onVis);
 
     return () => {
       mounted = false;
-      clearInterval(poll);
-      document.removeEventListener("visibilitychange", focusRefresh);
-      supabase.removeChannel(channel);
+      window.clearInterval(poll);
+      document.removeEventListener("visibilitychange", onVis);
+      try {
+        supabase.removeChannel(channel);
+      } catch {}
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase, shopSlug]);
 
-  /* ---------- UI ---------- */
+  async function setJobStage(row: Row, stage: JobStage) {
+    if (!supabase) {
+      setErr("Supabase client not initialized (missing VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY).");
+      return;
+    }
 
-  const quick = rows.filter(r => isQuickJob(r.payload));
-  const long = rows.filter(r => !isQuickJob(r.payload));
+    if (!shopSlug) {
+      setErr("Missing shop slug in URL. Open /live/<slug>/staff and try again.");
+      return;
+    }
+
+    if (!isUuid(row?.id)) {
+      setErr(`Bad job id (expected uuid). Got: ${String(row?.id)}`);
+      return;
+    }
+
+    let code = employeeCode.trim();
+
+    if (!code) {
+      const input = window.prompt("Enter your mechanic code (initials or 4-digit PIN):", "");
+      code = (input || "").trim();
+
+      if (!code) {
+        setErr("Stage change cancelled — employee code required.");
+        return;
+      }
+
+      setEmployeeCode(code);
+      localStorage.setItem(storageKey, code);
+
+      if (!employeeName.trim()) {
+        setEmployeeName(code);
+        localStorage.setItem(nameKey, code);
+      }
+    }
+
+    setBusy(true);
+    setErr(null);
+
+    const nowIso = new Date().toISOString();
+
+    // snapshot for rollback
+    const prevRows = rows;
+
+    // optimistic UI
+    setRows((prev) =>
+      prev
+        .map((r) =>
+          r.id === row.id
+            ? {
+                ...r,
+                current_stage: stage,
+                stage_updated_at: nowIso,
+                stage_updated_by_employee_code: code,
+                handled_by_employee_code: code,
+              }
+            : r
+        )
+        .filter((r) => r.current_stage !== "done")
+    );
+
+    if (stage === "done") setActive(null);
+
+    try {
+      // public.hp_set_job_stage(p_shop_slug text, p_job_id uuid, p_employee_code text, p_stage job_stage)
+      const res = (await (supabase as any).rpc("hp_set_job_stage", {
+        p_shop_slug: shopSlug,
+        p_job_id: row.id,
+        p_employee_code: code,
+        p_stage: stage,
+      })) as any;
+
+      setBusy(false);
+
+      if (res?.error) {
+        setRows(prevRows);
+        setErr(`RPC hp_set_job_stage failed | ${formatSupabaseError(res.error)}`);
+        await load("rpc-error-refresh");
+        return;
+      }
+
+      // truth refresh (also helps if any row changed order)
+      await load("stage-update");
+    } catch (e: any) {
+      setBusy(false);
+      setRows(prevRows);
+      setErr(`RPC threw exception | ${formatSupabaseError(e)}`);
+      await load("rpc-exception-refresh");
+    }
+  }
+
+  const quickRows = rows.filter((r) => isQuickJob(r.payload));
+  const longRows = rows.filter((r) => !isQuickJob(r.payload));
+
+  const employeeReady = !!employeeCode.trim();
 
   return (
-    <div className="h-screen bg-slate-950 text-white p-6">
-      <h1 className="text-xl font-bold mb-4">Employee Board — /live/{shopSlug}/board</h1>
+    <div className="h-screen bg-slate-950 text-white flex flex-col">
+      <div className="border-b border-slate-800 px-6 py-4 flex items-center justify-between gap-4">
+        <div className="min-w-0">
+          <div className="text-lg font-bold flex items-center gap-2">
+            <span>Employee Board</span>
+            <span className="text-[11px] text-slate-400 font-semibold rounded-md border border-slate-800 px-2 py-0.5">
+              build {String(buildTag).slice(0, 10)}
+            </span>
+          </div>
+          <div className="text-xs text-slate-400 truncate">/live/{shopSlug || "no-slug"}/staff</div>
+        </div>
 
-      <div className="grid grid-cols-2 gap-6">
-        {[["Quick jobs", quick], ["Longer jobs", long]].map(([title, list]: any) => (
-          <div key={title}>
-            <div className="text-sm text-slate-400 mb-2">{title}</div>
-            <div className="space-y-3">
-              {list.map((r: Row) => (
-                <div key={r.id}
-                  onClick={() => setActive(r)}
-                  className="cursor-pointer rounded-xl border border-slate-800 bg-slate-900 p-4 hover:border-blue-400"
-                >
-                  <div className="flex justify-between">
-                    <div className="font-bold">{safeText(r.payload?.vehicle, 40)}</div>
-                    <div className="text-blue-300">{r.current_stage}</div>
-                  </div>
-                  <div className="text-sm text-slate-300">{safeText(r.payload?.name, 40)}</div>
-                  <div className="text-xs text-slate-400 mt-1">{safeText(r.payload?.message, 120)}</div>
-                  <div className="text-xs text-slate-500 mt-2">{formatTime(r.created_at)}</div>
-                </div>
-              ))}
+        <div className="flex items-center gap-2">
+          <input
+            value={employeeCode}
+            onChange={(e) => setEmployeeCode(e.target.value)}
+            placeholder="Employee code"
+            className="w-40 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-blue-400"
+          />
+          <input
+            value={employeeName}
+            onChange={(e) => setEmployeeName(e.target.value)}
+            placeholder="Name (optional)"
+            className="w-48 hidden md:block rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-blue-400"
+          />
+          <button
+            type="button"
+            onClick={() => load("manual-refresh")}
+            className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm hover:border-slate-500"
+          >
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      {err ? (
+        <div className="mx-6 mt-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200 whitespace-pre-wrap">
+          {err}
+        </div>
+      ) : null}
+
+      {!employeeReady ? (
+        <div className="p-6">
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-6 max-w-xl">
+            <div className="text-xl font-bold">Enter employee code to continue</div>
+            <div className="text-sm text-slate-300 mt-2">
+              This makes every stage change attributable — and writes an immutable event stamp for proof.
+            </div>
+            <div className="text-xs text-slate-500 mt-3">Stored locally on this device for this shop slug.</div>
+            <div className="text-xs text-slate-500 mt-2">
+              (You can also skip this and just change a stage — it will prompt you the first time.)
             </div>
           </div>
-        ))}
-      </div>
+        </div>
+      ) : (
+        <div className="flex-1 flex overflow-hidden">
+          <div className={(active ? "w-2/3" : "w-full") + " p-6 overflow-y-auto"}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <div className="text-xs text-slate-400 font-semibold mb-2">Quick jobs</div>
+                <div className="space-y-3">
+                  {quickRows.map((r) => {
+                    const stage = (r.current_stage || "diagnosing") as string;
+                    const vehicle = safeText(r.payload?.vehicle || "Vehicle", 48);
+                    const name = safeText(r.payload?.name || "Customer", 40);
+                    const message = safeText(r.payload?.message || "", 160);
+                    const lastBy = r.stage_updated_by_employee_code || r.handled_by_employee_code || null;
+                    const lastAt = r.stage_updated_at || null;
+
+                    return (
+                      <div
+                        key={r.id}
+                        onClick={() => setActive(r)}
+                        className="cursor-pointer rounded-xl border border-slate-800 bg-slate-900 p-4 hover:border-blue-400"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="font-bold text-lg">{vehicle}</div>
+                          <div className={"text-xs font-semibold " + stageColor(stage)}>
+                            {STAGES.find((s) => s.key === stage)?.label ?? stage}
+                          </div>
+                        </div>
+                        <div className="text-sm text-slate-300">{name}</div>
+                        <div className="text-xs text-slate-400 mt-1">{message}</div>
+
+                        <div className="mt-2 text-[11px] text-slate-500 flex items-center justify-between">
+                          <span>{formatTime(r.created_at)}</span>
+                          {lastBy && (
+                            <span className="text-slate-400">
+                              Last:{" "}
+                              <span className="text-slate-200 font-semibold">
+                                {lastBy}
+                                {lastAt ? ` @ ${formatTime(lastAt)}` : ""}
+                              </span>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {quickRows.length === 0 ? <div className="text-sm text-slate-500">No quick jobs yet.</div> : null}
+                </div>
+              </div>
+
+              <div>
+                <div className="text-xs text-slate-400 font-semibold mb-2">Longer jobs</div>
+                <div className="space-y-3">
+                  {longRows.map((r) => {
+                    const stage = (r.current_stage || "diagnosing") as string;
+                    const vehicle = safeText(r.payload?.vehicle || "Vehicle", 48);
+                    const name = safeText(r.payload?.name || "Customer", 40);
+                    const message = safeText(r.payload?.message || "", 160);
+                    const lastBy = r.stage_updated_by_employee_code || r.handled_by_employee_code || null;
+                    const lastAt = r.stage_updated_at || null;
+
+                    return (
+                      <div
+                        key={r.id}
+                        onClick={() => setActive(r)}
+                        className="cursor-pointer rounded-xl border border-slate-800 bg-slate-900 p-4 hover:border-blue-400"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="font-bold text-lg">{vehicle}</div>
+                          <div className={"text-xs font-semibold " + stageColor(stage)}>
+                            {STAGES.find((s) => s.key === stage)?.label ?? stage}
+                          </div>
+                        </div>
+                        <div className="text-sm text-slate-300">{name}</div>
+                        <div className="text-xs text-slate-400 mt-1">{message}</div>
+
+                        <div className="mt-2 text-[11px] text-slate-500 flex items-center justify-between">
+                          <span>{formatTime(r.created_at)}</span>
+                          {lastBy && (
+                            <span className="text-slate-400">
+                              Last:{" "}
+                              <span className="text-slate-200 font-semibold">
+                                {lastBy}
+                                {lastAt ? ` @ ${formatTime(lastAt)}` : ""}
+                              </span>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {longRows.length === 0 ? <div className="text-sm text-slate-500">No longer jobs yet.</div> : null}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {active ? (
+            <div className="w-1/3 border-l border-slate-800 bg-slate-900 p-6 overflow-y-auto">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h2 className="text-2xl font-bold mb-1 truncate">
+                    {safeText(active.payload?.vehicle || "Vehicle", 60)}
+                  </h2>
+                  <div className="text-sm text-slate-300">{safeText(active.payload?.name || "Customer", 60)}</div>
+                  <div className="text-xs text-slate-500 mt-1">{formatTime(active.created_at)}</div>
+                </div>
+                <button
+                  className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm hover:border-slate-500"
+                  onClick={() => setActive(null)}
+                >
+                  Close
+                </button>
+              </div>
+
+              <div className="text-sm text-slate-300 mt-4 rounded-xl border border-slate-800 bg-slate-950/30 p-3 whitespace-pre-wrap">
+                {active.payload?.message || "No message"}
+              </div>
+
+              <div className="text-xs text-slate-400 mt-5 mb-2">Set Stage (provably stamped to employee code)</div>
+
+              <div className="grid grid-cols-1 gap-2">
+                {STAGES.map((s) => (
+                  <button
+                    key={s.key}
+                    disabled={busy}
+                    className={[
+                      "w-full p-3 rounded-xl border text-left",
+                      "border-slate-700 bg-slate-800/40 hover:bg-slate-800/70",
+                      busy ? "opacity-60 cursor-not-allowed" : "",
+                    ].join(" ")}
+                    onClick={() => setJobStage(active, s.key)}
+                  >
+                    <div className={"font-semibold " + stageColor(s.key)}>{s.label}</div>
+                    <div className="text-[11px] text-slate-400">{s.help}</div>
+                  </button>
+                ))}
+              </div>
+
+              <div className="text-xs text-slate-500 mt-4">
+                Active employee:{" "}
+                <span className="text-slate-200 font-semibold">
+                  {employeeName || "Employee"} ({employeeCode || "—"})
+                </span>
+              </div>
+            </div>
+          ) : null}
+        </div>
+      )}
     </div>
   );
 }
