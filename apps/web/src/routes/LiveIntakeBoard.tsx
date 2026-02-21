@@ -1,7 +1,9 @@
 ﻿// apps/web/src/routes/LiveIntakeBoard.tsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams, useNavigate } from "react-router-dom";
+import WorkOrderDrawer from "./WorkOrderDrawer";
+import PrintWorkOrder from "./PrintWorkOrder";
 
 type JobStage = "diagnosing" | "waiting_parts" | "repairing" | "done";
 
@@ -79,6 +81,38 @@ function formatSupabaseError(e: any) {
 export default function LiveIntakeBoard() {
   const { slug } = useParams();
   const shopSlug = (slug ?? "").trim();
+
+  const loc = useLocation();
+  const nav = useNavigate();
+
+  // ✅ PRINT MODE (router-bypass): /live/<slug>/staff?print=<jobId>
+  const printId = useMemo(() => {
+    try {
+      const v = new URLSearchParams(loc.search).get("print");
+      return (v || "").trim() || null;
+    } catch {
+      return null;
+    }
+  }, [loc.search]);
+
+  // If in print mode, render PrintWorkOrder directly (bypasses global router)
+  // Also: bridge sessionStorage key if PrintWorkOrder expects "printWorkOrder"
+  useEffect(() => {
+    if (!printId) return;
+
+    // If print payload already exists, duplicate it into an id-scoped key too
+    // (safe no-op if PrintWorkOrder only uses "printWorkOrder")
+    try {
+      const raw = sessionStorage.getItem("printWorkOrder");
+      if (raw) {
+        sessionStorage.setItem(`printWorkOrder:${printId}`, raw);
+      }
+    } catch {}
+  }, [printId]);
+
+  if (printId) {
+    return <PrintWorkOrder />;
+  }
 
   const buildTag = useMemo(() => {
     const env = (import.meta as any).env ?? {};
@@ -206,27 +240,22 @@ export default function LiveIntakeBoard() {
     if (!supabase || !shopSlug) return;
 
     let mounted = true;
-    let heartbeatMs = 20000; // SAFETY NET (was 3000, too much)
+    let heartbeatMs = 20000;
     let lastRealtimeAt = 0;
     let subStatus = "INIT";
 
     const setSubStatus = (s: string) => {
       subStatus = s;
-      // if we’re not fully subscribed, temporarily poll faster so the board still feels alive
       heartbeatMs = s === "SUBSCRIBED" ? 20000 : 5000;
     };
 
-    // initial load
     load("initial");
 
-    // debounce “load” if we choose to use it (we mostly won’t)
     let loadTimer: number | null = null;
     const scheduleLoad = (why: string) => {
       if (!mounted) return;
       if (loadTimer) window.clearTimeout(loadTimer);
-      loadTimer = window.setTimeout(() => {
-        load(why);
-      }, 250);
+      loadTimer = window.setTimeout(() => load(why), 250);
     };
 
     const channel = supabase
@@ -239,7 +268,6 @@ export default function LiveIntakeBoard() {
         (p: any) => {
           lastRealtimeAt = Date.now();
 
-          // Apply updates locally (NO full reload flood)
           const eventType = p.eventType as "INSERT" | "UPDATE" | "DELETE";
           if (eventType === "DELETE") {
             const oldId = p.old?.id;
@@ -254,13 +282,10 @@ export default function LiveIntakeBoard() {
           if (next && next.slug === shopSlug) {
             upsertRow(next);
           } else {
-            // fallback if payload is weird
             scheduleLoad("realtime:fallback");
           }
         }
       )
-      // If you have a stage event table, cool, but don’t spam full loads on it.
-      // Instead, just nudge a refresh (debounced) because the truth lives on public_intake_submissions anyway.
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "job_stage_events", filter: `slug=eq.${shopSlug}` },
@@ -276,12 +301,8 @@ export default function LiveIntakeBoard() {
 
     const tick = async () => {
       if (!mounted) return;
-
-      // If the tab is hidden, don’t poll. iOS will pause timers anyway.
       if (document.visibilityState !== "visible") return;
 
-      // If realtime is working (recent event), don’t poll at all.
-      // We only want heartbeat to catch “socket asleep” cases.
       const since = Date.now() - lastRealtimeAt;
       if (subStatus === "SUBSCRIBED" && lastRealtimeAt && since < 15000) return;
 
@@ -295,9 +316,7 @@ export default function LiveIntakeBoard() {
     };
     armPoll();
 
-    // re-arm poll if subscription state changes (faster when not subscribed)
     const statusWatcher = window.setInterval(() => {
-      // heartbeatMs may change when setSubStatus runs; re-arm to apply it
       armPoll();
     }, 2000);
 
@@ -362,11 +381,8 @@ export default function LiveIntakeBoard() {
     setErr(null);
 
     const nowIso = new Date().toISOString();
-
-    // snapshot for rollback
     const prevRows = rowsRef.current;
 
-    // optimistic UI
     const optimistic: Row = {
       ...row,
       current_stage: stage,
@@ -379,7 +395,6 @@ export default function LiveIntakeBoard() {
     if (stage === "done") setActive(null);
 
     try {
-      // public.hp_set_job_stage(p_shop_slug text, p_job_id uuid, p_employee_code text, p_stage job_stage)
       const res = (await (supabase as any).rpc("hp_set_job_stage", {
         p_shop_slug: shopSlug,
         p_job_id: row.id,
@@ -396,8 +411,6 @@ export default function LiveIntakeBoard() {
         return;
       }
 
-      // DO NOT force-load on success; realtime will update everyone.
-      // But do a light refresh once to guarantee ordering is correct if needed.
       await load("stage-update");
     } catch (e: any) {
       setBusy(false);
@@ -409,7 +422,6 @@ export default function LiveIntakeBoard() {
 
   const quickRows = rows.filter((r) => isQuickJob(r.payload));
   const longRows = rows.filter((r) => !isQuickJob(r.payload));
-
   const employeeReady = !!employeeCode.trim();
 
   return (
@@ -469,7 +481,7 @@ export default function LiveIntakeBoard() {
         </div>
       ) : (
         <div className="flex-1 flex overflow-hidden">
-          <div className={(active ? "w-2/3" : "w-full") + " p-6 overflow-y-auto"}>
+          <div className="w-full p-6 overflow-y-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <div className="text-xs text-slate-400 font-semibold mb-2">Quick jobs</div>
@@ -561,60 +573,25 @@ export default function LiveIntakeBoard() {
                 </div>
               </div>
             </div>
+
+            <WorkOrderDrawer
+              open={!!active}
+              row={active}
+              employeeCode={employeeCode}
+              employeeName={employeeName}
+              onStageChange={(stage: JobStage) => {
+                if (!active) return;
+                return setJobStage(active, stage);
+              }}
+              onOpenChange={(open) => {
+                if (!open) setActive(null);
+              }}
+            />
           </div>
-
-          {active ? (
-            <div className="w-1/3 border-l border-slate-800 bg-slate-900 p-6 overflow-y-auto">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <h2 className="text-2xl font-bold mb-1 truncate">
-                    {safeText(active.payload?.vehicle || "Vehicle", 60)}
-                  </h2>
-                  <div className="text-sm text-slate-300">{safeText(active.payload?.name || "Customer", 60)}</div>
-                  <div className="text-xs text-slate-500 mt-1">{formatTime(active.created_at)}</div>
-                </div>
-                <button
-                  className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm hover:border-slate-500"
-                  onClick={() => setActive(null)}
-                >
-                  Close
-                </button>
-              </div>
-
-              <div className="text-sm text-slate-300 mt-4 rounded-xl border border-slate-800 bg-slate-950/30 p-3 whitespace-pre-wrap">
-                {active.payload?.message || "No message"}
-              </div>
-
-              <div className="text-xs text-slate-400 mt-5 mb-2">Set Stage (provably stamped to employee code)</div>
-
-              <div className="grid grid-cols-1 gap-2">
-                {STAGES.map((s) => (
-                  <button
-                    key={s.key}
-                    disabled={busy}
-                    className={[
-                      "w-full p-3 rounded-xl border text-left",
-                      "border-slate-700 bg-slate-800/40 hover:bg-slate-800/70",
-                      busy ? "opacity-60 cursor-not-allowed" : "",
-                    ].join(" ")}
-                    onClick={() => setJobStage(active, s.key)}
-                  >
-                    <div className={"font-semibold " + stageColor(s.key)}>{s.label}</div>
-                    <div className="text-[11px] text-slate-400">{s.help}</div>
-                  </button>
-                ))}
-              </div>
-
-              <div className="text-xs text-slate-500 mt-4">
-                Active employee:{" "}
-                <span className="text-slate-200 font-semibold">
-                  {employeeName || "Employee"} ({employeeCode || "—"})
-                </span>
-              </div>
-            </div>
-          ) : null}
         </div>
       )}
+
+      {busy ? null : null}
     </div>
   );
 }

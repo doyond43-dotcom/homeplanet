@@ -1,16 +1,28 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-type Row = {
+export type JobStage = "diagnosing" | "waiting_parts" | "repairing" | "done";
+
+export type Row = {
   id: string;
   created_at: string;
   slug: string;
   payload: any;
+
+  current_stage?: JobStage | null;
+  stage_updated_at?: string | null;
+  stage_updated_by_employee_code?: string | null;
+  handled_by_employee_code?: string | null;
 };
 
 type Props = {
-  row: Row;
-  onClose: () => void;
+  open: boolean;
+  row: Row | null;
+  onOpenChange: (open: boolean) => void;
+
+  employeeCode?: string;
+  employeeName?: string;
+  onStageChange?: (stage: JobStage) => void | Promise<void>;
 };
 
 type Line = {
@@ -18,20 +30,46 @@ type Line = {
   price: string;
 };
 
-export default function WorkOrderDrawer({ row, onClose }: Props) {
+function formatTime(iso: string) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}
+
+export default function WorkOrderDrawer({
+  open,
+  row,
+  onOpenChange,
+  employeeCode,
+  employeeName,
+  onStageChange,
+}: Props) {
   const nav = useNavigate();
 
   const [notes, setNotes] = useState("");
   const [labor, setLabor] = useState<Line[]>([{ description: "", price: "" }]);
   const [parts, setParts] = useState<Line[]>([{ description: "", price: "" }]);
 
-  function updateLine(setter: any, arr: Line[], i: number, key: keyof Line, val: string) {
+  useEffect(() => {
+    if (!row) return;
+    setNotes("");
+    setLabor([{ description: "", price: "" }]);
+    setParts([{ description: "", price: "" }]);
+  }, [row?.id]);
+
+  function updateLine(
+    setter: React.Dispatch<React.SetStateAction<Line[]>>,
+    arr: Line[],
+    i: number,
+    key: keyof Line,
+    val: string
+  ) {
     const copy = [...arr];
-    copy[i][key] = val;
+    copy[i] = { ...copy[i], [key]: val };
     setter(copy);
   }
 
-  function addLine(setter: any, arr: Line[]) {
+  function addLine(setter: React.Dispatch<React.SetStateAction<Line[]>>, arr: Line[]) {
     setter([...arr, { description: "", price: "" }]);
   }
 
@@ -43,7 +81,19 @@ export default function WorkOrderDrawer({ row, onClose }: Props) {
   const partsTotal = total(parts);
   const grand = laborTotal + partsTotal;
 
+  function close() {
+    onOpenChange(false);
+  }
+
+  async function setStage(stage: JobStage) {
+    if (!onStageChange) return;
+    await onStageChange(stage);
+    if (stage === "done") close();
+  }
+
   function goPrint() {
+    if (!row) return;
+
     const data = {
       row,
       notes,
@@ -51,35 +101,110 @@ export default function WorkOrderDrawer({ row, onClose }: Props) {
       parts,
       laborTotal,
       partsTotal,
-      grand
+      grand,
     };
 
     sessionStorage.setItem("printWorkOrder", JSON.stringify(data));
-    nav(`/print/${row.id}`);
+
+    // IMPORTANT:
+    // Your global router is hijacking /print/* and /live/*/print/* and sending it to Public Intake (/c/:slug).
+    // So we STAY on the already-working staff route and trigger print mode via querystring.
+    nav(`/live/${row.slug}/staff?print=${encodeURIComponent(row.id)}`);
   }
 
-  return (
-    <div className="fixed inset-0 bg-black/60 flex justify-end z-50">
-      <div className="w-[520px] bg-slate-950 text-white h-full overflow-y-auto p-6 space-y-6">
+  if (!open || !row) return null;
 
-        {/* HEADER */}
-        <div className="flex justify-between items-start">
-          <div>
-            <div className="text-2xl font-bold">{row.payload?.vehicle || "Vehicle"}</div>
-            <div className="text-sm text-slate-300">{row.payload?.name || "Customer"}</div>
-            <div className="text-xs text-slate-500 mt-1">
-              {new Date(row.created_at).toLocaleString()}
+  const stage = (row.current_stage || "diagnosing") as JobStage;
+  const lastBy = row.stage_updated_by_employee_code || row.handled_by_employee_code || "";
+  const lastAt = row.stage_updated_at || "";
+
+  return (
+    <div className="fixed inset-0 bg-black/60 flex justify-end z-50" onClick={close}>
+      <div
+        className="w-[520px] bg-slate-950 text-white h-full overflow-y-auto p-6 space-y-6"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex justify-between items-start gap-4">
+          <div className="min-w-0">
+            <div className="text-2xl font-bold truncate">{row.payload?.vehicle || "Vehicle"}</div>
+            <div className="text-sm text-slate-300 truncate">{row.payload?.name || "Customer"}</div>
+
+            <div className="text-xs text-slate-500 mt-1">{new Date(row.created_at).toLocaleString()}</div>
+
+            <div className="text-xs text-slate-400 mt-2">
+              Stage: <span className="text-slate-200 font-semibold">{stage}</span>
+              {lastBy ? (
+                <>
+                  {" "}
+                  • Last: <span className="text-slate-200 font-semibold">{lastBy}</span>
+                  {lastAt ? <span className="text-slate-400"> @ {formatTime(lastAt)}</span> : null}
+                </>
+              ) : null}
             </div>
+
+            {(employeeCode || employeeName) ? (
+              <div className="text-[11px] text-slate-500 mt-1">
+                You: <span className="text-slate-300 font-semibold">{employeeName || employeeCode}</span>
+              </div>
+            ) : null}
           </div>
+
           <button
-            onClick={onClose}
+            onClick={close}
             className="border border-slate-700 px-3 py-2 rounded-lg hover:border-slate-400"
           >
             Close
           </button>
         </div>
 
-        {/* NOTES */}
+        {onStageChange ? (
+          <div className="space-y-2">
+            <div className="text-sm text-slate-400">Job Stage</div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => setStage("diagnosing")}
+                className={`rounded-xl border px-3 py-2 text-sm font-semibold ${
+                  stage === "diagnosing"
+                    ? "border-blue-400 bg-blue-500/10"
+                    : "border-slate-700 hover:border-slate-400"
+                }`}
+              >
+                Diagnosing
+              </button>
+              <button
+                onClick={() => setStage("waiting_parts")}
+                className={`rounded-xl border px-3 py-2 text-sm font-semibold ${
+                  stage === "waiting_parts"
+                    ? "border-orange-400 bg-orange-500/10"
+                    : "border-slate-700 hover:border-slate-400"
+                }`}
+              >
+                Waiting Parts
+              </button>
+              <button
+                onClick={() => setStage("repairing")}
+                className={`rounded-xl border px-3 py-2 text-sm font-semibold ${
+                  stage === "repairing"
+                    ? "border-emerald-400 bg-emerald-500/10"
+                    : "border-slate-700 hover:border-slate-400"
+                }`}
+              >
+                Repairing
+              </button>
+              <button
+                onClick={() => setStage("done")}
+                className={`rounded-xl border px-3 py-2 text-sm font-semibold ${
+                  stage === "done"
+                    ? "border-green-400 bg-green-500/10"
+                    : "border-slate-700 hover:border-slate-400"
+                }`}
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        ) : null}
+
         <div>
           <div className="text-sm text-slate-400 mb-1">Technician Notes</div>
           <textarea
@@ -88,13 +213,17 @@ export default function WorkOrderDrawer({ row, onClose }: Props) {
             className="w-full h-28 bg-slate-900 border border-slate-700 rounded-xl p-3"
             placeholder="Diagnosis, findings, recommendations..."
           />
+          <div className="text-[11px] text-slate-500 mt-2">
+            (Notes are currently local in the drawer. Next step: save notes to Supabase with a timestamped event.)
+          </div>
         </div>
 
-        {/* LABOR */}
         <div>
           <div className="flex justify-between items-center mb-2">
             <div className="font-semibold">Labor</div>
-            <button onClick={() => addLine(setLabor, labor)} className="text-xs text-blue-400">+ Add</button>
+            <button onClick={() => addLine(setLabor, labor)} className="text-xs text-blue-400">
+              + Add
+            </button>
           </div>
 
           {labor.map((l, i) => (
@@ -119,11 +248,12 @@ export default function WorkOrderDrawer({ row, onClose }: Props) {
           </div>
         </div>
 
-        {/* PARTS */}
         <div>
           <div className="flex justify-between items-center mb-2">
             <div className="font-semibold">Parts</div>
-            <button onClick={() => addLine(setParts, parts)} className="text-xs text-blue-400">+ Add</button>
+            <button onClick={() => addLine(setParts, parts)} className="text-xs text-blue-400">
+              + Add
+            </button>
           </div>
 
           {parts.map((p, i) => (
@@ -148,19 +278,16 @@ export default function WorkOrderDrawer({ row, onClose }: Props) {
           </div>
         </div>
 
-        {/* GRAND TOTAL */}
         <div className="border-t border-slate-700 pt-4 text-right text-lg font-bold">
           Grand Total: ${grand.toFixed(2)}
         </div>
 
-        {/* PRINT */}
         <button
           onClick={goPrint}
           className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-semibold"
         >
           Print Work Order
         </button>
-
       </div>
     </div>
   );
