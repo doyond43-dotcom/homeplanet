@@ -7,14 +7,8 @@ import LiveIntakeBoard from "./routes/LiveIntakeBoard";
 import LiveAlias from "./routes/LiveAlias";
 import PrintWorkOrder from "./routes/PrintWorkOrder";
 
-/**
- * LiveShell prevents /live/:slug from hijacking subroutes.
- * Now:
- *   /live/:slug                 -> TV
- *   /live/:slug/staff           -> Employee board
- *   /live/:slug/board           -> (legacy link) -> TV
- *   /live/:slug/work-order/:id  -> Printable work order
- */
+import ServiceRoutes from "./service/ServiceRoutes";
+
 function LiveShell() {
   return <Outlet />;
 }
@@ -24,21 +18,17 @@ export default function App() {
     <BrowserRouter>
       <Routes>
 
+        {/* SERVICE SYSTEM — fully isolated namespace */}
+        <Route path="/service/*" element={<ServiceRoutes />} />
+
         {/* Canonical public page */}
         <Route path="/c/:slug" element={<PublicPage />} />
 
-        {/* LIVE SYSTEM — nested so routes stop fighting */}
+        {/* LIVE SYSTEM */}
         <Route path="/live/:slug" element={<LiveShell />}>
-          {/* Default: TV display */}
           <Route index element={<LiveShopTV />} />
-
-          {/* Staff interactive dashboard */}
           <Route path="staff" element={<LiveIntakeBoard />} />
-
-          {/* Printable work order */}
           <Route path="work-order/:id" element={<PrintWorkOrder />} />
-
-          {/* Backwards compatibility (old QR codes) */}
           <Route path="board" element={<LiveShopTV />} />
         </Route>
 

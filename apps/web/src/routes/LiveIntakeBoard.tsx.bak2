@@ -1,8 +1,7 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
+﻿// apps/web/src/routes/LiveIntakeBoard.tsx
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { useLocation, useParams } from "react-router-dom";
-import WorkOrderDrawer from "./WorkOrderDrawer";
-import PrintWorkOrder from "./PrintWorkOrder";
+import { useParams } from "react-router-dom";
 
 type JobStage = "diagnosing" | "waiting_parts" | "repairing" | "done";
 
@@ -58,73 +57,9 @@ function formatTime(iso: string) {
   return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
-// Basic UUID sanity check (prevents "invalid input syntax for type uuid" mystery 400s)
-function isUuid(v: unknown) {
-  if (typeof v !== "string") return false;
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
-}
-
-function formatSupabaseError(e: any) {
-  if (!e) return "Unknown error";
-  if (typeof e === "string") return e;
-
-  const code = e.code ? `code=${e.code}` : "";
-  const msg = e.message ? `message=${e.message}` : "";
-  const details = e.details ? `details=${e.details}` : "";
-  const hint = e.hint ? `hint=${e.hint}` : "";
-  const parts = [code, msg, details, hint].filter(Boolean);
-
-  return parts.length ? parts.join(" | ") : safeText(e, 400);
-}
-
-/**
- * Wrapper component:
- * - Only contains the minimal hooks needed for print-mode decision
- * - Prevents "Rendered fewer hooks than expected" by NOT mixing board hooks with print early-return
- */
 export default function LiveIntakeBoard() {
   const { slug } = useParams();
   const shopSlug = (slug ?? "").trim();
-
-  const loc = useLocation();
-
-  // ✅ PRINT MODE (router-bypass): /live/<slug>/staff?print=<jobId>
-  const printId = useMemo(() => {
-    try {
-      const v = new URLSearchParams(loc.search).get("print");
-      return (v || "").trim() || null;
-    } catch {
-      return null;
-    }
-  }, [loc.search]);
-
-  // Bridge sessionStorage key if PrintWorkOrder expects "printWorkOrder"
-  useEffect(() => {
-    if (!printId) return;
-    try {
-      const raw = sessionStorage.getItem("printWorkOrder");
-      if (raw) sessionStorage.setItem(`printWorkOrder:${printId}`, raw);
-    } catch {}
-  }, [printId]);
-
-  if (printId) {
-    return <PrintWorkOrder />;
-  }
-
-  return <LiveIntakeBoardBody shopSlug={shopSlug} />;
-}
-
-function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
-  const buildTag = useMemo(() => {
-    const env = (import.meta as any).env ?? {};
-    return (
-      env.VITE_VERCEL_GIT_COMMIT_SHA ||
-      env.VITE_GIT_COMMIT_SHA ||
-      env.VERCEL_GIT_COMMIT_SHA ||
-      env.GIT_COMMIT_SHA ||
-      "dev"
-    );
-  }, []);
 
   const supabase = useMemo(() => {
     const url = (import.meta as any).env?.VITE_SUPABASE_URL;
@@ -147,18 +82,6 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  // keep refs so realtime handlers never use stale state
-  const rowsRef = useRef<Row[]>([]);
-  const activeIdRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    rowsRef.current = rows;
-  }, [rows]);
-
-  useEffect(() => {
-    activeIdRef.current = active?.id ?? null;
-  }, [active]);
-
   const inFlightRef = useRef(false);
 
   useEffect(() => {
@@ -166,32 +89,6 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
     localStorage.setItem(storageKey, employeeCode || "");
     localStorage.setItem(nameKey, employeeName || "");
   }, [employeeCode, employeeName, shopSlug, storageKey, nameKey]);
-
-  function upsertRow(next: Row) {
-    setRows((prev) => {
-      // remove done
-      if ((next.current_stage || "diagnosing") === "done") {
-        return prev.filter((r) => r.id !== next.id);
-      }
-
-      const i = prev.findIndex((r) => r.id === next.id);
-      if (i === -1) {
-        // new row at top
-        return [next, ...prev];
-      }
-      const copy = prev.slice();
-      copy[i] = { ...copy[i], ...next };
-      // keep newest-first sort stable on created_at
-      copy.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-      return copy;
-    });
-
-    // if drawer is open for same job, keep it in sync too
-    const activeId = activeIdRef.current;
-    if (activeId && activeId === next.id) {
-      setActive((prev) => (prev ? { ...prev, ...next } : prev));
-    }
-  }
 
   async function load(reason = "load") {
     if (!supabase || !shopSlug) return;
@@ -221,120 +118,33 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
     inFlightRef.current = false;
 
     if (error) {
-      setErr(`[${reason}] ${formatSupabaseError(error)}`);
+      setErr(`[${reason}] ${error.message || String(error)}`);
       return;
     }
 
-    const nextRows = ((data as any) || []) as Row[];
-    setRows(nextRows);
-
-    // keep active in sync if still exists
-    const activeId = activeIdRef.current;
-    if (activeId) {
-      const found = nextRows.find((r) => r.id === activeId) || null;
-      if (found) setActive(found);
-    }
+    setRows((data as any) || []);
   }
 
-  // ✅ Realtime-first + ✅ low-frequency heartbeat fallback (iPad/Safari-safe, NOT chatty)
   useEffect(() => {
-    if (!supabase || !shopSlug) return;
-
-    let mounted = true;
-    let heartbeatMs = 20000;
-    let lastRealtimeAt = 0;
-    let subStatus = "INIT";
-
-    const setSubStatus = (s: string) => {
-      subStatus = s;
-      heartbeatMs = s === "SUBSCRIBED" ? 20000 : 5000;
-    };
-
     load("initial");
 
-    let loadTimer: number | null = null;
-    const scheduleLoad = (why: string) => {
-      if (!mounted) return;
-      if (loadTimer) window.clearTimeout(loadTimer);
-      loadTimer = window.setTimeout(() => load(why), 250);
-    };
+    if (!supabase || !shopSlug) return;
 
     const channel = supabase
-      .channel(`board:${shopSlug}`, {
-        config: { broadcast: { ack: true }, presence: { key: shopSlug } },
-      })
+      .channel(`board:${shopSlug}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "public_intake_submissions", filter: `slug=eq.${shopSlug}` },
-        (p: any) => {
-          lastRealtimeAt = Date.now();
-
-          const eventType = p.eventType as "INSERT" | "UPDATE" | "DELETE";
-          if (eventType === "DELETE") {
-            const oldId = p.old?.id;
-            if (oldId) {
-              setRows((prev) => prev.filter((r) => r.id !== oldId));
-              if (activeIdRef.current === oldId) setActive(null);
-            }
-            return;
-          }
-
-          const next = (p.new ?? null) as Row | null;
-          if (next && next.slug === shopSlug) {
-            upsertRow(next);
-          } else {
-            scheduleLoad("realtime:fallback");
-          }
-        }
+        () => load("realtime:intake")
       )
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "job_stage_events", filter: `slug=eq.${shopSlug}` },
-        () => {
-          lastRealtimeAt = Date.now();
-          scheduleLoad("realtime:stage-event");
-        }
+        () => load("realtime:events")
       )
-      .subscribe((status) => {
-        console.log("Realtime status:", status);
-        setSubStatus(String(status));
-      });
-
-    const tick = async () => {
-      if (!mounted) return;
-      if (document.visibilityState !== "visible") return;
-
-      const since = Date.now() - lastRealtimeAt;
-      if (subStatus === "SUBSCRIBED" && lastRealtimeAt && since < 15000) return;
-
-      await load("heartbeat");
-    };
-
-    let pollId: number | null = null;
-    const armPoll = () => {
-      if (pollId) window.clearInterval(pollId);
-      pollId = window.setInterval(tick, heartbeatMs);
-    };
-    armPoll();
-
-    const statusWatcher = window.setInterval(() => {
-      armPoll();
-    }, 2000);
-
-    const onVis = () => {
-      if (document.visibilityState === "visible") load("focus");
-    };
-    document.addEventListener("visibilitychange", onVis);
+      .subscribe();
 
     return () => {
-      mounted = false;
-
-      if (loadTimer) window.clearTimeout(loadTimer);
-      if (pollId) window.clearInterval(pollId);
-      window.clearInterval(statusWatcher);
-
-      document.removeEventListener("visibilitychange", onVis);
-
       try {
         supabase.removeChannel(channel);
       } catch {}
@@ -343,18 +153,10 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
   }, [supabase, shopSlug]);
 
   async function setJobStage(row: Row, stage: JobStage) {
-    if (!supabase) {
-      setErr("Supabase client not initialized (missing VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY).");
-      return;
-    }
+    if (!supabase) return;
 
     if (!shopSlug) {
-      setErr("Missing shop slug in URL. Open /live/<slug>/staff and try again.");
-      return;
-    }
-
-    if (!isUuid(row?.id)) {
-      setErr(`Bad job id (expected uuid). Got: ${String(row?.id)}`);
+      setErr("Missing shop slug in URL. Open /live/<slug>/board and try again.");
       return;
     }
 
@@ -382,60 +184,54 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
     setErr(null);
 
     const nowIso = new Date().toISOString();
-    const prevRows = rowsRef.current;
+    setRows((prev) =>
+      prev
+        .map((r) =>
+          r.id === row.id
+            ? {
+                ...r,
+                current_stage: stage,
+                stage_updated_at: nowIso,
+                stage_updated_by_employee_code: code,
+                handled_by_employee_code: code,
+              }
+            : r
+        )
+        .filter((r) => r.current_stage !== "done")
+    );
 
-    const optimistic: Row = {
-      ...row,
-      current_stage: stage,
-      stage_updated_at: nowIso,
-      stage_updated_by_employee_code: code,
-      handled_by_employee_code: code,
-    };
-
-    upsertRow(optimistic);
     if (stage === "done") setActive(null);
 
-    try {
-      const res = (await (supabase as any).rpc("hp_set_job_stage", {
-        p_shop_slug: shopSlug,
-        p_job_id: row.id,
-        p_employee_code: code,
-        p_stage: stage,
-      })) as any;
+    // ✅ Use the NEW unambiguous RPC (prevents overload + signature mismatch hell)
+    const res = (await (supabase as any).rpc("hp_set_job_stage", {
+      p_shop_slug: shopSlug,
+      p_job_id: row.id,
+      p_employee_code: code,
+      p_stage: stage,
+    })) as any;
 
-      setBusy(false);
+    setBusy(false);
 
-      if (res?.error) {
-        setRows(prevRows);
-        setErr(`RPC hp_set_job_stage failed | ${formatSupabaseError(res.error)}`);
-        await load("rpc-error-refresh");
-        return;
-      }
-
-      await load("stage-update");
-    } catch (e: any) {
-      setBusy(false);
-      setRows(prevRows);
-      setErr(`RPC threw exception | ${formatSupabaseError(e)}`);
-      await load("rpc-exception-refresh");
+    if (res?.error) {
+      setErr(res.error.message || String(res.error));
+      await load("rpc-error-refresh");
+      return;
     }
+
+    await load("stage-update");
   }
 
   const quickRows = rows.filter((r) => isQuickJob(r.payload));
   const longRows = rows.filter((r) => !isQuickJob(r.payload));
+
   const employeeReady = !!employeeCode.trim();
 
   return (
     <div className="h-screen bg-slate-950 text-white flex flex-col">
       <div className="border-b border-slate-800 px-6 py-4 flex items-center justify-between gap-4">
         <div className="min-w-0">
-          <div className="text-lg font-bold flex items-center gap-2">
-            <span>Employee Board</span>
-            <span className="text-[11px] text-slate-400 font-semibold rounded-md border border-slate-800 px-2 py-0.5">
-              build {String(buildTag).slice(0, 10)}
-            </span>
-          </div>
-          <div className="text-xs text-slate-400 truncate">/live/{shopSlug || "no-slug"}/staff</div>
+          <div className="text-lg font-bold">Employee Board</div>
+          <div className="text-xs text-slate-400 truncate">/live/{shopSlug || "no-slug"}/board</div>
         </div>
 
         <div className="flex items-center gap-2">
@@ -462,7 +258,7 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
       </div>
 
       {err ? (
-        <div className="mx-6 mt-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200 whitespace-pre-wrap">
+        <div className="mx-6 mt-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
           {err}
         </div>
       ) : null}
@@ -482,7 +278,7 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
         </div>
       ) : (
         <div className="flex-1 flex overflow-hidden">
-          <div className="w-full p-6 overflow-y-auto">
+          <div className={(active ? "w-2/3" : "w-full") + " p-6 overflow-y-auto"}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <div className="text-xs text-slate-400 font-semibold mb-2">Quick jobs</div>
@@ -491,7 +287,7 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
                     const stage = (r.current_stage || "diagnosing") as string;
                     const vehicle = safeText(r.payload?.vehicle || "Vehicle", 48);
                     const name = safeText(r.payload?.name || "Customer", 40);
-                    const message = safeText(r.payload?.message || "", 160);
+                    const message = safeText(r.payload?.message || "", 140);
                     const lastBy = r.stage_updated_by_employee_code || r.handled_by_employee_code || null;
                     const lastAt = r.stage_updated_at || null;
 
@@ -536,7 +332,7 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
                     const stage = (r.current_stage || "diagnosing") as string;
                     const vehicle = safeText(r.payload?.vehicle || "Vehicle", 48);
                     const name = safeText(r.payload?.name || "Customer", 40);
-                    const message = safeText(r.payload?.message || "", 160);
+                    const message = safeText(r.payload?.message || "", 140);
                     const lastBy = r.stage_updated_by_employee_code || r.handled_by_employee_code || null;
                     const lastAt = r.stage_updated_at || null;
 
@@ -574,25 +370,60 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
                 </div>
               </div>
             </div>
-
-            <WorkOrderDrawer
-              open={!!active}
-              row={active}
-              employeeCode={employeeCode}
-              employeeName={employeeName}
-              onStageChange={(stage: JobStage) => {
-                if (!active) return;
-                return setJobStage(active, stage);
-              }}
-              onOpenChange={(open) => {
-                if (!open) setActive(null);
-              }}
-            />
           </div>
+
+          {active ? (
+            <div className="w-1/3 border-l border-slate-800 bg-slate-900 p-6 overflow-y-auto">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h2 className="text-2xl font-bold mb-1 truncate">
+                    {safeText(active.payload?.vehicle || "Vehicle", 60)}
+                  </h2>
+                  <div className="text-sm text-slate-300">{safeText(active.payload?.name || "Customer", 60)}</div>
+                  <div className="text-xs text-slate-500 mt-1">{formatTime(active.created_at)}</div>
+                </div>
+                <button
+                  className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm hover:border-slate-500"
+                  onClick={() => setActive(null)}
+                >
+                  Close
+                </button>
+              </div>
+
+              <div className="text-sm text-slate-300 mt-4 rounded-xl border border-slate-800 bg-slate-950/30 p-3 whitespace-pre-wrap">
+                {active.payload?.message || "No message"}
+              </div>
+
+              <div className="text-xs text-slate-400 mt-5 mb-2">Set Stage (provably stamped to employee code)</div>
+
+              <div className="grid grid-cols-1 gap-2">
+                {STAGES.map((s) => (
+                  <button
+                    key={s.key}
+                    disabled={busy}
+                    className={[
+                      "w-full p-3 rounded-xl border text-left",
+                      "border-slate-700 bg-slate-800/40 hover:bg-slate-800/70",
+                      busy ? "opacity-60 cursor-not-allowed" : "",
+                    ].join(" ")}
+                    onClick={() => setJobStage(active, s.key)}
+                  >
+                    <div className={"font-semibold " + stageColor(s.key)}>{s.label}</div>
+                    <div className="text-[11px] text-slate-400">{s.help}</div>
+                  </button>
+                ))}
+              </div>
+
+              <div className="text-xs text-slate-500 mt-4">
+                Active employee:{" "}
+                <span className="text-slate-200 font-semibold">
+                  {employeeName || "Employee"} ({employeeCode || "—"})
+                </span>
+              </div>
+            </div>
+          ) : null}
         </div>
       )}
-
-      {busy ? null : null}
     </div>
   );
 }
