@@ -71,16 +71,14 @@ function total(lines: Line[]) {
 /** -------- Quick Text (Tab shorthand expansion) --------
  *  - Invisible (no UI clutter)
  *  - Only expands on Tab
- *  - Only expands when caret is at END of the input (safe)
- *  - Touches Labor/Parts description inputs
- *  - Also enabled for Technician Notes textarea (optional)
+ *  - Only expands when caret is at END of the field (safe)
+ *  - Works on Technician Notes (textarea) + Labor/Parts description inputs
  */
 const QUICK_TEXT: Record<string, string> = {
   // sides / position
   ds: "driver side",
   drv: "driver side",
   driver: "driver side",
-  dr: "driver side", // ✅ you typed "Dr"
 
   ps: "passenger side",
   pass: "passenger side",
@@ -101,12 +99,24 @@ const QUICK_TEXT: Record<string, string> = {
   headlamp: "headlamp",
   headlight: "headlamp",
 
+  br: "brake",
+  brake: "brake",
+  bl: "brake line",
+  "brake-line": "brake line",
+
+  bt: "battery test",
+  "battery-test": "battery test",
+
   alt: "alternator",
   alternator: "alternator",
+  at: "alternator test",
+  "alternator-test": "alternator test",
 
   batt: "battery",
   battery: "battery",
 
+  ws: "window switch",
+  "window-switch": "window switch",
   wm: "window motor",
   "window-motor": "window motor",
 
@@ -119,14 +129,6 @@ const QUICK_TEXT: Record<string, string> = {
   rot: "rotation",
   rotate: "rotation",
   rotation: "rotation",
-
-  // brakes (✅ you typed "bre")
-  br: "brake",
-  bre: "brake",
-  brake: "brake",
-  brakes: "brakes",
-  bk: "brake",
-  bks: "brakes",
 
   // verbs
   rep: "replace",
@@ -141,21 +143,22 @@ const QUICK_TEXT: Record<string, string> = {
   install: "install",
 };
 
-// ✅ Supports both <input> and <textarea>
-function expandLastTokenOnTab(e: KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>, dict = QUICK_TEXT) {
+type QuickTextTarget = HTMLInputElement | HTMLTextAreaElement;
+
+function expandLastTokenOnTab(e: KeyboardEvent<QuickTextTarget>, dict = QUICK_TEXT) {
   if (e.key !== "Tab") return;
 
   const el = e.currentTarget;
   const value = el.value ?? "";
 
   const caret = el.selectionStart ?? value.length;
-  // Safety: only expand when caret is at the end (prevents weird mid-string edits)
+
+  // Safety: only expand when caret is at the end (prevents mid-string weirdness)
   if (caret !== value.length) return;
 
   // last token (split on whitespace)
   const parts = value.split(/\s+/);
-  const lastRaw = parts[parts.length - 1] ?? "";
-  const last = lastRaw.trim().toLowerCase();
+  const last = (parts[parts.length - 1] ?? "").trim().toLowerCase();
   if (!last) return;
 
   const replacement = dict[last];
@@ -167,7 +170,7 @@ function expandLastTokenOnTab(e: KeyboardEvent<HTMLInputElement | HTMLTextAreaEl
   parts[parts.length - 1] = replacement;
   const next = parts.join(" ").replace(/\s+/g, " ").trimStart();
 
-  // Update the input DOM value then trigger an input event so React state catches up
+  // Update DOM value then trigger an input event so React state catches up
   el.value = next;
   el.dispatchEvent(new Event("input", { bubbles: true }));
 }
