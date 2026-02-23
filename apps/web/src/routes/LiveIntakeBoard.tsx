@@ -147,6 +147,16 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  // ✅ Customer lookup (surgical add-on; does NOT touch board load/realtime/stages)
+  const [lookupQuery, setLookupQuery] = useState("");
+  const [lookupBusy, setLookupBusy] = useState(false);
+  const [lookupErr, setLookupErr] = useState<string | null>(null);
+  const [lookupOpen, setLookupOpen] = useState(false);
+  const [lookupResults, setLookupResults] = useState<Row[]>([]);
+  const lookupReqSeqRef = useRef(0);
+  const lookupWrapRef = useRef<HTMLDivElement | null>(null);
+  const lookupInputRef = useRef<HTMLInputElement | null>(null);
+
   // keep refs so realtime handlers never use stale state
   const rowsRef = useRef<Row[]>([]);
   const activeIdRef = useRef<string | null>(null);
@@ -342,6 +352,93 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase, shopSlug]);
 
+  // ✅ Customer lookup search (includes completed jobs; does not affect board rows)
+  useEffect(() => {
+    if (!supabase || !shopSlug) return;
+
+    const qRaw = lookupQuery.trim();
+    if (!qRaw) {
+      setLookupErr(null);
+      setLookupBusy(false);
+      setLookupResults([]);
+      setLookupOpen(false);
+      return;
+    }
+
+    const seq = ++lookupReqSeqRef.current;
+    setLookupBusy(true);
+    setLookupErr(null);
+    setLookupOpen(true);
+
+    const timer = window.setTimeout(async () => {
+      try {
+        // NOTE: uuid column partial search may depend on PostgREST casting behavior.
+        // We always support exact uuid match via id.eq when input looks like uuid.
+        const isId = isUuid(qRaw);
+        const q = qRaw.replace(/,/g, " ").replace(/\s+/g, " ").trim(); // mild sanitize (avoid breaking .or)
+
+        let query = supabase
+          .from("public_intake_submissions")
+          .select(
+            [
+              "id",
+              "created_at",
+              "slug",
+              "payload",
+              "current_stage",
+              "stage_updated_at",
+              "stage_updated_by_employee_code",
+              "handled_by_employee_code",
+            ].join(",")
+          )
+          .eq("slug", shopSlug)
+          .order("created_at", { ascending: false })
+          .limit(25);
+
+        if (isId) {
+          // exact id match + name/vehicle fuzzy
+          query = query.or(`id.eq.${q},payload->>name.ilike.%${q}%,payload->>vehicle.ilike.%${q}%`);
+        } else {
+          // fuzzy match name/vehicle + attempt fuzzy id match
+          query = query.or(`payload->>name.ilike.%${q}%,payload->>vehicle.ilike.%${q}%,id.ilike.%${q}%`);
+        }
+
+        const { data, error } = await query;
+
+        if (lookupReqSeqRef.current !== seq) return; // stale
+        setLookupBusy(false);
+
+        if (error) {
+          setLookupErr(formatSupabaseError(error));
+          setLookupResults([]);
+          return;
+        }
+
+        setLookupErr(null);
+        setLookupResults((((data as any) || []) as Row[]) || []);
+      } catch (e: any) {
+        if (lookupReqSeqRef.current !== seq) return;
+        setLookupBusy(false);
+        setLookupErr(formatSupabaseError(e));
+        setLookupResults([]);
+      }
+    }, 250);
+
+    return () => window.clearTimeout(timer);
+  }, [lookupQuery, supabase, shopSlug]);
+
+  // Close lookup dropdown when clicking outside
+  useEffect(() => {
+    const onDown = (ev: MouseEvent) => {
+      const el = lookupWrapRef.current;
+      if (!el) return;
+      if (el.contains(ev.target as any)) return;
+      setLookupOpen(false);
+    };
+    window.addEventListener("mousedown", onDown);
+    return () => window.removeEventListener("mousedown", onDown);
+  }, []);
+
   async function setJobStage(row: Row, stage: JobStage) {
     if (!supabase) {
       setErr("Supabase client not initialized (missing VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY).");
@@ -439,6 +536,91 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* ✅ Customer lookup (includes done; does NOT touch board logic) */}
+          <div ref={lookupWrapRef} className="relative hidden lg:block">
+            <input
+              ref={lookupInputRef}
+              value={lookupQuery}
+              onChange={(e) => setLookupQuery(e.target.value)}
+              onFocus={() => {
+                if (lookupQuery.trim()) setLookupOpen(true);
+              }}
+              placeholder="Customer lookup (name / vehicle / id)"
+              className="w-[360px] rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-blue-400"
+            />
+
+            {lookupOpen ? (
+              <div className="absolute right-0 mt-2 w-[560px] max-w-[80vw] rounded-xl border border-slate-800 bg-slate-950 shadow-2xl z-50 overflow-hidden">
+                <div className="px-3 py-2 border-b border-slate-800 flex items-center justify-between">
+                  <div className="text-xs text-slate-400">
+                    Search: <span className="text-slate-200 font-semibold">{lookupQuery.trim()}</span>{" "}
+                    <span className="text-slate-500">(includes completed)</span>
+                  </div>
+                  <div className="text-[11px] text-slate-500 flex items-center gap-2">
+                    {lookupBusy ? <span className="text-slate-300">Searching…</span> : null}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLookupOpen(false);
+                      }}
+                      className="rounded-md border border-slate-800 bg-slate-900 px-2 py-1 hover:border-slate-600"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+
+                {lookupErr ? (
+                  <div className="px-3 py-3 text-sm text-red-200 bg-red-500/10 border-b border-red-500/20 whitespace-pre-wrap">
+                    {lookupErr}
+                  </div>
+                ) : null}
+
+                <div className="max-h-[420px] overflow-y-auto">
+                  {lookupResults.map((r) => {
+                    const stage = (r.current_stage || "diagnosing") as string;
+                    const vehicle = safeText(r.payload?.vehicle || "Vehicle", 52);
+                    const name = safeText(r.payload?.name || "Customer", 40);
+                    const msg = safeText(r.payload?.message || r.payload?.notes || "", 120);
+
+                    return (
+                      <button
+                        key={r.id}
+                        type="button"
+                        onClick={() => {
+                          setActive(r); // ✅ opens WorkOrderDrawer (even if done)
+                          setLookupOpen(false);
+                        }}
+                        className="w-full text-left px-3 py-3 border-b border-slate-900 hover:bg-slate-900/50"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="font-semibold truncate">{vehicle}</div>
+                            <div className="text-sm text-slate-300 truncate">{name}</div>
+                            {msg ? <div className="text-xs text-slate-500 mt-1 truncate">{msg}</div> : null}
+                            <div className="text-[11px] text-slate-600 mt-1 truncate">id: {r.id}</div>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <div className={"text-xs font-semibold " + stageColor(stage)}>
+                              {STAGES.find((s) => s.key === stage)?.label ?? stage}
+                            </div>
+                            <div className="text-[11px] text-slate-500 mt-1">{formatTime(r.created_at)}</div>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+
+                  {!lookupBusy && lookupResults.length === 0 ? (
+                    <div className="px-3 py-4 text-sm text-slate-500">
+                      No matches. Try full UUID for id searches if partial id doesn’t match.
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
+          </div>
+
           <input
             value={employeeCode}
             onChange={(e) => setEmployeeCode(e.target.value)}
