@@ -73,13 +73,14 @@ function total(lines: Line[]) {
  *  - Only expands on Tab
  *  - Only expands when caret is at END of the input (safe)
  *  - Touches Labor/Parts description inputs
- *  - ✅ Also supports Technician Notes textarea (optional, enabled below)
+ *  - Also enabled for Technician Notes textarea (optional)
  */
 const QUICK_TEXT: Record<string, string> = {
   // sides / position
   ds: "driver side",
   drv: "driver side",
   driver: "driver side",
+  dr: "driver side", // ✅ you typed "Dr"
 
   ps: "passenger side",
   pass: "passenger side",
@@ -108,7 +109,6 @@ const QUICK_TEXT: Record<string, string> = {
 
   wm: "window motor",
   "window-motor": "window motor",
-  window: "window",
 
   sw: "switch",
   switch: "switch",
@@ -119,6 +119,14 @@ const QUICK_TEXT: Record<string, string> = {
   rot: "rotation",
   rotate: "rotation",
   rotation: "rotation",
+
+  // brakes (✅ you typed "bre")
+  br: "brake",
+  bre: "brake",
+  brake: "brake",
+  brakes: "brakes",
+  bk: "brake",
+  bks: "brakes",
 
   // verbs
   rep: "replace",
@@ -133,7 +141,7 @@ const QUICK_TEXT: Record<string, string> = {
   install: "install",
 };
 
-// ✅ FIX: support both <input> and <textarea>
+// ✅ Supports both <input> and <textarea>
 function expandLastTokenOnTab(e: KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>, dict = QUICK_TEXT) {
   if (e.key !== "Tab") return;
 
@@ -144,9 +152,10 @@ function expandLastTokenOnTab(e: KeyboardEvent<HTMLInputElement | HTMLTextAreaEl
   // Safety: only expand when caret is at the end (prevents weird mid-string edits)
   if (caret !== value.length) return;
 
-  // last token
+  // last token (split on whitespace)
   const parts = value.split(/\s+/);
-  const last = (parts[parts.length - 1] ?? "").trim().toLowerCase();
+  const lastRaw = parts[parts.length - 1] ?? "";
+  const last = lastRaw.trim().toLowerCase();
   if (!last) return;
 
   const replacement = dict[last];
@@ -527,7 +536,7 @@ export default function WorkOrderDrawer({
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            onKeyDown={expandLastTokenOnTab} // ✅ NOW TAB EXPANDS HERE TOO
+            onKeyDown={expandLastTokenOnTab}
             className="w-full h-28 bg-slate-900 border border-slate-700 rounded-xl p-3"
             placeholder="Diagnosis, findings, recommendations..."
           />
