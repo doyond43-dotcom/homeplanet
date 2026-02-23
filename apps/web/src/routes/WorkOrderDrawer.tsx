@@ -45,6 +45,7 @@ export type PrintData = {
   parts: Line[];
   laborTotal: number;
   partsTotal: number;
+  shopSuppliesFee: number; // ✅ system fee (auto)
   grand: number;
 
   technicianCode?: string;
@@ -52,6 +53,11 @@ export type PrintData = {
 
   savedAtIso?: string;
 };
+
+/* ---------- constants ---------- */
+
+// ✅ Shop Supplies / Misc materials fee (auto-applied per work order)
+const SHOP_SUPPLIES_FEE = 15;
 
 /* ---------- utils ---------- */
 
@@ -272,7 +278,8 @@ export default function WorkOrderDrawer({
 
     const laborTotal = total(labor);
     const partsTotal = total(parts);
-    const grand = laborTotal + partsTotal;
+    const shopSuppliesFee = SHOP_SUPPLIES_FEE;
+    const grand = laborTotal + partsTotal + shopSuppliesFee;
 
     const payload: PrintData = {
       row,
@@ -281,6 +288,7 @@ export default function WorkOrderDrawer({
       parts,
       laborTotal,
       partsTotal,
+      shopSuppliesFee,
       grand,
       technicianCode: (employeeCode || "").trim() || undefined,
       technicianName: (employeeName || "").trim() || undefined,
@@ -307,7 +315,8 @@ export default function WorkOrderDrawer({
 
   const laborTotal = total(labor);
   const partsTotal = total(parts);
-  const grand = laborTotal + partsTotal;
+  const shopSuppliesFee = SHOP_SUPPLIES_FEE;
+  const grand = laborTotal + partsTotal + shopSuppliesFee;
 
   function close() {
     try {
@@ -339,6 +348,7 @@ export default function WorkOrderDrawer({
       parts: normalizeLines(parts),
       laborTotal,
       partsTotal,
+      shopSuppliesFee: SHOP_SUPPLIES_FEE,
       grand,
       technicianCode: techCode || undefined,
       technicianName: (employeeName || "").trim() || undefined,
@@ -645,7 +655,9 @@ export default function WorkOrderDrawer({
                 value={p.description}
                 onChange={(e) => updateLine(setParts, p.id, "description", e.target.value)}
                 onKeyDown={(e) =>
-                  expandLastTokenOnTabControlled(e, p.description, (next) => updateLine(setParts, p.id, "description", next))
+                  expandLastTokenOnTabControlled(e, p.description, (next) =>
+                    updateLine(setParts, p.id, "description", next)
+                  )
                 }
                 placeholder="Part"
                 className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 h-9"
@@ -662,7 +674,14 @@ export default function WorkOrderDrawer({
           <div className="text-right text-sm text-slate-300 mt-1">Parts Total: ${partsTotal.toFixed(2)}</div>
         </div>
 
-        <div className="border-t border-slate-700 pt-4 text-right text-lg font-bold">Grand Total: ${grand.toFixed(2)}</div>
+        {/* ✅ Shop supplies fee (always on, not editable) */}
+        <div className="text-right text-sm text-slate-300 -mt-2">
+          Shop Supplies Fee: ${shopSuppliesFee.toFixed(2)}
+        </div>
+
+        <div className="border-t border-slate-700 pt-4 text-right text-lg font-bold">
+          Grand Total: ${grand.toFixed(2)}
+        </div>
 
         <button onClick={goPrint} className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-semibold">
           Print Work Order
