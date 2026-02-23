@@ -1,3 +1,4 @@
+// apps/web/src/routes/WorkOrderDrawer.tsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Dispatch, SetStateAction, KeyboardEvent } from "react";
 import { useNavigate } from "react-router-dom";
@@ -27,7 +28,7 @@ type Props = {
 };
 
 export type Line = {
-  id: string; // ✅ stable key
+  id: string; // ✅ stable key (prevents “other row changed” bug)
   description: string;
   price: string;
 };
@@ -86,10 +87,10 @@ function normalizeLines(lines: Partial<Line>[]) {
 }
 
 /** -------- Quick Text (Tab shorthand expansion) --------
- *  - ONLY for Labor/Parts description fields
- *  - Expands only on Tab
- *  - Expands only when caret is at END of field (safe)
- *  - DOES NOT dispatch synthetic input events (fixes weird cross-field updates)
+ *  ✅ Only used in Labor/Parts description fields
+ *  ✅ Expands only on Tab
+ *  ✅ Expands only when caret is at END of field (safe)
+ *  ✅ Updates React state directly (no dispatchEvent hacks)
  */
 const QUICK_TEXT: Record<string, string> = {
   // sides / position
@@ -155,22 +156,47 @@ const QUICK_TEXT: Record<string, string> = {
 
 type TextEl = HTMLInputElement;
 
-function maybeExpandLastToken(valueRaw: string, caret: number, dict = QUICK_TEXT) {
-  const value = valueRaw ?? "";
-  if (caret !== value.length) return null; // only expand at end
+function expandLastTokenOnTabControlled(
+  e: KeyboardEvent<TextEl>,
+  currentValue: string,
+  setValue: (next: string) => void,
+  dict = QUICK_TEXT
+) {
+  if (e.key !== "Tab") return;
 
+  const el = e.currentTarget;
+  const value = currentValue ?? "";
+
+  // caret info
+  const caret = el.selectionStart ?? value.length;
+
+  // only expand when caret is at end
+  if (caret !== value.length) return;
+
+  // last token
   const parts = value.split(/\s+/);
   const last = (parts[parts.length - 1] ?? "").trim().toLowerCase();
-  if (!last) return null;
+  if (!last) return;
 
   const replacement = dict[last];
-  if (!replacement) return null;
+  if (!replacement) return;
+
+  // only block Tab when we actually expand
+  e.preventDefault();
 
   parts[parts.length - 1] = replacement;
-
-  // keep spacing sane, but don't nuke leading spaces if user started with one
   const next = parts.join(" ").replace(/\s+/g, " ").trimStart();
-  return next;
+
+  // ✅ React-safe update
+  setValue(next);
+
+  // Put caret at end on next tick (keeps typing smooth)
+  requestAnimationFrame(() => {
+    try {
+      const len = next.length;
+      el.setSelectionRange(len, len);
+    } catch {}
+  });
 }
 
 /** -------- Voice (Web Speech API) -------- */
@@ -277,33 +303,6 @@ export default function WorkOrderDrawer({
 
   function addLine(setter: Dispatch<SetStateAction<Line[]>>) {
     setter((prev) => [...prev, { id: makeId(), description: "", price: "" }]);
-  }
-
-  // Tab-expand ONLY for labor/parts description inputs
-  function onDescKeyDown(
-    e: KeyboardEvent<TextEl>,
-    setter: Dispatch<SetStateAction<Line[]>>,
-    lineId: string
-  ) {
-    if (e.key !== "Tab") return;
-
-    const el = e.currentTarget;
-    const next = maybeExpandLastToken(el.value ?? "", el.selectionStart ?? (el.value?.length ?? 0));
-    if (!next) return; // allow normal Tab behavior
-
-    // We ARE expanding -> stop focus jump
-    e.preventDefault();
-
-    // Update the exact line in state (no DOM tricks)
-    updateLine(setter, lineId, "description", next);
-
-    // Keep caret at end on next frame
-    requestAnimationFrame(() => {
-      try {
-        const len = next.length;
-        el.setSelectionRange(len, len);
-      } catch {}
-    });
   }
 
   const laborTotal = total(labor);
@@ -538,6 +537,7 @@ export default function WorkOrderDrawer({
           </div>
         ) : null}
 
+        {/* ✅ Notes: NO quick-text / NO Tab expansion */}
         <div>
           <div className="flex items-center justify-between gap-2 mb-1">
             <div className="text-sm text-slate-400">Technician Notes</div>
@@ -559,7 +559,6 @@ export default function WorkOrderDrawer({
             </button>
           </div>
 
-          {/* ✅ NO smart-text in notes (avoids cross-field weirdness) */}
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
@@ -598,7 +597,9 @@ export default function WorkOrderDrawer({
               <input
                 value={l.description}
                 onChange={(e) => updateLine(setLabor, l.id, "description", e.target.value)}
-                onKeyDown={(e) => onDescKeyDown(e, setLabor, l.id)} // ✅ smart-text here
+                onKeyDown={(e) =>
+                  expandLastTokenOnTabControlled(e, l.description, (next) => updateLine(setLabor, l.id, "description", next))
+                }
                 placeholder="Labor description"
                 className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 h-9"
               />
@@ -643,7 +644,9 @@ export default function WorkOrderDrawer({
               <input
                 value={p.description}
                 onChange={(e) => updateLine(setParts, p.id, "description", e.target.value)}
-                onKeyDown={(e) => onDescKeyDown(e, setParts, p.id)} // ✅ smart-text here
+                onKeyDown={(e) =>
+                  expandLastTokenOnTabControlled(e, p.description, (next) => updateLine(setParts, p.id, "description", next))
+                }
                 placeholder="Part"
                 className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 h-9"
               />
