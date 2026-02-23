@@ -27,6 +27,7 @@ type Props = {
 };
 
 export type Line = {
+  id: string; // ✅ stable key (fixes “other row changed” bug)
   description: string;
   price: string;
 };
@@ -45,13 +46,13 @@ export type PrintData = {
   partsTotal: number;
   grand: number;
 
-  // ✅ technician attribution
   technicianCode?: string;
   technicianName?: string;
 
-  // metadata
   savedAtIso?: string;
 };
+
+/* ---------- utils ---------- */
 
 function formatTime(iso: string) {
   const d = new Date(iso);
@@ -59,20 +60,37 @@ function formatTime(iso: string) {
   return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
-function normalizeLines(lines: Line[]) {
-  const cleaned = (lines || []).filter((l) => (l.description || "").trim() || (l.price || "").trim());
-  return cleaned.length ? cleaned : [{ description: "", price: "" }];
-}
-
 function total(lines: Line[]) {
   return (lines || []).reduce((t, l) => t + (parseFloat(l.price) || 0), 0);
 }
 
+function makeId() {
+  // browser-safe stable id
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const c = (globalThis as any)?.crypto;
+    if (c?.randomUUID) return c.randomUUID();
+  } catch {}
+  return `${Date.now()}_${Math.random().toString(16).slice(2)}`;
+}
+
+function normalizeLines(lines: Partial<Line>[]) {
+  const cleaned = (lines || [])
+    .map((l) => ({
+      id: String(l.id || makeId()),
+      description: String(l.description || ""),
+      price: String(l.price || ""),
+    }))
+    .filter((l) => l.description.trim() || l.price.trim());
+
+  return cleaned.length ? cleaned : [{ id: makeId(), description: "", price: "" }];
+}
+
 /** -------- Quick Text (Tab shorthand expansion) --------
  *  - Invisible (no UI clutter)
- *  - Only expands on Tab
- *  - Only expands when caret is at END of the field (safe)
- *  - Works on Technician Notes (textarea) + Labor/Parts description inputs
+ *  - Expands only on Tab
+ *  - Expands only when caret is at END of field (safe)
+ *  - Works in: Labor/Parts inputs + Notes textarea
  */
 const QUICK_TEXT: Record<string, string> = {
   // sides / position
@@ -99,24 +117,12 @@ const QUICK_TEXT: Record<string, string> = {
   headlamp: "headlamp",
   headlight: "headlamp",
 
-  br: "brake",
-  brake: "brake",
-  bl: "brake line",
-  "brake-line": "brake line",
-
-  bt: "battery test",
-  "battery-test": "battery test",
-
   alt: "alternator",
   alternator: "alternator",
-  at: "alternator test",
-  "alternator-test": "alternator test",
 
   batt: "battery",
   battery: "battery",
 
-  ws: "window switch",
-  "window-switch": "window switch",
   wm: "window motor",
   "window-motor": "window motor",
 
@@ -130,7 +136,7 @@ const QUICK_TEXT: Record<string, string> = {
   rotate: "rotation",
   rotation: "rotation",
 
-  // verbs
+  // verbs / actions
   rep: "replace",
   repl: "replace",
   replace: "replace",
@@ -141,11 +147,16 @@ const QUICK_TEXT: Record<string, string> = {
 
   inst: "install",
   install: "install",
+
+  // your shop shorthand
+  br: "brake",
+  bt: "battery test",
+  at: "alternator test",
 };
 
-type QuickTextTarget = HTMLInputElement | HTMLTextAreaElement;
+type TextEl = HTMLInputElement | HTMLTextAreaElement;
 
-function expandLastTokenOnTab(e: KeyboardEvent<QuickTextTarget>, dict = QUICK_TEXT) {
+function expandLastTokenOnTab(e: KeyboardEvent<TextEl>, dict = QUICK_TEXT) {
   if (e.key !== "Tab") return;
 
   const el = e.currentTarget;
@@ -153,10 +164,10 @@ function expandLastTokenOnTab(e: KeyboardEvent<QuickTextTarget>, dict = QUICK_TE
 
   const caret = el.selectionStart ?? value.length;
 
-  // Safety: only expand when caret is at the end (prevents mid-string weirdness)
+  // only expand when caret is at end (prevents mid-string weirdness)
   if (caret !== value.length) return;
 
-  // last token (split on whitespace)
+  // last token
   const parts = value.split(/\s+/);
   const last = (parts[parts.length - 1] ?? "").trim().toLowerCase();
   if (!last) return;
@@ -164,13 +175,13 @@ function expandLastTokenOnTab(e: KeyboardEvent<QuickTextTarget>, dict = QUICK_TE
   const replacement = dict[last];
   if (!replacement) return;
 
-  // Tab normally moves focus; we only block it when we actually expand
+  // only block Tab when we actually expand
   e.preventDefault();
 
   parts[parts.length - 1] = replacement;
   const next = parts.join(" ").replace(/\s+/g, " ").trimStart();
 
-  // Update DOM value then trigger an input event so React state catches up
+  // set DOM value and notify React
   el.value = next;
   el.dispatchEvent(new Event("input", { bubbles: true }));
 }
@@ -183,12 +194,15 @@ type SpeechRec = {
   lang: string;
   interimResults: boolean;
   continuous: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onresult: ((ev: any) => void) | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onerror: ((ev: any) => void) | null;
   onend: (() => void) | null;
 };
 
 function getSpeechRecognition(): (new () => SpeechRec) | null {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const w = window as any;
   return w.SpeechRecognition || w.webkitSpeechRecognition || null;
 }
@@ -207,10 +221,10 @@ export default function WorkOrderDrawer({
   const draftKey = useMemo(() => (jobId ? `workOrderDraft:${jobId}` : ""), [jobId]);
 
   const [notes, setNotes] = useState("");
-  const [labor, setLabor] = useState<Line[]>([{ description: "", price: "" }]);
-  const [parts, setParts] = useState<Line[]>([{ description: "", price: "" }]);
+  const [labor, setLabor] = useState<Line[]>(() => [{ id: makeId(), description: "", price: "" }]);
+  const [parts, setParts] = useState<Line[]>(() => [{ id: makeId(), description: "", price: "" }]);
 
-  const [dictating, setDictating] = useState<null | { kind: "notes" | "labor" | "parts"; index?: number }>(null);
+  const [dictating, setDictating] = useState<null | { kind: "notes" | "labor" | "parts"; id?: string }>(null);
   const recRef = useRef<SpeechRec | null>(null);
 
   const speechCtor = useMemo(() => getSpeechRecognition(), []);
@@ -220,16 +234,16 @@ export default function WorkOrderDrawer({
     if (!row?.id) return;
 
     let nextNotes = "";
-    let nextLabor: Line[] = [{ description: "", price: "" }];
-    let nextParts: Line[] = [{ description: "", price: "" }];
+    let nextLabor: Line[] = [{ id: makeId(), description: "", price: "" }];
+    let nextParts: Line[] = [{ id: makeId(), description: "", price: "" }];
 
     try {
       const raw = localStorage.getItem(draftKey);
       if (raw) {
         const parsed = JSON.parse(raw) as Partial<PrintData>;
         nextNotes = String(parsed.notes || "");
-        nextLabor = normalizeLines((parsed.labor as Line[]) || []);
-        nextParts = normalizeLines((parsed.parts as Line[]) || []);
+        nextLabor = normalizeLines((parsed.labor as Partial<Line>[]) || []);
+        nextParts = normalizeLines((parsed.parts as Partial<Line>[]) || []);
       }
     } catch {}
 
@@ -267,18 +281,15 @@ export default function WorkOrderDrawer({
 
   function updateLine(
     setter: Dispatch<SetStateAction<Line[]>>,
-    arr: Line[],
-    i: number,
-    key: keyof Line,
+    id: string,
+    key: keyof Omit<Line, "id">,
     val: string
   ) {
-    const copy = [...arr];
-    copy[i] = { ...copy[i], [key]: val };
-    setter(copy);
+    setter((prev) => prev.map((l) => (l.id === id ? { ...l, [key]: val } : l)));
   }
 
-  function addLine(setter: Dispatch<SetStateAction<Line[]>>, arr: Line[]) {
-    setter([...arr, { description: "", price: "" }]);
+  function addLine(setter: Dispatch<SetStateAction<Line[]>>) {
+    setter((prev) => [...prev, { id: makeId(), description: "", price: "" }]);
   }
 
   const laborTotal = total(labor);
@@ -286,13 +297,11 @@ export default function WorkOrderDrawer({
   const grand = laborTotal + partsTotal;
 
   function close() {
-    // stop dictation if drawer is closing
     try {
       recRef.current?.abort?.();
     } catch {}
     recRef.current = null;
     setDictating(null);
-
     onOpenChange(false);
   }
 
@@ -338,7 +347,6 @@ export default function WorkOrderDrawer({
   function startDictationForNotes() {
     if (!speechCtor) return;
 
-    // toggle off if already dictating notes
     if (dictating?.kind === "notes") {
       try {
         recRef.current?.stop?.();
@@ -357,6 +365,7 @@ export default function WorkOrderDrawer({
     rec.interimResults = false;
     rec.continuous = false;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     rec.onresult = (ev: any) => {
       const t = ev?.results?.[0]?.[0]?.transcript;
       if (typeof t === "string" && t.trim()) {
@@ -372,11 +381,10 @@ export default function WorkOrderDrawer({
     rec.start();
   }
 
-  function startDictationForLine(kind: "labor" | "parts", index: number) {
+  function startDictationForLine(kind: "labor" | "parts", lineId: string) {
     if (!speechCtor) return;
 
-    // toggle off if already dictating this exact line
-    if (dictating?.kind === kind && dictating?.index === index) {
+    if (dictating?.kind === kind && dictating?.id === lineId) {
       try {
         recRef.current?.stop?.();
       } catch {}
@@ -394,36 +402,37 @@ export default function WorkOrderDrawer({
     rec.interimResults = false;
     rec.continuous = false;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     rec.onresult = (ev: any) => {
       const t = ev?.results?.[0]?.[0]?.transcript;
       if (typeof t === "string" && t.trim()) {
         const text = t.trim();
         if (kind === "labor") {
-          setLabor((prev) => {
-            const copy = [...prev];
-            const cur = copy[index] || { description: "", price: "" };
-            const merged = cur.description ? cur.description.trimEnd() + " " + text : text;
-            copy[index] = { ...cur, description: merged };
-            return copy;
-          });
+          setLabor((prev) =>
+            prev.map((l) => {
+              if (l.id !== lineId) return l;
+              const merged = l.description ? l.description.trimEnd() + " " + text : text;
+              return { ...l, description: merged };
+            })
+          );
         } else {
-          setParts((prev) => {
-            const copy = [...prev];
-            const cur = copy[index] || { description: "", price: "" };
-            const merged = cur.description ? cur.description.trimEnd() + " " + text : text;
-            copy[index] = { ...cur, description: merged };
-            return copy;
-          });
+          setParts((prev) =>
+            prev.map((p) => {
+              if (p.id !== lineId) return p;
+              const merged = p.description ? p.description.trimEnd() + " " + text : text;
+              return { ...p, description: merged };
+            })
+          );
         }
       }
     };
 
     rec.onerror = () => {};
     rec.onend = () => {
-      setDictating((d) => (d?.kind === kind && d?.index === index ? null : d));
+      setDictating((d) => (d?.kind === kind && d?.id === lineId ? null : d));
     };
 
-    setDictating({ kind, index });
+    setDictating({ kind, id: lineId });
     rec.start();
   }
 
@@ -539,7 +548,7 @@ export default function WorkOrderDrawer({
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            onKeyDown={expandLastTokenOnTab}
+            onKeyDown={expandLastTokenOnTab} // ✅ quick-text works in notes too
             className="w-full h-28 bg-slate-900 border border-slate-700 rounded-xl p-3"
             placeholder="Diagnosis, findings, recommendations..."
           />
@@ -549,21 +558,21 @@ export default function WorkOrderDrawer({
         <div>
           <div className="flex justify-between items-center mb-2">
             <div className="font-semibold">Labor</div>
-            <button onClick={() => addLine(setLabor, labor)} className="text-xs text-blue-400">
+            <button onClick={() => addLine(setLabor)} className="text-xs text-blue-400">
               + Add
             </button>
           </div>
 
-          {labor.map((l, i) => (
-            <div key={i} className="flex gap-2 mb-2 items-center">
+          {labor.map((l) => (
+            <div key={l.id} className="flex gap-2 mb-2 items-center">
               <button
                 type="button"
-                onClick={() => startDictationForLine("labor", i)}
+                onClick={() => startDictationForLine("labor", l.id)}
                 disabled={!speechCtor}
                 className={`h-9 px-2 rounded-lg border ${
                   !speechCtor
                     ? "border-slate-800 text-slate-600"
-                    : dictating?.kind === "labor" && dictating?.index === i
+                    : dictating?.kind === "labor" && dictating?.id === l.id
                     ? "border-emerald-400 text-emerald-200 bg-emerald-500/10"
                     : "border-slate-700 text-slate-200 hover:border-slate-400"
                 }`}
@@ -574,14 +583,14 @@ export default function WorkOrderDrawer({
 
               <input
                 value={l.description}
-                onChange={(e) => updateLine(setLabor, labor, i, "description", e.target.value)}
+                onChange={(e) => updateLine(setLabor, l.id, "description", e.target.value)}
                 onKeyDown={expandLastTokenOnTab}
                 placeholder="Labor description"
                 className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 h-9"
               />
               <input
                 value={l.price}
-                onChange={(e) => updateLine(setLabor, labor, i, "price", e.target.value)}
+                onChange={(e) => updateLine(setLabor, l.id, "price", e.target.value)}
                 placeholder="0.00"
                 className="w-24 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-right h-9"
               />
@@ -594,21 +603,21 @@ export default function WorkOrderDrawer({
         <div>
           <div className="flex justify-between items-center mb-2">
             <div className="font-semibold">Parts</div>
-            <button onClick={() => addLine(setParts, parts)} className="text-xs text-blue-400">
+            <button onClick={() => addLine(setParts)} className="text-xs text-blue-400">
               + Add
             </button>
           </div>
 
-          {parts.map((p, i) => (
-            <div key={i} className="flex gap-2 mb-2 items-center">
+          {parts.map((p) => (
+            <div key={p.id} className="flex gap-2 mb-2 items-center">
               <button
                 type="button"
-                onClick={() => startDictationForLine("parts", i)}
+                onClick={() => startDictationForLine("parts", p.id)}
                 disabled={!speechCtor}
                 className={`h-9 px-2 rounded-lg border ${
                   !speechCtor
                     ? "border-slate-800 text-slate-600"
-                    : dictating?.kind === "parts" && dictating?.index === i
+                    : dictating?.kind === "parts" && dictating?.id === p.id
                     ? "border-emerald-400 text-emerald-200 bg-emerald-500/10"
                     : "border-slate-700 text-slate-200 hover:border-slate-400"
                 }`}
@@ -619,14 +628,14 @@ export default function WorkOrderDrawer({
 
               <input
                 value={p.description}
-                onChange={(e) => updateLine(setParts, parts, i, "description", e.target.value)}
+                onChange={(e) => updateLine(setParts, p.id, "description", e.target.value)}
                 onKeyDown={expandLastTokenOnTab}
                 placeholder="Part"
                 className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 h-9"
               />
               <input
                 value={p.price}
-                onChange={(e) => updateLine(setParts, parts, i, "price", e.target.value)}
+                onChange={(e) => updateLine(setParts, p.id, "price", e.target.value)}
                 placeholder="0.00"
                 className="w-24 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-right h-9"
               />
