@@ -28,7 +28,7 @@ type Props = {
 };
 
 export type Line = {
-  id: string; // ✅ stable key (prevents “other row changed” bug)
+  id: string; // ✅ stable key prevents “other row changed” bugs
   description: string;
   price: string;
 };
@@ -45,7 +45,6 @@ export type PrintData = {
   parts: Line[];
   laborTotal: number;
   partsTotal: number;
-  shopSuppliesFee: number; // ✅ system fee (auto)
   grand: number;
 
   technicianCode?: string;
@@ -53,11 +52,6 @@ export type PrintData = {
 
   savedAtIso?: string;
 };
-
-/* ---------- constants ---------- */
-
-// ✅ Shop Supplies / Misc materials fee (auto-applied per work order)
-const SHOP_SUPPLIES_FEE = 15;
 
 /* ---------- utils ---------- */
 
@@ -93,10 +87,10 @@ function normalizeLines(lines: Partial<Line>[]) {
 }
 
 /** -------- Quick Text (Tab shorthand expansion) --------
- *  ✅ Only used in Labor/Parts description fields
- *  ✅ Expands only on Tab
- *  ✅ Expands only when caret is at END of field (safe)
- *  ✅ Updates React state directly (no dispatchEvent hacks)
+ *  - Invisible
+ *  - Expands only on Tab
+ *  - Expands only when caret is at END of field
+ *  - ✅ ONLY USED IN Labor + Parts (NOT Technician Notes)
  */
 const QUICK_TEXT: Record<string, string> = {
   // sides / position
@@ -154,7 +148,7 @@ const QUICK_TEXT: Record<string, string> = {
   inst: "install",
   install: "install",
 
-  // shop shorthand
+  // your shop shorthand
   br: "brake",
   bt: "battery test",
   at: "alternator test",
@@ -162,24 +156,17 @@ const QUICK_TEXT: Record<string, string> = {
 
 type TextEl = HTMLInputElement;
 
-function expandLastTokenOnTabControlled(
-  e: KeyboardEvent<TextEl>,
-  currentValue: string,
-  setValue: (next: string) => void,
-  dict = QUICK_TEXT
-) {
+function expandLastTokenOnTab(e: KeyboardEvent<TextEl>, dict = QUICK_TEXT) {
   if (e.key !== "Tab") return;
 
   const el = e.currentTarget;
-  const value = currentValue ?? "";
+  const value = el.value ?? "";
 
-  // caret info
   const caret = el.selectionStart ?? value.length;
 
-  // only expand when caret is at end
+  // only expand when caret is at end (prevents mid-string weirdness)
   if (caret !== value.length) return;
 
-  // last token
   const parts = value.split(/\s+/);
   const last = (parts[parts.length - 1] ?? "").trim().toLowerCase();
   if (!last) return;
@@ -193,16 +180,9 @@ function expandLastTokenOnTabControlled(
   parts[parts.length - 1] = replacement;
   const next = parts.join(" ").replace(/\s+/g, " ").trimStart();
 
-  // ✅ React-safe update
-  setValue(next);
-
-  // Put caret at end on next tick (keeps typing smooth)
-  requestAnimationFrame(() => {
-    try {
-      const len = next.length;
-      el.setSelectionRange(len, len);
-    } catch {}
-  });
+  // set DOM value and notify React
+  el.value = next;
+  el.dispatchEvent(new Event("input", { bubbles: true }));
 }
 
 /** -------- Voice (Web Speech API) -------- */
@@ -272,14 +252,13 @@ export default function WorkOrderDrawer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [row?.id]);
 
-  // Auto-save draft
+  // Auto-save draft (local per device — not realtime across devices)
   useEffect(() => {
     if (!row?.id) return;
 
     const laborTotal = total(labor);
     const partsTotal = total(parts);
-    const shopSuppliesFee = SHOP_SUPPLIES_FEE;
-    const grand = laborTotal + partsTotal + shopSuppliesFee;
+    const grand = laborTotal + partsTotal;
 
     const payload: PrintData = {
       row,
@@ -288,7 +267,6 @@ export default function WorkOrderDrawer({
       parts,
       laborTotal,
       partsTotal,
-      shopSuppliesFee,
       grand,
       technicianCode: (employeeCode || "").trim() || undefined,
       technicianName: (employeeName || "").trim() || undefined,
@@ -315,8 +293,7 @@ export default function WorkOrderDrawer({
 
   const laborTotal = total(labor);
   const partsTotal = total(parts);
-  const shopSuppliesFee = SHOP_SUPPLIES_FEE;
-  const grand = laborTotal + partsTotal + shopSuppliesFee;
+  const grand = laborTotal + partsTotal;
 
   function close() {
     try {
@@ -348,7 +325,6 @@ export default function WorkOrderDrawer({
       parts: normalizeLines(parts),
       laborTotal,
       partsTotal,
-      shopSuppliesFee: SHOP_SUPPLIES_FEE,
       grand,
       technicianCode: techCode || undefined,
       technicianName: (employeeName || "").trim() || undefined,
@@ -396,9 +372,7 @@ export default function WorkOrderDrawer({
       }
     };
     rec.onerror = () => {};
-    rec.onend = () => {
-      setDictating((d) => (d?.kind === "notes" ? null : d));
-    };
+    rec.onend = () => setDictating((d) => (d?.kind === "notes" ? null : d));
 
     setDictating({ kind: "notes" });
     rec.start();
@@ -451,9 +425,7 @@ export default function WorkOrderDrawer({
     };
 
     rec.onerror = () => {};
-    rec.onend = () => {
-      setDictating((d) => (d?.kind === kind && d?.id === lineId ? null : d));
-    };
+    rec.onend = () => setDictating((d) => (d?.kind === kind && d?.id === lineId ? null : d));
 
     setDictating({ kind, id: lineId });
     rec.start();
@@ -547,7 +519,7 @@ export default function WorkOrderDrawer({
           </div>
         ) : null}
 
-        {/* ✅ Notes: NO quick-text / NO Tab expansion */}
+        {/* Technician Notes (NO quick-text Tab expansion here) */}
         <div>
           <div className="flex items-center justify-between gap-2 mb-1">
             <div className="text-sm text-slate-400">Technician Notes</div>
@@ -607,9 +579,7 @@ export default function WorkOrderDrawer({
               <input
                 value={l.description}
                 onChange={(e) => updateLine(setLabor, l.id, "description", e.target.value)}
-                onKeyDown={(e) =>
-                  expandLastTokenOnTabControlled(e, l.description, (next) => updateLine(setLabor, l.id, "description", next))
-                }
+                onKeyDown={expandLastTokenOnTab} // ✅ quick-text ON (Labor)
                 placeholder="Labor description"
                 className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 h-9"
               />
@@ -654,11 +624,7 @@ export default function WorkOrderDrawer({
               <input
                 value={p.description}
                 onChange={(e) => updateLine(setParts, p.id, "description", e.target.value)}
-                onKeyDown={(e) =>
-                  expandLastTokenOnTabControlled(e, p.description, (next) =>
-                    updateLine(setParts, p.id, "description", next)
-                  )
-                }
+                onKeyDown={expandLastTokenOnTab} // ✅ quick-text ON (Parts)
                 placeholder="Part"
                 className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 h-9"
               />
@@ -674,14 +640,7 @@ export default function WorkOrderDrawer({
           <div className="text-right text-sm text-slate-300 mt-1">Parts Total: ${partsTotal.toFixed(2)}</div>
         </div>
 
-        {/* ✅ Shop supplies fee (always on, not editable) */}
-        <div className="text-right text-sm text-slate-300 -mt-2">
-          Shop Supplies Fee: ${shopSuppliesFee.toFixed(2)}
-        </div>
-
-        <div className="border-t border-slate-700 pt-4 text-right text-lg font-bold">
-          Grand Total: ${grand.toFixed(2)}
-        </div>
+        <div className="border-t border-slate-700 pt-4 text-right text-lg font-bold">Grand Total: ${grand.toFixed(2)}</div>
 
         <button onClick={goPrint} className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-semibold">
           Print Work Order
