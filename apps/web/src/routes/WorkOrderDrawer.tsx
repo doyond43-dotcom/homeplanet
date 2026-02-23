@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Dispatch, SetStateAction } from "react";
+import type { Dispatch, SetStateAction, KeyboardEvent } from "react";
 import { useNavigate } from "react-router-dom";
 
 export type JobStage = "diagnosing" | "waiting_parts" | "repairing" | "done";
@@ -66,6 +66,99 @@ function normalizeLines(lines: Line[]) {
 
 function total(lines: Line[]) {
   return (lines || []).reduce((t, l) => t + (parseFloat(l.price) || 0), 0);
+}
+
+/** -------- Quick Text (Tab shorthand expansion) --------
+ *  - Invisible (no UI clutter)
+ *  - Only expands on Tab
+ *  - Only expands when caret is at END of the input (safe)
+ *  - Only touches Labor/Parts description inputs
+ */
+const QUICK_TEXT: Record<string, string> = {
+  // sides / position
+  ds: "driver side",
+  drv: "driver side",
+  driver: "driver side",
+
+  ps: "passenger side",
+  pass: "passenger side",
+  passenger: "passenger side",
+
+  fr: "front",
+  front: "front",
+  rr: "rear",
+  rear: "rear",
+
+  l: "left",
+  left: "left",
+  r: "right",
+  right: "right",
+
+  // common parts / jobs
+  hl: "headlamp",
+  headlamp: "headlamp",
+  headlight: "headlamp",
+
+  alt: "alternator",
+  alternator: "alternator",
+
+  batt: "battery",
+  battery: "battery",
+
+  wm: "window motor",
+  "window-motor": "window motor",
+  window: "window",
+
+  sw: "switch",
+  switch: "switch",
+
+  plug: "tire plug",
+  "tire-plug": "tire plug",
+
+  rot: "rotation",
+  rotate: "rotation",
+  rotation: "rotation",
+
+  // verbs
+  rep: "replace",
+  repl: "replace",
+  replace: "replace",
+
+  test: "test",
+  diag: "diagnostic",
+  diagnostic: "diagnostic",
+
+  inst: "install",
+  install: "install",
+};
+
+function expandLastTokenOnTab(e: KeyboardEvent<HTMLInputElement>, dict = QUICK_TEXT) {
+  if (e.key !== "Tab") return;
+
+  const el = e.currentTarget;
+  const value = el.value ?? "";
+
+  const caret = el.selectionStart ?? value.length;
+  // Safety: only expand when caret is at the end (prevents weird mid-string edits)
+  if (caret !== value.length) return;
+
+  // last token
+  const parts = value.split(/\s+/);
+  const last = (parts[parts.length - 1] ?? "").trim().toLowerCase();
+  if (!last) return;
+
+  const replacement = dict[last];
+  if (!replacement) return;
+
+  // Tab normally moves focus; we only block it when we actually expand
+  e.preventDefault();
+
+  parts[parts.length - 1] = replacement;
+  const next = parts.join(" ").replace(/\s+/g, " ").trimStart();
+
+  // Update the input DOM value then trigger an input event so React state catches up
+  el.value = next;
+  el.dispatchEvent(new Event("input", { bubbles: true }));
 }
 
 /** -------- Voice (Web Speech API) -------- */
@@ -326,11 +419,7 @@ export default function WorkOrderDrawer({
   const lastBy = row.stage_updated_by_employee_code || row.handled_by_employee_code || "";
   const lastAt = row.stage_updated_at || "";
 
-  const techLabel =
-    (employeeName || "").trim() ||
-    (employeeCode || "").trim() ||
-    (lastBy || "").trim() ||
-    "";
+  const techLabel = (employeeName || "").trim() || (employeeCode || "").trim() || (lastBy || "").trim() || "";
 
   return (
     <div className="fixed inset-0 bg-black/60 flex justify-end z-50" onClick={close}>
@@ -471,6 +560,7 @@ export default function WorkOrderDrawer({
               <input
                 value={l.description}
                 onChange={(e) => updateLine(setLabor, labor, i, "description", e.target.value)}
+                onKeyDown={expandLastTokenOnTab}
                 placeholder="Labor description"
                 className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 h-9"
               />
@@ -515,6 +605,7 @@ export default function WorkOrderDrawer({
               <input
                 value={p.description}
                 onChange={(e) => updateLine(setParts, parts, i, "description", e.target.value)}
+                onKeyDown={expandLastTokenOnTab}
                 placeholder="Part"
                 className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 h-9"
               />
