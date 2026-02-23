@@ -372,8 +372,9 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
 
     const timer = window.setTimeout(async () => {
       try {
-        // NOTE: uuid column partial search may depend on PostgREST casting behavior.
-        // We always support exact uuid match via id.eq when input looks like uuid.
+        // We support:
+        // - name + vehicle fuzzy search (always safe)
+        // - id exact match ONLY when input looks like a UUID (uuid cannot be ilike'd)
         const isId = isUuid(qRaw);
         const q = qRaw.replace(/,/g, " ").replace(/\s+/g, " ").trim(); // mild sanitize (avoid breaking .or)
 
@@ -396,11 +397,11 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
           .limit(25);
 
         if (isId) {
-          // exact id match + name/vehicle fuzzy
+          // ✅ id exact match + name/vehicle fuzzy
           query = query.or(`id.eq.${q},payload->>name.ilike.%${q}%,payload->>vehicle.ilike.%${q}%`);
         } else {
-          // fuzzy match name/vehicle + attempt fuzzy id match
-          query = query.or(`payload->>name.ilike.%${q}%,payload->>vehicle.ilike.%${q}%,id.ilike.%${q}%`);
+          // ✅ name/vehicle fuzzy ONLY (avoid uuid ilike operator error)
+          query = query.or(`payload->>name.ilike.%${q}%,payload->>vehicle.ilike.%${q}%`);
         }
 
         const { data, error } = await query;
@@ -613,7 +614,7 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
 
                   {!lookupBusy && lookupResults.length === 0 ? (
                     <div className="px-3 py-4 text-sm text-slate-500">
-                      No matches. Try full UUID for id searches if partial id doesn’t match.
+                      No matches. (Tip: ID search requires full UUID.)
                     </div>
                   ) : null}
                 </div>
