@@ -72,7 +72,8 @@ function total(lines: Line[]) {
  *  - Invisible (no UI clutter)
  *  - Only expands on Tab
  *  - Only expands when caret is at END of the input (safe)
- *  - Only touches Labor/Parts description inputs
+ *  - Touches Labor/Parts description inputs
+ *  - ✅ Also supports Technician Notes textarea (optional, enabled below)
  */
 const QUICK_TEXT: Record<string, string> = {
   // sides / position
@@ -132,7 +133,8 @@ const QUICK_TEXT: Record<string, string> = {
   install: "install",
 };
 
-function expandLastTokenOnTab(e: KeyboardEvent<HTMLInputElement>, dict = QUICK_TEXT) {
+// ✅ FIX: support both <input> and <textarea>
+function expandLastTokenOnTab(e: KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>, dict = QUICK_TEXT) {
   if (e.key !== "Tab") return;
 
   const el = e.currentTarget;
@@ -525,6 +527,7 @@ export default function WorkOrderDrawer({
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
+            onKeyDown={expandLastTokenOnTab} // ✅ NOW TAB EXPANDS HERE TOO
             className="w-full h-28 bg-slate-900 border border-slate-700 rounded-xl p-3"
             placeholder="Diagnosis, findings, recommendations..."
           />
