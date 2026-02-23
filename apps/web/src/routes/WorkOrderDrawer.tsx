@@ -90,7 +90,7 @@ function normalizeLines(lines: Partial<Line>[]) {
  *  - Invisible (no UI clutter)
  *  - Expands only on Tab
  *  - Expands only when caret is at END of field (safe)
- *  - Works in: Labor/Parts inputs + Notes textarea
+ *  - Works ONLY in: Labor/Parts description inputs
  */
 const QUICK_TEXT: Record<string, string> = {
   // sides / position
@@ -148,20 +148,17 @@ const QUICK_TEXT: Record<string, string> = {
   inst: "install",
   install: "install",
 
-  // your shop shorthand
+  // shop shorthand
   br: "brake",
   bt: "battery test",
   at: "alternator test",
 };
 
-type TextEl = HTMLInputElement | HTMLTextAreaElement;
-
-function expandLastTokenOnTab(e: KeyboardEvent<TextEl>, dict = QUICK_TEXT) {
+function expandLastTokenOnTab(e: KeyboardEvent<HTMLInputElement>, dict = QUICK_TEXT) {
   if (e.key !== "Tab") return;
 
   const el = e.currentTarget;
   const value = el.value ?? "";
-
   const caret = el.selectionStart ?? value.length;
 
   // only expand when caret is at end (prevents mid-string weirdness)
@@ -229,7 +226,7 @@ export default function WorkOrderDrawer({
 
   const speechCtor = useMemo(() => getSpeechRecognition(), []);
 
-  // Load draft when opening a job (✅ includes draftKey)
+  // Load draft when opening a job
   useEffect(() => {
     if (!row?.id) return;
 
@@ -250,7 +247,8 @@ export default function WorkOrderDrawer({
     setNotes(nextNotes);
     setLabor(nextLabor);
     setParts(nextParts);
-  }, [row?.id, draftKey]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [row?.id]);
 
   // Auto-save draft
   useEffect(() => {
@@ -547,7 +545,6 @@ export default function WorkOrderDrawer({
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            onKeyDown={expandLastTokenOnTab} // ✅ quick-text works in notes too
             className="w-full h-28 bg-slate-900 border border-slate-700 rounded-xl p-3"
             placeholder="Diagnosis, findings, recommendations..."
           />
