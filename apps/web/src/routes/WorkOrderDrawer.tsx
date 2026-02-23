@@ -229,7 +229,7 @@ export default function WorkOrderDrawer({
 
   const speechCtor = useMemo(() => getSpeechRecognition(), []);
 
-  // Load draft when opening a job
+  // Load draft when opening a job (✅ includes draftKey)
   useEffect(() => {
     if (!row?.id) return;
 
@@ -250,8 +250,7 @@ export default function WorkOrderDrawer({
     setNotes(nextNotes);
     setLabor(nextLabor);
     setParts(nextParts);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [row?.id]);
+  }, [row?.id, draftKey]);
 
   // Auto-save draft
   useEffect(() => {
