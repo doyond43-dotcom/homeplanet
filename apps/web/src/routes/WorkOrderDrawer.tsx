@@ -27,7 +27,7 @@ type Props = {
 };
 
 export type Line = {
-  id: string; // ✅ stable key (fixes “other row changed” bug)
+  id: string; // ✅ stable key
   description: string;
   price: string;
 };
@@ -65,7 +65,6 @@ function total(lines: Line[]) {
 }
 
 function makeId() {
-  // browser-safe stable id
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const c = (globalThis as any)?.crypto;
@@ -87,10 +86,10 @@ function normalizeLines(lines: Partial<Line>[]) {
 }
 
 /** -------- Quick Text (Tab shorthand expansion) --------
- *  - Invisible (no UI clutter)
+ *  - ONLY for Labor/Parts description fields
  *  - Expands only on Tab
  *  - Expands only when caret is at END of field (safe)
- *  - Works ONLY in: Labor/Parts description inputs
+ *  - DOES NOT dispatch synthetic input events (fixes weird cross-field updates)
  */
 const QUICK_TEXT: Record<string, string> = {
   // sides / position
@@ -154,33 +153,24 @@ const QUICK_TEXT: Record<string, string> = {
   at: "alternator test",
 };
 
-function expandLastTokenOnTab(e: KeyboardEvent<HTMLInputElement>, dict = QUICK_TEXT) {
-  if (e.key !== "Tab") return;
+type TextEl = HTMLInputElement;
 
-  const el = e.currentTarget;
-  const value = el.value ?? "";
-  const caret = el.selectionStart ?? value.length;
+function maybeExpandLastToken(valueRaw: string, caret: number, dict = QUICK_TEXT) {
+  const value = valueRaw ?? "";
+  if (caret !== value.length) return null; // only expand at end
 
-  // only expand when caret is at end (prevents mid-string weirdness)
-  if (caret !== value.length) return;
-
-  // last token
   const parts = value.split(/\s+/);
   const last = (parts[parts.length - 1] ?? "").trim().toLowerCase();
-  if (!last) return;
+  if (!last) return null;
 
   const replacement = dict[last];
-  if (!replacement) return;
-
-  // only block Tab when we actually expand
-  e.preventDefault();
+  if (!replacement) return null;
 
   parts[parts.length - 1] = replacement;
-  const next = parts.join(" ").replace(/\s+/g, " ").trimStart();
 
-  // set DOM value and notify React
-  el.value = next;
-  el.dispatchEvent(new Event("input", { bubbles: true }));
+  // keep spacing sane, but don't nuke leading spaces if user started with one
+  const next = parts.join(" ").replace(/\s+/g, " ").trimStart();
+  return next;
 }
 
 /** -------- Voice (Web Speech API) -------- */
@@ -287,6 +277,33 @@ export default function WorkOrderDrawer({
 
   function addLine(setter: Dispatch<SetStateAction<Line[]>>) {
     setter((prev) => [...prev, { id: makeId(), description: "", price: "" }]);
+  }
+
+  // Tab-expand ONLY for labor/parts description inputs
+  function onDescKeyDown(
+    e: KeyboardEvent<TextEl>,
+    setter: Dispatch<SetStateAction<Line[]>>,
+    lineId: string
+  ) {
+    if (e.key !== "Tab") return;
+
+    const el = e.currentTarget;
+    const next = maybeExpandLastToken(el.value ?? "", el.selectionStart ?? (el.value?.length ?? 0));
+    if (!next) return; // allow normal Tab behavior
+
+    // We ARE expanding -> stop focus jump
+    e.preventDefault();
+
+    // Update the exact line in state (no DOM tricks)
+    updateLine(setter, lineId, "description", next);
+
+    // Keep caret at end on next frame
+    requestAnimationFrame(() => {
+      try {
+        const len = next.length;
+        el.setSelectionRange(len, len);
+      } catch {}
+    });
   }
 
   const laborTotal = total(labor);
@@ -542,6 +559,7 @@ export default function WorkOrderDrawer({
             </button>
           </div>
 
+          {/* ✅ NO smart-text in notes (avoids cross-field weirdness) */}
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
@@ -580,7 +598,7 @@ export default function WorkOrderDrawer({
               <input
                 value={l.description}
                 onChange={(e) => updateLine(setLabor, l.id, "description", e.target.value)}
-                onKeyDown={expandLastTokenOnTab}
+                onKeyDown={(e) => onDescKeyDown(e, setLabor, l.id)} // ✅ smart-text here
                 placeholder="Labor description"
                 className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 h-9"
               />
@@ -625,7 +643,7 @@ export default function WorkOrderDrawer({
               <input
                 value={p.description}
                 onChange={(e) => updateLine(setParts, p.id, "description", e.target.value)}
-                onKeyDown={expandLastTokenOnTab}
+                onKeyDown={(e) => onDescKeyDown(e, setParts, p.id)} // ✅ smart-text here
                 placeholder="Part"
                 className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 h-9"
               />
