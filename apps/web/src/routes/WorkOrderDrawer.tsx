@@ -29,7 +29,7 @@ type Props = {
 };
 
 export type Line = {
-  id: string; // ✅ stable key prevents “other row changed” bugs
+  id: string; // stable key
   description: string;
   price: string;
 };
@@ -52,24 +52,6 @@ export type PrintData = {
   technicianName?: string;
 
   savedAtIso?: string;
-};
-
-/* ---------- shared doc (Supabase) ---------- */
-
-type WorkOrderDoc = {
-  shop_slug: string;
-  job_id: string;
-
-  technician_notes: string;
-  labor: Line[];
-  parts: Line[];
-
-  labor_total: number;
-  parts_total: number;
-  grand_total: number;
-
-  updated_by_employee_code?: string | null;
-  updated_at?: string | null;
 };
 
 /* ---------- utils ---------- */
@@ -105,29 +87,8 @@ function normalizeLines(lines: Partial<Line>[]) {
   return cleaned.length ? cleaned : [{ id: makeId(), description: "", price: "" }];
 }
 
-function safeJson(x: unknown) {
-  try {
-    return JSON.stringify(x ?? null);
-  } catch {
-    return "";
-  }
-}
-
-function computeTotals(labor: Line[], parts: Line[]) {
-  const laborTotal = total(labor);
-  const partsTotal = total(parts);
-  const grand = laborTotal + partsTotal;
-  return { laborTotal, partsTotal, grand };
-}
-
-/** -------- Quick Text (Tab shorthand expansion) --------
- *  - Invisible
- *  - Expands only on Tab
- *  - Expands only when caret is at END of field
- *  - ✅ ONLY USED IN Labor + Parts (NOT Technician Notes)
- */
+/** -------- Quick Text (Tab shorthand expansion) -------- */
 const QUICK_TEXT: Record<string, string> = {
-  // sides / position
   ds: "driver side",
   drv: "driver side",
   driver: "driver side",
@@ -146,7 +107,6 @@ const QUICK_TEXT: Record<string, string> = {
   r: "right",
   right: "right",
 
-  // common parts / jobs
   hl: "headlamp",
   headlamp: "headlamp",
   headlight: "headlamp",
@@ -170,7 +130,6 @@ const QUICK_TEXT: Record<string, string> = {
   rotate: "rotation",
   rotation: "rotation",
 
-  // verbs / actions
   rep: "replace",
   repl: "replace",
   replace: "replace",
@@ -182,7 +141,6 @@ const QUICK_TEXT: Record<string, string> = {
   inst: "install",
   install: "install",
 
-  // your shop shorthand
   br: "brake",
   bt: "battery test",
   at: "alternator test",
@@ -197,8 +155,6 @@ function expandLastTokenOnTab(e: KeyboardEvent<TextEl>, dict = QUICK_TEXT) {
   const value = el.value ?? "";
 
   const caret = el.selectionStart ?? value.length;
-
-  // only expand when caret is at end (prevents mid-string weirdness)
   if (caret !== value.length) return;
 
   const parts = value.split(/\s+/);
@@ -208,13 +164,11 @@ function expandLastTokenOnTab(e: KeyboardEvent<TextEl>, dict = QUICK_TEXT) {
   const replacement = dict[last];
   if (!replacement) return;
 
-  // only block Tab when we actually expand
   e.preventDefault();
 
   parts[parts.length - 1] = replacement;
   const next = parts.join(" ").replace(/\s+/g, " ").trimStart();
 
-  // set DOM value and notify React
   el.value = next;
   el.dispatchEvent(new Event("input", { bubbles: true }));
 }
@@ -240,6 +194,27 @@ function getSpeechRecognition(): (new () => SpeechRec) | null {
   return w.SpeechRecognition || w.webkitSpeechRecognition || null;
 }
 
+/* ---------- realtime shared draft model ---------- */
+
+type DraftDoc = {
+  notes: string;
+  labor: Line[];
+  parts: Line[];
+};
+
+function toDraftDoc(notes: string, labor: Line[], parts: Line[]): DraftDoc {
+  return {
+    notes: String(notes || ""),
+    labor: normalizeLines(labor || []),
+    parts: normalizeLines(parts || []),
+  };
+}
+
+function shallowEqDoc(a: DraftDoc, b: DraftDoc) {
+  // Simple string compare is fine because we store normalized arrays with stable ids.
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
 export default function WorkOrderDrawer({
   open,
   row,
@@ -250,39 +225,238 @@ export default function WorkOrderDrawer({
 }: Props) {
   const nav = useNavigate();
 
+  // ✅ singleton client (one per tab)
   const supabase = useMemo(() => getSupabase(), []);
 
   const jobId = row?.id || "";
-  const shopSlug = row?.slug || "";
-
   const draftKey = useMemo(() => (jobId ? `workOrderDraft:${jobId}` : ""), [jobId]);
 
   const [notes, setNotes] = useState("");
   const [labor, setLabor] = useState<Line[]>(() => [{ id: makeId(), description: "", price: "" }]);
   const [parts, setParts] = useState<Line[]>(() => [{ id: makeId(), description: "", price: "" }]);
 
+  // Live sync status UI
+  const [syncLabel, setSyncLabel] = useState<string>(""); // "Live sync" / error text
+  const [savedAt, setSavedAt] = useState<string>("");
+
+  // identify this tab/device so we can ignore our own realtime echoes
+  const clientId = useMemo(() => {
+    try {
+      const existing = sessionStorage.getItem("hp_client_id");
+      if (existing) return existing;
+      const id = makeId();
+      sessionStorage.setItem("hp_client_id", id);
+      return id;
+    } catch {
+      return makeId();
+    }
+  }, []);
+
   const [dictating, setDictating] = useState<null | { kind: "notes" | "labor" | "parts"; id?: string }>(null);
   const recRef = useRef<SpeechRec | null>(null);
 
   const speechCtor = useMemo(() => getSpeechRecognition(), []);
 
-  // Realtime / save indicators
-  const [syncStatus, setSyncStatus] = useState<"idle" | "loading" | "saving" | "live" | "error">("idle");
-  const [syncMsg, setSyncMsg] = useState<string>("");
-  const [lastSavedIso, setLastSavedIso] = useState<string>("");
-
-  // Guards to prevent overwriting local edits with incoming realtime
-  const lastLocalEditAtRef = useRef<number>(0);
-  const lastServerUpdatedAtRef = useRef<string | null>(null);
-
+  // refs for debounce + stale-guard
+  const lastAppliedRemoteRef = useRef<string>(""); // json string
+  const lastSentRef = useRef<string>(""); // json string
   const saveTimerRef = useRef<number | null>(null);
+  const mountedRef = useRef(false);
 
-  // Track current job key (helps prevent stale updates)
-  const jobKey = useMemo(() => (shopSlug && jobId ? `${shopSlug}:${jobId}` : ""), [shopSlug, jobId]);
+  /* ---------- Load draft when opening a job (local first, then DB) ---------- */
+  useEffect(() => {
+    if (!row?.id) return;
 
-  function markLocalEdit() {
-    lastLocalEditAtRef.current = Date.now();
-  }
+    mountedRef.current = true;
+    setSyncLabel("Live sync");
+    setSavedAt("");
+
+    // 1) load local immediately (fast UX)
+    try {
+      const raw = localStorage.getItem(draftKey);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Partial<PrintData>;
+        setNotes(String(parsed.notes || ""));
+        setLabor(normalizeLines((parsed.labor as Partial<Line>[]) || []));
+        setParts(normalizeLines((parsed.parts as Partial<Line>[]) || []));
+        if (parsed.savedAtIso) setSavedAt(formatTime(String(parsed.savedAtIso)));
+      } else {
+        setNotes("");
+        setLabor([{ id: makeId(), description: "", price: "" }]);
+        setParts([{ id: makeId(), description: "", price: "" }]);
+      }
+    } catch {
+      setNotes("");
+      setLabor([{ id: makeId(), description: "", price: "" }]);
+      setParts([{ id: makeId(), description: "", price: "" }]);
+    }
+
+    // 2) load shared DB draft (authoritative for cross-device)
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from("work_order_drafts")
+          .select("doc, updated_at, updated_by")
+          .eq("job_id", row.id)
+          .limit(1)
+          .maybeSingle();
+
+        if (!mountedRef.current) return;
+
+        if (error) {
+          setSyncLabel(`Live sync (read err)`);
+          return;
+        }
+
+        if (data?.doc) {
+          const doc = data.doc as DraftDoc;
+          const normalized = toDraftDoc(doc.notes || "", (doc.labor as any) || [], (doc.parts as any) || []);
+          const js = JSON.stringify(normalized);
+
+          lastAppliedRemoteRef.current = js;
+
+          setNotes(normalized.notes);
+          setLabor(normalized.labor);
+          setParts(normalized.parts);
+
+          if (data.updated_at) setSavedAt(formatTime(String(data.updated_at)));
+        }
+      } catch {
+        if (!mountedRef.current) return;
+        setSyncLabel(`Live sync (read err)`);
+      }
+    })();
+
+    return () => {
+      mountedRef.current = false;
+      if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [row?.id, draftKey]);
+
+  /* ---------- Realtime subscribe to shared DB draft ---------- */
+  useEffect(() => {
+    if (!open || !row?.id) return;
+
+    const chan = supabase
+      .channel(`wo-draft:${row.id}`, { config: { broadcast: { ack: true } } })
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "work_order_drafts", filter: `job_id=eq.${row.id}` },
+        (p: any) => {
+          const next = p.new;
+          if (!next?.doc) return;
+
+          // ignore our own writes
+          const updatedBy = String(next.updated_by || "");
+          if (updatedBy && updatedBy === clientId) return;
+
+          const doc = next.doc as DraftDoc;
+          const normalized = toDraftDoc(doc.notes || "", (doc.labor as any) || [], (doc.parts as any) || []);
+          const js = JSON.stringify(normalized);
+
+          // prevent loops + redundant sets
+          if (js === lastAppliedRemoteRef.current) return;
+
+          lastAppliedRemoteRef.current = js;
+
+          // if our current local state equals the remote, no-op
+          const current = toDraftDoc(notes, labor, parts);
+          if (shallowEqDoc(current, normalized)) return;
+
+          setNotes(normalized.notes);
+          setLabor(normalized.labor);
+          setParts(normalized.parts);
+
+          if (next.updated_at) setSavedAt(formatTime(String(next.updated_at)));
+          setSyncLabel("Live sync");
+        }
+      )
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") setSyncLabel("Live sync");
+        else setSyncLabel(`Live sync (${String(status)})`);
+      });
+
+    return () => {
+      try {
+        supabase.removeChannel(chan);
+      } catch {}
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, row?.id]);
+
+  /* ---------- Save: local (always) + shared DB (debounced) ---------- */
+  useEffect(() => {
+    if (!row?.id) return;
+
+    const laborTotal = total(labor);
+    const partsTotal = total(parts);
+    const grand = laborTotal + partsTotal;
+
+    const payload: PrintData = {
+      row,
+      notes,
+      labor,
+      parts,
+      laborTotal,
+      partsTotal,
+      grand,
+      technicianCode: (employeeCode || "").trim() || undefined,
+      technicianName: (employeeName || "").trim() || undefined,
+      savedAtIso: new Date().toISOString(),
+    };
+
+    // 1) local safety draft
+    try {
+      localStorage.setItem(draftKey, JSON.stringify(payload));
+    } catch {}
+
+    // 2) shared DB (debounced)
+    const doc = toDraftDoc(notes, labor, parts);
+    const js = JSON.stringify(doc);
+
+    // If we just applied this from remote, don't immediately re-upsert
+    if (js === lastAppliedRemoteRef.current) return;
+
+    // If we already sent same content, skip
+    if (js === lastSentRef.current) return;
+
+    if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = window.setTimeout(async () => {
+      try {
+        setSyncLabel("Live sync");
+
+        const tech =
+          (employeeCode || "").trim() ||
+          (row.stage_updated_by_employee_code || row.handled_by_employee_code || "").trim() ||
+          "";
+
+        const { error } = await supabase.from("work_order_drafts").upsert(
+          {
+            job_id: row.id,
+            slug: row.slug,
+            doc,
+            updated_by: clientId, // 👈 this device/tab
+          },
+          { onConflict: "job_id" }
+        );
+
+        if (error) {
+          setSyncLabel("Live sync (save err)");
+          return;
+        }
+
+        lastSentRef.current = js;
+        setSavedAt(formatTime(new Date().toISOString()));
+        setSyncLabel("Live sync");
+      } catch {
+        setSyncLabel("Live sync (save err)");
+      }
+    }, 250); // fast enough to feel live, slow enough to avoid hammering
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [row?.id, draftKey, notes, labor, parts, row, employeeCode, employeeName]);
 
   function updateLine(
     setter: Dispatch<SetStateAction<Line[]>>,
@@ -290,12 +464,10 @@ export default function WorkOrderDrawer({
     key: keyof Omit<Line, "id">,
     val: string
   ) {
-    markLocalEdit();
     setter((prev) => prev.map((l) => (l.id === id ? { ...l, [key]: val } : l)));
   }
 
   function addLine(setter: Dispatch<SetStateAction<Line[]>>) {
-    markLocalEdit();
     setter((prev) => [...prev, { id: makeId(), description: "", price: "" }]);
   }
 
@@ -376,7 +548,6 @@ export default function WorkOrderDrawer({
     rec.onresult = (ev: any) => {
       const t = ev?.results?.[0]?.[0]?.transcript;
       if (typeof t === "string" && t.trim()) {
-        markLocalEdit();
         setNotes((prev) => (prev ? prev.trimEnd() + "\n" + t.trim() : t.trim()));
       }
     };
@@ -412,7 +583,6 @@ export default function WorkOrderDrawer({
     rec.onresult = (ev: any) => {
       const t = ev?.results?.[0]?.[0]?.transcript;
       if (typeof t === "string" && t.trim()) {
-        markLocalEdit();
         const text = t.trim();
         if (kind === "labor") {
           setLabor((prev) =>
@@ -440,286 +610,6 @@ export default function WorkOrderDrawer({
     setDictating({ kind, id: lineId });
     rec.start();
   }
-
-  /* =========================
-     1) Load doc on open
-     - Prefer server doc (job_work_orders)
-     - Fall back to local draft if server missing
-     - Ensure server doc exists (upsert empty if needed)
-  ========================= */
-
-  useEffect(() => {
-    if (!open) return;
-    if (!row?.id) return;
-    if (!shopSlug || !jobId) return;
-
-    let cancelled = false;
-
-    const loadDoc = async () => {
-      setSyncStatus("loading");
-      setSyncMsg("");
-
-      // 1) Start with local draft fallback (fast)
-      let nextNotes = "";
-      let nextLabor: Line[] = [{ id: makeId(), description: "", price: "" }];
-      let nextParts: Line[] = [{ id: makeId(), description: "", price: "" }];
-
-      try {
-        const raw = localStorage.getItem(draftKey);
-        if (raw) {
-          const parsed = JSON.parse(raw) as Partial<PrintData>;
-          nextNotes = String(parsed.notes || "");
-          nextLabor = normalizeLines((parsed.labor as Partial<Line>[]) || []);
-          nextParts = normalizeLines((parsed.parts as Partial<Line>[]) || []);
-        }
-      } catch {}
-
-      // Apply local first (so UI isn't blank)
-      setNotes(nextNotes);
-      setLabor(nextLabor);
-      setParts(nextParts);
-
-      // 2) Now prefer server (true shared doc)
-      try {
-        const { data, error } = await supabase
-          .from("job_work_orders")
-          .select("*")
-          .eq("shop_slug", shopSlug)
-          .eq("job_id", jobId)
-          .maybeSingle();
-
-        if (cancelled) return;
-
-        if (error) {
-          setSyncStatus("error");
-          setSyncMsg(String(error?.message || "Failed to load shared doc"));
-          return;
-        }
-
-        if (data) {
-          const d = data as WorkOrderDoc;
-          lastServerUpdatedAtRef.current = d.updated_at ?? null;
-
-          setNotes(String(d.technician_notes || ""));
-          setLabor(normalizeLines((d.labor as any) || []));
-          setParts(normalizeLines((d.parts as any) || []));
-
-          setLastSavedIso(d.updated_at || "");
-          setSyncStatus("live");
-          setSyncMsg("Live");
-          return;
-        }
-
-        // 3) No server doc yet -> create one (upsert empty or based on local)
-        const baseLabor = normalizeLines(nextLabor);
-        const baseParts = normalizeLines(nextParts);
-        const baseTotals = computeTotals(baseLabor, baseParts);
-
-        const emptyDoc: Partial<WorkOrderDoc> = {
-          shop_slug: shopSlug,
-          job_id: jobId,
-          technician_notes: nextNotes || "",
-          labor: baseLabor,
-          parts: baseParts,
-          labor_total: baseTotals.laborTotal,
-          parts_total: baseTotals.partsTotal,
-          grand_total: baseTotals.grand,
-          updated_by_employee_code: (employeeCode || "").trim() || null,
-          updated_at: new Date().toISOString(),
-        };
-
-        const { error: upErr } = await supabase
-          .from("job_work_orders")
-          .upsert(emptyDoc, { onConflict: "shop_slug,job_id" });
-
-        if (cancelled) return;
-
-        if (upErr) {
-          setSyncStatus("error");
-          setSyncMsg(String(upErr?.message || "Failed to create shared doc"));
-          return;
-        }
-
-        setSyncStatus("live");
-        setSyncMsg("Live");
-      } catch (e: any) {
-        if (cancelled) return;
-        setSyncStatus("error");
-        setSyncMsg(String(e?.message || e || "Failed to load shared doc"));
-      }
-    };
-
-    loadDoc();
-
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, row?.id, jobKey]);
-
-  /* =========================
-     2) Realtime subscribe for this job doc
-     - When another device saves, we update instantly
-     - Guard against stomping local edits (short window)
-  ========================= */
-
-  useEffect(() => {
-    if (!open) return;
-    if (!row?.id) return;
-    if (!shopSlug || !jobId) return;
-
-    let isMounted = true;
-
-    const channel = supabase
-      .channel(`wo:${shopSlug}:${jobId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "job_work_orders",
-          filter: `shop_slug=eq.${shopSlug}`,
-        },
-        (payload: any) => {
-          if (!isMounted) return;
-
-          const next = payload?.new as WorkOrderDoc | undefined;
-          if (!next) return;
-          if (String(next.job_id) !== String(jobId)) return;
-
-          // If we just edited locally, don't overwrite mid-typing
-          const msSinceLocal = Date.now() - lastLocalEditAtRef.current;
-          if (msSinceLocal < 700) return;
-
-          // Apply only if newer than what we have
-          const nextAt = next.updated_at ?? null;
-          const prevAt = lastServerUpdatedAtRef.current;
-          if (nextAt && prevAt && nextAt <= prevAt) return;
-
-          lastServerUpdatedAtRef.current = nextAt;
-
-          setNotes(String(next.technician_notes || ""));
-          setLabor(normalizeLines((next.labor as any) || []));
-          setParts(normalizeLines((next.parts as any) || []));
-
-          setLastSavedIso(nextAt || "");
-          setSyncStatus("live");
-          setSyncMsg("Live");
-        }
-      )
-      .subscribe((status) => {
-        // status can be 'SUBSCRIBED' / 'CHANNEL_ERROR' / etc.
-        if (String(status) === "SUBSCRIBED") {
-          setSyncStatus("live");
-          setSyncMsg("Live");
-        }
-      });
-
-    return () => {
-      isMounted = false;
-      try {
-        supabase.removeChannel(channel);
-      } catch {}
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, row?.id, jobKey]);
-
-  /* =========================
-     3) Local draft autosave (safety fallback)
-     - Keeps your existing "refresh won't nuke it" behavior
-  ========================= */
-
-  useEffect(() => {
-    if (!row?.id) return;
-
-    const { laborTotal, partsTotal, grand } = computeTotals(labor, parts);
-
-    const payload: PrintData = {
-      row,
-      notes,
-      labor,
-      parts,
-      laborTotal,
-      partsTotal,
-      grand,
-      technicianCode: (employeeCode || "").trim() || undefined,
-      technicianName: (employeeName || "").trim() || undefined,
-      savedAtIso: new Date().toISOString(),
-    };
-
-    try {
-      localStorage.setItem(draftKey, JSON.stringify(payload));
-    } catch {}
-  }, [row?.id, draftKey, notes, labor, parts, row, employeeCode, employeeName]);
-
-  /* =========================
-     4) Shared doc autosave (Google Docs)
-     - Debounced upsert to job_work_orders
-     - Writes notes + labor + parts + totals
-  ========================= */
-
-  useEffect(() => {
-    if (!open) return;
-    if (!row?.id) return;
-    if (!shopSlug || !jobId) return;
-
-    // debounce saves
-    if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
-
-    saveTimerRef.current = window.setTimeout(async () => {
-      try {
-        setSyncStatus("saving");
-        setSyncMsg("Saving…");
-
-        const nlabor = normalizeLines(labor);
-        const nparts = normalizeLines(parts);
-        const { laborTotal, partsTotal, grand } = computeTotals(nlabor, nparts);
-
-        const nowIso = new Date().toISOString();
-
-        // mark last local edit (prevents immediate realtime echo overwrites)
-        lastLocalEditAtRef.current = Date.now();
-
-        const doc: Partial<WorkOrderDoc> = {
-          shop_slug: shopSlug,
-          job_id: jobId,
-          technician_notes: String(notes || ""),
-          labor: nlabor,
-          parts: nparts,
-          labor_total: laborTotal,
-          parts_total: partsTotal,
-          grand_total: grand,
-          updated_by_employee_code: (employeeCode || "").trim() || null,
-          updated_at: nowIso,
-        };
-
-        const { error } = await supabase
-          .from("job_work_orders")
-          .upsert(doc, { onConflict: "shop_slug,job_id" });
-
-        if (error) {
-          setSyncStatus("error");
-          setSyncMsg(String(error?.message || "Save failed"));
-          return;
-        }
-
-        lastServerUpdatedAtRef.current = nowIso;
-        setLastSavedIso(nowIso);
-        setSyncStatus("live");
-        setSyncMsg("Live");
-      } catch (e: any) {
-        setSyncStatus("error");
-        setSyncMsg(String(e?.message || e || "Save failed"));
-      }
-    }, 350);
-
-    return () => {
-      if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
-    };
-
-    // IMPORTANT: stabilize deps to prevent save-loops
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, row?.id, jobKey, safeJson(notes), safeJson(labor), safeJson(parts), (employeeCode || "").trim()]);
 
   if (!open || !row) return null;
 
@@ -759,41 +649,12 @@ export default function WorkOrderDrawer({
               </div>
             ) : null}
 
-            {/* Live Sync badge */}
-            <div className="mt-2 inline-flex items-center gap-2 text-[11px]">
-              <span
-                className={`rounded-md border px-2 py-0.5 font-semibold ${
-                  syncStatus === "live"
-                    ? "border-emerald-400/40 text-emerald-200 bg-emerald-500/10"
-                    : syncStatus === "saving"
-                    ? "border-blue-400/40 text-blue-200 bg-blue-500/10"
-                    : syncStatus === "loading"
-                    ? "border-slate-600 text-slate-300 bg-slate-900/40"
-                    : syncStatus === "error"
-                    ? "border-red-400/40 text-red-200 bg-red-500/10"
-                    : "border-slate-700 text-slate-300 bg-slate-900/40"
-                }`}
-                title={syncMsg || ""}
-              >
-                {syncStatus === "loading"
-                  ? "Loading…"
-                  : syncStatus === "saving"
-                  ? "Saving…"
-                  : syncStatus === "error"
-                  ? "Sync error"
-                  : "Live sync"}
+            <div className="mt-2 flex items-center gap-3">
+              <span className="text-[11px] font-semibold rounded-md border border-emerald-700/60 bg-emerald-600/10 px-2 py-1 text-emerald-200">
+                {syncLabel || "Live sync"}
               </span>
-
-              {lastSavedIso ? (
-                <span className="text-slate-500">Saved: {formatTime(lastSavedIso)}</span>
-              ) : null}
+              {savedAt ? <span className="text-[11px] text-slate-500">Saved: {savedAt}</span> : null}
             </div>
-
-            {syncStatus === "error" && syncMsg ? (
-              <div className="mt-2 text-[11px] text-red-200 bg-red-500/10 border border-red-500/20 rounded-lg px-2 py-2 whitespace-pre-wrap">
-                {syncMsg}
-              </div>
-            ) : null}
           </div>
 
           <button onClick={close} className="border border-slate-700 px-3 py-2 rounded-lg hover:border-slate-400">
@@ -845,7 +706,7 @@ export default function WorkOrderDrawer({
           </div>
         ) : null}
 
-        {/* Technician Notes (NO quick-text Tab expansion here) */}
+        {/* Technician Notes */}
         <div>
           <div className="flex items-center justify-between gap-2 mb-1">
             <div className="text-sm text-slate-400">Technician Notes</div>
@@ -869,26 +730,17 @@ export default function WorkOrderDrawer({
 
           <textarea
             value={notes}
-            onChange={(e) => {
-              markLocalEdit();
-              setNotes(e.target.value);
-            }}
+            onChange={(e) => setNotes(e.target.value)}
             className="w-full h-28 bg-slate-900 border border-slate-700 rounded-xl p-3"
             placeholder="Diagnosis, findings, recommendations..."
           />
-          <div className="text-[11px] text-slate-500 mt-2">
-            (Live sync + local safety draft — so refresh won’t nuke it.)
-          </div>
+          <div className="text-[11px] text-slate-500 mt-2">(Live sync + local safety draft — so refresh won’t nuke it.)</div>
         </div>
 
         <div>
           <div className="flex justify-between items-center mb-2">
             <div className="font-semibold">Labor</div>
-            <button
-              onClick={() => addLine(setLabor)}
-              className="text-xs text-blue-400"
-              type="button"
-            >
+            <button onClick={() => addLine(setLabor)} className="text-xs text-blue-400">
               + Add
             </button>
           </div>
@@ -914,7 +766,7 @@ export default function WorkOrderDrawer({
               <input
                 value={l.description}
                 onChange={(e) => updateLine(setLabor, l.id, "description", e.target.value)}
-                onKeyDown={expandLastTokenOnTab} // ✅ quick-text ON (Labor)
+                onKeyDown={expandLastTokenOnTab}
                 placeholder="Labor description"
                 className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 h-9"
               />
@@ -933,11 +785,7 @@ export default function WorkOrderDrawer({
         <div>
           <div className="flex justify-between items-center mb-2">
             <div className="font-semibold">Parts</div>
-            <button
-              onClick={() => addLine(setParts)}
-              className="text-xs text-blue-400"
-              type="button"
-            >
+            <button onClick={() => addLine(setParts)} className="text-xs text-blue-400">
               + Add
             </button>
           </div>
@@ -963,7 +811,7 @@ export default function WorkOrderDrawer({
               <input
                 value={p.description}
                 onChange={(e) => updateLine(setParts, p.id, "description", e.target.value)}
-                onKeyDown={expandLastTokenOnTab} // ✅ quick-text ON (Parts)
+                onKeyDown={expandLastTokenOnTab}
                 placeholder="Part"
                 className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 h-9"
               />
@@ -979,9 +827,7 @@ export default function WorkOrderDrawer({
           <div className="text-right text-sm text-slate-300 mt-1">Parts Total: ${partsTotal.toFixed(2)}</div>
         </div>
 
-        <div className="border-t border-slate-700 pt-4 text-right text-lg font-bold">
-          Grand Total: ${grand.toFixed(2)}
-        </div>
+        <div className="border-t border-slate-700 pt-4 text-right text-lg font-bold">Grand Total: ${grand.toFixed(2)}</div>
 
         <button onClick={goPrint} className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-semibold">
           Print Work Order
