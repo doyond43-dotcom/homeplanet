@@ -296,7 +296,7 @@ export default function WorkOrderDrawer({
       try {
         const { data, error } = await supabase
           .from("work_order_drafts")
-          .select("doc, updated_at, updated_by")
+          .select("doc, updated_at, updated_by, shop_slug")
           .eq("job_id", row.id)
           .limit(1)
           .maybeSingle();
@@ -435,7 +435,7 @@ export default function WorkOrderDrawer({
         const { error } = await supabase.from("work_order_drafts").upsert(
           {
             job_id: row.id,
-            slug: row.slug,
+            shop_slug: row.slug, // ✅ FIX: column is shop_slug, not slug
             doc,
             updated_by: clientId, // 👈 this device/tab
           },
