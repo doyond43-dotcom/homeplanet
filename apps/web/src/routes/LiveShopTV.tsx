@@ -1,6 +1,6 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
+import { getSupabase } from "../lib/supabase";
 
 type Row = {
   id: string;
@@ -75,16 +75,8 @@ export default function LiveShopTV() {
   const lastFullSyncAtRef = useRef<number>(0);
   const [, bump] = useState(0);
 
-  const supabase = useMemo(() => {
-    const url = (import.meta as any).env?.VITE_SUPABASE_URL;
-    const key = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY;
-    if (!url || !key) return null;
-
-    return createClient(url, key, {
-      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-      realtime: { params: { eventsPerSecond: 10 } },
-    });
-  }, []);
+  // ✅ use singleton client (one per tab)
+  const supabase = getSupabase();
 
   // ✅ HARD TV SCROLL LOCK (body/html + wheel/touch/keys)
   useEffect(() => {
@@ -109,7 +101,6 @@ export default function LiveShopTV() {
     };
     const stopKeys = (e: KeyboardEvent) => {
       const k = e.key;
-      // keys that commonly scroll pages
       if (
         k === "ArrowUp" ||
         k === "ArrowDown" ||
@@ -141,11 +132,6 @@ export default function LiveShopTV() {
   }, []);
 
   async function loadLatest(reason: string) {
-    if (!supabase) {
-      setStatus("Waiting for env…");
-      setConnected(false);
-      return;
-    }
     if (!shopSlug) {
       setStatus("Missing slug in URL");
       setConnected(false);
@@ -180,7 +166,7 @@ export default function LiveShopTV() {
   }
 
   async function driftCheck() {
-    if (!supabase || !shopSlug) return;
+    if (!shopSlug) return;
 
     const localNewest = rows[0]?.created_at ?? null;
 
@@ -210,14 +196,28 @@ export default function LiveShopTV() {
   }, [shopSlug]);
 
   useEffect(() => {
-    if (!supabase || !shopSlug) return;
+    if (!shopSlug) return;
 
     setStatus("Listening…");
     setConnected(true);
     setLastErr(null);
 
+    const channelName = `intake-tv:${shopSlug}`;
+
+    // ✅ De-dupe: remove any existing channel with same topic before subscribing
+    try {
+      const chans: any[] = (supabase as any).getChannels?.() ?? [];
+      for (const ch of chans) {
+        if (ch?.topic === `realtime:${channelName}`) {
+          try {
+            supabase.removeChannel(ch);
+          } catch {}
+        }
+      }
+    } catch {}
+
     const channel = supabase
-      .channel(`intake-tv:${shopSlug}`)
+      .channel(channelName)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "public_intake_submissions", filter: `slug=eq.${shopSlug}` },
@@ -267,8 +267,9 @@ export default function LiveShopTV() {
         supabase.removeChannel(channel);
       } catch {}
     };
+    // ✅ IMPORTANT: do NOT depend on rows.length (it causes resubscribe loops)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shopSlug, supabase, rows.length]);
+  }, [shopSlug]);
 
   const newest = rows[0] ?? null;
 
@@ -324,7 +325,6 @@ export default function LiveShopTV() {
               <div className="mt-6">
                 <div className="text-xs text-slate-400 font-semibold">Recent</div>
 
-                {/* ✅ NO SCROLL: fixed list area, clipped */}
                 <div className="mt-2 space-y-2 overflow-hidden">
                   {rows.slice(0, 8).map((r) => {
                     const s = extractSummary(r.payload);

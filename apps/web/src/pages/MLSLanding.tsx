@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { type SupabaseClient } from "@supabase/supabase-js";
+import { getSupabase } from "../lib/supabase";
 
 function useMediaQuery(query: string) {
-  const get = () =>
-    typeof window !== "undefined" ? window.matchMedia(query).matches : false;
+  const get = () => (typeof window !== "undefined" ? window.matchMedia(query).matches : false);
   const [matches, setMatches] = React.useState(get);
 
   React.useEffect(() => {
@@ -112,16 +112,6 @@ const BUILD_MARKER = "BUILD_MARKER_UTC_20260215_093500";
  * Everyone sees the same board. Refresh never changes identity.
  */
 const PUBLIC_DEMO_FAMILY_KEY = "demo_public";
-
-function getSupabase(): SupabaseClient | null {
-  const url = (import.meta as any).env?.VITE_SUPABASE_URL as string | undefined;
-  const key = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY as string | undefined;
-  if (!url || !key) return null;
-  return createClient(url, key, {
-    auth: { persistSession: false },
-    realtime: { params: { eventsPerSecond: 10 } },
-  });
-}
 
 /* -------------------- HOMEPLANET VISUAL PHYSICS --------------------
    Key fix: the WHOLE PAGE lives inside a big cosmic glass shell.
@@ -311,11 +301,7 @@ const glassNoise: React.CSSProperties = {
   zIndex: 1,
 };
 
-function CosmicCard(props: {
-  children: React.ReactNode;
-  emitter?: "green" | "blue" | "neutral";
-  style?: React.CSSProperties;
-}) {
+function CosmicCard(props: { children: React.ReactNode; emitter?: "green" | "blue" | "neutral"; style?: React.CSSProperties }) {
   const emitter = props.emitter ?? "neutral";
 
   const glow: React.CSSProperties =
@@ -327,8 +313,8 @@ function CosmicCard(props: {
           borderRadius: 32,
           background:
             "radial-gradient(520px 300px at 18% 18%, rgba(34,197,94,0.36), rgba(34,197,94,0.12) 40%, rgba(130,160,255,0.12) 62%, rgba(0,0,0,0) 78%), radial-gradient(600px 380px at 78% 14%, rgba(130,160,255,0.16), rgba(0,0,0,0) 66%)",
-          filter: "blur(26px)", // PATCH: tighten glow (less smoke) while keeping energy
-          opacity: 1, // PATCH: keep the restored life
+          filter: "blur(26px)",
+          opacity: 1,
           zIndex: 0,
         }
       : emitter === "blue"
@@ -364,8 +350,6 @@ function CosmicCard(props: {
     </div>
   );
 }
-
-/* -------------------- TYPO + LAYOUT -------------------- */
 
 const dayTop: React.CSSProperties = {
   display: "flex",
@@ -550,8 +534,7 @@ const quickDockWrap: React.CSSProperties = {
   right: 0,
   bottom: 0,
   padding: "12px 12px calc(env(safe-area-inset-bottom, 0px) + 12px)",
-  background:
-    "linear-gradient(180deg, rgba(7,7,7,0), rgba(7,7,7,0.88) 26%, rgba(7,7,7,0.98))",
+  background: "linear-gradient(180deg, rgba(7,7,7,0), rgba(7,7,7,0.88) 26%, rgba(7,7,7,0.98))",
   zIndex: 9990,
 };
 
@@ -610,13 +593,9 @@ export default function MLSLanding() {
   }, [events]);
 
   const dayLabel = useMemo(() => formatDayHeaderLocal(), []);
-  const lastUpdated = latest
-    ? `${formatDateLocal(latest.created_at)} • ${formatTimeLocal(latest.created_at)}`
-    : "No updates yet";
+  const lastUpdated = latest ? `${formatDateLocal(latest.created_at)}   ${formatTimeLocal(latest.created_at)}` : "No updates yet";
 
-  const layoutGrid: React.CSSProperties = isNarrow
-    ? { ...grid2, gridTemplateColumns: "1fr" }
-    : grid2;
+  const layoutGrid: React.CSSProperties = isNarrow ? { ...grid2, gridTemplateColumns: "1fr" } : grid2;
 
   const timeline = useMemo(() => {
     const sorted = [...events].sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
@@ -700,7 +679,7 @@ export default function MLSLanding() {
     await insertEvent({
       child: "Chelsea",
       type: "Pickup Change",
-      details: "After school — Aunt picking up",
+      details: "After school   Aunt picking up",
     });
     await loadLatest();
   }
@@ -709,7 +688,7 @@ export default function MLSLanding() {
     await insertEvent({
       child: (child || "").trim() || "Chelsea",
       type: "Other",
-      details: "Today started — board is active",
+      details: "Today started   board is active",
     });
     await loadLatest();
   }
@@ -731,15 +710,11 @@ export default function MLSLanding() {
 
     const channel = sb
       .channel("mls_events_public_demo")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "mls_events" },
-        (payload) => {
-          const row = payload.new as SignalEvent;
-          if (!row || row.family_key !== FAMILY_KEY) return;
-          setEvents((prev) => uniqById([row, ...prev]));
-        }
-      )
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "mls_events" }, (payload) => {
+        const row = payload.new as SignalEvent;
+        if (!row || row.family_key !== FAMILY_KEY) return;
+        setEvents((prev) => uniqById([row, ...prev]));
+      })
       .subscribe();
 
     return () => {
@@ -755,10 +730,9 @@ export default function MLSLanding() {
   return (
     <div style={pageBg}>
       <div style={vignette} />
-      <div style={buildMarkerOverlay}>{"BUILD_MARKER_UI: " + BUILD_MARKER + " • key=" + FAMILY_KEY}</div>
+      <div style={buildMarkerOverlay}>{"BUILD_MARKER_UI: " + BUILD_MARKER + "   key=" + FAMILY_KEY}</div>
 
       <div style={container}>
-        {/* BIG HOMEPLANET SHELL (this is the missing vibe) */}
         <div style={shellOuter}>
           <div style={shellGlow} />
           <div style={shellNoise} />
@@ -776,10 +750,10 @@ export default function MLSLanding() {
                 <button style={btnGhost} onClick={() => (window.location.href = "/")}>
                   Back to Registry
                 </button>
-                <button style={btnGhost} onClick={() => alert("Press Kit (control) — coming next")}>
+                <button style={btnGhost} onClick={() => alert("Press Kit (control)   coming next")}>
                   Press Kit (control)
                 </button>
-                <button style={btnGhost} onClick={() => alert("Taylor Creek (control) — coming next")}>
+                <button style={btnGhost} onClick={() => alert("Taylor Creek (control)   coming next")}>
                   Taylor Creek (control)
                 </button>
               </div>
@@ -787,7 +761,6 @@ export default function MLSLanding() {
 
             <div style={layoutGrid}>
               <div style={{ display: "grid", gap: 16 }}>
-                {/* TODAY CARD */}
                 <CosmicCard emitter="green" style={{ ...pad }}>
                   <div style={dayTop}>
                     <div>
@@ -797,9 +770,7 @@ export default function MLSLanding() {
                     <div style={statusPill}>{latest ? "Recorded" : loading ? "Loading" : "No updates"}</div>
                   </div>
 
-                  <div style={bigLine}>
-                    {latest ? typeToHumanLine(latest.type) : loading ? "Loading…" : "Nothing recorded yet"}
-                  </div>
+                  <div style={bigLine}>{latest ? typeToHumanLine(latest.type) : loading ? "Loading " : "Nothing recorded yet"}</div>
 
                   {latest ? (
                     <div style={kv}>
@@ -811,7 +782,7 @@ export default function MLSLanding() {
 
                       <div style={k}>Recorded</div>
                       <div style={v}>
-                        {formatDateLocal(latest.created_at)} • {formatTimeLocal(latest.created_at)}
+                        {formatDateLocal(latest.created_at)}   {formatTimeLocal(latest.created_at)}
                       </div>
                     </div>
                   ) : (
@@ -840,7 +811,6 @@ export default function MLSLanding() {
                   {ok ? <div style={bannerOk}>{ok}</div> : null}
                 </CosmicCard>
 
-                {/* TIMELINE */}
                 <CosmicCard emitter="blue" style={{ ...pad }}>
                   <p style={sectionTitle}>TIMELINE</p>
 
@@ -850,7 +820,7 @@ export default function MLSLanding() {
                         <div style={momentTop}>
                           <div style={momentType}>{typeToHumanLine(e.type)}</div>
                           <div style={momentTime}>
-                            {formatDateLocal(e.created_at)} • {formatTimeLocal(e.created_at)}
+                            {formatDateLocal(e.created_at)}   {formatTimeLocal(e.created_at)}
                           </div>
                         </div>
                         <div style={momentWho}>Who: {e.child}</div>
@@ -865,7 +835,6 @@ export default function MLSLanding() {
                 </CosmicCard>
               </div>
 
-              {/* UPDATE PANEL */}
               {!isMobile && (
                 <CosmicCard emitter="neutral" style={{ ...pad }}>
                   <p style={sectionTitle}>UPDATE TODAY</p>
@@ -888,16 +857,12 @@ export default function MLSLanding() {
                       placeholder="What changed?"
                     />
 
-                    <button
-                      style={{ ...primaryBtn, ...(canConfirm ? null : btnDisabled) }}
-                      onClick={confirm}
-                      disabled={!canConfirm}
-                    >
+                    <button style={{ ...primaryBtn, ...(canConfirm ? null : btnDisabled) }} onClick={confirm} disabled={!canConfirm}>
                       Confirm
                     </button>
 
                     <div style={{ opacity: 0.66, fontWeight: 750, fontSize: 12, lineHeight: 1.3 }}>
-                      One sentence. Just what’s happening.
+                      One sentence. Just what s happening.
                     </div>
                   </div>
                 </CosmicCard>
@@ -935,5 +900,4 @@ export default function MLSLanding() {
     </div>
   );
 }
-
 

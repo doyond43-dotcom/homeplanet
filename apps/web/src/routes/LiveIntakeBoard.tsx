@@ -1,6 +1,6 @@
 ﻿import { useEffect, useMemo, useRef, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
 import { useLocation, useParams } from "react-router-dom";
+import { getSupabase } from "../lib/supabase";
 import WorkOrderDrawer from "./WorkOrderDrawer";
 import PrintWorkOrder from "./PrintWorkOrder";
 
@@ -126,16 +126,8 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
     );
   }, []);
 
-  const supabase = useMemo(() => {
-    const url = (import.meta as any).env?.VITE_SUPABASE_URL;
-    const key = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY;
-    if (!url || !key) return null;
-
-    return createClient(url, key, {
-      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-      realtime: { params: { eventsPerSecond: 10 } },
-    });
-  }, []);
+  // ✅ singleton client (one per tab)
+  const supabase = useMemo(() => getSupabase(), []);
 
   const storageKey = useMemo(() => `hp_employee_code:${shopSlug || "no-slug"}`, [shopSlug]);
   const nameKey = useMemo(() => `hp_employee_name:${shopSlug || "no-slug"}`, [shopSlug]);
@@ -204,7 +196,7 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
   }
 
   async function load(reason = "load") {
-    if (!supabase || !shopSlug) return;
+    if (!shopSlug) return;
     if (inFlightRef.current) return;
     inFlightRef.current = true;
 
@@ -248,7 +240,7 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
 
   // ✅ Realtime-first + ✅ low-frequency heartbeat fallback (iPad/Safari-safe, NOT chatty)
   useEffect(() => {
-    if (!supabase || !shopSlug) return;
+    if (!shopSlug) return;
 
     let mounted = true;
     let heartbeatMs = 20000;
@@ -350,11 +342,11 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
       } catch {}
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [supabase, shopSlug]);
+  }, [shopSlug]);
 
   // ✅ Customer lookup search (includes completed jobs; does not affect board rows)
   useEffect(() => {
-    if (!supabase || !shopSlug) return;
+    if (!shopSlug) return;
 
     const qRaw = lookupQuery.trim();
     if (!qRaw) {
@@ -426,7 +418,7 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
     }, 250);
 
     return () => window.clearTimeout(timer);
-  }, [lookupQuery, supabase, shopSlug]);
+  }, [lookupQuery, shopSlug]);
 
   // Close lookup dropdown when clicking outside
   useEffect(() => {
@@ -441,11 +433,6 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
   }, []);
 
   async function setJobStage(row: Row, stage: JobStage) {
-    if (!supabase) {
-      setErr("Supabase client not initialized (missing VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY).");
-      return;
-    }
-
     if (!shopSlug) {
       setErr("Missing shop slug in URL. Open /live/<slug>/staff and try again.");
       return;
@@ -589,7 +576,7 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
                         key={r.id}
                         type="button"
                         onClick={() => {
-                          setActive(r); // ✅ opens WorkOrderDrawer (even if done)
+                          setActive(r);
                           setLookupOpen(false);
                         }}
                         className="w-full text-left px-3 py-3 border-b border-slate-900 hover:bg-slate-900/50"
@@ -613,9 +600,7 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
                   })}
 
                   {!lookupBusy && lookupResults.length === 0 ? (
-                    <div className="px-3 py-4 text-sm text-slate-500">
-                      No matches. (Tip: ID search requires full UUID.)
-                    </div>
+                    <div className="px-3 py-4 text-sm text-slate-500">No matches. (Tip: ID search requires full UUID.)</div>
                   ) : null}
                 </div>
               </div>
@@ -747,6 +732,7 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
                                 {lastBy}
                                 {lastAt ? ` @ ${formatTime(lastAt)}` : ""}
                               </span>
+                              {/* stage label */}
                             </span>
                           )}
                         </div>
