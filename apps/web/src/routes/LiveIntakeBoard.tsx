@@ -1,4 +1,5 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
+﻿// apps/web/src/routes/LiveIntakeBoard.tsx
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { getSupabase } from "../lib/supabase";
 import WorkOrderDrawer from "./WorkOrderDrawer";
@@ -163,6 +164,9 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
 
   const inFlightRef = useRef(false);
 
+  // ✅ broadcast "nudge" channel reference (used by setJobStage to poke other devices)
+  const rtChannelRef = useRef<any>(null);
+
   useEffect(() => {
     if (!shopSlug) return;
     localStorage.setItem(storageKey, employeeCode || "");
@@ -265,6 +269,7 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
       .channel(`board:${shopSlug}`, {
         config: { broadcast: { ack: true }, presence: { key: shopSlug } },
       })
+      // ✅ DB changes on the main board table (INSERT/UPDATE/DELETE)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "public_intake_submissions", filter: `slug=eq.${shopSlug}` },
@@ -289,18 +294,30 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
           }
         }
       )
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "job_stage_events", filter: `slug=eq.${shopSlug}` },
-        () => {
-          lastRealtimeAt = Date.now();
-          scheduleLoad("realtime:stage-event");
-        }
-      )
+      // ✅ Stage-event table (some environments emit updates via an event row instead of a row update)
+      // IMPORTANT: we do NOT rely on filter here because schemas vary (slug vs shop_slug).
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "job_stage_events" }, (p: any) => {
+        lastRealtimeAt = Date.now();
+        const n = p?.new ?? {};
+        const inferredSlug = String(n.slug ?? n.shop_slug ?? n.shopSlug ?? "").trim();
+        // only react to our shop if we can infer it; otherwise ignore
+        if (inferredSlug && inferredSlug !== shopSlug) return;
+        scheduleLoad("realtime:stage-event");
+      })
+      // ✅ Broadcast "nudge": if DB realtime glitches, devices still get a refresh cue instantly
+      .on("broadcast", { event: "hp_refresh" }, (msg: any) => {
+        lastRealtimeAt = Date.now();
+        const slugFromMsg = String(msg?.payload?.slug ?? "").trim();
+        if (slugFromMsg && slugFromMsg !== shopSlug) return;
+        scheduleLoad("broadcast:hp_refresh");
+      })
       .subscribe((status) => {
         console.log("Realtime status:", status);
         setSubStatus(String(status));
       });
+
+    // store channel so setJobStage can broadcast a refresh nudge to other devices
+    rtChannelRef.current = channel;
 
     const tick = async () => {
       if (!mounted) return;
@@ -336,6 +353,8 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
       window.clearInterval(statusWatcher);
 
       document.removeEventListener("visibilitychange", onVis);
+
+      rtChannelRef.current = null;
 
       try {
         supabase.removeChannel(channel);
@@ -496,6 +515,18 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
         await load("rpc-error-refresh");
         return;
       }
+
+      // ✅ NUDGE OTHER DEVICES IMMEDIATELY (works even if postgres_changes glitches)
+      try {
+        const ch = rtChannelRef.current;
+        if (ch?.send) {
+          await ch.send({
+            type: "broadcast",
+            event: "hp_refresh",
+            payload: { slug: shopSlug, job_id: row.id, stage },
+          });
+        }
+      } catch {}
 
       await load("stage-update");
     } catch (e: any) {
@@ -732,7 +763,6 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
                                 {lastBy}
                                 {lastAt ? ` @ ${formatTime(lastAt)}` : ""}
                               </span>
-                              {/* stage label */}
                             </span>
                           )}
                         </div>
