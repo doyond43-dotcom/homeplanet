@@ -74,10 +74,22 @@ export default function CityRoutes() {
       {/* ABSOLUTE route so /print/:id works even if CityRoutes is mounted under /:slug/* */}
       <Route path="/print/:id" element={<PrintWorkOrder />} />
 
-      {/* NEW: clean isolated Service UI layer (safe to delete later) */}
+      {/* =========================
+         SERVICE (existing)
+         ========================= */}
       <Route path="/service" element={<Navigate to="/service/taylor-creek" replace />} />
       <Route path="/service/:shopSlug" element={<ServiceBoard />} />
       <Route path="/service/:shopSlug/board" element={<ServiceBoard />} />
+
+      {/* =========================
+         LIVE (NEW) — prevent falling into "*" placeholder
+         This keeps your public "live staff" link working:
+         https://www.homeplanet.city/live/taylor-creek/staff
+         ========================= */}
+      <Route path="/live" element={<Navigate to="/live/taylor-creek/staff" replace />} />
+      <Route path="/live/:shopSlug" element={<Navigate to="staff" replace />} />
+      <Route path="/live/:shopSlug/staff" element={<ServiceBoard />} />
+      <Route path="/live/:shopSlug/staff/board" element={<ServiceBoard />} />
 
       {/* /  OR  /city  */}
       <Route index element={<CityIndex />} />
