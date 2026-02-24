@@ -216,8 +216,8 @@ function shallowEqDoc(a: DraftDoc, b: DraftDoc) {
 
 /* ---------- tuning ---------- */
 
-// ✅ Option B: tone down DB writes
-const SAVE_DEBOUNCE_MS = 900;
+// ✅ Option B: tone down DB writes (quieter pulse)
+const SAVE_DEBOUNCE_MS = 1200;
 
 export default function WorkOrderDrawer({
   open,
@@ -238,6 +238,21 @@ export default function WorkOrderDrawer({
   const [notes, setNotes] = useState("");
   const [labor, setLabor] = useState<Line[]>(() => [{ id: makeId(), description: "", price: "" }]);
   const [parts, setParts] = useState<Line[]>(() => [{ id: makeId(), description: "", price: "" }]);
+
+  // ✅ keep latest values for realtime callback without re-subscribing
+  const notesRef = useRef(notes);
+  const laborRef = useRef(labor);
+  const partsRef = useRef(parts);
+
+  useEffect(() => {
+    notesRef.current = notes;
+  }, [notes]);
+  useEffect(() => {
+    laborRef.current = labor;
+  }, [labor]);
+  useEffect(() => {
+    partsRef.current = parts;
+  }, [parts]);
 
   // Live sync status UI
   const [syncLabel, setSyncLabel] = useState<string>("");
@@ -266,12 +281,6 @@ export default function WorkOrderDrawer({
   const lastSentRef = useRef<string>(""); // json string
   const saveTimerRef = useRef<number | null>(null);
   const mountedRef = useRef(false);
-
-  // ✅ keep latest local doc in a ref so realtime handler doesn't need notes/labor/parts deps
-  const latestLocalDocRef = useRef<DraftDoc>({ notes: "", labor: [], parts: [] });
-  useEffect(() => {
-    latestLocalDocRef.current = toDraftDoc(notes, labor, parts);
-  }, [notes, labor, parts]);
 
   /* ---------- Load draft when opening a job (local first, then DB) ---------- */
   useEffect(() => {
@@ -371,8 +380,8 @@ export default function WorkOrderDrawer({
           if (js === lastAppliedRemoteRef.current) return;
           lastAppliedRemoteRef.current = js;
 
-          // compare against latest local state (ref)
-          const current = latestLocalDocRef.current;
+          // compare against latest local state (refs)
+          const current = toDraftDoc(notesRef.current, laborRef.current, partsRef.current);
           if (shallowEqDoc(current, normalized)) return;
 
           setNotes(normalized.notes);
