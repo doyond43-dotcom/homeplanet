@@ -214,6 +214,11 @@ function shallowEqDoc(a: DraftDoc, b: DraftDoc) {
   return JSON.stringify(a) === JSON.stringify(b);
 }
 
+/* ---------- tuning ---------- */
+
+// ✅ Option B: tone down DB writes
+const SAVE_DEBOUNCE_MS = 900;
+
 export default function WorkOrderDrawer({
   open,
   row,
@@ -261,6 +266,12 @@ export default function WorkOrderDrawer({
   const lastSentRef = useRef<string>(""); // json string
   const saveTimerRef = useRef<number | null>(null);
   const mountedRef = useRef(false);
+
+  // ✅ keep latest local doc in a ref so realtime handler doesn't need notes/labor/parts deps
+  const latestLocalDocRef = useRef<DraftDoc>({ notes: "", labor: [], parts: [] });
+  useEffect(() => {
+    latestLocalDocRef.current = toDraftDoc(notes, labor, parts);
+  }, [notes, labor, parts]);
 
   /* ---------- Load draft when opening a job (local first, then DB) ---------- */
   useEffect(() => {
@@ -356,10 +367,12 @@ export default function WorkOrderDrawer({
           const normalized = toDraftDoc(doc.notes || "", (doc.labor as any) || [], (doc.parts as any) || []);
           const js = JSON.stringify(normalized);
 
+          // prevent loops + redundant sets
           if (js === lastAppliedRemoteRef.current) return;
           lastAppliedRemoteRef.current = js;
 
-          const current = toDraftDoc(notes, labor, parts);
+          // compare against latest local state (ref)
+          const current = latestLocalDocRef.current;
           if (shallowEqDoc(current, normalized)) return;
 
           setNotes(normalized.notes);
@@ -380,8 +393,9 @@ export default function WorkOrderDrawer({
         supabase.removeChannel(chan);
       } catch {}
     };
+    // ✅ do NOT include notes/labor/parts here — prevents re-subscribing on every keystroke
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, row?.id, notes, labor, parts, clientId]);
+  }, [open, row?.id, clientId]);
 
   /* ---------- Save: local (always) + shared DB (debounced) ---------- */
   useEffect(() => {
@@ -413,7 +427,10 @@ export default function WorkOrderDrawer({
     const doc = toDraftDoc(notes, labor, parts);
     const js = JSON.stringify(doc);
 
+    // If we just applied this from remote, don't immediately re-upsert
     if (js === lastAppliedRemoteRef.current) return;
+
+    // If we already sent same content, skip
     if (js === lastSentRef.current) return;
 
     if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
@@ -430,15 +447,15 @@ export default function WorkOrderDrawer({
           {
             job_id: row.id,
 
-            // ✅ FIX: DB column is shop_slug (not slug)
+            // ✅ your table expects shop_slug
             shop_slug: row.slug,
 
             doc,
 
-            // ✅ FIX: DB column is updated_by_device_id (used to ignore our own echoes)
+            // ✅ device id to ignore our own realtime echoes
             updated_by_device_id: clientId,
 
-            // ✅ Good metadata (matches your column list screenshots)
+            // ✅ optional: who typed it
             updated_by_employee_code: tech || null,
             updated_by: tech || null,
           },
@@ -456,7 +473,7 @@ export default function WorkOrderDrawer({
       } catch {
         setSyncLabel("Live sync (save err)");
       }
-    }, 250);
+    }, SAVE_DEBOUNCE_MS);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [row?.id, draftKey, notes, labor, parts, row, employeeCode, employeeName, clientId]);
