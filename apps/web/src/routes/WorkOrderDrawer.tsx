@@ -9,7 +9,7 @@ export type JobStage = "diagnosing" | "waiting_parts" | "repairing" | "done";
 export type Row = {
   id: string;
   created_at: string;
-  slug: string;
+  slug: string; // this is your SHOP slug (e.g. "taylor-creek")
   payload: any;
 
   current_stage?: JobStage | null;
@@ -211,7 +211,6 @@ function toDraftDoc(notes: string, labor: Line[], parts: Line[]): DraftDoc {
 }
 
 function shallowEqDoc(a: DraftDoc, b: DraftDoc) {
-  // Simple string compare is fine because we store normalized arrays with stable ids.
   return JSON.stringify(a) === JSON.stringify(b);
 }
 
@@ -236,7 +235,7 @@ export default function WorkOrderDrawer({
   const [parts, setParts] = useState<Line[]>(() => [{ id: makeId(), description: "", price: "" }]);
 
   // Live sync status UI
-  const [syncLabel, setSyncLabel] = useState<string>(""); // "Live sync" / error text
+  const [syncLabel, setSyncLabel] = useState<string>("");
   const [savedAt, setSavedAt] = useState<string>("");
 
   // identify this tab/device so we can ignore our own realtime echoes
@@ -296,7 +295,7 @@ export default function WorkOrderDrawer({
       try {
         const { data, error } = await supabase
           .from("work_order_drafts")
-          .select("doc, updated_at, updated_by, shop_slug")
+          .select("doc, updated_at, updated_by_device_id")
           .eq("job_id", row.id)
           .limit(1)
           .maybeSingle();
@@ -320,6 +319,7 @@ export default function WorkOrderDrawer({
           setParts(normalized.parts);
 
           if (data.updated_at) setSavedAt(formatTime(String(data.updated_at)));
+          setSyncLabel("Live sync");
         }
       } catch {
         if (!mountedRef.current) return;
@@ -348,20 +348,17 @@ export default function WorkOrderDrawer({
           const next = p.new;
           if (!next?.doc) return;
 
-          // ignore our own writes
-          const updatedBy = String(next.updated_by || "");
-          if (updatedBy && updatedBy === clientId) return;
+          // ignore our own writes (device/tab)
+          const updatedByDevice = String(next.updated_by_device_id || "");
+          if (updatedByDevice && updatedByDevice === clientId) return;
 
           const doc = next.doc as DraftDoc;
           const normalized = toDraftDoc(doc.notes || "", (doc.labor as any) || [], (doc.parts as any) || []);
           const js = JSON.stringify(normalized);
 
-          // prevent loops + redundant sets
           if (js === lastAppliedRemoteRef.current) return;
-
           lastAppliedRemoteRef.current = js;
 
-          // if our current local state equals the remote, no-op
           const current = toDraftDoc(notes, labor, parts);
           if (shallowEqDoc(current, normalized)) return;
 
@@ -384,7 +381,7 @@ export default function WorkOrderDrawer({
       } catch {}
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, row?.id]);
+  }, [open, row?.id, notes, labor, parts, clientId]);
 
   /* ---------- Save: local (always) + shared DB (debounced) ---------- */
   useEffect(() => {
@@ -416,10 +413,7 @@ export default function WorkOrderDrawer({
     const doc = toDraftDoc(notes, labor, parts);
     const js = JSON.stringify(doc);
 
-    // If we just applied this from remote, don't immediately re-upsert
     if (js === lastAppliedRemoteRef.current) return;
-
-    // If we already sent same content, skip
     if (js === lastSentRef.current) return;
 
     if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
@@ -435,9 +429,18 @@ export default function WorkOrderDrawer({
         const { error } = await supabase.from("work_order_drafts").upsert(
           {
             job_id: row.id,
-            shop_slug: row.slug, // ✅ FIX: column is shop_slug, not slug
+
+            // ✅ FIX: DB column is shop_slug (not slug)
+            shop_slug: row.slug,
+
             doc,
-            updated_by: clientId, // 👈 this device/tab
+
+            // ✅ FIX: DB column is updated_by_device_id (used to ignore our own echoes)
+            updated_by_device_id: clientId,
+
+            // ✅ Good metadata (matches your column list screenshots)
+            updated_by_employee_code: tech || null,
+            updated_by: tech || null,
           },
           { onConflict: "job_id" }
         );
@@ -453,10 +456,10 @@ export default function WorkOrderDrawer({
       } catch {
         setSyncLabel("Live sync (save err)");
       }
-    }, 250); // fast enough to feel live, slow enough to avoid hammering
+    }, 250);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [row?.id, draftKey, notes, labor, parts, row, employeeCode, employeeName]);
+  }, [row?.id, draftKey, notes, labor, parts, row, employeeCode, employeeName, clientId]);
 
   function updateLine(
     setter: Dispatch<SetStateAction<Line[]>>,
@@ -512,8 +515,8 @@ export default function WorkOrderDrawer({
     };
 
     try {
-      sessionStorage.setItem("printWorkOrder", JSON.stringify(data)); // legacy
-      sessionStorage.setItem(`printWorkOrder:${row.id}`, JSON.stringify(data)); // scoped
+      sessionStorage.setItem("printWorkOrder", JSON.stringify(data));
+      sessionStorage.setItem(`printWorkOrder:${row.id}`, JSON.stringify(data));
     } catch {}
 
     try {
