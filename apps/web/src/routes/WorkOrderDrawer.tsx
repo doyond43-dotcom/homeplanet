@@ -50,8 +50,7 @@ export type PrintData = {
 
   technicianCode?: string;
   technicianName?: string;
-
-  // ✅ local draft extras (for refresh safety)
+  // local draft extras (for refresh safety)
   nextActionLabel?: string;
   nextActionAt?: string; // datetime-local value
   nextActionNote?: string;
@@ -80,16 +79,28 @@ function makeId() {
   return `${Date.now()}_${Math.random().toString(16).slice(2)}`;
 }
 
-function normalizeLines(lines: Partial<Line>[]) {
-  const cleaned = (lines || [])
+function normalizeLinesForDoc(lines: Partial<Line>[]) {
+  // For DB doc: store only meaningful lines, never create placeholders (prevents id churn)
+  return (lines || [])
     .map((l) => ({
       id: String(l.id || makeId()),
       description: String(l.description || ""),
       price: String(l.price || ""),
     }))
     .filter((l) => l.description.trim() || l.price.trim());
+}
 
-  return cleaned.length ? cleaned : [{ id: makeId(), description: "", price: "" }];
+function ensureUiLines(lines: Partial<Line>[]) {
+  // For UI: always show at least one editable row
+  const cleaned = (lines || []).map((l) => ({
+    id: String(l.id || makeId()),
+    description: String(l.description || ""),
+    price: String(l.price || ""),
+  }));
+
+  return cleaned.length
+    ? (cleaned as Line[])
+    : [{ id: makeId(), description: "", price: "" }];
 }
 
 /** -------- Quick Text (Tab shorthand expansion) -------- */
@@ -205,8 +216,7 @@ type DraftDoc = {
   notes: string;
   labor: Line[];
   parts: Line[];
-
-  // ✅ calendar anchor stored in shared doc
+  // calendar anchor stored in shared doc
   next_action_at?: string | null; // datetime-local string (or ISO if you prefer)
   next_action_label?: string | null;
   next_action_note?: string | null;
@@ -218,12 +228,12 @@ function toDraftDoc(
   parts: Line[],
   next_action_at?: string | null,
   next_action_label?: string | null,
-  next_action_note?: string | null
+  next_action_note?: string | null,
 ): DraftDoc {
   return {
     notes: String(notes || ""),
-    labor: normalizeLines(labor || []),
-    parts: normalizeLines(parts || []),
+    labor: normalizeLinesForDoc(labor || []),
+    parts: normalizeLinesForDoc(parts || []),
 
     next_action_at: next_action_at ? String(next_action_at) : null,
     next_action_label: next_action_label ? String(next_action_label) : null,
@@ -236,8 +246,7 @@ function shallowEqDoc(a: DraftDoc, b: DraftDoc) {
 }
 
 /* ---------- tuning ---------- */
-
-// ✅ Option B: tone down DB writes (quieter pulse)
+// Option B: tone down DB writes (quieter pulse)
 const SAVE_DEBOUNCE_MS = 1200;
 
 export default function WorkOrderDrawer({
@@ -249,23 +258,27 @@ export default function WorkOrderDrawer({
   onStageChange,
 }: Props) {
   const nav = useNavigate();
-
-  // ✅ singleton client (one per tab)
+  // singleton client (one per tab)
   const supabase = useMemo(() => getSupabase(), []);
 
   const jobId = row?.id || "";
-  const draftKey = useMemo(() => (jobId ? `workOrderDraft:${jobId}` : ""), [jobId]);
+  const draftKey = useMemo(
+    () => (jobId ? `workOrderDraft:${jobId}` : ""),
+    [jobId],
+  );
 
   const [notes, setNotes] = useState("");
-  const [labor, setLabor] = useState<Line[]>(() => [{ id: makeId(), description: "", price: "" }]);
-  const [parts, setParts] = useState<Line[]>(() => [{ id: makeId(), description: "", price: "" }]);
-
-  // ✅ calendar anchor state (local + shared doc)
+  const [labor, setLabor] = useState<Line[]>(() => [
+    { id: makeId(), description: "", price: "" },
+  ]);
+  const [parts, setParts] = useState<Line[]>(() => [
+    { id: makeId(), description: "", price: "" },
+  ]);
+  // calendar anchor state (local + shared doc)
   const [nextActionLabel, setNextActionLabel] = useState<string>("Part ETA");
   const [nextActionAt, setNextActionAt] = useState<string>(""); // datetime-local value
   const [nextActionNote, setNextActionNote] = useState<string>("");
-
-  // ✅ keep latest values for realtime callback without re-subscribing
+  // keep latest values for realtime callback without re-subscribing
   const notesRef = useRef(notes);
   const laborRef = useRef(labor);
   const partsRef = useRef(parts);
@@ -311,7 +324,10 @@ export default function WorkOrderDrawer({
     }
   }, []);
 
-  const [dictating, setDictating] = useState<null | { kind: "notes" | "labor" | "parts"; id?: string }>(null);
+  const [dictating, setDictating] = useState<null | {
+    kind: "notes" | "labor" | "parts";
+    id?: string;
+  }>(null);
   const recRef = useRef<SpeechRec | null>(null);
 
   const speechCtor = useMemo(() => getSpeechRecognition(), []);
@@ -321,12 +337,19 @@ export default function WorkOrderDrawer({
   const lastSentRef = useRef<string>(""); // json string
   const saveTimerRef = useRef<number | null>(null);
   const mountedRef = useRef(false);
+  // prevent "blank overwrite" during initial open/load
+  const hydratingRef = useRef<boolean>(false); // true while we are loading initial state
+  const hydratedOnceRef = useRef<boolean>(false); // becomes true after DB load finishes at least once
 
   /* ---------- Load draft when opening a job (local first, then DB) ---------- */
   useEffect(() => {
     if (!row?.id) return;
 
     mountedRef.current = true;
+    // block save effect until DB read finishes (prevents blank overwrite)
+    hydratingRef.current = true;
+    hydratedOnceRef.current = false;
+
     setSyncLabel("Live sync");
     setSavedAt("");
 
@@ -336,15 +359,15 @@ export default function WorkOrderDrawer({
       if (raw) {
         const parsed = JSON.parse(raw) as Partial<PrintData>;
         setNotes(String(parsed.notes || ""));
-        setLabor(normalizeLines((parsed.labor as Partial<Line>[]) || []));
-        setParts(normalizeLines((parsed.parts as Partial<Line>[]) || []));
-
-        // ✅ calendar anchor from local
+        setLabor(ensureUiLines((parsed.labor as Partial<Line>[]) || []));
+        setParts(ensureUiLines((parsed.parts as Partial<Line>[]) || []));
+        // calendar anchor from local
         setNextActionLabel(String(parsed.nextActionLabel || "Part ETA"));
         setNextActionAt(String(parsed.nextActionAt || ""));
         setNextActionNote(String(parsed.nextActionNote || ""));
 
-        if (parsed.savedAtIso) setSavedAt(formatTime(String(parsed.savedAtIso)));
+        if (parsed.savedAtIso)
+          setSavedAt(formatTime(String(parsed.savedAtIso)));
       } else {
         setNotes("");
         setLabor([{ id: makeId(), description: "", price: "" }]);
@@ -378,6 +401,9 @@ export default function WorkOrderDrawer({
 
         if (error) {
           setSyncLabel(`Live sync (read err)`);
+          // still unblock saving so user edits can persist
+          hydratedOnceRef.current = true;
+          hydratingRef.current = false;
           return;
         }
 
@@ -390,32 +416,42 @@ export default function WorkOrderDrawer({
             (doc.parts as any) || [],
             (doc as any).next_action_at || null,
             (doc as any).next_action_label || null,
-            (doc as any).next_action_note || null
+            (doc as any).next_action_note || null,
           );
 
           const js = JSON.stringify(normalized);
           lastAppliedRemoteRef.current = js;
 
           setNotes(normalized.notes);
-          setLabor(normalized.labor);
-          setParts(normalized.parts);
-
-          // ✅ calendar anchor from DB
-          setNextActionLabel(String((normalized as any).next_action_label || "Part ETA"));
+          setLabor(ensureUiLines(normalized.labor));
+          setParts(ensureUiLines(normalized.parts));
+          // calendar anchor from DB
+          setNextActionLabel(
+            String((normalized as any).next_action_label || "Part ETA"),
+          );
           setNextActionAt(String((normalized as any).next_action_at || ""));
           setNextActionNote(String((normalized as any).next_action_note || ""));
 
           if (data.updated_at) setSavedAt(formatTime(String(data.updated_at)));
           setSyncLabel("Live sync");
         }
+        // DB read finished (even if no doc existed)
+        hydratedOnceRef.current = true;
+        hydratingRef.current = false;
       } catch {
         if (!mountedRef.current) return;
         setSyncLabel(`Live sync (read err)`);
+        // still unblock saving so user edits can persist
+        hydratedOnceRef.current = true;
+        hydratingRef.current = false;
       }
     })();
 
     return () => {
       mountedRef.current = false;
+      hydratingRef.current = false;
+      hydratedOnceRef.current = false;
+
       if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
       saveTimerRef.current = null;
     };
@@ -430,7 +466,12 @@ export default function WorkOrderDrawer({
       .channel(`wo-draft:${row.id}`, { config: { broadcast: { ack: true } } })
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "work_order_drafts", filter: `job_id=eq.${row.id}` },
+        {
+          event: "*",
+          schema: "public",
+          table: "work_order_drafts",
+          filter: `job_id=eq.${row.id}`,
+        },
         (p: any) => {
           const next = p.new;
           if (!next?.doc) return;
@@ -446,7 +487,7 @@ export default function WorkOrderDrawer({
             (doc.parts as any) || [],
             (doc as any).next_action_at || null,
             (doc as any).next_action_label || null,
-            (doc as any).next_action_note || null
+            (doc as any).next_action_note || null,
           );
 
           const js = JSON.stringify(normalized);
@@ -462,22 +503,23 @@ export default function WorkOrderDrawer({
             partsRef.current,
             nextActionAtRef.current || null,
             nextActionLabelRef.current || null,
-            nextActionNoteRef.current || null
+            nextActionNoteRef.current || null,
           );
           if (shallowEqDoc(current, normalized)) return;
 
           setNotes(normalized.notes);
-          setLabor(normalized.labor);
-          setParts(normalized.parts);
-
-          // ✅ calendar anchor from realtime
-          setNextActionLabel(String((normalized as any).next_action_label || "Part ETA"));
+          setLabor(ensureUiLines(normalized.labor));
+          setParts(ensureUiLines(normalized.parts));
+          // calendar anchor from realtime
+          setNextActionLabel(
+            String((normalized as any).next_action_label || "Part ETA"),
+          );
           setNextActionAt(String((normalized as any).next_action_at || ""));
           setNextActionNote(String((normalized as any).next_action_note || ""));
 
           if (next.updated_at) setSavedAt(formatTime(String(next.updated_at)));
           setSyncLabel("Live sync");
-        }
+        },
       )
       .subscribe((status) => {
         if (status === "SUBSCRIBED") setSyncLabel("Live sync");
@@ -489,13 +531,15 @@ export default function WorkOrderDrawer({
         supabase.removeChannel(chan);
       } catch {}
     };
-    // ✅ do NOT include notes/labor/parts here — prevents re-subscribing on every keystroke
+    // NOTE: do NOT include notes/labor/parts here; prevents re-subscribing on every keystroke
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, row?.id, clientId]);
 
   /* ---------- Save: local (always) + shared DB (debounced) ---------- */
   useEffect(() => {
     if (!row?.id) return;
+    // Critical: do NOT save while initial local+DB hydration is happening
+    if (hydratingRef.current || !hydratedOnceRef.current) return;
 
     const laborTotal = total(labor);
     const partsTotal = total(parts);
@@ -511,8 +555,7 @@ export default function WorkOrderDrawer({
       grand,
       technicianCode: (employeeCode || "").trim() || undefined,
       technicianName: (employeeName || "").trim() || undefined,
-
-      // ✅ store for local reload convenience
+      // store for local reload convenience
       nextActionLabel,
       nextActionAt,
       nextActionNote,
@@ -532,7 +575,7 @@ export default function WorkOrderDrawer({
       parts,
       nextActionAt || null,
       nextActionLabel || null,
-      nextActionNote || null
+      nextActionNote || null,
     );
     const js = JSON.stringify(doc);
 
@@ -549,26 +592,27 @@ export default function WorkOrderDrawer({
 
         const tech =
           (employeeCode || "").trim() ||
-          (row.stage_updated_by_employee_code || row.handled_by_employee_code || "").trim() ||
+          (
+            row.stage_updated_by_employee_code ||
+            row.handled_by_employee_code ||
+            ""
+          ).trim() ||
           "";
 
         const { error } = await supabase.from("work_order_drafts").upsert(
           {
             job_id: row.id,
-
-            // ✅ your table expects shop_slug
+            // your table expects shop_slug
             shop_slug: row.slug,
 
             doc,
-
-            // ✅ device id to ignore our own realtime echoes
+            // device id to ignore our own realtime echoes
             updated_by_device_id: clientId,
-
-            // ✅ optional: who typed it
+            // optional: who typed it
             updated_by_employee_code: tech || null,
             updated_by: tech || null,
           },
-          { onConflict: "job_id" }
+          { onConflict: "job_id" },
         );
 
         if (error) {
@@ -604,7 +648,7 @@ export default function WorkOrderDrawer({
     setter: Dispatch<SetStateAction<Line[]>>,
     id: string,
     key: keyof Omit<Line, "id">,
-    val: string
+    val: string,
   ) {
     setter((prev) => prev.map((l) => (l.id === id ? { ...l, [key]: val } : l)));
   }
@@ -637,21 +681,24 @@ export default function WorkOrderDrawer({
 
     const techCode =
       (employeeCode || "").trim() ||
-      (row.stage_updated_by_employee_code || row.handled_by_employee_code || "").trim() ||
+      (
+        row.stage_updated_by_employee_code ||
+        row.handled_by_employee_code ||
+        ""
+      ).trim() ||
       "";
 
     const data: PrintData = {
       row,
       notes,
-      labor: normalizeLines(labor),
-      parts: normalizeLines(parts),
+      labor: ensureUiLines(normalizeLinesForDoc(labor)),
+      parts: ensureUiLines(normalizeLinesForDoc(parts)),
       laborTotal,
       partsTotal,
       grand,
       technicianCode: techCode || undefined,
       technicianName: (employeeName || "").trim() || undefined,
-
-      // ✅ carry into print payload too (harmless even if print page ignores)
+      // carry into print payload too (harmless even if print page ignores)
       nextActionLabel,
       nextActionAt,
       nextActionNote,
@@ -696,10 +743,21 @@ export default function WorkOrderDrawer({
     rec.onresult = (ev: any) => {
       const t = ev?.results?.[0]?.[0]?.transcript;
       if (typeof t === "string" && t.trim()) {
-        setNotes((prev) => (prev ? prev.trimEnd() + "\n" + t.trim() : t.trim()));
+        setNotes((prev) =>
+          prev ? prev.trimEnd() + "\n" + t.trim() : t.trim(),
+        );
       }
     };
-    rec.onerror = () => {};
+
+    rec.onerror = () => {
+      // iOS/Safari can get stuck "green" without onend; force reset
+      try {
+        rec.abort();
+      } catch {}
+      recRef.current = null;
+      setDictating(null);
+    };
+
     rec.onend = () => setDictating((d) => (d?.kind === "notes" ? null : d));
 
     setDictating({ kind: "notes" });
@@ -736,24 +794,37 @@ export default function WorkOrderDrawer({
           setLabor((prev) =>
             prev.map((l) => {
               if (l.id !== lineId) return l;
-              const merged = l.description ? l.description.trimEnd() + " " + text : text;
+              const merged = l.description
+                ? l.description.trimEnd() + " " + text
+                : text;
               return { ...l, description: merged };
-            })
+            }),
           );
         } else {
           setParts((prev) =>
             prev.map((p) => {
               if (p.id !== lineId) return p;
-              const merged = p.description ? p.description.trimEnd() + " " + text : text;
+              const merged = p.description
+                ? p.description.trimEnd() + " " + text
+                : text;
               return { ...p, description: merged };
-            })
+            }),
           );
         }
       }
     };
 
-    rec.onerror = () => {};
-    rec.onend = () => setDictating((d) => (d?.kind === kind && d?.id === lineId ? null : d));
+    rec.onerror = () => {
+      // iOS/Safari can get stuck "green" without onend; force reset
+      try {
+        rec.abort();
+      } catch {}
+      recRef.current = null;
+      setDictating(null);
+    };
+
+    rec.onend = () =>
+      setDictating((d) => (d?.kind === kind && d?.id === lineId ? null : d));
 
     setDictating({ kind, id: lineId });
     rec.start();
@@ -762,38 +833,62 @@ export default function WorkOrderDrawer({
   if (!open || !row) return null;
 
   const stage = (row.current_stage || "diagnosing") as JobStage;
-  const lastBy = row.stage_updated_by_employee_code || row.handled_by_employee_code || "";
+  const lastBy =
+    row.stage_updated_by_employee_code || row.handled_by_employee_code || "";
   const lastAt = row.stage_updated_at || "";
 
-  const techLabel = (employeeName || "").trim() || (employeeCode || "").trim() || (lastBy || "").trim() || "";
+  const techLabel =
+    (employeeName || "").trim() ||
+    (employeeCode || "").trim() ||
+    (lastBy || "").trim() ||
+    "";
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex justify-end z-50" onClick={close}>
+    <div
+      className="fixed inset-0 bg-black/60 flex justify-end z-50"
+      onClick={close}
+    >
       <div
         className="w-[520px] bg-slate-950 text-white h-full overflow-y-auto p-6 space-y-6"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-start gap-4">
           <div className="min-w-0">
-            <div className="text-2xl font-bold truncate">{row.payload?.vehicle || "Vehicle"}</div>
-            <div className="text-sm text-slate-300 truncate">{row.payload?.name || "Customer"}</div>
+            <div className="text-2xl font-bold truncate">
+              {row.payload?.vehicle || "Vehicle"}
+            </div>
+            <div className="text-sm text-slate-300 truncate">
+              {row.payload?.name || "Customer"}
+            </div>
 
-            <div className="text-xs text-slate-500 mt-1">{new Date(row.created_at).toLocaleString()}</div>
+            <div className="text-xs text-slate-500 mt-1">
+              {new Date(row.created_at).toLocaleString()}
+            </div>
 
             <div className="text-xs text-slate-400 mt-2">
-              Stage: <span className="text-slate-200 font-semibold">{stage}</span>
+              Stage:{" "}
+              <span className="text-slate-200 font-semibold">{stage}</span>
               {lastBy ? (
                 <>
                   {" "}
-                  • Last: <span className="text-slate-200 font-semibold">{lastBy}</span>
-                  {lastAt ? <span className="text-slate-400"> @ {formatTime(lastAt)}</span> : null}
+                  - Last:{" "}
+                  <span className="text-slate-200 font-semibold">{lastBy}</span>
+                  {lastAt ? (
+                    <span className="text-slate-400">
+                      {" "}
+                      @ {formatTime(lastAt)}
+                    </span>
+                  ) : null}
                 </>
               ) : null}
             </div>
 
             {techLabel ? (
               <div className="text-[11px] text-slate-500 mt-1">
-                Technician: <span className="text-slate-300 font-semibold">{techLabel}</span>
+                Technician:{" "}
+                <span className="text-slate-300 font-semibold">
+                  {techLabel}
+                </span>
               </div>
             ) : null}
 
@@ -801,11 +896,18 @@ export default function WorkOrderDrawer({
               <span className="text-[11px] font-semibold rounded-md border border-emerald-700/60 bg-emerald-600/10 px-2 py-1 text-emerald-200">
                 {syncLabel || "Live sync"}
               </span>
-              {savedAt ? <span className="text-[11px] text-slate-500">Saved: {savedAt}</span> : null}
+              {savedAt ? (
+                <span className="text-[11px] text-slate-500">
+                  Saved: {savedAt}
+                </span>
+              ) : null}
             </div>
           </div>
 
-          <button onClick={close} className="border border-slate-700 px-3 py-2 rounded-lg hover:border-slate-400">
+          <button
+            onClick={close}
+            className="border border-slate-700 px-3 py-2 rounded-lg hover:border-slate-400"
+          >
             Close
           </button>
         </div>
@@ -817,7 +919,9 @@ export default function WorkOrderDrawer({
               <button
                 onClick={() => setStage("diagnosing")}
                 className={`rounded-xl border px-3 py-2 text-sm font-semibold ${
-                  stage === "diagnosing" ? "border-blue-400 bg-blue-500/10" : "border-slate-700 hover:border-slate-400"
+                  stage === "diagnosing"
+                    ? "border-blue-400 bg-blue-500/10"
+                    : "border-slate-700 hover:border-slate-400"
                 }`}
               >
                 Diagnosing
@@ -845,7 +949,9 @@ export default function WorkOrderDrawer({
               <button
                 onClick={() => setStage("done")}
                 className={`rounded-xl border px-3 py-2 text-sm font-semibold ${
-                  stage === "done" ? "border-green-400 bg-green-500/10" : "border-slate-700 hover:border-slate-400"
+                  stage === "done"
+                    ? "border-green-400 bg-green-500/10"
+                    : "border-slate-700 hover:border-slate-400"
                 }`}
               >
                 Done
@@ -867,12 +973,16 @@ export default function WorkOrderDrawer({
                 !speechCtor
                   ? "border-slate-800 text-slate-600"
                   : dictating?.kind === "notes"
-                  ? "border-emerald-400 text-emerald-200 bg-emerald-500/10"
-                  : "border-slate-700 text-slate-200 hover:border-slate-400"
+                    ? "border-emerald-400 text-emerald-200 bg-emerald-500/10"
+                    : "border-slate-700 text-slate-200 hover:border-slate-400"
               }`}
-              title={!speechCtor ? "Voice input not supported in this browser" : "Dictate notes"}
+              title={
+                !speechCtor
+                  ? "Voice input not supported in this browser"
+                  : "Dictate notes"
+              }
             >
-              {dictating?.kind === "notes" ? "🎙️ Listening…" : "🎙️ Mic"}
+              {dictating?.kind === "notes" ? "Listening..." : "Mic"}
             </button>
           </div>
 
@@ -882,14 +992,18 @@ export default function WorkOrderDrawer({
             className="w-full h-28 bg-slate-900 border border-slate-700 rounded-xl p-3"
             placeholder="Diagnosis, findings, recommendations..."
           />
-          <div className="text-[11px] text-slate-500 mt-2">(Live sync + local safety draft — so refresh won’t nuke it.)</div>
+          <div className="text-[11px] text-slate-500 mt-2">
+            (Live sync + local safety draft - so refresh will not nuke it.)
+          </div>
         </div>
 
         {/* Next Date (Calendar Anchor) */}
         <div>
           <div className="flex items-center justify-between gap-2 mb-2">
             <div className="text-sm text-slate-400">Next Date</div>
-            <div className="text-[11px] text-slate-500">Part ETA / customer return</div>
+            <div className="text-[11px] text-slate-500">
+              Part ETA / customer return
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-2">
@@ -925,7 +1039,10 @@ export default function WorkOrderDrawer({
         <div>
           <div className="flex justify-between items-center mb-2">
             <div className="font-semibold">Labor</div>
-            <button onClick={() => addLine(setLabor)} className="text-xs text-blue-400">
+            <button
+              onClick={() => addLine(setLabor)}
+              className="text-xs text-blue-400"
+            >
               + Add
             </button>
           </div>
@@ -940,37 +1057,50 @@ export default function WorkOrderDrawer({
                   !speechCtor
                     ? "border-slate-800 text-slate-600"
                     : dictating?.kind === "labor" && dictating?.id === l.id
-                    ? "border-emerald-400 text-emerald-200 bg-emerald-500/10"
-                    : "border-slate-700 text-slate-200 hover:border-slate-400"
+                      ? "border-emerald-400 text-emerald-200 bg-emerald-500/10"
+                      : "border-slate-700 text-slate-200 hover:border-slate-400"
                 }`}
-                title={!speechCtor ? "Voice input not supported" : "Dictate labor description"}
+                title={
+                  !speechCtor
+                    ? "Voice input not supported"
+                    : "Dictate labor description"
+                }
               >
-                🎙️
+                Mic
               </button>
 
               <input
                 value={l.description}
-                onChange={(e) => updateLine(setLabor, l.id, "description", e.target.value)}
+                onChange={(e) =>
+                  updateLine(setLabor, l.id, "description", e.target.value)
+                }
                 onKeyDown={expandLastTokenOnTab}
                 placeholder="Labor description"
                 className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 h-9"
               />
               <input
                 value={l.price}
-                onChange={(e) => updateLine(setLabor, l.id, "price", e.target.value)}
+                onChange={(e) =>
+                  updateLine(setLabor, l.id, "price", e.target.value)
+                }
                 placeholder="0.00"
                 className="w-24 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-right h-9"
               />
             </div>
           ))}
 
-          <div className="text-right text-sm text-slate-300 mt-1">Labor Total: ${laborTotal.toFixed(2)}</div>
+          <div className="text-right text-sm text-slate-300 mt-1">
+            Labor Total: ${laborTotal.toFixed(2)}
+          </div>
         </div>
 
         <div>
           <div className="flex justify-between items-center mb-2">
             <div className="font-semibold">Parts</div>
-            <button onClick={() => addLine(setParts)} className="text-xs text-blue-400">
+            <button
+              onClick={() => addLine(setParts)}
+              className="text-xs text-blue-400"
+            >
               + Add
             </button>
           </div>
@@ -985,36 +1115,51 @@ export default function WorkOrderDrawer({
                   !speechCtor
                     ? "border-slate-800 text-slate-600"
                     : dictating?.kind === "parts" && dictating?.id === p.id
-                    ? "border-emerald-400 text-emerald-200 bg-emerald-500/10"
-                    : "border-slate-700 text-slate-200 hover:border-slate-400"
+                      ? "border-emerald-400 text-emerald-200 bg-emerald-500/10"
+                      : "border-slate-700 text-slate-200 hover:border-slate-400"
                 }`}
-                title={!speechCtor ? "Voice input not supported" : "Dictate part description"}
+                title={
+                  !speechCtor
+                    ? "Voice input not supported"
+                    : "Dictate part description"
+                }
               >
-                🎙️
+                Mic
               </button>
 
               <input
                 value={p.description}
-                onChange={(e) => updateLine(setParts, p.id, "description", e.target.value)}
+                onChange={(e) =>
+                  updateLine(setParts, p.id, "description", e.target.value)
+                }
                 onKeyDown={expandLastTokenOnTab}
                 placeholder="Part"
                 className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 h-9"
               />
               <input
                 value={p.price}
-                onChange={(e) => updateLine(setParts, p.id, "price", e.target.value)}
+                onChange={(e) =>
+                  updateLine(setParts, p.id, "price", e.target.value)
+                }
                 placeholder="0.00"
                 className="w-24 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-right h-9"
               />
             </div>
           ))}
 
-          <div className="text-right text-sm text-slate-300 mt-1">Parts Total: ${partsTotal.toFixed(2)}</div>
+          <div className="text-right text-sm text-slate-300 mt-1">
+            Parts Total: ${partsTotal.toFixed(2)}
+          </div>
         </div>
 
-        <div className="border-t border-slate-700 pt-4 text-right text-lg font-bold">Grand Total: ${grand.toFixed(2)}</div>
+        <div className="border-t border-slate-700 pt-4 text-right text-lg font-bold">
+          Grand Total: ${grand.toFixed(2)}
+        </div>
 
-        <button onClick={goPrint} className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-semibold">
+        <button
+          onClick={goPrint}
+          className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-semibold"
+        >
           Print Work Order
         </button>
       </div>
