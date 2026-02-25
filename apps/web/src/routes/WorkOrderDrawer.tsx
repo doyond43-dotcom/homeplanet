@@ -274,10 +274,12 @@ export default function WorkOrderDrawer({
   const [parts, setParts] = useState<Line[]>(() => [
     { id: makeId(), description: "", price: "" },
   ]);
+
   // calendar anchor state (local + shared doc)
   const [nextActionLabel, setNextActionLabel] = useState<string>("Part ETA");
   const [nextActionAt, setNextActionAt] = useState<string>(""); // datetime-local value
   const [nextActionNote, setNextActionNote] = useState<string>("");
+
   // keep latest values for realtime callback without re-subscribing
   const notesRef = useRef(notes);
   const laborRef = useRef(labor);
@@ -328,8 +330,8 @@ export default function WorkOrderDrawer({
     kind: "notes" | "labor" | "parts";
     id?: string;
   }>(null);
-  const recRef = useRef<SpeechRec | null>(null);
 
+  const recRef = useRef<SpeechRec | null>(null);
   const speechCtor = useMemo(() => getSpeechRecognition(), []);
 
   // refs for debounce + stale-guard
@@ -337,6 +339,7 @@ export default function WorkOrderDrawer({
   const lastSentRef = useRef<string>(""); // json string
   const saveTimerRef = useRef<number | null>(null);
   const mountedRef = useRef(false);
+
   // prevent "blank overwrite" during initial open/load
   const hydratingRef = useRef<boolean>(false); // true while we are loading initial state
   const hydratedOnceRef = useRef<boolean>(false); // becomes true after DB load finishes at least once
@@ -361,13 +364,15 @@ export default function WorkOrderDrawer({
         setNotes(String(parsed.notes || ""));
         setLabor(ensureUiLines((parsed.labor as Partial<Line>[]) || []));
         setParts(ensureUiLines((parsed.parts as Partial<Line>[]) || []));
+
         // calendar anchor from local
         setNextActionLabel(String(parsed.nextActionLabel || "Part ETA"));
         setNextActionAt(String(parsed.nextActionAt || ""));
         setNextActionNote(String(parsed.nextActionNote || ""));
 
-        if (parsed.savedAtIso)
+        if (parsed.savedAtIso) {
           setSavedAt(formatTime(String(parsed.savedAtIso)));
+        }
       } else {
         setNotes("");
         setLabor([{ id: makeId(), description: "", price: "" }]);
@@ -400,7 +405,7 @@ export default function WorkOrderDrawer({
         if (!mountedRef.current) return;
 
         if (error) {
-          setSyncLabel(`Live sync (read err)`);
+          setSyncLabel("Live sync (read err)");
           // still unblock saving so user edits can persist
           hydratedOnceRef.current = true;
           hydratingRef.current = false;
@@ -425,6 +430,7 @@ export default function WorkOrderDrawer({
           setNotes(normalized.notes);
           setLabor(ensureUiLines(normalized.labor));
           setParts(ensureUiLines(normalized.parts));
+
           // calendar anchor from DB
           setNextActionLabel(
             String((normalized as any).next_action_label || "Part ETA"),
@@ -435,12 +441,13 @@ export default function WorkOrderDrawer({
           if (data.updated_at) setSavedAt(formatTime(String(data.updated_at)));
           setSyncLabel("Live sync");
         }
+
         // DB read finished (even if no doc existed)
         hydratedOnceRef.current = true;
         hydratingRef.current = false;
       } catch {
         if (!mountedRef.current) return;
-        setSyncLabel(`Live sync (read err)`);
+        setSyncLabel("Live sync (read err)");
         // still unblock saving so user edits can persist
         hydratedOnceRef.current = true;
         hydratingRef.current = false;
@@ -510,6 +517,7 @@ export default function WorkOrderDrawer({
           setNotes(normalized.notes);
           setLabor(ensureUiLines(normalized.labor));
           setParts(ensureUiLines(normalized.parts));
+
           // calendar anchor from realtime
           setNextActionLabel(
             String((normalized as any).next_action_label || "Part ETA"),
@@ -555,6 +563,7 @@ export default function WorkOrderDrawer({
       grand,
       technicianCode: (employeeCode || "").trim() || undefined,
       technicianName: (employeeName || "").trim() || undefined,
+
       // store for local reload convenience
       nextActionLabel,
       nextActionAt,
@@ -698,6 +707,7 @@ export default function WorkOrderDrawer({
       grand,
       technicianCode: techCode || undefined,
       technicianName: (employeeName || "").trim() || undefined,
+
       // carry into print payload too (harmless even if print page ignores)
       nextActionLabel,
       nextActionAt,
@@ -886,9 +896,7 @@ export default function WorkOrderDrawer({
             {techLabel ? (
               <div className="text-[11px] text-slate-500 mt-1">
                 Technician:{" "}
-                <span className="text-slate-300 font-semibold">
-                  {techLabel}
-                </span>
+                <span className="text-slate-300 font-semibold">{techLabel}</span>
               </div>
             ) : null}
 
@@ -905,6 +913,7 @@ export default function WorkOrderDrawer({
           </div>
 
           <button
+            type="button"
             onClick={close}
             className="border border-slate-700 px-3 py-2 rounded-lg hover:border-slate-400"
           >
@@ -917,6 +926,7 @@ export default function WorkOrderDrawer({
             <div className="text-sm text-slate-400">Job Stage</div>
             <div className="grid grid-cols-2 gap-2">
               <button
+                type="button"
                 onClick={() => setStage("diagnosing")}
                 className={`rounded-xl border px-3 py-2 text-sm font-semibold ${
                   stage === "diagnosing"
@@ -927,6 +937,7 @@ export default function WorkOrderDrawer({
                 Diagnosing
               </button>
               <button
+                type="button"
                 onClick={() => setStage("waiting_parts")}
                 className={`rounded-xl border px-3 py-2 text-sm font-semibold ${
                   stage === "waiting_parts"
@@ -937,6 +948,7 @@ export default function WorkOrderDrawer({
                 Waiting Parts
               </button>
               <button
+                type="button"
                 onClick={() => setStage("repairing")}
                 className={`rounded-xl border px-3 py-2 text-sm font-semibold ${
                   stage === "repairing"
@@ -947,6 +959,7 @@ export default function WorkOrderDrawer({
                 Repairing
               </button>
               <button
+                type="button"
                 onClick={() => setStage("done")}
                 className={`rounded-xl border px-3 py-2 text-sm font-semibold ${
                   stage === "done"
@@ -967,7 +980,11 @@ export default function WorkOrderDrawer({
 
             <button
               type="button"
-              onClick={startDictationForNotes}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                startDictationForNotes();
+              }}
               disabled={!speechCtor}
               className={`text-xs px-3 py-1 rounded-lg border ${
                 !speechCtor
@@ -1040,7 +1057,12 @@ export default function WorkOrderDrawer({
           <div className="flex justify-between items-center mb-2">
             <div className="font-semibold">Labor</div>
             <button
-              onClick={() => addLine(setLabor)}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                addLine(setLabor);
+              }}
               className="text-xs text-blue-400"
             >
               + Add
@@ -1051,7 +1073,11 @@ export default function WorkOrderDrawer({
             <div key={l.id} className="flex gap-2 mb-2 items-center">
               <button
                 type="button"
-                onClick={() => startDictationForLine("labor", l.id)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  startDictationForLine("labor", l.id);
+                }}
                 disabled={!speechCtor}
                 className={`h-9 px-2 rounded-lg border ${
                   !speechCtor
@@ -1098,7 +1124,12 @@ export default function WorkOrderDrawer({
           <div className="flex justify-between items-center mb-2">
             <div className="font-semibold">Parts</div>
             <button
-              onClick={() => addLine(setParts)}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                addLine(setParts);
+              }}
               className="text-xs text-blue-400"
             >
               + Add
@@ -1109,7 +1140,11 @@ export default function WorkOrderDrawer({
             <div key={p.id} className="flex gap-2 mb-2 items-center">
               <button
                 type="button"
-                onClick={() => startDictationForLine("parts", p.id)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  startDictationForLine("parts", p.id);
+                }}
                 disabled={!speechCtor}
                 className={`h-9 px-2 rounded-lg border ${
                   !speechCtor
@@ -1157,7 +1192,12 @@ export default function WorkOrderDrawer({
         </div>
 
         <button
-          onClick={goPrint}
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            goPrint();
+          }}
           className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-semibold"
         >
           Print Work Order
