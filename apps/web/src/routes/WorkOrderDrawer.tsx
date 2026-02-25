@@ -51,6 +51,11 @@ export type PrintData = {
   technicianCode?: string;
   technicianName?: string;
 
+  // ✅ local draft extras (for refresh safety)
+  nextActionLabel?: string;
+  nextActionAt?: string; // datetime-local value
+  nextActionNote?: string;
+
   savedAtIso?: string;
 };
 
@@ -200,13 +205,29 @@ type DraftDoc = {
   notes: string;
   labor: Line[];
   parts: Line[];
+
+  // ✅ calendar anchor stored in shared doc
+  next_action_at?: string | null; // datetime-local string (or ISO if you prefer)
+  next_action_label?: string | null;
+  next_action_note?: string | null;
 };
 
-function toDraftDoc(notes: string, labor: Line[], parts: Line[]): DraftDoc {
+function toDraftDoc(
+  notes: string,
+  labor: Line[],
+  parts: Line[],
+  next_action_at?: string | null,
+  next_action_label?: string | null,
+  next_action_note?: string | null
+): DraftDoc {
   return {
     notes: String(notes || ""),
     labor: normalizeLines(labor || []),
     parts: normalizeLines(parts || []),
+
+    next_action_at: next_action_at ? String(next_action_at) : null,
+    next_action_label: next_action_label ? String(next_action_label) : null,
+    next_action_note: next_action_note ? String(next_action_note) : null,
   };
 }
 
@@ -239,10 +260,19 @@ export default function WorkOrderDrawer({
   const [labor, setLabor] = useState<Line[]>(() => [{ id: makeId(), description: "", price: "" }]);
   const [parts, setParts] = useState<Line[]>(() => [{ id: makeId(), description: "", price: "" }]);
 
+  // ✅ calendar anchor state (local + shared doc)
+  const [nextActionLabel, setNextActionLabel] = useState<string>("Part ETA");
+  const [nextActionAt, setNextActionAt] = useState<string>(""); // datetime-local value
+  const [nextActionNote, setNextActionNote] = useState<string>("");
+
   // ✅ keep latest values for realtime callback without re-subscribing
   const notesRef = useRef(notes);
   const laborRef = useRef(labor);
   const partsRef = useRef(parts);
+
+  const nextActionLabelRef = useRef(nextActionLabel);
+  const nextActionAtRef = useRef(nextActionAt);
+  const nextActionNoteRef = useRef(nextActionNote);
 
   useEffect(() => {
     notesRef.current = notes;
@@ -253,6 +283,16 @@ export default function WorkOrderDrawer({
   useEffect(() => {
     partsRef.current = parts;
   }, [parts]);
+
+  useEffect(() => {
+    nextActionLabelRef.current = nextActionLabel;
+  }, [nextActionLabel]);
+  useEffect(() => {
+    nextActionAtRef.current = nextActionAt;
+  }, [nextActionAt]);
+  useEffect(() => {
+    nextActionNoteRef.current = nextActionNote;
+  }, [nextActionNote]);
 
   // Live sync status UI
   const [syncLabel, setSyncLabel] = useState<string>("");
@@ -298,16 +338,30 @@ export default function WorkOrderDrawer({
         setNotes(String(parsed.notes || ""));
         setLabor(normalizeLines((parsed.labor as Partial<Line>[]) || []));
         setParts(normalizeLines((parsed.parts as Partial<Line>[]) || []));
+
+        // ✅ calendar anchor from local
+        setNextActionLabel(String(parsed.nextActionLabel || "Part ETA"));
+        setNextActionAt(String(parsed.nextActionAt || ""));
+        setNextActionNote(String(parsed.nextActionNote || ""));
+
         if (parsed.savedAtIso) setSavedAt(formatTime(String(parsed.savedAtIso)));
       } else {
         setNotes("");
         setLabor([{ id: makeId(), description: "", price: "" }]);
         setParts([{ id: makeId(), description: "", price: "" }]);
+
+        setNextActionLabel("Part ETA");
+        setNextActionAt("");
+        setNextActionNote("");
       }
     } catch {
       setNotes("");
       setLabor([{ id: makeId(), description: "", price: "" }]);
       setParts([{ id: makeId(), description: "", price: "" }]);
+
+      setNextActionLabel("Part ETA");
+      setNextActionAt("");
+      setNextActionNote("");
     }
 
     // 2) load shared DB draft (authoritative for cross-device)
@@ -329,14 +383,27 @@ export default function WorkOrderDrawer({
 
         if (data?.doc) {
           const doc = data.doc as DraftDoc;
-          const normalized = toDraftDoc(doc.notes || "", (doc.labor as any) || [], (doc.parts as any) || []);
-          const js = JSON.stringify(normalized);
 
+          const normalized = toDraftDoc(
+            doc.notes || "",
+            (doc.labor as any) || [],
+            (doc.parts as any) || [],
+            (doc as any).next_action_at || null,
+            (doc as any).next_action_label || null,
+            (doc as any).next_action_note || null
+          );
+
+          const js = JSON.stringify(normalized);
           lastAppliedRemoteRef.current = js;
 
           setNotes(normalized.notes);
           setLabor(normalized.labor);
           setParts(normalized.parts);
+
+          // ✅ calendar anchor from DB
+          setNextActionLabel(String((normalized as any).next_action_label || "Part ETA"));
+          setNextActionAt(String((normalized as any).next_action_at || ""));
+          setNextActionNote(String((normalized as any).next_action_note || ""));
 
           if (data.updated_at) setSavedAt(formatTime(String(data.updated_at)));
           setSyncLabel("Live sync");
@@ -373,7 +440,15 @@ export default function WorkOrderDrawer({
           if (updatedByDevice && updatedByDevice === clientId) return;
 
           const doc = next.doc as DraftDoc;
-          const normalized = toDraftDoc(doc.notes || "", (doc.labor as any) || [], (doc.parts as any) || []);
+          const normalized = toDraftDoc(
+            doc.notes || "",
+            (doc.labor as any) || [],
+            (doc.parts as any) || [],
+            (doc as any).next_action_at || null,
+            (doc as any).next_action_label || null,
+            (doc as any).next_action_note || null
+          );
+
           const js = JSON.stringify(normalized);
 
           // prevent loops + redundant sets
@@ -381,12 +456,24 @@ export default function WorkOrderDrawer({
           lastAppliedRemoteRef.current = js;
 
           // compare against latest local state (refs)
-          const current = toDraftDoc(notesRef.current, laborRef.current, partsRef.current);
+          const current = toDraftDoc(
+            notesRef.current,
+            laborRef.current,
+            partsRef.current,
+            nextActionAtRef.current || null,
+            nextActionLabelRef.current || null,
+            nextActionNoteRef.current || null
+          );
           if (shallowEqDoc(current, normalized)) return;
 
           setNotes(normalized.notes);
           setLabor(normalized.labor);
           setParts(normalized.parts);
+
+          // ✅ calendar anchor from realtime
+          setNextActionLabel(String((normalized as any).next_action_label || "Part ETA"));
+          setNextActionAt(String((normalized as any).next_action_at || ""));
+          setNextActionNote(String((normalized as any).next_action_note || ""));
 
           if (next.updated_at) setSavedAt(formatTime(String(next.updated_at)));
           setSyncLabel("Live sync");
@@ -424,6 +511,12 @@ export default function WorkOrderDrawer({
       grand,
       technicianCode: (employeeCode || "").trim() || undefined,
       technicianName: (employeeName || "").trim() || undefined,
+
+      // ✅ store for local reload convenience
+      nextActionLabel,
+      nextActionAt,
+      nextActionNote,
+
       savedAtIso: new Date().toISOString(),
     };
 
@@ -433,7 +526,14 @@ export default function WorkOrderDrawer({
     } catch {}
 
     // 2) shared DB (debounced)
-    const doc = toDraftDoc(notes, labor, parts);
+    const doc = toDraftDoc(
+      notes,
+      labor,
+      parts,
+      nextActionAt || null,
+      nextActionLabel || null,
+      nextActionNote || null
+    );
     const js = JSON.stringify(doc);
 
     // If we just applied this from remote, don't immediately re-upsert
@@ -485,7 +585,20 @@ export default function WorkOrderDrawer({
     }, SAVE_DEBOUNCE_MS);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [row?.id, draftKey, notes, labor, parts, row, employeeCode, employeeName, clientId]);
+  }, [
+    row?.id,
+    draftKey,
+    notes,
+    labor,
+    parts,
+    nextActionLabel,
+    nextActionAt,
+    nextActionNote,
+    row,
+    employeeCode,
+    employeeName,
+    clientId,
+  ]);
 
   function updateLine(
     setter: Dispatch<SetStateAction<Line[]>>,
@@ -537,6 +650,12 @@ export default function WorkOrderDrawer({
       grand,
       technicianCode: techCode || undefined,
       technicianName: (employeeName || "").trim() || undefined,
+
+      // ✅ carry into print payload too (harmless even if print page ignores)
+      nextActionLabel,
+      nextActionAt,
+      nextActionNote,
+
       savedAtIso: new Date().toISOString(),
     };
 
@@ -764,6 +883,43 @@ export default function WorkOrderDrawer({
             placeholder="Diagnosis, findings, recommendations..."
           />
           <div className="text-[11px] text-slate-500 mt-2">(Live sync + local safety draft — so refresh won’t nuke it.)</div>
+        </div>
+
+        {/* Next Date (Calendar Anchor) */}
+        <div>
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <div className="text-sm text-slate-400">Next Date</div>
+            <div className="text-[11px] text-slate-500">Part ETA / customer return</div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <select
+              value={nextActionLabel}
+              onChange={(e) => setNextActionLabel(e.target.value)}
+              className="bg-slate-900 border border-slate-700 rounded-lg px-2 py-2 text-sm"
+            >
+              <option>Part ETA</option>
+              <option>Customer Return</option>
+              <option>Appointment</option>
+              <option>Recheck</option>
+              <option>Drop-off</option>
+              <option>Other</option>
+            </select>
+
+            <input
+              type="datetime-local"
+              value={nextActionAt}
+              onChange={(e) => setNextActionAt(e.target.value)}
+              className="bg-slate-900 border border-slate-700 rounded-lg px-2 py-2 text-sm"
+            />
+          </div>
+
+          <input
+            value={nextActionNote}
+            onChange={(e) => setNextActionNote(e.target.value)}
+            placeholder='Optional note (e.g., "AutoZone arriving", "customer after 3pm")'
+            className="mt-2 w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm"
+          />
         </div>
 
         <div>

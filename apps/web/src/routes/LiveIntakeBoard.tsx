@@ -59,6 +59,19 @@ function formatTime(iso: string) {
   return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
+function formatDateTimeLocalPretty(v: string) {
+  // v is typically "YYYY-MM-DDTHH:mm" (datetime-local)
+  try {
+    const d = new Date(v);
+    if (Number.isNaN(d.getTime())) return v;
+    const date = d.toLocaleDateString([], { month: "numeric", day: "numeric" });
+    const time = d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    return `${date} ${time}`;
+  } catch {
+    return v;
+  }
+}
+
 // Basic UUID sanity check (prevents "invalid input syntax for type uuid" mystery 400s)
 function isUuid(v: unknown) {
   if (typeof v !== "string") return false;
@@ -115,6 +128,43 @@ export default function LiveIntakeBoard() {
   return <LiveIntakeBoardBody shopSlug={shopSlug} />;
 }
 
+/* ----------------------------- Next Date chips ----------------------------- */
+
+type NextDateChip = {
+  jobId: string;
+  at: string; // datetime-local string
+  label: string; // "Part ETA" etc
+  note?: string;
+  updatedAt?: string; // db updated_at
+};
+
+function chipBadgeColor(label: string) {
+  const x = (label || "").toLowerCase();
+  if (x.includes("eta")) return "border-orange-500/30 bg-orange-500/10 text-orange-200";
+  if (x.includes("appointment")) return "border-blue-500/30 bg-blue-500/10 text-blue-200";
+  if (x.includes("recheck")) return "border-purple-500/30 bg-purple-500/10 text-purple-200";
+  if (x.includes("drop")) return "border-slate-500/30 bg-slate-500/10 text-slate-200";
+  if (x.includes("return")) return "border-emerald-500/30 bg-emerald-500/10 text-emerald-200";
+  return "border-slate-600/30 bg-slate-900/40 text-slate-200";
+}
+
+function toChipFromDraft(jobId: string, doc: any, updatedAt?: string | null): NextDateChip | null {
+  if (!doc) return null;
+  const at = String(doc?.next_action_at ?? "").trim();
+  const label = String(doc?.next_action_label ?? "").trim();
+  const note = String(doc?.next_action_note ?? "").trim();
+
+  if (!at) return null;
+
+  return {
+    jobId,
+    at,
+    label: label || "Next Date",
+    note: note || undefined,
+    updatedAt: updatedAt ? String(updatedAt) : undefined,
+  };
+}
+
 function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
   const buildTag = useMemo(() => {
     const env = (import.meta as any).env ?? {};
@@ -139,6 +189,13 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
   const [active, setActive] = useState<Row | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  // ✅ Next Date chips map: job_id -> chip
+  const [nextDateByJob, setNextDateByJob] = useState<Record<string, NextDateChip | null>>({});
+  const nextDateByJobRef = useRef<Record<string, NextDateChip | null>>({});
+  useEffect(() => {
+    nextDateByJobRef.current = nextDateByJob;
+  }, [nextDateByJob]);
 
   // ✅ Customer lookup (surgical add-on; does NOT touch board load/realtime/stages)
   const [lookupQuery, setLookupQuery] = useState("");
@@ -241,6 +298,111 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
       if (found) setActive(found);
     }
   }
+
+  // ✅ Next Date: batched fetch for current rows (quiet, cached)
+  useEffect(() => {
+    if (!shopSlug) return;
+
+    const ids = rows.map((r) => r.id).filter((id) => isUuid(id));
+    if (ids.length === 0) return;
+
+    let cancelled = false;
+
+    // Debounce a bit so quick bursts of row updates don't spam reads
+    const timer = window.setTimeout(async () => {
+      try {
+        // Only fetch ids we don't already have in the map
+        const existing = nextDateByJobRef.current || {};
+        const missing = ids.filter((id) => !(id in existing));
+
+        if (missing.length === 0) return;
+
+        const { data, error } = await supabase
+          .from("work_order_drafts")
+          .select("job_id, doc, updated_at")
+          .eq("shop_slug", shopSlug)
+          .in("job_id", missing);
+
+        if (cancelled) return;
+
+        if (error) {
+          // don't blow up UI for this (keep board stable)
+          console.warn("Next Date fetch error:", error);
+          // still mark as known-missing to avoid re-query loop
+          setNextDateByJob((prev) => {
+            const next = { ...prev };
+            for (const id of missing) next[id] = null;
+            return next;
+          });
+          return;
+        }
+
+        const rowsData = ((data as any) || []) as Array<{ job_id: string; doc: any; updated_at?: string | null }>;
+        const got = new Set<string>(rowsData.map((x) => String(x.job_id)));
+
+        setNextDateByJob((prev) => {
+          const next = { ...prev };
+          for (const id of missing) {
+            // default: no chip unless doc has next_action_at
+            next[id] = null;
+          }
+          for (const it of rowsData) {
+            const jobId = String(it.job_id || "");
+            const chip = toChipFromDraft(jobId, it.doc, it.updated_at || null);
+            next[jobId] = chip;
+          }
+          // any missing not returned -> null (already set above)
+          for (const id of missing) {
+            if (!got.has(id)) next[id] = null;
+          }
+          return next;
+        });
+      } catch (e: any) {
+        if (cancelled) return;
+        console.warn("Next Date fetch exception:", e);
+      }
+    }, 350);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rows, shopSlug]);
+
+  // ✅ Next Date: realtime updates from work_order_drafts (instant chip refresh)
+  useEffect(() => {
+    if (!shopSlug) return;
+
+    let mounted = true;
+
+    const ch = supabase
+      .channel(`wo-drafts:${shopSlug}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "work_order_drafts", filter: `shop_slug=eq.${shopSlug}` },
+        (p: any) => {
+          if (!mounted) return;
+
+          const next = p?.new ?? null;
+          const jobId = String(next?.job_id ?? "").trim();
+          if (!jobId) return;
+
+          const chip = toChipFromDraft(jobId, next?.doc, next?.updated_at ?? null);
+
+          setNextDateByJob((prev) => ({ ...prev, [jobId]: chip }));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      mounted = false;
+      try {
+        supabase.removeChannel(ch);
+      } catch {}
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shopSlug]);
 
   // ✅ Realtime-first + ✅ low-frequency heartbeat fallback (iPad/Safari-safe, NOT chatty)
   useEffect(() => {
@@ -541,6 +703,39 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
   const longRows = rows.filter((r) => !isQuickJob(r.payload));
   const employeeReady = !!employeeCode.trim();
 
+  const renderNextDateChip = (jobId: string) => {
+    const chip = nextDateByJob[jobId];
+    if (!chip || !chip.at) return null;
+
+    const label = chip.label || "Next Date";
+    const when = formatDateTimeLocalPretty(chip.at);
+    const note = chip.note ? safeText(chip.note, 80) : "";
+
+    return (
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <div
+          className={`inline-flex items-center gap-2 rounded-md border px-2 py-1 text-[11px] font-semibold ${chipBadgeColor(
+            label
+          )}`}
+          title={note ? `${label} • ${when}\n${note}` : `${label} • ${when}`}
+        >
+          <span>📅</span>
+          <span className="truncate max-w-[220px]">
+            {label}: {when}
+          </span>
+        </div>
+
+        {note ? (
+          <div className="text-[11px] text-slate-500 truncate max-w-[240px]" title={note}>
+            {note}
+          </div>
+        ) : (
+          <div />
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="h-screen bg-slate-950 text-white flex flex-col">
       <div className="border-b border-slate-800 px-6 py-4 flex items-center justify-between gap-4">
@@ -709,6 +904,9 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
                         <div className="text-sm text-slate-300">{name}</div>
                         <div className="text-xs text-slate-400 mt-1">{message}</div>
 
+                        {/* ✅ Next Date chip */}
+                        {renderNextDateChip(r.id)}
+
                         <div className="mt-2 text-[11px] text-slate-500 flex items-center justify-between">
                           <span>{formatTime(r.created_at)}</span>
                           {lastBy && (
@@ -753,6 +951,9 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
                         </div>
                         <div className="text-sm text-slate-300">{name}</div>
                         <div className="text-xs text-slate-400 mt-1">{message}</div>
+
+                        {/* ✅ Next Date chip */}
+                        {renderNextDateChip(r.id)}
 
                         <div className="mt-2 text-[11px] text-slate-500 flex items-center justify-between">
                           <span>{formatTime(r.created_at)}</span>
