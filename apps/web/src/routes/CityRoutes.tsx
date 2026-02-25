@@ -1,20 +1,37 @@
 ﻿// apps/web/src/routes/CityRoutes.tsx
 import { Routes, Route, Link, Navigate } from "react-router-dom";
 
-// IMPORTANT: this is the real page we want for /city/creator
-import CreatorStudio from "../pages/CreatorStudio";
+// /city/creator should be the CreatorCity launchpad (NOT CreatorStudio tool screen)
+import CreatorCity from "../pages/CreatorCity";
 
 function CityIndex() {
-  const cities = ["creator", "service", "education", "safety", "family", "commerce", "health", "legal"];
+  const cities = [
+    "creator",
+    "service",
+    "education",
+    "safety",
+    "family",
+    "commerce",
+    "health",
+    "legal",
+  ];
 
   return (
     <div style={{ padding: 24 }}>
-      <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 12 }}>HomePlanet Cities</h1>
+      <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 12 }}>
+        HomePlanet Cities
+      </h1>
       <div style={{ color: "#94a3b8", marginBottom: 16 }}>
         Choose a City (these routes live under <code>/city/</code>).
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+          gap: 12,
+        }}
+      >
         {cities.map((c) => (
           <Link
             key={c}
@@ -29,7 +46,9 @@ function CityIndex() {
             }}
           >
             <div style={{ fontWeight: 800, fontSize: 16 }}>{c}</div>
-            <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 6 }}>Open {c} city</div>
+            <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 6 }}>
+              Open {c} city
+            </div>
           </Link>
         ))}
       </div>
@@ -40,7 +59,9 @@ function CityIndex() {
 function CityPlaceholder() {
   return (
     <div style={{ padding: 24 }}>
-      <h2 style={{ fontSize: 22, fontWeight: 900, marginBottom: 8 }}>City not built yet</h2>
+      <h2 style={{ fontSize: 22, fontWeight: 900, marginBottom: 8 }}>
+        City not built yet
+      </h2>
       <div style={{ color: "#94a3b8" }}>
         This route exists, but the City page hasn’t been wired yet.
       </div>
@@ -59,11 +80,14 @@ export default function CityRoutes() {
       {/* /city */}
       <Route index element={<CityIndex />} />
 
-      {/* ✅ REAL CITY PAGES */}
-      <Route path="creator" element={<CreatorStudio />} />
+      {/* REAL CITY PAGES */}
+      <Route path="creator" element={<CreatorCity />} />
 
       {/* Optional: keep /city/service as a friendly redirect */}
-      <Route path="service" element={<Navigate to="/service/taylor-creek" replace />} />
+      <Route
+        path="service"
+        element={<Navigate to="/service/taylor-creek" replace />}
+      />
 
       {/* /city/<anything-else> */}
       <Route path="*" element={<CityPlaceholder />} />
