@@ -1,5 +1,4 @@
-﻿// apps/web/src/App.tsx
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
+﻿import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 
 import PublicPage from "./routes/PublicPage";
 import TenantPublicPage from "./routes/TenantPublicPage";
@@ -36,23 +35,23 @@ export default function App() {
         {/* Planets (core app layer) — MUST be above tenant catch-all */}
         <Route path="/planet/*" element={<PlanetRoutes />} />
 
+        {/* Creator shortcuts (must be above tenant catch-all) */}
+        <Route path="/creator" element={<Navigate to="/planet/creator" replace />} />
+        <Route path="/creator/studio" element={<Navigate to="/planet/creator/studio" replace />} />
+        <Route path="/creator/*" element={<Navigate to="/planet/creator" replace />} />
+
         {/* Press routes — MUST be above tenant catch-all */}
         <Route path="/press" element={<PressPage />} />
         <Route path="/press/taylor-creek" element={<PressKitTaylorCreek />} />
 
         {/* Taylor Creek landing page — MUST be above tenant catch-all */}
         <Route path="/taylor-creek" element={<TaylorCreekSite />} />
-        {/* Friendly casing redirect (optional but prevents surprises) */}
         <Route path="/Taylor-Creek" element={<Navigate to="/taylor-creek" replace />} />
 
         {/* Canonical public intake page */}
         <Route path="/c/:slug" element={<PublicPage />} />
 
-        {/* Tenant public pages (themed shells + fallback to PublicPage)
-            NOTE: keep BELOW /city/*, /planet/*, /press*, and /taylor-creek so it doesn't steal them */}
-        <Route path="/:slug/*" element={<TenantPublicPage />} />
-
-        {/* LIVE SYSTEM */}
+        {/* LIVE SYSTEM — MUST be above tenant catch-all so /live/:slug isn't stolen */}
         <Route path="/live/:slug" element={<LiveShell />}>
           <Route index element={<LiveShopTV />} />
           <Route path="staff" element={<LiveIntakeBoard />} />
@@ -62,6 +61,10 @@ export default function App() {
 
         {/* Alias helper */}
         <Route path="/go/:slug" element={<LiveAlias />} />
+
+        {/* Tenant public pages (themed shells + fallback to PublicPage)
+            NOTE: keep BELOW /city/*, /planet/*, /press*, /taylor-creek, and /live/:slug so it doesn't steal them */}
+        <Route path="/:slug/*" element={<TenantPublicPage />} />
 
         {/* Home (root) */}
         <Route path="/" element={<Navigate to="/city" replace />} />
