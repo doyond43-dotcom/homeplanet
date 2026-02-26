@@ -15,6 +15,7 @@ import PressPage from "./routes/PressPage";
 import PressKitTaylorCreek from "./routes/PressKitTaylorCreek";
 
 import PlanetRoutes from "./planet/PlanetRoutes";
+import CreatorCity from "./pages/CreatorCity";
 
 import NotFound from "./pages/NotFound";
 
@@ -29,29 +30,28 @@ export default function App() {
         {/* SERVICE SYSTEM — fully isolated namespace */}
         <Route path="/service/*" element={<ServiceRoutes />} />
 
-        {/* Cities (geography layer) — MUST be above tenant catch-all */}
+        {/* Cities (geography layer) */}
         <Route path="/city/*" element={<CityRoutes />} />
 
-        {/* Planets (core app layer) — MUST be above tenant catch-all */}
+        {/* Planets (core app layer) */}
         <Route path="/planet/*" element={<PlanetRoutes />} />
 
-        {/* Creator shortcuts (must be above tenant catch-all) */}
-        <Route path="/creator" element={<Navigate to="/planet/creator" replace />} />
-        <Route path="/creator/studio" element={<Navigate to="/planet/creator/studio" replace />} />
-        <Route path="/creator/*" element={<Navigate to="/planet/creator" replace />} />
+        {/* ✅ RESTORE: Creator City at /creator/* (must be above tenant catch-all) */}
+        <Route path="/creator/*" element={<CreatorCity />} />
+        <Route path="/creator" element={<Navigate to="/creator" replace />} />
 
-        {/* Press routes — MUST be above tenant catch-all */}
+        {/* Press routes */}
         <Route path="/press" element={<PressPage />} />
         <Route path="/press/taylor-creek" element={<PressKitTaylorCreek />} />
 
-        {/* Taylor Creek landing page — MUST be above tenant catch-all */}
+        {/* Taylor Creek landing page */}
         <Route path="/taylor-creek" element={<TaylorCreekSite />} />
         <Route path="/Taylor-Creek" element={<Navigate to="/taylor-creek" replace />} />
 
         {/* Canonical public intake page */}
         <Route path="/c/:slug" element={<PublicPage />} />
 
-        {/* LIVE SYSTEM — MUST be above tenant catch-all so /live/:slug isn't stolen */}
+        {/* LIVE SYSTEM */}
         <Route path="/live/:slug" element={<LiveShell />}>
           <Route index element={<LiveShopTV />} />
           <Route path="staff" element={<LiveIntakeBoard />} />
@@ -62,12 +62,11 @@ export default function App() {
         {/* Alias helper */}
         <Route path="/go/:slug" element={<LiveAlias />} />
 
-        {/* Tenant public pages (themed shells + fallback to PublicPage)
-            NOTE: keep BELOW /city/*, /planet/*, /press*, /taylor-creek, and /live/:slug so it doesn't steal them */}
+        {/* Tenant public pages (keep LAST so it doesn't steal real routes) */}
         <Route path="/:slug/*" element={<TenantPublicPage />} />
 
-        {/* Home (root) */}
-        <Route path="/" element={<Navigate to="/city" replace />} />
+        {/* Home (root) — send to Creator like before */}
+        <Route path="/" element={<Navigate to="/creator" replace />} />
 
         {/* Catch all */}
         <Route path="*" element={<NotFound />} />
