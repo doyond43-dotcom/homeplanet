@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useRef, useCallback } from "react";
+import React, { useMemo, useRef, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PLANETS } from "../planet/planetMap";
 
@@ -97,7 +97,7 @@ export default function PlanetOverview() {
     title: "🏗 Build",
     subtitle: "Create → release → evolve",
     desc: "This is the gravity well. Everything begins here.",
-    to: planet.id === "creator" ? "/planet/creator/build" : `/planet/${planet.id}/${buildCityId}`,
+    to: planet.id === "creator" ? "/creator/build" : `/planet/${planet.id}/${buildCityId}`,
   };
 
   const secondaryCities = cities

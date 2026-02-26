@@ -1,4 +1,4 @@
-// apps/web/src/pages/CreatorCity.tsx
+﻿// apps/web/src/pages/CreatorCity.tsx
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { PLANETS } from "../planet/planetMap";
@@ -98,17 +98,17 @@ export default function CreatorCity() {
         >
           <button
             style={btnPrimary}
-            onClick={() => nav("/planet/creator/build")}
+            onClick={() => nav("/creator/build")}
           >
             + Create Planet
           </button>
-          <button style={btn} onClick={() => nav("/planet/creator/projects")}>
+          <button style={btn} onClick={() => nav("/creator/projects")}>
             Projects
           </button>
-          <button style={btn} onClick={() => nav("/planet/creator/studio")}>
+          <button style={btn} onClick={() => nav("/creator/studio")}>
             Studio
           </button>
-          <button style={btn} onClick={() => nav("/planet/creator/build")}>
+          <button style={btn} onClick={() => nav("/creator/build")}>
             Build
           </button>
         </div>
@@ -134,7 +134,7 @@ export default function CreatorCity() {
               lineHeight: 1.4,
             }}
           >
-            The “Create Planet” button routes into the Creator build flow. This
+            The â€œCreate Planetâ€ button routes into the Creator build flow. This
             keeps /city/creator clean and stable.
           </div>
           <div
@@ -147,11 +147,11 @@ export default function CreatorCity() {
           >
             <button
               style={btnPrimary}
-              onClick={() => nav("/planet/creator/build")}
+              onClick={() => nav("/creator/build")}
             >
               Start Build
             </button>
-            <button style={btn} onClick={() => nav("/planet/creator/projects")}>
+            <button style={btn} onClick={() => nav("/creator/projects")}>
               Open Projects
             </button>
           </div>
@@ -172,7 +172,7 @@ export default function CreatorCity() {
             URLs.
           </div>
           <div style={{ marginTop: 12, color: "#94a3b8", fontSize: 12 }}>
-            Tip: We can later add “Recent planets” + “Usage counter” badges
+            Tip: We can later add â€œRecent planetsâ€ + â€œUsage counterâ€ badges
             here.
           </div>
         </div>
@@ -220,7 +220,7 @@ export default function CreatorCity() {
 
         {planets.length === 0 ? (
           <div style={{ color: "#94a3b8", marginTop: 10 }}>
-            PLANETS list is empty/unavailable — that’s okay. CreatorCity still
+            PLANETS list is empty/unavailable â€” thatâ€™s okay. CreatorCity still
             works as the build launchpad.
           </div>
         ) : null}
@@ -228,3 +228,4 @@ export default function CreatorCity() {
     </div>
   );
 }
+

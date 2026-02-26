@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
@@ -18,7 +18,7 @@ export default function Login() {
       if (!mounted) return;
       if (data.session) {
         const from = loc?.state?.from;
-        nav(from || "/planet/creator/projects", { replace: true });
+        nav(from || "/creator/projects", { replace: true });
       }
     });
     return () => { mounted = false; };
@@ -41,7 +41,7 @@ export default function Login() {
       if (error) throw error;
 
       const from = (loc as any)?.state?.from;
-      nav(from || "/planet/creator/projects", { replace: true });
+      nav(from || "/creator/projects", { replace: true });
     } catch (e: any) {
       setErr(e?.message ?? "Sign-in failed");
     } finally {

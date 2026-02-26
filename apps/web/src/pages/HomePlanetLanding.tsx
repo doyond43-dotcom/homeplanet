@@ -18,11 +18,11 @@ export default function HomePlanetLanding() {
       key: "creator",
       title: "Creator Planet",
       status: "Live",
-      desc: "Build, publish, intake, proof, and monetize � receipts by default.",
+      desc: "Build, publish, intake, proof, and monetize Ã¢â‚¬â€ receipts by default.",
       cities: [
-        { label: "Studio City", to: "/planet/creator/studio", live: true },
-        { label: "Build City", to: "/planet/creator/build", live: true },
-        { label: "Live City", to: "/planet/creator/live", live: false },
+        { label: "Studio City", to: "/creator/studio", live: true },
+        { label: "Build City", to: "/creator/build", live: true },
+        { label: "Live City", to: "/live/taylor-creek", live: false },
       ],
     },
     {
@@ -204,7 +204,7 @@ export default function HomePlanetLanding() {
             <button
               type="button"
               style={linkBtn}
-              onClick={() => nav("/planet/creator/studio")}
+              onClick={() => nav("/creator/studio")}
               title="Enter Creator Studio"
             >
               Enter Creator Studio ?

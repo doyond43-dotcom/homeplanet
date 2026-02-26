@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import { normalizeStringsDeep } from "../lib/text/normalizeText";
@@ -30,13 +30,13 @@ function inferNameFromText(input: string): string {
     firstLine.split(/[.!?]/).map((x) => x.trim()).filter(Boolean)[0] || firstLine;
 
   const called = firstSentence.match(/\b(called|named)\s+([A-Za-z0-9&'".\- ]{2,60})/i);
-  if (called?.[2]) return called[2].trim().replace(/^["'“”]+|["'“”]+$/g, "");
+  if (called?.[2]) return called[2].trim().replace(/^["'â€œâ€]+|["'â€œâ€]+$/g, "");
 
   const brandish = firstSentence.replace(/^i\s+(run|own|have|started)\s+/i, "").trim();
   const cleaned = brandish.replace(/^a\s+|an\s+|the\s+/i, "").trim();
 
   const title = cleaned.slice(0, 56).trim();
-  return title ? title.replace(/^["'“”]+|["'“”]+$/g, "") : "Untitled Site";
+  return title ? title.replace(/^["'â€œâ€]+|["'â€œâ€]+$/g, "") : "Untitled Site";
 }
 
 // Plain English -> structured BuildPreview format
@@ -59,7 +59,7 @@ function generateStructuredBuild(input: string): string {
 
   return `H1: ${name}
 
-Subheadline: Built from your description — ready to share
+Subheadline: Built from your description â€” ready to share
 
 About:
 ${raw || "Describe what you do, who it's for, and what you want customers to do."}
@@ -105,7 +105,7 @@ export default function CreatorBuild() {
     "I run a Tampa-based dance studio that teaches hip hop and contemporary classes for kids and adults. Booking online. Contact: hello@movetampa.com"
   );
 
-  // Generated “build text” that powers the preview + autosave
+  // Generated â€œbuild textâ€ that powers the preview + autosave
   const [buildText, setBuildText] = useState<string>(() =>
     generateStructuredBuild(
       "I run a Tampa-based dance studio that teaches hip hop and contemporary classes for kids and adults. Booking online. Contact: hello@movetampa.com"
@@ -339,9 +339,9 @@ export default function CreatorBuild() {
   // ------------------------------------------------------------
 
   const statusLabel =
-    (status === "creating" && "creating…") ||
-    (status === "saving" && "saving…") ||
-    (status === "saved" && "saved ✓") ||
+    (status === "creating" && "creatingâ€¦") ||
+    (status === "saving" && "savingâ€¦") ||
+    (status === "saved" && "saved âœ“") ||
     (status === "error" && "error") ||
     (activeProjectId ? "auto-saved" : "start typing");
 
@@ -385,7 +385,7 @@ export default function CreatorBuild() {
           fontWeight: 900,
         }}
       >
-        MIC BUILD ACTIVE ✓ (CreatorBuild.tsx)
+        MIC BUILD ACTIVE âœ“ (CreatorBuild.tsx)
         <div style={{ display: "flex", gap: 10, alignItems: "center", marginTop: 10, flexWrap: "wrap" }}>
           <button
             type="button"
@@ -452,7 +452,7 @@ export default function CreatorBuild() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 14 }}>
         <div>
           <h1 style={{ fontSize: 22, margin: 0 }}>Creator</h1>
-          <div style={{ opacity: 0.65, fontSize: 12 }}>Describe • Build • Preview</div>
+          <div style={{ opacity: 0.65, fontSize: 12 }}>Describe â€¢ Build â€¢ Preview</div>
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
@@ -468,7 +468,7 @@ export default function CreatorBuild() {
             style={hpPill}
             title="Back"
           >
-            ← Back
+            â† Back
           </button>
 
           <button
@@ -476,7 +476,7 @@ export default function CreatorBuild() {
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              navigate("/planet/creator/projects");
+              navigate("/creator/projects");
             }}
             style={hpPill}
           >
@@ -510,7 +510,7 @@ export default function CreatorBuild() {
         <div style={hpCard}>
           <div style={{ fontSize: 18, fontWeight: 900, marginBottom: 6 }}>Describe your business or idea</div>
           <div style={{ opacity: 0.75, fontSize: 12, marginBottom: 10 }}>
-            Type a few sentences — or tap the mic — we’ll turn it into a site.
+            Type a few sentences â€” or tap the mic â€” weâ€™ll turn it into a site.
           </div>
 
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, gap: 10 }}>
@@ -565,7 +565,7 @@ export default function CreatorBuild() {
                   // best-effort; still allow studio
                 }
 
-                navigate("/planet/creator/studio");
+                navigate("/creator/studio");
               }}
               style={{
                 height: 46,
@@ -583,7 +583,7 @@ export default function CreatorBuild() {
 
             <div style={{ fontSize: 12, opacity: 0.75 }}>
               <span style={{ fontWeight: 900 }}>{autoName}</span>{" "}
-              <span style={{ opacity: 0.85 }}>• Auto-generated — rename anytime.</span>
+              <span style={{ opacity: 0.85 }}>â€¢ Auto-generated â€” rename anytime.</span>
             </div>
           </div>
 

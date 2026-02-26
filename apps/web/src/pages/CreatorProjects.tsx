@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import { useProjectStore } from "../state/projectStore";
@@ -73,7 +73,7 @@ export default function CreatorProjects() {
       setErr(null);
       const p = await ensureProject("build", "Untitled Build");
       setActiveProjectId(p.id);
-      navigate("/planet/creator/build");
+      navigate("/creator/build");
     } catch (e: any) {
       console.error("[HP] createBuildProject FAILED:", e);
       setErr(e?.message ?? String(e));
@@ -123,7 +123,7 @@ export default function CreatorProjects() {
         </div>
       </div>
 
-      {loading && <div style={{ opacity: 0.8 }}>Loading…</div>}
+      {loading && <div style={{ opacity: 0.8 }}>Loadingâ€¦</div>}
 
       {!loading && err && (
         <div style={{ padding: 12, borderRadius: 12, border: "1px solid rgba(255,255,255,0.24)" }}>
@@ -163,8 +163,8 @@ export default function CreatorProjects() {
               key={p.id}
               onClick={() => {
                 setActiveProjectId(p.id);
-                if (p.kind === "city") navigate("/planet/creator/city");
-                else navigate("/planet/creator/build");
+                if (p.kind === "city") navigate("/city/creator");
+                else navigate("/creator/build");
               }}
               style={{
                 textAlign: "left",

@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import CreatorServices from "./CreatorServices";
@@ -677,8 +677,8 @@ export default function CreatorStudio() {
 
         <StudioSurface
           mode={mode}
-          onBack={() => nav("/planet/creator/studio")}
-          onBuild={() => nav("/planet/creator/build")}
+          onBack={() => nav("/creator/studio")}
+          onBuild={() => nav("/creator/build")}
         />
       </div>
     );
@@ -704,9 +704,9 @@ export default function CreatorStudio() {
             onMouseLeave={() => setHoverKey(null)}
             onFocus={() => setHoverKey(m.key)}
             onBlur={() => setHoverKey(null)}
-            onClick={() => nav(`/planet/creator/studio/${m.key}`)}
+            onClick={() => nav(`/creator/studio/${m.key}`)}
             onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") nav(`/planet/creator/studio/${m.key}`);
+              if (e.key === "Enter" || e.key === " ") nav(`/creator/studio/${m.key}`);
             }}
             role="button"
             tabIndex={0}
