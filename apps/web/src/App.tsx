@@ -27,31 +27,31 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* SERVICE SYSTEM — fully isolated namespace */}
+
+        {/* SERVICE */}
         <Route path="/service/*" element={<ServiceRoutes />} />
 
-        {/* Cities (geography layer) */}
-        <Route path="/city/*" element={<CityRoutes />} />
-
-        {/* Planets (core app layer) */}
+        {/* PLANET */}
         <Route path="/planet/*" element={<PlanetRoutes />} />
 
-        {/* ✅ RESTORE: Creator City at /creator/* (must be above tenant catch-all) */}
+        {/* CREATOR (REAL APP — MUST BE ABOVE TENANT) */}
         <Route path="/creator/*" element={<CreatorCity />} />
-        <Route path="/creator" element={<Navigate to="/creator" replace />} />
 
-        {/* Press routes */}
+        {/* CITY */}
+        <Route path="/city/*" element={<CityRoutes />} />
+
+        {/* PRESS */}
         <Route path="/press" element={<PressPage />} />
         <Route path="/press/taylor-creek" element={<PressKitTaylorCreek />} />
 
-        {/* Taylor Creek landing page */}
+        {/* TAYLOR CREEK */}
         <Route path="/taylor-creek" element={<TaylorCreekSite />} />
         <Route path="/Taylor-Creek" element={<Navigate to="/taylor-creek" replace />} />
 
-        {/* Canonical public intake page */}
+        {/* PUBLIC INTAKE */}
         <Route path="/c/:slug" element={<PublicPage />} />
 
-        {/* LIVE SYSTEM */}
+        {/* LIVE */}
         <Route path="/live/:slug" element={<LiveShell />}>
           <Route index element={<LiveShopTV />} />
           <Route path="staff" element={<LiveIntakeBoard />} />
@@ -59,16 +59,12 @@ export default function App() {
           <Route path="board" element={<LiveShopTV />} />
         </Route>
 
-        {/* Alias helper */}
-        <Route path="/go/:slug" element={<LiveAlias />} />
-
-        {/* Tenant public pages (keep LAST so it doesn't steal real routes) */}
+        {/* TENANT (LAST OR IT STEALS EVERYTHING) */}
         <Route path="/:slug/*" element={<TenantPublicPage />} />
 
-        {/* Home (root) — send to Creator like before */}
+        {/* ROOT */}
         <Route path="/" element={<Navigate to="/creator" replace />} />
 
-        {/* Catch all */}
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
