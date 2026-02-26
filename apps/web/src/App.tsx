@@ -1,4 +1,4 @@
-﻿import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 
 import PublicPage from "./routes/PublicPage";
 import TenantPublicPage from "./routes/TenantPublicPage";
@@ -15,7 +15,7 @@ import PressPage from "./routes/PressPage";
 import PressKitTaylorCreek from "./routes/PressKitTaylorCreek";
 
 import PlanetRoutes from "./planet/PlanetRoutes";
-import CreatorCity from "./pages/CreatorCity";
+import CreatorRoutes from "./routes/CreatorRoutes";
 
 import NotFound from "./pages/NotFound";
 
@@ -27,31 +27,30 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-
-        {/* SERVICE */}
+        {/* SERVICE SYSTEM — isolated namespace */}
         <Route path="/service/*" element={<ServiceRoutes />} />
 
-        {/* PLANET */}
-        <Route path="/planet/*" element={<PlanetRoutes />} />
-
-        {/* CREATOR (REAL APP — MUST BE ABOVE TENANT) */}
-        <Route path="/creator/*" element={<CreatorCity />} />
-
-        {/* CITY */}
+        {/* Cities (geography layer) — MUST be above tenant catch-all */}
         <Route path="/city/*" element={<CityRoutes />} />
 
-        {/* PRESS */}
+        {/* Planets (core app layer) — MUST be above tenant catch-all */}
+        <Route path="/planet/*" element={<PlanetRoutes />} />
+
+        {/* Creator tool hub — MUST be above tenant catch-all */}
+        <Route path="/creator/*" element={<CreatorRoutes />} />
+
+        {/* Press routes — MUST be above tenant catch-all */}
         <Route path="/press" element={<PressPage />} />
         <Route path="/press/taylor-creek" element={<PressKitTaylorCreek />} />
 
-        {/* TAYLOR CREEK */}
+        {/* Taylor Creek landing page — MUST be above tenant catch-all */}
         <Route path="/taylor-creek" element={<TaylorCreekSite />} />
         <Route path="/Taylor-Creek" element={<Navigate to="/taylor-creek" replace />} />
 
-        {/* PUBLIC INTAKE */}
+        {/* Canonical public intake page */}
         <Route path="/c/:slug" element={<PublicPage />} />
 
-        {/* LIVE */}
+        {/* LIVE SYSTEM — MUST be above tenant catch-all */}
         <Route path="/live/:slug" element={<LiveShell />}>
           <Route index element={<LiveShopTV />} />
           <Route path="staff" element={<LiveIntakeBoard />} />
@@ -59,12 +58,13 @@ export default function App() {
           <Route path="board" element={<LiveShopTV />} />
         </Route>
 
-        {/* TENANT (LAST OR IT STEALS EVERYTHING) */}
+        {/* Tenant public pages (LAST before NotFound) */}
         <Route path="/:slug/*" element={<TenantPublicPage />} />
 
-        {/* ROOT */}
-        <Route path="/" element={<Navigate to="/creator" replace />} />
+        {/* Root */}
+        <Route path="/" element={<Navigate to="/city" replace />} />
 
+        {/* Catch all */}
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
