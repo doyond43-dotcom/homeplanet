@@ -10,7 +10,8 @@ import PrintWorkOrder from "./routes/PrintWorkOrder";
 
 import ServiceRoutes from "./service/ServiceRoutes";
 import CityRoutes from "./routes/CityRoutes";
-import TaylorCreekSite from "./routes/TaylorCreekSite";
+import TaylorCreekSite from "./routes/TaylorCreekSite";
+import PressKitTaylorCreek from "./routes/PressKitTaylorCreek";
 import NotFound from "./pages/NotFound";
 
 function LiveShell() {
@@ -33,7 +34,10 @@ export default function App() {
         <Route path="/Taylor-Creek" element={<Navigate to="/taylor-creek" replace />} />
 
         {/* Canonical public intake page */}
-        <Route path="/c/:slug" element={<PublicPage />} />
+        <Route path="/c/:slug" element={<PublicPage />} />        {/* Press kit (must be above tenant catch-all) */}
+        <Route path="/press/taylor-creek" element={<PressKitTaylorCreek />} />
+
+
 
         {/* Tenant public pages (themed shells + fallback to PublicPage)
             NOTE: keep BELOW /city/* and /taylor-creek so it doesn't steal them */}
