@@ -10,8 +10,13 @@ import PrintWorkOrder from "./routes/PrintWorkOrder";
 
 import ServiceRoutes from "./service/ServiceRoutes";
 import CityRoutes from "./routes/CityRoutes";
-import TaylorCreekSite from "./routes/TaylorCreekSite";
+import TaylorCreekSite from "./routes/TaylorCreekSite";
+
+import PressPage from "./routes/PressPage";
 import PressKitTaylorCreek from "./routes/PressKitTaylorCreek";
+
+import PlanetRoutes from "./planet/PlanetRoutes";
+
 import NotFound from "./pages/NotFound";
 
 function LiveShell() {
@@ -28,19 +33,23 @@ export default function App() {
         {/* Cities (geography layer) — MUST be above tenant catch-all */}
         <Route path="/city/*" element={<CityRoutes />} />
 
+        {/* Planets (core app layer) — MUST be above tenant catch-all */}
+        <Route path="/planet/*" element={<PlanetRoutes />} />
+
+        {/* Press routes — MUST be above tenant catch-all */}
+        <Route path="/press" element={<PressPage />} />
+        <Route path="/press/taylor-creek" element={<PressKitTaylorCreek />} />
+
         {/* Taylor Creek landing page — MUST be above tenant catch-all */}
         <Route path="/taylor-creek" element={<TaylorCreekSite />} />
         {/* Friendly casing redirect (optional but prevents surprises) */}
         <Route path="/Taylor-Creek" element={<Navigate to="/taylor-creek" replace />} />
 
         {/* Canonical public intake page */}
-        <Route path="/c/:slug" element={<PublicPage />} />        {/* Press kit (must be above tenant catch-all) */}
-        <Route path="/press/taylor-creek" element={<PressKitTaylorCreek />} />
-
-
+        <Route path="/c/:slug" element={<PublicPage />} />
 
         {/* Tenant public pages (themed shells + fallback to PublicPage)
-            NOTE: keep BELOW /city/* and /taylor-creek so it doesn't steal them */}
+            NOTE: keep BELOW /city/*, /planet/*, /press*, and /taylor-creek so it doesn't steal them */}
         <Route path="/:slug/*" element={<TenantPublicPage />} />
 
         {/* LIVE SYSTEM */}
@@ -54,10 +63,10 @@ export default function App() {
         {/* Alias helper */}
         <Route path="/go/:slug" element={<LiveAlias />} />
 
-        {/* Home */}
-        <Route path="/" element={<Navigate to="/taylor-creek" replace />} />
+        {/* Home (root) */}
+        <Route path="/" element={<Navigate to="/city" replace />} />
 
-        {/* Catch all (DO NOT silently redirect to Taylor Creek) */}
+        {/* Catch all */}
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
