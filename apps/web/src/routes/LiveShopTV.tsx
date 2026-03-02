@@ -1,13 +1,40 @@
+// LiveShopTV.tsx
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getSupabase } from "../lib/supabase";
 
-type Row = {
+/**
+ * LiveShopTV
+ * - Default: reads + listens to public_intake_submissions filtered by slug
+ * - Special case: slug === "awnit" reads + listens to public.awnit_leads (no slug column)
+ */
+
+type IntakeRow = {
   id: string;
   created_at: string;
   slug: string;
   payload: any;
   converted_service_id: string | null;
+};
+
+type AwnitLeadRow = {
+  id: string;
+  created_at: string;
+  name: string | null;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  project_type: string | null;
+  best_time: string | null;
+  notes: string | null;
+  status: string | null;
+  photo_urls: string[] | null;
+};
+
+type Row = {
+  id: string;
+  created_at: string;
+  payload: any;
 };
 
 function safeText(x: unknown, max = 90): string {
@@ -21,8 +48,18 @@ function extractSummary(payload: any) {
   return {
     name: safeText(p.name || p.customer_name || p.first_name || p.full_name || "", 28) || "New customer",
     vehicle:
-      safeText(p.vehicle || p.car || p.make_model || p.vehicle_info || p.vehicleText || "", 42) ||
-      "Vehicle not specified",
+      safeText(
+        p.vehicle ||
+          p.car ||
+          p.make_model ||
+          p.vehicle_info ||
+          p.vehicleText ||
+          // AWNIT fallback
+          p.project_type ||
+          p.projectType ||
+          "",
+        42
+      ) || "Vehicle not specified",
     message: safeText(p.message || p.notes || p.problem || p.issue || "", 160) || "No message provided",
   };
 }
@@ -62,9 +99,41 @@ function mergeDelete(prev: Row[], id: string, limit = 30) {
   return prev.filter((r) => r.id !== id).slice(0, limit);
 }
 
+function normalizeAwnitLead(r: AwnitLeadRow): Row {
+  // Normalize AWNIT lead into the generic payload shape used by the TV UI.
+  // The "vehicle" slot becomes Project Type.
+  const payload = {
+    name: r.name ?? "",
+    phone: r.phone ?? "",
+    email: r.email ?? "",
+    address: r.address ?? "",
+    project_type: r.project_type ?? "",
+    best_time: r.best_time ?? "",
+    notes: r.notes ?? "",
+    message: r.notes ?? "",
+  };
+
+  return {
+    id: r.id,
+    created_at: r.created_at,
+    payload,
+  };
+}
+
+function normalizeIntakeRow(r: IntakeRow): Row {
+  return {
+    id: r.id,
+    created_at: r.created_at,
+    payload: r.payload ?? {},
+  };
+}
+
 export default function LiveShopTV() {
   const { slug } = useParams();
   const shopSlug = (slug ?? "").trim();
+
+  // Mode switch: AWNIT uses its own table
+  const isAwnit = shopSlug.toLowerCase() === "awnit";
 
   const [rows, setRows] = useState<Row[]>([]);
   const [status, setStatus] = useState("Starting…");
@@ -93,12 +162,8 @@ export default function LiveShopTV() {
     (doc.style as any).overscrollBehavior = "none";
     (body.style as any).overscrollBehavior = "none";
 
-    const stopWheel = (e: WheelEvent) => {
-      e.preventDefault();
-    };
-    const stopTouch = (e: TouchEvent) => {
-      e.preventDefault();
-    };
+    const stopWheel = (e: WheelEvent) => e.preventDefault();
+    const stopTouch = (e: TouchEvent) => e.preventDefault();
     const stopKeys = (e: KeyboardEvent) => {
       const k = e.key;
       if (
@@ -143,6 +208,31 @@ export default function LiveShopTV() {
     setStatus(reason);
     setLastErr(null);
 
+    if (isAwnit) {
+      const { data, error } = await supabase
+        .from("awnit_leads")
+        .select("id, created_at, name, phone, email, address, project_type, best_time, notes, status, photo_urls")
+        .order("created_at", { ascending: false })
+        .limit(30);
+
+      inFlightLoadRef.current = false;
+
+      if (error) {
+        setLastErr(error.message || String(error));
+        setStatus("Load failed");
+        setConnected(false);
+        return;
+      }
+
+      const normalized = (data ?? []).map((r: any) => normalizeAwnitLead(r as AwnitLeadRow));
+      setRows(() => normalized.slice().sort(sortDescByCreatedAt).slice(0, 30));
+      lastFullSyncAtRef.current = Date.now();
+      setConnected(true);
+      setStatus("Listening…");
+      return;
+    }
+
+    // Default pipeline: public_intake_submissions by slug
     const { data, error } = await supabase
       .from("public_intake_submissions")
       .select("id, created_at, slug, payload, converted_service_id")
@@ -159,7 +249,8 @@ export default function LiveShopTV() {
       return;
     }
 
-    setRows(() => (data ?? []).slice().sort(sortDescByCreatedAt).slice(0, 30));
+    const normalized = (data ?? []).map((r: any) => normalizeIntakeRow(r as IntakeRow));
+    setRows(() => normalized.slice().sort(sortDescByCreatedAt).slice(0, 30));
     lastFullSyncAtRef.current = Date.now();
     setConnected(true);
     setStatus("Listening…");
@@ -169,6 +260,24 @@ export default function LiveShopTV() {
     if (!shopSlug) return;
 
     const localNewest = rows[0]?.created_at ?? null;
+
+    if (isAwnit) {
+      const { data, error } = await supabase
+        .from("awnit_leads")
+        .select("created_at")
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      if (error) {
+        setConnected(false);
+        return;
+      }
+
+      const dbNewest = (data?.[0] as any)?.created_at ?? null;
+      if (dbNewest && localNewest && dbNewest !== localNewest) loadLatest("Resyncing…");
+      if (dbNewest && !localNewest) loadLatest("Loading…");
+      return;
+    }
 
     const { data, error } = await supabase
       .from("public_intake_submissions")
@@ -216,34 +325,40 @@ export default function LiveShopTV() {
       }
     } catch {}
 
+    // Realtime source (table + optional filter)
+    const tableName = isAwnit ? "awnit_leads" : "public_intake_submissions";
+    const changeBase: any = { schema: "public", table: tableName };
+
+    const insertSpec = isAwnit
+      ? { event: "INSERT", ...changeBase }
+      : { event: "INSERT", ...changeBase, filter: `slug=eq.${shopSlug}` };
+
+    const updateSpec = isAwnit
+      ? { event: "UPDATE", ...changeBase }
+      : { event: "UPDATE", ...changeBase, filter: `slug=eq.${shopSlug}` };
+
+    const deleteSpec = isAwnit
+      ? { event: "DELETE", ...changeBase }
+      : { event: "DELETE", ...changeBase, filter: `slug=eq.${shopSlug}` };
+
     const channel = supabase
       .channel(channelName)
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "public_intake_submissions", filter: `slug=eq.${shopSlug}` },
-        (evt) => {
-          const row = evt.new as Row;
-          setRows((prev) => mergeUpsert(prev, row, 30));
-          setStatus("New arrival");
-          setTimeout(() => setStatus("Listening…"), 1200);
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "public_intake_submissions", filter: `slug=eq.${shopSlug}` },
-        (evt) => {
-          const row = evt.new as Row;
-          setRows((prev) => mergeUpsert(prev, row, 30));
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "DELETE", schema: "public", table: "public_intake_submissions", filter: `slug=eq.${shopSlug}` },
-        (evt) => {
-          const oldRow = evt.old as Partial<Row>;
-          if (oldRow?.id) setRows((prev) => mergeDelete(prev, oldRow.id as string, 30));
-        }
-      )
+      .on("postgres_changes", insertSpec, (evt) => {
+        const rowAny = evt.new as any;
+        const normalized = isAwnit ? normalizeAwnitLead(rowAny as AwnitLeadRow) : normalizeIntakeRow(rowAny as IntakeRow);
+        setRows((prev) => mergeUpsert(prev, normalized, 30));
+        setStatus("New arrival");
+        setTimeout(() => setStatus("Listening…"), 1200);
+      })
+      .on("postgres_changes", updateSpec, (evt) => {
+        const rowAny = evt.new as any;
+        const normalized = isAwnit ? normalizeAwnitLead(rowAny as AwnitLeadRow) : normalizeIntakeRow(rowAny as IntakeRow);
+        setRows((prev) => mergeUpsert(prev, normalized, 30));
+      })
+      .on("postgres_changes", deleteSpec, (evt) => {
+        const oldRow = evt.old as any;
+        if (oldRow?.id) setRows((prev) => mergeDelete(prev, oldRow.id as string, 30));
+      })
       .subscribe((s) => {
         if (s === "SUBSCRIBED") loadLatest("Syncing…");
         if (s === "TIMED_OUT" || s === "CHANNEL_ERROR") {
@@ -267,7 +382,6 @@ export default function LiveShopTV() {
         supabase.removeChannel(channel);
       } catch {}
     };
-    // ✅ IMPORTANT: do NOT depend on rows.length (it causes resubscribe loops)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shopSlug]);
 
@@ -287,6 +401,7 @@ export default function LiveShopTV() {
             <div className="text-xl font-bold">
               {connected ? status : "Reconnecting…"}{" "}
               <span className="text-xs text-slate-400 font-semibold">/{shopSlug || "no-slug"}</span>
+              {isAwnit ? <span className="ml-2 text-xs text-emerald-300 font-semibold">(awnit_leads)</span> : null}
             </div>
             <div className="text-xs text-slate-400">
               Rows: <span className="text-slate-200 font-semibold">{rows.length}</span>
