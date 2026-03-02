@@ -17,6 +17,7 @@ import PressKitTaylorCreek from "./routes/PressKitTaylorCreek";
 import PlanetRoutes from "./planet/PlanetRoutes";
 import CreatorRoutes from "./routes/CreatorRoutes";
 
+import LiveAwnitIntake from "./pages/LiveAwnitIntake";
 import NotFound from "./pages/NotFound";
 
 function LiveShell() {
@@ -49,6 +50,9 @@ export default function App() {
 
         {/* Canonical public intake page */}
         <Route path="/c/:slug" element={<PublicPage />} />
+
+        {/* LIVE: AWNIT Intake (explicit) — must be above /live/:slug */}
+        <Route path="/live/awnit" element={<LiveAwnitIntake />} />
 
         {/* LIVE SYSTEM — MUST be above tenant catch-all */}
         <Route path="/live/:slug" element={<LiveShell />}>
