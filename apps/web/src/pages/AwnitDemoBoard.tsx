@@ -82,7 +82,7 @@ function safeToast(msg: string) {
   try {
     // eslint-disable-next-line no-alert
     alert(msg);
-  } catch {
+  } catch (e) {
     /* noop */
   }
 }
@@ -93,7 +93,7 @@ async function copyToClipboard(text: string) {
   try {
     await navigator.clipboard.writeText(val);
     safeToast("Copied.");
-  } catch {
+  } catch (e) {
     const ta = document.createElement("textarea");
     ta.value = val;
     ta.style.position = "fixed";
@@ -103,7 +103,7 @@ async function copyToClipboard(text: string) {
     try {
       document.execCommand("copy");
       safeToast("Copied.");
-    } catch {
+    } catch (e) {
       safeToast("Copy failed.");
     } finally {
       document.body.removeChild(ta);
@@ -207,7 +207,7 @@ function useSpeechDictation() {
   function stop() {
     try {
       recRef.current?.stop?.();
-    } catch {
+    } catch (e) {
       /* noop */
     }
   }
@@ -254,7 +254,7 @@ function useSpeechDictation() {
 
     try {
       rec.start();
-    } catch {
+    } catch (e) {
       safeToast("Mic start failed.");
     }
   }
@@ -309,7 +309,7 @@ const GRAB_CODES = ["2222", "4444", "6666", "8888", "9999"] as const;
 export default function AwnitDemoBoard() {
   // ✅ BUILD MARKER: verify deployed bundle instantly
   // In Console:  window.__AWNIT_API_MARKER__
-  ;(window as any).__AWNIT_API_MARKER__ = "supabase-wired-awnit-board";
+  (window as any).__AWNIT_API_MARKER__ = "supabase-wired-awnit-board";
 
   const { supported, listening, toggle, activeTargetRef } = useSpeechDictation();
   const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false);
@@ -331,10 +331,27 @@ export default function AwnitDemoBoard() {
     try {
       setLoadError(null);
       const rows = await awnitListJobs();
-      const normalized: AwnitJobRow[] = (rows || []).map((r: any) => ({
-        ...r,
-        stage: coerceStage(r.stage),
-      }));
+
+      // ✅ FIX: normalize/force customer object so drawer binds correctly
+      // Supports both nested customer and common flat field names.
+      const normalized: AwnitJobRow[] = (rows || []).map((r: any) => {
+        const customer =
+          r.customer && typeof r.customer === "object"
+            ? r.customer
+            : {
+                name: r.customer_name ?? r.customerName ?? r.name ?? null,
+                phone: r.customer_phone ?? r.customerPhone ?? r.phone ?? null,
+                email: r.customer_email ?? r.customerEmail ?? r.email ?? null,
+                address: r.customer_address ?? r.customerAddress ?? r.address ?? null,
+              };
+
+        return {
+          ...r,
+          customer,
+          stage: coerceStage(r.stage),
+        };
+      });
+
       setJobs(normalized);
 
       setSelectedJobId((cur) => {
@@ -396,7 +413,7 @@ export default function AwnitDemoBoard() {
 
   // ---------------- DB-backed getters ----------------
   function getScope(job: AwnitJobRow): ScopeItem[] {
-    return coerceScopeItems((job as any).scope_items);
+    return coerceScopeItems(((job as any).scopeItems ?? (job as any).scope_items));
   }
 
   function getMaterials(job: AwnitJobRow): MaterialItem[] {
@@ -404,7 +421,7 @@ export default function AwnitDemoBoard() {
   }
 
   function getNotes(job: AwnitJobRow): string {
-    return ((job as any).tech_notes || "").toString();
+    return (((job as any).techNotes ?? (job as any).tech_notes) || "").toString();
   }
 
   function scopeCounts(items: ScopeItem[]) {
@@ -427,48 +444,96 @@ export default function AwnitDemoBoard() {
     await persist(jobId, { stage });
   }
 
-  // ---------------- Scope updates (DB: scope_items) ----------------
+    // ---------------- Scope updates (DB: scope_items) ----------------
   function addScopeItem(job: AwnitJobRow, type: ScopeType) {
-    const cur = getScope(job);
-    const idx = nextIndex(cur, type);
-    const labelBase =
-      type === "door"
-        ? "Door"
-        : type === "window"
-        ? "Window"
-        : type === "screen"
-        ? "Screen"
-        : type === "trim"
-        ? "Trim"
-        : "Custom";
+  const cur = getScope(job);
+  const idx = nextIndex(cur, type);
 
-    const item: ScopeItem = {
-      id: makeId(),
-      type,
-      label: `${labelBase} ${idx}`,
-      quick: "",
-      done: false,
-      createdAt: nowIso(),
-    };
+  const labelBase =
+    type === "door"
+      ? "Door"
+      : type === "window"
+      ? "Window"
+      : type === "screen"
+      ? "Screen"
+      : type === "trim"
+      ? "Trim"
+      : "Custom";
 
-    const next = [item, ...cur];
-    persist(job.id, { scope_items: next });
+  const item: ScopeItem = {
+    id: makeId(),
+    type,
+    label: `${labelBase} ${idx}`,
+    quick: "",
+    done: false,
+    createdAt: nowIso(),
+  };
+
+  const next = [item, ...cur];
+
+  // keep UI responsive
+  try { updateJobOptimistic(job.id, { scopeItems: next } as any); } catch (e) {}
+
+  // single write (debounced if available)
+  try {
+    // @ts-ignore
+    persistDebounced(job.id, { scopeItems: next }, "scope_items");
+  } catch (e) {
+    persist(job.id, { scopeItems: next });
   }
+}
+
 
   function removeScopeItem(job: AwnitJobRow, itemId: string) {
-    const next = getScope(job).filter((x) => x.id !== itemId);
-    persist(job.id, { scope_items: next });
+    const target = (itemId ?? "").toString();
+    const next = getScope(job).filter((x) => ((x.id ?? "").toString() !== target));
+
+    // keep UI responsive
+    try { updateJobOptimistic(job.id, { scopeItems: next } as any); } catch (e) {}
+
+    // single write (debounced if available)
+    try {
+      // @ts-ignore
+      persistDebounced(job.id, { scopeItems: next }, "scope_items");
+    } catch (e) {
+      persist(job.id, { scopeItems: next });
+    }
   }
 
   function toggleScopeDone(job: AwnitJobRow, itemId: string) {
-    const next = getScope(job).map((x) => (x.id === itemId ? { ...x, done: !x.done } : x));
-    persist(job.id, { scope_items: next });
+    const target = (itemId ?? "").toString();
+    const next = getScope(job).map((x) =>
+      ((x.id ?? "").toString() === target ? { ...x, done: !Boolean((x as any).done) } : x)
+    );
+
+    // keep UI responsive
+    try { updateJobOptimistic(job.id, { scopeItems: next } as any); } catch (e) {}
+
+    // single write (debounced if available)
+    try {
+      // @ts-ignore
+      persistDebounced(job.id, { scopeItems: next }, "scope_items");
+    } catch (e) {
+      persist(job.id, { scopeItems: next });
+    }
   }
 
   function setScopeQuick(job: AwnitJobRow, itemId: string, val: string) {
-    const next = getScope(job).map((x) => (x.id === itemId ? { ...x, quick: val } : x));
-    updateJobOptimistic(job.id, { scope_items: next } as any);
-    persistDebounced(job.id, { scope_items: next }, "scope_items");
+    const target = (itemId ?? "").toString();
+    const next = getScope(job).map((x) =>
+      ((x.id ?? "").toString() === target ? { ...x, quick: val } : x)
+    );
+
+    // keep UI responsive
+    try { updateJobOptimistic(job.id, { scopeItems: next } as any); } catch (e) {}
+
+    // single write (debounced if available)
+    try {
+      // @ts-ignore
+      persistDebounced(job.id, { scopeItems: next }, "scope_items");
+    } catch (e) {
+      persist(job.id, { scopeItems: next });
+    }
   }
 
   // ---------------- Materials updates (DB: materials) ----------------
@@ -485,23 +550,75 @@ export default function AwnitDemoBoard() {
       addedBy: grabCode || "live",
       addedAt: nowIso(),
     };
-    const next = [item, ...cur];
-    persist(job.id, { materials: next });
-  }
 
-  function removeMaterial(job: AwnitJobRow, id: string) {
-    const next = getMaterials(job).filter((x) => x.id !== id);
-    persist(job.id, { materials: next });
+    const next = [item, ...cur];
+
+    // keep UI responsive
+    try { updateJobOptimistic(job.id, { materials: next } as any); } catch (e) {}
+
+    // single write (debounced if available)
+    try {
+      // @ts-ignore
+      persistDebounced(job.id, { materials: next }, "materials");
+    } catch (e) {
+      persist(job.id, { materials: next });
+    }
   }
 
   function toggleMaterial(job: AwnitJobRow, id: string) {
-    const next = getMaterials(job).map((x) => (x.id === id ? { ...x, checked: !x.checked } : x));
+  const target = (id ?? "").toString();
+  const next = getMaterials(job).map((x) =>
+    ((x.id ?? "").toString() === target ? { ...x, checked: !Boolean((x as any).checked) } : x)
+  );
+
+  // keep UI responsive
+  try { updateJobOptimistic(job.id, { materials: next } as any); } catch (e) {}
+
+  // single write (debounced if available)
+  try {
+    // @ts-ignore
+    persistDebounced(job.id, { materials: next }, "materials");
+  } catch (e) {
     persist(job.id, { materials: next });
   }
+}
 
-  function applyTemplate(job: AwnitJobRow, templateKey: string) {
+function removeMaterial(job: AwnitJobRow, id: string) {
+  const target = (id ?? "").toString();
+  const next = getMaterials(job).filter((x) => ((x.id ?? "").toString() !== target));
+
+  // keep UI responsive
+  try { updateJobOptimistic(job.id, { materials: next } as any); } catch (e) {}
+
+  // single write (debounced if available)
+  try {
+    // @ts-ignore
+    persistDebounced(job.id, { materials: next }, "materials");
+  } catch (e) {
+    persist(job.id, { materials: next });
+  }
+}
+function applyTemplate(job: AwnitJobRow, templateKey: string) {
     const items = MATERIAL_TEMPLATES[templateKey] || [];
-    for (const n of items) addMaterial(job, n);
+    if (!items.length) return;
+
+    // IMPORTANT: do ONE DB write (avoids stale job snapshot overwriting previous adds)
+    const cur = getMaterials(job);
+    const now = nowIso();
+    const next = [
+      ...items.map((n) => ({
+        id: makeId(),
+        name: n,
+        qty: undefined,
+        checked: false,
+        addedBy: grabCode || "live",
+        addedAt: now,
+      }
+)),
+      ...cur,
+    ] as MaterialItem[];
+
+    persist(job.id, { materials: next });
   }
 
   function quickAddMaterials(job: AwnitJobRow) {
@@ -524,8 +641,8 @@ export default function AwnitDemoBoard() {
 
   // ---------------- Notes updates (DB: tech_notes) ----------------
   function setNotes(job: AwnitJobRow, value: string) {
-    updateJobOptimistic(job.id, { tech_notes: value } as any);
-    persistDebounced(job.id, { tech_notes: value }, "tech_notes");
+    updateJobOptimistic(job.id, { techNotes: value } as any);
+    persistDebounced(job.id, { techNotes: value }, "techNotes");
   }
 
   // ---------------- Share / copy to tech ----------------
@@ -1054,3 +1171,21 @@ export default function AwnitDemoBoard() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

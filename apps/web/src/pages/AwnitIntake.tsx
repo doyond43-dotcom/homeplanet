@@ -5,6 +5,11 @@ import { awnitCreateJob } from "../lib/awnitJobsApi";
  * AWNIT Intake (Create Job)
  * - Creates a job in public.awnit_jobs
  * - Then navigates back to the board
+ *
+ * IMPORTANT:
+ * awnitCreateJob expects FLAT columns:
+ *   customer_name, customer_phone, customer_address, summary, etc
+ * NOT a nested { customer: { ... } } object.
  */
 
 export default function AwnitIntake() {
@@ -27,17 +32,26 @@ export default function AwnitIntake() {
       setErr(null);
       setSubmitting(true);
 
-      // Minimal schema-safe payload
-      // IMPORTANT: api maps apptDate->appt_date if you add later
+      // ✅ FLAT payload (matches public.awnit_jobs columns + api guards)
       await awnitCreateJob({
-        title: summary.trim().slice(0, 48),
+        customer_name: customerName.trim(),
+        customer_phone: phone.trim() || null,
+        customer_address: address.trim() || null,
+
+        title: summary.trim().slice(0, 48) || "Job",
         summary: summary.trim(),
+
         stage: "Scheduled",
-        customer: {
-          name: customerName.trim(),
-          phone: phone.trim(),
-          address: address.trim(),
-        },
+
+        // optional columns (safe)
+        customer_email: null,
+        appt_date: null,
+        appt_time: null,
+        crew: null,
+        scope_items: null,
+        materials: null,
+        tech_notes: null,
+        meta: null,
       });
 
       window.location.assign("/planet/vehicles/awnit-demo");
