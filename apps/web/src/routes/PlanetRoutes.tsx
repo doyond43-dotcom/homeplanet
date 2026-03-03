@@ -1,11 +1,9 @@
 ﻿import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createInvoiceFromJob } from "../lib/invoices";
 
-// NOTE (Preview-safe): we avoid react-router-dom here because the preview runtime
-// may not mount a <Router>, which would crash useNavigate().
-// In your real repo, you can restore:
-//   import { useNavigate } from "react-router-dom";
-
-
+import { supabase } from "../lib/supabase";
 /**
  * AWNIT — Live Board (1-week test)
  * - Appointment required at Add Job
@@ -14,17 +12,20 @@
  * - Materials Grab List (separate) + MIC (new line per tap) + multi-line quick add
  * - "Grab Code" accountability on Copy Grab List (week-1 = numeric IDs, names later)
  *
- * NOTE (Canvas/Preview build):
- * The preview/build environment does NOT have your repo modules:
- *   ../lib/invoices
- *   ../lib/supabase
- *
- * So this file includes SAFE, LOCAL STUBS that compile in preview.
- * In your real repo, replace the stubs with your real imports.
+ * INVOICE V1 (added):
+ * - One-click Generate Invoice from current drawer data (Scope + Materials + Notes)
+ * - Creates rows in: invoices + invoice_lines
+ * - Navigates to /planet/vehicles/awnit-demo/invoice/:invoiceId
  */
 
 // ---------------- Types ----------------
-type Stage = "Scheduled" | "Measured" | "Estimate Sent" | "Ordered" | "Installed" | "Done";
+type Stage =
+  | "Scheduled"
+  | "Measured"
+  | "Estimate Sent"
+  | "Ordered"
+  | "Installed"
+  | "Done";
 
 type Job = {
   id: string;
@@ -63,45 +64,6 @@ type MaterialItem = {
   addedBy: string; // week-1: grabCode if available, else "live"
   addedAt: string; // ISO
 };
-
-// ---------------- Repo stubs (safe for preview) ----------------
-/**
- * EXPECTED BEHAVIOR QUESTION (answer in chat so I wire it correctly in your repo):
- * When you click “Generate Invoice”, should it:
- *   A) ALWAYS create a brand-new invoice, OR
- *   B) update/overwrite an existing draft invoice for this job if one already exists?
- */
-
-// Minimal stub: creates an invoice id and stores payload in localStorage (preview only).
-async function createInvoiceFromJob(input: {
-  job: Job;
-  scopeItems: ScopeItem[];
-  materials: MaterialItem[];
-  notes: string;
-}): Promise<string> {
-  const id = `inv_${makeId()}`;
-  try {
-    const key = `awnit_demo_invoice_${id}`;
-    localStorage.setItem(
-      key,
-      JSON.stringify({
-        id,
-        createdAt: new Date().toISOString(),
-        job: input.job,
-        scopeItems: input.scopeItems,
-        materials: input.materials,
-        notes: input.notes,
-      })
-    );
-  } catch {
-    // ignore for preview
-  }
-  return id;
-}
-
-// Preview stub for the footer line. In your repo, replace with:
-//   import { supabase as sb } from "../lib/supabase";
-const sb: any = null;
 
 // ---------------- Helpers ----------------
 function cn(...parts: Array<string | false | null | undefined>) {
@@ -148,13 +110,6 @@ function makeId() {
 function nowIso() {
   return new Date().toISOString();
 }
-
-function fmtAppt(j: Job) {
-  const d = (j.apptDate || "").trim();
-  const t = (j.apptTime || "").trim();
-  const crew = (j.crew || "").trim();
-  const base = [d, t].filter(Boolean).join(" ");
-  return `${base || "—"}${crew ? ` • ${crew}` : ""}`;
 }
 
 function stageTone(stage: Stage) {
@@ -162,10 +117,7 @@ function stageTone(stage: Stage) {
     case "Scheduled":
       return { lane: "border-l-sky-400/70", pill: "border-sky-300/30 bg-sky-300/15 text-sky-100" };
     case "Measured":
-      return {
-        lane: "border-l-emerald-400/80",
-        pill: "border-emerald-400/30 bg-emerald-400/15 text-emerald-100",
-      };
+      return { lane: "border-l-emerald-400/80", pill: "border-emerald-400/30 bg-emerald-400/15 text-emerald-100" };
     case "Estimate Sent":
       return { lane: "border-l-violet-400/70", pill: "border-violet-300/30 bg-violet-300/15 text-violet-100" };
     case "Ordered":
@@ -175,10 +127,7 @@ function stageTone(stage: Stage) {
     case "Done":
       return { lane: "border-l-slate-300/40", pill: "border-white/10 bg-white/5 text-slate-200" };
     default:
-      return {
-        lane: "border-l-emerald-400/60",
-        pill: "border-emerald-400/30 bg-emerald-400/15 text-emerald-100",
-      };
+      return { lane: "border-l-emerald-400/60", pill: "border-emerald-400/30 bg-emerald-400/15 text-emerald-100" };
   }
 }
 
@@ -187,7 +136,9 @@ type SpeechCtor = new () => any;
 
 function getSpeechCtor(): SpeechCtor | null {
   const w = window as any;
-  return w.SpeechRecognition || w.webkitSpeechRecognition ? (w.SpeechRecognition || w.webkitSpeechRecognition) : null;
+  return (w.SpeechRecognition || w.webkitSpeechRecognition)
+    ? (w.SpeechRecognition || w.webkitSpeechRecognition)
+    : null;
 }
 
 function useSpeechDictation() {
@@ -220,13 +171,10 @@ function useSpeechDictation() {
       return;
     }
 
-    // same target = toggle off
     if (listening && activeTargetRef.current === targetId) {
       stop();
       return;
     }
-
-    // switching targets while listening: stop previous first
     if (listening && activeTargetRef.current && activeTargetRef.current !== targetId) {
       stop();
     }
@@ -325,87 +273,14 @@ const MATERIAL_TEMPLATES: Record<string, string[]> = {
 // Week-1 Employee IDs (names later)
 const GRAB_CODES = ["2222", "4444", "6666", "8888", "9999"] as const;
 
-// ---------------- Small self-tests (DEV only) ----------------
-function digitsPhone(s?: string) {
-  const raw = (s || "").trim();
-  if (!raw) return "";
-  if (raw.startsWith("+")) return raw.replace(/[^\d+]/g, "");
-  const digits = raw.replace(/[^\d]/g, "");
-  if (digits.length === 10) return `+1${digits}`;
-  if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
-  if (digits.length >= 12 && digits.length <= 15) return `+${digits}`;
-  return digits;
-}
-
-function buildGrabListText(job: Job, materials: MaterialItem[]) {
-  const header = [
-    `AWNIT — Materials Grab List`,
-    `Job: ${job.title}`,
-    `Customer: ${job.customer.name || "-"}`,
-    `Address: ${job.customer.address || "-"}`,
-    `Appt: ${job.apptDate || "-"} ${job.apptTime || "-"}`.trim(),
-    ``,
-  ].join("\n");
-
-  const lines = materials
-    .slice()
-    .reverse()
-    .map((m, idx) => {
-      const who = m.addedBy || "live";
-      const q = m.qty ? ` (x ${m.qty})` : "";
-      const chk = m.checked ? "✅" : "⬜";
-      return `${chk} ${idx + 1}. ${m.name}${q} — ${who}`;
-    });
-
-  return header + lines.join("\n");
-}
-
-if ((import.meta as any)?.env?.DEV) {
-  // dictationAppendLine
-  console.assert(dictationAppendLine("", "hello", true) === "hello\n", "dictationAppendLine: first line");
-  console.assert(
-    dictationAppendLine("hello\n", "world", true) === "hello\nworld\n",
-    "dictationAppendLine: append"
-  );
-  console.assert(dictationAppendLine("hello\n", "", true) === "hello\n", "dictationAppendLine: empty ignored");
-  console.assert(dictationAppendLine("hello\n", "world", false) === "hello\n", "dictationAppendLine: interim ignored");
-
-  // digitsPhone
-  console.assert(digitsPhone("(555) 123-4567") === "+15551234567", "digitsPhone: US 10-digit");
-  console.assert(digitsPhone("+1 (555) 123-4567") === "+15551234567", "digitsPhone: already +");
-  console.assert(digitsPhone("1-555-123-4567") === "+15551234567", "digitsPhone: leading 1");
-
-  // buildGrabListText
-  const j: Job = {
-    id: "job_test",
-    title: "Test Job",
-    summary: "",
-    stage: "Scheduled",
-    apptDate: "2026-01-01",
-    apptTime: "09:00",
-    customer: { name: "Test Customer" },
-  };
-  const mats: MaterialItem[] = [
-    { id: "m1", name: "Caulk", checked: false, addedBy: "2222", addedAt: new Date().toISOString() },
-    { id: "m2", name: "Screws", qty: "2 boxes", checked: true, addedBy: "4444", addedAt: new Date().toISOString() },
-  ];
-  const txt = buildGrabListText(j, mats);
-  console.assert(txt.includes("AWNIT — Materials Grab List"), "buildGrabListText: header");
-  console.assert(txt.includes("✅ 2. Screws (x 2 boxes)"), "buildGrabListText: numbering + qty");
-}
-
 // ---------------- Component ----------------
 export default function AwnitDemoBoard() {
-  // Preview-safe navigate stub. In your repo, swap back to: const navigate = useNavigate();
-  const navigate = (to: string) => {
-    try {
-      window.location.href = to;
-    } catch {
-      /* noop */
-    }
-  };
+  const navigate = useNavigate();
   const { supported, listening, toggle, activeTargetRef } = useSpeechDictation();
   const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false);
+
+  // Optional supabase (not required for week-1 local demo; harmless if env missing)
+  const supabase = useMemo(() => makeSupabase(), []);
 
   // Seed jobs
   const seedJobs: Job[] = useMemo(
@@ -467,7 +342,10 @@ export default function AwnitDemoBoard() {
     if (!selectedJobId && jobs.length) setSelectedJobId(jobs[0].id);
   }, [jobs, selectedJobId]);
 
-  const selectedJob = useMemo(() => jobs.find((j) => j.id === selectedJobId) || null, [jobs, selectedJobId]);
+  const selectedJob = useMemo(
+    () => jobs.find((j) => j.id === selectedJobId) || null,
+    [jobs, selectedJobId]
+  );
 
   // ---------------- Drawer: Scope Items per Job ----------------
   const [scopeByJob, setScopeByJob] = useState<Record<string, ScopeItem[]>>({});
@@ -517,14 +395,20 @@ export default function AwnitDemoBoard() {
   function toggleScopeDone(jobId: string, itemId: string) {
     setScopeByJob((prev) => {
       const cur = prev[jobId] || [];
-      return { ...prev, [jobId]: cur.map((x) => (x.id === itemId ? { ...x, done: !x.done } : x)) };
+      return {
+        ...prev,
+        [jobId]: cur.map((x) => (x.id === itemId ? { ...x, done: !x.done } : x)),
+      };
     });
   }
 
   function setScopeQuick(jobId: string, itemId: string, val: string) {
     setScopeByJob((prev) => {
       const cur = prev[jobId] || [];
-      return { ...prev, [jobId]: cur.map((x) => (x.id === itemId ? { ...x, quick: val } : x)) };
+      return {
+        ...prev,
+        [jobId]: cur.map((x) => (x.id === itemId ? { ...x, quick: val } : x)),
+      };
     });
   }
 
@@ -573,7 +457,10 @@ export default function AwnitDemoBoard() {
   function toggleMaterial(jobId: string, id: string) {
     setMaterialsByJob((prev) => {
       const cur = prev[jobId] || [];
-      return { ...prev, [jobId]: cur.map((x) => (x.id === id ? { ...x, checked: !x.checked } : x)) };
+      return {
+        ...prev,
+        [jobId]: cur.map((x) => (x.id === id ? { ...x, checked: !x.checked } : x)),
+      };
     });
   }
 
@@ -592,12 +479,36 @@ export default function AwnitDemoBoard() {
       .filter(Boolean);
 
     for (const line of lines) {
+      // allow "name x qty" simple parse
       const m = line.match(/^(.*?)(?:\s+x\s+(.+))?$/i);
       const name = (m?.[1] || "").trim();
       const qty = (m?.[2] || "").trim();
       addMaterial(jobId, name, qty || undefined);
     }
     setMaterialsQuickAdd("");
+  }
+
+  function buildGrabListText(job: Job, materials: MaterialItem[]) {
+    const header = [
+      `AWNIT — Materials Grab List`,
+      `Job: ${job.title}`,
+      `Customer: ${job.customer.name || "-"}`,
+      `Address: ${job.customer.address || "-"}`,
+      `Appt: ${job.apptDate || "-"} ${job.apptTime || "-"}`.trim(),
+      ``,
+    ].join("\n");
+
+    const lines = materials
+      .slice()
+      .reverse()
+      .map((m, idx) => {
+        const who = m.addedBy || "live";
+        const q = m.qty ? ` (x ${m.qty})` : "";
+        const chk = m.checked ? "✅" : "⬜";
+        return `${chk} ${idx + 1}. ${m.name}${q} — ${who}`;
+      });
+
+    return header + lines.join("\n");
   }
 
   // ---------------- Notes per Job ----------------
@@ -632,10 +543,37 @@ export default function AwnitDemoBoard() {
     ].join("\n");
   }
 
+  function digitsPhone(s?: string) {
+    const raw = (s || "").trim();
+    if (!raw) return "";
+
+    // Keep explicit +country numbers
+    if (raw.startsWith("+")) {
+      const d = raw.replace(/[^\d+]/g, "");
+      return d;
+    }
+
+    // Strip to digits only
+    const digits = raw.replace(/[^\d]/g, "");
+
+    // US normalizations:
+    // - 10 digits -> +1XXXXXXXXXX
+    // - 11 digits starting with 1 -> +1XXXXXXXXXX
+    if (digits.length === 10) return `+1${digits}`;
+    if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
+
+    // Fallback: if it's 12-15 digits, treat as international and prefix +
+    if (digits.length >= 12 && digits.length <= 15) return `+${digits}`;
+
+    // Last resort (better than nothing)
+    return digits;
+  }
+
   function smsHref(job: Job) {
     const phone = digitsPhone(job.customer.phone);
     if (!phone) return "";
     const body = encodeURIComponent(buildTechPayload(job));
+    // most mobile browsers: sms:+1...&body=...
     return `sms:${phone}?&body=${body}`;
   }
 
@@ -645,13 +583,6 @@ export default function AwnitDemoBoard() {
     const subject = encodeURIComponent(`AWNIT — ${job.title}`);
     const body = encodeURIComponent(buildTechPayload(job));
     return `mailto:${email}?subject=${subject}&body=${body}`;
-  }
-
-  function mapsHref(job: Job) {
-    const addr = (job.customer.address || "").trim();
-    if (!addr) return "";
-    const q = encodeURIComponent(addr);
-    return `https://www.google.com/maps/search/?api=1&query=${q}`;
   }
 
   // ---------------- Invoice ----------------
@@ -664,20 +595,19 @@ export default function AwnitDemoBoard() {
       const mats = getMaterials(selectedJob.id);
       const notes = notesByJob[selectedJob.id] || "";
 
+      // Your helper decides schema; we pass what we have.
       const invoiceId = await createInvoiceFromJob({
         job: selectedJob,
         scopeItems: scope,
         materials: mats,
         notes,
-      });
+      } as any);
 
       if (!invoiceId) {
         safeToast("Invoice created, but no ID returned.");
         return;
       }
 
-      // Preview will navigate if your router has this route.
-      // In your repo this should land on your invoice page.
       window.location.assign(`/planet/vehicles/awnit-demo/invoice/${invoiceId}`);
     } catch (e: any) {
       safeToast(e?.message || "Invoice generation failed.");
@@ -687,7 +617,11 @@ export default function AwnitDemoBoard() {
   }
 
   // ---------------- UI computed ----------------
-  const stages: Stage[] = useMemo(() => ["Scheduled", "Measured", "Estimate Sent", "Ordered", "Installed", "Done"], []);
+  const stages: Stage[] = useMemo(
+    () => ["Scheduled", "Measured", "Estimate Sent", "Ordered", "Installed", "Done"],
+    []
+  );
+
   const jobsByStage = useMemo(() => {
     const map = new Map<Stage, Job[]>();
     for (const s of stages) map.set(s, []);
@@ -778,7 +712,9 @@ export default function AwnitDemoBoard() {
                         <div className="mt-1 text-[11px] text-white/60">{fmtAppt(j)}</div>
                       </button>
                     ))}
-                    {list.length === 0 ? <div className="px-3 py-2 text-xs text-white/40">No jobs</div> : null}
+                    {list.length === 0 ? (
+                      <div className="px-3 py-2 text-xs text-white/40">No jobs</div>
+                    ) : null}
                   </div>
                 </div>
               );
@@ -803,18 +739,6 @@ export default function AwnitDemoBoard() {
                 >
                   Copy Tech Text
                 </button>
-
-                {selectedJob.customer.address ? (
-                  <a
-                    className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-bold hover:bg-white/10"
-                    href={mapsHref(selectedJob)}
-                    target="_blank"
-                    rel="noreferrer"
-                    title="Open in Google Maps"
-                  >
-                    Maps
-                  </a>
-                ) : null}
 
                 {selectedJob.customer.phone ? (
                   <a
@@ -929,9 +853,7 @@ export default function AwnitDemoBoard() {
                                 type="button"
                                 className={cn(
                                   "rounded-full border px-3 py-1 text-xs font-extrabold",
-                                  it.done
-                                    ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-100"
-                                    : "border-white/10 bg-white/5 text-white/70"
+                                  it.done ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-100" : "border-white/10 bg-white/5 text-white/70"
                                 )}
                                 onClick={() => toggleScopeDone(selectedJob.id, it.id)}
                               >
@@ -1037,10 +959,7 @@ export default function AwnitDemoBoard() {
                     ) : null}
 
                     {getMaterials(selectedJob.id).map((m) => (
-                      <div
-                        key={m.id}
-                        className="flex items-start justify-between gap-2 rounded-xl border border-white/10 bg-black/20 p-3"
-                      >
+                      <div key={m.id} className="flex items-start justify-between gap-2 rounded-xl border border-white/10 bg-black/20 p-3">
                         <div className="min-w-0">
                           <button
                             type="button"
@@ -1102,13 +1021,12 @@ export default function AwnitDemoBoard() {
 
         {/* Dev / env note */}
         <div className="mt-4 text-xs text-white/40">
-          Supabase client: {sb ? "env detected" : "env missing (fine for local demo)"} • Route: /planet/vehicles/awnit-demo
+          Supabase client: {supabase ? "env detected" : "env missing (fine for local demo)"} • Route: /planet/vehicles/awnit-demo
         </div>
       </div>
     </div>
   );
 }
-
 
 
 
