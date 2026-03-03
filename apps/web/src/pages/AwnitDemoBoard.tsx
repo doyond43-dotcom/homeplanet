@@ -678,7 +678,7 @@ export default function AwnitDemoBoard() {
 
       // Preview will navigate if your router has this route.
       // In your repo this should land on your invoice page.
-      navigate(`/planet/vehicles/awnit-demo/invoice/${invoiceId}`);
+      navigate(`/planet/vehicles/awnit-demo/invoice/`);
     } catch (e: any) {
       safeToast(e?.message || "Invoice generation failed.");
     } finally {
@@ -1100,3 +1100,4 @@ export default function AwnitDemoBoard() {
     </div>
   );
 }
+

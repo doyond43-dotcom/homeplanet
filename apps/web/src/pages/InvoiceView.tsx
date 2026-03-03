@@ -8,7 +8,6 @@ type InvoiceRow = {
   created_at?: string | null;
   status?: string | null;
 
-  // Totals
   subtotal?: number | null;
   tax?: number | null;
   shipping?: number | null;
@@ -16,13 +15,11 @@ type InvoiceRow = {
   deposit?: number | null;
   total?: number | null;
 
-  // Customer snapshot fields (if your table has them)
   customer_name?: string | null;
   customer_phone?: string | null;
   customer_email?: string | null;
   customer_address?: string | null;
 
-  // Optional metadata
   meta?: any;
 };
 
@@ -48,8 +45,6 @@ function money(n: any) {
 
 export default function InvoiceView() {
   const navigate = useNavigate();
-
-  // Support either :invoiceId or :id depending on your route
   const params = useParams();
   const invoiceId = (params as any)?.invoiceId || (params as any)?.id || "";
 
@@ -69,7 +64,6 @@ export default function InvoiceView() {
         return;
       }
 
-      // Helpful failure message if env keys are missing.
       const url = (import.meta as any).env?.VITE_SUPABASE_URL;
       const anon = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY;
       if (!url || !anon) {
@@ -82,12 +76,7 @@ export default function InvoiceView() {
         setLoading(true);
         setErr(null);
 
-        const invRes = await supabase
-          .from("invoices")
-          .select("*")
-          .eq("id", invoiceId)
-          .maybeSingle();
-
+        const invRes = await supabase.from("invoices").select("*").eq("id", invoiceId).maybeSingle();
         if (invRes.error) throw invRes.error;
         if (!invRes.data) throw new Error("Invoice not found.");
 
@@ -139,11 +128,7 @@ export default function InvoiceView() {
     <div className={shell}>
       <div className={wrap}>
         <div className="mb-4 flex items-center justify-between gap-2">
-          <button
-            type="button"
-            className={pillBtn}
-            onClick={() => navigate("/planet/vehicles/awnit-demo")}
-          >
+          <button type="button" className={pillBtn} onClick={() => navigate("/planet/vehicles/awnit-demo")}>
             ← Back to Board
           </button>
 
@@ -154,9 +139,7 @@ export default function InvoiceView() {
             <button
               type="button"
               className={greenBtn}
-              onClick={() => {
-                navigator.clipboard?.writeText(window.location.href).catch(() => {});
-              }}
+              onClick={() => navigator.clipboard?.writeText(window.location.href).catch(() => {})}
             >
               Copy Link
             </button>
@@ -166,9 +149,7 @@ export default function InvoiceView() {
         <div className={cn(card, "p-5")}>
           <div className="flex items-start justify-between gap-3">
             <div>
-              <div className="text-sm font-semibold tracking-wide text-emerald-300/90">
-                AWNIT — Invoice
-              </div>
+              <div className="text-sm font-semibold tracking-wide text-emerald-300/90">AWNIT — Invoice</div>
               <div className="text-2xl font-extrabold leading-tight">
                 {invoiceId ? `#${String(invoiceId).slice(0, 8).toUpperCase()}` : "#—"}
               </div>
@@ -179,8 +160,7 @@ export default function InvoiceView() {
 
             <div className="text-right text-sm text-slate-300">
               <div>
-                Status:{" "}
-                <span className="font-extrabold text-slate-100">{invoice?.status ?? "draft"}</span>
+                Status: <span className="font-extrabold text-slate-100">{invoice?.status ?? "draft"}</span>
               </div>
             </div>
           </div>
@@ -206,9 +186,7 @@ export default function InvoiceView() {
                     <div className="font-bold">{invoice.customer_name ?? "—"}</div>
                     <div className="text-slate-300">{invoice.customer_phone ?? "—"}</div>
                     <div className="text-slate-300">{invoice.customer_email ?? "—"}</div>
-                    <div className="text-slate-300 whitespace-pre-line">
-                      {invoice.customer_address ?? "—"}
-                    </div>
+                    <div className="text-slate-300 whitespace-pre-line">{invoice.customer_address ?? "—"}</div>
                   </div>
                 </div>
 
@@ -241,27 +219,15 @@ export default function InvoiceView() {
 
               <div className="mt-5 space-y-3">
                 {grouped.labor.length > 0 && (
-                  <Section title="Scope / Labor">
-                    {grouped.labor.map((l) => (
-                      <LineRow key={l.id} line={l} />
-                    ))}
-                  </Section>
+                  <Section title="Scope / Labor">{grouped.labor.map((l) => <LineRow key={l.id} line={l} />)}</Section>
                 )}
 
                 {grouped.material.length > 0 && (
-                  <Section title="Materials">
-                    {grouped.material.map((l) => (
-                      <LineRow key={l.id} line={l} />
-                    ))}
-                  </Section>
+                  <Section title="Materials">{grouped.material.map((l) => <LineRow key={l.id} line={l} />)}</Section>
                 )}
 
                 {grouped.other.length > 0 && (
-                  <Section title="Other">
-                    {grouped.other.map((l) => (
-                      <LineRow key={l.id} line={l} />
-                    ))}
-                  </Section>
+                  <Section title="Other">{grouped.other.map((l) => <LineRow key={l.id} line={l} />)}</Section>
                 )}
 
                 {lines.length === 0 && (
@@ -298,19 +264,14 @@ function Section({ title, children }: { title: string; children: any }) {
 
 function LineRow({ line }: { line: any }) {
   const qty = typeof line.qty === "number" ? line.qty : parseFloat(String(line.qty ?? "")) || 1;
-  const unit =
-    typeof line.unit_price === "number" ? line.unit_price : parseFloat(String(line.unit_price ?? "")) || 0;
+  const unit = typeof line.unit_price === "number" ? line.unit_price : parseFloat(String(line.unit_price ?? "")) || 0;
   const ext = qty * unit;
 
   return (
     <div className="rounded-xl border border-white/10 bg-black/20 px-3 py-2 flex items-start justify-between gap-3">
       <div className="min-w-0">
-        <div className="text-sm font-semibold text-slate-100 whitespace-pre-line">
-          {line.description ?? "—"}
-        </div>
-        <div className="text-[11px] text-slate-400">
-          {line.line_type ?? "line"} • Qty {qty} • Unit {unit.toFixed(2)}
-        </div>
+        <div className="text-sm font-semibold text-slate-100 whitespace-pre-line">{line.description ?? "—"}</div>
+        <div className="text-[11px] text-slate-400">{line.line_type ?? "line"} • Qty {qty} • Unit {unit.toFixed(2)}</div>
       </div>
       <div className="shrink-0 text-sm font-extrabold text-slate-100">{money(ext)}</div>
     </div>

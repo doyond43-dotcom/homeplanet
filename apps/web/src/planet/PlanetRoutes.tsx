@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+﻿import { Routes, Route, Navigate } from "react-router-dom";
 
 import PlanetOverview from "../pages/PlanetOverview";
 import CityPage from "../pages/CityPage";
@@ -20,19 +20,19 @@ import LifePlanet from "../pages/LifePlanet";
 
 /**
  * Planet layer:
- * - /planet/creator is a special launchpad (CreatorCity)
- * - AWNIT canonical:
- *    - /planet/awnit (landing)
- *    - /planet/awnit/demo (dashboard demo board)
- * - legacy AWNIT paths redirect to canonical
+ * - /planet/creator is the Creator hub
+ * - /planet/vehicles/awnit-demo is AWNIT Live Demo Board
+ * - /planet/vehicles/awnit-demo/invoice/:invoiceId is the invoice view
+ * - /planet/:planetId routes to PlanetOverview
+ * - /planet/:planetId/:cityId routes to CityPage
  */
 export default function PlanetRoutes() {
   return (
     <Routes>
-      {/* /planet -> default planet */}
+      {/* /planet -> default */}
       <Route index element={<Navigate to="/planet/creator" replace />} />
 
-      {/* ---------- Creator planet (special) ---------- */}
+      {/* ---------- Creator ---------- */}
       <Route path="creator" element={<CreatorCity />} />
       <Route path="creator/projects" element={<CreatorProjects />} />
       <Route path="creator/studio/*" element={<CreatorStudio />} />
@@ -40,17 +40,15 @@ export default function PlanetRoutes() {
       <Route path="creator/release/:releaseId" element={<ReleaseViewer />} />
       <Route path="creator/*" element={<Navigate to="/planet/creator" replace />} />
 
-      {/* ---------- AWNIT (CANONICAL) — must be ABOVE generic routes ---------- */}
-      <Route path="awnit" element={<AwnitLandingPage />} />
-      <Route path="awnit/demo" element={<AwnitDemoBoard />} />
-      <Route path="awnit/demo/invoice/:invoiceId" element={<InvoiceView />} />
+      {/* ---------- AWNIT (CANONICAL) ---------- */}
+      <Route path="vehicles/awnit" element={<AwnitLandingPage />} />
+      <Route path="vehicles/awnit-demo" element={<AwnitDemoBoard />} />
+      <Route path="vehicles/awnit-demo/invoice/:invoiceId" element={<InvoiceView />} />
 
-      {/* ---------- AWNIT (LEGACY REDIRECTS) ---------- */}
-      <Route path="vehicles/awnit" element={<Navigate to="/planet/awnit" replace />} />
-      <Route path="vehicles/awnit-demo" element={<Navigate to="/planet/awnit/demo" replace />} />
-      <Route path="demo/awnit" element={<Navigate to="/planet/awnit/demo" replace />} />
+      {/* Optional legacy / fallback demo path */}
+      <Route path="demo/awnit" element={<Navigate to="/planet/vehicles/awnit-demo" replace />} />
 
-      {/* ---------- Life (personal presence ledger) ---------- */}
+      {/* ---------- Life ---------- */}
       <Route path="life" element={<LifePlanet />} />
 
       {/* ---------- Generic planets ---------- */}
@@ -62,10 +60,3 @@ export default function PlanetRoutes() {
     </Routes>
   );
 }
-
-
-
-
-
-
-
