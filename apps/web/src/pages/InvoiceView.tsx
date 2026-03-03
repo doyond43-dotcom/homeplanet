@@ -1,12 +1,12 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-
 import { supabase } from "../lib/supabase";
 
 type InvoiceRow = {
   id: string;
   created_at?: string | null;
   status?: string | null;
+  invoice_number?: string | null;
 
   subtotal?: number | null;
   tax?: number | null;
@@ -26,15 +26,15 @@ type InvoiceRow = {
 type InvoiceLineRow = {
   id: string;
   invoice_id: string;
-  line_type: "labor" | "material" | "part" | "fee" | "note" | string;
   qty?: number | null;
   unit_price?: number | null;
   description?: string | null;
   created_at?: string | null;
 };
 
-function cn(...parts: Array<string | false | null | undefined>) {
-  return parts.filter(Boolean).join(" ");
+function toNum(v: any, fallback = 0) {
+  const n = typeof v === "number" ? v : parseFloat(String(v ?? ""));
+  return Number.isFinite(n) ? n : fallback;
 }
 
 function money(n: any) {
@@ -43,264 +43,248 @@ function money(n: any) {
   return v.toLocaleString(undefined, { style: "currency", currency: "USD" });
 }
 
+function fmtDate(d?: string | null) {
+  if (!d) return "";
+  const dt = new Date(d);
+  if (Number.isNaN(dt.getTime())) return "";
+  return dt.toLocaleDateString();
+}
+
+function safeText(v: any) {
+  return String(v ?? "").trim();
+}
+
 export default function InvoiceView() {
   const navigate = useNavigate();
   const params = useParams();
   const invoiceId = (params as any)?.invoiceId || (params as any)?.id || "";
-const isLocal = typeof invoiceId === "string" && invoiceId.startsWith("inv_");
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [invoice, setInvoice] = useState<InvoiceRow | null>(null);
   const [lines, setLines] = useState<InvoiceLineRow[]>([]);
 
   useEffect(() => {
-  let alive = true;
+    let alive = true;
 
-  async function run() {
-    setLoading(true);
-    setErr("");
+    async function run() {
+      setLoading(true);
+      setErr(null);
 
-    // ---- LOCAL invoice mode (demo) ----
-    if (isLocal) {
       try {
-        const key = `awnit_demo_invoice_${invoiceId}`;
-        const raw = localStorage.getItem(key);
-        if (!raw) {
-          if (alive) setErr("Local invoice not found (storage cleared).");
+        const invRes = await supabase.from("invoices").select("*").eq("id", invoiceId).maybeSingle();
+        if (invRes.error) throw invRes.error;
+        if (!invRes.data) {
+          setErr("Invoice not found.");
           return;
         }
-        const parsed = JSON.parse(raw);
 
-        // Shape it into what the UI expects minimally
+        const linesRes = await supabase
+          .from("invoice_lines")
+          .select("id, invoice_id, qty, unit_price, description, created_at")
+          .eq("invoice_id", invoiceId)
+          .order("created_at", { ascending: true });
+
+        if (linesRes.error) throw linesRes.error;
+
         if (alive) {
-          setInvoice({
-            id: parsed.id,
-            created_at: parsed.created_at,
-            status: "draft",
-            customer_name: parsed?.job?.customer_name ?? parsed?.job?.customerName ?? "—",
-            customer_phone: parsed?.job?.customer_phone ?? parsed?.job?.customerPhone ?? "—",
-            customer_email: parsed?.job?.customer_email ?? parsed?.job?.customerEmail ?? "—",
-            customer_address: parsed?.job?.customer_address ?? parsed?.job?.customerAddress ?? "—",
-            subtotal: 0,
-            tax: 0,
-            shipping: 0,
-            deposit: 0,
-            total: 0,
-          } as any);
-
-          // If your component stores lines separately, leave as-is; otherwise it will still render header + status safely.
+          setInvoice(invRes.data as any);
+          setLines((linesRes.data ?? []) as any);
         }
       } catch (e: any) {
-        if (alive) setErr(e?.message ?? "Failed to load local invoice.");
+        if (alive) setErr(e?.message ?? "Failed to load invoice.");
       } finally {
         if (alive) setLoading(false);
       }
-      return;
     }
 
-    // ---- Supabase invoice mode (real) ----
-    try {
-      if (!invoiceId) {
-        setErr("Missing invoice id.");
-        return;
-      }
+    if (invoiceId) run();
 
-      const invRes = await supabase.from("invoices").select("*").eq("id", invoiceId).maybeSingle();
-      if (invRes.error) throw invRes.error;
+    return () => {
+      alive = false;
+    };
+  }, [invoiceId]);
 
-      const linesRes = await supabase
-        .from("invoice_lines")
-        .select("*")
-        .eq("invoice_id", invoiceId)
-        .order("sort", { ascending: true });
+  const computed = useMemo(() => {
+    const subtotal = lines.reduce((sum, ln) => sum + toNum(ln.qty, 0) * toNum(ln.unit_price, 0), 0);
 
-      if (linesRes.error) throw linesRes.error;
+    const tax = invoice?.tax ?? 0;
+    const shipping = invoice?.shipping ?? 0;
+    const discount = invoice?.discount ?? 0;
+    const deposit = invoice?.deposit ?? 0;
 
-      if (alive) {
-        setInvoice(invRes.data as any);
-        setLines((linesRes.data ?? []) as any);
-      }
-    } catch (e: any) {
-      if (alive) setErr(e?.message ?? "Failed to load invoice.");
-    } finally {
-      if (alive) setLoading(false);
-    }
-  }
+    const total = subtotal + toNum(tax) + toNum(shipping) - toNum(discount) - toNum(deposit);
 
-  run();
-  return () => { alive = false; };
-}, [invoiceId]);
+    return { subtotal, tax, shipping, discount, deposit, total };
+  }, [lines, invoice]);
 
-  const shell =
-    "min-h-screen w-full overflow-x-hidden bg-gradient-to-b from-slate-950 via-slate-950 to-black text-slate-100";
-  const wrap = "mx-auto max-w-4xl px-4 py-6";
-  const card =
-    "rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md shadow-[0_0_0_1px_rgba(255,255,255,0.06)]";
+  // Demo-friendly placeholders (only used if DB values are blank)
+  const demo = useMemo(() => {
+    const meta = (invoice?.meta ?? {}) as any;
 
-  const pillBtn =
-    "inline-flex items-center justify-center rounded-xl px-3 py-2 text-sm font-semibold border border-white/10 bg-white/5 hover:bg-white/10 active:bg-white/15 transition";
-  const greenBtn =
-    "inline-flex items-center justify-center rounded-xl px-3 py-2 text-sm font-bold border border-emerald-400/30 bg-emerald-400/15 hover:bg-emerald-400/20 active:bg-emerald-400/25 transition";
+    const name = safeText(invoice?.customer_name) || safeText(meta.customer_name) || "John & Jane Homeowner";
+    const address = safeText(invoice?.customer_address) || safeText(meta.customer_address) || "123 Sunshine Blvd";
+    const cityStateZip = safeText(meta.city_state_zip) || "Okeechobee, FL 34974";
+    const phone = safeText(invoice?.customer_phone) || safeText(meta.customer_phone) || "(863) 555-0147";
+    const email = safeText(invoice?.customer_email) || safeText(meta.customer_email) || "customer@example.com";
 
-  const grouped = useMemo(() => {
-    const labor = lines.filter((l) => l.line_type === "labor");
-    const material = lines.filter((l) => l.line_type === "material");
-    const other = lines.filter((l) => l.line_type !== "labor" && l.line_type !== "material");
-    return { labor, material, other };
-  }, [lines]);
+    return { name, address, cityStateZip, phone, email };
+  }, [invoice]);
+
+  // ONE-PAGE PRINT: total table rows (real lines + blanks) capped so it won't spill
+  const MAX_TABLE_ROWS_ONE_PAGE = 12; // adjust only if you change margins/fonts a lot
+  const blankRowsCount = Math.max(0, MAX_TABLE_ROWS_ONE_PAGE - (lines?.length ?? 0));
+  const blankRows = Array.from({ length: blankRowsCount });
 
   return (
-    <div className={shell}>
-      <div className={wrap}>
-        <div className="mb-4 flex items-center justify-between gap-2">
-          <button type="button" className={pillBtn} onClick={() => navigate("/planet/vehicles/awnit-demo")}>
-            ← Back to Board
+    <div className="min-h-screen bg-gray-200 py-10 text-black">
+      <div className="max-w-5xl mx-auto px-6">
+        {/* Controls */}
+        <div className="mb-6 flex justify-between no-print">
+          <button onClick={() => navigate(-1)} className="border border-black px-4 py-2 rounded bg-white">
+            ← Back
           </button>
 
-          <div className="flex items-center gap-2">
-            <button type="button" className={pillBtn} onClick={() => window.print()}>
-              Print
-            </button>
-            <button
-              type="button"
-              className={greenBtn}
-              onClick={() => navigator.clipboard?.writeText(window.location.href).catch(() => {})}
-            >
-              Copy Link
-            </button>
-          </div>
+          <button onClick={() => window.print()} className="border border-black px-4 py-2 rounded bg-white font-semibold">
+            Print
+          </button>
         </div>
 
-        <div className={cn(card, "p-5")}>
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <div className="text-sm font-semibold tracking-wide text-emerald-300/90">AWNIT — Invoice</div>
-              <div className="text-2xl font-extrabold leading-tight">
-                {invoiceId ? `#${String(invoiceId).slice(0, 8).toUpperCase()}` : "#—"}
-              </div>
-              <div className="mt-1 text-sm text-slate-300">
-                {invoice?.created_at ? new Date(invoice.created_at).toLocaleString() : "—"}
-              </div>
-            </div>
+        {loading && <div className="text-sm">Loading invoice…</div>}
+        {err && <div className="text-red-600 text-sm">{err}</div>}
 
-            <div className="text-right text-sm text-slate-300">
+        {!loading && !err && invoice && (
+          <div
+            className="bg-[#fdfdfc] border-2 border-black shadow-xl p-10"
+            style={{ breakInside: "avoid", pageBreakInside: "avoid" as any }}
+          >
+            {/* Header */}
+            <div className="flex justify-between mb-8">
               <div>
-                Status: <span className="font-extrabold text-slate-100">{invoice?.status ?? "draft"}</span>
+                <div className="text-4xl font-extrabold tracking-tight">Awnit</div>
+                <div className="mt-1 text-sm">Awnit.com</div>
+                <div className="text-sm">(863) 634-3100</div>
+                <div className="text-sm">Okeechobee, FL</div>
               </div>
+
+              <div className="text-right">
+                <div className="text-sm font-bold tracking-wide">INVOICE</div>
+                <div className="text-2xl font-extrabold mt-1">
+                  {invoice.invoice_number ?? `AWN-${String(invoice.id).slice(0, 6).toUpperCase()}`}
+                </div>
+                <div className="mt-2 text-sm">Invoice Date: {fmtDate(invoice.created_at)}</div>
+              </div>
+            </div>
+
+            {/* Customer block (paper-style lines) */}
+            <div className="mb-8">
+              <div className="font-semibold border-b border-black pb-1 mb-3">Customer</div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                <div className="flex gap-2">
+                  <div className="w-24 font-semibold">Name:</div>
+                  <div className="flex-1 border-b border-black">{demo.name}</div>
+                </div>
+
+                <div className="flex gap-2">
+                  <div className="w-24 font-semibold">Phone:</div>
+                  <div className="flex-1 border-b border-black">{demo.phone}</div>
+                </div>
+
+                <div className="flex gap-2">
+                  <div className="w-24 font-semibold">Address:</div>
+                  <div className="flex-1 border-b border-black">{demo.address}</div>
+                </div>
+
+                <div className="flex gap-2">
+                  <div className="w-24 font-semibold">Email:</div>
+                  <div className="flex-1 border-b border-black">{demo.email}</div>
+                </div>
+
+                <div className="flex gap-2 md:col-span-2">
+                  <div className="w-24 font-semibold">City/Zip:</div>
+                  <div className="flex-1 border-b border-black">{demo.cityStateZip}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Line Table */}
+            <table className="w-full border-collapse border border-black mb-8">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="border border-black p-2 w-16">Qty</th>
+                  <th className="border border-black p-2 text-left">Description</th>
+                  <th className="border border-black p-2 w-32 text-right">Unit Price</th>
+                  <th className="border border-black p-2 w-32 text-right">Total</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {/* Real lines */}
+                {lines.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="border border-black p-3 text-sm">
+                      No line items.
+                    </td>
+                  </tr>
+                ) : (
+                  lines.map((ln) => {
+                    const qty = toNum(ln.qty);
+                    const unit = toNum(ln.unit_price);
+                    const total = qty * unit;
+
+                    return (
+                      <tr key={ln.id}>
+                        <td className="border border-black p-2 text-center">{qty}</td>
+                        <td className="border border-black p-2 text-sm">{ln.description}</td>
+                        <td className="border border-black p-2 text-right text-sm">{money(unit)}</td>
+                        <td className="border border-black p-2 text-right font-semibold text-sm">
+                          {money(total)}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+
+                {/* Blank rows (paper look) — capped to keep ONE printed page */}
+                {blankRows.map((_, idx) => (
+                  <tr key={`blank_${idx}`} className="h-7">
+                    <td className="border border-black p-2 text-center">&nbsp;</td>
+                    <td className="border border-black p-2">&nbsp;</td>
+                    <td className="border border-black p-2 text-right">&nbsp;</td>
+                    <td className="border border-black p-2 text-right">&nbsp;</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {/* Totals */}
+            <div className="flex justify-end">
+              <div className="w-80 border-2 border-black p-4">
+                <div className="flex justify-between text-sm">
+                  <span>Subtotal:</span>
+                  <span>{money(computed.subtotal)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Tax:</span>
+                  <span>{money(computed.tax)}</span>
+                </div>
+
+                <div className="border-t-2 border-black mt-3 pt-2 flex justify-between font-bold text-lg">
+                  <span>Total:</span>
+                  <span>{money(computed.total)}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-8 text-center text-sm">Thank you for your business!</div>
+
+            <div className="no-print mt-4 text-xs text-gray-600">
+              Demo note: customer details show real DB values when present; otherwise placeholders are shown for a complete demo invoice.
             </div>
           </div>
-
-          {loading && (
-            <div className="mt-5 rounded-xl border border-white/10 bg-black/20 px-3 py-3 text-sm text-slate-300">
-              Loading invoice…
-            </div>
-          )}
-
-          {err && !loading && (
-            <div className="mt-5 rounded-xl border border-rose-300/30 bg-rose-300/10 px-3 py-3 text-sm text-rose-100">
-              {err}
-            </div>
-          )}
-
-          {!loading && !err && invoice && (
-            <>
-              <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                  <div className="text-sm font-extrabold">Customer</div>
-                  <div className="mt-2 text-sm">
-                    <div className="font-bold">{invoice.customer_name ?? "—"}</div>
-                    <div className="text-slate-300">{invoice.customer_phone ?? "—"}</div>
-                    <div className="text-slate-300">{invoice.customer_email ?? "—"}</div>
-                    <div className="text-slate-300 whitespace-pre-line">{invoice.customer_address ?? "—"}</div>
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                  <div className="text-sm font-extrabold">Totals</div>
-                  <div className="mt-2 space-y-1 text-sm text-slate-200">
-                    <div className="flex justify-between">
-                      <span className="text-slate-300">Subtotal</span>
-                      <span className="font-bold">{money(invoice.subtotal ?? 0)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-300">Tax</span>
-                      <span className="font-bold">{money(invoice.tax ?? 0)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-300">Shipping</span>
-                      <span className="font-bold">{money(invoice.shipping ?? 0)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-300">Deposit</span>
-                      <span className="font-bold">-{money(invoice.deposit ?? 0)}</span>
-                    </div>
-                    <div className="mt-2 pt-2 border-t border-white/10 flex justify-between">
-                      <span className="text-slate-200 font-extrabold">Total</span>
-                      <span className="text-slate-100 font-extrabold">{money(invoice.total ?? 0)}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-5 space-y-3">
-                {grouped.labor.length > 0 && (
-                  <Section title="Scope / Labor">{grouped.labor.map((l) => <LineRow key={l.id} line={l} />)}</Section>
-                )}
-
-                {grouped.material.length > 0 && (
-                  <Section title="Materials">{grouped.material.map((l) => <LineRow key={l.id} line={l} />)}</Section>
-                )}
-
-                {grouped.other.length > 0 && (
-                  <Section title="Other">{grouped.other.map((l) => <LineRow key={l.id} line={l} />)}</Section>
-                )}
-
-                {lines.length === 0 && (
-                  <div className="rounded-xl border border-white/10 bg-black/20 px-3 py-3 text-sm text-slate-300">
-                    No line items.
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-        </div>
-
-        <div className="h-8" />
+        )}
       </div>
-
-      <style>{`
-        @media print {
-          button { display: none !important; }
-          body { background: white !important; }
-        }
-      `}</style>
     </div>
   );
 }
-
-function Section({ title, children }: { title: string; children: any }) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-      <div className="text-sm font-extrabold">{title}</div>
-      <div className="mt-2 space-y-2">{children}</div>
-    </div>
-  );
-}
-
-function LineRow({ line }: { line: any }) {
-  const qty = typeof line.qty === "number" ? line.qty : parseFloat(String(line.qty ?? "")) || 1;
-  const unit = typeof line.unit_price === "number" ? line.unit_price : parseFloat(String(line.unit_price ?? "")) || 0;
-  const ext = qty * unit;
-
-  return (
-    <div className="rounded-xl border border-white/10 bg-black/20 px-3 py-2 flex items-start justify-between gap-3">
-      <div className="min-w-0">
-        <div className="text-sm font-semibold text-slate-100 whitespace-pre-line">{line.description ?? "—"}</div>
-        <div className="text-[11px] text-slate-400">{line.line_type ?? "line"} • Qty {qty} • Unit {unit.toFixed(2)}</div>
-      </div>
-      <div className="shrink-0 text-sm font-extrabold text-slate-100">{money(ext)}</div>
-    </div>
-  );
-}
-

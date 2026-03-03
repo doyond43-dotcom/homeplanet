@@ -14,25 +14,22 @@ function toNum(v: any, fallback = 0) {
 /**
  * Creates an invoice + invoice_lines from a Job object.
  *
- * IMPORTANT:
- * - You MUST map your job drawer fields into `lines` below.
- * - Right now this supports 2 optional arrays on the job:
- *   - job.material_items: [{ qty, description, unit_price }]
- *   - job.labor_items:    [{ qty, description, unit_price }]
+ * Supports:
+ *  - createInvoiceFromJob(job)
+ *  - createInvoiceFromJob({ job, scopeItems, materials, notes })
  *
- * If your job uses different fields, paste your job shape and we’ll adjust.
+ * DEMO SAFETY:
+ *  If job.id is NOT a UUID (ex: "job_1001"), uses LOCAL invoice mode.
  */
-export async function createInvoiceFromJob(input: any) {
-  // Supports:
-  //  - createInvoiceFromJob(job)
-  //  - createInvoiceFromJob({ job, scopeItems, materials, notes })
+export async function createInvoiceFromJob(input: any): Promise<string> {
   const payload = input?.job ? input : { job: input, scopeItems: [], materials: [], notes: "" };
   const job = payload?.job;
 
-  // ---- DEMO SAFETY: if job.id is NOT a UUID (ex: "job_1001"), use LOCAL invoice mode ----
-  const isUuid = (v: any) => typeof v === "string" &&
+  const isUuid = (v: any) =>
+    typeof v === "string" &&
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
 
+  // ---- LOCAL invoice mode for non-UUID jobs ----
   if (!isUuid(job?.id)) {
     const id = `inv_${Math.random().toString(36).slice(2, 10)}${Math.random().toString(36).slice(2, 10)}`;
     const key = `awnit_demo_invoice_${id}`;
@@ -47,7 +44,11 @@ export async function createInvoiceFromJob(input: any) {
       notes: payload?.notes ?? "",
     };
 
-    try { localStorage.setItem(key, JSON.stringify(localPayload)); } catch {}
+    try {
+      localStorage.setItem(key, JSON.stringify(localPayload));
+    } catch {
+      // ignore storage failures
+    }
     return id;
   }
 
@@ -55,7 +56,7 @@ export async function createInvoiceFromJob(input: any) {
 
   const lines: UiInvoiceLine[] = [];
 
-  // 1) Materials -> lines (adjust mapping to match your job shape)
+  // 1) Materials -> lines (legacy mapping if present)
   if (Array.isArray(job.material_items)) {
     for (const m of job.material_items) {
       const description = String(m?.description ?? "").trim();
@@ -69,7 +70,7 @@ export async function createInvoiceFromJob(input: any) {
     }
   }
 
-  // 2) Labor -> lines (adjust mapping to match your job shape)
+  // 2) Labor -> lines (legacy mapping if present)
   if (Array.isArray(job.labor_items)) {
     for (const l of job.labor_items) {
       const description = String(l?.description ?? "").trim();
@@ -92,19 +93,15 @@ export async function createInvoiceFromJob(input: any) {
     });
   }
 
-  // Totals (tax/shipping/deposit can come from job fields if you store them)
-  const subtotal = lines.reduce(
-    (sum, x) => sum + toNum(x.qty, 1) * toNum(x.unit_price, 0),
-    0
-  );
-
+  // Totals
+  const subtotal = lines.reduce((sum, x) => sum + toNum(x.qty, 1) * toNum(x.unit_price, 0), 0);
   const tax = toNum(job?.tax, 0);
   const shipping = toNum(job?.shipping, 0);
   const total = subtotal + tax + shipping;
   const deposit = toNum(job?.deposit, 0);
   const balance = total - deposit;
 
-  // 4) Create invoice row (invoice_number defaults in DB)
+  // 4) Create invoice row
   const { data: inv, error: invErr } = await supabase
     .from("invoices")
     .insert({
@@ -117,12 +114,13 @@ export async function createInvoiceFromJob(input: any) {
       deposit,
       balance,
     })
-    .select("*")
+    .select("id")
     .single();
 
   if (invErr) throw invErr;
+  if (!inv?.id) throw new Error("Invoice created but missing inv.id");
 
-  // 5) Insert invoice lines
+  // 5) Insert invoice lines (NO line_type / sort — your DB doesn't have them)
   const lineRows = lines.map((x) => ({
     invoice_id: inv.id,
     qty: toNum(x.qty, 1),
@@ -134,7 +132,6 @@ export async function createInvoiceFromJob(input: any) {
   const { error: lineErr } = await supabase.from("invoice_lines").insert(lineRows);
   if (lineErr) throw lineErr;
 
-  return inv;
+  // ✅ Return the ID string (what the board expects for routing)
+  return String(inv.id);
 }
-
-
