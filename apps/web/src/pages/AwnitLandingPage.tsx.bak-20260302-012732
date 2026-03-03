@@ -1,0 +1,139 @@
+﻿import { useMemo, useRef, useState } from "react";
+
+function cn(...parts: Array<string | false | null | undefined>) {
+  return parts.filter(Boolean).join(" ");
+}
+
+function digitsPhone(s?: string) {
+  const raw = (s || "").trim();
+  if (!raw) return "";
+  if (raw.startsWith("+")) return raw.replace(/[^\d+]/g, "");
+  const digits = raw.replace(/[^\d]/g, "");
+  if (digits.length === 10) return `+1${digits}`;
+  if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
+  if (digits.length >= 12 && digits.length <= 15) return `+${digits}`;
+  return digits;
+}
+
+function mapsHref(address: string) {
+  const a = (address || "").trim();
+  if (!a) return "";
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(a)}`;
+}
+
+function smsHref(phone: string, body: string) {
+  const p = digitsPhone(phone);
+  if (!p) return "";
+  return `sms:${p}?&body=${encodeURIComponent(body || "")}`;
+}
+
+function mailtoHref(email: string, subject: string, body: string) {
+  const e = (email || "").trim();
+  if (!e) return "";
+  return `mailto:${e}?subject=${encodeURIComponent(subject || "")}&body=${encodeURIComponent(body || "")}`;
+}
+
+type ProjectType =
+  | "Impact Windows"
+  | "Hurricane Shutters"
+  | "Door Installations"
+  | "Screen Repair"
+  | "Trim + Caulk Finish"
+  | "Custom Storm Solutions";
+
+function toProjectType(label: string): ProjectType {
+  const v = (label || "").toLowerCase().trim();
+  if (v.includes("impact")) return "Impact Windows";
+  if (v.includes("shutter")) return "Hurricane Shutters";
+  if (v.includes("door")) return "Door Installations";
+  if (v.includes("screen")) return "Screen Repair";
+  if (v.includes("trim") || v.includes("caulk")) return "Trim + Caulk Finish";
+  return "Custom Storm Solutions";
+}
+
+export default function AwnitLandingPage() {
+  const BUSINESS = useMemo(
+    () => ({
+      name: "AWNIT",
+      tagline: "Storm & Impact Specialists",
+      phoneDisplay: "(863) 634-3100",
+      phoneDial: "8636343100",
+      email: "awnit@example.com",
+      address: "3169 US-441, Okeechobee, FL 34974",
+      hours: "Mon–Fri 8am–5pm",
+      serviceArea: "Okeechobee + surrounding areas",
+    }),
+    []
+  );
+
+  const demoHref = "/planet/vehicles/awnit-demo";
+
+  const heroImgSrc = useMemo(
+    () => new URL("../assets/awnit/hero.webp", import.meta.url).toString(),
+    []
+  );
+
+  const [quote, setQuote] = useState({
+    name: "",
+    phone: "",
+    address: "",
+    projectType: "Impact Windows" as ProjectType,
+    notes: "",
+  });
+
+  const quoteRef = useRef<HTMLDivElement | null>(null);
+
+  function goToQuote(projectLabel?: string) {
+    if (projectLabel) {
+      const pt = toProjectType(projectLabel);
+      setQuote((p) => ({ ...p, projectType: pt }));
+    }
+    requestAnimationFrame(() => {
+      quoteRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+
+  const callHref = `tel:${digitsPhone(BUSINESS.phoneDial)}`;
+  const directionsHref = mapsHref(BUSINESS.address);
+
+  return (
+    <div className="min-h-screen bg-[#070d18] text-white">
+      <div className="pointer-events-none fixed inset-0">
+        <div className="absolute -top-48 left-1/2 h-[520px] w-[900px] -translate-x-1/2 rounded-full bg-emerald-500/10 blur-3xl" />
+        <div className="absolute top-64 left-1/4 h-[420px] w-[520px] -translate-x-1/2 rounded-full bg-sky-500/10 blur-3xl" />
+      </div>
+
+      <section className="relative z-10 mx-auto max-w-7xl px-4 pb-10 pt-10 md:px-6 md:pb-14">
+        <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 md:p-8">
+
+          <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8">
+            
+            <div className="lg:col-span-7">
+              <h1 className="text-4xl font-extrabold tracking-tight md:text-5xl">
+                Florida <span className="text-emerald-300">Storm & Impact</span> Specialists
+              </h1>
+              <p className="mt-3 max-w-xl text-base text-white/70 md:text-lg">
+                Precision installs. Clear communication. No confusion.
+                <span className="font-bold text-white/85"> Built right the first time.</span>
+              </p>
+            </div>
+
+            {/* CLEAN IMAGE — NO OVERLAY CARD */}
+            <div className="lg:col-span-5">
+              <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/20">
+                <img
+                  src={heroImgSrc}
+                  alt="AWNIT install work"
+                  className="h-[380px] w-full object-cover opacity-90"
+                  loading="lazy"
+                />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-black/20" />
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}

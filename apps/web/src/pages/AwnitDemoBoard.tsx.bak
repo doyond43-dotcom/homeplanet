@@ -1,0 +1,1688 @@
+﻿import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createInvoiceFromJob } from "../lib/invoices";
+
+/**
+ * AWNIT — Live Board (1-week test)
+ * - Appointment required at Add Job
+ * - Stage color lanes like Taylor Creek
+ * - Scope + per-unit Measurements (Doors/Windows/Screens/Trim + Custom) + MIC (new line per tap)
+ * - Materials Grab List (separate) + MIC (new line per tap) + multi-line quick add
+ * - "Grab Code" accountability on Copy Grab List (week-1 = numeric IDs, names later)
+ *
+ * INVOICE V1 (added):
+ * - One-click Generate Invoice from current drawer data (Scope + Materials + Notes)
+ * - Creates rows in: invoices + invoice_lines
+ * - Navigates to /invoice/:id (route/page next step)
+ */
+
+// ---------------- Types ----------------
+type Stage =
+  | "Scheduled"
+  | "Measured"
+  | "Estimate Sent"
+  | "Ordered"
+  | "Installed"
+  | "Done";
+
+type Job = {
+  id: string;
+  title: string;
+  summary: string;
+  stage: Stage;
+
+  apptDate: string; // YYYY-MM-DD
+  apptTime: string; // HH:MM
+  crew?: string;
+
+  customer: {
+    name: string;
+    phone?: string;
+    email?: string;
+    address?: string;
+  };
+};
+
+type ScopeType = "door" | "window" | "screen" | "trim" | "custom";
+
+type ScopeItem = {
+  id: string;
+  type: ScopeType;
+  label: string; // "Door 1", "Window 2", "Custom 1"
+  quick: string; // multi-line measurements/notes
+  done: boolean;
+  createdAt: string;
+};
+
+type MaterialItem = {
+  id: string;
+  name: string;
+  qty?: string;
+  checked: boolean;
+  addedBy: string; // week-1: grabCode if available, else "live"
+  addedAt: string; // ISO
+};
+
+type MaterialsBroadcast = {
+  senderId: string;
+  jobId: string;
+  materials: MaterialItem[];
+};
+
+// ---------------- Helpers ----------------
+function cn(...parts: Array<string | false | null | undefined>) {
+  return parts.filter(Boolean).join(" ");
+}
+
+function safeToast(msg: string) {
+  try {
+    // eslint-disable-next-line no-alert
+    alert(msg);
+  } catch {
+    /* noop */
+  }
+}
+
+async function copyToClipboard(text: string) {
+  const val = (text || "").trim();
+  if (!val) return safeToast("Nothing to copy.");
+  try {
+    await navigator.clipboard.writeText(val);
+    safeToast("Copied.");
+  } catch {
+    const ta = document.createElement("textarea");
+    ta.value = val;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+      document.execCommand("copy");
+      safeToast("Copied.");
+    } catch {
+      safeToast("Copy failed.");
+    } finally {
+      document.body.removeChild(ta);
+    }
+  }
+}
+
+function makeId() {
+  return `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function nowIso() {
+  return new Date().toISOString();
+}
+
+function makeSupabase(): SupabaseClient | null {
+  const url = (import.meta as any).env?.VITE_SUPABASE_URL as string | undefined;
+  const key = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY as string | undefined;
+  if (!url || !key) return null;
+  return createClient(url, key, { auth: { persistSession: false } });
+}
+
+function fmtAppt(job: Job) {
+  const d = (job.apptDate || "").trim();
+  const t = (job.apptTime || "").trim();
+  if (!d || !t) return "Appt: —";
+  try {
+    const dt = new Date(`${d}T${t}:00`);
+    const date = dt.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+    const time = dt.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+    return `Appt: ${date}, ${time}${job.crew ? `  •  ${job.crew}` : ""}`;
+  } catch {
+    return `Appt: ${d} ${t}${job.crew ? ` • ${job.crew}` : ""}`;
+  }
+}
+
+function stageTone(stage: Stage) {
+  switch (stage) {
+    case "Scheduled":
+      return { lane: "border-l-sky-400/70", pill: "border-sky-300/30 bg-sky-300/15 text-sky-100" };
+    case "Measured":
+      return { lane: "border-l-emerald-400/80", pill: "border-emerald-400/30 bg-emerald-400/15 text-emerald-100" };
+    case "Estimate Sent":
+      return { lane: "border-l-violet-400/70", pill: "border-violet-300/30 bg-violet-300/15 text-violet-100" };
+    case "Ordered":
+      return { lane: "border-l-amber-300/70", pill: "border-amber-300/30 bg-amber-300/15 text-amber-100" };
+    case "Installed":
+      return { lane: "border-l-lime-300/70", pill: "border-lime-300/30 bg-lime-300/15 text-lime-100" };
+    case "Done":
+      return { lane: "border-l-slate-300/40", pill: "border-white/10 bg-white/5 text-slate-200" };
+    default:
+      return { lane: "border-l-emerald-400/60", pill: "border-emerald-400/30 bg-emerald-400/15 text-emerald-100" };
+  }
+}
+
+// ---------------- Speech (Mic) ----------------
+type SpeechCtor = new () => any;
+
+function getSpeechCtor(): SpeechCtor | null {
+  const w = window as any;
+  return (w.SpeechRecognition || w.webkitSpeechRecognition)
+    ? (w.SpeechRecognition || w.webkitSpeechRecognition)
+    : null;
+}
+
+function useSpeechDictation() {
+  const ctorRef = useRef<SpeechCtor | null>(null);
+  const recRef = useRef<any>(null);
+
+  const [supported, setSupported] = useState(false);
+  const [listening, setListening] = useState(false);
+  const activeTargetRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const ctor = getSpeechCtor();
+    ctorRef.current = ctor;
+    setSupported(!!ctor);
+  }, []);
+
+  function stop() {
+    try {
+      recRef.current?.stop?.();
+    } catch {
+      /* noop */
+    }
+  }
+
+  function toggle(targetId: string, onText: (text: string, isFinal: boolean) => void) {
+    const ctor = ctorRef.current;
+    if (!ctor) {
+      safeToast("Mic not supported in this browser.");
+      return;
+    }
+
+    if (listening && activeTargetRef.current === targetId) {
+      stop();
+      return;
+    }
+    if (listening && activeTargetRef.current && activeTargetRef.current !== targetId) {
+      stop();
+    }
+
+    const rec = new ctor();
+    recRef.current = rec;
+
+    rec.continuous = false; // tap mic = one burst, then stop
+    rec.interimResults = false;
+    rec.lang = "en-US";
+
+    activeTargetRef.current = targetId;
+
+    rec.onstart = () => setListening(true);
+    rec.onerror = () => setListening(false);
+    rec.onend = () => setListening(false);
+
+    rec.onresult = (event: any) => {
+      let interim = "";
+      let finals = "";
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const r = event.results[i];
+        const txt = (r[0]?.transcript || "").trim();
+        if (!txt) continue;
+        if (r.isFinal) finals += (finals ? " " : "") + txt;
+        else interim += (interim ? " " : "") + txt;
+      }
+
+      if (interim) onText(interim, false);
+      if (finals) onText(finals, true);
+    };
+
+    try {
+      rec.start();
+    } catch {
+      safeToast("Mic start failed.");
+    }
+  }
+
+  return { supported, listening, toggle, stop, activeTargetRef };
+}
+
+function MicButton({
+  label = "Mic",
+  supported,
+  listening,
+  active,
+  onClick,
+}: {
+  label?: string;
+  supported: boolean;
+  listening: boolean;
+  active: boolean;
+  onClick: () => void;
+}) {
+  const base =
+    "inline-flex items-center justify-center rounded-full px-3 py-2 text-sm font-extrabold border transition select-none whitespace-nowrap";
+  const off = "border-white/10 bg-white/5 hover:bg-white/10 active:bg-white/15";
+  const on = "border-emerald-400/40 bg-emerald-400/15 hover:bg-emerald-400/20 active:bg-emerald-400/25";
+  const disabled = "opacity-40 cursor-not-allowed";
+
+  return (
+    <button
+      type="button"
+      className={cn(base, supported ? (active && listening ? on : off) : off, !supported && disabled)}
+      onClick={() => supported && onClick()}
+      title={supported ? "Tap to dictate" : "Mic not supported"}
+      aria-label="Microphone"
+    >
+      🎤
+      <span className="ml-2">{label}</span>
+    </button>
+  );
+}
+
+// tap mic = new line behavior
+function dictationAppendLine(prev: string, text: string, isFinal: boolean) {
+  // Only commit FINAL results. One mic tap = one new line.
+  if (!isFinal) return prev;
+  const line = (text || "").trim();
+  if (!line) return prev;
+
+  const base = (prev || "").trimEnd();
+  return (base ? `${base}\n${line}` : line) + "\n";
+}
+
+// ---------------- Materials Templates (simple) ----------------
+const MATERIAL_TEMPLATES: Record<string, string[]> = {
+  "Window install": ["Caulk / sealant", "Shims", "Flashing tape", "Foam", "Screws", "Touch-up paint"],
+  "Door install": ["Caulk / sealant", "Shims", "Flashing tape", "Foam", "Screws", "Wood filler"],
+  "Screen repair": ["Spline", "Screen roll", "Spline tool", "Corners / clips", "Fasteners"],
+  "Trim + caulk touchup": ["Caulk / sealant", "Painter tape", "Touch-up paint", "Rags / wipes"],
+};
+
+// Week-1 Employee IDs (names later)
+const GRAB_CODES = ["2222", "4444", "6666", "8888", "9999"] as const;
+
+// ---------------- Component ----------------
+export default function AwnitDemoBoard() {
+  const navigate = useNavigate();
+  const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false);
+
+  // Seed jobs
+  const seedJobs: Job[] = useMemo(
+    () => [
+      {
+        id: "job_1001",
+        title: "Screen Enclosure Repair",
+        summary: "Torn screen + spline replacement on west side panel.",
+        stage: "Measured",
+        apptDate: "2026-02-28",
+        apptTime: "09:30",
+        crew: "Crew 1",
+        customer: {
+          name: "Maria Johnson",
+          phone: "(555) 201-8891",
+          email: "maria.j@example.com",
+          address: "214 SW 8th Ave, Okeechobee, FL 34974",
+        },
+      },
+      {
+        id: "job_1002",
+        title: "Hurricane Shutter Measure",
+        summary: "Initial measure for front windows + slider.",
+        stage: "Scheduled",
+        apptDate: "2026-02-28",
+        apptTime: "13:00",
+        crew: "Austin",
+        customer: {
+          name: "Derek Stone",
+          phone: "(555) 913-4402",
+          email: "derek.stone@example.com",
+          address: "105 NE 3rd St, Okeechobee, FL 34972",
+        },
+      },
+      {
+        id: "job_1003",
+        title: "Window Replacement Quote",
+        summary: "Estimate deliver + follow-up scheduled.",
+        stage: "Estimate Sent",
+        apptDate: "2026-03-01",
+        apptTime: "10:00",
+        crew: "Ruben",
+        customer: {
+          name: "Alicia Perez",
+          phone: "(555) 650-7780",
+          email: "alicia.p@example.com",
+          address: "7900 US-441, Okeechobee, FL 34974",
+        },
+      },
+    ],
+    []
+  );
+
+  const [jobs, setJobs] = useState<Job[]>(seedJobs);
+  const [showPanels, setShowPanels] = useState(true);
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+
+  const selectedJob = useMemo(
+    () => jobs.find((j) => j.id === selectedJobId) || null,
+    [jobs, selectedJobId]
+  );
+
+  // ---------------- Drawer: Scope Items per Job ----------------
+  const [scopeByJob, setScopeByJob] = useState<Record<string, ScopeItem[]>>({});
+
+  function getScope(jobId: string) {
+    return scopeByJob[jobId] || [];
+  }
+
+  function nextIndex(items: ScopeItem[], type: ScopeType) {
+    const count = items.filter((x) => x.type === type).length;
+    return count + 1;
+  }
+
+  function addScopeItem(jobId: string, type: ScopeType) {
+    setScopeByJob((prev) => {
+      const cur = prev[jobId] || [];
+      const idx = nextIndex(cur, type);
+      const labelBase =
+        type === "door"
+          ? "Door"
+          : type === "window"
+          ? "Window"
+          : type === "screen"
+          ? "Screen"
+          : type === "trim"
+          ? "Trim"
+          : "Custom";
+      const item: ScopeItem = {
+        id: makeId(),
+        type,
+        label: `${labelBase} ${idx}`,
+        quick: "",
+        done: false,
+        createdAt: nowIso(),
+      };
+      return { ...prev, [jobId]: [item, ...cur] };
+    });
+  }
+
+  function removeScopeItem(jobId: string, itemId: string) {
+    setScopeByJob((prev) => {
+      const cur = prev[jobId] || [];
+      return { ...prev, [jobId]: cur.filter((x) => x.id !== itemId) };
+    });
+  }
+
+  function toggleScopeDone(jobId: string, itemId: string) {
+    setScopeByJob((prev) => {
+      const cur = prev[jobId] || [];
+      return {
+        ...prev,
+        [jobId]: cur.map((x) => (x.id === itemId ? { ...x, done: !x.done } : x)),
+      };
+    });
+  }
+
+  function setScopeQuick(jobId: string, itemId: string, val: string) {
+    setScopeByJob((prev) => {
+      const cur = prev[jobId] || [];
+      return {
+        ...prev,
+        [jobId]: cur.map((x) => (x.id === itemId ? { ...x, quick: val } : x)),
+      };
+    });
+  }
+
+  function scopeCounts(items: ScopeItem[]) {
+    const doors = items.filter((x) => x.type === "door").length;
+    const windows = items.filter((x) => x.type === "window").length;
+    const screens = items.filter((x) => x.type === "screen").length;
+    const trim = items.filter((x) => x.type === "trim").length;
+    const custom = items.filter((x) => x.type === "custom").length;
+    return { doors, windows, screens, trim, custom };
+  }
+
+  // ---------------- Notes per Job ----------------
+  const [notesByJob, setNotesByJob] = useState<Record<string, string>>({});
+  const selectedNotes = notesByJob[selectedJobId || ""] || "";
+
+  function setNotes(jobId: string, value: string) {
+    setNotesByJob((prev) => ({ ...prev, [jobId]: value }));
+  }
+
+  // ---------------- Stage updates ----------------
+  function setStage(jobId: string, stage: Stage) {
+    setJobs((prev) => prev.map((j) => (j.id === jobId ? { ...j, stage } : j)));
+  }
+
+  // ---------------- Share / copy to tech ----------------
+  function buildTechPayload(job: Job) {
+    const c = job.customer;
+    const appt = `${job.apptDate || "-"} ${job.apptTime || "-"}`.trim();
+    return [
+      `AWNIT — Job`,
+      `Customer: ${c.name || "-"}`,
+      `Phone: ${c.phone || "-"}`,
+      `Address: ${c.address || "-"}`,
+      `Email: ${c.email || "-"}`,
+      ``,
+      `Job: ${job.title}`,
+      `Summary: ${job.summary}`,
+      `Appt: ${appt}`,
+      `Crew: ${job.crew || "-"}`,
+      `Stage: ${job.stage}`,
+    ].join("\n");
+  }
+
+  function digitsPhone(s?: string) {
+    return (s || "").replace(/[^\d]/g, "");
+  }
+
+  async function handleSendToTech(job: Job) {
+    const payload = buildTechPayload(job);
+
+    // @ts-expect-error web share typing varies
+    const canShare = typeof navigator !== "undefined" && !!navigator.share;
+    if (canShare) {
+      try {
+        // @ts-expect-error web share typing varies
+        await navigator.share({ title: "AWNIT Job", text: payload });
+        return;
+      } catch {
+        // fall through to copy
+      }
+    }
+
+    await copyToClipboard(payload);
+    safeToast("Tech payload copied. Paste into text/email/Slack.");
+  }
+
+  async function handleTextTech(job: Job) {
+    const phone = digitsPhone(job.customer?.phone);
+    const payload = buildTechPayload(job);
+
+    if (!phone) {
+      await copyToClipboard(payload);
+      safeToast("No phone on file. Payload copied—paste into SMS.");
+      return;
+    }
+
+    const url = `sms:${phone}?&body=${encodeURIComponent(payload)}`;
+    try {
+      window.location.href = url;
+    } catch {
+      await copyToClipboard(payload);
+      safeToast("SMS open failed. Payload copied—paste into SMS.");
+    }
+  }
+
+  async function handleEmailTech(job: Job) {
+    const subject = `AWNIT Job: ${job.title} — ${job.customer?.name || "Customer"}`;
+    const body = buildTechPayload(job);
+    const url = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    try {
+      window.location.href = url;
+    } catch {
+      await copyToClipboard(body);
+      safeToast("Email open failed. Payload copied—paste into email.");
+    }
+  }
+
+  // ---------------- Materials (Grab List): per job + realtime broadcast ----------------
+  const senderIdRef = useRef<string>(makeId());
+  const supabaseRef = useRef<SupabaseClient | null>(null);
+  const channelRef = useRef<any>(null);
+
+  const [materialsByJob, setMaterialsByJob] = useState<Record<string, MaterialItem[]>>({});
+
+  // Grab accountability (per job)
+  const [grabCodeByJob, setGrabCodeByJob] = useState<Record<string, string>>({});
+  const [lastGrabbedByJob, setLastGrabbedByJob] = useState<
+    Record<string, { code: string; at: string } | undefined>
+  >({});
+
+  useEffect(() => {
+    const supa = makeSupabase();
+    supabaseRef.current = supa;
+    if (!supa) return;
+
+    const ch = supa
+      .channel("awnit-live-materials", { config: { broadcast: { self: false } } })
+      .on("broadcast", { event: "materials_update" }, (payload: any) => {
+        const data = payload?.payload as MaterialsBroadcast | undefined;
+        if (!data) return;
+        if (data.senderId === senderIdRef.current) return;
+        setMaterialsByJob((prev) => ({ ...prev, [data.jobId]: data.materials || [] }));
+      })
+      .subscribe();
+
+    channelRef.current = ch;
+
+    return () => {
+      try {
+        if (channelRef.current) supa.removeChannel(channelRef.current);
+      } catch {
+        /* noop */
+      }
+      channelRef.current = null;
+    };
+  }, []);
+
+  function broadcastMaterials(jobId: string, materials: MaterialItem[]) {
+    const ch = channelRef.current;
+    if (!ch) return;
+    const msg: MaterialsBroadcast = { senderId: senderIdRef.current, jobId, materials };
+    ch.send({ type: "broadcast", event: "materials_update", payload: msg });
+  }
+
+  function setJobMaterials(jobId: string, updater: (cur: MaterialItem[]) => MaterialItem[]) {
+    setMaterialsByJob((prev) => {
+      const cur = prev[jobId] || [];
+      const nextList = updater(cur);
+      const next = { ...prev, [jobId]: nextList };
+      queueMicrotask(() => broadcastMaterials(jobId, nextList));
+      return next;
+    });
+  }
+
+  function addMaterial(jobId: string, nameRaw: string, qtyRaw?: string) {
+    const name = (nameRaw || "").trim();
+    if (!name) return;
+    const qty = (qtyRaw || "").trim();
+    const code = (grabCodeByJob[jobId] || "").trim();
+
+    setJobMaterials(jobId, (cur) => {
+      const exists = cur.some((x) => x.name.toLowerCase() === name.toLowerCase());
+      if (exists) return cur;
+      return [
+        ...cur,
+        {
+          id: makeId(),
+          name,
+          qty: qty || undefined,
+          checked: false,
+          addedBy: code || "live",
+          addedAt: nowIso(),
+        },
+      ];
+    });
+  }
+
+  function addMaterialsFromLines(jobId: string, linesRaw: string, qtyRaw?: string) {
+    const lines = (linesRaw || "")
+      .split("\n")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    if (!lines.length) return;
+
+    lines.forEach((line) => addMaterial(jobId, line, qtyRaw));
+  }
+
+  function removeMaterial(jobId: string, itemId: string) {
+    setJobMaterials(jobId, (cur) => cur.filter((x) => x.id !== itemId));
+  }
+
+  function clearMaterials(jobId: string) {
+    setJobMaterials(jobId, () => []);
+  }
+
+  function toggleMaterial(jobId: string, itemId: string) {
+    setJobMaterials(jobId, (cur) =>
+      cur.map((x) => (x.id === itemId ? { ...x, checked: !x.checked } : x))
+    );
+  }
+
+  function setMaterialQty(jobId: string, itemId: string, qty: string) {
+    const val = (qty || "").trim();
+    setJobMaterials(jobId, (cur) =>
+      cur.map((x) => (x.id === itemId ? { ...x, qty: val || undefined } : x))
+    );
+  }
+
+  function addTemplate(jobId: string, templateName: string) {
+    const items = MATERIAL_TEMPLATES[templateName] || [];
+    items.forEach((n) => addMaterial(jobId, n));
+  }
+
+  const selectedMaterials = selectedJob ? materialsByJob[selectedJob.id] || [] : [];
+  const mDone = selectedMaterials.filter((x) => x.checked).length;
+  const mTotal = selectedMaterials.length;
+
+  // quick add becomes multi-line
+  const [matName, setMatName] = useState("");
+  const [matQty, setMatQty] = useState("");
+
+  // ---------------- Add Job Modal (Appointment required) ----------------
+  const [showAddJobModal, setShowAddJobModal] = useState(false);
+
+  const [newJobTitle, setNewJobTitle] = useState("");
+  const [newJobSummary, setNewJobSummary] = useState("");
+  const [newCustName, setNewCustName] = useState("");
+  const [newCustAddress, setNewCustAddress] = useState("");
+  const [newCustPhone, setNewCustPhone] = useState("");
+
+  const [newApptDate, setNewApptDate] = useState("");
+  const [newApptTime, setNewApptTime] = useState("");
+  const [newCrew, setNewCrew] = useState("");
+  const [newStage, setNewStage] = useState<Stage>("Scheduled");
+
+  function resetAddJobForm() {
+    setNewJobTitle("");
+    setNewJobSummary("");
+    setNewCustName("");
+    setNewCustAddress("");
+    setNewCustPhone("");
+    setNewApptDate("");
+    setNewApptTime("");
+    setNewCrew("");
+    setNewStage("Scheduled");
+  }
+
+  function addJobNow() {
+    const title = newJobTitle.trim();
+    const customerName = newCustName.trim();
+    const apptDate = newApptDate.trim();
+    const apptTime = newApptTime.trim();
+
+    if (!title || !customerName) {
+      safeToast("Need: Job Title + Customer Name.");
+      return;
+    }
+    if (!apptDate || !apptTime) {
+      safeToast("Appointment required: Date + Time.");
+      return;
+    }
+
+    const id = makeId();
+    const job: Job = {
+      id,
+      title,
+      summary: newJobSummary.trim() || "—",
+      stage: newStage,
+      apptDate,
+      apptTime,
+      crew: newCrew.trim() || undefined,
+      customer: {
+        name: customerName,
+        address: newCustAddress.trim() || undefined,
+        phone: newCustPhone.trim() || undefined,
+      },
+    };
+
+    setJobs((prev) => [job, ...prev]);
+    setShowAddJobModal(false);
+    resetAddJobForm();
+    setSelectedJobId(id);
+
+    setMaterialsByJob((prev) => ({ ...prev, [id]: prev[id] || [] }));
+    setScopeByJob((prev) => ({ ...prev, [id]: prev[id] || [] }));
+  }
+
+  // ---------------- Photo Modal ----------------
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
+
+  // ---------------- Mic dictation wiring ----------------
+  const speech = useSpeechDictation();
+
+  // ---------------- INVOICE V1 ----------------
+  function parseQty(qty?: string) {
+    const n = parseFloat(String(qty ?? "").trim());
+    return Number.isFinite(n) && n > 0 ? n : 1;
+  }
+
+  function buildInvoiceJob(job: Job) {
+    // Materials -> invoice material_items
+    const mats = (materialsByJob[job.id] || []).map((m) => ({
+      qty: parseQty(m.qty),
+      description: m.qty ? `${m.name} (qty: ${m.qty})` : m.name,
+      unit_price: 0,
+    }));
+
+    // Scope -> invoice labor_items (for now)
+    const scopeLines = (scopeByJob[job.id] || []).map((s) => ({
+      qty: 1,
+      description: `${s.label}: ${String(s.quick || "").trim()}`.trim(),
+      unit_price: 0,
+    }));
+
+    // Add a job header line (keeps it looking professional even with $0 lines)
+    const header = [
+      `Job: ${job.title}`,
+      `Customer: ${job.customer?.name || "-"}`,
+      `Stage: ${job.stage}`,
+      `Appt: ${fmtAppt(job)}`,
+    ].join(" • ");
+
+    const linesWithHeader = [
+      { qty: 1, description: header, unit_price: 0 },
+      ...scopeLines,
+    ];
+
+    const notes = (notesByJob[job.id] || "").trim();
+    if (notes) {
+      linesWithHeader.push({ qty: 1, description: `Notes: ${notes}`, unit_price: 0 });
+    }
+
+    return {
+      id: job.id,
+      tax: 0,
+      shipping: 0,
+      deposit: 0,
+      material_items: mats,
+      labor_items: linesWithHeader,
+    };
+  }
+
+  async function onGenerateInvoice() {
+    if (!selectedJob) return;
+
+    try {
+      setIsGeneratingInvoice(true);
+      const payload = buildInvoiceJob(selectedJob);
+      const inv = await createInvoiceFromJob(payload);
+      navigate(`/invoice/${inv.id}`);
+    } catch (e: any) {
+      console.error(e);
+      safeToast(e?.message ?? "Failed to generate invoice");
+    } finally {
+      setIsGeneratingInvoice(false);
+    }
+  }
+
+  // ---------------- Styling ----------------
+  const shell =
+    "min-h-screen w-full overflow-x-hidden bg-gradient-to-b from-slate-950 via-slate-950 to-black text-slate-100";
+  const wrap = "mx-auto max-w-6xl px-4 py-6";
+  const card =
+    "rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md shadow-[0_0_0_1px_rgba(255,255,255,0.06)]";
+  const cardHeader = "flex items-center justify-between gap-3 px-5 py-4 border-b border-white/10";
+  const cardBody = "px-5 py-4";
+  const subtle = "text-slate-300";
+  const pillBtn =
+    "inline-flex items-center justify-center rounded-xl px-3 py-2 text-sm font-semibold border border-white/10 bg-white/5 hover:bg-white/10 active:bg-white/15 transition";
+  const greenBtn =
+    "inline-flex items-center justify-center rounded-xl px-3 py-2 text-sm font-bold border border-emerald-400/30 bg-emerald-400/15 hover:bg-emerald-400/20 active:bg-emerald-400/25 transition";
+  const input =
+    "w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 outline-none focus:ring-2 focus:ring-emerald-400/20 [color-scheme:dark]";
+  const textarea =
+    "w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 outline-none focus:ring-2 focus:ring-emerald-400/20 [color-scheme:dark]";
+
+  // ---------------- Render ----------------
+  return (
+    <div className={shell}>
+      <div className={wrap}>
+        {/* Top bar */}
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <div className="text-sm font-semibold tracking-wide text-emerald-300/90">AWNIT — Today</div>
+            <div className="text-2xl font-extrabold leading-tight">Live Board</div>
+            <div className={cn("mt-1 text-sm", subtle)}>
+              Click a job → right drawer. Appointment required. <span className="opacity-70">Color lanes = stage</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button className={pillBtn} onClick={() => setShowAddJobModal(true)} title="Add Job">
+              + Add Job
+            </button>
+            <button className={pillBtn} onClick={() => setShowPanels((v) => !v)}>
+              {showPanels ? "Hide Panels" : "Show Panels"}
+            </button>
+          </div>
+        </div>
+
+        {/* Active Jobs */}
+        <div className={cn(card, "relative")}>
+          <div className={cardHeader}>
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-2xl bg-emerald-400/15 border border-emerald-400/25 flex items-center justify-center">
+                <span className="text-emerald-200 font-black">A</span>
+              </div>
+              <div>
+                <div className="text-lg font-extrabold">Active Jobs</div>
+                <div className={cn("text-sm", subtle)}>{jobs.length} active</div>
+              </div>
+            </div>
+
+            <div className={cn("hidden sm:flex items-center gap-2", subtle)}>
+              <span className="text-xs">Click a row to open drawer</span>
+            </div>
+          </div>
+
+          <div className={cn(cardBody, "pt-3")}>
+            <div className="overflow-hidden rounded-xl border border-white/10">
+              <div className="grid grid-cols-12 gap-0 bg-white/5 px-3 py-2 text-xs font-bold tracking-wide text-slate-200">
+                <div className="col-span-5">Job</div>
+                <div className="col-span-4">Customer</div>
+                <div className="col-span-3 text-right">Stage</div>
+              </div>
+
+              <div className="divide-y divide-white/10">
+                {jobs.map((j) => {
+                  const isSel = j.id === selectedJobId;
+                  const mats = materialsByJob[j.id] || [];
+                  const done = mats.filter((x) => x.checked).length;
+                  const total = mats.length;
+                  const tone = stageTone(j.stage);
+
+                  return (
+                    <button
+                      key={j.id}
+                      type="button"
+                      className={cn(
+                        "w-full text-left grid grid-cols-12 gap-0 px-3 py-3 hover:bg-white/10 transition border-l-4",
+                        tone.lane,
+                        isSel && "bg-white/10"
+                      )}
+                      onClick={() => setSelectedJobId(j.id)}
+                    >
+                      <div className="col-span-5">
+                        <div className="font-extrabold">{j.title}</div>
+                        <div className={cn("text-xs mt-0.5 line-clamp-1", subtle)}>{j.summary}</div>
+                      </div>
+
+                      <div className="col-span-4">
+                        <div className="font-semibold">{j.customer.name}</div>
+                        <div className={cn("text-xs mt-0.5 line-clamp-1", subtle)}>{j.customer.address || "—"}</div>
+                        <div className={cn("text-xs mt-1", subtle)}>{fmtAppt(j)}</div>
+                      </div>
+
+                      <div className="col-span-3 flex items-center justify-end gap-2">
+                        {total > 0 && (
+                          <span className="rounded-full px-2 py-1 text-[11px] font-extrabold border border-white/10 bg-white/5 text-slate-200">
+                            M: {done}/{total}
+                          </span>
+                        )}
+                        <span className={cn("rounded-full px-2 py-1 text-xs font-extrabold border", tone.pill)}>
+                          {j.stage}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {showPanels && (
+              <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
+                {/* Customers */}
+                <div className={card}>
+                  <div className={cardHeader}>
+                    <div className="font-extrabold">Customers</div>
+                    <div className={cn("text-xs", subtle)}>{jobs.length}</div>
+                  </div>
+                  <div className={cn(cardBody, "pt-3")}>
+                    <div className="space-y-2">
+                      {jobs.map((j) => (
+                        <div key={j.id} className="rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+                          <div className="font-bold">{j.customer.name}</div>
+                          <div className={cn("text-xs mt-1", subtle)}>
+                            {j.customer.phone || "—"} <span className="mx-2 opacity-40">•</span> {j.customer.email || "—"}
+                          </div>
+                          <div className={cn("text-xs mt-1", subtle)}>{j.customer.address || "—"}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Warranties */}
+                <div className={card}>
+                  <div className={cardHeader}>
+                    <div className="font-extrabold">Warranties</div>
+                    <div className={cn("text-xs", subtle)}>3</div>
+                  </div>
+                  <div className={cn(cardBody, "pt-3")}>
+                    <div className="space-y-2">
+                      <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+                        <div className="font-bold">Standard Labor</div>
+                        <div className={cn("text-xs mt-1", subtle)}>1 year labor warranty (installation workmanship).</div>
+                      </div>
+                      <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+                        <div className="font-bold">Manufacturer</div>
+                        <div className={cn("text-xs mt-1", subtle)}>Varies by product line. Store docs with each job.</div>
+                      </div>
+                      <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+                        <div className="font-bold">Permit/Code</div>
+                        <div className={cn("text-xs mt-1", subtle)}>Permit steps required by municipality for certain installs.</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Parts */}
+                <div className={cn(card, "md:col-span-2")}>
+                  <div className={cardHeader}>
+                    <div className="font-extrabold">Parts</div>
+                    <div className={cn("text-xs", subtle)}>Job-specific items (ordered/vendor/tracking)</div>
+                  </div>
+                  <div className={cn(cardBody, "pt-3")}>
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      {[
+                        { id: "p1", name: "Hardware kit", note: "Job-specific" },
+                        { id: "p2", name: "Window/door unit", note: "Job-specific" },
+                        { id: "p3", name: "Anchor set", note: "Job-specific" },
+                        { id: "p4", name: "Screen frame section", note: "Job-specific" },
+                      ].map((p) => (
+                        <div key={p.id} className="rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+                          <div className="font-bold">{p.name}</div>
+                          <div className={cn("text-xs mt-1", subtle)}>{p.note}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Backdrop */}
+      {selectedJob && (
+        <button
+          type="button"
+          className="fixed inset-0 z-[9998] bg-black/60 cursor-default"
+          aria-label="Close drawer"
+          onClick={() => setSelectedJobId(null)}
+        />
+      )}
+
+      {/* Drawer */}
+      <div
+        className={cn(
+          "fixed top-0 right-0 bottom-0 z-[9999] w-[92vw] max-w-md transform transition-transform duration-200",
+          selectedJob ? "translate-x-0" : "translate-x-full"
+        )}
+        aria-hidden={!selectedJob}
+      >
+        <div className="h-full w-full rounded-none sm:rounded-l-2xl border border-white/10 border-l bg-white/5 backdrop-blur-md shadow-[0_0_0_1px_rgba(255,255,255,0.06)] flex flex-col">
+          {/* Header pinned */}
+          <div className="shrink-0 flex items-center justify-between gap-3 px-5 py-4 border-b border-white/10 bg-black/40 backdrop-blur-md">
+            <div className="min-w-0">
+              <div className="text-sm font-semibold text-emerald-300/90">Job Detail</div>
+              <div className="truncate text-lg font-extrabold">{selectedJob?.title || "—"}</div>
+              <div className="truncate text-xs mt-0.5 text-slate-300">{selectedJob?.summary || ""}</div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button type="button" className={pillBtn} onClick={() => setShowPhotoModal(true)} title="Add Photo">
+                📷 Add Photo
+              </button>
+              <button type="button" className={pillBtn} onClick={() => setSelectedJobId(null)}>
+                Close
+              </button>
+            </div>
+          </div>
+
+          {/* Scroll area */}
+          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+            {/* Appointment + Stage */}
+            {selectedJob && (
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-sm font-extrabold">Appointment</div>
+                  <span className={cn("rounded-full px-2 py-1 text-xs font-extrabold border", stageTone(selectedJob.stage).pill)}>
+                    {selectedJob.stage}
+                  </span>
+                </div>
+
+                <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div>
+                    <div className="text-[11px] font-bold text-slate-200 mb-1">Date</div>
+                    <input
+                      type="date"
+                      className={input}
+                      value={selectedJob.apptDate}
+                      onChange={(e) =>
+                        setJobs((prev) =>
+                          prev.map((j) => (j.id === selectedJob.id ? { ...j, apptDate: e.target.value } : j))
+                        )
+                      }
+                    />
+                  </div>
+                  <div>
+                    <div className="text-[11px] font-bold text-slate-200 mb-1">Time</div>
+                    <input
+                      type="time"
+                      className={input}
+                      value={selectedJob.apptTime}
+                      onChange={(e) =>
+                        setJobs((prev) =>
+                          prev.map((j) => (j.id === selectedJob.id ? { ...j, apptTime: e.target.value } : j))
+                        )
+                      }
+                    />
+                  </div>
+                  <div>
+                    <div className="text-[11px] font-bold text-slate-200 mb-1">Crew / Tech</div>
+                    <input
+                      className={input}
+                      placeholder="(optional)"
+                      value={selectedJob.crew || ""}
+                      onChange={(e) =>
+                        setJobs((prev) =>
+                          prev.map((j) => (j.id === selectedJob.id ? { ...j, crew: e.target.value || undefined } : j))
+                        )
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div>
+                    <div className="text-[11px] font-bold text-slate-200 mb-1">Stage</div>
+                    <select
+                      className={cn(input, "bg-black/40")}
+                      value={selectedJob.stage}
+                      onChange={(e) => setStage(selectedJob.id, e.target.value as Stage)}
+                    >
+                      {(["Scheduled", "Measured", "Estimate Sent", "Ordered", "Installed", "Done"] as Stage[]).map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex items-end justify-end gap-2">
+                    <div className="text-xs text-slate-400">
+                      Realtime: {supabaseRef.current ? "ON" : "OFF (no env)"}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Customer (RESTORED + Maps + Text + Email) */}
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <div className="text-sm font-extrabold">Customer</div>
+              <div className="mt-2 space-y-1 text-sm">
+                <div className="font-bold">{selectedJob?.customer.name || "—"}</div>
+                <div className="text-slate-300">{selectedJob?.customer.phone || "—"}</div>
+                <div className="text-slate-300">{selectedJob?.customer.email || "—"}</div>
+                <div className="text-slate-300 whitespace-pre-line">{selectedJob?.customer.address || "—"}</div>
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  className={greenBtn}
+                  onClick={() => selectedJob && handleSendToTech(selectedJob)}
+                >
+                  Send to Tech / Employee
+                </button>
+
+                <button
+                  type="button"
+                  className={greenBtn}
+                  onClick={() => {
+                    if (!selectedJob?.customer.address) return;
+                    const q = encodeURIComponent(selectedJob.customer.address);
+                    window.open(`https://www.google.com/maps/search/?api=1&query=${q}`, "_blank");
+                  }}
+                >
+                  Google Maps
+                </button>
+
+                <button
+                  type="button"
+                  className={pillBtn}
+                  onClick={() => selectedJob && handleTextTech(selectedJob)}
+                >
+                  Text Tech
+                </button>
+
+                <button
+                  type="button"
+                  className={pillBtn}
+                  onClick={() => selectedJob && handleEmailTech(selectedJob)}
+                >
+                  Email Tech
+                </button>
+
+                <button
+                  type="button"
+                  className={pillBtn}
+                  onClick={() => copyToClipboard(selectedJob?.customer.address || "")}
+                  disabled={!((selectedJob?.customer.address || "").trim().length)}
+                >
+                  Copy Address
+                </button>
+
+                <button
+                  type="button"
+                  className={pillBtn}
+                  onClick={() => {
+                    if (!selectedJob) return;
+                    copyToClipboard(
+                      `${selectedJob.customer.name}\n${selectedJob.customer.phone || "-"}\n${selectedJob.customer.email || "-"}\n${selectedJob.customer.address || "-"}`
+                    );
+                  }}
+                >
+                  Copy Contact Block
+                </button>
+              </div>
+            </div>
+
+            {/* Scope + Measurements */}
+            {selectedJob && (
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-extrabold">Scope + Measurements</div>
+                    <div className="text-xs text-slate-300">Add units. Mic tap = new line.</div>
+                  </div>
+                  {(() => {
+                    const c = scopeCounts(getScope(selectedJob.id));
+                    return (
+                      <div className="text-xs text-slate-300 text-right">
+                        Doors {c.doors} • Windows {c.windows}
+                        <br />
+                        Screen {c.screens} • Trim {c.trim}
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button type="button" className={pillBtn} onClick={() => addScopeItem(selectedJob.id, "door")}>
+                    + Add Door
+                  </button>
+                  <button type="button" className={pillBtn} onClick={() => addScopeItem(selectedJob.id, "window")}>
+                    + Add Window
+                  </button>
+                  <button type="button" className={pillBtn} onClick={() => addScopeItem(selectedJob.id, "screen")}>
+                    + Add Screen
+                  </button>
+                  <button type="button" className={pillBtn} onClick={() => addScopeItem(selectedJob.id, "trim")}>
+                    + Add Trim
+                  </button>
+                  <button type="button" className={pillBtn} onClick={() => addScopeItem(selectedJob.id, "custom")}>
+                    + Add Custom
+                  </button>
+                </div>
+
+                <div className="mt-3 space-y-2">
+                  {getScope(selectedJob.id).length === 0 ? (
+                    <div className="rounded-xl border border-white/10 bg-black/20 px-3 py-3 text-sm text-slate-300">
+                      Add doors/windows/screens — then speak measurements.
+                      <div className="mt-2 text-xs text-slate-400">
+                        Example lines:
+                        <br />• 36x80 RH front entry
+                        <br />• Window 1 24x68
+                      </div>
+                    </div>
+                  ) : (
+                    getScope(selectedJob.id).map((it) => {
+                      const targetId = `scope_${selectedJob.id}_${it.id}`;
+                      const micActive = speech.activeTargetRef.current === targetId;
+
+                      return (
+                        <div
+                          key={it.id}
+                          className={cn(
+                            "rounded-xl border border-white/10 px-3 py-3",
+                            it.done ? "bg-emerald-400/10" : "bg-white/5 hover:bg-white/10"
+                          )}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="font-extrabold">{it.label}</div>
+
+                            <div className="flex items-center gap-2">
+                              <MicButton
+                                label="Mic"
+                                supported={speech.supported}
+                                listening={speech.listening}
+                                active={micActive}
+                                onClick={() => {
+                                  speech.toggle(targetId, (txt, isFinal) => {
+                                    setScopeByJob((prev) => {
+                                      const cur = prev[selectedJob.id] || [];
+                                      const next = cur.map((x) => {
+                                        if (x.id !== it.id) return x;
+                                        return { ...x, quick: dictationAppendLine(x.quick || "", txt, isFinal) };
+                                      });
+                                      return { ...prev, [selectedJob.id]: next };
+                                    });
+                                  });
+                                }}
+                              />
+
+                              <button type="button" className={pillBtn} onClick={() => toggleScopeDone(selectedJob.id, it.id)}>
+                                {it.done ? "✓ Done" : "Mark Done"}
+                              </button>
+
+                              <button
+                                type="button"
+                                className={cn(pillBtn, "px-3")}
+                                onClick={() => removeScopeItem(selectedJob.id, it.id)}
+                                title="Remove"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="mt-2">
+                            <div className="text-[11px] font-bold text-slate-200 mb-1">Measurements / Notes</div>
+                            <textarea
+                              className={cn(textarea, "min-h-[78px]")}
+                              placeholder={"Example:\n36x80 RH front entry\nWindow 1 24x68"}
+                              value={it.quick}
+                              onChange={(e) => setScopeQuick(selectedJob.id, it.id, e.target.value)}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Materials (Grab List) — RESTORED + MIC AT TOP OF QUICK-ADD */}
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-extrabold">Materials (Grab List)</div>
+                  <div className="text-xs text-slate-300">Consumables / truck stock / small hardware</div>
+                </div>
+                <div className="text-xs text-slate-300">{mTotal ? `M: ${mDone}/${mTotal}` : "M: 0/0"}</div>
+              </div>
+
+              {/* Grab Code (accountability) */}
+              {selectedJob && (
+                <div className="mt-3 rounded-2xl border border-white/10 bg-black/20 p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <div className="text-xs font-extrabold text-slate-200">Grab Code (who grabbed it)</div>
+                      <div className="text-[11px] text-slate-400">Week-1: use numeric IDs. Names later.</div>
+                    </div>
+
+                    {lastGrabbedByJob[selectedJob.id]?.code && lastGrabbedByJob[selectedJob.id]?.at && (
+                      <div className="text-[11px] text-slate-300 text-right">
+                        Last: <span className="font-extrabold">{lastGrabbedByJob[selectedJob.id]!.code}</span>
+                        <br />
+                        {new Date(lastGrabbedByJob[selectedJob.id]!.at).toLocaleString()}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-2 grid grid-cols-1 sm:grid-cols-12 gap-2">
+                    <div className="col-span-6">
+                      <input
+                        className={input}
+                        inputMode="numeric"
+                        placeholder="Enter code (e.g., 2222)"
+                        value={grabCodeByJob[selectedJob.id] || ""}
+                        onChange={(e) => {
+                          const v = (e.target.value || "").replace(/[^\d]/g, "").slice(0, 4);
+                          setGrabCodeByJob((prev) => ({ ...prev, [selectedJob.id]: v }));
+                        }}
+                      />
+                    </div>
+                    <div className="col-span-6 flex flex-wrap gap-2 justify-end">
+                      {GRAB_CODES.map((c) => (
+                        <button
+                          key={c}
+                          type="button"
+                          className={pillBtn}
+                          onClick={() => setGrabCodeByJob((prev) => ({ ...prev, [selectedJob.id]: c }))}
+                          title="Set grab code"
+                        >
+                          {c}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Quick add (multi-line) + MIC TOP-RIGHT */}
+              <div className="mt-3 rounded-2xl border border-white/10 bg-black/20 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="text-xs font-extrabold text-slate-200">Quick add materials</div>
+                  {selectedJob && (
+                    <MicButton
+                      label="Mic"
+                      supported={speech.supported}
+                      listening={speech.listening}
+                      active={speech.activeTargetRef.current === `mat_${selectedJob.id}`}
+                      onClick={() => {
+                        const targetId = `mat_${selectedJob.id}`;
+                        speech.toggle(targetId, (txt, isFinal) => {
+                          setMatName((prev) => dictationAppendLine(prev || "", txt, isFinal));
+                        });
+                      }}
+                    />
+                  )}
+                </div>
+
+                <div className="mt-2 grid grid-cols-1 sm:grid-cols-12 gap-2">
+                  <div className="col-span-7">
+                    <textarea
+                      className={cn(textarea, "min-h-[90px]")}
+                      placeholder={"One per line\nCaulk / sealant\nShims\nFlashing tape"}
+                      value={matName}
+                      onChange={(e) => setMatName(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="col-span-3">
+                    <input
+                      className={input}
+                      placeholder="Qty (opt)"
+                      value={matQty}
+                      onChange={(e) => setMatQty(e.target.value)}
+                    />
+                    <div className="mt-2 text-[11px] text-slate-400">Tip: leave qty blank if unknown.</div>
+                  </div>
+
+                  <div className="col-span-2 flex flex-col gap-2 justify-start">
+                    <button
+                      type="button"
+                      className={pillBtn}
+                      onClick={() => {
+                        if (!selectedJob) return;
+                        addMaterialsFromLines(selectedJob.id, matName, matQty);
+                        setMatName("");
+                        setMatQty("");
+                      }}
+                    >
+                      Add
+                    </button>
+
+                    {selectedJob && (
+                      <button
+                        type="button"
+                        className={pillBtn}
+                        onClick={() => clearMaterials(selectedJob.id)}
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-3 flex flex-wrap gap-2">
+                {Object.keys(MATERIAL_TEMPLATES).map((t) => (
+                  <button key={t} type="button" className={pillBtn} onClick={() => selectedJob && addTemplate(selectedJob.id, t)}>
+                    + {t}
+                  </button>
+                ))}
+              </div>
+
+              <div className="mt-3 space-y-2">
+                {!selectedJob || selectedMaterials.length === 0 ? (
+                  <div className="rounded-xl border border-white/10 bg-black/20 px-3 py-3 text-sm text-slate-300">
+                    No materials yet. Add a couple so nobody forgets the consumables.
+                  </div>
+                ) : (
+                  selectedMaterials.map((m) => (
+                    <div
+                      key={m.id}
+                      className={cn(
+                        "flex items-center gap-2 rounded-xl border border-white/10 px-3 py-2",
+                        m.checked ? "bg-emerald-400/10" : "bg-white/5 hover:bg-white/10"
+                      )}
+                    >
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4"
+                        checked={m.checked}
+                        onChange={() => selectedJob && toggleMaterial(selectedJob.id, m.id)}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className={cn("text-sm font-semibold truncate", m.checked && "text-emerald-100")}>{m.name}</div>
+                        <div className="text-[11px] text-slate-400">
+                          Added by {m.addedBy} • {new Date(m.addedAt).toLocaleString()}
+                        </div>
+                      </div>
+
+                      <input
+                        className={cn(input, "w-24")}
+                        placeholder="qty"
+                        value={m.qty || ""}
+                        onChange={(e) => selectedJob && setMaterialQty(selectedJob.id, m.id, e.target.value)}
+                      />
+
+                      <button type="button" className={cn(pillBtn, "px-3")} onClick={() => selectedJob && removeMaterial(selectedJob.id, m.id)} title="Remove">
+                        ✕
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {selectedJob && (
+                <div className="mt-3 flex items-center gap-2">
+                  <button
+                    type="button"
+                    className={pillBtn}
+                    onClick={async () => {
+                      const code = (grabCodeByJob[selectedJob.id] || "").trim();
+                      if (!code || code.length !== 4) {
+                        safeToast("Enter your 4-digit Grab Code first (ex: 2222).");
+                        return;
+                      }
+
+                      const lines = (materialsByJob[selectedJob.id] || []).map((x) => {
+                        const mark = x.checked ? "✓" : "•";
+                        const qty = x.qty ? ` (${x.qty})` : "";
+                        return `${mark} ${x.name}${qty}`;
+                      });
+
+                      const stampedAt = nowIso();
+                      setLastGrabbedByJob((prev) => ({ ...prev, [selectedJob.id]: { code, at: stampedAt } }));
+
+                      const text = [
+                        "AWNIT — Materials (Grab List)",
+                        `Job: ${selectedJob.title}`,
+                        `Customer: ${selectedJob.customer.name}`,
+                        `Grabbed By: ${code}`,
+                        `Time: ${new Date(stampedAt).toLocaleString()}`,
+                        "",
+                        ...(lines.length ? lines : ["(none)"]),
+                      ].join("\n");
+
+                      await copyToClipboard(text);
+                    }}
+                  >
+                    Copy grab list (requires code)
+                  </button>
+
+                  <div className="text-xs text-slate-400 ml-auto">Realtime: {supabaseRef.current ? "ON" : "OFF (no env)"}</div>
+                </div>
+              )}
+            </div>
+
+            {/* Notes */}
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-extrabold">Notes</div>
+
+                {selectedJob && (
+                  <MicButton
+                    label="Mic"
+                    supported={speech.supported}
+                    listening={speech.listening}
+                    active={speech.activeTargetRef.current === `notes_${selectedJob.id}`}
+                    onClick={() => {
+                      const targetId = `notes_${selectedJob.id}`;
+                      speech.toggle(targetId, (txt, isFinal) => {
+                        setNotes(selectedJob.id, dictationAppendLine(notesByJob[selectedJob.id] || "", txt, isFinal));
+                      });
+                    }}
+                  />
+                )}
+              </div>
+
+              <textarea
+                className="mt-3 w-full min-h-[140px] rounded-2xl border border-white/10 bg-black/30 px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-emerald-400/20"
+                placeholder="Talk it in. Each mic tap becomes a new line."
+                value={selectedJob ? selectedNotes : ""}
+                onChange={(e) => selectedJob && setNotes(selectedJob.id, e.target.value)}
+              />
+            </div>
+
+            {/* Invoice (V1) */}
+            {selectedJob && (
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <div className="text-sm font-extrabold">Invoice</div>
+                <div className="mt-2 text-xs text-slate-300">
+                  Generates an invoice from current Scope + Materials + Notes, then opens printable view.
+                </div>
+
+                <button
+                  type="button"
+                  className={cn(greenBtn, "w-full mt-3")}
+                  onClick={onGenerateInvoice}
+                  disabled={isGeneratingInvoice}
+                >
+                  {isGeneratingInvoice ? "Generating..." : "Generate Invoice"}
+                </button>
+              </div>
+            )}
+
+            <div className="h-6" />
+          </div>
+        </div>
+      </div>
+
+      {/* Add Job Modal */}
+      {showAddJobModal && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/70 px-4">
+          <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md p-6 space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-lg font-extrabold">+ Add Job</div>
+                <div className="text-sm text-slate-300">Appointment required. Built for 1-week live test.</div>
+              </div>
+              <button
+                type="button"
+                className={pillBtn}
+                onClick={() => {
+                  setShowAddJobModal(false);
+                  resetAddJobForm();
+                }}
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3">
+              <div>
+                <div className="text-xs font-bold text-slate-200 mb-1">Job Title *</div>
+                <input
+                  className={input}
+                  value={newJobTitle}
+                  onChange={(e) => setNewJobTitle(e.target.value)}
+                  placeholder="e.g., Door install / Window install"
+                />
+              </div>
+
+              <div>
+                <div className="text-xs font-bold text-slate-200 mb-1">Job Summary</div>
+                <input
+                  className={input}
+                  value={newJobSummary}
+                  onChange={(e) => setNewJobSummary(e.target.value)}
+                  placeholder="Short description…"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <div className="text-xs font-bold text-slate-200 mb-1">Customer Name *</div>
+                  <input
+                    className={input}
+                    value={newCustName}
+                    onChange={(e) => setNewCustName(e.target.value)}
+                    placeholder="Customer name"
+                  />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-slate-200 mb-1">Phone</div>
+                  <input
+                    className={input}
+                    value={newCustPhone}
+                    onChange={(e) => setNewCustPhone(e.target.value)}
+                    placeholder="(optional)"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div className="text-xs font-bold text-slate-200 mb-1">Address</div>
+                <input
+                  className={input}
+                  value={newCustAddress}
+                  onChange={(e) => setNewCustAddress(e.target.value)}
+                  placeholder="(optional) Street, City, State"
+                />
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                <div className="text-sm font-extrabold">Appointment (required)</div>
+                <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div>
+                    <div className="text-[11px] font-bold text-slate-200 mb-1">Date *</div>
+                    <input type="date" className={input} value={newApptDate} onChange={(e) => setNewApptDate(e.target.value)} />
+                  </div>
+                  <div>
+                    <div className="text-[11px] font-bold text-slate-200 mb-1">Time *</div>
+                    <input type="time" className={input} value={newApptTime} onChange={(e) => setNewApptTime(e.target.value)} />
+                  </div>
+                  <div>
+                    <div className="text-[11px] font-bold text-slate-200 mb-1">Crew/Tech</div>
+                    <input className={input} value={newCrew} onChange={(e) => setNewCrew(e.target.value)} placeholder="(optional)" />
+                  </div>
+                </div>
+
+                <div className="mt-3">
+                  <div className="text-[11px] font-bold text-slate-200 mb-1">Stage</div>
+                  <select className={cn(input, "bg-black/40")} value={newStage} onChange={(e) => setNewStage(e.target.value as Stage)}>
+                    {(["Scheduled", "Measured", "Estimate Sent", "Ordered", "Installed", "Done"] as Stage[]).map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button type="button" className={pillBtn} onClick={() => resetAddJobForm()}>
+                Reset
+              </button>
+              <button type="button" className={greenBtn} onClick={addJobNow}>
+                Save Job
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Photo Modal */}
+      {showPhotoModal && (
+        <div className="fixed inset-0 z-[10001] flex items-center justify-center bg-black/70 px-4">
+          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md p-6 space-y-4">
+            <div className="text-lg font-extrabold">📷 Photo Attachments</div>
+            <div className="text-sm text-slate-300">
+              Upload / camera capture coming in Phase 2.
+              <br />
+              Photos will attach directly to this job.
+            </div>
+
+            <div className="flex justify-end">
+              <button type="button" className={pillBtn} onClick={() => setShowPhotoModal(false)}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

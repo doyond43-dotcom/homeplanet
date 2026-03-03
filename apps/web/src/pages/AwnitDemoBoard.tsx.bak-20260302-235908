@@ -8,11 +8,16 @@ import { awnitListJobs, awnitUpdateJob } from "../lib/awnitJobsApi";
  * AWNIT — Live Board (Supabase-backed)
  * Single source of truth: public.awnit_jobs
  *
- * This file is patched to:
- * - ALWAYS attempt DB writes for stage/scope/materials/notes (no demo-only handlers)
- * - Optimistic UI updates so lanes move instantly
- * - Add a build marker so you can confirm production has the right bundle
- * - Auto-refresh jobs every 5s (so Intake appears without manual refresh)
+ * Columns assumed (per your lock-in):
+ * - id (uuid)
+ * - stage (text)
+ * - scope_items (jsonb)
+ * - materials (jsonb)
+ * - tech_notes (text)
+ * - customer fields + appointment fields
+ * - meta (jsonb)
+ *
+ * No demo seed data. No localStorage persistence.
  */
 
 // ---------------- Types ----------------
@@ -79,6 +84,7 @@ function nowIso() {
 }
 
 function safeToast(msg: string) {
+  // No UI popups about Supabase; small alert only for real errors
   try {
     // eslint-disable-next-line no-alert
     alert(msg);
@@ -305,12 +311,32 @@ const MATERIAL_TEMPLATES: Record<string, string[]> = {
 
 const GRAB_CODES = ["2222", "4444", "6666", "8888", "9999"] as const;
 
+function buildGrabListText(job: AwnitJobRow, materials: MaterialItem[]) {
+  const c = job.customer || {};
+  const header = [
+    `AWNIT — Materials Grab List`,
+    `Job: ${job.title || "-"}`,
+    `Customer: ${c.name || "-"}`,
+    `Address: ${c.address || "-"}`,
+    `Appt: ${(job.apptDate || "-").toString()} ${(job.apptTime || "-").toString()}`.trim(),
+    ``,
+  ].join("\n");
+
+  const lines = materials
+    .slice()
+    .reverse()
+    .map((m, idx) => {
+      const who = m.addedBy || "live";
+      const q = m.qty ? ` (x ${m.qty})` : "";
+      const chk = m.checked ? "✅" : "⬜";
+      return `${chk} ${idx + 1}. ${m.name}${q} — ${who}`;
+    });
+
+  return header + lines.join("\n");
+}
+
 // ---------------- Component ----------------
 export default function AwnitDemoBoard() {
-  // ✅ BUILD MARKER: verify deployed bundle instantly
-  // In Console:  window.__AWNIT_API_MARKER__
-  ;(window as any).__AWNIT_API_MARKER__ = "supabase-wired-awnit-board";
-
   const { supported, listening, toggle, activeTargetRef } = useSpeechDictation();
   const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false);
 
@@ -331,12 +357,14 @@ export default function AwnitDemoBoard() {
     try {
       setLoadError(null);
       const rows = await awnitListJobs();
+      // Normalize shape (in case API returns raw db column names)
       const normalized: AwnitJobRow[] = (rows || []).map((r: any) => ({
         ...r,
         stage: coerceStage(r.stage),
       }));
       setJobs(normalized);
 
+      // keep selection stable if possible
       setSelectedJobId((cur) => {
         if (cur && normalized.some((j) => j.id === cur)) return cur;
         return normalized.length ? normalized[0].id : null;
@@ -350,12 +378,10 @@ export default function AwnitDemoBoard() {
 
   useEffect(() => {
     loadJobs();
-
-    // ✅ Auto-refresh: intake appears + remote edits show up
+    // Simple auto-refresh so intake appears without manual refresh
     const t = window.setInterval(() => {
       loadJobs();
     }, 5000);
-
     return () => window.clearInterval(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -366,17 +392,14 @@ export default function AwnitDemoBoard() {
     setJobs((prev) => prev.map((j) => (j.id === jobId ? { ...j, ...patch } : j)));
   }
 
-  /**
-   * ✅ Persist to DB.
-   * - Always optimistic update first so lanes move immediately.
-   * - On error: reload truth from DB and show error.
-   */
   async function persist(jobId: string, patch: Record<string, any>) {
+    // optimistic first
     updateJobOptimistic(jobId, patch as any);
 
     try {
       await awnitUpdateJob(jobId, patch);
     } catch (e: any) {
+      // hard reload from db to recover truth
       await loadJobs();
       safeToast(e?.message || "Save failed.");
     }
@@ -422,9 +445,8 @@ export default function AwnitDemoBoard() {
   }
 
   // ---------------- Stage updates (DB) ----------------
-  async function setStage(jobId: string, stage: Stage) {
-    // ✅ DB write (PATCH) + optimistic lane move
-    await persist(jobId, { stage });
+  function setStage(jobId: string, stage: Stage) {
+    persist(jobId, { stage });
   }
 
   // ---------------- Scope updates (DB: scope_items) ----------------
@@ -432,15 +454,7 @@ export default function AwnitDemoBoard() {
     const cur = getScope(job);
     const idx = nextIndex(cur, type);
     const labelBase =
-      type === "door"
-        ? "Door"
-        : type === "window"
-        ? "Window"
-        : type === "screen"
-        ? "Screen"
-        : type === "trim"
-        ? "Trim"
-        : "Custom";
+      type === "door" ? "Door" : type === "window" ? "Window" : type === "screen" ? "Screen" : type === "trim" ? "Trim" : "Custom";
 
     const item: ScopeItem = {
       id: makeId(),
@@ -467,6 +481,7 @@ export default function AwnitDemoBoard() {
 
   function setScopeQuick(job: AwnitJobRow, itemId: string, val: string) {
     const next = getScope(job).map((x) => (x.id === itemId ? { ...x, quick: val } : x));
+    // debounce (textarea)
     updateJobOptimistic(job.id, { scope_items: next } as any);
     persistDebounced(job.id, { scope_items: next }, "scope_items");
   }
@@ -570,30 +585,6 @@ export default function AwnitDemoBoard() {
     return `https://www.google.com/maps/search/?api=1&query=${q}`;
   }
 
-  function buildGrabListText(job: AwnitJobRow, materials: MaterialItem[]) {
-    const c = job.customer || {};
-    const header = [
-      `AWNIT — Materials Grab List`,
-      `Job: ${job.title || "-"}`,
-      `Customer: ${c.name || "-"}`,
-      `Address: ${c.address || "-"}`,
-      `Appt: ${(job.apptDate || "-").toString()} ${(job.apptTime || "-").toString()}`.trim(),
-      ``,
-    ].join("\n");
-
-    const lines = materials
-      .slice()
-      .reverse()
-      .map((m, idx) => {
-        const who = m.addedBy || "live";
-        const q = m.qty ? ` (x ${m.qty})` : "";
-        const chk = m.checked ? "✅" : "⬜";
-        return `${chk} ${idx + 1}. ${m.name}${q} — ${who}`;
-      });
-
-    return header + lines.join("\n");
-  }
-
   // ---------------- Invoice (UUID job.id) ----------------
   async function generateInvoice() {
     if (!selectedJob) return;
@@ -605,6 +596,7 @@ export default function AwnitDemoBoard() {
       const mats = getMaterials(selectedJob);
       const notes = getNotes(selectedJob);
 
+      // createInvoiceFromJob must accept uuid job.id (it will now)
       const invoiceId = await createInvoiceFromJob({
         job: selectedJob as any,
         scopeItems: scope,
@@ -825,7 +817,7 @@ export default function AwnitDemoBoard() {
                             ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-100"
                             : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10"
                         )}
-                        onClick={() => void setStage(selectedJob.id, s)}
+                        onClick={() => setStage(selectedJob.id, s)}
                       >
                         {s}
                       </button>

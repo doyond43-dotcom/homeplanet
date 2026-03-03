@@ -1,51 +1,22 @@
-﻿// apps/web/src/lib/supabase.ts
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+﻿import { createClient } from "@supabase/supabase-js";
 
-/**
- * Hard-sanitized env loader for Vite
- */
-function readEnv(key: string): string {
-  const raw = (import.meta.env as any)?.[key];
+const url = (import.meta as any).env?.VITE_SUPABASE_URL as string | undefined;
+const anon = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY as string | undefined;
 
-  if (!raw || typeof raw !== "string") {
-    throw new Error(`Missing ${key}`);
-  }
-
-  const value = raw.trim();
-
-  // Keep this if you like seeing env in console (optional)
-  console.log(`✅ ${key} =`, value);
-
-  if (!/^https?:\/\//i.test(value) && key.includes("URL")) {
-    throw new Error(`Invalid ${key}: ${value}`);
-  }
-
-  return value;
+if (!url || !anon) {
+  // This throws only when the module is actually imported at runtime.
+  console.warn("Supabase env missing: VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY");
 }
 
-const SUPABASE_URL = readEnv("VITE_SUPABASE_URL");
-const SUPABASE_ANON_KEY = readEnv("VITE_SUPABASE_ANON_KEY");
-
-// ✅ singleton per browser tab
-let _client: SupabaseClient | null = null;
-
-export function getSupabase(): SupabaseClient {
-  if (_client) return _client;
-
-  _client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
-      storageKey: "hp-auth",
-    },
-    realtime: {
-      params: { eventsPerSecond: 20 },
-    },
-  });
-
-  return _client;
+export const supabase = createClient(url || "", anon || "", {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: false,
+    storageKey: "hp-auth", // IMPORTANT: single shared key
+  },
+});
+// Back-compat export for older imports (ex: LiveShopTV.tsx)
+export function getSupabase() {
+  return supabase;
 }
-
-// Back-compat: existing code can still import { supabase }
-export const supabase = getSupabase();
