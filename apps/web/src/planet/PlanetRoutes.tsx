@@ -12,6 +12,7 @@ import ReleaseViewer from "../pages/ReleaseViewer";
 
 // AWNIT
 import AwnitDemoBoard from "../pages/AwnitDemoBoard";
+import AwnitIntake from "../pages/AwnitIntake";
 import InvoiceView from "../pages/InvoiceView";
 import AwnitLandingPage from "../pages/AwnitLandingPage";
 
@@ -43,7 +44,8 @@ export default function PlanetRoutes() {
       {/* ---------- AWNIT (CANONICAL) ---------- */}
       <Route path="vehicles/awnit" element={<AwnitLandingPage />} />
       <Route path="vehicles/awnit-demo" element={<AwnitDemoBoard />} />
-      <Route path="vehicles/awnit-demo/invoice/:invoiceId" element={<InvoiceView />} />
+      
+      <Route path="vehicles/awnit-intake" element={<AwnitIntake />} /><Route path="vehicles/awnit-demo/invoice/:invoiceId" element={<InvoiceView />} />
 
       {/* Optional legacy / fallback demo path */}
       <Route path="demo/awnit" element={<Navigate to="/planet/vehicles/awnit-demo" replace />} />
@@ -60,3 +62,4 @@ export default function PlanetRoutes() {
     </Routes>
   );
 }
+
