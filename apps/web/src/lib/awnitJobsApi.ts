@@ -1,39 +1,62 @@
-﻿import type { PostgrestError } from "@supabase/supabase-js";
-import { supabase } from "./supabase";
+﻿import { supabase } from "./supabase";
 
-/**
- * AWNIT Jobs API — Single source of truth: public.awnit_jobs
- */
-
-export type AwnitJobRow = Record<string, any>;
-
-function throwIfError(error: PostgrestError | null, context: string) {
-  if (error) throw new Error(`${context}: ${error.message || "Unknown database error"}`);
+function throwIfError(error: any, msg: string) {
+  if (!error) return;
+  throw new Error(error.message || msg);
 }
 
-export async function awnitListJobs(): Promise<AwnitJobRow[]> {
+/* =========================
+   LIST JOBS
+========================= */
+export async function awnitListJobs() {
   const { data, error } = await supabase
     .from("awnit_jobs")
     .select("*")
     .order("updated_at", { ascending: false });
 
   throwIfError(error, "awnitListJobs failed");
-  return (data || []) as AwnitJobRow[];
+  return data || [];
 }
 
-export async function awnitCreateJob(payload: Record<string, any>): Promise<AwnitJobRow> {
+/* =========================
+   CREATE JOB
+========================= */
+export async function awnitCreateJob(payload: any) {
+  const row = {
+    title: payload.title ?? null,
+    summary: payload.summary ?? null,
+    stage: payload.stage ?? "Scheduled",
+
+    customer_name: payload.customer_name ?? null,
+    customer_phone: payload.customer_phone ?? null,
+    customer_email: payload.customer_email ?? null,
+    customer_address: payload.customer_address ?? null,
+
+    appt_date: payload.appt_date ?? null,
+    appt_time: payload.appt_time ?? null,
+    crew: payload.crew ?? null,
+
+    scope_items: [],
+    materials: [],
+    tech_notes: "",
+    meta: {},
+  };
+
   const { data, error } = await supabase
     .from("awnit_jobs")
-    .insert(payload)
+    .insert([row])
     .select("*")
     .single();
 
   throwIfError(error, "awnitCreateJob failed");
-  return data as AwnitJobRow;
+  return data;
 }
 
-export async function awnitUpdateJob(id: string, patch: Record<string, any>): Promise<AwnitJobRow> {
-  if (!id) throw new Error("awnitUpdateJob: missing id");
+/* =========================
+   UPDATE JOB
+========================= */
+export async function awnitUpdateJob(id: string, patch: any) {
+  if (!id) throw new Error("Missing job id");
 
   const { data, error } = await supabase
     .from("awnit_jobs")
@@ -43,5 +66,5 @@ export async function awnitUpdateJob(id: string, patch: Record<string, any>): Pr
     .single();
 
   throwIfError(error, "awnitUpdateJob failed");
-  return data as AwnitJobRow;
+  return data;
 }
