@@ -1,5 +1,6 @@
 ﻿import { useEffect, useMemo, useRef, useState } from "react";
 
+import { createInvoiceFromJob } from "../lib/invoices";
 // NOTE (Preview-safe): we avoid react-router-dom here because the preview runtime
 // may not mount a <Router>, which would crash useNavigate().
 // In your real repo, you can restore:
@@ -73,31 +74,6 @@ type MaterialItem = {
  */
 
 // Minimal stub: creates an invoice id and stores payload in localStorage (preview only).
-async function createInvoiceFromJob(input: {
-  job: Job;
-  scopeItems: ScopeItem[];
-  materials: MaterialItem[];
-  notes: string;
-}): Promise<string> {
-  const id = `inv_${makeId()}`;
-  try {
-    const key = `awnit_demo_invoice_${id}`;
-    localStorage.setItem(
-      key,
-      JSON.stringify({
-        id,
-        createdAt: new Date().toISOString(),
-        job: input.job,
-        scopeItems: input.scopeItems,
-        materials: input.materials,
-        notes: input.notes,
-      })
-    );
-  } catch {
-    // ignore for preview
-  }
-  return id;
-}
 
 // Preview stub for the footer line. In your repo, replace with:
 //   import { supabase as sb } from "../lib/supabase";
@@ -1108,6 +1084,7 @@ export default function AwnitDemoBoard() {
     </div>
   );
 }
+
 
 
 
