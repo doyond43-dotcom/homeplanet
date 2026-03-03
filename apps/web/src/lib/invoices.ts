@@ -29,6 +29,28 @@ export async function createInvoiceFromJob(input: any) {
   const payload = input?.job ? input : { job: input, scopeItems: [], materials: [], notes: "" };
   const job = payload?.job;
 
+  // ---- DEMO SAFETY: if job.id is NOT a UUID (ex: "job_1001"), use LOCAL invoice mode ----
+  const isUuid = (v: any) => typeof v === "string" &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
+
+  if (!isUuid(job?.id)) {
+    const id = `inv_${Math.random().toString(36).slice(2, 10)}${Math.random().toString(36).slice(2, 10)}`;
+    const key = `awnit_demo_invoice_${id}`;
+
+    const localPayload = {
+      id,
+      mode: "local",
+      created_at: new Date().toISOString(),
+      job: job ?? null,
+      scopeItems: payload?.scopeItems ?? [],
+      materials: payload?.materials ?? [],
+      notes: payload?.notes ?? "",
+    };
+
+    try { localStorage.setItem(key, JSON.stringify(localPayload)); } catch {}
+    return id;
+  }
+
   if (!job?.id) throw new Error("createInvoiceFromJob: job.id is required");
 
   const lines: UiInvoiceLine[] = [];
@@ -114,4 +136,5 @@ export async function createInvoiceFromJob(input: any) {
 
   return inv;
 }
+
 

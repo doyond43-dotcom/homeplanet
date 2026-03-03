@@ -47,6 +47,7 @@ export default function InvoiceView() {
   const navigate = useNavigate();
   const params = useParams();
   const invoiceId = (params as any)?.invoiceId || (params as any)?.id || "";
+const isLocal = typeof invoiceId === "string" && invoiceId.startsWith("inv_");
 
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -54,57 +55,82 @@ export default function InvoiceView() {
   const [lines, setLines] = useState<InvoiceLineRow[]>([]);
 
   useEffect(() => {
-    let alive = true;
+  let alive = true;
 
-    async function load() {
-      if (!invoiceId) {
-        setErr("Missing invoice id.");
-        setInvoice(null);
-        setLines([]);
-        return;
-      }
+  async function run() {
+    setLoading(true);
+    setErr("");
 
-      const url = (import.meta as any).env?.VITE_SUPABASE_URL;
-      const anon = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY;
-      if (!url || !anon) {
-        setErr("Supabase env missing (VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY).");
-        setLoading(false);
-        return;
-      }
-
+    // ---- LOCAL invoice mode (demo) ----
+    if (isLocal) {
       try {
-        setLoading(true);
-        setErr(null);
+        const key = `awnit_demo_invoice_${invoiceId}`;
+        const raw = localStorage.getItem(key);
+        if (!raw) {
+          if (alive) setErr("Local invoice not found (storage cleared).");
+          return;
+        }
+        const parsed = JSON.parse(raw);
 
-        const invRes = await supabase.from("invoices").select("*").eq("id", invoiceId).maybeSingle();
-        if (invRes.error) throw invRes.error;
-        if (!invRes.data) throw new Error("Invoice not found.");
+        // Shape it into what the UI expects minimally
+        if (alive) {
+          setInvoice({
+            id: parsed.id,
+            created_at: parsed.created_at,
+            status: "draft",
+            customer_name: parsed?.job?.customer_name ?? parsed?.job?.customerName ?? "—",
+            customer_phone: parsed?.job?.customer_phone ?? parsed?.job?.customerPhone ?? "—",
+            customer_email: parsed?.job?.customer_email ?? parsed?.job?.customerEmail ?? "—",
+            customer_address: parsed?.job?.customer_address ?? parsed?.job?.customerAddress ?? "—",
+            subtotal: 0,
+            tax: 0,
+            shipping: 0,
+            deposit: 0,
+            total: 0,
+          } as any);
 
-        const linesRes = await supabase
-          .from("invoice_lines")
-          .select("*")
-          .eq("invoice_id", invoiceId)
-          .order("created_at", { ascending: true });
-
-        if (linesRes.error) throw linesRes.error;
-
-        if (!alive) return;
-        setInvoice(invRes.data as any);
-        setLines((linesRes.data || []) as any);
+          // If your component stores lines separately, leave as-is; otherwise it will still render header + status safely.
+        }
       } catch (e: any) {
-        if (!alive) return;
-        setErr(e?.message ?? "Failed to load invoice.");
+        if (alive) setErr(e?.message ?? "Failed to load local invoice.");
       } finally {
-        if (!alive) return;
-        setLoading(false);
+        if (alive) setLoading(false);
       }
+      return;
     }
 
-    load();
-    return () => {
-      alive = false;
-    };
-  }, [invoiceId]);
+    // ---- Supabase invoice mode (real) ----
+    try {
+      if (!invoiceId) {
+        setErr("Missing invoice id.");
+        return;
+      }
+
+      const invRes = await supabase.from("invoices").select("*").eq("id", invoiceId).maybeSingle();
+      if (invRes.error) throw invRes.error;
+
+      const linesRes = await supabase
+        .from("invoice_lines")
+        .select("*")
+        .eq("invoice_id", invoiceId)
+        .order("sort", { ascending: true });
+
+      if (linesRes.error) throw linesRes.error;
+
+      if (alive) {
+        setInvoice(invRes.data as any);
+        setLines((linesRes.data ?? []) as any);
+      }
+    } catch (e: any) {
+      if (alive) setErr(e?.message ?? "Failed to load invoice.");
+    } finally {
+      if (alive) setLoading(false);
+    }
+  }
+
+  run();
+  return () => { alive = false; };
+}, [invoiceId]);
 
   const shell =
     "min-h-screen w-full overflow-x-hidden bg-gradient-to-b from-slate-950 via-slate-950 to-black text-slate-100";
@@ -277,3 +303,4 @@ function LineRow({ line }: { line: any }) {
     </div>
   );
 }
+
