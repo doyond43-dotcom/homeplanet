@@ -1,4 +1,4 @@
-﻿import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 import PlanetOverview from "../pages/PlanetOverview";
 import CityPage from "../pages/CityPage";

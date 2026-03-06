@@ -1,23 +1,28 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
+﻿// src/pages/AwnitDemoBoard.tsx
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { createInvoiceFromJob } from "../lib/invoices";
-
-// 🔥 IMPORTANT: adjust this import path to match your repo (use rg to find it)
 import { awnitListJobs, awnitUpdateJob } from "../lib/awnitJobsApi";
 
 /**
  * AWNIT — Live Board (Supabase-backed)
  * Single source of truth: public.awnit_jobs
  *
- * This file is patched to:
- * - ALWAYS attempt DB writes for stage/scope/materials/notes (no demo-only handlers)
- * - Optimistic UI updates so lanes move instantly
- * - Add a build marker so you can confirm production has the right bundle
- * - Auto-refresh jobs every 5s (so Intake appears without manual refresh)
+ * Stabilized to:
+ * - Persist scope/materials/notes to the CORRECT DB fields: scope_items, materials, tech_notes
+ * - Keep optimistic UI in sync with those same DB fields
+ * - Prevent the 5s refresh from overwriting edits while you’re actively clicking
+ * - Remove “Invalid Date” by safely formatting timestamps and normalizing older shapes
+ * - Ensure list items always have stable React keys (no key warnings)
+ *
+ * Beam panel mode:
+ * - Supports /planet/vehicles/awnit-demo?panel=measurement&open_url=/cards/measurement
+ * - Keeps the board visible
+ * - Opens the measurement card in a right-side workspace panel
+ * - Guards the panel so it can only open /cards/* routes
  */
 
-// ---------------- Types ----------------
 type Stage = "Scheduled" | "Measured" | "Estimate Sent" | "Ordered" | "Installed" | "Done";
-
 type ScopeType = "door" | "window" | "screen" | "trim" | "custom";
 
 type ScopeItem = {
@@ -39,14 +44,13 @@ type MaterialItem = {
 };
 
 type AwnitJobRow = {
-  id: string; // uuid
+  id: string;
   title: string | null;
   summary: string | null;
   stage: Stage | string | null;
 
-  apptDate?: string | null; // if your DB uses appt_date, map in API layer or here
+  apptDate?: string | null;
   apptTime?: string | null;
-
   crew?: string | null;
 
   customer?: {
@@ -56,16 +60,14 @@ type AwnitJobRow = {
     address?: string | null;
   } | null;
 
-  // DB truth fields:
-  scope_items?: any; // jsonb
-  materials?: any; // jsonb
+  scope_items?: any;
+  materials?: any;
   tech_notes?: string | null;
 
-  // optional
+  meta?: any;
   updated_at?: string | null;
 };
 
-// ---------------- Helpers ----------------
 function cn(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(" ");
 }
@@ -80,11 +82,16 @@ function nowIso() {
 
 function safeToast(msg: string) {
   try {
-    // eslint-disable-next-line no-alert
     alert(msg);
-  } catch (e) {
+  } catch {
     /* noop */
   }
+}
+
+function reactKey(...parts: Array<any>) {
+  return parts
+    .map((p) => (p === undefined || p === null || p === "" ? "_" : String(p)))
+    .join("__");
 }
 
 async function copyToClipboard(text: string) {
@@ -93,7 +100,7 @@ async function copyToClipboard(text: string) {
   try {
     await navigator.clipboard.writeText(val);
     safeToast("Copied.");
-  } catch (e) {
+  } catch {
     const ta = document.createElement("textarea");
     ta.value = val;
     ta.style.position = "fixed";
@@ -103,11 +110,21 @@ async function copyToClipboard(text: string) {
     try {
       document.execCommand("copy");
       safeToast("Copied.");
-    } catch (e) {
+    } catch {
       safeToast("Copy failed.");
     } finally {
       document.body.removeChild(ta);
     }
+  }
+}
+
+function safeTimeLabel(isoLike: any) {
+  try {
+    const d = new Date(isoLike);
+    if (isNaN(d.getTime())) return "";
+    return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  } catch {
+    return "";
   }
 }
 
@@ -150,8 +167,25 @@ function coerceScopeItems(v: any): ScopeItem[] {
 
 function coerceMaterials(v: any): MaterialItem[] {
   if (!v) return [];
-  if (Array.isArray(v)) return v as MaterialItem[];
-  return [];
+  const arr = Array.isArray(v) ? v : [];
+  return arr
+    .map((m: any, i: number): MaterialItem => {
+      const id = (m?.id ?? m?.uuid ?? `mat-${i}`).toString();
+      const name = (m?.name ?? m?.label ?? "").toString();
+      const qty = (m?.qty ?? m?.quantity ?? "").toString().trim();
+      const checked = Boolean(m?.checked);
+      const addedBy = (m?.addedBy ?? m?.added_by ?? "live").toString();
+      const addedAt = (m?.addedAt ?? m?.added_at ?? m?.createdAt ?? m?.created_at ?? "").toString();
+      return {
+        id,
+        name,
+        qty: qty ? qty : undefined,
+        checked,
+        addedBy,
+        addedAt: addedAt || nowIso(),
+      };
+    })
+    .filter((m) => (m.name || "").trim().length > 0);
 }
 
 function dictationAppendLine(prev: string, text: string, isFinal: boolean) {
@@ -181,7 +215,6 @@ function fmtAppt(job: AwnitJobRow) {
   return `${base || "—"}${crew ? ` • ${crew}` : ""}`;
 }
 
-// ---------------- Speech (Mic) ----------------
 type SpeechCtor = new () => any;
 
 function getSpeechCtor(): SpeechCtor | null {
@@ -207,7 +240,7 @@ function useSpeechDictation() {
   function stop() {
     try {
       recRef.current?.stop?.();
-    } catch (e) {
+    } catch {
       /* noop */
     }
   }
@@ -254,7 +287,7 @@ function useSpeechDictation() {
 
     try {
       rec.start();
-    } catch (e) {
+    } catch {
       safeToast("Mic start failed.");
     }
   }
@@ -295,7 +328,6 @@ function MicButton({
   );
 }
 
-// ---------------- Materials Templates (simple) ----------------
 const MATERIAL_TEMPLATES: Record<string, string[]> = {
   "Window install": ["Caulk / sealant", "Shims", "Flashing tape", "Foam", "Screws", "Touch-up paint"],
   "Door install": ["Caulk / sealant", "Shims", "Flashing tape", "Foam", "Screws", "Wood filler"],
@@ -305,11 +337,11 @@ const MATERIAL_TEMPLATES: Record<string, string[]> = {
 
 const GRAB_CODES = ["2222", "4444", "6666", "8888", "9999"] as const;
 
-// ---------------- Component ----------------
 export default function AwnitDemoBoard() {
-  // ✅ BUILD MARKER: verify deployed bundle instantly
-  // In Console:  window.__AWNIT_API_MARKER__
-  (window as any).__AWNIT_API_MARKER__ = "supabase-wired-awnit-board";
+  (window as any).__AWNIT_API_MARKER__ = "supabase-wired-awnit-board-stabilized-v4-keysafe";
+
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const { supported, listening, toggle, activeTargetRef } = useSpeechDictation();
   const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false);
@@ -320,13 +352,88 @@ export default function AwnitDemoBoard() {
 
   const [showPanels, setShowPanels] = useState(true);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
-
-  // Local UI helpers (not source of truth; DB is)
   const [grabCode, setGrabCode] = useState<(typeof GRAB_CODES)[number] | "">(GRAB_CODES[0]);
+
+  const [rightPanel, setRightPanel] = useState<null | "measurement">(null);
+  const [panelTitle, setPanelTitle] = useState("Door Measurement Card");
+  const [panelUrl, setPanelUrl] = useState("/cards/measurement");
+
+  const lastEditAtRef = useRef<number>(0);
+  const markEdit = () => {
+    lastEditAtRef.current = Date.now();
+  };
+  const recentlyEdited = () => Date.now() - lastEditAtRef.current < 3000;
 
   const stages: Stage[] = useMemo(() => ["Scheduled", "Measured", "Estimate Sent", "Ordered", "Installed", "Done"], []);
 
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const panel = params.get("panel");
+    const rawOpenUrl = params.get("open_url");
+    const title = params.get("title") || "Door Measurement Card";
+    const sessionId = params.get("session_id");
+    const code = params.get("code");
+    const beam = params.get("beam");
+
+    if (panel === "measurement") {
+      let decodedOpenUrl = "/cards/measurement";
+
+      if (rawOpenUrl) {
+        try {
+          decodedOpenUrl = decodeURIComponent(rawOpenUrl);
+        } catch {
+          decodedOpenUrl = rawOpenUrl;
+        }
+      }
+
+      let safePanelPath = "/cards/measurement";
+
+      if (decodedOpenUrl.startsWith("/cards/")) {
+        safePanelPath = decodedOpenUrl;
+      }
+
+      const workspaceUrl = new URL(safePanelPath, window.location.origin);
+
+      if (beam) workspaceUrl.searchParams.set("beam", beam);
+      if (sessionId) workspaceUrl.searchParams.set("session_id", sessionId);
+      if (code) workspaceUrl.searchParams.set("code", code);
+
+      setRightPanel("measurement");
+      setPanelTitle(title);
+      setPanelUrl(`${workspaceUrl.pathname}${workspaceUrl.search}${workspaceUrl.hash}`);
+    } else {
+      setRightPanel(null);
+      setPanelTitle("Door Measurement Card");
+      setPanelUrl("/cards/measurement");
+    }
+  }, [location.search]);
+
+  function closeRightPanel() {
+    const params = new URLSearchParams(location.search);
+    params.delete("panel");
+    params.delete("beam");
+    params.delete("card_type");
+    params.delete("title");
+    params.delete("open_url");
+    params.delete("session_id");
+    params.delete("code");
+
+    const next = params.toString();
+
+    navigate(
+      {
+        pathname: location.pathname,
+        search: next ? `?${next}` : "",
+      },
+      { replace: true }
+    );
+
+    setRightPanel(null);
+  }
+
   async function loadJobs() {
+    if (recentlyEdited()) return;
+
     try {
       setLoadError(null);
       const rows = await awnitListJobs();
@@ -346,6 +453,7 @@ export default function AwnitDemoBoard() {
           ...r,
           customer,
           stage: coerceStage(r.stage),
+          meta: r.meta && typeof r.meta === "object" ? r.meta : {},
         };
       });
 
@@ -366,11 +474,11 @@ export default function AwnitDemoBoard() {
     loadJobs();
 
     const t = window.setInterval(() => {
+      if (recentlyEdited()) return;
       loadJobs();
     }, 5000);
 
     return () => window.clearInterval(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const selectedJob = useMemo(() => jobs.find((j) => j.id === selectedJobId) || null, [jobs, selectedJobId]);
@@ -380,10 +488,14 @@ export default function AwnitDemoBoard() {
   }
 
   async function persist(jobId: string, patch: Record<string, any>) {
+    markEdit();
     updateJobOptimistic(jobId, patch as any);
 
     try {
-      await awnitUpdateJob(jobId, patch);
+      const saved = await (awnitUpdateJob as any)(jobId, patch);
+      if (saved && typeof saved === "object") {
+        setJobs((prev) => prev.map((j) => (j.id === jobId ? { ...j, ...(saved as any) } : j)));
+      }
     } catch (e: any) {
       await loadJobs();
       safeToast(e?.message || "Save failed.");
@@ -393,6 +505,7 @@ export default function AwnitDemoBoard() {
   const debounceRef = useRef<Record<string, number>>({});
 
   function persistDebounced(jobId: string, patch: Record<string, any>, key: string, ms = 450) {
+    markEdit();
     const k = `${jobId}:${key}`;
     if (debounceRef.current[k]) window.clearTimeout(debounceRef.current[k]);
     debounceRef.current[k] = window.setTimeout(() => {
@@ -402,7 +515,7 @@ export default function AwnitDemoBoard() {
   }
 
   function getScope(job: AwnitJobRow): ScopeItem[] {
-    return coerceScopeItems((job as any).scopeItems ?? (job as any).scope_items);
+    return coerceScopeItems((job as any).scope_items ?? (job as any).scopeItems);
   }
 
   function getMaterials(job: AwnitJobRow): MaterialItem[] {
@@ -410,7 +523,7 @@ export default function AwnitDemoBoard() {
   }
 
   function getNotes(job: AwnitJobRow): string {
-    return (((job as any).techNotes ?? (job as any).tech_notes) || "").toString();
+    return (((job as any).tech_notes ?? (job as any).techNotes) || "").toString();
   }
 
   function scopeCounts(items: ScopeItem[]) {
@@ -427,26 +540,18 @@ export default function AwnitDemoBoard() {
     return count + 1;
   }
 
-  // ✅ Persisted Materials Quick Add (per job, stored in meta)
   function getMaterialsQuickAddText(job: AwnitJobRow): string {
     const m: any = (job as any)?.meta || {};
     return (m.materialsQuickAdd ?? "").toString();
   }
 
   function setMaterialsQuickAddText(job: AwnitJobRow, val: string) {
+    markEdit();
     const curMeta: any = (job as any)?.meta || {};
     const nextMeta = { ...curMeta, materialsQuickAdd: val };
 
-    try {
-      updateJobOptimistic(job.id, { meta: nextMeta } as any);
-    } catch {}
-
-    try {
-      // @ts-ignore
-      persistDebounced(job.id, { meta: nextMeta }, "meta");
-    } catch {
-      persist(job.id, { meta: nextMeta });
-    }
+    updateJobOptimistic(job.id, { meta: nextMeta } as any);
+    persistDebounced(job.id, { meta: nextMeta }, "meta");
   }
 
   async function setStage(jobId: string, stage: Stage) {
@@ -454,6 +559,8 @@ export default function AwnitDemoBoard() {
   }
 
   function addScopeItem(job: AwnitJobRow, type: ScopeType) {
+    markEdit();
+
     const cur = getScope(job);
     const idx = nextIndex(cur, type);
 
@@ -478,70 +585,41 @@ export default function AwnitDemoBoard() {
     };
 
     const next = [item, ...cur];
-
-    try {
-      updateJobOptimistic(job.id, { scopeItems: next } as any);
-    } catch {}
-
-    try {
-      // @ts-ignore
-      persistDebounced(job.id, { scopeItems: next }, "scope_items");
-    } catch {
-      persist(job.id, { scopeItems: next });
-    }
+    updateJobOptimistic(job.id, { scope_items: next } as any);
+    persistDebounced(job.id, { scope_items: next }, "scope_items");
   }
 
   function removeScopeItem(job: AwnitJobRow, itemId: string) {
+    markEdit();
     const target = (itemId ?? "").toString();
     const next = getScope(job).filter((x) => (x.id ?? "").toString() !== target);
 
-    try {
-      updateJobOptimistic(job.id, { scopeItems: next } as any);
-    } catch {}
-
-    try {
-      // @ts-ignore
-      persistDebounced(job.id, { scopeItems: next }, "scope_items");
-    } catch {
-      persist(job.id, { scopeItems: next });
-    }
+    updateJobOptimistic(job.id, { scope_items: next } as any);
+    persistDebounced(job.id, { scope_items: next }, "scope_items");
   }
 
   function toggleScopeDone(job: AwnitJobRow, itemId: string) {
+    markEdit();
     const target = (itemId ?? "").toString();
     const next = getScope(job).map((x) =>
       (x.id ?? "").toString() === target ? { ...x, done: !Boolean((x as any).done) } : x
     );
 
-    try {
-      updateJobOptimistic(job.id, { scopeItems: next } as any);
-    } catch {}
-
-    try {
-      // @ts-ignore
-      persistDebounced(job.id, { scopeItems: next }, "scope_items");
-    } catch {
-      persist(job.id, { scopeItems: next });
-    }
+    updateJobOptimistic(job.id, { scope_items: next } as any);
+    persistDebounced(job.id, { scope_items: next }, "scope_items");
   }
 
   function setScopeQuick(job: AwnitJobRow, itemId: string, val: string) {
+    markEdit();
     const target = (itemId ?? "").toString();
     const next = getScope(job).map((x) => ((x.id ?? "").toString() === target ? { ...x, quick: val } : x));
 
-    try {
-      updateJobOptimistic(job.id, { scopeItems: next } as any);
-    } catch {}
-
-    try {
-      // @ts-ignore
-      persistDebounced(job.id, { scopeItems: next }, "scope_items");
-    } catch {
-      persist(job.id, { scopeItems: next });
-    }
+    updateJobOptimistic(job.id, { scope_items: next } as any);
+    persistDebounced(job.id, { scope_items: next }, "scope_items");
   }
 
   function addMaterial(job: AwnitJobRow, name: string, qty?: string) {
+    markEdit();
     const n = (name || "").trim();
     if (!n) return;
 
@@ -556,54 +634,32 @@ export default function AwnitDemoBoard() {
     };
 
     const next = [item, ...cur];
-
-    try {
-      updateJobOptimistic(job.id, { materials: next } as any);
-    } catch {}
-
-    try {
-      // @ts-ignore
-      persistDebounced(job.id, { materials: next }, "materials");
-    } catch {
-      persist(job.id, { materials: next });
-    }
+    updateJobOptimistic(job.id, { materials: next } as any);
+    persistDebounced(job.id, { materials: next }, "materials");
   }
 
   function toggleMaterial(job: AwnitJobRow, id: string) {
+    markEdit();
     const target = (id ?? "").toString();
     const next = getMaterials(job).map((x) =>
       (x.id ?? "").toString() === target ? { ...x, checked: !Boolean((x as any).checked) } : x
     );
 
-    try {
-      updateJobOptimistic(job.id, { materials: next } as any);
-    } catch {}
-
-    try {
-      // @ts-ignore
-      persistDebounced(job.id, { materials: next }, "materials");
-    } catch {
-      persist(job.id, { materials: next });
-    }
+    updateJobOptimistic(job.id, { materials: next } as any);
+    persistDebounced(job.id, { materials: next }, "materials");
   }
 
   function removeMaterial(job: AwnitJobRow, id: string) {
+    markEdit();
     const target = (id ?? "").toString();
     const next = getMaterials(job).filter((x) => (x.id ?? "").toString() !== target);
 
-    try {
-      updateJobOptimistic(job.id, { materials: next } as any);
-    } catch {}
-
-    try {
-      // @ts-ignore
-      persistDebounced(job.id, { materials: next }, "materials");
-    } catch {
-      persist(job.id, { materials: next });
-    }
+    updateJobOptimistic(job.id, { materials: next } as any);
+    persistDebounced(job.id, { materials: next }, "materials");
   }
 
   function applyTemplate(job: AwnitJobRow, templateKey: string) {
+    markEdit();
     const items = MATERIAL_TEMPLATES[templateKey] || [];
     if (!items.length) return;
 
@@ -621,10 +677,12 @@ export default function AwnitDemoBoard() {
       ...cur,
     ] as MaterialItem[];
 
+    updateJobOptimistic(job.id, { materials: next } as any);
     persist(job.id, { materials: next });
   }
 
   function quickAddMaterials(job: AwnitJobRow) {
+    markEdit();
     const raw = (getMaterialsQuickAddText(job) || "").trim();
     if (!raw) return;
 
@@ -640,13 +698,13 @@ export default function AwnitDemoBoard() {
       addMaterial(job, name, qty || undefined);
     }
 
-    // ✅ persist clear so it doesn't "come back" weirdly
     setMaterialsQuickAddText(job, "");
   }
 
   function setNotes(job: AwnitJobRow, value: string) {
-    updateJobOptimistic(job.id, { techNotes: value } as any);
-    persistDebounced(job.id, { techNotes: value }, "techNotes");
+    markEdit();
+    updateJobOptimistic(job.id, { tech_notes: value } as any);
+    persistDebounced(job.id, { tech_notes: value }, "tech_notes");
   }
 
   function buildTechPayload(job: AwnitJobRow) {
@@ -753,437 +811,446 @@ export default function AwnitDemoBoard() {
 
   return (
     <div className="min-h-screen bg-[#0b1220] text-white">
-      <div className="mx-auto max-w-7xl p-3 md:p-6">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div>
-            <div className="text-2xl font-extrabold tracking-tight">AWNIT — Live Board</div>
-            <div className="text-sm text-white/60">Supabase-backed • scope + materials + notes • invoice v1</div>
-            {loadError ? <div className="mt-1 text-xs text-red-300">{loadError}</div> : null}
-          </div>
+      <div className="flex min-h-screen w-full">
+        <div className={rightPanel ? "min-w-0 flex-1" : "w-full"}>
+          <div className="mx-auto max-w-7xl p-3 md:p-6">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <div className="text-2xl font-extrabold tracking-tight">AWNIT — Live Board</div>
+                <div className="text-sm text-white/60">Supabase-backed • scope + materials + notes • invoice v1</div>
+                {loadError ? <div className="mt-1 text-xs text-red-300">{loadError}</div> : null}
+              </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold hover:bg-white/10"
-              onClick={() => setShowPanels((v) => !v)}
-            >
-              {showPanels ? "Hide Panels" : "Show Panels"}
-            </button>
-
-            <button
-              type="button"
-              className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold hover:bg-white/10"
-              onClick={loadJobs}
-              disabled={loading}
-              title="Reload from database"
-            >
-              {loading ? "Loading…" : "Refresh"}
-            </button>
-
-            <button
-              type="button"
-              className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold hover:bg-white/10"
-              onClick={() => window.location.assign("/planet/vehicles/awnit-intake")}
-              title="Add a new job (from Intake / Request)"
-            >
-              + Add Job
-            </button>
-
-            <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2">
-              <div className="text-xs font-bold text-white/70">Grab Code</div>
-              <select
-                className="rounded-lg bg-transparent text-sm outline-none"
-                value={grabCode}
-                onChange={(e) => setGrabCode(e.target.value as any)}
-              >
-                {GRAB_CODES.map((c) => (
-                  <option key={c} value={c} className="text-black">
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <button
-              type="button"
-              className="rounded-xl bg-emerald-500/90 px-4 py-2 text-sm font-extrabold text-black hover:bg-emerald-400 disabled:opacity-50"
-              onClick={generateInvoice}
-              disabled={!selectedJob || isGeneratingInvoice}
-              title="Generate invoice from Scope + Materials + Notes"
-            >
-              {isGeneratingInvoice ? "Generating…" : "Generate Invoice"}
-            </button>
-          </div>
-        </div>
-
-        {/* Lanes */}
-        {showPanels ? (
-          <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3 xl:grid-cols-6">
-            {stages.map((s) => {
-              const tone = stageTone(s);
-              const list = jobsByStage.get(s) || [];
-              return (
-                <div key={s} className={cn("rounded-2xl border border-white/10 bg-white/5", tone.lane, "border-l-4")}>
-                  <div className="flex items-center justify-between border-b border-white/10 p-3">
-                    <div className="text-sm font-extrabold">{s}</div>
-                    <div className={cn("rounded-full border px-2 py-0.5 text-xs font-bold", tone.pill)}>{list.length}</div>
-                  </div>
-
-                  <div className="p-2 space-y-2">
-                    {list.map((j) => (
-                      <button
-                        key={j.id}
-                        type="button"
-                        onClick={() => setSelectedJobId(j.id)}
-                        className={cn(
-                          "w-full rounded-xl border px-3 py-2 text-left hover:bg-white/10",
-                          selectedJobId === j.id ? "border-emerald-400/40 bg-emerald-400/10" : "border-white/10 bg-white/5"
-                        )}
-                      >
-                        <div className="text-sm font-bold truncate">{j.title || "Untitled Job"}</div>
-                        <div className="mt-0.5 text-xs text-white/60 truncate">{j.customer?.name || "-"}</div>
-                        <div className="mt-1 text-[11px] text-white/60">{fmtAppt(j)}</div>
-                      </button>
-                    ))}
-                    {list.length === 0 ? <div className="px-3 py-2 text-xs text-white/40">No jobs</div> : null}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : null}
-
-        {/* Drawer */}
-        <div className="mt-4 rounded-2xl border border-white/10 bg-white/5">
-          <div className="flex flex-col gap-2 border-b border-white/10 p-3 md:flex-row md:items-center md:justify-between">
-            <div>
-              <div className="text-lg font-extrabold">Job Drawer</div>
-              <div className="text-xs text-white/60">Click a job in lanes to load details</div>
-            </div>
-
-            {selectedJob ? (
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
-                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-bold hover:bg-white/10"
-                  onClick={() => copyToClipboard(buildTechPayload(selectedJob))}
+                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold hover:bg-white/10"
+                  onClick={() => setShowPanels((v) => !v)}
                 >
-                  Copy Tech Text
+                  {showPanels ? "Hide Panels" : "Show Panels"}
                 </button>
 
-                {selectedJob.customer?.address ? (
-                  <a
-                    className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-bold hover:bg-white/10"
-                    href={mapsHref(selectedJob)}
-                    target="_blank"
-                    rel="noreferrer"
-                    title="Open in Google Maps"
-                  >
-                    Maps
-                  </a>
-                ) : null}
+                <button
+                  type="button"
+                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold hover:bg-white/10"
+                  onClick={() => void loadJobs()}
+                  disabled={loading}
+                  title="Reload from database"
+                >
+                  {loading ? "Loading…" : "Refresh"}
+                </button>
 
-                {selectedJob.customer?.phone ? (
-                  <a
-                    className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-bold hover:bg-white/10"
-                    href={smsHref(selectedJob)}
-                    target="_blank"
-                    rel="noreferrer"
-                    title="Send SMS from device"
-                  >
-                    Send SMS
-                  </a>
-                ) : null}
+                <button
+                  type="button"
+                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold hover:bg-white/10"
+                  onClick={() => window.location.assign("/planet/vehicles/awnit-intake")}
+                  title="Add a new job"
+                >
+                  + Add Job
+                </button>
 
-                {selectedJob.customer?.email ? (
-                  <a
-                    className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-bold hover:bg-white/10"
-                    href={emailHref(selectedJob)}
-                    target="_blank"
-                    rel="noreferrer"
-                    title="Send email"
+                <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+                  <div className="text-xs font-bold text-white/70">Grab Code</div>
+                  <select
+                    className="rounded-lg bg-transparent text-sm outline-none"
+                    value={grabCode}
+                    onChange={(e) => setGrabCode(e.target.value as any)}
                   >
-                    Email
-                  </a>
-                ) : null}
+                    {GRAB_CODES.map((c, idx) => (
+                      <option key={reactKey("grab-code", c, idx)} value={c} className="text-black">
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <button
+                  type="button"
+                  className="rounded-xl bg-emerald-500/90 px-4 py-2 text-sm font-extrabold text-black hover:bg-emerald-400 disabled:opacity-50"
+                  onClick={generateInvoice}
+                  disabled={!selectedJob || isGeneratingInvoice}
+                  title="Generate invoice from Scope + Materials + Notes"
+                >
+                  {isGeneratingInvoice ? "Generating…" : "Generate Invoice"}
+                </button>
+              </div>
+            </div>
+
+            {showPanels ? (
+              <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3 xl:grid-cols-6">
+                {stages.map((s, stageIdx) => {
+                  const tone = stageTone(s);
+                  const list = jobsByStage.get(s) || [];
+                  return (
+                    <div
+                      key={reactKey("stage-lane", s, stageIdx)}
+                      className={cn("rounded-2xl border border-white/10 bg-white/5", tone.lane, "border-l-4")}
+                    >
+                      <div className="flex items-center justify-between border-b border-white/10 p-3">
+                        <div className="text-sm font-extrabold">{s}</div>
+                        <div className={cn("rounded-full border px-2 py-0.5 text-xs font-bold", tone.pill)}>{list.length}</div>
+                      </div>
+
+                      <div className="space-y-2 p-2">
+                        {list.map((j, jobIdx) => (
+                          <button
+                            key={reactKey("job-card", s, j.id, j.updated_at, jobIdx)}
+                            type="button"
+                            onClick={() => setSelectedJobId(j.id)}
+                            className={cn(
+                              "w-full rounded-xl border px-3 py-2 text-left hover:bg-white/10",
+                              selectedJobId === j.id ? "border-emerald-400/40 bg-emerald-400/10" : "border-white/10 bg-white/5"
+                            )}
+                          >
+                            <div className="truncate text-sm font-bold">{j.title || "Untitled Job"}</div>
+                            <div className="mt-0.5 truncate text-xs text-white/60">{j.customer?.name || "-"}</div>
+                            <div className="mt-1 text-[11px] text-white/60">{fmtAppt(j)}</div>
+                          </button>
+                        ))}
+                        {list.length === 0 ? <div className="px-3 py-2 text-xs text-white/40">No jobs</div> : null}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             ) : null}
-          </div>
 
-          {!selectedJob ? (
-            <div className="p-4 text-sm text-white/60">Select a job to open the drawer.</div>
-          ) : (
-            <div className="grid grid-cols-1 gap-3 p-3 lg:grid-cols-3">
-              {/* Left: customer + stage */}
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                <div className="text-sm font-extrabold">Customer</div>
-                <div className="mt-2 space-y-1 text-sm">
-                  <div className="font-bold">{selectedJob.customer?.name || "-"}</div>
-                  <div className="text-white/70">{selectedJob.customer?.address || "-"}</div>
-                  <div className="text-white/70">{selectedJob.customer?.phone || "-"}</div>
-                  <div className="text-white/70">{selectedJob.customer?.email || "-"}</div>
+            <div className="mt-4 rounded-2xl border border-white/10 bg-white/5">
+              <div className="flex flex-col gap-2 border-b border-white/10 p-3 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <div className="text-lg font-extrabold">Job Drawer</div>
+                  <div className="text-xs text-white/60">Click a job in lanes to load details</div>
                 </div>
 
-                <div className="mt-3 rounded-2xl border border-white/10 bg-black/20 p-3">
-                  <div className="text-xs font-bold text-white/60">Appointment</div>
-                  <div className="mt-1 text-sm font-bold">{fmtAppt(selectedJob)}</div>
-                </div>
+                {selectedJob ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-bold hover:bg-white/10"
+                      onClick={() => copyToClipboard(buildTechPayload(selectedJob))}
+                    >
+                      Copy Tech Text
+                    </button>
 
-                <div className="mt-3">
-                  <div className="text-xs font-bold text-white/60">Stage</div>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {stages.map((s) => (
-                      <button
-                        key={s}
-                        type="button"
-                        className={cn(
-                          "rounded-full border px-3 py-1 text-xs font-extrabold",
-                          coerceStage(selectedJob.stage) === s
-                            ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-100"
-                            : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10"
-                        )}
-                        onClick={() => void setStage(selectedJob.id, s)}
+                    {selectedJob.customer?.address ? (
+                      <a
+                        className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-bold hover:bg-white/10"
+                        href={mapsHref(selectedJob)}
+                        target="_blank"
+                        rel="noreferrer"
+                        title="Open in Google Maps"
                       >
-                        {s}
-                      </button>
-                    ))}
+                        Maps
+                      </a>
+                    ) : null}
+
+                    {selectedJob.customer?.phone ? (
+                      <a
+                        className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-bold hover:bg-white/10"
+                        href={smsHref(selectedJob)}
+                        target="_blank"
+                        rel="noreferrer"
+                        title="Send SMS from device"
+                      >
+                        Send SMS
+                      </a>
+                    ) : null}
+
+                    {selectedJob.customer?.email ? (
+                      <a
+                        className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-bold hover:bg-white/10"
+                        href={emailHref(selectedJob)}
+                        target="_blank"
+                        rel="noreferrer"
+                        title="Send email"
+                      >
+                        Email
+                      </a>
+                    ) : null}
                   </div>
-                </div>
+                ) : null}
               </div>
 
-              {/* Middle: scope + measurements */}
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm font-extrabold">Scope + Measurements</div>
-                  <div className="text-xs text-white/60">
-                    {(() => {
-                      const c = scopeCounts(getScope(selectedJob));
-                      return `D:${c.doors} W:${c.windows} S:${c.screens} T:${c.trim} C:${c.custom}`;
-                    })()}
-                  </div>
-                </div>
-
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {(["door", "window", "screen", "trim", "custom"] as ScopeType[]).map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-extrabold hover:bg-white/10"
-                      onClick={() => addScopeItem(selectedJob, t)}
-                    >
-                      + {t.toUpperCase()}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="mt-3 space-y-2">
-                  {getScope(selectedJob).length === 0 ? (
-                    <div className="rounded-xl border border-white/10 bg-black/20 p-3 text-sm text-white/60">
-                      Add items (Door/Window/Screen/Trim/Custom). Use mic to append a new line per tap.
+              {!selectedJob ? (
+                <div className="p-4 text-sm text-white/60">Select a job to open the drawer.</div>
+              ) : (
+                <div className="grid grid-cols-1 gap-3 p-3 lg:grid-cols-3">
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                    <div className="text-sm font-extrabold">Customer</div>
+                    <div className="mt-2 space-y-1 text-sm">
+                      <div className="font-bold">{selectedJob.customer?.name || "-"}</div>
+                      <div className="text-white/70">{selectedJob.customer?.address || "-"}</div>
+                      <div className="text-white/70">{selectedJob.customer?.phone || "-"}</div>
+                      <div className="text-white/70">{selectedJob.customer?.email || "-"}</div>
                     </div>
-                  ) : null}
 
-                  {getScope(selectedJob).map((it) => {
-                    const targetId = `scope_${selectedJob.id}_${it.id}`;
-                    const isActive = activeTargetRef.current === targetId;
+                    <div className="mt-3 rounded-2xl border border-white/10 bg-black/20 p-3">
+                      <div className="text-xs font-bold text-white/60">Appointment</div>
+                      <div className="mt-1 text-sm font-bold">{fmtAppt(selectedJob)}</div>
+                    </div>
 
-                    return (
-                      <div key={it.id} className="rounded-2xl border border-white/10 bg-black/20 p-3">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
+                    <div className="mt-3">
+                      <div className="text-xs font-bold text-white/60">Stage</div>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {stages.map((s, idx) => (
+                          <button
+                            key={reactKey("stage-pill", selectedJob.id, s, idx)}
+                            type="button"
+                            className={cn(
+                              "rounded-full border px-3 py-1 text-xs font-extrabold",
+                              coerceStage(selectedJob.stage) === s
+                                ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-100"
+                                : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10"
+                            )}
+                            onClick={() => void setStage(selectedJob.id, s)}
+                          >
+                            {s}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm font-extrabold">Scope + Measurements</div>
+                      <div className="text-xs text-white/60">
+                        {(() => {
+                          const c = scopeCounts(getScope(selectedJob));
+                          return `D:${c.doors} W:${c.windows} S:${c.screens} T:${c.trim} C:${c.custom}`;
+                        })()}
+                      </div>
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {(["door", "window", "screen", "trim", "custom"] as ScopeType[]).map((t, idx) => (
+                        <button
+                          key={reactKey("scope-add", selectedJob.id, t, idx)}
+                          type="button"
+                          className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-extrabold hover:bg-white/10"
+                          onClick={() => addScopeItem(selectedJob, t)}
+                        >
+                          + {t.toUpperCase()}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="mt-3 space-y-2">
+                      {getScope(selectedJob).length === 0 ? (
+                        <div className="rounded-xl border border-white/10 bg-black/20 p-3 text-sm text-white/60">
+                          Add items (Door/Window/Screen/Trim/Custom). Use mic to append a new line per tap.
+                        </div>
+                      ) : null}
+
+                      {getScope(selectedJob).map((it, idx) => {
+                        const targetId = `scope_${selectedJob.id}_${it.id}`;
+                        const isActive = activeTargetRef.current === targetId;
+
+                        return (
+                          <div
+                            key={reactKey("scope-item", selectedJob.id, it.id, it.type, it.createdAt, idx)}
+                            className="rounded-2xl border border-white/10 bg-black/20 p-3"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    className={cn(
+                                      "rounded-full border px-3 py-1 text-xs font-extrabold",
+                                      it.done
+                                        ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-100"
+                                        : "border-white/10 bg-white/5 text-white/70"
+                                    )}
+                                    onClick={() => toggleScopeDone(selectedJob, it.id)}
+                                  >
+                                    {it.done ? "Done" : "Open"}
+                                  </button>
+                                  <div className="truncate text-sm font-extrabold">{it.label}</div>
+                                </div>
+                                <div className="mt-1 text-xs text-white/50">{it.type}</div>
+                              </div>
+
+                              <div className="flex items-center gap-2">
+                                <MicButton
+                                  label="Mic"
+                                  supported={supported}
+                                  listening={listening}
+                                  active={isActive}
+                                  onClick={() =>
+                                    toggle(targetId, (txt, isFinal) => {
+                                      setScopeQuick(selectedJob, it.id, dictationAppendLine(it.quick, txt, isFinal));
+                                    })
+                                  }
+                                />
+                                <button
+                                  type="button"
+                                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-extrabold hover:bg-white/10"
+                                  onClick={() => removeScopeItem(selectedJob, it.id)}
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            </div>
+
+                            <textarea
+                              className="mt-3 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none placeholder:text-white/30"
+                              value={it.quick}
+                              onChange={(e) => setScopeQuick(selectedJob, it.id, e.target.value)}
+                              placeholder="Measurements / notes (Mic adds a new line per tap)"
+                              rows={4}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm font-extrabold">Materials Grab List</div>
+                        <button
+                          type="button"
+                          className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-extrabold hover:bg-white/10"
+                          onClick={() => copyToClipboard(buildGrabListText(selectedJob, getMaterials(selectedJob)))}
+                        >
+                          Copy Grab List
+                        </button>
+                      </div>
+
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {Object.keys(MATERIAL_TEMPLATES).map((k, idx) => (
+                          <button
+                            key={reactKey("material-template", selectedJob.id, k, idx)}
+                            type="button"
+                            className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-extrabold hover:bg-white/10"
+                            onClick={() => applyTemplate(selectedJob, k)}
+                          >
+                            + {k}
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="mt-3">
+                        <div className="text-xs font-bold text-white/60">Quick Add (one per line)</div>
+                        <textarea
+                          className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none placeholder:text-white/30"
+                          value={getMaterialsQuickAddText(selectedJob)}
+                          onChange={(e) => setMaterialsQuickAddText(selectedJob, e.target.value)}
+                          placeholder={"Caulk / sealant\nScrews x 2 boxes\nShims"}
+                          rows={4}
+                        />
+                        <div className="mt-2 flex items-center justify-between">
+                          <button
+                            type="button"
+                            className="rounded-xl bg-white px-3 py-2 text-xs font-extrabold text-black hover:bg-white/90"
+                            onClick={() => quickAddMaterials(selectedJob)}
+                          >
+                            Add Lines
+                          </button>
+
+                          <div className="text-xs text-white/50">
+                            Added by: <span className="font-bold text-white/70">{grabCode || "live"}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 space-y-2">
+                        {getMaterials(selectedJob).length === 0 ? (
+                          <div className="rounded-xl border border-white/10 bg-black/20 p-3 text-sm text-white/60">
+                            No materials yet. Use templates or quick add.
+                          </div>
+                        ) : null}
+
+                        {getMaterials(selectedJob).map((m, idx) => (
+                          <div
+                            key={reactKey("material-item", selectedJob.id, m.id, m.name, m.addedAt, idx)}
+                            className="flex items-start justify-between gap-2 rounded-xl border border-white/10 bg-black/20 p-3"
+                          >
+                            <div className="min-w-0">
                               <button
                                 type="button"
-                                className={cn(
-                                  "rounded-full border px-3 py-1 text-xs font-extrabold",
-                                  it.done
-                                    ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-100"
-                                    : "border-white/10 bg-white/5 text-white/70"
-                                )}
-                                onClick={() => toggleScopeDone(selectedJob, it.id)}
+                                className="text-left"
+                                onClick={() => toggleMaterial(selectedJob, m.id)}
+                                title="Toggle checked"
                               >
-                                {it.done ? "Done" : "Open"}
+                                <div className="truncate text-sm font-bold">
+                                  {m.checked ? "✅" : "⬜"} {m.name}
+                                  {m.qty ? <span className="text-white/60"> (x {m.qty})</span> : null}
+                                </div>
+                                <div className="mt-1 text-xs text-white/50">
+                                  {m.addedBy} • {safeTimeLabel(m.addedAt)}
+                                </div>
                               </button>
-                              <div className="text-sm font-extrabold truncate">{it.label}</div>
                             </div>
-                            <div className="mt-1 text-xs text-white/50">{it.type}</div>
-                          </div>
 
-                          <div className="flex items-center gap-2">
-                            <MicButton
-                              label="Mic"
-                              supported={supported}
-                              listening={listening}
-                              active={isActive}
-                              onClick={() =>
-                                toggle(targetId, (txt, isFinal) => {
-                                  setScopeQuick(selectedJob, it.id, dictationAppendLine(it.quick, txt, isFinal));
-                                })
-                              }
-                            />
                             <button
                               type="button"
                               className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-extrabold hover:bg-white/10"
-                              onClick={() => removeScopeItem(selectedJob, it.id)}
+                              onClick={() => removeMaterial(selectedJob, m.id)}
                             >
                               Remove
                             </button>
                           </div>
-                        </div>
-
-                        <textarea
-                          className="mt-3 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none placeholder:text-white/30"
-                          value={it.quick}
-                          onChange={(e) => setScopeQuick(selectedJob, it.id, e.target.value)}
-                          placeholder="Measurements / notes… (Mic adds a new line per tap)"
-                          rows={4}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Right: Materials + Notes */}
-              <div className="space-y-3">
-                {/* Materials */}
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm font-extrabold">Materials Grab List</div>
-                    <button
-                      type="button"
-                      className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-extrabold hover:bg-white/10"
-                      onClick={() => copyToClipboard(buildGrabListText(selectedJob, getMaterials(selectedJob)))}
-                    >
-                      Copy Grab List
-                    </button>
-                  </div>
-
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {Object.keys(MATERIAL_TEMPLATES).map((k) => (
-                      <button
-                        key={k}
-                        type="button"
-                        className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-extrabold hover:bg-white/10"
-                        onClick={() => applyTemplate(selectedJob, k)}
-                      >
-                        + {k}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="mt-3">
-                    <div className="text-xs font-bold text-white/60">Quick Add (one per line)</div>
-                    <textarea
-                      className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none placeholder:text-white/30"
-                      value={getMaterialsQuickAddText(selectedJob)}
-                      onChange={(e) => setMaterialsQuickAddText(selectedJob, e.target.value)}
-                      placeholder={"Caulk / sealant\nScrews x 2 boxes\nShims"}
-                      rows={4}
-                    />
-                    <div className="mt-2 flex items-center justify-between">
-                      <button
-                        type="button"
-                        className="rounded-xl bg-white px-3 py-2 text-xs font-extrabold text-black hover:bg-white/90"
-                        onClick={() => quickAddMaterials(selectedJob)}
-                      >
-                        Add Lines
-                      </button>
-
-                      <div className="text-xs text-white/50">
-                        Added by: <span className="font-bold text-white/70">{grabCode || "live"}</span>
+                        ))}
                       </div>
                     </div>
-                  </div>
 
-                  <div className="mt-3 space-y-2">
-                    {getMaterials(selectedJob).length === 0 ? (
-                      <div className="rounded-xl border border-white/10 bg-black/20 p-3 text-sm text-white/60">
-                        No materials yet. Use templates or quick add.
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm font-extrabold">Technician Notes</div>
+                        <MicButton
+                          label="Mic"
+                          supported={supported}
+                          listening={listening}
+                          active={activeTargetRef.current === `notes_${selectedJob.id}`}
+                          onClick={() =>
+                            toggle(`notes_${selectedJob.id}`, (txt, isFinal) => {
+                              setNotes(selectedJob, dictationAppendLine(getNotes(selectedJob), txt, isFinal));
+                            })
+                          }
+                        />
                       </div>
-                    ) : null}
 
-                    {getMaterials(selectedJob).map((m) => (
-                      <div
-                        key={m.id}
-                        className="flex items-start justify-between gap-2 rounded-xl border border-white/10 bg-black/20 p-3"
-                      >
-                        <div className="min-w-0">
-                          <button
-                            type="button"
-                            className="text-left"
-                            onClick={() => toggleMaterial(selectedJob, m.id)}
-                            title="Toggle checked"
-                          >
-                            <div className="text-sm font-bold truncate">
-                              {m.checked ? "✅" : "⬜"} {m.name}
-                              {m.qty ? <span className="text-white/60"> (x {m.qty})</span> : null}
-                            </div>
-                            <div className="mt-1 text-xs text-white/50">
-                              {m.addedBy} •{" "}
-                              {new Date(m.addedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
-                            </div>
-                          </button>
-                        </div>
-
-                        <button
-                          type="button"
-                          className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-extrabold hover:bg-white/10"
-                          onClick={() => removeMaterial(selectedJob, m.id)}
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    ))}
+                      <textarea
+                        className="mt-3 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none placeholder:text-white/30"
+                        value={getNotes(selectedJob)}
+                        onChange={(e) => setNotes(selectedJob, e.target.value)}
+                        placeholder="Notes (Mic adds a new line per tap)"
+                        rows={8}
+                      />
+                    </div>
                   </div>
                 </div>
-
-                {/* Notes */}
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm font-extrabold">Technician Notes</div>
-                    <MicButton
-                      label="Mic"
-                      supported={supported}
-                      listening={listening}
-                      active={activeTargetRef.current === `notes_${selectedJob.id}`}
-                      onClick={() =>
-                        toggle(`notes_${selectedJob.id}`, (txt, isFinal) => {
-                          setNotes(selectedJob, dictationAppendLine(getNotes(selectedJob), txt, isFinal));
-                        })
-                      }
-                    />
-                  </div>
-
-                  <textarea
-                    className="mt-3 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none placeholder:text-white/30"
-                    value={getNotes(selectedJob)}
-                    onChange={(e) => setNotes(selectedJob, e.target.value)}
-                    placeholder="Notes… (Mic adds a new line per tap)"
-                    rows={8}
-                  />
-                </div>
-              </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
+
+        {rightPanel === "measurement" && (
+          <aside className="relative w-[min(48vw,720px)] min-w-[360px] max-w-[720px] border-l border-white/10 bg-black/40 backdrop-blur-xl">
+            <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+              <div className="min-w-0">
+                <div className="text-xs uppercase tracking-[0.2em] text-cyan-300/80">Beam Workspace</div>
+                <div className="truncate text-sm font-semibold text-white">{panelTitle}</div>
+              </div>
+
+              <button
+                type="button"
+                onClick={closeRightPanel}
+                className="rounded-lg border border-white/10 px-3 py-1.5 text-sm text-white/80 transition hover:bg-white/10 hover:text-white"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="h-[calc(100vh-65px)] w-full">
+              <iframe title={panelTitle} src={panelUrl} className="h-full w-full bg-white" />
+            </div>
+          </aside>
+        )}
       </div>
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
