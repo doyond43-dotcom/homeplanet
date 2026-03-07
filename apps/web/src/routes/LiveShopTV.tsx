@@ -60,20 +60,23 @@ function safeText(x: unknown, max = 90): string {
 
 function extractSummary(payload: any) {
   const p = payload ?? {};
+  const isRoom = p.status === "room";
+
   return {
     name: safeText(p.name || p.customer_name || p.first_name || p.full_name || "", 28) || "New customer",
-    vehicle:
-      safeText(
-        p.vehicle ||
-          p.car ||
-          p.make_model ||
-          p.vehicle_info ||
-          p.vehicleText ||
-          p.project_type ||
-          p.projectType ||
-          "",
-        42
-      ) || "Vehicle not specified",
+    vehicle: isRoom
+      ? "Room"
+      : safeText(
+          p.vehicle ||
+            p.car ||
+            p.make_model ||
+            p.vehicle_info ||
+            p.vehicleText ||
+            p.project_type ||
+            p.projectType ||
+            "",
+          42
+        ) || "Vehicle not specified",
     message: safeText(p.message || p.notes || p.problem || p.issue || "", 160) || "No message provided",
   };
 }
@@ -123,6 +126,7 @@ function normalizeAwnitLead(r: AwnitLeadRow): Row {
     best_time: r.best_time ?? "",
     notes: r.notes ?? "",
     message: r.notes ?? "",
+    status: r.status ?? "",
   };
 
   return {
@@ -269,7 +273,7 @@ export default function LiveShopTV() {
           .insert([
             {
               name: "Tech2244",
-              project_type: "Room",
+              project_type: "Repair",
               notes: msg,
               status: "room",
             },
@@ -288,6 +292,7 @@ export default function LiveShopTV() {
           project_type: "Room",
           message: msg,
           notes: msg,
+          status: "room",
         };
 
         const { data, error } = await supabase
