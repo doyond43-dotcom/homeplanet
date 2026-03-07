@@ -14,6 +14,8 @@ import { getSupabase } from "../lib/supabase";
  * - Layout fix:
  *   - Recent section scrolls inside the board
  *   - Footer stays visible
+ * - Persistence fix:
+ *   - Ask the Room now writes to Supabase instead of only local state
  */
 
 type IntakeRow = {
@@ -170,10 +172,12 @@ function AskRoomBar({
   value,
   onChange,
   onSend,
+  sending,
 }: {
   value: string;
   onChange: (next: string) => void;
   onSend: () => void;
+  sending: boolean;
 }) {
   return (
     <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900/30 p-4">
@@ -186,14 +190,16 @@ function AskRoomBar({
             if (e.key === "Enter") onSend();
           }}
           placeholder="Anyone see the small prybar?"
-          className="h-11 flex-1 rounded-xl border border-slate-700 bg-slate-950/70 px-4 text-sm text-slate-100 outline-none placeholder:text-slate-500"
+          className="h-11 flex-1 rounded-xl border border-slate-700 bg-slate-950/70 px-4 text-sm text-slate-100 outline-none placeholder:text-slate-500 disabled:opacity-60"
+          disabled={sending}
         />
         <button
           type="button"
           onClick={onSend}
-          className="h-11 rounded-xl border border-blue-500/30 bg-blue-500/15 px-4 text-sm font-semibold text-blue-100 hover:bg-blue-500/20"
+          disabled={sending}
+          className="h-11 rounded-xl border border-blue-500/30 bg-blue-500/15 px-4 text-sm font-semibold text-blue-100 hover:bg-blue-500/20 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Send
+          {sending ? "Sending…" : "Send"}
         </button>
       </div>
     </div>
@@ -212,6 +218,7 @@ export default function LiveShopTV() {
   const [lastErr, setLastErr] = useState<string | null>(null);
   const [pulseIds, setPulseIds] = useState<Record<string, boolean>>({});
   const [askRoomValue, setAskRoomValue] = useState("");
+  const [sendingRoom, setSendingRoom] = useState(false);
 
   const inFlightLoadRef = useRef(false);
   const lastFullSyncAtRef = useRef<number>(0);
@@ -248,29 +255,72 @@ export default function LiveShopTV() {
     }, 1800);
   }
 
-  function handleAskRoomSend() {
+  async function handleAskRoomSend() {
     const msg = askRoomValue.trim();
-    if (!msg) return;
+    if (!msg || sendingRoom) return;
 
-    const syntheticId =
-      typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `room-${Date.now()}`;
+    setSendingRoom(true);
+    setLastErr(null);
 
-    const newRow: Row = {
-      id: syntheticId,
-      created_at: new Date().toISOString(),
-      payload: {
-        name: "Tech2244",
-        project_type: "Room",
-        message: msg,
-        notes: msg,
-      },
-    };
+    try {
+      if (isAwnit) {
+        const { data, error } = await supabase
+          .from("awnit_leads")
+          .insert([
+            {
+              name: "Tech2244",
+              project_type: "Room",
+              notes: msg,
+              status: "room",
+            },
+          ])
+          .select("id, created_at, name, phone, email, address, project_type, best_time, notes, status, photo_urls")
+          .single();
 
-    setRows((prev) => mergeUpsert(prev, newRow, 30));
-    flashPulse(syntheticId);
-    setStatus("Room update");
-    window.setTimeout(() => setStatus("Listening…"), 1200);
-    setAskRoomValue("");
+        if (error) throw error;
+
+        const normalized = normalizeAwnitLead(data as AwnitLeadRow);
+        setRows((prev) => mergeUpsert(prev, normalized, 30));
+        flashPulse(normalized.id);
+      } else {
+        const payload = {
+          name: "Tech2244",
+          project_type: "Room",
+          message: msg,
+          notes: msg,
+        };
+
+        const { data, error } = await supabase
+          .from("public_intake_submissions")
+          .insert([
+            {
+              slug: shopSlug,
+              payload,
+              converted_service_id: null,
+            },
+          ])
+          .select("id, created_at, slug, payload, converted_service_id")
+          .single();
+
+        if (error) throw error;
+
+        const normalized = normalizeIntakeRow(data as IntakeRow);
+        setRows((prev) => mergeUpsert(prev, normalized, 30));
+        flashPulse(normalized.id);
+      }
+
+      setStatus("Room update");
+      window.setTimeout(() => setStatus("Listening…"), 1200);
+      setAskRoomValue("");
+      lastFullSyncAtRef.current = Date.now();
+    } catch (err: any) {
+      const msgText = err?.message || String(err);
+      setLastErr(msgText);
+      setStatus("Room send failed");
+      window.setTimeout(() => setStatus("Listening…"), 1800);
+    } finally {
+      setSendingRoom(false);
+    }
   }
 
   useEffect(() => {
@@ -466,11 +516,17 @@ export default function LiveShopTV() {
     const tableName = isAwnit ? "awnit_leads" : "public_intake_submissions";
     const changeBase: any = { schema: "public", table: tableName };
 
-    const insertSpec = isAwnit ? { event: "INSERT", ...changeBase } : { event: "INSERT", ...changeBase, filter: `slug=eq.${shopSlug}` };
+    const insertSpec = isAwnit
+      ? { event: "INSERT", ...changeBase }
+      : { event: "INSERT", ...changeBase, filter: `slug=eq.${shopSlug}` };
 
-    const updateSpec = isAwnit ? { event: "UPDATE", ...changeBase } : { event: "UPDATE", ...changeBase, filter: `slug=eq.${shopSlug}` };
+    const updateSpec = isAwnit
+      ? { event: "UPDATE", ...changeBase }
+      : { event: "UPDATE", ...changeBase, filter: `slug=eq.${shopSlug}` };
 
-    const deleteSpec = isAwnit ? { event: "DELETE", ...changeBase } : { event: "DELETE", ...changeBase, filter: `slug=eq.${shopSlug}` };
+    const deleteSpec = isAwnit
+      ? { event: "DELETE", ...changeBase }
+      : { event: "DELETE", ...changeBase, filter: `slug=eq.${shopSlug}` };
 
     const channel = supabase
       .channel(channelName)
@@ -559,7 +615,12 @@ export default function LiveShopTV() {
                 ))}
               </div>
 
-              <AskRoomBar value={askRoomValue} onChange={setAskRoomValue} onSend={handleAskRoomSend} />
+              <AskRoomBar
+                value={askRoomValue}
+                onChange={setAskRoomValue}
+                onSend={handleAskRoomSend}
+                sending={sendingRoom}
+              />
             </div>
           </div>
 
