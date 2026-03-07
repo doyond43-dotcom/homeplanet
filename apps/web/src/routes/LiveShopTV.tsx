@@ -64,7 +64,6 @@ function extractSummary(payload: any) {
           p.make_model ||
           p.vehicle_info ||
           p.vehicleText ||
-          // AWNIT fallback
           p.project_type ||
           p.projectType ||
           "",
@@ -289,6 +288,17 @@ export default function LiveShopTV() {
     const stopWheel = (e: WheelEvent) => e.preventDefault();
     const stopTouch = (e: TouchEvent) => e.preventDefault();
     const stopKeys = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName?.toLowerCase();
+
+      const isTypingField =
+        tag === "input" ||
+        tag === "textarea" ||
+        tag === "select" ||
+        !!target?.isContentEditable;
+
+      if (isTypingField) return;
+
       const k = e.key;
       if (
         k === "ArrowUp" ||
@@ -389,7 +399,11 @@ export default function LiveShopTV() {
     const localNewest = rows[0]?.created_at ?? null;
 
     if (isAwnit) {
-      const { data, error } = await supabase.from("awnit_leads").select("created_at").order("created_at", { ascending: false }).limit(1);
+      const { data, error } = await supabase
+        .from("awnit_leads")
+        .select("created_at")
+        .order("created_at", { ascending: false })
+        .limit(1);
 
       if (error) {
         setConnected(false);
