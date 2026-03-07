@@ -11,6 +11,9 @@ import { getSupabase } from "../lib/supabase";
  *   - Live presence strip
  *   - Ask the Room bar
  *   - Subtle pulse on fresh activity
+ * - Layout fix:
+ *   - Recent section scrolls inside the board
+ *   - Footer stays visible
  */
 
 type IntakeRow = {
@@ -270,7 +273,6 @@ export default function LiveShopTV() {
     setAskRoomValue("");
   }
 
-  // HARD TV SCROLL LOCK
   useEffect(() => {
     const doc = document.documentElement;
     const body = document.body;
@@ -519,101 +521,110 @@ export default function LiveShopTV() {
   }, [shopSlug]);
 
   const newest = rows[0] ?? null;
+  const recentRows = newest ? rows.slice(1, 8) : rows.slice(0, 8);
 
   return (
     <div className="h-screen w-screen overflow-hidden bg-slate-950 p-6 text-slate-100">
       <div className="mx-auto h-full w-full max-w-none">
         <div
-          className="h-full overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/40 p-6"
+          className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/40 p-6"
           style={{
             boxShadow:
               "0 0 0 1px rgba(148,163,184,.25), 0 0 40px rgba(59,130,246,.10), 0 0 90px rgba(16,185,129,.06)",
           }}
         >
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="text-xl font-bold">
-              {connected ? status : "Reconnecting…"}{" "}
-              <span className="text-xs font-semibold text-slate-400">/{shopSlug || "no-slug"}</span>
-              {isAwnit ? <span className="ml-2 text-xs font-semibold text-emerald-300">(awnit_leads)</span> : null}
-            </div>
-            <div className="text-xs text-slate-400">
-              Rows: <span className="font-semibold text-slate-200">{rows.length}</span>
-            </div>
-          </div>
-
-          {lastErr ? (
-            <div className="mt-3 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">{lastErr}</div>
-          ) : null}
-
-          <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-900/20 p-4">
-            <div className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Live now</div>
-            <div className="flex flex-wrap gap-2">
-              {presenceUsers.map((user) => (
-                <PresenceChip key={user.id} user={user} />
-              ))}
+          <div className="shrink-0">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="text-xl font-bold">
+                {connected ? status : "Reconnecting…"}{" "}
+                <span className="text-xs font-semibold text-slate-400">/{shopSlug || "no-slug"}</span>
+                {isAwnit ? <span className="ml-2 text-xs font-semibold text-emerald-300">(awnit_leads)</span> : null}
+              </div>
+              <div className="text-xs text-slate-400">
+                Rows: <span className="font-semibold text-slate-200">{rows.length}</span>
+              </div>
             </div>
 
-            <AskRoomBar value={askRoomValue} onChange={setAskRoomValue} onSend={handleAskRoomSend} />
-          </div>
+            {lastErr ? (
+              <div className="mt-3 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+                {lastErr}
+              </div>
+            ) : null}
 
-          {!newest ? (
-            <div className="mt-6 text-lg text-slate-400">No arrivals yet.</div>
-          ) : (
-            <div className="mt-6">
-              <div className="text-xs font-semibold text-slate-400">Newest arrival</div>
-
-              <div
-                className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-900/30 p-6"
-                style={{ boxShadow: "0 0 0 1px rgba(148,163,184,.20), 0 0 30px rgba(59,130,246,.14)" }}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 text-4xl font-extrabold">
-                    {extractSummary(newest.payload).vehicle}
-                    <PulseDot active={!!pulseIds[newest.id]} />
-                  </div>
-                  <div className="shrink-0 rounded-full border border-slate-700 bg-slate-950/60 px-3 py-1 text-sm font-semibold text-slate-200">
-                    {ageShort(newest.created_at)}
-                  </div>
-                </div>
-
-                <div className="mt-2 text-xl text-slate-200">{extractSummary(newest.payload).message}</div>
-                <div className="mt-3 text-base text-slate-400">
-                  {extractSummary(newest.payload).name} • {formatTime(newest.created_at)}
-                </div>
+            <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-900/20 p-4">
+              <div className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Live now</div>
+              <div className="flex flex-wrap gap-2">
+                {presenceUsers.map((user) => (
+                  <PresenceChip key={user.id} user={user} />
+                ))}
               </div>
 
-              <div className="mt-6">
-                <div className="text-xs font-semibold text-slate-400">Recent</div>
+              <AskRoomBar value={askRoomValue} onChange={setAskRoomValue} onSend={handleAskRoomSend} />
+            </div>
+          </div>
 
-                <div className="mt-2 space-y-2 overflow-hidden">
-                  {rows.slice(0, 8).map((r) => {
-                    const s = extractSummary(r.payload);
-                    return (
-                      <div key={r.id} className="rounded-xl border border-slate-800 bg-slate-950/30 px-4 py-3">
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="truncate text-base font-semibold text-slate-100">
-                              {s.vehicle}
-                              <PulseDot active={!!pulseIds[r.id]} />
-                              <span className="font-normal text-slate-400"> — {s.name}</span>
+          <div className="mt-6 flex min-h-0 flex-1 flex-col overflow-hidden">
+            {!newest ? (
+              <div className="text-lg text-slate-400">No arrivals yet.</div>
+            ) : (
+              <>
+                <div className="shrink-0">
+                  <div className="text-xs font-semibold text-slate-400">Newest arrival</div>
+
+                  <div
+                    className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-900/30 p-6"
+                    style={{ boxShadow: "0 0 0 1px rgba(148,163,184,.20), 0 0 30px rgba(59,130,246,.14)" }}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 text-4xl font-extrabold">
+                        {extractSummary(newest.payload).vehicle}
+                        <PulseDot active={!!pulseIds[newest.id]} />
+                      </div>
+                      <div className="shrink-0 rounded-full border border-slate-700 bg-slate-950/60 px-3 py-1 text-sm font-semibold text-slate-200">
+                        {ageShort(newest.created_at)}
+                      </div>
+                    </div>
+
+                    <div className="mt-2 text-xl text-slate-200">{extractSummary(newest.payload).message}</div>
+                    <div className="mt-3 text-base text-slate-400">
+                      {extractSummary(newest.payload).name} • {formatTime(newest.created_at)}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 flex min-h-0 flex-1 flex-col overflow-hidden">
+                  <div className="shrink-0 text-xs font-semibold text-slate-400">Recent</div>
+
+                  <div className="mt-2 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
+                    {recentRows.map((r) => {
+                      const s = extractSummary(r.payload);
+                      return (
+                        <div key={r.id} className="rounded-xl border border-slate-800 bg-slate-950/30 px-4 py-3">
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="truncate text-base font-semibold text-slate-100">
+                                {s.vehicle}
+                                <PulseDot active={!!pulseIds[r.id]} />
+                                <span className="font-normal text-slate-400"> — {s.name}</span>
+                              </div>
+                              <div className="mt-1 truncate text-sm text-slate-300">{s.message}</div>
                             </div>
-                            <div className="mt-1 truncate text-sm text-slate-300">{s.message}</div>
-                          </div>
-                          <div className="shrink-0 text-sm text-slate-400">
-                            <span className="mr-2">{ageShort(r.created_at)}</span>
-                            {formatTime(r.created_at)}
+                            <div className="shrink-0 text-sm text-slate-400">
+                              <span className="mr-2">{ageShort(r.created_at)}</span>
+                              {formatTime(r.created_at)}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                  {rows.length === 0 ? <div className="mt-2 text-sm text-slate-500">No rows yet.</div> : null}
+                      );
+                    })}
+                    {recentRows.length === 0 ? <div className="mt-2 text-sm text-slate-500">No rows yet.</div> : null}
+                  </div>
                 </div>
-              </div>
-            </div>
-          )}
+              </>
+            )}
+          </div>
 
-          <div className="mt-4 text-xs text-slate-500">
+          <div className="mt-4 shrink-0 text-xs text-slate-500">
             TV view: read-only. Staff uses <span className="text-slate-300">/live/{shopSlug}/board</span>.
           </div>
         </div>
