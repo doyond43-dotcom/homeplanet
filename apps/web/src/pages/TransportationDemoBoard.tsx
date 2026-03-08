@@ -220,7 +220,7 @@ function buildTripSummary(ride: RideRequest) {
     .join("\n");
 
   return [
-    `HOMEPLANET — TRIP SUMMARY`,
+    `HOMEPLANET — DISPATCH SUMMARY`,
     ``,
     `Passenger: ${ride.passengerName}`,
     `Trip #: ${ride.tripNumber || "-"}`,
@@ -240,7 +240,7 @@ function buildTripSummary(ride: RideRequest) {
     `TIMELINE`,
     timeline || "-",
     ``,
-    `TRIP RECORDS`,
+    `OPERATIONAL RECORDS`,
     records || "-",
     ``,
     `DRIVER`,
@@ -574,6 +574,20 @@ export default function TransportationDemoBoard() {
     ? selectedRide.timeline.slice().sort((a, b) => b.time.localeCompare(a.time))[0]
     : null;
 
+  const activeRideCount = rides.filter((r) =>
+    ["Driver Assigned", "Driver En Route", "Passenger Picked Up"].includes(coerceStage(r.stage))
+  ).length;
+
+  const assignedCount = rides.filter((r) =>
+    ["Driver Assigned", "Driver En Route", "Passenger Picked Up", "Trip Complete"].includes(coerceStage(r.stage))
+  ).length;
+
+  const awaitingPickupCount = rides.filter((r) =>
+    ["New Request", "Driver Assigned", "Driver En Route"].includes(coerceStage(r.stage))
+  ).length;
+
+  const completedCount = rides.filter((r) => coerceStage(r.stage) === "Trip Complete").length;
+
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_18%_0%,rgba(34,126,255,.20),transparent_26%),radial-gradient(circle_at_82%_0%,rgba(224,188,96,.10),transparent_24%),radial-gradient(circle_at_top,rgba(19,35,66,1)_0%,rgba(8,18,35,1)_42%,rgba(4,10,22,1)_100%)] text-[#f4efe1]">
       <div className="mx-auto max-w-7xl p-3 md:p-6">
@@ -612,6 +626,32 @@ export default function TransportationDemoBoard() {
             >
               Generate Trip Summary
             </button>
+          </div>
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+          <div className="rounded-2xl border border-[#31425d] bg-[linear-gradient(180deg,rgba(18,28,46,.98),rgba(12,20,34,.98))] p-3">
+            <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#9fb5d3]">Active Rides</div>
+            <div className="mt-2 text-2xl font-extrabold text-white">{activeRideCount}</div>
+            <div className="mt-1 text-xs text-[#c8b997]">Trips currently in motion</div>
+          </div>
+
+          <div className="rounded-2xl border border-[#31425d] bg-[linear-gradient(180deg,rgba(18,28,46,.98),rgba(12,20,34,.98))] p-3">
+            <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#9fb5d3]">Drivers Assigned</div>
+            <div className="mt-2 text-2xl font-extrabold text-white">{assignedCount}</div>
+            <div className="mt-1 text-xs text-[#c8b997]">Trips with operator coverage</div>
+          </div>
+
+          <div className="rounded-2xl border border-[#31425d] bg-[linear-gradient(180deg,rgba(18,28,46,.98),rgba(12,20,34,.98))] p-3">
+            <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#9fb5d3]">Awaiting Pickup</div>
+            <div className="mt-2 text-2xl font-extrabold text-white">{awaitingPickupCount}</div>
+            <div className="mt-1 text-xs text-[#c8b997]">Requests not yet completed</div>
+          </div>
+
+          <div className="rounded-2xl border border-[#31425d] bg-[linear-gradient(180deg,rgba(18,28,46,.98),rgba(12,20,34,.98))] p-3">
+            <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#9fb5d3]">Completed Trips</div>
+            <div className="mt-2 text-2xl font-extrabold text-white">{completedCount}</div>
+            <div className="mt-1 text-xs text-[#c8b997]">Finished rides on board</div>
           </div>
         </div>
 
@@ -678,8 +718,8 @@ export default function TransportationDemoBoard() {
         <div className="mt-4 rounded-2xl border border-[#2c3b56] bg-[linear-gradient(180deg,rgba(10,19,36,.96),rgba(6,13,27,.96))]">
           <div className="flex flex-col gap-2 border-b border-[#223148] p-3 md:flex-row md:items-center md:justify-between">
             <div>
-              <div className="text-lg font-extrabold text-white">Ride Drawer</div>
-              <div className="text-xs text-[#c8b997]">Open a ride to review dispatch, timeline, records, and trip summary</div>
+              <div className="text-lg font-extrabold text-white">Dispatch Console</div>
+              <div className="text-xs text-[#c8b997]">Open a ride to review live dispatch, timeline, records, and trip summary</div>
             </div>
 
             {selectedRide ? (
@@ -700,7 +740,33 @@ export default function TransportationDemoBoard() {
           ) : (
             <div className="grid grid-cols-1 gap-3 p-3 lg:grid-cols-3">
               <div className="rounded-2xl border border-[#31425d] bg-[linear-gradient(180deg,rgba(21,32,51,.98),rgba(14,23,38,.98))] p-3">
-                <div className="text-sm font-extrabold text-[#fff3d2]">Ride</div>
+                <div className="text-sm font-extrabold text-[#fff3d2]">Current Trip</div>
+
+                <div className="mt-2 rounded-2xl border border-[#354b67] bg-[linear-gradient(180deg,rgba(13,21,36,.96),rgba(10,16,29,.96))] p-3">
+                  <div className="text-xs font-bold text-[#e7cf95]">Current Dispatch</div>
+
+                  <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
+                    <div className="rounded-xl border border-[#3a4b67] bg-[#19253a] p-2">
+                      <div className="text-xs text-[#d2be92]">Passenger</div>
+                      <div className="mt-1 font-bold text-white">{selectedRide.passengerName || "-"}</div>
+                    </div>
+
+                    <div className="rounded-xl border border-[#3a4b67] bg-[#19253a] p-2">
+                      <div className="text-xs text-[#d2be92]">Status</div>
+                      <div className="mt-1 font-bold text-white">{selectedRide.stage || "-"}</div>
+                    </div>
+
+                    <div className="rounded-xl border border-[#3a4b67] bg-[#19253a] p-2">
+                      <div className="text-xs text-[#d2be92]">Driver</div>
+                      <div className="mt-1 font-bold text-white">{selectedRide.assignedDriver || "Unassigned"}</div>
+                    </div>
+
+                    <div className="rounded-xl border border-[#3a4b67] bg-[#19253a] p-2">
+                      <div className="text-xs text-[#d2be92]">Vehicle</div>
+                      <div className="mt-1 font-bold text-white">{selectedRide.vehicle || "Unassigned"}</div>
+                    </div>
+                  </div>
+                </div>
 
                 <div className="mt-2 space-y-2 text-sm">
                   <div>
@@ -836,7 +902,7 @@ export default function TransportationDemoBoard() {
                 </div>
 
                 <div className="mt-3 rounded-2xl border border-[#354b67] bg-[linear-gradient(180deg,rgba(13,21,36,.96),rgba(10,16,29,.96))] p-3">
-                  <div className="text-xs font-bold text-[#e7cf95]">Ride Snapshot</div>
+                  <div className="text-xs font-bold text-[#e7cf95]">Live Status</div>
                   <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
                     <div className="rounded-xl border border-[#3a4b67] bg-[#19253a] p-2">
                       <div className="text-xs text-[#d2be92]">Records</div>
@@ -858,7 +924,7 @@ export default function TransportationDemoBoard() {
                 </div>
 
                 <div className="mt-3 rounded-2xl border border-[#354b67] bg-[linear-gradient(180deg,rgba(13,21,36,.96),rgba(10,16,29,.96))] p-3">
-                  <div className="text-xs font-bold text-[#e7cf95]">Active Ride Summary</div>
+                  <div className="text-xs font-bold text-[#e7cf95]">Current Dispatch</div>
 
                   <div className="mt-2 space-y-2 text-sm text-[#d9d3c4]">
                     <div>
@@ -889,7 +955,7 @@ export default function TransportationDemoBoard() {
 
               <div className="space-y-3">
                 <div className="rounded-2xl border border-[#31425d] bg-[linear-gradient(180deg,rgba(21,32,51,.98),rgba(14,23,38,.98))] p-3">
-                  <div className="text-sm font-extrabold text-[#fff3d2]">Trip Records</div>
+                  <div className="text-sm font-extrabold text-[#fff3d2]">Operational Records</div>
 
                   <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-3">
                     <div>
@@ -944,7 +1010,7 @@ export default function TransportationDemoBoard() {
                         setMetaValue(selectedRide, "newRecordSource", "");
                       }}
                     >
-                      Add Trip Record
+                      Add Record
                     </button>
                   </div>
 
@@ -1179,7 +1245,7 @@ export default function TransportationDemoBoard() {
                 </div>
 
                 <div className="rounded-2xl border border-[#31425d] bg-[linear-gradient(180deg,rgba(21,32,51,.98),rgba(14,23,38,.98))] p-3">
-                  <div className="text-sm font-extrabold text-[#fff3d2]">Ride Issues</div>
+                  <div className="text-sm font-extrabold text-[#fff3d2]">Dispatch Issues</div>
 
                   <div className="mt-2">
                     <textarea
@@ -1234,7 +1300,7 @@ export default function TransportationDemoBoard() {
 
                 <div className="rounded-2xl border border-[#31425d] bg-[linear-gradient(180deg,rgba(21,32,51,.98),rgba(14,23,38,.98))] p-3">
                   <div className="flex items-center justify-between">
-                    <div className="text-sm font-extrabold text-[#fff3d2]">Trip Summary Preview</div>
+                    <div className="text-sm font-extrabold text-[#fff3d2]">Dispatch Summary Preview</div>
                     <button
                       type="button"
                       className="rounded-xl border border-[#4a5a78] bg-[linear-gradient(180deg,rgba(23,35,58,.96),rgba(14,23,38,.96))] px-3 py-2 text-xs font-extrabold text-[#eef4ff] hover:border-[#67d2ff] hover:bg-[#23314b]"
@@ -1259,7 +1325,7 @@ export default function TransportationDemoBoard() {
                           className="rounded-xl border border-[#e0bc60] bg-[linear-gradient(180deg,#f0cf7e,#d5a94d)] px-3 py-2 text-xs font-extrabold text-[#14181f] hover:brightness-110"
                           onClick={() => copyToClipboard(buildTripSummary(selectedRide))}
                         >
-                          Copy Trip Summary
+                          Copy Dispatch Summary
                         </button>
                       </div>
                     </>
