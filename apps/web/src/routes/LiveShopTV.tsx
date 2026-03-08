@@ -16,6 +16,9 @@ import { getSupabase } from "../lib/supabase";
  *   - Footer stays visible
  * - Persistence fix:
  *   - Ask the Room now writes to Supabase instead of only local state
+ * - Room UX:
+ *   - ROOM QUESTION badge
+ *   - Resolve button hides room card from board
  */
 
 type IntakeRow = {
@@ -58,11 +61,17 @@ function safeText(x: unknown, max = 90): string {
   return s.length > max ? s.slice(0, max - 1) + "…" : s;
 }
 
+function isRoomPayload(payload: any) {
+  const p = payload ?? {};
+  return p.status === "room" || p.best_time === "room";
+}
+
 function extractSummary(payload: any) {
   const p = payload ?? {};
-  const isRoom = p.status === "room" || p.best_time === "room";
+  const isRoom = isRoomPayload(p);
 
   return {
+    isRoom,
     name: safeText(p.name || p.customer_name || p.first_name || p.full_name || "", 28) || "New customer",
     vehicle: isRoom
       ? "Room"
@@ -223,6 +232,7 @@ export default function LiveShopTV() {
   const [pulseIds, setPulseIds] = useState<Record<string, boolean>>({});
   const [askRoomValue, setAskRoomValue] = useState("");
   const [sendingRoom, setSendingRoom] = useState(false);
+  const [resolvedIds, setResolvedIds] = useState<Record<string, boolean>>({});
 
   const inFlightLoadRef = useRef(false);
   const lastFullSyncAtRef = useRef<number>(0);
@@ -257,6 +267,10 @@ export default function LiveShopTV() {
       });
       delete pulseTimersRef.current[id];
     }, 1800);
+  }
+
+  function resolveRoomCard(id: string) {
+    setResolvedIds((prev) => ({ ...prev, [id]: true }));
   }
 
   async function handleAskRoomSend() {
@@ -494,6 +508,7 @@ export default function LiveShopTV() {
     setRows([]);
     setConnected(false);
     setLastErr(null);
+    setResolvedIds({});
     loadLatest("Loading…");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shopSlug]);
@@ -581,8 +596,9 @@ export default function LiveShopTV() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shopSlug]);
 
-  const newest = rows[0] ?? null;
-  const recentRows = newest ? rows.slice(1, 8) : rows.slice(0, 8);
+  const visibleRows = rows.filter((r) => !resolvedIds[r.id]);
+  const newest = visibleRows[0] ?? null;
+  const recentRows = newest ? visibleRows.slice(1, 8) : visibleRows.slice(0, 8);
 
   return (
     <div className="h-screen w-screen overflow-hidden bg-slate-950 p-6 text-slate-100">
@@ -602,7 +618,7 @@ export default function LiveShopTV() {
                 {isAwnit ? <span className="ml-2 text-xs font-semibold text-emerald-300">(awnit_leads)</span> : null}
               </div>
               <div className="text-xs text-slate-400">
-                Rows: <span className="font-semibold text-slate-200">{rows.length}</span>
+                Rows: <span className="font-semibold text-slate-200">{visibleRows.length}</span>
               </div>
             </div>
 
@@ -641,6 +657,21 @@ export default function LiveShopTV() {
                     className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-900/30 p-6"
                     style={{ boxShadow: "0 0 0 1px rgba(148,163,184,.20), 0 0 30px rgba(59,130,246,.14)" }}
                   >
+                    {extractSummary(newest.payload).isRoom ? (
+                      <div className="mb-3 flex items-center justify-between gap-3">
+                        <span className="inline-flex items-center rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-emerald-300">
+                          Room Question
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => resolveRoomCard(newest.id)}
+                          className="rounded-lg border border-slate-700 bg-slate-950/70 px-3 py-1 text-xs font-semibold text-slate-300 hover:bg-slate-900"
+                        >
+                          Resolve
+                        </button>
+                      </div>
+                    ) : null}
+
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 text-4xl font-extrabold">
                         {extractSummary(newest.payload).vehicle}
@@ -666,6 +697,21 @@ export default function LiveShopTV() {
                       const s = extractSummary(r.payload);
                       return (
                         <div key={r.id} className="rounded-xl border border-slate-800 bg-slate-950/30 px-4 py-3">
+                          {s.isRoom ? (
+                            <div className="mb-2 flex items-center justify-between gap-3">
+                              <span className="inline-flex items-center rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-300">
+                                Room Question
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => resolveRoomCard(r.id)}
+                                className="rounded-lg border border-slate-700 bg-slate-950/70 px-2.5 py-1 text-[10px] font-semibold text-slate-300 hover:bg-slate-900"
+                              >
+                                Resolve
+                              </button>
+                            </div>
+                          ) : null}
+
                           <div className="flex items-center justify-between gap-3">
                             <div className="min-w-0">
                               <div className="truncate text-base font-semibold text-slate-100">
