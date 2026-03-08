@@ -18,6 +18,7 @@ import PlanetRoutes from "./planet/PlanetRoutes";
 import CreatorRoutes from "./routes/CreatorRoutes";
 
 import LiveAwnitIntake from "./pages/LiveAwnitIntake";
+import LegalDemoBoard from "./pages/LegalDemoBoard";
 import NotFound from "./pages/NotFound";
 
 /* BEAM ROUTES */
@@ -37,7 +38,7 @@ function MeasurementCardPlaceholder() {
   const code = searchParams.get("code") || "";
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-4">
+    <div className="min-h-screen bg-slate-950 p-4 text-slate-100">
       <div className="mx-auto max-w-3xl rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
         <div className="text-xs uppercase tracking-[0.2em] text-cyan-300/80">Beam Card</div>
         <div className="mt-1 text-2xl font-extrabold">Door Measurement Card</div>
@@ -87,6 +88,11 @@ export default function App() {
 
         {/* Cities (geography layer) — MUST be above tenant catch-all */}
         <Route path="/city/*" element={<CityRoutes />} />
+
+        {/* LEGAL DEMO — explicit top-level routes to avoid route swallowing */}
+        <Route path="/legal-demo" element={<LegalDemoBoard />} />
+        <Route path="/legal-evidence-board" element={<Navigate to="/legal-demo" replace />} />
+        <Route path="/planet/legal/demo" element={<LegalDemoBoard />} />
 
         {/* Planets (core app layer) — MUST be above tenant catch-all */}
         <Route path="/planet/*" element={<PlanetRoutes />} />
