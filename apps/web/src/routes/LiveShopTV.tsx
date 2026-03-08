@@ -60,7 +60,7 @@ function safeText(x: unknown, max = 90): string {
 
 function extractSummary(payload: any) {
   const p = payload ?? {};
-  const isRoom = p.status === "room";
+  const isRoom = p.status === "room" || p.best_time === "room";
 
   return {
     name: safeText(p.name || p.customer_name || p.first_name || p.full_name || "", 28) || "New customer",
@@ -274,8 +274,9 @@ export default function LiveShopTV() {
             {
               name: "Tech2244",
               project_type: "Repair",
+              best_time: "room",
               notes: msg,
-              status: "room",
+              status: "new",
             },
           ])
           .select("id, created_at, name, phone, email, address, project_type, best_time, notes, status, photo_urls")
@@ -434,7 +435,7 @@ export default function LiveShopTV() {
       .order("created_at", { ascending: false })
       .limit(30);
 
-    inFlightLoadRef.current = false;
+      inFlightLoadRef.current = false;
 
     if (error) {
       setLastErr(error.message || String(error));
