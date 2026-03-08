@@ -1,4 +1,4 @@
-﻿// apps/web/src/routes/TenantPublicPage.tsx
+// apps/web/src/routes/TenantPublicPage.tsx
 import { useMemo } from "react";
 import { Navigate, useParams } from "react-router-dom";
 import PublicPage from "./PublicPage";
@@ -30,7 +30,7 @@ export default function TenantPublicPage() {
 
   const slug = useMemo(() => slugRaw.toLowerCase(), [slugRaw]);
 
-  // ✅ CRITICAL: If our "tenant catch-all" accidentally captures reserved routes
+  // ? CRITICAL: If our "tenant catch-all" accidentally captures reserved routes
   // like /city/* or /live/*, bounce back to the intended absolute path.
   if (slug && RESERVED_SLUGS.has(slug)) {
     const to = `/${slug}${restRaw ? `/${restRaw}` : ""}`;

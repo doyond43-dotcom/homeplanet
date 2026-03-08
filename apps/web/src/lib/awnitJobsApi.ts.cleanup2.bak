@@ -1,0 +1,260 @@
+﻿// src/lib/awnitJobsApi.ts
+import { supabase } from "./supabase";
+
+export type AwnitJobRow = {
+  id: string;
+
+  customer_name: string;
+  customer_phone: string | null;
+  customer_email: string | null;
+  customer_address: string | null;
+
+  title: string | null;
+  summary: string;
+
+  stage: string | null;
+
+  appt_date: string | null;
+  appt_time: string | null;
+  crew: string | null;
+
+  scope_items: string[]; // IMPORTANT: treat as NOT NULL
+  materials: string[]; // IMPORTANT: treat as NOT NULL (safe default)
+  tech_notes: string; // safer as NOT NULL (safe default)
+
+  // ✅ DB constraint: meta is NOT NULL (treat as object always)
+  meta: Record<string, any>;
+
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type AwnitCreateJobInput = {
+  // required
+  customer_name: string;
+  summary: string;
+
+  // optional
+  customer_phone?: string | null;
+  customer_email?: string | null;
+  customer_address?: string | null;
+
+  title?: string | null;
+  stage?: string | null;
+
+  appt_date?: string | null;
+  appt_time?: string | null;
+  crew?: string | null;
+
+  scope_items?: string[] | null;
+  materials?: string[] | null;
+  tech_notes?: string | null;
+
+  // ✅ allow passing null/undefined, but we normalize to {}
+  meta?: Record<string, any> | null;
+};
+
+export type AwnitUpdateJobInput = Partial<
+  Omit<AwnitCreateJobInput, "customer_name" | "summary">
+> & {
+  // allow updating these too, but optional
+  customer_name?: string;
+  summary?: string;
+};
+
+function throwIfError(error: any, fallbackMsg: string) {
+  if (!error) return;
+  const msg = error?.message || fallbackMsg;
+  throw new Error(msg);
+}
+
+function normStr(v: any) {
+  return String(v ?? "").trim();
+}
+
+function normOptStr(v: any) {
+  const s = String(v ?? "").trim();
+  return s ? s : null;
+}
+
+function normArr(v: any): string[] {
+  if (!v) return [];
+  if (Array.isArray(v)) return v.map((x) => String(x ?? "").trim()).filter(Boolean);
+  return [];
+}
+
+function normNotes(v: any): string {
+  // keep as string (NOT NULL safe)
+  return String(v ?? "").trim();
+}
+
+function normMeta(v: any): Record<string, any> {
+  // ✅ must always return an object (NOT NULL)
+  if (v && typeof v === "object" && !Array.isArray(v)) return v as Record<string, any>;
+  return {};
+}
+
+function isEmptyObj(o: any) {
+  return !o || (typeof o === "object" && !Array.isArray(o) && Object.keys(o).length === 0);
+}
+
+/**
+ * Creates a job in public.awnit_jobs using flat columns.
+ * IMPORTANT: Do not nest { customer: { ... } }
+ * IMPORTANT: scope_items/materials must NEVER be null if DB has NOT NULL
+ * IMPORTANT: meta must NEVER be null (DB NOT NULL)
+ */
+export async function awnitCreateJob(input: AwnitCreateJobInput): Promise<AwnitJobRow> {
+  // Hard requirements
+  const customer_name = normStr(input.customer_name);
+  const summary = normStr(input.summary);
+
+  if (!customer_name) throw new Error("customer_name is required");
+  if (!summary) throw new Error("summary is required");
+
+  const payload = {
+    customer_name,
+    customer_phone: normOptStr(input.customer_phone),
+    customer_email: normOptStr(input.customer_email),
+    customer_address: normOptStr(input.customer_address),
+
+    title: normStr(input.title || summary).slice(0, 80),
+    summary,
+
+    stage: normStr(input.stage || "Scheduled") || "Scheduled",
+
+    appt_date: input.appt_date ?? null,
+    appt_time: input.appt_time ?? null,
+    crew: input.crew ?? null,
+
+    // ✅ NEVER NULL:
+    scope_items: normArr(input.scope_items),
+    materials: normArr(input.materials),
+    tech_notes: normNotes(input.tech_notes),
+
+    // ✅ NEVER NULL:
+    meta: normMeta(input.meta),
+  };
+
+  console.log("[awnitCreateJob] INSERT payload:", payload);
+
+  const res = await supabase.from("awnit_jobs").insert([payload]).select("*").maybeSingle();
+
+  if (res.error) {
+    console.error("[awnitCreateJob] ERROR:", res.error);
+    throwIfError(res.error, "Failed to create job.");
+  }
+  if (!res.data) throw new Error("Create job returned no data.");
+
+  // ✅ guarantee meta exists for UI
+  const row = res.data as any;
+  if (!row.meta) row.meta = {};
+  return row as AwnitJobRow;
+}
+
+/**
+ * Lists jobs for the board.
+ */
+export async function awnitListJobs(): Promise<AwnitJobRow[]> {
+  const res = await supabase.from("awnit_jobs").select("*").order("created_at", { ascending: false });
+
+  if (res.error) {
+    console.error("[awnitListJobs] ERROR:", res.error);
+    throwIfError(res.error, "Failed to list jobs.");
+  }
+
+  const rows = (res.data ?? []) as any[];
+  for (const r of rows) {
+    if (!r.meta) r.meta = {};
+    if (!Array.isArray(r.scope_items)) r.scope_items = [];
+    if (!Array.isArray(r.materials)) r.materials = [];
+    if (typeof r.tech_notes !== "string") r.tech_notes = "";
+  }
+  return rows as AwnitJobRow[];
+}
+
+/**
+ * Updates a job by id.
+ * IMPORTANT: scope_items/materials/tech_notes must NEVER be set to null.
+ * IMPORTANT: meta must NEVER be set to null.
+ * IMPORTANT: Do NOT send empty update payloads (PostgREST will 406).
+ */
+export async function awnitUpdateJob(id: string, patch: AwnitUpdateJobInput): Promise<AwnitJobRow> {
+  if (!id) throw new Error("id is required");
+
+  const updatePayload: any = {};
+
+  // strings
+  if (patch.customer_name !== undefined) updatePayload.customer_name = normStr(patch.customer_name);
+  if (patch.summary !== undefined) updatePayload.summary = normStr(patch.summary);
+  if (patch.title !== undefined) updatePayload.title = patch.title ? normStr(patch.title).slice(0, 80) : null;
+
+  if (patch.customer_phone !== undefined) updatePayload.customer_phone = normOptStr(patch.customer_phone);
+  if (patch.customer_email !== undefined) updatePayload.customer_email = normOptStr(patch.customer_email);
+  if (patch.customer_address !== undefined) updatePayload.customer_address = normOptStr(patch.customer_address);
+
+  if (patch.stage !== undefined) updatePayload.stage = patch.stage ? normStr(patch.stage) : null;
+
+  // schedule
+  if (patch.appt_date !== undefined) updatePayload.appt_date = patch.appt_date ?? null;
+  if (patch.appt_time !== undefined) updatePayload.appt_time = patch.appt_time ?? null;
+  if (patch.crew !== undefined) updatePayload.crew = patch.crew ?? null;
+
+  // ✅ arrays / notes: NEVER NULL
+  if (patch.scope_items !== undefined) updatePayload.scope_items = normArr(patch.scope_items);
+  if (patch.materials !== undefined) updatePayload.materials = normArr(patch.materials);
+  if (patch.tech_notes !== undefined) updatePayload.tech_notes = normNotes(patch.tech_notes);
+
+  // ✅ meta: NEVER NULL
+  if (patch.meta !== undefined) updatePayload.meta = normMeta(patch.meta);
+
+  // ✅ Prevent empty PATCH {} -> PostgREST 406
+  if (isEmptyObj(updatePayload)) {
+    console.warn("[awnitUpdateJob] Empty patch; skipping update. id=", id);
+
+    const getRes = await supabase.from("awnit_jobs").select("*").eq("id", id).maybeSingle();
+    if (getRes.error) {
+      console.error("[awnitUpdateJob] FETCH ERROR:", getRes.error);
+      throwIfError(getRes.error, "Failed to fetch job after empty patch.");
+    }
+    if (!getRes.data) throw new Error("Fetch job returned no data.");
+
+    const row = getRes.data as any;
+    if (!row.meta) row.meta = {};
+    if (!Array.isArray(row.scope_items)) row.scope_items = [];
+    if (!Array.isArray(row.materials)) row.materials = [];
+    if (typeof row.tech_notes !== "string") row.tech_notes = "";
+    return row as AwnitJobRow;
+  }
+
+  console.log("[awnitUpdateJob] UPDATE payload:", { id, ...updatePayload });
+
+// ✅ If nothing to update, avoid PATCH {} -> 406 / PGRST116
+if (Object.keys(updatePayload).length === 0) {
+  console.warn("[awnitUpdateJob] Empty patch; skipping update.");
+  const cur = await supabase.from("awnit_jobs").select("*").eq("id", id).maybeSingle();
+  if (cur.error) throwIfError(cur.error, "Failed to fetch job after empty patch.");
+  if (!cur.data) throw new Error("Job not found.");
+  return cur.data as AwnitJobRow;
+}
+const res = await supabase
+    .from("awnit_jobs")
+    .update(updatePayload)
+    .eq("id", id)
+    .select("*")
+    .maybeSingle();
+
+  if (res.error) {
+    console.error("[awnitUpdateJob] ERROR:", res.error);
+    throwIfError(res.error, "Failed to update job.");
+  }
+  if (!res.data) throw new Error("Update job returned no data.");
+
+  const row = res.data as any;
+  if (!row.meta) row.meta = {};
+  if (!Array.isArray(row.scope_items)) row.scope_items = [];
+  if (!Array.isArray(row.materials)) row.materials = [];
+  if (typeof row.tech_notes !== "string") row.tech_notes = "";
+  return row as AwnitJobRow;
+}
+

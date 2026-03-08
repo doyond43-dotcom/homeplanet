@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { CSSProperties } from "react";
 import type { CreatorDemoConfig, DemoOverlayEvent, RedactionPreset } from "./types";
 import { redactSample } from "./redaction";
@@ -60,7 +60,7 @@ export default function CreatorDemoPanel() {
 
   const [events, setEvents] = useState<DemoOverlayEvent[]>([
     { id: makeId(), ts: Date.now(), kind: "presence_timestamp", label: "Presence Timestamp Recorded" },
-    { id: makeId(), ts: Date.now(), kind: "payment_cap_authorized", label: "Payment Cap Authorized — $250" },
+    { id: makeId(), ts: Date.now(), kind: "payment_cap_authorized", label: "Payment Cap Authorized � $250" },
   ]);
 
   const sample = useMemo(() => {
@@ -169,9 +169,9 @@ export default function CreatorDemoPanel() {
         </div>
 
         <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button style={btnGhost} onClick={() => push("handle_detected", "Handle Detected → Claim Cluster")}>Handle</button>
+          <button style={btnGhost} onClick={() => push("handle_detected", "Handle Detected ? Claim Cluster")}>Handle</button>
           <button style={btnGhost} onClick={() => push("stitch_applied", "Paragraph Auto-stitched")}>Stitch</button>
-          <button style={btnGhost} onClick={() => push("part_added", "Part Added — $87")}>Part</button>
+          <button style={btnGhost} onClick={() => push("part_added", "Part Added � $87")}>Part</button>
           <button style={btnGhost} onClick={() => push("export_packet_updated", "Export Packet Updated")}>Export</button>
           <button style={btnGhost} onClick={() => push("dispute_log_generated", "Dispute Log Generated")}>Dispute</button>
         </div>

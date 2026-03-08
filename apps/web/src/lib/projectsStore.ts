@@ -1,4 +1,4 @@
-﻿export type HPProject = {
+export type HPProject = {
   id: string;
   name: string;
   createdAt: number;

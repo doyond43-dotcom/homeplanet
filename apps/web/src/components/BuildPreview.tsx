@@ -1,4 +1,4 @@
-ï»¿import { normalizeStringsDeep } from "../lib/text/normalizeText";
+import { normalizeStringsDeep } from "../lib/text/normalizeText";
 
 type Props = {
   rawText: string;
@@ -16,12 +16,12 @@ function parseBuild(raw: string) {
   const lines = (s: string) =>
     s
       .split("\n")
-      .map((x) => x.replace(/^[-*â€¢]\s*/, "").trim())
+      .map((x) => x.replace(/^[-*•]\s*/, "").trim())
       .filter(Boolean);
 
   return {
     h1: section("H1") || "Untitled Site",
-    sub: section("Subheadline") || "Built from your description â€” ready to share",
+    sub: section("Subheadline") || "Built from your description — ready to share",
     about: section("About"),
     services: lines(section("Services")),
     products: lines(section("Products")),
@@ -94,7 +94,7 @@ export function BuildPreview({ rawText, projectId }: Props) {
       </div>
 
       <div style={{ marginTop: 18, fontSize: 12, opacity: 0.6 }}>
-        {parsed.footer || `${parsed.h1} â€” Built with HomePlanet`}
+        {parsed.footer || `${parsed.h1} — Built with HomePlanet`}
       </div>
 
       {projectId && (

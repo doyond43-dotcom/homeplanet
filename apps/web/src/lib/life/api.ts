@@ -1,4 +1,4 @@
-﻿import type { LifeEvent, LifeEventType } from "./types";
+import type { LifeEvent, LifeEventType } from "./types";
 
 /**
  * IMPORTANT:

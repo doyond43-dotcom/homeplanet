@@ -1,7 +1,7 @@
-ï»¿import { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 /**
- * AuthorFlow â€” Calm writing + explicit handle generation (user-controlled)
+ * AuthorFlow — Calm writing + explicit handle generation (user-controlled)
  * v0.2 (adds Recommend Move vs Apply Move + basic stitching)
  *
  * What this adds:
@@ -64,7 +64,7 @@ function recommendTarget(text: string): MoveTarget {
 
 /**
  * Extractor returns objects so we can keep both:
- * - display (may be shortened with â€¦)
+ * - display (may be shortened with …)
  * - source (full snippet we try to find/remove from draft)
  */
 function extractSuggestionsFromDraft(draft: string): Array<{ source: string; display: string }> {
@@ -94,7 +94,7 @@ function extractSuggestionsFromDraft(draft: string): Array<{ source: string; dis
 
     // Longer line: keep a compact display, but preserve full source
     if (words.length > 12) {
-      const display = words.slice(0, 9).join(" ") + "â€¦";
+      const display = words.slice(0, 9).join(" ") + "…";
       out.push({ source: cleaned, display });
       continue;
     }
@@ -254,7 +254,7 @@ export default function AuthorFlow() {
     const nextDraft = insertAtTarget(removed.next, s.source, s.target);
     setDraft(nextDraft);
 
-    // keep the handle as a â€œstructural markerâ€
+    // keep the handle as a “structural marker”
     const key = normalize(s.source);
     if (!handleKeys.has(key)) {
       setHandles((prev) => [
@@ -263,7 +263,7 @@ export default function AuthorFlow() {
       ]);
     }
 
-    // remove the suggestion (itâ€™s been acted on)
+    // remove the suggestion (it’s been acted on)
     setSuggestions((prev) => prev.filter((x) => x.id !== id));
     setLastRecommended(null);
   }
@@ -286,7 +286,7 @@ export default function AuthorFlow() {
             {handles.map((h) => (
               <div key={h.id} style={handleRowStyle}>
                 <span style={{ minWidth: 0, overflowWrap: "anywhere" }}>
-                  {h.kind === "generated" ? "âœ¨ " : ""}
+                  {h.kind === "generated" ? "? " : ""}
                   {h.label}
                 </span>
                 <span style={{ fontSize: 12, opacity: 0.55, whiteSpace: "nowrap" }}>
@@ -342,7 +342,7 @@ export default function AuthorFlow() {
 
             {suggestions.length === 0 ? (
               <div style={{ fontSize: 13, opacity: 0.6 }}>
-                No suggestions right now. Try shorter standalone sentences (5â€“12 words) or add a manual handle.
+                No suggestions right now. Try shorter standalone sentences (5–12 words) or add a manual handle.
               </div>
             ) : (
               <div style={{ display: "grid", gap: 10 }}>
@@ -438,7 +438,7 @@ function ManualAdd({ onAdd }: { onAdd: (label: string) => void }) {
       <input
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        placeholder="New handleâ€¦"
+        placeholder="New handle…"
         style={inputStyle}
       />
       <button

@@ -1,4 +1,4 @@
-ï»¿import { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 type DbProjectType = "Awnings" | "Windows" | "Doors" | "Repair" | "Other";
@@ -71,7 +71,7 @@ export default function LiveAwnitIntake() {
       const { error } = await supabase.from("awnit_leads").insert([payload]);
       if (error) throw error;
 
-      setOkMsg("Saved âœ… â€” AWNIT received your request. Weâ€™ll follow up soon.");
+      setOkMsg("Saved ? — AWNIT received your request. We’ll follow up soon.");
       setForm({
         name: "",
         phone: "",
@@ -102,9 +102,9 @@ export default function LiveAwnitIntake() {
               A
             </div>
             <div className="min-w-0">
-              <div className="font-extrabold truncate">{BUSINESS.name} â€” Live Intake</div>
+              <div className="font-extrabold truncate">{BUSINESS.name} — Live Intake</div>
               <div className="text-xs text-white/55 truncate">
-                Quick capture while weâ€™re on a job â€¢ No voicemail needed
+                Quick capture while we’re on a job • No voicemail needed
               </div>
             </div>
           </div>

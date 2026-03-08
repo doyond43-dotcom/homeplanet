@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthProvider";
 
@@ -58,7 +58,7 @@ export default function Signup() {
           disabled={busy}
           style={{ padding: 10, borderRadius: 12, border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.08)", color: "#fff", cursor: "pointer" }}
         >
-          {busy ? "Working…" : "Sign up"}
+          {busy ? "Working�" : "Sign up"}
         </button>
       </form>
 

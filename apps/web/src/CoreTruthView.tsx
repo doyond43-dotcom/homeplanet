@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { useAuth } from "./auth/AuthProvider";
 import { emitCoreTruth } from "./lib/coreTruth";
 import { usePresence } from "./lib/usePresence";

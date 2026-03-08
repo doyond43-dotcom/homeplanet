@@ -1,4 +1,4 @@
-﻿import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 export default function PressKitTaylorCreek() {
   const nav = useNavigate();
@@ -23,7 +23,7 @@ export default function PressKitTaylorCreek() {
         <div style={{ display: "flex", justifyContent: "space-between" }}>
           <div>
             <div style={{ fontSize: 22, fontWeight: 800 }}>
-              🪐 Taylor Creek Auto Repair
+              ?? Taylor Creek Auto Repair
             </div>
             <div style={{ opacity: 0.8 }}>Powered by HomePlanet</div>
           </div>
@@ -36,9 +36,9 @@ export default function PressKitTaylorCreek() {
         </div>
 
         <div style={{ marginTop: 20 }}>
-          <h1>Public Proof Infrastructure — Live Demonstration</h1>
+          <h1>Public Proof Infrastructure � Live Demonstration</h1>
 
-          <button onClick={goIntake}>Try it now →</button>
+          <button onClick={goIntake}>Try it now ?</button>
           <Link to="/live/taylor-creek">Open Live Demo</Link>
         </div>
       </div>

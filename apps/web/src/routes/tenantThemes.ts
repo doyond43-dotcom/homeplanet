@@ -1,4 +1,4 @@
-﻿export type TenantTheme = {
+export type TenantTheme = {
   slug: string;
   brandName: string;
   locationLine: string;
@@ -19,7 +19,7 @@ export const TENANT_THEMES: Record<string, TenantTheme> = {
     brandName: "Taylor Creek Auto Repair",
     locationLine: "Okeechobee, Florida",
     planetLabel: "Planet: Auto Services",
-    tierLabel: "Gold Tier • Verified",
+    tierLabel: "Gold Tier � Verified",
     phoneLabel: "(000) 000-0000",
     addressLabel: "Okeechobee, FL",
     // Taylor Creek identity: black/red accents (subtle)

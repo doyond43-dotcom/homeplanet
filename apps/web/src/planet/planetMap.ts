@@ -1,4 +1,4 @@
-ï»¿export type City = {
+export type City = {
   id: string;
   label: string;
 };
@@ -26,7 +26,7 @@ export const PLANETS: Planet[] = [
   {
     id: "creator",
     label: "Creator",
-    subtitle: "Build â€¢ Remix â€¢ Demo â€¢ Commerce",
+    subtitle: "Build • Remix • Demo • Commerce",
     cities: [
       { id: "projects", label: "Projects" },
       { id: "demos", label: "Demos" },
@@ -36,7 +36,7 @@ export const PLANETS: Planet[] = [
   {
     id: "career",
     label: "Career",
-    subtitle: "Timeline â€¢ Evidence â€¢ Reputation",
+    subtitle: "Timeline • Evidence • Reputation",
     cities: [
       { id: "timeline", label: "Timeline" },
       { id: "evidence", label: "Evidence" },
@@ -46,7 +46,7 @@ export const PLANETS: Planet[] = [
   {
     id: "vehicles",
     label: "Vehicles",
-    subtitle: "Intake â€¢ Service â€¢ Disputes",
+    subtitle: "Intake • Service • Disputes",
     cities: [
       { id: "intake", label: "Intake" },
       { id: "service-history", label: "Service History" },
@@ -56,7 +56,7 @@ export const PLANETS: Planet[] = [
   {
     id: "education",
     label: "Education",
-    subtitle: "Presence â€¢ Submissions â€¢ Reviews",
+    subtitle: "Presence • Submissions • Reviews",
     cities: [
       { id: "submissions", label: "Submissions" },
       { id: "reviews", label: "Reviews" },
@@ -66,7 +66,7 @@ export const PLANETS: Planet[] = [
   {
     id: "safety",
     label: "Safety & Identity",
-    subtitle: "Age Anchor â€¢ Shield Events",
+    subtitle: "Age Anchor • Shield Events",
     cities: [
       { id: "age-anchor", label: "Age Anchor" },
       { id: "shield-events", label: "Shield Events" },
@@ -76,7 +76,7 @@ export const PLANETS: Planet[] = [
   {
     id: "payments",
     label: "Payments",
-    subtitle: "Pre-Auth â€¢ Caps â€¢ Proof",
+    subtitle: "Pre-Auth • Caps • Proof",
     cities: [
       { id: "preauth", label: "Pre-Auth Caps" },
       { id: "disputes", label: "Dispute Proof" },

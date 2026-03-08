@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { getMySignals, type PresenceSignalRow } from "./signalsApi";
 
 export function useSignals(pollMs: number = 4000, limit: number = 10) {

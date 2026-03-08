@@ -1,1 +1,1 @@
-﻿export { default } from "./LiveViewer";
+export { default } from "./LiveViewer";

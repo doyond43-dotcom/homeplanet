@@ -1,4 +1,4 @@
-ï»¿import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import ResidentHeader from "../components/ResidentHeader";
 
@@ -112,7 +112,7 @@ export default function BaysFlow() {
       )
     );
 
-    emitOverlay("bay_job_started", `Bay ${bayId.split("_")[1]} â€” Job started (${jobId})`, { bayId, jobId });
+    emitOverlay("bay_job_started", `Bay ${bayId.split("_")[1]} — Job started (${jobId})`, { bayId, jobId });
     firePulse();
   }
 
@@ -127,7 +127,7 @@ export default function BaysFlow() {
         const next = nextPhase(b.activeJob.phase);
         const updated: BayJob = { ...b.activeJob, phase: next, lastEventAt: now };
 
-        emitOverlay("bay_phase_change", `Bay ${bayId.split("_")[1]} â€” Phase â†’ ${phaseLabel(next)}`, {
+        emitOverlay("bay_phase_change", `Bay ${bayId.split("_")[1]} — Phase ? ${phaseLabel(next)}`, {
           bayId,
           jobId: b.activeJob.jobId,
           phase: next,
@@ -145,7 +145,7 @@ export default function BaysFlow() {
     const b = bays.find((x) => x.id === bayId);
     if (!b?.activeJob) return;
 
-    emitOverlay("bay_snapshot", `Bay ${bayId.split("_")[1]} â€” Snapshot captured`, {
+    emitOverlay("bay_snapshot", `Bay ${bayId.split("_")[1]} — Snapshot captured`, {
       bayId,
       jobId: b.activeJob.jobId,
       ts: now,
@@ -165,7 +165,7 @@ export default function BaysFlow() {
     const b = bays.find((x) => x.id === bayId);
     if (!b?.activeJob) return;
 
-    emitOverlay("bay_clip", `Bay ${bayId.split("_")[1]} â€” Clip captured (10s)`, {
+    emitOverlay("bay_clip", `Bay ${bayId.split("_")[1]} — Clip captured (10s)`, {
       bayId,
       jobId: b.activeJob.jobId,
       seconds: 10,
@@ -259,7 +259,7 @@ export default function BaysFlow() {
               <div style={{ fontSize: 12, opacity: 0.7 }}>
                 {job ? (
                   <>
-                    <span style={{ fontFamily: mono }}>{job.jobId}</span> â€¢ last event{" "}
+                    <span style={{ fontFamily: mono }}>{job.jobId}</span> • last event{" "}
                     <span style={{ fontFamily: mono }}>{fmt(job.lastEventAt)}</span>
                   </>
                 ) : (

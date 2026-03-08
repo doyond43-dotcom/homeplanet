@@ -1,4 +1,4 @@
-﻿import type { DemoOverlayEvent } from "./types";
+import type { DemoOverlayEvent } from "./types";
 
 type Listener = (e: DemoOverlayEvent) => void;
 

@@ -1,4 +1,4 @@
-﻿export const UI_VERSION = "0.1.0-calm-core";
+export const UI_VERSION = "0.1.0-calm-core";
 
 /**
  * UI Lock: Calm Core

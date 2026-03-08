@@ -1,4 +1,4 @@
-Ôªøimport React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
 type Props = {
   onFinal?: (final: string) => void;
@@ -46,13 +46,13 @@ export default function VoiceDictationButton(props: Props) {
     setState("idle");
     setInterim("");
     try {
-      // stop() lets it finalize; abort() kills immediately (useful if it‚Äôs stuck)
+      // stop() lets it finalize; abort() kills immediately (useful if itís stuck)
       recRef.current?.stop?.();
     } catch {}
   };
 
   const hardResetRec = () => {
-    // If Chrome gets ‚Äústicky‚Äù, recreating the instance is the cleanest reset.
+    // If Chrome gets ìstickyî, recreating the instance is the cleanest reset.
     try {
       recRef.current?.abort?.();
     } catch {}
@@ -65,12 +65,12 @@ export default function VoiceDictationButton(props: Props) {
 
     const now = Date.now();
 
-    // 1) exact same as last emit within 2500ms ‚Üí ignore
+    // 1) exact same as last emit within 2500ms ? ignore
     if (t === lastEmitRef.current.t && now - lastEmitRef.current.ts < 2500) {
       return false;
     }
 
-    // 2) seen in recent map within 4000ms ‚Üí ignore
+    // 2) seen in recent map within 4000ms ? ignore
     const seenAt = recentMapRef.current.get(t);
     if (seenAt && now - seenAt < 4000) return false;
 
@@ -96,7 +96,7 @@ export default function VoiceDictationButton(props: Props) {
 
     /**
      * Key behavior:
-     * - interimResults=true => instant feedback (feels ‚Äúcrisp‚Äù)
+     * - interimResults=true => instant feedback (feels ìcrispî)
      * - continuous=false   => Chrome finalizes smaller chunks more reliably
      */
     rec.continuous = false;
@@ -110,7 +110,7 @@ export default function VoiceDictationButton(props: Props) {
       setState("listening");
     };
 
-    // Force quicker finalization when the user stops speaking (reduces ‚Äú10s lag‚Äù feel)
+    // Force quicker finalization when the user stops speaking (reduces ì10s lagî feel)
     rec.onspeechend = () => {
       try {
         rec.stop();
@@ -198,11 +198,11 @@ export default function VoiceDictationButton(props: Props) {
     wantListeningRef.current = true;
     setState("starting");
 
-    // reset dedupe window for a new ‚Äúsession‚Äù
+    // reset dedupe window for a new ìsessionî
     lastEmitRef.current = { t: "", ts: 0 };
     recentMapRef.current = new Map();
 
-    // Sometimes calling start() while it‚Äôs half-alive throws.
+    // Sometimes calling start() while itís half-alive throws.
     // Abort + tiny delay gives Chrome a clean edge.
     try {
       recRef.current?.abort?.();
@@ -251,7 +251,7 @@ export default function VoiceDictationButton(props: Props) {
         gap: 10,
       } as React.CSSProperties,
 
-      // HomePlanet ‚Äúhandle‚Äù pill ‚Äî playful, not SMS
+      // HomePlanet ìhandleî pill ó playful, not SMS
       btn: {
         height: 38,
         padding: "0 14px",
@@ -306,7 +306,7 @@ export default function VoiceDictationButton(props: Props) {
         style={styles.btn}
       >
         <span style={styles.icon} aria-hidden="true">
-          {/* fuller ‚Äútool mic‚Äù icon (gray idle, green live) */}
+          {/* fuller ìtool micî icon (gray idle, green live) */}
           <svg width="18" height="18" viewBox="0 0 24 24">
             <path
               fill={isOn ? "rgba(0,255,150,0.95)" : "rgba(210,210,210,0.90)"}
@@ -315,14 +315,14 @@ export default function VoiceDictationButton(props: Props) {
           </svg>
         </span>
 
-        {/* keep the label ‚Äì this is what gave it that ‚Äúcreator tool‚Äù feel */}
+        {/* keep the label ñ this is what gave it that ìcreator toolî feel */}
         {isOn ? "Listening" : "Speak"}
       </button>
 
       {/* tiny live feedback so it feels fast */}
       <div style={styles.status}>
         {error ? <span style={styles.err}>Mic: {error}</span> : null}
-        {!error && isOn ? (interim ? interim : state === "starting" ? "‚Ä¶" : "") : null}
+        {!error && isOn ? (interim ? interim : state === "starting" ? "Ö" : "") : null}
       </div>
     </div>
   );

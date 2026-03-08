@@ -1,58 +1,30 @@
-import LegalDemoBoard from "../pages/LegalDemoBoard";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { createInvoiceFromJob } from "../lib/invoices";
 
-import { supabase } from "../lib/supabase";
+// 🔥 IMPORTANT: adjust this import path to match your repo (use rg to find it)
+import { awnitListJobs, awnitUpdateJob } from "../lib/awnitJobsApi";
+
 /**
- * AWNIT Ã¢â‚¬â€ Live Board (1-week test)
- * - Appointment required at Add Job
- * - Stage color lanes like Taylor Creek
- * - Scope + per-unit Measurements (Doors/Windows/Screens/Trim + Custom) + MIC (new line per tap)
- * - Materials Grab List (separate) + MIC (new line per tap) + multi-line quick add
- * - "Grab Code" accountability on Copy Grab List (week-1 = numeric IDs, names later)
+ * AWNIT — Live Board (Supabase-backed)
+ * Single source of truth: public.awnit_jobs
  *
- * INVOICE V1 (added):
- * - One-click Generate Invoice from current drawer data (Scope + Materials + Notes)
- * - Creates rows in: invoices + invoice_lines
- * - Navigates to /planet/vehicles/awnit-demo/invoice/:invoiceId
+ * This file is patched to:
+ * - ALWAYS attempt DB writes for stage/scope/materials/notes (no demo-only handlers)
+ * - Optimistic UI updates so lanes move instantly
+ * - Add a build marker so you can confirm production has the right bundle
+ * - Auto-refresh jobs every 5s (so Intake appears without manual refresh)
  */
 
 // ---------------- Types ----------------
-type Stage =
-  | "Scheduled"
-  | "Measured"
-  | "Estimate Sent"
-  | "Ordered"
-  | "Installed"
-  | "Done";
-
-type Job = {
-  id: string;
-  title: string;
-  summary: string;
-  stage: Stage;
-
-  apptDate: string; // YYYY-MM-DD
-  apptTime: string; // HH:MM
-  crew?: string;
-
-  customer: {
-    name: string;
-    phone?: string;
-    email?: string;
-    address?: string;
-  };
-};
+type Stage = "Scheduled" | "Measured" | "Estimate Sent" | "Ordered" | "Installed" | "Done";
 
 type ScopeType = "door" | "window" | "screen" | "trim" | "custom";
 
 type ScopeItem = {
   id: string;
   type: ScopeType;
-  label: string; // "Door 1", "Window 2", "Custom 1"
-  quick: string; // multi-line measurements/notes
+  label: string;
+  quick: string;
   done: boolean;
   createdAt: string;
 };
@@ -62,8 +34,35 @@ type MaterialItem = {
   name: string;
   qty?: string;
   checked: boolean;
-  addedBy: string; // week-1: grabCode if available, else "live"
-  addedAt: string; // ISO
+  addedBy: string;
+  addedAt: string;
+};
+
+type AwnitJobRow = {
+  id: string; // uuid
+  title: string | null;
+  summary: string | null;
+  stage: Stage | string | null;
+
+  apptDate?: string | null; // if your DB uses appt_date, map in API layer or here
+  apptTime?: string | null;
+
+  crew?: string | null;
+
+  customer?: {
+    name?: string | null;
+    phone?: string | null;
+    email?: string | null;
+    address?: string | null;
+  } | null;
+
+  // DB truth fields:
+  scope_items?: any; // jsonb
+  materials?: any; // jsonb
+  tech_notes?: string | null;
+
+  // optional
+  updated_at?: string | null;
 };
 
 // ---------------- Helpers ----------------
@@ -71,11 +70,19 @@ function cn(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(" ");
 }
 
+function makeId() {
+  return `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function nowIso() {
+  return new Date().toISOString();
+}
+
 function safeToast(msg: string) {
   try {
     // eslint-disable-next-line no-alert
     alert(msg);
-  } catch {
+  } catch (e) {
     /* noop */
   }
 }
@@ -86,7 +93,7 @@ async function copyToClipboard(text: string) {
   try {
     await navigator.clipboard.writeText(val);
     safeToast("Copied.");
-  } catch {
+  } catch (e) {
     const ta = document.createElement("textarea");
     ta.value = val;
     ta.style.position = "fixed";
@@ -96,7 +103,7 @@ async function copyToClipboard(text: string) {
     try {
       document.execCommand("copy");
       safeToast("Copied.");
-    } catch {
+    } catch (e) {
       safeToast("Copy failed.");
     } finally {
       document.body.removeChild(ta);
@@ -104,21 +111,15 @@ async function copyToClipboard(text: string) {
   }
 }
 
-function makeId() {
-  return `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
-}
-
-function nowIso() {
-  return new Date().toISOString();
-}
-}
-
 function stageTone(stage: Stage) {
   switch (stage) {
     case "Scheduled":
       return { lane: "border-l-sky-400/70", pill: "border-sky-300/30 bg-sky-300/15 text-sky-100" };
     case "Measured":
-      return { lane: "border-l-emerald-400/80", pill: "border-emerald-400/30 bg-emerald-400/15 text-emerald-100" };
+      return {
+        lane: "border-l-emerald-400/80",
+        pill: "border-emerald-400/30 bg-emerald-400/15 text-emerald-100",
+      };
     case "Estimate Sent":
       return { lane: "border-l-violet-400/70", pill: "border-violet-300/30 bg-violet-300/15 text-violet-100" };
     case "Ordered":
@@ -128,8 +129,56 @@ function stageTone(stage: Stage) {
     case "Done":
       return { lane: "border-l-slate-300/40", pill: "border-white/10 bg-white/5 text-slate-200" };
     default:
-      return { lane: "border-l-emerald-400/60", pill: "border-emerald-400/30 bg-emerald-400/15 text-emerald-100" };
+      return {
+        lane: "border-l-emerald-400/60",
+        pill: "border-emerald-400/30 bg-emerald-400/15 text-emerald-100",
+      };
   }
+}
+
+function coerceStage(s: any): Stage {
+  const v = (s || "").toString();
+  const ok: Stage[] = ["Scheduled", "Measured", "Estimate Sent", "Ordered", "Installed", "Done"];
+  return ok.includes(v as Stage) ? (v as Stage) : "Scheduled";
+}
+
+function coerceScopeItems(v: any): ScopeItem[] {
+  if (!v) return [];
+  if (Array.isArray(v)) return v as ScopeItem[];
+  return [];
+}
+
+function coerceMaterials(v: any): MaterialItem[] {
+  if (!v) return [];
+  if (Array.isArray(v)) return v as MaterialItem[];
+  return [];
+}
+
+function dictationAppendLine(prev: string, text: string, isFinal: boolean) {
+  if (!isFinal) return prev;
+  const line = (text || "").trim();
+  if (!line) return prev;
+  const base = (prev || "").trimEnd();
+  return (base ? `${base}\n${line}` : line) + "\n";
+}
+
+function digitsPhone(s?: string | null) {
+  const raw = (s || "").trim();
+  if (!raw) return "";
+  if (raw.startsWith("+")) return raw.replace(/[^\d+]/g, "");
+  const digits = raw.replace(/[^\d]/g, "");
+  if (digits.length === 10) return `+1${digits}`;
+  if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
+  if (digits.length >= 12 && digits.length <= 15) return `+${digits}`;
+  return digits;
+}
+
+function fmtAppt(job: AwnitJobRow) {
+  const d = (job.apptDate || "").trim();
+  const t = (job.apptTime || "").trim();
+  const crew = (job.crew || "").trim();
+  const base = [d, t].filter(Boolean).join(" ");
+  return `${base || "—"}${crew ? ` • ${crew}` : ""}`;
 }
 
 // ---------------- Speech (Mic) ----------------
@@ -137,9 +186,7 @@ type SpeechCtor = new () => any;
 
 function getSpeechCtor(): SpeechCtor | null {
   const w = window as any;
-  return (w.SpeechRecognition || w.webkitSpeechRecognition)
-    ? (w.SpeechRecognition || w.webkitSpeechRecognition)
-    : null;
+  return w.SpeechRecognition || w.webkitSpeechRecognition ? (w.SpeechRecognition || w.webkitSpeechRecognition) : null;
 }
 
 function useSpeechDictation() {
@@ -160,7 +207,7 @@ function useSpeechDictation() {
   function stop() {
     try {
       recRef.current?.stop?.();
-    } catch {
+    } catch (e) {
       /* noop */
     }
   }
@@ -176,6 +223,7 @@ function useSpeechDictation() {
       stop();
       return;
     }
+
     if (listening && activeTargetRef.current && activeTargetRef.current !== targetId) {
       stop();
     }
@@ -183,7 +231,7 @@ function useSpeechDictation() {
     const rec = new ctor();
     recRef.current = rec;
 
-    rec.continuous = false; // tap mic = one burst, then stop
+    rec.continuous = false;
     rec.interimResults = false;
     rec.lang = "en-US";
 
@@ -194,24 +242,19 @@ function useSpeechDictation() {
     rec.onend = () => setListening(false);
 
     rec.onresult = (event: any) => {
-      let interim = "";
       let finals = "";
-
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const r = event.results[i];
         const txt = (r[0]?.transcript || "").trim();
         if (!txt) continue;
         if (r.isFinal) finals += (finals ? " " : "") + txt;
-        else interim += (interim ? " " : "") + txt;
       }
-
-      if (interim) onText(interim, false);
       if (finals) onText(finals, true);
     };
 
     try {
       rec.start();
-    } catch {
+    } catch (e) {
       safeToast("Mic start failed.");
     }
   }
@@ -246,21 +289,10 @@ function MicButton({
       title={supported ? "Tap to dictate" : "Mic not supported"}
       aria-label="Microphone"
     >
-      ??
+      🎤
       <span className="ml-2">{label}</span>
     </button>
   );
-}
-
-// tap mic = new line behavior
-function dictationAppendLine(prev: string, text: string, isFinal: boolean) {
-  // Only commit FINAL results. One mic tap = one new line.
-  if (!isFinal) return prev;
-  const line = (text || "").trim();
-  if (!line) return prev;
-
-  const base = (prev || "").trimEnd();
-  return (base ? `${base}\n${line}` : line) + "\n";
 }
 
 // ---------------- Materials Templates (simple) ----------------
@@ -271,146 +303,114 @@ const MATERIAL_TEMPLATES: Record<string, string[]> = {
   "Trim + caulk touchup": ["Caulk / sealant", "Painter tape", "Touch-up paint", "Rags / wipes"],
 };
 
-// Week-1 Employee IDs (names later)
 const GRAB_CODES = ["2222", "4444", "6666", "8888", "9999"] as const;
 
 // ---------------- Component ----------------
 export default function AwnitDemoBoard() {
-  const navigate = useNavigate();
+  // ✅ BUILD MARKER: verify deployed bundle instantly
+  // In Console:  window.__AWNIT_API_MARKER__
+  (window as any).__AWNIT_API_MARKER__ = "supabase-wired-awnit-board";
+
   const { supported, listening, toggle, activeTargetRef } = useSpeechDictation();
   const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false);
 
-  // Optional supabase (not required for week-1 local demo; harmless if env missing)
-  const supabase = useMemo(() => makeSupabase(), []);
+  const [jobs, setJobs] = useState<AwnitJobRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  // Seed jobs
-  const seedJobs: Job[] = useMemo(
-    () => [
-      {
-        id: "job_1001",
-        title: "Screen Enclosure Repair",
-        summary: "Torn screen + spline replacement on west side panel.",
-        stage: "Measured",
-        apptDate: "2026-02-28",
-        apptTime: "09:30",
-        crew: "Crew 1",
-        customer: {
-          name: "Maria Johnson",
-          phone: "(555) 201-8891",
-          email: "maria.j@example.com",
-          address: "214 SW 8th Ave, Okeechobee, FL 34974",
-        },
-      },
-      {
-        id: "job_1002",
-        title: "Hurricane Shutter Measure",
-        summary: "Initial measure for front windows + slider.",
-        stage: "Scheduled",
-        apptDate: "2026-02-28",
-        apptTime: "13:00",
-        crew: "Austin",
-        customer: {
-          name: "Derek Stone",
-          phone: "(555) 913-4402",
-          email: "derek.stone@example.com",
-          address: "105 NE 3rd St, Okeechobee, FL 34972",
-        },
-      },
-      {
-        id: "job_1003",
-        title: "Window Replacement Quote",
-        summary: "Estimate deliver + follow-up scheduled.",
-        stage: "Estimate Sent",
-        apptDate: "2026-03-01",
-        apptTime: "10:00",
-        crew: "Ruben",
-        customer: {
-          name: "Alicia Perez",
-          phone: "(555) 650-7780",
-          email: "alicia.p@example.com",
-          address: "7900 US-441, Okeechobee, FL 34974",
-        },
-      },
-    ],
-    []
-  );
-
-  const [jobs, setJobs] = useState<Job[]>(seedJobs);
   const [showPanels, setShowPanels] = useState(true);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
 
+  // Local UI helpers (not source of truth; DB is)
+  const [grabCode, setGrabCode] = useState<(typeof GRAB_CODES)[number] | "">(GRAB_CODES[0]);
+
+  const stages: Stage[] = useMemo(() => ["Scheduled", "Measured", "Estimate Sent", "Ordered", "Installed", "Done"], []);
+
+  async function loadJobs() {
+    try {
+      setLoadError(null);
+      const rows = await awnitListJobs();
+
+      const normalized: AwnitJobRow[] = (rows || []).map((r: any) => {
+        const customer =
+          r.customer && typeof r.customer === "object"
+            ? r.customer
+            : {
+                name: r.customer_name ?? r.customerName ?? r.name ?? null,
+                phone: r.customer_phone ?? r.customerPhone ?? r.phone ?? null,
+                email: r.customer_email ?? r.customerEmail ?? r.email ?? null,
+                address: r.customer_address ?? r.customerAddress ?? r.address ?? null,
+              };
+
+        return {
+          ...r,
+          customer,
+          stage: coerceStage(r.stage),
+        };
+      });
+
+      setJobs(normalized);
+
+      setSelectedJobId((cur) => {
+        if (cur && normalized.some((j) => j.id === cur)) return cur;
+        return normalized.length ? normalized[0].id : null;
+      });
+    } catch (e: any) {
+      setLoadError(e?.message || "Failed to load jobs.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   useEffect(() => {
-    if (!selectedJobId && jobs.length) setSelectedJobId(jobs[0].id);
-  }, [jobs, selectedJobId]);
+    loadJobs();
 
-  const selectedJob = useMemo(
-    () => jobs.find((j) => j.id === selectedJobId) || null,
-    [jobs, selectedJobId]
-  );
+    const t = window.setInterval(() => {
+      loadJobs();
+    }, 5000);
 
-  // ---------------- Drawer: Scope Items per Job ----------------
-  const [scopeByJob, setScopeByJob] = useState<Record<string, ScopeItem[]>>({});
+    return () => window.clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  function getScope(jobId: string) {
-    return scopeByJob[jobId] || [];
+  const selectedJob = useMemo(() => jobs.find((j) => j.id === selectedJobId) || null, [jobs, selectedJobId]);
+
+  function updateJobOptimistic(jobId: string, patch: Partial<AwnitJobRow>) {
+    setJobs((prev) => prev.map((j) => (j.id === jobId ? { ...j, ...patch } : j)));
   }
 
-  function nextIndex(items: ScopeItem[], type: ScopeType) {
-    const count = items.filter((x) => x.type === type).length;
-    return count + 1;
+  async function persist(jobId: string, patch: Record<string, any>) {
+    updateJobOptimistic(jobId, patch as any);
+
+    try {
+      await awnitUpdateJob(jobId, patch);
+    } catch (e: any) {
+      await loadJobs();
+      safeToast(e?.message || "Save failed.");
+    }
   }
 
-  function addScopeItem(jobId: string, type: ScopeType) {
-    setScopeByJob((prev) => {
-      const cur = prev[jobId] || [];
-      const idx = nextIndex(cur, type);
-      const labelBase =
-        type === "door"
-          ? "Door"
-          : type === "window"
-            ? "Window"
-            : type === "screen"
-              ? "Screen"
-              : type === "trim"
-                ? "Trim"
-                : "Custom";
-      const item: ScopeItem = {
-        id: makeId(),
-        type,
-        label: `${labelBase} ${idx}`,
-        quick: "",
-        done: false,
-        createdAt: nowIso(),
-      };
-      return { ...prev, [jobId]: [item, ...cur] };
-    });
+  const debounceRef = useRef<Record<string, number>>({});
+
+  function persistDebounced(jobId: string, patch: Record<string, any>, key: string, ms = 450) {
+    const k = `${jobId}:${key}`;
+    if (debounceRef.current[k]) window.clearTimeout(debounceRef.current[k]);
+    debounceRef.current[k] = window.setTimeout(() => {
+      persist(jobId, patch);
+      delete debounceRef.current[k];
+    }, ms);
   }
 
-  function removeScopeItem(jobId: string, itemId: string) {
-    setScopeByJob((prev) => {
-      const cur = prev[jobId] || [];
-      return { ...prev, [jobId]: cur.filter((x) => x.id !== itemId) };
-    });
+  function getScope(job: AwnitJobRow): ScopeItem[] {
+    return coerceScopeItems((job as any).scopeItems ?? (job as any).scope_items);
   }
 
-  function toggleScopeDone(jobId: string, itemId: string) {
-    setScopeByJob((prev) => {
-      const cur = prev[jobId] || [];
-      return {
-        ...prev,
-        [jobId]: cur.map((x) => (x.id === itemId ? { ...x, done: !x.done } : x)),
-      };
-    });
+  function getMaterials(job: AwnitJobRow): MaterialItem[] {
+    return coerceMaterials((job as any).materials);
   }
 
-  function setScopeQuick(jobId: string, itemId: string, val: string) {
-    setScopeByJob((prev) => {
-      const cur = prev[jobId] || [];
-      return {
-        ...prev,
-        [jobId]: cur.map((x) => (x.id === itemId ? { ...x, quick: val } : x)),
-      };
-    });
+  function getNotes(job: AwnitJobRow): string {
+    return (((job as any).techNotes ?? (job as any).tech_notes) || "").toString();
   }
 
   function scopeCounts(items: ScopeItem[]) {
@@ -422,80 +422,282 @@ export default function AwnitDemoBoard() {
     return { doors, windows, screens, trim, custom };
   }
 
-  // ---------------- Materials per Job ----------------
-  const [materialsByJob, setMaterialsByJob] = useState<Record<string, MaterialItem[]>>({});
-  const [grabCode, setGrabCode] = useState<(typeof GRAB_CODES)[number] | "">(GRAB_CODES[0]);
-  const [materialsQuickAdd, setMaterialsQuickAdd] = useState("");
-
-  function getMaterials(jobId: string) {
-    return materialsByJob[jobId] || [];
+  function nextIndex(items: ScopeItem[], type: ScopeType) {
+    const count = items.filter((x) => x.type === type).length;
+    return count + 1;
   }
 
-  function addMaterial(jobId: string, name: string, qty?: string) {
+  // ✅ Persisted Materials Quick Add (per job, stored in meta)
+  function getMaterialsQuickAddText(job: AwnitJobRow): string {
+    const m: any = (job as any)?.meta || {};
+    return (m.materialsQuickAdd ?? "").toString();
+  }
+
+  function setMaterialsQuickAddText(job: AwnitJobRow, val: string) {
+    const curMeta: any = (job as any)?.meta || {};
+    const nextMeta = { ...curMeta, materialsQuickAdd: val };
+
+    try {
+      updateJobOptimistic(job.id, { meta: nextMeta } as any);
+    } catch {}
+
+    try {
+      // @ts-ignore
+      persistDebounced(job.id, { meta: nextMeta }, "meta");
+    } catch {
+      persist(job.id, { meta: nextMeta });
+    }
+  }
+
+  async function setStage(jobId: string, stage: Stage) {
+    await persist(jobId, { stage });
+  }
+
+  function addScopeItem(job: AwnitJobRow, type: ScopeType) {
+    const cur = getScope(job);
+    const idx = nextIndex(cur, type);
+
+    const labelBase =
+      type === "door"
+        ? "Door"
+        : type === "window"
+        ? "Window"
+        : type === "screen"
+        ? "Screen"
+        : type === "trim"
+        ? "Trim"
+        : "Custom";
+
+    const item: ScopeItem = {
+      id: makeId(),
+      type,
+      label: `${labelBase} ${idx}`,
+      quick: "",
+      done: false,
+      createdAt: nowIso(),
+    };
+
+    const next = [item, ...cur];
+
+    try {
+      updateJobOptimistic(job.id, { scopeItems: next } as any);
+    } catch {}
+
+    try {
+      // @ts-ignore
+      persistDebounced(job.id, { scopeItems: next }, "scope_items");
+    } catch {
+      persist(job.id, { scopeItems: next });
+    }
+  }
+
+  function removeScopeItem(job: AwnitJobRow, itemId: string) {
+    const target = (itemId ?? "").toString();
+    const next = getScope(job).filter((x) => (x.id ?? "").toString() !== target);
+
+    try {
+      updateJobOptimistic(job.id, { scopeItems: next } as any);
+    } catch {}
+
+    try {
+      // @ts-ignore
+      persistDebounced(job.id, { scopeItems: next }, "scope_items");
+    } catch {
+      persist(job.id, { scopeItems: next });
+    }
+  }
+
+  function toggleScopeDone(job: AwnitJobRow, itemId: string) {
+    const target = (itemId ?? "").toString();
+    const next = getScope(job).map((x) =>
+      (x.id ?? "").toString() === target ? { ...x, done: !Boolean((x as any).done) } : x
+    );
+
+    try {
+      updateJobOptimistic(job.id, { scopeItems: next } as any);
+    } catch {}
+
+    try {
+      // @ts-ignore
+      persistDebounced(job.id, { scopeItems: next }, "scope_items");
+    } catch {
+      persist(job.id, { scopeItems: next });
+    }
+  }
+
+  function setScopeQuick(job: AwnitJobRow, itemId: string, val: string) {
+    const target = (itemId ?? "").toString();
+    const next = getScope(job).map((x) => ((x.id ?? "").toString() === target ? { ...x, quick: val } : x));
+
+    try {
+      updateJobOptimistic(job.id, { scopeItems: next } as any);
+    } catch {}
+
+    try {
+      // @ts-ignore
+      persistDebounced(job.id, { scopeItems: next }, "scope_items");
+    } catch {
+      persist(job.id, { scopeItems: next });
+    }
+  }
+
+  function addMaterial(job: AwnitJobRow, name: string, qty?: string) {
     const n = (name || "").trim();
     if (!n) return;
-    setMaterialsByJob((prev) => {
-      const cur = prev[jobId] || [];
-      const item: MaterialItem = {
+
+    const cur = getMaterials(job);
+    const item: MaterialItem = {
+      id: makeId(),
+      name: n,
+      qty: (qty || "").trim() || undefined,
+      checked: false,
+      addedBy: grabCode || "live",
+      addedAt: nowIso(),
+    };
+
+    const next = [item, ...cur];
+
+    try {
+      updateJobOptimistic(job.id, { materials: next } as any);
+    } catch {}
+
+    try {
+      // @ts-ignore
+      persistDebounced(job.id, { materials: next }, "materials");
+    } catch {
+      persist(job.id, { materials: next });
+    }
+  }
+
+  function toggleMaterial(job: AwnitJobRow, id: string) {
+    const target = (id ?? "").toString();
+    const next = getMaterials(job).map((x) =>
+      (x.id ?? "").toString() === target ? { ...x, checked: !Boolean((x as any).checked) } : x
+    );
+
+    try {
+      updateJobOptimistic(job.id, { materials: next } as any);
+    } catch {}
+
+    try {
+      // @ts-ignore
+      persistDebounced(job.id, { materials: next }, "materials");
+    } catch {
+      persist(job.id, { materials: next });
+    }
+  }
+
+  function removeMaterial(job: AwnitJobRow, id: string) {
+    const target = (id ?? "").toString();
+    const next = getMaterials(job).filter((x) => (x.id ?? "").toString() !== target);
+
+    try {
+      updateJobOptimistic(job.id, { materials: next } as any);
+    } catch {}
+
+    try {
+      // @ts-ignore
+      persistDebounced(job.id, { materials: next }, "materials");
+    } catch {
+      persist(job.id, { materials: next });
+    }
+  }
+
+  function applyTemplate(job: AwnitJobRow, templateKey: string) {
+    const items = MATERIAL_TEMPLATES[templateKey] || [];
+    if (!items.length) return;
+
+    const cur = getMaterials(job);
+    const now = nowIso();
+    const next = [
+      ...items.map((n) => ({
         id: makeId(),
         name: n,
-        qty: (qty || "").trim() || undefined,
+        qty: undefined,
         checked: false,
         addedBy: grabCode || "live",
-        addedAt: nowIso(),
-      };
-      return { ...prev, [jobId]: [item, ...cur] };
-    });
+        addedAt: now,
+      })),
+      ...cur,
+    ] as MaterialItem[];
+
+    persist(job.id, { materials: next });
   }
 
-  function removeMaterial(jobId: string, id: string) {
-    setMaterialsByJob((prev) => {
-      const cur = prev[jobId] || [];
-      return { ...prev, [jobId]: cur.filter((x) => x.id !== id) };
-    });
-  }
-
-  function toggleMaterial(jobId: string, id: string) {
-    setMaterialsByJob((prev) => {
-      const cur = prev[jobId] || [];
-      return {
-        ...prev,
-        [jobId]: cur.map((x) => (x.id === id ? { ...x, checked: !x.checked } : x)),
-      };
-    });
-  }
-
-  function applyTemplate(jobId: string, templateKey: string) {
-    const items = MATERIAL_TEMPLATES[templateKey] || [];
-    for (const n of items) addMaterial(jobId, n);
-  }
-
-  function quickAddMaterials(jobId: string) {
-    const raw = (materialsQuickAdd || "").trim();
+  function quickAddMaterials(job: AwnitJobRow) {
+    const raw = (getMaterialsQuickAddText(job) || "").trim();
     if (!raw) return;
 
     const lines = raw
-      .split("\n")
+      .split(/\r?\n/g)
       .map((l) => l.trim())
       .filter(Boolean);
 
     for (const line of lines) {
-      // allow "name x qty" simple parse
       const m = line.match(/^(.*?)(?:\s+x\s+(.+))?$/i);
       const name = (m?.[1] || "").trim();
       const qty = (m?.[2] || "").trim();
-      addMaterial(jobId, name, qty || undefined);
+      addMaterial(job, name, qty || undefined);
     }
-    setMaterialsQuickAdd("");
+
+    // ✅ persist clear so it doesn't "come back" weirdly
+    setMaterialsQuickAddText(job, "");
   }
 
-  function buildGrabListText(job: Job, materials: MaterialItem[]) {
+  function setNotes(job: AwnitJobRow, value: string) {
+    updateJobOptimistic(job.id, { techNotes: value } as any);
+    persistDebounced(job.id, { techNotes: value }, "techNotes");
+  }
+
+  function buildTechPayload(job: AwnitJobRow) {
+    const c = job.customer || {};
+    const appt = `${job.apptDate || "-"} ${job.apptTime || "-"}`.trim();
+    return [
+      `AWNIT — Job`,
+      `Customer: ${c.name || "-"}`,
+      `Phone: ${c.phone || "-"}`,
+      `Address: ${c.address || "-"}`,
+      `Email: ${c.email || "-"}`,
+      ``,
+      `Job: ${job.title || "-"}`,
+      `Summary: ${job.summary || ""}`,
+      `Appt: ${appt}`,
+      `Crew: ${job.crew || "-"}`,
+      `Stage: ${coerceStage(job.stage)}`,
+      `Job ID: ${job.id}`,
+    ].join("\n");
+  }
+
+  function smsHref(job: AwnitJobRow) {
+    const phone = digitsPhone(job.customer?.phone || "");
+    if (!phone) return "";
+    const body = encodeURIComponent(buildTechPayload(job));
+    return `sms:${phone}?&body=${body}`;
+  }
+
+  function emailHref(job: AwnitJobRow) {
+    const email = (job.customer?.email || "").trim();
+    if (!email) return "";
+    const subject = encodeURIComponent(`AWNIT — ${job.title || "Job"}`);
+    const body = encodeURIComponent(buildTechPayload(job));
+    return `mailto:${email}?subject=${subject}&body=${body}`;
+  }
+
+  function mapsHref(job: AwnitJobRow) {
+    const addr = (job.customer?.address || "").trim();
+    if (!addr) return "";
+    const q = encodeURIComponent(addr);
+    return `https://www.google.com/maps/search/?api=1&query=${q}`;
+  }
+
+  function buildGrabListText(job: AwnitJobRow, materials: MaterialItem[]) {
+    const c = job.customer || {};
     const header = [
-      `AWNIT Ã¢â‚¬â€ Materials Grab List`,
-      `Job: ${job.title}`,
-      `Customer: ${job.customer.name || "-"}`,
-      `Address: ${job.customer.address || "-"}`,
-      `Appt: ${job.apptDate || "-"} ${job.apptTime || "-"}`.trim(),
+      `AWNIT — Materials Grab List`,
+      `Job: ${job.title || "-"}`,
+      `Customer: ${c.name || "-"}`,
+      `Address: ${c.address || "-"}`,
+      `Appt: ${(job.apptDate || "-").toString()} ${(job.apptTime || "-").toString()}`.trim(),
       ``,
     ].join("\n");
 
@@ -505,104 +707,29 @@ export default function AwnitDemoBoard() {
       .map((m, idx) => {
         const who = m.addedBy || "live";
         const q = m.qty ? ` (x ${m.qty})` : "";
-        const chk = m.checked ? "?" : "?";
-        return `${chk} ${idx + 1}. ${m.name}${q} Ã¢â‚¬â€ ${who}`;
+        const chk = m.checked ? "✅" : "⬜";
+        return `${chk} ${idx + 1}. ${m.name}${q} — ${who}`;
       });
 
     return header + lines.join("\n");
   }
 
-  // ---------------- Notes per Job ----------------
-  const [notesByJob, setNotesByJob] = useState<Record<string, string>>({});
-  const selectedNotes = notesByJob[selectedJobId || ""] || "";
-
-  function setNotes(jobId: string, value: string) {
-    setNotesByJob((prev) => ({ ...prev, [jobId]: value }));
-  }
-
-  // ---------------- Stage updates ----------------
-  function setStage(jobId: string, stage: Stage) {
-    setJobs((prev) => prev.map((j) => (j.id === jobId ? { ...j, stage } : j)));
-  }
-
-  // ---------------- Share / copy to tech ----------------
-  function buildTechPayload(job: Job) {
-    const c = job.customer;
-    const appt = `${job.apptDate || "-"} ${job.apptTime || "-"}`.trim();
-    return [
-      `AWNIT Ã¢â‚¬â€ Job`,
-      `Customer: ${c.name || "-"}`,
-      `Phone: ${c.phone || "-"}`,
-      `Address: ${c.address || "-"}`,
-      `Email: ${c.email || "-"}`,
-      ``,
-      `Job: ${job.title}`,
-      `Summary: ${job.summary}`,
-      `Appt: ${appt}`,
-      `Crew: ${job.crew || "-"}`,
-      `Stage: ${job.stage}`,
-    ].join("\n");
-  }
-
-  function digitsPhone(s?: string) {
-    const raw = (s || "").trim();
-    if (!raw) return "";
-
-    // Keep explicit +country numbers
-    if (raw.startsWith("+")) {
-      const d = raw.replace(/[^\d+]/g, "");
-      return d;
-    }
-
-    // Strip to digits only
-    const digits = raw.replace(/[^\d]/g, "");
-
-    // US normalizations:
-    // - 10 digits -> +1XXXXXXXXXX
-    // - 11 digits starting with 1 -> +1XXXXXXXXXX
-    if (digits.length === 10) return `+1${digits}`;
-    if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
-
-    // Fallback: if it's 12-15 digits, treat as international and prefix +
-    if (digits.length >= 12 && digits.length <= 15) return `+${digits}`;
-
-    // Last resort (better than nothing)
-    return digits;
-  }
-
-  function smsHref(job: Job) {
-    const phone = digitsPhone(job.customer.phone);
-    if (!phone) return "";
-    const body = encodeURIComponent(buildTechPayload(job));
-    // most mobile browsers: sms:+1...&body=...
-    return `sms:${phone}?&body=${body}`;
-  }
-
-  function emailHref(job: Job) {
-    const email = (job.customer.email || "").trim();
-    if (!email) return "";
-    const subject = encodeURIComponent(`AWNIT Ã¢â‚¬â€ ${job.title}`);
-    const body = encodeURIComponent(buildTechPayload(job));
-    return `mailto:${email}?subject=${subject}&body=${body}`;
-  }
-
-  // ---------------- Invoice ----------------
   async function generateInvoice() {
     if (!selectedJob) return;
+
     try {
       setIsGeneratingInvoice(true);
 
-      const scope = getScope(selectedJob.id);
-      const mats = getMaterials(selectedJob.id);
-      const notes = notesByJob[selectedJob.id] || "";
+      const scope = getScope(selectedJob);
+      const mats = getMaterials(selectedJob);
+      const notes = getNotes(selectedJob);
 
-      // Your helper decides schema; we pass what we have.
       const invoiceId = await createInvoiceFromJob({
-        job: selectedJob,
+        job: selectedJob as any,
         scopeItems: scope,
         materials: mats,
         notes,
-      } as any);
+      });
 
       if (!invoiceId) {
         safeToast("Invoice created, but no ID returned.");
@@ -617,27 +744,21 @@ export default function AwnitDemoBoard() {
     }
   }
 
-  // ---------------- UI computed ----------------
-  const stages: Stage[] = useMemo(
-    () => ["Scheduled", "Measured", "Estimate Sent", "Ordered", "Installed", "Done"],
-    []
-  );
-
   const jobsByStage = useMemo(() => {
-    const map = new Map<Stage, Job[]>();
+    const map = new Map<Stage, AwnitJobRow[]>();
     for (const s of stages) map.set(s, []);
-    for (const j of jobs) map.get(j.stage)?.push(j);
+    for (const j of jobs) map.get(coerceStage(j.stage))?.push(j);
     return map;
   }, [jobs, stages]);
 
-  // ---------------- Render ----------------
   return (
     <div className="min-h-screen bg-[#0b1220] text-white">
       <div className="mx-auto max-w-7xl p-3 md:p-6">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <div className="text-2xl font-extrabold tracking-tight">AWNIT Ã¢â‚¬â€ Live Board</div>
-            <div className="text-sm text-white/60">Week-1 demo surface Ã¢â‚¬Â¢ scope + materials + notes Ã¢â‚¬Â¢ invoice v1</div>
+            <div className="text-2xl font-extrabold tracking-tight">AWNIT — Live Board</div>
+            <div className="text-sm text-white/60">Supabase-backed • scope + materials + notes • invoice v1</div>
+            {loadError ? <div className="mt-1 text-xs text-red-300">{loadError}</div> : null}
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -648,6 +769,17 @@ export default function AwnitDemoBoard() {
             >
               {showPanels ? "Hide Panels" : "Show Panels"}
             </button>
+
+            <button
+              type="button"
+              className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold hover:bg-white/10"
+              onClick={loadJobs}
+              disabled={loading}
+              title="Reload from database"
+            >
+              {loading ? "Loading…" : "Refresh"}
+            </button>
+
             <button
               type="button"
               className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold hover:bg-white/10"
@@ -679,7 +811,7 @@ export default function AwnitDemoBoard() {
               disabled={!selectedJob || isGeneratingInvoice}
               title="Generate invoice from Scope + Materials + Notes"
             >
-              {isGeneratingInvoice ? "GeneratingÃ¢â‚¬Â¦" : "Generate Invoice"}
+              {isGeneratingInvoice ? "Generating…" : "Generate Invoice"}
             </button>
           </div>
         </div>
@@ -708,14 +840,12 @@ export default function AwnitDemoBoard() {
                           selectedJobId === j.id ? "border-emerald-400/40 bg-emerald-400/10" : "border-white/10 bg-white/5"
                         )}
                       >
-                        <div className="text-sm font-bold truncate">{j.title}</div>
-                        <div className="mt-0.5 text-xs text-white/60 truncate">{j.customer.name}</div>
+                        <div className="text-sm font-bold truncate">{j.title || "Untitled Job"}</div>
+                        <div className="mt-0.5 text-xs text-white/60 truncate">{j.customer?.name || "-"}</div>
                         <div className="mt-1 text-[11px] text-white/60">{fmtAppt(j)}</div>
                       </button>
                     ))}
-                    {list.length === 0 ? (
-                      <div className="px-3 py-2 text-xs text-white/40">No jobs</div>
-                    ) : null}
+                    {list.length === 0 ? <div className="px-3 py-2 text-xs text-white/40">No jobs</div> : null}
                   </div>
                 </div>
               );
@@ -741,7 +871,19 @@ export default function AwnitDemoBoard() {
                   Copy Tech Text
                 </button>
 
-                {selectedJob.customer.phone ? (
+                {selectedJob.customer?.address ? (
+                  <a
+                    className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-bold hover:bg-white/10"
+                    href={mapsHref(selectedJob)}
+                    target="_blank"
+                    rel="noreferrer"
+                    title="Open in Google Maps"
+                  >
+                    Maps
+                  </a>
+                ) : null}
+
+                {selectedJob.customer?.phone ? (
                   <a
                     className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-bold hover:bg-white/10"
                     href={smsHref(selectedJob)}
@@ -753,7 +895,7 @@ export default function AwnitDemoBoard() {
                   </a>
                 ) : null}
 
-                {selectedJob.customer.email ? (
+                {selectedJob.customer?.email ? (
                   <a
                     className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-bold hover:bg-white/10"
                     href={emailHref(selectedJob)}
@@ -776,10 +918,10 @@ export default function AwnitDemoBoard() {
               <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
                 <div className="text-sm font-extrabold">Customer</div>
                 <div className="mt-2 space-y-1 text-sm">
-                  <div className="font-bold">{selectedJob.customer.name || "-"}</div>
-                  <div className="text-white/70">{selectedJob.customer.address || "-"}</div>
-                  <div className="text-white/70">{selectedJob.customer.phone || "-"}</div>
-                  <div className="text-white/70">{selectedJob.customer.email || "-"}</div>
+                  <div className="font-bold">{selectedJob.customer?.name || "-"}</div>
+                  <div className="text-white/70">{selectedJob.customer?.address || "-"}</div>
+                  <div className="text-white/70">{selectedJob.customer?.phone || "-"}</div>
+                  <div className="text-white/70">{selectedJob.customer?.email || "-"}</div>
                 </div>
 
                 <div className="mt-3 rounded-2xl border border-white/10 bg-black/20 p-3">
@@ -796,11 +938,11 @@ export default function AwnitDemoBoard() {
                         type="button"
                         className={cn(
                           "rounded-full border px-3 py-1 text-xs font-extrabold",
-                          selectedJob.stage === s
+                          coerceStage(selectedJob.stage) === s
                             ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-100"
                             : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10"
                         )}
-                        onClick={() => setStage(selectedJob.id, s)}
+                        onClick={() => void setStage(selectedJob.id, s)}
                       >
                         {s}
                       </button>
@@ -815,7 +957,7 @@ export default function AwnitDemoBoard() {
                   <div className="text-sm font-extrabold">Scope + Measurements</div>
                   <div className="text-xs text-white/60">
                     {(() => {
-                      const c = scopeCounts(getScope(selectedJob.id));
+                      const c = scopeCounts(getScope(selectedJob));
                       return `D:${c.doors} W:${c.windows} S:${c.screens} T:${c.trim} C:${c.custom}`;
                     })()}
                   </div>
@@ -827,7 +969,7 @@ export default function AwnitDemoBoard() {
                       key={t}
                       type="button"
                       className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-extrabold hover:bg-white/10"
-                      onClick={() => addScopeItem(selectedJob.id, t)}
+                      onClick={() => addScopeItem(selectedJob, t)}
                     >
                       + {t.toUpperCase()}
                     </button>
@@ -835,13 +977,13 @@ export default function AwnitDemoBoard() {
                 </div>
 
                 <div className="mt-3 space-y-2">
-                  {getScope(selectedJob.id).length === 0 ? (
+                  {getScope(selectedJob).length === 0 ? (
                     <div className="rounded-xl border border-white/10 bg-black/20 p-3 text-sm text-white/60">
                       Add items (Door/Window/Screen/Trim/Custom). Use mic to append a new line per tap.
                     </div>
                   ) : null}
 
-                  {getScope(selectedJob.id).map((it) => {
+                  {getScope(selectedJob).map((it) => {
                     const targetId = `scope_${selectedJob.id}_${it.id}`;
                     const isActive = activeTargetRef.current === targetId;
 
@@ -854,9 +996,11 @@ export default function AwnitDemoBoard() {
                                 type="button"
                                 className={cn(
                                   "rounded-full border px-3 py-1 text-xs font-extrabold",
-                                  it.done ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-100" : "border-white/10 bg-white/5 text-white/70"
+                                  it.done
+                                    ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-100"
+                                    : "border-white/10 bg-white/5 text-white/70"
                                 )}
-                                onClick={() => toggleScopeDone(selectedJob.id, it.id)}
+                                onClick={() => toggleScopeDone(selectedJob, it.id)}
                               >
                                 {it.done ? "Done" : "Open"}
                               </button>
@@ -873,14 +1017,14 @@ export default function AwnitDemoBoard() {
                               active={isActive}
                               onClick={() =>
                                 toggle(targetId, (txt, isFinal) => {
-                                  setScopeQuick(selectedJob.id, it.id, dictationAppendLine(it.quick, txt, isFinal));
+                                  setScopeQuick(selectedJob, it.id, dictationAppendLine(it.quick, txt, isFinal));
                                 })
                               }
                             />
                             <button
                               type="button"
                               className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-extrabold hover:bg-white/10"
-                              onClick={() => removeScopeItem(selectedJob.id, it.id)}
+                              onClick={() => removeScopeItem(selectedJob, it.id)}
                             >
                               Remove
                             </button>
@@ -890,8 +1034,8 @@ export default function AwnitDemoBoard() {
                         <textarea
                           className="mt-3 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none placeholder:text-white/30"
                           value={it.quick}
-                          onChange={(e) => setScopeQuick(selectedJob.id, it.id, e.target.value)}
-                          placeholder="Measurements / notesÃ¢â‚¬Â¦ (Mic adds a new line per tap)"
+                          onChange={(e) => setScopeQuick(selectedJob, it.id, e.target.value)}
+                          placeholder="Measurements / notes… (Mic adds a new line per tap)"
                           rows={4}
                         />
                       </div>
@@ -909,7 +1053,7 @@ export default function AwnitDemoBoard() {
                     <button
                       type="button"
                       className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-extrabold hover:bg-white/10"
-                      onClick={() => copyToClipboard(buildGrabListText(selectedJob, getMaterials(selectedJob.id)))}
+                      onClick={() => copyToClipboard(buildGrabListText(selectedJob, getMaterials(selectedJob)))}
                     >
                       Copy Grab List
                     </button>
@@ -921,7 +1065,7 @@ export default function AwnitDemoBoard() {
                         key={k}
                         type="button"
                         className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-extrabold hover:bg-white/10"
-                        onClick={() => applyTemplate(selectedJob.id, k)}
+                        onClick={() => applyTemplate(selectedJob, k)}
                       >
                         + {k}
                       </button>
@@ -932,8 +1076,8 @@ export default function AwnitDemoBoard() {
                     <div className="text-xs font-bold text-white/60">Quick Add (one per line)</div>
                     <textarea
                       className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none placeholder:text-white/30"
-                      value={materialsQuickAdd}
-                      onChange={(e) => setMaterialsQuickAdd(e.target.value)}
+                      value={getMaterialsQuickAddText(selectedJob)}
+                      onChange={(e) => setMaterialsQuickAddText(selectedJob, e.target.value)}
                       placeholder={"Caulk / sealant\nScrews x 2 boxes\nShims"}
                       rows={4}
                     />
@@ -941,7 +1085,7 @@ export default function AwnitDemoBoard() {
                       <button
                         type="button"
                         className="rounded-xl bg-white px-3 py-2 text-xs font-extrabold text-black hover:bg-white/90"
-                        onClick={() => quickAddMaterials(selectedJob.id)}
+                        onClick={() => quickAddMaterials(selectedJob)}
                       >
                         Add Lines
                       </button>
@@ -953,27 +1097,31 @@ export default function AwnitDemoBoard() {
                   </div>
 
                   <div className="mt-3 space-y-2">
-                    {getMaterials(selectedJob.id).length === 0 ? (
+                    {getMaterials(selectedJob).length === 0 ? (
                       <div className="rounded-xl border border-white/10 bg-black/20 p-3 text-sm text-white/60">
                         No materials yet. Use templates or quick add.
                       </div>
                     ) : null}
 
-                    {getMaterials(selectedJob.id).map((m) => (
-                      <div key={m.id} className="flex items-start justify-between gap-2 rounded-xl border border-white/10 bg-black/20 p-3">
+                    {getMaterials(selectedJob).map((m) => (
+                      <div
+                        key={m.id}
+                        className="flex items-start justify-between gap-2 rounded-xl border border-white/10 bg-black/20 p-3"
+                      >
                         <div className="min-w-0">
                           <button
                             type="button"
                             className="text-left"
-                            onClick={() => toggleMaterial(selectedJob.id, m.id)}
+                            onClick={() => toggleMaterial(selectedJob, m.id)}
                             title="Toggle checked"
                           >
                             <div className="text-sm font-bold truncate">
-                              {m.checked ? "?" : "?"} {m.name}
+                              {m.checked ? "✅" : "⬜"} {m.name}
                               {m.qty ? <span className="text-white/60"> (x {m.qty})</span> : null}
                             </div>
                             <div className="mt-1 text-xs text-white/50">
-                              {m.addedBy} Ã¢â‚¬Â¢ {new Date(m.addedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
+                              {m.addedBy} •{" "}
+                              {new Date(m.addedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
                             </div>
                           </button>
                         </div>
@@ -981,7 +1129,7 @@ export default function AwnitDemoBoard() {
                         <button
                           type="button"
                           className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-extrabold hover:bg-white/10"
-                          onClick={() => removeMaterial(selectedJob.id, m.id)}
+                          onClick={() => removeMaterial(selectedJob, m.id)}
                         >
                           Remove
                         </button>
@@ -1001,7 +1149,7 @@ export default function AwnitDemoBoard() {
                       active={activeTargetRef.current === `notes_${selectedJob.id}`}
                       onClick={() =>
                         toggle(`notes_${selectedJob.id}`, (txt, isFinal) => {
-                          setNotes(selectedJob.id, dictationAppendLine(selectedNotes, txt, isFinal));
+                          setNotes(selectedJob, dictationAppendLine(getNotes(selectedJob), txt, isFinal));
                         })
                       }
                     />
@@ -1009,9 +1157,9 @@ export default function AwnitDemoBoard() {
 
                   <textarea
                     className="mt-3 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none placeholder:text-white/30"
-                    value={selectedNotes}
-                    onChange={(e) => setNotes(selectedJob.id, e.target.value)}
-                    placeholder="NotesÃ¢â‚¬Â¦ (Mic adds a new line per tap)"
+                    value={getNotes(selectedJob)}
+                    onChange={(e) => setNotes(selectedJob, e.target.value)}
+                    placeholder="Notes… (Mic adds a new line per tap)"
                     rows={8}
                   />
                 </div>
@@ -1019,15 +1167,23 @@ export default function AwnitDemoBoard() {
             </div>
           )}
         </div>
-
-        {/* Dev / env note */}
-        <div className="mt-4 text-xs text-white/40">
-          Supabase client: {supabase ? "env detected" : "env missing (fine for local demo)"} Ã¢â‚¬Â¢ Route: /planet/vehicles/awnit-demo
-        </div>
       </div>
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

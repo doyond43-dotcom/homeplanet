@@ -1,4 +1,4 @@
-﻿import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import type { CSSProperties } from "react";
 
 type NavLink = { label: string; to: string };
@@ -30,7 +30,7 @@ export default function ResidentHeader({
     <div style={wrap}>
       <div style={left}>
         <button type="button" style={backBtn} onClick={goBack} title="Back">
-          ← Back
+          ? Back
         </button>
 
         <div style={{ display: "grid", gap: 2 }}>

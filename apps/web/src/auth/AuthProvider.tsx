@@ -1,4 +1,4 @@
-﻿import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
 import { ensureProfile } from "../lib/profile";
@@ -30,7 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const s = data.session ?? null;
       setSession(s);
 
-      // ✅ NEVER block UI on profile creation
+      // ? NEVER block UI on profile creation
       setLoading(false);
 
       if (s?.user) {
@@ -41,7 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession ?? null);
 
-      // ✅ NEVER block UI on profile creation
+      // ? NEVER block UI on profile creation
       setLoading(false);
 
       if (newSession?.user) {

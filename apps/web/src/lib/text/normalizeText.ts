@@ -1,5 +1,5 @@
-﻿/**
- * HomePlanet text normalization — SAFE MODE
+/**
+ * HomePlanet text normalization � SAFE MODE
  * Browser + Supabase already provide valid UTF-8.
  * We NEVER reinterpret characters on the client.
  * Only trims invisible BOM characters.

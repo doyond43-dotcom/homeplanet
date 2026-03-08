@@ -1,4 +1,4 @@
-﻿export type LifeEventType = "movement" | "work" | "meeting" | "health" | "reflection";
+export type LifeEventType = "movement" | "work" | "meeting" | "health" | "reflection";
 
 export type LifeEvent = {
   id: string;

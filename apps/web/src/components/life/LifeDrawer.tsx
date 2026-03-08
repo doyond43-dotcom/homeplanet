@@ -1,4 +1,4 @@
-Ôªøimport React from "react";
+import React from "react";
 import type { LifeEvent } from "../../lib/life/types";
 import { LIFE_TYPES } from "../../lib/life/types";
 import { createLifeEvent, deleteLifeEvent, listLifeEvents } from "../../lib/life/api";
@@ -125,11 +125,11 @@ export function LifeDrawer() {
           </div>
         </div>
         {loading ? (
-          <div className="p-3 text-sm text-gray-600">Loading‚Ä¶</div>
+          <div className="p-3 text-sm text-gray-600">LoadingÖ</div>
         ) : error ? (
           <div className="p-3 text-sm text-red-600">{error}</div>
         ) : events.length === 0 ? (
-          <div className="p-3 text-sm text-gray-600">No entries yet. Hit ‚ÄúAdd‚Äù.</div>
+          <div className="p-3 text-sm text-gray-600">No entries yet. Hit ìAddî.</div>
         ) : (
           <div className="max-h-[70vh] overflow-auto p-2">
             {grouped.map(([k, list]) => (
@@ -179,9 +179,9 @@ export function LifeDrawer() {
               <div className="min-w-0">
                 <div className="text-xl font-semibold truncate">{selected.title}</div>
                 <div className="mt-1 text-sm text-gray-600">
-                  {typeLabel(selected.type)} ‚Ä¢ {fmtDay(selected.created_at)} ‚Ä¢ {fmtTime(selected.created_at)}
+                  {typeLabel(selected.type)} ï {fmtDay(selected.created_at)} ï {fmtTime(selected.created_at)}
                 </div>
-                {selected.location ? <div className="mt-1 text-sm text-gray-700">üìç {selected.location}</div> : null}
+                {selected.location ? <div className="mt-1 text-sm text-gray-700">?? {selected.location}</div> : null}
               </div>
 
               <button
@@ -205,7 +205,7 @@ export function LifeDrawer() {
             )}
 
             <div className="rounded-2xl border p-3 text-xs text-gray-600">
-              Immutable anchor: created_at is the presence timestamp. Editing content later won‚Äôt change origin.
+              Immutable anchor: created_at is the presence timestamp. Editing content later wonít change origin.
             </div>
           </div>
         )}

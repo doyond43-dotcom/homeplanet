@@ -1,4 +1,4 @@
-﻿// apps/web/src/routes/CityRoutes.tsx
+// apps/web/src/routes/CityRoutes.tsx
 import { Routes, Route, Link, Navigate, useLocation } from "react-router-dom";
 import CreatorCity from "../pages/CreatorCity";
 
@@ -7,7 +7,7 @@ function CityIndex() {
 
   const isLive = (c: string) => c === "creator" || c === "service";
 
-  // ✅ City cards should route to REAL destinations.
+  // ? City cards should route to REAL destinations.
   // - creator -> /city/creator (launchpad)
   // - service -> /service/taylor-creek (real app)
   // - others -> /city/<name> (coming soon placeholder)
@@ -140,14 +140,14 @@ function CityPlaceholder() {
       <div style={panel}>
         <div style={h2}>{city.charAt(0).toUpperCase() + city.slice(1)} City</div>
         <div style={sub}>
-          This City route exists, but the City page hasn’t been wired yet.
+          This City route exists, but the City page hasn�t been wired yet.
           <br />
-          You’re not lost — it’s just not built yet.
+          You�re not lost � it�s just not built yet.
         </div>
 
         <div style={row}>
           <Link to="/city" style={btn}>
-            ← Back to Cities
+            ? Back to Cities
           </Link>
 <Link to="/service/taylor-creek" style={btn}>
             Go to Service (Taylor Creek)
@@ -168,7 +168,7 @@ export default function CityRoutes() {
       {/* /city */}
       <Route index element={<CityIndex />} />
 
-      {/* ✅ REAL CITY PAGES */}
+      {/* ? REAL CITY PAGES */}
       <Route path="creator" element={<CreatorCity />} />
 
       {/* keep /city/service as a friendly redirect (in case anyone hits it) */}

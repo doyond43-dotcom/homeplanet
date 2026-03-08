@@ -1,4 +1,4 @@
-﻿// apps/web/src/routes/LiveIntakeBoard.tsx
+// apps/web/src/routes/LiveIntakeBoard.tsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { getSupabase } from "../lib/supabase";
@@ -35,7 +35,7 @@ function isQuickJob(payload: any) {
 function safeText(x: unknown, max = 140): string {
   const s = (typeof x === "string" ? x : JSON.stringify(x ?? "")).replace(/\s+/g, " ").trim();
   if (!s) return "";
-  return s.length > max ? s.slice(0, max - 1) + "…" : s;
+  return s.length > max ? s.slice(0, max - 1) + "�" : s;
 }
 
 function stageColor(stage: string) {
@@ -102,7 +102,7 @@ export default function LiveIntakeBoard() {
 
   const loc = useLocation();
 
-  // ✅ PRINT MODE (router-bypass): /live/<slug>/staff?print=<jobId>
+  // ? PRINT MODE (router-bypass): /live/<slug>/staff?print=<jobId>
   const printId = useMemo(() => {
     try {
       const v = new URLSearchParams(loc.search).get("print");
@@ -177,7 +177,7 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
     );
   }, []);
 
-  // ✅ singleton client (one per tab)
+  // ? singleton client (one per tab)
   const supabase = useMemo(() => getSupabase(), []);
 
   const storageKey = useMemo(() => `hp_employee_code:${shopSlug || "no-slug"}`, [shopSlug]);
@@ -190,14 +190,14 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  // ✅ Next Date chips map: job_id -> chip
+  // ? Next Date chips map: job_id -> chip
   const [nextDateByJob, setNextDateByJob] = useState<Record<string, NextDateChip | null>>({});
   const nextDateByJobRef = useRef<Record<string, NextDateChip | null>>({});
   useEffect(() => {
     nextDateByJobRef.current = nextDateByJob;
   }, [nextDateByJob]);
 
-  // ✅ Customer lookup (surgical add-on; does NOT touch board load/realtime/stages)
+  // ? Customer lookup (surgical add-on; does NOT touch board load/realtime/stages)
   const [lookupQuery, setLookupQuery] = useState("");
   const [lookupBusy, setLookupBusy] = useState(false);
   const [lookupErr, setLookupErr] = useState<string | null>(null);
@@ -221,7 +221,7 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
 
   const inFlightRef = useRef(false);
 
-  // ✅ broadcast "nudge" channel reference (used by setJobStage to poke other devices)
+  // ? broadcast "nudge" channel reference (used by setJobStage to poke other devices)
   const rtChannelRef = useRef<any>(null);
 
   useEffect(() => {
@@ -299,7 +299,7 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
     }
   }
 
-  // ✅ Next Date: batched fetch for current rows (quiet, cached)
+  // ? Next Date: batched fetch for current rows (quiet, cached)
   useEffect(() => {
     if (!shopSlug) return;
 
@@ -370,7 +370,7 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rows, shopSlug]);
 
-  // ✅ Next Date: realtime updates from work_order_drafts (instant chip refresh)
+  // ? Next Date: realtime updates from work_order_drafts (instant chip refresh)
   useEffect(() => {
     if (!shopSlug) return;
 
@@ -404,7 +404,7 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shopSlug]);
 
-  // ✅ Realtime-first + ✅ low-frequency heartbeat fallback (iPad/Safari-safe, NOT chatty)
+  // ? Realtime-first + ? low-frequency heartbeat fallback (iPad/Safari-safe, NOT chatty)
   useEffect(() => {
     if (!shopSlug) return;
 
@@ -431,7 +431,7 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
       .channel(`board:${shopSlug}`, {
         config: { broadcast: { ack: true }, presence: { key: shopSlug } },
       })
-      // ✅ DB changes on the main board table (INSERT/UPDATE/DELETE)
+      // ? DB changes on the main board table (INSERT/UPDATE/DELETE)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "public_intake_submissions", filter: `slug=eq.${shopSlug}` },
@@ -456,7 +456,7 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
           }
         }
       )
-      // ✅ Stage-event table (some environments emit updates via an event row instead of a row update)
+      // ? Stage-event table (some environments emit updates via an event row instead of a row update)
       // IMPORTANT: we do NOT rely on filter here because schemas vary (slug vs shop_slug).
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "job_stage_events" }, (p: any) => {
         lastRealtimeAt = Date.now();
@@ -466,7 +466,7 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
         if (inferredSlug && inferredSlug !== shopSlug) return;
         scheduleLoad("realtime:stage-event");
       })
-      // ✅ Broadcast "nudge": if DB realtime glitches, devices still get a refresh cue instantly
+      // ? Broadcast "nudge": if DB realtime glitches, devices still get a refresh cue instantly
       .on("broadcast", { event: "hp_refresh" }, (msg: any) => {
         lastRealtimeAt = Date.now();
         const slugFromMsg = String(msg?.payload?.slug ?? "").trim();
@@ -525,7 +525,7 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shopSlug]);
 
-  // ✅ Customer lookup search (includes completed jobs; does not affect board rows)
+  // ? Customer lookup search (includes completed jobs; does not affect board rows)
   useEffect(() => {
     if (!shopSlug) return;
 
@@ -570,10 +570,10 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
           .limit(25);
 
         if (isId) {
-          // ✅ id exact match + name/vehicle fuzzy
+          // ? id exact match + name/vehicle fuzzy
           query = query.or(`id.eq.${q},payload->>name.ilike.%${q}%,payload->>vehicle.ilike.%${q}%`);
         } else {
-          // ✅ name/vehicle fuzzy ONLY (avoid uuid ilike operator error)
+          // ? name/vehicle fuzzy ONLY (avoid uuid ilike operator error)
           query = query.or(`payload->>name.ilike.%${q}%,payload->>vehicle.ilike.%${q}%`);
         }
 
@@ -631,7 +631,7 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
       code = (input || "").trim();
 
       if (!code) {
-        setErr("Stage change cancelled — employee code required.");
+        setErr("Stage change cancelled � employee code required.");
         return;
       }
 
@@ -678,7 +678,7 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
         return;
       }
 
-      // ✅ NUDGE OTHER DEVICES IMMEDIATELY (works even if postgres_changes glitches)
+      // ? NUDGE OTHER DEVICES IMMEDIATELY (works even if postgres_changes glitches)
       try {
         const ch = rtChannelRef.current;
         if (ch?.send) {
@@ -717,9 +717,9 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
           className={`inline-flex items-center gap-2 rounded-md border px-2 py-1 text-[11px] font-semibold ${chipBadgeColor(
             label
           )}`}
-          title={note ? `${label} • ${when}\n${note}` : `${label} • ${when}`}
+          title={note ? `${label} � ${when}\n${note}` : `${label} � ${when}`}
         >
-          <span>📅</span>
+          <span>??</span>
           <span className="truncate max-w-[220px]">
             {label}: {when}
           </span>
@@ -750,7 +750,7 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* ✅ Customer lookup (includes done; does NOT touch board logic) */}
+          {/* ? Customer lookup (includes done; does NOT touch board logic) */}
           <div ref={lookupWrapRef} className="relative hidden lg:block">
             <input
               ref={lookupInputRef}
@@ -771,7 +771,7 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
                     <span className="text-slate-500">(includes completed)</span>
                   </div>
                   <div className="text-[11px] text-slate-500 flex items-center gap-2">
-                    {lookupBusy ? <span className="text-slate-300">Searching…</span> : null}
+                    {lookupBusy ? <span className="text-slate-300">Searching�</span> : null}
                     <button
                       type="button"
                       onClick={() => {
@@ -866,11 +866,11 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
           <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-6 max-w-xl">
             <div className="text-xl font-bold">Enter employee code to continue</div>
             <div className="text-sm text-slate-300 mt-2">
-              This makes every stage change attributable — and writes an immutable event stamp for proof.
+              This makes every stage change attributable � and writes an immutable event stamp for proof.
             </div>
             <div className="text-xs text-slate-500 mt-3">Stored locally on this device for this shop slug.</div>
             <div className="text-xs text-slate-500 mt-2">
-              (You can also skip this and just change a stage — it will prompt you the first time.)
+              (You can also skip this and just change a stage � it will prompt you the first time.)
             </div>
           </div>
         </div>
@@ -904,7 +904,7 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
                         <div className="text-sm text-slate-300">{name}</div>
                         <div className="text-xs text-slate-400 mt-1">{message}</div>
 
-                        {/* ✅ Next Date chip */}
+                        {/* ? Next Date chip */}
                         {renderNextDateChip(r.id)}
 
                         <div className="mt-2 text-[11px] text-slate-500 flex items-center justify-between">
@@ -952,7 +952,7 @@ function LiveIntakeBoardBody({ shopSlug }: { shopSlug: string }) {
                         <div className="text-sm text-slate-300">{name}</div>
                         <div className="text-xs text-slate-400 mt-1">{message}</div>
 
-                        {/* ✅ Next Date chip */}
+                        {/* ? Next Date chip */}
                         {renderNextDateChip(r.id)}
 
                         <div className="mt-2 text-[11px] text-slate-500 flex items-center justify-between">

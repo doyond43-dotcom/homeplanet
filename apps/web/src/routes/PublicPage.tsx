@@ -1,4 +1,4 @@
-Ôªøimport { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 
 // IMPORTANT: Adjust this import if your supabase client lives elsewhere.
@@ -13,11 +13,11 @@ type PublicPageRow = {
 };
 
 // -----------------------------
-// Mojibake / UTF-8 helpers (SINGLE SOURCE OF TRUTH ‚Äî no duplicates)
+// Mojibake / UTF-8 helpers (SINGLE SOURCE OF TRUTH ó no duplicates)
 // -----------------------------
 function fixMojibakeOnce(input: string): string {
   if (!input) return input;
-  const looksCorrupted = /√É.|‚Äô|‚Äú|‚Äù|‚Äì|‚Äî|‚Äù¬¶|√Ç /u.test(input);
+  const looksCorrupted = /√.|í|ì|î|ñ|ó|î¶|¬ /u.test(input);
   if (!looksCorrupted) return input;
 
   try {
@@ -109,16 +109,16 @@ function formatPreviewSentence(d: {
   const when = trimOrEmpty(d.best_time);
   const where = trimOrEmpty(d.address);
 
-  // Keep the ‚Äúrequest‚Äù line tight and readable
+  // Keep the ìrequestî line tight and readable
   const msg = trimOrEmpty(d.message);
   const request = msg
     ? msg.length > 220
-      ? msg.slice(0, 217) + "‚Ä¶"
+      ? msg.slice(0, 217) + "Ö"
       : msg
-    : "Request details will appear here as you type‚Ä¶";
+    : "Request details will appear here as you typeÖ";
 
   const parts: string[] = [];
-  parts.push(`${who} ‚Äî prefers ${pref.toLowerCase()}`);
+  parts.push(`${who} ó prefers ${pref.toLowerCase()}`);
   if (vehicle) parts.push(`vehicle: ${vehicle}`);
   if (when) parts.push(`best time: ${when.toLowerCase()}`);
   if (where) parts.push(`location: ${where}`);
@@ -126,7 +126,7 @@ function formatPreviewSentence(d: {
   return {
     title: who,
     request,
-    meta: parts.join(" ‚Ä¢ "),
+    meta: parts.join(" ï "),
   };
 }
 
@@ -178,7 +178,7 @@ function approxBytesFromDataUrl(dataUrl: string) {
   const idx = dataUrl.indexOf(",");
   if (idx < 0) return dataUrl.length;
   const b64 = dataUrl.slice(idx + 1);
-  // base64 bytes Àú (len * 3/4) - padding
+  // base64 bytes ò (len * 3/4) - padding
   const pad = b64.endsWith("==") ? 2 : b64.endsWith("=") ? 1 : 0;
   return Math.max(0, Math.floor((b64.length * 3) / 4) - pad);
 }
@@ -721,7 +721,7 @@ export default function PublicPage() {
     return (
       <div style={styles.page}>
         <div style={styles.shell}>
-          <div style={{ color: "#e8eefc", fontWeight: 900, fontSize: 14, padding: 10 }}>Loading‚Ä¶</div>
+          <div style={{ color: "#e8eefc", fontWeight: 900, fontSize: 14, padding: 10 }}>LoadingÖ</div>
         </div>
       </div>
     );
@@ -763,7 +763,7 @@ export default function PublicPage() {
             <div style={styles.badge} />
             <div>
               <div style={styles.brandText}>HomePlanet</div>
-              <div style={styles.brandSub}>Public Intake ‚Ä¢ {page?.slug}</div>
+              <div style={styles.brandSub}>Public Intake ï {page?.slug}</div>
             </div>
           </div>
           <div style={{ ...styles.pill, opacity: 0.9 }}>Receipt-ready</div>
@@ -774,7 +774,7 @@ export default function PublicPage() {
           <div style={styles.heroInner}>
             <div style={styles.heroTitle}>Request logged. Proof-ready.</div>
             <div style={styles.heroText}>
-              Submit your request in under a minute. You‚Äôll get a receipt ID you can reference anytime.
+              Submit your request in under a minute. Youíll get a receipt ID you can reference anytime.
             </div>
             <div style={styles.pillRow}>
               <div style={styles.pill}>Instant receipt</div>
@@ -797,7 +797,7 @@ export default function PublicPage() {
           </div>
           <div style={styles.trustItem}>
             <div style={styles.dot} />
-            <div>No ‚Äúlost texts.‚Äù No ‚Äúwe never got it.‚Äù Everything is logged.</div>
+            <div>No ìlost texts.î No ìwe never got it.î Everything is logged.</div>
           </div>
         </div>
 
@@ -906,7 +906,7 @@ export default function PublicPage() {
                 onChange={(e) => setField("best_time", e.target.value)}
                 style={styles.input as any}
               >
-                <option value="">Choose time‚Ä¶</option>
+                <option value="">Choose timeÖ</option>
                 <option value="Morning">Morning</option>
                 <option value="Afternoon">Afternoon</option>
                 <option value="Evening">Evening</option>
@@ -920,7 +920,7 @@ export default function PublicPage() {
                 value={draft.message}
                 onChange={(e) => setField("message", e.target.value)}
                 rows={6}
-                placeholder="Describe the issue / request‚Ä¶"
+                placeholder="Describe the issue / requestÖ"
                 style={styles.textarea}
               />
             </div>
@@ -997,7 +997,7 @@ export default function PublicPage() {
                 ...(saving || !canSubmit ? styles.ctaDisabled : {}),
               }}
             >
-              {saving ? "Submitting‚Ä¶" : "Confirm & Get Receipt"}
+              {saving ? "SubmittingÖ" : "Confirm & Get Receipt"}
             </button>
 
             {success ? <div style={styles.bannerOk}>{success}</div> : null}
@@ -1012,11 +1012,11 @@ export default function PublicPage() {
               <div>
                 <div style={{ color: "#e8eefc", fontWeight: 950, fontSize: 14 }}>Receipt</div>
                 <div style={{ color: "#b7c2da", fontWeight: 900, fontSize: 12, marginTop: 4 }}>
-                  Saved {savedAt ? `‚Ä¢ ${savedAt}` : ""}
+                  Saved {savedAt ? `ï ${savedAt}` : ""}
                 </div>
               </div>
               <div style={{ ...styles.pill, background: "rgba(34,197,94,0.18)", borderColor: "rgba(34,197,94,0.35)" }}>
-                Logged ‚úì
+                Logged ?
               </div>
             </div>
 
@@ -1075,7 +1075,7 @@ export default function PublicPage() {
           </div>
         ) : null}
 
-        <div style={styles.footer}>Powered by HomePlanet ‚Ä¢ Presence-First Intake</div>
+        <div style={styles.footer}>Powered by HomePlanet ï Presence-First Intake</div>
       </div>
     </div>
   );

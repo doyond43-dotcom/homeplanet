@@ -1,4 +1,4 @@
-﻿import { supabase } from "./supabaseClient";
+import { supabase } from "./supabaseClient";
 
 export type UiInvoiceLine = {
   qty: number;
@@ -120,7 +120,7 @@ export async function createInvoiceFromJob(input: any): Promise<string> {
   if (invErr) throw invErr;
   if (!inv?.id) throw new Error("Invoice created but missing inv.id");
 
-  // 5) Insert invoice lines (NO line_type / sort — your DB doesn't have them)
+  // 5) Insert invoice lines (NO line_type / sort � your DB doesn't have them)
   const lineRows = lines.map((x) => ({
     invoice_id: inv.id,
     qty: toNum(x.qty, 1),
@@ -132,6 +132,6 @@ export async function createInvoiceFromJob(input: any): Promise<string> {
   const { error: lineErr } = await supabase.from("invoice_lines").insert(lineRows);
   if (lineErr) throw lineErr;
 
-  // ✅ Return the ID string (what the board expects for routing)
+  // ? Return the ID string (what the board expects for routing)
   return String(inv.id);
 }

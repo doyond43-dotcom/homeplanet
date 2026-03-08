@@ -1,4 +1,4 @@
-ï»¿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
@@ -93,7 +93,7 @@ export default function ReceiptPage() {
     <div style={{ minHeight: "100vh", background: "#0b0f17", padding: 14 }}>
       <div style={{ maxWidth: 560, margin: "0 auto" }}>
         <div style={{ color: "#e8eefc", fontWeight: 900, fontSize: 18 }}>
-          Receipt â€¢ Proof-ready
+          Receipt • Proof-ready
         </div>
 
         <div
@@ -106,7 +106,7 @@ export default function ReceiptPage() {
           }}
         >
           {loading ? (
-            <div style={{ color: "#e8eefc" }}>Loading receiptâ€¦</div>
+            <div style={{ color: "#e8eefc" }}>Loading receipt…</div>
           ) : err ? (
             <div style={{ color: "#ffd2da", fontWeight: 900 }}>{err}</div>
           ) : (

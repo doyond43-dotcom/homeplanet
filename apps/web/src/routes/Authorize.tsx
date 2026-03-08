@@ -1,4 +1,4 @@
-ï»¿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
@@ -279,7 +279,7 @@ export default function Authorize() {
     return (
       <div style={styles.page}>
         <div style={styles.shell}>
-          <div style={{ color: "#e8eefc", fontWeight: 900, fontSize: 14, padding: 10 }}>Loadingâ€¦</div>
+          <div style={{ color: "#e8eefc", fontWeight: 900, fontSize: 14, padding: 10 }}>Loading…</div>
         </div>
       </div>
     );
@@ -317,7 +317,7 @@ export default function Authorize() {
             <div style={styles.badge} />
             <div>
               <div style={styles.brandText}>HomePlanet</div>
-              <div style={styles.brandSub}>Authorization â€¢ {slug || "business"}</div>
+              <div style={styles.brandSub}>Authorization • {slug || "business"}</div>
             </div>
           </div>
           <div style={styles.pill}>Receipt-linked</div>
@@ -327,7 +327,7 @@ export default function Authorize() {
           <div style={styles.heroInner}>
             <div style={styles.heroTitle}>Authorize service. Proof logged.</div>
             <div style={styles.heroText}>
-              Youâ€™re approving a maximum amount â€” not a charge yet. Every change is timestamped.
+              You’re approving a maximum amount — not a charge yet. Every change is timestamped.
             </div>
           </div>
         </div>
@@ -342,7 +342,7 @@ export default function Authorize() {
             <div style={styles.label}>Customer</div>
             <div style={{ color: "#e8eefc", fontWeight: 900 }}>{who}</div>
             <div style={{ color: "#b7c2da", fontWeight: 800, fontSize: 12, marginTop: 4 }}>
-              {phone ? phone : ""}{phone && email ? " â€¢ " : ""}{email ? email : ""}
+              {phone ? phone : ""}{phone && email ? " • " : ""}{email ? email : ""}
             </div>
           </div>
 
@@ -361,16 +361,16 @@ export default function Authorize() {
 
           <div style={{ marginTop: 12 }}>
             <div style={styles.trustItem}><div style={styles.dot} /><div>Receipt-backed and timestamped.</div></div>
-            <div style={styles.trustItem}><div style={styles.dot} /><div>No surprise charges â€” capture happens later.</div></div>
+            <div style={styles.trustItem}><div style={styles.dot} /><div>No surprise charges — capture happens later.</div></div>
             <div style={styles.trustItem}><div style={styles.dot} /><div>Change requests create a new proof record.</div></div>
           </div>
 
           <button onClick={authorize} disabled={saving} style={{ ...styles.cta, opacity: saving ? 0.7 : 1 }}>
-            {saving ? "Recordingâ€¦" : `Authorize Up To ${capLabel}`}
+            {saving ? "Recording…" : `Authorize Up To ${capLabel}`}
           </button>
 
           <button
-            onClick={() => alert("Request different amount â€” coming next.")}
+            onClick={() => alert("Request different amount — coming next.")}
             disabled={saving}
             style={styles.btn}
           >
@@ -385,7 +385,7 @@ export default function Authorize() {
                   <div style={{ fontWeight: 950 }}>Authorization Receipt</div>
                   <div style={{ ...styles.mono, marginTop: 4 }}>{authReceipt}</div>
                   <div style={{ color: "#b7c2da", fontWeight: 800, fontSize: 12, marginTop: 6 }}>
-                    Linked intake: {intakeReceipt}{authAt ? ` â€¢ ${authAt}` : ""}
+                    Linked intake: {intakeReceipt}{authAt ? ` • ${authAt}` : ""}
                   </div>
                 </div>
               ) : null}
@@ -395,7 +395,7 @@ export default function Authorize() {
           {err ? <div style={styles.bannerErr}>{err}</div> : null}
         </div>
 
-        <div style={styles.footer}>Powered by HomePlanet â€¢ Presence-First Authorization</div>
+        <div style={styles.footer}>Powered by HomePlanet • Presence-First Authorization</div>
       </div>
     </div>
   );

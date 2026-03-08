@@ -1,4 +1,4 @@
-﻿import * as React from "react";
+import * as React from "react";
 import type { TenantTheme } from "../routes/tenantThemes";
 import { TenantHeader } from "./TenantHeader";
 

@@ -1,4 +1,4 @@
-﻿import { useEffect } from "react";
+import { useEffect } from "react";
 import { emitCoreTruth } from "./coreTruth";
 
 /**
@@ -18,7 +18,7 @@ export function usePresence(enabled: boolean) {
           note: "auto heartbeat",
         });
       } catch {
-        // silent — presence should never crash UI
+        // silent � presence should never crash UI
       }
     }
 

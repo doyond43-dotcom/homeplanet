@@ -1,4 +1,4 @@
-Ôªøimport React, { useMemo, useRef, useState, useCallback, useEffect } from "react";
+import React, { useMemo, useRef, useState, useCallback, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { PLANETS } from "../planet/planetMap";
 
@@ -16,13 +16,13 @@ function normalizeCities(input: any): City[] {
 }
 
 /**
- * PlanetSidebar ‚Äî OS navigation spine (flex-safe; no overlays)
+ * PlanetSidebar ó OS navigation spine (flex-safe; no overlays)
  * Adds:
  * - Collapsed / Expanded states (system-level, not page-level)
  * - Crisp pill controls that match Creator Build
  * Keeps:
  * - iOS-safe single-event navigation
- * - Hard fallback if router doesn‚Äôt update path
+ * - Hard fallback if router doesnít update path
  */
 export function PlanetSidebar(props: { witnessMode: boolean; onToggleWitnessMode: () => void }) {
   const { witnessMode, onToggleWitnessMode } = props;
@@ -33,7 +33,7 @@ export function PlanetSidebar(props: { witnessMode: boolean; onToggleWitnessMode
   const location = useLocation();
 
   
-  /* ARRIVAL_SIDEBAR_SOFT_V1 ‚Äî soften Atlas on first load, then reveal */
+  /* ARRIVAL_SIDEBAR_SOFT_V1 ó soften Atlas on first load, then reveal */
   const [arrivalSoft, setArrivalSoft] = useState<boolean>(true);
   useEffect(() => {
     const t = window.setTimeout(() => setArrivalSoft(false), 450);
@@ -123,7 +123,7 @@ window.location.assign(safeTo);
 
   const planets = useMemo(() => (PLANETS as any[]) ?? [], []);
 
-  // Sidebar shell ‚Äî IMPORTANT: flex-safe; no fixed overlays; cannot cover <main>
+  // Sidebar shell ó IMPORTANT: flex-safe; no fixed overlays; cannot cover <main>
   const shell: React.CSSProperties = {
     position: "sticky",
     top: 0,
@@ -145,7 +145,7 @@ window.location.assign(safeTo);
     WebkitTapHighlightColor: "transparent",
   };
 
-  // ARRIVAL_SIDEBAR_SOFT_V1 ‚Äî visual only (no layout shift)
+  // ARRIVAL_SIDEBAR_SOFT_V1 ó visual only (no layout shift)
   (shell as any).transition = "opacity 420ms ease, filter 420ms ease";
   if (arrivalSoft) {
     (shell as any).opacity = 0.72;
@@ -209,14 +209,14 @@ window.location.assign(safeTo);
 
   const caret: React.CSSProperties = { opacity: 0.70, fontWeight: 900 };
 
-  // Shared nav props ‚Äî single event to avoid duplicate toggles on iOS
+  // Shared nav props ó single event to avoid duplicate toggles on iOS
   const tapSafeNavProps = (to: string) => ({
     onClick: (e: any) => go(to, e),
   });
 
   return (
     <aside style={shell}>
-      {/* Top ‚Äúspine‚Äù header */}
+      {/* Top ìspineî header */}
       <div style={{ /* HP_STAGE_WRAP_V1 */ display: "flex", width: "100%", maxWidth: 1480, margin: "0 auto",alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 10 }}>
         <div style={{ minWidth: 0 }}>
           <div style={title}>{collapsed ? "AT" : "Atlas"}</div>

@@ -1,4 +1,4 @@
-﻿import CreatorDemoPanel from "../subsystems/creatorDemo/CreatorDemoPanel";
+import CreatorDemoPanel from "../subsystems/creatorDemo/CreatorDemoPanel";
 import ResidentHeader from "../components/ResidentHeader";
 
 export default function DemoFlow() {

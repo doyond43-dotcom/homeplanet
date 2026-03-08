@@ -1,4 +1,4 @@
-﻿type Status =
+type Status =
   | "Live"
   | "Structured"
   | "Concept Locked"
@@ -72,19 +72,19 @@ export default function PlanetsRegistry() {
             <div className="rounded-2xl border border-slate-800 bg-slate-950/40 p-6">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-slate-100">
-                  MLS — Parenting Signal Infrastructure
+                  MLS � Parenting Signal Infrastructure
                 </h3>
                 <StatusBadge status="Structured" />
               </div>
               <p className="mt-3 text-sm text-slate-400">
-                Origin Concept: Chelsea Rule • Captured: October 2025 (approx.)
+                Origin Concept: Chelsea Rule � Captured: October 2025 (approx.)
               </p>
               <a
                 href="/mls"
                 className="inline-block mt-4 text-sm text-sky-400 hover:underline"
                 onClick={(e) => e.stopPropagation()}
               >
-                View Concept →
+                View Concept ?
               </a>
             </div>
 
@@ -135,7 +135,7 @@ export default function PlanetsRegistry() {
                 className="inline-block mt-4 text-sm text-sky-400 hover:underline"
                 onClick={(e) => e.stopPropagation()}
               >
-                View City →
+                View City ?
               </a>
             </div>
           </div>

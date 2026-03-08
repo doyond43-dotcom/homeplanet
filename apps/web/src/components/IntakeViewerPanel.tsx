@@ -1,4 +1,4 @@
-ï»¿import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
 type IntakeRow = {
@@ -280,7 +280,7 @@ export default function IntakeViewerPanel({
           <input
             value={receiptLookup}
             onChange={(e) => setReceiptLookup(e.target.value)}
-            placeholder={hasReceiptIdCol ? "Paste receipt_idâ€¦" : "Paste row id (uuid)â€¦"}
+            placeholder={hasReceiptIdCol ? "Paste receipt_id…" : "Paste row id (uuid)…"}
             style={{
               width: "100%",
               padding: "8px 10px",
@@ -327,7 +327,7 @@ export default function IntakeViewerPanel({
             >
               {(receiptResult as any).receipt_id ?? (receiptResult as any).id}
             </span>{" "}
-            â€” {String((receiptResult as any).created_at)}
+            — {String((receiptResult as any).created_at)}
           </div>
         ) : null}
       </div>

@@ -1,4 +1,4 @@
-﻿import type { TenantTheme } from "../routes/tenantThemes";
+import type { TenantTheme } from "../routes/tenantThemes";
 
 export function TenantHeader({ theme }: { theme: TenantTheme }) {
   return (
@@ -14,7 +14,7 @@ export function TenantHeader({ theme }: { theme: TenantTheme }) {
 
               {/* Planet badge */}
               <span className="hidden sm:inline-flex items-center rounded-full border border-slate-700 bg-slate-950/40 px-2.5 py-1 text-[11px] text-slate-300">
-                🪐 {theme.planetLabel}
+                ?? {theme.planetLabel}
               </span>
             </div>
 

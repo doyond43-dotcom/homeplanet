@@ -1,4 +1,4 @@
-﻿import { useEffect } from "react";
+import { useEffect } from "react";
 import type { OrbitReason } from "./useOrbitLock";
 
 export function OrbitOffer(props: {
@@ -30,7 +30,7 @@ export function OrbitOffer(props: {
         position: "fixed",
         inset: 0,
         zIndex: 50,
-        pointerEvents: "none", // ✅ lets the rest of the app stay clickable
+        pointerEvents: "none", // ? lets the rest of the app stay clickable
       }}
     >
       {/* The card itself is clickable */}
@@ -39,7 +39,7 @@ export function OrbitOffer(props: {
         aria-modal="false"
         aria-label="Orbit Lock offer"
         style={{
-          pointerEvents: "auto", // ✅ only the card catches taps/clicks
+          pointerEvents: "auto", // ? only the card catches taps/clicks
           position: "absolute",
           right: 12,
           bottom: "calc(12px + env(safe-area-inset-bottom))",
@@ -100,7 +100,7 @@ export function OrbitOffer(props: {
             aria-label="Dismiss Orbit Lock offer"
             title="Dismiss"
           >
-            ×
+            �
           </button>
         </div>
 
@@ -134,7 +134,7 @@ export function OrbitOffer(props: {
               whiteSpace: "nowrap",
             }}
           >
-            I’m good
+            I�m good
           </button>
         </div>
       </div>

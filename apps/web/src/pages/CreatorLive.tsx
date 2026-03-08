@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   LiveKitRoom,
@@ -12,7 +12,7 @@ import "@livekit/components-styles";
 import { Track } from "livekit-client";
 
 /**
- * CreatorLive.tsx — mobile-stable host page
+ * CreatorLive.tsx � mobile-stable host page
  * Fixes:
  * - Never render LiveKitRoom until token+serverUrl exist (prevents white screen)
  * - Proper deps for Go Live permission gate

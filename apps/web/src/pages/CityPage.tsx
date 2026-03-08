@@ -1,4 +1,4 @@
-Ôªøimport { useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { PLANETS } from "../planet/planetMap";
 
 export default function CityPage() {
@@ -9,7 +9,7 @@ export default function CityPage() {
   return (
     <div>
       <h1 style={{ fontSize: 24, margin: 0 }}>
-        üèô {planet?.label ?? planetId} / {city?.label ?? cityId}
+        ?? {planet?.label ?? planetId} / {city?.label ?? cityId}
       </h1>
 
       <p style={{ marginTop: 10, color: "rgba(255,255,255,0.70)", lineHeight: 1.5 }}>
@@ -20,7 +20,7 @@ export default function CityPage() {
         <div style={{ flex: "1 1 260px", borderRadius: 18, border: "1px solid rgba(255,255,255,0.10)", padding: 14, background: "rgba(255,255,255,0.03)" }}>
           <div style={{ fontWeight: 800 }}>Next Action</div>
           <div style={{ marginTop: 6, color: "rgba(255,255,255,0.65)" }}>
-            Add one ‚ÄúCreate‚Äù flow here (single form + save + visible proof).
+            Add one ìCreateî flow here (single form + save + visible proof).
           </div>
         </div>
         <div style={{ flex: "1 1 260px", borderRadius: 18, border: "1px solid rgba(255,255,255,0.10)", padding: 14, background: "rgba(255,255,255,0.03)" }}>
@@ -32,7 +32,7 @@ export default function CityPage() {
         <div style={{ flex: "1 1 260px", borderRadius: 18, border: "1px solid rgba(255,255,255,0.10)", padding: 14, background: "rgba(255,255,255,0.03)" }}>
           <div style={{ fontWeight: 800 }}>Telemetry Lens</div>
           <div style={{ marginTop: 6, color: "rgba(255,255,255,0.65)" }}>
-            Later: witness logs & ‚Äúlive build mode‚Äù overlay.
+            Later: witness logs & ìlive build modeî overlay.
           </div>
         </div>
       </div>

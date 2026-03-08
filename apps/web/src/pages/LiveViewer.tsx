@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import {
   LiveKitRoom,
@@ -60,8 +60,8 @@ function StartAudioButton() {
       </button>
       <div style={{ fontSize: 12, opacity: 0.8 }}>
         {status === "idle" && "Tap once to enable sound in this tab."}
-        {status === "ok" && "Audio enabled ✅"}
-        {status === "fail" && "Audio blocked ❌ (check browser/site sound + permissions)"}
+        {status === "ok" && "Audio enabled ?"}
+        {status === "fail" && "Audio blocked ? (check browser/site sound + permissions)"}
       </div>
     </div>
   );
@@ -92,7 +92,7 @@ export default function LiveViewer() {
   }, [room]);
 
   if (!room) return <div style={{ padding: 16 }}>Missing room.</div>;
-  if (!token || !serverUrl) return <div style={{ padding: 16 }}>Joining…</div>;
+  if (!token || !serverUrl) return <div style={{ padding: 16 }}>Joining�</div>;
 
   return (
     <div style={{ padding: 16, background: "black", color: "white", minHeight: "100vh" }}>
@@ -102,8 +102,8 @@ export default function LiveViewer() {
         token={token}
         serverUrl={serverUrl}
         connect={true}
-        audio={true}   // ✅ viewer playback ON
-        video={false}  // ✅ viewer does NOT publish
+        audio={true}   // ? viewer playback ON
+        video={false}  // ? viewer does NOT publish
         style={{ background: "black" }}
       >
         <RoomAudioRenderer />
@@ -112,7 +112,7 @@ export default function LiveViewer() {
       </LiveKitRoom>
 
       <div style={{ marginTop: 10, fontSize: 12, opacity: 0.75 }}>
-        If you still can’t hear: make sure the HOST mic is not muted and your browser tab/site is not muted.
+        If you still can�t hear: make sure the HOST mic is not muted and your browser tab/site is not muted.
       </div>
     </div>
   );

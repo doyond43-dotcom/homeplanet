@@ -1,4 +1,4 @@
-Ôªøimport * as React from "react";
+import * as React from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 export default function PressKitTaylorCreek() {
@@ -33,7 +33,7 @@ export default function PressKitTaylorCreek() {
           }}
         >
           <div>
-            <div style={{ fontSize: 22, fontWeight: 900 }}>ü™ê Taylor Creek Auto Repair</div>
+            <div style={{ fontSize: 22, fontWeight: 900 }}>?? Taylor Creek Auto Repair</div>
             <div style={{ opacity: 0.8, marginTop: 4 }}>Powered by HomePlanet</div>
           </div>
 
@@ -60,7 +60,7 @@ export default function PressKitTaylorCreek() {
             Public Proof Infrastructure for Real-World Submissions
           </div>
           <div style={{ marginTop: 10, lineHeight: 1.55, opacity: 0.92 }}>
-            A live auto repair shop issuing receipts, timestamps, public lookups, and preserved PDF proof records ‚Äî before disputes begin.
+            A live auto repair shop issuing receipts, timestamps, public lookups, and preserved PDF proof records ó before disputes begin.
           </div>
 
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 14 }}>
@@ -87,7 +87,7 @@ export default function PressKitTaylorCreek() {
           {/* Demo actions */}
           <div id="demo" style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 18 }}>
             <button type="button" onClick={goIntake} style={primaryBtnStyle}>
-              Run 60-Second Demo ‚Üí
+              Run 60-Second Demo ?
             </button>
 
             <button type="button" onClick={goIntake} style={secondaryBtnStyle as any}>
@@ -98,7 +98,7 @@ export default function PressKitTaylorCreek() {
               Download Sample PDF
             </a>
 
-            {/* Keep this, but it‚Äôs optional. If LiveKit isn't configured, it may hang on "joining". */}
+            {/* Keep this, but itís optional. If LiveKit isn't configured, it may hang on "joining". */}
             <Link to="/live/taylor-creek" style={secondaryBtnStyle as any}>
               Open Live Demo (optional)
             </Link>
@@ -168,18 +168,18 @@ export default function PressKitTaylorCreek() {
 FOR IMMEDIATE RELEASE
 
 Local Auto Repair Shop Launches Public Proof System for Service Requests and Receipts
-Okeechobee, FL ‚Äî February 10, 2026
+Okeechobee, FL ó February 10, 2026
 
-Taylor Creek Auto Repair has launched a public-facing system that allows customers, inspectors, and reporters to submit service requests, receive instant receipts, and download timestamped PDF records‚Äîbefore any work begins.
+Taylor Creek Auto Repair has launched a public-facing system that allows customers, inspectors, and reporters to submit service requests, receive instant receipts, and download timestamped PDF recordsóbefore any work begins.
 
 Using a QR code posted at the shop or on its website, customers can submit a service request in seconds. They immediately receive a receipt ID, can look up their submission on a public page, and download a preserved PDF snapshot showing exactly what was submitted and when.
 
-‚ÄúThis isn‚Äôt marketing. It‚Äôs documentation.‚Äù
+ìThis isnít marketing. Itís documentation.î
 
 The public demo is live now:
-‚Ä¢ Service intake: /c/[slug]
-‚Ä¢ Receipt lookup: /r/[receipt-id]
-‚Ä¢ Press kit: /press/taylor-creek
+ï Service intake: /c/[slug]
+ï Receipt lookup: /r/[receipt-id]
+ï Press kit: /press/taylor-creek
 
 Media Contact: press@homeplanet.city
           </div>
@@ -205,10 +205,10 @@ Media Contact: press@homeplanet.city
             flexWrap: "wrap",
           }}
         >
-          <span>¬© HomePlanet ‚Äî Public Proof Infrastructure</span>
-          <span>‚Ä¢</span>
-          <span>Receipts ‚Ä¢ Timestamping ‚Ä¢ Chain-of-Custody ‚Ä¢ Records</span>
-          <span>‚Ä¢</span>
+          <span>© HomePlanet ó Public Proof Infrastructure</span>
+          <span>ï</span>
+          <span>Receipts ï Timestamping ï Chain-of-Custody ï Records</span>
+          <span>ï</span>
           <a href="#demo" style={footerLinkStyle}>
             Demo
           </a>

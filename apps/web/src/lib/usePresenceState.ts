@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { getMyPresenceState, type PresenceStateRow } from "./presenceApi";
 import { supabase } from "./supabase";
 

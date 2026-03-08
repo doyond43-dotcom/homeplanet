@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 type DemoAtom = {
   id: string;
   type: "moving_beacon";
@@ -26,7 +26,7 @@ export default function AtmosphereDemoStrip() {
   useEffect(() => {
     if (!getDemoFlag()) return;
 
-    // Create a “passing truck” that lasts ~70 seconds
+    // Create a �passing truck� that lasts ~70 seconds
     setAtom({
       id: "demo-truck-1",
       type: "moving_beacon",
@@ -48,7 +48,7 @@ export default function AtmosphereDemoStrip() {
       setAtom((prev) => {
         if (!prev) return null;
         const nextEta = prev.etaSeconds - 1;
-        if (nextEta <= -25) return null; // dissolve after it “passes”
+        if (nextEta <= -25) return null; // dissolve after it �passes�
         return { ...prev, etaSeconds: nextEta, confidence: Math.max(0.35, prev.confidence - 0.003) };
       });
     }, 1000);
@@ -67,7 +67,7 @@ export default function AtmosphereDemoStrip() {
       "just passed";
 
     const arrow =
-      atom.direction === "toward" ? "→ toward you" : "← away from you";
+      atom.direction === "toward" ? "? toward you" : "? away from you";
 
     const badge =
       atom.confidence >= 0.85 ? "Anchored" :
@@ -100,7 +100,7 @@ export default function AtmosphereDemoStrip() {
                   </span>
                 </div>
                 <div className="text-xs text-slate-400 truncate">
-                  {atom.street} → {display.etaText}
+                  {atom.street} ? {display.etaText}
                 </div>
               </div>
             </div>
@@ -109,7 +109,7 @@ export default function AtmosphereDemoStrip() {
               <span className="hidden sm:inline-flex items-center rounded-full border border-slate-700 bg-slate-950/50 px-2.5 py-1 text-[11px] text-slate-200">
                 {display.badge}
               </span>
-              <span className="text-slate-400 text-sm">{open ? "▴" : "▾"}</span>
+              <span className="text-slate-400 text-sm">{open ? "?" : "?"}</span>
             </div>
           </div>
         </button>
@@ -123,7 +123,7 @@ export default function AtmosphereDemoStrip() {
                   {atom.label}
                 </div>
                 <div className="mt-1 text-xs text-slate-400">
-                  Moving along {atom.street} • {display.arrow}
+                  Moving along {atom.street} � {display.arrow}
                 </div>
                 <div className="mt-2 text-sm text-slate-200">
                   ETA: <span className="font-semibold">{display.etaText}</span>

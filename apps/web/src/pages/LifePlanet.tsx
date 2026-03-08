@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 import { LifeDrawer } from "../components/life/LifeDrawer";
 
 export default function LifePlanet() {

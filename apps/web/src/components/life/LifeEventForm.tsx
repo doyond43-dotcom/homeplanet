@@ -1,4 +1,4 @@
-ï»¿import React from "react";
+import React from "react";
 import type { LifeEventType } from "../../lib/life/types";
 import { LIFE_TYPES } from "../../lib/life/types";
 
@@ -93,7 +93,7 @@ export function LifeEventForm({ open, onClose, onSubmit, defaultType = "work" }:
               className="rounded-xl border px-3 py-2"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              placeholder='e.g., "Taylor Creek Auto" or "McDonaldâ€™s â€“ Okeechobee"'
+              placeholder='e.g., "Taylor Creek Auto" or "McDonald’s – Okeechobee"'
             />
           </div>
 

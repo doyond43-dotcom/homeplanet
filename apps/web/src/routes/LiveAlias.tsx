@@ -1,4 +1,4 @@
-﻿// apps/web/src/routes/LiveAlias.tsx
+// apps/web/src/routes/LiveAlias.tsx
 import { Navigate, useParams } from "react-router-dom";
 
 export default function LiveAlias() {

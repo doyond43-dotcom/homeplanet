@@ -1,4 +1,4 @@
-﻿export type RedactionPreset = "safe_public" | "internal" | "off";
+export type RedactionPreset = "safe_public" | "internal" | "off";
 
 export type CreatorDemoConfig = {
   enabled: boolean;

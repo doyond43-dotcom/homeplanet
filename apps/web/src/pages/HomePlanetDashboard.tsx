@@ -1,5 +1,5 @@
-﻿/**
- * TEMP STUB — Intake ship unblock
+/**
+ * TEMP STUB � Intake ship unblock
  * The prior file was corrupted ("void USAGE_COUNTS" etc).
  * Replace with real dashboard after build is green.
  */

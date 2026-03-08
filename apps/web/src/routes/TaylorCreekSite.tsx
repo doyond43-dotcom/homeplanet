@@ -1,4 +1,4 @@
-Ôªøimport { Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 const SHOP_PHONE_DISPLAY = "(863) 467-2221";
 const SHOP_PHONE_TEL = "+18634672221";
@@ -50,7 +50,7 @@ export default function TaylorCreekSite() {
             </div>
             <div>
               <div className="text-lg font-semibold leading-tight flex items-center gap-2">
-                <span aria-hidden>ü™ê</span>
+                <span aria-hidden>??</span>
                 <span>Taylor Creek Auto Repair</span>
                 <span className="hidden sm:inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-950/50 px-2.5 py-1 text-[11px] text-slate-200">
                   <span className="inline-block h-1.5 w-1.5 rounded-full bg-sky-300/80" />
@@ -58,7 +58,7 @@ export default function TaylorCreekSite() {
                 </span>
               </div>
               <div className="text-xs text-slate-400 leading-tight">
-                Okeechobee, Florida ‚Ä¢ HomePlanet Verified Node
+                Okeechobee, Florida ï HomePlanet Verified Node
               </div>
             </div>
           </div>
@@ -67,7 +67,7 @@ export default function TaylorCreekSite() {
           <div className="hidden sm:flex items-center gap-2 rounded-full border border-amber-400/60 bg-amber-400/10 px-3 py-1">
             <span className="inline-block h-2 w-2 rounded-full bg-amber-300" />
             <span className="text-xs font-medium text-amber-200">
-              Gold Tier ‚Ä¢ Public Proof Enabled
+              Gold Tier ï Public Proof Enabled
             </span>
           </div>
         </div>
@@ -131,7 +131,7 @@ export default function TaylorCreekSite() {
                   </div>
 
                   <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
-                    You‚Äôre checking in your vehicle
+                    Youíre checking in your vehicle
                     <span className="block mt-2 text-slate-300 text-lg md:text-xl font-semibold">
                       This creates your service record
                     </span>
@@ -139,7 +139,7 @@ export default function TaylorCreekSite() {
 
                   <p className="mt-4 text-slate-300 max-w-2xl">
                     Tell the shop what you need before you talk to the mechanic. Add a photo if it
-                    helps. You‚Äôll get a receipt number and a clean, time-ordered intake record you
+                    helps. Youíll get a receipt number and a clean, time-ordered intake record you
                     can reference later.
                   </p>
 
@@ -165,15 +165,15 @@ export default function TaylorCreekSite() {
                   </div>
 
                   <div className="mt-3 text-xs text-slate-400">
-                    Takes about 20 seconds ‚Ä¢ You‚Äôll get a receipt number
+                    Takes about 20 seconds ï Youíll get a receipt number
                     {adminMode ? (
                       <span className="ml-2 text-slate-500">
-                        ‚Ä¢ Admin mode on (board button visible)
+                        ï Admin mode on (board button visible)
                       </span>
                     ) : null}
                   </div>
 
-                  {/* ‚úÖ NEW: Receipt instruction line (behavior design) */}
+                  {/* ? NEW: Receipt instruction line (behavior design) */}
                   <div className="mt-1 text-xs text-slate-500">
                     Show your receipt at the front desk, or keep it for your records.
                   </div>
@@ -213,7 +213,7 @@ export default function TaylorCreekSite() {
                   ) : null}
 
                   <div className="mt-5 text-xs text-slate-500">
-                    Powered by HomePlanet ‚Ä¢ Presence-First Intake ‚Ä¢ Receipt + record at submission
+                    Powered by HomePlanet ï Presence-First Intake ï Receipt + record at submission
                     (not after).
                   </div>
 
@@ -221,14 +221,14 @@ export default function TaylorCreekSite() {
                     <span className="mt-2 inline-block h-2 w-2 rounded-full bg-sky-300/80" />
                     <div>
                       <span className="font-semibold">Presence-First:</span> your request is
-                      anchored at submission ‚Äî before edits, confusion, or ‚Äúwe never got it.‚Äù
+                      anchored at submission ó before edits, confusion, or ìwe never got it.î
                     </div>
                   </div>
 
                   {/* VEHICLE CALLOUT */}
                   <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-950/35 px-4 py-3 text-sm text-slate-300">
                     <span className="font-semibold text-slate-200">Tip:</span> Adding vehicle details
-                    (year/make/model) helps the shop triage faster and prevents ‚Äúwhich car?‚Äù mixups.
+                    (year/make/model) helps the shop triage faster and prevents ìwhich car?î mixups.
                   </div>
                 </div>
 
@@ -244,8 +244,8 @@ export default function TaylorCreekSite() {
 
                     <div className="mt-3 space-y-1 text-sm text-slate-300">
                       <div className="flex justify-between">
-                        <span>Mon‚ÄìFri</span>
-                        <span>8:00am ‚Äì 5:00pm</span>
+                        <span>MonñFri</span>
+                        <span>8:00am ñ 5:00pm</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Saturday</span>
@@ -302,7 +302,7 @@ export default function TaylorCreekSite() {
                       </div>
 
                       <div className="mt-3 text-xs text-slate-500">
-                        Safe placeholders ‚Äî swap with real details anytime.
+                        Safe placeholders ó swap with real details anytime.
                       </div>
                     </div>
                   </div>
@@ -331,7 +331,7 @@ export default function TaylorCreekSite() {
                   "linear-gradient(to bottom, rgba(239,68,68,0.0), rgba(239,68,68,0.8), rgba(239,68,68,0.0))",
               }}
             />
-            <div className="text-sm font-semibold">Submit ‚Üí Receipt ‚Üí PDF</div>
+            <div className="text-sm font-semibold">Submit ? Receipt ? PDF</div>
             <p className="mt-2 text-sm text-slate-300">
               Every intake becomes a time-anchored proof trail the moment it lands.
             </p>
@@ -383,7 +383,7 @@ export default function TaylorCreekSite() {
         </section>
 
         <footer className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-slate-500 border-t border-slate-900 pt-6">
-          <div>¬© {new Date().getFullYear()} Taylor Creek Auto Repair</div>
+          <div>© {new Date().getFullYear()} Taylor Creek Auto Repair</div>
           <nav className="flex gap-4">
             <a href={CHECKIN_HREF} className="hover:text-slate-300">
               Start request
