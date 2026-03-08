@@ -345,7 +345,7 @@ function coerceStage(s: any): MatterStage {
 
 function buildMatterText(matter: LegalMatter) {
   return [
-    `HomePlanet — Legal Evidence Demo`,
+    `HomePlanet — Case Timeline & Evidence Builder`,
     `Matter: ${matter.title || "-"}`,
     `Matter #: ${matter.matterNumber || "-"}`,
     `Attorney: ${matter.attorney || "-"}`,
@@ -369,7 +369,7 @@ function smsHref(matter: LegalMatter) {
 function emailHref(matter: LegalMatter) {
   const email = (matter.client?.email || "").trim();
   if (!email) return "";
-  const subject = encodeURIComponent(`HomePlanet Legal Demo — ${matter.title || "Matter"}`);
+  const subject = encodeURIComponent(`HomePlanet Case Timeline & Evidence Builder — ${matter.title || "Matter"}`);
   const body = encodeURIComponent(buildMatterText(matter));
   return `mailto:${email}?subject=${subject}&body=${body}`;
 }
@@ -936,10 +936,10 @@ export default function LegalDemoBoard() {
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <div className="text-2xl font-extrabold tracking-tight text-white">
-                  HomePlanet — Legal Evidence Board
+                  HomePlanet — Case Timeline &amp; Evidence Builder
                 </div>
                 <div className="text-sm text-[#d7c8a6]">
-                  HomePlanet Core Board • legal evidence intake • timeline • packet preview
+                  HomePlanet Core Board • evidence intake • timeline building • case packet preview
                 </div>
               </div>
 
