@@ -19,8 +19,8 @@ import AwnitLandingPage from "../pages/AwnitLandingPage";
 // Legal demo
 import LegalDemoBoard from "../pages/LegalDemoBoard";
 
-// NEW: Transportation demo
-import TransportationDemoBoard from "../pages/TransportationDemoBoard";
+// Transportation demo (V2 Dispatch System)
+import TransportationDispatchBoardV2 from "../pages/TransportationDispatchBoardV2";
 
 // Life
 import LifePlanet from "../pages/LifePlanet";
@@ -31,10 +31,11 @@ import LifePlanet from "../pages/LifePlanet";
  * - /planet/vehicles/awnit-demo is AWNIT Live Demo Board
  * - /planet/vehicles/awnit-demo/invoice/:invoiceId is the invoice view
  * - /planet/legal/demo is the Legal Evidence Demo Board
- * - /planet/transport/demo is the Transportation Dispatch Demo Board
+ * - /planet/transport/demo is the Transportation Dispatch Demo Board (V2)
  * - /planet/:planetId routes to PlanetOverview
  * - /planet/:planetId/:cityId routes to CityPage
  */
+
 export default function PlanetRoutes() {
   return (
     <Routes>
@@ -58,8 +59,8 @@ export default function PlanetRoutes() {
       {/* ---------- LEGAL DEMO ---------- */}
       <Route path="legal/demo" element={<LegalDemoBoard />} />
 
-      {/* ---------- TRANSPORTATION DEMO ---------- */}
-      <Route path="transport/demo" element={<TransportationDemoBoard />} />
+      {/* ---------- TRANSPORTATION DISPATCH DEMO (V2) ---------- */}
+      <Route path="transport/demo" element={<TransportationDispatchBoardV2 />} />
 
       {/* Optional legacy / fallback demo path */}
       <Route path="demo/awnit" element={<Navigate to="/planet/vehicles/awnit-demo" replace />} />
