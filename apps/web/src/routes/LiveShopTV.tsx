@@ -276,7 +276,6 @@ export default function LiveShopTV() {
               project_type: "Repair",
               best_time: "room",
               notes: msg,
-              status: "new",
             },
           ])
           .select("id, created_at, name, phone, email, address, project_type, best_time, notes, status, photo_urls")
@@ -435,7 +434,7 @@ export default function LiveShopTV() {
       .order("created_at", { ascending: false })
       .limit(30);
 
-      inFlightLoadRef.current = false;
+    inFlightLoadRef.current = false;
 
     if (error) {
       setLastErr(error.message || String(error));
