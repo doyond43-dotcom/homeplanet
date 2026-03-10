@@ -22,8 +22,9 @@ import LegalDemoBoard from "../pages/LegalDemoBoard";
 // Transportation demo (V2 Dispatch System)
 import TransportationDispatchBoardV2 from "../pages/TransportationDispatchBoardV2";
 
-// Mom's Kitchen demo
+// Restaurant demos
 import MomsKitchenDemo from "../pages/MomsKitchenDemo";
+import RestaurantRushDemo from "../pages/RestaurantRushDemo";
 
 // Life
 import LifePlanet from "../pages/LifePlanet";
@@ -36,6 +37,8 @@ import LifePlanet from "../pages/LifePlanet";
  *  /planet/legal/demo
  *  /planet/transport/demo
  *  /planet/food/moms-kitchen-demo
+ *  /planet/food/demo
+ *  /planet/food/demo-rush
  *
  * Core navigation:
  *  /planet/creator
@@ -46,7 +49,6 @@ import LifePlanet from "../pages/LifePlanet";
 export default function PlanetRoutes() {
   return (
     <Routes>
-
       {/* Default /planet landing */}
       <Route index element={<Navigate to="/planet/creator" replace />} />
 
@@ -56,27 +58,42 @@ export default function PlanetRoutes() {
       <Route path="creator/studio/*" element={<CreatorStudio />} />
       <Route path="creator/build" element={<CreatorBuild />} />
       <Route path="creator/release/:releaseId" element={<ReleaseViewer />} />
-      <Route path="creator/*" element={<Navigate to="/planet/creator" replace />} />
+      <Route
+        path="creator/*"
+        element={<Navigate to="/planet/creator" replace />}
+      />
 
       {/* ---------- AWNIT ---------- */}
       <Route path="vehicles/awnit" element={<AwnitLandingPage />} />
       <Route path="vehicles/awnit-demo" element={<AwnitDemoBoard />} />
       <Route path="vehicles/awnit-intake" element={<AwnitIntake />} />
-      <Route path="vehicles/awnit-demo/invoice/:invoiceId" element={<InvoiceView />} />
+      <Route
+        path="vehicles/awnit-demo/invoice/:invoiceId"
+        element={<InvoiceView />}
+      />
 
       {/* ---------- Legal Demo ---------- */}
       <Route path="legal/demo" element={<LegalDemoBoard />} />
 
       {/* ---------- Transportation Dispatch Demo ---------- */}
-      <Route path="transport/demo" element={<TransportationDispatchBoardV2 />} />
+      <Route
+        path="transport/demo"
+        element={<TransportationDispatchBoardV2 />}
+      />
 
-      {/* ---------- Mom's Kitchen Demo ---------- */}
+      {/* ---------- Restaurant Demos ---------- */}
       <Route path="food/moms-kitchen-demo" element={<MomsKitchenDemo />} />
+      <Route path="food/demo" element={<MomsKitchenDemo />} />
+      <Route path="food/demo-rush" element={<RestaurantRushDemo />} />
 
       {/* ---------- Legacy Redirects ---------- */}
       <Route
         path="demo/awnit"
         element={<Navigate to="/planet/vehicles/awnit-demo" replace />}
+      />
+      <Route
+        path="food"
+        element={<Navigate to="/planet/food/demo" replace />}
       />
 
       {/* ---------- Life ---------- */}
@@ -88,7 +105,6 @@ export default function PlanetRoutes() {
 
       {/* ---------- Fallback ---------- */}
       <Route path="*" element={<Navigate to="/city" replace />} />
-
     </Routes>
   );
 }
