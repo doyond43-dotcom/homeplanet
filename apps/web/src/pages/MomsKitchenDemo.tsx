@@ -7,6 +7,8 @@ type Ticket = {
   text: string;
   stage: TicketStage;
   createdAt: number;
+  updatedAt: number;
+  autoCompletedAt?: number;
 };
 
 type MoveSnapshot = {
@@ -23,6 +25,21 @@ type AlertItem = {
 
 const stages = ["NEW", "ON GRILL", "PLATING", "READY", "COMPLETED"] as const;
 
+const SAMPLE_ORDERS = [
+  "Table 7\nWestern Omelette • Coffee",
+  "Table 9\nBiscuits & Gravy • Tea",
+  "Takeout #21\nBreakfast Burrito • Coffee",
+  "Table 3\nPancakes • Bacon",
+  "Takeout #22\nBurger • Fries",
+  "Table 6\nFrench Toast • Sausage",
+  "Table 10\n2 Eggs • Ham • Wheat Toast",
+  "Takeout #24\nClub Sandwich • Fries",
+  "Table 11\nPatty Melt • Onion Rings",
+  "Takeout #25\n2 Egg Breakfast • Bacon",
+  "Table 12\nBLT • Fries",
+  "Takeout #26\nGrilled Cheese • Tomato Soup",
+];
+
 function formatAge(createdAt: number, now: number) {
   const minutes = Math.max(0, Math.floor((now - createdAt) / 60000));
   return `${minutes}m`;
@@ -32,45 +49,58 @@ function extractTicketLabel(text: string) {
   return text.split("\n")[0] || "Order";
 }
 
+function pickRandom<T>(items: T[]) {
+  return items[Math.floor(Math.random() * items.length)];
+}
+
 export default function MomsKitchenDemo() {
-  const [now, setNow] = useState(Date.now());
+  const initialNow = Date.now();
+
+  const [now, setNow] = useState(initialNow);
 
   const [tickets, setTickets] = useState<Ticket[]>([
     {
       id: 1,
       text: "Table 4\n2 Eggs • Bacon • Toast",
       stage: 0,
-      createdAt: Date.now() - 2 * 60 * 1000,
+      createdAt: initialNow - 2 * 60 * 1000,
+      updatedAt: initialNow - 2 * 60 * 1000,
     },
     {
       id: 2,
       text: "Takeout #14\nPatty Melt • Fries",
       stage: 0,
-      createdAt: Date.now() - 1 * 60 * 1000,
+      createdAt: initialNow - 1 * 60 * 1000,
+      updatedAt: initialNow - 1 * 60 * 1000,
     },
     {
       id: 3,
       text: "Table 2\nPancakes • Sausage",
       stage: 1,
-      createdAt: Date.now() - 5 * 60 * 1000,
+      createdAt: initialNow - 5 * 60 * 1000,
+      updatedAt: initialNow - 4 * 60 * 1000,
     },
     {
       id: 4,
       text: "Table 8\nClub Sandwich • Fries",
       stage: 2,
-      createdAt: Date.now() - 7 * 60 * 1000,
+      createdAt: initialNow - 7 * 60 * 1000,
+      updatedAt: initialNow - 90 * 1000,
     },
     {
       id: 5,
       text: "Table 5\nPatty Melt • Onion Rings",
       stage: 3,
-      createdAt: Date.now() - 9 * 60 * 1000,
+      createdAt: initialNow - 9 * 60 * 1000,
+      updatedAt: initialNow - 40 * 1000,
     },
     {
       id: 6,
       text: "Table 1\nBiscuits & Gravy",
       stage: 4,
-      createdAt: Date.now() - 12 * 60 * 1000,
+      createdAt: initialNow - 12 * 60 * 1000,
+      updatedAt: initialNow - 20 * 1000,
+      autoCompletedAt: initialNow - 20 * 1000,
     },
   ]);
 
@@ -170,7 +200,27 @@ export default function MomsKitchenDemo() {
     }
   }
 
-  function moveTicket(id: number) {
+  function addOrder(showAlert = true) {
+    const order = pickRandom(SAMPLE_ORDERS);
+    const timestamp = Date.now();
+
+    setTickets((prev) => [
+      ...prev,
+      {
+        id: timestamp + Math.floor(Math.random() * 1000),
+        text: order,
+        stage: 0,
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      },
+    ]);
+
+    if (showAlert) {
+      pushAlert("NEW ORDER", `${extractTicketLabel(order)} entered`);
+    }
+  }
+
+  function advanceTicketById(id: number, isAuto = false) {
     setTickets((prev) =>
       prev.map((ticket) => {
         if (ticket.id !== id) return ticket;
@@ -178,21 +228,30 @@ export default function MomsKitchenDemo() {
 
         const fromStage = ticket.stage;
         const toStage = (ticket.stage + 1) as TicketStage;
+        const timestamp = Date.now();
 
-        setLastMove({
-          ticketId: id,
-          fromStage,
-          toStage,
-        });
+        if (!isAuto) {
+          setLastMove({
+            ticketId: id,
+            fromStage,
+            toStage,
+          });
+        }
 
         maybeFireStageAlert(ticket.text, toStage);
 
         return {
           ...ticket,
           stage: toStage,
+          updatedAt: timestamp,
+          autoCompletedAt: toStage === 4 ? timestamp : undefined,
         };
       })
     );
+  }
+
+  function moveTicket(id: number) {
+    advanceTicketById(id, false);
   }
 
   function undoLastMove() {
@@ -201,7 +260,12 @@ export default function MomsKitchenDemo() {
     setTickets((prev) =>
       prev.map((ticket) =>
         ticket.id === lastMove.ticketId
-          ? { ...ticket, stage: lastMove.fromStage }
+          ? {
+              ...ticket,
+              stage: lastMove.fromStage,
+              updatedAt: Date.now(),
+              autoCompletedAt: undefined,
+            }
           : ticket
       )
     );
@@ -209,44 +273,84 @@ export default function MomsKitchenDemo() {
     setLastMove(null);
   }
 
-  function addOrder() {
-    const newId = Date.now();
+  useEffect(() => {
+    if (!autopilot) return;
 
-    const sampleOrders = [
-      "Table 7\nWestern Omelette • Coffee",
-      "Table 9\nBiscuits & Gravy • Tea",
-      "Takeout #21\nBreakfast Burrito • Coffee",
-      "Table 3\nPancakes • Bacon",
-      "Takeout #22\nBurger • Fries",
-      "Table 6\nFrench Toast • Sausage",
-      "Table 10\n2 Eggs • Ham • Wheat Toast",
-      "Takeout #24\nClub Sandwich • Fries",
-    ];
+    const createInterval = window.setInterval(() => {
+      setTickets((current) => {
+        const active = current.filter((t) => t.stage !== 4).length;
 
-    const order =
-      sampleOrders[Math.floor(Math.random() * sampleOrders.length)];
+        if (active >= 12) return current;
+        return current;
+      });
 
-    setTickets((prev) => [
-      ...prev,
-      {
-        id: newId,
-        text: order,
-        stage: 0,
-        createdAt: Date.now(),
-      },
-    ]);
+      addOrder(true);
+    }, 12000);
 
-    pushAlert("NEW ORDER", `${extractTicketLabel(order)} entered`);
-  }
+    return () => window.clearInterval(createInterval);
+  }, [autopilot]);
 
   useEffect(() => {
     if (!autopilot) return;
 
-    const interval = window.setInterval(() => {
-      addOrder();
-    }, 10000);
+    const progressInterval = window.setInterval(() => {
+      setTickets((prev) => {
+        const eligible = prev.filter((t) => t.stage < 4);
 
-    return () => window.clearInterval(interval);
+        if (eligible.length === 0) return prev;
+
+        const stagePriority = [3, 2, 1, 0] as TicketStage[];
+        let chosen: Ticket | undefined;
+
+        for (const stage of stagePriority) {
+          const stageTickets = eligible.filter((t) => t.stage === stage);
+          if (stageTickets.length > 0) {
+            chosen = pickRandom(stageTickets);
+            break;
+          }
+        }
+
+        if (!chosen) return prev;
+
+        const fromStage = chosen.stage;
+        const toStage = (chosen.stage + 1) as TicketStage;
+        const timestamp = Date.now();
+
+        maybeFireStageAlert(chosen.text, toStage);
+
+        return prev.map((ticket) =>
+          ticket.id === chosen!.id
+            ? {
+                ...ticket,
+                stage: toStage,
+                updatedAt: timestamp,
+                autoCompletedAt: toStage === 4 ? timestamp : undefined,
+              }
+            : ticket
+        );
+      });
+    }, 5500);
+
+    return () => window.clearInterval(progressInterval);
+  }, [autopilot]);
+
+  useEffect(() => {
+    if (!autopilot) return;
+
+    const cleanupInterval = window.setInterval(() => {
+      const cutoff = Date.now() - 25000;
+
+      setTickets((prev) =>
+        prev.filter(
+          (ticket) =>
+            ticket.stage !== 4 ||
+            !ticket.autoCompletedAt ||
+            ticket.autoCompletedAt > cutoff
+        )
+      );
+    }, 4000);
+
+    return () => window.clearInterval(cleanupInterval);
   }, [autopilot]);
 
   return (
@@ -317,7 +421,7 @@ export default function MomsKitchenDemo() {
 
         <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
           <button
-            onClick={addOrder}
+            onClick={() => addOrder(true)}
             style={{
               padding: "10px 16px",
               background: "#7c3aed",
@@ -359,7 +463,7 @@ export default function MomsKitchenDemo() {
               fontWeight: 600,
             }}
           >
-            Autopilot {autopilot ? "ON" : "OFF"}
+            Full-Service Autopilot {autopilot ? "ON" : "OFF"}
           </button>
 
           <button
