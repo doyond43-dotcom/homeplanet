@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type TicketStage = 0 | 1 | 2 | 3 | 4;
 
@@ -15,11 +15,21 @@ type MoveSnapshot = {
   toStage: TicketStage;
 };
 
+type AlertItem = {
+  id: number;
+  title: string;
+  message: string;
+};
+
 const stages = ["NEW", "ON GRILL", "PLATING", "READY", "COMPLETED"] as const;
 
 function formatAge(createdAt: number, now: number) {
   const minutes = Math.max(0, Math.floor((now - createdAt) / 60000));
   return `${minutes}m`;
+}
+
+function extractTicketLabel(text: string) {
+  return text.split("\n")[0] || "Order";
 }
 
 export default function MomsKitchenDemo() {
@@ -65,6 +75,10 @@ export default function MomsKitchenDemo() {
   ]);
 
   const [lastMove, setLastMove] = useState<MoveSnapshot | null>(null);
+  const [autopilot, setAutopilot] = useState(true);
+  const [alerts, setAlerts] = useState<AlertItem[]>([]);
+  const [soundOn, setSoundOn] = useState(false);
+  const audioContextRef = useRef<AudioContext | null>(null);
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -90,6 +104,72 @@ export default function MomsKitchenDemo() {
     return Math.round(totalMinutes / activeTickets.length);
   }, [tickets, now]);
 
+  function playChime() {
+    if (!soundOn || typeof window === "undefined") return;
+
+    try {
+      const AudioCtx =
+        window.AudioContext ||
+        (window as typeof window & {
+          webkitAudioContext?: typeof AudioContext;
+        }).webkitAudioContext;
+
+      if (!AudioCtx) return;
+
+      const ctx = audioContextRef.current ?? new AudioCtx();
+      audioContextRef.current = ctx;
+
+      if (ctx.state === "suspended") {
+        void ctx.resume();
+      }
+
+      const oscillator = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(880, ctx.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(
+        660,
+        ctx.currentTime + 0.18
+      );
+
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.08, ctx.currentTime + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.22);
+
+      oscillator.connect(gain);
+      gain.connect(ctx.destination);
+
+      oscillator.start(ctx.currentTime);
+      oscillator.stop(ctx.currentTime + 0.22);
+    } catch {
+      // ignore audio issues in demo mode
+    }
+  }
+
+  function pushAlert(title: string, message: string) {
+    const id = Date.now() + Math.floor(Math.random() * 1000);
+
+    setAlerts((prev) => [...prev, { id, title, message }]);
+    playChime();
+
+    window.setTimeout(() => {
+      setAlerts((prev) => prev.filter((a) => a.id !== id));
+    }, 3200);
+  }
+
+  function maybeFireStageAlert(ticketText: string, toStage: TicketStage) {
+    const ticketLabel = extractTicketLabel(ticketText);
+
+    if (toStage === 2) {
+      pushAlert("SERVER ALERT", `${ticketLabel} plating`);
+    }
+
+    if (toStage === 3) {
+      pushAlert("SERVER ALERT", `${ticketLabel} ready for pickup`);
+    }
+  }
+
   function moveTicket(id: number) {
     setTickets((prev) =>
       prev.map((ticket) => {
@@ -104,6 +184,8 @@ export default function MomsKitchenDemo() {
           fromStage,
           toStage,
         });
+
+        maybeFireStageAlert(ticket.text, toStage);
 
         return {
           ...ticket,
@@ -137,6 +219,8 @@ export default function MomsKitchenDemo() {
       "Table 3\nPancakes • Bacon",
       "Takeout #22\nBurger • Fries",
       "Table 6\nFrench Toast • Sausage",
+      "Table 10\n2 Eggs • Ham • Wheat Toast",
+      "Takeout #24\nClub Sandwich • Fries",
     ];
 
     const order =
@@ -151,7 +235,19 @@ export default function MomsKitchenDemo() {
         createdAt: Date.now(),
       },
     ]);
+
+    pushAlert("NEW ORDER", `${extractTicketLabel(order)} entered`);
   }
+
+  useEffect(() => {
+    if (!autopilot) return;
+
+    const interval = window.setInterval(() => {
+      addOrder();
+    }, 10000);
+
+    return () => window.clearInterval(interval);
+  }, [autopilot]);
 
   return (
     <div
@@ -162,6 +258,46 @@ export default function MomsKitchenDemo() {
         padding: "20px",
       }}
     >
+      <div
+        style={{
+          position: "fixed",
+          top: 16,
+          right: 16,
+          zIndex: 1000,
+          display: "flex",
+          flexDirection: "column",
+          gap: 10,
+          width: 300,
+          pointerEvents: "none",
+        }}
+      >
+        {alerts.map((alert) => (
+          <div
+            key={alert.id}
+            style={{
+              background: "rgba(23, 27, 35, 0.96)",
+              border: "1px solid rgba(124, 58, 237, 0.45)",
+              borderRadius: 12,
+              padding: "12px 14px",
+              boxShadow: "0 10px 30px rgba(0,0,0,0.35)",
+            }}
+          >
+            <div
+              style={{
+                fontSize: 12,
+                fontWeight: 800,
+                letterSpacing: "0.08em",
+                color: "#c084fc",
+                marginBottom: 4,
+              }}
+            >
+              {alert.title}
+            </div>
+            <div style={{ fontSize: 14, lineHeight: 1.35 }}>{alert.message}</div>
+          </div>
+        ))}
+      </div>
+
       <div
         style={{
           display: "flex",
@@ -209,6 +345,36 @@ export default function MomsKitchenDemo() {
             }}
           >
             Undo Last Move
+          </button>
+
+          <button
+            onClick={() => setAutopilot((prev) => !prev)}
+            style={{
+              padding: "10px 16px",
+              background: autopilot ? "#166534" : "#334155",
+              border: "none",
+              borderRadius: 8,
+              color: "white",
+              cursor: "pointer",
+              fontWeight: 600,
+            }}
+          >
+            Autopilot {autopilot ? "ON" : "OFF"}
+          </button>
+
+          <button
+            onClick={() => setSoundOn((prev) => !prev)}
+            style={{
+              padding: "10px 16px",
+              background: soundOn ? "#0f766e" : "#334155",
+              border: "none",
+              borderRadius: 8,
+              color: "white",
+              cursor: "pointer",
+              fontWeight: 600,
+            }}
+          >
+            Chime {soundOn ? "ON" : "OFF"}
           </button>
         </div>
       </div>
