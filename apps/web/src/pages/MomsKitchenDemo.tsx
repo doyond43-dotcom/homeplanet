@@ -24,6 +24,7 @@ type Ticket = {
   autoCompletedAt?: number;
   stationTasks: StationTask[];
   assignedServer: string;
+  highlightNew?: boolean;
 };
 
 type MoveSnapshot = {
@@ -36,6 +37,14 @@ type AlertItem = {
   id: number;
   title: string;
   message: string;
+};
+
+type IntakeEvent = {
+  id: number;
+  text: string;
+  assignedServer: string;
+  createdAt: number;
+  stationSummary: string;
 };
 
 type StationTemplate = {
@@ -206,18 +215,6 @@ const SAMPLE_ORDERS: OrderTemplate[] = [
     ],
   },
   {
-    text: "Table 19\n2 Eggs • Sausage • Rye Toast\n2 Eggs • Bacon • Grits\nSteak & Eggs\nFrench Toast",
-    expectedMinMinutes: 12,
-    expectedMaxMinutes: 16,
-    stationTasks: [
-      { station: "grill", label: "2 Eggs • Sausage", durationSec: 180 },
-      { station: "toast", label: "Rye Toast", durationSec: 50 },
-      { station: "grill", label: "2 Eggs • Bacon • Grits", durationSec: 230 },
-      { station: "grill", label: "Steak & Eggs", durationSec: 320 },
-      { station: "grill", label: "French Toast", durationSec: 190 },
-    ],
-  },
-  {
     text: "Table 20\nSide Fries",
     expectedMinMinutes: 2,
     expectedMaxMinutes: 3,
@@ -281,10 +278,16 @@ function getStationSummary(ticket: Ticket, now: number) {
   };
 }
 
+function makeIntakeSummary(tasks: StationTask[]) {
+  const unique = Array.from(new Set(tasks.map((t) => STATION_LABELS[t.station])));
+  return unique.join(" • ");
+}
+
 export default function MomsKitchenDemo() {
   const initialNow = Date.now();
 
   const [now, setNow] = useState(initialNow);
+  const [intakeFeed, setIntakeFeed] = useState<IntakeEvent[]>([]);
 
   const [tickets, setTickets] = useState<Ticket[]>([
     {
@@ -296,6 +299,7 @@ export default function MomsKitchenDemo() {
       expectedMinMinutes: 4,
       expectedMaxMinutes: 6,
       assignedServer: "Angela",
+      highlightNew: true,
       stationTasks: cloneStationTasks([
         { station: "grill", label: "2 Eggs • Bacon", durationSec: 180 },
         { station: "toast", label: "Toast", durationSec: 45 },
@@ -418,6 +422,16 @@ export default function MomsKitchenDemo() {
     return () => window.clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    if (!tickets.some((t) => t.highlightNew)) return;
+
+    const timeout = window.setTimeout(() => {
+      setTickets((prev) => prev.map((t) => ({ ...t, highlightNew: false })));
+    }, 2200);
+
+    return () => window.clearTimeout(timeout);
+  }, [tickets]);
+
   const activeCount = useMemo(
     () => tickets.filter((t) => t.stage !== 4).length,
     [tickets]
@@ -465,13 +479,13 @@ export default function MomsKitchenDemo() {
 
       gain.gain.setValueAtTime(0.0001, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.16, ctx.currentTime + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.30);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.3);
 
       oscillator.connect(gain);
       gain.connect(ctx.destination);
 
       oscillator.start(ctx.currentTime);
-      oscillator.stop(ctx.currentTime + 0.30);
+      oscillator.stop(ctx.currentTime + 0.3);
     } catch {
       // ignore audio issues in demo mode
     }
@@ -506,27 +520,45 @@ export default function MomsKitchenDemo() {
     }
   }
 
-  function addOrder(showAlert = false) {
+  function addOrder(showTopAlert = true) {
     const order = pickRandom(SAMPLE_ORDERS);
     const timestamp = Date.now();
+    const assignedServer = pickRandom(SERVER_NAMES);
+    const id = timestamp + Math.floor(Math.random() * 1000);
+    const stationTasks = cloneStationTasks(order.stationTasks);
 
     setTickets((prev) => [
       ...prev,
       {
-        id: timestamp + Math.floor(Math.random() * 1000),
+        id,
         text: order.text,
         stage: 0,
         createdAt: timestamp,
         updatedAt: timestamp,
         expectedMinMinutes: order.expectedMinMinutes,
         expectedMaxMinutes: order.expectedMaxMinutes,
-        stationTasks: cloneStationTasks(order.stationTasks),
-        assignedServer: pickRandom(SERVER_NAMES),
+        stationTasks,
+        assignedServer,
+        highlightNew: true,
       },
     ]);
 
-    if (showAlert) {
-      pushAlert("NEW ORDER", `${extractTicketLabel(order.text)} entered`);
+    setIntakeFeed((prev) => [
+      {
+        id,
+        text: order.text,
+        assignedServer,
+        createdAt: timestamp,
+        stationSummary: makeIntakeSummary(stationTasks),
+      },
+      ...prev,
+    ].slice(0, 6));
+
+    if (showTopAlert) {
+      pushAlert(
+        "INTAKE",
+        `${assignedServer} • ${extractTicketLabel(order.text)} entered`
+      );
     }
   }
 
@@ -593,7 +625,7 @@ export default function MomsKitchenDemo() {
     const createInterval = window.setInterval(() => {
       const active = tickets.filter((t) => t.stage !== 4).length;
       if (active < 12) {
-        addOrder(false);
+        addOrder(true);
       }
     }, 15000);
 
@@ -794,7 +826,7 @@ export default function MomsKitchenDemo() {
 
         <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
           <button
-            onClick={() => addOrder(false)}
+            onClick={() => addOrder(true)}
             style={{
               padding: "10px 16px",
               background: "#7c3aed",
@@ -859,172 +891,253 @@ export default function MomsKitchenDemo() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(5, 1fr)",
-          gap: 15,
+          gridTemplateColumns: "320px 1fr",
+          gap: 18,
+          alignItems: "start",
         }}
       >
-        {stages.map((stage, stageIndex) => (
+        <div
+          style={{
+            background: "#161b24",
+            border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: 12,
+            padding: 12,
+            minHeight: 620,
+          }}
+        >
           <div
-            key={stage}
             style={{
-              background: "#1b1f27",
-              padding: 10,
-              borderRadius: 10,
-              minHeight: 420,
-              border: "1px solid rgba(255,255,255,0.06)",
+              fontSize: 18,
+              fontWeight: 800,
+              marginBottom: 6,
             }}
           >
-            <h2
+            LIVE INTAKE
+          </div>
+          <div style={{ fontSize: 13, opacity: 0.75, marginBottom: 12 }}>
+            New orders landing into the system
+          </div>
+
+          <div style={{ display: "grid", gap: 10 }}>
+            {intakeFeed.length === 0 && (
+              <div
+                style={{
+                  background: "rgba(255,255,255,0.03)",
+                  borderRadius: 10,
+                  padding: 12,
+                  fontSize: 13,
+                  opacity: 0.75,
+                }}
+              >
+                Waiting for new intake...
+              </div>
+            )}
+
+            {intakeFeed.map((item) => (
+              <div
+                key={item.id}
+                style={{
+                  background: "rgba(124, 58, 237, 0.10)",
+                  border: "1px solid rgba(124, 58, 237, 0.30)",
+                  borderRadius: 10,
+                  padding: 12,
+                }}
+              >
+                <div style={{ fontWeight: 800, marginBottom: 4 }}>
+                  {extractTicketLabel(item.text)}
+                </div>
+                <div style={{ opacity: 0.88, marginBottom: 8, whiteSpace: "pre-line" }}>
+                  {item.text.split("\n").slice(1).join("\n")}
+                </div>
+                <div style={{ fontSize: 12, display: "grid", gap: 4, opacity: 0.82 }}>
+                  <span>Server: {item.assignedServer}</span>
+                  <span>Received: {formatClockTime(item.createdAt)}</span>
+                  <span>Stations: {item.stationSummary}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(5, 1fr)",
+            gap: 15,
+          }}
+        >
+          {stages.map((stage, stageIndex) => (
+            <div
+              key={stage}
               style={{
-                textAlign: "center",
-                marginTop: 4,
-                marginBottom: 14,
-                fontSize: "18px",
-                letterSpacing: "0.02em",
+                background: "#1b1f27",
+                padding: 10,
+                borderRadius: 10,
+                minHeight: 620,
+                border: "1px solid rgba(255,255,255,0.06)",
               }}
             >
-              {stage}
-            </h2>
+              <h2
+                style={{
+                  textAlign: "center",
+                  marginTop: 4,
+                  marginBottom: 14,
+                  fontSize: "18px",
+                  letterSpacing: "0.02em",
+                }}
+              >
+                {stage}
+              </h2>
 
-            {tickets
-              .filter((t) => t.stage === stageIndex)
-              .map((t) => {
-                const elapsedMs = now - t.createdAt;
-                const elapsedMinutes = elapsedMs / 60000;
-                const isLate = elapsedMinutes > t.expectedMaxMinutes;
-                const stationSummary = getStationSummary(t, now);
+              {tickets
+                .filter((t) => t.stage === stageIndex)
+                .map((t) => {
+                  const elapsedMs = now - t.createdAt;
+                  const elapsedMinutes = elapsedMs / 60000;
+                  const isLate = elapsedMinutes > t.expectedMaxMinutes;
+                  const stationSummary = getStationSummary(t, now);
 
-                return (
-                  <div
-                    key={t.id}
-                    onClick={() => moveTicket(t.id)}
-                    style={{
-                      background: isLate ? "rgba(127, 29, 29, 0.32)" : "#2a2f38",
-                      padding: 12,
-                      borderRadius: 8,
-                      marginBottom: 10,
-                      cursor: t.stage === 4 ? "default" : "pointer",
-                      whiteSpace: "pre-line",
-                      lineHeight: 1.45,
-                      border: isLate
-                        ? "1px solid rgba(248, 113, 113, 0.45)"
-                        : "1px solid rgba(255,255,255,0.05)",
-                    }}
-                    title={
-                      t.stage === 4
-                        ? "Completed ticket"
-                        : "Click to move to next stage"
-                    }
-                  >
-                    <div style={{ marginBottom: 8 }}>{t.text}</div>
-
+                  return (
                     <div
+                      key={t.id}
+                      onClick={() => moveTicket(t.id)}
                       style={{
-                        fontSize: "12px",
-                        opacity: 0.86,
-                        display: "grid",
-                        gap: 4,
-                      }}
-                    >
-                      <span>Server: {t.assignedServer}</span>
-                      <span>Received: {formatClockTime(t.createdAt)}</span>
-                      <span>
-                        Started: {t.startedAt ? formatClockTime(t.startedAt) : "—"}
-                      </span>
-                      <span>
-                        Expected: {t.expectedMinMinutes}–{t.expectedMaxMinutes} min
-                      </span>
-                      <span>Elapsed: {formatElapsedMs(elapsedMs)}</span>
-                      {isLate && (
-                        <span style={{ color: "#fca5a5", fontWeight: 700 }}>
-                          Running Late
-                        </span>
-                      )}
-                    </div>
-
-                    <div
-                      style={{
-                        marginTop: 10,
-                        padding: "8px 10px",
+                        background: isLate
+                          ? "rgba(127, 29, 29, 0.32)"
+                          : t.stage === 0 && t.highlightNew
+                          ? "rgba(124, 58, 237, 0.16)"
+                          : "#2a2f38",
+                        padding: 12,
                         borderRadius: 8,
-                        background: "rgba(255,255,255,0.03)",
-                        fontSize: 12,
-                        display: "grid",
-                        gap: 5,
+                        marginBottom: 10,
+                        cursor: t.stage === 4 ? "default" : "pointer",
+                        whiteSpace: "pre-line",
+                        lineHeight: 1.45,
+                        border: isLate
+                          ? "1px solid rgba(248, 113, 113, 0.45)"
+                          : t.stage === 0 && t.highlightNew
+                          ? "1px solid rgba(124, 58, 237, 0.50)"
+                          : "1px solid rgba(255,255,255,0.05)",
+                        boxShadow:
+                          t.stage === 0 && t.highlightNew
+                            ? "0 0 0 1px rgba(124,58,237,0.18), 0 0 22px rgba(124,58,237,0.18)"
+                            : "none",
                       }}
+                      title={
+                        t.stage === 4
+                          ? "Completed ticket"
+                          : "Click to move to next stage"
+                      }
                     >
-                      <div style={{ fontWeight: 700, opacity: 0.9 }}>
-                        Stations ({stationSummary.doneCount}/{stationSummary.total})
+                      <div style={{ marginBottom: 8 }}>{t.text}</div>
+
+                      <div
+                        style={{
+                          fontSize: "12px",
+                          opacity: 0.86,
+                          display: "grid",
+                          gap: 4,
+                        }}
+                      >
+                        <span>Server: {t.assignedServer}</span>
+                        <span>Received: {formatClockTime(t.createdAt)}</span>
+                        <span>
+                          Started: {t.startedAt ? formatClockTime(t.startedAt) : "—"}
+                        </span>
+                        <span>
+                          Expected: {t.expectedMinMinutes}–{t.expectedMaxMinutes} min
+                        </span>
+                        <span>Elapsed: {formatElapsedMs(elapsedMs)}</span>
+                        {isLate && (
+                          <span style={{ color: "#fca5a5", fontWeight: 700 }}>
+                            Running Late
+                          </span>
+                        )}
                       </div>
 
-                      {t.stationTasks.map((task, index) => {
-                        const status = getStationStatus(task, now);
+                      <div
+                        style={{
+                          marginTop: 10,
+                          padding: "8px 10px",
+                          borderRadius: 8,
+                          background: "rgba(255,255,255,0.03)",
+                          fontSize: 12,
+                          display: "grid",
+                          gap: 5,
+                        }}
+                      >
+                        <div style={{ fontWeight: 700, opacity: 0.9 }}>
+                          Stations ({stationSummary.doneCount}/{stationSummary.total})
+                        </div>
 
-                        return (
-                          <div
-                            key={`${task.station}-${task.label}-${index}`}
-                            style={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              gap: 8,
-                              opacity: status === "done" ? 0.9 : 1,
-                            }}
-                          >
-                            <span>
-                              {STATION_LABELS[task.station]}: {task.label}
-                            </span>
-                            <span
+                        {t.stationTasks.map((task, index) => {
+                          const status = getStationStatus(task, now);
+
+                          return (
+                            <div
+                              key={`${task.station}-${task.label}-${index}`}
                               style={{
-                                color:
-                                  status === "done"
-                                    ? "#86efac"
-                                    : status === "in_progress"
-                                    ? "#93c5fd"
-                                    : "#cbd5e1",
-                                fontWeight: 600,
+                                display: "flex",
+                                justifyContent: "space-between",
+                                gap: 8,
                               }}
                             >
-                              {status === "done"
-                                ? "Done"
-                                : status === "in_progress"
-                                ? "Working"
-                                : "Waiting"}
-                            </span>
+                              <span>
+                                {STATION_LABELS[task.station]}: {task.label}
+                              </span>
+                              <span
+                                style={{
+                                  color:
+                                    status === "done"
+                                      ? "#86efac"
+                                      : status === "in_progress"
+                                      ? "#93c5fd"
+                                      : "#cbd5e1",
+                                  fontWeight: 600,
+                                }}
+                              >
+                                {status === "done"
+                                  ? "Done"
+                                  : status === "in_progress"
+                                  ? "Working"
+                                  : "Waiting"}
+                              </span>
+                            </div>
+                          );
+                        })}
+
+                        {t.stage === 2 && !stationSummary.allDone && (
+                          <div style={{ color: "#fcd34d", fontWeight: 600 }}>
+                            Window waiting on stations
                           </div>
-                        );
-                      })}
+                        )}
 
-                      {t.stage === 2 && !stationSummary.allDone && (
-                        <div style={{ color: "#fcd34d", fontWeight: 600 }}>
-                          Window waiting on stations
-                        </div>
-                      )}
+                        {t.stage >= 2 && stationSummary.allDone && (
+                          <div style={{ color: "#86efac", fontWeight: 600 }}>
+                            All stations complete
+                          </div>
+                        )}
+                      </div>
 
-                      {t.stage >= 2 && stationSummary.allDone && (
-                        <div style={{ color: "#86efac", fontWeight: 600 }}>
-                          All stations complete
-                        </div>
-                      )}
+                      <div
+                        style={{
+                          marginTop: 10,
+                          fontSize: "13px",
+                          opacity: 0.8,
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                        }}
+                      >
+                        <span>⏱ Live</span>
+                        {t.stage < 4 && <span>Next →</span>}
+                      </div>
                     </div>
-
-                    <div
-                      style={{
-                        marginTop: 10,
-                        fontSize: "13px",
-                        opacity: 0.8,
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                      }}
-                    >
-                      <span>⏱ Live</span>
-                      {t.stage < 4 && <span>Next →</span>}
-                    </div>
-                  </div>
-                );
-              })}
-          </div>
-        ))}
+                  );
+                })}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
