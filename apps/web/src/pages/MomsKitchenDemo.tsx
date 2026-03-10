@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 type TicketStage = 0 | 1 | 2 | 3 | 4;
 type StationKey = "grill" | "fryer" | "drinks" | "prep" | "toast";
-
 type StationStatus = "waiting" | "in_progress" | "done";
 
 type StationTask = {
@@ -24,6 +23,7 @@ type Ticket = {
   expectedMaxMinutes: number;
   autoCompletedAt?: number;
   stationTasks: StationTask[];
+  assignedServer: string;
 };
 
 type MoveSnapshot = {
@@ -60,6 +60,8 @@ const STATION_LABELS: Record<StationKey, string> = {
   prep: "Prep",
   toast: "Toast",
 };
+
+const SERVER_NAMES = ["Angela", "Kiana", "Darla", "Maria", "Jess", "Tina"];
 
 const SAMPLE_ORDERS: OrderTemplate[] = [
   {
@@ -293,6 +295,7 @@ export default function MomsKitchenDemo() {
       updatedAt: initialNow - 2 * 60 * 1000,
       expectedMinMinutes: 4,
       expectedMaxMinutes: 6,
+      assignedServer: "Angela",
       stationTasks: cloneStationTasks([
         { station: "grill", label: "2 Eggs • Bacon", durationSec: 180 },
         { station: "toast", label: "Toast", durationSec: 45 },
@@ -301,38 +304,31 @@ export default function MomsKitchenDemo() {
     {
       id: 2,
       text: "Takeout #14\nPatty Melt • Fries",
-      stage: 0,
-      createdAt: initialNow - 1 * 60 * 1000,
-      updatedAt: initialNow - 1 * 60 * 1000,
-      expectedMinMinutes: 7,
-      expectedMaxMinutes: 9,
-      stationTasks: cloneStationTasks([
-        { station: "grill", label: "Patty Melt", durationSec: 250 },
-        { station: "fryer", label: "Fries", durationSec: 120 },
-      ]),
-    },
-    {
-      id: 3,
-      text: "Table 2\nPancakes • Sausage",
       stage: 1,
       createdAt: initialNow - 5 * 60 * 1000,
       updatedAt: initialNow - 4 * 60 * 1000,
-      startedAt: initialNow - 4.5 * 60 * 1000,
-      expectedMinMinutes: 4,
-      expectedMaxMinutes: 6,
-      stationTasks: cloneStationTasks([
-        { station: "grill", label: "Pancakes • Sausage", durationSec: 220 },
-      ]).map((task) => ({
-        ...task,
-        startedAt: initialNow - 4.5 * 60 * 1000,
-        completedAt:
-          initialNow - (initialNow - 4.5 * 60 * 1000) >= task.durationSec * 1000
-            ? initialNow - 4.5 * 60 * 1000 + task.durationSec * 1000
-            : undefined,
-      })),
+      startedAt: initialNow - 4 * 60 * 1000,
+      expectedMinMinutes: 7,
+      expectedMaxMinutes: 9,
+      assignedServer: "Kiana",
+      stationTasks: [
+        {
+          station: "grill",
+          label: "Patty Melt",
+          durationSec: 250,
+          startedAt: initialNow - 4 * 60 * 1000,
+        },
+        {
+          station: "fryer",
+          label: "Fries",
+          durationSec: 120,
+          startedAt: initialNow - 4 * 60 * 1000,
+          completedAt: initialNow - 2 * 60 * 1000,
+        },
+      ],
     },
     {
-      id: 4,
+      id: 3,
       text: "Table 8\nClub Sandwich • Fries",
       stage: 2,
       createdAt: initialNow - 7 * 60 * 1000,
@@ -340,6 +336,7 @@ export default function MomsKitchenDemo() {
       startedAt: initialNow - 6.5 * 60 * 1000,
       expectedMinMinutes: 6,
       expectedMaxMinutes: 8,
+      assignedServer: "Darla",
       stationTasks: [
         {
           station: "prep",
@@ -358,7 +355,7 @@ export default function MomsKitchenDemo() {
       ],
     },
     {
-      id: 5,
+      id: 4,
       text: "Table 5\nPatty Melt • Onion Rings",
       stage: 3,
       createdAt: initialNow - 9 * 60 * 1000,
@@ -366,6 +363,7 @@ export default function MomsKitchenDemo() {
       startedAt: initialNow - 8.5 * 60 * 1000,
       expectedMinMinutes: 7,
       expectedMaxMinutes: 9,
+      assignedServer: "Maria",
       stationTasks: [
         {
           station: "grill",
@@ -384,7 +382,7 @@ export default function MomsKitchenDemo() {
       ],
     },
     {
-      id: 6,
+      id: 5,
       text: "Table 1\nBiscuits & Gravy",
       stage: 4,
       createdAt: initialNow - 12 * 60 * 1000,
@@ -393,6 +391,7 @@ export default function MomsKitchenDemo() {
       expectedMinMinutes: 4,
       expectedMaxMinutes: 6,
       autoCompletedAt: initialNow - 20 * 1000,
+      assignedServer: "Jess",
       stationTasks: [
         {
           station: "prep",
@@ -465,14 +464,14 @@ export default function MomsKitchenDemo() {
       );
 
       gain.gain.setValueAtTime(0.0001, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.14, ctx.currentTime + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.28);
+      gain.gain.exponentialRampToValueAtTime(0.16, ctx.currentTime + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.30);
 
       oscillator.connect(gain);
       gain.connect(ctx.destination);
 
       oscillator.start(ctx.currentTime);
-      oscillator.stop(ctx.currentTime + 0.28);
+      oscillator.stop(ctx.currentTime + 0.30);
     } catch {
       // ignore audio issues in demo mode
     }
@@ -481,27 +480,33 @@ export default function MomsKitchenDemo() {
   function pushAlert(title: string, message: string) {
     const id = Date.now() + Math.floor(Math.random() * 1000);
 
-    setAlerts((prev) => [...prev, { id, title, message }]);
+    setAlerts((prev) => [...prev.slice(-3), { id, title, message }]);
     playChime();
 
     window.setTimeout(() => {
       setAlerts((prev) => prev.filter((a) => a.id !== id));
-    }, 3600);
+    }, 4200);
   }
 
-  function maybeFireStageAlert(ticketText: string, toStage: TicketStage) {
-    const ticketLabel = extractTicketLabel(ticketText);
+  function maybeFireStageAlert(ticket: Ticket, toStage: TicketStage) {
+    const ticketLabel = extractTicketLabel(ticket.text);
 
     if (toStage === 2) {
-      pushAlert("SERVER ALERT", `${ticketLabel} moved to PLATING`);
+      pushAlert(
+        "SERVER ALERT",
+        `${ticket.assignedServer} • ${ticketLabel} plating`
+      );
     }
 
     if (toStage === 3) {
-      pushAlert("SERVER ALERT", `${ticketLabel} ready for pickup`);
+      pushAlert(
+        "SERVER ALERT",
+        `${ticket.assignedServer} • ${ticketLabel} ready for pickup`
+      );
     }
   }
 
-  function addOrder(showAlert = true) {
+  function addOrder(showAlert = false) {
     const order = pickRandom(SAMPLE_ORDERS);
     const timestamp = Date.now();
 
@@ -516,6 +521,7 @@ export default function MomsKitchenDemo() {
         expectedMinMinutes: order.expectedMinMinutes,
         expectedMaxMinutes: order.expectedMaxMinutes,
         stationTasks: cloneStationTasks(order.stationTasks),
+        assignedServer: pickRandom(SERVER_NAMES),
       },
     ]);
 
@@ -542,7 +548,7 @@ export default function MomsKitchenDemo() {
           });
         }
 
-        maybeFireStageAlert(ticket.text, toStage);
+        maybeFireStageAlert(ticket, toStage);
 
         return {
           ...ticket,
@@ -587,7 +593,7 @@ export default function MomsKitchenDemo() {
     const createInterval = window.setInterval(() => {
       const active = tickets.filter((t) => t.stage !== 4).length;
       if (active < 12) {
-        addOrder(true);
+        addOrder(false);
       }
     }, 15000);
 
@@ -681,7 +687,7 @@ export default function MomsKitchenDemo() {
           return prev;
         }
 
-        maybeFireStageAlert(chosen.text, nextStage);
+        maybeFireStageAlert(chosen, nextStage);
 
         return prev.map((ticket) =>
           ticket.id === chosen!.id
@@ -738,7 +744,7 @@ export default function MomsKitchenDemo() {
           display: "flex",
           flexDirection: "column",
           gap: 10,
-          width: 320,
+          width: 340,
           pointerEvents: "none",
         }}
       >
@@ -746,8 +752,8 @@ export default function MomsKitchenDemo() {
           <div
             key={alert.id}
             style={{
-              background: "rgba(23, 27, 35, 0.97)",
-              border: "1px solid rgba(124, 58, 237, 0.5)",
+              background: "rgba(23, 27, 35, 0.98)",
+              border: "1px solid rgba(124, 58, 237, 0.55)",
               borderRadius: 12,
               padding: "12px 14px",
               boxShadow: "0 10px 30px rgba(0,0,0,0.35)",
@@ -788,7 +794,7 @@ export default function MomsKitchenDemo() {
 
         <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
           <button
-            onClick={() => addOrder(true)}
+            onClick={() => addOrder(false)}
             style={{
               padding: "10px 16px",
               background: "#7c3aed",
@@ -920,6 +926,7 @@ export default function MomsKitchenDemo() {
                         gap: 4,
                       }}
                     >
+                      <span>Server: {t.assignedServer}</span>
                       <span>Received: {formatClockTime(t.createdAt)}</span>
                       <span>
                         Started: {t.startedAt ? formatClockTime(t.startedAt) : "—"}
