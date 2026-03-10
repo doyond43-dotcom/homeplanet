@@ -8,6 +8,9 @@ type Ticket = {
   stage: TicketStage;
   createdAt: number;
   updatedAt: number;
+  startedAt?: number;
+  expectedMinMinutes: number;
+  expectedMaxMinutes: number;
   autoCompletedAt?: number;
 };
 
@@ -23,27 +26,101 @@ type AlertItem = {
   message: string;
 };
 
+type OrderTemplate = {
+  text: string;
+  expectedMinMinutes: number;
+  expectedMaxMinutes: number;
+};
+
 const stages = ["NEW", "ON GRILL", "PLATING", "READY", "COMPLETED"] as const;
 
-const SAMPLE_ORDERS = [
-  "Table 7\nWestern Omelette • Coffee",
-  "Table 9\nBiscuits & Gravy • Tea",
-  "Takeout #21\nBreakfast Burrito • Coffee",
-  "Table 3\nPancakes • Bacon",
-  "Takeout #22\nBurger • Fries",
-  "Table 6\nFrench Toast • Sausage",
-  "Table 10\n2 Eggs • Ham • Wheat Toast",
-  "Takeout #24\nClub Sandwich • Fries",
-  "Table 11\nPatty Melt • Onion Rings",
-  "Takeout #25\n2 Egg Breakfast • Bacon",
-  "Table 12\nBLT • Fries",
-  "Takeout #26\nGrilled Cheese • Tomato Soup",
+const SAMPLE_ORDERS: OrderTemplate[] = [
+  {
+    text: "Table 7\nWestern Omelette • Coffee",
+    expectedMinMinutes: 5,
+    expectedMaxMinutes: 7,
+  },
+  {
+    text: "Table 9\nBiscuits & Gravy • Tea",
+    expectedMinMinutes: 4,
+    expectedMaxMinutes: 6,
+  },
+  {
+    text: "Takeout #21\nBreakfast Burrito • Coffee",
+    expectedMinMinutes: 3,
+    expectedMaxMinutes: 5,
+  },
+  {
+    text: "Table 3\nPancakes • Bacon",
+    expectedMinMinutes: 4,
+    expectedMaxMinutes: 6,
+  },
+  {
+    text: "Takeout #22\nBurger • Fries",
+    expectedMinMinutes: 7,
+    expectedMaxMinutes: 9,
+  },
+  {
+    text: "Table 6\nFrench Toast • Sausage",
+    expectedMinMinutes: 5,
+    expectedMaxMinutes: 7,
+  },
+  {
+    text: "Table 10\n2 Eggs • Ham • Wheat Toast",
+    expectedMinMinutes: 4,
+    expectedMaxMinutes: 6,
+  },
+  {
+    text: "Takeout #24\nClub Sandwich • Fries",
+    expectedMinMinutes: 6,
+    expectedMaxMinutes: 8,
+  },
+  {
+    text: "Table 11\nPatty Melt • Onion Rings",
+    expectedMinMinutes: 7,
+    expectedMaxMinutes: 9,
+  },
+  {
+    text: "Takeout #25\n2 Egg Breakfast • Bacon",
+    expectedMinMinutes: 4,
+    expectedMaxMinutes: 6,
+  },
+  {
+    text: "Table 12\nBLT • Fries",
+    expectedMinMinutes: 5,
+    expectedMaxMinutes: 7,
+  },
+  {
+    text: "Takeout #26\nGrilled Cheese • Tomato Soup",
+    expectedMinMinutes: 5,
+    expectedMaxMinutes: 7,
+  },
+  {
+    text: "Table 14\nCoffee",
+    expectedMinMinutes: 1,
+    expectedMaxMinutes: 1,
+  },
+  {
+    text: "Table 15\nCoffee • Breakfast Burrito",
+    expectedMinMinutes: 3,
+    expectedMaxMinutes: 5,
+  },
+  {
+    text: "Table 16\n2 Eggs • Bacon • Toast\nPancakes • Sausage",
+    expectedMinMinutes: 7,
+    expectedMaxMinutes: 10,
+  },
+  {
+    text: "Table 18\nSteak & Eggs\nBiscuits & Gravy\nPancakes\nCoffee x3",
+    expectedMinMinutes: 10,
+    expectedMaxMinutes: 14,
+  },
+  {
+    text: "Table 19\n2 Eggs • Sausage • Rye Toast\n2 Eggs • Bacon • Grits\nSteak & Eggs\nFrench Toast",
+    expectedMinMinutes: 12,
+    expectedMaxMinutes: 16,
+  },
 ];
-
-function formatAge(createdAt: number, now: number) {
-  const minutes = Math.max(0, Math.floor((now - createdAt) / 60000));
-  return `${minutes}m`;
-}
 
 function extractTicketLabel(text: string) {
   return text.split("\n")[0] || "Order";
@@ -51,6 +128,20 @@ function extractTicketLabel(text: string) {
 
 function pickRandom<T>(items: T[]) {
   return items[Math.floor(Math.random() * items.length)];
+}
+
+function formatClockTime(timestamp: number) {
+  return new Date(timestamp).toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function formatElapsedMs(ms: number) {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}m ${String(seconds).padStart(2, "0")}s`;
 }
 
 export default function MomsKitchenDemo() {
@@ -65,6 +156,8 @@ export default function MomsKitchenDemo() {
       stage: 0,
       createdAt: initialNow - 2 * 60 * 1000,
       updatedAt: initialNow - 2 * 60 * 1000,
+      expectedMinMinutes: 4,
+      expectedMaxMinutes: 6,
     },
     {
       id: 2,
@@ -72,6 +165,8 @@ export default function MomsKitchenDemo() {
       stage: 0,
       createdAt: initialNow - 1 * 60 * 1000,
       updatedAt: initialNow - 1 * 60 * 1000,
+      expectedMinMinutes: 7,
+      expectedMaxMinutes: 9,
     },
     {
       id: 3,
@@ -79,6 +174,9 @@ export default function MomsKitchenDemo() {
       stage: 1,
       createdAt: initialNow - 5 * 60 * 1000,
       updatedAt: initialNow - 4 * 60 * 1000,
+      startedAt: initialNow - 4.5 * 60 * 1000,
+      expectedMinMinutes: 4,
+      expectedMaxMinutes: 6,
     },
     {
       id: 4,
@@ -86,6 +184,9 @@ export default function MomsKitchenDemo() {
       stage: 2,
       createdAt: initialNow - 7 * 60 * 1000,
       updatedAt: initialNow - 90 * 1000,
+      startedAt: initialNow - 6.5 * 60 * 1000,
+      expectedMinMinutes: 6,
+      expectedMaxMinutes: 8,
     },
     {
       id: 5,
@@ -93,6 +194,9 @@ export default function MomsKitchenDemo() {
       stage: 3,
       createdAt: initialNow - 9 * 60 * 1000,
       updatedAt: initialNow - 40 * 1000,
+      startedAt: initialNow - 8.5 * 60 * 1000,
+      expectedMinMinutes: 7,
+      expectedMaxMinutes: 9,
     },
     {
       id: 6,
@@ -100,6 +204,9 @@ export default function MomsKitchenDemo() {
       stage: 4,
       createdAt: initialNow - 12 * 60 * 1000,
       updatedAt: initialNow - 20 * 1000,
+      startedAt: initialNow - 11.5 * 60 * 1000,
+      expectedMinMinutes: 4,
+      expectedMaxMinutes: 6,
       autoCompletedAt: initialNow - 20 * 1000,
     },
   ]);
@@ -157,21 +264,21 @@ export default function MomsKitchenDemo() {
       const gain = ctx.createGain();
 
       oscillator.type = "sine";
-      oscillator.frequency.setValueAtTime(880, ctx.currentTime);
+      oscillator.frequency.setValueAtTime(980, ctx.currentTime);
       oscillator.frequency.exponentialRampToValueAtTime(
-        660,
-        ctx.currentTime + 0.18
+        720,
+        ctx.currentTime + 0.22
       );
 
       gain.gain.setValueAtTime(0.0001, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.08, ctx.currentTime + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.22);
+      gain.gain.exponentialRampToValueAtTime(0.14, ctx.currentTime + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.28);
 
       oscillator.connect(gain);
       gain.connect(ctx.destination);
 
       oscillator.start(ctx.currentTime);
-      oscillator.stop(ctx.currentTime + 0.22);
+      oscillator.stop(ctx.currentTime + 0.28);
     } catch {
       // ignore audio issues in demo mode
     }
@@ -185,14 +292,14 @@ export default function MomsKitchenDemo() {
 
     window.setTimeout(() => {
       setAlerts((prev) => prev.filter((a) => a.id !== id));
-    }, 3200);
+    }, 3600);
   }
 
   function maybeFireStageAlert(ticketText: string, toStage: TicketStage) {
     const ticketLabel = extractTicketLabel(ticketText);
 
     if (toStage === 2) {
-      pushAlert("SERVER ALERT", `${ticketLabel} plating`);
+      pushAlert("SERVER ALERT", `${ticketLabel} moved to PLATING`);
     }
 
     if (toStage === 3) {
@@ -208,15 +315,17 @@ export default function MomsKitchenDemo() {
       ...prev,
       {
         id: timestamp + Math.floor(Math.random() * 1000),
-        text: order,
+        text: order.text,
         stage: 0,
         createdAt: timestamp,
         updatedAt: timestamp,
+        expectedMinMinutes: order.expectedMinMinutes,
+        expectedMaxMinutes: order.expectedMaxMinutes,
       },
     ]);
 
     if (showAlert) {
-      pushAlert("NEW ORDER", `${extractTicketLabel(order)} entered`);
+      pushAlert("NEW ORDER", `${extractTicketLabel(order.text)} entered`);
     }
   }
 
@@ -244,6 +353,8 @@ export default function MomsKitchenDemo() {
           ...ticket,
           stage: toStage,
           updatedAt: timestamp,
+          startedAt:
+            ticket.startedAt || toStage >= 1 ? ticket.startedAt ?? timestamp : undefined,
           autoCompletedAt: toStage === 4 ? timestamp : undefined,
         };
       })
@@ -265,6 +376,8 @@ export default function MomsKitchenDemo() {
               stage: lastMove.fromStage,
               updatedAt: Date.now(),
               autoCompletedAt: undefined,
+              startedAt:
+                lastMove.fromStage === 0 ? undefined : ticket.startedAt,
             }
           : ticket
       )
@@ -279,13 +392,12 @@ export default function MomsKitchenDemo() {
     const createInterval = window.setInterval(() => {
       setTickets((current) => {
         const active = current.filter((t) => t.stage !== 4).length;
-
         if (active >= 12) return current;
         return current;
       });
 
       addOrder(true);
-    }, 12000);
+    }, 15000);
 
     return () => window.clearInterval(createInterval);
   }, [autopilot]);
@@ -312,7 +424,6 @@ export default function MomsKitchenDemo() {
 
         if (!chosen) return prev;
 
-        const fromStage = chosen.stage;
         const toStage = (chosen.stage + 1) as TicketStage;
         const timestamp = Date.now();
 
@@ -324,12 +435,16 @@ export default function MomsKitchenDemo() {
                 ...ticket,
                 stage: toStage,
                 updatedAt: timestamp,
+                startedAt:
+                  ticket.startedAt || toStage >= 1
+                    ? ticket.startedAt ?? timestamp
+                    : undefined,
                 autoCompletedAt: toStage === 4 ? timestamp : undefined,
               }
             : ticket
         );
       });
-    }, 5500);
+    }, 8000);
 
     return () => window.clearInterval(progressInterval);
   }, [autopilot]);
@@ -338,7 +453,7 @@ export default function MomsKitchenDemo() {
     if (!autopilot) return;
 
     const cleanupInterval = window.setInterval(() => {
-      const cutoff = Date.now() - 25000;
+      const cutoff = Date.now() - 60000;
 
       setTickets((prev) =>
         prev.filter(
@@ -348,7 +463,7 @@ export default function MomsKitchenDemo() {
             ticket.autoCompletedAt > cutoff
         )
       );
-    }, 4000);
+    }, 5000);
 
     return () => window.clearInterval(cleanupInterval);
   }, [autopilot]);
@@ -371,7 +486,7 @@ export default function MomsKitchenDemo() {
           display: "flex",
           flexDirection: "column",
           gap: 10,
-          width: 300,
+          width: 320,
           pointerEvents: "none",
         }}
       >
@@ -379,8 +494,8 @@ export default function MomsKitchenDemo() {
           <div
             key={alert.id}
             style={{
-              background: "rgba(23, 27, 35, 0.96)",
-              border: "1px solid rgba(124, 58, 237, 0.45)",
+              background: "rgba(23, 27, 35, 0.97)",
+              border: "1px solid rgba(124, 58, 237, 0.5)",
               borderRadius: 12,
               padding: "12px 14px",
               boxShadow: "0 10px 30px rgba(0,0,0,0.35)",
@@ -515,43 +630,76 @@ export default function MomsKitchenDemo() {
 
             {tickets
               .filter((t) => t.stage === stageIndex)
-              .map((t) => (
-                <div
-                  key={t.id}
-                  onClick={() => moveTicket(t.id)}
-                  style={{
-                    background: "#2a2f38",
-                    padding: 12,
-                    borderRadius: 8,
-                    marginBottom: 10,
-                    cursor: t.stage === 4 ? "default" : "pointer",
-                    whiteSpace: "pre-line",
-                    lineHeight: 1.45,
-                    border: "1px solid rgba(255,255,255,0.05)",
-                  }}
-                  title={
-                    t.stage === 4
-                      ? "Completed ticket"
-                      : "Click to move to next stage"
-                  }
-                >
-                  <div>{t.text}</div>
+              .map((t) => {
+                const elapsedMs = now - t.createdAt;
+                const elapsedMinutes = elapsedMs / 60000;
+                const isLate = elapsedMinutes > t.expectedMaxMinutes;
 
+                return (
                   <div
+                    key={t.id}
+                    onClick={() => moveTicket(t.id)}
                     style={{
-                      marginTop: 10,
-                      fontSize: "13px",
-                      opacity: 0.8,
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
+                      background: isLate
+                        ? "rgba(127, 29, 29, 0.32)"
+                        : "#2a2f38",
+                      padding: 12,
+                      borderRadius: 8,
+                      marginBottom: 10,
+                      cursor: t.stage === 4 ? "default" : "pointer",
+                      whiteSpace: "pre-line",
+                      lineHeight: 1.45,
+                      border: isLate
+                        ? "1px solid rgba(248, 113, 113, 0.45)"
+                        : "1px solid rgba(255,255,255,0.05)",
                     }}
+                    title={
+                      t.stage === 4
+                        ? "Completed ticket"
+                        : "Click to move to next stage"
+                    }
                   >
-                    <span>⏱ {formatAge(t.createdAt, now)}</span>
-                    {t.stage < 4 && <span>Next →</span>}
+                    <div style={{ marginBottom: 8 }}>{t.text}</div>
+
+                    <div
+                      style={{
+                        fontSize: "12px",
+                        opacity: 0.86,
+                        display: "grid",
+                        gap: 4,
+                      }}
+                    >
+                      <span>Received: {formatClockTime(t.createdAt)}</span>
+                      <span>
+                        Started: {t.startedAt ? formatClockTime(t.startedAt) : "—"}
+                      </span>
+                      <span>
+                        Expected: {t.expectedMinMinutes}–{t.expectedMaxMinutes} min
+                      </span>
+                      <span>Elapsed: {formatElapsedMs(elapsedMs)}</span>
+                      {isLate && (
+                        <span style={{ color: "#fca5a5", fontWeight: 700 }}>
+                          Running Late
+                        </span>
+                      )}
+                    </div>
+
+                    <div
+                      style={{
+                        marginTop: 10,
+                        fontSize: "13px",
+                        opacity: 0.8,
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      <span>⏱ Live</span>
+                      {t.stage < 4 && <span>Next →</span>}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
           </div>
         ))}
       </div>
