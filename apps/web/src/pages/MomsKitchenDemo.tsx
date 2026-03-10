@@ -1,6 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 type TicketStage = 0 | 1 | 2 | 3 | 4;
+type StationKey = "grill" | "fryer" | "drinks" | "prep" | "toast";
+
+type StationStatus = "waiting" | "in_progress" | "done";
+
+type StationTask = {
+  station: StationKey;
+  label: string;
+  durationSec: number;
+  startedAt?: number;
+  completedAt?: number;
+};
 
 type Ticket = {
   id: number;
@@ -12,6 +23,7 @@ type Ticket = {
   expectedMinMinutes: number;
   expectedMaxMinutes: number;
   autoCompletedAt?: number;
+  stationTasks: StationTask[];
 };
 
 type MoveSnapshot = {
@@ -26,99 +38,194 @@ type AlertItem = {
   message: string;
 };
 
+type StationTemplate = {
+  station: StationKey;
+  label: string;
+  durationSec: number;
+};
+
 type OrderTemplate = {
   text: string;
   expectedMinMinutes: number;
   expectedMaxMinutes: number;
+  stationTasks: StationTemplate[];
 };
 
 const stages = ["NEW", "ON GRILL", "PLATING", "READY", "COMPLETED"] as const;
+
+const STATION_LABELS: Record<StationKey, string> = {
+  grill: "Grill",
+  fryer: "Fryer",
+  drinks: "Drinks",
+  prep: "Prep",
+  toast: "Toast",
+};
 
 const SAMPLE_ORDERS: OrderTemplate[] = [
   {
     text: "Table 7\nWestern Omelette • Coffee",
     expectedMinMinutes: 5,
     expectedMaxMinutes: 7,
+    stationTasks: [
+      { station: "grill", label: "Western Omelette", durationSec: 210 },
+      { station: "drinks", label: "Coffee", durationSec: 35 },
+    ],
   },
   {
     text: "Table 9\nBiscuits & Gravy • Tea",
     expectedMinMinutes: 4,
     expectedMaxMinutes: 6,
+    stationTasks: [
+      { station: "prep", label: "Biscuits & Gravy", durationSec: 180 },
+      { station: "drinks", label: "Tea", durationSec: 25 },
+    ],
   },
   {
     text: "Takeout #21\nBreakfast Burrito • Coffee",
     expectedMinMinutes: 3,
     expectedMaxMinutes: 5,
+    stationTasks: [
+      { station: "grill", label: "Breakfast Burrito", durationSec: 170 },
+      { station: "drinks", label: "Coffee", durationSec: 30 },
+    ],
   },
   {
     text: "Table 3\nPancakes • Bacon",
     expectedMinMinutes: 4,
     expectedMaxMinutes: 6,
+    stationTasks: [
+      { station: "grill", label: "Pancakes • Bacon", durationSec: 220 },
+    ],
   },
   {
     text: "Takeout #22\nBurger • Fries",
     expectedMinMinutes: 7,
     expectedMaxMinutes: 9,
+    stationTasks: [
+      { station: "grill", label: "Burger", durationSec: 240 },
+      { station: "fryer", label: "Fries", durationSec: 120 },
+    ],
   },
   {
     text: "Table 6\nFrench Toast • Sausage",
     expectedMinMinutes: 5,
     expectedMaxMinutes: 7,
+    stationTasks: [
+      { station: "grill", label: "French Toast • Sausage", durationSec: 230 },
+    ],
   },
   {
     text: "Table 10\n2 Eggs • Ham • Wheat Toast",
     expectedMinMinutes: 4,
     expectedMaxMinutes: 6,
+    stationTasks: [
+      { station: "grill", label: "2 Eggs • Ham", durationSec: 170 },
+      { station: "toast", label: "Wheat Toast", durationSec: 45 },
+    ],
   },
   {
     text: "Takeout #24\nClub Sandwich • Fries",
     expectedMinMinutes: 6,
     expectedMaxMinutes: 8,
+    stationTasks: [
+      { station: "prep", label: "Club Sandwich", durationSec: 180 },
+      { station: "fryer", label: "Fries", durationSec: 110 },
+    ],
   },
   {
     text: "Table 11\nPatty Melt • Onion Rings",
     expectedMinMinutes: 7,
     expectedMaxMinutes: 9,
+    stationTasks: [
+      { station: "grill", label: "Patty Melt", durationSec: 250 },
+      { station: "fryer", label: "Onion Rings", durationSec: 140 },
+    ],
   },
   {
     text: "Takeout #25\n2 Egg Breakfast • Bacon",
     expectedMinMinutes: 4,
     expectedMaxMinutes: 6,
+    stationTasks: [
+      { station: "grill", label: "2 Egg Breakfast • Bacon", durationSec: 185 },
+    ],
   },
   {
     text: "Table 12\nBLT • Fries",
     expectedMinMinutes: 5,
     expectedMaxMinutes: 7,
+    stationTasks: [
+      { station: "prep", label: "BLT", durationSec: 150 },
+      { station: "fryer", label: "Fries", durationSec: 100 },
+    ],
   },
   {
     text: "Takeout #26\nGrilled Cheese • Tomato Soup",
     expectedMinMinutes: 5,
     expectedMaxMinutes: 7,
+    stationTasks: [
+      { station: "grill", label: "Grilled Cheese", durationSec: 140 },
+      { station: "prep", label: "Tomato Soup", durationSec: 120 },
+    ],
   },
   {
     text: "Table 14\nCoffee",
     expectedMinMinutes: 1,
     expectedMaxMinutes: 1,
+    stationTasks: [{ station: "drinks", label: "Coffee", durationSec: 20 }],
   },
   {
     text: "Table 15\nCoffee • Breakfast Burrito",
     expectedMinMinutes: 3,
     expectedMaxMinutes: 5,
+    stationTasks: [
+      { station: "drinks", label: "Coffee", durationSec: 25 },
+      { station: "grill", label: "Breakfast Burrito", durationSec: 170 },
+    ],
   },
   {
     text: "Table 16\n2 Eggs • Bacon • Toast\nPancakes • Sausage",
     expectedMinMinutes: 7,
     expectedMaxMinutes: 10,
+    stationTasks: [
+      { station: "grill", label: "2 Eggs • Bacon", durationSec: 180 },
+      { station: "toast", label: "Toast", durationSec: 45 },
+      { station: "grill", label: "Pancakes • Sausage", durationSec: 220 },
+    ],
   },
   {
     text: "Table 18\nSteak & Eggs\nBiscuits & Gravy\nPancakes\nCoffee x3",
     expectedMinMinutes: 10,
     expectedMaxMinutes: 14,
+    stationTasks: [
+      { station: "grill", label: "Steak & Eggs", durationSec: 340 },
+      { station: "prep", label: "Biscuits & Gravy", durationSec: 180 },
+      { station: "grill", label: "Pancakes", durationSec: 180 },
+      { station: "drinks", label: "Coffee x3", durationSec: 45 },
+    ],
   },
   {
     text: "Table 19\n2 Eggs • Sausage • Rye Toast\n2 Eggs • Bacon • Grits\nSteak & Eggs\nFrench Toast",
     expectedMinMinutes: 12,
     expectedMaxMinutes: 16,
+    stationTasks: [
+      { station: "grill", label: "2 Eggs • Sausage", durationSec: 180 },
+      { station: "toast", label: "Rye Toast", durationSec: 50 },
+      { station: "grill", label: "2 Eggs • Bacon • Grits", durationSec: 230 },
+      { station: "grill", label: "Steak & Eggs", durationSec: 320 },
+      { station: "grill", label: "French Toast", durationSec: 190 },
+    ],
+  },
+  {
+    text: "Table 20\nSide Fries",
+    expectedMinMinutes: 2,
+    expectedMaxMinutes: 3,
+    stationTasks: [{ station: "fryer", label: "Side Fries", durationSec: 75 }],
+  },
+  {
+    text: "Table 21\nWhite Toast",
+    expectedMinMinutes: 1,
+    expectedMaxMinutes: 2,
+    stationTasks: [{ station: "toast", label: "White Toast", durationSec: 35 }],
   },
 ];
 
@@ -144,6 +251,34 @@ function formatElapsedMs(ms: number) {
   return `${minutes}m ${String(seconds).padStart(2, "0")}s`;
 }
 
+function cloneStationTasks(tasks: StationTemplate[]): StationTask[] {
+  return tasks.map((task) => ({ ...task }));
+}
+
+function getStationStatus(task: StationTask, now: number): StationStatus {
+  if (task.completedAt) return "done";
+  if (task.startedAt) {
+    const elapsed = (now - task.startedAt) / 1000;
+    if (elapsed >= task.durationSec) return "done";
+    return "in_progress";
+  }
+  return "waiting";
+}
+
+function getStationSummary(ticket: Ticket, now: number) {
+  const statuses = ticket.stationTasks.map((task) => getStationStatus(task, now));
+  const doneCount = statuses.filter((s) => s === "done").length;
+  const inProgressCount = statuses.filter((s) => s === "in_progress").length;
+  const total = ticket.stationTasks.length;
+
+  return {
+    doneCount,
+    inProgressCount,
+    total,
+    allDone: doneCount === total && total > 0,
+  };
+}
+
 export default function MomsKitchenDemo() {
   const initialNow = Date.now();
 
@@ -158,6 +293,10 @@ export default function MomsKitchenDemo() {
       updatedAt: initialNow - 2 * 60 * 1000,
       expectedMinMinutes: 4,
       expectedMaxMinutes: 6,
+      stationTasks: cloneStationTasks([
+        { station: "grill", label: "2 Eggs • Bacon", durationSec: 180 },
+        { station: "toast", label: "Toast", durationSec: 45 },
+      ]),
     },
     {
       id: 2,
@@ -167,6 +306,10 @@ export default function MomsKitchenDemo() {
       updatedAt: initialNow - 1 * 60 * 1000,
       expectedMinMinutes: 7,
       expectedMaxMinutes: 9,
+      stationTasks: cloneStationTasks([
+        { station: "grill", label: "Patty Melt", durationSec: 250 },
+        { station: "fryer", label: "Fries", durationSec: 120 },
+      ]),
     },
     {
       id: 3,
@@ -177,6 +320,16 @@ export default function MomsKitchenDemo() {
       startedAt: initialNow - 4.5 * 60 * 1000,
       expectedMinMinutes: 4,
       expectedMaxMinutes: 6,
+      stationTasks: cloneStationTasks([
+        { station: "grill", label: "Pancakes • Sausage", durationSec: 220 },
+      ]).map((task) => ({
+        ...task,
+        startedAt: initialNow - 4.5 * 60 * 1000,
+        completedAt:
+          initialNow - (initialNow - 4.5 * 60 * 1000) >= task.durationSec * 1000
+            ? initialNow - 4.5 * 60 * 1000 + task.durationSec * 1000
+            : undefined,
+      })),
     },
     {
       id: 4,
@@ -187,6 +340,22 @@ export default function MomsKitchenDemo() {
       startedAt: initialNow - 6.5 * 60 * 1000,
       expectedMinMinutes: 6,
       expectedMaxMinutes: 8,
+      stationTasks: [
+        {
+          station: "prep",
+          label: "Club Sandwich",
+          durationSec: 180,
+          startedAt: initialNow - 6.5 * 60 * 1000,
+          completedAt: initialNow - 3.5 * 60 * 1000,
+        },
+        {
+          station: "fryer",
+          label: "Fries",
+          durationSec: 110,
+          startedAt: initialNow - 6.2 * 60 * 1000,
+          completedAt: initialNow - 4.3 * 60 * 1000,
+        },
+      ],
     },
     {
       id: 5,
@@ -197,6 +366,22 @@ export default function MomsKitchenDemo() {
       startedAt: initialNow - 8.5 * 60 * 1000,
       expectedMinMinutes: 7,
       expectedMaxMinutes: 9,
+      stationTasks: [
+        {
+          station: "grill",
+          label: "Patty Melt",
+          durationSec: 250,
+          startedAt: initialNow - 8.5 * 60 * 1000,
+          completedAt: initialNow - 4.3 * 60 * 1000,
+        },
+        {
+          station: "fryer",
+          label: "Onion Rings",
+          durationSec: 140,
+          startedAt: initialNow - 8.1 * 60 * 1000,
+          completedAt: initialNow - 5.8 * 60 * 1000,
+        },
+      ],
     },
     {
       id: 6,
@@ -208,6 +393,15 @@ export default function MomsKitchenDemo() {
       expectedMinMinutes: 4,
       expectedMaxMinutes: 6,
       autoCompletedAt: initialNow - 20 * 1000,
+      stationTasks: [
+        {
+          station: "prep",
+          label: "Biscuits & Gravy",
+          durationSec: 180,
+          startedAt: initialNow - 11.5 * 60 * 1000,
+          completedAt: initialNow - 8.5 * 60 * 1000,
+        },
+      ],
     },
   ]);
 
@@ -321,6 +515,7 @@ export default function MomsKitchenDemo() {
         updatedAt: timestamp,
         expectedMinMinutes: order.expectedMinMinutes,
         expectedMaxMinutes: order.expectedMaxMinutes,
+        stationTasks: cloneStationTasks(order.stationTasks),
       },
     ]);
 
@@ -354,7 +549,7 @@ export default function MomsKitchenDemo() {
           stage: toStage,
           updatedAt: timestamp,
           startedAt:
-            ticket.startedAt || toStage >= 1 ? ticket.startedAt ?? timestamp : undefined,
+            toStage >= 1 ? ticket.startedAt ?? timestamp : ticket.startedAt,
           autoCompletedAt: toStage === 4 ? timestamp : undefined,
         };
       })
@@ -390,16 +585,60 @@ export default function MomsKitchenDemo() {
     if (!autopilot) return;
 
     const createInterval = window.setInterval(() => {
-      setTickets((current) => {
-        const active = current.filter((t) => t.stage !== 4).length;
-        if (active >= 12) return current;
-        return current;
-      });
-
-      addOrder(true);
+      const active = tickets.filter((t) => t.stage !== 4).length;
+      if (active < 12) {
+        addOrder(true);
+      }
     }, 15000);
 
     return () => window.clearInterval(createInterval);
+  }, [autopilot, tickets]);
+
+  useEffect(() => {
+    if (!autopilot) return;
+
+    const stationInterval = window.setInterval(() => {
+      setTickets((prev) =>
+        prev.map((ticket) => {
+          if (ticket.stage === 4) return ticket;
+
+          let changed = false;
+          const updatedTasks = ticket.stationTasks.map((task) => {
+            if (task.completedAt) return task;
+
+            if (!task.startedAt && ticket.stage >= 1) {
+              changed = true;
+              return {
+                ...task,
+                startedAt: Date.now(),
+              };
+            }
+
+            if (task.startedAt && !task.completedAt) {
+              const elapsedSec = (Date.now() - task.startedAt) / 1000;
+              if (elapsedSec >= task.durationSec) {
+                changed = true;
+                return {
+                  ...task,
+                  completedAt: task.startedAt + task.durationSec * 1000,
+                };
+              }
+            }
+
+            return task;
+          });
+
+          return changed
+            ? {
+                ...ticket,
+                stationTasks: updatedTasks,
+              }
+            : ticket;
+        })
+      );
+    }, 1000);
+
+    return () => window.clearInterval(stationInterval);
   }, [autopilot]);
 
   useEffect(() => {
@@ -408,7 +647,6 @@ export default function MomsKitchenDemo() {
     const progressInterval = window.setInterval(() => {
       setTickets((prev) => {
         const eligible = prev.filter((t) => t.stage < 4);
-
         if (eligible.length === 0) return prev;
 
         const stagePriority = [3, 2, 1, 0] as TicketStage[];
@@ -424,22 +662,36 @@ export default function MomsKitchenDemo() {
 
         if (!chosen) return prev;
 
-        const toStage = (chosen.stage + 1) as TicketStage;
+        const summary = getStationSummary(chosen, Date.now());
         const timestamp = Date.now();
 
-        maybeFireStageAlert(chosen.text, toStage);
+        let nextStage = chosen.stage;
+
+        if (chosen.stage === 0) {
+          nextStage = 1;
+        } else if (chosen.stage === 1) {
+          nextStage = summary.allDone ? 2 : 1;
+        } else if (chosen.stage === 2) {
+          nextStage = 3;
+        } else if (chosen.stage === 3) {
+          nextStage = 4;
+        }
+
+        if (nextStage === chosen.stage) {
+          return prev;
+        }
+
+        maybeFireStageAlert(chosen.text, nextStage);
 
         return prev.map((ticket) =>
           ticket.id === chosen!.id
             ? {
                 ...ticket,
-                stage: toStage,
+                stage: nextStage,
                 updatedAt: timestamp,
                 startedAt:
-                  ticket.startedAt || toStage >= 1
-                    ? ticket.startedAt ?? timestamp
-                    : undefined,
-                autoCompletedAt: toStage === 4 ? timestamp : undefined,
+                  nextStage >= 1 ? ticket.startedAt ?? timestamp : ticket.startedAt,
+                autoCompletedAt: nextStage === 4 ? timestamp : undefined,
               }
             : ticket
         );
@@ -578,7 +830,7 @@ export default function MomsKitchenDemo() {
               fontWeight: 600,
             }}
           >
-            Full-Service Autopilot {autopilot ? "ON" : "OFF"}
+            Station-Aware Autopilot {autopilot ? "ON" : "OFF"}
           </button>
 
           <button
@@ -634,15 +886,14 @@ export default function MomsKitchenDemo() {
                 const elapsedMs = now - t.createdAt;
                 const elapsedMinutes = elapsedMs / 60000;
                 const isLate = elapsedMinutes > t.expectedMaxMinutes;
+                const stationSummary = getStationSummary(t, now);
 
                 return (
                   <div
                     key={t.id}
                     onClick={() => moveTicket(t.id)}
                     style={{
-                      background: isLate
-                        ? "rgba(127, 29, 29, 0.32)"
-                        : "#2a2f38",
+                      background: isLate ? "rgba(127, 29, 29, 0.32)" : "#2a2f38",
                       padding: 12,
                       borderRadius: 8,
                       marginBottom: 10,
@@ -681,6 +932,71 @@ export default function MomsKitchenDemo() {
                         <span style={{ color: "#fca5a5", fontWeight: 700 }}>
                           Running Late
                         </span>
+                      )}
+                    </div>
+
+                    <div
+                      style={{
+                        marginTop: 10,
+                        padding: "8px 10px",
+                        borderRadius: 8,
+                        background: "rgba(255,255,255,0.03)",
+                        fontSize: 12,
+                        display: "grid",
+                        gap: 5,
+                      }}
+                    >
+                      <div style={{ fontWeight: 700, opacity: 0.9 }}>
+                        Stations ({stationSummary.doneCount}/{stationSummary.total})
+                      </div>
+
+                      {t.stationTasks.map((task, index) => {
+                        const status = getStationStatus(task, now);
+
+                        return (
+                          <div
+                            key={`${task.station}-${task.label}-${index}`}
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              gap: 8,
+                              opacity: status === "done" ? 0.9 : 1,
+                            }}
+                          >
+                            <span>
+                              {STATION_LABELS[task.station]}: {task.label}
+                            </span>
+                            <span
+                              style={{
+                                color:
+                                  status === "done"
+                                    ? "#86efac"
+                                    : status === "in_progress"
+                                    ? "#93c5fd"
+                                    : "#cbd5e1",
+                                fontWeight: 600,
+                              }}
+                            >
+                              {status === "done"
+                                ? "Done"
+                                : status === "in_progress"
+                                ? "Working"
+                                : "Waiting"}
+                            </span>
+                          </div>
+                        );
+                      })}
+
+                      {t.stage === 2 && !stationSummary.allDone && (
+                        <div style={{ color: "#fcd34d", fontWeight: 600 }}>
+                          Window waiting on stations
+                        </div>
+                      )}
+
+                      {t.stage >= 2 && stationSummary.allDone && (
+                        <div style={{ color: "#86efac", fontWeight: 600 }}>
+                          All stations complete
+                        </div>
                       )}
                     </div>
 
