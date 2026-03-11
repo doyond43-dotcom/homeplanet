@@ -92,6 +92,24 @@ const stageMeta: Array<{
   },
 ];
 
+function cn(...parts: Array<string | false | null | undefined>) {
+  return parts.filter(Boolean).join(" ");
+}
+
+function makeId(prefix: string) {
+  return `${prefix}-${Date.now().toString(36)}-${Math.random()
+    .toString(36)
+    .slice(2, 8)}`;
+}
+
+function safeToast(message: string) {
+  try {
+    alert(message);
+  } catch {
+    // noop
+  }
+}
+
 function stageLabel(stage: JobStage) {
   return stageMeta.find((s) => s.id === stage)?.label ?? stage;
 }
@@ -332,18 +350,123 @@ function nextStage(stage: JobStage): JobStage {
       return "installed";
     case "installed":
       return "done";
+    case "done":
     default:
       return "done";
   }
 }
 
+async function copyToClipboard(text: string) {
+  const value = (text || "").trim();
+  if (!value) {
+    safeToast("Nothing to copy.");
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(value);
+    safeToast("Copied.");
+  } catch {
+    const ta = document.createElement("textarea");
+    ta.value = value;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+      document.execCommand("copy");
+      safeToast("Copied.");
+    } catch {
+      safeToast("Copy failed.");
+    } finally {
+      document.body.removeChild(ta);
+    }
+  }
+}
+
+function buildTechText(job: Job) {
+  return [
+    `WILDING — Job`,
+    `Job #: ${job.jobNo}`,
+    `Customer: ${job.customer}`,
+    `Address: ${job.address}`,
+    `Phone: ${job.phone}`,
+    `Email: ${job.email}`,
+    ``,
+    `Job: ${job.title}`,
+    `Appointment: ${job.appointment}`,
+    `Crew: ${job.assignedCrew}`,
+    `Stage: ${stageLabel(job.stage)}`,
+    `Estimate: $${job.estimateAmount?.toLocaleString() ?? "—"}`,
+    ``,
+    `Notes:`,
+    `${job.notes || "-"}`,
+  ].join("\n");
+}
+
+function buildGrabListText(job: Job) {
+  const header = [
+    `WILDING — Materials Grab List`,
+    `Job #: ${job.jobNo}`,
+    `Job: ${job.title}`,
+    `Customer: ${job.customer}`,
+    `Address: ${job.address}`,
+    `Appointment: ${job.appointment}`,
+    `Crew: ${job.assignedCrew}`,
+    ``,
+  ].join("\n");
+
+  const items =
+    job.materials.length > 0
+      ? job.materials
+          .slice()
+          .reverse()
+          .map((item, idx) => {
+            const mark = item.checked ? "✅" : "⬜";
+            return `${mark} ${idx + 1}. ${item.label} — ${item.addedBy} • ${item.timeLabel}`;
+          })
+          .join("\n")
+      : "No materials yet.";
+
+  return `${header}${items}`;
+}
+
+function digitsPhone(phone: string) {
+  const digits = (phone || "").replace(/[^\d]/g, "");
+  if (!digits) return "";
+  if (digits.length === 10) return `+1${digits}`;
+  if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
+  return digits;
+}
+
+function smsHref(job: Job) {
+  const phone = digitsPhone(job.phone);
+  if (!phone) return "";
+  const body = encodeURIComponent(buildTechText(job));
+  return `sms:${phone}?&body=${body}`;
+}
+
+function emailHref(job: Job) {
+  const email = (job.email || "").trim();
+  if (!email) return "";
+  const subject = encodeURIComponent(`WILDING — ${job.title}`);
+  const body = encodeURIComponent(buildTechText(job));
+  return `mailto:${email}?subject=${subject}&body=${body}`;
+}
+
 export default function WildingDemoBoard() {
-  const [jobs, setJobs] = useState<Job[]>(seedJobs());
-  const [selectedId, setSelectedId] = useState<string>(seedJobs()[1].id);
+  const [jobs, setJobs] = useState<Job[]>(() => seedJobs());
+  const [selectedId, setSelectedId] = useState<string>(() => {
+    const seeded = seedJobs();
+    return seeded[1]?.id ?? seeded[0]?.id ?? "";
+  });
   const [quickAddText, setQuickAddText] = useState("");
   const [addedBy, setAddedBy] = useState("2222");
+  const [showPanels, setShowPanels] = useState(true);
 
-  const selectedJob = jobs.find((j) => j.id === selectedId) ?? jobs[0];
+  const selectedJob = useMemo(() => {
+    return jobs.find((j) => j.id === selectedId) ?? jobs[0] ?? null;
+  }, [jobs, selectedId]);
 
   const grouped = useMemo(() => {
     return stageMeta.map((stage) => ({
@@ -352,11 +475,10 @@ export default function WildingDemoBoard() {
     }));
   }, [jobs]);
 
-  function updateSelected(patch: Partial<Job>) {
-    if (!selectedJob) return;
+  function updateJob(jobId: string, patch: Partial<Job>) {
     setJobs((prev) =>
       prev.map((job) =>
-        job.id === selectedJob.id
+        job.id === jobId
           ? {
               ...job,
               ...patch,
@@ -366,20 +488,19 @@ export default function WildingDemoBoard() {
     );
   }
 
+  function updateSelected(patch: Partial<Job>) {
+    if (!selectedJob) return;
+    updateJob(selectedJob.id, patch);
+  }
+
   function updateScope(scopeId: string, measurements: string) {
     if (!selectedJob) return;
-    setJobs((prev) =>
-      prev.map((job) =>
-        job.id === selectedJob.id
-          ? {
-              ...job,
-              scopeItems: job.scopeItems.map((scope) =>
-                scope.id === scopeId ? { ...scope, measurements } : scope
-              ),
-            }
-          : job
-      )
-    );
+
+    updateJob(selectedJob.id, {
+      scopeItems: selectedJob.scopeItems.map((scope) =>
+        scope.id === scopeId ? { ...scope, measurements } : scope
+      ),
+    });
   }
 
   function addScope(kind: ScopeType) {
@@ -395,31 +516,35 @@ export default function WildingDemoBoard() {
     };
 
     const newScope: ScopeItem = {
-      id: `scope-${Date.now()}`,
+      id: makeId("scope"),
       kind,
       title: titleMap[kind],
       measurements: "",
     };
 
-    updateSelected({
-      scopeItems: [...selectedJob.scopeItems, newScope],
+    updateJob(selectedJob.id, {
+      scopeItems: [newScope, ...selectedJob.scopeItems],
     });
   }
 
   function removeScope(scopeId: string) {
     if (!selectedJob) return;
-    updateSelected({
+
+    updateJob(selectedJob.id, {
       scopeItems: selectedJob.scopeItems.filter((s) => s.id !== scopeId),
     });
   }
 
   function addMaterial(label: string) {
-    if (!selectedJob || !label.trim()) return;
+    if (!selectedJob) return;
+
+    const trimmed = label.trim();
+    if (!trimmed) return;
 
     const newItem: MaterialItem = {
-      id: `mat-${Date.now()}`,
-      label: label.trim(),
-      addedBy,
+      id: makeId("mat"),
+      label: trimmed,
+      addedBy: addedBy.trim() || "2222",
       checked: false,
       timeLabel: new Date().toLocaleTimeString([], {
         hour: "numeric",
@@ -427,31 +552,35 @@ export default function WildingDemoBoard() {
       }),
     };
 
-    updateSelected({
+    updateJob(selectedJob.id, {
       materials: [newItem, ...selectedJob.materials],
     });
   }
 
   function addQuickLines() {
+    if (!selectedJob) return;
+
     const lines = quickAddText
-      .split("\n")
+      .split(/\r?\n/g)
       .map((line) => line.trim())
       .filter(Boolean);
 
-    if (!selectedJob || lines.length === 0) return;
+    if (lines.length === 0) return;
+
+    const stamp = new Date().toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+    });
 
     const newItems: MaterialItem[] = lines.map((line, idx) => ({
-      id: `mat-${Date.now()}-${idx}`,
+      id: `${makeId("mat")}-${idx}`,
       label: line,
-      addedBy,
+      addedBy: addedBy.trim() || "2222",
       checked: false,
-      timeLabel: new Date().toLocaleTimeString([], {
-        hour: "numeric",
-        minute: "2-digit",
-      }),
+      timeLabel: stamp,
     }));
 
-    updateSelected({
+    updateJob(selectedJob.id, {
       materials: [...newItems, ...selectedJob.materials],
     });
 
@@ -460,7 +589,8 @@ export default function WildingDemoBoard() {
 
   function toggleMaterial(itemId: string) {
     if (!selectedJob) return;
-    updateSelected({
+
+    updateJob(selectedJob.id, {
       materials: selectedJob.materials.map((item) =>
         item.id === itemId ? { ...item, checked: !item.checked } : item
       ),
@@ -469,19 +599,20 @@ export default function WildingDemoBoard() {
 
   function removeMaterial(itemId: string) {
     if (!selectedJob) return;
-    updateSelected({
+
+    updateJob(selectedJob.id, {
       materials: selectedJob.materials.filter((item) => item.id !== itemId),
     });
   }
 
   function moveSelectedTo(stage: JobStage) {
     if (!selectedJob) return;
-    updateSelected({ stage });
+    updateJob(selectedJob.id, { stage });
   }
 
   function advanceSelected() {
     if (!selectedJob) return;
-    updateSelected({ stage: nextStage(selectedJob.stage) });
+    updateJob(selectedJob.id, { stage: nextStage(selectedJob.stage) });
   }
 
   return (
@@ -502,93 +633,123 @@ export default function WildingDemoBoard() {
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
-                <button className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/90 hover:bg-white/10">
-                  Hide Panels
+                <button
+                  type="button"
+                  onClick={() => setShowPanels((v) => !v)}
+                  className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/90 hover:bg-white/10"
+                >
+                  {showPanels ? "Hide Panels" : "Show Panels"}
                 </button>
 
                 <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/80">
-                  Grab Code <span className="ml-2 font-semibold text-white">2222 ▾</span>
+                  Grab Code <span className="ml-2 font-semibold text-white">{addedBy || "2222"}</span>
                 </div>
 
-                <button className="rounded-2xl border border-emerald-400/30 bg-emerald-500/15 px-5 py-2 text-sm font-semibold text-emerald-100 hover:bg-emerald-500/20">
+                <button
+                  type="button"
+                  className="rounded-2xl border border-emerald-400/30 bg-emerald-500/15 px-5 py-2 text-sm font-semibold text-emerald-100 hover:bg-emerald-500/20"
+                  onClick={() => safeToast("Invoice demo action only for now.")}
+                >
                   Generate Invoice
                 </button>
               </div>
             </div>
           </header>
 
-          <section className="mb-4 grid gap-3 xl:grid-cols-6">
-            {grouped.map((stage) => (
-              <div
-                key={stage.id}
-                className={`rounded-[24px] border ${stage.accent} bg-white/[0.06] p-3 shadow-xl shadow-black/20 backdrop-blur`}
-              >
-                <div className="mb-3 flex items-center justify-between">
-                  <div className="text-lg font-semibold text-white">{stage.label}</div>
-                  <div className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${stage.chip}`}>
-                    {stage.jobs.length}
+          {showPanels ? (
+            <section className="mb-4 grid gap-3 xl:grid-cols-6">
+              {grouped.map((stage) => (
+                <div
+                  key={stage.id}
+                  className={cn(
+                    "rounded-[24px] border bg-white/[0.06] p-3 shadow-xl shadow-black/20 backdrop-blur",
+                    stage.accent
+                  )}
+                >
+                  <div className="mb-3 flex items-center justify-between">
+                    <div className="text-lg font-semibold text-white">{stage.label}</div>
+                    <div className={cn("rounded-full border px-2.5 py-0.5 text-xs font-semibold", stage.chip)}>
+                      {stage.jobs.length}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    {stage.jobs.length === 0 ? (
+                      <div className="rounded-xl border border-white/10 bg-black/10 px-3 py-6 text-sm text-white/30">
+                        No jobs
+                      </div>
+                    ) : null}
+
+                    {stage.jobs.map((job) => {
+                      const isSelected = selectedJob?.id === job.id;
+
+                      return (
+                        <button
+                          key={job.id}
+                          type="button"
+                          onClick={() => setSelectedId(job.id)}
+                          className={cn(
+                            "w-full rounded-[18px] border p-3 text-left transition",
+                            isSelected
+                              ? "border-cyan-400/45 bg-cyan-500/10"
+                              : "border-white/10 bg-[#111d2e] hover:bg-[#152338]"
+                          )}
+                        >
+                          <div className="truncate text-lg font-semibold text-white">{job.title}</div>
+                          <div className="mt-1 text-sm text-white/72">{job.customer}</div>
+                          <div className="mt-1 text-xs text-white/45">
+                            {job.appointment} • {job.assignedCrew}
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
-
-                <div className="space-y-2">
-                  {stage.jobs.length === 0 && (
-                    <div className="rounded-xl border border-white/10 bg-black/10 px-3 py-6 text-sm text-white/30">
-                      No jobs
-                    </div>
-                  )}
-
-                  {stage.jobs.map((job) => {
-                    const isSelected = selectedJob?.id === job.id;
-                    return (
-                      <button
-                        key={job.id}
-                        onClick={() => setSelectedId(job.id)}
-                        className={`w-full rounded-[18px] border p-3 text-left transition ${
-                          isSelected
-                            ? "border-cyan-400/45 bg-cyan-500/10"
-                            : "border-white/10 bg-[#111d2e] hover:bg-[#152338]"
-                        }`}
-                      >
-                        <div className="truncate text-lg font-semibold text-white">
-                          {job.title}
-                        </div>
-                        <div className="mt-1 text-sm text-white/72">{job.customer}</div>
-                        <div className="mt-1 text-xs text-white/45">
-                          {job.appointment} • {job.assignedCrew}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </section>
+              ))}
+            </section>
+          ) : null}
 
           <section className="rounded-[28px] border border-white/10 bg-white/[0.06] p-4 shadow-2xl shadow-black/20 backdrop-blur">
             <div className="mb-4 flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
               <div>
-                <h2 className="text-[32px] font-semibold tracking-tight text-white">
-                  Job Drawer
-                </h2>
-                <p className="mt-1 text-sm text-white/60">
-                  Click a job in lanes to load details
-                </p>
+                <h2 className="text-[32px] font-semibold tracking-tight text-white">Job Drawer</h2>
+                <p className="mt-1 text-sm text-white/60">Click a job in lanes to load details</p>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
-                <button className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/90 hover:bg-white/10">
-                  Copy Tech Text
-                </button>
-                <button className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/90 hover:bg-white/10">
-                  Send SMS
-                </button>
-                <button className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/90 hover:bg-white/10">
-                  Email
-                </button>
-              </div>
+              {selectedJob ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void copyToClipboard(buildTechText(selectedJob))}
+                    className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/90 hover:bg-white/10"
+                  >
+                    Copy Tech Text
+                  </button>
+
+                  {selectedJob.phone ? (
+                    <a
+                      href={smsHref(selectedJob)}
+                      className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/90 hover:bg-white/10"
+                    >
+                      Send SMS
+                    </a>
+                  ) : null}
+
+                  {selectedJob.email ? (
+                    <a
+                      href={emailHref(selectedJob)}
+                      className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/90 hover:bg-white/10"
+                    >
+                      Email
+                    </a>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
 
-            {selectedJob && (
+            {!selectedJob ? (
+              <div className="p-4 text-sm text-white/60">Select a job to open the drawer.</div>
+            ) : (
               <div className="grid gap-4 xl:grid-cols-[1fr_1fr_1.05fr]">
                 <div className="rounded-[24px] border border-white/10 bg-[#0c1623] p-4">
                   <div className="mb-3 text-xl font-semibold text-white">Customer</div>
@@ -613,12 +774,14 @@ export default function WildingDemoBoard() {
                       {stageMeta.map((stage) => (
                         <button
                           key={stage.id}
+                          type="button"
                           onClick={() => moveSelectedTo(stage.id)}
-                          className={`rounded-full border px-3 py-1 text-sm font-semibold transition ${
+                          className={cn(
+                            "rounded-full border px-3 py-1 text-sm font-semibold transition",
                             selectedJob.stage === stage.id
                               ? stage.chip
                               : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10"
-                          }`}
+                          )}
                         >
                           {stage.label}
                         </button>
@@ -628,12 +791,18 @@ export default function WildingDemoBoard() {
 
                   <div className="mt-5 grid grid-cols-2 gap-2">
                     <button
+                      type="button"
                       onClick={advanceSelected}
                       className="rounded-2xl border border-cyan-400/30 bg-cyan-500/12 px-4 py-3 text-sm font-semibold text-cyan-100 hover:bg-cyan-500/18"
                     >
                       Advance Stage
                     </button>
-                    <button className="rounded-2xl border border-emerald-400/30 bg-emerald-500/12 px-4 py-3 text-sm font-semibold text-emerald-100 hover:bg-emerald-500/18">
+
+                    <button
+                      type="button"
+                      onClick={() => safeToast("Invoice Ready clicked.")}
+                      className="rounded-2xl border border-emerald-400/30 bg-emerald-500/12 px-4 py-3 text-sm font-semibold text-emerald-100 hover:bg-emerald-500/18"
+                    >
                       Invoice Ready
                     </button>
                   </div>
@@ -648,12 +817,8 @@ export default function WildingDemoBoard() {
 
                 <div className="rounded-[24px] border border-white/10 bg-[#0c1623] p-4">
                   <div className="mb-3 flex items-center justify-between">
-                    <div className="text-xl font-semibold text-white">
-                      Scope + Measurements
-                    </div>
-                    <div className="text-sm text-white/50">
-                      {selectedJob.scopeItems.length} areas
-                    </div>
+                    <div className="text-xl font-semibold text-white">Scope + Measurements</div>
+                    <div className="text-sm text-white/50">{selectedJob.scopeItems.length} areas</div>
                   </div>
 
                   <div className="mb-4 flex flex-wrap gap-2">
@@ -676,16 +841,19 @@ export default function WildingDemoBoard() {
                             <span className="rounded-full border border-cyan-400/25 bg-cyan-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-cyan-200">
                               {scopeKindLabel(scope.kind)}
                             </span>
-                            <span className="text-lg font-semibold text-white">
-                              {scope.title}
-                            </span>
+                            <span className="text-lg font-semibold text-white">{scope.title}</span>
                           </div>
 
                           <div className="flex items-center gap-2">
-                            <button className="rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white/80 hover:bg-white/10">
+                            <button
+                              type="button"
+                              className="rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white/80 hover:bg-white/10"
+                            >
                               Mic
                             </button>
+
                             <button
+                              type="button"
                               onClick={() => removeScope(scope.id)}
                               className="rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white/80 hover:bg-white/10"
                             >
@@ -709,10 +877,12 @@ export default function WildingDemoBoard() {
                 <div className="space-y-4">
                   <div className="rounded-[24px] border border-white/10 bg-[#0c1623] p-4">
                     <div className="mb-3 flex items-center justify-between">
-                      <div className="text-xl font-semibold text-white">
-                        Materials Grab List
-                      </div>
-                      <button className="rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white/80 hover:bg-white/10">
+                      <div className="text-xl font-semibold text-white">Materials Grab List</div>
+                      <button
+                        type="button"
+                        onClick={() => void copyToClipboard(buildGrabListText(selectedJob))}
+                        className="rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white/80 hover:bg-white/10"
+                      >
                         Copy Grab List
                       </button>
                     </div>
@@ -745,6 +915,7 @@ export default function WildingDemoBoard() {
 
                     <div className="mb-4 flex items-center justify-between gap-3">
                       <button
+                        type="button"
                         onClick={addQuickLines}
                         className="rounded-2xl border border-white/10 bg-white px-4 py-2 text-sm font-semibold text-black hover:bg-white/90"
                       >
@@ -776,7 +947,12 @@ export default function WildingDemoBoard() {
                                 className="mt-1 h-4 w-4 rounded border-white/20 bg-transparent"
                               />
                               <div className="min-w-0">
-                                <div className={`text-base font-medium ${item.checked ? "text-emerald-100" : "text-white"}`}>
+                                <div
+                                  className={cn(
+                                    "text-base font-medium",
+                                    item.checked ? "text-emerald-100" : "text-white"
+                                  )}
+                                >
                                   {item.label}
                                 </div>
                                 <div className="mt-1 text-xs text-white/45">
@@ -787,6 +963,7 @@ export default function WildingDemoBoard() {
                           </div>
 
                           <button
+                            type="button"
                             onClick={() => removeMaterial(item.id)}
                             className="rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white/80 hover:bg-white/10"
                           >
@@ -799,10 +976,11 @@ export default function WildingDemoBoard() {
 
                   <div className="rounded-[24px] border border-white/10 bg-[#0c1623] p-4">
                     <div className="mb-3 flex items-center justify-between">
-                      <div className="text-xl font-semibold text-white">
-                        Technician Notes
-                      </div>
-                      <button className="rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white/80 hover:bg-white/10">
+                      <div className="text-xl font-semibold text-white">Technician Notes</div>
+                      <button
+                        type="button"
+                        className="rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white/80 hover:bg-white/10"
+                      >
                         Mic
                       </button>
                     </div>
@@ -834,6 +1012,7 @@ function QuickScopeButton({
 }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-white/88 hover:bg-white/10"
     >
@@ -851,6 +1030,7 @@ function MiniAction({
 }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm font-semibold text-white/88 hover:bg-white/10"
     >
