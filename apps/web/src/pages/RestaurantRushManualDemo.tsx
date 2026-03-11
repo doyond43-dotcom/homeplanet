@@ -94,23 +94,44 @@ function prevLane(lane: LaneId): LaneId {
   }
 }
 
-function stationStateClasses(state: StationState) {
-  switch (state) {
-    case "hold":
-      return "border-amber-400/45 bg-amber-500/10 text-amber-200";
-    case "rush":
-      return "border-rose-400/45 bg-rose-500/10 text-rose-200";
-    case "done":
-      return "border-emerald-400/45 bg-emerald-500/10 text-emerald-200";
-    default:
-      return "border-white/10 bg-white/5 text-white/65";
-  }
-}
-
 function priorityClasses(priority?: "normal" | "rush") {
   return priority === "rush"
     ? "border-rose-400/50 bg-rose-500/12 text-rose-100"
     : "border-cyan-400/25 bg-cyan-500/10 text-cyan-100";
+}
+
+function stationBadgeClasses(state: StationState) {
+  switch (state) {
+    case "hold":
+      return "border-amber-400/45 bg-amber-500/12 text-amber-100";
+    case "rush":
+      return "border-rose-400/45 bg-rose-500/12 text-rose-100";
+    case "done":
+      return "border-emerald-400/45 bg-emerald-500/12 text-emerald-100";
+    default:
+      return "border-white/10 bg-white/5 text-white/60";
+  }
+}
+
+function smallActionButtonClasses(active: boolean, tone: "hold" | "release" | "rush" | "done") {
+  if (tone === "hold") {
+    return active
+      ? "border-amber-400/45 bg-amber-500/12 text-amber-100"
+      : "border-white/10 bg-white/5 text-white/70 hover:bg-amber-500/15";
+  }
+  if (tone === "release") {
+    return active
+      ? "border-cyan-400/30 bg-cyan-500/10 text-cyan-100"
+      : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10";
+  }
+  if (tone === "rush") {
+    return active
+      ? "border-rose-400/45 bg-rose-500/12 text-rose-100"
+      : "border-white/10 bg-white/5 text-white/70 hover:bg-rose-500/15";
+  }
+  return active
+    ? "border-emerald-400/45 bg-emerald-500/12 text-emerald-100"
+    : "border-white/10 bg-white/5 text-white/70 hover:bg-emerald-500/15";
 }
 
 function createStationLines(): StationLine[] {
@@ -256,16 +277,19 @@ export default function RestaurantRushManualDemo() {
       text,
       ts: Date.now(),
     };
+
     setNotifications((prev) => [item, ...prev].slice(0, 5));
+
     window.setTimeout(() => {
       setNotifications((prev) => prev.filter((n) => n.id !== item.id));
-    }, 3500);
+    }, 3200);
   }
 
   function moveTicket(ticketId: string, targetLane: LaneId) {
     setTickets((prev) =>
       prev.map((ticket) => {
         if (ticket.id !== ticketId) return ticket;
+
         return {
           ...ticket,
           lane: targetLane,
@@ -302,6 +326,7 @@ export default function RestaurantRushManualDemo() {
     setTickets((prev) =>
       prev.map((ticket) => {
         if (ticket.id !== ticketId) return ticket;
+
         return {
           ...ticket,
           stationLines: ticket.stationLines.map((line) =>
@@ -313,12 +338,14 @@ export default function RestaurantRushManualDemo() {
 
     const ticket = tickets.find((t) => t.id === ticketId);
     const stationLabel = ticket?.stationLines.find((s) => s.id === stationId)?.label ?? stationId;
+
     if (ticket) {
       const actionLabel =
         state === "hold" ? "Hold" :
         state === "rush" ? "Rush" :
         state === "done" ? "Complete" :
         "Release";
+
       pushNotification(`${actionLabel}: ${stationLabel} on order #${ticket.orderNo}`);
     }
   }
@@ -333,6 +360,7 @@ export default function RestaurantRushManualDemo() {
 
   function addTicket() {
     const orderNo = nextOrderRef.current++;
+
     const newTicket: Ticket = {
       id: `t-${orderNo}`,
       orderNo,
@@ -348,12 +376,12 @@ export default function RestaurantRushManualDemo() {
       ][Math.floor(Math.random() * 4)],
       lane: "new",
       createdAt: Date.now(),
-      ticketMinutesOffset: 0,
       priority: Math.random() > 0.72 ? "rush" : "normal",
       server: ["Ava", "Jess", "Mia", "Tori"][Math.floor(Math.random() * 4)],
       notes: Math.random() > 0.65 ? "Guest mod on ticket" : undefined,
       stationLines: createStationLines(),
     };
+
     setTickets((prev) => [newTicket, ...prev]);
     pushNotification(`New order #${orderNo} added to Live Intake`);
   }
@@ -399,8 +427,8 @@ export default function RestaurantRushManualDemo() {
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.14),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(217,70,239,0.12),_transparent_28%)]" />
 
-        <div className="relative mx-auto max-w-[1540px] px-3 py-3 md:px-4 md:py-4">
-          <header className="mb-3 rounded-[28px] border border-white/10 bg-white/5 p-4 shadow-2xl shadow-black/20 backdrop-blur">
+        <div className="relative mx-auto max-w-[1600px] px-3 py-3 md:px-4 md:py-4">
+          <header className="mb-3 rounded-[26px] border border-white/10 bg-white/5 p-4 shadow-2xl shadow-black/20 backdrop-blur">
             <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
               <div className="min-w-0">
                 <div className="mb-2 inline-flex items-center rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-cyan-200">
@@ -423,12 +451,14 @@ export default function RestaurantRushManualDemo() {
                 >
                   + Add Ticket
                 </button>
+
                 <button
                   onClick={clearCompleted}
                   className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/85 transition hover:bg-white/10"
                 >
                   Clear Completed
                 </button>
+
                 <button
                   onClick={resetBoard}
                   className="rounded-2xl border border-fuchsia-400/30 bg-fuchsia-500/10 px-4 py-2 text-sm font-medium text-fuchsia-100 transition hover:bg-fuchsia-500/15"
@@ -455,7 +485,7 @@ export default function RestaurantRushManualDemo() {
             </div>
           </header>
 
-          <div className="pointer-events-none fixed right-4 top-4 z-50 hidden w-[300px] flex-col gap-2 xl:flex">
+          <div className="pointer-events-none fixed right-4 top-4 z-50 hidden w-[280px] flex-col gap-2 2xl:flex">
             {notifications.map((note) => (
               <div
                 key={note.id}
@@ -474,23 +504,24 @@ export default function RestaurantRushManualDemo() {
               {laneMeta.map((lane) => (
                 <section
                   key={lane.id}
-                  className={`rounded-[28px] border ${lane.accent} bg-white/[0.04] p-3 shadow-xl shadow-black/20 backdrop-blur`}
+                  className={`rounded-[26px] border ${lane.accent} bg-white/[0.06] p-3 shadow-xl shadow-black/20 backdrop-blur`}
                 >
                   <div className="mb-3 flex items-center justify-between">
                     <div>
                       <div className="text-[10px] uppercase tracking-[0.22em] text-white/45">
                         {lane.label}
                       </div>
-                      <div className="mt-1 text-xl font-semibold text-white">
+                      <div className="mt-1 text-lg font-semibold text-white">
                         {grouped[lane.id].length} ticket{grouped[lane.id].length === 1 ? "" : "s"}
                       </div>
                     </div>
+
                     <div className={`rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-[10px] font-medium ${lane.chip}`}>
                       {lane.id.toUpperCase()}
                     </div>
                   </div>
 
-                  <div className="space-y-3">
+                  <div className="grid gap-2">
                     {grouped[lane.id].map((ticket) => (
                       <TicketCard
                         key={ticket.id}
@@ -507,7 +538,7 @@ export default function RestaurantRushManualDemo() {
 
                     {grouped[lane.id].length === 0 && (
                       <div className="rounded-2xl border border-dashed border-white/10 bg-black/10 px-3 py-8 text-center text-sm text-white/35">
-                        No tickets in {lane.label}
+                        No tickets
                       </div>
                     )}
                   </div>
@@ -542,155 +573,147 @@ function TicketCard({
 }) {
   const elapsed = formatElapsed(now - ticket.createdAt);
   const laneIndex = laneOrder.indexOf(ticket.lane);
+  const compactItems = ticket.items.slice(0, 2).join(" • ");
+  const moreCount = ticket.items.length > 2 ? ticket.items.length - 2 : 0;
 
   return (
-    <article className="rounded-[24px] border border-white/10 bg-[#0c1623] p-3 shadow-xl shadow-black/20">
-      <div className="mb-3 flex items-start justify-between gap-2">
+    <article className="rounded-[22px] border border-white/10 bg-[#0c1623] p-3 shadow-xl shadow-black/20">
+      <div className="mb-2 flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <div className="text-[15px] font-semibold text-white">#{ticket.orderNo}</div>
+            <div className="text-lg font-bold tracking-tight text-white">#{ticket.orderNo}</div>
             <span
-              className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] ${priorityClasses(
+              className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] ${priorityClasses(
                 ticket.priority
               )}`}
             >
               {ticket.priority === "rush" ? "Rush" : "Standard"}
             </span>
           </div>
-          <div className="mt-1 truncate text-sm text-white/70">
-            Table {ticket.table} • {ticket.guestName}
+
+          <div className="mt-0.5 text-[13px] font-medium text-white/80">
+            T{ticket.table} • {ticket.guestName}
           </div>
         </div>
 
         <div className="text-right">
-          <div className="text-[10px] uppercase tracking-[0.18em] text-white/40">
-            Ticket Time
+          <div className="text-[9px] uppercase tracking-[0.18em] text-white/40">
+            Time
           </div>
-          <div className="mt-1 text-[15px] font-semibold text-white">{elapsed}</div>
+          <div className="mt-0.5 text-sm font-semibold text-white">{elapsed}</div>
         </div>
       </div>
 
-      <div className="mb-3 flex flex-wrap gap-1.5">
-        {ticket.items.map((item) => (
-          <span
-            key={item}
-            className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-white/80"
-          >
-            {item}
-          </span>
-        ))}
+      <div className="mb-2 rounded-xl border border-white/10 bg-white/5 px-2.5 py-2">
+        <div className="truncate text-[12px] font-medium text-white/90">{compactItems}</div>
+        {moreCount > 0 && (
+          <div className="mt-0.5 text-[10px] text-white/45">
+            +{moreCount} more item{moreCount === 1 ? "" : "s"}
+          </div>
+        )}
       </div>
 
-      <div className="mb-3 grid grid-cols-2 gap-2 text-[11px] text-white/60">
-        <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2">
+      <div className="mb-2 grid grid-cols-2 gap-2 text-[10px] text-white/60">
+        <div className="rounded-xl border border-white/10 bg-white/5 px-2.5 py-2">
           <span className="text-white/35">Server:</span>{" "}
           <span className="text-white/85">{ticket.server ?? "—"}</span>
         </div>
-        <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2">
+        <div className="rounded-xl border border-white/10 bg-white/5 px-2.5 py-2">
           <span className="text-white/35">Status:</span>{" "}
           <span className="text-white/85">{laneLabel(ticket.lane)}</span>
         </div>
       </div>
 
       {ticket.notes && (
-        <div className="mb-3 rounded-2xl border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100">
-          Note: {ticket.notes}
+        <div className="mb-2 rounded-xl border border-amber-400/20 bg-amber-500/10 px-2.5 py-2 text-[10px] text-amber-100">
+          {ticket.notes}
         </div>
       )}
 
-      <div className="mb-3">
-        <div className="mb-2 text-[10px] uppercase tracking-[0.2em] text-white/40">
-          Station Sequencing
+      <div className="mb-2 rounded-xl border border-white/10 bg-black/20 p-2.5">
+        <div className="mb-1 flex items-center justify-between text-[9px] uppercase tracking-[0.2em] text-white/40">
+          <span>Stations</span>
+          <span>{ticket.stationLines.length}</span>
         </div>
 
-        <div className="space-y-2">
+        <div className="flex flex-wrap gap-1.5">
           {ticket.stationLines.map((line) => (
             <div
               key={line.id}
-              className="rounded-2xl border border-white/10 bg-black/20 p-2.5"
+              className={`flex items-center gap-1 rounded-lg border px-2 py-1 text-[9px] ${stationBadgeClasses(line.state)}`}
             >
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <div className="text-sm font-medium text-white/90">{line.label}</div>
-                <div
-                  className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] ${stationStateClasses(
-                    line.state
-                  )}`}
-                >
-                  {line.state}
-                </div>
-              </div>
+              <span className="font-medium text-white/85">{line.label}</span>
 
-              <div className="grid grid-cols-4 gap-1.5">
-                <button
-                  onClick={() => onStationChange(ticket.id, line.id, "hold")}
-                  className="rounded-xl border border-amber-400/30 bg-amber-500/10 px-2 py-1.5 text-[10px] font-medium text-amber-100 transition hover:bg-amber-500/15"
-                >
-                  Hold
-                </button>
-                <button
-                  onClick={() => onStationChange(ticket.id, line.id, "idle")}
-                  className="rounded-xl border border-white/10 bg-white/5 px-2 py-1.5 text-[10px] font-medium text-white/80 transition hover:bg-white/10"
-                >
-                  Release
-                </button>
-                <button
-                  onClick={() => onStationChange(ticket.id, line.id, "rush")}
-                  className="rounded-xl border border-rose-400/30 bg-rose-500/10 px-2 py-1.5 text-[10px] font-medium text-rose-100 transition hover:bg-rose-500/15"
-                >
-                  Rush
-                </button>
-                <button
-                  onClick={() => onStationChange(ticket.id, line.id, "done")}
-                  className="rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-2 py-1.5 text-[10px] font-medium text-emerald-100 transition hover:bg-emerald-500/15"
-                >
-                  Complete
-                </button>
-              </div>
+              <button
+                onClick={() => onStationChange(ticket.id, line.id, "hold")}
+                className={`rounded px-1 py-0.5 transition ${smallActionButtonClasses(line.state === "hold", "hold")}`}
+              >
+                H
+              </button>
+
+              <button
+                onClick={() => onStationChange(ticket.id, line.id, "idle")}
+                className={`rounded px-1 py-0.5 transition ${smallActionButtonClasses(line.state === "idle", "release")}`}
+              >
+                R
+              </button>
+
+              <button
+                onClick={() => onStationChange(ticket.id, line.id, "rush")}
+                className={`rounded px-1 py-0.5 transition ${smallActionButtonClasses(line.state === "rush", "rush")}`}
+              >
+                !
+              </button>
+
+              <button
+                onClick={() => onStationChange(ticket.id, line.id, "done")}
+                className={`rounded px-1 py-0.5 transition ${smallActionButtonClasses(line.state === "done", "done")}`}
+              >
+                ✓
+              </button>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="mb-3 rounded-2xl border border-white/10 bg-black/20 p-2.5">
-        <div className="mb-2 text-[10px] uppercase tracking-[0.2em] text-white/40">
-          Quick Move
-        </div>
-        <div className="grid grid-cols-3 gap-1.5">
-          <button
-            onClick={onBack}
-            disabled={laneIndex === 0}
-            className="rounded-xl border border-white/10 bg-white/5 px-2 py-2 text-[11px] font-medium text-white/85 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            ← Back
-          </button>
-          <button
-            onClick={onAdvance}
-            disabled={laneIndex === laneOrder.length - 1}
-            className="rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-2 py-2 text-[11px] font-medium text-cyan-100 transition hover:bg-cyan-500/15 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Advance →
-          </button>
-          <button
-            onClick={() => onMove(ticket.id, "cook")}
-            className="rounded-xl border border-fuchsia-400/30 bg-fuchsia-500/10 px-2 py-2 text-[11px] font-medium text-fuchsia-100 transition hover:bg-fuchsia-500/15"
-          >
-            Send to Cook
-          </button>
-        </div>
+      <div className="mb-2 grid grid-cols-3 gap-1.5">
+        <button
+          onClick={onBack}
+          disabled={laneIndex === 0}
+          className="rounded-xl border border-white/10 bg-white/5 px-2 py-2 text-[10px] font-medium text-white/85 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          ← Back
+        </button>
+
+        <button
+          onClick={onAdvance}
+          disabled={laneIndex === laneOrder.length - 1}
+          className="rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-2 py-2 text-[10px] font-medium text-cyan-100 transition hover:bg-cyan-500/15 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Advance →
+        </button>
+
+        <button
+          onClick={() => onMove(ticket.id, "cook")}
+          className="rounded-xl border border-fuchsia-400/30 bg-fuchsia-500/10 px-2 py-2 text-[10px] font-medium text-fuchsia-100 transition hover:bg-fuchsia-500/15"
+        >
+          To Cook
+        </button>
       </div>
 
       <div className="grid grid-cols-2 gap-1.5">
         <button
           onClick={onMarkReady}
-          className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-sm font-medium text-emerald-100 transition hover:bg-emerald-500/15"
+          className="rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-2 py-2 text-[10px] font-medium text-emerald-100 transition hover:bg-emerald-500/15"
         >
           Mark Ready
         </button>
+
         <button
           onClick={onMarkDone}
-          className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-medium text-white/85 transition hover:bg-white/10"
+          className="rounded-xl border border-white/10 bg-white/5 px-2 py-2 text-[10px] font-medium text-white/85 transition hover:bg-white/10"
         >
-          Complete Ticket
+          Complete
         </button>
       </div>
     </article>
