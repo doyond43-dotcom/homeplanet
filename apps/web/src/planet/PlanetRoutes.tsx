@@ -22,34 +22,30 @@ import LegalDemoBoard from "../pages/LegalDemoBoard";
 // Transportation demo (V2 Dispatch System)
 import TransportationDispatchBoardV2 from "../pages/TransportationDispatchBoardV2";
 
-// Restaurant demos
+// Mom's Kitchen demo
 import MomsKitchenDemo from "../pages/MomsKitchenDemo";
-import RestaurantRushDemo from "../pages/RestaurantRushDemo";
+import RestaurantRushManualDemo from "../pages/RestaurantRushManualDemo";
 
 // Life
 import LifePlanet from "../pages/LifePlanet";
 
 /**
- * Planet routing layer
- *
- * Canonical demo boards:
- *  /planet/vehicles/awnit-demo
- *  /planet/legal/demo
- *  /planet/transport/demo
- *  /planet/food/moms-kitchen-demo
- *  /planet/food/demo
- *  /planet/food/demo-rush
- *
- * Core navigation:
- *  /planet/creator
- *  /planet/:planetId
- *  /planet/:planetId/:cityId
+ * Planet layer:
+ * - /planet/creator is the Creator hub
+ * - /planet/vehicles/awnit-demo is AWNIT Live Demo Board
+ * - /planet/vehicles/awnit-demo/invoice/:invoiceId is the invoice view
+ * - /planet/legal/demo is the Legal Evidence Demo Board
+ * - /planet/transport/demo is the Transportation Dispatch Demo Board (V2)
+ * - /planet/food/moms-kitchen-demo is Mom's Kitchen Live Demo Board
+ * - /planet/food/restaurant-rush-manual is the manual restaurant rush demo board
+ * - /planet/:planetId routes to PlanetOverview
+ * - /planet/:planetId/:cityId routes to CityPage
  */
 
 export default function PlanetRoutes() {
   return (
     <Routes>
-      {/* Default /planet landing */}
+      {/* /planet -> default */}
       <Route index element={<Navigate to="/planet/creator" replace />} />
 
       {/* ---------- Creator ---------- */}
@@ -58,48 +54,35 @@ export default function PlanetRoutes() {
       <Route path="creator/studio/*" element={<CreatorStudio />} />
       <Route path="creator/build" element={<CreatorBuild />} />
       <Route path="creator/release/:releaseId" element={<ReleaseViewer />} />
-      <Route
-        path="creator/*"
-        element={<Navigate to="/planet/creator" replace />}
-      />
+      <Route path="creator/*" element={<Navigate to="/planet/creator" replace />} />
 
-      {/* ---------- AWNIT ---------- */}
+      {/* ---------- AWNIT (CANONICAL) ---------- */}
       <Route path="vehicles/awnit" element={<AwnitLandingPage />} />
       <Route path="vehicles/awnit-demo" element={<AwnitDemoBoard />} />
       <Route path="vehicles/awnit-intake" element={<AwnitIntake />} />
-      <Route
-        path="vehicles/awnit-demo/invoice/:invoiceId"
-        element={<InvoiceView />}
-      />
+      <Route path="vehicles/awnit-demo/invoice/:invoiceId" element={<InvoiceView />} />
 
-      {/* ---------- Legal Demo ---------- */}
+      {/* ---------- LEGAL DEMO ---------- */}
       <Route path="legal/demo" element={<LegalDemoBoard />} />
 
-      {/* ---------- Transportation Dispatch Demo ---------- */}
-      <Route
-        path="transport/demo"
-        element={<TransportationDispatchBoardV2 />}
-      />
+      {/* ---------- TRANSPORTATION DISPATCH DEMO (V2) ---------- */}
+      <Route path="transport/demo" element={<TransportationDispatchBoardV2 />} />
 
-      {/* ---------- Restaurant Demos ---------- */}
+      {/* ---------- FOOD / RESTAURANT DEMOS ---------- */}
       <Route path="food/moms-kitchen-demo" element={<MomsKitchenDemo />} />
-      <Route path="food/demo" element={<MomsKitchenDemo />} />
-      <Route path="food/demo-rush" element={<RestaurantRushDemo />} />
+      <Route path="food/restaurant-rush-manual" element={<RestaurantRushManualDemo />} />
 
-      {/* ---------- Legacy Redirects ---------- */}
+      {/* Optional legacy / fallback demo paths */}
+      <Route path="demo/awnit" element={<Navigate to="/planet/vehicles/awnit-demo" replace />} />
       <Route
-        path="demo/awnit"
-        element={<Navigate to="/planet/vehicles/awnit-demo" replace />}
-      />
-      <Route
-        path="food"
-        element={<Navigate to="/planet/food/demo" replace />}
+        path="demo/restaurant-rush-manual"
+        element={<Navigate to="/planet/food/restaurant-rush-manual" replace />}
       />
 
       {/* ---------- Life ---------- */}
       <Route path="life" element={<LifePlanet />} />
 
-      {/* ---------- Generic Planet Views ---------- */}
+      {/* ---------- Generic planets ---------- */}
       <Route path=":planetId" element={<PlanetOverview />} />
       <Route path=":planetId/:cityId" element={<CityPage />} />
 
