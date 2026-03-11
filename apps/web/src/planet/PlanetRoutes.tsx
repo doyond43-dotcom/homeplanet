@@ -26,6 +26,7 @@ import TransportationDispatchBoardV2 from "../pages/TransportationDispatchBoardV
 import MomsKitchenDemo from "../pages/MomsKitchenDemo";
 import RestaurantRushManualDemo from "../pages/RestaurantRushManualDemo";
 import RestaurantRushSimpleDemo from "../pages/RestaurantRushSimpleDemo";
+import RestaurantRushLiveDemo from "../pages/RestaurantRushLiveDemo";
 
 // Life
 import LifePlanet from "../pages/LifePlanet";
@@ -40,6 +41,7 @@ import LifePlanet from "../pages/LifePlanet";
  * - /planet/food/moms-kitchen-demo is Mom's Kitchen Live Demo Board
  * - /planet/food/restaurant-rush-manual is the manual restaurant rush demo board
  * - /planet/food/restaurant-rush-simple is the simplified restaurant rush demo board
+ * - /planet/food/restaurant-rush-live is the LIVE rush simulation demo
  * - /planet/:planetId routes to PlanetOverview
  * - /planet/:planetId/:cityId routes to CityPage
  */
@@ -74,6 +76,7 @@ export default function PlanetRoutes() {
       <Route path="food/moms-kitchen-demo" element={<MomsKitchenDemo />} />
       <Route path="food/restaurant-rush-manual" element={<RestaurantRushManualDemo />} />
       <Route path="food/restaurant-rush-simple" element={<RestaurantRushSimpleDemo />} />
+      <Route path="food/restaurant-rush-live" element={<RestaurantRushLiveDemo />} />
 
       {/* Optional legacy / fallback demo paths */}
       <Route path="demo/awnit" element={<Navigate to="/planet/vehicles/awnit-demo" replace />} />
@@ -84,6 +87,10 @@ export default function PlanetRoutes() {
       <Route
         path="demo/restaurant-rush-simple"
         element={<Navigate to="/planet/food/restaurant-rush-simple" replace />}
+      />
+      <Route
+        path="demo/restaurant-rush-live"
+        element={<Navigate to="/planet/food/restaurant-rush-live" replace />}
       />
 
       {/* ---------- Life ---------- */}
