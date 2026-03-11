@@ -215,6 +215,44 @@ function fmtAppt(job: AwnitJobRow) {
   return `${base || "—"}${crew ? ` • ${crew}` : ""}`;
 }
 
+function nextActionLabel(stage: Stage) {
+  switch (stage) {
+    case "Scheduled":
+      return "Take measurements and confirm material count";
+    case "Measured":
+      return "Send estimate to customer";
+    case "Estimate Sent":
+      return "Follow up and lock approval";
+    case "Ordered":
+      return "Track material arrival and prep install";
+    case "Installed":
+      return "Capture completion photos and close job";
+    case "Done":
+      return "Job complete — ready for archive or follow-up";
+    default:
+      return "Review job and choose next action";
+  }
+}
+
+function nextActionTone(stage: Stage) {
+  switch (stage) {
+    case "Scheduled":
+      return "border-sky-400/35 bg-sky-500/10 text-sky-100";
+    case "Measured":
+      return "border-emerald-400/35 bg-emerald-500/10 text-emerald-100";
+    case "Estimate Sent":
+      return "border-violet-400/35 bg-violet-500/10 text-violet-100";
+    case "Ordered":
+      return "border-amber-400/35 bg-amber-500/10 text-amber-100";
+    case "Installed":
+      return "border-lime-400/35 bg-lime-500/10 text-lime-100";
+    case "Done":
+      return "border-white/10 bg-white/5 text-white/75";
+    default:
+      return "border-cyan-400/35 bg-cyan-500/10 text-cyan-100";
+  }
+}
+
 type SpeechCtor = new () => any;
 
 function getSpeechCtor(): SpeechCtor | null {
@@ -338,7 +376,7 @@ const MATERIAL_TEMPLATES: Record<string, string[]> = {
 const GRAB_CODES = ["2222", "4444", "6666", "8888", "9999"] as const;
 
 export default function AwnitDemoBoard() {
-  (window as any).__AWNIT_API_MARKER__ = "supabase-wired-awnit-board-stabilized-v5-camera-buttons";
+  (window as any).__AWNIT_API_MARKER__ = "supabase-wired-awnit-board-stabilized-v6-next-action";
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -1070,6 +1108,20 @@ export default function AwnitDemoBoard() {
                     <div className="mt-3 rounded-2xl border border-white/10 bg-black/20 p-3">
                       <div className="text-xs font-bold text-white/60">Appointment</div>
                       <div className="mt-1 text-sm font-bold">{fmtAppt(selectedJob)}</div>
+                    </div>
+
+                    <div
+                      className={cn(
+                        "mt-3 rounded-2xl border p-3",
+                        nextActionTone(coerceStage(selectedJob.stage))
+                      )}
+                    >
+                      <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] opacity-75">
+                        Next Action
+                      </div>
+                      <div className="mt-1 text-sm font-bold">
+                        {nextActionLabel(coerceStage(selectedJob.stage))}
+                      </div>
                     </div>
 
                     <div className="mt-3">
