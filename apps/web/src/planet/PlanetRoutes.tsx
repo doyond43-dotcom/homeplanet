@@ -40,14 +40,18 @@ import LifePlanet from "../pages/LifePlanet";
  * - /planet/creator is the Creator hub
  * - /planet/vehicles/awnit-demo is AWNIT Live Demo Board
  * - /planet/vehicles/awnit-demo/invoice/:invoiceId is the invoice view
- * - /planet/services/wilding is the Wilding Enterprises landing page
- * - /planet/services/wilding-board is the Wilding Live Work Board
+ * - /planet/services/wilding is the Wilding landing page
+ * - /planet/services/wilding-board is the Wilding Live Board
+ * - /planet/services/wilding-live redirects to the Wilding Live Board
+ * - /planet/demo/wilding redirects to the Wilding landing page
+ * - /planet/demo/wilding-board redirects to the Wilding Live Board
+ * - /planet/demo/wilding-live redirects to the Wilding Live Board
  * - /planet/legal/demo is the Legal Evidence Demo Board
  * - /planet/transport/demo is the Transportation Dispatch Demo Board (V2)
  * - /planet/food/moms-kitchen-demo is Mom's Kitchen Live Demo Board
  * - /planet/food/restaurant-rush-manual is the manual restaurant rush demo board
  * - /planet/food/restaurant-rush-simple is the simplified restaurant rush demo board
- * - /planet/food/restaurant-rush-live is the LIVE rush simulation demo
+ * - /planet/food/restaurant-rush-live is the live rush simulation demo
  * - /planet/:planetId routes to PlanetOverview
  * - /planet/:planetId/:cityId routes to CityPage
  */
@@ -55,7 +59,6 @@ import LifePlanet from "../pages/LifePlanet";
 export default function PlanetRoutes() {
   return (
     <Routes>
-
       {/* /planet -> default */}
       <Route index element={<Navigate to="/planet/creator" replace />} />
 
@@ -67,7 +70,7 @@ export default function PlanetRoutes() {
       <Route path="creator/release/:releaseId" element={<ReleaseViewer />} />
       <Route path="creator/*" element={<Navigate to="/planet/creator" replace />} />
 
-      {/* ---------- AWNIT (CANONICAL) ---------- */}
+      {/* ---------- AWNIT ---------- */}
       <Route path="vehicles/awnit" element={<AwnitLandingPage />} />
       <Route path="vehicles/awnit-demo" element={<AwnitDemoBoard />} />
       <Route path="vehicles/awnit-intake" element={<AwnitIntake />} />
@@ -76,11 +79,15 @@ export default function PlanetRoutes() {
       {/* ---------- WILDING ---------- */}
       <Route path="services/wilding" element={<WildingLandingPage />} />
       <Route path="services/wilding-board" element={<WildingLiveBoard />} />
+      <Route
+        path="services/wilding-live"
+        element={<Navigate to="/planet/services/wilding-board" replace />}
+      />
 
       {/* ---------- LEGAL DEMO ---------- */}
       <Route path="legal/demo" element={<LegalDemoBoard />} />
 
-      {/* ---------- TRANSPORTATION DISPATCH DEMO (V2) ---------- */}
+      {/* ---------- TRANSPORTATION DEMO ---------- */}
       <Route path="transport/demo" element={<TransportationDispatchBoardV2 />} />
 
       {/* ---------- FOOD / RESTAURANT DEMOS ---------- */}
@@ -92,10 +99,26 @@ export default function PlanetRoutes() {
       {/* ---------- Demo redirects ---------- */}
       <Route path="demo/awnit" element={<Navigate to="/planet/vehicles/awnit-demo" replace />} />
       <Route path="demo/wilding" element={<Navigate to="/planet/services/wilding" replace />} />
-      <Route path="demo/wilding-board" element={<Navigate to="/planet/services/wilding-board" replace />} />
-      <Route path="demo/restaurant-rush-manual" element={<Navigate to="/planet/food/restaurant-rush-manual" replace />} />
-      <Route path="demo/restaurant-rush-simple" element={<Navigate to="/planet/food/restaurant-rush-simple" replace />} />
-      <Route path="demo/restaurant-rush-live" element={<Navigate to="/planet/food/restaurant-rush-live" replace />} />
+      <Route
+        path="demo/wilding-board"
+        element={<Navigate to="/planet/services/wilding-board" replace />}
+      />
+      <Route
+        path="demo/wilding-live"
+        element={<Navigate to="/planet/services/wilding-board" replace />}
+      />
+      <Route
+        path="demo/restaurant-rush-manual"
+        element={<Navigate to="/planet/food/restaurant-rush-manual" replace />}
+      />
+      <Route
+        path="demo/restaurant-rush-simple"
+        element={<Navigate to="/planet/food/restaurant-rush-simple" replace />}
+      />
+      <Route
+        path="demo/restaurant-rush-live"
+        element={<Navigate to="/planet/food/restaurant-rush-live" replace />}
+      />
 
       {/* ---------- Life ---------- */}
       <Route path="life" element={<LifePlanet />} />
@@ -106,7 +129,6 @@ export default function PlanetRoutes() {
 
       {/* ---------- Fallback ---------- */}
       <Route path="*" element={<Navigate to="/city" replace />} />
-
     </Routes>
   );
 }
