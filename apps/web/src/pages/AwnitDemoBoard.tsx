@@ -338,7 +338,7 @@ const MATERIAL_TEMPLATES: Record<string, string[]> = {
 const GRAB_CODES = ["2222", "4444", "6666", "8888", "9999"] as const;
 
 export default function AwnitDemoBoard() {
-  (window as any).__AWNIT_API_MARKER__ = "supabase-wired-awnit-board-stabilized-v4-keysafe";
+  (window as any).__AWNIT_API_MARKER__ = "supabase-wired-awnit-board-stabilized-v5-camera-buttons";
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -357,6 +357,8 @@ export default function AwnitDemoBoard() {
   const [rightPanel, setRightPanel] = useState<null | "measurement">(null);
   const [panelTitle, setPanelTitle] = useState("Door Measurement Card");
   const [panelUrl, setPanelUrl] = useState("/cards/measurement");
+
+  const cameraInputRef = useRef<HTMLInputElement | null>(null);
 
   const lastEditAtRef = useRef<number>(0);
   const markEdit = () => {
@@ -772,6 +774,16 @@ export default function AwnitDemoBoard() {
     return header + lines.join("\n");
   }
 
+  function openCameraCapture() {
+    cameraInputRef.current?.click();
+  }
+
+  function handleCameraFiles(files: FileList | null) {
+    const file = files?.[0];
+    if (!file) return;
+    safeToast(`Captured: ${file.name}`);
+  }
+
   async function generateInvoice() {
     if (!selectedJob) return;
 
@@ -809,22 +821,72 @@ export default function AwnitDemoBoard() {
     return map;
   }, [jobs, stages]);
 
+  const activeCrewsCount = useMemo(() => {
+    const crews = new Set(
+      jobs
+        .map((j) => (j.crew || "").trim())
+        .filter(Boolean)
+    );
+    return crews.size;
+  }, [jobs]);
+
+  const todaysJobsCount = jobs.length;
+  const invoiceReadyCount = jobs.filter((j) => {
+    const s = coerceStage(j.stage);
+    return s === "Estimate Sent" || s === "Ordered" || s === "Installed" || s === "Done";
+  }).length;
+
   return (
     <div className="min-h-screen bg-[#0b1220] text-white">
       <div className="flex min-h-screen w-full">
         <div className={rightPanel ? "min-w-0 flex-1" : "w-full"}>
           <div className="mx-auto max-w-7xl p-3 md:p-6">
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={(e) => {
+                handleCameraFiles(e.target.files);
+                e.currentTarget.value = "";
+              }}
+            />
+
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
-                <div className="text-2xl font-extrabold tracking-tight">AWNIT — Live Board</div>
-                <div className="text-sm text-white/60">Supabase-backed • scope + materials + notes • invoice v1</div>
-                {loadError ? <div className="mt-1 text-xs text-red-300">{loadError}</div> : null}
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="text-2xl font-extrabold tracking-tight">AWNIT — Live Board</div>
+                  <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/25 bg-emerald-500/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-emerald-200">
+                    <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                    LIVE
+                  </span>
+                  <span className="inline-flex items-center rounded-full border border-cyan-400/20 bg-cyan-500/10 px-3 py-1 text-xs font-bold text-cyan-100">
+                    HomePlanet Demo Node
+                  </span>
+                </div>
+
+                <div className="mt-1 text-sm text-white/60">Supabase-backed • scope + materials + notes • invoice v1</div>
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-bold text-white/80">
+                    Today&apos;s Jobs: <span className="text-white">{todaysJobsCount}</span>
+                  </div>
+                  <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-bold text-white/80">
+                    Active Crews: <span className="text-white">{activeCrewsCount}</span>
+                  </div>
+                  <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-bold text-white/80">
+                    Invoice Ready: <span className="text-white">{invoiceReadyCount}</span>
+                  </div>
+                </div>
+
+                {loadError ? <div className="mt-2 text-xs text-red-300">{loadError}</div> : null}
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
-                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold hover:bg-white/10"
+                  className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold hover:bg-white/10"
                   onClick={() => setShowPanels((v) => !v)}
                 >
                   {showPanels ? "Hide Panels" : "Show Panels"}
@@ -832,7 +894,7 @@ export default function AwnitDemoBoard() {
 
                 <button
                   type="button"
-                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold hover:bg-white/10"
+                  className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold hover:bg-white/10"
                   onClick={() => void loadJobs()}
                   disabled={loading}
                   title="Reload from database"
@@ -842,14 +904,14 @@ export default function AwnitDemoBoard() {
 
                 <button
                   type="button"
-                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold hover:bg-white/10"
+                  className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold hover:bg-white/10"
                   onClick={() => window.location.assign("/planet/vehicles/awnit-intake")}
                   title="Add a new job"
                 >
                   + Add Job
                 </button>
 
-                <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+                <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-3">
                   <div className="text-xs font-bold text-white/70">Grab Code</div>
                   <select
                     className="rounded-lg bg-transparent text-sm outline-none"
@@ -866,7 +928,7 @@ export default function AwnitDemoBoard() {
 
                 <button
                   type="button"
-                  className="rounded-xl bg-emerald-500/90 px-4 py-2 text-sm font-extrabold text-black hover:bg-emerald-400 disabled:opacity-50"
+                  className="rounded-xl border border-blue-400/40 bg-blue-500/20 px-5 py-3 text-sm font-extrabold text-blue-100 hover:bg-blue-500/30 disabled:opacity-50"
                   onClick={generateInvoice}
                   disabled={!selectedJob || isGeneratingInvoice}
                   title="Generate invoice from Scope + Materials + Notes"
@@ -898,7 +960,7 @@ export default function AwnitDemoBoard() {
                             type="button"
                             onClick={() => setSelectedJobId(j.id)}
                             className={cn(
-                              "w-full rounded-xl border px-3 py-2 text-left hover:bg-white/10",
+                              "w-full rounded-xl border px-3 py-3 text-left hover:bg-white/10 transition",
                               selectedJobId === j.id ? "border-emerald-400/40 bg-emerald-400/10" : "border-white/10 bg-white/5"
                             )}
                           >
@@ -926,15 +988,36 @@ export default function AwnitDemoBoard() {
                   <div className="flex flex-wrap items-center gap-2">
                     <button
                       type="button"
-                      className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-bold hover:bg-white/10"
+                      className="rounded-xl border border-blue-400/40 bg-blue-500/20 px-4 py-3 text-sm font-bold text-blue-100 hover:bg-blue-500/30"
                       onClick={() => copyToClipboard(buildTechPayload(selectedJob))}
                     >
                       Copy Tech Text
                     </button>
 
+                    <button
+                      type="button"
+                      className="rounded-xl border border-blue-400/40 bg-blue-500/20 px-4 py-3 text-sm font-bold text-blue-100 hover:bg-blue-500/30"
+                      onClick={openCameraCapture}
+                      title="Open camera"
+                    >
+                      Camera
+                    </button>
+
+                    {selectedJob.customer?.phone ? (
+                      <a
+                        className="rounded-xl border border-emerald-400/40 bg-emerald-500/20 px-4 py-3 text-sm font-bold text-emerald-100 hover:bg-emerald-500/30"
+                        href={smsHref(selectedJob)}
+                        target="_blank"
+                        rel="noreferrer"
+                        title="Text customer from device"
+                      >
+                        Text Customer
+                      </a>
+                    ) : null}
+
                     {selectedJob.customer?.address ? (
                       <a
-                        className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-bold hover:bg-white/10"
+                        className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-bold hover:bg-white/10"
                         href={mapsHref(selectedJob)}
                         target="_blank"
                         rel="noreferrer"
@@ -946,7 +1029,7 @@ export default function AwnitDemoBoard() {
 
                     {selectedJob.customer?.phone ? (
                       <a
-                        className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-bold hover:bg-white/10"
+                        className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-bold hover:bg-white/10"
                         href={smsHref(selectedJob)}
                         target="_blank"
                         rel="noreferrer"
@@ -958,7 +1041,7 @@ export default function AwnitDemoBoard() {
 
                     {selectedJob.customer?.email ? (
                       <a
-                        className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-bold hover:bg-white/10"
+                        className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-bold hover:bg-white/10"
                         href={emailHref(selectedJob)}
                         target="_blank"
                         rel="noreferrer"
