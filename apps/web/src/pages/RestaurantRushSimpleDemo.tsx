@@ -320,11 +320,11 @@ export default function RestaurantRushSimpleDemo() {
             <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
               <div className="min-w-0">
                 <div className="mb-2 inline-flex items-center rounded-full border border-cyan-400/30 bg-cyan-500/10 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.24em] text-cyan-200">
-                  Restaurant Rush Simple Demo
+                  Mom&apos;s Kitchen Simple Demo
                 </div>
 
                 <h1 className="text-[34px] font-semibold tracking-tight text-white md:text-[40px]">
-                  Pogie’s Kitchen Flow Board
+                  Mom&apos;s Kitchen Flow Board
                 </h1>
 
                 <p className="mt-2 max-w-4xl text-base text-white/70 md:text-lg">
