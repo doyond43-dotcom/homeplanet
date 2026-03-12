@@ -15,14 +15,32 @@ type SystemCard = {
   to: string;
 };
 
+type WorkspaceCard = {
+  id: string;
+  title: string;
+  subtitle: string;
+  to: string;
+};
+
+type ResidentCard = {
+  id: string;
+  title: string;
+  subtitle: string;
+  to: string;
+};
+
 export default function CreatorCity() {
   const nav = useNavigate();
 
   const planets = useMemo<PlanetCard[]>(
     () => [
       { id: "creator", title: "Creator", subtitle: "/planet/creator • Studio + Build", to: "/planet/creator" },
-      { id: "career", title: "Career", subtitle: "/planet/career • Timeline + Proof", to: "/planet/career" },
       { id: "vehicles", title: "Vehicles", subtitle: "/planet/vehicles • Intake + Service", to: "/planet/vehicles" },
+      { id: "services", title: "Services", subtitle: "/planet/services • Live Boards + Dispatch", to: "/planet/services" },
+      { id: "food", title: "Food", subtitle: "/planet/food • Kitchen + Rush Flow", to: "/planet/food" },
+      { id: "legal", title: "Legal", subtitle: "/planet/legal • Evidence + Timeline", to: "/planet/legal" },
+      { id: "transport", title: "Transport", subtitle: "/planet/transport • Dispatch + Routing", to: "/planet/transport" },
+      { id: "career", title: "Career", subtitle: "/planet/career • Timeline + Proof", to: "/planet/career" },
       { id: "education", title: "Education", subtitle: "/planet/education • Presence + Submissions", to: "/planet/education" },
       { id: "safety", title: "Safety & Identity", subtitle: "/planet/safety • Shield + Events", to: "/planet/safety" },
       { id: "payments", title: "Payments", subtitle: "/planet/payments • Pre-Auth + Caps", to: "/planet/payments" },
@@ -39,13 +57,31 @@ export default function CreatorCity() {
         to: "/planet/vehicles/awnit-demo",
       },
       {
-        id: "wilding",
+        id: "taylor-creek",
+        title: "Taylor Creek Live Board",
+        subtitle: "/live/taylor-creek/board",
+        to: "/live/taylor-creek/board",
+      },
+      {
+        id: "wilding-board",
         title: "Wilding Live Board",
         subtitle: "/planet/services/wilding-board",
         to: "/planet/services/wilding-board",
       },
       {
-        id: "restaurant",
+        id: "wilding-dispatch",
+        title: "Wilding Dispatch Board",
+        subtitle: "/planet/services/wilding-dispatch",
+        to: "/planet/services/wilding-dispatch",
+      },
+      {
+        id: "moms-kitchen-simple",
+        title: "Mom's Kitchen Flow Board",
+        subtitle: "/planet/food/restaurant-rush-simple",
+        to: "/planet/food/restaurant-rush-simple",
+      },
+      {
+        id: "restaurant-live",
         title: "Restaurant Rush Live",
         subtitle: "/planet/food/restaurant-rush-live",
         to: "/planet/food/restaurant-rush-live",
@@ -61,6 +97,60 @@ export default function CreatorCity() {
         title: "Transportation Dispatch Demo",
         subtitle: "/planet/transport/demo",
         to: "/planet/transport/demo",
+      },
+    ],
+    []
+  );
+
+  const workspaces = useMemo<WorkspaceCard[]>(
+    () => [
+      {
+        id: "awnit-workspace",
+        title: "AWNIT Workspace",
+        subtitle: "/app/awnit/board • Private tenant operations",
+        to: "/app/awnit/board",
+      },
+      {
+        id: "wilding-workspace",
+        title: "Wilding Workspace",
+        subtitle: "/app/wilding/board • Private screen repair operations",
+        to: "/app/wilding/board",
+      },
+      {
+        id: "moms-kitchen-workspace",
+        title: "Mom's Kitchen Workspace",
+        subtitle: "/app/moms-kitchen/board • Private restaurant operations",
+        to: "/app/moms-kitchen/board",
+      },
+    ],
+    []
+  );
+
+  const residents = useMemo<ResidentCard[]>(
+    () => [
+      {
+        id: "resident-creator",
+        title: "Creator Resident",
+        subtitle: "/city/creator • HomePlanet command center",
+        to: "/city/creator",
+      },
+      {
+        id: "resident-family",
+        title: "Family Resident",
+        subtitle: "/city/family • Family layer resident",
+        to: "/city/family",
+      },
+      {
+        id: "resident-commerce",
+        title: "Commerce Resident",
+        subtitle: "/city/commerce • Business + service resident",
+        to: "/city/commerce",
+      },
+      {
+        id: "resident-signal",
+        title: "Signal Resident",
+        subtitle: "/city/signal • Presence + alerts resident",
+        to: "/city/signal",
       },
     ],
     []
@@ -135,7 +225,7 @@ export default function CreatorCity() {
     fontSize: 14,
     opacity: 0.85,
     lineHeight: 1.5,
-    maxWidth: 720,
+    maxWidth: 760,
   };
 
   const pills: React.CSSProperties = {
@@ -224,9 +314,49 @@ export default function CreatorCity() {
     marginTop: 14,
   };
 
+  const workspacesGrid: React.CSSProperties = {
+    display: "grid",
+    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+    gap: 14,
+    marginTop: 14,
+  };
+
+  const residentsGrid: React.CSSProperties = {
+    display: "grid",
+    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+    gap: 14,
+    marginTop: 14,
+  };
+
   const systemCard: React.CSSProperties = {
     border: "1px solid rgba(148,163,184,0.22)",
     background: "rgba(2,6,23,0.55)",
+    borderRadius: 14,
+    padding: 16,
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 14,
+    boxShadow: "0 10px 30px rgba(0,0,0,0.22)",
+  };
+
+  const workspaceCard: React.CSSProperties = {
+    border: "1px solid rgba(56,189,248,0.22)",
+    background: "rgba(8,47,73,0.28)",
+    borderRadius: 14,
+    padding: 16,
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 14,
+    boxShadow: "0 10px 30px rgba(0,0,0,0.22)",
+  };
+
+  const residentCard: React.CSSProperties = {
+    border: "1px solid rgba(168,85,247,0.22)",
+    background: "rgba(59,7,100,0.18)",
     borderRadius: 14,
     padding: 16,
     cursor: "pointer",
@@ -268,6 +398,28 @@ export default function CreatorCity() {
     border: "1px solid rgba(34,197,94,0.45)",
     color: "rgba(187,247,208,1)",
     background: "rgba(34,197,94,0.10)",
+    flexShrink: 0,
+  };
+
+  const workspaceBadge: React.CSSProperties = {
+    borderRadius: 999,
+    padding: "5px 10px",
+    fontSize: 11,
+    fontWeight: 900,
+    border: "1px solid rgba(56,189,248,0.4)",
+    color: "rgba(186,230,253,1)",
+    background: "rgba(56,189,248,0.10)",
+    flexShrink: 0,
+  };
+
+  const residentBadge: React.CSSProperties = {
+    borderRadius: 999,
+    padding: "5px 10px",
+    fontSize: 11,
+    fontWeight: 900,
+    border: "1px solid rgba(168,85,247,0.35)",
+    color: "rgb(233,213,255)",
+    background: "rgba(168,85,247,0.10)",
     flexShrink: 0,
   };
 
@@ -314,7 +466,7 @@ export default function CreatorCity() {
             </div>
 
             <div style={subtitle}>
-              This is the HomePlanet launchpad. Jump into Studio, Projects, Build, or open a live business system already running inside the network.
+              This is the HomePlanet launchpad. Jump into Studio, Projects, Build, open a live business system, open a resident layer, or enter the private workspace layer.
             </div>
           </div>
 
@@ -341,8 +493,8 @@ export default function CreatorCity() {
           <div style={card}>
             <div style={cardTitle}>System Status</div>
             <div style={cardText}>
-              Creator City now acts as the launchpad for active demos and future planet expansion.
-              Live systems are listed below first so the network feels operational before everything else is fully wired.
+              Creator City now acts as the launchpad for active demos, resident layers, private workspaces, and future planet expansion.
+              Live systems appear first so the network feels operational before everything else is fully wired.
             </div>
           </div>
         </div>
@@ -368,6 +520,34 @@ export default function CreatorCity() {
             <div key={p.id} style={planetCard} onClick={() => nav(p.to)}>
               <div style={planetTitle}>{p.title}</div>
               <div style={planetSub}>{p.subtitle}</div>
+            </div>
+          ))}
+        </div>
+
+        <div style={sectionLabel}>Residents</div>
+
+        <div style={residentsGrid}>
+          {residents.map((r) => (
+            <div key={r.id} style={residentCard} onClick={() => nav(r.to)}>
+              <div style={systemTextWrap}>
+                <div style={systemTitle}>{r.title}</div>
+                <div style={systemSub}>{r.subtitle}</div>
+              </div>
+              <div style={residentBadge}>RESIDENT</div>
+            </div>
+          ))}
+        </div>
+
+        <div style={sectionLabel}>Private Workspaces</div>
+
+        <div style={workspacesGrid}>
+          {workspaces.map((w) => (
+            <div key={w.id} style={workspaceCard} onClick={() => nav(w.to)}>
+              <div style={systemTextWrap}>
+                <div style={systemTitle}>{w.title}</div>
+                <div style={systemSub}>{w.subtitle}</div>
+              </div>
+              <div style={workspaceBadge}>PRIVATE</div>
             </div>
           ))}
         </div>
