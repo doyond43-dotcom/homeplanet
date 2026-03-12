@@ -19,6 +19,7 @@ import AwnitLandingPage from "../pages/AwnitLandingPage";
 // Wilding
 import WildingLandingPage from "../pages/WildingLandingPage";
 import WildingLiveBoard from "../pages/WildingLiveBoard";
+import WildingLiveBoardDispatch from "../pages/WildingLiveBoardDispatch";
 
 // Legal demo
 import LegalDemoBoard from "../pages/LegalDemoBoard";
@@ -42,9 +43,12 @@ import LifePlanet from "../pages/LifePlanet";
  * - /planet/vehicles/awnit-demo/invoice/:invoiceId is the invoice view
  * - /planet/services/wilding is the Wilding landing page
  * - /planet/services/wilding-board is the Wilding Live Board
+ * - /planet/services/wilding-dispatch is the Wilding dispatch / scheduling board
+ * - /planet/services/wilding-ops redirects to the Wilding dispatch / scheduling board
  * - /planet/services/wilding-live redirects to the Wilding Live Board
  * - /planet/demo/wilding redirects to the Wilding landing page
  * - /planet/demo/wilding-board redirects to the Wilding Live Board
+ * - /planet/demo/wilding-dispatch redirects to the Wilding dispatch board
  * - /planet/demo/wilding-live redirects to the Wilding Live Board
  * - /planet/legal/demo is the Legal Evidence Demo Board
  * - /planet/transport/demo is the Transportation Dispatch Demo Board (V2)
@@ -79,6 +83,11 @@ export default function PlanetRoutes() {
       {/* ---------- WILDING ---------- */}
       <Route path="services/wilding" element={<WildingLandingPage />} />
       <Route path="services/wilding-board" element={<WildingLiveBoard />} />
+      <Route path="services/wilding-dispatch" element={<WildingLiveBoardDispatch />} />
+      <Route
+        path="services/wilding-ops"
+        element={<Navigate to="/planet/services/wilding-dispatch" replace />}
+      />
       <Route
         path="services/wilding-live"
         element={<Navigate to="/planet/services/wilding-board" replace />}
@@ -102,6 +111,10 @@ export default function PlanetRoutes() {
       <Route
         path="demo/wilding-board"
         element={<Navigate to="/planet/services/wilding-board" replace />}
+      />
+      <Route
+        path="demo/wilding-dispatch"
+        element={<Navigate to="/planet/services/wilding-dispatch" replace />}
       />
       <Route
         path="demo/wilding-live"

@@ -16,6 +16,7 @@ import PressKitTaylorCreek from "./routes/PressKitTaylorCreek";
 
 import PlanetRoutes from "./planet/PlanetRoutes";
 import CreatorRoutes from "./routes/CreatorRoutes";
+import WorkspaceRoutes from "./app/WorkspaceRoutes";
 
 import LiveAwnitIntake from "./pages/LiveAwnitIntake";
 import LegalDemoBoard from "./pages/LegalDemoBoard";
@@ -25,6 +26,9 @@ import NotFound from "./pages/NotFound";
 import BeamScreen from "./routes/BeamScreen";
 import BeamReceive from "./routes/BeamReceive";
 import BeamOpen from "./routes/BeamOpen";
+
+/* WILDING DISPATCH BOARD */
+import WildingLiveBoardDispatch from "./pages/WildingLiveBoardDispatch";
 
 function LiveShell() {
   return <Outlet />;
@@ -83,38 +87,42 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* SERVICE SYSTEM — isolated namespace */}
+
+        {/* SERVICE SYSTEM */}
         <Route path="/service/*" element={<ServiceRoutes />} />
 
-        {/* Cities (geography layer) — MUST be above tenant catch-all */}
+        {/* CITY LAYER */}
         <Route path="/city/*" element={<CityRoutes />} />
 
-        {/* LEGAL DEMO — explicit top-level routes to avoid route swallowing */}
+        {/* LEGAL DEMO */}
         <Route path="/legal-demo" element={<LegalDemoBoard />} />
         <Route path="/legal-evidence-board" element={<Navigate to="/legal-demo" replace />} />
         <Route path="/planet/legal/demo" element={<LegalDemoBoard />} />
 
-        {/* Planets (core app layer) — MUST be above tenant catch-all */}
+        {/* PLANET CORE */}
         <Route path="/planet/*" element={<PlanetRoutes />} />
 
-        {/* Creator tool hub — MUST be above tenant catch-all */}
+        {/* CREATOR */}
         <Route path="/creator/*" element={<CreatorRoutes />} />
 
-        {/* Press routes — MUST be above tenant catch-all */}
+        {/* WORKSPACE */}
+        <Route path="/app/*" element={<WorkspaceRoutes />} />
+
+        {/* PRESS */}
         <Route path="/press" element={<PressPage />} />
         <Route path="/press/taylor-creek" element={<PressKitTaylorCreek />} />
 
-        {/* Taylor Creek landing page — MUST be above tenant catch-all */}
+        {/* TAYLOR CREEK */}
         <Route path="/taylor-creek" element={<TaylorCreekSite />} />
         <Route path="/Taylor-Creek" element={<Navigate to="/taylor-creek" replace />} />
 
-        {/* Canonical public intake page */}
+        {/* PUBLIC INTAKE */}
         <Route path="/c/:slug" element={<PublicPage />} />
 
-        {/* LIVE: AWNIT Intake (explicit) — must be above /live/:slug */}
+        {/* AWNIT LIVE */}
         <Route path="/live/awnit" element={<LiveAwnitIntake />} />
 
-        {/* LIVE SYSTEM — MUST be above tenant catch-all */}
+        {/* LIVE SYSTEM */}
         <Route path="/live/:slug" element={<LiveShell />}>
           <Route index element={<LiveShopTV />} />
           <Route path="staff" element={<LiveIntakeBoard />} />
@@ -122,22 +130,26 @@ export default function App() {
           <Route path="board" element={<LiveShopTV />} />
         </Route>
 
-        {/* BEAM SYSTEM */}
+        {/* BEAM */}
         <Route path="/beam/staff" element={<BeamScreen />} />
         <Route path="/beam/open/:claimId" element={<BeamOpen />} />
         <Route path="/beam/:sessionId" element={<BeamReceive />} />
 
-        {/* REAL CARD ROUTE */}
+        {/* CARD */}
         <Route path="/cards/measurement" element={<MeasurementCardPlaceholder />} />
 
-        {/* Tenant public pages (LAST before NotFound) */}
+        {/* WILDING DISPATCH BOARD */}
+        <Route path="/wilding-dispatch" element={<WildingLiveBoardDispatch />} />
+
+        {/* TENANT PUBLIC */}
         <Route path="/:slug/*" element={<TenantPublicPage />} />
 
-        {/* Root */}
+        {/* ROOT */}
         <Route path="/" element={<Navigate to="/city" replace />} />
 
-        {/* Catch all */}
+        {/* FALLBACK */}
         <Route path="*" element={<NotFound />} />
+
       </Routes>
     </BrowserRouter>
   );
