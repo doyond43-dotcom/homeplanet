@@ -15,6 +15,18 @@ import { awnitListJobs, awnitUpdateJob } from "../lib/awnitJobsApi";
  * - Remove “Invalid Date” by safely formatting timestamps and normalizing older shapes
  * - Ensure list items always have stable React keys (no key warnings)
  *
+ * Responsive pass:
+ * - Cleaner phone / tablet layout
+ * - Header actions stack instead of crushing
+ * - Stage lanes horizontal-scroll on smaller screens
+ * - Job drawer actions wrap cleanly
+ * - Right workspace panel becomes mobile-friendly
+ *
+ * Demo seed pass:
+ * - When live data is sparse, fills empty lanes with believable demo jobs
+ * - Real jobs always stay first
+ * - Demo jobs only fill missing gaps
+ *
  * Beam panel mode:
  * - Supports /planet/vehicles/awnit-demo?panel=measurement&open_url=/cards/measurement
  * - Keeps the board visible
@@ -253,6 +265,32 @@ function nextActionTone(stage: Stage) {
   }
 }
 
+function splitMaterialGroupName(name: string) {
+  const raw = (name || "").trim();
+  const m = raw.match(/^([^:]+):\s*(.+)$/);
+  if (!m) {
+    return { group: "General", itemName: raw };
+  }
+  return {
+    group: m[1].trim(),
+    itemName: m[2].trim(),
+  };
+}
+
+function groupMaterialsForDisplay(materials: MaterialItem[]) {
+  const map = new Map<string, MaterialItem[]>();
+
+  for (const mat of materials) {
+    const { group, itemName } = splitMaterialGroupName(mat.name);
+    const nextItem = { ...mat, name: itemName };
+
+    if (!map.has(group)) map.set(group, []);
+    map.get(group)!.push(nextItem);
+  }
+
+  return Array.from(map.entries());
+}
+
 type SpeechCtor = new () => any;
 
 function getSpeechCtor(): SpeechCtor | null {
@@ -347,7 +385,7 @@ function MicButton({
   onClick: () => void;
 }) {
   const base =
-    "inline-flex items-center justify-center rounded-full px-3 py-2 text-sm font-extrabold border transition select-none whitespace-nowrap";
+    "inline-flex min-h-[42px] items-center justify-center rounded-full px-3 py-2 text-sm font-extrabold border transition select-none whitespace-nowrap";
   const off = "border-white/10 bg-white/5 hover:bg-white/10 active:bg-white/15";
   const on = "border-emerald-400/40 bg-emerald-400/15 hover:bg-emerald-400/20 active:bg-emerald-400/25";
   const disabled = "opacity-40 cursor-not-allowed";
@@ -367,13 +405,425 @@ function MicButton({
 }
 
 const MATERIAL_TEMPLATES: Record<string, string[]> = {
-  "Window install": ["Caulk / sealant", "Shims", "Flashing tape", "Foam", "Screws", "Touch-up paint"],
-  "Door install": ["Caulk / sealant", "Shims", "Flashing tape", "Foam", "Screws", "Wood filler"],
-  "Screen repair": ["Spline", "Screen roll", "Spline tool", "Corners / clips", "Fasteners"],
-  "Trim + caulk touchup": ["Caulk / sealant", "Painter tape", "Touch-up paint", "Rags / wipes"],
+  "Window install": [
+    "Window 1: Impact window unit",
+    "Window 1: Shims",
+    "General: Flashing tape",
+    "General: Foam",
+    "General: Screws",
+    "General: Touch-up paint",
+  ],
+  "Door install": [
+    "Door 1: Door slab / unit",
+    "Door 1: Hinge set",
+    "Door 1: Sweep",
+    "General: Caulk / sealant",
+    "General: Shims",
+    "General: Screws",
+    "General: Wood filler",
+  ],
+  "Screen repair": [
+    "Screen 1: Spline",
+    "Screen 1: Screen roll",
+    "Screen 1: Spline tool",
+    "General: Corners / clips",
+    "General: Fasteners",
+  ],
+  "Trim + caulk touchup": [
+    "Trim 1: Caulk / sealant",
+    "Trim 1: Painter tape",
+    "Trim 1: Touch-up paint",
+    "General: Rags / wipes",
+  ],
 };
 
 const GRAB_CODES = ["2222", "4444", "6666", "8888", "9999"] as const;
+
+function demoScope(
+  idBase: string,
+  items: Array<{ type: ScopeType; label: string; quick: string; done?: boolean }>
+): ScopeItem[] {
+  return items.map((item, idx) => ({
+    id: `${idBase}_scope_${idx + 1}`,
+    type: item.type,
+    label: item.label,
+    quick: item.quick,
+    done: Boolean(item.done),
+    createdAt: "2026-03-13T10:12:00.000Z",
+  }));
+}
+
+function demoMaterials(
+  idBase: string,
+  items: Array<{ name: string; qty?: string; checked?: boolean; addedBy?: string; addedAt?: string }>
+): MaterialItem[] {
+  return items.map((item, idx) => ({
+    id: `${idBase}_mat_${idx + 1}`,
+    name: item.name,
+    qty: item.qty,
+    checked: Boolean(item.checked),
+    addedBy: item.addedBy || "2222",
+    addedAt: item.addedAt || "2026-03-13T10:12:00.000Z",
+  }));
+}
+
+const DEMO_SEED_JOBS: AwnitJobRow[] = [
+  {
+    id: "demo_scheduled_entry_door",
+    title: "Customer wants dark bronze front entry door",
+    summary: "Measure opening, confirm swing direction, review hardware finish and threshold condition.",
+    stage: "Scheduled",
+    apptDate: "2026-03-14",
+    apptTime: "9:00 AM",
+    crew: "Crew A",
+    customer: {
+      name: "Alex Parker",
+      phone: "(555) 777-0142",
+      email: "alex.parker@example.com",
+      address: "202 Demo Lane",
+    },
+    scope_items: demoScope("demo_scheduled_entry_door", [
+      {
+        type: "door",
+        label: "Door 1",
+        quick:
+          "Front entry door needs full measure.\nConfirm outswing vs inswing.\nCheck jamb width, threshold slope, and existing hardware backset.",
+      },
+      {
+        type: "trim",
+        label: "Trim 1",
+        quick: "Inspect exterior trim return for soft spots.\nNote paint match requirement for final install.",
+      },
+    ]),
+    materials: demoMaterials("demo_scheduled_entry_door", [
+      { name: "Door 1: Prehung door unit" },
+      { name: "Door 1: Hinge set" },
+      { name: "General: Caulk / sealant" },
+      { name: "General: Screws", qty: "2 boxes" },
+    ]),
+    tech_notes:
+      "Customer wants finish and hardware to match existing exterior color.\nVerify swing direction and hardware color before final order release.\nTake before and after photos at threshold, strike side, exterior elevation, and interior finish line.",
+    meta: { materialsQuickAdd: "" },
+    updated_at: "2026-03-13T10:12:00.000Z",
+  },
+  {
+    id: "demo_scheduled_two_windows",
+    title: "Need 2 windows replaced in guest room",
+    summary: "Measure both openings, confirm stucco return depth, review grid pattern with customer.",
+    stage: "Scheduled",
+    apptDate: "2026-03-14",
+    apptTime: "1:30 PM",
+    crew: "Crew B",
+    customer: {
+      name: "John Carter",
+      phone: "(555) 777-0199",
+      email: "john.carter@example.com",
+      address: "18 Creator Ave",
+    },
+    scope_items: demoScope("demo_scheduled_two_windows", [
+      {
+        type: "window",
+        label: "Window 1",
+        quick: "Left guest room window.\nCheck rough opening and existing sill condition.\nConfirm tempered requirement.",
+      },
+      {
+        type: "window",
+        label: "Window 2",
+        quick: "Right guest room window.\nMatch visible lite pattern with adjacent front room window.",
+      },
+    ]),
+    materials: demoMaterials("demo_scheduled_two_windows", [
+      { name: "Window 1: Impact window unit" },
+      { name: "Window 2: Impact window unit" },
+      { name: "General: Flashing tape" },
+      { name: "General: Foam" },
+      { name: "General: Screws" },
+    ]),
+    tech_notes:
+      "Customer asked if one window can be privacy glass.\nNeed to verify HOA color and interior trim finish.\nGood candidate to convert fast after measurement.",
+    meta: { materialsQuickAdd: "" },
+    updated_at: "2026-03-13T10:14:00.000Z",
+  },
+  {
+    id: "demo_measured_aluminum_screen",
+    title: "Customer wants aluminum screen panel replaced",
+    summary: "Measurements complete, waiting to finalize spline and mesh spec.",
+    stage: "Measured",
+    apptDate: "2026-03-13",
+    apptTime: "11:00 AM",
+    crew: "Crew A",
+    customer: {
+      name: "Alex Parker",
+      phone: "(555) 777-0142",
+      email: "alex.parker@example.com",
+      address: "202 Demo Lane",
+    },
+    scope_items: demoScope("demo_measured_aluminum_screen", [
+      {
+        type: "screen",
+        label: "Screen 1",
+        quick:
+          "Screen panel measured at 22-1/4 × 78-5/8.\nSpline channel is in fair condition.\nRecommend fresh spline at reinstall.",
+        done: true,
+      },
+    ]),
+    materials: demoMaterials("demo_measured_aluminum_screen", [
+      { name: "Screen 1: Screen roll", checked: true },
+      { name: "Screen 1: Spline", checked: true },
+      { name: "Screen 1: Spline tool" },
+      { name: "General: Fasteners" },
+    ]),
+    tech_notes:
+      "Measurement complete.\nCustomer prefers darker mesh if available.\nNext step is estimate with material and labor line together.",
+    meta: { materialsQuickAdd: "" },
+    updated_at: "2026-03-13T10:18:00.000Z",
+  },
+  {
+    id: "demo_estimate_sent_side_door",
+    title: "Estimate out for side garage door replacement",
+    summary: "Customer received estimate, follow-up needed for hardware package selection.",
+    stage: "Estimate Sent",
+    apptDate: "2026-03-12",
+    apptTime: "3:00 PM",
+    crew: "Crew C",
+    customer: {
+      name: "Taylor Bennett",
+      phone: "(555) 777-0111",
+      email: "taylor.bennett@example.com",
+      address: "55 Sample Court",
+    },
+    scope_items: demoScope("demo_estimate_sent_side_door", [
+      {
+        type: "door",
+        label: "Door 1",
+        quick:
+          "Garage side entry opening measured and square enough for standard unit.\nCustomer deciding between smooth fiberglass and steel.",
+        done: true,
+      },
+      {
+        type: "custom",
+        label: "Custom 1",
+        quick: "Waiting on customer approval for upgraded deadbolt and lever set finish.",
+      },
+    ]),
+    materials: demoMaterials("demo_estimate_sent_side_door", [
+      { name: "Door 1: Door slab / unit", checked: true },
+      { name: "Door 1: Sweep" },
+      { name: "General: Shims" },
+      { name: "General: Caulk / sealant" },
+    ]),
+    tech_notes:
+      "Estimate sent this morning.\nCustomer liked bronze hardware but asked for brushed nickel option too.\nCall back tomorrow morning if no reply by 10:30.",
+    meta: { materialsQuickAdd: "" },
+    updated_at: "2026-03-13T10:22:00.000Z",
+  },
+  {
+    id: "demo_ordered_hardware_wait",
+    title: "Waiting on hardware color approval before order release",
+    summary: "Core order ready, final finish approval pending before vendor release.",
+    stage: "Ordered",
+    apptDate: "2026-03-17",
+    apptTime: "TBD",
+    crew: "Office",
+    customer: {
+      name: "Jordan Reed",
+      phone: "(555) 777-0188",
+      email: "jordan.reed@example.com",
+      address: "77 Builder Way",
+    },
+    scope_items: demoScope("demo_ordered_hardware_wait", [
+      {
+        type: "door",
+        label: "Door 1",
+        quick: "Order package ready.\nHold release until satin nickel vs matte black hardware is confirmed.",
+        done: true,
+      },
+      {
+        type: "trim",
+        label: "Trim 1",
+        quick: "Exterior trim touch-up included in install scope.\nNeed one extra stick white PVC.",
+      },
+    ]),
+    materials: demoMaterials("demo_ordered_hardware_wait", [
+      { name: "Door 1: Door slab / unit", checked: true },
+      { name: "Door 1: Hinge set", checked: true },
+      { name: "General: Screws", checked: true },
+      { name: "Trim 1: Touch-up paint" },
+      { name: "General: Caulk / sealant" },
+    ]),
+    tech_notes:
+      "Order draft built.\nNeed final hardware color text from customer before submitting.\nOnce approved, move install target to next open slot.",
+    meta: { materialsQuickAdd: "" },
+    updated_at: "2026-03-13T10:26:00.000Z",
+  },
+  {
+    id: "demo_installed_retrofit",
+    title: "Customer wants retrofit install wrapped up today",
+    summary: "Install complete, final completion photos and walkthrough still needed.",
+    stage: "Installed",
+    apptDate: "2026-03-13",
+    apptTime: "8:00 AM",
+    crew: "Crew A",
+    customer: {
+      name: "Alex Parker",
+      phone: "(555) 777-0142",
+      email: "alex.parker@example.com",
+      address: "202 Demo Lane",
+    },
+    scope_items: demoScope("demo_installed_retrofit", [
+      {
+        type: "window",
+        label: "Window 1",
+        quick:
+          "Opening measured at 35-3/4 × 53-1/8.\nStucco return is clean with usable shim space on both jambs.\nSill has light crown but remains serviceable.",
+        done: true,
+      },
+      {
+        type: "door",
+        label: "Door 1",
+        quick:
+          "Existing rear entry opening measured at 35-7/8 × 79-1/4.\nJamb reads plumb overall with minor head variance approx. 1/8.",
+        done: true,
+      },
+      {
+        type: "screen",
+        label: "Screen 1",
+        quick:
+          "Screen panel measured and reinstalled.\nRecommend fresh spline at reinstall.\nTake frame tension photo before final fit.",
+        done: true,
+      },
+      {
+        type: "trim",
+        label: "Trim 1",
+        quick: "Exterior trim return needs fresh caulk line after install.\nSmall paint touchup likely needed at upper left corner.",
+      },
+    ]),
+    materials: demoMaterials("demo_installed_retrofit", [
+      { name: "General: Caulk / sealant", checked: true },
+      { name: "General: Shims", checked: true },
+      { name: "General: Flashing tape", checked: true },
+      { name: "General: Foam", checked: true },
+      { name: "General: Screws", checked: true },
+      { name: "General: Wood filler" },
+    ]),
+    tech_notes:
+      "Customer wants finish and hardware to match existing exterior color.\nVerify swing direction and hardware color before final order release.\nTake before and after photos at threshold, strike side, exterior elevation, and interior finish line.\nInspect framing during removal for any hidden soft spots.\nFinal sweep: clean silicone line, collect signatures, and confirm customer satisfaction.",
+    meta: {
+      materialsQuickAdd:
+        "Door 1: Prehung door unit\nDoor 1: Hinge set\nDoor 1: Lockset / handle kit\nDoor 1: Door sweep\nGeneral: Flashing tape\nGeneral: Foam\nGeneral: Screws x 2 boxes",
+    },
+    updated_at: "2026-03-13T10:30:00.000Z",
+  },
+  {
+    id: "demo_installed_motorized_screen",
+    title: "Install 16' × 10' motorized screen on rear patio",
+    summary: "Main install finished, customer walkthrough and final trim cleanup pending.",
+    stage: "Installed",
+    apptDate: "2026-03-13",
+    apptTime: "10:30 AM",
+    crew: "Crew B",
+    customer: {
+      name: "Jamie Collins",
+      phone: "(555) 777-0166",
+      email: "jamie.collins@example.com",
+      address: "44 Presentation Blvd",
+    },
+    scope_items: demoScope("demo_installed_motorized_screen", [
+      {
+        type: "custom",
+        label: "Custom 1",
+        quick: "Motorized screen housing mounted and powered.\nNeed final remote pairing confirmation with customer.",
+        done: true,
+      },
+      {
+        type: "trim",
+        label: "Trim 1",
+        quick: "Touch-up on right side return.\nFinal bead needs smoothing after cleanup.",
+      },
+    ]),
+    materials: demoMaterials("demo_installed_motorized_screen", [
+      { name: "General: Fasteners", checked: true },
+      { name: "General: Touch-up paint" },
+      { name: "General: Caulk / sealant", checked: true },
+      { name: "General: Rags / wipes", checked: true },
+    ]),
+    tech_notes:
+      "Install is visually complete.\nNeed remote sync demonstration and final trim cleanup.\nTake wide patio photo and close-up of bottom bar alignment before moving to done.",
+    meta: { materialsQuickAdd: "" },
+    updated_at: "2026-03-13T10:33:00.000Z",
+  },
+  {
+    id: "demo_done_trim_touchup",
+    title: "Trim + caulk touchup completed at side entry",
+    summary: "Work complete, photos captured, ready for archive or follow-up.",
+    stage: "Done",
+    apptDate: "2026-03-12",
+    apptTime: "2:00 PM",
+    crew: "Crew C",
+    customer: {
+      name: "Morgan Price",
+      phone: "(555) 777-0107",
+      email: "morgan.price@example.com",
+      address: "91 Mockup Terrace",
+    },
+    scope_items: demoScope("demo_done_trim_touchup", [
+      {
+        type: "trim",
+        label: "Trim 1",
+        quick: "Completed exterior trim seal and touch-up.\nJoint lines cleaned and paint blended.",
+        done: true,
+      },
+    ]),
+    materials: demoMaterials("demo_done_trim_touchup", [
+      { name: "Trim 1: Caulk / sealant", checked: true },
+      { name: "Trim 1: Touch-up paint", checked: true },
+      { name: "General: Rags / wipes", checked: true },
+    ]),
+    tech_notes:
+      "Job complete.\nCompletion photos captured.\nCustomer happy with finish line and cleanup.\nSafe to archive after invoice confirmation.",
+    meta: { materialsQuickAdd: "" },
+    updated_at: "2026-03-13T10:36:00.000Z",
+  },
+];
+
+function mergeWithDemoSeed(rows: AwnitJobRow[]): AwnitJobRow[] {
+  const normalizedReal = rows.map((r) => ({
+    ...r,
+    stage: coerceStage(r.stage),
+  }));
+
+  const realIds = new Set(normalizedReal.map((j) => j.id));
+  const byStage = new Map<Stage, AwnitJobRow[]>();
+
+  const orderedStages: Stage[] = ["Scheduled", "Measured", "Estimate Sent", "Ordered", "Installed", "Done"];
+
+  for (const stage of orderedStages) {
+    byStage.set(
+      stage,
+      normalizedReal.filter((j) => coerceStage(j.stage) === stage)
+    );
+  }
+
+  const merged: AwnitJobRow[] = [...normalizedReal];
+
+  for (const stage of orderedStages) {
+    const existing = byStage.get(stage) || [];
+    const minimumNeeded = stage === "Installed" || stage === "Scheduled" ? 2 : 1;
+
+    if (existing.length >= minimumNeeded) continue;
+
+    const filler = DEMO_SEED_JOBS.filter(
+      (j) => coerceStage(j.stage) === stage && !realIds.has(j.id)
+    ).slice(0, minimumNeeded - existing.length);
+
+    for (const demoJob of filler) {
+      merged.push(demoJob);
+      realIds.add(demoJob.id);
+    }
+  }
+
+  return merged;
+}
 
 export default function AwnitDemoBoard() {
   (window as any).__AWNIT_API_MARKER__ = "supabase-wired-awnit-board-stabilized-v6-next-action";
@@ -497,14 +947,23 @@ export default function AwnitDemoBoard() {
         };
       });
 
-      setJobs(normalized);
+      const merged = mergeWithDemoSeed(normalized);
+
+      setJobs(merged);
 
       setSelectedJobId((cur) => {
-        if (cur && normalized.some((j) => j.id === cur)) return cur;
-        return normalized.length ? normalized[0].id : null;
+        if (cur && merged.some((j) => j.id === cur)) return cur;
+        return merged.length ? merged[0].id : null;
       });
     } catch (e: any) {
       setLoadError(e?.message || "Failed to load jobs.");
+
+      const merged = mergeWithDemoSeed([]);
+      setJobs(merged);
+      setSelectedJobId((cur) => {
+        if (cur && merged.some((j) => j.id === cur)) return cur;
+        return merged.length ? merged[0].id : null;
+      });
     } finally {
       setLoading(false);
     }
@@ -530,6 +989,9 @@ export default function AwnitDemoBoard() {
   async function persist(jobId: string, patch: Record<string, any>) {
     markEdit();
     updateJobOptimistic(jobId, patch as any);
+
+    const isDemoJob = jobId.startsWith("demo_");
+    if (isDemoJob) return;
 
     try {
       const saved = await (awnitUpdateJob as any)(jobId, patch);
@@ -878,7 +1340,7 @@ export default function AwnitDemoBoard() {
     <div className="min-h-screen bg-[#0b1220] text-white">
       <div className="flex min-h-screen w-full">
         <div className={rightPanel ? "min-w-0 flex-1" : "w-full"}>
-          <div className="mx-auto max-w-7xl p-3 md:p-6">
+          <div className="mx-auto max-w-7xl px-3 py-3 sm:px-4 sm:py-4 md:px-6 md:py-6">
             <input
               ref={cameraInputRef}
               type="file"
@@ -891,142 +1353,161 @@ export default function AwnitDemoBoard() {
               }}
             />
 
-            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-              <div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="text-2xl font-extrabold tracking-tight">AWNIT — Live Board</div>
-                  <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/25 bg-emerald-500/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-emerald-200">
-                    <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                    LIVE
-                  </span>
-                  <span className="inline-flex items-center rounded-full border border-cyan-400/20 bg-cyan-500/10 px-3 py-1 text-xs font-bold text-cyan-100">
-                    HomePlanet Demo Node
-                  </span>
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-3 sm:p-4 md:p-5">
+              <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                    <div className="min-w-0 text-xl font-extrabold tracking-tight sm:text-2xl md:text-3xl">
+                      AWNIT — Live Board
+                    </div>
+
+                    <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/25 bg-emerald-500/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-emerald-200 sm:text-xs">
+                      <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
+                      LIVE
+                    </span>
+
+                    <span className="inline-flex items-center rounded-full border border-cyan-400/20 bg-cyan-500/10 px-3 py-1 text-[11px] font-bold text-cyan-100 sm:text-xs">
+                      HomePlanet Demo Node
+                    </span>
+                  </div>
+
+                  <div className="mt-2 text-sm text-white/60">
+                    Supabase-backed • scope + materials + notes • invoice v1
+                  </div>
+
+                  {loadError ? <div className="mt-2 text-xs text-red-300">{loadError}</div> : null}
                 </div>
 
-                <div className="mt-1 text-sm text-white/60">Supabase-backed • scope + materials + notes • invoice v1</div>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                  <button
+                    type="button"
+                    className="min-h-[48px] rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold hover:bg-white/10"
+                    onClick={() => setShowPanels((v) => !v)}
+                  >
+                    {showPanels ? "Hide Panels" : "Show Panels"}
+                  </button>
 
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-bold text-white/80">
-                    Today&apos;s Jobs: <span className="text-white">{todaysJobsCount}</span>
+                  <button
+                    type="button"
+                    className="min-h-[48px] rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold hover:bg-white/10 disabled:opacity-60"
+                    onClick={() => void loadJobs()}
+                    disabled={loading}
+                    title="Reload from database"
+                  >
+                    {loading ? "Loading…" : "Refresh"}
+                  </button>
+
+                  <button
+                    type="button"
+                    className="min-h-[48px] rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold hover:bg-white/10 sm:col-span-2 xl:col-span-1"
+                    onClick={() => window.location.assign("/planet/vehicles/awnit-intake")}
+                    title="Add a new job"
+                  >
+                    + Add Job
+                  </button>
+
+                  <div className="flex min-h-[48px] items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-3 sm:col-span-2 xl:col-span-1">
+                    <div className="text-xs font-bold text-white/70">Grab Code</div>
+                    <select
+                      className="min-w-[88px] rounded-lg bg-transparent text-sm outline-none"
+                      value={grabCode}
+                      onChange={(e) => setGrabCode(e.target.value as any)}
+                    >
+                      {GRAB_CODES.map((c, idx) => (
+                        <option key={reactKey("grab-code", c, idx)} value={c} className="text-black">
+                          {c}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                  <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-bold text-white/80">
-                    Active Crews: <span className="text-white">{activeCrewsCount}</span>
-                  </div>
-                  <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-bold text-white/80">
-                    Invoice Ready: <span className="text-white">{invoiceReadyCount}</span>
-                  </div>
+
+                  <button
+                    type="button"
+                    className="min-h-[48px] rounded-xl border border-blue-400/40 bg-blue-500/20 px-5 py-3 text-sm font-extrabold text-blue-100 hover:bg-blue-500/30 disabled:opacity-50 sm:col-span-2 xl:col-span-2"
+                    onClick={generateInvoice}
+                    disabled={!selectedJob || isGeneratingInvoice}
+                    title="Generate invoice from Scope + Materials + Notes"
+                  >
+                    {isGeneratingInvoice ? "Generating…" : "Generate Invoice"}
+                  </button>
                 </div>
-
-                {loadError ? <div className="mt-2 text-xs text-red-300">{loadError}</div> : null}
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold hover:bg-white/10"
-                  onClick={() => setShowPanels((v) => !v)}
-                >
-                  {showPanels ? "Hide Panels" : "Show Panels"}
-                </button>
-
-                <button
-                  type="button"
-                  className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold hover:bg-white/10"
-                  onClick={() => void loadJobs()}
-                  disabled={loading}
-                  title="Reload from database"
-                >
-                  {loading ? "Loading…" : "Refresh"}
-                </button>
-
-                <button
-                  type="button"
-                  className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold hover:bg-white/10"
-                  onClick={() => window.location.assign("/planet/vehicles/awnit-intake")}
-                  title="Add a new job"
-                >
-                  + Add Job
-                </button>
-
-                <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-3">
-                  <div className="text-xs font-bold text-white/70">Grab Code</div>
-                  <select
-                    className="rounded-lg bg-transparent text-sm outline-none"
-                    value={grabCode}
-                    onChange={(e) => setGrabCode(e.target.value as any)}
-                  >
-                    {GRAB_CODES.map((c, idx) => (
-                      <option key={reactKey("grab-code", c, idx)} value={c} className="text-black">
-                        {c}
-                      </option>
-                    ))}
-                  </select>
+              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm font-bold text-white/80">
+                  Today&apos;s Jobs: <span className="text-white">{todaysJobsCount}</span>
                 </div>
-
-                <button
-                  type="button"
-                  className="rounded-xl border border-blue-400/40 bg-blue-500/20 px-5 py-3 text-sm font-extrabold text-blue-100 hover:bg-blue-500/30 disabled:opacity-50"
-                  onClick={generateInvoice}
-                  disabled={!selectedJob || isGeneratingInvoice}
-                  title="Generate invoice from Scope + Materials + Notes"
-                >
-                  {isGeneratingInvoice ? "Generating…" : "Generate Invoice"}
-                </button>
+                <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm font-bold text-white/80">
+                  Active Crews: <span className="text-white">{activeCrewsCount}</span>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm font-bold text-white/80">
+                  Invoice Ready: <span className="text-white">{invoiceReadyCount}</span>
+                </div>
               </div>
             </div>
 
             {showPanels ? (
-              <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3 xl:grid-cols-6">
-                {stages.map((s, stageIdx) => {
-                  const tone = stageTone(s);
-                  const list = jobsByStage.get(s) || [];
-                  return (
-                    <div
-                      key={reactKey("stage-lane", s, stageIdx)}
-                      className={cn("rounded-2xl border border-white/10 bg-white/5", tone.lane, "border-l-4")}
-                    >
-                      <div className="flex items-center justify-between border-b border-white/10 p-3">
-                        <div className="text-sm font-extrabold">{s}</div>
-                        <div className={cn("rounded-full border px-2 py-0.5 text-xs font-bold", tone.pill)}>{list.length}</div>
-                      </div>
+              <div className="mt-4">
+                <div className="flex gap-3 overflow-x-auto pb-2 xl:grid xl:grid-cols-6 xl:overflow-visible xl:pb-0">
+                  {stages.map((s, stageIdx) => {
+                    const tone = stageTone(s);
+                    const list = jobsByStage.get(s) || [];
 
-                      <div className="space-y-2 p-2">
-                        {list.map((j, jobIdx) => (
-                          <button
-                            key={reactKey("job-card", s, j.id, j.updated_at, jobIdx)}
-                            type="button"
-                            onClick={() => setSelectedJobId(j.id)}
-                            className={cn(
-                              "w-full rounded-xl border px-3 py-3 text-left hover:bg-white/10 transition",
-                              selectedJobId === j.id ? "border-emerald-400/40 bg-emerald-400/10" : "border-white/10 bg-white/5"
-                            )}
-                          >
-                            <div className="truncate text-sm font-bold">{j.title || "Untitled Job"}</div>
-                            <div className="mt-0.5 truncate text-xs text-white/60">{j.customer?.name || "-"}</div>
-                            <div className="mt-1 text-[11px] text-white/60">{fmtAppt(j)}</div>
-                          </button>
-                        ))}
-                        {list.length === 0 ? <div className="px-3 py-2 text-xs text-white/40">No jobs</div> : null}
+                    return (
+                      <div
+                        key={reactKey("stage-lane", s, stageIdx)}
+                        className={cn(
+                          "min-w-[280px] shrink-0 rounded-2xl border border-white/10 bg-white/5 xl:min-w-0",
+                          tone.lane,
+                          "border-l-4"
+                        )}
+                      >
+                        <div className="flex items-center justify-between border-b border-white/10 p-3">
+                          <div className="text-sm font-extrabold">{s}</div>
+                          <div className={cn("rounded-full border px-2 py-0.5 text-xs font-bold", tone.pill)}>
+                            {list.length}
+                          </div>
+                        </div>
+
+                        <div className="space-y-2 p-2">
+                          {list.map((j, jobIdx) => (
+                            <button
+                              key={reactKey("job-card", s, j.id, j.updated_at, jobIdx)}
+                              type="button"
+                              onClick={() => setSelectedJobId(j.id)}
+                              className={cn(
+                                "w-full rounded-xl border px-3 py-3 text-left transition hover:bg-white/10",
+                                selectedJobId === j.id
+                                  ? "border-emerald-400/40 bg-emerald-400/10"
+                                  : "border-white/10 bg-white/5"
+                              )}
+                            >
+                              <div className="truncate text-sm font-bold">{j.title || "Untitled Job"}</div>
+                              <div className="mt-0.5 truncate text-xs text-white/60">{j.customer?.name || "-"}</div>
+                              <div className="mt-1 text-[11px] text-white/60">{fmtAppt(j)}</div>
+                            </button>
+                          ))}
+                          {list.length === 0 ? <div className="px-3 py-2 text-xs text-white/40">No jobs</div> : null}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             ) : null}
 
             <div className="mt-4 rounded-2xl border border-white/10 bg-white/5">
-              <div className="flex flex-col gap-2 border-b border-white/10 p-3 md:flex-row md:items-center md:justify-between">
-                <div>
+              <div className="flex flex-col gap-3 border-b border-white/10 p-3 sm:p-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0">
                   <div className="text-lg font-extrabold">Job Drawer</div>
                   <div className="text-xs text-white/60">Click a job in lanes to load details</div>
                 </div>
 
                 {selectedJob ? (
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
                     <button
                       type="button"
-                      className="rounded-xl border border-blue-400/40 bg-blue-500/20 px-4 py-3 text-sm font-bold text-blue-100 hover:bg-blue-500/30"
+                      className="min-h-[44px] rounded-xl border border-blue-400/40 bg-blue-500/20 px-4 py-3 text-sm font-bold text-blue-100 hover:bg-blue-500/30"
                       onClick={() => copyToClipboard(buildTechPayload(selectedJob))}
                     >
                       Copy Tech Text
@@ -1034,16 +1515,16 @@ export default function AwnitDemoBoard() {
 
                     <button
                       type="button"
-                      className="rounded-xl border border-blue-400/40 bg-blue-500/20 px-4 py-3 text-sm font-bold text-blue-100 hover:bg-blue-500/30"
+                      className="min-h-[44px] rounded-xl border border-blue-400/40 bg-blue-500/20 px-4 py-3 text-sm font-bold text-blue-100 hover:bg-blue-500/30"
                       onClick={openCameraCapture}
                       title="Open camera"
                     >
-                      Camera
+                      🖼️ Camera
                     </button>
 
                     {selectedJob.customer?.phone ? (
                       <a
-                        className="rounded-xl border border-emerald-400/40 bg-emerald-500/20 px-4 py-3 text-sm font-bold text-emerald-100 hover:bg-emerald-500/30"
+                        className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-emerald-400/40 bg-emerald-500/20 px-4 py-3 text-sm font-bold text-emerald-100 hover:bg-emerald-500/30"
                         href={smsHref(selectedJob)}
                         target="_blank"
                         rel="noreferrer"
@@ -1055,7 +1536,7 @@ export default function AwnitDemoBoard() {
 
                     {selectedJob.customer?.address ? (
                       <a
-                        className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-bold hover:bg-white/10"
+                        className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-bold hover:bg-white/10"
                         href={mapsHref(selectedJob)}
                         target="_blank"
                         rel="noreferrer"
@@ -1067,7 +1548,7 @@ export default function AwnitDemoBoard() {
 
                     {selectedJob.customer?.phone ? (
                       <a
-                        className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-bold hover:bg-white/10"
+                        className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-bold hover:bg-white/10"
                         href={smsHref(selectedJob)}
                         target="_blank"
                         rel="noreferrer"
@@ -1079,7 +1560,7 @@ export default function AwnitDemoBoard() {
 
                     {selectedJob.customer?.email ? (
                       <a
-                        className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-bold hover:bg-white/10"
+                        className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-bold hover:bg-white/10"
                         href={emailHref(selectedJob)}
                         target="_blank"
                         rel="noreferrer"
@@ -1095,24 +1576,25 @@ export default function AwnitDemoBoard() {
               {!selectedJob ? (
                 <div className="p-4 text-sm text-white/60">Select a job to open the drawer.</div>
               ) : (
-                <div className="grid grid-cols-1 gap-3 p-3 lg:grid-cols-3">
-                  <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                <div className="grid grid-cols-1 gap-3 p-3 sm:p-4 xl:grid-cols-3">
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-3 sm:p-4">
                     <div className="text-sm font-extrabold">Customer</div>
-                    <div className="mt-2 space-y-1 text-sm">
+
+                    <div className="mt-3 space-y-2 text-sm">
                       <div className="font-bold">{selectedJob.customer?.name || "-"}</div>
-                      <div className="text-white/70">{selectedJob.customer?.address || "-"}</div>
-                      <div className="text-white/70">{selectedJob.customer?.phone || "-"}</div>
-                      <div className="text-white/70">{selectedJob.customer?.email || "-"}</div>
+                      <div className="break-words text-white/70">{selectedJob.customer?.address || "-"}</div>
+                      <div className="break-all text-white/70">{selectedJob.customer?.phone || "-"}</div>
+                      <div className="break-all text-white/70">{selectedJob.customer?.email || "-"}</div>
                     </div>
 
-                    <div className="mt-3 rounded-2xl border border-white/10 bg-black/20 p-3">
+                    <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-3">
                       <div className="text-xs font-bold text-white/60">Appointment</div>
                       <div className="mt-1 text-sm font-bold">{fmtAppt(selectedJob)}</div>
                     </div>
 
                     <div
                       className={cn(
-                        "mt-3 rounded-2xl border p-3",
+                        "mt-4 rounded-2xl border p-3",
                         nextActionTone(coerceStage(selectedJob.stage))
                       )}
                     >
@@ -1124,7 +1606,7 @@ export default function AwnitDemoBoard() {
                       </div>
                     </div>
 
-                    <div className="mt-3">
+                    <div className="mt-4">
                       <div className="text-xs font-bold text-white/60">Stage</div>
                       <div className="mt-2 flex flex-wrap gap-2">
                         {stages.map((s, idx) => (
@@ -1132,7 +1614,7 @@ export default function AwnitDemoBoard() {
                             key={reactKey("stage-pill", selectedJob.id, s, idx)}
                             type="button"
                             className={cn(
-                              "rounded-full border px-3 py-1 text-xs font-extrabold",
+                              "rounded-full border px-3 py-2 text-xs font-extrabold",
                               coerceStage(selectedJob.stage) === s
                                 ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-100"
                                 : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10"
@@ -1146,8 +1628,8 @@ export default function AwnitDemoBoard() {
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                    <div className="flex items-center justify-between">
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-3 sm:p-4">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <div className="text-sm font-extrabold">Scope + Measurements</div>
                       <div className="text-xs text-white/60">
                         {(() => {
@@ -1157,12 +1639,12 @@ export default function AwnitDemoBoard() {
                       </div>
                     </div>
 
-                    <div className="mt-3 flex flex-wrap gap-2">
+                    <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
                       {(["door", "window", "screen", "trim", "custom"] as ScopeType[]).map((t, idx) => (
                         <button
                           key={reactKey("scope-add", selectedJob.id, t, idx)}
                           type="button"
-                          className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-extrabold hover:bg-white/10"
+                          className="min-h-[42px] rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-extrabold hover:bg-white/10"
                           onClick={() => addScopeItem(selectedJob, t)}
                         >
                           + {t.toUpperCase()}
@@ -1186,9 +1668,9 @@ export default function AwnitDemoBoard() {
                             key={reactKey("scope-item", selectedJob.id, it.id, it.type, it.createdAt, idx)}
                             className="rounded-2xl border border-white/10 bg-black/20 p-3"
                           >
-                            <div className="flex items-start justify-between gap-2">
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                               <div className="min-w-0">
-                                <div className="flex items-center gap-2">
+                                <div className="flex flex-wrap items-center gap-2">
                                   <button
                                     type="button"
                                     className={cn(
@@ -1201,12 +1683,12 @@ export default function AwnitDemoBoard() {
                                   >
                                     {it.done ? "Done" : "Open"}
                                   </button>
-                                  <div className="truncate text-sm font-extrabold">{it.label}</div>
+                                  <div className="min-w-0 truncate text-sm font-extrabold">{it.label}</div>
                                 </div>
                                 <div className="mt-1 text-xs text-white/50">{it.type}</div>
                               </div>
 
-                              <div className="flex items-center gap-2">
+                              <div className="flex flex-wrap items-center gap-2">
                                 <MicButton
                                   label="Mic"
                                   supported={supported}
@@ -1220,7 +1702,7 @@ export default function AwnitDemoBoard() {
                                 />
                                 <button
                                   type="button"
-                                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-extrabold hover:bg-white/10"
+                                  className="min-h-[42px] rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-extrabold hover:bg-white/10"
                                   onClick={() => removeScopeItem(selectedJob, it.id)}
                                 >
                                   Remove
@@ -1242,12 +1724,12 @@ export default function AwnitDemoBoard() {
                   </div>
 
                   <div className="space-y-3">
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                      <div className="flex items-center justify-between">
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-3 sm:p-4">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <div className="text-sm font-extrabold">Materials Grab List</div>
                         <button
                           type="button"
-                          className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-extrabold hover:bg-white/10"
+                          className="min-h-[42px] rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-extrabold hover:bg-white/10"
                           onClick={() => copyToClipboard(buildGrabListText(selectedJob, getMaterials(selectedJob)))}
                         >
                           Copy Grab List
@@ -1259,7 +1741,7 @@ export default function AwnitDemoBoard() {
                           <button
                             key={reactKey("material-template", selectedJob.id, k, idx)}
                             type="button"
-                            className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-extrabold hover:bg-white/10"
+                            className="min-h-[42px] rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-extrabold hover:bg-white/10"
                             onClick={() => applyTemplate(selectedJob, k)}
                           >
                             + {k}
@@ -1273,13 +1755,13 @@ export default function AwnitDemoBoard() {
                           className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none placeholder:text-white/30"
                           value={getMaterialsQuickAddText(selectedJob)}
                           onChange={(e) => setMaterialsQuickAddText(selectedJob, e.target.value)}
-                          placeholder={"Caulk / sealant\nScrews x 2 boxes\nShims"}
+                          placeholder={"General: Caulk / sealant\nDoor 1: Hinge set\nGeneral: Screws x 2 boxes"}
                           rows={4}
                         />
-                        <div className="mt-2 flex items-center justify-between">
+                        <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                           <button
                             type="button"
-                            className="rounded-xl bg-white px-3 py-2 text-xs font-extrabold text-black hover:bg-white/90"
+                            className="min-h-[42px] rounded-xl bg-white px-3 py-2 text-xs font-extrabold text-black hover:bg-white/90"
                             onClick={() => quickAddMaterials(selectedJob)}
                           >
                             Add Lines
@@ -1291,49 +1773,62 @@ export default function AwnitDemoBoard() {
                         </div>
                       </div>
 
-                      <div className="mt-3 space-y-2">
+                      <div className="mt-3 space-y-3">
                         {getMaterials(selectedJob).length === 0 ? (
                           <div className="rounded-xl border border-white/10 bg-black/20 p-3 text-sm text-white/60">
                             No materials yet. Use templates or quick add.
                           </div>
                         ) : null}
 
-                        {getMaterials(selectedJob).map((m, idx) => (
+                        {groupMaterialsForDisplay(getMaterials(selectedJob)).map(([groupName, items], groupIdx) => (
                           <div
-                            key={reactKey("material-item", selectedJob.id, m.id, m.name, m.addedAt, idx)}
-                            className="flex items-start justify-between gap-2 rounded-xl border border-white/10 bg-black/20 p-3"
+                            key={reactKey("material-group", selectedJob.id, groupName, groupIdx)}
+                            className="rounded-2xl border border-white/10 bg-black/20 p-3"
                           >
-                            <div className="min-w-0">
-                              <button
-                                type="button"
-                                className="text-left"
-                                onClick={() => toggleMaterial(selectedJob, m.id)}
-                                title="Toggle checked"
-                              >
-                                <div className="truncate text-sm font-bold">
-                                  {m.checked ? "✅" : "⬜"} {m.name}
-                                  {m.qty ? <span className="text-white/60"> (x {m.qty})</span> : null}
-                                </div>
-                                <div className="mt-1 text-xs text-white/50">
-                                  {m.addedBy} • {safeTimeLabel(m.addedAt)}
-                                </div>
-                              </button>
+                            <div className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.16em] text-white/55">
+                              {groupName}
                             </div>
 
-                            <button
-                              type="button"
-                              className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-extrabold hover:bg-white/10"
-                              onClick={() => removeMaterial(selectedJob, m.id)}
-                            >
-                              Remove
-                            </button>
+                            <div className="space-y-2">
+                              {items.map((m, idx) => (
+                                <div
+                                  key={reactKey("material-item", selectedJob.id, groupName, m.id, m.name, m.addedAt, idx)}
+                                  className="flex flex-col gap-2 rounded-xl border border-white/10 bg-white/5 p-3 sm:flex-row sm:items-start sm:justify-between"
+                                >
+                                  <div className="min-w-0">
+                                    <button
+                                      type="button"
+                                      className="text-left"
+                                      onClick={() => toggleMaterial(selectedJob, m.id)}
+                                      title="Toggle checked"
+                                    >
+                                      <div className="break-words text-sm font-bold">
+                                        {m.checked ? "✅" : "⬜"} {m.name}
+                                        {m.qty ? <span className="text-white/60"> (x {m.qty})</span> : null}
+                                      </div>
+                                      <div className="mt-1 text-xs text-white/50">
+                                        {m.addedBy} • {safeTimeLabel(m.addedAt)}
+                                      </div>
+                                    </button>
+                                  </div>
+
+                                  <button
+                                    type="button"
+                                    className="min-h-[42px] self-start rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-extrabold hover:bg-white/10"
+                                    onClick={() => removeMaterial(selectedJob, m.id)}
+                                  >
+                                    Remove
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         ))}
                       </div>
                     </div>
 
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                      <div className="flex items-center justify-between">
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-3 sm:p-4">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <div className="text-sm font-extrabold">Technician Notes</div>
                         <MicButton
                           label="Mic"
@@ -1364,7 +1859,13 @@ export default function AwnitDemoBoard() {
         </div>
 
         {rightPanel === "measurement" && (
-          <aside className="relative w-[min(48vw,720px)] min-w-[360px] max-w-[720px] border-l border-white/10 bg-black/40 backdrop-blur-xl">
+          <aside
+            className={cn(
+              "z-40 border-white/10 bg-black/50 backdrop-blur-xl",
+              "fixed inset-x-0 bottom-0 top-[72px] border-t md:top-[80px]",
+              "xl:relative xl:top-0 xl:w-[min(48vw,720px)] xl:min-w-[360px] xl:max-w-[720px] xl:border-l xl:border-t-0"
+            )}
+          >
             <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
               <div className="min-w-0">
                 <div className="text-xs uppercase tracking-[0.2em] text-cyan-300/80">Beam Workspace</div>
@@ -1380,7 +1881,7 @@ export default function AwnitDemoBoard() {
               </button>
             </div>
 
-            <div className="h-[calc(100vh-65px)] w-full">
+            <div className="h-[calc(100%-57px)] w-full xl:h-[calc(100vh-65px)]">
               <iframe title={panelTitle} src={panelUrl} className="h-full w-full bg-white" />
             </div>
           </aside>
