@@ -19,10 +19,18 @@ import LifePlanet from "../pages/LifePlanet";
 /* NEW PAGE */
 import JeanettesLanding from "../pages/JeanettesLanding";
 
+/* Restaurant demo pages */
+import RestaurantRushSimpleDemo from "../pages/RestaurantRushSimpleDemo";
+import RestaurantRushManualDemo from "../pages/RestaurantRushManualDemo";
+import RestaurantRushLiveDemo from "../pages/RestaurantRushLiveDemo";
+import RestaurantRushDemo from "../pages/RestaurantRushDemo";
+import MomsKitchenDemo from "../pages/MomsKitchenDemo";
+
 /**
  * Planet layer:
  * - /planet/creator is a special "launchpad" (CreatorCity)
  * - /planet/vehicles/awnit-demo is a special demo surface
+ * - /planet/food/... exposes restaurant demo pages
  * - /planet/:planetId routes to PlanetOverview
  * - /planet/:planetId/:cityId routes to CityPage
  * - legacy creator paths stay stable
@@ -30,7 +38,6 @@ import JeanettesLanding from "../pages/JeanettesLanding";
 export default function PlanetRoutes() {
   return (
     <Routes>
-
       {/* /planet -> default planet */}
       <Route index element={<Navigate to="/planet/creator" replace />} />
 
@@ -51,6 +58,13 @@ export default function PlanetRoutes() {
       {/* ---------- Legacy/Fallback demo path (optional) ---------- */}
       <Route path="demo/awnit" element={<AwnitDemoBoard />} />
 
+      {/* ---------- Restaurant / Food demos (must be ABOVE generic routes) ---------- */}
+      <Route path="food/restaurant-rush-simple" element={<RestaurantRushSimpleDemo />} />
+      <Route path="food/restaurant-rush-manual" element={<RestaurantRushManualDemo />} />
+      <Route path="food/restaurant-rush-live" element={<RestaurantRushLiveDemo />} />
+      <Route path="food/restaurant-rush" element={<RestaurantRushDemo />} />
+      <Route path="food/moms-kitchen" element={<MomsKitchenDemo />} />
+
       {/* ---------- Jeanette Landing Page ---------- */}
       <Route path="jeanettes" element={<JeanettesLanding />} />
 
@@ -63,7 +77,6 @@ export default function PlanetRoutes() {
 
       {/* ---------- Fallback ---------- */}
       <Route path="*" element={<Navigate to="/planet/creator" replace />} />
-
     </Routes>
   );
 }

@@ -95,6 +95,47 @@ function priorityClasses(priority?: "normal" | "rush") {
     : "border-cyan-400/25 bg-cyan-500/10 text-cyan-100";
 }
 
+function laneSurface(lane: LaneId) {
+  switch (lane) {
+    case "new":
+      return "border-cyan-400/12 bg-cyan-500/[0.03]";
+    case "cook":
+      return "border-amber-400/12 bg-amber-500/[0.03]";
+    case "ready":
+      return "border-emerald-400/12 bg-emerald-500/[0.03]";
+    case "done":
+      return "border-white/10 bg-white/[0.03]";
+    default:
+      return "border-white/10 bg-white/[0.03]";
+  }
+}
+
+function primaryButtonClasses(lane: LaneId) {
+  switch (lane) {
+    case "new":
+      return "border-cyan-400/30 bg-cyan-500/10 text-cyan-100 hover:bg-cyan-500/15";
+    case "cook":
+      return "border-amber-400/30 bg-amber-500/10 text-amber-100 hover:bg-amber-500/15";
+    case "ready":
+      return "border-emerald-400/30 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/15";
+    default:
+      return "border-white/10 bg-white/5 text-white/60";
+  }
+}
+
+function statusChipClasses(lane: LaneId) {
+  switch (lane) {
+    case "new":
+      return "border-cyan-400/20 bg-cyan-500/10 text-cyan-100";
+    case "cook":
+      return "border-amber-400/20 bg-amber-500/10 text-amber-100";
+    case "ready":
+      return "border-emerald-400/20 bg-emerald-500/10 text-emerald-100";
+    default:
+      return "border-white/10 bg-white/5 text-white/75";
+  }
+}
+
 function seedTickets(now: number): Ticket[] {
   return [
     {
@@ -308,48 +349,50 @@ export default function RestaurantRushSimpleDemo() {
   }, [tickets]);
 
   const activeTickets = tickets.filter((ticket) => ticket.lane !== "done").length;
-  const rushTickets = tickets.filter((ticket) => ticket.priority === "rush" && ticket.lane !== "done").length;
+  const rushTickets = tickets.filter(
+    (ticket) => ticket.priority === "rush" && ticket.lane !== "done"
+  ).length;
 
   return (
     <div className="min-h-screen bg-[#07111b] text-white">
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.14),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(217,70,239,0.12),_transparent_28%)]" />
 
-        <div className="relative mx-auto max-w-[1800px] px-4 py-4 md:px-5 md:py-5">
-          <header className="mb-4 rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-2xl shadow-black/20 backdrop-blur">
+        <div className="relative mx-auto max-w-[1800px] px-3 py-3 sm:px-4 sm:py-4 md:px-5 md:py-5">
+          <header className="mb-4 rounded-[28px] border border-white/10 bg-white/5 p-4 shadow-2xl shadow-black/20 backdrop-blur sm:p-5 md:p-6">
             <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
               <div className="min-w-0">
                 <div className="mb-2 inline-flex items-center rounded-full border border-cyan-400/30 bg-cyan-500/10 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.24em] text-cyan-200">
-                  Mom&apos;s Kitchen Simple Demo
+                  Restaurant Rush Simple Demo
                 </div>
 
-                <h1 className="text-[34px] font-semibold tracking-tight text-white md:text-[40px]">
-                  Mom&apos;s Kitchen Flow Board
+                <h1 className="text-[30px] font-semibold tracking-tight text-white sm:text-[34px] md:text-[40px]">
+                  Pogie’s Kitchen Flow Board
                 </h1>
 
-                <p className="mt-2 max-w-4xl text-base text-white/70 md:text-lg">
+                <p className="mt-2 max-w-4xl text-sm text-white/70 sm:text-base md:text-lg">
                   Big, simple, readable. New tickets, cooking, ready, completed. Clear flow for cooks, servers, and owners.
                 </p>
               </div>
 
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
                 <button
                   onClick={addTicket}
-                  className="min-h-[60px] rounded-2xl border border-cyan-400/40 bg-cyan-500/15 px-5 py-3 text-lg font-semibold text-cyan-100 transition hover:bg-cyan-500/20"
+                  className="min-h-[52px] rounded-2xl border border-cyan-400/40 bg-cyan-500/15 px-5 py-3 text-base font-semibold text-cyan-100 transition hover:bg-cyan-500/20 md:min-h-[56px] md:text-lg"
                 >
                   + Add Ticket
                 </button>
 
                 <button
                   onClick={clearCompleted}
-                  className="min-h-[60px] rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-lg font-semibold text-white/90 transition hover:bg-white/10"
+                  className="min-h-[52px] rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-base font-semibold text-white/90 transition hover:bg-white/10 md:min-h-[56px] md:text-lg"
                 >
                   Clear Completed
                 </button>
 
                 <button
                   onClick={resetBoard}
-                  className="min-h-[60px] rounded-2xl border border-fuchsia-400/30 bg-fuchsia-500/10 px-5 py-3 text-lg font-semibold text-fuchsia-100 transition hover:bg-fuchsia-500/15"
+                  className="min-h-[52px] rounded-2xl border border-fuchsia-400/30 bg-fuchsia-500/10 px-5 py-3 text-base font-semibold text-fuchsia-100 transition hover:bg-fuchsia-500/15 sm:col-span-2 xl:col-span-1 md:min-h-[56px] md:text-lg"
                 >
                   Reset Board
                 </button>
@@ -357,34 +400,39 @@ export default function RestaurantRushSimpleDemo() {
             </div>
 
             <div className="mt-5 grid grid-cols-2 gap-3 xl:grid-cols-4">
-              <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-4">
-                <div className="text-[11px] uppercase tracking-[0.24em] text-white/45">Active Tickets</div>
-                <div className="mt-1 text-4xl font-semibold text-white">{activeTickets}</div>
-              </div>
-
-              <div className="rounded-2xl border border-rose-400/20 bg-rose-500/[0.06] px-4 py-4">
-                <div className="text-[11px] uppercase tracking-[0.24em] text-rose-200/70">Rush Orders</div>
-                <div className="mt-1 text-4xl font-semibold text-rose-100">{rushTickets}</div>
-              </div>
-
-              <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/[0.06] px-4 py-4">
-                <div className="text-[11px] uppercase tracking-[0.24em] text-emerald-200/70">Ready Now</div>
-                <div className="mt-1 text-4xl font-semibold text-emerald-100">{grouped.ready.length}</div>
-              </div>
-
-              <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-4">
-                <div className="text-[11px] uppercase tracking-[0.24em] text-white/45">Completed</div>
-                <div className="mt-1 text-4xl font-semibold text-white">{grouped.done.length}</div>
-              </div>
+              <MetricCard
+                label="Active Tickets"
+                value={activeTickets}
+                className="border-white/10 bg-black/20 text-white"
+                labelClassName="text-white/45"
+              />
+              <MetricCard
+                label="Rush Orders"
+                value={rushTickets}
+                className="border-rose-400/20 bg-rose-500/[0.06] text-rose-100"
+                labelClassName="text-rose-200/70"
+              />
+              <MetricCard
+                label="Ready Now"
+                value={grouped.ready.length}
+                className="border-emerald-400/20 bg-emerald-500/[0.06] text-emerald-100"
+                labelClassName="text-emerald-200/70"
+              />
+              <MetricCard
+                label="Completed"
+                value={grouped.done.length}
+                className="border-white/10 bg-black/20 text-white"
+                labelClassName="text-white/45"
+              />
             </div>
           </header>
 
           <main>
-            <div className="grid grid-cols-1 gap-4 xl:grid-cols-4">
+            <div className="flex gap-4 overflow-x-auto pb-2 xl:grid xl:grid-cols-4 xl:overflow-visible xl:pb-0">
               {laneMeta.map((lane) => (
                 <section
                   key={lane.id}
-                  className={`rounded-[28px] border ${lane.accent} bg-white/[0.06] p-4 shadow-xl shadow-black/20 backdrop-blur`}
+                  className={`min-w-[300px] shrink-0 rounded-[28px] border ${lane.accent} bg-white/[0.06] p-4 shadow-xl shadow-black/20 backdrop-blur xl:min-w-0`}
                 >
                   <div className="mb-4 flex items-center justify-between">
                     <div>
@@ -396,7 +444,9 @@ export default function RestaurantRushSimpleDemo() {
                       </div>
                     </div>
 
-                    <div className={`rounded-full border px-3 py-1.5 text-[11px] font-semibold tracking-[0.2em] ${lane.pill}`}>
+                    <div
+                      className={`rounded-full border px-3 py-1.5 text-[11px] font-semibold tracking-[0.2em] ${lane.pill}`}
+                    >
                       {lane.short}
                     </div>
                   </div>
@@ -413,7 +463,7 @@ export default function RestaurantRushSimpleDemo() {
                     ))}
 
                     {grouped[lane.id].length === 0 && (
-                      <div className="rounded-2xl border border-dashed border-white/10 bg-black/10 px-4 py-10 text-center text-lg text-white/35">
+                      <div className="rounded-2xl border border-dashed border-white/10 bg-black/10 px-4 py-10 text-center text-base text-white/35 md:text-lg">
                         No tickets
                       </div>
                     )}
@@ -424,6 +474,25 @@ export default function RestaurantRushSimpleDemo() {
           </main>
         </div>
       </div>
+    </div>
+  );
+}
+
+function MetricCard({
+  label,
+  value,
+  className,
+  labelClassName,
+}: {
+  label: string;
+  value: number;
+  className: string;
+  labelClassName: string;
+}) {
+  return (
+    <div className={`rounded-2xl border px-4 py-4 ${className}`}>
+      <div className={`text-[11px] uppercase tracking-[0.24em] ${labelClassName}`}>{label}</div>
+      <div className="mt-1 text-3xl font-semibold sm:text-4xl">{value}</div>
     </div>
   );
 }
@@ -450,79 +519,84 @@ function SimpleTicketCard({
   if (ticket.lane === "done") primaryLabel = "Completed";
 
   return (
-    <article className="rounded-[24px] border border-white/10 bg-[#0c1623] p-4 shadow-xl shadow-black/20">
-      <div className="mb-4 rounded-[20px] border border-white/10 bg-white/[0.04] px-4 py-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="text-3xl font-bold tracking-tight text-white">#{ticket.orderNo}</div>
-              <span
-                className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${priorityClasses(
-                  ticket.priority
-                )}`}
-              >
-                {ticket.priority === "rush" ? "Rush" : "Standard"}
-              </span>
-            </div>
-
-            <div className="mt-2 text-xl font-medium text-white/85">
-              T{ticket.table} • {ticket.guestName}
-            </div>
+    <article
+      className={cn(
+        "rounded-[24px] border p-4 shadow-xl shadow-black/20",
+        "bg-[#0c1623]",
+        laneSurface(ticket.lane)
+      )}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="text-2xl font-bold tracking-tight text-white sm:text-3xl">#{ticket.orderNo}</div>
+            <span
+              className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${priorityClasses(
+                ticket.priority
+              )}`}
+            >
+              {ticket.priority === "rush" ? "Rush" : "Standard"}
+            </span>
           </div>
 
-          <div className="text-right">
-            <div className="text-[11px] uppercase tracking-[0.22em] text-white/45">Time</div>
-            <div className="mt-1 text-3xl font-semibold text-white">{elapsed}</div>
+          <div className="mt-1 text-lg font-medium text-white/90 sm:text-xl">
+            T{ticket.table} • {ticket.guestName}
           </div>
+        </div>
+
+        <div className="shrink-0 text-right">
+          <div className="text-[11px] uppercase tracking-[0.22em] text-white/45">Time</div>
+          <div className="mt-1 text-2xl font-semibold text-white sm:text-3xl">{elapsed}</div>
         </div>
       </div>
 
-      <div className="mb-4 rounded-[20px] border border-cyan-400/12 bg-[#0a1320] px-4 py-3">
+      <div className="mt-4 rounded-[20px] border border-white/10 bg-black/20 p-3">
         <div className="mb-2 text-[11px] uppercase tracking-[0.22em] text-white/45">Order</div>
         <div className="space-y-2">
           {ticket.items.map((item, index) => (
             <div
               key={`${ticket.id}-item-${index}`}
-              className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-3 text-xl font-semibold text-white"
+              className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-lg font-semibold text-white sm:text-xl"
             >
               {item}
             </div>
           ))}
         </div>
+
+        {mods.length > 0 && (
+          <div className="mt-3 border-t border-white/10 pt-3">
+            <div className="mb-2 text-[11px] uppercase tracking-[0.22em] text-amber-100/70">Mods</div>
+            <div className="flex flex-wrap gap-2">
+              {mods.map((mod, index) => (
+                <div
+                  key={`${ticket.id}-mod-${index}`}
+                  className="rounded-full border border-amber-300/15 bg-amber-500/10 px-3 py-2 text-sm font-semibold text-amber-50 sm:text-base"
+                >
+                  {mod}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
-      {mods.length > 0 && (
-        <div className="mb-4 rounded-[20px] border border-amber-400/20 bg-amber-500/10 px-4 py-3">
-          <div className="mb-2 text-[11px] uppercase tracking-[0.22em] text-amber-100/70">
-            Basic Mods
-          </div>
-          <div className="space-y-2">
-            {mods.map((mod, index) => (
-              <div
-                key={`${ticket.id}-mod-${index}`}
-                className="rounded-xl border border-amber-300/15 bg-black/10 px-3 py-3 text-lg font-semibold text-amber-50"
-              >
-                {mod}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div className="mb-4 grid grid-cols-2 gap-3">
-        <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3 text-lg text-white/85">
+      <div className="mt-4 flex flex-wrap gap-2">
+        <div className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/85">
           <span className="text-white/45">Server:</span> {ticket.server ?? "—"}
         </div>
-        <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3 text-lg text-white/85">
-          <span className="text-white/45">Status:</span> {laneLabel(ticket.lane)}
+        <div
+          className={`rounded-full border px-3 py-2 text-sm ${statusChipClasses(ticket.lane)}`}
+        >
+          <span className="text-white/45">Status:</span>{" "}
+          <span className="font-semibold text-current">{laneLabel(ticket.lane)}</span>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="mt-4 grid grid-cols-2 gap-3">
         <button
           onClick={onBack}
           disabled={isFirstLane}
-          className="min-h-[68px] rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-lg font-semibold text-white/90 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+          className="min-h-[54px] rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-base font-semibold text-white/90 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
         >
           Back
         </button>
@@ -530,11 +604,18 @@ function SimpleTicketCard({
         <button
           onClick={onNext}
           disabled={isLastLane}
-          className="min-h-[68px] rounded-2xl border border-cyan-400/30 bg-cyan-500/10 px-4 py-3 text-lg font-semibold text-cyan-100 transition hover:bg-cyan-500/15 disabled:cursor-not-allowed disabled:opacity-40"
+          className={cn(
+            "min-h-[54px] rounded-2xl border px-4 py-3 text-base font-semibold transition disabled:cursor-not-allowed disabled:opacity-40",
+            primaryButtonClasses(ticket.lane)
+          )}
         >
           {primaryLabel}
         </button>
       </div>
     </article>
   );
+}
+
+function cn(...parts: Array<string | false | null | undefined>) {
+  return parts.filter(Boolean).join(" ");
 }
