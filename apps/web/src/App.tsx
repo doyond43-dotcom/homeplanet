@@ -6,6 +6,7 @@ import LiveShopTV from "./routes/LiveShopTV";
 import LiveIntakeBoard from "./routes/LiveIntakeBoard";
 import LiveAlias from "./routes/LiveAlias";
 import PrintWorkOrder from "./routes/PrintWorkOrder";
+import JanetsLiveTVBoard from "./routes/JanetsLiveTVBoard";
 
 import ServiceRoutes from "./service/ServiceRoutes";
 import CityRoutes from "./routes/CityRoutes";
@@ -87,7 +88,6 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-
         {/* SERVICE SYSTEM */}
         <Route path="/service/*" element={<ServiceRoutes />} />
 
@@ -122,6 +122,9 @@ export default function App() {
         {/* AWNIT LIVE */}
         <Route path="/live/awnit" element={<LiveAwnitIntake />} />
 
+        {/* JANET'S LIVE TV BOARD */}
+        <Route path="/janets-live-tv-board" element={<JanetsLiveTVBoard />} />
+
         {/* LIVE SYSTEM */}
         <Route path="/live/:slug" element={<LiveShell />}>
           <Route index element={<LiveShopTV />} />
@@ -149,7 +152,6 @@ export default function App() {
 
         {/* FALLBACK */}
         <Route path="*" element={<NotFound />} />
-
       </Routes>
     </BrowserRouter>
   );
