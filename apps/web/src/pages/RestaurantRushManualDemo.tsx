@@ -113,24 +113,27 @@ function stationBadgeClasses(state: StationState) {
   }
 }
 
-function smallActionButtonClasses(active: boolean, tone: "hold" | "release" | "rush" | "done") {
+function actionButtonClasses(tone: "hold" | "release" | "rush" | "done", active: boolean) {
   if (tone === "hold") {
     return active
-      ? "border-amber-400/45 bg-amber-500/12 text-amber-100"
+      ? "border-amber-400/45 bg-amber-500/15 text-amber-100"
       : "border-white/10 bg-white/5 text-white/80 hover:bg-amber-500/15";
   }
+
   if (tone === "release") {
     return active
-      ? "border-cyan-400/30 bg-cyan-500/10 text-cyan-100"
+      ? "border-cyan-400/35 bg-cyan-500/12 text-cyan-100"
       : "border-white/10 bg-white/5 text-white/80 hover:bg-white/10";
   }
+
   if (tone === "rush") {
     return active
-      ? "border-rose-400/45 bg-rose-500/12 text-rose-100"
+      ? "border-rose-400/45 bg-rose-500/15 text-rose-100"
       : "border-white/10 bg-white/5 text-white/80 hover:bg-rose-500/15";
   }
+
   return active
-    ? "border-emerald-400/45 bg-emerald-500/12 text-emerald-100"
+    ? "border-emerald-400/45 bg-emerald-500/15 text-emerald-100"
     : "border-white/10 bg-white/5 text-white/80 hover:bg-emerald-500/15";
 }
 
@@ -165,6 +168,26 @@ function stationSummary(lines: StationLine[]) {
   if (counts.hold > 0) return `${counts.hold} hold`;
   if (counts.done === lines.length) return "all done";
   return `${counts.done}/${lines.length} done`;
+}
+
+function averageMinutes(tickets: Ticket[], now: number) {
+  if (tickets.length === 0) return "0.0";
+  const total = tickets.reduce((sum, ticket) => sum + (now - ticket.createdAt), 0);
+  return (total / tickets.length / 60000).toFixed(1);
+}
+
+function longestMinutes(tickets: Ticket[], now: number) {
+  if (tickets.length === 0) return "0.0";
+  const longest = Math.max(...tickets.map((ticket) => now - ticket.createdAt));
+  return (longest / 60000).toFixed(1);
+}
+
+function readyCount(tickets: Ticket[]) {
+  return tickets.filter((t) => t.lane === "ready").length;
+}
+
+function rushCount(tickets: Ticket[]) {
+  return tickets.filter((t) => t.priority === "rush" && t.lane !== "done").length;
 }
 
 function seedTickets(now: number): Ticket[] {
@@ -303,11 +326,11 @@ export default function RestaurantRushManualDemo() {
       ts: Date.now(),
     };
 
-    setNotifications((prev) => [item, ...prev].slice(0, 5));
+    setNotifications((prev) => [item, ...prev].slice(0, 6));
 
     window.setTimeout(() => {
       setNotifications((prev) => prev.filter((n) => n.id !== item.id));
-    }, 3200);
+    }, 3600);
   }
 
   function moveTicket(ticketId: string, targetLane: LaneId) {
@@ -366,9 +389,9 @@ export default function RestaurantRushManualDemo() {
 
     if (ticket) {
       const actionLabel =
-        state === "hold" ? "Hold" :
-        state === "rush" ? "Rush" :
-        state === "done" ? "Complete" :
+        state === "hold" ? "Pause" :
+        state === "rush" ? "Fire" :
+        state === "done" ? "Done" :
         "Release";
 
       pushNotification(`${actionLabel}: ${stationLabel} on order #${ticket.orderNo}`);
@@ -376,11 +399,25 @@ export default function RestaurantRushManualDemo() {
   }
 
   function markReady(ticketId: string) {
+    const ticket = tickets.find((t) => t.id === ticketId);
     moveTicket(ticketId, "ready");
+    if (ticket) {
+      pushNotification(`Plate ready alert: Order #${ticket.orderNo} for server ${ticket.server ?? "floor"}`);
+    }
   }
 
   function markDone(ticketId: string) {
+    const ticket = tickets.find((t) => t.id === ticketId);
     moveTicket(ticketId, "done");
+    if (ticket) {
+      pushNotification(`Order #${ticket.orderNo} completed and cleared for table ${ticket.table}`);
+    }
+  }
+
+  function pingServer(ticketId: string) {
+    const ticket = tickets.find((t) => t.id === ticketId);
+    if (!ticket) return;
+    pushNotification(`Server notification sent: ${ticket.server ?? "Server"} to table ${ticket.table} for order #${ticket.orderNo}`);
   }
 
   function addTicket() {
@@ -466,7 +503,7 @@ export default function RestaurantRushManualDemo() {
   function resetBoard() {
     nextOrderRef.current = 208;
     setTickets(seedTickets(Date.now()));
-    pushNotification("Rush demo board reset");
+    pushNotification("Mom's Kitchen rush board reset");
   }
 
   const grouped = useMemo(() => {
@@ -493,6 +530,19 @@ export default function RestaurantRushManualDemo() {
     return map;
   }, [tickets]);
 
+  const avgTicketTime = averageMinutes(
+    tickets.filter((t) => t.lane !== "done"),
+    now
+  );
+
+  const longestOpen = longestMinutes(
+    tickets.filter((t) => t.lane !== "done"),
+    now
+  );
+
+  const rushOpen = rushCount(tickets);
+  const readyOpen = readyCount(tickets);
+
   return (
     <div className="min-h-screen bg-[#07111b] text-white">
       <div className="relative overflow-hidden">
@@ -503,15 +553,15 @@ export default function RestaurantRushManualDemo() {
             <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
               <div className="min-w-0">
                 <div className="mb-2 inline-flex items-center rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-cyan-200">
-                  Restaurant Rush Manual Demo
+                  Mom&apos;s Kitchen Demo
                 </div>
 
                 <h1 className="text-[30px] font-semibold tracking-tight text-white">
-                  Pogie’s-Style Kitchen Flow Board
+                  Mom&apos;s Kitchen — Rush Board
                 </h1>
 
                 <p className="mt-1 text-sm text-white/65">
-                  Controlled demo mode. Manual movement, station-aware flow, expo controls, readable under rush.
+                  Live ticket lanes • pause toast • fire fries • plate ready alerts • server notifications • kitchen timing metrics
                 </p>
               </div>
 
@@ -539,6 +589,14 @@ export default function RestaurantRushManualDemo() {
               </div>
             </div>
 
+            <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-5">
+              <MetricCard label="Open Tickets" value={String(tickets.filter((t) => t.lane !== "done").length)} />
+              <MetricCard label="Rush Tickets" value={String(rushOpen)} />
+              <MetricCard label="Ready to Run" value={String(readyOpen)} />
+              <MetricCard label="Avg Ticket Time" value={`${avgTicketTime}m`} />
+              <MetricCard label="Longest Open" value={`${longestOpen}m`} />
+            </div>
+
             <div className="mt-4 grid grid-cols-2 gap-2 lg:grid-cols-3 xl:grid-cols-6">
               {laneOrder.map((lane) => (
                 <div
@@ -556,7 +614,7 @@ export default function RestaurantRushManualDemo() {
             </div>
           </header>
 
-          <div className="pointer-events-none fixed right-4 top-4 z-50 hidden w-[280px] flex-col gap-2 2xl:flex">
+          <div className="pointer-events-none fixed right-4 top-4 z-50 hidden w-[300px] flex-col gap-2 2xl:flex">
             {notifications.map((note) => (
               <div
                 key={note.id}
@@ -571,54 +629,74 @@ export default function RestaurantRushManualDemo() {
           </div>
 
           <main className="pb-4">
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-6">
-              {laneMeta.map((lane) => (
-                <section
-                  key={lane.id}
-                  className={`rounded-[26px] border ${lane.accent} bg-white/[0.06] p-3 shadow-xl shadow-black/20 backdrop-blur flex flex-col self-start`}
-                >
-                  <div className="mb-3 flex items-center justify-between">
-                    <div>
-                      <div className="text-[10px] uppercase tracking-[0.22em] text-white/45">
-                        {lane.label}
+            <div className="overflow-x-auto pb-2">
+              <div className="flex min-w-max items-start gap-3">
+                {laneMeta.map((lane) => (
+                  <section
+                    key={lane.id}
+                    className={`flex w-[340px] min-w-[340px] flex-col self-start rounded-[26px] border ${lane.accent} bg-white/[0.06] p-3 shadow-xl shadow-black/20 backdrop-blur`}
+                  >
+                    <div className="mb-3 flex items-center justify-between">
+                      <div>
+                        <div className="text-[10px] uppercase tracking-[0.22em] text-white/45">
+                          {lane.label}
+                        </div>
+                        <div className="mt-1 text-lg font-semibold text-white">
+                          {grouped[lane.id].length} ticket{grouped[lane.id].length === 1 ? "" : "s"}
+                        </div>
                       </div>
-                      <div className="mt-1 text-lg font-semibold text-white">
-                        {grouped[lane.id].length} ticket{grouped[lane.id].length === 1 ? "" : "s"}
+
+                      <div className={`rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-[10px] font-medium ${lane.chip}`}>
+                        {lane.id.toUpperCase()}
                       </div>
                     </div>
 
-                    <div className={`rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-[10px] font-medium ${lane.chip}`}>
-                      {lane.id.toUpperCase()}
+                    <div className="flex flex-col gap-2">
+                      {grouped[lane.id].map((ticket) => (
+                        <TicketCard
+                          key={ticket.id}
+                          ticket={ticket}
+                          now={now}
+                          onBack={() => nudgePrev(ticket.id)}
+                          onAdvance={() => nudgeNext(ticket.id)}
+                          onMove={moveTicket}
+                          onStationChange={updateStation}
+                          onMarkReady={() => markReady(ticket.id)}
+                          onMarkDone={() => markDone(ticket.id)}
+                          onPingServer={() => pingServer(ticket.id)}
+                        />
+                      ))}
+
+                      {grouped[lane.id].length === 0 && (
+                        <div className="rounded-2xl border border-dashed border-white/10 bg-black/10 px-3 py-8 text-center text-sm text-white/35">
+                          No tickets
+                        </div>
+                      )}
                     </div>
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    {grouped[lane.id].map((ticket) => (
-                      <TicketCard
-                        key={ticket.id}
-                        ticket={ticket}
-                        now={now}
-                        onBack={() => nudgePrev(ticket.id)}
-                        onAdvance={() => nudgeNext(ticket.id)}
-                        onMove={moveTicket}
-                        onStationChange={updateStation}
-                        onMarkReady={() => markReady(ticket.id)}
-                        onMarkDone={() => markDone(ticket.id)}
-                      />
-                    ))}
-
-                    {grouped[lane.id].length === 0 && (
-                      <div className="rounded-2xl border border-dashed border-white/10 bg-black/10 px-3 py-8 text-center text-sm text-white/35">
-                        No tickets
-                      </div>
-                    )}
-                  </div>
-                </section>
-              ))}
+                  </section>
+                ))}
+              </div>
             </div>
           </main>
         </div>
       </div>
+    </div>
+  );
+}
+
+function MetricCard({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-black/20 px-3 py-3">
+      <div className="text-[10px] uppercase tracking-[0.22em] text-white/45">
+        {label}
+      </div>
+      <div className="mt-1 text-2xl font-semibold text-white">{value}</div>
     </div>
   );
 }
@@ -632,6 +710,7 @@ function TicketCard({
   onStationChange,
   onMarkReady,
   onMarkDone,
+  onPingServer,
 }: {
   ticket: Ticket;
   now: number;
@@ -641,6 +720,7 @@ function TicketCard({
   onStationChange: (ticketId: string, stationId: StationId, state: StationState) => void;
   onMarkReady: () => void;
   onMarkDone: () => void;
+  onPingServer: () => void;
 }) {
   const elapsed = formatElapsed(now - ticket.createdAt);
   const laneIndex = laneOrder.indexOf(ticket.lane);
@@ -730,62 +810,81 @@ function TicketCard({
       </div>
 
       <div className="mb-2 rounded-xl border border-white/10 bg-black/20 p-2.5">
-        <div className="mb-1.5 flex items-center justify-between text-[9px] uppercase tracking-[0.2em] text-white/40">
+        <div className="mb-2 flex items-center justify-between text-[9px] uppercase tracking-[0.2em] text-white/40">
           <span>Station Controls</span>
           <span>{ticket.stationLines.length}</span>
         </div>
 
-        <div className="flex flex-wrap gap-1.5">
+        <div className="space-y-2">
           {ticket.stationLines.map((line) => (
             <div
               key={line.id}
-              className={`flex items-center gap-1 rounded-lg border px-2 py-1 text-[9px] ${stationBadgeClasses(line.state)}`}
+              className={`rounded-xl border px-2 py-2 ${stationBadgeClasses(line.state)}`}
             >
-              <span className="font-medium text-white/85">{line.label}</span>
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-white/90">{line.label}</span>
+                <span className="text-[10px] uppercase tracking-[0.16em] text-white/60">
+                  {line.state}
+                </span>
+              </div>
 
-              <button
-                onClick={() => onStationChange(ticket.id, line.id, "hold")}
-                className={`rounded px-1 py-0.5 transition ${smallActionButtonClasses(line.state === "hold", "hold")}`}
-                title="Hold"
-              >
-                H
-              </button>
+              <div className="grid grid-cols-2 gap-1.5">
+                <button
+                  onClick={() => onStationChange(ticket.id, line.id, "hold")}
+                  className={`rounded-lg border px-2 py-1.5 text-[10px] font-medium transition ${actionButtonClasses("hold", line.state === "hold")}`}
+                >
+                  {line.id === "toast" ? "Pause Toast" : "Hold"}
+                </button>
 
-              <button
-                onClick={() => onStationChange(ticket.id, line.id, "idle")}
-                className={`rounded px-1 py-0.5 transition ${smallActionButtonClasses(line.state === "idle", "release")}`}
-                title="Release"
-              >
-                R
-              </button>
+                <button
+                  onClick={() => onStationChange(ticket.id, line.id, "idle")}
+                  className={`rounded-lg border px-2 py-1.5 text-[10px] font-medium transition ${actionButtonClasses("release", line.state === "idle")}`}
+                >
+                  Release
+                </button>
 
-              <button
-                onClick={() => onStationChange(ticket.id, line.id, "rush")}
-                className={`rounded px-1 py-0.5 transition ${smallActionButtonClasses(line.state === "rush", "rush")}`}
-                title="Rush"
-              >
-                !
-              </button>
+                <button
+                  onClick={() => onStationChange(ticket.id, line.id, "rush")}
+                  className={`rounded-lg border px-2 py-1.5 text-[10px] font-medium transition ${actionButtonClasses("rush", line.state === "rush")}`}
+                >
+                  {line.id === "fryer" ? "Fire Fries" : "Rush"}
+                </button>
 
-              <button
-                onClick={() => onStationChange(ticket.id, line.id, "done")}
-                className={`rounded px-1 py-0.5 transition ${smallActionButtonClasses(line.state === "done", "done")}`}
-                title="Done"
-              >
-                ✓
-              </button>
+                <button
+                  onClick={() => onStationChange(ticket.id, line.id, "done")}
+                  className={`rounded-lg border px-2 py-1.5 text-[10px] font-medium transition ${actionButtonClasses("done", line.state === "done")}`}
+                >
+                  Done
+                </button>
+              </div>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-1.5">
+      <div className="mb-2 grid grid-cols-2 gap-1.5">
+        <button
+          onClick={onPingServer}
+          className="rounded-xl border border-violet-400/30 bg-violet-500/10 px-2 py-2 text-[10px] font-medium text-violet-100 transition hover:bg-violet-500/15"
+        >
+          Notify Server
+        </button>
+
+        <button
+          onClick={ticket.lane === "ready" || ticket.lane === "done" ? onMarkDone : onMarkReady}
+          className="rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-2 py-2 text-[10px] font-medium text-emerald-100 transition hover:bg-emerald-500/15"
+        >
+          {ticket.lane === "ready" || ticket.lane === "done" ? "Complete Ticket" : "Plate Ready"}
+        </button>
+      </div>
+
+      <div className="grid grid-cols-3 gap-1.5">
         <button
           onClick={onBack}
           disabled={laneIndex === 0}
           className="rounded-xl border border-white/10 bg-white/5 px-2 py-2 text-[10px] font-medium text-white/85 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          Hold
+          Back
         </button>
 
         <button
@@ -793,21 +892,14 @@ function TicketCard({
           disabled={laneIndex === laneOrder.length - 1}
           className="rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-2 py-2 text-[10px] font-medium text-cyan-100 transition hover:bg-cyan-500/15 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          Release
+          Advance
         </button>
 
         <button
           onClick={() => onMove(ticket.id, "cook")}
           className="rounded-xl border border-rose-400/30 bg-rose-500/10 px-2 py-2 text-[10px] font-medium text-rose-100 transition hover:bg-rose-500/15"
         >
-          Rush
-        </button>
-
-        <button
-          onClick={ticket.lane === "ready" || ticket.lane === "done" ? onMarkDone : onMarkReady}
-          className="rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-2 py-2 text-[10px] font-medium text-emerald-100 transition hover:bg-emerald-500/15"
-        >
-          Done
+          Rush Lane
         </button>
       </div>
     </article>
