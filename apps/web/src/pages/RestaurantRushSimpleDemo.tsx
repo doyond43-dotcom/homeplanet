@@ -15,46 +15,12 @@ type Ticket = {
   server?: string;
 };
 
-const laneMeta: Array<{
-  id: LaneId;
-  label: string;
-  short: string;
-  accent: string;
-  pill: string;
-}> = [
-  {
-    id: "new",
-    label: "New Tickets",
-    short: "NEW",
-    accent: "border-cyan-400/40",
-    pill: "text-cyan-200 border-cyan-400/30 bg-cyan-500/10",
-  },
-  {
-    id: "cook",
-    label: "Cooking",
-    short: "COOK",
-    accent: "border-amber-400/40",
-    pill: "text-amber-200 border-amber-400/30 bg-amber-500/10",
-  },
-  {
-    id: "ready",
-    label: "Ready",
-    short: "READY",
-    accent: "border-emerald-400/40",
-    pill: "text-emerald-200 border-emerald-400/30 bg-emerald-500/10",
-  },
-  {
-    id: "done",
-    label: "Completed",
-    short: "DONE",
-    accent: "border-zinc-400/35",
-    pill: "text-zinc-200 border-white/10 bg-white/5",
-  },
-];
-
-function cn(...parts: Array<string | false | null | undefined>) {
-  return parts.filter(Boolean).join(" ");
-}
+const laneMeta = [
+  { id: "new", label: "New Tickets", short: "NEW", accent: "border-cyan-400/40", pill: "text-cyan-200 border-cyan-400/30 bg-cyan-500/10" },
+  { id: "cook", label: "Cooking", short: "COOK", accent: "border-amber-400/40", pill: "text-amber-200 border-amber-400/30 bg-amber-500/10" },
+  { id: "ready", label: "Ready", short: "READY", accent: "border-emerald-400/40", pill: "text-emerald-200 border-emerald-400/30 bg-emerald-500/10" },
+  { id: "done", label: "Completed", short: "DONE", accent: "border-zinc-400/35", pill: "text-zinc-200 border-white/10 bg-white/5" },
+] as const;
 
 function laneLabel(id: LaneId) {
   return laneMeta.find((lane) => lane.id === id)?.label ?? id;
@@ -93,53 +59,6 @@ function prevLane(lane: LaneId): LaneId {
   }
 }
 
-function priorityClasses(priority?: "normal" | "rush") {
-  return priority === "rush"
-    ? "border-rose-400/45 bg-rose-500/12 text-rose-100"
-    : "border-cyan-400/25 bg-cyan-500/10 text-cyan-100";
-}
-
-function laneSurface(lane: LaneId) {
-  switch (lane) {
-    case "new":
-      return "border-cyan-400/12 bg-cyan-500/[0.03]";
-    case "cook":
-      return "border-amber-400/12 bg-amber-500/[0.03]";
-    case "ready":
-      return "border-emerald-400/12 bg-emerald-500/[0.03]";
-    case "done":
-      return "border-white/10 bg-white/[0.03]";
-    default:
-      return "border-white/10 bg-white/[0.03]";
-  }
-}
-
-function primaryButtonClasses(lane: LaneId) {
-  switch (lane) {
-    case "new":
-      return "border-cyan-400/30 bg-cyan-500/10 text-cyan-100 hover:bg-cyan-500/15";
-    case "cook":
-      return "border-amber-400/30 bg-amber-500/10 text-amber-100 hover:bg-amber-500/15";
-    case "ready":
-      return "border-emerald-400/30 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/15";
-    default:
-      return "border-white/10 bg-white/5 text-white/60";
-  }
-}
-
-function statusChipClasses(lane: LaneId) {
-  switch (lane) {
-    case "new":
-      return "border-cyan-400/20 bg-cyan-500/10 text-cyan-100";
-    case "cook":
-      return "border-amber-400/20 bg-amber-500/10 text-amber-100";
-    case "ready":
-      return "border-emerald-400/20 bg-emerald-500/10 text-emerald-100";
-    default:
-      return "border-white/10 bg-white/5 text-white/75";
-  }
-}
-
 function seedTickets(now: number): Ticket[] {
   return [
     {
@@ -150,7 +69,7 @@ function seedTickets(now: number): Ticket[] {
       items: ["Cheeseburger", "Fries", "Sweet Tea"],
       mods: ["No onion"],
       lane: "new",
-      createdAt: now - 70_000,
+      createdAt: now - 70000,
       priority: "normal",
       server: "Jess",
     },
@@ -162,7 +81,7 @@ function seedTickets(now: number): Ticket[] {
       items: ["2 Egg Breakfast", "Bacon", "Toast", "Hash Browns"],
       mods: ["Eggs over medium", "Bacon crispy", "Toast wheat"],
       lane: "new",
-      createdAt: now - 2 * 60_000 - 10_000,
+      createdAt: now - 120000,
       priority: "normal",
       server: "Ava",
     },
@@ -174,7 +93,7 @@ function seedTickets(now: number): Ticket[] {
       items: ["Club Sandwich", "Fries", "Ranch"],
       mods: ["Split plate", "Extra ranch"],
       lane: "cook",
-      createdAt: now - 4 * 60_000 - 20_000,
+      createdAt: now - 260000,
       priority: "rush",
       server: "Mia",
     },
@@ -186,7 +105,7 @@ function seedTickets(now: number): Ticket[] {
       items: ["French Toast", "Sausage", "Coffee"],
       mods: ["Light syrup", "Coffee now"],
       lane: "cook",
-      createdAt: now - 5 * 60_000 - 15_000,
+      createdAt: now - 320000,
       priority: "normal",
       server: "Tori",
     },
@@ -198,7 +117,7 @@ function seedTickets(now: number): Ticket[] {
       items: ["BLT", "Chips", "Diet Coke"],
       mods: ["Cut in half"],
       lane: "ready",
-      createdAt: now - 7 * 60_000,
+      createdAt: now - 420000,
       priority: "normal",
       server: "Jess",
     },
@@ -210,7 +129,7 @@ function seedTickets(now: number): Ticket[] {
       items: ["Steak & Eggs", "Bacon", "Toast"],
       mods: ["Steak rare", "Bacon extra crispy", "Toast whole grain"],
       lane: "ready",
-      createdAt: now - 8 * 60_000 - 10_000,
+      createdAt: now - 480000,
       priority: "rush",
       server: "Ava",
     },
@@ -222,7 +141,7 @@ function seedTickets(now: number): Ticket[] {
       items: ["Patty Melt", "Onion Rings"],
       mods: ["No pickle"],
       lane: "done",
-      createdAt: now - 11 * 60_000,
+      createdAt: now - 600000,
       priority: "normal",
       server: "Mia",
     },
@@ -235,396 +154,176 @@ export default function RestaurantRushSimpleDemo() {
   const nextOrderRef = useRef(308);
 
   useEffect(() => {
-    const timer = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => window.clearInterval(timer);
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
   }, []);
 
-  function moveTicket(ticketId: string, targetLane: LaneId) {
-    setTickets((prev) =>
-      prev.map((ticket) =>
-        ticket.id === ticketId ? { ...ticket, lane: targetLane } : ticket
-      )
-    );
+  function moveTicket(id: string, lane: LaneId) {
+    setTickets((prev) => prev.map((t) => (t.id === id ? { ...t, lane } : t)));
   }
 
-  function nudgeNext(ticketId: string) {
-    const ticket = tickets.find((t) => t.id === ticketId);
+  function nudgeNext(id: string) {
+    const ticket = tickets.find((t) => t.id === id);
     if (!ticket || ticket.lane === "done") return;
-    moveTicket(ticketId, nextLane(ticket.lane));
+    moveTicket(id, nextLane(ticket.lane));
   }
 
-  function nudgePrev(ticketId: string) {
-    const ticket = tickets.find((t) => t.id === ticketId);
+  function nudgePrev(id: string) {
+    const ticket = tickets.find((t) => t.id === id);
     if (!ticket || ticket.lane === "new") return;
-    moveTicket(ticketId, prevLane(ticket.lane));
-  }
-
-  function addTicket() {
-    const orderNo = nextOrderRef.current++;
-
-    const pool: Array<Omit<Ticket, "id" | "orderNo" | "lane" | "createdAt">> = [
-      {
-        table: "7",
-        guestName: "Taylor",
-        items: ["Western Omelet", "Toast", "Hash Browns"],
-        mods: ["No onions", "Add cheddar", "Toast rye"],
-        priority: "normal",
-        server: "Ava",
-      },
-      {
-        table: "22",
-        guestName: "Rivera",
-        items: ["Pancake Combo", "Sausage", "Fruit Cup"],
-        mods: ["Eggs scrambled soft"],
-        priority: "normal",
-        server: "Jess",
-      },
-      {
-        table: "16",
-        guestName: "Brooks",
-        items: ["Steak & Eggs", "Toast"],
-        mods: ["Steak medium rare", "Eggs sunny side up", "Toast white"],
-        priority: "rush",
-        server: "Mia",
-      },
-      {
-        table: "5",
-        guestName: "Allen",
-        items: ["Bacon Cheeseburger", "Fries"],
-        mods: ["No pickle", "Fries extra crispy"],
-        priority: "normal",
-        server: "Tori",
-      },
-      {
-        table: "28",
-        guestName: "Scott",
-        items: ["2 Egg Breakfast", "Bacon", "Grits"],
-        mods: ["Eggs over easy", "Bacon extra crispy"],
-        priority: "rush",
-        server: "Ava",
-      },
-    ];
-
-    const pick = pool[Math.floor(Math.random() * pool.length)];
-
-    setTickets((prev) => [
-      {
-        id: `t-${orderNo}`,
-        orderNo,
-        lane: "new",
-        createdAt: Date.now(),
-        ...pick,
-      },
-      ...prev,
-    ]);
-  }
-
-  function clearCompleted() {
-    setTickets((prev) => prev.filter((ticket) => ticket.lane !== "done"));
-  }
-
-  function resetBoard() {
-    nextOrderRef.current = 308;
-    setTickets(seedTickets(Date.now()));
+    moveTicket(id, prevLane(ticket.lane));
   }
 
   const grouped = useMemo(() => {
-    const map: Record<LaneId, Ticket[]> = {
-      new: [],
-      cook: [],
-      ready: [],
-      done: [],
-    };
-
-    tickets.forEach((ticket) => {
-      map[ticket.lane].push(ticket);
-    });
-
-    Object.values(map).forEach((list) => {
-      list.sort((a, b) => {
-        if (a.priority !== b.priority) {
-          return a.priority === "rush" ? -1 : 1;
-        }
-        return a.createdAt - b.createdAt;
-      });
-    });
-
+    const map: Record<LaneId, Ticket[]> = { new: [], cook: [], ready: [], done: [] };
+    tickets.forEach((t) => map[t.lane].push(t));
     return map;
   }, [tickets]);
 
-  const activeTickets = tickets.filter((ticket) => ticket.lane !== "done").length;
-  const rushTickets = tickets.filter(
-    (ticket) => ticket.priority === "rush" && ticket.lane !== "done"
-  ).length;
+  const active = tickets.filter((t) => t.lane !== "done").length;
 
   return (
     <div className="min-h-screen bg-[#07111b] text-white">
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.14),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(217,70,239,0.12),_transparent_28%)]" />
+      <div className="mx-auto max-w-7xl px-4 py-4">
 
-        <div className="relative mx-auto max-w-7xl px-3 py-3 sm:px-4 sm:py-4 md:px-5 md:py-5">
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-3 sm:p-4">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <div className="inline-flex items-center rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-cyan-200 sm:text-[11px]">
-                    Restaurant Rush Simple Demo
-                  </div>
+        {/* HEADER */}
+        <header className="rounded-3xl border border-white/10 bg-white/5 p-4 mb-4">
+          <div className="flex flex-col lg:flex-row lg:justify-between gap-3">
+
+            <div>
+              <div className="inline-flex items-center rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-[11px] uppercase tracking-wider text-cyan-200">
+                Restaurant Rush Demo
+              </div>
+
+              <h1 className="mt-2 text-3xl md:text-4xl font-bold">
+                Mom's Kitchen Flow Board
+              </h1>
+
+              <p className="text-white/70 mt-2 max-w-2xl">
+                Big, simple, readable. New tickets, cooking, ready, completed. Clear flow for cooks, servers, and owners.
+              </p>
+            </div>
+
+            <div className="flex gap-2 flex-wrap">
+              <button className="rounded-xl border border-cyan-400/40 bg-cyan-500/15 px-4 py-2 text-sm">
+                + Add Ticket
+              </button>
+              <button className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm">
+                Clear Completed
+              </button>
+              <button className="rounded-xl border border-fuchsia-400/30 bg-fuchsia-500/10 px-4 py-2 text-sm">
+                Reset Board
+              </button>
+            </div>
+
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
+            <Metric label="Active Tickets" value={active} />
+            <Metric label="Rush Orders" value={2} />
+            <Metric label="Ready Now" value={grouped.ready.length} />
+            <Metric label="Completed" value={grouped.done.length} />
+          </div>
+        </header>
+
+        {/* LANES */}
+        <div className="flex xl:grid xl:grid-cols-4 gap-3 overflow-x-auto pb-2">
+          {laneMeta.map((lane) => (
+            <section key={lane.id} className="min-w-[280px] xl:min-w-0 rounded-3xl border border-white/10 bg-white/5 p-3">
+
+              <div className="flex justify-between mb-3">
+                <div>
+                  <div className="text-xs text-white/50 uppercase">{lane.label}</div>
+                  <div className="text-2xl font-bold">{grouped[lane.id].length}</div>
                 </div>
 
-                <h1 className="mt-2 text-[28px] font-extrabold tracking-tight text-white sm:text-[34px] md:text-[38px]">
-                  Pogie&apos;s Kitchen Flow Board
-                </h1>
-
-                <p className="mt-2 max-w-3xl text-sm text-white/70 md:text-base">
-                  Big, simple, readable. New tickets, cooking, ready, completed. Clear flow for cooks, servers, and owners.
-                </p>
+                <div className={`rounded-full border px-3 py-1 text-xs ${lane.pill}`}>
+                  {lane.short}
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-3">
-                <button
-                  onClick={addTicket}
-                  className="min-h-[46px] rounded-xl border border-cyan-400/40 bg-cyan-500/15 px-4 py-2.5 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-500/20"
-                >
-                  + Add Ticket
-                </button>
-
-                <button
-                  onClick={clearCompleted}
-                  className="min-h-[46px] rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white/90 transition hover:bg-white/10"
-                >
-                  Clear Completed
-                </button>
-
-                <button
-                  onClick={resetBoard}
-                  className="min-h-[46px] rounded-xl border border-fuchsia-400/30 bg-fuchsia-500/10 px-4 py-2.5 text-sm font-semibold text-fuchsia-100 transition hover:bg-fuchsia-500/15 sm:col-span-2 lg:col-span-1 xl:col-span-1"
-                >
-                  Reset Board
-                </button>
+              <div className="flex flex-col gap-3">
+                {grouped[lane.id].map((ticket) => (
+                  <TicketCard
+                    key={ticket.id}
+                    ticket={ticket}
+                    now={now}
+                    onNext={() => nudgeNext(ticket.id)}
+                    onBack={() => nudgePrev(ticket.id)}
+                  />
+                ))}
               </div>
-            </div>
 
-            <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4">
-              <MetricCard
-                label="Active Tickets"
-                value={activeTickets}
-                className="border-white/10 bg-black/20 text-white"
-                labelClassName="text-white/45"
-              />
-              <MetricCard
-                label="Rush Orders"
-                value={rushTickets}
-                className="border-rose-400/20 bg-rose-500/[0.06] text-rose-100"
-                labelClassName="text-rose-200/70"
-              />
-              <MetricCard
-                label="Ready Now"
-                value={grouped.ready.length}
-                className="border-emerald-400/20 bg-emerald-500/[0.06] text-emerald-100"
-                labelClassName="text-emerald-200/70"
-              />
-              <MetricCard
-                label="Completed"
-                value={grouped.done.length}
-                className="border-white/10 bg-black/20 text-white"
-                labelClassName="text-white/45"
-              />
-            </div>
-          </div>
-
-          <main className="mt-4">
-            <div className="flex gap-3 overflow-x-auto pb-2 xl:grid xl:grid-cols-4 xl:overflow-visible xl:pb-0">
-              {laneMeta.map((lane) => (
-                <section
-                  key={lane.id}
-                  className={`min-w-[280px] shrink-0 rounded-[26px] border ${lane.accent} bg-white/[0.06] p-3 shadow-xl shadow-black/20 backdrop-blur sm:p-4 xl:min-w-0`}
-                >
-                  <div className="mb-3 flex items-center justify-between">
-                    <div>
-                      <div className="text-[10px] uppercase tracking-[0.22em] text-white/45 sm:text-[11px]">
-                        {lane.label}
-                      </div>
-                      <div className="mt-1 text-2xl font-semibold text-white sm:text-3xl">
-                        {grouped[lane.id].length}
-                      </div>
-                    </div>
-
-                    <div
-                      className={`rounded-full border px-3 py-1.5 text-[10px] font-semibold tracking-[0.18em] sm:text-[11px] ${lane.pill}`}
-                    >
-                      {lane.short}
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-3">
-                    {grouped[lane.id].map((ticket) => (
-                      <SimpleTicketCard
-                        key={ticket.id}
-                        ticket={ticket}
-                        now={now}
-                        onBack={() => nudgePrev(ticket.id)}
-                        onNext={() => nudgeNext(ticket.id)}
-                      />
-                    ))}
-
-                    {grouped[lane.id].length === 0 && (
-                      <div className="rounded-2xl border border-dashed border-white/10 bg-black/10 px-4 py-8 text-center text-sm text-white/35">
-                        No tickets
-                      </div>
-                    )}
-                  </div>
-                </section>
-              ))}
-            </div>
-          </main>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function MetricCard({
-  label,
-  value,
-  className,
-  labelClassName,
-}: {
-  label: string;
-  value: number;
-  className: string;
-  labelClassName: string;
-}) {
-  return (
-    <div className={`rounded-2xl border px-4 py-3 ${className}`}>
-      <div className={`text-[10px] uppercase tracking-[0.2em] sm:text-[11px] ${labelClassName}`}>{label}</div>
-      <div className="mt-1 text-2xl font-semibold sm:text-3xl">{value}</div>
-    </div>
-  );
-}
-
-function SimpleTicketCard({
-  ticket,
-  now,
-  onBack,
-  onNext,
-}: {
-  ticket: Ticket;
-  now: number;
-  onBack: () => void;
-  onNext: () => void;
-}) {
-  const elapsed = formatElapsed(now - ticket.createdAt);
-  const mods = ticket.mods ?? [];
-  const isFirstLane = ticket.lane === "new";
-  const isLastLane = ticket.lane === "done";
-
-  let primaryLabel = "Start Cooking";
-  if (ticket.lane === "cook") primaryLabel = "Mark Ready";
-  if (ticket.lane === "ready") primaryLabel = "Complete";
-  if (ticket.lane === "done") primaryLabel = "Completed";
-
-  return (
-    <article
-      className={cn(
-        "rounded-[22px] border p-3 shadow-xl shadow-black/20",
-        "bg-[#0c1623]",
-        laneSurface(ticket.lane)
-      )}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="text-xl font-bold tracking-tight text-white sm:text-2xl">
-              #{ticket.orderNo}
-            </div>
-            <span
-              className={`rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] sm:text-[11px] ${priorityClasses(
-                ticket.priority
-              )}`}
-            >
-              {ticket.priority === "rush" ? "Rush" : "Standard"}
-            </span>
-          </div>
-
-          <div className="mt-1 text-sm font-medium text-white/90 sm:text-base">
-            T{ticket.table} • {ticket.guestName}
-          </div>
-        </div>
-
-        <div className="shrink-0 text-right">
-          <div className="text-[10px] uppercase tracking-[0.2em] text-white/45">Time</div>
-          <div className="mt-1 text-lg font-semibold text-white sm:text-xl">{elapsed}</div>
-        </div>
-      </div>
-
-      <div className="mt-3 rounded-[18px] border border-white/10 bg-black/20 p-3">
-        <div className="mb-2 text-[10px] uppercase tracking-[0.2em] text-white/45 sm:text-[11px]">
-          Order
-        </div>
-
-        <div className="space-y-2">
-          {ticket.items.map((item, index) => (
-            <div
-              key={`${ticket.id}-item-${index}`}
-              className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm font-semibold text-white sm:text-base"
-            >
-              {item}
-            </div>
+            </section>
           ))}
         </div>
 
-        {mods.length > 0 && (
-          <div className="mt-3 border-t border-white/10 pt-3">
-            <div className="mb-2 text-[10px] uppercase tracking-[0.2em] text-amber-100/70 sm:text-[11px]">
-              Mods
-            </div>
+      </div>
+    </div>
+  );
+}
 
-            <div className="flex flex-wrap gap-2">
-              {mods.map((mod, index) => (
-                <div
-                  key={`${ticket.id}-mod-${index}`}
-                  className="rounded-full border border-amber-300/15 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-50 sm:text-sm"
-                >
-                  {mod}
-                </div>
-              ))}
-            </div>
+function Metric({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-black/20 px-3 py-2">
+      <div className="text-xs text-white/50 uppercase">{label}</div>
+      <div className="text-xl font-semibold">{value}</div>
+    </div>
+  );
+}
+
+function TicketCard({
+  ticket,
+  now,
+  onNext,
+  onBack,
+}: {
+  ticket: Ticket;
+  now: number;
+  onNext: () => void;
+  onBack: () => void;
+}) {
+  const elapsed = formatElapsed(now - ticket.createdAt);
+
+  return (
+    <div className="rounded-2xl border border-white/10 bg-[#0c1623] p-3">
+
+      <div className="flex justify-between mb-2">
+        <div className="font-bold">#{ticket.orderNo}</div>
+        <div className="text-sm text-white/70">{elapsed}</div>
+      </div>
+
+      <div className="text-sm text-white/80 mb-2">
+        T{ticket.table} • {ticket.guestName}
+      </div>
+
+      <div className="space-y-1 text-sm">
+        {ticket.items.map((item, i) => (
+          <div key={i} className="border border-white/10 rounded-lg px-2 py-1">
+            {item}
           </div>
-        )}
+        ))}
       </div>
 
-      <div className="mt-3 flex flex-wrap gap-2">
-        <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/85">
-          <span className="text-white/45">Server:</span> {ticket.server ?? "—"}
+      {ticket.mods && (
+        <div className="mt-2 flex flex-wrap gap-1">
+          {ticket.mods.map((m, i) => (
+            <span key={i} className="text-xs border border-amber-400/30 bg-amber-500/10 px-2 py-1 rounded-full">
+              {m}
+            </span>
+          ))}
         </div>
+      )}
 
-        <div className={`rounded-full border px-3 py-1.5 text-xs ${statusChipClasses(ticket.lane)}`}>
-          <span className="text-white/45">Status:</span>{" "}
-          <span className="font-semibold text-current">{laneLabel(ticket.lane)}</span>
-        </div>
-      </div>
-
-      <div className="mt-3 grid grid-cols-2 gap-2.5">
-        <button
-          onClick={onBack}
-          disabled={isFirstLane}
-          className="min-h-[44px] rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white/90 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
-        >
+      <div className="grid grid-cols-2 gap-2 mt-3">
+        <button onClick={onBack} className="border border-white/10 rounded-lg py-2 text-sm">
           Back
         </button>
-
-        <button
-          onClick={onNext}
-          disabled={isLastLane}
-          className={cn(
-            "min-h-[44px] rounded-xl border px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-40",
-            primaryButtonClasses(ticket.lane)
-          )}
-        >
-          {primaryLabel}
+        <button onClick={onNext} className="border border-cyan-400/30 bg-cyan-500/10 rounded-lg py-2 text-sm">
+          Next
         </button>
       </div>
-    </article>
+
+    </div>
   );
 }
