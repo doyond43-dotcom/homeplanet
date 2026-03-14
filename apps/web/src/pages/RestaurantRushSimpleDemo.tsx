@@ -52,6 +52,10 @@ const laneMeta: Array<{
   },
 ];
 
+function cn(...parts: Array<string | false | null | undefined>) {
+  return parts.filter(Boolean).join(" ");
+}
+
 function laneLabel(id: LaneId) {
   return laneMeta.find((lane) => lane.id === id)?.label ?? id;
 }
@@ -358,48 +362,50 @@ export default function RestaurantRushSimpleDemo() {
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.14),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(217,70,239,0.12),_transparent_28%)]" />
 
-        <div className="relative mx-auto max-w-[1800px] px-3 py-3 sm:px-4 sm:py-4 md:px-5 md:py-5">
-          <header className="mb-4 rounded-[28px] border border-white/10 bg-white/5 p-4 shadow-2xl shadow-black/20 backdrop-blur sm:p-5 md:p-6">
-            <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+        <div className="relative mx-auto max-w-7xl px-3 py-3 sm:px-4 sm:py-4 md:px-5 md:py-5">
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-3 sm:p-4">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div className="min-w-0">
-                <div className="mb-2 inline-flex items-center rounded-full border border-cyan-400/30 bg-cyan-500/10 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.24em] text-cyan-200">
-                  Restaurant Rush Simple Demo
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="inline-flex items-center rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-cyan-200 sm:text-[11px]">
+                    Restaurant Rush Simple Demo
+                  </div>
                 </div>
 
-                <h1 className="text-[30px] font-semibold tracking-tight text-white sm:text-[34px] md:text-[40px]">
-                  Pogie’s Kitchen Flow Board
+                <h1 className="mt-2 text-[28px] font-extrabold tracking-tight text-white sm:text-[34px] md:text-[38px]">
+                  Pogie&apos;s Kitchen Flow Board
                 </h1>
 
-                <p className="mt-2 max-w-4xl text-sm text-white/70 sm:text-base md:text-lg">
+                <p className="mt-2 max-w-3xl text-sm text-white/70 md:text-base">
                   Big, simple, readable. New tickets, cooking, ready, completed. Clear flow for cooks, servers, and owners.
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-3">
                 <button
                   onClick={addTicket}
-                  className="min-h-[52px] rounded-2xl border border-cyan-400/40 bg-cyan-500/15 px-5 py-3 text-base font-semibold text-cyan-100 transition hover:bg-cyan-500/20 md:min-h-[56px] md:text-lg"
+                  className="min-h-[46px] rounded-xl border border-cyan-400/40 bg-cyan-500/15 px-4 py-2.5 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-500/20"
                 >
                   + Add Ticket
                 </button>
 
                 <button
                   onClick={clearCompleted}
-                  className="min-h-[52px] rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-base font-semibold text-white/90 transition hover:bg-white/10 md:min-h-[56px] md:text-lg"
+                  className="min-h-[46px] rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white/90 transition hover:bg-white/10"
                 >
                   Clear Completed
                 </button>
 
                 <button
                   onClick={resetBoard}
-                  className="min-h-[52px] rounded-2xl border border-fuchsia-400/30 bg-fuchsia-500/10 px-5 py-3 text-base font-semibold text-fuchsia-100 transition hover:bg-fuchsia-500/15 sm:col-span-2 xl:col-span-1 md:min-h-[56px] md:text-lg"
+                  className="min-h-[46px] rounded-xl border border-fuchsia-400/30 bg-fuchsia-500/10 px-4 py-2.5 text-sm font-semibold text-fuchsia-100 transition hover:bg-fuchsia-500/15 sm:col-span-2 lg:col-span-1 xl:col-span-1"
                 >
                   Reset Board
                 </button>
               </div>
             </div>
 
-            <div className="mt-5 grid grid-cols-2 gap-3 xl:grid-cols-4">
+            <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4">
               <MetricCard
                 label="Active Tickets"
                 value={activeTickets}
@@ -425,33 +431,33 @@ export default function RestaurantRushSimpleDemo() {
                 labelClassName="text-white/45"
               />
             </div>
-          </header>
+          </div>
 
-          <main>
-            <div className="flex gap-4 overflow-x-auto pb-2 xl:grid xl:grid-cols-4 xl:overflow-visible xl:pb-0">
+          <main className="mt-4">
+            <div className="flex gap-3 overflow-x-auto pb-2 xl:grid xl:grid-cols-4 xl:overflow-visible xl:pb-0">
               {laneMeta.map((lane) => (
                 <section
                   key={lane.id}
-                  className={`min-w-[300px] shrink-0 rounded-[28px] border ${lane.accent} bg-white/[0.06] p-4 shadow-xl shadow-black/20 backdrop-blur xl:min-w-0`}
+                  className={`min-w-[280px] shrink-0 rounded-[26px] border ${lane.accent} bg-white/[0.06] p-3 shadow-xl shadow-black/20 backdrop-blur sm:p-4 xl:min-w-0`}
                 >
-                  <div className="mb-4 flex items-center justify-between">
+                  <div className="mb-3 flex items-center justify-between">
                     <div>
-                      <div className="text-[11px] uppercase tracking-[0.24em] text-white/45">
+                      <div className="text-[10px] uppercase tracking-[0.22em] text-white/45 sm:text-[11px]">
                         {lane.label}
                       </div>
-                      <div className="mt-1 text-3xl font-semibold text-white">
+                      <div className="mt-1 text-2xl font-semibold text-white sm:text-3xl">
                         {grouped[lane.id].length}
                       </div>
                     </div>
 
                     <div
-                      className={`rounded-full border px-3 py-1.5 text-[11px] font-semibold tracking-[0.2em] ${lane.pill}`}
+                      className={`rounded-full border px-3 py-1.5 text-[10px] font-semibold tracking-[0.18em] sm:text-[11px] ${lane.pill}`}
                     >
                       {lane.short}
                     </div>
                   </div>
 
-                  <div className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-3">
                     {grouped[lane.id].map((ticket) => (
                       <SimpleTicketCard
                         key={ticket.id}
@@ -463,7 +469,7 @@ export default function RestaurantRushSimpleDemo() {
                     ))}
 
                     {grouped[lane.id].length === 0 && (
-                      <div className="rounded-2xl border border-dashed border-white/10 bg-black/10 px-4 py-10 text-center text-base text-white/35 md:text-lg">
+                      <div className="rounded-2xl border border-dashed border-white/10 bg-black/10 px-4 py-8 text-center text-sm text-white/35">
                         No tickets
                       </div>
                     )}
@@ -490,9 +496,9 @@ function MetricCard({
   labelClassName: string;
 }) {
   return (
-    <div className={`rounded-2xl border px-4 py-4 ${className}`}>
-      <div className={`text-[11px] uppercase tracking-[0.24em] ${labelClassName}`}>{label}</div>
-      <div className="mt-1 text-3xl font-semibold sm:text-4xl">{value}</div>
+    <div className={`rounded-2xl border px-4 py-3 ${className}`}>
+      <div className={`text-[10px] uppercase tracking-[0.2em] sm:text-[11px] ${labelClassName}`}>{label}</div>
+      <div className="mt-1 text-2xl font-semibold sm:text-3xl">{value}</div>
     </div>
   );
 }
@@ -521,7 +527,7 @@ function SimpleTicketCard({
   return (
     <article
       className={cn(
-        "rounded-[24px] border p-4 shadow-xl shadow-black/20",
+        "rounded-[22px] border p-3 shadow-xl shadow-black/20",
         "bg-[#0c1623]",
         laneSurface(ticket.lane)
       )}
@@ -529,9 +535,11 @@ function SimpleTicketCard({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <div className="text-2xl font-bold tracking-tight text-white sm:text-3xl">#{ticket.orderNo}</div>
+            <div className="text-xl font-bold tracking-tight text-white sm:text-2xl">
+              #{ticket.orderNo}
+            </div>
             <span
-              className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${priorityClasses(
+              className={`rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] sm:text-[11px] ${priorityClasses(
                 ticket.priority
               )}`}
             >
@@ -539,24 +547,27 @@ function SimpleTicketCard({
             </span>
           </div>
 
-          <div className="mt-1 text-lg font-medium text-white/90 sm:text-xl">
+          <div className="mt-1 text-sm font-medium text-white/90 sm:text-base">
             T{ticket.table} • {ticket.guestName}
           </div>
         </div>
 
         <div className="shrink-0 text-right">
-          <div className="text-[11px] uppercase tracking-[0.22em] text-white/45">Time</div>
-          <div className="mt-1 text-2xl font-semibold text-white sm:text-3xl">{elapsed}</div>
+          <div className="text-[10px] uppercase tracking-[0.2em] text-white/45">Time</div>
+          <div className="mt-1 text-lg font-semibold text-white sm:text-xl">{elapsed}</div>
         </div>
       </div>
 
-      <div className="mt-4 rounded-[20px] border border-white/10 bg-black/20 p-3">
-        <div className="mb-2 text-[11px] uppercase tracking-[0.22em] text-white/45">Order</div>
+      <div className="mt-3 rounded-[18px] border border-white/10 bg-black/20 p-3">
+        <div className="mb-2 text-[10px] uppercase tracking-[0.2em] text-white/45 sm:text-[11px]">
+          Order
+        </div>
+
         <div className="space-y-2">
           {ticket.items.map((item, index) => (
             <div
               key={`${ticket.id}-item-${index}`}
-              className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-lg font-semibold text-white sm:text-xl"
+              className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm font-semibold text-white sm:text-base"
             >
               {item}
             </div>
@@ -565,12 +576,15 @@ function SimpleTicketCard({
 
         {mods.length > 0 && (
           <div className="mt-3 border-t border-white/10 pt-3">
-            <div className="mb-2 text-[11px] uppercase tracking-[0.22em] text-amber-100/70">Mods</div>
+            <div className="mb-2 text-[10px] uppercase tracking-[0.2em] text-amber-100/70 sm:text-[11px]">
+              Mods
+            </div>
+
             <div className="flex flex-wrap gap-2">
               {mods.map((mod, index) => (
                 <div
                   key={`${ticket.id}-mod-${index}`}
-                  className="rounded-full border border-amber-300/15 bg-amber-500/10 px-3 py-2 text-sm font-semibold text-amber-50 sm:text-base"
+                  className="rounded-full border border-amber-300/15 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-50 sm:text-sm"
                 >
                   {mod}
                 </div>
@@ -580,23 +594,22 @@ function SimpleTicketCard({
         )}
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-2">
-        <div className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/85">
+      <div className="mt-3 flex flex-wrap gap-2">
+        <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/85">
           <span className="text-white/45">Server:</span> {ticket.server ?? "—"}
         </div>
-        <div
-          className={`rounded-full border px-3 py-2 text-sm ${statusChipClasses(ticket.lane)}`}
-        >
+
+        <div className={`rounded-full border px-3 py-1.5 text-xs ${statusChipClasses(ticket.lane)}`}>
           <span className="text-white/45">Status:</span>{" "}
           <span className="font-semibold text-current">{laneLabel(ticket.lane)}</span>
         </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-3">
+      <div className="mt-3 grid grid-cols-2 gap-2.5">
         <button
           onClick={onBack}
           disabled={isFirstLane}
-          className="min-h-[54px] rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-base font-semibold text-white/90 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+          className="min-h-[44px] rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white/90 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
         >
           Back
         </button>
@@ -605,7 +618,7 @@ function SimpleTicketCard({
           onClick={onNext}
           disabled={isLastLane}
           className={cn(
-            "min-h-[54px] rounded-2xl border px-4 py-3 text-base font-semibold transition disabled:cursor-not-allowed disabled:opacity-40",
+            "min-h-[44px] rounded-xl border px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-40",
             primaryButtonClasses(ticket.lane)
           )}
         >
@@ -614,8 +627,4 @@ function SimpleTicketCard({
       </div>
     </article>
   );
-}
-
-function cn(...parts: Array<string | false | null | undefined>) {
-  return parts.filter(Boolean).join(" ");
 }
