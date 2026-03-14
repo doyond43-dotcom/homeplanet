@@ -1,5 +1,12 @@
 // src/pages/JoeGrantLegalDesk.tsx
-import { useEffect, useMemo, useState, type ComponentType } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type ComponentType,
+} from "react";
 import {
   CalendarDays,
   Camera,
@@ -18,6 +25,7 @@ import {
   StickyNote,
   Tag,
   Trash2,
+  Upload,
   User,
 } from "lucide-react";
 
@@ -30,13 +38,15 @@ type MatterStage =
   | "follow-up"
   | "closed";
 
+type MatterPriority = "high" | "medium" | "normal";
+
 type Matter = {
   id: string;
   client: string;
   title: string;
   due: string;
   stage: MatterStage;
-  priority: "high" | "medium" | "normal";
+  priority: MatterPriority;
   summary: string;
   contact: string;
   nextAction: string;
@@ -56,11 +66,43 @@ type Sticky = {
   text: string;
 };
 
+type DocStatus = "ready" | "waiting" | "sent";
+
 type DocItem = {
   id: string;
   label: string;
   detail: string;
-  status: "ready" | "waiting" | "sent";
+  status: DocStatus;
+};
+
+type AttachmentKind = "photo" | "file";
+
+type AttachmentItem = {
+  id: string;
+  name: string;
+  kind: AttachmentKind;
+  type: string;
+};
+
+type SavedNote = {
+  id: string;
+  matterId: string;
+  title: string;
+  text: string;
+  createdAt: string;
+  updatedAt: string;
+  timestampedAt: string | null;
+  attachments: AttachmentItem[];
+};
+
+const STAGE_LABELS: Record<MatterStage, string> = {
+  intake: "Intake",
+  review: "Review",
+  "pending-client": "Pending Client",
+  filing: "Filing",
+  court: "Court",
+  "follow-up": "Follow-up",
+  closed: "Closed",
 };
 
 const INITIAL_MATTERS: Matter[] = [
@@ -173,45 +215,12 @@ const INITIAL_DOCS: DocItem[] = [
   },
 ];
 
-const DEFAULT_NEW_MATTER = (): Matter => ({
-  id: `MAT-${Date.now()}`,
-  client: "New Client",
-  title: "New matter",
-  due: "No due date",
-  stage: "intake",
-  priority: "normal",
-  summary: "Add matter summary.",
-  contact: "(000) 000-0000",
-  nextAction: "Add next action.",
-});
-
-const DEFAULT_NEW_APPOINTMENT = (): Appointment => ({
-  id: `APT-${Date.now()}`,
-  time: "New",
-  title: "New appointment",
-  matter: "Attach to matter",
-  type: "Office",
-});
-
-const DEFAULT_NEW_STICKY = (): Sticky => ({
-  id: `ST-${Date.now()}`,
-  title: "New sticky",
-  text: "Tap to edit.",
-});
-
-const DEFAULT_NEW_DOC = (): DocItem => ({
-  id: `DOC-${Date.now()}`,
-  label: "New document",
-  detail: "Add details.",
-  status: "waiting",
-});
-
 function cx(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(" ");
 }
 
-function formatNow() {
-  return new Date().toLocaleString([], {
+function formatNow(date = new Date()) {
+  return date.toLocaleString([], {
     year: "numeric",
     month: "numeric",
     day: "numeric",
@@ -237,6 +246,47 @@ function formatLiveTime(date: Date) {
   });
 }
 
+function makeMatter(): Matter {
+  return {
+    id: `MAT-${Date.now()}`,
+    client: "New Client",
+    title: "New matter",
+    due: "No due date",
+    stage: "intake",
+    priority: "normal",
+    summary: "Add matter summary.",
+    contact: "(000) 000-0000",
+    nextAction: "Add next action.",
+  };
+}
+
+function makeAppointment(): Appointment {
+  return {
+    id: `APT-${Date.now()}`,
+    time: "New",
+    title: "New appointment",
+    matter: "Attach to matter",
+    type: "Office",
+  };
+}
+
+function makeSticky(): Sticky {
+  return {
+    id: `ST-${Date.now()}`,
+    title: "New sticky",
+    text: "Tap to edit.",
+  };
+}
+
+function makeDoc(): DocItem {
+  return {
+    id: `DOC-${Date.now()}`,
+    label: "New document",
+    detail: "Add details.",
+    status: "waiting",
+  };
+}
+
 function stageBadge(stage: MatterStage) {
   const base =
     "rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]";
@@ -260,7 +310,7 @@ function stageBadge(stage: MatterStage) {
   }
 }
 
-function priorityClasses(priority: Matter["priority"]) {
+function priorityClasses(priority: MatterPriority) {
   if (priority === "high") {
     return "border-[#d7b6b8] bg-[#fbefef] text-[#8d4e56]";
   }
@@ -270,7 +320,7 @@ function priorityClasses(priority: Matter["priority"]) {
   return "border-[#d5d8de] bg-[#f6f7f9] text-[#647080]";
 }
 
-function docStatusClasses(status: DocItem["status"]) {
+function docStatusClasses(status: DocStatus) {
   if (status === "ready") {
     return "border-[#c7d9cd] bg-[#edf7f0] text-[#466a53]";
   }
@@ -280,27 +330,41 @@ function docStatusClasses(status: DocItem["status"]) {
   return "border-[#c6d3ea] bg-[#edf3fb] text-[#48607f]";
 }
 
+function textInputClass() {
+  return "w-full rounded-xl border border-[#d6d9de] bg-white px-3 py-2 text-sm text-[#243040] outline-none";
+}
+
+function areaInputClass() {
+  return "w-full rounded-xl border border-[#d6d9de] bg-white px-3 py-2 text-sm text-[#243040] outline-none resize-y";
+}
+
 export default function JoeGrantLegalDesk() {
   const [matters, setMatters] = useState<Matter[]>(INITIAL_MATTERS);
   const [appointments, setAppointments] = useState<Appointment[]>(INITIAL_APPOINTMENTS);
   const [stickies, setStickies] = useState<Sticky[]>(INITIAL_STICKIES);
   const [docs, setDocs] = useState<DocItem[]>(INITIAL_DOCS);
+  const [savedNotes, setSavedNotes] = useState<SavedNote[]>([]);
 
   const [query, setQuery] = useState("");
   const [selectedMatterId, setSelectedMatterId] = useState<string>(INITIAL_MATTERS[0]?.id ?? "");
+
+  const [draftTitle, setDraftTitle] = useState("Live notebook entry");
   const [noteText, setNoteText] = useState(
-    "Client called from vehicle. Need one clean follow-up note and timestamp."
+    "Client called from vehicle. Need one clean follow-up note and timestamp.",
   );
   const [createdAt] = useState(formatNow());
   const [updatedAt, setUpdatedAt] = useState(formatNow());
   const [timestampedAt, setTimestampedAt] = useState<string | null>(null);
   const [liveNow, setLiveNow] = useState(new Date());
+  const [attachments, setAttachments] = useState<AttachmentItem[]>([]);
+
+  const photoInputRef = useRef<HTMLInputElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
       setLiveNow(new Date());
     }, 1000);
-
     return () => window.clearInterval(timer);
   }, []);
 
@@ -329,48 +393,81 @@ export default function JoeGrantLegalDesk() {
     matters[0] ??
     null;
 
+  const notesForSelectedMatter = useMemo(() => {
+    if (!selectedMatter) return [];
+    return savedNotes.filter((note) => note.matterId === selectedMatter.id);
+  }, [savedNotes, selectedMatter]);
+
   function handleSelectMatter(id: string) {
     setSelectedMatterId(id);
   }
 
+  function updateMatter(id: string, patch: Partial<Matter>) {
+    setMatters((prev) =>
+      prev.map((matter) => (matter.id === id ? { ...matter, ...patch } : matter)),
+    );
+  }
+
   function addMatter() {
-    const newMatter = DEFAULT_NEW_MATTER();
+    const newMatter = makeMatter();
     setMatters((prev) => [newMatter, ...prev]);
     setSelectedMatterId(newMatter.id);
   }
 
   function removeMatter(id: string) {
-    setMatters((prev) => {
-      const remaining = prev.filter((m) => m.id !== id);
-      if (selectedMatterId === id) {
-        setSelectedMatterId(remaining[0]?.id ?? "");
-      }
-      return remaining;
-    });
+    const remaining = matters.filter((matter) => matter.id !== id);
+    setMatters(remaining);
+    setSavedNotes((prev) => prev.filter((note) => note.matterId !== id));
+    if (selectedMatterId === id) {
+      setSelectedMatterId(remaining[0]?.id ?? "");
+    }
+  }
+
+  function updateAppointment(id: string, patch: Partial<Appointment>) {
+    setAppointments((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, ...patch } : item)),
+    );
   }
 
   function addAppointment() {
-    setAppointments((prev) => [DEFAULT_NEW_APPOINTMENT(), ...prev]);
+    setAppointments((prev) => [makeAppointment(), ...prev]);
   }
 
   function removeAppointment(id: string) {
     setAppointments((prev) => prev.filter((item) => item.id !== id));
   }
 
+  function updateSticky(id: string, patch: Partial<Sticky>) {
+    setStickies((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, ...patch } : item)),
+    );
+  }
+
   function addSticky() {
-    setStickies((prev) => [DEFAULT_NEW_STICKY(), ...prev]);
+    setStickies((prev) => [makeSticky(), ...prev]);
   }
 
   function removeSticky(id: string) {
     setStickies((prev) => prev.filter((item) => item.id !== id));
   }
 
+  function updateDoc(id: string, patch: Partial<DocItem>) {
+    setDocs((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, ...patch } : item)),
+    );
+  }
+
   function addDocument() {
-    setDocs((prev) => [DEFAULT_NEW_DOC(), ...prev]);
+    setDocs((prev) => [makeDoc(), ...prev]);
   }
 
   function removeDoc(id: string) {
     setDocs((prev) => prev.filter((item) => item.id !== id));
+  }
+
+  function handleDraftTitleChange(value: string) {
+    setDraftTitle(value);
+    setUpdatedAt(formatNow());
   }
 
   function handleNoteChange(value: string) {
@@ -379,19 +476,240 @@ export default function JoeGrantLegalDesk() {
   }
 
   function clearNote() {
+    setDraftTitle("Live notebook entry");
     setNoteText("");
+    setAttachments([]);
     setUpdatedAt(formatNow());
     setTimestampedAt(null);
   }
 
-  function stampNote() {
+  function stampDraft() {
     const now = formatNow();
     setUpdatedAt(now);
     setTimestampedAt(now);
   }
 
+  function addVoicePlaceholder() {
+    const voiceLine = `\n[Voice note marker · ${formatNow()}]`;
+    setNoteText((prev) => `${prev}${voiceLine}`);
+    setUpdatedAt(formatNow());
+  }
+
+  function handleFileSelection(
+    event: ChangeEvent<HTMLInputElement>,
+    kind: AttachmentKind,
+  ) {
+    const files = Array.from(event.target.files ?? []);
+    if (!files.length) return;
+
+    const newAttachments: AttachmentItem[] = files.map((file) => ({
+      id: `${kind}-${Date.now()}-${file.name}`,
+      name: file.name,
+      kind,
+      type: file.type,
+    }));
+
+    setAttachments((prev) => [...prev, ...newAttachments]);
+    setUpdatedAt(formatNow());
+    event.target.value = "";
+  }
+
+  function removeAttachment(id: string) {
+    setAttachments((prev) => prev.filter((item) => item.id !== id));
+    setUpdatedAt(formatNow());
+  }
+
+  function saveDraftNote() {
+    if (!selectedMatter) return;
+
+    const now = formatNow();
+    const cleanTitle = draftTitle.trim() || "Untitled note";
+    const cleanText = noteText.trim();
+
+    const note: SavedNote = {
+      id: `NOTE-${Date.now()}`,
+      matterId: selectedMatter.id,
+      title: cleanTitle,
+      text: cleanText || "(blank note)",
+      createdAt: now,
+      updatedAt: now,
+      timestampedAt,
+      attachments: [...attachments],
+    };
+
+    setSavedNotes((prev) => [note, ...prev]);
+    setUpdatedAt(now);
+  }
+
+  function updateSavedNote(id: string, patch: Partial<SavedNote>) {
+    setSavedNotes((prev) =>
+      prev.map((note) =>
+        note.id === id ? { ...note, ...patch, updatedAt: formatNow() } : note,
+      ),
+    );
+  }
+
+  function removeSavedNote(id: string) {
+    setSavedNotes((prev) => prev.filter((note) => note.id !== id));
+  }
+
+  function timestampSavedNote(id: string) {
+    const now = formatNow();
+    setSavedNotes((prev) =>
+      prev.map((note) =>
+        note.id === id ? { ...note, timestampedAt: now, updatedAt: now } : note,
+      ),
+    );
+  }
+
+  function buildExportText(title: string, text: string, matterName: string) {
+    return [
+      `Title: ${title}`,
+      `Matter: ${matterName}`,
+      `Created: ${createdAt}`,
+      `Updated: ${updatedAt}`,
+      `Timestamped: ${timestampedAt ?? "Not yet"}`,
+      "",
+      text,
+    ].join("\n");
+  }
+
+  function exportDraft() {
+    const matterName = selectedMatter
+      ? `${selectedMatter.client} — ${selectedMatter.title}`
+      : "Unassigned matter";
+
+    const content = buildExportText(draftTitle, noteText, matterName);
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${slugify(draftTitle || "live-notebook-note")}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function exportSavedNote(note: SavedNote) {
+    const matter = matters.find((m) => m.id === note.matterId);
+    const matterName = matter ? `${matter.client} — ${matter.title}` : "Unassigned matter";
+    const content = [
+      `Title: ${note.title}`,
+      `Matter: ${matterName}`,
+      `Created: ${note.createdAt}`,
+      `Updated: ${note.updatedAt}`,
+      `Timestamped: ${note.timestampedAt ?? "Not yet"}`,
+      "",
+      note.text,
+    ].join("\n");
+
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${slugify(note.title || "saved-note")}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function printContent(title: string, text: string, metaLines: string[]) {
+    const w = window.open("", "_blank", "width=900,height=700");
+    if (!w) return;
+
+    const escapedTitle = escapeHtml(title);
+    const escapedText = escapeHtml(text).replace(/\n/g, "<br/>");
+    const escapedMeta = metaLines
+      .map((line) => `<div style="margin-bottom:6px;">${escapeHtml(line)}</div>`)
+      .join("");
+
+    w.document.write(`
+      <html>
+        <head>
+          <title>${escapedTitle}</title>
+          <style>
+            body {
+              font-family: Arial, Helvetica, sans-serif;
+              padding: 32px;
+              color: #1f2a37;
+              line-height: 1.6;
+            }
+            h1 {
+              margin: 0 0 16px 0;
+              font-size: 24px;
+            }
+            .meta {
+              margin-bottom: 20px;
+              padding: 14px;
+              border: 1px solid #d5d8de;
+              border-radius: 12px;
+              background: #f7f8fa;
+            }
+            .content {
+              white-space: normal;
+              border: 1px solid #d5d8de;
+              border-radius: 12px;
+              padding: 18px;
+            }
+          </style>
+        </head>
+        <body>
+          <h1>${escapedTitle}</h1>
+          <div class="meta">${escapedMeta}</div>
+          <div class="content">${escapedText}</div>
+        </body>
+      </html>
+    `);
+    w.document.close();
+    w.focus();
+    w.print();
+  }
+
+  function printDraft() {
+    const matterName = selectedMatter
+      ? `${selectedMatter.client} — ${selectedMatter.title}`
+      : "Unassigned matter";
+
+    printContent(draftTitle || "Live notebook entry", noteText || "(blank note)", [
+      `Matter: ${matterName}`,
+      `Created: ${createdAt}`,
+      `Updated: ${updatedAt}`,
+      `Timestamped: ${timestampedAt ?? "Not yet"}`,
+    ]);
+  }
+
+  function printSavedNote(note: SavedNote) {
+    const matter = matters.find((m) => m.id === note.matterId);
+    const matterName = matter ? `${matter.client} — ${matter.title}` : "Unassigned matter";
+
+    printContent(note.title, note.text, [
+      `Matter: ${matterName}`,
+      `Created: ${note.createdAt}`,
+      `Updated: ${note.updatedAt}`,
+      `Timestamped: ${note.timestampedAt ?? "Not yet"}`,
+    ]);
+  }
+
   return (
     <div className="min-h-screen bg-[#d9d4cb] text-[#1f2a37]">
+      <input
+        ref={photoInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={(e) => handleFileSelection(e, "photo")}
+      />
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        className="hidden"
+        onChange={(e) => handleFileSelection(e, "file")}
+      />
+
       <div className="mx-auto w-full max-w-[1400px] px-3 py-4 sm:px-4 lg:px-5 lg:py-5">
         <header className="mb-4 rounded-[24px] border border-[#d0cac0] bg-[#ebe7e0] px-3 py-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)] sm:px-4">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
@@ -430,7 +748,7 @@ export default function JoeGrantLegalDesk() {
                   />
                 </label>
 
-                <div className="flex min-w-[220px] items-center justify-between rounded-2xl border border-[#c7d1e1] bg-[#eef3fb] px-4 py-3 text-[#48607f]">
+                <div className="flex min-w-[240px] items-center justify-between rounded-2xl border border-[#c7d1e1] bg-[#eef3fb] px-4 py-3 text-[#48607f]">
                   <div className="min-w-0">
                     <div className="text-[10px] font-semibold uppercase tracking-[0.16em] opacity-80">
                       Today
@@ -455,9 +773,7 @@ export default function JoeGrantLegalDesk() {
             <div className="mb-3 flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-[15px] font-semibold text-[#243040]">Active Matters</h2>
-                <p className="mt-1 text-xs text-[#6a7380]">
-                  Open the right client fast.
-                </p>
+                <p className="mt-1 text-xs text-[#6a7380]">Open the right client fast.</p>
               </div>
 
               <div className="flex items-center gap-2">
@@ -471,7 +787,7 @@ export default function JoeGrantLegalDesk() {
                 </button>
 
                 <div className="rounded-full border border-[#d3d6dd] bg-[#f7f8fa] px-2.5 py-1 text-[11px] font-semibold text-[#61707f]">
-                  {filteredMatters.length} visible
+                  {filteredMatters.length}
                 </div>
               </div>
             </div>
@@ -479,6 +795,7 @@ export default function JoeGrantLegalDesk() {
             <div className="space-y-2.5">
               {filteredMatters.map((matter) => {
                 const active = selectedMatter?.id === matter.id;
+
                 return (
                   <div
                     key={matter.id}
@@ -491,9 +808,7 @@ export default function JoeGrantLegalDesk() {
                   >
                     <div className="mb-2 flex items-start justify-between gap-2">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className={stageBadge(matter.stage)}>
-                          {matter.stage.replace("-", " ")}
-                        </span>
+                        <span className={stageBadge(matter.stage)}>{STAGE_LABELS[matter.stage]}</span>
                         <span
                           className={cx(
                             "rounded-full border px-2.5 py-1 text-[10px] font-semibold capitalize",
@@ -507,7 +822,7 @@ export default function JoeGrantLegalDesk() {
                       <button
                         type="button"
                         onClick={() => removeMatter(matter.id)}
-                        className="rounded-full border border-[#e1c7ca] bg-[#fbefef] p-1.5 text-[#8d4e56] transition hover:opacity-90"
+                        className="rounded-full border border-[#e1c7ca] bg-[#fbefef] p-1.5 text-[#8d4e56]"
                         title="Delete matter"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -531,14 +846,81 @@ export default function JoeGrantLegalDesk() {
                         <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-[#8b95a2]" />
                       </div>
                     </button>
+
+                    {active && (
+                      <div className="mt-3 space-y-2 border-t border-[#d9dce1] pt-3">
+                        <input
+                          className={textInputClass()}
+                          value={matter.client}
+                          onChange={(e) => updateMatter(matter.id, { client: e.target.value })}
+                          placeholder="Client"
+                        />
+                        <input
+                          className={textInputClass()}
+                          value={matter.title}
+                          onChange={(e) => updateMatter(matter.id, { title: e.target.value })}
+                          placeholder="Matter title"
+                        />
+                        <input
+                          className={textInputClass()}
+                          value={matter.due}
+                          onChange={(e) => updateMatter(matter.id, { due: e.target.value })}
+                          placeholder="Due"
+                        />
+                        <select
+                          className={textInputClass()}
+                          value={matter.stage}
+                          onChange={(e) =>
+                            updateMatter(matter.id, { stage: e.target.value as MatterStage })
+                          }
+                        >
+                          {Object.entries(STAGE_LABELS).map(([value, label]) => (
+                            <option key={value} value={value}>
+                              {label}
+                            </option>
+                          ))}
+                        </select>
+                        <select
+                          className={textInputClass()}
+                          value={matter.priority}
+                          onChange={(e) =>
+                            updateMatter(matter.id, {
+                              priority: e.target.value as MatterPriority,
+                            })
+                          }
+                        >
+                          <option value="high">High</option>
+                          <option value="medium">Medium</option>
+                          <option value="normal">Normal</option>
+                        </select>
+                        <input
+                          className={textInputClass()}
+                          value={matter.contact}
+                          onChange={(e) => updateMatter(matter.id, { contact: e.target.value })}
+                          placeholder="Contact"
+                        />
+                        <textarea
+                          className={areaInputClass()}
+                          rows={3}
+                          value={matter.summary}
+                          onChange={(e) => updateMatter(matter.id, { summary: e.target.value })}
+                          placeholder="Summary"
+                        />
+                        <textarea
+                          className={areaInputClass()}
+                          rows={3}
+                          value={matter.nextAction}
+                          onChange={(e) => updateMatter(matter.id, { nextAction: e.target.value })}
+                          placeholder="Next action"
+                        />
+                      </div>
+                    )}
                   </div>
                 );
               })}
 
               {filteredMatters.length === 0 && (
-                <div className="rounded-[20px] border border-[#d9dce1] bg-[#fafafa] px-4 py-8 text-center text-sm text-[#6a7380]">
-                  No matters match this search.
-                </div>
+                <EmptyCard text="No matters match this search." />
               )}
             </div>
           </section>
@@ -549,7 +931,7 @@ export default function JoeGrantLegalDesk() {
               <div>
                 <h2 className="text-[15px] font-semibold text-[#243040]">Legal Notebook</h2>
                 <p className="mt-1 text-xs text-[#6a7380]">
-                  Write once, timestamp it, attach proof, and keep the page clean.
+                  Write once, timestamp it, attach proof, save it, export it, and print it.
                 </p>
               </div>
 
@@ -559,7 +941,7 @@ export default function JoeGrantLegalDesk() {
                 className="inline-flex items-center gap-1 rounded-full border border-[#e1c7ca] bg-[#fbefef] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8d4e56]"
               >
                 <Trash2 className="h-3.5 w-3.5" />
-                Clear Note
+                Clear Draft
               </button>
             </div>
 
@@ -571,7 +953,7 @@ export default function JoeGrantLegalDesk() {
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className={stageBadge(selectedMatter.stage)}>
-                            {selectedMatter.stage.replace("-", " ")}
+                            {STAGE_LABELS[selectedMatter.stage]}
                           </span>
                           <span className="rounded-full border border-[#d3d6dd] bg-[#f6f7f9] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#65717f]">
                             {selectedMatter.id}
@@ -631,9 +1013,7 @@ export default function JoeGrantLegalDesk() {
                     </div>
                   </>
                 ) : (
-                  <div className="rounded-[18px] border border-[#d9dce1] bg-[#fcfcfd] px-4 py-8 text-center text-sm text-[#6a7380]">
-                    No matter selected.
-                  </div>
+                  <EmptyCard text="No matter selected." />
                 )}
 
                 <div className="mt-4 rounded-[20px] border border-[#d9dce1] bg-[#fcfcfd]">
@@ -652,7 +1032,14 @@ export default function JoeGrantLegalDesk() {
                     </div>
                   </div>
 
-                  <div className="p-4">
+                  <div className="space-y-3 p-4">
+                    <input
+                      className={textInputClass()}
+                      value={draftTitle}
+                      onChange={(e) => handleDraftTitleChange(e.target.value)}
+                      placeholder="Draft title"
+                    />
+
                     <textarea
                       value={noteText}
                       onChange={(e) => handleNoteChange(e.target.value)}
@@ -660,18 +1047,165 @@ export default function JoeGrantLegalDesk() {
                       className="min-h-[320px] w-full resize-y rounded-[18px] border border-[#d5d8de] bg-white p-4 text-[16px] leading-8 text-[#243040] outline-none placeholder:text-[#99a2ae]"
                       placeholder="Type or dictate the live legal note here..."
                     />
+
+                    <div className="rounded-[18px] border border-[#d9dce1] bg-[#f7f8fa] p-3">
+                      <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#778392]">
+                        <Upload className="h-3.5 w-3.5" />
+                        Attachments
+                      </div>
+
+                      {attachments.length === 0 ? (
+                        <div className="text-sm text-[#6a7380]">No attachments yet.</div>
+                      ) : (
+                        <div className="space-y-2">
+                          {attachments.map((item) => (
+                            <div
+                              key={item.id}
+                              className="flex items-center justify-between gap-3 rounded-xl border border-[#d9dce1] bg-white px-3 py-2"
+                            >
+                              <div className="min-w-0">
+                                <div className="truncate text-sm font-medium text-[#243040]">
+                                  {item.name}
+                                </div>
+                                <div className="text-xs text-[#6a7380] uppercase">
+                                  {item.kind}
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => removeAttachment(item.id)}
+                                className="rounded-full border border-[#e1c7ca] bg-[#fbefef] p-1.5 text-[#8d4e56]"
+                                title="Remove attachment"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
+                </div>
+
+                <div className="mt-4 rounded-[20px] border border-[#d9dce1] bg-[#fcfcfd] p-4">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-[15px] font-semibold text-[#243040]">Saved Notes</h3>
+                      <p className="mt-1 text-xs text-[#6a7380]">
+                        Notes saved to the selected matter.
+                      </p>
+                    </div>
+                    <div className="rounded-full border border-[#d3d6dd] bg-[#f7f8fa] px-2.5 py-1 text-[11px] font-semibold text-[#61707f]">
+                      {notesForSelectedMatter.length}
+                    </div>
+                  </div>
+
+                  {notesForSelectedMatter.length === 0 ? (
+                    <EmptyCard text="No saved notes for this matter yet." />
+                  ) : (
+                    <div className="space-y-3">
+                      {notesForSelectedMatter.map((note) => (
+                        <div
+                          key={note.id}
+                          className="rounded-[18px] border border-[#d9dce1] bg-[#f7f8fa] p-3"
+                        >
+                          <div className="mb-3 flex items-start justify-between gap-3">
+                            <input
+                              className={textInputClass()}
+                              value={note.title}
+                              onChange={(e) =>
+                                updateSavedNote(note.id, { title: e.target.value })
+                              }
+                              placeholder="Saved note title"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeSavedNote(note.id)}
+                              className="rounded-full border border-[#e1c7ca] bg-[#fbefef] p-2 text-[#8d4e56]"
+                              title="Delete saved note"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+
+                          <textarea
+                            className={areaInputClass()}
+                            rows={6}
+                            value={note.text}
+                            onChange={(e) =>
+                              updateSavedNote(note.id, { text: e.target.value })
+                            }
+                            placeholder="Saved note text"
+                          />
+
+                          <div className="mt-3 grid gap-2 md:grid-cols-3">
+                            <TimestampChip label="Created" value={note.createdAt} />
+                            <TimestampChip label="Updated" value={note.updatedAt} />
+                            <TimestampChip
+                              label="Timestamped"
+                              value={note.timestampedAt ?? "Not yet"}
+                            />
+                          </div>
+
+                          {note.attachments.length > 0 && (
+                            <div className="mt-3 rounded-[16px] border border-[#d9dce1] bg-white p-3">
+                              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#778392]">
+                                Saved Attachments
+                              </div>
+                              <div className="space-y-2">
+                                {note.attachments.map((file) => (
+                                  <div
+                                    key={file.id}
+                                    className="rounded-xl border border-[#d9dce1] bg-[#f7f8fa] px-3 py-2 text-sm text-[#243040]"
+                                  >
+                                    {file.name}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            <SmallActionButton
+                              label="Timestamp"
+                              icon={CheckCircle2}
+                              onClick={() => timestampSavedNote(note.id)}
+                            />
+                            <SmallActionButton
+                              label="Export"
+                              icon={Upload}
+                              onClick={() => exportSavedNote(note)}
+                            />
+                            <SmallActionButton
+                              label="Print"
+                              icon={Printer}
+                              onClick={() => printSavedNote(note)}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* ACTION RAIL */}
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-1">
-                <ToolButton icon={Mic} label="Voice" />
-                <ToolButton icon={Camera} label="Photo" />
-                <ToolButton icon={Paperclip} label="Attach" />
-                <ToolButton icon={CheckCircle2} label="Timestamp" onClick={stampNote} />
-                <ToolButton icon={Save} label="Save" />
-                <ToolButton icon={Printer} label="Print" />
+                <ToolButton icon={Mic} label="Voice" onClick={addVoicePlaceholder} />
+                <ToolButton
+                  icon={Camera}
+                  label="Photo"
+                  onClick={() => photoInputRef.current?.click()}
+                />
+                <ToolButton
+                  icon={Paperclip}
+                  label="Attach"
+                  onClick={() => fileInputRef.current?.click()}
+                />
+                <ToolButton icon={CheckCircle2} label="Timestamp" onClick={stampDraft} />
+                <ToolButton icon={Save} label="Save" onClick={saveDraftNote} />
+                <ToolButton icon={Upload} label="Export" onClick={exportDraft} />
+                <ToolButton icon={Printer} label="Print" onClick={printDraft} />
                 <ToolButton icon={Trash2} label="Delete" onClick={clearNote} danger />
               </div>
             </div>
@@ -684,7 +1218,7 @@ export default function JoeGrantLegalDesk() {
                 <div>
                   <h2 className="text-[15px] font-semibold text-[#243040]">Schedule / Appointments</h2>
                   <p className="mt-1 text-xs text-[#6a7380]">
-                    Remove what is done and keep the day clean.
+                    Create, edit, and remove what is done.
                   </p>
                 </div>
 
@@ -702,35 +1236,48 @@ export default function JoeGrantLegalDesk() {
                 {appointments.map((item) => (
                   <div
                     key={item.id}
-                    className="rounded-[20px] border border-[#d9dce1] bg-[#f7f8fa] px-3.5 py-3.5"
+                    className="rounded-[20px] border border-[#d9dce1] bg-[#f7f8fa] p-3.5"
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 text-[12px] text-[#697583]">
-                          <CalendarDays className="h-3.5 w-3.5" />
-                          {item.time}
-                        </div>
-                        <div className="mt-1 text-[16px] font-semibold text-[#243040]">
-                          {item.title}
-                        </div>
-                        <div className="mt-1 line-clamp-1 text-sm text-[#5f6b79]">
-                          {item.matter}
-                        </div>
+                    <div className="mb-3 flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-2 text-[12px] text-[#697583]">
+                        <CalendarDays className="h-3.5 w-3.5" />
+                        Appointment
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => removeAppointment(item.id)}
+                        className="rounded-full border border-[#e1c7ca] bg-[#fbefef] p-1.5 text-[#8d4e56]"
+                        title="Delete appointment"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
 
-                      <div className="flex shrink-0 items-start gap-2">
-                        <div className="rounded-full border border-[#d3d6dd] bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#65717f]">
-                          {item.type}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => removeAppointment(item.id)}
-                          className="rounded-full border border-[#e1c7ca] bg-[#fbefef] p-1.5 text-[#8d4e56]"
-                          title="Delete appointment"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
+                    <div className="space-y-2">
+                      <input
+                        className={textInputClass()}
+                        value={item.time}
+                        onChange={(e) => updateAppointment(item.id, { time: e.target.value })}
+                        placeholder="Time"
+                      />
+                      <input
+                        className={textInputClass()}
+                        value={item.title}
+                        onChange={(e) => updateAppointment(item.id, { title: e.target.value })}
+                        placeholder="Title"
+                      />
+                      <input
+                        className={textInputClass()}
+                        value={item.matter}
+                        onChange={(e) => updateAppointment(item.id, { matter: e.target.value })}
+                        placeholder="Matter"
+                      />
+                      <input
+                        className={textInputClass()}
+                        value={item.type}
+                        onChange={(e) => updateAppointment(item.id, { type: e.target.value })}
+                        placeholder="Type"
+                      />
                     </div>
                   </div>
                 ))}
@@ -744,7 +1291,7 @@ export default function JoeGrantLegalDesk() {
                 <div>
                   <h2 className="text-[15px] font-semibold text-[#243040]">Sticky Notes</h2>
                   <p className="mt-1 text-xs text-[#6a7380]">
-                    Keep only the reminders that still matter.
+                    Create, edit, and remove live reminders.
                   </p>
                 </div>
 
@@ -762,17 +1309,13 @@ export default function JoeGrantLegalDesk() {
                 {stickies.map((note) => (
                   <div
                     key={note.id}
-                    className="rounded-[20px] border border-[#d8caad] bg-[#faf5e9] px-3.5 py-3.5"
+                    className="rounded-[20px] border border-[#d8caad] bg-[#faf5e9] p-3.5"
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 text-sm font-semibold text-[#5f5034]">
-                          <StickyNote className="h-4 w-4 shrink-0 text-[#9d814b]" />
-                          {note.title}
-                        </div>
-                        <p className="mt-2 text-sm leading-6 text-[#6b5b3d]">{note.text}</p>
+                    <div className="mb-3 flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-2 text-sm font-semibold text-[#5f5034]">
+                        <StickyNote className="h-4 w-4 shrink-0 text-[#9d814b]" />
+                        Sticky Note
                       </div>
-
                       <button
                         type="button"
                         onClick={() => removeSticky(note.id)}
@@ -781,6 +1324,22 @@ export default function JoeGrantLegalDesk() {
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
+                    </div>
+
+                    <div className="space-y-2">
+                      <input
+                        className={textInputClass()}
+                        value={note.title}
+                        onChange={(e) => updateSticky(note.id, { title: e.target.value })}
+                        placeholder="Sticky title"
+                      />
+                      <textarea
+                        className={areaInputClass()}
+                        rows={4}
+                        value={note.text}
+                        onChange={(e) => updateSticky(note.id, { text: e.target.value })}
+                        placeholder="Sticky text"
+                      />
                     </div>
                   </div>
                 ))}
@@ -794,7 +1353,7 @@ export default function JoeGrantLegalDesk() {
                 <div>
                   <h2 className="text-[15px] font-semibold text-[#243040]">Documents / Follow-up</h2>
                   <p className="mt-1 text-xs text-[#6a7380]">
-                    Remove completed support items when ready.
+                    Create, edit, status, and remove support items.
                   </p>
                 </div>
 
@@ -812,34 +1371,56 @@ export default function JoeGrantLegalDesk() {
                 {docs.map((item) => (
                   <div
                     key={item.id}
-                    className="rounded-[20px] border border-[#d9dce1] bg-[#f7f8fa] px-3.5 py-3.5"
+                    className="rounded-[20px] border border-[#d9dce1] bg-[#f7f8fa] p-3.5"
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 text-[15px] font-semibold text-[#243040]">
-                          <FolderOpen className="h-4 w-4 text-[#778392]" />
-                          <span className="truncate">{item.label}</span>
-                        </div>
-                        <div className="mt-1 text-sm text-[#5f6b79]">{item.detail}</div>
+                    <div className="mb-3 flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-2 text-[15px] font-semibold text-[#243040]">
+                        <FolderOpen className="h-4 w-4 text-[#778392]" />
+                        Document
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => removeDoc(item.id)}
+                        className="rounded-full border border-[#e1c7ca] bg-[#fbefef] p-1.5 text-[#8d4e56]"
+                        title="Delete document"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
 
-                      <div className="flex shrink-0 items-start gap-2">
-                        <div
-                          className={cx(
-                            "rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]",
-                            docStatusClasses(item.status),
-                          )}
-                        >
-                          {item.status}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => removeDoc(item.id)}
-                          className="rounded-full border border-[#e1c7ca] bg-[#fbefef] p-1.5 text-[#8d4e56]"
-                          title="Delete document"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
+                    <div className="space-y-2">
+                      <input
+                        className={textInputClass()}
+                        value={item.label}
+                        onChange={(e) => updateDoc(item.id, { label: e.target.value })}
+                        placeholder="Document title"
+                      />
+                      <textarea
+                        className={areaInputClass()}
+                        rows={3}
+                        value={item.detail}
+                        onChange={(e) => updateDoc(item.id, { detail: e.target.value })}
+                        placeholder="Document detail"
+                      />
+                      <select
+                        className={textInputClass()}
+                        value={item.status}
+                        onChange={(e) =>
+                          updateDoc(item.id, { status: e.target.value as DocStatus })
+                        }
+                      >
+                        <option value="ready">Ready</option>
+                        <option value="waiting">Waiting</option>
+                        <option value="sent">Sent</option>
+                      </select>
+
+                      <div
+                        className={cx(
+                          "inline-flex rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]",
+                          docStatusClasses(item.status),
+                        )}
+                      >
+                        {item.status}
                       </div>
                     </div>
                   </div>
@@ -885,6 +1466,27 @@ function ToolButton({
   );
 }
 
+function SmallActionButton({
+  icon: Icon,
+  label,
+  onClick,
+}: {
+  icon: ComponentType<{ className?: string }>;
+  label: string;
+  onClick?: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex items-center gap-1 rounded-full border border-[#d5d8de] bg-white px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#5d6978]"
+    >
+      <Icon className="h-3.5 w-3.5" />
+      {label}
+    </button>
+  );
+}
+
 function TimestampChip({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-[16px] border border-[#d5d8de] bg-[#f7f8fa] px-3 py-2">
@@ -902,4 +1504,20 @@ function EmptyCard({ text }: { text: string }) {
       {text}
     </div>
   );
+}
+
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
