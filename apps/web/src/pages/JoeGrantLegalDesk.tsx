@@ -347,6 +347,7 @@ export default function JoeGrantLegalDesk() {
 
   const [query, setQuery] = useState("");
   const [selectedMatterId, setSelectedMatterId] = useState<string>(INITIAL_MATTERS[0]?.id ?? "");
+  const [expandedMatterId, setExpandedMatterId] = useState<string | null>(null);
 
   const [draftTitle, setDraftTitle] = useState("Live notebook entry");
   const [noteText, setNoteText] = useState(
@@ -402,6 +403,10 @@ export default function JoeGrantLegalDesk() {
     setSelectedMatterId(id);
   }
 
+  function toggleMatterExpanded(id: string) {
+    setExpandedMatterId((prev) => (prev === id ? null : id));
+  }
+
   function updateMatter(id: string, patch: Partial<Matter>) {
     setMatters((prev) =>
       prev.map((matter) => (matter.id === id ? { ...matter, ...patch } : matter)),
@@ -418,8 +423,13 @@ export default function JoeGrantLegalDesk() {
     const remaining = matters.filter((matter) => matter.id !== id);
     setMatters(remaining);
     setSavedNotes((prev) => prev.filter((note) => note.matterId !== id));
+
     if (selectedMatterId === id) {
       setSelectedMatterId(remaining[0]?.id ?? "");
+    }
+
+    if (expandedMatterId === id) {
+      setExpandedMatterId(null);
     }
   }
 
@@ -795,6 +805,7 @@ export default function JoeGrantLegalDesk() {
             <div className="space-y-2.5">
               {filteredMatters.map((matter) => {
                 const active = selectedMatter?.id === matter.id;
+                const expanded = expandedMatterId === matter.id;
 
                 return (
                   <div
@@ -829,12 +840,12 @@ export default function JoeGrantLegalDesk() {
                       </button>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => handleSelectMatter(matter.id)}
-                      className="w-full text-left"
-                    >
-                      <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <button
+                        type="button"
+                        onClick={() => handleSelectMatter(matter.id)}
+                        className="min-w-0 flex-1 text-left"
+                      >
                         <div className="min-w-0">
                           <div className="text-[16px] font-semibold text-[#243040]">{matter.client}</div>
                           <div className="mt-1 line-clamp-1 text-sm text-[#65707d]">{matter.title}</div>
@@ -843,11 +854,24 @@ export default function JoeGrantLegalDesk() {
                             <span>{matter.due}</span>
                           </div>
                         </div>
-                        <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-[#8b95a2]" />
-                      </div>
-                    </button>
+                      </button>
 
-                    {active && (
+                      <button
+                        type="button"
+                        onClick={() => toggleMatterExpanded(matter.id)}
+                        className="mt-1 shrink-0"
+                        title={expanded ? "Collapse" : "Expand"}
+                      >
+                        <ChevronRight
+                          className={cx(
+                            "h-4 w-4 text-[#8b95a2] transition-transform",
+                            expanded && "rotate-90",
+                          )}
+                        />
+                      </button>
+                    </div>
+
+                    {expanded && (
                       <div className="mt-3 space-y-2 border-t border-[#d9dce1] pt-3">
                         <input
                           className={textInputClass()}
