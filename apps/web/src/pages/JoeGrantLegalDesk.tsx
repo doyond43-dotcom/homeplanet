@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+// src/pages/JoeGrantLegalDesk.tsx
+import { useEffect, useMemo, useState, type ComponentType } from "react";
 import {
   CalendarDays,
   Camera,
@@ -10,8 +11,13 @@ import {
   Mic,
   Paperclip,
   Phone,
+  Plus,
+  Printer,
+  Save,
   Search,
   StickyNote,
+  Tag,
+  Trash2,
   User,
 } from "lucide-react";
 
@@ -28,12 +34,12 @@ type Matter = {
   id: string;
   client: string;
   title: string;
-  stage: MatterStage;
-  nextAction: string;
   due: string;
+  stage: MatterStage;
   priority: "high" | "medium" | "normal";
-  contact: string;
   summary: string;
+  contact: string;
+  nextAction: string;
 };
 
 type Appointment = {
@@ -57,96 +63,54 @@ type DocItem = {
   status: "ready" | "waiting" | "sent";
 };
 
-const STAGE_ORDER: MatterStage[] = [
-  "intake",
-  "review",
-  "pending-client",
-  "filing",
-  "court",
-  "follow-up",
-  "closed",
-];
-
-const STAGE_LABELS: Record<MatterStage, string> = {
-  intake: "Intake",
-  review: "Review",
-  "pending-client": "Pending Client",
-  filing: "Filing",
-  court: "Court",
-  "follow-up": "Follow-up",
-  closed: "Closed",
-};
-
-const MATTERS: Matter[] = [
+const INITIAL_MATTERS: Matter[] = [
   {
     id: "MAT-24018",
     client: "Maria Ortega",
     title: "Estate administration / probate intake",
-    stage: "review",
-    nextAction: "Review death certificate and asset list before callback.",
     due: "Today · 10:30 AM",
+    stage: "review",
     priority: "high",
-    contact: "(863) 555-0148",
     summary: "Initial probate matter with family waiting on first document pass.",
+    contact: "(863) 555-0148",
+    nextAction: "Review death certificate and asset list before callback.",
   },
   {
     id: "MAT-24022",
     client: "Derrick Lawson",
     title: "Contract dispute response deadline",
-    stage: "filing",
-    nextAction: "Finalize response packet and confirm exhibits are attached.",
     due: "Today · 2:00 PM",
+    stage: "filing",
     priority: "high",
-    contact: "(863) 555-0172",
     summary: "Response window is short and filing packet needs final review.",
+    contact: "(863) 555-0172",
+    nextAction: "Finalize response packet and confirm exhibits are attached.",
   },
   {
     id: "MAT-24011",
     client: "Angela Pierce",
     title: "Guardianship follow-up",
-    stage: "pending-client",
-    nextAction: "Get signed physician form from client and set court prep call.",
     due: "Tomorrow · 9:00 AM",
+    stage: "pending-client",
     priority: "medium",
-    contact: "(863) 555-0102",
     summary: "Waiting on client-side paperwork before next court-facing step.",
+    contact: "(863) 555-0102",
+    nextAction: "Get signed physician form from client and set court prep call.",
   },
   {
     id: "MAT-24004",
     client: "Jamal Reed",
     title: "Real estate document review",
-    stage: "follow-up",
-    nextAction: "Send revision summary and close open title question.",
     due: "Tomorrow · 1:30 PM",
+    stage: "follow-up",
     priority: "normal",
-    contact: "(863) 555-0160",
     summary: "Mostly complete, but one clarification still needs to go out.",
-  },
-  {
-    id: "MAT-23998",
-    client: "Helen Barker",
-    title: "Small business formation cleanup",
-    stage: "intake",
-    nextAction: "Confirm entity name and gather ownership percentages.",
-    due: "Friday · 11:15 AM",
-    priority: "normal",
-    contact: "(863) 555-0191",
-    summary: "New intake with quick setup path once the ownership details arrive.",
-  },
-  {
-    id: "MAT-23977",
-    client: "Christopher Neal",
-    title: "Hearing prep and witness order",
-    stage: "court",
-    nextAction: "Run final hearing checklist and print hearing binder.",
-    due: "Monday · 8:00 AM",
-    priority: "high",
-    contact: "(863) 555-0130",
-    summary: "Court date is close, and prep list needs to stay visible.",
+    contact: "(863) 555-0160",
+    nextAction: "Send revision summary and close open title question.",
   },
 ];
 
-const APPOINTMENTS: Appointment[] = [
+const INITIAL_APPOINTMENTS: Appointment[] = [
   {
     id: "APT-1",
     time: "9:00 AM",
@@ -168,16 +132,9 @@ const APPOINTMENTS: Appointment[] = [
     matter: "Real estate document review",
     type: "Call",
   },
-  {
-    id: "APT-4",
-    time: "4:15 PM",
-    title: "Court prep review",
-    matter: "Hearing prep and witness order",
-    type: "Internal",
-  },
 ];
 
-const STICKIES: Sticky[] = [
+const INITIAL_STICKIES: Sticky[] = [
   {
     id: "ST-1",
     title: "Clerk call",
@@ -195,7 +152,7 @@ const STICKIES: Sticky[] = [
   },
 ];
 
-const DOCS: DocItem[] = [
+const INITIAL_DOCS: DocItem[] = [
   {
     id: "DOC-1",
     label: "Probate intake checklist",
@@ -214,16 +171,70 @@ const DOCS: DocItem[] = [
     detail: "Sent to client, not yet returned.",
     status: "sent",
   },
-  {
-    id: "DOC-4",
-    label: "Hearing binder print packet",
-    detail: "Ready for print once witness order is locked.",
-    status: "ready",
-  },
 ];
+
+const DEFAULT_NEW_MATTER = (): Matter => ({
+  id: `MAT-${Date.now()}`,
+  client: "New Client",
+  title: "New matter",
+  due: "No due date",
+  stage: "intake",
+  priority: "normal",
+  summary: "Add matter summary.",
+  contact: "(000) 000-0000",
+  nextAction: "Add next action.",
+});
+
+const DEFAULT_NEW_APPOINTMENT = (): Appointment => ({
+  id: `APT-${Date.now()}`,
+  time: "New",
+  title: "New appointment",
+  matter: "Attach to matter",
+  type: "Office",
+});
+
+const DEFAULT_NEW_STICKY = (): Sticky => ({
+  id: `ST-${Date.now()}`,
+  title: "New sticky",
+  text: "Tap to edit.",
+});
+
+const DEFAULT_NEW_DOC = (): DocItem => ({
+  id: `DOC-${Date.now()}`,
+  label: "New document",
+  detail: "Add details.",
+  status: "waiting",
+});
 
 function cx(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(" ");
+}
+
+function formatNow() {
+  return new Date().toLocaleString([], {
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function formatLiveDate(date: Date) {
+  return date.toLocaleDateString([], {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function formatLiveTime(date: Date) {
+  return date.toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+  });
 }
 
 function stageBadge(stage: MatterStage) {
@@ -270,241 +281,297 @@ function docStatusClasses(status: DocItem["status"]) {
 }
 
 export default function JoeGrantLegalDesk() {
+  const [matters, setMatters] = useState<Matter[]>(INITIAL_MATTERS);
+  const [appointments, setAppointments] = useState<Appointment[]>(INITIAL_APPOINTMENTS);
+  const [stickies, setStickies] = useState<Sticky[]>(INITIAL_STICKIES);
+  const [docs, setDocs] = useState<DocItem[]>(INITIAL_DOCS);
+
   const [query, setQuery] = useState("");
-  const [selectedId, setSelectedId] = useState<string>(MATTERS[0]?.id ?? "");
-  const [stageFilter, setStageFilter] = useState<"all" | MatterStage>("all");
-  const [activeStickyId, setActiveStickyId] = useState<string>(STICKIES[0]?.id ?? "");
-  const [quickNote, setQuickNote] = useState(
+  const [selectedMatterId, setSelectedMatterId] = useState<string>(INITIAL_MATTERS[0]?.id ?? "");
+  const [noteText, setNoteText] = useState(
     "Client called from vehicle. Need one clean follow-up note and timestamp."
   );
+  const [createdAt] = useState(formatNow());
+  const [updatedAt, setUpdatedAt] = useState(formatNow());
+  const [timestampedAt, setTimestampedAt] = useState<string | null>(null);
+  const [liveNow, setLiveNow] = useState(new Date());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setLiveNow(new Date());
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, []);
 
   const filteredMatters = useMemo(() => {
     const q = query.trim().toLowerCase();
-
-    return MATTERS.filter((matter) => {
-      const stageMatch = stageFilter === "all" || matter.stage === stageFilter;
-      const textMatch =
-        q.length === 0
-          ? true
-          : [
-              matter.id,
-              matter.client,
-              matter.title,
-              matter.nextAction,
-              matter.summary,
-              matter.contact,
-            ]
-              .join(" ")
-              .toLowerCase()
-              .includes(q);
-
-      return stageMatch && textMatch;
-    });
-  }, [query, stageFilter]);
+    if (!q) return matters;
+    return matters.filter((matter) =>
+      [
+        matter.id,
+        matter.client,
+        matter.title,
+        matter.summary,
+        matter.contact,
+        matter.nextAction,
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(q),
+    );
+  }, [matters, query]);
 
   const selectedMatter =
-    filteredMatters.find((matter) => matter.id === selectedId) ??
+    filteredMatters.find((m) => m.id === selectedMatterId) ??
+    matters.find((m) => m.id === selectedMatterId) ??
     filteredMatters[0] ??
-    MATTERS[0];
+    matters[0] ??
+    null;
 
-  const activeSticky =
-    STICKIES.find((note) => note.id === activeStickyId) ?? STICKIES[0];
+  function handleSelectMatter(id: string) {
+    setSelectedMatterId(id);
+  }
 
-  const selectedStageIndex = selectedMatter
-    ? STAGE_ORDER.indexOf(selectedMatter.stage)
-    : -1;
+  function addMatter() {
+    const newMatter = DEFAULT_NEW_MATTER();
+    setMatters((prev) => [newMatter, ...prev]);
+    setSelectedMatterId(newMatter.id);
+  }
+
+  function removeMatter(id: string) {
+    setMatters((prev) => {
+      const remaining = prev.filter((m) => m.id !== id);
+      if (selectedMatterId === id) {
+        setSelectedMatterId(remaining[0]?.id ?? "");
+      }
+      return remaining;
+    });
+  }
+
+  function addAppointment() {
+    setAppointments((prev) => [DEFAULT_NEW_APPOINTMENT(), ...prev]);
+  }
+
+  function removeAppointment(id: string) {
+    setAppointments((prev) => prev.filter((item) => item.id !== id));
+  }
+
+  function addSticky() {
+    setStickies((prev) => [DEFAULT_NEW_STICKY(), ...prev]);
+  }
+
+  function removeSticky(id: string) {
+    setStickies((prev) => prev.filter((item) => item.id !== id));
+  }
+
+  function addDocument() {
+    setDocs((prev) => [DEFAULT_NEW_DOC(), ...prev]);
+  }
+
+  function removeDoc(id: string) {
+    setDocs((prev) => prev.filter((item) => item.id !== id));
+  }
+
+  function handleNoteChange(value: string) {
+    setNoteText(value);
+    setUpdatedAt(formatNow());
+  }
+
+  function clearNote() {
+    setNoteText("");
+    setUpdatedAt(formatNow());
+    setTimestampedAt(null);
+  }
+
+  function stampNote() {
+    const now = formatNow();
+    setUpdatedAt(now);
+    setTimestampedAt(now);
+  }
 
   return (
     <div className="min-h-screen bg-[#d9d4cb] text-[#1f2a37]">
-      <div className="mx-auto w-full max-w-[1240px] px-3 py-4 sm:px-4 lg:px-5 lg:py-5">
+      <div className="mx-auto w-full max-w-[1400px] px-3 py-4 sm:px-4 lg:px-5 lg:py-5">
         <header className="mb-4 rounded-[24px] border border-[#d0cac0] bg-[#ebe7e0] px-3 py-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)] sm:px-4">
-          <div className="flex flex-col gap-3">
-            <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <div className="rounded-full border border-[#c8d2e2] bg-[#eef3fb] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-[#48607f]">
-                    Joe Grant Legal Desk
-                  </div>
-                  <div className="rounded-full border border-[#d2ccc2] bg-[#f5f2ec] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#706657]">
-                    Daily Planner
-                  </div>
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="rounded-full border border-[#c8d2e2] bg-[#eef3fb] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-[#48607f]">
+                  Joe Grant Legal Notebook Desk
                 </div>
 
-                <h1 className="mt-2 text-[22px] font-semibold tracking-tight text-[#243040]">
-                  Fast access to matters, notes, schedule, and proof.
-                </h1>
-                <p className="mt-1 max-w-3xl text-sm text-[#626c79]">
-                  Built for quick pull-ups, clean notes, and real daily movement on laptop, tablet, or in the car.
-                </p>
-              </div>
-
-              <div className="flex w-full flex-col gap-2 xl:max-w-[680px]">
-                <div className="flex w-full flex-col gap-2 sm:flex-row">
-                  <label className="flex min-w-0 flex-1 items-center gap-2 rounded-2xl border border-[#d3d6dd] bg-[#f7f8fa] px-3 py-3 text-sm text-[#586474]">
-                    <Search className="h-4 w-4 text-[#7a8593]" />
-                    <input
-                      value={query}
-                      onChange={(e) => setQuery(e.target.value)}
-                      placeholder="Search matter, client, note, or ID"
-                      className="w-full bg-transparent outline-none placeholder:text-[#99a2ae]"
-                    />
-                  </label>
-
-                  <button
-                    type="button"
-                    className="rounded-2xl border border-[#c7d1e1] bg-[#eef3fb] px-4 py-3 text-sm font-semibold text-[#48607f]"
-                  >
-                    Today’s Desk
-                  </button>
-                </div>
-
-                <div className="flex items-center gap-2 overflow-x-auto pb-0.5">
-                  <button
-                    type="button"
-                    onClick={() => setStageFilter("all")}
-                    className={cx(
-                      "shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold transition",
-                      stageFilter === "all"
-                        ? "border-[#c6d3ea] bg-[#edf3fb] text-[#48607f]"
-                        : "border-[#d5d8de] bg-[#f7f8fa] text-[#667181]",
-                    )}
-                  >
-                    All Matters
-                  </button>
-
-                  {STAGE_ORDER.map((stage) => (
-                    <button
-                      key={stage}
-                      type="button"
-                      onClick={() => setStageFilter(stage)}
-                      className={cx(
-                        "shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold transition",
-                        stageFilter === stage
-                          ? "border-[#c6d3ea] bg-[#edf3fb] text-[#48607f]"
-                          : "border-[#d5d8de] bg-[#f7f8fa] text-[#667181]",
-                      )}
-                    >
-                      {STAGE_LABELS[stage]}
-                    </button>
-                  ))}
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#b9ddc0] bg-[#edf9f0] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#2f7d46] shadow-[0_0_0_1px_rgba(47,125,70,0.06),0_0_18px_rgba(82,201,109,0.18)]">
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#52c96d] opacity-75" />
+                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#2f9e44]" />
+                  </span>
+                  Live Notebook
                 </div>
               </div>
+
+              <h1 className="mt-2 text-[22px] font-semibold tracking-tight text-[#243040]">
+                Fast access to matters, notes, schedule, and proof.
+              </h1>
+              <p className="mt-1 max-w-3xl text-sm text-[#626c79]">
+                Built for quick pull-ups, quick typing, timestamps, and clean removal when the day moves on.
+              </p>
             </div>
 
-            <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-              <button
-                type="button"
-                className="flex items-center justify-center gap-2 rounded-[18px] border border-[#c7d1e1] bg-[#eef3fb] px-4 py-3 text-sm font-semibold text-[#48607f]"
-              >
-                <Mic className="h-4 w-4" />
-                Voice Note
-              </button>
+            <div className="flex w-full max-w-[720px] flex-col gap-2">
+              <div className="flex w-full flex-col gap-2 sm:flex-row">
+                <label className="flex min-w-0 flex-1 items-center gap-2 rounded-2xl border border-[#d3d6dd] bg-[#f7f8fa] px-3 py-3 text-sm text-[#586474]">
+                  <Search className="h-4 w-4 text-[#7a8593]" />
+                  <input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Search matter, client, note, or ID"
+                    className="w-full bg-transparent outline-none placeholder:text-[#99a2ae]"
+                  />
+                </label>
 
-              <button
-                type="button"
-                className="flex items-center justify-center gap-2 rounded-[18px] border border-[#d8caad] bg-[#faf5e9] px-4 py-3 text-sm font-semibold text-[#806a43]"
-              >
-                <Camera className="h-4 w-4" />
-                Add Photo
-              </button>
-
-              <button
-                type="button"
-                className="flex items-center justify-center gap-2 rounded-[18px] border border-[#c9d9cf] bg-[#edf7f0] px-4 py-3 text-sm font-semibold text-[#466a53]"
-              >
-                <CheckCircle2 className="h-4 w-4" />
-                Timestamp Note
-              </button>
-
-              <button
-                type="button"
-                className="flex items-center justify-center gap-2 rounded-[18px] border border-[#d5d8de] bg-[#f7f8fa] px-4 py-3 text-sm font-semibold text-[#647080]"
-              >
-                <Paperclip className="h-4 w-4" />
-                Attach Document
-              </button>
+                <div className="flex min-w-[220px] items-center justify-between rounded-2xl border border-[#c7d1e1] bg-[#eef3fb] px-4 py-3 text-[#48607f]">
+                  <div className="min-w-0">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.16em] opacity-80">
+                      Today
+                    </div>
+                    <div className="truncate text-sm font-semibold">{formatLiveDate(liveNow)}</div>
+                  </div>
+                  <div className="ml-3 text-right">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.16em] opacity-80">
+                      Live Time
+                    </div>
+                    <div className="text-sm font-semibold">{formatLiveTime(liveNow)}</div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </header>
 
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.04fr_0.96fr]">
-          <section className="rounded-[24px] border border-[#d0cac0] bg-[#ebe7e0] p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)] sm:p-4">
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[320px_minmax(0,1fr)_340px]">
+          {/* LEFT RAIL */}
+          <section className="rounded-[24px] border border-[#d0cac0] bg-[#ebe7e0] p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)]">
             <div className="mb-3 flex items-start justify-between gap-3">
               <div>
-                <h2 className="text-[15px] font-semibold text-[#243040]">Active Matter</h2>
+                <h2 className="text-[15px] font-semibold text-[#243040]">Active Matters</h2>
                 <p className="mt-1 text-xs text-[#6a7380]">
-                  Pull up the right file fast and keep the next move visible.
+                  Open the right client fast.
                 </p>
               </div>
 
-              <div className="rounded-full border border-[#d3d6dd] bg-[#f7f8fa] px-2.5 py-1 text-[11px] font-semibold text-[#61707f]">
-                {filteredMatters.length} visible
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={addMatter}
+                  className="inline-flex items-center gap-1 rounded-full border border-[#c6d3ea] bg-[#edf3fb] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#48607f]"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Matter
+                </button>
+
+                <div className="rounded-full border border-[#d3d6dd] bg-[#f7f8fa] px-2.5 py-1 text-[11px] font-semibold text-[#61707f]">
+                  {filteredMatters.length} visible
+                </div>
               </div>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-1 lg:grid-cols-[0.94fr_1.06fr]">
-              <div className="rounded-[22px] border border-[#d7d1c7] bg-[#f3f0ea] p-2.5">
-                <div className="space-y-2.5">
-                  {filteredMatters.map((matter) => {
-                    const active = selectedMatter?.id === matter.id;
+            <div className="space-y-2.5">
+              {filteredMatters.map((matter) => {
+                const active = selectedMatter?.id === matter.id;
+                return (
+                  <div
+                    key={matter.id}
+                    className={cx(
+                      "rounded-[20px] border px-3 py-3 transition",
+                      active
+                        ? "border-[#c6d3ea] bg-[#eef3fb] shadow-[0_6px_18px_rgba(72,96,127,0.08)]"
+                        : "border-[#d9dce1] bg-[#fafafa]",
+                    )}
+                  >
+                    <div className="mb-2 flex items-start justify-between gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className={stageBadge(matter.stage)}>
+                          {matter.stage.replace("-", " ")}
+                        </span>
+                        <span
+                          className={cx(
+                            "rounded-full border px-2.5 py-1 text-[10px] font-semibold capitalize",
+                            priorityClasses(matter.priority),
+                          )}
+                        >
+                          {matter.priority}
+                        </span>
+                      </div>
 
-                    return (
                       <button
-                        key={matter.id}
                         type="button"
-                        onClick={() => setSelectedId(matter.id)}
-                        className={cx(
-                          "w-full rounded-[20px] border px-3 py-3 text-left transition",
-                          active
-                            ? "border-[#c6d3ea] bg-[#eef3fb] shadow-[0_6px_18px_rgba(72,96,127,0.08)]"
-                            : "border-[#d9dce1] bg-[#fafafa] hover:bg-white",
-                        )}
+                        onClick={() => removeMatter(matter.id)}
+                        className="rounded-full border border-[#e1c7ca] bg-[#fbefef] p-1.5 text-[#8d4e56] transition hover:opacity-90"
+                        title="Delete matter"
                       >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span className={stageBadge(matter.stage)}>
-                                {STAGE_LABELS[matter.stage]}
-                              </span>
-                              <span
-                                className={cx(
-                                  "rounded-full border px-2.5 py-1 text-[10px] font-semibold capitalize",
-                                  priorityClasses(matter.priority),
-                                )}
-                              >
-                                {matter.priority}
-                              </span>
-                            </div>
-
-                            <div className="mt-2 text-[16px] font-semibold text-[#243040]">
-                              {matter.client}
-                            </div>
-                            <div className="mt-1 line-clamp-1 text-sm text-[#65707d]">
-                              {matter.title}
-                            </div>
-                          </div>
-
-                          <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-[#8b95a2]" />
-                        </div>
-
-                        <div className="mt-3 flex items-center gap-2 text-[12px] text-[#6b7684]">
-                          <Clock3 className="h-3.5 w-3.5" />
-                          <span>{matter.due}</span>
-                        </div>
+                        <Trash2 className="h-3.5 w-3.5" />
                       </button>
-                    );
-                  })}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleSelectMatter(matter.id)}
+                      className="w-full text-left"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="text-[16px] font-semibold text-[#243040]">{matter.client}</div>
+                          <div className="mt-1 line-clamp-1 text-sm text-[#65707d]">{matter.title}</div>
+                          <div className="mt-3 flex items-center gap-2 text-[12px] text-[#6b7684]">
+                            <Clock3 className="h-3.5 w-3.5" />
+                            <span>{matter.due}</span>
+                          </div>
+                        </div>
+                        <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-[#8b95a2]" />
+                      </div>
+                    </button>
+                  </div>
+                );
+              })}
+
+              {filteredMatters.length === 0 && (
+                <div className="rounded-[20px] border border-[#d9dce1] bg-[#fafafa] px-4 py-8 text-center text-sm text-[#6a7380]">
+                  No matters match this search.
                 </div>
+              )}
+            </div>
+          </section>
+
+          {/* CENTER NOTEBOOK */}
+          <section className="rounded-[24px] border border-[#d0cac0] bg-[#ebe7e0] p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)] sm:p-4">
+            <div className="mb-3 flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-[15px] font-semibold text-[#243040]">Legal Notebook</h2>
+                <p className="mt-1 text-xs text-[#6a7380]">
+                  Write once, timestamp it, attach proof, and keep the page clean.
+                </p>
               </div>
 
+              <button
+                type="button"
+                onClick={clearNote}
+                className="inline-flex items-center gap-1 rounded-full border border-[#e1c7ca] bg-[#fbefef] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8d4e56]"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Clear Note
+              </button>
+            </div>
+
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_92px]">
               <div className="rounded-[22px] border border-[#d7d1c7] bg-[#f7f4ef] p-4">
                 {selectedMatter ? (
-                  <div className="space-y-3">
+                  <>
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className={stageBadge(selectedMatter.stage)}>
-                            {STAGE_LABELS[selectedMatter.stage]}
+                            {selectedMatter.stage.replace("-", " ")}
                           </span>
                           <span className="rounded-full border border-[#d3d6dd] bg-[#f6f7f9] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#65717f]">
                             {selectedMatter.id}
@@ -527,7 +594,7 @@ export default function JoeGrantLegalDesk() {
                       </div>
                     </div>
 
-                    <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
                       <div className="rounded-[18px] border border-[#d9dce1] bg-[#fcfcfd] p-3.5">
                         <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#778392]">
                           <User className="h-3.5 w-3.5" />
@@ -553,7 +620,7 @@ export default function JoeGrantLegalDesk() {
                       </div>
                     </div>
 
-                    <div className="rounded-[18px] border border-[#c6d3ea] bg-[#eef3fb] p-4">
+                    <div className="mt-3 rounded-[18px] border border-[#c6d3ea] bg-[#eef3fb] p-4">
                       <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#48607f]">
                         <CheckCircle2 className="h-3.5 w-3.5" />
                         Next Action
@@ -562,77 +629,77 @@ export default function JoeGrantLegalDesk() {
                         {selectedMatter.nextAction}
                       </p>
                     </div>
+                  </>
+                ) : (
+                  <div className="rounded-[18px] border border-[#d9dce1] bg-[#fcfcfd] px-4 py-8 text-center text-sm text-[#6a7380]">
+                    No matter selected.
                   </div>
-                ) : null}
+                )}
+
+                <div className="mt-4 rounded-[20px] border border-[#d9dce1] bg-[#fcfcfd]">
+                  <div className="border-b border-[#e6e8eb] px-4 py-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="inline-flex items-center gap-2 rounded-full border border-[#d5d8de] bg-[#f7f8fa] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#65717f]">
+                        <Tag className="h-3.5 w-3.5" />
+                        {selectedMatter ? selectedMatter.client : "Untitled Note"}
+                      </div>
+                    </div>
+
+                    <div className="mt-3 grid gap-2 md:grid-cols-3">
+                      <TimestampChip label="Created" value={createdAt} />
+                      <TimestampChip label="Updated" value={updatedAt} />
+                      <TimestampChip label="Timestamped" value={timestampedAt ?? "Not yet"} />
+                    </div>
+                  </div>
+
+                  <div className="p-4">
+                    <textarea
+                      value={noteText}
+                      onChange={(e) => handleNoteChange(e.target.value)}
+                      rows={12}
+                      className="min-h-[320px] w-full resize-y rounded-[18px] border border-[#d5d8de] bg-white p-4 text-[16px] leading-8 text-[#243040] outline-none placeholder:text-[#99a2ae]"
+                      placeholder="Type or dictate the live legal note here..."
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* ACTION RAIL */}
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-1">
+                <ToolButton icon={Mic} label="Voice" />
+                <ToolButton icon={Camera} label="Photo" />
+                <ToolButton icon={Paperclip} label="Attach" />
+                <ToolButton icon={CheckCircle2} label="Timestamp" onClick={stampNote} />
+                <ToolButton icon={Save} label="Save" />
+                <ToolButton icon={Printer} label="Print" />
+                <ToolButton icon={Trash2} label="Delete" onClick={clearNote} danger />
               </div>
             </div>
           </section>
 
+          {/* RIGHT RAIL */}
           <div className="grid gap-4">
-            <section className="rounded-[24px] border border-[#d0cac0] bg-[#ebe7e0] p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)] sm:p-4">
-              <div className="mb-3">
-                <h2 className="text-[15px] font-semibold text-[#243040]">Matter Stage</h2>
-                <p className="mt-1 text-xs text-[#6a7380]">
-                  Keep the matter flow readable without making it feel technical.
-                </p>
-              </div>
-
-              <div className="rounded-[22px] border border-[#d7d1c7] bg-[#f7f4ef] p-3.5">
-                <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
-                  {STAGE_ORDER.map((stage, index) => {
-                    const done = index < selectedStageIndex;
-                    const current = index === selectedStageIndex;
-
-                    return (
-                      <div
-                        key={stage}
-                        className={cx(
-                          "flex items-center justify-between rounded-[18px] border px-3.5 py-3",
-                          current && "border-[#c6d3ea] bg-[#eef3fb]",
-                          done && "border-[#c9d9cf] bg-[#edf7f0]",
-                          !current && !done && "border-[#d9dce1] bg-[#fcfcfd]",
-                        )}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={cx(
-                              "flex h-8 w-8 items-center justify-center rounded-full border text-[12px] font-semibold",
-                              current && "border-[#b9c8de] bg-white text-[#48607f]",
-                              done && "border-[#bfd1c5] bg-white text-[#466a53]",
-                              !current && !done && "border-[#d4d8de] bg-white text-[#738091]",
-                            )}
-                          >
-                            {index + 1}
-                          </div>
-
-                          <div>
-                            <div className="text-sm font-semibold text-[#243040]">
-                              {STAGE_LABELS[stage]}
-                            </div>
-                            <div className="text-[11px] uppercase tracking-[0.16em] text-[#7a8593]">
-                              {current ? "Current" : done ? "Complete" : "Upcoming"}
-                            </div>
-                          </div>
-                        </div>
-
-                        <ChevronRight className="h-4 w-4 text-[#9aa3ae]" />
-                      </div>
-                    );
-                  })}
+            <section className="rounded-[24px] border border-[#d0cac0] bg-[#ebe7e0] p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)]">
+              <div className="mb-3 flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-[15px] font-semibold text-[#243040]">Schedule / Appointments</h2>
+                  <p className="mt-1 text-xs text-[#6a7380]">
+                    Remove what is done and keep the day clean.
+                  </p>
                 </div>
-              </div>
-            </section>
 
-            <section className="rounded-[24px] border border-[#d0cac0] bg-[#ebe7e0] p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)] sm:p-4">
-              <div className="mb-3">
-                <h2 className="text-[15px] font-semibold text-[#243040]">Schedule / Appointments</h2>
-                <p className="mt-1 text-xs text-[#6a7380]">
-                  The day should support the work, not crowd it.
-                </p>
+                <button
+                  type="button"
+                  onClick={addAppointment}
+                  className="inline-flex items-center gap-1 rounded-full border border-[#c6d3ea] bg-[#edf3fb] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#48607f]"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Appointment
+                </button>
               </div>
 
               <div className="space-y-2.5">
-                {APPOINTMENTS.map((item) => (
+                {appointments.map((item) => (
                   <div
                     key={item.id}
                     className="rounded-[20px] border border-[#d9dce1] bg-[#f7f8fa] px-3.5 py-3.5"
@@ -651,131 +718,98 @@ export default function JoeGrantLegalDesk() {
                         </div>
                       </div>
 
-                      <div className="rounded-full border border-[#d3d6dd] bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#65717f]">
-                        {item.type}
+                      <div className="flex shrink-0 items-start gap-2">
+                        <div className="rounded-full border border-[#d3d6dd] bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#65717f]">
+                          {item.type}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeAppointment(item.id)}
+                          className="rounded-full border border-[#e1c7ca] bg-[#fbefef] p-1.5 text-[#8d4e56]"
+                          title="Delete appointment"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
                       </div>
                     </div>
                   </div>
                 ))}
+
+                {appointments.length === 0 && <EmptyCard text="No appointments left." />}
               </div>
             </section>
-          </div>
-        </div>
 
-        <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[0.94fr_1.06fr]">
-          <section className="rounded-[24px] border border-[#d0cac0] bg-[#ebe7e0] p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)] sm:p-4">
-            <div className="mb-3">
-              <h2 className="text-[15px] font-semibold text-[#243040]">Quick Note / Timestamp</h2>
-              <p className="mt-1 text-xs text-[#6a7380]">
-                Make a note fast, attach proof, and keep moving.
-              </p>
-            </div>
-
-            <div className="rounded-[22px] border border-[#d7d1c7] bg-[#f7f4ef] p-3.5">
-              <textarea
-                value={quickNote}
-                onChange={(e) => setQuickNote(e.target.value)}
-                rows={6}
-                className="w-full rounded-[18px] border border-[#d5d8de] bg-[#fcfcfd] p-4 text-[15px] leading-7 text-[#243040] outline-none placeholder:text-[#99a2ae]"
-                placeholder="Type or dictate a quick note..."
-              />
-
-              <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                <button
-                  type="button"
-                  className="flex items-center justify-center gap-2 rounded-[18px] border border-[#c7d1e1] bg-[#eef3fb] px-4 py-3 text-sm font-semibold text-[#48607f]"
-                >
-                  <Mic className="h-4 w-4" />
-                  Dictate
-                </button>
-
-                <button
-                  type="button"
-                  className="flex items-center justify-center gap-2 rounded-[18px] border border-[#d8caad] bg-[#faf5e9] px-4 py-3 text-sm font-semibold text-[#806a43]"
-                >
-                  <Camera className="h-4 w-4" />
-                  Photo
-                </button>
-
-                <button
-                  type="button"
-                  className="flex items-center justify-center gap-2 rounded-[18px] border border-[#d5d8de] bg-[#f7f8fa] px-4 py-3 text-sm font-semibold text-[#647080]"
-                >
-                  <Paperclip className="h-4 w-4" />
-                  Attach
-                </button>
-
-                <button
-                  type="button"
-                  className="flex items-center justify-center gap-2 rounded-[18px] border border-[#c9d9cf] bg-[#edf7f0] px-4 py-3 text-sm font-semibold text-[#466a53]"
-                >
-                  <CheckCircle2 className="h-4 w-4" />
-                  Timestamp
-                </button>
-              </div>
-            </div>
-          </section>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <section className="rounded-[24px] border border-[#d0cac0] bg-[#ebe7e0] p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)] sm:p-4">
-              <div className="mb-3">
-                <h2 className="text-[15px] font-semibold text-[#243040]">Sticky Notes</h2>
-                <p className="mt-1 text-xs text-[#6a7380]">
-                  Tap one, view it, and update it fast.
-                </p>
-              </div>
-
-              <div className="space-y-2.5">
-                {STICKIES.map((note) => {
-                  const active = activeSticky?.id === note.id;
-                  return (
-                    <button
-                      key={note.id}
-                      type="button"
-                      onClick={() => setActiveStickyId(note.id)}
-                      className={cx(
-                        "w-full rounded-[20px] border px-3.5 py-3.5 text-left transition",
-                        active
-                          ? "border-[#d8caad] bg-[#faf5e9]"
-                          : "border-[#d9dce1] bg-[#f7f8fa]",
-                      )}
-                    >
-                      <div className="flex items-start gap-2.5">
-                        <StickyNote className="mt-0.5 h-4 w-4 shrink-0 text-[#9d814b]" />
-                        <div>
-                          <div className="text-sm font-semibold text-[#5f5034]">
-                            {note.title}
-                          </div>
-                          <p className="mt-1 text-sm leading-6 text-[#6b5b3d]">
-                            {note.text}
-                          </p>
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="mt-3 rounded-[20px] border border-[#d8caad] bg-[#faf5e9] p-3.5">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#806a43]">
-                  Selected Note
+            <section className="rounded-[24px] border border-[#d0cac0] bg-[#ebe7e0] p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)]">
+              <div className="mb-3 flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-[15px] font-semibold text-[#243040]">Sticky Notes</h2>
+                  <p className="mt-1 text-xs text-[#6a7380]">
+                    Keep only the reminders that still matter.
+                  </p>
                 </div>
-                <p className="mt-2 text-sm leading-6 text-[#5f5034]">
-                  {activeSticky?.text}
-                </p>
-              </div>
-            </section>
 
-            <section className="rounded-[24px] border border-[#d0cac0] bg-[#ebe7e0] p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)] sm:p-4">
-              <div className="mb-3">
-                <h2 className="text-[15px] font-semibold text-[#243040]">Documents / Follow-up</h2>
-                <p className="mt-1 text-xs text-[#6a7380]">
-                  Keep supporting files and follow-up clear.
-                </p>
+                <button
+                  type="button"
+                  onClick={addSticky}
+                  className="inline-flex items-center gap-1 rounded-full border border-[#d8caad] bg-[#faf5e9] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#806a43]"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Sticky
+                </button>
               </div>
 
               <div className="space-y-2.5">
-                {DOCS.map((item) => (
+                {stickies.map((note) => (
+                  <div
+                    key={note.id}
+                    className="rounded-[20px] border border-[#d8caad] bg-[#faf5e9] px-3.5 py-3.5"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 text-sm font-semibold text-[#5f5034]">
+                          <StickyNote className="h-4 w-4 shrink-0 text-[#9d814b]" />
+                          {note.title}
+                        </div>
+                        <p className="mt-2 text-sm leading-6 text-[#6b5b3d]">{note.text}</p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => removeSticky(note.id)}
+                        className="rounded-full border border-[#e7d8bc] bg-[#fff8ea] p-1.5 text-[#8a6f3f]"
+                        title="Delete sticky note"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
+                {stickies.length === 0 && <EmptyCard text="No sticky notes left." />}
+              </div>
+            </section>
+
+            <section className="rounded-[24px] border border-[#d0cac0] bg-[#ebe7e0] p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)]">
+              <div className="mb-3 flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-[15px] font-semibold text-[#243040]">Documents / Follow-up</h2>
+                  <p className="mt-1 text-xs text-[#6a7380]">
+                    Remove completed support items when ready.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={addDocument}
+                  className="inline-flex items-center gap-1 rounded-full border border-[#c7d9cd] bg-[#edf7f0] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#466a53]"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Document
+                </button>
+              </div>
+
+              <div className="space-y-2.5">
+                {docs.map((item) => (
                   <div
                     key={item.id}
                     className="rounded-[20px] border border-[#d9dce1] bg-[#f7f8fa] px-3.5 py-3.5"
@@ -789,51 +823,83 @@ export default function JoeGrantLegalDesk() {
                         <div className="mt-1 text-sm text-[#5f6b79]">{item.detail}</div>
                       </div>
 
-                      <div
-                        className={cx(
-                          "shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]",
-                          docStatusClasses(item.status),
-                        )}
-                      >
-                        {item.status}
+                      <div className="flex shrink-0 items-start gap-2">
+                        <div
+                          className={cx(
+                            "rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]",
+                            docStatusClasses(item.status),
+                          )}
+                        >
+                          {item.status}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeDoc(item.id)}
+                          className="rounded-full border border-[#e1c7ca] bg-[#fbefef] p-1.5 text-[#8d4e56]"
+                          title="Delete document"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
                       </div>
                     </div>
                   </div>
                 ))}
+
+                {docs.length === 0 && <EmptyCard text="No document items left." />}
               </div>
             </section>
           </div>
         </div>
-
-        <footer className="mt-4 grid gap-3 md:grid-cols-3">
-          <div className="rounded-[20px] border border-[#d0cac0] bg-[#ebe7e0] px-3.5 py-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)]">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#75808e]">
-              Quick Focus
-            </div>
-            <p className="mt-2 text-sm text-[#5f6b79]">
-              Pull up the right matter fast and move the next action.
-            </p>
-          </div>
-
-          <div className="rounded-[20px] border border-[#d0cac0] bg-[#ebe7e0] px-3.5 py-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)]">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#75808e]">
-              Desk Logic
-            </div>
-            <p className="mt-2 text-sm text-[#5f6b79]">
-              Bigger targets, cleaner stacking, less fake dashboard noise.
-            </p>
-          </div>
-
-          <div className="rounded-[20px] border border-[#d0cac0] bg-[#ebe7e0] px-3.5 py-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)]">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#75808e]">
-              Follow-through
-            </div>
-            <p className="mt-2 text-sm text-[#5f6b79]">
-              Notes, proof, photos, and documents stay attached to the work.
-            </p>
-          </div>
-        </footer>
       </div>
+    </div>
+  );
+}
+
+function ToolButton({
+  icon: Icon,
+  label,
+  onClick,
+  danger = false,
+}: {
+  icon: ComponentType<{ className?: string }>;
+  label: string;
+  onClick?: () => void;
+  danger?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cx(
+        "flex min-h-[72px] flex-col items-center justify-center gap-2 rounded-[18px] border px-3 py-3 text-center shadow-[0_4px_10px_rgba(74,63,50,0.04)] transition hover:opacity-95",
+        danger
+          ? "border-[#e1c7ca] bg-[#fbefef] text-[#8d4e56]"
+          : "border-[#d5d8de] bg-[#f7f8fa] text-[#5d6978]",
+      )}
+    >
+      <Icon className="h-5 w-5" />
+      <span className="text-[11px] font-semibold uppercase tracking-[0.14em]">
+        {label}
+      </span>
+    </button>
+  );
+}
+
+function TimestampChip({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-[16px] border border-[#d5d8de] bg-[#f7f8fa] px-3 py-2">
+      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#778392]">
+        {label}
+      </div>
+      <div className="mt-1 text-sm font-medium text-[#243040]">{value}</div>
+    </div>
+  );
+}
+
+function EmptyCard({ text }: { text: string }) {
+  return (
+    <div className="rounded-[20px] border border-[#d9dce1] bg-[#fafafa] px-4 py-6 text-center text-sm text-[#6a7380]">
+      {text}
     </div>
   );
 }
