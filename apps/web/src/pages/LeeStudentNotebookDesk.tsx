@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock3,
+  Copy,
   FileText,
   FolderOpen,
   Mic,
@@ -22,6 +23,7 @@ import {
   Printer,
   Save,
   Search,
+  Send,
   StickyNote,
   Tag,
   Trash2,
@@ -39,6 +41,9 @@ type ProjectStage =
   | "complete";
 
 type ProjectPriority = "high" | "medium" | "normal";
+type DeskTheme = "pink" | "lavender" | "sky" | "mint" | "classic";
+type BeamRecipient = "Dad" | "Teacher" | "Friend" | "Custom";
+type BeamPreset = "Help" | "Teacher Update" | "Study Share" | "Freeform";
 
 type SchoolProject = {
   id: string;
@@ -211,6 +216,143 @@ const INITIAL_DOCS: DocItem[] = [
   },
 ];
 
+const THEME_STYLES: Record<
+  DeskTheme,
+  {
+    shell: string;
+    shellText: string;
+    card: string;
+    cardBorder: string;
+    headerBg: string;
+    heroBadge: string;
+    liveBadge: string;
+    accentPanel: string;
+    accentRing: string;
+    accentText: string;
+    accentSoftText: string;
+    selectedCard: string;
+    selectedShadow: string;
+    chip: string;
+    chipActive: string;
+    timerPanel: string;
+    parentPing: string;
+    themeSelect: string;
+    beamPreview: string;
+    buttonSoft: string;
+  }
+> = {
+  pink: {
+    shell: "bg-[#d9d4cb]",
+    shellText: "text-[#1f2a37]",
+    card: "bg-[#ebe7e0]",
+    cardBorder: "border-[#d0cac0]",
+    headerBg: "bg-[#ebe7e0]",
+    heroBadge: "border-[#f0c9df] bg-[#fff1f7] text-[#b94f84]",
+    liveBadge: "border-[#d7cff3] bg-[#f7f4fe] text-[#6f63a6]",
+    accentPanel: "border-[#d9d2ef] bg-[#f5f2fd]",
+    accentRing: "border-[#e8d6e6]",
+    accentText: "text-[#6d5ea8]",
+    accentSoftText: "text-[#7b70ac]",
+    selectedCard: "border-[#e7c6d8] bg-[#fff1f7]",
+    selectedShadow: "shadow-[0_6px_18px_rgba(185,79,132,0.10)]",
+    chip: "border-[#e9d7e0] bg-[#fff6fa] text-[#9e5a7b]",
+    chipActive: "border-[#e7c6d8] bg-[#f9dce9] text-[#8d4269]",
+    timerPanel: "border-[#e7c6d8] bg-[#fff1f7]",
+    parentPing: "border-[#e7c6d8] bg-[#fff1f7]",
+    themeSelect: "border-[#e7c6d8] bg-[#fff8fb] text-[#8d4269]",
+    beamPreview: "border-[#ead8e4] bg-[#fff8fb]",
+    buttonSoft: "border-[#e7c6d8] bg-[#fff6fa] text-[#8d4269]",
+  },
+  lavender: {
+    shell: "bg-[#d9d4cb]",
+    shellText: "text-[#1f2a37]",
+    card: "bg-[#ebe7e0]",
+    cardBorder: "border-[#d0cac0]",
+    headerBg: "bg-[#ebe7e0]",
+    heroBadge: "border-[#d9d2ef] bg-[#f5f2fd] text-[#6d5ea8]",
+    liveBadge: "border-[#d7cff3] bg-[#f7f4fe] text-[#6f63a6]",
+    accentPanel: "border-[#d9d2ef] bg-[#f5f2fd]",
+    accentRing: "border-[#d9d2ef]",
+    accentText: "text-[#6d5ea8]",
+    accentSoftText: "text-[#7b70ac]",
+    selectedCard: "border-[#d9d2ef] bg-[#f5f2fd]",
+    selectedShadow: "shadow-[0_6px_18px_rgba(109,94,168,0.08)]",
+    chip: "border-[#ddd8f0] bg-[#f7f4fe] text-[#6d5ea8]",
+    chipActive: "border-[#d2c8f1] bg-[#eee7ff] text-[#5b4b9a]",
+    timerPanel: "border-[#d9d2ef] bg-[#f5f2fd]",
+    parentPing: "border-[#d9d2ef] bg-[#f7f4fe]",
+    themeSelect: "border-[#d9d2ef] bg-[#fbfaff] text-[#6d5ea8]",
+    beamPreview: "border-[#ddd8f0] bg-[#faf8ff]",
+    buttonSoft: "border-[#d9d2ef] bg-[#f7f4fe] text-[#6d5ea8]",
+  },
+  sky: {
+    shell: "bg-[#d5dbe2]",
+    shellText: "text-[#1f2a37]",
+    card: "bg-[#e8edf2]",
+    cardBorder: "border-[#cfd7e0]",
+    headerBg: "bg-[#e8edf2]",
+    heroBadge: "border-[#c6d3ea] bg-[#edf3fb] text-[#48607f]",
+    liveBadge: "border-[#c6d3ea] bg-[#edf3fb] text-[#48607f]",
+    accentPanel: "border-[#c6d3ea] bg-[#edf3fb]",
+    accentRing: "border-[#d4dce8]",
+    accentText: "text-[#48607f]",
+    accentSoftText: "text-[#61789a]",
+    selectedCard: "border-[#c6d3ea] bg-[#edf3fb]",
+    selectedShadow: "shadow-[0_6px_18px_rgba(72,96,127,0.08)]",
+    chip: "border-[#cfe0ef] bg-[#f2f8fd] text-[#4d6888]",
+    chipActive: "border-[#b8d0ea] bg-[#dcecff] text-[#395b84]",
+    timerPanel: "border-[#c6d3ea] bg-[#edf3fb]",
+    parentPing: "border-[#c6d3ea] bg-[#edf3fb]",
+    themeSelect: "border-[#c6d3ea] bg-[#f7fbff] text-[#48607f]",
+    beamPreview: "border-[#d6e2ef] bg-[#f8fbff]",
+    buttonSoft: "border-[#c6d3ea] bg-[#edf3fb] text-[#48607f]",
+  },
+  mint: {
+    shell: "bg-[#d5ddd6]",
+    shellText: "text-[#1f2a37]",
+    card: "bg-[#e7eee8]",
+    cardBorder: "border-[#ccd8cf]",
+    headerBg: "bg-[#e7eee8]",
+    heroBadge: "border-[#c7d9cd] bg-[#edf7f0] text-[#466a53]",
+    liveBadge: "border-[#c7d9cd] bg-[#edf7f0] text-[#466a53]",
+    accentPanel: "border-[#c7d9cd] bg-[#edf7f0]",
+    accentRing: "border-[#d7e2da]",
+    accentText: "text-[#466a53]",
+    accentSoftText: "text-[#5c7a65]",
+    selectedCard: "border-[#c7d9cd] bg-[#edf7f0]",
+    selectedShadow: "shadow-[0_6px_18px_rgba(70,106,83,0.08)]",
+    chip: "border-[#d1e3d7] bg-[#f3fbf5] text-[#527561]",
+    chipActive: "border-[#bad3c3] bg-[#dff2e4] text-[#3f6650]",
+    timerPanel: "border-[#c7d9cd] bg-[#edf7f0]",
+    parentPing: "border-[#c7d9cd] bg-[#edf7f0]",
+    themeSelect: "border-[#c7d9cd] bg-[#f8fffa] text-[#466a53]",
+    beamPreview: "border-[#d8e6dc] bg-[#fbfffc]",
+    buttonSoft: "border-[#c7d9cd] bg-[#edf7f0] text-[#466a53]",
+  },
+  classic: {
+    shell: "bg-[#d9d4cb]",
+    shellText: "text-[#1f2a37]",
+    card: "bg-[#ebe7e0]",
+    cardBorder: "border-[#d0cac0]",
+    headerBg: "bg-[#ebe7e0]",
+    heroBadge: "border-[#d3d6dd] bg-[#f7f8fa] text-[#586474]",
+    liveBadge: "border-[#d3d6dd] bg-[#f7f8fa] text-[#586474]",
+    accentPanel: "border-[#d3d6dd] bg-[#f7f8fa]",
+    accentRing: "border-[#d6d9de]",
+    accentText: "text-[#586474]",
+    accentSoftText: "text-[#6a7380]",
+    selectedCard: "border-[#d9dce1] bg-[#fafafa]",
+    selectedShadow: "shadow-[0_6px_18px_rgba(74,63,50,0.06)]",
+    chip: "border-[#d5d8de] bg-[#f6f7f9] text-[#647080]",
+    chipActive: "border-[#c8d0d9] bg-[#e9edf1] text-[#4f5b69]",
+    timerPanel: "border-[#d5d8de] bg-[#f7f8fa]",
+    parentPing: "border-[#d5d8de] bg-[#f7f8fa]",
+    themeSelect: "border-[#d5d8de] bg-[#ffffff] text-[#586474]",
+    beamPreview: "border-[#d9dce1] bg-[#fafafa]",
+    buttonSoft: "border-[#d5d8de] bg-[#f7f8fa] text-[#5d6978]",
+  },
+};
+
 function cx(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(" ");
 }
@@ -340,6 +482,36 @@ function areaInputClass() {
   return "w-full rounded-xl border border-[#d6d9de] bg-white px-3 py-2 text-sm text-[#243040] outline-none resize-y";
 }
 
+function buildBeamMessage(
+  preset: BeamPreset,
+  recipient: BeamRecipient,
+  subject: string,
+  projectTitle: string
+) {
+  if (preset === "Help") {
+    return `Hi ${recipient === "Dad" ? "Dad" : "there"}, I need a little help with ${subject.toLowerCase()} and wanted to send a quick update.`;
+  }
+  if (preset === "Teacher Update") {
+    return `Hello, here is my update for ${projectTitle}. I organized my notes and wanted to share my progress.`;
+  }
+  if (preset === "Study Share") {
+    return `Hey, here are my notes for ${subject.toLowerCase()}. I cleaned them up so they are easy to follow.`;
+  }
+  return "";
+}
+
+function buildBeamTitle(
+  preset: BeamPreset,
+  recipient: BeamRecipient,
+  subject: string,
+  projectTitle: string
+) {
+  if (preset === "Help") return `${subject} Help Request`;
+  if (preset === "Teacher Update") return `${projectTitle} Update`;
+  if (preset === "Study Share") return `${subject} Notes Share`;
+  return `${recipient} Beam Card`;
+}
+
 export default function LeeStudentNotebookDesk() {
   const [projects, setProjects] = useState<SchoolProject[]>(INITIAL_PROJECTS);
   const [tasks, setTasks] = useState<StudyTask[]>(INITIAL_TASKS);
@@ -365,8 +537,25 @@ export default function LeeStudentNotebookDesk() {
   const [timerSeconds, setTimerSeconds] = useState(25 * 60);
   const [timerRunning, setTimerRunning] = useState(false);
 
+  const [deskTheme, setDeskTheme] = useState<DeskTheme>("pink");
+  const [beamOpen, setBeamOpen] = useState(false);
+  const [beamRecipient, setBeamRecipient] = useState<BeamRecipient>("Dad");
+  const [beamPreset, setBeamPreset] = useState<BeamPreset>("Help");
+  const [beamCustomRecipient, setBeamCustomRecipient] = useState("");
+  const [beamTitle, setBeamTitle] = useState("Science Help Request");
+  const [beamMessage, setBeamMessage] = useState(
+    buildBeamMessage("Help", "Dad", "Science", "Science fair project"),
+  );
+  const [beamIncludeProject, setBeamIncludeProject] = useState(true);
+  const [beamIncludeTimestamp, setBeamIncludeTimestamp] = useState(true);
+  const [beamIncludeAttachments, setBeamIncludeAttachments] = useState(false);
+  const [copiedBeam, setCopiedBeam] = useState(false);
+  const [shareStatus, setShareStatus] = useState("");
+
   const photoInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const theme = THEME_STYLES[deskTheme];
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -424,6 +613,71 @@ export default function LeeStudentNotebookDesk() {
     if (!selectedProject) return [];
     return timeline.filter((entry) => entry.projectId === selectedProject.id);
   }, [timeline, selectedProject]);
+
+  const beamResolvedRecipient =
+    beamRecipient === "Custom" ? beamCustomRecipient.trim() || "Custom" : beamRecipient;
+
+  const beamPreview = useMemo(() => {
+    const lines: string[] = [];
+    lines.push("Lee Notebook Card");
+    lines.push(`To: ${beamResolvedRecipient}`);
+    lines.push(`Title: ${beamTitle}`);
+
+    if (selectedProject && beamIncludeProject) {
+      lines.push(`Project: ${selectedProject.subject} — ${selectedProject.title}`);
+      lines.push(`Teacher: ${selectedProject.teacher}`);
+    }
+
+    if (beamIncludeTimestamp) {
+      lines.push(`Timestamp: ${formatNow()}`);
+    }
+
+    if (beamMessage.trim()) {
+      lines.push("");
+      lines.push("Message:");
+      lines.push(beamMessage.trim());
+    }
+
+    if (noteText.trim()) {
+      lines.push("");
+      lines.push("Notebook Entry:");
+      lines.push(noteText.trim());
+    }
+
+    lines.push("");
+    lines.push("Included:");
+    lines.push(`- project context: ${beamIncludeProject ? "yes" : "no"}`);
+    lines.push(`- timestamp: ${beamIncludeTimestamp ? "yes" : "no"}`);
+    lines.push(`- attachments: ${beamIncludeAttachments ? "yes" : "no"}`);
+
+    if (beamIncludeAttachments && attachments.length) {
+      lines.push("");
+      lines.push("Attachments:");
+      attachments.forEach((item) => lines.push(`- ${item.name}`));
+    }
+
+    return lines.join("\n");
+  }, [
+    beamResolvedRecipient,
+    beamTitle,
+    selectedProject,
+    beamIncludeProject,
+    beamIncludeTimestamp,
+    beamMessage,
+    noteText,
+    beamIncludeAttachments,
+    attachments,
+  ]);
+
+  useEffect(() => {
+    if (!selectedProject) return;
+    setBeamTitle(buildBeamTitle(beamPreset, beamRecipient, selectedProject.subject, selectedProject.title));
+    if (beamPreset !== "Freeform") {
+      setBeamMessage(
+        buildBeamMessage(beamPreset, beamRecipient, selectedProject.subject, selectedProject.title),
+      );
+    }
+  }, [beamPreset, beamRecipient, selectedProject]);
 
   function addTimeline(label: string, projectId?: string) {
     const id = projectId ?? selectedProject?.id;
@@ -716,8 +970,84 @@ export default function LeeStudentNotebookDesk() {
     setTimerSeconds(25 * 60);
   }
 
+  function setRecipient(nextRecipient: BeamRecipient) {
+    setBeamRecipient(nextRecipient);
+    if (selectedProject) {
+      setBeamTitle(buildBeamTitle(beamPreset, nextRecipient, selectedProject.subject, selectedProject.title));
+      if (beamPreset !== "Freeform") {
+        setBeamMessage(buildBeamMessage(beamPreset, nextRecipient, selectedProject.subject, selectedProject.title));
+      }
+    }
+  }
+
+  function applyPreset(nextPreset: BeamPreset) {
+    setBeamPreset(nextPreset);
+    if (!selectedProject) return;
+    setBeamTitle(buildBeamTitle(nextPreset, beamRecipient, selectedProject.subject, selectedProject.title));
+    setBeamMessage(buildBeamMessage(nextPreset, beamRecipient, selectedProject.subject, selectedProject.title));
+  }
+
+  function generateBeamCard() {
+    if (!selectedProject) return;
+    setBeamTitle(buildBeamTitle(beamPreset, beamRecipient, selectedProject.subject, selectedProject.title));
+    if (!beamMessage.trim() && beamPreset !== "Freeform") {
+      setBeamMessage(buildBeamMessage(beamPreset, beamRecipient, selectedProject.subject, selectedProject.title));
+    }
+    addTimeline(`Beam card prepared for ${beamResolvedRecipient}.`);
+  }
+
+  async function copyBeamCard() {
+    try {
+      await navigator.clipboard.writeText(beamPreview);
+      setCopiedBeam(true);
+      window.setTimeout(() => setCopiedBeam(false), 1800);
+      addTimeline(`Beam card copied for ${beamResolvedRecipient}.`);
+    } catch {
+      setCopiedBeam(false);
+      window.alert("Copy failed on this device/browser.");
+    }
+  }
+
+  async function shareBeamCard() {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: beamTitle,
+          text: beamPreview,
+        });
+        setShareStatus("Shared");
+        window.setTimeout(() => setShareStatus(""), 1800);
+        addTimeline(`Beam card shared to ${beamResolvedRecipient}.`);
+        return;
+      }
+
+      await navigator.clipboard.writeText(beamPreview);
+      setShareStatus("Share not available. Copied instead.");
+      window.setTimeout(() => setShareStatus(""), 2200);
+      addTimeline(`Beam card copied for ${beamResolvedRecipient}.`);
+    } catch {
+      setShareStatus("Share cancelled");
+      window.setTimeout(() => setShareStatus(""), 1800);
+    }
+  }
+
+  function clearBeamCard() {
+    setBeamPreset("Freeform");
+    setBeamRecipient("Dad");
+    setBeamCustomRecipient("");
+    if (selectedProject) {
+      setBeamTitle(buildBeamTitle("Freeform", "Dad", selectedProject.subject, selectedProject.title));
+    } else {
+      setBeamTitle("Dad Beam Card");
+    }
+    setBeamMessage("");
+    setBeamIncludeProject(true);
+    setBeamIncludeTimestamp(true);
+    setBeamIncludeAttachments(false);
+  }
+
   return (
-    <div className="min-h-screen bg-[#d9d4cb] text-[#1f2a37]">
+    <div className={cx("min-h-screen", theme.shell, theme.shellText)}>
       <input
         ref={photoInputRef}
         type="file"
@@ -735,15 +1065,31 @@ export default function LeeStudentNotebookDesk() {
       />
 
       <div className="mx-auto w-full max-w-[1400px] px-3 py-4 sm:px-4 lg:px-5 lg:py-5">
-        <header className="mb-4 rounded-[24px] border border-[#d0cac0] bg-[#ebe7e0] px-3 py-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)] sm:px-4">
+        <header
+          className={cx(
+            "mb-4 rounded-[24px] border px-3 py-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)] sm:px-4",
+            theme.cardBorder,
+            theme.headerBg,
+          )}
+        >
           <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <div className="rounded-full border border-[#d9d2ef] bg-[#f5f2fd] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-[#6d5ea8]">
+                <div
+                  className={cx(
+                    "rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.24em]",
+                    theme.heroBadge,
+                  )}
+                >
                   Lee Student Notebook Desk
                 </div>
 
-                <div className="inline-flex items-center gap-2 rounded-full border border-[#d7cff3] bg-[#f7f4fe] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6f63a6] shadow-[0_0_0_1px_rgba(111,99,166,0.05),0_0_18px_rgba(164,137,255,0.16)]">
+                <div
+                  className={cx(
+                    "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] shadow-[0_0_0_1px_rgba(111,99,166,0.05)]",
+                    theme.liveBadge,
+                  )}
+                >
                   <span className="relative flex h-2.5 w-2.5">
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#9d87ff] opacity-75" />
                     <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#7d6ae0]" />
@@ -760,7 +1106,7 @@ export default function LeeStudentNotebookDesk() {
               </p>
             </div>
 
-            <div className="flex w-full max-w-[760px] flex-col gap-2">
+            <div className="flex w-full max-w-[860px] flex-col gap-2">
               <div className="flex w-full flex-col gap-2 sm:flex-row">
                 <label className="flex min-w-0 flex-1 items-center gap-2 rounded-2xl border border-[#d3d6dd] bg-[#f7f8fa] px-3 py-3 text-sm text-[#586474]">
                   <Search className="h-4 w-4 text-[#7a8593]" />
@@ -772,7 +1118,13 @@ export default function LeeStudentNotebookDesk() {
                   />
                 </label>
 
-                <div className="flex min-w-[260px] items-center justify-between rounded-2xl border border-[#d9d2ef] bg-[#f5f2fd] px-4 py-3 text-[#6d5ea8]">
+                <div
+                  className={cx(
+                    "flex min-w-[260px] items-center justify-between rounded-2xl border px-4 py-3",
+                    theme.accentPanel,
+                    theme.accentText,
+                  )}
+                >
                   <div className="min-w-0">
                     <div className="text-[10px] font-semibold uppercase tracking-[0.16em] opacity-80">
                       Today
@@ -786,10 +1138,27 @@ export default function LeeStudentNotebookDesk() {
                     <div className="text-sm font-semibold">{formatLiveTime(liveNow)}</div>
                   </div>
                 </div>
+
+                <div className="sm:min-w-[180px]">
+                  <select
+                    value={deskTheme}
+                    onChange={(e) => setDeskTheme(e.target.value as DeskTheme)}
+                    className={cx(
+                      "h-full min-h-[52px] w-full rounded-2xl border px-4 py-3 text-sm font-semibold outline-none",
+                      theme.themeSelect,
+                    )}
+                  >
+                    <option value="pink">Pink</option>
+                    <option value="lavender">Lavender</option>
+                    <option value="sky">Sky</option>
+                    <option value="mint">Mint</option>
+                    <option value="classic">Classic</option>
+                  </select>
+                </div>
               </div>
 
-              <div className="rounded-2xl border border-[#d9d2ef] bg-[#f7f4fe] px-4 py-3">
-                <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#7b70ac]">
+              <div className={cx("rounded-2xl border px-4 py-3", theme.parentPing)}>
+                <div className={cx("text-[10px] font-semibold uppercase tracking-[0.16em]", theme.accentSoftText)}>
                   Parent Ping
                 </div>
                 <input
@@ -804,7 +1173,13 @@ export default function LeeStudentNotebookDesk() {
 
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-[320px_minmax(0,1fr)_340px]">
           {/* LEFT RAIL */}
-          <section className="rounded-[24px] border border-[#d0cac0] bg-[#ebe7e0] p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)]">
+          <section
+            className={cx(
+              "rounded-[24px] border p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)]",
+              theme.cardBorder,
+              theme.card,
+            )}
+          >
             <div className="mb-3 flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-[15px] font-semibold text-[#243040]">Active Projects</h2>
@@ -817,7 +1192,10 @@ export default function LeeStudentNotebookDesk() {
                 <button
                   type="button"
                   onClick={addProject}
-                  className="inline-flex items-center gap-1 rounded-full border border-[#d9d2ef] bg-[#f5f2fd] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6d5ea8]"
+                  className={cx(
+                    "inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em]",
+                    theme.buttonSoft,
+                  )}
                 >
                   <Plus className="h-3.5 w-3.5" />
                   Project
@@ -840,7 +1218,7 @@ export default function LeeStudentNotebookDesk() {
                     className={cx(
                       "rounded-[20px] border px-3 py-3 transition",
                       active
-                        ? "border-[#d9d2ef] bg-[#f5f2fd] shadow-[0_6px_18px_rgba(109,94,168,0.08)]"
+                        ? cx(theme.selectedCard, theme.selectedShadow)
                         : "border-[#d9dce1] bg-[#fafafa]",
                     )}
                   >
@@ -989,7 +1367,13 @@ export default function LeeStudentNotebookDesk() {
           </section>
 
           {/* CENTER */}
-          <section className="rounded-[24px] border border-[#d0cac0] bg-[#ebe7e0] p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)] sm:p-4">
+          <section
+            className={cx(
+              "rounded-[24px] border p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)] sm:p-4",
+              theme.cardBorder,
+              theme.card,
+            )}
+          >
             <div className="mb-3 flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-[15px] font-semibold text-[#243040]">Live Notebook</h2>
@@ -1018,7 +1402,13 @@ export default function LeeStudentNotebookDesk() {
                           <span className={stageBadge(selectedProject.stage)}>
                             {STAGE_LABELS[selectedProject.stage]}
                           </span>
-                          <span className="rounded-full border border-[#d9d2ef] bg-[#f5f2fd] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#6d5ea8]">
+                          <span
+                            className={cx(
+                              "rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em]",
+                              theme.accentPanel,
+                              theme.accentText,
+                            )}
+                          >
                             {selectedProject.id}
                           </span>
                         </div>
@@ -1029,8 +1419,8 @@ export default function LeeStudentNotebookDesk() {
                         <p className="mt-1 text-[15px] text-[#5e6977]">{selectedProject.title}</p>
                       </div>
 
-                      <div className="rounded-[18px] border border-[#d9d2ef] bg-[#f5f2fd] px-4 py-3 text-right">
-                        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6d5ea8]">
+                      <div className={cx("rounded-[18px] border px-4 py-3 text-right", theme.accentPanel)}>
+                        <div className={cx("text-[10px] font-semibold uppercase tracking-[0.18em]", theme.accentText)}>
                           Due
                         </div>
                         <div className="mt-1 text-sm font-semibold text-[#56498d]">
@@ -1061,8 +1451,8 @@ export default function LeeStudentNotebookDesk() {
                       </div>
                     </div>
 
-                    <div className="mt-3 rounded-[18px] border border-[#d9d2ef] bg-[#f5f2fd] p-4">
-                      <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6d5ea8]">
+                    <div className={cx("mt-3 rounded-[18px] border p-4", theme.accentPanel)}>
+                      <div className={cx("flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em]", theme.accentText)}>
                         <CheckCircle2 className="h-3.5 w-3.5" />
                         Next Step
                       </div>
@@ -1078,7 +1468,13 @@ export default function LeeStudentNotebookDesk() {
                 <div className="mt-4 rounded-[20px] border border-[#d9dce1] bg-[#fcfcfd]">
                   <div className="border-b border-[#e6e8eb] px-4 py-3">
                     <div className="flex flex-wrap items-center gap-2">
-                      <div className="inline-flex items-center gap-2 rounded-full border border-[#d9d2ef] bg-[#f5f2fd] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6d5ea8]">
+                      <div
+                        className={cx(
+                          "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em]",
+                          theme.accentPanel,
+                          theme.accentText,
+                        )}
+                      >
                         <Tag className="h-3.5 w-3.5" />
                         {selectedProject ? selectedProject.subject : "Untitled Note"}
                       </div>
@@ -1168,7 +1564,7 @@ export default function LeeStudentNotebookDesk() {
                           key={entry.id}
                           className="rounded-[16px] border border-[#d9dce1] bg-[#f7f8fa] px-3 py-3"
                         >
-                          <div className="text-[12px] font-semibold text-[#6d5ea8]">{entry.time}</div>
+                          <div className={cx("text-[12px] font-semibold", theme.accentText)}>{entry.time}</div>
                           <div className="mt-1 text-sm text-[#243040]">{entry.label}</div>
                         </div>
                       ))}
@@ -1241,6 +1637,7 @@ export default function LeeStudentNotebookDesk() {
                               label="Timestamp"
                               icon={CheckCircle2}
                               onClick={() => timestampSavedNote(note.id)}
+                              themeClass={theme.buttonSoft}
                             />
                           </div>
                         </div>
@@ -1252,21 +1649,23 @@ export default function LeeStudentNotebookDesk() {
 
               {/* ACTION RAIL */}
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-1">
-                <ToolButton icon={Mic} label="Voice" onClick={addVoicePlaceholder} />
+                <ToolButton icon={Mic} label="Voice" onClick={addVoicePlaceholder} themeClass={theme.buttonSoft} />
                 <ToolButton
                   icon={Camera}
                   label="Photo"
                   onClick={() => photoInputRef.current?.click()}
+                  themeClass={theme.buttonSoft}
                 />
                 <ToolButton
                   icon={Paperclip}
                   label="Attach"
                   onClick={() => fileInputRef.current?.click()}
+                  themeClass={theme.buttonSoft}
                 />
-                <ToolButton icon={CheckCircle2} label="Timestamp" onClick={stampDraft} />
-                <ToolButton icon={Save} label="Save" onClick={saveDraftNote} />
-                <ToolButton icon={Upload} label="Export" onClick={exportDraft} />
-                <ToolButton icon={Printer} label="Print" onClick={printDraft} />
+                <ToolButton icon={CheckCircle2} label="Timestamp" onClick={stampDraft} themeClass={theme.buttonSoft} />
+                <ToolButton icon={Save} label="Save" onClick={saveDraftNote} themeClass={theme.buttonSoft} />
+                <ToolButton icon={Upload} label="Export" onClick={exportDraft} themeClass={theme.buttonSoft} />
+                <ToolButton icon={Printer} label="Print" onClick={printDraft} themeClass={theme.buttonSoft} />
                 <ToolButton icon={Trash2} label="Delete" onClick={clearNote} danger />
               </div>
             </div>
@@ -1274,7 +1673,232 @@ export default function LeeStudentNotebookDesk() {
 
           {/* RIGHT RAIL */}
           <div className="grid gap-4">
-            <section className="rounded-[24px] border border-[#d0cac0] bg-[#ebe7e0] p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)]">
+            <section
+              className={cx(
+                "rounded-[24px] border p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)]",
+                theme.cardBorder,
+                theme.card,
+              )}
+            >
+              <div className="mb-3 flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-[15px] font-semibold text-[#243040]">Beam Card</h2>
+                  <p className="mt-1 text-xs text-[#6a7380]">
+                    Share notes or ask for help without making the page loud.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setBeamOpen((prev) => !prev)}
+                  className={cx(
+                    "inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em]",
+                    theme.buttonSoft,
+                  )}
+                >
+                  {beamOpen ? "Collapse" : "Open"}
+                  <ChevronRight
+                    className={cx("h-3.5 w-3.5 transition-transform", beamOpen && "rotate-90")}
+                  />
+                </button>
+              </div>
+
+              {!beamOpen ? (
+                <div className={cx("rounded-[20px] border p-4", theme.beamPreview)}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-semibold text-[#243040]">Beam Card</div>
+                      <div className="mt-1 text-xs text-[#6a7380]">
+                        Send notes, project updates, or a help request when needed.
+                      </div>
+                    </div>
+                    <div
+                      className={cx(
+                        "rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]",
+                        theme.chip,
+                      )}
+                    >
+                      Ready
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className={cx("rounded-[20px] border p-3", theme.beamPreview)}>
+                    <div className={cx("mb-2 text-[10px] font-semibold uppercase tracking-[0.16em]", theme.accentSoftText)}>
+                      Send To
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {(["Dad", "Teacher", "Friend", "Custom"] as BeamRecipient[]).map((item) => (
+                        <button
+                          key={item}
+                          type="button"
+                          onClick={() => setRecipient(item)}
+                          className={cx(
+                            "rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em]",
+                            beamRecipient === item ? theme.chipActive : theme.chip,
+                          )}
+                        >
+                          {item}
+                        </button>
+                      ))}
+                    </div>
+
+                    {beamRecipient === "Custom" && (
+                      <input
+                        className="mt-3 w-full rounded-xl border border-[#d6d9de] bg-white px-3 py-2 text-sm text-[#243040] outline-none"
+                        value={beamCustomRecipient}
+                        onChange={(e) => setBeamCustomRecipient(e.target.value)}
+                        placeholder="Type recipient name"
+                      />
+                    )}
+                  </div>
+
+                  <div className={cx("rounded-[20px] border p-3", theme.beamPreview)}>
+                    <div className={cx("mb-2 text-[10px] font-semibold uppercase tracking-[0.16em]", theme.accentSoftText)}>
+                      Quick Presets
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {(["Help", "Teacher Update", "Study Share", "Freeform"] as BeamPreset[]).map((item) => (
+                        <button
+                          key={item}
+                          type="button"
+                          onClick={() => applyPreset(item)}
+                          className={cx(
+                            "rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em]",
+                            beamPreset === item ? theme.chipActive : theme.chip,
+                          )}
+                        >
+                          {item}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className={cx("rounded-[20px] border p-3", theme.beamPreview)}>
+                    <div className="space-y-2">
+                      <input
+                        className={textInputClass()}
+                        value={beamTitle}
+                        onChange={(e) => setBeamTitle(e.target.value)}
+                        placeholder="Card title"
+                      />
+                      <textarea
+                        className={areaInputClass()}
+                        rows={4}
+                        value={beamMessage}
+                        onChange={(e) => setBeamMessage(e.target.value)}
+                        placeholder="Write a short message"
+                      />
+                    </div>
+                  </div>
+
+                  <div className={cx("rounded-[20px] border p-3", theme.beamPreview)}>
+                    <div className={cx("mb-2 text-[10px] font-semibold uppercase tracking-[0.16em]", theme.accentSoftText)}>
+                      Include
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setBeamIncludeProject((prev) => !prev)}
+                        className={cx(
+                          "rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em]",
+                          beamIncludeProject ? theme.chipActive : theme.chip,
+                        )}
+                      >
+                        Project
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setBeamIncludeTimestamp((prev) => !prev)}
+                        className={cx(
+                          "rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em]",
+                          beamIncludeTimestamp ? theme.chipActive : theme.chip,
+                        )}
+                      >
+                        Timestamp
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setBeamIncludeAttachments((prev) => !prev)}
+                        className={cx(
+                          "rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em]",
+                          beamIncludeAttachments ? theme.chipActive : theme.chip,
+                        )}
+                      >
+                        Attachments
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className={cx("rounded-[20px] border p-3", theme.beamPreview)}>
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <div>
+                        <div className="text-sm font-semibold text-[#243040]">Card Preview</div>
+                        <div className="mt-1 text-xs text-[#6a7380]">
+                          Auto-generated from the notebook and project.
+                        </div>
+                      </div>
+                    </div>
+                    <pre className="whitespace-pre-wrap break-words text-xs leading-6 text-[#334155]">
+                      {beamPreview}
+                    </pre>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={generateBeamCard}
+                      className={cx(
+                        "inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em]",
+                        theme.buttonSoft,
+                      )}
+                    >
+                      <Send className="h-3.5 w-3.5" />
+                      Generate
+                    </button>
+                    <button
+                      type="button"
+                      onClick={copyBeamCard}
+                      className={cx(
+                        "inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em]",
+                        theme.buttonSoft,
+                      )}
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                      {copiedBeam ? "Copied" : "Copy"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={shareBeamCard}
+                      className={cx(
+                        "inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em]",
+                        theme.buttonSoft,
+                      )}
+                    >
+                      <Send className="h-3.5 w-3.5" />
+                      {shareStatus || "Share"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={clearBeamCard}
+                      className="inline-flex items-center gap-1 rounded-full border border-[#e1c7ca] bg-[#fbefef] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8d4e56]"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Clear
+                    </button>
+                  </div>
+                </div>
+              )}
+            </section>
+
+            <section
+              className={cx(
+                "rounded-[24px] border p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)]",
+                theme.cardBorder,
+                theme.card,
+              )}
+            >
               <div className="mb-3 flex items-start justify-between gap-3">
                 <div>
                   <h2 className="text-[15px] font-semibold text-[#243040]">Study Timer</h2>
@@ -1284,8 +1908,8 @@ export default function LeeStudentNotebookDesk() {
                 </div>
               </div>
 
-              <div className="rounded-[20px] border border-[#d9d2ef] bg-[#f5f2fd] p-4 text-center">
-                <div className="text-[12px] font-semibold uppercase tracking-[0.18em] text-[#6d5ea8]">
+              <div className={cx("rounded-[20px] border p-4 text-center", theme.timerPanel)}>
+                <div className={cx("text-[12px] font-semibold uppercase tracking-[0.18em]", theme.accentText)}>
                   Focus Session
                 </div>
                 <div className="mt-3 text-5xl font-semibold tracking-tight text-[#243040]">
@@ -1293,14 +1917,20 @@ export default function LeeStudentNotebookDesk() {
                 </div>
 
                 <div className="mt-4 flex flex-wrap justify-center gap-2">
-                  <SmallActionButton icon={Play} label="Start" onClick={startTimer} />
-                  <SmallActionButton icon={AlarmClock} label="Pause" onClick={pauseTimer} />
-                  <SmallActionButton icon={Clock3} label="Reset" onClick={resetTimer} />
+                  <SmallActionButton icon={Play} label="Start" onClick={startTimer} themeClass={theme.buttonSoft} />
+                  <SmallActionButton icon={AlarmClock} label="Pause" onClick={pauseTimer} themeClass={theme.buttonSoft} />
+                  <SmallActionButton icon={Clock3} label="Reset" onClick={resetTimer} themeClass={theme.buttonSoft} />
                 </div>
               </div>
             </section>
 
-            <section className="rounded-[24px] border border-[#d0cac0] bg-[#ebe7e0] p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)]">
+            <section
+              className={cx(
+                "rounded-[24px] border p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)]",
+                theme.cardBorder,
+                theme.card,
+              )}
+            >
               <div className="mb-3 flex items-start justify-between gap-3">
                 <div>
                   <h2 className="text-[15px] font-semibold text-[#243040]">Tasks / Blocks</h2>
@@ -1312,7 +1942,10 @@ export default function LeeStudentNotebookDesk() {
                 <button
                   type="button"
                   onClick={addTask}
-                  className="inline-flex items-center gap-1 rounded-full border border-[#d9d2ef] bg-[#f5f2fd] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6d5ea8]"
+                  className={cx(
+                    "inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em]",
+                    theme.buttonSoft,
+                  )}
                 >
                   <Plus className="h-3.5 w-3.5" />
                   Task
@@ -1373,7 +2006,13 @@ export default function LeeStudentNotebookDesk() {
               </div>
             </section>
 
-            <section className="rounded-[24px] border border-[#d0cac0] bg-[#ebe7e0] p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)]">
+            <section
+              className={cx(
+                "rounded-[24px] border p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)]",
+                theme.cardBorder,
+                theme.card,
+              )}
+            >
               <div className="mb-3 flex items-start justify-between gap-3">
                 <div>
                   <h2 className="text-[15px] font-semibold text-[#243040]">Sticky Notes</h2>
@@ -1385,7 +2024,10 @@ export default function LeeStudentNotebookDesk() {
                 <button
                   type="button"
                   onClick={addSticky}
-                  className="inline-flex items-center gap-1 rounded-full border border-[#d9d2ef] bg-[#f5f2fd] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6d5ea8]"
+                  className={cx(
+                    "inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em]",
+                    theme.buttonSoft,
+                  )}
                 >
                   <Plus className="h-3.5 w-3.5" />
                   Sticky
@@ -1396,11 +2038,11 @@ export default function LeeStudentNotebookDesk() {
                 {stickies.map((note) => (
                   <div
                     key={note.id}
-                    className="rounded-[20px] border border-[#ddd8f0] bg-[#f7f4fe] p-3.5"
+                    className={cx("rounded-[20px] border p-3.5", theme.beamPreview)}
                   >
                     <div className="mb-3 flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-2 text-sm font-semibold text-[#6d5ea8]">
-                        <StickyNote className="h-4 w-4 shrink-0 text-[#7d6ae0]" />
+                      <div className={cx("flex items-center gap-2 text-sm font-semibold", theme.accentText)}>
+                        <StickyNote className="h-4 w-4 shrink-0" />
                         Sticky Note
                       </div>
                       <button
@@ -1435,7 +2077,13 @@ export default function LeeStudentNotebookDesk() {
               </div>
             </section>
 
-            <section className="rounded-[24px] border border-[#d0cac0] bg-[#ebe7e0] p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)]">
+            <section
+              className={cx(
+                "rounded-[24px] border p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)]",
+                theme.cardBorder,
+                theme.card,
+              )}
+            >
               <div className="mb-3 flex items-start justify-between gap-3">
                 <div>
                   <h2 className="text-[15px] font-semibold text-[#243040]">Documents / Teacher Prep</h2>
@@ -1447,7 +2095,10 @@ export default function LeeStudentNotebookDesk() {
                 <button
                   type="button"
                   onClick={addDocument}
-                  className="inline-flex items-center gap-1 rounded-full border border-[#d9d2ef] bg-[#f5f2fd] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6d5ea8]"
+                  className={cx(
+                    "inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em]",
+                    theme.buttonSoft,
+                  )}
                 >
                   <Plus className="h-3.5 w-3.5" />
                   Document
@@ -1528,11 +2179,13 @@ function ToolButton({
   label,
   onClick,
   danger = false,
+  themeClass,
 }: {
   icon: ComponentType<{ className?: string }>;
   label: string;
   onClick?: () => void;
   danger?: boolean;
+  themeClass?: string;
 }) {
   return (
     <button
@@ -1542,7 +2195,7 @@ function ToolButton({
         "flex min-h-[72px] flex-col items-center justify-center gap-2 rounded-[18px] border px-3 py-3 text-center shadow-[0_4px_10px_rgba(74,63,50,0.04)] transition hover:opacity-95",
         danger
           ? "border-[#e1c7ca] bg-[#fbefef] text-[#8d4e56]"
-          : "border-[#d5d8de] bg-[#f7f8fa] text-[#5d6978]",
+          : themeClass || "border-[#d5d8de] bg-[#f7f8fa] text-[#5d6978]",
       )}
     >
       <Icon className="h-5 w-5" />
@@ -1557,16 +2210,21 @@ function SmallActionButton({
   icon: Icon,
   label,
   onClick,
+  themeClass,
 }: {
   icon: ComponentType<{ className?: string }>;
   label: string;
   onClick?: () => void;
+  themeClass?: string;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center gap-1 rounded-full border border-[#d5d8de] bg-white px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#5d6978]"
+      className={cx(
+        "inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em]",
+        themeClass || "border-[#d5d8de] bg-white text-[#5d6978]",
+      )}
     >
       <Icon className="h-3.5 w-3.5" />
       {label}
