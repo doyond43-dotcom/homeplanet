@@ -1,500 +1,839 @@
-import React, { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
+import {
+  CalendarDays,
+  Camera,
+  CheckCircle2,
+  ChevronRight,
+  Clock3,
+  FileText,
+  FolderOpen,
+  Mic,
+  Paperclip,
+  Phone,
+  Search,
+  StickyNote,
+  User,
+} from "lucide-react";
 
-type MatterStage = "Intake" | "Review" | "Strategy" | "Scheduled" | "Done";
-type NoteTone = "amber" | "cyan" | "emerald";
-type AlertTone = "info" | "success" | "warning";
+type MatterStage =
+  | "intake"
+  | "review"
+  | "pending-client"
+  | "filing"
+  | "court"
+  | "follow-up"
+  | "closed";
 
-type MatterCard = {
+type Matter = {
   id: string;
+  client: string;
   title: string;
   stage: MatterStage;
-  client: string;
+  nextAction: string;
+  due: string;
+  priority: "high" | "medium" | "normal";
+  contact: string;
   summary: string;
-  nextStep: string;
-  owner: string;
-  when: string;
-};
-
-type StickyNote = {
-  id: string;
-  text: string;
-  tone: NoteTone;
-  pinned?: boolean;
 };
 
 type Appointment = {
   id: string;
+  time: string;
   title: string;
-  when: string;
-  type: "Call" | "Beam" | "Review";
-  status: "Scheduled" | "Ready" | "Pending";
+  matter: string;
+  type: string;
 };
 
-type AlertItem = {
+type Sticky = {
   id: string;
   title: string;
-  body: string;
-  tone: AlertTone;
+  text: string;
 };
 
-const matterSeed: MatterCard[] = [
+type DocItem = {
+  id: string;
+  label: string;
+  detail: string;
+  status: "ready" | "waiting" | "sent";
+};
+
+const STAGE_ORDER: MatterStage[] = [
+  "intake",
+  "review",
+  "pending-client",
+  "filing",
+  "court",
+  "follow-up",
+  "closed",
+];
+
+const STAGE_LABELS: Record<MatterStage, string> = {
+  intake: "Intake",
+  review: "Review",
+  "pending-client": "Pending Client",
+  filing: "Filing",
+  court: "Court",
+  "follow-up": "Follow-up",
+  closed: "Closed",
+};
+
+const MATTERS: Matter[] = [
   {
-    id: "m-1",
-    title: "IP Attorney Referral Follow-up",
-    stage: "Strategy",
-    client: "Dan Doyon",
-    summary: "Coordinate referral details and organize concept stack before handoff.",
-    nextStep: "Finalize referral packet and beam summary card",
-    owner: "Joe Grant",
-    when: "Today • 2:30 PM",
+    id: "MAT-24018",
+    client: "Maria Ortega",
+    title: "Estate administration / probate intake",
+    stage: "review",
+    nextAction: "Review death certificate and asset list before callback.",
+    due: "Today · 10:30 AM",
+    priority: "high",
+    contact: "(863) 555-0148",
+    summary: "Initial probate matter with family waiting on first document pass.",
   },
   {
-    id: "m-2",
-    title: "Case Review Notes",
-    stage: "Review",
-    client: "Shared matter",
-    summary: "Cross-check facts, preserve chronology, and keep attorney-facing summary tight.",
-    nextStep: "Review note cluster and tag priority items",
-    owner: "Joe Grant",
-    when: "Today • 4:00 PM",
+    id: "MAT-24022",
+    client: "Derrick Lawson",
+    title: "Contract dispute response deadline",
+    stage: "filing",
+    nextAction: "Finalize response packet and confirm exhibits are attached.",
+    due: "Today · 2:00 PM",
+    priority: "high",
+    contact: "(863) 555-0172",
+    summary: "Response window is short and filing packet needs final review.",
   },
   {
-    id: "m-3",
-    title: "Client Scheduling Window",
-    stage: "Scheduled",
-    client: "Dan Doyon",
-    summary: "Reserve a clean slot for a strategy call and supporting document review.",
-    nextStep: "Send meeting confirmation",
-    owner: "Joe Grant",
-    when: "Tomorrow • 10:15 AM",
+    id: "MAT-24011",
+    client: "Angela Pierce",
+    title: "Guardianship follow-up",
+    stage: "pending-client",
+    nextAction: "Get signed physician form from client and set court prep call.",
+    due: "Tomorrow · 9:00 AM",
+    priority: "medium",
+    contact: "(863) 555-0102",
+    summary: "Waiting on client-side paperwork before next court-facing step.",
+  },
+  {
+    id: "MAT-24004",
+    client: "Jamal Reed",
+    title: "Real estate document review",
+    stage: "follow-up",
+    nextAction: "Send revision summary and close open title question.",
+    due: "Tomorrow · 1:30 PM",
+    priority: "normal",
+    contact: "(863) 555-0160",
+    summary: "Mostly complete, but one clarification still needs to go out.",
+  },
+  {
+    id: "MAT-23998",
+    client: "Helen Barker",
+    title: "Small business formation cleanup",
+    stage: "intake",
+    nextAction: "Confirm entity name and gather ownership percentages.",
+    due: "Friday · 11:15 AM",
+    priority: "normal",
+    contact: "(863) 555-0191",
+    summary: "New intake with quick setup path once the ownership details arrive.",
+  },
+  {
+    id: "MAT-23977",
+    client: "Christopher Neal",
+    title: "Hearing prep and witness order",
+    stage: "court",
+    nextAction: "Run final hearing checklist and print hearing binder.",
+    due: "Monday · 8:00 AM",
+    priority: "high",
+    contact: "(863) 555-0130",
+    summary: "Court date is close, and prep list needs to stay visible.",
   },
 ];
 
-const noteSeed: StickyNote[] = [
-  { id: "n-1", text: "Ask IP attorney whether provisional scope should be split by layer.", tone: "amber", pinned: true },
-  { id: "n-2", text: "Keep referral summary simple — no overload on first handoff.", tone: "cyan" },
-  { id: "n-3", text: "Beam card should show next call time + core issue + latest note.", tone: "emerald" },
+const APPOINTMENTS: Appointment[] = [
+  {
+    id: "APT-1",
+    time: "9:00 AM",
+    title: "Client intake call",
+    matter: "Estate administration / probate intake",
+    type: "Phone",
+  },
+  {
+    id: "APT-2",
+    time: "11:30 AM",
+    title: "Document review block",
+    matter: "Contract dispute response deadline",
+    type: "Office",
+  },
+  {
+    id: "APT-3",
+    time: "2:30 PM",
+    title: "Follow-up with opposing counsel",
+    matter: "Real estate document review",
+    type: "Call",
+  },
+  {
+    id: "APT-4",
+    time: "4:15 PM",
+    title: "Court prep review",
+    matter: "Hearing prep and witness order",
+    type: "Internal",
+  },
 ];
 
-const appointmentSeed: Appointment[] = [
-  { id: "a-1", title: "Referral call prep", when: "Today • 1:45 PM", type: "Review", status: "Ready" },
-  { id: "a-2", title: "Strategy call with Dan", when: "Tomorrow • 10:15 AM", type: "Beam", status: "Scheduled" },
-  { id: "a-3", title: "Case note review", when: "Tomorrow • 2:00 PM", type: "Call", status: "Pending" },
+const STICKIES: Sticky[] = [
+  {
+    id: "ST-1",
+    title: "Clerk call",
+    text: "Call clerk before lunch to confirm hearing time was entered correctly.",
+  },
+  {
+    id: "ST-2",
+    title: "Client checklist",
+    text: "Probate matter needs one clean checklist the client can actually follow.",
+  },
+  {
+    id: "ST-3",
+    title: "Friday block",
+    text: "Keep Friday afternoon open for overflow drafting.",
+  },
 ];
 
-function cn(...parts: Array<string | false | null | undefined>) {
+const DOCS: DocItem[] = [
+  {
+    id: "DOC-1",
+    label: "Probate intake checklist",
+    detail: "Ready to send after first callback.",
+    status: "ready",
+  },
+  {
+    id: "DOC-2",
+    label: "Contract response exhibits",
+    detail: "Waiting on final attachment confirmation.",
+    status: "waiting",
+  },
+  {
+    id: "DOC-3",
+    label: "Guardianship physician form",
+    detail: "Sent to client, not yet returned.",
+    status: "sent",
+  },
+  {
+    id: "DOC-4",
+    label: "Hearing binder print packet",
+    detail: "Ready for print once witness order is locked.",
+    status: "ready",
+  },
+];
+
+function cx(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(" ");
 }
 
-function stageClasses(stage: MatterStage) {
+function stageBadge(stage: MatterStage) {
+  const base =
+    "rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]";
   switch (stage) {
-    case "Intake":
-      return "border-cyan-400/25 bg-cyan-500/10 text-cyan-100";
-    case "Review":
-      return "border-amber-400/25 bg-amber-500/10 text-amber-100";
-    case "Strategy":
-      return "border-violet-400/25 bg-violet-500/10 text-violet-100";
-    case "Scheduled":
-      return "border-emerald-400/25 bg-emerald-500/10 text-emerald-100";
+    case "intake":
+      return `${base} border-[#d3d6dd] bg-[#f5f6f8] text-[#5f6b7a]`;
+    case "review":
+      return `${base} border-[#c6d3ea] bg-[#edf3fb] text-[#48607f]`;
+    case "pending-client":
+      return `${base} border-[#d7c8aa] bg-[#faf5e8] text-[#7a6640]`;
+    case "filing":
+      return `${base} border-[#d3cae6] bg-[#f3effa] text-[#675487]`;
+    case "court":
+      return `${base} border-[#dfc6ca] bg-[#fbf0f2] text-[#7e4f57]`;
+    case "follow-up":
+      return `${base} border-[#c9d9cf] bg-[#edf7f0] text-[#4c6d58]`;
+    case "closed":
+      return `${base} border-[#d5d8de] bg-[#f5f6f8] text-[#697382]`;
     default:
-      return "border-white/10 bg-white/5 text-white/75";
+      return `${base} border-[#d5d8de] bg-[#f5f6f8] text-[#697382]`;
   }
 }
 
-function noteToneClasses(tone: NoteTone) {
-  switch (tone) {
-    case "amber":
-      return "border-amber-400/35 bg-amber-500/12 text-amber-50";
-    case "cyan":
-      return "border-cyan-400/35 bg-cyan-500/12 text-cyan-50";
-    default:
-      return "border-emerald-400/35 bg-emerald-500/12 text-emerald-50";
+function priorityClasses(priority: Matter["priority"]) {
+  if (priority === "high") {
+    return "border-[#d7b6b8] bg-[#fbefef] text-[#8d4e56]";
   }
+  if (priority === "medium") {
+    return "border-[#d8caad] bg-[#faf5e9] text-[#806a43]";
+  }
+  return "border-[#d5d8de] bg-[#f6f7f9] text-[#647080]";
 }
 
-function appointmentClasses(status: Appointment["status"]) {
-  switch (status) {
-    case "Ready":
-      return "border-emerald-400/30 bg-emerald-500/12 text-emerald-100";
-    case "Scheduled":
-      return "border-cyan-400/30 bg-cyan-500/12 text-cyan-100";
-    default:
-      return "border-amber-400/30 bg-amber-500/12 text-amber-100";
+function docStatusClasses(status: DocItem["status"]) {
+  if (status === "ready") {
+    return "border-[#c7d9cd] bg-[#edf7f0] text-[#466a53]";
   }
-}
-
-function alertClasses(tone: AlertTone) {
-  switch (tone) {
-    case "success":
-      return "border-emerald-400/30 bg-emerald-500/12 text-emerald-100";
-    case "warning":
-      return "border-amber-400/30 bg-amber-500/12 text-amber-100";
-    default:
-      return "border-cyan-400/30 bg-cyan-500/12 text-cyan-100";
+  if (status === "waiting") {
+    return "border-[#d8caad] bg-[#faf5e9] text-[#806a43]";
   }
+  return "border-[#c6d3ea] bg-[#edf3fb] text-[#48607f]";
 }
 
 export default function JoeGrantLegalDesk() {
-  const [matters, setMatters] = useState<MatterCard[]>(matterSeed);
-  const [notes, setNotes] = useState<StickyNote[]>(noteSeed);
-  const [appointments, setAppointments] = useState<Appointment[]>(appointmentSeed);
-  const [alerts, setAlerts] = useState<AlertItem[]>([
-    {
-      id: "seed-1",
-      title: "Beam Ready",
-      body: "Strategy call beam card ready for Joe Grant",
-      tone: "success",
-    },
-  ]);
-
-  const nextNoteRef = useRef(4);
-  const nextApptRef = useRef(4);
-
-  function pushAlert(title: string, body: string, tone: AlertTone) {
-    const id = `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-    setAlerts((prev) => [{ id, title, body, tone }, ...prev].slice(0, 4));
-  }
-
-  function addStickyNote() {
-    const samples = [
-      { text: "Call IP attorney after lunch and confirm intake format.", tone: "amber" as NoteTone },
-      { text: "Keep chronology visible near top of legal pad.", tone: "cyan" as NoteTone },
-      { text: "Beam appointment should open with referral summary card.", tone: "emerald" as NoteTone },
-    ];
-
-    const pick = samples[(nextNoteRef.current - 4) % samples.length];
-
-    setNotes((prev) => [
-      {
-        id: `n-${nextNoteRef.current++}`,
-        text: pick.text,
-        tone: pick.tone,
-      },
-      ...prev,
-    ]);
-
-    pushAlert("Sticky Note Added", "Joe Grant legal pad updated", "info");
-  }
-
-  function togglePin(noteId: string) {
-    setNotes((prev) =>
-      prev
-        .map((note) => (note.id === noteId ? { ...note, pinned: !note.pinned } : note))
-        .sort((a, b) => Number(Boolean(b.pinned)) - Number(Boolean(a.pinned)))
-    );
-  }
-
-  function addAppointment() {
-    const samples: Array<Omit<Appointment, "id">> = [
-      { title: "Beam case sync", when: "Friday • 11:00 AM", type: "Beam", status: "Scheduled" },
-      { title: "Attorney note review", when: "Friday • 1:30 PM", type: "Review", status: "Pending" },
-      { title: "Client follow-up call", when: "Friday • 3:15 PM", type: "Call", status: "Scheduled" },
-    ];
-
-    const pick = samples[(nextApptRef.current - 4) % samples.length];
-
-    setAppointments((prev) => [
-      {
-        id: `a-${nextApptRef.current++}`,
-        ...pick,
-      },
-      ...prev,
-    ]);
-
-    pushAlert("Appointment Added", `${pick.title} scheduled`, "success");
-  }
-
-  function markReady(apptId: string) {
-    setAppointments((prev) =>
-      prev.map((appt) => (appt.id === apptId ? { ...appt, status: "Ready" } : appt))
-    );
-    const appt = appointments.find((a) => a.id === apptId);
-    if (appt) pushAlert("Beam Ready", `${appt.title} is ready to open`, "success");
-  }
-
-  function openBeamCard() {
-    pushAlert("Beam Card", "Referral summary card opened for Joe Grant", "success");
-  }
-
-  function sendBeamLink() {
-    pushAlert("Beam Link Sent", "Secure meeting link prepared for strategy call", "info");
-  }
-
-  function advanceMatter(matterId: string) {
-    const order: MatterStage[] = ["Intake", "Review", "Strategy", "Scheduled", "Done"];
-
-    setMatters((prev) =>
-      prev.map((matter) => {
-        if (matter.id !== matterId) return matter;
-        const currentIndex = order.indexOf(matter.stage);
-        const nextStage = order[Math.min(currentIndex + 1, order.length - 1)];
-        return { ...matter, stage: nextStage };
-      })
-    );
-
-    const matter = matters.find((m) => m.id === matterId);
-    if (matter) {
-      pushAlert("Matter Updated", `${matter.title} moved forward`, "info");
-    }
-  }
-
-  const activeMatters = matters.filter((m) => m.stage !== "Done").length;
-  const todayAppointments = appointments.length;
-  const pinnedNotes = notes.filter((n) => n.pinned).length;
-  const beamReady = appointments.filter((a) => a.status === "Ready").length;
-
-  const sortedNotes = useMemo(
-    () => [...notes].sort((a, b) => Number(Boolean(b.pinned)) - Number(Boolean(a.pinned))),
-    [notes]
+  const [query, setQuery] = useState("");
+  const [selectedId, setSelectedId] = useState<string>(MATTERS[0]?.id ?? "");
+  const [stageFilter, setStageFilter] = useState<"all" | MatterStage>("all");
+  const [activeStickyId, setActiveStickyId] = useState<string>(STICKIES[0]?.id ?? "");
+  const [quickNote, setQuickNote] = useState(
+    "Client called from vehicle. Need one clean follow-up note and timestamp."
   );
 
-  return (
-    <div className="min-h-screen bg-[#07111b] text-white">
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.14),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(167,139,250,0.12),_transparent_28%)]" />
+  const filteredMatters = useMemo(() => {
+    const q = query.trim().toLowerCase();
 
-        <div className="relative mx-auto max-w-7xl px-3 py-3 sm:px-4 sm:py-4 md:px-5 md:py-5">
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-3 sm:p-4">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+    return MATTERS.filter((matter) => {
+      const stageMatch = stageFilter === "all" || matter.stage === stageFilter;
+      const textMatch =
+        q.length === 0
+          ? true
+          : [
+              matter.id,
+              matter.client,
+              matter.title,
+              matter.nextAction,
+              matter.summary,
+              matter.contact,
+            ]
+              .join(" ")
+              .toLowerCase()
+              .includes(q);
+
+      return stageMatch && textMatch;
+    });
+  }, [query, stageFilter]);
+
+  const selectedMatter =
+    filteredMatters.find((matter) => matter.id === selectedId) ??
+    filteredMatters[0] ??
+    MATTERS[0];
+
+  const activeSticky =
+    STICKIES.find((note) => note.id === activeStickyId) ?? STICKIES[0];
+
+  const selectedStageIndex = selectedMatter
+    ? STAGE_ORDER.indexOf(selectedMatter.stage)
+    : -1;
+
+  return (
+    <div className="min-h-screen bg-[#d9d4cb] text-[#1f2a37]">
+      <div className="mx-auto w-full max-w-[1240px] px-3 py-4 sm:px-4 lg:px-5 lg:py-5">
+        <header className="mb-4 rounded-[24px] border border-[#d0cac0] bg-[#ebe7e0] px-3 py-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)] sm:px-4">
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <div className="inline-flex items-center rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-cyan-200 sm:text-[11px]">
-                    Legal Planet Demo
+                  <div className="rounded-full border border-[#c8d2e2] bg-[#eef3fb] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-[#48607f]">
+                    Joe Grant Legal Desk
                   </div>
-
-                  <span className="inline-flex items-center rounded-full border border-emerald-400/25 bg-emerald-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-200 sm:text-[11px]">
-                    Joe Grant Desk
-                  </span>
+                  <div className="rounded-full border border-[#d2ccc2] bg-[#f5f2ec] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#706657]">
+                    Daily Planner
+                  </div>
                 </div>
 
-                <h1 className="mt-2 text-[28px] font-extrabold tracking-tight text-white sm:text-[34px] md:text-[38px]">
-                  Joe Grant Legal Pad
+                <h1 className="mt-2 text-[22px] font-semibold tracking-tight text-[#243040]">
+                  Fast access to matters, notes, schedule, and proof.
                 </h1>
-
-                <p className="mt-2 max-w-3xl text-sm text-white/70 md:text-base">
-                  A clean attorney-facing desk for matters, sticky notes, scheduling, and beam-ready follow-up.
+                <p className="mt-1 max-w-3xl text-sm text-[#626c79]">
+                  Built for quick pull-ups, clean notes, and real daily movement on laptop, tablet, or in the car.
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-3">
-                <button
-                  onClick={addStickyNote}
-                  className="min-h-[46px] rounded-xl border border-amber-400/30 bg-amber-500/10 px-4 py-2.5 text-sm font-semibold text-amber-100 transition hover:bg-amber-500/15"
-                >
-                  + Sticky Note
-                </button>
+              <div className="flex w-full flex-col gap-2 xl:max-w-[680px]">
+                <div className="flex w-full flex-col gap-2 sm:flex-row">
+                  <label className="flex min-w-0 flex-1 items-center gap-2 rounded-2xl border border-[#d3d6dd] bg-[#f7f8fa] px-3 py-3 text-sm text-[#586474]">
+                    <Search className="h-4 w-4 text-[#7a8593]" />
+                    <input
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      placeholder="Search matter, client, note, or ID"
+                      className="w-full bg-transparent outline-none placeholder:text-[#99a2ae]"
+                    />
+                  </label>
 
-                <button
-                  onClick={addAppointment}
-                  className="min-h-[46px] rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-4 py-2.5 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-500/15"
-                >
-                  + Appointment
-                </button>
-
-                <button
-                  onClick={openBeamCard}
-                  className="min-h-[46px] rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-2.5 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-500/15 sm:col-span-2 lg:col-span-1 xl:col-span-1"
-                >
-                  Open Beam Card
-                </button>
-              </div>
-            </div>
-
-            <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4">
-              <MetricCard label="Active Matters" value={activeMatters} />
-              <MetricCard label="Appointments" value={todayAppointments} />
-              <MetricCard label="Pinned Notes" value={pinnedNotes} />
-              <MetricCard label="Beam Ready" value={beamReady} />
-            </div>
-          </div>
-
-          <main className="mt-4 grid grid-cols-1 gap-3 xl:grid-cols-3">
-            <section className="rounded-3xl border border-cyan-400/20 bg-white/5 p-3 sm:p-4 xl:col-span-2">
-              <div className="mb-3 flex items-center justify-between">
-                <div>
-                  <div className="text-[10px] uppercase tracking-[0.22em] text-white/45 sm:text-[11px]">
-                    Matter Desk
-                  </div>
-                  <div className="mt-1 text-2xl font-bold">Open Matters</div>
+                  <button
+                    type="button"
+                    className="rounded-2xl border border-[#c7d1e1] bg-[#eef3fb] px-4 py-3 text-sm font-semibold text-[#48607f]"
+                  >
+                    Today’s Desk
+                  </button>
                 </div>
 
-                <button
-                  onClick={sendBeamLink}
-                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white/90 transition hover:bg-white/10 sm:text-sm"
-                >
-                  Send Beam Link
-                </button>
+                <div className="flex items-center gap-2 overflow-x-auto pb-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setStageFilter("all")}
+                    className={cx(
+                      "shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold transition",
+                      stageFilter === "all"
+                        ? "border-[#c6d3ea] bg-[#edf3fb] text-[#48607f]"
+                        : "border-[#d5d8de] bg-[#f7f8fa] text-[#667181]",
+                    )}
+                  >
+                    All Matters
+                  </button>
+
+                  {STAGE_ORDER.map((stage) => (
+                    <button
+                      key={stage}
+                      type="button"
+                      onClick={() => setStageFilter(stage)}
+                      className={cx(
+                        "shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold transition",
+                        stageFilter === stage
+                          ? "border-[#c6d3ea] bg-[#edf3fb] text-[#48607f]"
+                          : "border-[#d5d8de] bg-[#f7f8fa] text-[#667181]",
+                      )}
+                    >
+                      {STAGE_LABELS[stage]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+              <button
+                type="button"
+                className="flex items-center justify-center gap-2 rounded-[18px] border border-[#c7d1e1] bg-[#eef3fb] px-4 py-3 text-sm font-semibold text-[#48607f]"
+              >
+                <Mic className="h-4 w-4" />
+                Voice Note
+              </button>
+
+              <button
+                type="button"
+                className="flex items-center justify-center gap-2 rounded-[18px] border border-[#d8caad] bg-[#faf5e9] px-4 py-3 text-sm font-semibold text-[#806a43]"
+              >
+                <Camera className="h-4 w-4" />
+                Add Photo
+              </button>
+
+              <button
+                type="button"
+                className="flex items-center justify-center gap-2 rounded-[18px] border border-[#c9d9cf] bg-[#edf7f0] px-4 py-3 text-sm font-semibold text-[#466a53]"
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                Timestamp Note
+              </button>
+
+              <button
+                type="button"
+                className="flex items-center justify-center gap-2 rounded-[18px] border border-[#d5d8de] bg-[#f7f8fa] px-4 py-3 text-sm font-semibold text-[#647080]"
+              >
+                <Paperclip className="h-4 w-4" />
+                Attach Document
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.04fr_0.96fr]">
+          <section className="rounded-[24px] border border-[#d0cac0] bg-[#ebe7e0] p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)] sm:p-4">
+            <div className="mb-3 flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-[15px] font-semibold text-[#243040]">Active Matter</h2>
+                <p className="mt-1 text-xs text-[#6a7380]">
+                  Pull up the right file fast and keep the next move visible.
+                </p>
               </div>
 
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                {matters.map((matter) => (
-                  <article key={matter.id} className="rounded-2xl border border-white/10 bg-[#0c1623] p-3">
+              <div className="rounded-full border border-[#d3d6dd] bg-[#f7f8fa] px-2.5 py-1 text-[11px] font-semibold text-[#61707f]">
+                {filteredMatters.length} visible
+              </div>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-1 lg:grid-cols-[0.94fr_1.06fr]">
+              <div className="rounded-[22px] border border-[#d7d1c7] bg-[#f3f0ea] p-2.5">
+                <div className="space-y-2.5">
+                  {filteredMatters.map((matter) => {
+                    const active = selectedMatter?.id === matter.id;
+
+                    return (
+                      <button
+                        key={matter.id}
+                        type="button"
+                        onClick={() => setSelectedId(matter.id)}
+                        className={cx(
+                          "w-full rounded-[20px] border px-3 py-3 text-left transition",
+                          active
+                            ? "border-[#c6d3ea] bg-[#eef3fb] shadow-[0_6px_18px_rgba(72,96,127,0.08)]"
+                            : "border-[#d9dce1] bg-[#fafafa] hover:bg-white",
+                        )}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className={stageBadge(matter.stage)}>
+                                {STAGE_LABELS[matter.stage]}
+                              </span>
+                              <span
+                                className={cx(
+                                  "rounded-full border px-2.5 py-1 text-[10px] font-semibold capitalize",
+                                  priorityClasses(matter.priority),
+                                )}
+                              >
+                                {matter.priority}
+                              </span>
+                            </div>
+
+                            <div className="mt-2 text-[16px] font-semibold text-[#243040]">
+                              {matter.client}
+                            </div>
+                            <div className="mt-1 line-clamp-1 text-sm text-[#65707d]">
+                              {matter.title}
+                            </div>
+                          </div>
+
+                          <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-[#8b95a2]" />
+                        </div>
+
+                        <div className="mt-3 flex items-center gap-2 text-[12px] text-[#6b7684]">
+                          <Clock3 className="h-3.5 w-3.5" />
+                          <span>{matter.due}</span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="rounded-[22px] border border-[#d7d1c7] bg-[#f7f4ef] p-4">
+                {selectedMatter ? (
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className={stageBadge(selectedMatter.stage)}>
+                            {STAGE_LABELS[selectedMatter.stage]}
+                          </span>
+                          <span className="rounded-full border border-[#d3d6dd] bg-[#f6f7f9] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#65717f]">
+                            {selectedMatter.id}
+                          </span>
+                        </div>
+
+                        <h3 className="mt-3 text-[30px] font-semibold tracking-tight text-[#243040]">
+                          {selectedMatter.client}
+                        </h3>
+                        <p className="mt-1 text-[15px] text-[#5e6977]">{selectedMatter.title}</p>
+                      </div>
+
+                      <div className="rounded-[18px] border border-[#d8caad] bg-[#faf5e9] px-4 py-3 text-right">
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#806a43]">
+                          Due
+                        </div>
+                        <div className="mt-1 text-sm font-semibold text-[#5f5034]">
+                          {selectedMatter.due}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="rounded-[18px] border border-[#d9dce1] bg-[#fcfcfd] p-3.5">
+                        <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#778392]">
+                          <User className="h-3.5 w-3.5" />
+                          Client
+                        </div>
+                        <div className="mt-2 text-[15px] font-medium text-[#243040]">
+                          {selectedMatter.client}
+                        </div>
+                        <div className="mt-1 flex items-center gap-2 text-sm text-[#63707f]">
+                          <Phone className="h-3.5 w-3.5" />
+                          {selectedMatter.contact}
+                        </div>
+                      </div>
+
+                      <div className="rounded-[18px] border border-[#d9dce1] bg-[#fcfcfd] p-3.5">
+                        <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#778392]">
+                          <FileText className="h-3.5 w-3.5" />
+                          Matter Summary
+                        </div>
+                        <div className="mt-2 text-sm leading-6 text-[#566270]">
+                          {selectedMatter.summary}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-[18px] border border-[#c6d3ea] bg-[#eef3fb] p-4">
+                      <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#48607f]">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        Next Action
+                      </div>
+                      <p className="mt-2 text-[16px] leading-7 text-[#243040]">
+                        {selectedMatter.nextAction}
+                      </p>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          </section>
+
+          <div className="grid gap-4">
+            <section className="rounded-[24px] border border-[#d0cac0] bg-[#ebe7e0] p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)] sm:p-4">
+              <div className="mb-3">
+                <h2 className="text-[15px] font-semibold text-[#243040]">Matter Stage</h2>
+                <p className="mt-1 text-xs text-[#6a7380]">
+                  Keep the matter flow readable without making it feel technical.
+                </p>
+              </div>
+
+              <div className="rounded-[22px] border border-[#d7d1c7] bg-[#f7f4ef] p-3.5">
+                <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
+                  {STAGE_ORDER.map((stage, index) => {
+                    const done = index < selectedStageIndex;
+                    const current = index === selectedStageIndex;
+
+                    return (
+                      <div
+                        key={stage}
+                        className={cx(
+                          "flex items-center justify-between rounded-[18px] border px-3.5 py-3",
+                          current && "border-[#c6d3ea] bg-[#eef3fb]",
+                          done && "border-[#c9d9cf] bg-[#edf7f0]",
+                          !current && !done && "border-[#d9dce1] bg-[#fcfcfd]",
+                        )}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={cx(
+                              "flex h-8 w-8 items-center justify-center rounded-full border text-[12px] font-semibold",
+                              current && "border-[#b9c8de] bg-white text-[#48607f]",
+                              done && "border-[#bfd1c5] bg-white text-[#466a53]",
+                              !current && !done && "border-[#d4d8de] bg-white text-[#738091]",
+                            )}
+                          >
+                            {index + 1}
+                          </div>
+
+                          <div>
+                            <div className="text-sm font-semibold text-[#243040]">
+                              {STAGE_LABELS[stage]}
+                            </div>
+                            <div className="text-[11px] uppercase tracking-[0.16em] text-[#7a8593]">
+                              {current ? "Current" : done ? "Complete" : "Upcoming"}
+                            </div>
+                          </div>
+                        </div>
+
+                        <ChevronRight className="h-4 w-4 text-[#9aa3ae]" />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </section>
+
+            <section className="rounded-[24px] border border-[#d0cac0] bg-[#ebe7e0] p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)] sm:p-4">
+              <div className="mb-3">
+                <h2 className="text-[15px] font-semibold text-[#243040]">Schedule / Appointments</h2>
+                <p className="mt-1 text-xs text-[#6a7380]">
+                  The day should support the work, not crowd it.
+                </p>
+              </div>
+
+              <div className="space-y-2.5">
+                {APPOINTMENTS.map((item) => (
+                  <div
+                    key={item.id}
+                    className="rounded-[20px] border border-[#d9dce1] bg-[#f7f8fa] px-3.5 py-3.5"
+                  >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <div className="text-lg font-bold text-white">{matter.title}</div>
-                        <div className="mt-1 text-sm text-white/70">{matter.client}</div>
+                        <div className="flex items-center gap-2 text-[12px] text-[#697583]">
+                          <CalendarDays className="h-3.5 w-3.5" />
+                          {item.time}
+                        </div>
+                        <div className="mt-1 text-[16px] font-semibold text-[#243040]">
+                          {item.title}
+                        </div>
+                        <div className="mt-1 line-clamp-1 text-sm text-[#5f6b79]">
+                          {item.matter}
+                        </div>
                       </div>
 
-                      <div className={cn("rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em]", stageClasses(matter.stage))}>
-                        {matter.stage}
+                      <div className="rounded-full border border-[#d3d6dd] bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#65717f]">
+                        {item.type}
                       </div>
                     </div>
-
-                    <div className="mt-3 rounded-xl border border-white/10 bg-black/20 p-3 text-sm text-white/85">
-                      {matter.summary}
-                    </div>
-
-                    <div className="mt-3 space-y-2 text-sm">
-                      <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2">
-                        <span className="text-white/45">Next:</span> {matter.nextStep}
-                      </div>
-                      <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2">
-                        <span className="text-white/45">Owner:</span> {matter.owner}
-                      </div>
-                      <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2">
-                        <span className="text-white/45">When:</span> {matter.when}
-                      </div>
-                    </div>
-
-                    <div className="mt-3 grid grid-cols-2 gap-2">
-                      <button
-                        onClick={() => advanceMatter(matter.id)}
-                        className="rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-3 py-2 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-500/15"
-                      >
-                        Advance
-                      </button>
-                      <button
-                        onClick={openBeamCard}
-                        className="rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-500/15"
-                      >
-                        Beam Card
-                      </button>
-                    </div>
-                  </article>
+                  </div>
                 ))}
               </div>
             </section>
-
-            <section className="space-y-3">
-              <div className="rounded-3xl border border-amber-400/20 bg-white/5 p-3 sm:p-4">
-                <div className="mb-3 flex items-center justify-between">
-                  <div>
-                    <div className="text-[10px] uppercase tracking-[0.22em] text-white/45 sm:text-[11px]">
-                      Sticky Notes
-                    </div>
-                    <div className="mt-1 text-2xl font-bold">Personal Legal Pad</div>
-                  </div>
-
-                  <button
-                    onClick={addStickyNote}
-                    className="rounded-xl border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-xs font-semibold text-amber-100 transition hover:bg-amber-500/15 sm:text-sm"
-                  >
-                    Add
-                  </button>
-                </div>
-
-                <div className="space-y-2">
-                  {sortedNotes.map((note) => (
-                    <div
-                      key={note.id}
-                      className={cn("rounded-2xl border p-3", noteToneClasses(note.tone))}
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="text-sm font-semibold leading-6">{note.text}</div>
-                        <button
-                          onClick={() => togglePin(note.id)}
-                          className="shrink-0 rounded-lg border border-white/10 bg-black/10 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-white/80"
-                        >
-                          {note.pinned ? "Pinned" : "Pin"}
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="rounded-3xl border border-emerald-400/20 bg-white/5 p-3 sm:p-4">
-                <div className="mb-3 flex items-center justify-between">
-                  <div>
-                    <div className="text-[10px] uppercase tracking-[0.22em] text-white/45 sm:text-[11px]">
-                      Appointments
-                    </div>
-                    <div className="mt-1 text-2xl font-bold">Schedule + Beam</div>
-                  </div>
-
-                  <button
-                    onClick={addAppointment}
-                    className="rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-3 py-2 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-500/15 sm:text-sm"
-                  >
-                    Schedule
-                  </button>
-                </div>
-
-                <div className="space-y-2">
-                  {appointments.map((appt) => (
-                    <div key={appt.id} className="rounded-2xl border border-white/10 bg-[#0c1623] p-3">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="text-sm font-bold text-white">{appt.title}</div>
-                          <div className="mt-1 text-sm text-white/70">{appt.when}</div>
-                        </div>
-
-                        <div className={cn("rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em]", appointmentClasses(appt.status))}>
-                          {appt.status}
-                        </div>
-                      </div>
-
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/85">
-                          {appt.type}
-                        </div>
-                      </div>
-
-                      <div className="mt-3 grid grid-cols-2 gap-2">
-                        <button
-                          onClick={() => markReady(appt.id)}
-                          className="rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-500/15"
-                        >
-                          Mark Ready
-                        </button>
-                        <button
-                          onClick={openBeamCard}
-                          className="rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-3 py-2 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-500/15"
-                        >
-                          Open Beam
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
-          </main>
-
-          <div className="pointer-events-none fixed bottom-4 right-4 z-50 flex w-[min(92vw,360px)] flex-col gap-2">
-            {alerts.map((alert) => (
-              <div
-                key={alert.id}
-                className={cn("pointer-events-auto rounded-2xl border px-4 py-3 shadow-2xl shadow-black/30", alertClasses(alert.tone))}
-              >
-                <div className="text-[10px] font-bold uppercase tracking-[0.18em] opacity-80">
-                  {alert.title}
-                </div>
-                <div className="mt-1 text-sm font-semibold">{alert.body}</div>
-              </div>
-            ))}
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
 
-function MetricCard({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-xl border border-white/10 bg-black/20 px-3 py-2">
-      <div className="text-xs uppercase text-white/50">{label}</div>
-      <div className="text-xl font-semibold">{value}</div>
+        <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[0.94fr_1.06fr]">
+          <section className="rounded-[24px] border border-[#d0cac0] bg-[#ebe7e0] p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)] sm:p-4">
+            <div className="mb-3">
+              <h2 className="text-[15px] font-semibold text-[#243040]">Quick Note / Timestamp</h2>
+              <p className="mt-1 text-xs text-[#6a7380]">
+                Make a note fast, attach proof, and keep moving.
+              </p>
+            </div>
+
+            <div className="rounded-[22px] border border-[#d7d1c7] bg-[#f7f4ef] p-3.5">
+              <textarea
+                value={quickNote}
+                onChange={(e) => setQuickNote(e.target.value)}
+                rows={6}
+                className="w-full rounded-[18px] border border-[#d5d8de] bg-[#fcfcfd] p-4 text-[15px] leading-7 text-[#243040] outline-none placeholder:text-[#99a2ae]"
+                placeholder="Type or dictate a quick note..."
+              />
+
+              <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                <button
+                  type="button"
+                  className="flex items-center justify-center gap-2 rounded-[18px] border border-[#c7d1e1] bg-[#eef3fb] px-4 py-3 text-sm font-semibold text-[#48607f]"
+                >
+                  <Mic className="h-4 w-4" />
+                  Dictate
+                </button>
+
+                <button
+                  type="button"
+                  className="flex items-center justify-center gap-2 rounded-[18px] border border-[#d8caad] bg-[#faf5e9] px-4 py-3 text-sm font-semibold text-[#806a43]"
+                >
+                  <Camera className="h-4 w-4" />
+                  Photo
+                </button>
+
+                <button
+                  type="button"
+                  className="flex items-center justify-center gap-2 rounded-[18px] border border-[#d5d8de] bg-[#f7f8fa] px-4 py-3 text-sm font-semibold text-[#647080]"
+                >
+                  <Paperclip className="h-4 w-4" />
+                  Attach
+                </button>
+
+                <button
+                  type="button"
+                  className="flex items-center justify-center gap-2 rounded-[18px] border border-[#c9d9cf] bg-[#edf7f0] px-4 py-3 text-sm font-semibold text-[#466a53]"
+                >
+                  <CheckCircle2 className="h-4 w-4" />
+                  Timestamp
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <section className="rounded-[24px] border border-[#d0cac0] bg-[#ebe7e0] p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)] sm:p-4">
+              <div className="mb-3">
+                <h2 className="text-[15px] font-semibold text-[#243040]">Sticky Notes</h2>
+                <p className="mt-1 text-xs text-[#6a7380]">
+                  Tap one, view it, and update it fast.
+                </p>
+              </div>
+
+              <div className="space-y-2.5">
+                {STICKIES.map((note) => {
+                  const active = activeSticky?.id === note.id;
+                  return (
+                    <button
+                      key={note.id}
+                      type="button"
+                      onClick={() => setActiveStickyId(note.id)}
+                      className={cx(
+                        "w-full rounded-[20px] border px-3.5 py-3.5 text-left transition",
+                        active
+                          ? "border-[#d8caad] bg-[#faf5e9]"
+                          : "border-[#d9dce1] bg-[#f7f8fa]",
+                      )}
+                    >
+                      <div className="flex items-start gap-2.5">
+                        <StickyNote className="mt-0.5 h-4 w-4 shrink-0 text-[#9d814b]" />
+                        <div>
+                          <div className="text-sm font-semibold text-[#5f5034]">
+                            {note.title}
+                          </div>
+                          <p className="mt-1 text-sm leading-6 text-[#6b5b3d]">
+                            {note.text}
+                          </p>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="mt-3 rounded-[20px] border border-[#d8caad] bg-[#faf5e9] p-3.5">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#806a43]">
+                  Selected Note
+                </div>
+                <p className="mt-2 text-sm leading-6 text-[#5f5034]">
+                  {activeSticky?.text}
+                </p>
+              </div>
+            </section>
+
+            <section className="rounded-[24px] border border-[#d0cac0] bg-[#ebe7e0] p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)] sm:p-4">
+              <div className="mb-3">
+                <h2 className="text-[15px] font-semibold text-[#243040]">Documents / Follow-up</h2>
+                <p className="mt-1 text-xs text-[#6a7380]">
+                  Keep supporting files and follow-up clear.
+                </p>
+              </div>
+
+              <div className="space-y-2.5">
+                {DOCS.map((item) => (
+                  <div
+                    key={item.id}
+                    className="rounded-[20px] border border-[#d9dce1] bg-[#f7f8fa] px-3.5 py-3.5"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 text-[15px] font-semibold text-[#243040]">
+                          <FolderOpen className="h-4 w-4 text-[#778392]" />
+                          <span className="truncate">{item.label}</span>
+                        </div>
+                        <div className="mt-1 text-sm text-[#5f6b79]">{item.detail}</div>
+                      </div>
+
+                      <div
+                        className={cx(
+                          "shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]",
+                          docStatusClasses(item.status),
+                        )}
+                      >
+                        {item.status}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <footer className="mt-4 grid gap-3 md:grid-cols-3">
+          <div className="rounded-[20px] border border-[#d0cac0] bg-[#ebe7e0] px-3.5 py-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)]">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#75808e]">
+              Quick Focus
+            </div>
+            <p className="mt-2 text-sm text-[#5f6b79]">
+              Pull up the right matter fast and move the next action.
+            </p>
+          </div>
+
+          <div className="rounded-[20px] border border-[#d0cac0] bg-[#ebe7e0] px-3.5 py-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)]">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#75808e]">
+              Desk Logic
+            </div>
+            <p className="mt-2 text-sm text-[#5f6b79]">
+              Bigger targets, cleaner stacking, less fake dashboard noise.
+            </p>
+          </div>
+
+          <div className="rounded-[20px] border border-[#d0cac0] bg-[#ebe7e0] px-3.5 py-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)]">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#75808e]">
+              Follow-through
+            </div>
+            <p className="mt-2 text-sm text-[#5f6b79]">
+              Notes, proof, photos, and documents stay attached to the work.
+            </p>
+          </div>
+        </footer>
+      </div>
     </div>
   );
 }
