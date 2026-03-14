@@ -21,6 +21,7 @@ import WorkspaceRoutes from "./app/WorkspaceRoutes";
 
 import LiveAwnitIntake from "./pages/LiveAwnitIntake";
 import LegalDemoBoard from "./pages/LegalDemoBoard";
+import DanFieldNotebookDesk from "./pages/DanFieldNotebookDesk";
 import NotFound from "./pages/NotFound";
 
 /* BEAM ROUTES */
@@ -98,6 +99,10 @@ export default function App() {
         <Route path="/legal-demo" element={<LegalDemoBoard />} />
         <Route path="/legal-evidence-board" element={<Navigate to="/legal-demo" replace />} />
         <Route path="/planet/legal/demo" element={<LegalDemoBoard />} />
+
+        {/* DAN FIELD NOTEBOOK DESK */}
+        <Route path="/dan-field-notebook-desk" element={<DanFieldNotebookDesk />} />
+        <Route path="/field-desk" element={<Navigate to="/dan-field-notebook-desk" replace />} />
 
         {/* PLANET CORE */}
         <Route path="/planet/*" element={<PlanetRoutes />} />
