@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import type { LucideIcon } from "lucide-react";
 import {
   Shield,
   Battery,
@@ -25,6 +26,16 @@ type ActionLog = {
   time: string;
   title: string;
   detail: string;
+};
+
+type GuardianProfile = {
+  name: string;
+  label: string;
+  status: string;
+  location: string;
+  contact: string;
+  wearerPhone: string;
+  contactPhone: string;
 };
 
 const DEMO_TIMELINES: Record<GuardianMode, TimelineEvent[]> = {
@@ -109,10 +120,11 @@ export default function GuardianPresenceDesk() {
     "Guardian standing by. Select an action when needed.",
   );
   const [actionLogs, setActionLogs] = useState<ActionLog[]>([]);
+  const timelineRef = useRef<HTMLDivElement | null>(null);
 
   const timeline = DEMO_TIMELINES[mode];
 
-  const profile = useMemo(() => {
+  const profile = useMemo<GuardianProfile>(() => {
     if (mode === "elder") {
       return {
         name: "Mary Johnson",
@@ -120,6 +132,8 @@ export default function GuardianPresenceDesk() {
         status: "Monitoring safely",
         location: "Pine Street Neighborhood",
         contact: "Family Contact",
+        wearerPhone: "8635550101",
+        contactPhone: "8635550102",
       };
     }
 
@@ -130,6 +144,8 @@ export default function GuardianPresenceDesk() {
         status: "Route protection active",
         location: "Oak Avenue Corridor",
         contact: "Parent Contact",
+        wearerPhone: "8635550201",
+        contactPhone: "8635550202",
       };
     }
 
@@ -139,6 +155,8 @@ export default function GuardianPresenceDesk() {
       status: "Distress monitoring active",
       location: "Main Street",
       contact: "Responder Contact",
+      wearerPhone: "8635550301",
+      contactPhone: "8635550302",
     };
   }, [mode]);
 
@@ -160,8 +178,8 @@ export default function GuardianPresenceDesk() {
       nextMode === "elder"
         ? "Elder Mode loaded."
         : nextMode === "child"
-        ? "Child Mode loaded."
-        : "Medical Mode loaded.";
+          ? "Child Mode loaded."
+          : "Medical Mode loaded.";
     setActionNote(label);
     addLog("Mode changed", label);
   }
@@ -169,23 +187,32 @@ export default function GuardianPresenceDesk() {
   function handleCallWearer() {
     const msg =
       mode === "elder"
-        ? "Calling wearer check-in pathway."
+        ? "Opening phone dialer for wearer check-in."
         : mode === "child"
-        ? "Attempting voice check with child device."
-        : "Calling wearer after medical event.";
+          ? "Opening phone dialer for child device check."
+          : "Opening phone dialer after medical event.";
     setActionNote(msg);
     addLog("Call Wearer", msg);
+    window.location.href = `tel:${profile.wearerPhone}`;
   }
 
   function handleNotifyContact() {
+    const smsBody =
+      mode === "elder"
+        ? `Planet Guardian: Please check on ${profile.name}. Current location: ${profile.location}.`
+        : mode === "child"
+          ? `Planet Guardian: Please check on ${profile.name}. Route event detected near ${profile.location}.`
+          : `Planet Guardian: Please review medical event for ${profile.name}. Current location: ${profile.location}.`;
+
     const msg =
       mode === "elder"
-        ? "Family notification relay prepared."
+        ? "Opening SMS relay to family contact."
         : mode === "child"
-        ? "Parent notification relay prepared."
-        : "Responder / emergency contact relay prepared.";
+          ? "Opening SMS relay to parent contact."
+          : "Opening SMS relay to responder / emergency contact.";
     setActionNote(msg);
     addLog("Notify Contact", msg);
+    window.location.href = `sms:${profile.contactPhone}?body=${encodeURIComponent(smsBody)}`;
   }
 
   async function handleShareLocation() {
@@ -199,12 +226,23 @@ export default function GuardianPresenceDesk() {
     ].join("\n");
 
     try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "Planet Guardian Location Packet",
+          text: packet,
+        });
+        const msg = "Location packet shared.";
+        setActionNote(msg);
+        addLog("Share Location", msg);
+        return;
+      }
+
       await navigator.clipboard.writeText(packet);
       const msg = "Location packet copied to clipboard.";
       setActionNote(msg);
       addLog("Share Location", msg);
     } catch {
-      const msg = "Clipboard copy failed on this device/browser.";
+      const msg = "Share / clipboard action failed on this device/browser.";
       setActionNote(msg);
       addLog("Share Location", msg);
     }
@@ -215,10 +253,11 @@ export default function GuardianPresenceDesk() {
       mode === "elder"
         ? "Replaying elder continuity timeline."
         : mode === "child"
-        ? "Replaying school route / bike event timeline."
-        : "Replaying medical continuity timeline.";
+          ? "Replaying school route / bike event timeline."
+          : "Replaying medical continuity timeline.";
     setActionNote(msg);
     addLog("Replay Timeline", msg);
+    timelineRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   return (
@@ -275,7 +314,10 @@ export default function GuardianPresenceDesk() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-blue-400/20 bg-blue-950/40 p-5">
+            <div
+              ref={timelineRef}
+              className="rounded-2xl border border-blue-400/20 bg-blue-950/40 p-5"
+            >
               <h3 className="mb-3 text-sm uppercase tracking-wider text-blue-200/70">
                 Guardian Timeline
               </h3>
@@ -283,7 +325,7 @@ export default function GuardianPresenceDesk() {
               <div className="space-y-3">
                 {timeline.map((e, i) => (
                   <div
-                    key={i}
+                    key={`${e.time}-${e.title}-${i}`}
                     className="rounded-xl border border-blue-400/10 bg-black/30 p-3"
                   >
                     <div className="text-xs text-blue-300">{e.time}</div>
@@ -355,7 +397,7 @@ function ModeButton({
   onClick,
 }: {
   label: string;
-  icon: any;
+  icon: LucideIcon;
   active?: boolean;
   onClick?: () => void;
 }) {
@@ -381,7 +423,7 @@ function Info({
 }: {
   label: string;
   value: string;
-  icon: any;
+  icon: LucideIcon;
 }) {
   return (
     <div className="flex items-center gap-2 rounded-lg border border-blue-400/10 bg-black/30 p-2">
@@ -399,7 +441,7 @@ function Action({
   label,
   onClick,
 }: {
-  icon: any;
+  icon: LucideIcon;
   label: string;
   onClick?: () => void;
 }) {
