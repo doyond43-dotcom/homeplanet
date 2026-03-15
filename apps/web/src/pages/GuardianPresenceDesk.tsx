@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
   Shield,
@@ -11,7 +11,17 @@ import {
   Activity,
   Copy,
   CheckCircle2,
+  UserRound,
+  Smartphone,
+  AlertTriangle,
+  Home,
+  School,
+  Route,
 } from "lucide-react";
+
+import GuardianPanel from "../components/guardian/GuardianPanel";
+import { createGuardianSession } from "../lib/guardianService";
+import { startGuardianSensors } from "../lib/guardianSensors";
 
 type GuardianMode = "elder" | "child" | "medical";
 
@@ -33,9 +43,14 @@ type GuardianProfile = {
   label: string;
   status: string;
   location: string;
-  contact: string;
   wearerPhone: string;
+  contactName: string;
+  contactRelation: string;
   contactPhone: string;
+  homeBase?: string;
+  destination?: string;
+  destinationPhone?: string;
+  routeState?: string;
 };
 
 const DEMO_TIMELINES: Record<GuardianMode, TimelineEvent[]> = {
@@ -64,23 +79,23 @@ const DEMO_TIMELINES: Record<GuardianMode, TimelineEvent[]> = {
   child: [
     {
       time: "7:42 AM",
-      title: "School route started",
-      detail: "Guardian recognized expected route.",
+      title: "Left home base",
+      detail: "SE 29th Court — route to Okeechobee High School active.",
     },
     {
       time: "7:47 AM",
-      title: "Bike movement detected",
-      detail: "Normal speed and route pattern.",
+      title: "Bike route detected",
+      detail: "Movement normal and route continuity active.",
     },
     {
       time: "7:51 AM",
-      title: "Sudden fall event",
-      detail: "Impact pattern detected from bike crash.",
+      title: "Sudden stop event",
+      detail: "Guardian impact / stop check triggered.",
     },
     {
       time: "7:52 AM",
       title: "Guardian check initiated",
-      detail: "Parent relay ready with location.",
+      detail: "Parent relay ready with location context.",
     },
   ],
   medical: [
@@ -107,11 +122,31 @@ const DEMO_TIMELINES: Record<GuardianMode, TimelineEvent[]> = {
   ],
 };
 
+const guardianModuleSession = createGuardianSession({
+  residentId: "haley-d",
+  wearerName: "Haley D.",
+  wearerPhone: "8635320683",
+  contactName: "Chelsea Rule",
+  contactRelation: "Parent Contact",
+  contactPhone: "5614102991",
+  mode: "child",
+  status: "Route to Okeechobee High School active",
+  location: "SE 29th Court — Home",
+});
+
 function nowStamp() {
   return new Date().toLocaleTimeString([], {
     hour: "numeric",
     minute: "2-digit",
   });
+}
+
+function formatPhone(phone: string) {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length === 10) {
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+  }
+  return phone;
 }
 
 export default function GuardianPresenceDesk() {
@@ -120,6 +155,9 @@ export default function GuardianPresenceDesk() {
     "Guardian standing by. Select an action when needed.",
   );
   const [actionLogs, setActionLogs] = useState<ActionLog[]>([]);
+  const [sensorStatus, setSensorStatus] = useState("Sensor watch active.");
+  const [impactPromptOpen, setImpactPromptOpen] = useState(false);
+  const [impactPromptText, setImpactPromptText] = useState("");
   const timelineRef = useRef<HTMLDivElement | null>(null);
 
   const timeline = DEMO_TIMELINES[mode];
@@ -130,10 +168,12 @@ export default function GuardianPresenceDesk() {
         name: "Mary Johnson",
         label: "Age 78",
         status: "Monitoring safely",
-        location: "Pine Street Neighborhood",
-        contact: "Family Contact",
-        wearerPhone: "8635550101",
-        contactPhone: "8635550102",
+        location: "Neighborhood watch active",
+        wearerPhone: "8635320683",
+        contactName: "Chelsea Rule",
+        contactRelation: "Family Contact",
+        contactPhone: "5614102991",
+        routeState: "Monitoring",
       };
     }
 
@@ -141,11 +181,16 @@ export default function GuardianPresenceDesk() {
       return {
         name: "Haley D.",
         label: "School Route",
-        status: "Route protection active",
-        location: "Oak Avenue Corridor",
-        contact: "Parent Contact",
-        wearerPhone: "8635550201",
-        contactPhone: "8635550202",
+        status: "Route to Okeechobee High School active",
+        location: "On route",
+        wearerPhone: "8635320683",
+        contactName: "Chelsea Rule",
+        contactRelation: "Parent Contact",
+        contactPhone: "5614102991",
+        homeBase: "SE 29th Court — Home",
+        destination: "Okeechobee High School",
+        destinationPhone: "8634625025",
+        routeState: "On Route",
       };
     }
 
@@ -154,9 +199,11 @@ export default function GuardianPresenceDesk() {
       label: "Medical Watch",
       status: "Distress monitoring active",
       location: "Main Street",
-      contact: "Responder Contact",
-      wearerPhone: "8635550301",
-      contactPhone: "8635550302",
+      wearerPhone: "8635320683",
+      contactName: "Chelsea Rule",
+      contactRelation: "Emergency Contact",
+      contactPhone: "5614102991",
+      routeState: "Monitoring",
     };
   }, [mode]);
 
@@ -168,9 +215,23 @@ export default function GuardianPresenceDesk() {
         title,
         detail,
       },
-      ...prev.slice(0, 5),
+      ...prev.slice(0, 8),
     ]);
   }
+
+  useEffect(() => {
+    startGuardianSensors((event, detail) => {
+      const label = event.toUpperCase();
+      addLog(label, detail);
+      setSensorStatus(detail);
+
+      if (event === "impact" || event === "crash") {
+        setImpactPromptOpen(true);
+        setImpactPromptText(detail);
+        setActionNote("Impact detected. Guardian check opened.");
+      }
+    });
+  }, []);
 
   function handleModeChange(nextMode: GuardianMode) {
     setMode(nextMode);
@@ -182,37 +243,44 @@ export default function GuardianPresenceDesk() {
           : "Medical Mode loaded.";
     setActionNote(label);
     addLog("Mode changed", label);
+    setImpactPromptOpen(false);
   }
 
-  function handleCallWearer() {
+  async function handleCallWearer() {
     const msg =
-      mode === "elder"
-        ? "Opening phone dialer for wearer check-in."
-        : mode === "child"
-          ? "Opening phone dialer for child device check."
-          : "Opening phone dialer after medical event.";
+      mode === "child"
+        ? `Opening phone dialer for Dad line (${formatPhone(profile.wearerPhone)}).`
+        : `Opening phone dialer for ${profile.name}.`;
+
     setActionNote(msg);
     addLog("Call Wearer", msg);
+
+    try {
+      await navigator.clipboard.writeText(profile.wearerPhone);
+      addLog(
+        "Call Fallback",
+        `Wearer number copied: ${formatPhone(profile.wearerPhone)}`,
+      );
+    } catch {
+      // ignore clipboard failure
+    }
+
     window.location.href = `tel:${profile.wearerPhone}`;
   }
 
-  function handleNotifyContact() {
+  function handleTextContact() {
     const smsBody =
-      mode === "elder"
-        ? `Planet Guardian: Please check on ${profile.name}. Current location: ${profile.location}.`
-        : mode === "child"
-          ? `Planet Guardian: Please check on ${profile.name}. Route event detected near ${profile.location}.`
-          : `Planet Guardian: Please review medical event for ${profile.name}. Current location: ${profile.location}.`;
+      mode === "child"
+        ? `Planet Guardian: Please check on Haley. Route to Okeechobee High School is active. Current state: ${profile.routeState}.`
+        : `Planet Guardian: Please check on ${profile.name}. Current location: ${profile.location}.`;
 
-    const msg =
-      mode === "elder"
-        ? "Opening SMS relay to family contact."
-        : mode === "child"
-          ? "Opening SMS relay to parent contact."
-          : "Opening SMS relay to responder / emergency contact.";
+    const msg = `Opening SMS relay to ${profile.contactName}.`;
     setActionNote(msg);
-    addLog("Notify Contact", msg);
-    window.location.href = `sms:${profile.contactPhone}?body=${encodeURIComponent(smsBody)}`;
+    addLog("Text Contact", msg);
+
+    window.location.href = `sms:${profile.contactPhone}?body=${encodeURIComponent(
+      smsBody,
+    )}`;
   }
 
   async function handleShareLocation() {
@@ -222,8 +290,14 @@ export default function GuardianPresenceDesk() {
       `Mode: ${profile.label}`,
       `Status: ${profile.status}`,
       `Location: ${profile.location}`,
+      profile.homeBase ? `Home Base: ${profile.homeBase}` : "",
+      profile.destination ? `Destination: ${profile.destination}` : "",
+      `Wearer: ${formatPhone(profile.wearerPhone)}`,
+      `Contact: ${profile.contactName} (${formatPhone(profile.contactPhone)})`,
       `Time: ${nowStamp()}`,
-    ].join("\n");
+    ]
+      .filter(Boolean)
+      .join("\n");
 
     try {
       if (navigator.share) {
@@ -249,21 +323,29 @@ export default function GuardianPresenceDesk() {
   }
 
   function handleReplayTimeline() {
-    const msg =
-      mode === "elder"
-        ? "Replaying elder continuity timeline."
-        : mode === "child"
-          ? "Replaying school route / bike event timeline."
-          : "Replaying medical continuity timeline.";
+    const msg = "Replaying timeline.";
     setActionNote(msg);
     addLog("Replay Timeline", msg);
     timelineRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
+  function handleImpactOkay() {
+    setImpactPromptOpen(false);
+    setActionNote("Guardian check closed. Safe confirmed.");
+    addLog("I'M OK", "Wearer confirmed safe after impact check.");
+  }
+
+  function handleImpactNeedHelp() {
+    setImpactPromptOpen(false);
+    setActionNote("Help requested after impact check.");
+    addLog("NEED HELP", "Wearer requested help after impact check.");
+    handleTextContact();
+  }
+
   return (
     <div className="min-h-screen bg-[#0b1020] text-white">
       <div className="mx-auto max-w-[1300px] px-6 py-8">
-        <header className="mb-6 rounded-3xl border border-blue-400/20 bg-gradient-to-r from-blue-900/40 to-purple-900/40 p-6">
+        <header className="mb-6 rounded-3xl border border-blue-400/20 bg-gradient-to-r from-blue-900/40 to-purple-900/40 p-6 shadow-[0_0_0_1px_rgba(96,165,250,0.06),0_12px_40px_rgba(0,0,0,0.25)]">
           <div className="flex items-center gap-3">
             <Shield className="h-6 w-6 text-blue-300" />
             <h1 className="text-xl font-semibold tracking-wide">Planet Guardian</h1>
@@ -275,10 +357,11 @@ export default function GuardianPresenceDesk() {
         </header>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[300px_1fr_300px]">
+          {/* LEFT */}
           <section className="space-y-3">
-            <h2 className="text-sm uppercase tracking-wider text-blue-200/70">
+            <div className="text-sm uppercase tracking-wider text-blue-200/70">
               Guardian Modes
-            </h2>
+            </div>
 
             <ModeButton
               active={mode === "elder"}
@@ -286,14 +369,12 @@ export default function GuardianPresenceDesk() {
               icon={Shield}
               onClick={() => handleModeChange("elder")}
             />
-
             <ModeButton
               active={mode === "child"}
               label="Child Mode"
               icon={Bike}
               onClick={() => handleModeChange("child")}
             />
-
             <ModeButton
               active={mode === "medical"}
               label="Medical Mode"
@@ -302,8 +383,9 @@ export default function GuardianPresenceDesk() {
             />
           </section>
 
+          {/* CENTER */}
           <section className="space-y-4">
-            <div className="rounded-2xl border border-blue-400/20 bg-blue-900/20 p-5">
+            <div className="rounded-2xl border border-blue-400/20 bg-blue-900/20 p-5 shadow-[0_10px_28px_rgba(0,0,0,0.20)]">
               <h3 className="text-lg font-semibold">{profile.name}</h3>
               <p className="text-sm text-blue-200">{profile.label}</p>
 
@@ -312,15 +394,61 @@ export default function GuardianPresenceDesk() {
                 <Info label="Location" value={profile.location} icon={MapPin} />
                 <Info label="Battery" value="86%" icon={Battery} />
               </div>
+
+              {mode === "child" && (
+                <div className="mt-4 grid gap-3 md:grid-cols-3">
+                  <Info label="Home Base" value={profile.homeBase ?? "Home"} icon={Home} />
+                  <Info
+                    label="Destination"
+                    value={profile.destination ?? "School"}
+                    icon={School}
+                  />
+                  <Info
+                    label="Current State"
+                    value={profile.routeState ?? "On Route"}
+                    icon={Route}
+                  />
+                </div>
+              )}
             </div>
+
+            {impactPromptOpen && (
+              <div className="rounded-2xl border border-amber-400/30 bg-amber-900/20 p-5 shadow-[0_10px_28px_rgba(0,0,0,0.20)]">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="mt-0.5 h-5 w-5 text-amber-300" />
+                  <div className="flex-1">
+                    <div className="text-sm font-semibold uppercase tracking-wider text-amber-200/90">
+                      Guardian Check
+                    </div>
+                    <div className="mt-2 text-sm text-amber-50">
+                      {impactPromptText || "Possible impact detected. Are you okay?"}
+                    </div>
+                    <div className="mt-4 grid grid-cols-2 gap-2">
+                      <Action
+                        icon={CheckCircle2}
+                        label="I'm OK"
+                        onClick={handleImpactOkay}
+                        tone="green"
+                      />
+                      <Action
+                        icon={Bell}
+                        label="Need Help"
+                        onClick={handleImpactNeedHelp}
+                        tone="orange"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div
               ref={timelineRef}
-              className="rounded-2xl border border-blue-400/20 bg-blue-950/40 p-5"
+              className="rounded-2xl border border-blue-400/20 bg-blue-950/40 p-5 shadow-[0_10px_28px_rgba(0,0,0,0.20)]"
             >
-              <h3 className="mb-3 text-sm uppercase tracking-wider text-blue-200/70">
+              <div className="mb-3 text-sm uppercase tracking-wider text-blue-200/70">
                 Guardian Timeline
-              </h3>
+              </div>
 
               <div className="space-y-3">
                 {timeline.map((e, i) => (
@@ -336,7 +464,7 @@ export default function GuardianPresenceDesk() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-purple-400/20 bg-purple-900/20 p-5">
+            <div className="rounded-2xl border border-purple-400/20 bg-purple-900/20 p-5 shadow-[0_10px_28px_rgba(0,0,0,0.20)]">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-purple-300" />
                 <h3 className="text-sm uppercase tracking-wider text-purple-200/80">
@@ -345,6 +473,7 @@ export default function GuardianPresenceDesk() {
               </div>
 
               <p className="mt-3 text-sm text-purple-100/90">{actionNote}</p>
+              <p className="mt-2 text-xs text-purple-200/70">{sensorStatus}</p>
 
               <div className="mt-4 space-y-3">
                 {actionLogs.length === 0 ? (
@@ -367,23 +496,91 @@ export default function GuardianPresenceDesk() {
             </div>
           </section>
 
+          {/* RIGHT */}
           <section className="space-y-3">
-            <h2 className="text-sm uppercase tracking-wider text-blue-200/70">
+            <div className="text-sm uppercase tracking-wider text-blue-200/70">
               Guardian Actions
-            </h2>
-
-            <Action icon={Phone} label="Call Wearer" onClick={handleCallWearer} />
-            <Action icon={Bell} label="Notify Contact" onClick={handleNotifyContact} />
-            <Action icon={Copy} label="Share Location" onClick={handleShareLocation} />
-            <Action icon={HeartPulse} label="Replay Timeline" onClick={handleReplayTimeline} />
-
-            <div className="rounded-2xl border border-blue-400/20 bg-blue-900/20 p-4">
-              <div className="text-xs uppercase tracking-wider text-blue-200/70">
-                Active Contact
-              </div>
-              <div className="mt-2 text-sm font-medium">{profile.contact}</div>
             </div>
+
+            <Action
+              icon={Phone}
+              label="Call Wearer"
+              onClick={handleCallWearer}
+              tone="blue"
+            />
+            <Action
+              icon={Bell}
+              label="Text Contact"
+              onClick={handleTextContact}
+              tone="green"
+            />
+            <Action
+              icon={Copy}
+              label="Share Location"
+              onClick={handleShareLocation}
+              tone="purple"
+            />
+            <Action
+              icon={HeartPulse}
+              label="Replay Timeline"
+              onClick={handleReplayTimeline}
+              tone="orange"
+            />
+
+            <div className="rounded-2xl border border-blue-400/20 bg-blue-900/20 p-4 shadow-[0_10px_28px_rgba(0,0,0,0.20)]">
+              <div className="text-xs uppercase tracking-wider text-blue-200/70">
+                Wearer
+              </div>
+              <div className="mt-2 flex items-center gap-2 text-sm font-medium">
+                <UserRound className="h-4 w-4 text-blue-300" />
+                <span>{profile.name}</span>
+              </div>
+              <div className="mt-1 flex items-center gap-2 text-sm text-blue-100/85">
+                <Phone className="h-4 w-4 text-blue-300" />
+                <span>{formatPhone(profile.wearerPhone)}</span>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-blue-400/20 bg-blue-900/20 p-4 shadow-[0_10px_28px_rgba(0,0,0,0.20)]">
+              <div className="text-xs uppercase tracking-wider text-blue-200/70">
+                Primary Contact
+              </div>
+              <div className="mt-2 text-sm font-medium">{profile.contactName}</div>
+              <div className="mt-1 text-xs text-blue-200/70">{profile.contactRelation}</div>
+              <div className="mt-2 flex items-center gap-2 text-sm text-blue-100/85">
+                <Smartphone className="h-4 w-4 text-blue-300" />
+                <span>{formatPhone(profile.contactPhone)}</span>
+              </div>
+            </div>
+
+            {mode === "child" && (
+              <div className="rounded-2xl border border-blue-400/20 bg-blue-900/20 p-4 shadow-[0_10px_28px_rgba(0,0,0,0.20)]">
+                <div className="text-xs uppercase tracking-wider text-blue-200/70">
+                  Destination
+                </div>
+                <div className="mt-2 text-sm font-medium">{profile.destination}</div>
+                <div className="mt-1 text-xs text-blue-200/70">School</div>
+                <div className="mt-2 flex items-center gap-2 text-sm text-blue-100/85">
+                  <Phone className="h-4 w-4 text-blue-300" />
+                  <span>{formatPhone(profile.destinationPhone ?? "")}</span>
+                </div>
+              </div>
+            )}
           </section>
+        </div>
+
+        {/* REUSABLE MODULE */}
+        <div className="mt-6 rounded-3xl border border-blue-400/20 bg-gradient-to-r from-blue-950/40 to-purple-950/30 p-4 shadow-[0_10px_30px_rgba(0,0,0,0.25)]">
+          <div className="mb-3">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-blue-200/80">
+              Guardian Module Test
+            </h2>
+            <p className="mt-1 text-sm text-blue-100/70">
+              Reusable Guardian panel running inside Planet Guardian the HomePlanet way.
+            </p>
+          </div>
+
+          <GuardianPanel initialSession={guardianModuleSession} variant="monitor" />
         </div>
       </div>
     </div>
@@ -404,11 +601,12 @@ function ModeButton({
   return (
     <button
       onClick={onClick}
-      className={`flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
+      className={[
+        "flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition shadow-[0_6px_18px_rgba(0,0,0,0.18)]",
         active
-          ? "border-purple-400 bg-purple-900/30"
-          : "border-blue-400/20 bg-black/30 hover:bg-blue-900/20"
-      }`}
+          ? "border-purple-400 bg-purple-900/30 text-white"
+          : "border-blue-400/25 bg-black/25 text-white hover:bg-blue-900/20",
+      ].join(" ")}
     >
       <Icon className="h-4 w-4" />
       <span>{label}</span>
@@ -440,17 +638,28 @@ function Action({
   icon: Icon,
   label,
   onClick,
+  tone = "blue",
 }: {
   icon: LucideIcon;
   label: string;
   onClick?: () => void;
+  tone?: "blue" | "green" | "purple" | "orange";
 }) {
+  const toneClasses =
+    tone === "green"
+      ? "border-emerald-400/35 bg-emerald-900/20 hover:bg-emerald-800/30 text-emerald-50"
+      : tone === "purple"
+        ? "border-purple-400/35 bg-purple-900/20 hover:bg-purple-800/30 text-purple-50"
+        : tone === "orange"
+          ? "border-amber-400/35 bg-amber-900/20 hover:bg-amber-800/30 text-amber-50"
+          : "border-blue-400/35 bg-blue-900/20 hover:bg-blue-800/30 text-blue-50";
+
   return (
     <button
       onClick={onClick}
-      className="flex w-full items-center gap-3 rounded-xl border border-blue-400/20 bg-blue-900/20 px-4 py-3 hover:bg-blue-800/30"
+      className={`flex w-full items-center gap-3 rounded-xl border px-4 py-3 transition shadow-[0_8px_22px_rgba(0,0,0,0.22)] ${toneClasses}`}
     >
-      <Icon className="h-4 w-4 text-blue-300" />
+      <Icon className="h-4 w-4" />
       <span>{label}</span>
     </button>
   );
