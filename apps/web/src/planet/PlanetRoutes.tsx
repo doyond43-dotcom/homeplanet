@@ -26,6 +26,7 @@ import MomsKitchenDemo from "../pages/MomsKitchenDemo";
 
 // Legal demo pages
 import JoeGrantLegalDesk from "../pages/JoeGrantLegalDesk";
+import GuardianPresenceDesk from "../pages/GuardianPresenceDesk";
 
 /**
  * Planet layer:
@@ -65,6 +66,7 @@ export default function PlanetRoutes() {
       <Route path="legal/joe-grant" element={<JoeGrantLegalDesk />} />
 
       {/* Other special pages */}
+      <Route path="guardian" element={<GuardianPresenceDesk />} />
       <Route path="jeanettes" element={<JeanettesLanding />} />
       <Route path="life" element={<LifePlanet />} />
 
