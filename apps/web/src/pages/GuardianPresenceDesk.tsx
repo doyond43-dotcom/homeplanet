@@ -17,6 +17,8 @@ import {
   Home,
   School,
   Route,
+  Link2,
+  MessageSquare,
 } from "lucide-react";
 
 import GuardianPanel from "../components/guardian/GuardianPanel";
@@ -125,10 +127,10 @@ const DEMO_TIMELINES: Record<GuardianMode, TimelineEvent[]> = {
 const guardianModuleSession = createGuardianSession({
   residentId: "haley-d",
   wearerName: "Haley D.",
-  wearerPhone: "8635320683",
-  contactName: "Chelsea Rule",
+  wearerPhone: "19032466394",
+  contactName: "Daniel Doyon",
   contactRelation: "Parent Contact",
-  contactPhone: "5614102991",
+  contactPhone: "8635320683",
   mode: "child",
   status: "Route to Okeechobee High School active",
   location: "SE 29th Court — Home",
@@ -143,6 +145,10 @@ function nowStamp() {
 
 function formatPhone(phone: string) {
   const digits = phone.replace(/\D/g, "");
+  if (digits.length === 11 && digits.startsWith("1")) {
+    const ten = digits.slice(1);
+    return `+1 (${ten.slice(0, 3)}) ${ten.slice(3, 6)}-${ten.slice(6)}`;
+  }
   if (digits.length === 10) {
     return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
   }
@@ -158,6 +164,11 @@ export default function GuardianPresenceDesk() {
   const [sensorStatus, setSensorStatus] = useState("Sensor watch active.");
   const [impactPromptOpen, setImpactPromptOpen] = useState(false);
   const [impactPromptText, setImpactPromptText] = useState("");
+  const [isPaired, setIsPaired] = useState(false);
+  const [pairedDeviceName, setPairedDeviceName] = useState("No device paired yet");
+  const [pairingCode] = useState(() =>
+    Math.random().toString(36).slice(2, 8).toUpperCase(),
+  );
   const timelineRef = useRef<HTMLDivElement | null>(null);
 
   const timeline = DEMO_TIMELINES[mode];
@@ -183,10 +194,10 @@ export default function GuardianPresenceDesk() {
         label: "School Route",
         status: "Route to Okeechobee High School active",
         location: "On route",
-        wearerPhone: "8635320683",
-        contactName: "Chelsea Rule",
+        wearerPhone: "19032466394",
+        contactName: "Daniel Doyon",
         contactRelation: "Parent Contact",
-        contactPhone: "5614102991",
+        contactPhone: "8635320683",
         homeBase: "SE 29th Court — Home",
         destination: "Okeechobee High School",
         destinationPhone: "8634625025",
@@ -215,23 +226,35 @@ export default function GuardianPresenceDesk() {
         title,
         detail,
       },
-      ...prev.slice(0, 8),
+      ...prev.slice(0, 10),
     ]);
   }
 
   useEffect(() => {
+    const ua = navigator.userAgent;
+    const inferredDevice =
+      /iPhone/i.test(ua)
+        ? "iPhone"
+        : /iPad/i.test(ua)
+          ? "iPad"
+          : /Android/i.test(ua)
+            ? "Android Phone"
+            : "Desktop Browser";
+
     startGuardianSensors((event, detail) => {
       const label = event.toUpperCase();
       addLog(label, detail);
       setSensorStatus(detail);
 
-      if (event === "impact" || event === "crash") {
+      if ((event === "impact" || event === "crash") && isPaired) {
         setImpactPromptOpen(true);
         setImpactPromptText(detail);
         setActionNote("Impact detected. Guardian check opened.");
       }
     });
-  }, []);
+
+    setPairedDeviceName(inferredDevice);
+  }, [isPaired]);
 
   function handleModeChange(nextMode: GuardianMode) {
     setMode(nextMode);
@@ -246,10 +269,41 @@ export default function GuardianPresenceDesk() {
     setImpactPromptOpen(false);
   }
 
+  async function handlePairDevice() {
+    const ua = navigator.userAgent;
+    const inferredDevice =
+      /iPhone/i.test(ua)
+        ? "Haley iPhone"
+        : /iPad/i.test(ua)
+          ? "Haley iPad"
+          : /Android/i.test(ua)
+            ? "Haley Android Phone"
+            : "Desktop Browser";
+
+    setIsPaired(true);
+    setPairedDeviceName(inferredDevice);
+    setActionNote(`Guardian paired to ${inferredDevice}.`);
+    addLog("PAIR DEVICE", `Guardian paired to ${inferredDevice}. Code ${pairingCode}.`);
+
+    try {
+      await navigator.clipboard.writeText(pairingCode);
+      addLog("PAIR CODE", `Pair code copied: ${pairingCode}`);
+    } catch {
+      // ignore clipboard failure
+    }
+  }
+
+  function handleUnpairDevice() {
+    setIsPaired(false);
+    setImpactPromptOpen(false);
+    setActionNote("Guardian device unpaired.");
+    addLog("UNPAIR DEVICE", "Wearer device link removed.");
+  }
+
   async function handleCallWearer() {
     const msg =
       mode === "child"
-        ? `Opening phone dialer for Dad line (${formatPhone(profile.wearerPhone)}).`
+        ? `Opening phone dialer for Haley (${formatPhone(profile.wearerPhone)}).`
         : `Opening phone dialer for ${profile.name}.`;
 
     setActionNote(msg);
@@ -283,6 +337,24 @@ export default function GuardianPresenceDesk() {
     )}`;
   }
 
+  function handleQuickTextOkay() {
+    const smsBody = `Planet Guardian update: Haley tapped I'm OK at ${nowStamp()}.`;
+    setActionNote("Opening quick OK relay.");
+    addLog("QUICK OK", "I'm OK relay opened.");
+    window.location.href = `sms:${profile.contactPhone}?body=${encodeURIComponent(
+      smsBody,
+    )}`;
+  }
+
+  function handleQuickTextHelp() {
+    const smsBody = `Planet Guardian alert: Haley tapped Need Help at ${nowStamp()}. Please check immediately.`;
+    setActionNote("Opening quick help relay.");
+    addLog("QUICK HELP", "Need Help relay opened.");
+    window.location.href = `sms:${profile.contactPhone}?body=${encodeURIComponent(
+      smsBody,
+    )}`;
+  }
+
   async function handleShareLocation() {
     const packet = [
       "Planet Guardian Location Packet",
@@ -294,6 +366,7 @@ export default function GuardianPresenceDesk() {
       profile.destination ? `Destination: ${profile.destination}` : "",
       `Wearer: ${formatPhone(profile.wearerPhone)}`,
       `Contact: ${profile.contactName} (${formatPhone(profile.contactPhone)})`,
+      isPaired ? `Paired Device: ${pairedDeviceName}` : "Paired Device: Not paired",
       `Time: ${nowStamp()}`,
     ]
       .filter(Boolean)
@@ -357,7 +430,6 @@ export default function GuardianPresenceDesk() {
         </header>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[300px_1fr_300px]">
-          {/* LEFT */}
           <section className="space-y-3">
             <div className="text-sm uppercase tracking-wider text-blue-200/70">
               Guardian Modes
@@ -383,11 +455,24 @@ export default function GuardianPresenceDesk() {
             />
           </section>
 
-          {/* CENTER */}
           <section className="space-y-4">
             <div className="rounded-2xl border border-blue-400/20 bg-blue-900/20 p-5 shadow-[0_10px_28px_rgba(0,0,0,0.20)]">
-              <h3 className="text-lg font-semibold">{profile.name}</h3>
-              <p className="text-sm text-blue-200">{profile.label}</p>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h3 className="text-lg font-semibold">{profile.name}</h3>
+                  <p className="text-sm text-blue-200">{profile.label}</p>
+                </div>
+
+                <div
+                  className={`rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] ${
+                    isPaired
+                      ? "border-emerald-400/35 bg-emerald-900/20 text-emerald-100"
+                      : "border-amber-400/35 bg-amber-900/20 text-amber-100"
+                  }`}
+                >
+                  {isPaired ? "Paired" : "Not Paired"}
+                </div>
+              </div>
 
               <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
                 <Info label="Status" value={profile.status} icon={Shield} />
@@ -410,6 +495,76 @@ export default function GuardianPresenceDesk() {
                   />
                 </div>
               )}
+            </div>
+
+            <div className="rounded-2xl border border-cyan-400/20 bg-cyan-900/10 p-5 shadow-[0_10px_28px_rgba(0,0,0,0.20)]">
+              <div className="flex items-center gap-2">
+                <Link2 className="h-4 w-4 text-cyan-300" />
+                <div className="text-sm uppercase tracking-wider text-cyan-200/80">
+                  Guardian Pairing
+                </div>
+              </div>
+
+              <div className="mt-3 grid gap-3 md:grid-cols-3">
+                <Info
+                  label="Pair Status"
+                  value={isPaired ? "Wearer device linked" : "Waiting to pair"}
+                  icon={Shield}
+                />
+                <Info label="Device" value={pairedDeviceName} icon={Smartphone} />
+                <Info label="Pair Code" value={pairingCode} icon={Copy} />
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                {!isPaired ? (
+                  <Action
+                    icon={Link2}
+                    label="Pair Device"
+                    onClick={handlePairDevice}
+                    tone="green"
+                  />
+                ) : (
+                  <Action
+                    icon={Link2}
+                    label="Unpair Device"
+                    onClick={handleUnpairDevice}
+                    tone="orange"
+                  />
+                )}
+
+                <Action
+                  icon={MessageSquare}
+                  label="Quick I'm OK"
+                  onClick={handleQuickTextOkay}
+                  tone="blue"
+                />
+                <Action
+                  icon={Bell}
+                  label="Quick Need Help"
+                  onClick={handleQuickTextHelp}
+                  tone="purple"
+                />
+                <Action
+                  icon={Phone}
+                  label="Call Dad"
+                  onClick={handleTextContact}
+                  tone="green"
+                />
+                <Action
+                  icon={Copy}
+                  label="Copy Pair Code"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(pairingCode);
+                      setActionNote("Pair code copied.");
+                      addLog("PAIR CODE", `Pair code copied: ${pairingCode}`);
+                    } catch {
+                      setActionNote("Pair code copy failed.");
+                    }
+                  }}
+                  tone="blue"
+                />
+              </div>
             </div>
 
             {impactPromptOpen && (
@@ -435,6 +590,18 @@ export default function GuardianPresenceDesk() {
                         label="Need Help"
                         onClick={handleImpactNeedHelp}
                         tone="orange"
+                      />
+                      <Action
+                        icon={MessageSquare}
+                        label="Quick I'm OK"
+                        onClick={handleQuickTextOkay}
+                        tone="blue"
+                      />
+                      <Action
+                        icon={Bell}
+                        label="Quick Need Help"
+                        onClick={handleQuickTextHelp}
+                        tone="purple"
                       />
                     </div>
                   </div>
@@ -496,7 +663,6 @@ export default function GuardianPresenceDesk() {
             </div>
           </section>
 
-          {/* RIGHT */}
           <section className="space-y-3">
             <div className="text-sm uppercase tracking-wider text-blue-200/70">
               Guardian Actions
@@ -569,7 +735,6 @@ export default function GuardianPresenceDesk() {
           </section>
         </div>
 
-        {/* REUSABLE MODULE */}
         <div className="mt-6 rounded-3xl border border-blue-400/20 bg-gradient-to-r from-blue-950/40 to-purple-950/30 p-4 shadow-[0_10px_30px_rgba(0,0,0,0.25)]">
           <div className="mb-3">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-blue-200/80">
