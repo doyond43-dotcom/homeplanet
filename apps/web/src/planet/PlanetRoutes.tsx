@@ -41,7 +41,8 @@ import EmilyLearningDesk from "../pages/EmilyLearningDesk";
  * - /planet/vehicles/awnit-demo is a special demo surface
  * - /planet/food/... exposes restaurant demo pages
  * - /planet/legal/... exposes legal demo pages
- * - /planet/guardian exposes guardian pages
+ * - /planet/guardian stays the original Guardian landing
+ * - /planet/guardian-pet is the separate pet tag demo landing
  * - /planet/emily exposes Emily's learning desk
  * - /planet/:planetId routes to PlanetOverview
  * - /planet/:planetId/:cityId routes to CityPage
@@ -74,12 +75,15 @@ export default function PlanetRoutes() {
       {/* Legal */}
       <Route path="legal/joe-grant" element={<JoeGrantLegalDesk />} />
 
-      {/* Guardian */}
-      <Route path="guardian" element={<GuardianPetTagDemo />} />
-      <Route path="guardian/pet/:petId" element={<GuardianPetTagDemo />} />
-      <Route path="guardian/found/:petId" element={<GuardianPetTagDemo />} />
+      {/* Guardian - keep original Guardian separate */}
+      <Route path="guardian" element={<GuardianPresenceDesk />} />
       <Route path="guardian/join" element={<GuardianJoinDesk />} />
       <Route path="guardian/presence" element={<GuardianPresenceDesk />} />
+
+      {/* Pet Guardian - separate landing and demos */}
+      <Route path="guardian-pet" element={<GuardianPetTagDemo />} />
+      <Route path="guardian-pet/pet/:petId" element={<GuardianPetTagDemo />} />
+      <Route path="guardian-pet/found/:petId" element={<GuardianPetTagDemo />} />
 
       {/* Other special pages */}
       <Route path="jeanettes" element={<JeanettesLanding />} />

@@ -34,6 +34,8 @@ type RadarEvent = {
   detail: string;
 };
 
+const PET_BASE_PATH = "/planet/guardian-pet";
+
 const DEMO_PET: DemoPet = {
   id: "bella-demo",
   name: "Bella",
@@ -236,35 +238,41 @@ function GuardianShell({
           <div className="flex flex-col gap-4 px-5 py-5 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-200">
-                Planet Guardian
+                Planet Guardian Pet
               </div>
               <h1 className="mt-3 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
                 Live rescue pages for lost pets
               </h1>
               <p className="mt-2 max-w-2xl text-sm text-white/70 sm:text-base">
-                From dumb pet tags to live rescue pages. Built for faster reunions,
-                clearer contact, and a stronger HomePlanet safety layer.
+                Pet Guardian stays separate from the main Guardian landing for now.
+                This page is the dedicated pet tag demo, sales flow, and finder flow.
               </p>
             </div>
 
             <nav className="flex flex-wrap gap-2">
               <Link
-                to="/planet/guardian"
+                to={PET_BASE_PATH}
                 className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white/85 transition hover:border-cyan-300/40 hover:bg-cyan-400/10"
               >
                 Sales Page
               </Link>
               <Link
-                to={`/planet/guardian/pet/${pet.id}`}
+                to={`${PET_BASE_PATH}/pet/${pet.id}`}
                 className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white/85 transition hover:border-cyan-300/40 hover:bg-cyan-400/10"
               >
                 Public QR Demo
               </Link>
               <Link
-                to={`/planet/guardian/found/${pet.id}`}
+                to={`${PET_BASE_PATH}/found/${pet.id}`}
                 className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white/85 transition hover:border-cyan-300/40 hover:bg-cyan-400/10"
               >
                 Finder Report
+              </Link>
+              <Link
+                to="/planet/guardian"
+                className="rounded-full border border-emerald-300/25 bg-emerald-400/10 px-4 py-2 text-sm font-medium text-emerald-100 transition hover:bg-emerald-400/18"
+              >
+                Main Guardian
               </Link>
             </nav>
           </div>
@@ -277,14 +285,14 @@ function GuardianShell({
 }
 
 function GuardianSalesPage({ pet }: { pet: DemoPet }) {
-  const scanDemoLink = `/planet/guardian/pet/${pet.id}`;
+  const scanDemoLink = `${PET_BASE_PATH}/pet/${pet.id}`;
 
   return (
     <div className="space-y-6">
       <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="rounded-[32px] border border-white/10 bg-white/6 p-6 backdrop-blur-xl sm:p-8">
           <div className="inline-flex items-center gap-2 rounded-full border border-amber-300/25 bg-amber-300/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-amber-200">
-            Tomorrow-ready demo
+            Pet Guardian demo
           </div>
 
           <h2 className="mt-4 max-w-3xl text-3xl font-semibold tracking-tight text-white sm:text-5xl">
@@ -292,8 +300,8 @@ function GuardianSalesPage({ pet }: { pet: DemoPet }) {
           </h2>
 
           <p className="mt-4 max-w-2xl text-base leading-7 text-white/85 sm:text-lg">
-            When a pet gets lost, every minute matters. Planet Guardian gives every pet
-            a QR-powered rescue page with live status, one-tap owner contact, a fast
+            When a pet gets lost, every minute matters. Pet Guardian gives every pet a
+            QR-powered rescue page with live status, one-tap owner contact, a fast
             finder report flow, and a neighborhood rescue timeline that feels like a
             real recovery system.
           </p>
@@ -306,7 +314,7 @@ function GuardianSalesPage({ pet }: { pet: DemoPet }) {
               Scan Bella’s live rescue page
             </Link>
             <Link
-              to={`/planet/guardian/found/${pet.id}`}
+              to={`${PET_BASE_PATH}/found/${pet.id}`}
               className="rounded-2xl border border-white/15 bg-white/6 px-5 py-3 text-sm font-semibold text-white/90 transition hover:bg-white/10"
             >
               Open finder report page
@@ -374,7 +382,7 @@ function GuardianSalesPage({ pet }: { pet: DemoPet }) {
         />
         <InfoPanel
           title="The solution"
-          body="Planet Guardian turns a pet tag into a live page that opens instantly when scanned, with clear actions for the person helping."
+          body="Pet Guardian turns a pet tag into a live page that opens instantly when scanned, with clear actions for the person helping."
         />
         <InfoPanel
           title="The result"
@@ -383,7 +391,7 @@ function GuardianSalesPage({ pet }: { pet: DemoPet }) {
       </section>
 
       <RadarPanel
-        subtitle="When a pet is marked missing, Planet Guardian activates a live awareness ring. Each scan and report becomes part of the recovery story."
+        subtitle="When a pet is marked missing, Pet Guardian activates a live awareness ring. Each scan and report becomes part of the recovery story."
         events={RADAR_EVENTS}
       />
 
@@ -440,7 +448,7 @@ function GuardianSalesPage({ pet }: { pet: DemoPet }) {
           <div className="mt-5 rounded-[28px] border border-dashed border-cyan-300/35 bg-[#071325] p-6 shadow-[inset_0_0_40px_rgba(34,211,238,0.05)]">
             <div className="mx-auto flex max-w-[320px] flex-col items-center rounded-[28px] border border-white/10 bg-[#0b1020] px-6 py-8 text-center">
               <div className="rounded-full border border-cyan-300/25 bg-cyan-400/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-200">
-                Planet Guardian
+                Planet Guardian Pet
               </div>
               <h4 className="mt-4 text-xl font-semibold text-white">
                 If I’m lost, please scan
@@ -472,7 +480,7 @@ function GuardianSalesPage({ pet }: { pet: DemoPet }) {
 
           <div className="mt-5 space-y-4 text-sm leading-7 text-white/78 sm:text-[15px]">
             <p>
-              <span className="font-semibold text-white">Planet Guardian</span> helps
+              <span className="font-semibold text-white">Pet Guardian</span> helps
               lost pets get home faster by turning a pet tag into a live rescue page.
             </p>
             <p>
@@ -500,7 +508,7 @@ function GuardianSalesPage({ pet }: { pet: DemoPet }) {
               Open Bella’s live rescue page
             </Link>
             <Link
-              to={`/planet/guardian/found/${pet.id}`}
+              to={`${PET_BASE_PATH}/found/${pet.id}`}
               className="rounded-2xl border border-white/15 bg-white/6 px-5 py-3 text-sm font-semibold text-white/90 transition hover:bg-white/10"
             >
               Open demo finder form
@@ -513,7 +521,7 @@ function GuardianSalesPage({ pet }: { pet: DemoPet }) {
 }
 
 function GuardianPetPage({ pet }: { pet: DemoPet }) {
-  const smsBody = `Hi ${pet.ownerName}, I found ${pet.name}. I scanned the Planet Guardian tag.`;
+  const smsBody = `Hi ${pet.ownerName}, I found ${pet.name}. I scanned the Planet Guardian pet tag.`;
   const callHref = buildTelHref(pet.callNumber);
   const smsHref = buildSmsHref(pet.textNumber, smsBody);
 
@@ -579,7 +587,7 @@ function GuardianPetPage({ pet }: { pet: DemoPet }) {
                 Text Owner
               </a>
               <Link
-                to={`/planet/guardian/found/${pet.id}`}
+                to={`${PET_BASE_PATH}/found/${pet.id}`}
                 className="rounded-[22px] border border-cyan-300/30 bg-cyan-400/15 px-4 py-4 text-center text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/22"
               >
                 Report Found Location
@@ -790,8 +798,8 @@ export default function GuardianPetTagDemo() {
   const pet = DEMO_PET;
 
   const currentStep = useMemo(() => {
-    if (location.pathname.includes("/guardian/found/")) return "found";
-    if (location.pathname.includes("/guardian/pet/")) return "pet";
+    if (location.pathname.includes("/guardian-pet/found/")) return "found";
+    if (location.pathname.includes("/guardian-pet/pet/")) return "pet";
     return "sales";
   }, [location.pathname]);
 
