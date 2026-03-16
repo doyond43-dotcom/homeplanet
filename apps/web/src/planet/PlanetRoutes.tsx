@@ -30,6 +30,7 @@ import JoeGrantLegalDesk from "../pages/JoeGrantLegalDesk";
 // Guardian
 import GuardianPresenceDesk from "../pages/GuardianPresenceDesk";
 import GuardianJoinDesk from "../pages/GuardianJoinDesk";
+import GuardianPetTagDemo from "../pages/GuardianPetTagDemo";
 
 // Emily
 import EmilyLearningDesk from "../pages/EmilyLearningDesk";
@@ -74,8 +75,11 @@ export default function PlanetRoutes() {
       <Route path="legal/joe-grant" element={<JoeGrantLegalDesk />} />
 
       {/* Guardian */}
-      <Route path="guardian" element={<GuardianPresenceDesk />} />
+      <Route path="guardian" element={<GuardianPetTagDemo />} />
+      <Route path="guardian/pet/:petId" element={<GuardianPetTagDemo />} />
+      <Route path="guardian/found/:petId" element={<GuardianPetTagDemo />} />
       <Route path="guardian/join" element={<GuardianJoinDesk />} />
+      <Route path="guardian/presence" element={<GuardianPresenceDesk />} />
 
       {/* Other special pages */}
       <Route path="jeanettes" element={<JeanettesLanding />} />
