@@ -31,6 +31,9 @@ import JoeGrantLegalDesk from "../pages/JoeGrantLegalDesk";
 import GuardianPresenceDesk from "../pages/GuardianPresenceDesk";
 import GuardianJoinDesk from "../pages/GuardianJoinDesk";
 
+// Emily
+import EmilyLearningDesk from "../pages/EmilyLearningDesk";
+
 /**
  * Planet layer:
  * - /planet/creator is a special "launchpad" (CreatorCity)
@@ -38,6 +41,7 @@ import GuardianJoinDesk from "../pages/GuardianJoinDesk";
  * - /planet/food/... exposes restaurant demo pages
  * - /planet/legal/... exposes legal demo pages
  * - /planet/guardian exposes guardian pages
+ * - /planet/emily exposes Emily's learning desk
  * - /planet/:planetId routes to PlanetOverview
  * - /planet/:planetId/:cityId routes to CityPage
  */
@@ -76,6 +80,7 @@ export default function PlanetRoutes() {
       {/* Other special pages */}
       <Route path="jeanettes" element={<JeanettesLanding />} />
       <Route path="life" element={<LifePlanet />} />
+      <Route path="emily" element={<EmilyLearningDesk />} />
 
       {/* Generic planets */}
       <Route path=":planetId" element={<PlanetOverview />} />

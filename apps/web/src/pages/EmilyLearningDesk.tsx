@@ -1,0 +1,2525 @@
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type ComponentType,
+} from "react";
+import {
+  AlarmClock,
+  BookOpen,
+  Brush,
+  Calculator,
+  CheckCircle2,
+  ChevronRight,
+  Clock3,
+  Copy,
+  Download,
+  Eraser,
+  FileText,
+  FolderOpen,
+  Lightbulb,
+  Mic,
+  Paperclip,
+  PencilLine,
+  Play,
+  Plus,
+  RotateCcw,
+  Save,
+  Search,
+  Send,
+  StickyNote,
+  Tag,
+  Trash2,
+  Upload,
+  User,
+} from "lucide-react";
+
+import GuardianPanel from "../components/guardian/GuardianPanel";
+import { createGuardianSession } from "../lib/guardianService";
+
+type ProjectStage =
+  | "idea"
+  | "assigned"
+  | "in-progress"
+  | "studying"
+  | "waiting"
+  | "submitted"
+  | "complete";
+
+type ProjectPriority = "high" | "medium" | "normal";
+type DeskTheme = "pink" | "lavender" | "sky" | "mint" | "classic";
+type BeamRecipient = "Dad" | "Teacher" | "Friend" | "Custom";
+type BeamPreset = "Help" | "Teacher Update" | "Study Share" | "Freeform";
+
+type SchoolProject = {
+  id: string;
+  subject: string;
+  title: string;
+  due: string;
+  stage: ProjectStage;
+  priority: ProjectPriority;
+  summary: string;
+  teacher: string;
+  nextStep: string;
+};
+
+type Sticky = {
+  id: string;
+  title: string;
+  text: string;
+};
+
+type DocStatus = "ready" | "waiting" | "sent";
+
+type DocItem = {
+  id: string;
+  label: string;
+  detail: string;
+  status: DocStatus;
+};
+
+type AttachmentKind = "photo" | "file";
+
+type AttachmentItem = {
+  id: string;
+  name: string;
+  kind: AttachmentKind;
+  type: string;
+};
+
+type SavedNote = {
+  id: string;
+  projectId: string;
+  title: string;
+  text: string;
+  createdAt: string;
+  updatedAt: string;
+  timestampedAt: string | null;
+  attachments: AttachmentItem[];
+};
+
+type TimelineEvent = {
+  id: string;
+  projectId: string;
+  time: string;
+  label: string;
+};
+
+type MathCoachProblem = {
+  prompt: string;
+  answer: number;
+  steps: string[];
+  skill: string;
+};
+
+const STAGE_LABELS: Record<ProjectStage, string> = {
+  idea: "Idea",
+  assigned: "Assigned",
+  "in-progress": "In Progress",
+  studying: "Studying",
+  waiting: "Waiting",
+  submitted: "Submitted",
+  complete: "Complete",
+};
+
+const INITIAL_PROJECTS: SchoolProject[] = [
+  {
+    id: "EM-101",
+    subject: "Art",
+    title: "Character sketch ideas",
+    due: "Friday · 2:00 PM",
+    stage: "in-progress",
+    priority: "high",
+    summary: "Sketch ideas, color notes, and final versions stay together here.",
+    teacher: "Ms. Rivera",
+    nextStep: "Draw one clean version of your favorite character pose.",
+  },
+  {
+    id: "EM-102",
+    subject: "Math",
+    title: "Practice and skill building",
+    due: "Tomorrow · 9:00 AM",
+    stage: "studying",
+    priority: "medium",
+    summary: "Work through problems, get help, and learn why the answer works.",
+    teacher: "Mr. Lewis",
+    nextStep: "Solve one problem slowly and check each step.",
+  },
+  {
+    id: "EM-103",
+    subject: "Reading",
+    title: "Vocabulary + response note",
+    due: "Monday · 10:00 AM",
+    stage: "assigned",
+    priority: "normal",
+    summary: "Keep words, meanings, and short responses together.",
+    teacher: "Mrs. Adams",
+    nextStep: "Write one strong sentence using the new vocabulary word.",
+  },
+];
+
+const INITIAL_STICKIES: Sticky[] = [
+  {
+    id: "ST-1",
+    title: "Emily tip",
+    text: "Small progress still counts. One clear step at a time.",
+  },
+  {
+    id: "ST-2",
+    title: "Art reminder",
+    text: "Messy first sketch is fine. Clean version comes later.",
+  },
+  {
+    id: "ST-3",
+    title: "Math reminder",
+    text: "Slow down and write each step. The answer gets easier.",
+  },
+];
+
+const INITIAL_DOCS: DocItem[] = [
+  {
+    id: "DOC-1",
+    label: "Art concept page",
+    detail: "Ready to keep new drawing ideas together.",
+    status: "ready",
+  },
+  {
+    id: "DOC-2",
+    label: "Math steps sheet",
+    detail: "Waiting for one more clean example.",
+    status: "waiting",
+  },
+  {
+    id: "DOC-3",
+    label: "Reading response draft",
+    detail: "Saved and ready to review.",
+    status: "sent",
+  },
+];
+
+const LEARNING_TIPS = [
+  "Small progress still counts. One clean step at a time.",
+  "Messy first drafts are allowed. Clean versions come later.",
+  "If math feels confusing, slow down and write each step.",
+  "Explain the problem out loud. Your brain often hears the answer first.",
+  "A little color and structure can make studying feel easier.",
+  "When drawing, start light. You can always make lines darker later.",
+];
+
+const THEME_STYLES: Record<
+  DeskTheme,
+  {
+    shell: string;
+    shellText: string;
+    card: string;
+    cardBorder: string;
+    headerBg: string;
+    heroBadge: string;
+    liveBadge: string;
+    accentPanel: string;
+    accentText: string;
+    accentSoftText: string;
+    selectedCard: string;
+    selectedShadow: string;
+    chip: string;
+    chipActive: string;
+    timerPanel: string;
+    parentPing: string;
+    themeSelect: string;
+    artPanel: string;
+    buttonSoft: string;
+    beamPreview: string;
+    guardianShell: string;
+  }
+> = {
+  pink: {
+    shell: "bg-[#d9d4cb]",
+    shellText: "text-[#1f2a37]",
+    card: "bg-[#ebe7e0]",
+    cardBorder: "border-[#d0cac0]",
+    headerBg: "bg-[#ebe7e0]",
+    heroBadge: "border-[#f0c9df] bg-[#fff1f7] text-[#b94f84]",
+    liveBadge: "border-[#f0c9df] bg-[#fff1f7] text-[#b94f84]",
+    accentPanel: "border-[#f0c9df] bg-[#fff1f7]",
+    accentText: "text-[#b94f84]",
+    accentSoftText: "text-[#9e5a7b]",
+    selectedCard: "border-[#e7c6d8] bg-[#fff1f7]",
+    selectedShadow: "shadow-[0_6px_18px_rgba(185,79,132,0.10)]",
+    chip: "border-[#e9d7e0] bg-[#fff6fa] text-[#9e5a7b]",
+    chipActive: "border-[#e7c6d8] bg-[#f9dce9] text-[#8d4269]",
+    timerPanel: "border-[#e7c6d8] bg-[#fff1f7]",
+    parentPing: "border-[#e7c6d8] bg-[#fff1f7]",
+    themeSelect: "border-[#e7c6d8] bg-[#fff8fb] text-[#8d4269]",
+    artPanel: "border-[#e7c6d8] bg-[#fff8fb]",
+    buttonSoft: "border-[#e7c6d8] bg-[#fff6fa] text-[#8d4269]",
+    beamPreview: "border-[#ead8e4] bg-[#fff8fb]",
+    guardianShell: "border-[#e7c6d8] bg-[#f7f1fb]",
+  },
+  lavender: {
+    shell: "bg-[#d9d4cb]",
+    shellText: "text-[#1f2a37]",
+    card: "bg-[#ebe7e0]",
+    cardBorder: "border-[#d0cac0]",
+    headerBg: "bg-[#ebe7e0]",
+    heroBadge: "border-[#d9d2ef] bg-[#f5f2fd] text-[#6d5ea8]",
+    liveBadge: "border-[#d7cff3] bg-[#f7f4fe] text-[#6f63a6]",
+    accentPanel: "border-[#d9d2ef] bg-[#f5f2fd]",
+    accentText: "text-[#6d5ea8]",
+    accentSoftText: "text-[#7b70ac]",
+    selectedCard: "border-[#d9d2ef] bg-[#f5f2fd]",
+    selectedShadow: "shadow-[0_6px_18px_rgba(109,94,168,0.08)]",
+    chip: "border-[#ddd8f0] bg-[#f7f4fe] text-[#6d5ea8]",
+    chipActive: "border-[#d2c8f1] bg-[#eee7ff] text-[#5b4b9a]",
+    timerPanel: "border-[#d9d2ef] bg-[#f5f2fd]",
+    parentPing: "border-[#d9d2ef] bg-[#f7f4fe]",
+    themeSelect: "border-[#d9d2ef] bg-[#fbfaff] text-[#6d5ea8]",
+    artPanel: "border-[#ddd8f0] bg-[#faf8ff]",
+    buttonSoft: "border-[#d9d2ef] bg-[#f7f4fe] text-[#6d5ea8]",
+    beamPreview: "border-[#ddd8f0] bg-[#faf8ff]",
+    guardianShell: "border-[#d9d2ef] bg-[#f3f1fb]",
+  },
+  sky: {
+    shell: "bg-[#d5dbe2]",
+    shellText: "text-[#1f2a37]",
+    card: "bg-[#e8edf2]",
+    cardBorder: "border-[#cfd7e0]",
+    headerBg: "bg-[#e8edf2]",
+    heroBadge: "border-[#c6d3ea] bg-[#edf3fb] text-[#48607f]",
+    liveBadge: "border-[#c6d3ea] bg-[#edf3fb] text-[#48607f]",
+    accentPanel: "border-[#c6d3ea] bg-[#edf3fb]",
+    accentText: "text-[#48607f]",
+    accentSoftText: "text-[#61789a]",
+    selectedCard: "border-[#c6d3ea] bg-[#edf3fb]",
+    selectedShadow: "shadow-[0_6px_18px_rgba(72,96,127,0.08)]",
+    chip: "border-[#cfe0ef] bg-[#f2f8fd] text-[#4d6888]",
+    chipActive: "border-[#b8d0ea] bg-[#dcecff] text-[#395b84]",
+    timerPanel: "border-[#c6d3ea] bg-[#edf3fb]",
+    parentPing: "border-[#c6d3ea] bg-[#edf3fb]",
+    themeSelect: "border-[#c6d3ea] bg-[#f7fbff] text-[#48607f]",
+    artPanel: "border-[#d6e2ef] bg-[#f8fbff]",
+    buttonSoft: "border-[#c6d3ea] bg-[#edf3fb] text-[#48607f]",
+    beamPreview: "border-[#d6e2ef] bg-[#f8fbff]",
+    guardianShell: "border-[#c6d3ea] bg-[#eef5fb]",
+  },
+  mint: {
+    shell: "bg-[#d5ddd6]",
+    shellText: "text-[#1f2a37]",
+    card: "bg-[#e7eee8]",
+    cardBorder: "border-[#ccd8cf]",
+    headerBg: "bg-[#e7eee8]",
+    heroBadge: "border-[#c7d9cd] bg-[#edf7f0] text-[#466a53]",
+    liveBadge: "border-[#c7d9cd] bg-[#edf7f0] text-[#466a53]",
+    accentPanel: "border-[#c7d9cd] bg-[#edf7f0]",
+    accentText: "text-[#466a53]",
+    accentSoftText: "text-[#5c7a65]",
+    selectedCard: "border-[#c7d9cd] bg-[#edf7f0]",
+    selectedShadow: "shadow-[0_6px_18px_rgba(70,106,83,0.08)]",
+    chip: "border-[#d1e3d7] bg-[#f3fbf5] text-[#527561]",
+    chipActive: "border-[#bad3c3] bg-[#dff2e4] text-[#3f6650]",
+    timerPanel: "border-[#c7d9cd] bg-[#edf7f0]",
+    parentPing: "border-[#c7d9cd] bg-[#edf7f0]",
+    themeSelect: "border-[#c7d9cd] bg-[#f8fffa] text-[#466a53]",
+    artPanel: "border-[#d8e6dc] bg-[#fbfffc]",
+    buttonSoft: "border-[#c7d9cd] bg-[#edf7f0] text-[#466a53]",
+    beamPreview: "border-[#d8e6dc] bg-[#fbfffc]",
+    guardianShell: "border-[#c7d9cd] bg-[#eef7f0]",
+  },
+  classic: {
+    shell: "bg-[#d9d4cb]",
+    shellText: "text-[#1f2a37]",
+    card: "bg-[#ebe7e0]",
+    cardBorder: "border-[#d0cac0]",
+    headerBg: "bg-[#ebe7e0]",
+    heroBadge: "border-[#d3d6dd] bg-[#f7f8fa] text-[#586474]",
+    liveBadge: "border-[#d3d6dd] bg-[#f7f8fa] text-[#586474]",
+    accentPanel: "border-[#d3d6dd] bg-[#f7f8fa]",
+    accentText: "text-[#586474]",
+    accentSoftText: "text-[#6a7380]",
+    selectedCard: "border-[#d9dce1] bg-[#fafafa]",
+    selectedShadow: "shadow-[0_6px_18px_rgba(74,63,50,0.06)]",
+    chip: "border-[#d5d8de] bg-[#f6f7f9] text-[#647080]",
+    chipActive: "border-[#c8d0d9] bg-[#e9edf1] text-[#4f5b69]",
+    timerPanel: "border-[#d5d8de] bg-[#f7f8fa]",
+    parentPing: "border-[#d5d8de] bg-[#f7f8fa]",
+    themeSelect: "border-[#d5d8de] bg-[#ffffff] text-[#586474]",
+    artPanel: "border-[#d9dce1] bg-[#fafafa]",
+    buttonSoft: "border-[#d5d8de] bg-[#f7f8fa] text-[#5d6978]",
+    beamPreview: "border-[#d9dce1] bg-[#fafafa]",
+    guardianShell: "border-[#d5d8de] bg-[#f4f5f8]",
+  },
+};
+
+const emilyGuardianSession = createGuardianSession({
+  residentId: "emily-d",
+  wearerName: "Emily Doyon",
+  wearerPhone: "8635320683",
+  contactName: "Daniel Doyon",
+  contactRelation: "Parent Contact",
+  contactPhone: "8635320683",
+  mode: "child",
+  status: "Learning day watch active",
+  location: "Emily Learning Desk",
+});
+
+function cx(...parts: Array<string | false | null | undefined>) {
+  return parts.filter(Boolean).join(" ");
+}
+
+function formatNow(date = new Date()) {
+  return date.toLocaleString([], {
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function formatLiveDate(date: Date) {
+  return date.toLocaleDateString([], {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function formatLiveTime(date: Date) {
+  return date.toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+}
+
+function formatTimer(seconds: number) {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+}
+
+function makeProject(): SchoolProject {
+  return {
+    id: `EM-${Date.now()}`,
+    subject: "Subject",
+    title: "New project",
+    due: "No due date",
+    stage: "idea",
+    priority: "normal",
+    summary: "Add project summary.",
+    teacher: "Teacher",
+    nextStep: "Add next step.",
+  };
+}
+
+function makeSticky(): Sticky {
+  return {
+    id: `ST-${Date.now()}`,
+    title: "New sticky",
+    text: "Tap to edit.",
+  };
+}
+
+function makeDoc(): DocItem {
+  return {
+    id: `DOC-${Date.now()}`,
+    label: "New document",
+    detail: "Add details.",
+    status: "waiting",
+  };
+}
+
+function stageBadge(stage: ProjectStage) {
+  const base =
+    "rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]";
+  switch (stage) {
+    case "idea":
+      return `${base} border-[#ddd8f0] bg-[#f5f2fd] text-[#6d5ea8]`;
+    case "assigned":
+      return `${base} border-[#d7c8aa] bg-[#faf5e8] text-[#7a6640]`;
+    case "in-progress":
+      return `${base} border-[#c6d3ea] bg-[#edf3fb] text-[#48607f]`;
+    case "studying":
+      return `${base} border-[#d5d9f4] bg-[#eef1fd] text-[#5666a6]`;
+    case "waiting":
+      return `${base} border-[#d5d8de] bg-[#f6f7f9] text-[#647080]`;
+    case "submitted":
+      return `${base} border-[#c7d9cd] bg-[#edf7f0] text-[#466a53]`;
+    case "complete":
+      return `${base} border-[#d0e0d4] bg-[#eff8f2] text-[#42654d]`;
+    default:
+      return `${base} border-[#d5d8de] bg-[#f6f7f9] text-[#647080]`;
+  }
+}
+
+function priorityClasses(priority: ProjectPriority) {
+  if (priority === "high") return "border-[#d7b6b8] bg-[#fbefef] text-[#8d4e56]";
+  if (priority === "medium") return "border-[#d8caad] bg-[#faf5e9] text-[#806a43]";
+  return "border-[#d5d8de] bg-[#f6f7f9] text-[#647080]";
+}
+
+function docStatusClasses(status: DocStatus) {
+  if (status === "ready") return "border-[#c7d9cd] bg-[#edf7f0] text-[#466a53]";
+  if (status === "waiting") return "border-[#d8caad] bg-[#faf5e9] text-[#806a43]";
+  return "border-[#c6d3ea] bg-[#edf3fb] text-[#48607f]";
+}
+
+function textInputClass() {
+  return "w-full rounded-xl border border-[#d6d9de] bg-white px-3 py-2 text-sm text-[#243040] outline-none";
+}
+
+function areaInputClass() {
+  return "w-full rounded-xl border border-[#d6d9de] bg-white px-3 py-2 text-sm text-[#243040] outline-none resize-y";
+}
+
+function buildMathProblem(): MathCoachProblem {
+  const a = Math.floor(Math.random() * 8) + 2;
+  const b = Math.floor(Math.random() * 8) + 2;
+  const c = a * b;
+
+  return {
+    prompt: `${a} × ${b} = ?`,
+    answer: c,
+    skill: "Multiplication",
+    steps: [
+      `Think of ${a} groups of ${b}.`,
+      `Count by ${b}s slowly: ${b}, ${b * 2}, ${b * 3}...`,
+      `After ${a} groups, the answer is ${c}.`,
+    ],
+  };
+}
+
+function buildBeamMessage(
+  preset: BeamPreset,
+  recipient: BeamRecipient,
+  subject: string,
+  projectTitle: string,
+) {
+  if (preset === "Help") {
+    return `Hi ${recipient === "Dad" ? "Dad" : "there"}, I need a little help with ${subject.toLowerCase()} and wanted to send a quick update.`;
+  }
+  if (preset === "Teacher Update") {
+    return `Hello, here is my update for ${projectTitle}. I organized my notes and wanted to share my progress.`;
+  }
+  if (preset === "Study Share") {
+    return `Hey, here are my notes for ${subject.toLowerCase()}. I cleaned them up so they are easy to follow.`;
+  }
+  return "";
+}
+
+function buildBeamTitle(
+  preset: BeamPreset,
+  recipient: BeamRecipient,
+  subject: string,
+  projectTitle: string,
+) {
+  if (preset === "Help") return `${subject} Help Request`;
+  if (preset === "Teacher Update") return `${projectTitle} Update`;
+  if (preset === "Study Share") return `${subject} Notes Share`;
+  return `${recipient} Beam Card`;
+}
+
+export default function EmilyLearningDesk() {
+  const [projects, setProjects] = useState<SchoolProject[]>(INITIAL_PROJECTS);
+  const [stickies, setStickies] = useState<Sticky[]>(INITIAL_STICKIES);
+  const [docs, setDocs] = useState<DocItem[]>(INITIAL_DOCS);
+  const [savedNotes, setSavedNotes] = useState<SavedNote[]>([]);
+  const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
+
+  const [query, setQuery] = useState("");
+  const [selectedProjectId, setSelectedProjectId] = useState<string>(
+    INITIAL_PROJECTS[0]?.id ?? "",
+  );
+  const [expandedProjectId, setExpandedProjectId] = useState<string | null>(null);
+
+  const [draftTitle, setDraftTitle] = useState("Emily learning note");
+  const [noteText, setNoteText] = useState(
+    "Start here: write down what feels hard, what feels fun, and one next step you can do right now.",
+  );
+  const [createdAt] = useState(formatNow());
+  const [updatedAt, setUpdatedAt] = useState(formatNow());
+  const [timestampedAt, setTimestampedAt] = useState<string | null>(null);
+  const [liveNow, setLiveNow] = useState(new Date());
+  const [attachments, setAttachments] = useState<AttachmentItem[]>([]);
+  const [parentPing, setParentPing] = useState(
+    "Dad: You got this. One calm step at a time.",
+  );
+  const [timerSeconds, setTimerSeconds] = useState(25 * 60);
+  const [timerRunning, setTimerRunning] = useState(false);
+
+  const [deskTheme, setDeskTheme] = useState<DeskTheme>("lavender");
+
+  const [mathProblem, setMathProblem] = useState<MathCoachProblem>(buildMathProblem());
+  const [mathAnswer, setMathAnswer] = useState("");
+  const [mathFeedback, setMathFeedback] = useState(
+    "Try the problem and press Check Answer.",
+  );
+  const [showMathSteps, setShowMathSteps] = useState(false);
+  const [todayTip] = useState(
+    () => LEARNING_TIPS[Math.floor(Math.random() * LEARNING_TIPS.length)],
+  );
+
+  const [calculatorInput, setCalculatorInput] = useState("");
+  const [calculatorResult, setCalculatorResult] = useState("0");
+
+  const [beamOpen, setBeamOpen] = useState(false);
+  const [beamRecipient, setBeamRecipient] = useState<BeamRecipient>("Dad");
+  const [beamPreset, setBeamPreset] = useState<BeamPreset>("Help");
+  const [beamCustomRecipient, setBeamCustomRecipient] = useState("");
+  const [beamTitle, setBeamTitle] = useState("Art Help Request");
+  const [beamMessage, setBeamMessage] = useState(
+    buildBeamMessage("Help", "Dad", "Art", "Character sketch ideas"),
+  );
+  const [beamIncludeProject, setBeamIncludeProject] = useState(true);
+  const [beamIncludeTimestamp, setBeamIncludeTimestamp] = useState(true);
+  const [beamIncludeAttachments, setBeamIncludeAttachments] = useState(false);
+  const [copiedBeam, setCopiedBeam] = useState(false);
+  const [shareStatus, setShareStatus] = useState("");
+
+  const photoInputRef = useRef<HTMLInputElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const isDrawingRef = useRef(false);
+
+  const theme = THEME_STYLES[deskTheme];
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setLiveNow(new Date());
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!timerRunning) return;
+    const id = window.setInterval(() => {
+      setTimerSeconds((prev) => {
+        if (prev <= 1) {
+          window.clearInterval(id);
+          setTimerRunning(false);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, [timerRunning]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.lineWidth = 3;
+    ctx.lineCap = "round";
+    ctx.strokeStyle = "#8b5cf6";
+  }, []);
+
+  const filteredProjects = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return projects;
+    return projects.filter((project) =>
+      [
+        project.id,
+        project.subject,
+        project.title,
+        project.summary,
+        project.teacher,
+        project.nextStep,
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(q),
+    );
+  }, [projects, query]);
+
+  const selectedProject =
+    filteredProjects.find((p) => p.id === selectedProjectId) ??
+    projects.find((p) => p.id === selectedProjectId) ??
+    filteredProjects[0] ??
+    projects[0] ??
+    null;
+
+  const notesForSelectedProject = useMemo(() => {
+    if (!selectedProject) return [];
+    return savedNotes.filter((note) => note.projectId === selectedProject.id);
+  }, [savedNotes, selectedProject]);
+
+  const timelineForSelectedProject = useMemo(() => {
+    if (!selectedProject) return [];
+    return timeline.filter((entry) => entry.projectId === selectedProject.id);
+  }, [timeline, selectedProject]);
+
+  const beamResolvedRecipient =
+    beamRecipient === "Custom" ? beamCustomRecipient.trim() || "Custom" : beamRecipient;
+
+  const beamPreview = useMemo(() => {
+    const lines: string[] = [];
+    lines.push("Emily Beam Card");
+    lines.push(`To: ${beamResolvedRecipient}`);
+    lines.push(`Title: ${beamTitle}`);
+
+    if (selectedProject && beamIncludeProject) {
+      lines.push(`Project: ${selectedProject.subject} — ${selectedProject.title}`);
+      lines.push(`Teacher: ${selectedProject.teacher}`);
+    }
+
+    if (beamIncludeTimestamp) {
+      lines.push(`Timestamp: ${formatNow()}`);
+    }
+
+    if (beamMessage.trim()) {
+      lines.push("");
+      lines.push("Message:");
+      lines.push(beamMessage.trim());
+    }
+
+    if (noteText.trim()) {
+      lines.push("");
+      lines.push("Notebook Entry:");
+      lines.push(noteText.trim());
+    }
+
+    lines.push("");
+    lines.push("Included:");
+    lines.push(`- project context: ${beamIncludeProject ? "yes" : "no"}`);
+    lines.push(`- timestamp: ${beamIncludeTimestamp ? "yes" : "no"}`);
+    lines.push(`- attachments: ${beamIncludeAttachments ? "yes" : "no"}`);
+
+    if (beamIncludeAttachments && attachments.length) {
+      lines.push("");
+      lines.push("Attachments:");
+      attachments.forEach((item) => lines.push(`- ${item.name}`));
+    }
+
+    return lines.join("\n");
+  }, [
+    beamResolvedRecipient,
+    beamTitle,
+    selectedProject,
+    beamIncludeProject,
+    beamIncludeTimestamp,
+    beamMessage,
+    noteText,
+    beamIncludeAttachments,
+    attachments,
+  ]);
+
+  useEffect(() => {
+    if (!selectedProject) return;
+    setBeamTitle(
+      buildBeamTitle(
+        beamPreset,
+        beamRecipient,
+        selectedProject.subject,
+        selectedProject.title,
+      ),
+    );
+    if (beamPreset !== "Freeform") {
+      setBeamMessage(
+        buildBeamMessage(
+          beamPreset,
+          beamRecipient,
+          selectedProject.subject,
+          selectedProject.title,
+        ),
+      );
+    }
+  }, [beamPreset, beamRecipient, selectedProject]);
+
+  function addTimeline(label: string, projectId?: string) {
+    const id = projectId ?? selectedProject?.id;
+    if (!id) return;
+    setTimeline((prev) => [
+      {
+        id: `TL-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        projectId: id,
+        time: formatNow(),
+        label,
+      },
+      ...prev,
+    ]);
+  }
+
+  function handleSelectProject(id: string) {
+    setSelectedProjectId(id);
+  }
+
+  function toggleProjectExpanded(id: string) {
+    setExpandedProjectId((prev) => (prev === id ? null : id));
+  }
+
+  function updateProject(id: string, patch: Partial<SchoolProject>) {
+    setProjects((prev) =>
+      prev.map((project) => (project.id === id ? { ...project, ...patch } : project)),
+    );
+  }
+
+  function addProject() {
+    const newProject = makeProject();
+    setProjects((prev) => [newProject, ...prev]);
+    setSelectedProjectId(newProject.id);
+    addTimeline("Project created.", newProject.id);
+  }
+
+  function removeProject(id: string) {
+    const remaining = projects.filter((project) => project.id !== id);
+    setProjects(remaining);
+    setSavedNotes((prev) => prev.filter((note) => note.projectId !== id));
+    setTimeline((prev) => prev.filter((entry) => entry.projectId !== id));
+
+    if (selectedProjectId === id) {
+      setSelectedProjectId(remaining[0]?.id ?? "");
+    }
+    if (expandedProjectId === id) {
+      setExpandedProjectId(null);
+    }
+  }
+
+  function updateSticky(id: string, patch: Partial<Sticky>) {
+    setStickies((prev) => prev.map((item) => (item.id === id ? { ...item, ...patch } : item)));
+  }
+
+  function addSticky() {
+    setStickies((prev) => [makeSticky(), ...prev]);
+  }
+
+  function removeSticky(id: string) {
+    setStickies((prev) => prev.filter((item) => item.id !== id));
+  }
+
+  function updateDoc(id: string, patch: Partial<DocItem>) {
+    setDocs((prev) => prev.map((item) => (item.id === id ? { ...item, ...patch } : item)));
+  }
+
+  function addDocument() {
+    setDocs((prev) => [makeDoc(), ...prev]);
+  }
+
+  function removeDoc(id: string) {
+    setDocs((prev) => prev.filter((item) => item.id !== id));
+  }
+
+  function handleDraftTitleChange(value: string) {
+    setDraftTitle(value);
+    setUpdatedAt(formatNow());
+  }
+
+  function handleNoteChange(value: string) {
+    setNoteText(value);
+    setUpdatedAt(formatNow());
+  }
+
+  function clearNote() {
+    setDraftTitle("Emily learning note");
+    setNoteText("");
+    setAttachments([]);
+    setUpdatedAt(formatNow());
+    setTimestampedAt(null);
+  }
+
+  function stampDraft() {
+    const now = formatNow();
+    setUpdatedAt(now);
+    setTimestampedAt(now);
+    addTimeline("Learning note timestamped.");
+  }
+
+  function addVoicePlaceholder() {
+    const voiceLine = `\n[Voice note marker · ${formatNow()}]`;
+    setNoteText((prev) => `${prev}${voiceLine}`);
+    setUpdatedAt(formatNow());
+    addTimeline("Voice note marker added.");
+  }
+
+  function handleFileSelection(event: ChangeEvent<HTMLInputElement>, kind: AttachmentKind) {
+    const files = Array.from(event.target.files ?? []);
+    if (!files.length) return;
+
+    const newAttachments: AttachmentItem[] = files.map((file) => ({
+      id: `${kind}-${Date.now()}-${file.name}`,
+      name: file.name,
+      kind,
+      type: file.type,
+    }));
+
+    setAttachments((prev) => [...prev, ...newAttachments]);
+    setUpdatedAt(formatNow());
+    addTimeline(kind === "photo" ? "Photo attached." : "File attached.");
+    event.target.value = "";
+  }
+
+  function removeAttachment(id: string) {
+    setAttachments((prev) => prev.filter((item) => item.id !== id));
+    setUpdatedAt(formatNow());
+  }
+
+  function saveDraftNote() {
+    if (!selectedProject) return;
+
+    const now = formatNow();
+    const cleanTitle = draftTitle.trim() || "Untitled note";
+    const cleanText = noteText.trim();
+
+    const note: SavedNote = {
+      id: `NOTE-${Date.now()}`,
+      projectId: selectedProject.id,
+      title: cleanTitle,
+      text: cleanText || "(blank note)",
+      createdAt: now,
+      updatedAt: now,
+      timestampedAt,
+      attachments: [...attachments],
+    };
+
+    setSavedNotes((prev) => [note, ...prev]);
+    setUpdatedAt(now);
+    addTimeline(`Saved note: ${cleanTitle}`);
+  }
+
+  function updateSavedNote(id: string, patch: Partial<SavedNote>) {
+    setSavedNotes((prev) =>
+      prev.map((note) =>
+        note.id === id ? { ...note, ...patch, updatedAt: formatNow() } : note,
+      ),
+    );
+  }
+
+  function removeSavedNote(id: string) {
+    setSavedNotes((prev) => prev.filter((note) => note.id !== id));
+  }
+
+  function timestampSavedNote(id: string) {
+    const now = formatNow();
+    const note = savedNotes.find((item) => item.id === id);
+    setSavedNotes((prev) =>
+      prev.map((entry) =>
+        entry.id === id ? { ...entry, timestampedAt: now, updatedAt: now } : entry,
+      ),
+    );
+    if (note) addTimeline(`Saved note timestamped: ${note.title}`);
+  }
+
+  function exportDraft() {
+    const projectName = selectedProject
+      ? `${selectedProject.subject} — ${selectedProject.title}`
+      : "Unassigned project";
+
+    const content = [
+      `Title: ${draftTitle}`,
+      `Project: ${projectName}`,
+      `Created: ${createdAt}`,
+      `Updated: ${updatedAt}`,
+      `Timestamped: ${timestampedAt ?? "Not yet"}`,
+      "",
+      noteText,
+    ].join("\n");
+
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${slugify(draftTitle || "emily-learning-note")}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function startTimer() {
+    if (timerSeconds === 0) setTimerSeconds(25 * 60);
+    setTimerRunning(true);
+    addTimeline("Focus timer started.");
+  }
+
+  function pauseTimer() {
+    setTimerRunning(false);
+    addTimeline("Focus timer paused.");
+  }
+
+  function resetTimer() {
+    setTimerRunning(false);
+    setTimerSeconds(25 * 60);
+  }
+
+  function checkMathAnswer() {
+    const numeric = Number(mathAnswer);
+    if (numeric === mathProblem.answer) {
+      setMathFeedback("Correct. Nice job. You slowed down and got it right.");
+      setShowMathSteps(false);
+      addTimeline("Math coach problem solved.");
+      return;
+    }
+
+    setMathFeedback("Not quite. Let’s break it down step by step.");
+    setShowMathSteps(true);
+    addTimeline("Math coach showed step-by-step help.");
+  }
+
+  function nextMathProblem() {
+    setMathProblem(buildMathProblem());
+    setMathAnswer("");
+    setMathFeedback("New problem ready. Try it slowly.");
+    setShowMathSteps(false);
+  }
+
+  function runCalculator() {
+    try {
+      const sanitized = calculatorInput.replace(/[^0-9+\-*/().\s]/g, "");
+      if (!sanitized.trim()) {
+        setCalculatorResult("0");
+        return;
+      }
+      const result = Function(`"use strict"; return (${sanitized})`)();
+      setCalculatorResult(String(result));
+    } catch {
+      setCalculatorResult("Error");
+    }
+  }
+
+  function setRecipient(nextRecipient: BeamRecipient) {
+    setBeamRecipient(nextRecipient);
+    if (selectedProject) {
+      setBeamTitle(
+        buildBeamTitle(
+          beamPreset,
+          nextRecipient,
+          selectedProject.subject,
+          selectedProject.title,
+        ),
+      );
+      if (beamPreset !== "Freeform") {
+        setBeamMessage(
+          buildBeamMessage(
+            beamPreset,
+            nextRecipient,
+            selectedProject.subject,
+            selectedProject.title,
+          ),
+        );
+      }
+    }
+  }
+
+  function applyPreset(nextPreset: BeamPreset) {
+    setBeamPreset(nextPreset);
+    if (!selectedProject) return;
+    setBeamTitle(
+      buildBeamTitle(
+        nextPreset,
+        beamRecipient,
+        selectedProject.subject,
+        selectedProject.title,
+      ),
+    );
+    setBeamMessage(
+      buildBeamMessage(
+        nextPreset,
+        beamRecipient,
+        selectedProject.subject,
+        selectedProject.title,
+      ),
+    );
+  }
+
+  function generateBeamCard() {
+    if (!selectedProject) return;
+    setBeamTitle(
+      buildBeamTitle(
+        beamPreset,
+        beamRecipient,
+        selectedProject.subject,
+        selectedProject.title,
+      ),
+    );
+    if (!beamMessage.trim() && beamPreset !== "Freeform") {
+      setBeamMessage(
+        buildBeamMessage(
+          beamPreset,
+          beamRecipient,
+          selectedProject.subject,
+          selectedProject.title,
+        ),
+      );
+    }
+    addTimeline(`Beam card prepared for ${beamResolvedRecipient}.`);
+  }
+
+  async function copyBeamCard() {
+    try {
+      await navigator.clipboard.writeText(beamPreview);
+      setCopiedBeam(true);
+      window.setTimeout(() => setCopiedBeam(false), 1800);
+      addTimeline(`Beam card copied for ${beamResolvedRecipient}.`);
+    } catch {
+      setCopiedBeam(false);
+      window.alert("Copy failed on this device/browser.");
+    }
+  }
+
+  async function shareBeamCard() {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: beamTitle,
+          text: beamPreview,
+        });
+        setShareStatus("Shared");
+        window.setTimeout(() => setShareStatus(""), 1800);
+        addTimeline(`Beam card shared to ${beamResolvedRecipient}.`);
+        return;
+      }
+
+      await navigator.clipboard.writeText(beamPreview);
+      setShareStatus("Share not available. Copied instead.");
+      window.setTimeout(() => setShareStatus(""), 2200);
+      addTimeline(`Beam card copied for ${beamResolvedRecipient}.`);
+    } catch {
+      setShareStatus("Share cancelled");
+      window.setTimeout(() => setShareStatus(""), 1800);
+    }
+  }
+
+  function clearBeamCard() {
+    setBeamPreset("Freeform");
+    setBeamRecipient("Dad");
+    setBeamCustomRecipient("");
+    if (selectedProject) {
+      setBeamTitle(
+        buildBeamTitle("Freeform", "Dad", selectedProject.subject, selectedProject.title),
+      );
+    } else {
+      setBeamTitle("Dad Beam Card");
+    }
+    setBeamMessage("");
+    setBeamIncludeProject(true);
+    setBeamIncludeTimestamp(true);
+    setBeamIncludeAttachments(false);
+  }
+
+  function getCanvasPoint(e: React.PointerEvent<HTMLCanvasElement>) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    return {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    };
+  }
+
+  function handlePointerDown(e: React.PointerEvent<HTMLCanvasElement>) {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx) return;
+
+    const point = getCanvasPoint(e);
+    isDrawingRef.current = true;
+    ctx.beginPath();
+    ctx.moveTo(point.x, point.y);
+  }
+
+  function handlePointerMove(e: React.PointerEvent<HTMLCanvasElement>) {
+    if (!isDrawingRef.current) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx) return;
+
+    const point = getCanvasPoint(e);
+    ctx.lineTo(point.x, point.y);
+    ctx.stroke();
+  }
+
+  function handlePointerUp() {
+    isDrawingRef.current = false;
+  }
+
+  function clearCanvas() {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    addTimeline("Art pad cleared.");
+  }
+
+  function saveArtAsPng() {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const link = document.createElement("a");
+    link.href = canvas.toDataURL("image/png");
+    link.download = `emily-art-${Date.now()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    addTimeline("Art saved as PNG.");
+  }
+
+  return (
+    <div className={cx("min-h-screen", theme.shell, theme.shellText)}>
+      <input
+        ref={photoInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={(e) => handleFileSelection(e, "photo")}
+      />
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        className="hidden"
+        onChange={(e) => handleFileSelection(e, "file")}
+      />
+
+      <div className="mx-auto w-full max-w-[1400px] px-3 py-4 sm:px-4 lg:px-5 lg:py-5">
+        <header
+          className={cx(
+            "mb-4 rounded-[24px] border px-3 py-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)] sm:px-4",
+            theme.cardBorder,
+            theme.headerBg,
+          )}
+        >
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <div
+                  className={cx(
+                    "rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.24em]",
+                    theme.heroBadge,
+                  )}
+                >
+                  Emily Learning Desk
+                </div>
+
+                <div
+                  className={cx(
+                    "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] shadow-[0_0_0_1px_rgba(111,99,166,0.05),0_0_18px_rgba(164,137,255,0.16)]",
+                    theme.liveBadge,
+                  )}
+                >
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#9d87ff] opacity-75" />
+                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#7d6ae0]" />
+                  </span>
+                  Live Learning Pulse
+                </div>
+              </div>
+
+              <h1 className="mt-2 text-[22px] font-semibold tracking-tight text-[#243040]">
+                Art, learning, notes, and calm smart help in one place.
+              </h1>
+              <p className="mt-1 max-w-3xl text-sm text-[#626c79]">
+                One page for Emily’s creativity, schoolwork, math support, Guardian, and Beam Card.
+              </p>
+            </div>
+
+            <div className="flex w-full max-w-[860px] flex-col gap-2">
+              <div className="flex w-full flex-col gap-2 sm:flex-row">
+                <label className="flex min-w-0 flex-1 items-center gap-2 rounded-2xl border border-[#d3d6dd] bg-[#f7f8fa] px-3 py-3 text-sm text-[#586474]">
+                  <Search className="h-4 w-4 text-[#7a8593]" />
+                  <input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Search subject, project, note, or idea"
+                    className="w-full bg-transparent outline-none placeholder:text-[#99a2ae]"
+                  />
+                </label>
+
+                <div
+                  className={cx(
+                    "flex min-w-[260px] items-center justify-between rounded-2xl border px-4 py-3",
+                    theme.accentPanel,
+                    theme.accentText,
+                  )}
+                >
+                  <div className="min-w-0">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.16em] opacity-80">
+                      Today
+                    </div>
+                    <div className="truncate text-sm font-semibold">{formatLiveDate(liveNow)}</div>
+                  </div>
+                  <div className="ml-3 text-right">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.16em] opacity-80">
+                      Live Time
+                    </div>
+                    <div className="text-sm font-semibold">{formatLiveTime(liveNow)}</div>
+                  </div>
+                </div>
+
+                <div className="sm:min-w-[180px]">
+                  <select
+                    value={deskTheme}
+                    onChange={(e) => setDeskTheme(e.target.value as DeskTheme)}
+                    className={cx(
+                      "h-full min-h-[52px] w-full rounded-2xl border px-4 py-3 text-sm font-semibold outline-none",
+                      theme.themeSelect,
+                    )}
+                  >
+                    <option value="pink">Pink</option>
+                    <option value="lavender">Lavender</option>
+                    <option value="sky">Sky</option>
+                    <option value="mint">Mint</option>
+                    <option value="classic">Classic</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className={cx("rounded-2xl border px-4 py-3", theme.parentPing)}>
+                <div
+                  className={cx(
+                    "text-[10px] font-semibold uppercase tracking-[0.16em]",
+                    theme.accentSoftText,
+                  )}
+                >
+                  Dad Help
+                </div>
+                <input
+                  className="mt-2 w-full bg-transparent text-sm text-[#4f466d] outline-none"
+                  value={parentPing}
+                  onChange={(e) => setParentPing(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[320px_minmax(0,1fr)_340px]">
+          {/* LEFT */}
+          <section
+            className={cx(
+              "rounded-[24px] border p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)]",
+              theme.cardBorder,
+              theme.card,
+            )}
+          >
+            <div className="mb-3 flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-[15px] font-semibold text-[#243040]">Active Projects</h2>
+                <p className="mt-1 text-xs text-[#6a7380]">
+                  Open the right learning project fast.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={addProject}
+                  className={cx(
+                    "inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em]",
+                    theme.buttonSoft,
+                  )}
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Project
+                </button>
+
+                <div className="rounded-full border border-[#d3d6dd] bg-[#f7f8fa] px-2.5 py-1 text-[11px] font-semibold text-[#61707f]">
+                  {filteredProjects.length}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2.5">
+              {filteredProjects.map((project) => {
+                const active = selectedProject?.id === project.id;
+                const expanded = expandedProjectId === project.id;
+
+                return (
+                  <div
+                    key={project.id}
+                    className={cx(
+                      "rounded-[20px] border px-3 py-3 transition",
+                      active
+                        ? cx(theme.selectedCard, theme.selectedShadow)
+                        : "border-[#d9dce1] bg-[#fafafa]",
+                    )}
+                  >
+                    <div className="mb-2 flex items-start justify-between gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className={stageBadge(project.stage)}>{STAGE_LABELS[project.stage]}</span>
+                        <span
+                          className={cx(
+                            "rounded-full border px-2.5 py-1 text-[10px] font-semibold capitalize",
+                            priorityClasses(project.priority),
+                          )}
+                        >
+                          {project.priority}
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => removeProject(project.id)}
+                        className="rounded-full border border-[#e1c7ca] bg-[#fbefef] p-1.5 text-[#8d4e56]"
+                        title="Delete project"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+
+                    <div className="flex items-start justify-between gap-3">
+                      <button
+                        type="button"
+                        onClick={() => handleSelectProject(project.id)}
+                        className="min-w-0 flex-1 text-left"
+                      >
+                        <div className="min-w-0">
+                          <div className="text-[16px] font-semibold text-[#243040]">
+                            {project.subject}
+                          </div>
+                          <div className="mt-1 line-clamp-1 text-sm text-[#65707d]">
+                            {project.title}
+                          </div>
+                          <div className="mt-3 flex items-center gap-2 text-[12px] text-[#6b7684]">
+                            <Clock3 className="h-3.5 w-3.5" />
+                            <span>{project.due}</span>
+                          </div>
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => toggleProjectExpanded(project.id)}
+                        className="mt-1 shrink-0"
+                        title={expanded ? "Collapse" : "Expand"}
+                      >
+                        <ChevronRight
+                          className={cx(
+                            "h-4 w-4 text-[#8b95a2] transition-transform",
+                            expanded && "rotate-90",
+                          )}
+                        />
+                      </button>
+                    </div>
+
+                    {expanded && (
+                      <div className="mt-3 space-y-2 border-t border-[#d9dce1] pt-3">
+                        <input
+                          className={textInputClass()}
+                          value={project.subject}
+                          onChange={(e) =>
+                            updateProject(project.id, { subject: e.target.value })
+                          }
+                          placeholder="Subject"
+                        />
+                        <input
+                          className={textInputClass()}
+                          value={project.title}
+                          onChange={(e) =>
+                            updateProject(project.id, { title: e.target.value })
+                          }
+                          placeholder="Project"
+                        />
+                        <input
+                          className={textInputClass()}
+                          value={project.due}
+                          onChange={(e) => updateProject(project.id, { due: e.target.value })}
+                          placeholder="Due"
+                        />
+                        <select
+                          className={textInputClass()}
+                          value={project.stage}
+                          onChange={(e) =>
+                            updateProject(project.id, {
+                              stage: e.target.value as ProjectStage,
+                            })
+                          }
+                        >
+                          {Object.entries(STAGE_LABELS).map(([value, label]) => (
+                            <option key={value} value={value}>
+                              {label}
+                            </option>
+                          ))}
+                        </select>
+                        <select
+                          className={textInputClass()}
+                          value={project.priority}
+                          onChange={(e) =>
+                            updateProject(project.id, {
+                              priority: e.target.value as ProjectPriority,
+                            })
+                          }
+                        >
+                          <option value="high">High</option>
+                          <option value="medium">Medium</option>
+                          <option value="normal">Normal</option>
+                        </select>
+                        <input
+                          className={textInputClass()}
+                          value={project.teacher}
+                          onChange={(e) =>
+                            updateProject(project.id, { teacher: e.target.value })
+                          }
+                          placeholder="Teacher"
+                        />
+                        <textarea
+                          className={areaInputClass()}
+                          rows={3}
+                          value={project.summary}
+                          onChange={(e) =>
+                            updateProject(project.id, { summary: e.target.value })
+                          }
+                          placeholder="Summary"
+                        />
+                        <textarea
+                          className={areaInputClass()}
+                          rows={3}
+                          value={project.nextStep}
+                          onChange={(e) =>
+                            updateProject(project.id, { nextStep: e.target.value })
+                          }
+                          placeholder="Next step"
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* CENTER */}
+          <section
+            className={cx(
+              "rounded-[24px] border p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)] sm:p-4",
+              theme.cardBorder,
+              theme.card,
+            )}
+          >
+            <div className="mb-3 flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-[15px] font-semibold text-[#243040]">Live Learning Notebook</h2>
+                <p className="mt-1 text-xs text-[#6a7380]">
+                  Write, draw, save progress, and keep learning clean.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={clearNote}
+                className="inline-flex items-center gap-1 rounded-full border border-[#e1c7ca] bg-[#fbefef] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8d4e56]"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Clear Draft
+              </button>
+            </div>
+
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_92px]">
+              <div className="rounded-[22px] border border-[#d7d1c7] bg-[#f7f4ef] p-4">
+                {selectedProject ? (
+                  <>
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className={stageBadge(selectedProject.stage)}>
+                            {STAGE_LABELS[selectedProject.stage]}
+                          </span>
+                          <span
+                            className={cx(
+                              "rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em]",
+                              theme.accentPanel,
+                              theme.accentText,
+                            )}
+                          >
+                            {selectedProject.id}
+                          </span>
+                        </div>
+
+                        <h3 className="mt-3 text-[30px] font-semibold tracking-tight text-[#243040]">
+                          {selectedProject.subject}
+                        </h3>
+                        <p className="mt-1 text-[15px] text-[#5e6977]">{selectedProject.title}</p>
+                      </div>
+
+                      <div className={cx("rounded-[18px] border px-4 py-3 text-right", theme.accentPanel)}>
+                        <div className={cx("text-[10px] font-semibold uppercase tracking-[0.18em]", theme.accentText)}>
+                          Due
+                        </div>
+                        <div className="mt-1 text-sm font-semibold text-[#56498d]">
+                          {selectedProject.due}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                      <div className="rounded-[18px] border border-[#d9dce1] bg-[#fcfcfd] p-3.5">
+                        <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#778392]">
+                          <User className="h-3.5 w-3.5" />
+                          Teacher
+                        </div>
+                        <div className="mt-2 text-[15px] font-medium text-[#243040]">
+                          {selectedProject.teacher}
+                        </div>
+                      </div>
+
+                      <div className="rounded-[18px] border border-[#d9dce1] bg-[#fcfcfd] p-3.5">
+                        <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#778392]">
+                          <FileText className="h-3.5 w-3.5" />
+                          Project Summary
+                        </div>
+                        <div className="mt-2 text-sm leading-6 text-[#566270]">
+                          {selectedProject.summary}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className={cx("mt-3 rounded-[18px] border p-4", theme.accentPanel)}>
+                      <div className={cx("flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em]", theme.accentText)}>
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        Next Step
+                      </div>
+                      <p className="mt-2 text-[16px] leading-7 text-[#243040]">
+                        {selectedProject.nextStep}
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <EmptyCard text="No project selected." />
+                )}
+
+                <div className="mt-4 rounded-[20px] border border-[#d9dce1] bg-[#fcfcfd]">
+                  <div className="border-b border-[#e6e8eb] px-4 py-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div
+                        className={cx(
+                          "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em]",
+                          theme.accentPanel,
+                          theme.accentText,
+                        )}
+                      >
+                        <Tag className="h-3.5 w-3.5" />
+                        {selectedProject ? selectedProject.subject : "Untitled Note"}
+                      </div>
+                    </div>
+
+                    <div className="mt-3 grid gap-2 md:grid-cols-3">
+                      <TimestampChip label="Created" value={createdAt} />
+                      <TimestampChip label="Updated" value={updatedAt} />
+                      <TimestampChip label="Timestamped" value={timestampedAt ?? "Not yet"} />
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 p-4">
+                    <input
+                      className={textInputClass()}
+                      value={draftTitle}
+                      onChange={(e) => handleDraftTitleChange(e.target.value)}
+                      placeholder="Draft title"
+                    />
+
+                    <textarea
+                      value={noteText}
+                      onChange={(e) => handleNoteChange(e.target.value)}
+                      rows={12}
+                      className="min-h-[320px] w-full resize-y rounded-[18px] border border-[#d5d8de] bg-white p-4 text-[16px] leading-8 text-[#243040] outline-none placeholder:text-[#99a2ae]"
+                      placeholder="Type the live learning note here..."
+                    />
+
+                    <div className="rounded-[18px] border border-[#d9dce1] bg-[#f7f8fa] p-3">
+                      <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#778392]">
+                        <Upload className="h-3.5 w-3.5" />
+                        Attachments
+                      </div>
+
+                      {attachments.length === 0 ? (
+                        <div className="text-sm text-[#6a7380]">No attachments yet.</div>
+                      ) : (
+                        <div className="space-y-2">
+                          {attachments.map((item) => (
+                            <div
+                              key={item.id}
+                              className="flex items-center justify-between gap-3 rounded-xl border border-[#d9dce1] bg-white px-3 py-2"
+                            >
+                              <div className="min-w-0">
+                                <div className="truncate text-sm font-medium text-[#243040]">
+                                  {item.name}
+                                </div>
+                                <div className="text-xs text-[#6a7380] uppercase">
+                                  {item.kind}
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => removeAttachment(item.id)}
+                                className="rounded-full border border-[#e1c7ca] bg-[#fbefef] p-1.5 text-[#8d4e56]"
+                                title="Remove attachment"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className={cx("mt-4 rounded-[20px] border p-4", theme.artPanel)}>
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-[15px] font-semibold text-[#243040]">Art Tab / Draw Pad</h3>
+                      <p className="mt-1 text-xs text-[#6a7380]">
+                        Draw with mouse, touch, or pen device and save it instantly.
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      <SmallActionButton
+                        label="Save PNG"
+                        icon={Download}
+                        onClick={saveArtAsPng}
+                        themeClass={theme.buttonSoft}
+                      />
+                      <SmallActionButton
+                        label="Clear"
+                        icon={Eraser}
+                        onClick={clearCanvas}
+                        themeClass={theme.buttonSoft}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="rounded-[18px] border border-[#d9dce1] bg-white p-3">
+                    <canvas
+                      ref={canvasRef}
+                      width={900}
+                      height={300}
+                      className="h-[300px] w-full touch-none rounded-[14px] border border-[#ebe7f7] bg-white"
+                      onPointerDown={handlePointerDown}
+                      onPointerMove={handlePointerMove}
+                      onPointerUp={handlePointerUp}
+                      onPointerLeave={handlePointerUp}
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-4 rounded-[20px] border border-[#d9dce1] bg-[#fcfcfd] p-4">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-[15px] font-semibold text-[#243040]">Growth Timeline</h3>
+                      <p className="mt-1 text-xs text-[#6a7380]">
+                        Small moments turn into visible progress.
+                      </p>
+                    </div>
+                    <div className="rounded-full border border-[#d3d6dd] bg-[#f7f8fa] px-2.5 py-1 text-[11px] font-semibold text-[#61707f]">
+                      {timelineForSelectedProject.length}
+                    </div>
+                  </div>
+
+                  {timelineForSelectedProject.length === 0 ? (
+                    <EmptyCard text="No timeline moments yet." />
+                  ) : (
+                    <div className="space-y-2">
+                      {timelineForSelectedProject.map((entry) => (
+                        <div
+                          key={entry.id}
+                          className="rounded-[16px] border border-[#d9dce1] bg-[#f7f8fa] px-3 py-3"
+                        >
+                          <div className={cx("text-[12px] font-semibold", theme.accentText)}>
+                            {entry.time}
+                          </div>
+                          <div className="mt-1 text-sm text-[#243040]">{entry.label}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-4 rounded-[20px] border border-[#d9dce1] bg-[#fcfcfd] p-4">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-[15px] font-semibold text-[#243040]">Saved Notes</h3>
+                      <p className="mt-1 text-xs text-[#6a7380]">
+                        Notes saved to the selected learning project.
+                      </p>
+                    </div>
+                    <div className="rounded-full border border-[#d3d6dd] bg-[#f7f8fa] px-2.5 py-1 text-[11px] font-semibold text-[#61707f]">
+                      {notesForSelectedProject.length}
+                    </div>
+                  </div>
+
+                  {notesForSelectedProject.length === 0 ? (
+                    <EmptyCard text="No saved notes for this project yet." />
+                  ) : (
+                    <div className="space-y-3">
+                      {notesForSelectedProject.map((note) => (
+                        <div
+                          key={note.id}
+                          className="rounded-[18px] border border-[#d9dce1] bg-[#f7f8fa] p-3"
+                        >
+                          <div className="mb-3 flex items-start justify-between gap-3">
+                            <input
+                              className={textInputClass()}
+                              value={note.title}
+                              onChange={(e) =>
+                                updateSavedNote(note.id, { title: e.target.value })
+                              }
+                              placeholder="Saved note title"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeSavedNote(note.id)}
+                              className="rounded-full border border-[#e1c7ca] bg-[#fbefef] p-2 text-[#8d4e56]"
+                              title="Delete saved note"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+
+                          <textarea
+                            className={areaInputClass()}
+                            rows={6}
+                            value={note.text}
+                            onChange={(e) =>
+                              updateSavedNote(note.id, { text: e.target.value })
+                            }
+                            placeholder="Saved note text"
+                          />
+
+                          <div className="mt-3 grid gap-2 md:grid-cols-3">
+                            <TimestampChip label="Created" value={note.createdAt} />
+                            <TimestampChip label="Updated" value={note.updatedAt} />
+                            <TimestampChip
+                              label="Timestamped"
+                              value={note.timestampedAt ?? "Not yet"}
+                            />
+                          </div>
+
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            <SmallActionButton
+                              label="Timestamp"
+                              icon={CheckCircle2}
+                              onClick={() => timestampSavedNote(note.id)}
+                              themeClass={theme.buttonSoft}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* LOWER SUPPORT AREA */}
+                <div className="mt-4 grid gap-4 xl:grid-cols-2">
+                  <section className="rounded-[20px] border border-[#d9dce1] bg-[#fcfcfd] p-4">
+                    <div className="mb-3 flex items-start justify-between gap-3">
+                      <div>
+                        <h3 className="text-[15px] font-semibold text-[#243040]">Sticky Notes</h3>
+                        <p className="mt-1 text-xs text-[#6a7380]">
+                          Small reminders that matter.
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={addSticky}
+                        className={cx(
+                          "inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em]",
+                          theme.buttonSoft,
+                        )}
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                        Sticky
+                      </button>
+                    </div>
+
+                    <div className="space-y-2.5">
+                      {stickies.map((note) => (
+                        <div
+                          key={note.id}
+                          className={cx("rounded-[18px] border p-3.5", theme.beamPreview)}
+                        >
+                          <div className="mb-3 flex items-start justify-between gap-3">
+                            <div className={cx("flex items-center gap-2 text-sm font-semibold", theme.accentText)}>
+                              <StickyNote className="h-4 w-4 shrink-0" />
+                              Sticky Note
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeSticky(note.id)}
+                              className="rounded-full border border-[#e7d8bc] bg-[#fff8ea] p-1.5 text-[#8a6f3f]"
+                              title="Delete sticky note"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+
+                          <div className="space-y-2">
+                            <input
+                              className={textInputClass()}
+                              value={note.title}
+                              onChange={(e) => updateSticky(note.id, { title: e.target.value })}
+                              placeholder="Sticky title"
+                            />
+                            <textarea
+                              className={areaInputClass()}
+                              rows={4}
+                              value={note.text}
+                              onChange={(e) => updateSticky(note.id, { text: e.target.value })}
+                              placeholder="Sticky text"
+                            />
+                          </div>
+                        </div>
+                      ))}
+
+                      {stickies.length === 0 && <EmptyCard text="No sticky notes left." />}
+                    </div>
+                  </section>
+
+                  <section className="rounded-[20px] border border-[#d9dce1] bg-[#fcfcfd] p-4">
+                    <div className="mb-3 flex items-start justify-between gap-3">
+                      <div>
+                        <h3 className="text-[15px] font-semibold text-[#243040]">
+                          Documents / Teacher Prep
+                        </h3>
+                        <p className="mt-1 text-xs text-[#6a7380]">
+                          Keep support items organized and ready.
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={addDocument}
+                        className={cx(
+                          "inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em]",
+                          theme.buttonSoft,
+                        )}
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                        Document
+                      </button>
+                    </div>
+
+                    <div className="space-y-2.5">
+                      {docs.map((item) => (
+                        <div
+                          key={item.id}
+                          className="rounded-[18px] border border-[#d9dce1] bg-[#f7f8fa] p-3.5"
+                        >
+                          <div className="mb-3 flex items-start justify-between gap-3">
+                            <div className="flex items-center gap-2 text-[15px] font-semibold text-[#243040]">
+                              <FolderOpen className="h-4 w-4 text-[#778392]" />
+                              Document
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeDoc(item.id)}
+                              className="rounded-full border border-[#e1c7ca] bg-[#fbefef] p-1.5 text-[#8d4e56]"
+                              title="Delete document"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+
+                          <div className="space-y-2">
+                            <input
+                              className={textInputClass()}
+                              value={item.label}
+                              onChange={(e) => updateDoc(item.id, { label: e.target.value })}
+                              placeholder="Document title"
+                            />
+                            <textarea
+                              className={areaInputClass()}
+                              rows={3}
+                              value={item.detail}
+                              onChange={(e) => updateDoc(item.id, { detail: e.target.value })}
+                              placeholder="Document detail"
+                            />
+                            <select
+                              className={textInputClass()}
+                              value={item.status}
+                              onChange={(e) =>
+                                updateDoc(item.id, { status: e.target.value as DocStatus })
+                              }
+                            >
+                              <option value="ready">Ready</option>
+                              <option value="waiting">Waiting</option>
+                              <option value="sent">Sent</option>
+                            </select>
+
+                            <div
+                              className={cx(
+                                "inline-flex rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]",
+                                docStatusClasses(item.status),
+                              )}
+                            >
+                              {item.status}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+
+                      {docs.length === 0 && <EmptyCard text="No document items left." />}
+                    </div>
+                  </section>
+                </div>
+              </div>
+
+              {/* ACTION RAIL */}
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-1">
+                <ToolButton icon={Mic} label="Voice" onClick={addVoicePlaceholder} themeClass={theme.buttonSoft} />
+                <ToolButton
+                  icon={Brush}
+                  label="Draw"
+                  onClick={() =>
+                    canvasRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })
+                  }
+                  themeClass={theme.buttonSoft}
+                />
+                <ToolButton
+                  icon={Paperclip}
+                  label="Attach"
+                  onClick={() => fileInputRef.current?.click()}
+                  themeClass={theme.buttonSoft}
+                />
+                <ToolButton icon={CheckCircle2} label="Timestamp" onClick={stampDraft} themeClass={theme.buttonSoft} />
+                <ToolButton icon={Save} label="Save" onClick={saveDraftNote} themeClass={theme.buttonSoft} />
+                <ToolButton icon={Upload} label="Export" onClick={exportDraft} themeClass={theme.buttonSoft} />
+                <ToolButton icon={Download} label="Art PNG" onClick={saveArtAsPng} themeClass={theme.buttonSoft} />
+                <ToolButton icon={Trash2} label="Delete" onClick={clearNote} danger />
+              </div>
+            </div>
+          </section>
+
+          {/* RIGHT */}
+          <div className="grid gap-4">
+            <section
+              className={cx(
+                "rounded-[24px] border p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)]",
+                theme.cardBorder,
+                theme.card,
+              )}
+            >
+              <div className="mb-3 flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-[15px] font-semibold text-[#243040]">Beam Card</h2>
+                  <p className="mt-1 text-xs text-[#6a7380]">
+                    Share notes or ask for help without making the page loud.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setBeamOpen((prev) => !prev)}
+                  className={cx(
+                    "inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em]",
+                    theme.buttonSoft,
+                  )}
+                >
+                  {beamOpen ? "Collapse" : "Open"}
+                  <ChevronRight
+                    className={cx("h-3.5 w-3.5 transition-transform", beamOpen && "rotate-90")}
+                  />
+                </button>
+              </div>
+
+              {!beamOpen ? (
+                <div className={cx("rounded-[20px] border p-4", theme.beamPreview)}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-semibold text-[#243040]">Beam Card</div>
+                      <div className="mt-1 text-xs text-[#6a7380]">
+                        Send notes, project updates, or a help request when needed.
+                      </div>
+                    </div>
+                    <div
+                      className={cx(
+                        "rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]",
+                        theme.chip,
+                      )}
+                    >
+                      Ready
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className={cx("rounded-[20px] border p-3", theme.beamPreview)}>
+                    <div className={cx("mb-2 text-[10px] font-semibold uppercase tracking-[0.16em]", theme.accentSoftText)}>
+                      Send To
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {(["Dad", "Teacher", "Friend", "Custom"] as BeamRecipient[]).map((item) => (
+                        <button
+                          key={item}
+                          type="button"
+                          onClick={() => setRecipient(item)}
+                          className={cx(
+                            "rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em]",
+                            beamRecipient === item ? theme.chipActive : theme.chip,
+                          )}
+                        >
+                          {item}
+                        </button>
+                      ))}
+                    </div>
+
+                    {beamRecipient === "Custom" && (
+                      <input
+                        className="mt-3 w-full rounded-xl border border-[#d6d9de] bg-white px-3 py-2 text-sm text-[#243040] outline-none"
+                        value={beamCustomRecipient}
+                        onChange={(e) => setBeamCustomRecipient(e.target.value)}
+                        placeholder="Type recipient name"
+                      />
+                    )}
+                  </div>
+
+                  <div className={cx("rounded-[20px] border p-3", theme.beamPreview)}>
+                    <div className={cx("mb-2 text-[10px] font-semibold uppercase tracking-[0.16em]", theme.accentSoftText)}>
+                      Quick Presets
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {(["Help", "Teacher Update", "Study Share", "Freeform"] as BeamPreset[]).map((item) => (
+                        <button
+                          key={item}
+                          type="button"
+                          onClick={() => applyPreset(item)}
+                          className={cx(
+                            "rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em]",
+                            beamPreset === item ? theme.chipActive : theme.chip,
+                          )}
+                        >
+                          {item}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className={cx("rounded-[20px] border p-3", theme.beamPreview)}>
+                    <div className="space-y-2">
+                      <input
+                        className={textInputClass()}
+                        value={beamTitle}
+                        onChange={(e) => setBeamTitle(e.target.value)}
+                        placeholder="Card title"
+                      />
+                      <textarea
+                        className={areaInputClass()}
+                        rows={4}
+                        value={beamMessage}
+                        onChange={(e) => setBeamMessage(e.target.value)}
+                        placeholder="Write a short message"
+                      />
+                    </div>
+                  </div>
+
+                  <div className={cx("rounded-[20px] border p-3", theme.beamPreview)}>
+                    <div className={cx("mb-2 text-[10px] font-semibold uppercase tracking-[0.16em]", theme.accentSoftText)}>
+                      Include
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setBeamIncludeProject((prev) => !prev)}
+                        className={cx(
+                          "rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em]",
+                          beamIncludeProject ? theme.chipActive : theme.chip,
+                        )}
+                      >
+                        Project
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setBeamIncludeTimestamp((prev) => !prev)}
+                        className={cx(
+                          "rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em]",
+                          beamIncludeTimestamp ? theme.chipActive : theme.chip,
+                        )}
+                      >
+                        Timestamp
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setBeamIncludeAttachments((prev) => !prev)}
+                        className={cx(
+                          "rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em]",
+                          beamIncludeAttachments ? theme.chipActive : theme.chip,
+                        )}
+                      >
+                        Attachments
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className={cx("rounded-[20px] border p-3", theme.beamPreview)}>
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <div>
+                        <div className="text-sm font-semibold text-[#243040]">Card Preview</div>
+                        <div className="mt-1 text-xs text-[#6a7380]">
+                          Auto-generated from the notebook and project.
+                        </div>
+                      </div>
+                    </div>
+                    <pre className="whitespace-pre-wrap break-words text-xs leading-6 text-[#334155]">
+                      {beamPreview}
+                    </pre>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={generateBeamCard}
+                      className={cx(
+                        "inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em]",
+                        theme.buttonSoft,
+                      )}
+                    >
+                      <Send className="h-3.5 w-3.5" />
+                      Generate
+                    </button>
+                    <button
+                      type="button"
+                      onClick={copyBeamCard}
+                      className={cx(
+                        "inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em]",
+                        theme.buttonSoft,
+                      )}
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                      {copiedBeam ? "Copied" : "Copy"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={shareBeamCard}
+                      className={cx(
+                        "inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em]",
+                        theme.buttonSoft,
+                      )}
+                    >
+                      <Send className="h-3.5 w-3.5" />
+                      {shareStatus || "Share"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={clearBeamCard}
+                      className="inline-flex items-center gap-1 rounded-full border border-[#e1c7ca] bg-[#fbefef] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8d4e56]"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Clear
+                    </button>
+                  </div>
+                </div>
+              )}
+            </section>
+
+            <section
+              className={cx(
+                "rounded-[24px] border p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)]",
+                theme.cardBorder,
+                theme.card,
+              )}
+            >
+              <div className="mb-3">
+                <h2 className="text-[15px] font-semibold text-[#243040]">Guardian</h2>
+                <p className="mt-1 text-xs text-[#6a7380]">
+                  Emily’s Guardian module, same family system as Haley.
+                </p>
+              </div>
+
+              <div className={cx("rounded-[20px] border p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]", theme.guardianShell)}>
+                <GuardianPanel initialSession={emilyGuardianSession} variant="monitor" />
+              </div>
+            </section>
+
+            <section
+              className={cx(
+                "rounded-[24px] border p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)]",
+                theme.cardBorder,
+                theme.card,
+              )}
+            >
+              <div className="mb-3 flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-[15px] font-semibold text-[#243040]">Math Coach</h2>
+                  <p className="mt-1 text-xs text-[#6a7380]">
+                    Daily problem, step-by-step help, and tutoring feel.
+                  </p>
+                </div>
+
+                <div
+                  className={cx(
+                    "rounded-full border px-2.5 py-1 text-[11px] font-semibold",
+                    theme.chip,
+                  )}
+                >
+                  {mathProblem.skill}
+                </div>
+              </div>
+
+              <div className={cx("rounded-[20px] border p-4", theme.artPanel)}>
+                <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#778392]">
+                  <PencilLine className="h-3.5 w-3.5" />
+                  Today’s Problem
+                </div>
+
+                <div className="mt-3 text-3xl font-semibold text-[#243040]">
+                  {mathProblem.prompt}
+                </div>
+
+                <input
+                  className="mt-4 w-full rounded-xl border border-[#d6d9de] bg-white px-3 py-3 text-lg text-[#243040] outline-none"
+                  value={mathAnswer}
+                  onChange={(e) => setMathAnswer(e.target.value)}
+                  placeholder="Type your answer"
+                />
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <SmallActionButton
+                    label="Check Answer"
+                    icon={CheckCircle2}
+                    onClick={checkMathAnswer}
+                    themeClass={theme.buttonSoft}
+                  />
+                  <SmallActionButton
+                    label="New Problem"
+                    icon={RotateCcw}
+                    onClick={nextMathProblem}
+                    themeClass={theme.buttonSoft}
+                  />
+                </div>
+
+                <div className="mt-4 rounded-[16px] border border-[#d9dce1] bg-white px-3 py-3 text-sm text-[#5d4d85]">
+                  {mathFeedback}
+                </div>
+
+                {showMathSteps && (
+                  <div className="mt-3 space-y-2">
+                    {mathProblem.steps.map((step, index) => (
+                      <div
+                        key={step}
+                        className="rounded-[14px] border border-[#d9dce1] bg-[#f7f8fa] px-3 py-3 text-sm text-[#243040]"
+                      >
+                        <span className="font-semibold">Step {index + 1}:</span> {step}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </section>
+
+            {/* MOVED UP DIRECTLY UNDER MATH COACH */}
+            <section
+              className={cx(
+                "rounded-[24px] border p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)]",
+                theme.cardBorder,
+                theme.card,
+              )}
+            >
+              <div className="mb-3 flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-[15px] font-semibold text-[#243040]">Calculator</h2>
+                  <p className="mt-1 text-xs text-[#6a7380]">
+                    Quick check tool for math work.
+                  </p>
+                </div>
+              </div>
+
+              <div className={cx("rounded-[20px] border p-4", theme.artPanel)}>
+                <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#778392]">
+                  <Calculator className="h-3.5 w-3.5" />
+                  Quick Calculator
+                </div>
+
+                <input
+                  className="mt-3 w-full rounded-xl border border-[#d6d9de] bg-white px-3 py-3 text-lg text-[#243040] outline-none"
+                  value={calculatorInput}
+                  onChange={(e) => setCalculatorInput(e.target.value)}
+                  placeholder="Example: (12 + 8) * 3"
+                />
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <SmallActionButton
+                    label="Calculate"
+                    icon={Calculator}
+                    onClick={runCalculator}
+                    themeClass={theme.buttonSoft}
+                  />
+                  <SmallActionButton
+                    label="Clear"
+                    icon={RotateCcw}
+                    onClick={() => {
+                      setCalculatorInput("");
+                      setCalculatorResult("0");
+                    }}
+                    themeClass={theme.buttonSoft}
+                  />
+                </div>
+
+                <div className="mt-4 rounded-[16px] border border-[#d9dce1] bg-white px-3 py-3">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#778392]">
+                    Result
+                  </div>
+                  <div className="mt-1 text-2xl font-semibold text-[#243040]">
+                    {calculatorResult}
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section
+              className={cx(
+                "rounded-[24px] border p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)]",
+                theme.cardBorder,
+                theme.card,
+              )}
+            >
+              <div className="mb-3 flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-[15px] font-semibold text-[#243040]">Today’s Tips</h2>
+                  <p className="mt-1 text-xs text-[#6a7380]">
+                    A little help goes a long way.
+                  </p>
+                </div>
+              </div>
+
+              <div className={cx("rounded-[20px] border p-4", theme.artPanel)}>
+                <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#778392]">
+                  <Lightbulb className="h-3.5 w-3.5" />
+                  Daily Learning Tip
+                </div>
+
+                <div className="mt-3 rounded-[16px] border border-[#d9dce1] bg-white px-3 py-3 text-sm leading-6 text-[#243040]">
+                  {todayTip}
+                </div>
+              </div>
+            </section>
+
+            <section
+              className={cx(
+                "rounded-[24px] border p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)]",
+                theme.cardBorder,
+                theme.card,
+              )}
+            >
+              <div className="mb-3 flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-[15px] font-semibold text-[#243040]">Study Timer</h2>
+                  <p className="mt-1 text-xs text-[#6a7380]">
+                    Short focus blocks and calm progress.
+                  </p>
+                </div>
+              </div>
+
+              <div className={cx("rounded-[20px] border p-4 text-center", theme.timerPanel)}>
+                <div className={cx("text-[12px] font-semibold uppercase tracking-[0.18em]", theme.accentText)}>
+                  Emily Focus Session
+                </div>
+                <div className="mt-3 text-5xl font-semibold tracking-tight text-[#243040]">
+                  {formatTimer(timerSeconds)}
+                </div>
+
+                <div className="mt-4 flex flex-wrap justify-center gap-2">
+                  <SmallActionButton
+                    icon={Play}
+                    label="Start"
+                    onClick={startTimer}
+                    themeClass={theme.buttonSoft}
+                  />
+                  <SmallActionButton
+                    icon={AlarmClock}
+                    label="Pause"
+                    onClick={pauseTimer}
+                    themeClass={theme.buttonSoft}
+                  />
+                  <SmallActionButton
+                    icon={Clock3}
+                    label="Reset"
+                    onClick={resetTimer}
+                    themeClass={theme.buttonSoft}
+                  />
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ToolButton({
+  icon: Icon,
+  label,
+  onClick,
+  danger = false,
+  themeClass,
+}: {
+  icon: ComponentType<{ className?: string }>;
+  label: string;
+  onClick?: () => void;
+  danger?: boolean;
+  themeClass?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cx(
+        "flex min-h-[72px] flex-col items-center justify-center gap-2 rounded-[18px] border px-3 py-3 text-center shadow-[0_4px_10px_rgba(74,63,50,0.04)] transition hover:opacity-95",
+        danger
+          ? "border-[#e1c7ca] bg-[#fbefef] text-[#8d4e56]"
+          : themeClass || "border-[#d5d8de] bg-[#f7f8fa] text-[#5d6978]",
+      )}
+    >
+      <Icon className="h-5 w-5" />
+      <span className="text-[11px] font-semibold uppercase tracking-[0.14em]">
+        {label}
+      </span>
+    </button>
+  );
+}
+
+function SmallActionButton({
+  icon: Icon,
+  label,
+  onClick,
+  themeClass,
+}: {
+  icon: ComponentType<{ className?: string }>;
+  label: string;
+  onClick?: () => void;
+  themeClass?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cx(
+        "inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em]",
+        themeClass || "border-[#d5d8de] bg-white text-[#5d6978]",
+      )}
+    >
+      <Icon className="h-3.5 w-3.5" />
+      {label}
+    </button>
+  );
+}
+
+function TimestampChip({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-[16px] border border-[#d5d8de] bg-[#f7f8fa] px-3 py-2">
+      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#778392]">
+        {label}
+      </div>
+      <div className="mt-1 text-sm font-medium text-[#243040]">{value}</div>
+    </div>
+  );
+}
+
+function EmptyCard({ text }: { text: string }) {
+  return (
+    <div className="rounded-[20px] border border-[#d9dce1] bg-[#fafafa] px-4 py-6 text-center text-sm text-[#6a7380]">
+      {text}
+    </div>
+  );
+}
+
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
