@@ -26,7 +26,10 @@ import MomsKitchenDemo from "../pages/MomsKitchenDemo";
 
 // Legal demo pages
 import JoeGrantLegalDesk from "../pages/JoeGrantLegalDesk";
+
+// Guardian
 import GuardianPresenceDesk from "../pages/GuardianPresenceDesk";
+import GuardianJoinDesk from "../pages/GuardianJoinDesk";
 
 /**
  * Planet layer:
@@ -34,6 +37,7 @@ import GuardianPresenceDesk from "../pages/GuardianPresenceDesk";
  * - /planet/vehicles/awnit-demo is a special demo surface
  * - /planet/food/... exposes restaurant demo pages
  * - /planet/legal/... exposes legal demo pages
+ * - /planet/guardian exposes guardian pages
  * - /planet/:planetId routes to PlanetOverview
  * - /planet/:planetId/:cityId routes to CityPage
  */
@@ -65,8 +69,11 @@ export default function PlanetRoutes() {
       {/* Legal */}
       <Route path="legal/joe-grant" element={<JoeGrantLegalDesk />} />
 
-      {/* Other special pages */}
+      {/* Guardian */}
       <Route path="guardian" element={<GuardianPresenceDesk />} />
+      <Route path="guardian/join" element={<GuardianJoinDesk />} />
+
+      {/* Other special pages */}
       <Route path="jeanettes" element={<JeanettesLanding />} />
       <Route path="life" element={<LifePlanet />} />
 
