@@ -1,10 +1,17 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from "react";
 import { useParams } from "react-router-dom";
+import {
+  Camera,
+  CarFront,
+  CheckCircle2,
+  Circle,
+  Clock3,
+  Loader2,
+  ShieldCheck,
+  Wrench,
+} from "lucide-react";
 
-// IMPORTANT: Adjust this import if your supabase client lives elsewhere.
 import { supabase } from "../lib/supabase";
-
-// NEW: allow this page to delegate to the real global 404
 import NotFound from "../pages/NotFound";
 
 type PublicPageRow = {
@@ -12,50 +19,26 @@ type PublicPageRow = {
   slug: string;
 };
 
-// -----------------------------
-// Mojibake / UTF-8 helpers (SINGLE SOURCE OF TRUTH — no duplicates)
-// -----------------------------
-function fixMojibakeOnce(input: string): string {
-  if (!input) return input;
-  const looksCorrupted = /Ã.|’|“|”|–|—|”¦|Â /u.test(input);
-  if (!looksCorrupted) return input;
+type ServiceChoice = "safety-check" | "tires" | "brakes" | "not-sure" | null;
+type CheckInMode = "waiting" | "dropoff" | null;
+type SubmissionState = "idle" | "submitting" | "success" | "error";
 
-  try {
-    const bytes = Uint8Array.from(input, (c) => c.charCodeAt(0) & 0xff);
-    const decoded = new TextDecoder("utf-8", { fatal: false }).decode(bytes);
-    return decoded || input;
-  } catch {
-    return input;
-  }
+type ReceiptPayload = {
+  receiptId: string;
+  submittedAt: string;
+  customerName: string;
+  vehicle: string;
+  phone: string;
+  service: Exclude<ServiceChoice, null>;
+  mode: Exclude<CheckInMode, null>;
+  photoName?: string;
+};
+
+function cx(...parts: Array<string | false | null | undefined>) {
+  return parts.filter(Boolean).join(" ");
 }
 
-function normalizeStringsDeep<T>(value: T): T {
-  const seen = new WeakMap<object, any>();
-
-  const walk = (v: any): any => {
-    if (typeof v === "string") return fixMojibakeOnce(v);
-    if (v === null || v === undefined) return v;
-    if (typeof v !== "object") return v;
-
-    if (seen.has(v)) return seen.get(v);
-
-    if (Array.isArray(v)) {
-      const arr: any[] = [];
-      seen.set(v, arr);
-      for (const item of v) arr.push(walk(item));
-      return arr;
-    }
-
-    const obj: Record<string, any> = {};
-    seen.set(v, obj);
-    for (const [k, val] of Object.entries(v)) obj[k] = walk(val);
-    return obj;
-  };
-
-  return walk(value);
-}
-
-function trimOrEmpty(v: any) {
+function trimOrEmpty(v: unknown) {
   try {
     return String(v ?? "").trim();
   } catch {
@@ -69,6 +52,58 @@ function safeNowIso() {
   } catch {
     return "";
   }
+}
+
+function formatNow(date = new Date()) {
+  return date.toLocaleString([], {
+    month: "numeric",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function fixMojibakeOnce(input: string): string {
+  if (!input) return input;
+  const looksCorrupted = /Ã.|â€¢|â€™|â€œ|â€|â€“|â€”|Â /u.test(input);
+  if (!looksCorrupted) return input;
+
+  try {
+    const bytes = Uint8Array.from(input, (c) => c.charCodeAt(0) & 0xff);
+    const decoded = new TextDecoder("utf-8", { fatal: false }).decode(bytes);
+    return decoded || input;
+  } catch {
+    return input;
+  }
+}
+
+function normalizeStringsDeep<T>(value: T): T {
+  const seen = new WeakMap<object, unknown>();
+
+  const walk = (v: unknown): unknown => {
+    if (typeof v === "string") return fixMojibakeOnce(v);
+    if (v === null || v === undefined) return v;
+    if (typeof v !== "object") return v;
+
+    if (seen.has(v as object)) return seen.get(v as object);
+
+    if (Array.isArray(v)) {
+      const arr: unknown[] = [];
+      seen.set(v, arr);
+      for (const item of v) arr.push(walk(item));
+      return arr;
+    }
+
+    const obj: Record<string, unknown> = {};
+    seen.set(v as object, obj);
+    for (const [k, val] of Object.entries(v as Record<string, unknown>)) {
+      obj[k] = walk(val);
+    }
+    return obj;
+  };
+
+  return walk(value) as T;
 }
 
 async function copyText(text: string) {
@@ -93,41 +128,45 @@ async function copyText(text: string) {
   }
 }
 
-function formatPreviewSentence(d: {
-  name: string;
-  vehicle: string;
-  phone: string;
-  email: string;
-  preferred_contact: string;
-  best_time: string;
-  address: string;
-  message: string;
-}) {
-  const who = trimOrEmpty(d.name) || "New customer";
-  const vehicle = trimOrEmpty(d.vehicle);
-  const pref = trimOrEmpty(d.preferred_contact) || "Text";
-  const when = trimOrEmpty(d.best_time);
-  const where = trimOrEmpty(d.address);
+function serviceLabel(service: ServiceChoice) {
+  switch (service) {
+    case "safety-check":
+      return "$25 Safety Check";
+    case "tires":
+      return "Tires";
+    case "brakes":
+      return "Brakes";
+    case "not-sure":
+      return "Not Sure";
+    default:
+      return "Not selected";
+  }
+}
 
-  // Keep the “request” line tight and readable
-  const msg = trimOrEmpty(d.message);
-  const request = msg
-    ? msg.length > 220
-      ? msg.slice(0, 217) + "…"
-      : msg
-    : "Request details will appear here as you type…";
+function modeLabel(mode: CheckInMode) {
+  switch (mode) {
+    case "waiting":
+      return "Waiting Here";
+    case "dropoff":
+      return "Dropping Off";
+    default:
+      return "Not selected";
+  }
+}
 
-  const parts: string[] = [];
-  parts.push(`${who} — prefers ${pref.toLowerCase()}`);
-  if (vehicle) parts.push(`vehicle: ${vehicle}`);
-  if (when) parts.push(`best time: ${when.toLowerCase()}`);
-  if (where) parts.push(`location: ${where}`);
+function buildRequestLine(service: ServiceChoice, mode: CheckInMode, vehicle: string) {
+  const pieces = [
+    service ? serviceLabel(service) : "Service not selected",
+    mode ? modeLabel(mode) : "Check-in mode not selected",
+    trimOrEmpty(vehicle) || "Vehicle not provided",
+  ];
+  return pieces.join(" • ");
+}
 
-  return {
-    title: who,
-    request,
-    meta: parts.join(" • "),
-  };
+function buildPreferenceLine(mode: CheckInMode) {
+  if (mode === "waiting") return "Customer is waiting on-site";
+  if (mode === "dropoff") return "Customer is dropping off";
+  return "Check-in mode not selected";
 }
 
 async function fileToJpegDataUrl(file: File, maxW = 1280, maxH = 1280, quality = 0.82) {
@@ -147,15 +186,12 @@ async function fileToJpegDataUrl(file: File, maxW = 1280, maxH = 1280, quality =
     const w = img.naturalWidth || img.width;
     const h = img.naturalHeight || img.height;
 
-    let nw = w;
-    let nh = h;
-
     const wr = maxW / Math.max(1, w);
     const hr = maxH / Math.max(1, h);
     const r = Math.min(1, wr, hr);
 
-    nw = Math.max(1, Math.round(w * r));
-    nh = Math.max(1, Math.round(h * r));
+    const nw = Math.max(1, Math.round(w * r));
+    const nh = Math.max(1, Math.round(h * r));
 
     const canvas = document.createElement("canvas");
     canvas.width = nw;
@@ -165,56 +201,47 @@ async function fileToJpegDataUrl(file: File, maxW = 1280, maxH = 1280, quality =
     if (!ctx) throw new Error("Canvas not available.");
 
     ctx.drawImage(img, 0, 0, nw, nh);
-
-    const dataUrl = canvas.toDataURL("image/jpeg", quality);
-    return dataUrl;
+    return canvas.toDataURL("image/jpeg", quality);
   } finally {
     URL.revokeObjectURL(url);
   }
 }
 
 function approxBytesFromDataUrl(dataUrl: string) {
-  // data:image/jpeg;base64,XXXX
   const idx = dataUrl.indexOf(",");
   if (idx < 0) return dataUrl.length;
   const b64 = dataUrl.slice(idx + 1);
-  // base64 bytes ˜ (len * 3/4) - padding
   const pad = b64.endsWith("==") ? 2 : b64.endsWith("=") ? 1 : 0;
   return Math.max(0, Math.floor((b64.length * 3) / 4) - pad);
 }
 
 export default function PublicPage() {
   const params = useParams();
-  const slug = (params as any)?.slug || (params as any)?.id || "";
+  const slug =
+    (params as { slug?: string; id?: string })?.slug ||
+    (params as { slug?: string; id?: string })?.id ||
+    "";
 
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [pageError, setPageError] = useState<string | null>(null);
   const [page, setPage] = useState<PublicPageRow | null>(null);
-
-  // If slug is invalid or not found, render the global 404 (NOT the intake error card)
   const [notFound, setNotFound] = useState(false);
 
-  // form draft (real fields)
-  const [draft, setDraft] = useState({
-    name: "",
-    vehicle: "",
-    phone: "",
-    email: "",
-    preferred_contact: "Text",
-    address: "",
-    best_time: "",
-    message: "",
-  });
+  const [service, setService] = useState<ServiceChoice>(null);
+  const [mode, setMode] = useState<CheckInMode>(null);
 
-  // Optional photo
+  const [fullName, setFullName] = useState("");
+  const [vehicle, setVehicle] = useState("");
+  const [phone, setPhone] = useState("");
+
+  const [photo, setPhoto] = useState<File | null>(null);
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
   const [photoName, setPhotoName] = useState<string | null>(null);
 
-  const [success, setSuccess] = useState<string | null>(null);
-  const [receipt, setReceipt] = useState<string | null>(null);
+  const [submissionState, setSubmissionState] = useState<SubmissionState>("idle");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [receipt, setReceipt] = useState<ReceiptPayload | null>(null);
   const [lastPayloadJson, setLastPayloadJson] = useState<string | null>(null);
-  const [savedAt, setSavedAt] = useState<string | null>(null);
 
   const normalizedSlug = useMemo(() => {
     return String(slug || "")
@@ -230,15 +257,11 @@ export default function PublicPage() {
 
     async function run() {
       setLoading(true);
-      setError(null);
+      setPageError(null);
       setNotFound(false);
-      setSuccess(null);
-      setReceipt(null);
-      setLastPayloadJson(null);
-      setSavedAt(null);
+      setPage(null);
 
       if (!normalizedSlug) {
-        // Missing slug should be a real 404 in the world model
         setLoading(false);
         setNotFound(true);
         return;
@@ -254,137 +277,143 @@ export default function PublicPage() {
 
       if (error) {
         setLoading(false);
-        setError(error.message || "Failed to load public page.");
+        setPageError(error.message || "Failed to load public page.");
         return;
       }
 
       if (!data) {
-        // Unknown slug should show the global NotFound page (not an intake error card)
         setLoading(false);
         setNotFound(true);
         return;
       }
 
-      const cleaned = normalizeStringsDeep(data) as PublicPageRow;
-      setPage(cleaned);
+      setPage(normalizeStringsDeep(data) as PublicPageRow);
       setLoading(false);
     }
 
     run();
+
     return () => {
       alive = false;
     };
   }, [normalizedSlug]);
 
-  const setField = (k: keyof typeof draft, v: string) => {
-    setDraft((d) => ({ ...d, [k]: v }));
-  };
+  const canContinueStep2 = !!service;
+  const canContinueStep3 = !!service && !!mode;
 
-  const buildPayload = () => {
-    const payload: any = {
-      name: trimOrEmpty(draft.name),
-      vehicle: trimOrEmpty(draft.vehicle),
-      phone: trimOrEmpty(draft.phone),
-      email: trimOrEmpty(draft.email),
-      preferred_contact: trimOrEmpty(draft.preferred_contact),
-      address: trimOrEmpty(draft.address),
-      best_time: trimOrEmpty(draft.best_time),
-      message: trimOrEmpty(draft.message),
-      client_ts: safeNowIso(),
-      source: "qr_public",
+  const fullNameOk = fullName.trim().length >= 2;
+  const phoneOk = phone.trim().length >= 7;
+  const readyToSubmit = !!service && !!mode && fullNameOk && phoneOk;
+
+  const livePreview = useMemo(() => {
+    return {
+      title: fullName.trim() || "New customer",
+      detail: buildRequestLine(service, mode, vehicle),
+      preference: buildPreferenceLine(mode),
     };
+  }, [fullName, service, mode, vehicle]);
 
-    // Optional photo fields (kept compact)
-    if (photoDataUrl) {
-      payload.photo = {
-        name: photoName || "upload.jpg",
-        mime: "image/jpeg",
-        data_url: photoDataUrl,
-      };
-    }
-
-    return normalizeStringsDeep(payload);
-  };
-
-  const canSubmit = useMemo(() => {
-    const name = trimOrEmpty(draft.name);
-    const vehicle = trimOrEmpty(draft.vehicle);
-    const phone = trimOrEmpty(draft.phone);
-    const email = trimOrEmpty(draft.email);
-    const msg = trimOrEmpty(draft.message);
-    return !!name || !!vehicle || !!phone || !!email || !!msg;
-  }, [draft]);
-
-  const preview = useMemo(() => formatPreviewSentence(draft), [draft]);
-
-  const submit = async () => {
-    if (!page) return;
-    if (saving) return;
-
-    setSaving(true);
-    setError(null);
-    setSuccess(null);
+  function resetForm() {
+    setService(null);
+    setMode(null);
+    setFullName("");
+    setVehicle("");
+    setPhone("");
+    setPhoto(null);
+    setPhotoDataUrl(null);
+    setPhotoName(null);
     setReceipt(null);
+    setSubmissionState("idle");
+    setErrorMessage("");
     setLastPayloadJson(null);
-    setSavedAt(null);
+  }
 
-    const payload = buildPayload();
+  function handlePhotoChange(event: ChangeEvent<HTMLInputElement>) {
+    const next = event.target.files?.[0] ?? null;
+    void (async () => {
+      if (!next) return;
 
-    const hasAny =
-      !!trimOrEmpty((payload as any).name) ||
-      !!trimOrEmpty((payload as any).vehicle) ||
-      !!trimOrEmpty((payload as any).phone) ||
-      !!trimOrEmpty((payload as any).email) ||
-      !!trimOrEmpty((payload as any).message);
+      setErrorMessage("");
 
-    if (!hasAny) {
-      setSaving(false);
-      setError("Add at least a name/vehicle/phone/email or a short message, then submit.");
-      return;
-    }
+      try {
+        const dataUrl = await fileToJpegDataUrl(next, 1280, 1280, 0.82);
+        const bytes = approxBytesFromDataUrl(dataUrl);
+        if (bytes > 650_000) {
+          throw new Error("Image too large. Try a smaller photo.");
+        }
 
-    const insertBase: any = {
-      slug: page.slug,
-      payload,
-    };
+        setPhoto(next);
+        setPhotoName(next.name);
+        setPhotoDataUrl(dataUrl);
+      } catch (err: unknown) {
+        setPhoto(null);
+        setPhotoName(null);
+        setPhotoDataUrl(null);
+        setErrorMessage(err instanceof Error ? err.message : "Failed to attach photo.");
+      } finally {
+        event.target.value = "";
+      }
+    })();
+  }
 
-    // NOTE:
-    // We MUST NOT use `.select(...)` on the insert for anon/public,
-    // because that adds `?select=` to the request, which requires anon SELECT
-    // and triggers: "new row violates row-level security policy".
-    //
-    // So we do:
-    // 1) insert with returning: "minimal" (no row readback)
-    // 2) generate a client receipt_id (presence-first proof token)
-    // 3) show that receipt immediately (receipt-ready UX)
-    //
-    // If you later want server-generated receipts, add a Postgres trigger to set receipt_id,
-    // AND add an anon SELECT policy scoped to that receipt only.
+  async function handleSubmit() {
+    if (!page || !service || !mode || !readyToSubmit) return;
+
     try {
-      // Generate a client-side receipt ID so we never need anon SELECT to show a receipt.
+      setSubmissionState("submitting");
+      setErrorMessage("");
+      setReceipt(null);
+      setLastPayloadJson(null);
+
+      const seededCustomerReported = trimOrEmpty(livePreview.detail);
+
+      const payload = normalizeStringsDeep({
+        name: trimOrEmpty(fullName),
+        vehicle: trimOrEmpty(vehicle),
+        phone: trimOrEmpty(phone),
+        preferred_contact: mode === "waiting" ? "Text" : "Call",
+        message: seededCustomerReported,
+        customer_reported: seededCustomerReported,
+        service_choice: serviceLabel(service),
+        checkin_mode: modeLabel(mode),
+        client_ts: safeNowIso(),
+        source: "qr_public",
+        photo: photoDataUrl
+          ? {
+              name: photoName || "upload.jpg",
+              mime: "image/jpeg",
+              data_url: photoDataUrl,
+            }
+          : undefined,
+      });
+
+      const insertBase = {
+        slug: page.slug,
+        payload,
+      };
+
       const clientReceipt =
-        (globalThis as any)?.crypto?.randomUUID?.() ||
+        (globalThis as { crypto?: Crypto }).crypto?.randomUUID?.() ||
         `rcpt_${Date.now()}_${Math.random().toString(16).slice(2)}`;
 
-      const insertWithClientReceipt = {
-        ...insertBase,
-        receipt_id: clientReceipt, // safe even if column doesn't exist (will error) -> fallback below
-      };
-
-      // Try insert including receipt_id (if column exists).
-      const { error } = await supabase
-        .from("public_intake_submissions")
-        .insert(insertWithClientReceipt as any);
-
-      if (error) throw error;
-
-      // Success: we can show the client receipt immediately.
-      setReceipt(String(clientReceipt));
       try {
-        window.localStorage.setItem("last_receipt_id", String(clientReceipt));
-      } catch {}
+        const { error } = await supabase
+          .from("public_intake_submissions")
+          .insert({
+            ...insertBase,
+            receipt_id: clientReceipt,
+          } as never);
 
-      setSavedAt(safeNowIso());
+        if (error) throw error;
+      } catch (firstErr) {
+        const { error } = await supabase
+          .from("public_intake_submissions")
+          .insert(insertBase as never);
+
+        if (error) throw error;
+
+        void firstErr;
+      }
 
       try {
         setLastPayloadJson(JSON.stringify(payload, null, 2));
@@ -392,362 +421,55 @@ export default function PublicPage() {
         setLastPayloadJson(null);
       }
 
-      setSaving(false);
-      setSuccess("Request logged.");
-      return;
-    } catch (e: any) {
-      // If receipt_id column doesn't exist (or other insert error),
-      // fallback to inserting ONLY slug + payload.
       try {
-        const { error } = await supabase
-          .from("public_intake_submissions")
-          .insert(insertBase as any);
+        window.localStorage.setItem("last_receipt_id", String(clientReceipt));
+      } catch {}
 
-        if (error) throw error;
+      setReceipt({
+        receiptId: String(clientReceipt),
+        submittedAt: formatNow(),
+        customerName: fullName.trim(),
+        vehicle: vehicle.trim(),
+        phone: phone.trim(),
+        service,
+        mode,
+        photoName: photoName || undefined,
+      });
 
-        // Fallback receipt (client-only token)
-        const clientReceipt =
-          (globalThis as any)?.crypto?.randomUUID?.() ||
-          `rcpt_${Date.now()}_${Math.random().toString(16).slice(2)}`;
-
-        setReceipt(String(clientReceipt));
-        try {
-          window.localStorage.setItem("last_receipt_id", String(clientReceipt));
-        } catch {}
-
-        setSavedAt(safeNowIso());
-
-        try {
-          setLastPayloadJson(JSON.stringify(payload, null, 2));
-        } catch {
-          setLastPayloadJson(null);
-        }
-
-        setSaving(false);
-        setSuccess("Request logged.");
-        return;
-      } catch (e2: any) {
-        setSaving(false);
-        setError(e2?.message || e?.message || "Failed to submit intake.");
-      }
+      setSubmissionState("success");
+    } catch (err: unknown) {
+      setSubmissionState("error");
+      setErrorMessage(
+        err instanceof Error ? err.message : "Something went wrong saving the request. Please try again.",
+      );
     }
-  };
-
-  // -----------------------------
-  // Styles (mobile-first, "one-pager" feel)
-  // -----------------------------
-  const styles = {
-    page: {
-      minHeight: "100vh",
-      background: "#0b0f17",
-      padding: 14,
-      display: "flex",
-      justifyContent: "center",
-    } as const,
-    shell: {
-      width: "100%",
-      maxWidth: 520,
-    } as const,
-    topBar: {
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      gap: 10,
-      marginBottom: 12,
-    } as const,
-    brand: {
-      display: "flex",
-      alignItems: "center",
-      gap: 10,
-    } as const,
-    badge: {
-      width: 36,
-      height: 36,
-      borderRadius: 12,
-      background: "linear-gradient(135deg,#3b82f6,#22c55e)",
-      boxShadow: "0 10px 30px rgba(0,0,0,0.35)",
-    } as const,
-    brandText: {
-      color: "#e8eefc",
-      fontWeight: 900,
-      fontSize: 14,
-      lineHeight: 1.1,
-    } as const,
-    brandSub: {
-      color: "#b7c2da",
-      fontWeight: 700,
-      fontSize: 12,
-      opacity: 0.9,
-    } as const,
-    card: {
-      background: "rgba(255,255,255,0.06)",
-      border: "1px solid rgba(255,255,255,0.10)",
-      borderRadius: 18,
-      padding: 14,
-      boxShadow: "0 18px 40px rgba(0,0,0,0.35)",
-      backdropFilter: "blur(8px)",
-    } as const,
-    hero: {
-      borderRadius: 18,
-      overflow: "hidden",
-      border: "1px solid rgba(255,255,255,0.12)",
-      background: "linear-gradient(135deg, rgba(59,130,246,0.18), rgba(34,197,94,0.14))",
-      marginBottom: 12,
-    } as const,
-    heroInner: {
-      padding: 14,
-      minHeight: 150,
-      display: "flex",
-      flexDirection: "column",
-      justifyContent: "flex-end",
-      gap: 8,
-      position: "relative",
-    } as const,
-    heroTitle: {
-      color: "#e8eefc",
-      fontSize: 20,
-      fontWeight: 950,
-      lineHeight: 1.15,
-      letterSpacing: -0.2,
-    } as const,
-    heroText: {
-      color: "#b7c2da",
-      fontSize: 13,
-      fontWeight: 700,
-      lineHeight: 1.35,
-    } as const,
-    pillRow: {
-      display: "flex",
-      flexWrap: "wrap",
-      gap: 8,
-      marginTop: 8,
-    } as const,
-    pill: {
-      padding: "7px 10px",
-      borderRadius: 999,
-      border: "1px solid rgba(255,255,255,0.14)",
-      background: "rgba(255,255,255,0.05)",
-      color: "#e8eefc",
-      fontWeight: 900,
-      fontSize: 12,
-    } as const,
-    trust: {
-      marginBottom: 12,
-    } as const,
-    trustItem: {
-      display: "flex",
-      gap: 10,
-      alignItems: "flex-start",
-      color: "#dbe7ff",
-      fontSize: 13,
-      fontWeight: 750,
-      lineHeight: 1.35,
-      opacity: 0.95,
-      marginTop: 8,
-    } as const,
-    dot: {
-      width: 10,
-      height: 10,
-      marginTop: 4,
-      borderRadius: 999,
-      background: "#22c55e",
-      boxShadow: "0 0 0 3px rgba(34,197,94,0.15)",
-      flex: "0 0 auto",
-    } as const,
-    label: {
-      color: "#c7d2ea",
-      fontSize: 12,
-      fontWeight: 900,
-      letterSpacing: 0.2,
-      marginBottom: 6,
-    } as const,
-    input: {
-      width: "100%",
-      padding: "12px 12px",
-      borderRadius: 14,
-      border: "1px solid rgba(255,255,255,0.14)",
-      background: "rgba(0,0,0,0.18)",
-      color: "#e8eefc",
-      fontSize: 14,
-      outline: "none",
-    } as const,
-    textarea: {
-      width: "100%",
-      padding: "12px 12px",
-      borderRadius: 14,
-      border: "1px solid rgba(255,255,255,0.14)",
-      background: "rgba(0,0,0,0.18)",
-      color: "#e8eefc",
-      fontSize: 14,
-      outline: "none",
-      resize: "vertical" as const,
-      fontFamily: "ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial",
-    } as const,
-    grid: {
-      display: "grid",
-      gridTemplateColumns: "1fr",
-      gap: 12,
-    } as const,
-    chips: {
-      display: "flex",
-      gap: 8,
-      flexWrap: "wrap",
-    } as const,
-    chip: (active: boolean) =>
-      ({
-        padding: "10px 12px",
-        borderRadius: 999,
-        border: "1px solid rgba(255,255,255,0.14)",
-        background: active ? "rgba(59,130,246,0.25)" : "rgba(255,255,255,0.05)",
-        color: "#e8eefc",
-        fontWeight: 950,
-        fontSize: 12,
-        cursor: "pointer",
-        userSelect: "none",
-      } as const),
-    cta: {
-      width: "100%",
-      padding: "14px 14px",
-      borderRadius: 16,
-      border: "1px solid rgba(255,255,255,0.16)",
-      background: "linear-gradient(135deg, rgba(59,130,246,0.90), rgba(34,197,94,0.85))",
-      color: "#071019",
-      fontWeight: 950,
-      fontSize: 15,
-      cursor: "pointer",
-      boxShadow: "0 18px 40px rgba(0,0,0,0.35)",
-    } as const,
-    ctaDisabled: {
-      opacity: 0.6,
-      cursor: "not-allowed",
-    } as const,
-    bannerOk: {
-      marginTop: 10,
-      padding: "10px 12px",
-      borderRadius: 14,
-      border: "1px solid rgba(34,197,94,0.35)",
-      background: "rgba(34,197,94,0.12)",
-      color: "#d8ffe6",
-      fontWeight: 900,
-      fontSize: 13,
-    } as const,
-    bannerErr: {
-      marginTop: 10,
-      padding: "10px 12px",
-      borderRadius: 14,
-      border: "1px solid rgba(176,0,32,0.45)",
-      background: "rgba(176,0,32,0.12)",
-      color: "#ffd2da",
-      fontWeight: 900,
-      fontSize: 13,
-    } as const,
-    receiptCard: {
-      marginTop: 12,
-      borderRadius: 18,
-    } as const,
-    mono: {
-      fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-      fontSize: 12,
-      color: "#e8eefc",
-      opacity: 0.95,
-      wordBreak: "break-all" as const,
-    } as const,
-    row: {
-      display: "flex",
-      gap: 10,
-      flexWrap: "wrap",
-      alignItems: "center",
-      marginTop: 10,
-    } as const,
-    smallBtn: {
-      padding: "10px 12px",
-      borderRadius: 14,
-      border: "1px solid rgba(255,255,255,0.14)",
-      background: "rgba(255,255,255,0.06)",
-      color: "#e8eefc",
-      fontWeight: 950,
-      fontSize: 12,
-      cursor: "pointer",
-    } as const,
-    footer: {
-      marginTop: 14,
-      color: "#b7c2da",
-      fontSize: 11,
-      fontWeight: 800,
-      opacity: 0.8,
-      textAlign: "center" as const,
-    } as const,
-    uploadBox: {
-      borderRadius: 16,
-      border: "1px dashed rgba(255,255,255,0.20)",
-      background: "rgba(255,255,255,0.04)",
-      padding: 12,
-    } as const,
-    uploadRow: {
-      display: "flex",
-      gap: 10,
-      alignItems: "center",
-      justifyContent: "space-between",
-      flexWrap: "wrap" as const,
-    } as const,
-    uploadBtn: {
-      padding: "10px 12px",
-      borderRadius: 14,
-      border: "1px solid rgba(255,255,255,0.14)",
-      background: "rgba(255,255,255,0.06)",
-      color: "#e8eefc",
-      fontWeight: 950,
-      fontSize: 12,
-      cursor: "pointer",
-    } as const,
-    uploadHint: {
-      color: "#b7c2da",
-      fontSize: 12,
-      fontWeight: 800,
-      opacity: 0.9,
-      lineHeight: 1.35,
-    } as const,
-    thumb: {
-      width: 86,
-      height: 64,
-      borderRadius: 12,
-      border: "1px solid rgba(255,255,255,0.12)",
-      objectFit: "cover" as const,
-      background: "rgba(0,0,0,0.18)",
-    } as const,
-  };
+  }
 
   if (loading) {
     return (
-      <div style={styles.page}>
-        <div style={styles.shell}>
-          <div style={{ color: "#e8eefc", fontWeight: 900, fontSize: 14, padding: 10 }}>Loading…</div>
+      <div className="min-h-screen bg-[#08111d] text-white">
+        <div className="mx-auto w-full max-w-[920px] px-4 py-5 sm:px-5 sm:py-6">
+          <div className="rounded-[28px] border border-[#2d415a] bg-[#0d1826] p-5 text-[15px] font-semibold text-white shadow-[0_18px_50px_rgba(0,0,0,0.32)]">
+            Loading...
+          </div>
         </div>
       </div>
     );
   }
 
-  // If slug was missing or not found, show the global 404 page
   if (notFound) {
     return <NotFound />;
   }
 
-  if (error) {
+  if (pageError || !page) {
     return (
-      <div style={styles.page}>
-        <div style={styles.shell}>
-          <div style={styles.topBar}>
-            <div style={styles.brand}>
-              <div style={styles.badge} />
-              <div>
-                <div style={styles.brandText}>HomePlanet</div>
-                <div style={styles.brandSub}>Public Intake</div>
-              </div>
+      <div className="min-h-screen bg-[#08111d] text-white">
+        <div className="mx-auto w-full max-w-[920px] px-4 py-5 sm:px-5 sm:py-6">
+          <div className="rounded-[28px] border border-[#2d415a] bg-[#0d1826] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.32)]">
+            <div className="text-[20px] font-semibold text-white">Public Intake</div>
+            <div className="mt-3 text-[15px] font-medium text-[#ffd1d1]">
+              {pageError || "Failed to load public page."}
             </div>
-          </div>
-          <div style={{ ...styles.card, padding: 14 }}>
-            <div style={{ color: "#e8eefc", fontWeight: 950, fontSize: 16, marginBottom: 8 }}>Public Intake</div>
-            <div style={{ color: "#ffd2da", fontWeight: 900 }}>{error}</div>
           </div>
         </div>
       </div>
@@ -755,329 +477,520 @@ export default function PublicPage() {
   }
 
   return (
-    <div style={styles.page}>
-      <div style={styles.shell}>
-        {/* Top bar */}
-        <div style={styles.topBar}>
-          <div style={styles.brand}>
-            <div style={styles.badge} />
-            <div>
-              <div style={styles.brandText}>HomePlanet</div>
-              <div style={styles.brandSub}>Public Intake • {page?.slug}</div>
-            </div>
-          </div>
-          <div style={{ ...styles.pill, opacity: 0.9 }}>Receipt-ready</div>
-        </div>
-
-        {/* Hero */}
-        <div style={styles.hero}>
-          <div style={styles.heroInner}>
-            <div style={styles.heroTitle}>Request logged. Proof-ready.</div>
-            <div style={styles.heroText}>
-              Submit your request in under a minute. You’ll get a receipt ID you can reference anytime.
-            </div>
-            <div style={styles.pillRow}>
-              <div style={styles.pill}>Instant receipt</div>
-              <div style={styles.pill}>Timestamped</div>
-              <div style={styles.pill}>Verified intake</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Trust bullets */}
-        <div style={{ ...styles.card, ...styles.trust }}>
-          <div style={{ color: "#e8eefc", fontWeight: 950, fontSize: 14 }}>What happens next</div>
-          <div style={styles.trustItem}>
-            <div style={styles.dot} />
-            <div>Your request is saved immediately with a receipt ID.</div>
-          </div>
-          <div style={styles.trustItem}>
-            <div style={styles.dot} />
-            <div>A reviewer can see it the moment it lands.</div>
-          </div>
-          <div style={styles.trustItem}>
-            <div style={styles.dot} />
-            <div>No “lost texts.” No “we never got it.” Everything is logged.</div>
-          </div>
-        </div>
-
-        {/* Form card */}
-        <div style={styles.card}>
-          <div style={{ color: "#e8eefc", fontWeight: 950, fontSize: 16, marginBottom: 10 }}>One-Page Intake</div>
-
-          {/* Preview */}
-          <div
-            style={{
-              borderRadius: 16,
-              border: "1px solid rgba(255,255,255,0.12)",
-              background: "rgba(0,0,0,0.22)",
-              padding: 12,
-              marginBottom: 12,
-            }}
-          >
-            <div style={{ color: "#b7c2da", fontWeight: 900, fontSize: 12, marginBottom: 6 }}>Live preview</div>
-            <div style={{ color: "#e8eefc", fontWeight: 950, fontSize: 14 }}>{preview.title}</div>
-
-            <div style={{ color: "#b7c2ea", fontWeight: 900, fontSize: 12, marginTop: 10 }}>
-              Preview request description
-            </div>
-            <div style={{ color: "#c7d2ea", fontWeight: 800, fontSize: 13, marginTop: 6, lineHeight: 1.35 }}>
-              {preview.request}
-            </div>
-
-            <div style={{ color: "#b7c2da", fontWeight: 900, fontSize: 12, marginTop: 10 }}>{preview.meta}</div>
-          </div>
-
-          <div style={styles.grid}>
-            <div>
-              <div style={styles.label}>Full name</div>
-              <input
-                value={draft.name}
-                onChange={(e) => setField("name", e.target.value)}
-                placeholder="Customer name"
-                style={styles.input}
-              />
-            </div>
-
-            <div>
-              <div style={styles.label}>Vehicle (optional)</div>
-              <input
-                value={draft.vehicle}
-                onChange={(e) => setField("vehicle", e.target.value)}
-                placeholder="Year / Make / Model (ex: 2016 Honda Civic)"
-                style={styles.input}
-              />
-            </div>
-
-            <div>
-              <div style={styles.label}>Phone</div>
-              <input
-                value={draft.phone}
-                onChange={(e) => setField("phone", e.target.value)}
-                placeholder="(555) 555-5555"
-                style={styles.input}
-              />
-            </div>
-
-            <div>
-              <div style={styles.label}>Email</div>
-              <input
-                value={draft.email}
-                onChange={(e) => setField("email", e.target.value)}
-                placeholder="email@example.com"
-                style={styles.input}
-              />
-            </div>
-
-            <div>
-              <div style={styles.label}>Preferred contact</div>
-              <div style={styles.chips}>
-                {["Text", "Call", "Email"].map((m) => {
-                  const active = trimOrEmpty(draft.preferred_contact).toLowerCase() === m.toLowerCase();
-                  return (
-                    <div
-                      key={m}
-                      onClick={() => setField("preferred_contact", m)}
-                      style={styles.chip(active)}
-                      role="button"
-                      aria-label={`Preferred contact ${m}`}
-                    >
-                      {m}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div>
-              <div style={styles.label}>Address (optional)</div>
-              <input
-                value={draft.address}
-                onChange={(e) => setField("address", e.target.value)}
-                placeholder="City, State"
-                style={styles.input}
-              />
-            </div>
-
-            <div>
-              <div style={styles.label}>Best time</div>
-              <select
-                value={draft.best_time}
-                onChange={(e) => setField("best_time", e.target.value)}
-                style={styles.input as any}
-              >
-                <option value="">Choose time…</option>
-                <option value="Morning">Morning</option>
-                <option value="Afternoon">Afternoon</option>
-                <option value="Evening">Evening</option>
-                <option value="Anytime">Anytime</option>
-              </select>
-            </div>
-
-            <div>
-              <div style={styles.label}>What do you need help with?</div>
-              <textarea
-                value={draft.message}
-                onChange={(e) => setField("message", e.target.value)}
-                rows={6}
-                placeholder="Describe the issue / request…"
-                style={styles.textarea}
-              />
-            </div>
-
-            {/* Photo upload (optional) */}
-            <div>
-              <div style={styles.label}>Upload a photo (optional)</div>
-              <div style={styles.uploadBox}>
-                <div style={styles.uploadRow}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    {photoDataUrl ? <img src={photoDataUrl} alt="Upload preview" style={styles.thumb} /> : null}
-                    <div style={styles.uploadHint}>
-                      Add a photo of the issue.
-                      <br />
-                      (Kept compact for proof + speed.)
-                    </div>
-                  </div>
-
-                  <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                    <label style={styles.uploadBtn}>
-                      Upload
-                      <input
-                        type="file"
-                        accept="image/*"
-                        style={{ display: "none" }}
-                        onChange={async (e) => {
-                          const f = e.target.files?.[0];
-                          if (!f) return;
-                          setError(null);
-
-                          try {
-                            const dataUrl = await fileToJpegDataUrl(f, 1280, 1280, 0.82);
-                            const bytes = approxBytesFromDataUrl(dataUrl);
-                            // Hard cap to avoid giant jsonb rows
-                            if (bytes > 650_000) {
-                              throw new Error("Image too large. Try a smaller photo.");
-                            }
-                            setPhotoName(f.name);
-                            setPhotoDataUrl(dataUrl);
-                          } catch (err: any) {
-                            setPhotoName(null);
-                            setPhotoDataUrl(null);
-                            setError(err?.message || "Failed to attach photo.");
-                          } finally {
-                            // allow re-pick same file
-                            (e.target as any).value = "";
-                          }
-                        }}
-                      />
-                    </label>
-
-                    {photoDataUrl ? (
-                      <button
-                        type="button"
-                        style={styles.uploadBtn}
-                        onClick={() => {
-                          setPhotoName(null);
-                          setPhotoDataUrl(null);
-                        }}
-                      >
-                        Remove
-                      </button>
-                    ) : null}
-                  </div>
+    <div className="min-h-screen bg-[#08111d] text-white">
+      <div className="mx-auto w-full max-w-[920px] px-4 py-5 sm:px-5 sm:py-6">
+        <header className="rounded-[28px] border border-[#2d415a] bg-[#0d1826] p-4 shadow-[0_18px_50px_rgba(0,0,0,0.32)] sm:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="rounded-full border border-[#3b546f] bg-[#102033] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#dbe7f6]">
+                  HomePlanet
+                </div>
+                <div className="rounded-full border border-[#3b546f] bg-[#102033] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#dbe7f6]">
+                  Public Intake • {page.slug}
                 </div>
               </div>
+
+              <h1 className="mt-4 text-[28px] font-semibold leading-tight text-white sm:text-[34px]">
+                Request logged. Proof-ready.
+              </h1>
+              <p className="mt-2 max-w-2xl text-[16px] leading-6 text-[#c6d3e3]">
+                Scan. Tap. Pull in. Your request is time-stamped and visible the moment it lands.
+              </p>
             </div>
 
-            <button
-              onClick={submit}
-              disabled={saving || !canSubmit}
-              style={{
-                ...styles.cta,
-                ...(saving || !canSubmit ? styles.ctaDisabled : {}),
-              }}
-            >
-              {saving ? "Submitting…" : "Confirm & Get Receipt"}
-            </button>
-
-            {success ? <div style={styles.bannerOk}>{success}</div> : null}
-            {error ? <div style={styles.bannerErr}>{error}</div> : null}
+            <div className="rounded-full border border-[#4d6886] bg-[#11263d] px-4 py-2 text-sm font-semibold text-[#dbe7f6]">
+              Receipt-ready
+            </div>
           </div>
-        </div>
 
-        {/* Receipt card */}
-        {receipt ? (
-          <div style={{ ...styles.card, ...styles.receiptCard }}>
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            <InfoPill icon={CheckCircle2} text="Instant receipt" />
+            <InfoPill icon={Clock3} text="Time-stamped" />
+            <InfoPill icon={ShieldCheck} text="Verified intake" />
+          </div>
+
+          <div className="mt-4 rounded-[22px] border border-[#425770] bg-[#0f1d2d] p-4">
+            <div className="text-[18px] font-semibold text-white">What happens next</div>
+            <div className="mt-3 space-y-2 text-[16px] text-[#d3deeb]">
+              <BulletLine text="Your request is saved immediately with a receipt ID." />
+              <BulletLine text="A reviewer can see it the moment it lands." />
+              <BulletLine text="No lost texts. No we never got it. Everything is logged." />
+            </div>
+          </div>
+        </header>
+
+        {submissionState === "success" && receipt ? (
+          <section className="mt-5 rounded-[28px] border border-[#2b7a55] bg-[#10261c] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.32)]">
+            <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <div style={{ color: "#e8eefc", fontWeight: 950, fontSize: 14 }}>Receipt</div>
-                <div style={{ color: "#b7c2da", fontWeight: 900, fontSize: 12, marginTop: 4 }}>
-                  Saved {savedAt ? `• ${savedAt}` : ""}
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#3f8f69] bg-[#123122] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#d6f6e5]">
+                  <CheckCircle2 className="h-4 w-4" />
+                  Receipt Ready
                 </div>
-              </div>
-              <div style={{ ...styles.pill, background: "rgba(34,197,94,0.18)", borderColor: "rgba(34,197,94,0.35)" }}>
-                Logged ?
-              </div>
-            </div>
 
-            <div style={{ marginTop: 10 }}>
-              <div style={{ color: "#b7c2da", fontWeight: 900, fontSize: 12, marginBottom: 6 }}>Receipt ID</div>
-              <div style={styles.mono}>{receipt}</div>
-            </div>
+                <h2 className="mt-4 text-[28px] font-semibold text-white">You're checked in.</h2>
+                <p className="mt-2 text-[16px] text-[#d3ebdf]">
+                  Show this receipt if needed or wait for Taylor Creek to review your request.
+                </p>
+              </div>
 
-            <div style={styles.row}>
               <button
-                style={styles.smallBtn}
+                type="button"
+                onClick={resetForm}
+                className="rounded-full border border-[#4c6b58] bg-[#173425] px-4 py-2 text-sm font-semibold text-white"
+              >
+                New intake
+              </button>
+            </div>
+
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
+              <ReceiptCard label="Receipt ID" value={receipt.receiptId} />
+              <ReceiptCard label="Submitted" value={receipt.submittedAt} />
+              <ReceiptCard label="Customer" value={receipt.customerName} />
+              <ReceiptCard label="Vehicle" value={receipt.vehicle || "Not provided"} />
+              <ReceiptCard label="Service" value={serviceLabel(receipt.service)} />
+              <ReceiptCard label="Check-in" value={modeLabel(receipt.mode)} />
+              <ReceiptCard label="Phone" value={receipt.phone} />
+              <ReceiptCard label="Photo" value={receipt.photoName || "No photo attached"} />
+            </div>
+
+            <div className="mt-5 rounded-[20px] border border-[#355844] bg-[#13291e] p-4 text-[16px] leading-7 text-[#d8efe2]">
+              Pull into the lot or see the front desk if directed. Your request is already in the system.
+            </div>
+
+            <div className="mt-5 flex flex-wrap gap-3">
+              <button
+                type="button"
                 onClick={async () => {
-                  const ok = await copyText(receipt);
+                  const ok = await copyText(receipt.receiptId);
                   if (ok) alert("Receipt copied");
                 }}
+                className="rounded-full border border-[#4c6b58] bg-[#173425] px-4 py-2 text-sm font-semibold text-white"
               >
                 Copy Receipt
               </button>
 
               <button
-                style={styles.smallBtn}
+                type="button"
                 onClick={async () => {
                   const summary =
-                    `Receipt: ${receipt}\n` +
-                    `Slug: ${page?.slug}\n` +
-                    `Saved: ${savedAt ?? ""}\n` +
-                    `Name: ${trimOrEmpty(draft.name)}\n` +
-                    `Vehicle: ${trimOrEmpty(draft.vehicle)}\n` +
-                    `Phone: ${trimOrEmpty(draft.phone)}\n` +
-                    `Email: ${trimOrEmpty(draft.email)}\n` +
-                    `Preferred: ${trimOrEmpty(draft.preferred_contact)}\n` +
-                    `Address: ${trimOrEmpty(draft.address)}\n` +
-                    `Best time: ${trimOrEmpty(draft.best_time)}\n` +
-                    `Message: ${trimOrEmpty(draft.message)}` +
-                    (photoName ? `\nPhoto: ${photoName}` : "");
+                    `Receipt: ${receipt.receiptId}\n` +
+                    `Slug: ${page.slug}\n` +
+                    `Submitted: ${receipt.submittedAt}\n` +
+                    `Customer: ${receipt.customerName}\n` +
+                    `Vehicle: ${receipt.vehicle}\n` +
+                    `Phone: ${receipt.phone}\n` +
+                    `Service: ${serviceLabel(receipt.service)}\n` +
+                    `Check-in: ${modeLabel(receipt.mode)}` +
+                    (receipt.photoName ? `\nPhoto: ${receipt.photoName}` : "");
                   const ok = await copyText(summary);
                   if (ok) alert("Summary copied");
                 }}
+                className="rounded-full border border-[#4c6b58] bg-[#173425] px-4 py-2 text-sm font-semibold text-white"
               >
                 Copy Summary
               </button>
 
               <button
-                style={styles.smallBtn}
+                type="button"
                 onClick={async () => {
-                  const text = lastPayloadJson || "";
-                  if (!text) return;
-                  const ok = await copyText(text);
+                  if (!lastPayloadJson) return;
+                  const ok = await copyText(lastPayloadJson);
                   if (ok) alert("JSON copied");
                 }}
                 disabled={!lastPayloadJson}
+                className={cx(
+                  "rounded-full border px-4 py-2 text-sm font-semibold",
+                  lastPayloadJson
+                    ? "border-[#4c6b58] bg-[#173425] text-white"
+                    : "cursor-not-allowed border-[#355844] bg-[#13291e] text-[#82a08d]",
+                )}
               >
                 Copy JSON
               </button>
             </div>
-          </div>
-        ) : null}
+          </section>
+        ) : (
+          <section className="mt-5 rounded-[28px] border border-[#2d415a] bg-[#0d1826] p-4 shadow-[0_18px_50px_rgba(0,0,0,0.32)] sm:p-5">
+            <div className="mb-4">
+              <h2 className="text-[24px] font-semibold text-white sm:text-[28px]">3-Step Intake</h2>
+              <p className="mt-1 text-[15px] text-[#c6d3e3]">
+                Big buttons. Fast check-in. Minimal typing.
+              </p>
+            </div>
 
-        <div style={styles.footer}>Powered by HomePlanet • Presence-First Intake</div>
+            <div className="space-y-4">
+              <StepCard step="Step 1" title="What do you need?" active complete={!!service}>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <ServiceButton
+                    icon={ShieldCheck}
+                    label="$25 Safety Check"
+                    sublabel="Fast check • great hook"
+                    active={service === "safety-check"}
+                    onClick={() => setService("safety-check")}
+                  />
+                  <ServiceButton
+                    icon={CarFront}
+                    label="Tires"
+                    sublabel="Flat, wear, replacement"
+                    active={service === "tires"}
+                    onClick={() => setService("tires")}
+                  />
+                  <ServiceButton
+                    icon={Wrench}
+                    label="Brakes"
+                    sublabel="Noise, grinding, inspection"
+                    active={service === "brakes"}
+                    onClick={() => setService("brakes")}
+                  />
+                  <ServiceButton
+                    icon={Wrench}
+                    label="Not Sure"
+                    sublabel="Need help figuring it out"
+                    active={service === "not-sure"}
+                    onClick={() => setService("not-sure")}
+                  />
+                </div>
+              </StepCard>
+
+              <StepCard
+                step="Step 2"
+                title="How are you checking in?"
+                active={canContinueStep2}
+                complete={!!mode}
+                muted={!canContinueStep2}
+              >
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <ModeButton
+                    label="Waiting Here"
+                    sublabel="I'm on-site now"
+                    active={mode === "waiting"}
+                    disabled={!canContinueStep2}
+                    onClick={() => setMode("waiting")}
+                  />
+                  <ModeButton
+                    label="Dropping Off"
+                    sublabel="Leaving vehicle with shop"
+                    active={mode === "dropoff"}
+                    disabled={!canContinueStep2}
+                    onClick={() => setMode("dropoff")}
+                  />
+                </div>
+              </StepCard>
+
+              <StepCard
+                step="Step 3"
+                title="Quick info"
+                active={canContinueStep3}
+                complete={readyToSubmit}
+                muted={!canContinueStep3}
+              >
+                <div className="grid gap-4">
+                  <div className="rounded-[20px] border border-[#324559] bg-[#0f1d2d] p-4">
+                    <div className="text-[14px] font-semibold uppercase tracking-[0.16em] text-[#8fa6c0]">
+                      Live preview
+                    </div>
+                    <div className="mt-3 text-[22px] font-semibold text-white">
+                      {livePreview.title}
+                    </div>
+                    <div className="mt-2 text-[16px] leading-7 text-[#d0dceb]">
+                      {livePreview.detail}
+                    </div>
+                    <div className="mt-2 text-[15px] text-[#9eb3ca]">
+                      {livePreview.preference}
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4">
+                    <Field
+                      label="Full name"
+                      placeholder="Customer name"
+                      value={fullName}
+                      onChange={setFullName}
+                      disabled={!canContinueStep3}
+                      large
+                    />
+                    <Field
+                      label="Vehicle"
+                      placeholder="Year / Make / Model"
+                      value={vehicle}
+                      onChange={setVehicle}
+                      disabled={!canContinueStep3}
+                      large
+                    />
+                    <Field
+                      label="Phone"
+                      placeholder="(555) 555-5555"
+                      value={phone}
+                      onChange={setPhone}
+                      disabled={!canContinueStep3}
+                      large
+                    />
+                  </div>
+
+                  <div className="rounded-[20px] border border-dashed border-[#4a647e] bg-[#101d2c] p-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 text-[18px] font-semibold text-white">
+                          <Camera className="h-5 w-5" />
+                          Add a photo
+                        </div>
+                        <p className="mt-1 text-[15px] text-[#c6d3e3]">
+                          Optional. Helpful for tire, brake, or visible issue proof.
+                        </p>
+                        {photoName ? (
+                          <div className="mt-2 text-[15px] font-medium text-[#9fe8c1]">
+                            Attached: {photoName}
+                          </div>
+                        ) : null}
+                      </div>
+
+                      <label
+                        className={cx(
+                          "inline-flex min-h-[56px] cursor-pointer items-center justify-center gap-2 rounded-full border px-5 py-3 text-[16px] font-semibold",
+                          canContinueStep3
+                            ? "border-[#7f95ad] bg-[#13263a] text-white"
+                            : "cursor-not-allowed border-[#3a4c61] bg-[#101922] text-[#73869d]",
+                        )}
+                      >
+                        <Camera className="h-5 w-5" />
+                        {photoName ? "Replace photo" : "Upload"}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          className="hidden"
+                          onChange={handlePhotoChange}
+                          disabled={!canContinueStep3}
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  {errorMessage ? (
+                    <div className="rounded-[18px] border border-[#7a3434] bg-[#2a1414] px-4 py-3 text-[15px] text-[#ffd1d1]">
+                      {errorMessage}
+                    </div>
+                  ) : null}
+
+                  <button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={!readyToSubmit || submissionState === "submitting" || !page}
+                    className={cx(
+                      "min-h-[64px] w-full rounded-[20px] px-6 text-[20px] font-semibold shadow-[0_14px_28px_rgba(0,0,0,0.22)] transition",
+                      readyToSubmit && submissionState !== "submitting"
+                        ? "bg-gradient-to-r from-[#12a9ff] to-[#10e66a] text-[#082033]"
+                        : "cursor-not-allowed bg-[#243341] text-[#8da3bb]",
+                    )}
+                  >
+                    {submissionState === "submitting" ? (
+                      <span className="inline-flex items-center gap-2">
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        Saving request...
+                      </span>
+                    ) : (
+                      "Confirm & Get Receipt"
+                    )}
+                  </button>
+                </div>
+              </StepCard>
+            </div>
+          </section>
+        )}
       </div>
     </div>
   );
 }
 
+function InfoPill({
+  icon: Icon,
+  text,
+}: {
+  icon: typeof CheckCircle2;
+  text: string;
+}) {
+  return (
+    <div className="inline-flex min-h-[54px] items-center gap-2 rounded-full border border-[#3b546f] bg-[#102033] px-4 py-3 text-[15px] font-semibold text-[#e4edf8]">
+      <Icon className="h-5 w-5 text-[#7fe8b5]" />
+      {text}
+    </div>
+  );
+}
+
+function BulletLine({ text }: { text: string }) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="mt-1 h-3 w-3 rounded-full bg-[#20e06e]" />
+      <div>{text}</div>
+    </div>
+  );
+}
+
+function StepCard({
+  step,
+  title,
+  children,
+  active,
+  complete,
+  muted = false,
+}: {
+  step: string;
+  title: string;
+  children: ReactNode;
+  active: boolean;
+  complete: boolean;
+  muted?: boolean;
+}) {
+  return (
+    <section
+      className={cx(
+        "rounded-[24px] border p-4 sm:p-5",
+        muted
+          ? "border-[#2d3d4e] bg-[#0b1520] opacity-70"
+          : active
+            ? "border-[#40617c] bg-[#0f1d2d]"
+            : "border-[#324559] bg-[#0d1826]",
+      )}
+    >
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div>
+          <div className="text-[13px] font-semibold uppercase tracking-[0.18em] text-[#8ea5c0]">
+            {step}
+          </div>
+          <h3 className="mt-1 text-[24px] font-semibold text-white">{title}</h3>
+        </div>
+
+        <div
+          className={cx(
+            "flex h-10 w-10 items-center justify-center rounded-full border",
+            complete
+              ? "border-[#3c8e67] bg-[#153225] text-[#9fe8c1]"
+              : active
+                ? "border-[#516a85] bg-[#12253a] text-[#d3e2f4]"
+                : "border-[#33475a] bg-[#101a24] text-[#70839a]",
+          )}
+        >
+          {complete ? <CheckCircle2 className="h-5 w-5" /> : <Circle className="h-4 w-4" />}
+        </div>
+      </div>
+
+      {children}
+    </section>
+  );
+}
+
+function ServiceButton({
+  icon: Icon,
+  label,
+  sublabel,
+  active,
+  onClick,
+}: {
+  icon: typeof ShieldCheck;
+  label: string;
+  sublabel: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cx(
+        "flex min-h-[112px] w-full flex-col items-start justify-center rounded-[24px] border px-5 py-4 text-left transition",
+        active
+          ? "border-[#63a8ff] bg-[#122e4a] shadow-[0_0_0_1px_rgba(99,168,255,0.25)]"
+          : "border-[#43586f] bg-[#122132]",
+      )}
+    >
+      <Icon className={cx("h-7 w-7", active ? "text-[#82c7ff]" : "text-[#b9cbe0]")} />
+      <div className="mt-3 text-[22px] font-semibold text-white">{label}</div>
+      <div className="mt-1 text-[15px] text-[#c5d2e2]">{sublabel}</div>
+    </button>
+  );
+}
+
+function ModeButton({
+  label,
+  sublabel,
+  active,
+  disabled,
+  onClick,
+}: {
+  label: string;
+  sublabel: string;
+  active: boolean;
+  disabled?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      className={cx(
+        "flex min-h-[104px] w-full flex-col items-start justify-center rounded-[24px] border px-5 py-4 text-left transition",
+        disabled
+          ? "cursor-not-allowed border-[#33475a] bg-[#0f1823] text-[#71859b]"
+          : active
+            ? "border-[#63a8ff] bg-[#122e4a]"
+            : "border-[#43586f] bg-[#122132]",
+      )}
+    >
+      <div className={cx("text-[22px] font-semibold", disabled ? "text-[#71859b]" : "text-white")}>
+        {label}
+      </div>
+      <div className={cx("mt-1 text-[15px]", disabled ? "text-[#6c8096]" : "text-[#c5d2e2]")}>
+        {sublabel}
+      </div>
+    </button>
+  );
+}
+
+function Field({
+  label,
+  placeholder,
+  value,
+  onChange,
+  disabled,
+  large = false,
+}: {
+  label: string;
+  placeholder: string;
+  value: string;
+  onChange: (value: string) => void;
+  disabled?: boolean;
+  large?: boolean;
+}) {
+  return (
+    <label className="block">
+      <div className="mb-2 text-[16px] font-semibold text-white">{label}</div>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        placeholder={placeholder}
+        className={cx(
+          "w-full rounded-[20px] border bg-[#122132] px-5 text-white outline-none placeholder:text-[#8ea3ba]",
+          large ? "min-h-[64px] text-[20px]" : "min-h-[56px] text-[18px]",
+          disabled
+            ? "cursor-not-allowed border-[#33475a] text-[#6f8399]"
+            : "border-[#4a6178]",
+        )}
+      />
+    </label>
+  );
+}
+
+function ReceiptCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-[18px] border border-[#355844] bg-[#13291e] p-4">
+      <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#93c9ac]">
+        {label}
+      </div>
+      <div className="mt-2 text-[18px] font-semibold text-white">{value}</div>
+    </div>
+  );
+}

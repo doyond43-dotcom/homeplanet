@@ -1,6 +1,6 @@
 // apps/web/src/routes/WorkOrderDrawer.tsx
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Dispatch, SetStateAction, KeyboardEvent } from "react";
+import type { ChangeEvent, Dispatch, KeyboardEvent, SetStateAction } from "react";
 import { useNavigate } from "react-router-dom";
 import { getSupabase } from "../lib/supabase";
 
@@ -9,7 +9,7 @@ export type JobStage = "diagnosing" | "waiting_parts" | "repairing" | "done";
 export type Row = {
   id: string;
   created_at: string;
-  slug: string; // this is your SHOP slug (e.g. "taylor-creek")
+  slug: string;
   payload: any;
 
   current_stage?: JobStage | null;
@@ -29,9 +29,26 @@ type Props = {
 };
 
 export type Line = {
-  id: string; // stable key
+  id: string;
   description: string;
   price: string;
+};
+
+type ServiceStory = {
+  customerReported: string;
+  advisorObserved: string;
+  techFound: string;
+  recommendedService: string;
+  workPerformed: string;
+};
+
+type ProofPhoto = {
+  id: string;
+  label: string;
+  name: string;
+  mime: string;
+  dataUrl: string;
+  createdAt: string;
 };
 
 export type PrintData = {
@@ -50,12 +67,35 @@ export type PrintData = {
 
   technicianCode?: string;
   technicianName?: string;
-  // local draft extras (for refresh safety)
+
   nextActionLabel?: string;
-  nextActionAt?: string; // datetime-local value
+  nextActionAt?: string;
   nextActionNote?: string;
 
+  serviceStory?: ServiceStory;
+  assignedTech?: string;
+  priority?: string;
+  internalNotes?: string;
+  proofPhotos?: ProofPhoto[];
+
   savedAtIso?: string;
+};
+
+type DraftDoc = {
+  notes: string;
+  labor: Line[];
+
+  parts: Line[];
+
+  next_action_at?: string | null;
+  next_action_label?: string | null;
+  next_action_note?: string | null;
+
+  service_story?: ServiceStory | null;
+  assigned_tech?: string | null;
+  priority?: string | null;
+  internal_notes?: string | null;
+  proof_photos?: ProofPhoto[] | null;
 };
 
 /* ---------- utils ---------- */
@@ -72,7 +112,6 @@ function total(lines: Line[]) {
 
 function makeId() {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const c = (globalThis as any)?.crypto;
     if (c?.randomUUID) return c.randomUUID();
   } catch {}
@@ -80,7 +119,6 @@ function makeId() {
 }
 
 function normalizeLinesForDoc(lines: Partial<Line>[]) {
-  // For DB doc: store only meaningful lines, never create placeholders (prevents id churn)
   return (lines || [])
     .map((l) => ({
       id: String(l.id || makeId()),
@@ -91,7 +129,6 @@ function normalizeLinesForDoc(lines: Partial<Line>[]) {
 }
 
 function ensureUiLines(lines: Partial<Line>[]) {
-  // For UI: always show at least one editable row
   const cleaned = (lines || []).map((l) => ({
     id: String(l.id || makeId()),
     description: String(l.description || ""),
@@ -101,6 +138,194 @@ function ensureUiLines(lines: Partial<Line>[]) {
   return cleaned.length
     ? (cleaned as Line[])
     : [{ id: makeId(), description: "", price: "" }];
+}
+
+function trimOrEmpty(v: unknown) {
+  try {
+    return String(v ?? "").trim();
+  } catch {
+    return "";
+  }
+}
+
+function emptyStory(): ServiceStory {
+  return {
+    customerReported: "",
+    advisorObserved: "",
+    techFound: "",
+    recommendedService: "",
+    workPerformed: "",
+  };
+}
+
+function normalizeStory(value: Partial<ServiceStory> | null | undefined): ServiceStory {
+  return {
+    customerReported: String(value?.customerReported || ""),
+    advisorObserved: String(value?.advisorObserved || ""),
+    techFound: String(value?.techFound || ""),
+    recommendedService: String(value?.recommendedService || ""),
+    workPerformed: String(value?.workPerformed || ""),
+  };
+}
+
+function hasAnyStoryContent(story: Partial<ServiceStory> | null | undefined) {
+  const s = normalizeStory(story);
+  return Boolean(
+    s.customerReported.trim() ||
+      s.advisorObserved.trim() ||
+      s.techFound.trim() ||
+      s.recommendedService.trim() ||
+      s.workPerformed.trim(),
+  );
+}
+
+function buildServiceSummary(story: ServiceStory) {
+  const chunks: string[] = [];
+
+  if (story.customerReported.trim()) {
+    chunks.push(`Customer reported: ${story.customerReported.trim()}.`);
+  }
+  if (story.advisorObserved.trim()) {
+    chunks.push(`Advisor observed: ${story.advisorObserved.trim()}.`);
+  }
+  if (story.techFound.trim()) {
+    chunks.push(`Tech found: ${story.techFound.trim()}.`);
+  }
+  if (story.recommendedService.trim()) {
+    chunks.push(`Recommended service: ${story.recommendedService.trim()}.`);
+  }
+  if (story.workPerformed.trim()) {
+    chunks.push(`Work performed: ${story.workPerformed.trim()}.`);
+  }
+
+  return chunks.join(" ");
+}
+
+function normalizeProofPhotos(input: Partial<ProofPhoto>[] | null | undefined): ProofPhoto[] {
+  return (input || [])
+    .map((it) => ({
+      id: String(it?.id || makeId()),
+      label: String(it?.label || "General"),
+      name: String(it?.name || "photo.jpg"),
+      mime: String(it?.mime || "image/jpeg"),
+      dataUrl: String(it?.dataUrl || ""),
+      createdAt: String(it?.createdAt || new Date().toISOString()),
+    }))
+    .filter((it) => it.dataUrl.trim());
+}
+
+function seedStoryFromRow(row: Row | null): ServiceStory {
+  if (!row) return emptyStory();
+
+  const payload = row.payload || {};
+
+  const directReported =
+    trimOrEmpty(payload.customer_reported) ||
+    trimOrEmpty(payload.message);
+
+  const service = trimOrEmpty(payload.service_choice);
+  const checkin = trimOrEmpty(payload.checkin_mode);
+  const vehicle = trimOrEmpty(payload.vehicle);
+
+  const builtReported = [service, checkin, vehicle].filter(Boolean).join(" - ");
+  const customerReported = directReported || builtReported || "";
+
+  let advisorObserved = "";
+  if (vehicle || service || checkin) {
+    const pieces: string[] = [];
+    if (service) pieces.push(`intake tagged as ${service.toLowerCase()}`);
+    if (checkin) pieces.push(`customer marked ${checkin.toLowerCase()}`);
+    if (vehicle) pieces.push(`vehicle listed as ${vehicle}`);
+    advisorObserved = pieces.join(" • ");
+  }
+
+  return {
+    customerReported,
+    advisorObserved,
+    techFound: "",
+    recommendedService: "",
+    workPerformed: "",
+  };
+}
+
+async function fileToJpegDataUrl(file: File, maxW = 1600, maxH = 1600, quality = 0.84) {
+  const typeOk = /^image\//i.test(file.type);
+  if (!typeOk) throw new Error("Please choose an image file.");
+
+  const url = URL.createObjectURL(file);
+
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const i = new Image();
+      i.onload = () => resolve(i);
+      i.onerror = () => reject(new Error("Failed to load image."));
+      i.src = url;
+    });
+
+    const w = img.naturalWidth || img.width;
+    const h = img.naturalHeight || img.height;
+
+    const wr = maxW / Math.max(1, w);
+    const hr = maxH / Math.max(1, h);
+    const r = Math.min(1, wr, hr);
+
+    const nw = Math.max(1, Math.round(w * r));
+    const nh = Math.max(1, Math.round(h * r));
+
+    const canvas = document.createElement("canvas");
+    canvas.width = nw;
+    canvas.height = nh;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Canvas not available.");
+
+    ctx.drawImage(img, 0, 0, nw, nh);
+    return canvas.toDataURL("image/jpeg", quality);
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+function approxBytesFromDataUrl(dataUrl: string) {
+  const idx = dataUrl.indexOf(",");
+  if (idx < 0) return dataUrl.length;
+  const b64 = dataUrl.slice(idx + 1);
+  const pad = b64.endsWith("==") ? 2 : b64.endsWith("=") ? 1 : 0;
+  return Math.max(0, Math.floor((b64.length * 3) / 4) - pad);
+}
+
+function toDraftDoc(
+  notes: string,
+  labor: Line[],
+  parts: Line[],
+  next_action_at?: string | null,
+  next_action_label?: string | null,
+  next_action_note?: string | null,
+  service_story?: ServiceStory | null,
+  assigned_tech?: string | null,
+  priority?: string | null,
+  internal_notes?: string | null,
+  proof_photos?: ProofPhoto[] | null,
+): DraftDoc {
+  return {
+    notes: String(notes || ""),
+    labor: normalizeLinesForDoc(labor || []),
+    parts: normalizeLinesForDoc(parts || []),
+
+    next_action_at: next_action_at ? String(next_action_at) : null,
+    next_action_label: next_action_label ? String(next_action_label) : null,
+    next_action_note: next_action_note ? String(next_action_note) : null,
+
+    service_story: normalizeStory(service_story || emptyStory()),
+    assigned_tech: assigned_tech ? String(assigned_tech) : null,
+    priority: priority ? String(priority) : null,
+    internal_notes: internal_notes ? String(internal_notes) : null,
+    proof_photos: normalizeProofPhotos(proof_photos || []),
+  };
+}
+
+function shallowEqDoc(a: DraftDoc, b: DraftDoc) {
+  return JSON.stringify(a) === JSON.stringify(b);
 }
 
 /** -------- Quick Text (Tab shorthand expansion) -------- */
@@ -169,7 +394,6 @@ function expandLastTokenOnTab(e: KeyboardEvent<TextEl>, dict = QUICK_TEXT) {
 
   const el = e.currentTarget;
   const value = el.value ?? "";
-
   const caret = el.selectionStart ?? value.length;
   if (caret !== value.length) return;
 
@@ -197,57 +421,26 @@ type SpeechRec = {
   lang: string;
   interimResults: boolean;
   continuous: boolean;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onresult: ((ev: any) => void) | null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onerror: ((ev: any) => void) | null;
   onend: (() => void) | null;
 };
 
 function getSpeechRecognition(): (new () => SpeechRec) | null {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const w = window as any;
   return w.SpeechRecognition || w.webkitSpeechRecognition || null;
 }
 
-/* ---------- realtime shared draft model ---------- */
-
-type DraftDoc = {
-  notes: string;
-  labor: Line[];
-  parts: Line[];
-  // calendar anchor stored in shared doc
-  next_action_at?: string | null; // datetime-local string (or ISO if you prefer)
-  next_action_label?: string | null;
-  next_action_note?: string | null;
-};
-
-function toDraftDoc(
-  notes: string,
-  labor: Line[],
-  parts: Line[],
-  next_action_at?: string | null,
-  next_action_label?: string | null,
-  next_action_note?: string | null,
-): DraftDoc {
-  return {
-    notes: String(notes || ""),
-    labor: normalizeLinesForDoc(labor || []),
-    parts: normalizeLinesForDoc(parts || []),
-
-    next_action_at: next_action_at ? String(next_action_at) : null,
-    next_action_label: next_action_label ? String(next_action_label) : null,
-    next_action_note: next_action_note ? String(next_action_note) : null,
-  };
-}
-
-function shallowEqDoc(a: DraftDoc, b: DraftDoc) {
-  return JSON.stringify(a) === JSON.stringify(b);
-}
-
 /* ---------- tuning ---------- */
-// Option B: tone down DB writes (quieter pulse)
 const SAVE_DEBOUNCE_MS = 1200;
+const PROOF_LABELS = [
+  "Beginning",
+  "Diagnosis",
+  "Old Part",
+  "New Part",
+  "Middle",
+  "Completion",
+] as const;
 
 export default function WorkOrderDrawer({
   open,
@@ -258,29 +451,29 @@ export default function WorkOrderDrawer({
   onStageChange,
 }: Props) {
   const nav = useNavigate();
-  // singleton client (one per tab)
   const supabase = useMemo(() => getSupabase(), []);
 
   const jobId = row?.id || "";
-  const draftKey = useMemo(
-    () => (jobId ? `workOrderDraft:${jobId}` : ""),
-    [jobId],
-  );
+  const draftKey = useMemo(() => (jobId ? `workOrderDraft:${jobId}` : ""), [jobId]);
 
   const [notes, setNotes] = useState("");
-  const [labor, setLabor] = useState<Line[]>(() => [
-    { id: makeId(), description: "", price: "" },
-  ]);
-  const [parts, setParts] = useState<Line[]>(() => [
-    { id: makeId(), description: "", price: "" },
-  ]);
+  const [labor, setLabor] = useState<Line[]>(() => [{ id: makeId(), description: "", price: "" }]);
+  const [parts, setParts] = useState<Line[]>(() => [{ id: makeId(), description: "", price: "" }]);
 
-  // calendar anchor state (local + shared doc)
   const [nextActionLabel, setNextActionLabel] = useState<string>("Part ETA");
-  const [nextActionAt, setNextActionAt] = useState<string>(""); // datetime-local value
+  const [nextActionAt, setNextActionAt] = useState<string>("");
   const [nextActionNote, setNextActionNote] = useState<string>("");
 
-  // keep latest values for realtime callback without re-subscribing
+  const [serviceStory, setServiceStory] = useState<ServiceStory>(emptyStory());
+  const [assignedTech, setAssignedTech] = useState<string>("");
+  const [priority, setPriority] = useState<string>("normal");
+  const [internalNotes, setInternalNotes] = useState<string>("");
+
+  const [proofPhotos, setProofPhotos] = useState<ProofPhoto[]>([]);
+  const [photoLabel, setPhotoLabel] = useState<string>("Beginning");
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const [photoError, setPhotoError] = useState<string>("");
+
   const notesRef = useRef(notes);
   const laborRef = useRef(labor);
   const partsRef = useRef(parts);
@@ -288,6 +481,12 @@ export default function WorkOrderDrawer({
   const nextActionLabelRef = useRef(nextActionLabel);
   const nextActionAtRef = useRef(nextActionAt);
   const nextActionNoteRef = useRef(nextActionNote);
+
+  const serviceStoryRef = useRef(serviceStory);
+  const assignedTechRef = useRef(assignedTech);
+  const priorityRef = useRef(priority);
+  const internalNotesRef = useRef(internalNotes);
+  const proofPhotosRef = useRef(proofPhotos);
 
   useEffect(() => {
     notesRef.current = notes;
@@ -309,11 +508,25 @@ export default function WorkOrderDrawer({
     nextActionNoteRef.current = nextActionNote;
   }, [nextActionNote]);
 
-  // Live sync status UI
+  useEffect(() => {
+    serviceStoryRef.current = serviceStory;
+  }, [serviceStory]);
+  useEffect(() => {
+    assignedTechRef.current = assignedTech;
+  }, [assignedTech]);
+  useEffect(() => {
+    priorityRef.current = priority;
+  }, [priority]);
+  useEffect(() => {
+    internalNotesRef.current = internalNotes;
+  }, [internalNotes]);
+  useEffect(() => {
+    proofPhotosRef.current = proofPhotos;
+  }, [proofPhotos]);
+
   const [syncLabel, setSyncLabel] = useState<string>("");
   const [savedAt, setSavedAt] = useState<string>("");
 
-  // identify this tab/device so we can ignore our own realtime echoes
   const clientId = useMemo(() => {
     try {
       const existing = sessionStorage.getItem("hp_client_id");
@@ -326,37 +539,32 @@ export default function WorkOrderDrawer({
     }
   }, []);
 
-  const [dictating, setDictating] = useState<null | {
-    kind: "notes" | "labor" | "parts";
-    id?: string;
-  }>(null);
+  const [dictating, setDictating] = useState<null | { kind: "notes" | "labor" | "parts"; id?: string }>(null);
 
   const recRef = useRef<SpeechRec | null>(null);
   const speechCtor = useMemo(() => getSpeechRecognition(), []);
 
-  // refs for debounce + stale-guard
-  const lastAppliedRemoteRef = useRef<string>(""); // json string
-  const lastSentRef = useRef<string>(""); // json string
+  const lastAppliedRemoteRef = useRef<string>("");
+  const lastSentRef = useRef<string>("");
   const saveTimerRef = useRef<number | null>(null);
   const mountedRef = useRef(false);
 
-  // prevent "blank overwrite" during initial open/load
-  const hydratingRef = useRef<boolean>(false); // true while we are loading initial state
-  const hydratedOnceRef = useRef<boolean>(false); // becomes true after DB load finishes at least once
+  const hydratingRef = useRef<boolean>(false);
+  const hydratedOnceRef = useRef<boolean>(false);
 
-  /* ---------- Load draft when opening a job (local first, then DB) ---------- */
+  /* ---------- Load draft when opening a job ---------- */
   useEffect(() => {
     if (!row?.id) return;
 
     mountedRef.current = true;
-    // block save effect until DB read finishes (prevents blank overwrite)
     hydratingRef.current = true;
     hydratedOnceRef.current = false;
 
     setSyncLabel("Live sync");
     setSavedAt("");
+    setPhotoError("");
+    setPhotoBusy(false);
 
-    // 1) load local immediately (fast UX)
     try {
       const raw = localStorage.getItem(draftKey);
       if (raw) {
@@ -365,10 +573,18 @@ export default function WorkOrderDrawer({
         setLabor(ensureUiLines((parsed.labor as Partial<Line>[]) || []));
         setParts(ensureUiLines((parsed.parts as Partial<Line>[]) || []));
 
-        // calendar anchor from local
         setNextActionLabel(String(parsed.nextActionLabel || "Part ETA"));
         setNextActionAt(String(parsed.nextActionAt || ""));
         setNextActionNote(String(parsed.nextActionNote || ""));
+
+        const seeded = seedStoryFromRow(row);
+        const incomingStory = normalizeStory(parsed.serviceStory);
+        setServiceStory(hasAnyStoryContent(incomingStory) ? incomingStory : seeded);
+
+        setAssignedTech(String(parsed.assignedTech || ""));
+        setPriority(String(parsed.priority || "normal"));
+        setInternalNotes(String(parsed.internalNotes || ""));
+        setProofPhotos(normalizeProofPhotos(parsed.proofPhotos || []));
 
         if (parsed.savedAtIso) {
           setSavedAt(formatTime(String(parsed.savedAtIso)));
@@ -381,6 +597,12 @@ export default function WorkOrderDrawer({
         setNextActionLabel("Part ETA");
         setNextActionAt("");
         setNextActionNote("");
+
+        setServiceStory(seedStoryFromRow(row));
+        setAssignedTech("");
+        setPriority("normal");
+        setInternalNotes("");
+        setProofPhotos([]);
       }
     } catch {
       setNotes("");
@@ -390,9 +612,14 @@ export default function WorkOrderDrawer({
       setNextActionLabel("Part ETA");
       setNextActionAt("");
       setNextActionNote("");
+
+      setServiceStory(seedStoryFromRow(row));
+      setAssignedTech("");
+      setPriority("normal");
+      setInternalNotes("");
+      setProofPhotos([]);
     }
 
-    // 2) load shared DB draft (authoritative for cross-device)
     (async () => {
       try {
         const { data, error } = await supabase
@@ -406,7 +633,6 @@ export default function WorkOrderDrawer({
 
         if (error) {
           setSyncLabel("Live sync (read err)");
-          // still unblock saving so user edits can persist
           hydratedOnceRef.current = true;
           hydratingRef.current = false;
           return;
@@ -419,9 +645,14 @@ export default function WorkOrderDrawer({
             doc.notes || "",
             (doc.labor as any) || [],
             (doc.parts as any) || [],
-            (doc as any).next_action_at || null,
-            (doc as any).next_action_label || null,
-            (doc as any).next_action_note || null,
+            doc.next_action_at || null,
+            doc.next_action_label || null,
+            doc.next_action_note || null,
+            doc.service_story || emptyStory(),
+            doc.assigned_tech || "",
+            doc.priority || "normal",
+            doc.internal_notes || "",
+            doc.proof_photos || [],
           );
 
           const js = JSON.stringify(normalized);
@@ -431,24 +662,28 @@ export default function WorkOrderDrawer({
           setLabor(ensureUiLines(normalized.labor));
           setParts(ensureUiLines(normalized.parts));
 
-          // calendar anchor from DB
-          setNextActionLabel(
-            String((normalized as any).next_action_label || "Part ETA"),
-          );
-          setNextActionAt(String((normalized as any).next_action_at || ""));
-          setNextActionNote(String((normalized as any).next_action_note || ""));
+          setNextActionLabel(String(normalized.next_action_label || "Part ETA"));
+          setNextActionAt(String(normalized.next_action_at || ""));
+          setNextActionNote(String(normalized.next_action_note || ""));
+
+          const seeded = seedStoryFromRow(row);
+          const incomingStory = normalizeStory(normalized.service_story);
+          setServiceStory(hasAnyStoryContent(incomingStory) ? incomingStory : seeded);
+
+          setAssignedTech(String(normalized.assigned_tech || ""));
+          setPriority(String(normalized.priority || "normal"));
+          setInternalNotes(String(normalized.internal_notes || ""));
+          setProofPhotos(normalizeProofPhotos(normalized.proof_photos || []));
 
           if (data.updated_at) setSavedAt(formatTime(String(data.updated_at)));
           setSyncLabel("Live sync");
         }
 
-        // DB read finished (even if no doc existed)
         hydratedOnceRef.current = true;
         hydratingRef.current = false;
       } catch {
         if (!mountedRef.current) return;
         setSyncLabel("Live sync (read err)");
-        // still unblock saving so user edits can persist
         hydratedOnceRef.current = true;
         hydratingRef.current = false;
       }
@@ -462,10 +697,9 @@ export default function WorkOrderDrawer({
       if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
       saveTimerRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [row?.id, draftKey]);
+  }, [row?.id, draftKey, row, supabase]);
 
-  /* ---------- Realtime subscribe to shared DB draft ---------- */
+  /* ---------- Realtime subscribe ---------- */
   useEffect(() => {
     if (!open || !row?.id) return;
 
@@ -483,7 +717,6 @@ export default function WorkOrderDrawer({
           const next = p.new;
           if (!next?.doc) return;
 
-          // ignore our own writes (device/tab)
           const updatedByDevice = String(next.updated_by_device_id || "");
           if (updatedByDevice && updatedByDevice === clientId) return;
 
@@ -492,18 +725,20 @@ export default function WorkOrderDrawer({
             doc.notes || "",
             (doc.labor as any) || [],
             (doc.parts as any) || [],
-            (doc as any).next_action_at || null,
-            (doc as any).next_action_label || null,
-            (doc as any).next_action_note || null,
+            doc.next_action_at || null,
+            doc.next_action_label || null,
+            doc.next_action_note || null,
+            doc.service_story || emptyStory(),
+            doc.assigned_tech || "",
+            doc.priority || "normal",
+            doc.internal_notes || "",
+            doc.proof_photos || [],
           );
 
           const js = JSON.stringify(normalized);
-
-          // prevent loops + redundant sets
           if (js === lastAppliedRemoteRef.current) return;
           lastAppliedRemoteRef.current = js;
 
-          // compare against latest local state (refs)
           const current = toDraftDoc(
             notesRef.current,
             laborRef.current,
@@ -511,6 +746,11 @@ export default function WorkOrderDrawer({
             nextActionAtRef.current || null,
             nextActionLabelRef.current || null,
             nextActionNoteRef.current || null,
+            serviceStoryRef.current,
+            assignedTechRef.current || null,
+            priorityRef.current || null,
+            internalNotesRef.current || null,
+            proofPhotosRef.current,
           );
           if (shallowEqDoc(current, normalized)) return;
 
@@ -518,12 +758,18 @@ export default function WorkOrderDrawer({
           setLabor(ensureUiLines(normalized.labor));
           setParts(ensureUiLines(normalized.parts));
 
-          // calendar anchor from realtime
-          setNextActionLabel(
-            String((normalized as any).next_action_label || "Part ETA"),
-          );
-          setNextActionAt(String((normalized as any).next_action_at || ""));
-          setNextActionNote(String((normalized as any).next_action_note || ""));
+          setNextActionLabel(String(normalized.next_action_label || "Part ETA"));
+          setNextActionAt(String(normalized.next_action_at || ""));
+          setNextActionNote(String(normalized.next_action_note || ""));
+
+          const seeded = seedStoryFromRow(row);
+          const incomingStory = normalizeStory(normalized.service_story);
+          setServiceStory(hasAnyStoryContent(incomingStory) ? incomingStory : seeded);
+
+          setAssignedTech(String(normalized.assigned_tech || ""));
+          setPriority(String(normalized.priority || "normal"));
+          setInternalNotes(String(normalized.internal_notes || ""));
+          setProofPhotos(normalizeProofPhotos(normalized.proof_photos || []));
 
           if (next.updated_at) setSavedAt(formatTime(String(next.updated_at)));
           setSyncLabel("Live sync");
@@ -539,14 +785,11 @@ export default function WorkOrderDrawer({
         supabase.removeChannel(chan);
       } catch {}
     };
-    // NOTE: do NOT include notes/labor/parts here; prevents re-subscribing on every keystroke
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, row?.id, clientId]);
+  }, [open, row?.id, clientId, row, supabase]);
 
-  /* ---------- Save: local (always) + shared DB (debounced) ---------- */
+  /* ---------- Save ---------- */
   useEffect(() => {
     if (!row?.id) return;
-    // Critical: do NOT save while initial local+DB hydration is happening
     if (hydratingRef.current || !hydratedOnceRef.current) return;
 
     const laborTotal = total(labor);
@@ -564,20 +807,23 @@ export default function WorkOrderDrawer({
       technicianCode: (employeeCode || "").trim() || undefined,
       technicianName: (employeeName || "").trim() || undefined,
 
-      // store for local reload convenience
       nextActionLabel,
       nextActionAt,
       nextActionNote,
 
+      serviceStory,
+      assignedTech,
+      priority,
+      internalNotes,
+      proofPhotos,
+
       savedAtIso: new Date().toISOString(),
     };
 
-    // 1) local safety draft
     try {
       localStorage.setItem(draftKey, JSON.stringify(payload));
     } catch {}
 
-    // 2) shared DB (debounced)
     const doc = toDraftDoc(
       notes,
       labor,
@@ -585,13 +831,15 @@ export default function WorkOrderDrawer({
       nextActionAt || null,
       nextActionLabel || null,
       nextActionNote || null,
+      serviceStory,
+      assignedTech || null,
+      priority || null,
+      internalNotes || null,
+      proofPhotos,
     );
     const js = JSON.stringify(doc);
 
-    // If we just applied this from remote, don't immediately re-upsert
     if (js === lastAppliedRemoteRef.current) return;
-
-    // If we already sent same content, skip
     if (js === lastSentRef.current) return;
 
     if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
@@ -601,23 +849,15 @@ export default function WorkOrderDrawer({
 
         const tech =
           (employeeCode || "").trim() ||
-          (
-            row.stage_updated_by_employee_code ||
-            row.handled_by_employee_code ||
-            ""
-          ).trim() ||
+          (row.stage_updated_by_employee_code || row.handled_by_employee_code || "").trim() ||
           "";
 
         const { error } = await supabase.from("work_order_drafts").upsert(
           {
             job_id: row.id,
-            // your table expects shop_slug
             shop_slug: row.slug,
-
             doc,
-            // device id to ignore our own realtime echoes
             updated_by_device_id: clientId,
-            // optional: who typed it
             updated_by_employee_code: tech || null,
             updated_by: tech || null,
           },
@@ -636,8 +876,6 @@ export default function WorkOrderDrawer({
         setSyncLabel("Live sync (save err)");
       }
     }, SAVE_DEBOUNCE_MS);
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     row?.id,
     draftKey,
@@ -647,10 +885,16 @@ export default function WorkOrderDrawer({
     nextActionLabel,
     nextActionAt,
     nextActionNote,
+    serviceStory,
+    assignedTech,
+    priority,
+    internalNotes,
+    proofPhotos,
     row,
     employeeCode,
     employeeName,
     clientId,
+    supabase,
   ]);
 
   function updateLine(
@@ -666,9 +910,54 @@ export default function WorkOrderDrawer({
     setter((prev) => [...prev, { id: makeId(), description: "", price: "" }]);
   }
 
+  function updateStoryField(key: keyof ServiceStory, value: string) {
+    setServiceStory((prev) => ({ ...prev, [key]: value }));
+  }
+
+  async function handleProofPhotoChange(e: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    setPhotoBusy(true);
+    setPhotoError("");
+
+    try {
+      const built: ProofPhoto[] = [];
+
+      for (const file of files) {
+        const dataUrl = await fileToJpegDataUrl(file, 1600, 1600, 0.84);
+        const bytes = approxBytesFromDataUrl(dataUrl);
+        if (bytes > 950_000) {
+          throw new Error("One of the proof photos is too large. Try a smaller image.");
+        }
+
+        built.push({
+          id: makeId(),
+          label: photoLabel || "General",
+          name: file.name || "photo.jpg",
+          mime: "image/jpeg",
+          dataUrl,
+          createdAt: new Date().toISOString(),
+        });
+      }
+
+      setProofPhotos((prev) => [...built, ...prev]);
+    } catch (err: any) {
+      setPhotoError(err?.message || "Failed to attach proof photo.");
+    } finally {
+      e.target.value = "";
+      setPhotoBusy(false);
+    }
+  }
+
+  function removeProofPhoto(id: string) {
+    setProofPhotos((prev) => prev.filter((p) => p.id !== id));
+  }
+
   const laborTotal = total(labor);
   const partsTotal = total(parts);
   const grand = laborTotal + partsTotal;
+  const serviceSummary = useMemo(() => buildServiceSummary(serviceStory), [serviceStory]);
 
   function close() {
     try {
@@ -690,11 +979,7 @@ export default function WorkOrderDrawer({
 
     const techCode =
       (employeeCode || "").trim() ||
-      (
-        row.stage_updated_by_employee_code ||
-        row.handled_by_employee_code ||
-        ""
-      ).trim() ||
+      (row.stage_updated_by_employee_code || row.handled_by_employee_code || "").trim() ||
       "";
 
     const data: PrintData = {
@@ -708,10 +993,15 @@ export default function WorkOrderDrawer({
       technicianCode: techCode || undefined,
       technicianName: (employeeName || "").trim() || undefined,
 
-      // carry into print payload too (harmless even if print page ignores)
       nextActionLabel,
       nextActionAt,
       nextActionNote,
+
+      serviceStory,
+      assignedTech,
+      priority,
+      internalNotes,
+      proofPhotos,
 
       savedAtIso: new Date().toISOString(),
     };
@@ -749,18 +1039,14 @@ export default function WorkOrderDrawer({
     rec.interimResults = false;
     rec.continuous = false;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     rec.onresult = (ev: any) => {
       const t = ev?.results?.[0]?.[0]?.transcript;
       if (typeof t === "string" && t.trim()) {
-        setNotes((prev) =>
-          prev ? prev.trimEnd() + "\n" + t.trim() : t.trim(),
-        );
+        setNotes((prev) => (prev ? prev.trimEnd() + "\n" + t.trim() : t.trim()));
       }
     };
 
     rec.onerror = () => {
-      // iOS/Safari can get stuck "green" without onend; force reset
       try {
         rec.abort();
       } catch {}
@@ -795,7 +1081,6 @@ export default function WorkOrderDrawer({
     rec.interimResults = false;
     rec.continuous = false;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     rec.onresult = (ev: any) => {
       const t = ev?.results?.[0]?.[0]?.transcript;
       if (typeof t === "string" && t.trim()) {
@@ -804,9 +1089,7 @@ export default function WorkOrderDrawer({
           setLabor((prev) =>
             prev.map((l) => {
               if (l.id !== lineId) return l;
-              const merged = l.description
-                ? l.description.trimEnd() + " " + text
-                : text;
+              const merged = l.description ? l.description.trimEnd() + " " + text : text;
               return { ...l, description: merged };
             }),
           );
@@ -814,9 +1097,7 @@ export default function WorkOrderDrawer({
           setParts((prev) =>
             prev.map((p) => {
               if (p.id !== lineId) return p;
-              const merged = p.description
-                ? p.description.trimEnd() + " " + text
-                : text;
+              const merged = p.description ? p.description.trimEnd() + " " + text : text;
               return { ...p, description: merged };
             }),
           );
@@ -825,7 +1106,6 @@ export default function WorkOrderDrawer({
     };
 
     rec.onerror = () => {
-      // iOS/Safari can get stuck "green" without onend; force reset
       try {
         rec.abort();
       } catch {}
@@ -843,8 +1123,7 @@ export default function WorkOrderDrawer({
   if (!open || !row) return null;
 
   const stage = (row.current_stage || "diagnosing") as JobStage;
-  const lastBy =
-    row.stage_updated_by_employee_code || row.handled_by_employee_code || "";
+  const lastBy = row.stage_updated_by_employee_code || row.handled_by_employee_code || "";
   const lastAt = row.stage_updated_at || "";
 
   const techLabel =
@@ -853,50 +1132,41 @@ export default function WorkOrderDrawer({
     (lastBy || "").trim() ||
     "";
 
+  const customerName = row.payload?.name || "Customer";
+  const vehicleLabel = row.payload?.vehicle || "Vehicle";
+  const phoneLabel = row.payload?.phone || "-";
+  const serviceChoice = row.payload?.service_choice || "-";
+  const checkinMode = row.payload?.checkin_mode || "-";
+  const photoUrl = row.payload?.photo?.data_url || row.payload?.photo_url || "";
+
   return (
-    <div
-      className="fixed inset-0 bg-black/60 flex justify-end z-50"
-      onClick={close}
-    >
+    <div className="fixed inset-0 z-50 flex justify-end bg-black/60" onClick={close}>
       <div
-        className="w-[520px] bg-slate-950 text-white h-full overflow-y-auto p-6 space-y-6"
+        className="h-full w-[620px] overflow-y-auto bg-slate-950 p-6 text-white space-y-6"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-start gap-4">
           <div className="min-w-0">
-            <div className="text-2xl font-bold truncate">
-              {row.payload?.vehicle || "Vehicle"}
-            </div>
-            <div className="text-sm text-slate-300 truncate">
-              {row.payload?.name || "Customer"}
-            </div>
-
+            <div className="text-2xl font-bold truncate">{vehicleLabel}</div>
+            <div className="text-sm text-slate-300 truncate">{customerName}</div>
             <div className="text-xs text-slate-500 mt-1">
               {new Date(row.created_at).toLocaleString()}
             </div>
 
             <div className="text-xs text-slate-400 mt-2">
-              Stage:{" "}
-              <span className="text-slate-200 font-semibold">{stage}</span>
+              Stage: <span className="text-slate-200 font-semibold">{stage}</span>
               {lastBy ? (
                 <>
                   {" "}
-                  - Last:{" "}
-                  <span className="text-slate-200 font-semibold">{lastBy}</span>
-                  {lastAt ? (
-                    <span className="text-slate-400">
-                      {" "}
-                      @ {formatTime(lastAt)}
-                    </span>
-                  ) : null}
+                  - Last: <span className="text-slate-200 font-semibold">{lastBy}</span>
+                  {lastAt ? <span className="text-slate-400"> @ {formatTime(lastAt)}</span> : null}
                 </>
               ) : null}
             </div>
 
             {techLabel ? (
               <div className="text-[11px] text-slate-500 mt-1">
-                Technician:{" "}
-                <span className="text-slate-300 font-semibold">{techLabel}</span>
+                Technician: <span className="text-slate-300 font-semibold">{techLabel}</span>
               </div>
             ) : null}
 
@@ -904,21 +1174,50 @@ export default function WorkOrderDrawer({
               <span className="text-[11px] font-semibold rounded-md border border-emerald-700/60 bg-emerald-600/10 px-2 py-1 text-emerald-200">
                 {syncLabel || "Live sync"}
               </span>
-              {savedAt ? (
-                <span className="text-[11px] text-slate-500">
-                  Saved: {savedAt}
-                </span>
-              ) : null}
+              {savedAt ? <span className="text-[11px] text-slate-500">Saved: {savedAt}</span> : null}
             </div>
           </div>
 
           <button
             type="button"
             onClick={close}
-            className="border border-slate-700 px-3 py-2 rounded-lg hover:border-slate-400"
+            className="rounded-lg border border-slate-700 px-3 py-2 hover:border-slate-400"
           >
             Close
           </button>
+        </div>
+
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4 space-y-4">
+          <div className="text-lg font-semibold">Intake</div>
+
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <InfoBox label="Customer" value={customerName} />
+            <InfoBox label="Phone" value={phoneLabel} />
+            <InfoBox label="Vehicle" value={vehicleLabel} />
+            <InfoBox label="Service" value={serviceChoice} />
+            <InfoBox label="Check-In" value={checkinMode} />
+            <InfoBox label="Receipt" value={row.payload?.receipt_id || row.id} />
+          </div>
+
+          {row.payload?.message ? (
+            <div>
+              <div className="text-sm text-slate-400 mb-1">Customer Message</div>
+              <div className="rounded-xl border border-slate-700 bg-slate-900 p-3 text-sm text-slate-200">
+                {row.payload.message}
+              </div>
+            </div>
+          ) : null}
+
+          {photoUrl ? (
+            <div>
+              <div className="text-sm text-slate-400 mb-1">Intake Photo</div>
+              <img
+                src={photoUrl}
+                alt="Intake"
+                className="max-h-64 w-full rounded-xl border border-slate-700 object-cover"
+              />
+            </div>
+          ) : null}
         </div>
 
         {onStageChange ? (
@@ -973,7 +1272,128 @@ export default function WorkOrderDrawer({
           </div>
         ) : null}
 
-        {/* Technician Notes */}
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4 space-y-4">
+          <div className="text-lg font-semibold">Service Story</div>
+
+          <StoryField
+            label="Customer Reported"
+            value={serviceStory.customerReported}
+            onChange={(v) => updateStoryField("customerReported", v)}
+            placeholder="What the customer said was happening..."
+          />
+
+          <StoryField
+            label="Advisor Observed"
+            value={serviceStory.advisorObserved}
+            onChange={(v) => updateStoryField("advisorObserved", v)}
+            placeholder="What the advisor noticed at intake..."
+          />
+
+          <StoryField
+            label="Tech Found"
+            value={serviceStory.techFound}
+            onChange={(v) => updateStoryField("techFound", v)}
+            placeholder="What the tech found during diagnosis..."
+          />
+
+          <StoryField
+            label="Recommended Service"
+            value={serviceStory.recommendedService}
+            onChange={(v) => updateStoryField("recommendedService", v)}
+            placeholder="What service is recommended..."
+          />
+
+          <StoryField
+            label="Work Performed"
+            value={serviceStory.workPerformed}
+            onChange={(v) => updateStoryField("workPerformed", v)}
+            placeholder="What was actually done..."
+          />
+
+          <div className="rounded-xl border border-emerald-700/50 bg-emerald-500/10 p-3">
+            <div className="text-xs uppercase tracking-wide text-emerald-300 font-semibold">
+              Stitched Service Summary
+            </div>
+            <div className="mt-2 text-sm leading-6 text-emerald-100">
+              {serviceSummary || "Service summary will build here as the story is filled out."}
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4 space-y-4">
+          <div className="text-lg font-semibold">Proof Photos</div>
+
+          <div className="grid grid-cols-[180px_1fr] gap-2">
+            <select
+              value={photoLabel}
+              onChange={(e) => setPhotoLabel(e.target.value)}
+              className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm"
+            >
+              {PROOF_LABELS.map((label) => (
+                <option key={label} value={label}>
+                  {label}
+                </option>
+              ))}
+            </select>
+
+            <label className="inline-flex items-center justify-center rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm font-semibold cursor-pointer hover:border-slate-500">
+              {photoBusy ? "Uploading..." : "Add Photo"}
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                multiple
+                className="hidden"
+                onChange={handleProofPhotoChange}
+                disabled={photoBusy}
+              />
+            </label>
+          </div>
+
+          <div className="text-xs text-slate-500">
+            Beginning, diagnosis, old parts, new parts, middle progress, completion.
+          </div>
+
+          {photoError ? (
+            <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+              {photoError}
+            </div>
+          ) : null}
+
+          {proofPhotos.length ? (
+            <div className="grid grid-cols-2 gap-3">
+              {proofPhotos.map((photo) => (
+                <div key={photo.id} className="rounded-xl border border-slate-700 bg-slate-900 p-2">
+                  <img
+                    src={photo.dataUrl}
+                    alt={photo.label}
+                    className="h-36 w-full rounded-lg object-cover border border-slate-800"
+                  />
+                  <div className="mt-2 flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="text-xs font-semibold text-emerald-300 uppercase tracking-wide">
+                        {photo.label}
+                      </div>
+                      <div className="text-xs text-slate-300 truncate">{photo.name}</div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeProofPhoto(photo.id)}
+                      className="rounded-md border border-slate-700 px-2 py-1 text-[11px] hover:border-slate-500"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-slate-700 bg-slate-900/40 p-4 text-sm text-slate-500">
+              No drawer proof photos yet.
+            </div>
+          )}
+        </div>
+
         <div>
           <div className="flex items-center justify-between gap-2 mb-1">
             <div className="text-sm text-slate-400">Technician Notes</div>
@@ -993,11 +1413,7 @@ export default function WorkOrderDrawer({
                     ? "border-emerald-400 text-emerald-200 bg-emerald-500/10"
                     : "border-slate-700 text-slate-200 hover:border-slate-400"
               }`}
-              title={
-                !speechCtor
-                  ? "Voice input not supported in this browser"
-                  : "Dictate notes"
-              }
+              title={!speechCtor ? "Voice input not supported in this browser" : "Dictate notes"}
             >
               {dictating?.kind === "notes" ? "Listening..." : "Mic"}
             </button>
@@ -1010,17 +1426,48 @@ export default function WorkOrderDrawer({
             placeholder="Diagnosis, findings, recommendations..."
           />
           <div className="text-[11px] text-slate-500 mt-2">
-            (Live sync + local safety draft - so refresh will not nuke it.)
+            Live sync + local safety draft.
           </div>
         </div>
 
-        {/* Next Date (Calendar Anchor) */}
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4 space-y-4">
+          <div className="text-lg font-semibold">Assignment</div>
+
+          <div>
+            <div className="text-sm text-slate-400 mb-1">Assigned Tech</div>
+            <input
+              value={assignedTech}
+              onChange={(e) => setAssignedTech(e.target.value)}
+              placeholder="Assign technician"
+              className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2"
+            />
+          </div>
+
+          <div>
+            <div className="text-sm text-slate-400 mb-2">Priority</div>
+            <div className="flex gap-2 flex-wrap">
+              {["high", "normal", "low"].map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setPriority(p)}
+                  className={`rounded-lg border px-3 py-2 text-sm font-semibold capitalize ${
+                    priority === p
+                      ? "border-blue-400 bg-blue-500/10 text-white"
+                      : "border-slate-700 text-slate-300 hover:border-slate-500"
+                  }`}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
         <div>
           <div className="flex items-center justify-between gap-2 mb-2">
             <div className="text-sm text-slate-400">Next Date</div>
-            <div className="text-[11px] text-slate-500">
-              Part ETA / customer return
-            </div>
+            <div className="text-[11px] text-slate-500">Part ETA / customer return</div>
           </div>
 
           <div className="grid grid-cols-2 gap-2">
@@ -1086,29 +1533,21 @@ export default function WorkOrderDrawer({
                       ? "border-emerald-400 text-emerald-200 bg-emerald-500/10"
                       : "border-slate-700 text-slate-200 hover:border-slate-400"
                 }`}
-                title={
-                  !speechCtor
-                    ? "Voice input not supported"
-                    : "Dictate labor description"
-                }
+                title={!speechCtor ? "Voice input not supported" : "Dictate labor description"}
               >
                 Mic
               </button>
 
               <input
                 value={l.description}
-                onChange={(e) =>
-                  updateLine(setLabor, l.id, "description", e.target.value)
-                }
+                onChange={(e) => updateLine(setLabor, l.id, "description", e.target.value)}
                 onKeyDown={expandLastTokenOnTab}
                 placeholder="Labor description"
                 className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 h-9"
               />
               <input
                 value={l.price}
-                onChange={(e) =>
-                  updateLine(setLabor, l.id, "price", e.target.value)
-                }
+                onChange={(e) => updateLine(setLabor, l.id, "price", e.target.value)}
                 placeholder="0.00"
                 className="w-24 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-right h-9"
               />
@@ -1153,29 +1592,21 @@ export default function WorkOrderDrawer({
                       ? "border-emerald-400 text-emerald-200 bg-emerald-500/10"
                       : "border-slate-700 text-slate-200 hover:border-slate-400"
                 }`}
-                title={
-                  !speechCtor
-                    ? "Voice input not supported"
-                    : "Dictate part description"
-                }
+                title={!speechCtor ? "Voice input not supported" : "Dictate part description"}
               >
                 Mic
               </button>
 
               <input
                 value={p.description}
-                onChange={(e) =>
-                  updateLine(setParts, p.id, "description", e.target.value)
-                }
+                onChange={(e) => updateLine(setParts, p.id, "description", e.target.value)}
                 onKeyDown={expandLastTokenOnTab}
                 placeholder="Part"
                 className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 h-9"
               />
               <input
                 value={p.price}
-                onChange={(e) =>
-                  updateLine(setParts, p.id, "price", e.target.value)
-                }
+                onChange={(e) => updateLine(setParts, p.id, "price", e.target.value)}
                 placeholder="0.00"
                 className="w-24 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-right h-9"
               />
@@ -1191,6 +1622,35 @@ export default function WorkOrderDrawer({
           Grand Total: ${grand.toFixed(2)}
         </div>
 
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4 space-y-4">
+          <div className="text-lg font-semibold">Completion</div>
+
+          <div>
+            <div className="text-sm text-slate-400 mb-1">Internal / Final Notes</div>
+            <textarea
+              value={internalNotes}
+              onChange={(e) => setInternalNotes(e.target.value)}
+              className="w-full h-28 bg-slate-900 border border-slate-700 rounded-xl p-3"
+              placeholder="Completion notes, pickup notes, final notes..."
+            />
+          </div>
+
+          <div className="rounded-xl border border-slate-700 bg-slate-900 p-3 text-sm text-slate-300">
+            <div>
+              <span className="text-slate-500">Assigned Tech:</span>{" "}
+              <span className="font-semibold text-slate-100">{assignedTech || "-"}</span>
+            </div>
+            <div className="mt-1">
+              <span className="text-slate-500">Priority:</span>{" "}
+              <span className="font-semibold text-slate-100 capitalize">{priority}</span>
+            </div>
+            <div className="mt-1">
+              <span className="text-slate-500">Current Stage:</span>{" "}
+              <span className="font-semibold text-slate-100">{stage}</span>
+            </div>
+          </div>
+        </div>
+
         <button
           type="button"
           onClick={(e) => {
@@ -1203,6 +1663,41 @@ export default function WorkOrderDrawer({
           Print Work Order
         </button>
       </div>
+    </div>
+  );
+}
+
+function InfoBox({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-slate-700 bg-slate-900 p-3">
+      <div className="text-[11px] uppercase tracking-wide text-slate-500 font-semibold">
+        {label}
+      </div>
+      <div className="mt-1 text-sm text-slate-100 break-words">{value}</div>
+    </div>
+  );
+}
+
+function StoryField({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+}) {
+  return (
+    <div>
+      <div className="text-sm text-slate-400 mb-1">{label}</div>
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full h-24 bg-slate-900 border border-slate-700 rounded-xl p-3"
+        placeholder={placeholder}
+      />
     </div>
   );
 }
