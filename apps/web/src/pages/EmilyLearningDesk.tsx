@@ -29,11 +29,13 @@ import {
   Save,
   Search,
   Send,
+  Sparkles,
   StickyNote,
   Tag,
   Trash2,
   Upload,
   User,
+  Wand2,
 } from "lucide-react";
 
 import GuardianPanel from "../components/guardian/GuardianPanel";
@@ -52,6 +54,14 @@ type ProjectPriority = "high" | "medium" | "normal";
 type DeskTheme = "pink" | "lavender" | "sky" | "mint" | "classic";
 type BeamRecipient = "Dad" | "Teacher" | "Friend" | "Custom";
 type BeamPreset = "Help" | "Teacher Update" | "Study Share" | "Freeform";
+type DrawingChallengeCategory =
+  | "characters"
+  | "animals"
+  | "fantasy"
+  | "everyday"
+  | "story"
+  | "surprise";
+type DrawingChallengeDifficulty = "easy" | "medium" | "bold";
 
 type SchoolProject = {
   id: string;
@@ -112,6 +122,16 @@ type MathCoachProblem = {
   answer: number;
   steps: string[];
   skill: string;
+};
+
+type DrawingChallenge = {
+  title: string;
+  prompt: string;
+  twist: string;
+  colorMood: string;
+  focusSkill: string;
+  category: DrawingChallengeCategory;
+  difficulty: DrawingChallengeDifficulty;
 };
 
 const STAGE_LABELS: Record<ProjectStage, string> = {
@@ -206,6 +226,98 @@ const LEARNING_TIPS = [
   "Explain the problem out loud. Your brain often hears the answer first.",
   "A little color and structure can make studying feel easier.",
   "When drawing, start light. You can always make lines darker later.",
+];
+
+const DRAWING_SUBJECTS: Record<DrawingChallengeCategory, string[]> = {
+  characters: [
+    "a sleepy superhero",
+    "a girl with giant headphones",
+    "a tiny robot artist",
+    "a dragon babysitter",
+    "a skateboarding princess",
+    "a friendly alien explorer",
+  ],
+  animals: [
+    "a cat wearing rain boots",
+    "a dolphin with a backpack",
+    "a giraffe at school",
+    "a fox baking cupcakes",
+    "a turtle racing a bike",
+    "a puppy astronaut",
+  ],
+  fantasy: [
+    "a floating castle",
+    "a crystal unicorn",
+    "a moon garden",
+    "a mermaid library",
+    "a cloud village",
+    "a glowing fairy bridge",
+  ],
+  everyday: [
+    "your dream bedroom",
+    "a cozy reading corner",
+    "a super fun lunchbox",
+    "a backpack with secret gadgets",
+    "a rainy day window scene",
+    "a future treehouse",
+  ],
+  story: [
+    "the moment before a big adventure",
+    "a surprise found in the woods",
+    "a best-friends mission",
+    "a mystery door opening",
+    "the happiest school day ever",
+    "a magical pet rescue",
+  ],
+  surprise: [
+    "a candy volcano",
+    "a singing shoe store",
+    "a pancake planet",
+    "a jellyfish parade",
+    "a monster tea party",
+    "a rainbow cave train",
+  ],
+};
+
+const DRAWING_TWISTS = {
+  easy: [
+    "Use only 3 main shapes to build it first.",
+    "Give it one big silly expression.",
+    "Add one tiny hidden detail.",
+    "Use soft lines first, then darken your favorite parts.",
+  ],
+  medium: [
+    "Show the character doing something, not just standing.",
+    "Add a background with at least 3 objects.",
+    "Use one close-up detail and one far-away detail.",
+    "Make the pose look like it is moving.",
+  ],
+  bold: [
+    "Turn it into a full mini scene with foreground and background.",
+    "Show a strong emotion without writing any words.",
+    "Add a dramatic light source or glowing effect.",
+    "Design it like it could be in a storybook cover.",
+  ],
+};
+
+const DRAWING_COLOR_MOODS = [
+  "Soft pastel colors",
+  "Sunset oranges and pinks",
+  "Ocean blues and teals",
+  "Magic purple glow",
+  "Forest greens and warm browns",
+  "Bright rainbow energy",
+  "Black, white, and one pop color",
+];
+
+const DRAWING_FOCUS_SKILLS = [
+  "Face expression",
+  "Pose and movement",
+  "Background details",
+  "Big shapes first",
+  "Clean line confidence",
+  "Color matching",
+  "Storytelling through drawing",
 ];
 
 const THEME_STYLES: Record<
@@ -400,6 +512,154 @@ function formatTimer(seconds: number) {
   return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
 }
 
+function randomItem<T>(items: T[]) {
+  return items[Math.floor(Math.random() * items.length)];
+}
+
+function tokenizeMathExpression(expression: string): string[] | null {
+  const sanitized = expression.replace(/\s+/g, "");
+  if (!sanitized) return null;
+  if (!/^[0-9+\-*/().]+$/.test(sanitized)) return null;
+
+  const tokens: string[] = [];
+  let i = 0;
+
+  while (i < sanitized.length) {
+    const char = sanitized[i];
+
+    if (/[0-9.]/.test(char)) {
+      let number = char;
+      i += 1;
+
+      while (i < sanitized.length && /[0-9.]/.test(sanitized[i])) {
+        number += sanitized[i];
+        i += 1;
+      }
+
+      if ((number.match(/\./g) ?? []).length > 1) return null;
+      if (number === ".") return null;
+
+      tokens.push(number);
+      continue;
+    }
+
+    if ("+-*/()".includes(char)) {
+      const prev = tokens[tokens.length - 1];
+
+      if (
+        char === "-" &&
+        (tokens.length === 0 || prev === "(" || prev === "+" || prev === "-" || prev === "*" || prev === "/")
+      ) {
+        const next = sanitized[i + 1];
+        if (next && /[0-9.]/.test(next)) {
+          let number = "-";
+          i += 1;
+          while (i < sanitized.length && /[0-9.]/.test(sanitized[i])) {
+            number += sanitized[i];
+            i += 1;
+          }
+          if ((number.match(/\./g) ?? []).length > 1) return null;
+          if (number === "-" || number === "-.") return null;
+          tokens.push(number);
+          continue;
+        }
+      }
+
+      tokens.push(char);
+      i += 1;
+      continue;
+    }
+
+    return null;
+  }
+
+  return tokens;
+}
+
+function evaluateMathExpression(expression: string): number | null {
+  const tokens = tokenizeMathExpression(expression);
+  if (!tokens) return null;
+
+  const values: number[] = [];
+  const operators: string[] = [];
+
+  const precedence = (op: string) => {
+    if (op === "+" || op === "-") return 1;
+    if (op === "*" || op === "/") return 2;
+    return 0;
+  };
+
+  const applyOperator = () => {
+    const op = operators.pop();
+    const b = values.pop();
+    const a = values.pop();
+
+    if (!op || a === undefined || b === undefined) return false;
+
+    let result: number;
+    switch (op) {
+      case "+":
+        result = a + b;
+        break;
+      case "-":
+        result = a - b;
+        break;
+      case "*":
+        result = a * b;
+        break;
+      case "/":
+        if (b === 0) return false;
+        result = a / b;
+        break;
+      default:
+        return false;
+    }
+
+    if (!Number.isFinite(result)) return false;
+    values.push(result);
+    return true;
+  };
+
+  for (const token of tokens) {
+    if (!Number.isNaN(Number(token))) {
+      values.push(Number(token));
+      continue;
+    }
+
+    if (token === "(") {
+      operators.push(token);
+      continue;
+    }
+
+    if (token === ")") {
+      while (operators.length && operators[operators.length - 1] !== "(") {
+        if (!applyOperator()) return null;
+      }
+      if (operators[operators.length - 1] !== "(") return null;
+      operators.pop();
+      continue;
+    }
+
+    while (
+      operators.length &&
+      operators[operators.length - 1] !== "(" &&
+      precedence(operators[operators.length - 1]) >= precedence(token)
+    ) {
+      if (!applyOperator()) return null;
+    }
+
+    operators.push(token);
+  }
+
+  while (operators.length) {
+    if (operators[operators.length - 1] === "(") return null;
+    if (!applyOperator()) return null;
+  }
+
+  if (values.length !== 1) return null;
+  return values[0];
+}
+
 function makeProject(): SchoolProject {
   return {
     id: `EM-${Date.now()}`,
@@ -521,6 +781,53 @@ function buildBeamTitle(
   return `${recipient} Beam Card`;
 }
 
+function buildDrawingChallenge(
+  category: DrawingChallengeCategory,
+  difficulty: DrawingChallengeDifficulty,
+): DrawingChallenge {
+  const resolvedCategory =
+    category === "surprise"
+      ? randomItem(
+          [
+            "characters",
+            "animals",
+            "fantasy",
+            "everyday",
+            "story",
+            "surprise",
+          ] as DrawingChallengeCategory[],
+        )
+      : category;
+
+  const subject = randomItem(DRAWING_SUBJECTS[resolvedCategory]);
+  const twist = randomItem(DRAWING_TWISTS[difficulty]);
+  const colorMood = randomItem(DRAWING_COLOR_MOODS);
+  const focusSkill = randomItem(DRAWING_FOCUS_SKILLS);
+
+  const titlePrefix =
+    resolvedCategory === "characters"
+      ? "Character Challenge"
+      : resolvedCategory === "animals"
+        ? "Animal Challenge"
+        : resolvedCategory === "fantasy"
+          ? "Fantasy Challenge"
+          : resolvedCategory === "everyday"
+            ? "Everyday Challenge"
+            : resolvedCategory === "story"
+              ? "Story Challenge"
+              : "Surprise Challenge";
+
+  return {
+    title: titlePrefix,
+    prompt: `Draw ${subject}.`,
+    twist,
+    colorMood,
+    focusSkill,
+    category: resolvedCategory,
+    difficulty,
+  };
+}
+
 export default function EmilyLearningDesk() {
   const [projects, setProjects] = useState<SchoolProject[]>(INITIAL_PROJECTS);
   const [stickies, setStickies] = useState<Sticky[]>(INITIAL_STICKIES);
@@ -577,6 +884,16 @@ export default function EmilyLearningDesk() {
   const [beamIncludeAttachments, setBeamIncludeAttachments] = useState(false);
   const [copiedBeam, setCopiedBeam] = useState(false);
   const [shareStatus, setShareStatus] = useState("");
+
+  const [challengeCategory, setChallengeCategory] =
+    useState<DrawingChallengeCategory>("characters");
+  const [challengeDifficulty, setChallengeDifficulty] =
+    useState<DrawingChallengeDifficulty>("easy");
+  const [drawingChallenge, setDrawingChallenge] = useState<DrawingChallenge>(() =>
+    buildDrawingChallenge("characters", "easy"),
+  );
+  const [challengeCompletedAt, setChallengeCompletedAt] = useState<string | null>(null);
+  const [challengeTimestampedAt, setChallengeTimestampedAt] = useState<string | null>(null);
 
   const photoInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -733,15 +1050,15 @@ export default function EmilyLearningDesk() {
   function addTimeline(label: string, projectId?: string) {
     const id = projectId ?? selectedProject?.id;
     if (!id) return;
-    setTimeline((prev) => [
-      {
-        id: `TL-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-        projectId: id,
-        time: formatNow(),
-        label,
-      },
-      ...prev,
-    ]);
+
+    const newEntry: TimelineEvent = {
+      id: `TL-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      projectId: id,
+      time: formatNow(),
+      label,
+    };
+
+    setTimeline((prev) => [newEntry, ...prev.slice(0, 99)]);
   }
 
   function handleSelectProject(id: string) {
@@ -967,17 +1284,13 @@ export default function EmilyLearningDesk() {
   }
 
   function runCalculator() {
-    try {
-      const sanitized = calculatorInput.replace(/[^0-9+\-*/().\s]/g, "");
-      if (!sanitized.trim()) {
-        setCalculatorResult("0");
-        return;
-      }
-      const result = Function(`"use strict"; return (${sanitized})`)();
-      setCalculatorResult(String(result));
-    } catch {
+    const result = evaluateMathExpression(calculatorInput);
+    if (result === null) {
       setCalculatorResult("Error");
+      return;
     }
+
+    setCalculatorResult(String(result));
   }
 
   function setRecipient(nextRecipient: BeamRecipient) {
@@ -1098,6 +1411,43 @@ export default function EmilyLearningDesk() {
     setBeamIncludeProject(true);
     setBeamIncludeTimestamp(true);
     setBeamIncludeAttachments(false);
+  }
+
+  function generateNewChallenge() {
+    const next = buildDrawingChallenge(challengeCategory, challengeDifficulty);
+    setDrawingChallenge(next);
+    setChallengeCompletedAt(null);
+    setChallengeTimestampedAt(null);
+    addTimeline(`New drawing challenge generated: ${next.prompt}`);
+  }
+
+  function addChallengeToNote() {
+    const block = [
+      "",
+      "[Drawing Challenge]",
+      `Title: ${drawingChallenge.title}`,
+      `Prompt: ${drawingChallenge.prompt}`,
+      `Twist: ${drawingChallenge.twist}`,
+      `Color Mood: ${drawingChallenge.colorMood}`,
+      `Focus Skill: ${drawingChallenge.focusSkill}`,
+      "",
+    ].join("\n");
+
+    setNoteText((prev) => `${prev.trimEnd()}\n${block}`);
+    setUpdatedAt(formatNow());
+    addTimeline("Drawing challenge added to notebook.");
+  }
+
+  function completeChallenge() {
+    const now = formatNow();
+    setChallengeCompletedAt(now);
+    addTimeline(`Drawing challenge marked complete: ${drawingChallenge.prompt}`);
+  }
+
+  function timestampChallenge() {
+    const now = formatNow();
+    setChallengeTimestampedAt(now);
+    addTimeline(`Drawing challenge timestamped: ${drawingChallenge.prompt}`);
   }
 
   function getCanvasPoint(e: React.PointerEvent<HTMLCanvasElement>) {
@@ -1287,7 +1637,6 @@ export default function EmilyLearningDesk() {
         </header>
 
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-[320px_minmax(0,1fr)_340px]">
-          {/* LEFT */}
           <section
             className={cx(
               "rounded-[24px] border p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)]",
@@ -1481,7 +1830,6 @@ export default function EmilyLearningDesk() {
             </div>
           </section>
 
-          {/* CENTER */}
           <section
             className={cx(
               "rounded-[24px] border p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)] sm:p-4",
@@ -1658,6 +2006,151 @@ export default function EmilyLearningDesk() {
                 </div>
 
                 <div className={cx("mt-4 rounded-[20px] border p-4", theme.artPanel)}>
+                  <div className="mb-3 flex items-start justify-between gap-3">
+                    <div>
+                      <h3 className="text-[15px] font-semibold text-[#243040]">
+                        Emily Drawing Challenge
+                      </h3>
+                      <p className="mt-1 text-xs text-[#6a7380]">
+                        Fresh prompts that make drawing feel fun instead of stuck.
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      <SmallActionButton
+                        label="New Challenge"
+                        icon={Wand2}
+                        onClick={generateNewChallenge}
+                        themeClass={theme.buttonSoft}
+                      />
+                      <SmallActionButton
+                        label="Add to Note"
+                        icon={BookOpen}
+                        onClick={addChallengeToNote}
+                        themeClass={theme.buttonSoft}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div>
+                      <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#778392]">
+                        Category
+                      </div>
+                      <select
+                        value={challengeCategory}
+                        onChange={(e) =>
+                          setChallengeCategory(e.target.value as DrawingChallengeCategory)
+                        }
+                        className={textInputClass()}
+                      >
+                        <option value="characters">Characters</option>
+                        <option value="animals">Animals</option>
+                        <option value="fantasy">Fantasy</option>
+                        <option value="everyday">Everyday</option>
+                        <option value="story">Story</option>
+                        <option value="surprise">Surprise</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#778392]">
+                        Difficulty
+                      </div>
+                      <select
+                        value={challengeDifficulty}
+                        onChange={(e) =>
+                          setChallengeDifficulty(e.target.value as DrawingChallengeDifficulty)
+                        }
+                        className={textInputClass()}
+                      >
+                        <option value="easy">Easy</option>
+                        <option value="medium">Medium</option>
+                        <option value="bold">Bold</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 rounded-[18px] border border-[#d9dce1] bg-white p-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span
+                        className={cx(
+                          "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]",
+                          theme.accentPanel,
+                          theme.accentText,
+                        )}
+                      >
+                        <Sparkles className="h-3.5 w-3.5" />
+                        {drawingChallenge.title}
+                      </span>
+
+                      <span
+                        className={cx(
+                          "rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]",
+                          theme.chip,
+                        )}
+                      >
+                        {drawingChallenge.difficulty}
+                      </span>
+
+                      <span
+                        className={cx(
+                          "rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]",
+                          theme.chip,
+                        )}
+                      >
+                        {drawingChallenge.category}
+                      </span>
+                    </div>
+
+                    <div className="mt-4 text-[24px] font-semibold leading-9 text-[#243040]">
+                      {drawingChallenge.prompt}
+                    </div>
+
+                    <div className="mt-4 grid gap-3 md:grid-cols-3">
+                      <ChallengeInfoCard
+                        label="Creative Twist"
+                        value={drawingChallenge.twist}
+                      />
+                      <ChallengeInfoCard
+                        label="Color Mood"
+                        value={drawingChallenge.colorMood}
+                      />
+                      <ChallengeInfoCard
+                        label="Focus Skill"
+                        value={drawingChallenge.focusSkill}
+                      />
+                    </div>
+
+                    <div className="mt-4 grid gap-2 md:grid-cols-2">
+                      <TimestampChip
+                        label="Completed"
+                        value={challengeCompletedAt ?? "Not yet"}
+                      />
+                      <TimestampChip
+                        label="Timestamped"
+                        value={challengeTimestampedAt ?? "Not yet"}
+                      />
+                    </div>
+
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <SmallActionButton
+                        label="Mark Complete"
+                        icon={CheckCircle2}
+                        onClick={completeChallenge}
+                        themeClass={theme.buttonSoft}
+                      />
+                      <SmallActionButton
+                        label="Timestamp"
+                        icon={Tag}
+                        onClick={timestampChallenge}
+                        themeClass={theme.buttonSoft}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className={cx("mt-4 rounded-[20px] border p-4", theme.artPanel)}>
                   <div className="mb-3 flex items-center justify-between gap-3">
                     <div>
                       <h3 className="text-[15px] font-semibold text-[#243040]">Art Tab / Draw Pad</h3>
@@ -1802,7 +2295,6 @@ export default function EmilyLearningDesk() {
                   )}
                 </div>
 
-                {/* LOWER SUPPORT AREA */}
                 <div className="mt-4 grid gap-4 xl:grid-cols-2">
                   <section className="rounded-[20px] border border-[#d9dce1] bg-[#fcfcfd] p-4">
                     <div className="mb-3 flex items-start justify-between gap-3">
@@ -1958,7 +2450,6 @@ export default function EmilyLearningDesk() {
                 </div>
               </div>
 
-              {/* ACTION RAIL */}
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-1">
                 <ToolButton icon={Mic} label="Voice" onClick={addVoicePlaceholder} themeClass={theme.buttonSoft} />
                 <ToolButton
@@ -1967,6 +2458,12 @@ export default function EmilyLearningDesk() {
                   onClick={() =>
                     canvasRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })
                   }
+                  themeClass={theme.buttonSoft}
+                />
+                <ToolButton
+                  icon={Wand2}
+                  label="Challenge"
+                  onClick={generateNewChallenge}
                   themeClass={theme.buttonSoft}
                 />
                 <ToolButton
@@ -1984,7 +2481,6 @@ export default function EmilyLearningDesk() {
             </div>
           </section>
 
-          {/* RIGHT */}
           <div className="grid gap-4">
             <section
               className={cx(
@@ -2300,7 +2796,6 @@ export default function EmilyLearningDesk() {
               </div>
             </section>
 
-            {/* MOVED UP DIRECTLY UNDER MATH COACH */}
             <section
               className={cx(
                 "rounded-[24px] border p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)]",
@@ -2505,6 +3000,17 @@ function TimestampChip({ label, value }: { label: string; value: string }) {
         {label}
       </div>
       <div className="mt-1 text-sm font-medium text-[#243040]">{value}</div>
+    </div>
+  );
+}
+
+function ChallengeInfoCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-[16px] border border-[#d9dce1] bg-[#f7f8fa] px-3 py-3">
+      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#778392]">
+        {label}
+      </div>
+      <div className="mt-2 text-sm leading-6 text-[#243040]">{value}</div>
     </div>
   );
 }
