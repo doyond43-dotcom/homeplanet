@@ -1,301 +1,645 @@
-import * as React from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useMemo, useState, type ChangeEvent, type ReactNode } from "react";
+import {
+  Camera,
+  CarFront,
+  CheckCircle2,
+  Circle,
+  Clock3,
+  Loader2,
+  ShieldCheck,
+  Wrench,
+} from "lucide-react";
+
+type ServiceChoice = "safety-check" | "tires" | "brakes" | "not-sure" | null;
+type CheckInMode = "waiting" | "dropoff" | null;
+type SubmissionState = "idle" | "submitting" | "success" | "error";
+
+type ReceiptPayload = {
+  receiptId: string;
+  submittedAt: string;
+  customerName: string;
+  vehicle: string;
+  phone: string;
+  service: Exclude<ServiceChoice, null>;
+  mode: Exclude<CheckInMode, null>;
+  photoName?: string;
+};
+
+function cx(...parts: Array<string | false | null | undefined>) {
+  return parts.filter(Boolean).join(" ");
+}
+
+function makeReceiptId() {
+  const stamp = Date.now().toString().slice(-6);
+  const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
+  return `TC-${stamp}-${rand}`;
+}
+
+function formatNow(date = new Date()) {
+  return date.toLocaleString([], {
+    month: "numeric",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function serviceLabel(service: ServiceChoice) {
+  switch (service) {
+    case "safety-check":
+      return "$25 Safety Check";
+    case "tires":
+      return "Tires";
+    case "brakes":
+      return "Brakes";
+    case "not-sure":
+      return "Not Sure";
+    default:
+      return "Not selected";
+  }
+}
+
+function modeLabel(mode: CheckInMode) {
+  switch (mode) {
+    case "waiting":
+      return "Waiting Here";
+    case "dropoff":
+      return "Dropping Off";
+    default:
+      return "Not selected";
+  }
+}
+
+function buildRequestLine(service: ServiceChoice, mode: CheckInMode, vehicle: string) {
+  const pieces = [
+    service ? serviceLabel(service) : "Service not selected",
+    mode ? modeLabel(mode) : "Check-in mode not selected",
+    vehicle.trim() || "Vehicle not provided",
+  ];
+  return pieces.join(" â€¢ ");
+}
+
+async function submitTaylorCreekIntake(form: {
+  fullName: string;
+  vehicle: string;
+  phone: string;
+  service: Exclude<ServiceChoice, null>;
+  mode: Exclude<CheckInMode, null>;
+  photo?: File | null;
+}): Promise<ReceiptPayload> {
+  await new Promise((resolve) => setTimeout(resolve, 900));
+
+  return {
+    receiptId: makeReceiptId(),
+    submittedAt: formatNow(),
+    customerName: form.fullName.trim(),
+    vehicle: form.vehicle.trim(),
+    phone: form.phone.trim(),
+    service: form.service,
+    mode: form.mode,
+    photoName: form.photo?.name,
+  };
+}
 
 export default function PressKitTaylorCreek() {
-  const nav = useNavigate();
-  const [sp] = useSearchParams();
+  const [service, setService] = useState<ServiceChoice>(null);
+  const [mode, setMode] = useState<CheckInMode>(null);
 
-  // If you pass ?slug=pmqf6bn1gs, the demo buttons go to /c/pmqf6bn1gs
-  // Otherwise it defaults to /c/taylor-creek (only works if that slug exists in public_pages)
-  const slug = (sp.get("slug") || "taylor-creek").trim();
+  const [fullName, setFullName] = useState("");
+  const [vehicle, setVehicle] = useState("");
+  const [phone, setPhone] = useState("");
 
-  const goIntake = () => nav(`/c/${encodeURIComponent(slug)}`);
+  const [photo, setPhoto] = useState<File | null>(null);
+
+  const [submissionState, setSubmissionState] = useState<SubmissionState>("idle");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [receipt, setReceipt] = useState<ReceiptPayload | null>(null);
+
+  const canContinueStep2 = !!service;
+  const canContinueStep3 = !!service && !!mode;
+
+  const fullNameOk = fullName.trim().length >= 2;
+  const phoneOk = phone.trim().length >= 7;
+  const readyToSubmit = !!service && !!mode && fullNameOk && phoneOk;
+
+  const livePreview = useMemo(() => {
+    return {
+      title: fullName.trim() || "New customer",
+      detail: buildRequestLine(service, mode, vehicle),
+      preference:
+        mode === "waiting"
+          ? "Customer is waiting on-site"
+          : mode === "dropoff"
+            ? "Customer is dropping off"
+            : "Check-in mode not selected",
+    };
+  }, [fullName, service, mode, vehicle]);
+
+  async function handleSubmit() {
+    if (!service || !mode || !readyToSubmit) return;
+
+    try {
+      setSubmissionState("submitting");
+      setErrorMessage("");
+
+      const result = await submitTaylorCreekIntake({
+        fullName,
+        vehicle,
+        phone,
+        service,
+        mode,
+        photo,
+      });
+
+      setReceipt(result);
+      setSubmissionState("success");
+    } catch {
+      setSubmissionState("error");
+      setErrorMessage("Something went wrong saving the request. Please try again.");
+    }
+  }
+
+  function handlePhotoChange(event: ChangeEvent<HTMLInputElement>) {
+    const next = event.target.files?.[0] ?? null;
+    setPhoto(next);
+  }
+
+  function resetForm() {
+    setService(null);
+    setMode(null);
+    setFullName("");
+    setVehicle("");
+    setPhone("");
+    setPhoto(null);
+    setReceipt(null);
+    setSubmissionState("idle");
+    setErrorMessage("");
+  }
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#05070d",
-        color: "#e5e7eb",
-        padding: "24px",
-        fontFamily:
-          'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"',
-      }}
-    >
-      <div style={{ maxWidth: 980, margin: "0 auto" }}>
-        {/* Header */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "baseline",
-            justifyContent: "space-between",
-            gap: 16,
-          }}
-        >
-          <div>
-            <div style={{ fontSize: 22, fontWeight: 900 }}>?? Taylor Creek Auto Repair</div>
-            <div style={{ opacity: 0.8, marginTop: 4 }}>Powered by HomePlanet</div>
-          </div>
+    <div className="min-h-screen bg-[#08111d] text-white">
+      <div className="mx-auto w-full max-w-[920px] px-4 py-5 sm:px-5 sm:py-6">
+        <header className="rounded-[28px] border border-[#2d415a] bg-[#0d1826] p-4 shadow-[0_18px_50px_rgba(0,0,0,0.32)] sm:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="rounded-full border border-[#3b546f] bg-[#102033] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#dbe7f6]">
+                  HomePlanet
+                </div>
+                <div className="rounded-full border border-[#3b546f] bg-[#102033] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#dbe7f6]">
+                  Public Intake â€¢ taylor-creek
+                </div>
+              </div>
 
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
-            <a href="#demo" style={topLinkStyle}>
-              Demo
-            </a>
-            <a href="#downloads" style={topLinkStyle}>
-              Downloads
-            </a>
-            <a href="#gov" style={topLinkStyle}>
-              Government
-            </a>
-            <a href="#press" style={topLinkStyle}>
-              Press
-            </a>
-          </div>
-        </div>
-
-        {/* Hero */}
-        <div style={cardStyle}>
-          <div style={{ fontSize: 13, opacity: 0.85, letterSpacing: 0.4 }}>PRESS KIT</div>
-          <div style={{ fontSize: 28, fontWeight: 950, marginTop: 8, lineHeight: 1.15 }}>
-            Public Proof Infrastructure for Real-World Submissions
-          </div>
-          <div style={{ marginTop: 10, lineHeight: 1.55, opacity: 0.92 }}>
-            A live auto repair shop issuing receipts, timestamps, public lookups, and preserved PDF proof records — before disputes begin.
-          </div>
-
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 14 }}>
-            <span style={pillStyle}>Receipt issued instantly</span>
-            <span style={pillStyle}>Timestamped record</span>
-            <span style={pillStyle}>Public lookup</span>
-            <span style={pillStyle}>Downloadable PDF</span>
-          </div>
-
-          {/* Trust strip */}
-          <div style={{ marginTop: 14, opacity: 0.9 }}>
-            <div style={{ fontWeight: 900, fontSize: 13, letterSpacing: 0.4, opacity: 0.85 }}>
-              TRUSTED FOR
+              <h1 className="mt-4 text-[28px] font-semibold leading-tight text-white sm:text-[34px]">
+                Request logged. Proof-ready.
+              </h1>
+              <p className="mt-2 max-w-2xl text-[16px] leading-6 text-[#c6d3e3]">
+                Scan. Tap. Pull in. Your request is time-stamped and visible the moment it lands.
+              </p>
             </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
-              <span style={miniPillStyle}>inspectors</span>
-              <span style={miniPillStyle}>courts</span>
-              <span style={miniPillStyle}>municipalities</span>
-              <span style={miniPillStyle}>contractors</span>
-              <span style={miniPillStyle}>schools</span>
+
+            <div className="rounded-full border border-[#4d6886] bg-[#11263d] px-4 py-2 text-sm font-semibold text-[#dbe7f6]">
+              Receipt-ready
             </div>
           </div>
 
-          {/* Demo actions */}
-          <div id="demo" style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 18 }}>
-            <button type="button" onClick={goIntake} style={primaryBtnStyle}>
-              Run 60-Second Demo ?
-            </button>
-
-            <button type="button" onClick={goIntake} style={secondaryBtnStyle as any}>
-              Submit Request
-            </button>
-
-            <a href="/assets/press/taylor-creek/sample-receipt.pdf" style={secondaryBtnStyle as any}>
-              Download Sample PDF
-            </a>
-
-            {/* Keep this, but it’s optional. If LiveKit isn't configured, it may hang on "joining". */}
-            <Link to="/live/taylor-creek" style={secondaryBtnStyle as any}>
-              Open Live Demo (optional)
-            </Link>
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            <InfoPill icon={CheckCircle2} text="Instant receipt" />
+            <InfoPill icon={Clock3} text="Time-stamped" />
+            <InfoPill icon={ShieldCheck} text="Verified intake" />
           </div>
 
-          <div style={{ marginTop: 10, fontSize: 12, opacity: 0.75 }}>
-            Using slug: <code style={codeStyle}>{slug}</code> (set via <code style={codeStyle}>?slug=YOURSLUG</code>)
+          <div className="mt-4 rounded-[22px] border border-[#425770] bg-[#0f1d2d] p-4">
+            <div className="text-[18px] font-semibold text-white">What happens next</div>
+            <div className="mt-3 space-y-2 text-[16px] text-[#d3deeb]">
+              <BulletLine text="Your request is saved immediately with a receipt ID." />
+              <BulletLine text="A reviewer can see it the moment it lands." />
+              <BulletLine text="No lost texts. No we never got it. Everything is logged." />
+            </div>
           </div>
-        </div>
+        </header>
 
-        {/* Demo flow */}
-        <div style={cardStyle}>
-          <div style={{ fontSize: 18, fontWeight: 900 }}>The 60-Second Demo Flow</div>
-          <ol style={{ marginTop: 10, lineHeight: 1.7, opacity: 0.92 }}>
-            <li>Scan QR</li>
-            <li>Submit</li>
-            <li>Get Receipt</li>
-            <li>Open Lookup</li>
-            <li>See Timestamp</li>
-            <li>Download PDF</li>
-          </ol>
-        </div>
+        {submissionState === "success" && receipt ? (
+          <section className="mt-5 rounded-[28px] border border-[#2b7a55] bg-[#10261c] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.32)]">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#3f8f69] bg-[#123122] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#d6f6e5]">
+                  <CheckCircle2 className="h-4 w-4" />
+                  Receipt Ready
+                </div>
 
-        {/* Government / Court */}
-        <div id="gov" style={cardStyle}>
-          <div style={{ fontSize: 18, fontWeight: 900 }}>Government & Court Mode</div>
-          <div style={{ marginTop: 10, lineHeight: 1.55, opacity: 0.92 }}>
-            Same system. Different headline. Built for inspections, reporting, and chain-of-custody records.
-          </div>
+                <h2 className="mt-4 text-[28px] font-semibold text-white">Youâ€™re checked in.</h2>
+                <p className="mt-2 text-[16px] text-[#d3ebdf]">
+                  Show this receipt if needed or wait for Taylor Creek to review your request.
+                </p>
+              </div>
 
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 12 }}>
-            <span style={pillStyle}>Public Submissions, Verified</span>
-            <span style={pillStyle}>Chain of Custody for Communities</span>
-            <span style={pillStyle}>Receipts for Reality</span>
-          </div>
+              <button
+                type="button"
+                onClick={resetForm}
+                className="rounded-full border border-[#4c6b58] bg-[#173425] px-4 py-2 text-sm font-semibold text-white"
+              >
+                New intake
+              </button>
+            </div>
 
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12, opacity: 0.9 }}>
-            <span style={miniPillStyle}>code enforcement intake</span>
-            <span style={miniPillStyle}>inspections</span>
-            <span style={miniPillStyle}>citizen reports</span>
-            <span style={miniPillStyle}>permit intake</span>
-            <span style={miniPillStyle}>incident logs</span>
-            <span style={miniPillStyle}>school submissions</span>
-          </div>
-        </div>
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
+              <ReceiptCard label="Receipt ID" value={receipt.receiptId} />
+              <ReceiptCard label="Submitted" value={receipt.submittedAt} />
+              <ReceiptCard label="Customer" value={receipt.customerName} />
+              <ReceiptCard label="Vehicle" value={receipt.vehicle || "Not provided"} />
+              <ReceiptCard label="Service" value={serviceLabel(receipt.service)} />
+              <ReceiptCard label="Check-in" value={modeLabel(receipt.mode)} />
+              <ReceiptCard label="Phone" value={receipt.phone} />
+              <ReceiptCard label="Photo" value={receipt.photoName || "No photo attached"} />
+            </div>
 
-        {/* Downloads */}
-        <div id="downloads" style={cardStyle}>
-          <div style={{ fontSize: 18, fontWeight: 900 }}>Downloads</div>
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 12 }}>
-            <a href="/assets/press/taylor-creek/one-pager.pdf" style={secondaryBtnStyle as any}>
-              One-Pager PDF
-            </a>
-            <a href="/assets/press/taylor-creek/flow-diagram.pdf" style={secondaryBtnStyle as any}>
-              Flow Diagram PDF
-            </a>
-            <a href="/assets/press/taylor-creek/sample-receipt.pdf" style={secondaryBtnStyle as any}>
-              Sample Receipt PDF
-            </a>
-          </div>
-        </div>
+            <div className="mt-5 rounded-[20px] border border-[#355844] bg-[#13291e] p-4 text-[16px] leading-7 text-[#d8efe2]">
+              Pull into the lot or see the front desk if directed. Your request is already in the system.
+            </div>
+          </section>
+        ) : (
+          <section className="mt-5 rounded-[28px] border border-[#2d415a] bg-[#0d1826] p-4 shadow-[0_18px_50px_rgba(0,0,0,0.32)] sm:p-5">
+            <div className="mb-4">
+              <h2 className="text-[24px] font-semibold text-white sm:text-[28px]">3-Step Intake</h2>
+              <p className="mt-1 text-[15px] text-[#c6d3e3]">
+                Big buttons. Fast check-in. Minimal typing.
+              </p>
+            </div>
 
-        {/* Press release */}
-        <div id="press" style={cardStyle}>
-          <div style={{ fontSize: 18, fontWeight: 900 }}>Press Release</div>
-          <div style={{ marginTop: 10, whiteSpace: "pre-wrap", lineHeight: 1.55, opacity: 0.95 }}>
-FOR IMMEDIATE RELEASE
+            <div className="space-y-4">
+              <StepCard step="Step 1" title="What do you need?" active complete={!!service}>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <ServiceButton
+                    icon={ShieldCheck}
+                    label="$25 Safety Check"
+                    sublabel="Fast check â€¢ great hook"
+                    active={service === "safety-check"}
+                    onClick={() => setService("safety-check")}
+                  />
+                  <ServiceButton
+                    icon={CarFront}
+                    label="Tires"
+                    sublabel="Flat, wear, replacement"
+                    active={service === "tires"}
+                    onClick={() => setService("tires")}
+                  />
+                  <ServiceButton
+                    icon={Wrench}
+                    label="Brakes"
+                    sublabel="Noise, grinding, inspection"
+                    active={service === "brakes"}
+                    onClick={() => setService("brakes")}
+                  />
+                  <ServiceButton
+                    icon={Wrench}
+                    label="Not Sure"
+                    sublabel="Need help figuring it out"
+                    active={service === "not-sure"}
+                    onClick={() => setService("not-sure")}
+                  />
+                </div>
+              </StepCard>
 
-Local Auto Repair Shop Launches Public Proof System for Service Requests and Receipts
-Okeechobee, FL — February 10, 2026
+              <StepCard
+                step="Step 2"
+                title="How are you checking in?"
+                active={canContinueStep2}
+                complete={!!mode}
+                muted={!canContinueStep2}
+              >
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <ModeButton
+                    label="Waiting Here"
+                    sublabel="Iâ€™m on-site now"
+                    active={mode === "waiting"}
+                    disabled={!canContinueStep2}
+                    onClick={() => setMode("waiting")}
+                  />
+                  <ModeButton
+                    label="Dropping Off"
+                    sublabel="Leaving vehicle with shop"
+                    active={mode === "dropoff"}
+                    disabled={!canContinueStep2}
+                    onClick={() => setMode("dropoff")}
+                  />
+                </div>
+              </StepCard>
 
-Taylor Creek Auto Repair has launched a public-facing system that allows customers, inspectors, and reporters to submit service requests, receive instant receipts, and download timestamped PDF records—before any work begins.
+              <StepCard
+                step="Step 3"
+                title="Quick info"
+                active={canContinueStep3}
+                complete={readyToSubmit}
+                muted={!canContinueStep3}
+              >
+                <div className="grid gap-4">
+                  <div className="rounded-[20px] border border-[#324559] bg-[#0f1d2d] p-4">
+                    <div className="text-[14px] font-semibold uppercase tracking-[0.16em] text-[#8fa6c0]">
+                      Live preview
+                    </div>
+                    <div className="mt-3 text-[22px] font-semibold text-white">
+                      {livePreview.title}
+                    </div>
+                    <div className="mt-2 text-[16px] leading-7 text-[#d0dceb]">
+                      {livePreview.detail}
+                    </div>
+                    <div className="mt-2 text-[15px] text-[#9eb3ca]">
+                      {livePreview.preference}
+                    </div>
+                  </div>
 
-Using a QR code posted at the shop or on its website, customers can submit a service request in seconds. They immediately receive a receipt ID, can look up their submission on a public page, and download a preserved PDF snapshot showing exactly what was submitted and when.
+                  <div className="grid gap-4">
+                    <Field
+                      label="Full name"
+                      placeholder="Customer name"
+                      value={fullName}
+                      onChange={setFullName}
+                      disabled={!canContinueStep3}
+                      large
+                    />
+                    <Field
+                      label="Vehicle"
+                      placeholder="Year / Make / Model"
+                      value={vehicle}
+                      onChange={setVehicle}
+                      disabled={!canContinueStep3}
+                      large
+                    />
+                    <Field
+                      label="Phone"
+                      placeholder="(555) 555-5555"
+                      value={phone}
+                      onChange={setPhone}
+                      disabled={!canContinueStep3}
+                      large
+                    />
+                  </div>
 
-“This isn’t marketing. It’s documentation.”
+                  <div className="rounded-[20px] border border-dashed border-[#4a647e] bg-[#101d2c] p-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 text-[18px] font-semibold text-white">
+                          <Camera className="h-5 w-5" />
+                          Add a photo
+                        </div>
+                        <p className="mt-1 text-[15px] text-[#c6d3e3]">
+                          Optional. Helpful for tire, brake, or visible issue proof.
+                        </p>
+                        {photo ? (
+                          <div className="mt-2 text-[15px] font-medium text-[#9fe8c1]">
+                            Attached: {photo.name}
+                          </div>
+                        ) : null}
+                      </div>
 
-The public demo is live now:
-• Service intake: /c/[slug]
-• Receipt lookup: /r/[receipt-id]
-• Press kit: /press/taylor-creek
+                      <label
+                        className={cx(
+                          "inline-flex min-h-[56px] cursor-pointer items-center justify-center gap-2 rounded-full border px-5 py-3 text-[16px] font-semibold",
+                          canContinueStep3
+                            ? "border-[#7f95ad] bg-[#13263a] text-white"
+                            : "cursor-not-allowed border-[#3a4c61] bg-[#101922] text-[#73869d]",
+                        )}
+                      >
+                        <Camera className="h-5 w-5" />
+                        {photo ? "Replace photo" : "Upload"}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          className="hidden"
+                          onChange={handlePhotoChange}
+                          disabled={!canContinueStep3}
+                        />
+                      </label>
+                    </div>
+                  </div>
 
-Media Contact: press@homeplanet.city
-          </div>
+                  {errorMessage ? (
+                    <div className="rounded-[18px] border border-[#7a3434] bg-[#2a1414] px-4 py-3 text-[15px] text-[#ffd1d1]">
+                      {errorMessage}
+                    </div>
+                  ) : null}
 
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 16 }}>
-            <a href="mailto:press@homeplanet.city" style={secondaryBtnStyle as any}>
-              Email Press
-            </a>
-            <button type="button" onClick={goIntake} style={secondaryBtnStyle as any}>
-              Submit Request
-            </button>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div
-          style={{
-            opacity: 0.72,
-            fontSize: 12,
-            marginTop: 18,
-            display: "flex",
-            gap: 10,
-            flexWrap: "wrap",
-          }}
-        >
-          <span>© HomePlanet — Public Proof Infrastructure</span>
-          <span>•</span>
-          <span>Receipts • Timestamping • Chain-of-Custody • Records</span>
-          <span>•</span>
-          <a href="#demo" style={footerLinkStyle}>
-            Demo
-          </a>
-          <a href="#downloads" style={footerLinkStyle}>
-            Downloads
-          </a>
-          <a href="#gov" style={footerLinkStyle}>
-            Government
-          </a>
-          <a href="#press" style={footerLinkStyle}>
-            Press
-          </a>
-        </div>
+                  <button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={!readyToSubmit || submissionState === "submitting"}
+                    className={cx(
+                      "min-h-[64px] w-full rounded-[20px] px-6 text-[20px] font-semibold shadow-[0_14px_28px_rgba(0,0,0,0.22)] transition",
+                      readyToSubmit && submissionState !== "submitting"
+                        ? "bg-gradient-to-r from-[#12a9ff] to-[#10e66a] text-[#082033]"
+                        : "cursor-not-allowed bg-[#243341] text-[#8da3bb]",
+                    )}
+                  >
+                    {submissionState === "submitting" ? (
+                      <span className="inline-flex items-center gap-2">
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        Saving request...
+                      </span>
+                    ) : (
+                      "Confirm & Get Receipt"
+                    )}
+                  </button>
+                </div>
+              </StepCard>
+            </div>
+          </section>
+        )}
       </div>
     </div>
   );
 }
 
-const cardStyle: React.CSSProperties = {
-  marginTop: 16,
-  background: "rgba(255,255,255,0.04)",
-  border: "1px solid rgba(255,255,255,0.10)",
-  borderRadius: 16,
-  padding: 18,
-  boxShadow: "0 8px 30px rgba(0,0,0,0.35)",
-};
+function InfoPill({
+  icon: Icon,
+  text,
+}: {
+  icon: typeof CheckCircle2;
+  text: string;
+}) {
+  return (
+    <div className="inline-flex min-h-[54px] items-center gap-2 rounded-full border border-[#3b546f] bg-[#102033] px-4 py-3 text-[15px] font-semibold text-[#e4edf8]">
+      <Icon className="h-5 w-5 text-[#7fe8b5]" />
+      {text}
+    </div>
+  );
+}
 
-const pillStyle: React.CSSProperties = {
-  fontSize: 12,
-  padding: "6px 10px",
-  borderRadius: 999,
-  background: "rgba(56,189,248,0.12)",
-  border: "1px solid rgba(56,189,248,0.25)",
-  color: "#7dd3fc",
-  fontWeight: 900,
-};
+function BulletLine({ text }: { text: string }) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="mt-1 h-3 w-3 rounded-full bg-[#20e06e]" />
+      <div>{text}</div>
+    </div>
+  );
+}
 
-const miniPillStyle: React.CSSProperties = {
-  fontSize: 12,
-  padding: "6px 10px",
-  borderRadius: 999,
-  background: "rgba(255,255,255,0.06)",
-  border: "1px solid rgba(255,255,255,0.12)",
-  color: "#e5e7eb",
-  fontWeight: 800,
-};
+function StepCard({
+  step,
+  title,
+  children,
+  active,
+  complete,
+  muted = false,
+}: {
+  step: string;
+  title: string;
+  children: ReactNode;
+  active: boolean;
+  complete: boolean;
+  muted?: boolean;
+}) {
+  return (
+    <section
+      className={cx(
+        "rounded-[24px] border p-4 sm:p-5",
+        muted
+          ? "border-[#2d3d4e] bg-[#0b1520] opacity-70"
+          : active
+            ? "border-[#40617c] bg-[#0f1d2d]"
+            : "border-[#324559] bg-[#0d1826]",
+      )}
+    >
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div>
+          <div className="text-[13px] font-semibold uppercase tracking-[0.18em] text-[#8ea5c0]">
+            {step}
+          </div>
+          <h3 className="mt-1 text-[24px] font-semibold text-white">{title}</h3>
+        </div>
 
-const primaryBtnStyle: React.CSSProperties = {
-  background: "#38bdf8",
-  color: "#021018",
-  border: "none",
-  borderRadius: 12,
-  padding: "10px 14px",
-  fontWeight: 950,
-  cursor: "pointer",
-};
+        <div
+          className={cx(
+            "flex h-10 w-10 items-center justify-center rounded-full border",
+            complete
+              ? "border-[#3c8e67] bg-[#153225] text-[#9fe8c1]"
+              : active
+                ? "border-[#516a85] bg-[#12253a] text-[#d3e2f4]"
+                : "border-[#33475a] bg-[#101a24] text-[#70839a]",
+          )}
+        >
+          {complete ? <CheckCircle2 className="h-5 w-5" /> : <Circle className="h-4 w-4" />}
+        </div>
+      </div>
 
-const secondaryBtnStyle: React.CSSProperties = {
-  background: "rgba(255,255,255,0.06)",
-  color: "#e5e7eb",
-  border: "1px solid rgba(255,255,255,0.14)",
-  borderRadius: 12,
-  padding: "10px 14px",
-  fontWeight: 900,
-  textDecoration: "none",
-  display: "inline-block",
-  cursor: "pointer",
-};
+      {children}
+    </section>
+  );
+}
 
-const topLinkStyle: React.CSSProperties = {
-  color: "#93c5fd",
-  textDecoration: "underline",
-  textUnderlineOffset: 3,
-  fontWeight: 900,
-};
+function ServiceButton({
+  icon: Icon,
+  label,
+  sublabel,
+  active,
+  onClick,
+}: {
+  icon: typeof ShieldCheck;
+  label: string;
+  sublabel: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cx(
+        "flex min-h-[112px] w-full flex-col items-start justify-center rounded-[24px] border px-5 py-4 text-left transition",
+        active
+          ? "border-[#63a8ff] bg-[#122e4a] shadow-[0_0_0_1px_rgba(99,168,255,0.25)]"
+          : "border-[#43586f] bg-[#122132]",
+      )}
+    >
+      <Icon className={cx("h-7 w-7", active ? "text-[#82c7ff]" : "text-[#b9cbe0]")} />
+      <div className="mt-3 text-[22px] font-semibold text-white">{label}</div>
+      <div className="mt-1 text-[15px] text-[#c5d2e2]">{sublabel}</div>
+    </button>
+  );
+}
 
-const footerLinkStyle: React.CSSProperties = {
-  color: "#93c5fd",
-  textDecoration: "underline",
-  textUnderlineOffset: 3,
-  fontWeight: 800,
-};
+function ModeButton({
+  label,
+  sublabel,
+  active,
+  disabled,
+  onClick,
+}: {
+  label: string;
+  sublabel: string;
+  active: boolean;
+  disabled?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      className={cx(
+        "flex min-h-[104px] w-full flex-col items-start justify-center rounded-[24px] border px-5 py-4 text-left transition",
+        disabled
+          ? "cursor-not-allowed border-[#33475a] bg-[#0f1823] text-[#71859b]"
+          : active
+            ? "border-[#63a8ff] bg-[#122e4a]"
+            : "border-[#43586f] bg-[#122132]",
+      )}
+    >
+      <div className={cx("text-[22px] font-semibold", disabled ? "text-[#71859b]" : "text-white")}>
+        {label}
+      </div>
+      <div className={cx("mt-1 text-[15px]", disabled ? "text-[#6c8096]" : "text-[#c5d2e2]")}>
+        {sublabel}
+      </div>
+    </button>
+  );
+}
 
-const codeStyle: React.CSSProperties = {
-  background: "rgba(255,255,255,0.06)",
-  border: "1px solid rgba(255,255,255,0.12)",
-  padding: "2px 6px",
-  borderRadius: 8,
-};
+function Field({
+  label,
+  placeholder,
+  value,
+  onChange,
+  disabled,
+  large = false,
+}: {
+  label: string;
+  placeholder: string;
+  value: string;
+  onChange: (value: string) => void;
+  disabled?: boolean;
+  large?: boolean;
+}) {
+  return (
+    <label className="block">
+      <div className="mb-2 text-[16px] font-semibold text-white">{label}</div>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        placeholder={placeholder}
+        className={cx(
+          "w-full rounded-[20px] border bg-[#122132] px-5 text-white outline-none placeholder:text-[#8ea3ba]",
+          large ? "min-h-[64px] text-[20px]" : "min-h-[56px] text-[18px]",
+          disabled
+            ? "cursor-not-allowed border-[#33475a] text-[#6f8399]"
+            : "border-[#4a6178]",
+        )}
+      />
+    </label>
+  );
+}
 
+function ReceiptCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-[18px] border border-[#355844] bg-[#13291e] p-4">
+      <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#93c9ac]">
+        {label}
+      </div>
+      <div className="mt-2 text-[18px] font-semibold text-white">{value}</div>
+    </div>
+  );
+}

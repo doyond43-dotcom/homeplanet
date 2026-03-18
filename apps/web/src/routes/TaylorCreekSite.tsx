@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { useMemo } from "react";
 
 const SHOP_PHONE_DISPLAY = "(863) 467-2221";
 const SHOP_PHONE_TEL = "+18634672221";
@@ -6,19 +6,25 @@ const SHOP_ADDRESS_LINE = "3826 US-441, Okeechobee, FL 34974";
 const MAPS_URL =
   "https://www.google.com/maps/search/?api=1&query=Taylor+Creek+Autorepair+inc+3826+US-441+Okeechobee+FL+34974";
 
-// Routes (hard href = safest in case router gets weird)
+// Routes (DO NOT CHANGE ‚Äî keeps QR working)
 const CHECKIN_HREF = "/c/taylor-creek";
 const BOARD_HREF = "/live/taylor-creek/board";
+
+function cx(...parts: Array<string | false | null | undefined>) {
+  return parts.filter(Boolean).join(" ");
+}
 
 async function copyToClipboard(text: string) {
   try {
     await navigator.clipboard.writeText(text);
     alert(`Copied: ${text}`);
   } catch {
-    // Fallback (older browsers)
     const ta = document.createElement("textarea");
     ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.left = "-9999px";
     document.body.appendChild(ta);
+    ta.focus();
     ta.select();
     document.execCommand("copy");
     document.body.removeChild(ta);
@@ -36,365 +42,235 @@ function isAdminMode() {
   }
 }
 
+function InfoPill({ text }: { text: string }) {
+  return (
+    <div className="inline-flex min-h-[42px] items-center rounded-full border border-[#334861] bg-[#102033] px-4 py-2 text-[13px] font-semibold text-[#dbe7f6]">
+      {text}
+    </div>
+  );
+}
+
+function ActionButton({
+  href,
+  label,
+  primary = false,
+  newTab = false,
+}: {
+  href: string;
+  label: string;
+  primary?: boolean;
+  newTab?: boolean;
+}) {
+  return (
+    <a
+      href={href}
+      target={newTab ? "_blank" : undefined}
+      rel={newTab ? "noreferrer" : undefined}
+      className={cx(
+        "inline-flex min-h-[54px] items-center justify-center rounded-[18px] px-5 py-3 text-center text-[16px] font-semibold transition",
+        primary
+          ? "bg-gradient-to-r from-[#12a9ff] to-[#10e66a] text-[#082033] shadow-[0_14px_28px_rgba(0,0,0,0.22)]"
+          : "border border-[#465b73] bg-[#122132] text-white hover:border-[#6d86a1]",
+      )}
+    >
+      {label}
+    </a>
+  );
+}
+
+function DetailCard({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-[24px] border border-[#324559] bg-[#0d1826] p-4 sm:p-5">
+      <div className="text-[13px] font-semibold uppercase tracking-[0.18em] text-[#8ea5c0]">
+        {title}
+      </div>
+      <div className="mt-3 text-[16px] leading-7 text-[#d0dceb]">{children}</div>
+    </section>
+  );
+}
+
 export default function TaylorCreekSite() {
   const adminMode = isAdminMode();
 
+  const year = useMemo(() => new Date().getFullYear(), []);
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
-      {/* Top bar */}
-      <div className="border-b border-slate-800 bg-slate-950/70 backdrop-blur">
-        <div className="mx-auto max-w-6xl px-4 py-4 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-slate-800 flex items-center justify-center font-bold">
-              TC
-            </div>
-            <div>
-              <div className="text-lg font-semibold leading-tight flex items-center gap-2">
-                <span aria-hidden>??</span>
-                <span>Taylor Creek Auto Repair</span>
-                <span className="hidden sm:inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-950/50 px-2.5 py-1 text-[11px] text-slate-200">
-                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-sky-300/80" />
-                  Planet: Auto Services
-                </span>
-              </div>
-              <div className="text-xs text-slate-400 leading-tight">
-                Okeechobee, Florida ï HomePlanet Verified Node
-              </div>
-            </div>
-          </div>
-
-          {/* Gold tier / trust badge */}
-          <div className="hidden sm:flex items-center gap-2 rounded-full border border-amber-400/60 bg-amber-400/10 px-3 py-1">
-            <span className="inline-block h-2 w-2 rounded-full bg-amber-300" />
-            <span className="text-xs font-medium text-amber-200">
-              Gold Tier ï Public Proof Enabled
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Page container */}
-      <div className="mx-auto max-w-6xl px-4 py-12 space-y-10">
-        {/* HERO */}
-        <section className="rounded-3xl border border-slate-800 bg-slate-900/30 p-6 md:p-10 shadow">
-          <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/45">
-            {/* subtle blue system glow */}
-            <div
-              aria-hidden
-              className="pointer-events-none absolute -left-24 -top-24 h-[520px] w-[520px] rounded-full blur-3xl opacity-20"
-              style={{
-                background:
-                  "radial-gradient(circle at 30% 30%, rgba(56,189,248,0.9), rgba(56,189,248,0.0) 55%)",
-              }}
-            />
-            {/* subtle red shop glow */}
-            <div
-              aria-hidden
-              className="pointer-events-none absolute -right-32 -bottom-32 h-[560px] w-[560px] rounded-full blur-3xl opacity-15"
-              style={{
-                background:
-                  "radial-gradient(circle at 70% 70%, rgba(239,68,68,0.9), rgba(239,68,68,0.0) 60%)",
-              }}
-            />
-            {/* brushed steel grain (hero only) */}
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-0 opacity-[0.06]"
-              style={{
-                backgroundImage:
-                  "repeating-linear-gradient(90deg, rgba(255,255,255,0.10) 0px, rgba(255,255,255,0.10) 1px, rgba(0,0,0,0) 2px, rgba(0,0,0,0) 6px), repeating-linear-gradient(0deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 1px, rgba(0,0,0,0) 2px, rgba(0,0,0,0) 10px)",
-              }}
-            />
-            {/* slight vignette */}
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-0 opacity-60"
-              style={{
-                background:
-                  "radial-gradient(circle at 50% 35%, rgba(0,0,0,0) 0%, rgba(0,0,0,0.55) 75%, rgba(0,0,0,0.85) 100%)",
-              }}
-            />
-
-            <div className="relative p-6 md:p-10">
-              <div className="grid md:grid-cols-[1fr_360px] gap-10">
-                {/* Left */}
-                <div>
-                  <div className="flex flex-wrap gap-2 mb-6">
-                    {["Receipt-ready", "Timestamped", "Verified intake", "Public lookup"].map((t) => (
-                      <span
-                        key={t}
-                        className="inline-flex items-center rounded-full border border-slate-700 bg-slate-950/50 px-3 py-1 text-[11px] text-slate-200"
-                      >
-                        {t}
-                      </span>
-                    ))}
-                  </div>
-
-                  <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
-                    Youíre checking in your vehicle
-                    <span className="block mt-2 text-slate-300 text-lg md:text-xl font-semibold">
-                      This creates your service record
-                    </span>
-                  </h1>
-
-                  <p className="mt-4 text-slate-300 max-w-2xl">
-                    Tell the shop what you need before you talk to the mechanic. Add a photo if it
-                    helps. Youíll get a receipt number and a clean, time-ordered intake record you
-                    can reference later.
-                  </p>
-
-                  <div className="mt-7 flex flex-wrap gap-3">
-                    {/* SAFEST NAV: hard href so it always works */}
-                    <a
-                      href={CHECKIN_HREF}
-                      className="inline-flex items-center justify-center rounded-xl bg-red-600 px-6 py-3 font-semibold hover:bg-red-500 transition shadow-sm"
-                    >
-                      Start check-in
-                    </a>
-
-                    {/* SHOP-ONLY: Board link hidden unless ?admin=1 */}
-                    {adminMode ? (
-                      <a
-                        href={BOARD_HREF}
-                        className="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-950/50 px-6 py-3 font-semibold text-slate-100 hover:bg-slate-900/60 transition"
-                        title="Shop live intake board"
-                      >
-                        Open Live Board
-                      </a>
-                    ) : null}
-                  </div>
-
-                  <div className="mt-3 text-xs text-slate-400">
-                    Takes about 20 seconds ï Youíll get a receipt number
-                    {adminMode ? (
-                      <span className="ml-2 text-slate-500">
-                        ï Admin mode on (board button visible)
-                      </span>
-                    ) : null}
-                  </div>
-
-                  {/* ? NEW: Receipt instruction line (behavior design) */}
-                  <div className="mt-1 text-xs text-slate-500">
-                    Show your receipt at the front desk, or keep it for your records.
-                  </div>
-
-                  <div className="mt-2 text-xs text-slate-500">
-                    Need to call or get directions? See{" "}
-                    <a href="#node-contact" className="underline hover:text-slate-300">
-                      Contact
-                    </a>
-                    .
-                  </div>
-
-                  {adminMode ? (
-                    <div className="mt-3 rounded-2xl border border-slate-800 bg-slate-950/40 px-4 py-3 text-xs text-slate-300">
-                      <div className="font-semibold text-slate-200">Shop shortcuts</div>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={() => copyToClipboard(window.location.origin + BOARD_HREF)}
-                          className="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-950/50 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-900/60 transition"
-                        >
-                          Copy board link
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => copyToClipboard(window.location.origin + CHECKIN_HREF)}
-                          className="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-950/50 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-900/60 transition"
-                        >
-                          Copy check-in link
-                        </button>
-                      </div>
-                      <div className="mt-2 text-slate-500">
-                        Tip: add <span className="font-mono">?admin=1</span> to show the board button
-                        on this page.
-                      </div>
-                    </div>
-                  ) : null}
-
-                  <div className="mt-5 text-xs text-slate-500">
-                    Powered by HomePlanet ï Presence-First Intake ï Receipt + record at submission
-                    (not after).
-                  </div>
-
-                  <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-950/40 px-4 py-3 text-sm text-slate-200 flex items-start gap-3">
-                    <span className="mt-2 inline-block h-2 w-2 rounded-full bg-sky-300/80" />
-                    <div>
-                      <span className="font-semibold">Presence-First:</span> your request is
-                      anchored at submission ó before edits, confusion, or ìwe never got it.î
-                    </div>
-                  </div>
-
-                  {/* VEHICLE CALLOUT */}
-                  <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-950/35 px-4 py-3 text-sm text-slate-300">
-                    <span className="font-semibold text-slate-200">Tip:</span> Adding vehicle details
-                    (year/make/model) helps the shop triage faster and prevents ìwhich car?î mixups.
-                  </div>
+    <div className="min-h-screen bg-[#08111d] text-white">
+      <div className="mx-auto w-full max-w-[920px] px-4 py-5 sm:px-5 sm:py-6">
+        {/* TOP HEADER */}
+        <header className="rounded-[28px] border border-[#2d415a] bg-[#0d1826] p-4 shadow-[0_18px_50px_rgba(0,0,0,0.32)] sm:p-5">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex h-14 w-14 items-center justify-center rounded-[18px] border border-[#334861] bg-[#13243a] text-[26px] font-extrabold text-white">
+                  TC
                 </div>
 
-                {/* Right */}
-                <aside className="space-y-4">
-                  <div
-                    id="node-contact"
-                    className="rounded-2xl border border-slate-800 bg-slate-950/45 p-5"
-                  >
-                    <div className="text-xs tracking-wider text-slate-400 font-semibold">
-                      OPERATING HOURS
-                    </div>
-
-                    <div className="mt-3 space-y-1 text-sm text-slate-300">
-                      <div className="flex justify-between">
-                        <span>MonñFri</span>
-                        <span>8:00am ñ 5:00pm</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Saturday</span>
-                        <span>By appointment</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Sunday</span>
-                        <span>Closed</span>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 border-t border-slate-800 pt-4">
-                      <div className="text-xs tracking-wider text-slate-400 font-semibold">
-                        NODE CONTACT
-                      </div>
-
-                      <div className="mt-2 text-sm text-slate-300 space-y-1">
-                        <div>Phone: {SHOP_PHONE_DISPLAY}</div>
-                        <div>Address: {SHOP_ADDRESS_LINE}</div>
-                      </div>
-
-                      <div className="mt-4 grid grid-cols-2 gap-2">
-                        <a
-                          href={`tel:${SHOP_PHONE_TEL}`}
-                          className="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-950/50 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-900/60 transition"
-                        >
-                          Call
-                        </a>
-
-                        <button
-                          type="button"
-                          onClick={() => copyToClipboard(SHOP_PHONE_TEL)}
-                          className="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-950/50 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-900/60 transition"
-                        >
-                          Copy phone
-                        </button>
-
-                        <a
-                          href={MAPS_URL}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-950/50 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-900/60 transition"
-                        >
-                          Directions
-                        </a>
-
-                        <button
-                          type="button"
-                          onClick={() => copyToClipboard(SHOP_ADDRESS_LINE)}
-                          className="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-950/50 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-900/60 transition"
-                        >
-                          Copy address
-                        </button>
-                      </div>
-
-                      <div className="mt-3 text-xs text-slate-500">
-                        Safe placeholders ó swap with real details anytime.
-                      </div>
-                    </div>
+                <div className="min-w-0">
+                  <div className="text-[30px] font-semibold leading-tight text-white sm:text-[34px]">
+                    Taylor Creek Auto Repair
                   </div>
-
-                  <div className="rounded-2xl border border-slate-800 bg-slate-950/45 p-5">
-                    <div className="text-sm font-semibold text-slate-200">Proof-ready workflow</div>
-                    <p className="mt-2 text-sm text-slate-300">
-                      Photos + notes become a single, time-ordered record. Cleaner approvals. Fewer
-                      disputes. Easier follow-ups.
-                    </p>
+                  <div className="mt-1 text-[15px] leading-5 text-[#aebed1]">
+                    Okeechobee, Florida ‚Ä¢ HomePlanet Verified Node
                   </div>
-                </aside>
+                </div>
               </div>
             </div>
-          </div>
-        </section>
 
-        {/* FEATURE CARDS */}
-        <section className="grid md:grid-cols-3 gap-5">
-          <div className="relative rounded-2xl border border-slate-800 bg-slate-950/45 p-6 overflow-hidden">
-            <div
-              aria-hidden
-              className="absolute left-0 top-0 h-full w-[2px]"
-              style={{
-                background:
-                  "linear-gradient(to bottom, rgba(239,68,68,0.0), rgba(239,68,68,0.8), rgba(239,68,68,0.0))",
-              }}
-            />
-            <div className="text-sm font-semibold">Submit ? Receipt ? PDF</div>
-            <p className="mt-2 text-sm text-slate-300">
-              Every intake becomes a time-anchored proof trail the moment it lands.
-            </p>
-          </div>
-
-          <div className="relative rounded-2xl border border-slate-800 bg-slate-950/45 p-6 overflow-hidden">
-            <div
-              aria-hidden
-              className="absolute left-0 top-0 h-full w-[2px]"
-              style={{
-                background:
-                  "linear-gradient(to bottom, rgba(56,189,248,0.0), rgba(56,189,248,0.85), rgba(56,189,248,0.0))",
-              }}
-            />
-            <div className="text-sm font-semibold">Public Lookup Enabled</div>
-            <p className="mt-2 text-sm text-slate-300">
-              Customers and managers can reference records instantly when needed.
-            </p>
-          </div>
-
-          <div className="relative rounded-2xl border border-slate-800 bg-slate-950/45 p-6 overflow-hidden">
-            <div
-              aria-hidden
-              className="absolute left-0 top-0 h-full w-[2px]"
-              style={{
-                background:
-                  "linear-gradient(to bottom, rgba(251,191,36,0.0), rgba(251,191,36,0.85), rgba(251,191,36,0.0))",
-              }}
-            />
-            <div className="text-sm font-semibold">Gold Tier Node</div>
-            <p className="mt-2 text-sm text-slate-300">
-              Enhanced verification for high-trust operations (visual layer for now).
-            </p>
-          </div>
-        </section>
-
-        {/* SERVICES */}
-        <section className="grid md:grid-cols-3 gap-5">
-          {[
-            ["Diagnostics", "No guessing. Findings documented before work begins."],
-            ["Brakes & Suspension", "Safety-critical systems handled with clear notes and verification."],
-            ["Maintenance", "Oil, fluids, inspections, and longevity care."],
-          ].map(([title, body]) => (
-            <div key={title} className="rounded-2xl border border-slate-800 bg-slate-950/45 p-6">
-              <div className="text-sm font-semibold">{title}</div>
-              <p className="mt-2 text-sm text-slate-300">{body}</p>
+            <div className="hidden sm:inline-flex min-h-[42px] items-center rounded-full border border-[#6b5a2a] bg-[#2a220f] px-4 py-2 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#f2dd95]">
+              Gold Tier
             </div>
-          ))}
+          </div>
+
+          <div className="mt-5 flex flex-wrap gap-2">
+            <InfoPill text="Receipt-ready" />
+            <InfoPill text="Timestamped" />
+            <InfoPill text="Verified intake" />
+            <InfoPill text="Public lookup" />
+          </div>
+        </header>
+
+        {/* HERO */}
+        <section className="mt-5 rounded-[28px] border border-[#2d415a] bg-[#0d1826] p-4 shadow-[0_18px_50px_rgba(0,0,0,0.32)] sm:p-5">
+          <div className="max-w-3xl">
+            <div className="text-[13px] font-semibold uppercase tracking-[0.18em] text-[#8ea5c0]">
+              Fast customer check-in
+            </div>
+
+            <h1 className="mt-3 text-[34px] font-semibold leading-[1.02] text-white sm:text-[44px]">
+              Check in your vehicle
+            </h1>
+
+            <p className="mt-3 text-[18px] leading-7 text-[#d0dceb]">
+              Start your service request in seconds. Your intake is saved immediately and a receipt is generated the
+              moment it lands.
+            </p>
+
+            <p className="mt-3 text-[15px] leading-6 text-[#9eb3ca]">
+              Tell the shop what you need before you talk to the mechanic. Add a photo if it helps. No lost texts. No
+              ‚Äúwe never got it.‚Äù
+            </p>
+          </div>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <ActionButton href={CHECKIN_HREF} label="Start Check-In" primary />
+            <ActionButton href={`tel:${SHOP_PHONE_TEL}`} label={`Call ${SHOP_PHONE_DISPLAY}`} />
+          </div>
+
+          {adminMode ? (
+            <div className="mt-3">
+              <ActionButton href={BOARD_HREF} label="Open Live Board" />
+            </div>
+          ) : null}
+
+          <div className="mt-4 rounded-[20px] border border-[#324559] bg-[#0f1d2d] p-4">
+            <div className="text-[14px] font-semibold uppercase tracking-[0.16em] text-[#8fa6c0]">
+              What happens next
+            </div>
+            <div className="mt-3 space-y-2 text-[16px] leading-7 text-[#d0dceb]">
+              <div>1. Tap check-in and choose what you need.</div>
+              <div>2. Add your name, vehicle, and phone number.</div>
+              <div>3. Get a receipt instantly while the request enters the system.</div>
+            </div>
+          </div>
+
+          <div className="mt-4 text-[13px] font-medium text-[#8ea5c0]">
+            Takes about 20 seconds ‚Ä¢ Receipt generated instantly
+          </div>
         </section>
 
-        <footer className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-slate-500 border-t border-slate-900 pt-6">
-          <div>© {new Date().getFullYear()} Taylor Creek Auto Repair</div>
-          <nav className="flex gap-4">
-            <a href={CHECKIN_HREF} className="hover:text-slate-300">
-              Start request
-            </a>
-            <Link to="/press/taylor-creek" className="hover:text-slate-300">
-              Press kit
-            </Link>
-          </nav>
+        {/* DETAILS */}
+        <div className="mt-5 grid gap-4">
+          <DetailCard title="Why this works">
+            <div className="space-y-3">
+              <p>
+                <span className="font-semibold text-white">Presence-first:</span> your request is anchored the moment
+                you submit it, before confusion, edits, or ‚Äúwe never got it.‚Äù
+              </p>
+              <p>
+                <span className="font-semibold text-white">Cleaner triage:</span> adding your vehicle details helps the
+                shop identify the right vehicle faster and reduces mixups.
+              </p>
+              <p>
+                <span className="font-semibold text-white">Better proof:</span> every intake becomes a time-anchored
+                record the moment it lands.
+              </p>
+            </div>
+          </DetailCard>
+
+          <DetailCard title="Operating hours">
+            <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-4 border-b border-[#243648] pb-2">
+                  <span className="font-semibold text-white">Mon‚ÄìFri</span>
+                  <span>8:00am ‚Äì 5:00pm</span>
+                </div>
+                <div className="flex items-center justify-between gap-4 border-b border-[#243648] pb-2">
+                  <span className="font-semibold text-white">Saturday</span>
+                  <span>By appointment</span>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <span className="font-semibold text-white">Sunday</span>
+                  <span>Closed</span>
+                </div>
+              </div>
+            </div>
+          </DetailCard>
+
+          <DetailCard title="Node contact">
+            <div className="space-y-4">
+              <div>
+                <div className="font-semibold text-white">Phone</div>
+                <div className="mt-1">
+                  <a href={`tel:${SHOP_PHONE_TEL}`} className="underline decoration-dotted underline-offset-4">
+                    {SHOP_PHONE_DISPLAY}
+                  </a>
+                </div>
+              </div>
+
+              <div>
+                <div className="font-semibold text-white">Address</div>
+                <div className="mt-1">{SHOP_ADDRESS_LINE}</div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <ActionButton href={`tel:${SHOP_PHONE_TEL}`} label="Call" />
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard(SHOP_PHONE_TEL)}
+                  className="inline-flex min-h-[54px] items-center justify-center rounded-[18px] border border-[#465b73] bg-[#122132] px-5 py-3 text-center text-[16px] font-semibold text-white transition hover:border-[#6d86a1]"
+                >
+                  Copy Phone
+                </button>
+                <ActionButton href={MAPS_URL} label="Directions" newTab />
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard(SHOP_ADDRESS_LINE)}
+                  className="inline-flex min-h-[54px] items-center justify-center rounded-[18px] border border-[#465b73] bg-[#122132] px-5 py-3 text-center text-[16px] font-semibold text-white transition hover:border-[#6d86a1]"
+                >
+                  Copy Address
+                </button>
+              </div>
+            </div>
+          </DetailCard>
+
+          <DetailCard title="Public lookup enabled">
+            Customers and managers can reference records quickly when needed. Intake, receipt, and service context stay
+            tied together instead of floating around as disconnected texts or calls.
+          </DetailCard>
+        </div>
+
+        {/* FOOTER */}
+        <footer className="mt-6 border-t border-[#162231] pt-6 text-center text-[12px] text-[#6f8399]">
+          ¬© {year} Taylor Creek Auto Repair
         </footer>
       </div>
     </div>
   );
 }
-
