@@ -31,6 +31,7 @@ import JoeGrantLegalDesk from "../pages/JoeGrantLegalDesk";
 import GuardianPresenceDesk from "../pages/GuardianPresenceDesk";
 import GuardianJoinDesk from "../pages/GuardianJoinDesk";
 import GuardianPetTagDemo from "../pages/GuardianPetTagDemo";
+import PetCareTimelinePanel from "../components/guardian/PetCareTimelinePanel";
 
 // Emily
 import EmilyLearningDesk from "../pages/EmilyLearningDesk";
@@ -41,7 +42,8 @@ import EmilyLearningDesk from "../pages/EmilyLearningDesk";
  * - /planet/vehicles/awnit-demo is a special demo surface
  * - /planet/food/... exposes restaurant demo pages
  * - /planet/legal/... exposes legal demo pages
- * - /planet/guardian stays the original Guardian landing
+ * - /planet/guardian now redirects to the pet care timeline demo
+ * - /planet/guardian/join and /planet/guardian/presence keep the original human Guardian surfaces
  * - /planet/guardian-pet is the separate pet tag demo landing
  * - /planet/emily exposes Emily's learning desk
  * - /planet/:planetId routes to PlanetOverview
@@ -75,15 +77,19 @@ export default function PlanetRoutes() {
       {/* Legal */}
       <Route path="legal/joe-grant" element={<JoeGrantLegalDesk />} />
 
-      {/* Guardian - keep original Guardian separate */}
-      <Route path="guardian" element={<GuardianPresenceDesk />} />
+      {/* Guardian */}
+      <Route
+        path="guardian"
+        element={<Navigate to="/planet/guardian-pet/timeline" replace />}
+      />
       <Route path="guardian/join" element={<GuardianJoinDesk />} />
       <Route path="guardian/presence" element={<GuardianPresenceDesk />} />
 
-      {/* Pet Guardian - separate landing and demos */}
+      {/* Pet Guardian */}
       <Route path="guardian-pet" element={<GuardianPetTagDemo />} />
       <Route path="guardian-pet/pet/:petId" element={<GuardianPetTagDemo />} />
       <Route path="guardian-pet/found/:petId" element={<GuardianPetTagDemo />} />
+      <Route path="guardian-pet/timeline" element={<PetCareTimelinePanel />} />
 
       {/* Other special pages */}
       <Route path="jeanettes" element={<JeanettesLanding />} />

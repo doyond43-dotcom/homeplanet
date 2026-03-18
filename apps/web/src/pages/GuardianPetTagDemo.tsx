@@ -34,6 +34,25 @@ type RadarEvent = {
   detail: string;
 };
 
+type CareEventType =
+  | "fed"
+  | "water"
+  | "walked"
+  | "potty"
+  | "medication"
+  | "groomed"
+  | "vet"
+  | "service";
+
+type CareTimelineEvent = {
+  id: string;
+  time: string;
+  title: string;
+  detail: string;
+  type: CareEventType;
+  proof?: string;
+};
+
 const PET_BASE_PATH = "/planet/guardian-pet";
 
 const DEMO_PET: DemoPet = {
@@ -77,6 +96,62 @@ const RADAR_EVENTS: RadarEvent[] = [
     time: "9:04 AM",
     title: "Finder report started",
     detail: "Location and notes can now flow into the rescue timeline.",
+  },
+];
+
+const BELLA_CARE_TIMELINE: CareTimelineEvent[] = [
+  {
+    id: "care-1",
+    time: "6:52 AM",
+    title: "Breakfast logged",
+    detail: "Bella finished morning meal. Appetite looked normal.",
+    type: "fed",
+    proof: "Bowl check captured",
+  },
+  {
+    id: "care-2",
+    time: "7:08 AM",
+    title: "Water refreshed",
+    detail: "Fresh water added and bowl level confirmed.",
+    type: "water",
+  },
+  {
+    id: "care-3",
+    time: "7:24 AM",
+    title: "Morning potty break",
+    detail: "Bathroom break completed before neighborhood walk.",
+    type: "potty",
+  },
+  {
+    id: "care-4",
+    time: "7:42 AM",
+    title: "Walk completed",
+    detail: "18-minute walk logged. Calm pace. No issues noted.",
+    type: "walked",
+    proof: "Walk route / duration ready",
+  },
+  {
+    id: "care-5",
+    time: "1:20 PM",
+    title: "Medication confirmed",
+    detail: "Midday dose recorded by caregiver.",
+    type: "medication",
+  },
+  {
+    id: "care-6",
+    time: "4:10 PM",
+    title: "Service visit recorded",
+    detail:
+      "Dog walker / pet service demo: service provider scanned the tag, opened Bella’s timeline, and logged the visit.",
+    type: "service",
+    proof: "Presence-ready service event",
+  },
+  {
+    id: "care-7",
+    time: "5:35 PM",
+    title: "Vet follow-up note",
+    detail: "Reminder added for checkup and activity monitoring.",
+    type: "vet",
   },
 ];
 
@@ -218,6 +293,124 @@ function RadarPanel({
   );
 }
 
+function getCareTypePill(type: CareEventType) {
+  switch (type) {
+    case "fed":
+      return "border-emerald-400/30 bg-emerald-400/10 text-emerald-100";
+    case "water":
+      return "border-sky-400/30 bg-sky-400/10 text-sky-100";
+    case "walked":
+      return "border-cyan-400/30 bg-cyan-400/10 text-cyan-100";
+    case "potty":
+      return "border-amber-400/30 bg-amber-400/10 text-amber-100";
+    case "medication":
+      return "border-fuchsia-400/30 bg-fuchsia-400/10 text-fuchsia-100";
+    case "groomed":
+      return "border-violet-400/30 bg-violet-400/10 text-violet-100";
+    case "vet":
+      return "border-rose-400/30 bg-rose-400/10 text-rose-100";
+    case "service":
+      return "border-white/20 bg-white/10 text-white";
+    default:
+      return "border-white/20 bg-white/10 text-white";
+  }
+}
+
+function careTypeLabel(type: CareEventType) {
+  switch (type) {
+    case "fed":
+      return "Fed";
+    case "water":
+      return "Water";
+    case "walked":
+      return "Walked";
+    case "potty":
+      return "Potty";
+    case "medication":
+      return "Medication";
+    case "groomed":
+      return "Groomed";
+    case "vet":
+      return "Vet";
+    case "service":
+      return "Service Visit";
+    default:
+      return "Event";
+  }
+}
+
+function PetCareTimelinePreview({
+  events,
+}: {
+  events: CareTimelineEvent[];
+}) {
+  return (
+    <section className="rounded-[32px] border border-white/10 bg-white/6 p-6 backdrop-blur-xl sm:p-8">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200">
+            Bella’s care timeline
+          </p>
+          <h3 className="mt-2 text-2xl font-semibold text-white sm:text-3xl">
+            More than a lost pet page
+          </h3>
+          <p className="mt-3 max-w-3xl text-sm leading-7 text-white/72 sm:text-base">
+            This same tag can later support pet walkers, pooper-scooper companies,
+            groomers, sitters, and vet staff. Each visit can become a presence-ready
+            care event with proof, timing, and service notes.
+          </p>
+        </div>
+
+        <div className="rounded-full border border-cyan-300/25 bg-cyan-400/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100">
+          Presence-ready
+        </div>
+      </div>
+
+      <div className="mt-6 grid gap-4 lg:grid-cols-[0.88fr_1.12fr]">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+          <MetricCard value={`${events.length}`} label="recent care events" />
+          <MetricCard value="1 tag" label="lost pet + care history" />
+          <MetricCard value="Service-ready" label="walkers, vets, groomers" />
+        </div>
+
+        <div className="space-y-4">
+          {events.slice(0, 5).map((event) => (
+            <div
+              key={event.id}
+              className="rounded-[24px] border border-white/10 bg-[#08101f] p-4"
+            >
+              <div className="flex flex-wrap items-center gap-3">
+                <span
+                  className={cn(
+                    "rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em]",
+                    getCareTypePill(event.type)
+                  )}
+                >
+                  {careTypeLabel(event.type)}
+                </span>
+                <span className="text-xs text-white/55">{event.time}</span>
+              </div>
+
+              <h4 className="mt-3 text-base font-semibold text-white">
+                {event.title}
+              </h4>
+              <p className="mt-2 text-sm leading-6 text-white/70">
+                {event.detail}
+              </p>
+
+              {event.proof ? (
+                <div className="mt-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/70">
+                  {event.proof}
+                </div>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function GuardianShell({
   children,
   pet,
@@ -269,7 +462,7 @@ function GuardianShell({
                 Finder Report
               </Link>
               <Link
-                to="/planet/guardian"
+                to="/planet/guardian-pet/timeline"
                 className="rounded-full border border-emerald-300/25 bg-emerald-400/10 px-4 py-2 text-sm font-medium text-emerald-100 transition hover:bg-emerald-400/18"
               >
                 Main Guardian
@@ -324,11 +517,12 @@ function GuardianSalesPage({ pet }: { pet: DemoPet }) {
           <div className="mt-8 grid gap-3 sm:grid-cols-3">
             <MetricCard value="1 scan" label="opens the live pet page" />
             <MetricCard value="3 taps" label="call, text, or report found" />
-            <MetricCard value="1 system" label="for families, vets, rescues" />
+            <MetricCard value="1 system" label="for families, vets, services" />
           </div>
 
           <p className="mt-6 text-sm leading-6 text-white/68">
-            Designed for pet owners, shelters, rescues, vets, groomers, and neighborhoods.
+            Designed for pet owners, shelters, rescues, vets, groomers, walkers, sitters,
+            and neighborhoods.
           </p>
         </div>
 
@@ -385,8 +579,8 @@ function GuardianSalesPage({ pet }: { pet: DemoPet }) {
           body="Pet Guardian turns a pet tag into a live page that opens instantly when scanned, with clear actions for the person helping."
         />
         <InfoPanel
-          title="The result"
-          body="Faster reunions, better trust, cleaner shelter conversations, and a strong HomePlanet story people actually remember."
+          title="The bigger play"
+          body="The same tag can later support walkers, pooper-scooper services, groomers, sitters, and vets with presence-ready care logging."
         />
       </section>
 
@@ -394,6 +588,8 @@ function GuardianSalesPage({ pet }: { pet: DemoPet }) {
         subtitle="When a pet is marked missing, Pet Guardian activates a live awareness ring. Each scan and report becomes part of the recovery story."
         events={RADAR_EVENTS}
       />
+
+      <PetCareTimelinePreview events={BELLA_CARE_TIMELINE} />
 
       <section className="rounded-[32px] border border-white/10 bg-white/6 p-6 backdrop-blur-xl sm:p-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -493,10 +689,12 @@ function GuardianSalesPage({ pet }: { pet: DemoPet }) {
               recovery activity the owner, shelter, or rescue can follow.
             </p>
             <p>
-              Great for pet owners, shelters, rescues, groomers, vets, and neighborhoods.
+              The same tag can later support care visits, dog walking, poop pickup,
+              grooming, and vet logs as timestamped pet service events.
             </p>
             <p className="font-semibold text-cyan-100">
-              Powered by HomePlanet — a real-world safety layer built for faster reunions.
+              Powered by HomePlanet — a real-world safety layer built for faster reunions
+              and trustworthy pet care records.
             </p>
           </div>
 
@@ -619,6 +817,8 @@ function GuardianPetPage({ pet }: { pet: DemoPet }) {
           </div>
         </section>
       </div>
+
+      <PetCareTimelinePreview events={BELLA_CARE_TIMELINE} />
 
       <RadarPanel
         subtitle="Every scan, page open, and report can become part of the live recovery timeline."
