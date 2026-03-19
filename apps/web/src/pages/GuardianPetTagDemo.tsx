@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import HomePlanetFooter from "../components/HomePlanetFooter";
 
 type PetStatus = "missing" | "safe" | "traveling";
 
@@ -313,7 +314,7 @@ function getCareTypePill(type: CareEventType) {
       return "border-white/20 bg-white/10 text-white";
     default:
       return "border-white/20 bg-white/10 text-white";
-  }
+    }
 }
 
 function careTypeLabel(type: CareEventType) {
@@ -471,7 +472,11 @@ function GuardianShell({
           </div>
         </header>
 
-        {children}
+        <div className="flex-1">
+          {children}
+        </div>
+
+        <HomePlanetFooter />
       </div>
     </div>
   );
