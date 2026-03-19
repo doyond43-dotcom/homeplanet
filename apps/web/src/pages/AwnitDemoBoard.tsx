@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { createInvoiceFromJob } from "../lib/invoices";
 import { awnitListJobs, awnitUpdateJob } from "../lib/awnitJobsApi";
+import HomePlanetFooter from "../components/HomePlanetFooter";
 
 /**
  * AWNIT — Live Board (Supabase-backed)
@@ -1074,8 +1075,8 @@ export default function AwnitDemoBoard() {
         : type === "screen"
         ? "Screen"
         : type === "trim"
-        ? "Trim"
-        : "Custom";
+          ? "Trim"
+          : "Custom";
 
     const item: ScopeItem = {
       id: makeId(),
@@ -1855,6 +1856,8 @@ export default function AwnitDemoBoard() {
                 </div>
               )}
             </div>
+
+            <HomePlanetFooter className="mt-8" />
           </div>
         </div>
 

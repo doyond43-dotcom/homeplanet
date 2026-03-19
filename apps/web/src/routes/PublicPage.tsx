@@ -901,8 +901,8 @@ function ServiceButton({
       className={cx(
         "flex min-h-[112px] w-full flex-col items-start justify-center rounded-[24px] border px-5 py-4 text-left transition",
         active
-          ? "border-[#63a8ff] bg-[#122e4a] shadow-[0_0_0_1px_rgba(99,168,255,0.25)]"
-          : "border-[#43586f] bg-[#122132]",
+          ? "border-[#63a8ff] bg-[#122e4a] shadow-[0_0_0_1px_rgba(34,224,110,0.34),0_0_12px_rgba(34,224,110,0.16),0_0_22px_rgba(34,224,110,0.08),0_0_0_1px_rgba(99,168,255,0.25)]"
+          : "border-[#43586f] bg-[#122132] shadow-[0_0_0_1px_rgba(34,224,110,0.12),0_0_10px_rgba(34,224,110,0.05)] hover:shadow-[0_0_0_1px_rgba(34,224,110,0.22),0_0_12px_rgba(34,224,110,0.08)]",
       )}
     >
       <Icon className={cx("h-7 w-7", active ? "text-[#82c7ff]" : "text-[#b9cbe0]")} />
@@ -935,8 +935,8 @@ function ModeButton({
         disabled
           ? "cursor-not-allowed border-[#33475a] bg-[#0f1823] text-[#71859b]"
           : active
-            ? "border-[#63a8ff] bg-[#122e4a]"
-            : "border-[#43586f] bg-[#122132]",
+            ? "border-[#63a8ff] bg-[#122e4a] shadow-[0_0_0_1px_rgba(34,224,110,0.34),0_0_12px_rgba(34,224,110,0.16),0_0_22px_rgba(34,224,110,0.08)]"
+            : "border-[#43586f] bg-[#122132] shadow-[0_0_0_1px_rgba(34,224,110,0.12),0_0_10px_rgba(34,224,110,0.05)] hover:shadow-[0_0_0_1px_rgba(34,224,110,0.22),0_0_12px_rgba(34,224,110,0.08)]",
       )}
     >
       <div className={cx("text-[22px] font-semibold", disabled ? "text-[#71859b]" : "text-white")}>
@@ -973,11 +973,11 @@ function Field({
         disabled={disabled}
         placeholder={placeholder}
         className={cx(
-          "w-full rounded-[20px] border bg-[#122132] px-5 text-white outline-none placeholder:text-[#8ea3ba]",
+          "w-full rounded-[20px] border bg-[#122132] px-5 text-white outline-none placeholder:text-[#8ea3ba] transition",
           large ? "min-h-[64px] text-[20px]" : "min-h-[56px] text-[18px]",
           disabled
             ? "cursor-not-allowed border-[#33475a] text-[#6f8399]"
-            : "border-[#4a6178]",
+            : "border-[#4a6178] shadow-[0_0_0_1px_rgba(34,224,110,0.12),0_0_10px_rgba(34,224,110,0.05)] focus:border-[#63a8ff] focus:shadow-[0_0_0_1px_rgba(34,224,110,0.34),0_0_12px_rgba(34,224,110,0.14),0_0_22px_rgba(34,224,110,0.07)]",
         )}
       />
     </label>
