@@ -46,6 +46,69 @@ function QRCodeImg({ value, size = 240 }: { value: string; size?: number }) {
   return <img src={src} width={size} height={size} style={{ borderRadius: 14, display: "block" }} alt="QR code" />;
 }
 
+function HomePlanetFooter() {
+  const footerWrap: React.CSSProperties = {
+    marginTop: 34,
+    paddingTop: 18,
+    borderTop: "1px solid rgba(148,163,184,0.16)",
+    textAlign: "center",
+  };
+
+  const footerPrimary: React.CSSProperties = {
+    fontSize: 13,
+    color: "#94a3b8",
+    fontWeight: 700,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    flexWrap: "wrap",
+  };
+
+  const footerSecondary: React.CSSProperties = {
+    marginTop: 6,
+    fontSize: 12,
+    color: "rgba(148,163,184,0.72)",
+  };
+
+  const footerPlanetMark: React.CSSProperties = {
+    position: "relative",
+    width: 16,
+    height: 16,
+    display: "inline-block",
+    borderRadius: "50%",
+    background: "radial-gradient(circle at 35% 35%, #7dd3fc 0%, #38bdf8 45%, #1d4ed8 100%)",
+    boxShadow: "0 0 10px rgba(56,189,248,0.45)",
+    flexShrink: 0,
+  };
+
+  const footerPlanetRing: React.CSSProperties = {
+    position: "absolute",
+    left: -3,
+    top: 6,
+    width: 22,
+    height: 7,
+    border: "1.5px solid rgba(186,230,253,0.92)",
+    borderRadius: "50%",
+    transform: "rotate(-18deg)",
+    opacity: 0.95,
+    boxShadow: "0 0 6px rgba(125,211,252,0.25)",
+    pointerEvents: "none",
+  };
+
+  return (
+    <div style={footerWrap}>
+      <div style={footerPrimary}>
+        <span style={footerPlanetMark}>
+          <span style={footerPlanetRing} />
+        </span>
+        HomePlanet © 2026. All rights reserved.
+      </div>
+      <div style={footerSecondary}>Presence-first systems and workflows protected.</div>
+    </div>
+  );
+}
+
 function StudioSurface({ mode, onBack, onBuild }: { mode: string; onBack: () => void; onBuild: () => void }) {
   const store: any = useProjectStore();
   const activeProjectId: string | null = store?.activeProjectId ?? null;
@@ -368,11 +431,12 @@ function StudioSurface({ mode, onBack, onBuild }: { mode: string; onBack: () => 
     address: "",
     best_time: "",
   });
-  
+
   const [, setIntakeSaving] = useState(false);
   const [, setIntakeError] = useState<string | null>(null);
   const [, setIntakeSuccess] = useState<string | null>(null);
-const submitIntake = async () => {
+
+  const submitIntake = async () => {
     if (!slug) {
       setIntakeError("Slug is not ready yet. Wait one second and try again.");
       return;
@@ -434,7 +498,7 @@ const submitIntake = async () => {
   };
   // ===== End Intake wiring =====
 
-return (
+  return (
     <div style={shell}>
       <style>{PRINT_CSS}</style>
 
@@ -508,8 +572,7 @@ return (
             <button type="button" style={primary} onClick={submitIntake}>
               Submit Intake
             </button>
-          
-</div>
+          </div>
 
           <div style={panel}>
             <div style={{ fontWeight: 950, color: "white" }}>Share (QR + Link)</div>
@@ -549,20 +612,19 @@ return (
               <button type="button" style={pill} onClick={copyUrl}>
                 Copy link
               </button>
-              
-<button type="button" style={pill} onClick={onBack} title="Back to Studio">
+
+              <button type="button" style={pill} onClick={onBack} title="Back to Studio">
                 Studio
               </button>
-              
-<button type="button" style={pill} onClick={onBuild} title="Back to Build">
+
+              <button type="button" style={pill} onClick={onBuild} title="Back to Build">
                 Build
               </button>
-              
-<button type="button" style={primary} onClick={() => window.print()} title="Print / Save PDF">
+
+              <button type="button" style={primary} onClick={() => window.print()} title="Print / Save PDF">
                 Print / Save PDF
               </button>
-            
-</div>
+            </div>
 
             <div style={{ height: 12 }} />
 
@@ -577,6 +639,8 @@ return (
           </div>
         </div>
       )}
+
+      <HomePlanetFooter />
     </div>
   );
 }
@@ -670,8 +734,7 @@ export default function CreatorStudio() {
               <button type="button" style={hpPill} onClick={() => window.print()} title="Print / Save PDF">
                 Print / Save PDF
               </button>
-            
-</div>
+            </div>
           </div>
         </div>
 
@@ -719,12 +782,8 @@ export default function CreatorStudio() {
           </div>
         ))}
       </div>
+
+      <HomePlanetFooter />
     </div>
   );
 }
-
-
-
-
-
-

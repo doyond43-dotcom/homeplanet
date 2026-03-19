@@ -447,6 +447,55 @@ export default function CreatorCity() {
     opacity: 0.78,
   };
 
+  const footerWrap: React.CSSProperties = {
+    marginTop: 34,
+    paddingTop: 18,
+    borderTop: "1px solid rgba(148,163,184,0.16)",
+    textAlign: "center",
+  };
+
+  const footerPrimary: React.CSSProperties = {
+    fontSize: 13,
+    color: "#94a3b8",
+    fontWeight: 700,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    flexWrap: "wrap",
+  };
+
+  const footerSecondary: React.CSSProperties = {
+    marginTop: 6,
+    fontSize: 12,
+    color: "rgba(148,163,184,0.72)",
+  };
+
+  const footerPlanetMark: React.CSSProperties = {
+    position: "relative",
+    width: 16,
+    height: 16,
+    display: "inline-block",
+    borderRadius: "50%",
+    background: "radial-gradient(circle at 35% 35%, #7dd3fc 0%, #38bdf8 45%, #1d4ed8 100%)",
+    boxShadow: "0 0 10px rgba(56,189,248,0.45)",
+    flexShrink: 0,
+  };
+
+  const footerPlanetRing: React.CSSProperties = {
+    position: "absolute",
+    left: -3,
+    top: 6,
+    width: 22,
+    height: 7,
+    border: "1.5px solid rgba(186,230,253,0.92)",
+    borderRadius: "50%",
+    transform: "rotate(-18deg)",
+    opacity: 0.95,
+    boxShadow: "0 0 6px rgba(125,211,252,0.25)",
+    pointerEvents: "none",
+  };
+
   const goCreatePlanet = () => nav("/creator/build");
   const goProjects = () => nav("/creator/projects");
   const goStudio = () => nav("/creator/studio");
@@ -550,6 +599,16 @@ export default function CreatorCity() {
               <div style={workspaceBadge}>PRIVATE</div>
             </div>
           ))}
+        </div>
+
+        <div style={footerWrap}>
+          <div style={footerPrimary}>
+            <span style={footerPlanetMark}>
+              <span style={footerPlanetRing} />
+            </span>
+            HomePlanet © 2026. All rights reserved.
+          </div>
+          <div style={footerSecondary}>Presence-first systems and workflows protected.</div>
         </div>
       </div>
     </div>
