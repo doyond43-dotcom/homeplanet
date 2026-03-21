@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { addWalkOnStop } from "../lib/RouteCutLiveStore";
+import { addWalkOnStop } from "../lib/routecutLiveStore";
 
 export default function RouteCutLawnPage() {
   const routeSteps = useMemo(
@@ -54,37 +54,37 @@ export default function RouteCutLawnPage() {
 
   return (
     <div className="min-h-screen bg-[#070B14] text-white">
-      <div className="max-w-7xl mx-auto px-5 py-6 space-y-8">
+      <div className="mx-auto max-w-7xl space-y-8 px-5 py-6">
         {/* HEADER */}
-        <div className="rounded-2xl border border-cyan-400/20 bg-[#0B1220]/80 px-6 py-4 flex justify-between items-center">
+        <div className="flex items-center justify-between rounded-2xl border border-cyan-400/20 bg-[#0B1220]/80 px-6 py-4">
           <div>
-            <div className="text-xs text-cyan-300/70 uppercase tracking-widest">
+            <div className="text-xs uppercase tracking-widest text-cyan-300/70">
               Live Route Page
             </div>
-            <div className="font-semibold text-lg">RouteCut Lawn Co. by Johnny</div>
+            <div className="text-lg font-semibold">RouteCut Lawn Co. by Johnny</div>
           </div>
 
-          <div className="text-xs border border-cyan-300/30 px-3 py-1 rounded-full flex items-center gap-2">
-            <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+          <div className="flex items-center gap-2 rounded-full border border-cyan-300/30 px-3 py-1 text-xs">
+            <span className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
             Live Route Active
           </div>
         </div>
 
         {/* TOP GRID */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
           {/* LIVE OPENING */}
-          <div className="rounded-3xl border border-cyan-400/20 bg-gradient-to-br from-[#0B1220] to-[#0A1A2F] p-6 space-y-6">
-            <div className="text-xs text-cyan-300/70 uppercase tracking-widest">
+          <div className="space-y-6 rounded-3xl border border-cyan-400/20 bg-gradient-to-br from-[#0B1220] to-[#0A1A2F] p-6">
+            <div className="text-xs uppercase tracking-widest text-cyan-300/70">
               Live Opening
             </div>
 
-            <h1 className="text-3xl sm:text-4xl font-semibold leading-tight max-w-3xl">
+            <h1 className="max-w-3xl text-3xl font-semibold leading-tight sm:text-4xl">
               Next opening available now.
             </h1>
 
-            <p className="text-green-300 font-medium">You’re next in line.</p>
+            <p className="font-medium text-green-300">You’re next in line.</p>
 
-            <p className="text-white/70 max-w-2xl text-sm sm:text-base leading-7">
+            <p className="max-w-2xl text-sm leading-7 text-white/70 sm:text-base">
               Johnny is finishing nearby. Claim this now and skip the usual
               back-and-forth.
             </p>
@@ -93,22 +93,22 @@ export default function RouteCutLawnPage() {
               {routeSteps.map((step, i) => (
                 <div
                   key={step.title}
-                  className="border border-cyan-400/20 rounded-xl p-4 bg-[#0D1728]/50"
+                  className="rounded-xl border border-cyan-400/20 bg-[#0D1728]/50 p-4"
                 >
-                  <div className="text-xs text-cyan-300/60 uppercase tracking-[0.2em] mb-1">
+                  <div className="mb-1 text-xs uppercase tracking-[0.2em] text-cyan-300/60">
                     Stop {i + 1}
                   </div>
                   <div className="font-medium text-white">{step.title}</div>
-                  <div className="text-white/50 text-sm mt-1">{step.body}</div>
+                  <div className="mt-1 text-sm text-white/50">{step.body}</div>
                 </div>
               ))}
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <button
                 type="button"
                 onClick={() => scrollToId("form")}
-                className="px-5 py-3 bg-green-400 text-black rounded-xl font-semibold hover:bg-green-300 transition"
+                className="rounded-xl bg-green-400 px-5 py-3 font-semibold text-black transition hover:bg-green-300"
               >
                 Claim This Spot
               </button>
@@ -116,7 +116,7 @@ export default function RouteCutLawnPage() {
               <button
                 type="button"
                 onClick={() => scrollToId("how")}
-                className="px-5 py-3 border border-cyan-400/30 rounded-xl text-white/85 hover:bg-cyan-400/10 transition"
+                className="rounded-xl border border-cyan-400/30 px-5 py-3 text-white/85 transition hover:bg-cyan-400/10"
               >
                 See How It Flows
               </button>
@@ -126,37 +126,35 @@ export default function RouteCutLawnPage() {
           {/* LIVE REQUEST */}
           <div
             id="form"
-            className="rounded-3xl border border-cyan-400/20 bg-[#08111f] p-6 space-y-4"
+            className="space-y-4 rounded-3xl border border-cyan-400/20 bg-[#08111f] p-6"
           >
-            <div className="flex justify-between items-center gap-3">
-              <div className="text-xs text-cyan-300/70 uppercase tracking-widest">
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-xs uppercase tracking-widest text-cyan-300/70">
                 Live Request
               </div>
-              <div className="text-xs border border-cyan-300/30 px-2 py-1 rounded-full text-white/80">
+              <div className="rounded-full border border-cyan-300/30 px-2 py-1 text-xs text-white/80">
                 Fast confirm
               </div>
             </div>
 
-            <h2 className="text-xl sm:text-2xl font-semibold">
-              Lock this opening
-            </h2>
+            <h2 className="text-xl font-semibold sm:text-2xl">Lock this opening</h2>
 
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full p-3 rounded-xl bg-[#0D1728] border border-cyan-400/20 outline-none placeholder:text-white/30"
+              className="w-full rounded-xl border border-cyan-400/20 bg-[#0D1728] p-3 outline-none placeholder:text-white/30"
               placeholder="Your name"
             />
             <input
               value={address}
               onChange={(e) => setAddress(e.target.value)}
-              className="w-full p-3 rounded-xl bg-[#0D1728] border border-cyan-400/20 outline-none placeholder:text-white/30"
+              className="w-full rounded-xl border border-cyan-400/20 bg-[#0D1728] p-3 outline-none placeholder:text-white/30"
               placeholder="Street address"
             />
             <input
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full p-3 rounded-xl bg-[#0D1728] border border-cyan-400/20 outline-none placeholder:text-white/30"
+              className="w-full rounded-xl border border-cyan-400/20 bg-[#0D1728] p-3 outline-none placeholder:text-white/30"
               placeholder="Best number"
             />
 
@@ -164,7 +162,7 @@ export default function RouteCutLawnPage() {
               type="button"
               onClick={handleLockMySpot}
               disabled={isSubmitting}
-              className="w-full py-3 bg-green-400 text-black rounded-xl font-semibold hover:bg-green-300 transition disabled:opacity-70"
+              className="w-full rounded-xl bg-green-400 py-3 font-semibold text-black transition hover:bg-green-300 disabled:opacity-70"
             >
               {isSubmitting ? "Locking..." : "Lock My Spot"}
             </button>
@@ -172,17 +170,17 @@ export default function RouteCutLawnPage() {
         </div>
 
         {/* ROUTE FLOW */}
-        <div className="rounded-3xl border border-cyan-400/20 bg-[#0B1220]/80 p-6 space-y-6">
-          <div className="text-xs text-cyan-300/70 uppercase tracking-widest">
+        <div className="space-y-6 rounded-3xl border border-cyan-400/20 bg-[#0B1220]/80 p-6">
+          <div className="text-xs uppercase tracking-widest text-cyan-300/70">
             Route Flow
           </div>
 
-          <h2 className="text-2xl sm:text-3xl font-semibold">
+          <h2 className="text-2xl font-semibold sm:text-3xl">
             Catch the route while it’s moving.
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-            <div className="border border-cyan-400/20 rounded-xl p-4 bg-[#0D1728]/50">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-xl border border-cyan-400/20 bg-[#0D1728]/50 p-4">
               27th St active
               <br />
               2 cuts remaining
@@ -190,17 +188,17 @@ export default function RouteCutLawnPage() {
               Your yard next
             </div>
 
-            <div className="border border-cyan-400/20 rounded-xl p-4 bg-[#0D1728]/50">
+            <div className="rounded-xl border border-cyan-400/20 bg-[#0D1728]/50 p-4">
               Confirm → Cut → Done
             </div>
 
-            <div className="bg-green-400 text-black rounded-xl p-4 font-semibold">
+            <div className="rounded-xl bg-green-400 p-4 font-semibold text-black">
               $80
               <br />
               Most homes
             </div>
 
-            <div className="border border-cyan-400/20 rounded-xl p-4 bg-[#0D1728]/50">
+            <div className="rounded-xl border border-cyan-400/20 bg-[#0D1728]/50 p-4">
               Route keeps moving
             </div>
           </div>
@@ -209,37 +207,37 @@ export default function RouteCutLawnPage() {
         {/* HOW IT WORKS */}
         <div
           id="how"
-          className="rounded-3xl border border-cyan-400/20 bg-[#0B1220]/80 p-6 space-y-6"
+          className="space-y-6 rounded-3xl border border-cyan-400/20 bg-[#0B1220]/80 p-6"
         >
-          <div className="text-xs text-cyan-300/70 uppercase tracking-widest">
+          <div className="text-xs uppercase tracking-widest text-cyan-300/70">
             How It Works
           </div>
 
-          <h2 className="text-2xl sm:text-3xl font-semibold">
+          <h2 className="text-2xl font-semibold sm:text-3xl">
             No scheduling. Just catch it.
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-            <div className="border border-cyan-400/20 rounded-xl p-4 bg-[#0D1728]/50">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-xl border border-cyan-400/20 bg-[#0D1728]/50 p-4">
               Route goes live
             </div>
 
-            <div className="border border-cyan-400/20 rounded-xl p-4 bg-[#0D1728]/50">
+            <div className="rounded-xl border border-cyan-400/20 bg-[#0D1728]/50 p-4">
               Opening appears
             </div>
 
-            <div className="bg-green-400 text-black rounded-xl p-4 font-semibold">
+            <div className="rounded-xl bg-green-400 p-4 font-semibold text-black">
               You claim it
             </div>
 
-            <div className="border border-cyan-400/20 rounded-xl p-4 bg-[#0D1728]/50">
+            <div className="rounded-xl border border-cyan-400/20 bg-[#0D1728]/50 p-4">
               We pull up
             </div>
           </div>
         </div>
 
         {/* FOOTER */}
-        <div className="text-center text-white/50 text-sm border border-cyan-400/20 rounded-xl p-4 bg-[#0B1220]/60">
+        <div className="rounded-xl border border-cyan-400/20 bg-[#0B1220]/60 p-4 text-center text-sm text-white/50">
           HomePlanet Node • RouteCut Lawn
           <br />
           © 2026 HomePlanet
