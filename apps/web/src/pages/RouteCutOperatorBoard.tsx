@@ -5,6 +5,7 @@ import {
   addWalkOnStop,
   advanceStop,
   buildCustomerPaymentMessage,
+  buildPaymentSmsHref,
   formatEventTime,
   logCustomerContact,
   markStopPaid,
@@ -153,7 +154,17 @@ export default function RouteCutOperatorBoard() {
 
   const handleAdvance = () => {
     if (!selectedStop || selectedStop.status === "complete") return;
+
+    const isCompleting = selectedStop.status === "on-site";
+    const paymentSmsHref = isCompleting
+      ? buildPaymentSmsHref(selectedStop)
+      : null;
+
     advanceStop(selectedStop.id);
+
+    if (paymentSmsHref) {
+      window.location.href = paymentSmsHref;
+    }
   };
 
   const handleStepBack = () => {
