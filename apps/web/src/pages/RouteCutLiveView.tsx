@@ -1,5 +1,7 @@
 import { useMemo } from "react";
 import {
+  formatEventTime,
+  getLatestEvent,
   getStopById,
   orderedStatuses,
   statusLabel,
@@ -19,6 +21,7 @@ export default function RouteCutLiveView() {
     null;
 
   const allStatuses = orderedStatuses();
+  const latestEvent = getLatestEvent(stop);
 
   const progress = useMemo(() => {
     if (!stop) return [];
@@ -36,6 +39,25 @@ export default function RouteCutLiveView() {
       };
     });
   }, [allStatuses, stop]);
+
+  const statusMessage = useMemo(() => {
+    if (!stop) return "";
+
+    switch (stop.status) {
+      case "new":
+        return "Your stop was received and is now in the live route queue.";
+      case "scheduled":
+        return "Your stop has been confirmed and locked into the route.";
+      case "en-route":
+        return "The crew is on the way to your property now.";
+      case "on-site":
+        return "The crew has arrived and your service is actively underway.";
+      case "complete":
+        return "Your route stop has been completed and closed out.";
+      default:
+        return "";
+    }
+  }, [stop]);
 
   if (!stop) {
     return (
@@ -75,10 +97,7 @@ export default function RouteCutLiveView() {
             <h1 className="text-3xl font-semibold sm:text-4xl">
               {stop.customer} — {stop.address}
             </h1>
-            <p className="max-w-2xl leading-7 text-white/65">
-              Your lawn is locked into the live route. This page updates as the
-              crew moves from new to scheduled to en route, on site, and complete.
-            </p>
+            <p className="max-w-2xl leading-7 text-white/65">{statusMessage}</p>
           </div>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -142,6 +161,25 @@ export default function RouteCutLiveView() {
                 </div>
               </div>
             ))}
+          </div>
+        </section>
+
+        <section className="space-y-4 rounded-3xl border border-cyan-400/20 bg-[#0B1220]/80 p-6">
+          <div>
+            <div className="text-xs uppercase tracking-widest text-cyan-300/70">
+              Latest route event
+            </div>
+            <div className="mt-2 text-2xl font-semibold">
+              {latestEvent?.title ?? "Waiting for route activity"}
+            </div>
+            <div className="mt-2 text-white/60">
+              {latestEvent?.detail ?? "Updates will appear here as the crew moves."}
+            </div>
+            {latestEvent && (
+              <div className="mt-2 text-sm text-white/40">
+                Logged at {formatEventTime(latestEvent.createdAt)}
+              </div>
+            )}
           </div>
         </section>
 
