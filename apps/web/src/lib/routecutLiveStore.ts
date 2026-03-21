@@ -432,13 +432,49 @@ export function setSelectedStop(id: string | null) {
   emitChange();
 }
 
+export function buildCustomerPaymentMessage(stop: RouteCutStop) {
+  const lines = [
+    `Hi ${stop.customer} — your RouteCut service is complete.`,
+    "",
+    `Total: $${stop.payment.amountDue}`,
+    "",
+    `Pay via Zelle:`,
+    ROUTE_OWNER_PAYMENT.zelle,
+  ];
+
+  if (ROUTE_OWNER_PAYMENT.cashApp?.trim()) {
+    lines.push("", "Or Cash App:", ROUTE_OWNER_PAYMENT.cashApp);
+  }
+
+  lines.push("", "Thank you!");
+
+  return lines.join("\n");
+}
+
+async function tryCopyToClipboard(value: string) {
+  try {
+    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(value);
+    }
+  } catch {
+    // Ignore clipboard failures silently.
+  }
+}
+
+export function buildPaymentSmsHref(stop: RouteCutStop) {
+  const body = encodeURIComponent(buildCustomerPaymentMessage(stop));
+  return `sms:${stop.phone}?&body=${body}`;
+}
+
 export function moveStop(id: string, next: RouteCutStatus) {
+  let completedStop: RouteCutStop | null = null;
+
   const updatedStops = state.stops.map((stop) => {
     if (stop.id !== id) return stop;
 
     const isComplete = next === "complete";
 
-    return {
+    const updatedStop: RouteCutStop = {
       ...stop,
       status: next,
       openingWindow: isComplete ? "Completed" : stop.openingWindow,
@@ -460,6 +496,12 @@ export function moveStop(id: string, next: RouteCutStatus) {
         }),
       ],
     };
+
+    if (isComplete) {
+      completedStop = updatedStop;
+    }
+
+    return updatedStop;
   });
 
   const selectedId = next === "complete" ? findNextSelectableStopId(updatedStops, id) : id;
@@ -471,6 +513,10 @@ export function moveStop(id: string, next: RouteCutStatus) {
   };
 
   emitChange();
+
+  if (completedStop && completedStop.payment.status !== "paid") {
+    void tryCopyToClipboard(buildCustomerPaymentMessage(completedStop));
+  }
 }
 
 export function advanceStop(id: string) {
@@ -575,25 +621,6 @@ export function addStopNote(id: string, note: string) {
   };
 
   emitChange();
-}
-
-export function buildCustomerPaymentMessage(stop: RouteCutStop) {
-  const lines = [
-    `Hi ${stop.customer} — your RouteCut service is ready for payment.`,
-    "",
-    `Total: $${stop.payment.amountDue}`,
-    "",
-    `Pay via Zelle:`,
-    ROUTE_OWNER_PAYMENT.zelle,
-  ];
-
-  if (ROUTE_OWNER_PAYMENT.cashApp?.trim()) {
-    lines.push("", "Or Cash App:", ROUTE_OWNER_PAYMENT.cashApp);
-  }
-
-  lines.push("", "Thank you!");
-
-  return lines.join("\n");
 }
 
 export function logCustomerContact(id: string, method: "text" | "call") {

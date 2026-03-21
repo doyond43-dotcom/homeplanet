@@ -1,5 +1,11 @@
 import { useMemo, useState } from "react";
 import HomePlanetFooter from "../components/HomePlanetFooter";
+import {
+  ROUTE_OWNER_PAYMENT,
+  buildCustomerPaymentMessage,
+  getStopById,
+  useRouteCutStore,
+} from "../lib/routecutLiveStore";
 
 type PaymentRail = "cashapp" | "zelle";
 
@@ -13,9 +19,62 @@ type RailConfig = {
   payUrl: string | null;
 };
 
+function OwnerNav({ stopId }: { stopId: string | null }) {
+  const operatorUrl = "/planet/routecut/operator";
+  const liveUrl = stopId ? `/planet/routecut/live?stopId=${stopId}` : "/planet/routecut/live";
+  const paymentUrl = stopId
+    ? `${ROUTE_OWNER_PAYMENT.paymentNodeUrl}?stopId=${stopId}`
+    : ROUTE_OWNER_PAYMENT.paymentNodeUrl;
+
+  const buttonClass =
+    "rounded-xl border border-cyan-400/30 px-4 py-2 text-sm transition hover:bg-cyan-400/10";
+
+  return (
+    <div className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-cyan-400/20 bg-[#0B1220]/70 px-4 py-3">
+      <span className="text-xs uppercase tracking-[0.25em] text-cyan-300/60">
+        Owner Nav
+      </span>
+
+      <button
+        type="button"
+        onClick={() => window.location.assign(operatorUrl)}
+        className={buttonClass}
+      >
+        Operator
+      </button>
+
+      <button
+        type="button"
+        onClick={() => window.location.assign(liveUrl)}
+        className={buttonClass}
+      >
+        Live View
+      </button>
+
+      <button
+        type="button"
+        onClick={() => window.location.assign(paymentUrl)}
+        className={buttonClass}
+      >
+        Payment Node
+      </button>
+    </div>
+  );
+}
+
 export default function HomePlanetPaymentNode() {
-  const [activeRail, setActiveRail] = useState<PaymentRail>("cashapp");
+  const [activeRail, setActiveRail] = useState<PaymentRail>("zelle");
   const [paidMarked, setPaidMarked] = useState(false);
+  const { stops, selectedId } = useRouteCutStore();
+
+  const params = new URLSearchParams(window.location.search);
+  const stopIdFromQuery = params.get("stopId");
+
+  const stop =
+    getStopById(stopIdFromQuery) ??
+    stops.find((item) => item.id === selectedId) ??
+    stops[0] ??
+    null;
 
   const rail = useMemo<RailConfig>(() => {
     if (activeRail === "cashapp") {
@@ -23,10 +82,12 @@ export default function HomePlanetPaymentNode() {
         id: "cashapp",
         label: "Cash App",
         qrSrc: "/payment/cashapp-qr.png",
-        accountName: "Daniel Doyon",
-        handle: "$homeplanetsystems",
+        accountName: ROUTE_OWNER_PAYMENT.ownerName,
+        handle: ROUTE_OWNER_PAYMENT.cashApp,
         helper: "Scan with Cash App to send instantly.",
-        payUrl: "https://cash.app/$homeplanetsystems",
+        payUrl: ROUTE_OWNER_PAYMENT.cashApp
+          ? `https://cash.app/${ROUTE_OWNER_PAYMENT.cashApp.replace("$", "")}`
+          : null,
       };
     }
 
@@ -34,8 +95,8 @@ export default function HomePlanetPaymentNode() {
       id: "zelle",
       label: "Zelle",
       qrSrc: "/payment/zelle-qr.png",
-      accountName: "Daniel Doyon",
-      handle: "863-532-0683",
+      accountName: ROUTE_OWNER_PAYMENT.ownerName,
+      handle: ROUTE_OWNER_PAYMENT.zelle,
       helper: "Scan with Zelle to send instantly.",
       payUrl: null,
     };
@@ -44,13 +105,7 @@ export default function HomePlanetPaymentNode() {
   const handleMarkPaid = () => {
     setPaidMarked(true);
     window.alert(
-      "Payment marked. Next step: wire this into the proof flow, invoice record, or live job board."
-    );
-  };
-
-  const handleOpenProofFlow = () => {
-    window.alert(
-      "Next step: connect this button to your HomePlanet proof timeline or invoice flow."
+      "Payment marked on this screen. The next step is tying this directly to the live route payment state if you want customer-side confirmation here too."
     );
   };
 
@@ -63,9 +118,34 @@ export default function HomePlanetPaymentNode() {
     window.open(rail.payUrl, "_blank", "noopener,noreferrer");
   };
 
+  const handleTextPayment = async () => {
+    if (!stop) return;
+
+    const message = buildCustomerPaymentMessage(stop);
+
+    try {
+      await navigator.clipboard.writeText(message);
+    } catch {
+      // ignore clipboard failure
+    }
+
+    window.location.href = `sms:${stop.phone}?&body=${encodeURIComponent(message)}`;
+  };
+
+  const paymentSummary = stop
+    ? {
+        customer: stop.customer,
+        service: stop.service,
+        amountDue: stop.payment.amountDue,
+        status: stop.payment.status,
+      }
+    : null;
+
   return (
     <div className="min-h-screen bg-[#050814] text-white">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+        <OwnerNav stopId={stop?.id ?? null} />
+
         <div className="relative overflow-hidden rounded-[30px] border border-cyan-400/20 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.14),transparent_28%),radial-gradient(circle_at_top_right,rgba(74,222,128,0.10),transparent_22%),linear-gradient(180deg,#071120_0%,#081424_100%)] shadow-[0_0_0_1px_rgba(34,211,238,0.05),0_20px_60px_rgba(0,0,0,0.5)]">
           <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,transparent_0%,rgba(56,189,248,0.05)_24%,transparent_42%,rgba(74,222,128,0.04)_62%,transparent_100%)]" />
 
@@ -150,9 +230,31 @@ export default function HomePlanetPaymentNode() {
                       Scan target
                     </div>
                     <div className="mt-2 break-all text-base font-semibold text-white">
-                      {rail.handle}
+                      {rail.handle || "Not configured"}
                     </div>
                   </div>
+
+                  {paymentSummary && (
+                    <div className="rounded-2xl border border-cyan-400/15 bg-[#091524] p-4">
+                      <div className="text-[11px] uppercase tracking-[0.28em] text-cyan-300/60">
+                        Current stop
+                      </div>
+                      <div className="mt-2 text-lg font-semibold text-white">
+                        {paymentSummary.customer}
+                      </div>
+                      <div className="mt-1 text-sm text-white/60">
+                        {paymentSummary.service}
+                      </div>
+                      <div className="mt-3 flex items-center justify-between text-sm">
+                        <span className="text-white/55">
+                          Status: {paymentSummary.status === "paid" ? "Paid" : "Unpaid"}
+                        </span>
+                        <span className="font-medium text-white">
+                          ${paymentSummary.amountDue}
+                        </span>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="rounded-2xl border border-cyan-400/15 bg-[#091524] p-4">
                     <div className="text-[11px] uppercase tracking-[0.28em] text-cyan-300/60">
@@ -189,10 +291,10 @@ export default function HomePlanetPaymentNode() {
                   <div className="w-full rounded-[24px] border border-white/10 bg-white p-4 shadow-[0_10px_30px_rgba(0,0,0,0.3)]">
                     <div className="mb-4 text-center">
                       <div className="text-lg font-semibold text-black">
-                        Daniel Doyon
+                        {ROUTE_OWNER_PAYMENT.ownerName}
                       </div>
                       <div className="mt-1 text-sm text-slate-500">
-                        {rail.handle}
+                        {rail.handle || "Configure payment handle"}
                       </div>
                     </div>
 
@@ -217,7 +319,7 @@ export default function HomePlanetPaymentNode() {
                       {rail.accountName}
                     </div>
                     <div className="mt-1 text-sm text-cyan-200/80">
-                      {rail.handle}
+                      {rail.handle || "Not configured"}
                     </div>
                   </div>
                 </div>
@@ -254,10 +356,20 @@ export default function HomePlanetPaymentNode() {
                 </div>
 
                 <div className="mt-4 grid gap-3">
+                  {stop ? (
+                    <button
+                      type="button"
+                      onClick={handleTextPayment}
+                      className="rounded-2xl bg-green-400 px-4 py-3 font-semibold text-black transition hover:bg-green-300"
+                    >
+                      Text Payment
+                    </button>
+                  ) : null}
+
                   <button
                     type="button"
                     onClick={handleMarkPaid}
-                    className="rounded-2xl bg-green-400 px-4 py-3 font-semibold text-black transition hover:bg-green-300"
+                    className="rounded-2xl border border-cyan-400/20 bg-[#091524] px-4 py-3 font-medium text-white transition hover:bg-cyan-400/10"
                   >
                     I Paid
                   </button>
@@ -270,15 +382,7 @@ export default function HomePlanetPaymentNode() {
                     >
                       Open {rail.label}
                     </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleOpenProofFlow}
-                      className="rounded-2xl border border-cyan-400/20 bg-[#091524] px-4 py-3 font-medium text-white transition hover:bg-cyan-400/10"
-                    >
-                      Open Proof Flow
-                    </button>
-                  )}
+                  ) : null}
                 </div>
 
                 {paidMarked && (

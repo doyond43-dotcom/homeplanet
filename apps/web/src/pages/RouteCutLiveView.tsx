@@ -1,5 +1,7 @@
 import { useMemo } from "react";
 import {
+  ROUTE_OWNER_PAYMENT,
+  buildPaymentSmsHref,
   formatEventTime,
   getLatestEvent,
   getStopById,
@@ -7,6 +9,49 @@ import {
   statusLabel,
   useRouteCutStore,
 } from "../lib/routecutLiveStore";
+
+function OwnerNav({ stopId }: { stopId: string | null }) {
+  const operatorUrl = "/planet/routecut/operator";
+  const liveUrl = stopId ? `/planet/routecut/live?stopId=${stopId}` : "/planet/routecut/live";
+  const paymentUrl = stopId
+    ? `${ROUTE_OWNER_PAYMENT.paymentNodeUrl}?stopId=${stopId}`
+    : ROUTE_OWNER_PAYMENT.paymentNodeUrl;
+
+  const buttonClass =
+    "rounded-xl border border-cyan-400/30 px-4 py-2 text-sm transition hover:bg-cyan-400/10";
+
+  return (
+    <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-cyan-400/20 bg-[#0B1220]/70 px-4 py-3">
+      <span className="text-xs uppercase tracking-[0.25em] text-cyan-300/60">
+        Owner Nav
+      </span>
+
+      <button
+        type="button"
+        onClick={() => window.location.assign(operatorUrl)}
+        className={buttonClass}
+      >
+        Operator
+      </button>
+
+      <button
+        type="button"
+        onClick={() => window.location.assign(liveUrl)}
+        className={buttonClass}
+      >
+        Live View
+      </button>
+
+      <button
+        type="button"
+        onClick={() => window.location.assign(paymentUrl)}
+        className={buttonClass}
+      >
+        Payment Node
+      </button>
+    </div>
+  );
+}
 
 export default function RouteCutLiveView() {
   const { stops, selectedId, updatedAt } = useRouteCutStore();
@@ -74,7 +119,9 @@ export default function RouteCutLiveView() {
 
   return (
     <div className="min-h-screen bg-[#070B14] text-white">
-      <div className="mx-auto max-w-5xl space-y-8 px-5 py-6">
+      <div className="mx-auto max-w-5xl space-y-6 px-5 py-6">
+        <OwnerNav stopId={stop.id} />
+
         <header className="flex flex-col gap-4 rounded-2xl border border-cyan-400/20 bg-[#0B1220]/80 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="text-xs uppercase tracking-widest text-cyan-300/70">
@@ -100,7 +147,7 @@ export default function RouteCutLiveView() {
             <p className="max-w-2xl leading-7 text-white/65">{statusMessage}</p>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
             <div className="rounded-xl border border-cyan-400/20 bg-[#0D1728]/60 p-4">
               <div className="text-xs uppercase tracking-[0.2em] text-cyan-300/60">
                 Window
@@ -123,7 +170,50 @@ export default function RouteCutLiveView() {
               </div>
               <div className="mt-2 text-lg font-medium">{stop.service}</div>
             </div>
+
+            <div className="rounded-xl border border-cyan-400/20 bg-[#0D1728]/60 p-4">
+              <div className="text-xs uppercase tracking-[0.2em] text-cyan-300/60">
+                Payment
+              </div>
+              <div className="mt-2 text-lg font-medium">
+                {stop.payment.status === "paid" ? "Paid" : "Unpaid"}
+              </div>
+            </div>
           </div>
+
+          {stop.status === "complete" && stop.payment.status !== "paid" ? (
+            <div className="rounded-2xl border border-cyan-400/20 bg-[#0D1728]/60 p-4">
+              <div className="text-xs uppercase tracking-[0.2em] text-cyan-300/60">
+                Payment ready
+              </div>
+              <div className="mt-2 text-white/70">
+                This stop is complete and payment is still open.
+              </div>
+              <div className="mt-4 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() =>
+                    window.location.assign(
+                      `${ROUTE_OWNER_PAYMENT.paymentNodeUrl}?stopId=${stop.id}`
+                    )
+                  }
+                  className="rounded-xl bg-green-500 px-4 py-2 font-medium text-black transition hover:bg-green-400"
+                >
+                  Open Payment Node
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.location.href = buildPaymentSmsHref(stop);
+                  }}
+                  className="rounded-xl border border-cyan-400/30 px-4 py-2 transition hover:bg-cyan-400/10"
+                >
+                  Text Payment
+                </button>
+              </div>
+            </div>
+          ) : null}
         </section>
 
         <section className="space-y-6 rounded-3xl border border-cyan-400/20 bg-[#0B1220]/80 p-6">
