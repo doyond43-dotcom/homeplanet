@@ -134,15 +134,6 @@ type DrawingChallenge = {
   difficulty: DrawingChallengeDifficulty;
 };
 
-type ArtTool = "brush" | "eraser";
-
-type ArtSticker = {
-  id: string;
-  label: string;
-  emoji: string;
-  size: number;
-};
-
 const STAGE_LABELS: Record<ProjectStage, string> = {
   idea: "Idea",
   assigned: "Assigned",
@@ -158,7 +149,7 @@ const INITIAL_PROJECTS: SchoolProject[] = [
     id: "EM-101",
     subject: "Art",
     title: "Character sketch ideas",
-    due: "Friday Ã‚Â· 2:00 PM",
+    due: "Friday Â· 2:00 PM",
     stage: "in-progress",
     priority: "high",
     summary: "Sketch ideas, color notes, and final versions stay together here.",
@@ -169,7 +160,7 @@ const INITIAL_PROJECTS: SchoolProject[] = [
     id: "EM-102",
     subject: "Math",
     title: "Practice and skill building",
-    due: "Tomorrow Ã‚Â· 9:00 AM",
+    due: "Tomorrow Â· 9:00 AM",
     stage: "studying",
     priority: "medium",
     summary: "Work through problems, get help, and learn why the answer works.",
@@ -180,7 +171,7 @@ const INITIAL_PROJECTS: SchoolProject[] = [
     id: "EM-103",
     subject: "Reading",
     title: "Vocabulary + response note",
-    due: "Monday Ã‚Â· 10:00 AM",
+    due: "Monday Â· 10:00 AM",
     stage: "assigned",
     priority: "normal",
     summary: "Keep words, meanings, and short responses together.",
@@ -235,26 +226,6 @@ const LEARNING_TIPS = [
   "Explain the problem out loud. Your brain often hears the answer first.",
   "A little color and structure can make studying feel easier.",
   "When drawing, start light. You can always make lines darker later.",
-];
-
-const ART_COLORS = [
-  "#8b5cf6",
-  "#ec4899",
-  "#0ea5e9",
-  "#10b981",
-  "#f59e0b",
-  "#ef4444",
-  "#111827",
-  "#ffffff",
-];
-
-const ART_STICKERS: ArtSticker[] = [
-  { id: "heart", label: "Heart", emoji: "💖", size: 72 },
-  { id: "star", label: "Star", emoji: "⭐", size: 72 },
-  { id: "rainbow", label: "Rainbow", emoji: "🌈", size: 82 },
-  { id: "flower", label: "Flower", emoji: "🌸", size: 72 },
-  { id: "sparkles", label: "Sparkles", emoji: "✨", size: 72 },
-  { id: "unicorn", label: "Unicorn", emoji: "🦄", size: 82 },
 ];
 
 const DRAWING_SUBJECTS: Record<DrawingChallengeCategory, string[]> = {
@@ -774,7 +745,7 @@ function buildMathProblem(): MathCoachProblem {
   const c = a * b;
 
   return {
-    prompt: `${a} Ãƒâ€” ${b} = ?`,
+    prompt: `${a} Ã— ${b} = ?`,
     answer: c,
     skill: "Multiplication",
     steps: [
@@ -929,18 +900,11 @@ export default function EmilyLearningDesk() {
   const [challengeCompletedAt, setChallengeCompletedAt] = useState<string | null>(null);
   const [challengeTimestampedAt, setChallengeTimestampedAt] = useState<string | null>(null);
 
-    const photoInputRef = useRef<HTMLInputElement | null>(null);
+  const photoInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const studioCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const isDrawingRef = useRef(false);
-  const activeCanvasRef = useRef<"inline" | "studio" | null>(null);
-
-  const [artStudioOpen, setArtStudioOpen] = useState(false);
-  const [artTool, setArtTool] = useState<ArtTool>("brush");
-  const [artColor, setArtColor] = useState("#8b5cf6");
-  const [artBrushSize, setArtBrushSize] = useState(6);
 
   const theme = THEME_STYLES[deskTheme];
 
@@ -966,39 +930,15 @@ export default function EmilyLearningDesk() {
     return () => window.clearInterval(id);
   }, [timerRunning]);
 
-    useEffect(() => {
-    const configureCanvas = (canvas: HTMLCanvasElement | null) => {
-      if (!canvas) return;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-      ctx.imageSmoothingEnabled = true;
-
-      if (canvas.dataset.initialized !== "true") {
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        canvas.dataset.initialized = "true";
-      }
-    };
-
-    configureCanvas(canvasRef.current);
-    configureCanvas(studioCanvasRef.current);
-  }, []);
-
   useEffect(() => {
-    if (!artStudioOpen) return;
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setArtStudioOpen(false);
-      }
-    };
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [artStudioOpen]);
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.lineWidth = 3;
+    ctx.lineCap = "round";
+    ctx.strokeStyle = "#8b5cf6";
+  }, []);
 
   const filteredProjects = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -1045,7 +985,7 @@ export default function EmilyLearningDesk() {
     lines.push(`Title: ${beamTitle}`);
 
     if (selectedProject && beamIncludeProject) {
-      lines.push(`Project: ${selectedProject.subject} Ã¢â‚¬â€ ${selectedProject.title}`);
+      lines.push(`Project: ${selectedProject.subject} â€” ${selectedProject.title}`);
       lines.push(`Teacher: ${selectedProject.teacher}`);
     }
 
@@ -1211,7 +1151,7 @@ export default function EmilyLearningDesk() {
   }
 
   function addVoicePlaceholder() {
-    const voiceLine = `\n[Voice note marker Ã‚Â· ${formatNow()}]`;
+    const voiceLine = `\n[Voice note marker Â· ${formatNow()}]`;
     setNoteText((prev) => `${prev}${voiceLine}`);
     setUpdatedAt(formatNow());
     addTimeline("Voice note marker added.");
@@ -1287,7 +1227,7 @@ export default function EmilyLearningDesk() {
 
   function exportDraft() {
     const projectName = selectedProject
-      ? `${selectedProject.subject} Ã¢â‚¬â€ ${selectedProject.title}`
+      ? `${selectedProject.subject} â€” ${selectedProject.title}`
       : "Unassigned project";
 
     const content = [
@@ -1336,7 +1276,7 @@ export default function EmilyLearningDesk() {
       return;
     }
 
-    setMathFeedback("Not quite. LetÃ¢â‚¬â„¢s break it down step by step.");
+    setMathFeedback("Not quite. Letâ€™s break it down step by step.");
     setShowMathSteps(true);
     addTimeline("Math coach showed step-by-step help.");
   }
@@ -1515,134 +1455,60 @@ export default function EmilyLearningDesk() {
     addTimeline(`Drawing challenge timestamped: ${drawingChallenge.prompt}`);
   }
 
-    function getCanvasPoint(
-    e: React.PointerEvent<HTMLCanvasElement>,
-    canvas: HTMLCanvasElement,
-  ) {
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-
+  function getCanvasPoint(e: React.PointerEvent<HTMLCanvasElement>) {
+    const rect = e.currentTarget.getBoundingClientRect();
     return {
-      x: (e.clientX - rect.left) * scaleX,
-      y: (e.clientY - rect.top) * scaleY,
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
     };
   }
 
-  function applyArtBrush(ctx: CanvasRenderingContext2D) {
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.lineWidth = artBrushSize;
-    ctx.strokeStyle = artTool === "eraser" ? "rgba(0,0,0,1)" : artColor;
-    ctx.globalCompositeOperation =
-      artTool === "eraser" ? "destination-out" : "source-over";
-  }
-
-  function beginDraw(
-    e: React.PointerEvent<HTMLCanvasElement>,
-    target: "inline" | "studio",
-  ) {
-    const canvas = target === "studio" ? studioCanvasRef.current : canvasRef.current;
+  function handlePointerDown(e: React.PointerEvent<HTMLCanvasElement>) {
+    const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
 
-    const point = getCanvasPoint(e, canvas);
-
-    applyArtBrush(ctx);
+    const point = getCanvasPoint(e);
     isDrawingRef.current = true;
-    activeCanvasRef.current = target;
-
-    canvas.setPointerCapture?.(e.pointerId);
     ctx.beginPath();
     ctx.moveTo(point.x, point.y);
-    ctx.lineTo(point.x + 0.01, point.y + 0.01);
-    ctx.stroke();
   }
 
-  function moveDraw(
-    e: React.PointerEvent<HTMLCanvasElement>,
-    target: "inline" | "studio",
-  ) {
-    if (!isDrawingRef.current || activeCanvasRef.current !== target) return;
-
-    const canvas = target === "studio" ? studioCanvasRef.current : canvasRef.current;
+  function handlePointerMove(e: React.PointerEvent<HTMLCanvasElement>) {
+    if (!isDrawingRef.current) return;
+    const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
 
-    const point = getCanvasPoint(e, canvas);
-    applyArtBrush(ctx);
+    const point = getCanvasPoint(e);
     ctx.lineTo(point.x, point.y);
     ctx.stroke();
   }
 
-  function endDraw(e?: React.PointerEvent<HTMLCanvasElement>) {
-    const target = activeCanvasRef.current;
-    const canvas =
-      target === "studio"
-        ? studioCanvasRef.current
-        : target === "inline"
-          ? canvasRef.current
-          : null;
-
-    if (canvas && e) {
-      try {
-        canvas.releasePointerCapture?.(e.pointerId);
-      } catch {
-      }
-    }
-
+  function handlePointerUp() {
     isDrawingRef.current = false;
-    activeCanvasRef.current = null;
   }
 
-  function clearCanvas(target: "inline" | "studio" = "inline") {
-    const canvas = target === "studio" ? studioCanvasRef.current : canvasRef.current;
+  function clearCanvas() {
+    const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
-
-    ctx.globalCompositeOperation = "source-over";
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    addTimeline(target === "studio" ? "Art Studio canvas cleared." : "Art pad cleared.");
+    addTimeline("Art pad cleared.");
   }
 
-  function saveArtAsPng(target: "inline" | "studio" = "inline") {
-    const canvas = target === "studio" ? studioCanvasRef.current : canvasRef.current;
+  function saveArtAsPng() {
+    const canvas = canvasRef.current;
     if (!canvas) return;
 
     const link = document.createElement("a");
     link.href = canvas.toDataURL("image/png");
-    link.download =
-      target === "studio"
-        ? `emily-art-studio-${Date.now()}.png`
-        : `emily-art-${Date.now()}.png`;
-
+    link.download = `emily-art-${Date.now()}.png`;
     document.body.appendChild(link);
     link.click();
     link.remove();
 
-    addTimeline(target === "studio" ? "Art Studio saved as PNG." : "Art saved as PNG.");
-  }
-
-  function openArtStudio() {
-    setArtStudioOpen(true);
-    addTimeline("Art Studio opened.");
-  }
-
-  function addStickerToStudio(sticker: ArtSticker) {
-    const canvas = studioCanvasRef.current;
-    const ctx = canvas?.getContext("2d");
-    if (!canvas || !ctx) return;
-
-    ctx.globalCompositeOperation = "source-over";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.font = `${sticker.size}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
-    ctx.fillText(sticker.emoji, canvas.width / 2, canvas.height / 2);
-
-    addTimeline(`Art Studio sticker added: ${sticker.label}.`);
+    addTimeline("Art saved as PNG.");
   }
 
   return (
@@ -1701,7 +1567,7 @@ export default function EmilyLearningDesk() {
                 Art, learning, notes, and calm smart help in one place.
               </h1>
               <p className="mt-1 max-w-3xl text-sm text-[#626c79]">
-                One page for EmilyÃ¢â‚¬â„¢s creativity, schoolwork, math support, Guardian, and Beam Card.
+                One page for Emilyâ€™s creativity, schoolwork, math support, Guardian, and Beam Card.
               </p>
             </div>
 
@@ -2289,268 +2155,43 @@ export default function EmilyLearningDesk() {
                   </div>
                 </div>
 
-                                <div className={cx("mt-4 rounded-[20px] border p-4", theme.artPanel)}>
+                <div className={cx("mt-4 rounded-[20px] border p-4", theme.artPanel)}>
                   <div className="mb-3 flex items-center justify-between gap-3">
                     <div>
                       <h3 className="text-[15px] font-semibold text-[#243040]">Art Tab / Draw Pad</h3>
                       <p className="mt-1 text-xs text-[#6a7380]">
-                        Fixed inline cursor alignment plus a full Art Studio for bigger drawing sessions.
+                        Draw with mouse, touch, or pen device and save it instantly.
                       </p>
                     </div>
 
                     <div className="flex flex-wrap gap-2">
                       <SmallActionButton
-                        label="Open Studio"
-                        icon={Brush}
-                        onClick={openArtStudio}
-                        themeClass={theme.buttonSoft}
-                      />
-                      <SmallActionButton
                         label="Save PNG"
                         icon={Download}
-                        onClick={() => saveArtAsPng("inline")}
+                        onClick={saveArtAsPng}
                         themeClass={theme.buttonSoft}
                       />
                       <SmallActionButton
                         label="Clear"
                         icon={Eraser}
-                        onClick={() => clearCanvas("inline")}
+                        onClick={clearCanvas}
                         themeClass={theme.buttonSoft}
                       />
                     </div>
                   </div>
 
-                  <div className="mb-3 grid gap-3 md:grid-cols-[minmax(0,1fr)_180px]">
-                    <div className="rounded-[18px] border border-[#d9dce1] bg-white p-3">
-                      <div className="mb-3 flex flex-wrap items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setArtTool("brush")}
-                          className={cx(
-                            "rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em]",
-                            artTool === "brush" ? theme.chipActive : theme.chip,
-                          )}
-                        >
-                          Brush
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setArtTool("eraser")}
-                          className={cx(
-                            "rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em]",
-                            artTool === "eraser" ? theme.chipActive : theme.chip,
-                          )}
-                        >
-                          Eraser
-                        </button>
-
-                        <div className="ml-auto flex items-center gap-2 rounded-full border border-[#d9dce1] bg-[#f7f8fa] px-3 py-1.5 text-[11px] font-semibold text-[#5d6978]">
-                          <span>Brush Size</span>
-                          <input
-                            type="range"
-                            min={2}
-                            max={28}
-                            step={1}
-                            value={artBrushSize}
-                            onChange={(e) => setArtBrushSize(Number(e.target.value))}
-                            className="w-[92px]"
-                          />
-                          <span>{artBrushSize}</span>
-                        </div>
-                      </div>
-
-                      <div className="mb-3 flex flex-wrap gap-2">
-                        {ART_COLORS.map((color) => (
-                          <button
-                            key={color}
-                            type="button"
-                            onClick={() => {
-                              setArtColor(color);
-                              setArtTool("brush");
-                            }}
-                            className={cx(
-                              "h-8 w-8 rounded-full border-2 transition",
-                              artColor === color ? "border-[#243040] scale-105" : "border-white",
-                            )}
-                            style={{ backgroundColor: color }}
-                            title={color}
-                          />
-                        ))}
-                      </div>
-
-                      <canvas
-                        ref={canvasRef}
-                        width={900}
-                        height={300}
-                        className="h-[300px] w-full touch-none rounded-[14px] border border-[#ebe7f7] bg-white"
-                        style={{ touchAction: "none" }}
-                        onPointerDown={(e) => beginDraw(e, "inline")}
-                        onPointerMove={(e) => moveDraw(e, "inline")}
-                        onPointerUp={(e) => endDraw(e)}
-                        onPointerLeave={(e) => endDraw(e)}
-                      />
-                    </div>
-
-                    <div className="rounded-[18px] border border-[#d9dce1] bg-white p-3">
-                      <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#778392]">
-                        Quick Art Help
-                      </div>
-                      <div className="mt-3 space-y-2 text-sm text-[#5f6b79]">
-                        <p>• Inline pad cursor offset is corrected using real canvas scale.</p>
-                        <p>• Open Art Studio for bigger canvas and better pen / mouse control.</p>
-                        <p>• Use eraser, color palette, brush size, and starter stickers.</p>
-                      </div>
-                    </div>
+                  <div className="rounded-[18px] border border-[#d9dce1] bg-white p-3">
+                    <canvas
+                      ref={canvasRef}
+                      width={900}
+                      height={300}
+                      className="h-[300px] w-full touch-none rounded-[14px] border border-[#ebe7f7] bg-white"
+                      onPointerDown={handlePointerDown}
+                      onPointerMove={handlePointerMove}
+                      onPointerUp={handlePointerUp}
+                      onPointerLeave={handlePointerUp}
+                    />
                   </div>
-
-                  {artStudioOpen && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[rgba(15,23,42,0.55)] p-3 sm:p-5">
-                      <div className="max-h-[95vh] w-full max-w-[1220px] overflow-hidden rounded-[28px] border border-[#d9dce1] bg-[#fcfcfd] shadow-[0_30px_80px_rgba(15,23,42,0.28)]">
-                        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#e5e7eb] px-4 py-4 sm:px-5">
-                          <div>
-                            <h3 className="text-[18px] font-semibold text-[#243040]">
-                              Emily Art Studio
-                            </h3>
-                            <p className="mt-1 text-sm text-[#6a7380]">
-                              Bigger canvas, better precision, colors, eraser, stickers, Save PNG, and Clear.
-                            </p>
-                          </div>
-
-                          <div className="flex flex-wrap gap-2">
-                            <SmallActionButton
-                              label="Save PNG"
-                              icon={Download}
-                              onClick={() => saveArtAsPng("studio")}
-                              themeClass={theme.buttonSoft}
-                            />
-                            <SmallActionButton
-                              label="Clear"
-                              icon={Eraser}
-                              onClick={() => clearCanvas("studio")}
-                              themeClass={theme.buttonSoft}
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setArtStudioOpen(false)}
-                              className="inline-flex items-center gap-1 rounded-full border border-[#e1c7ca] bg-[#fbefef] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8d4e56]"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                              Close
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className="grid gap-4 p-4 sm:grid-cols-[250px_minmax(0,1fr)] sm:p-5">
-                          <div className="space-y-4">
-                            <div className="rounded-[20px] border border-[#d9dce1] bg-white p-4">
-                              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#778392]">
-                                Tool
-                              </div>
-                              <div className="mt-3 flex flex-wrap gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() => setArtTool("brush")}
-                                  className={cx(
-                                    "rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em]",
-                                    artTool === "brush" ? theme.chipActive : theme.chip,
-                                  )}
-                                >
-                                  Brush
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => setArtTool("eraser")}
-                                  className={cx(
-                                    "rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em]",
-                                    artTool === "eraser" ? theme.chipActive : theme.chip,
-                                  )}
-                                >
-                                  Eraser
-                                </button>
-                              </div>
-
-                              <div className="mt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#778392]">
-                                Brush Size
-                              </div>
-                              <div className="mt-2 flex items-center gap-3">
-                                <input
-                                  type="range"
-                                  min={2}
-                                  max={40}
-                                  step={1}
-                                  value={artBrushSize}
-                                  onChange={(e) => setArtBrushSize(Number(e.target.value))}
-                                  className="w-full"
-                                />
-                                <div className="min-w-[34px] text-right text-sm font-semibold text-[#243040]">
-                                  {artBrushSize}
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="rounded-[20px] border border-[#d9dce1] bg-white p-4">
-                              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#778392]">
-                                Color Palette
-                              </div>
-                              <div className="mt-3 grid grid-cols-4 gap-2">
-                                {ART_COLORS.map((color) => (
-                                  <button
-                                    key={`studio-${color}`}
-                                    type="button"
-                                    onClick={() => {
-                                      setArtColor(color);
-                                      setArtTool("brush");
-                                    }}
-                                    className={cx(
-                                      "h-10 w-full rounded-2xl border-2 transition",
-                                      artColor === color ? "border-[#243040]" : "border-white",
-                                    )}
-                                    style={{ backgroundColor: color }}
-                                    title={color}
-                                  />
-                                ))}
-                              </div>
-                            </div>
-
-                            <div className="rounded-[20px] border border-[#d9dce1] bg-white p-4">
-                              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#778392]">
-                                Starter Stickers
-                              </div>
-                              <div className="mt-3 grid grid-cols-2 gap-2">
-                                {ART_STICKERS.map((sticker) => (
-                                  <button
-                                    key={sticker.id}
-                                    type="button"
-                                    onClick={() => addStickerToStudio(sticker)}
-                                    className="rounded-[16px] border border-[#d9dce1] bg-[#f7f8fa] px-3 py-3 text-left transition hover:bg-[#eef2ff]"
-                                  >
-                                    <div className="text-2xl">{sticker.emoji}</div>
-                                    <div className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#5f6b79]">
-                                      {sticker.label}
-                                    </div>
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="rounded-[22px] border border-[#d9dce1] bg-white p-3">
-                            <canvas
-                              ref={studioCanvasRef}
-                              width={1400}
-                              height={900}
-                              className="max-h-[72vh] w-full touch-none rounded-[18px] border border-[#ebe7f7] bg-white"
-                              style={{ touchAction: "none" }}
-                              onPointerDown={(e) => beginDraw(e, "studio")}
-                              onPointerMove={(e) => moveDraw(e, "studio")}
-                              onPointerUp={(e) => endDraw(e)}
-                              onPointerLeave={(e) => endDraw(e)}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
 
                 <div className="mt-4 rounded-[20px] border border-[#d9dce1] bg-[#fcfcfd] p-4">
@@ -2816,10 +2457,12 @@ export default function EmilyLearningDesk() {
 
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-1">
                 <ToolButton icon={Mic} label="Voice" onClick={addVoicePlaceholder} themeClass={theme.buttonSoft} />
-                                <ToolButton
+                <ToolButton
                   icon={Brush}
                   label="Draw"
-                  onClick={openArtStudio}
+                  onClick={() =>
+                    canvasRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })
+                  }
                   themeClass={theme.buttonSoft}
                 />
                 <ToolButton
@@ -3088,7 +2731,7 @@ export default function EmilyLearningDesk() {
               <div className="mb-3">
                 <h2 className="text-[15px] font-semibold text-[#243040]">Guardian</h2>
                 <p className="mt-1 text-xs text-[#6a7380]">
-                  EmilyÃ¢â‚¬â„¢s Guardian module, same family system as Haley.
+                  Emilyâ€™s Guardian module, same family system as Haley.
                 </p>
               </div>
 
@@ -3182,7 +2825,7 @@ export default function EmilyLearningDesk() {
               <div className={cx("rounded-[20px] border p-4", theme.artPanel)}>
                 <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#778392]">
                   <PencilLine className="h-3.5 w-3.5" />
-                  TodayÃ¢â‚¬â„¢s Problem
+                  Todayâ€™s Problem
                 </div>
 
                 <div className="mt-3 text-3xl font-semibold text-[#243040]">
@@ -3297,7 +2940,7 @@ export default function EmilyLearningDesk() {
             >
               <div className="mb-3 flex items-start justify-between gap-3">
                 <div>
-                  <h2 className="text-[15px] font-semibold text-[#243040]">TodayÃ¢â‚¬â„¢s Tips</h2>
+                  <h2 className="text-[15px] font-semibold text-[#243040]">Todayâ€™s Tips</h2>
                   <p className="mt-1 text-xs text-[#6a7380]">
                     A little help goes a long way.
                   </p>

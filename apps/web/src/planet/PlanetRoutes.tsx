@@ -36,6 +36,14 @@ import PetCareTimelinePanel from "../components/guardian/PetCareTimelinePanel";
 // Emily
 import EmilyLearningDesk from "../pages/EmilyLearningDesk";
 
+// RouteCut Lawn
+import RouteCutLawnPage from "../pages/RouteCutLawnPage";
+import RouteCutOperatorBoard from "../pages/RouteCutOperatorBoard";
+import RouteCutLiveView from "../pages/RouteCutLiveView";
+
+// Payment
+import HomePlanetPaymentNode from "../pages/HomePlanetPaymentNode";
+
 /**
  * Planet layer:
  * - /planet/creator is a special "launchpad" (CreatorCity)
@@ -46,6 +54,10 @@ import EmilyLearningDesk from "../pages/EmilyLearningDesk";
  * - /planet/guardian/join and /planet/guardian/presence keep the original human Guardian surfaces
  * - /planet/guardian-pet is the separate pet tag demo landing
  * - /planet/emily exposes Emily's learning desk
+ * - /planet/lawn/routecut exposes the RouteCut Lawn live route page
+ * - /planet/routecut/operator exposes the RouteCut operator board
+ * - /planet/routecut/live exposes the RouteCut customer live view
+ * - /planet/payments/node exposes the HomePlanet payment node
  * - /planet/:planetId routes to PlanetOverview
  * - /planet/:planetId/:cityId routes to CityPage
  */
@@ -90,6 +102,15 @@ export default function PlanetRoutes() {
       <Route path="guardian-pet/pet/:petId" element={<GuardianPetTagDemo />} />
       <Route path="guardian-pet/found/:petId" element={<GuardianPetTagDemo />} />
       <Route path="guardian-pet/timeline" element={<PetCareTimelinePanel />} />
+
+      {/* Lawn */}
+      <Route path="lawn/routecut" element={<RouteCutLawnPage />} />
+      <Route path="demo/routecut" element={<RouteCutLawnPage />} />
+      <Route path="routecut/operator" element={<RouteCutOperatorBoard />} />
+      <Route path="routecut/live" element={<RouteCutLiveView />} />
+
+      {/* Payment */}
+      <Route path="payments/node" element={<HomePlanetPaymentNode />} />
 
       {/* Other special pages */}
       <Route path="jeanettes" element={<JeanettesLanding />} />

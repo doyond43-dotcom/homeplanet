@@ -143,6 +143,29 @@ type ArtSticker = {
   size: number;
 };
 
+type StudioStickerObject = {
+  id: string;
+  kind: "sticker";
+  stickerId: string;
+  emoji: string;
+  label: string;
+  x: number;
+  y: number;
+  size: number;
+};
+
+type StudioTextObject = {
+  id: string;
+  kind: "text";
+  text: string;
+  x: number;
+  y: number;
+  size: number;
+  color: string;
+};
+
+type StudioObject = StudioStickerObject | StudioTextObject;
+
 const STAGE_LABELS: Record<ProjectStage, string> = {
   idea: "Idea",
   assigned: "Assigned",
@@ -158,7 +181,7 @@ const INITIAL_PROJECTS: SchoolProject[] = [
     id: "EM-101",
     subject: "Art",
     title: "Character sketch ideas",
-    due: "Friday Ã‚Â· 2:00 PM",
+    due: "Friday ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢"Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡- 2:00 PM",
     stage: "in-progress",
     priority: "high",
     summary: "Sketch ideas, color notes, and final versions stay together here.",
@@ -169,7 +192,7 @@ const INITIAL_PROJECTS: SchoolProject[] = [
     id: "EM-102",
     subject: "Math",
     title: "Practice and skill building",
-    due: "Tomorrow Ã‚Â· 9:00 AM",
+    due: "Tomorrow ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢"Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡- 9:00 AM",
     stage: "studying",
     priority: "medium",
     summary: "Work through problems, get help, and learn why the answer works.",
@@ -180,7 +203,7 @@ const INITIAL_PROJECTS: SchoolProject[] = [
     id: "EM-103",
     subject: "Reading",
     title: "Vocabulary + response note",
-    due: "Monday Ã‚Â· 10:00 AM",
+    due: "Monday ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢"Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡- 10:00 AM",
     stage: "assigned",
     priority: "normal",
     summary: "Keep words, meanings, and short responses together.",
@@ -249,12 +272,12 @@ const ART_COLORS = [
 ];
 
 const ART_STICKERS: ArtSticker[] = [
-  { id: "heart", label: "Heart", emoji: "💖", size: 72 },
-  { id: "star", label: "Star", emoji: "⭐", size: 72 },
-  { id: "rainbow", label: "Rainbow", emoji: "🌈", size: 82 },
-  { id: "flower", label: "Flower", emoji: "🌸", size: 72 },
-  { id: "sparkles", label: "Sparkles", emoji: "✨", size: 72 },
-  { id: "unicorn", label: "Unicorn", emoji: "🦄", size: 82 },
+  { id: "heart", label: "Heart", emoji: "\u{1F496}", size: 72 },
+  { id: "star", label: "Star", emoji: "\u2B50", size: 72 },
+  { id: "rainbow", label: "Rainbow", emoji: "\u{1F308}", size: 82 },
+  { id: "flower", label: "Flower", emoji: "\u{1F338}", size: 72 },
+  { id: "sparkles", label: "Sparkles", emoji: "\u2728", size: 72 },
+  { id: "unicorn", label: "Unicorn", emoji: "\u{1F984}", size: 82 },
 ];
 
 const DRAWING_SUBJECTS: Record<DrawingChallengeCategory, string[]> = {
@@ -774,7 +797,7 @@ function buildMathProblem(): MathCoachProblem {
   const c = a * b;
 
   return {
-    prompt: `${a} Ãƒâ€” ${b} = ?`,
+    prompt: `${a} ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â 'ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢"Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â ${b} = ?`,
     answer: c,
     skill: "Multiplication",
     steps: [
@@ -940,7 +963,48 @@ export default function EmilyLearningDesk() {
   const [artStudioOpen, setArtStudioOpen] = useState(false);
   const [artTool, setArtTool] = useState<ArtTool>("brush");
   const [artColor, setArtColor] = useState("#8b5cf6");
-  const [artBrushSize, setArtBrushSize] = useState(6);
+    const [artBrushSize, setArtBrushSize] = useState(6);
+  const [studioObjects, setStudioObjects] = useState<StudioObject[]>([]);
+  const [selectedStudioObjectId, setSelectedStudioObjectId] = useState<string | null>(null);
+  const [studioTextInput, setStudioTextInput] = useState("Emily");
+  const [studioDraggingObjectId, setStudioDraggingObjectId] = useState<string | null>(null);
+
+    function getStudioObjectAtPoint(x: number, y: number) {
+    for (let i = studioObjects.length - 1; i >= 0; i -= 1) {
+      const item = studioObjects[i];
+
+      if (item.kind === "sticker") {
+        const half = item.size / 2;
+        const hit =
+          x >= item.x - half &&
+          x <= item.x + half &&
+          y >= item.y - half &&
+          y <= item.y + half;
+
+        if (hit) return item;
+      } else {
+        const textWidth = Math.max(item.text.length * item.size * 0.62, item.size);
+        const textHeight = item.size * 1.2;
+        const hit =
+          x >= item.x &&
+          x <= item.x + textWidth &&
+          y >= item.y - textHeight &&
+          y <= item.y + textHeight * 0.2;
+
+        if (hit) return item;
+      }
+    }
+
+    return null;
+  }
+
+  function bringStudioObjectToFront(id: string) {
+    setStudioObjects((prev) => {
+      const found = prev.find((item) => item.id === id);
+      if (!found) return prev;
+      return [...prev.filter((item) => item.id !== id), found];
+    });
+  }
 
   const theme = THEME_STYLES[deskTheme];
 
@@ -1045,7 +1109,7 @@ export default function EmilyLearningDesk() {
     lines.push(`Title: ${beamTitle}`);
 
     if (selectedProject && beamIncludeProject) {
-      lines.push(`Project: ${selectedProject.subject} Ã¢â‚¬â€ ${selectedProject.title}`);
+      lines.push(`Project: ${selectedProject.subject} ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢"Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â ${selectedProject.title}`);
       lines.push(`Teacher: ${selectedProject.teacher}`);
     }
 
@@ -1211,7 +1275,7 @@ export default function EmilyLearningDesk() {
   }
 
   function addVoicePlaceholder() {
-    const voiceLine = `\n[Voice note marker Ã‚Â· ${formatNow()}]`;
+    const voiceLine = `\n[Voice note marker ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢"Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡- ${formatNow()}]`;
     setNoteText((prev) => `${prev}${voiceLine}`);
     setUpdatedAt(formatNow());
     addTimeline("Voice note marker added.");
@@ -1287,7 +1351,7 @@ export default function EmilyLearningDesk() {
 
   function exportDraft() {
     const projectName = selectedProject
-      ? `${selectedProject.subject} Ã¢â‚¬â€ ${selectedProject.title}`
+      ? `${selectedProject.subject} ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢"Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â ${selectedProject.title}`
       : "Unassigned project";
 
     const content = [
@@ -1336,7 +1400,7 @@ export default function EmilyLearningDesk() {
       return;
     }
 
-    setMathFeedback("Not quite. LetÃ¢â‚¬â„¢s break it down step by step.");
+    setMathFeedback("Not quite. LetÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s break it down step by step.");
     setShowMathSteps(true);
     addTimeline("Math coach showed step-by-step help.");
   }
@@ -1701,7 +1765,7 @@ export default function EmilyLearningDesk() {
                 Art, learning, notes, and calm smart help in one place.
               </h1>
               <p className="mt-1 max-w-3xl text-sm text-[#626c79]">
-                One page for EmilyÃ¢â‚¬â„¢s creativity, schoolwork, math support, Guardian, and Beam Card.
+                One page for EmilyÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s creativity, schoolwork, math support, Guardian, and Beam Card.
               </p>
             </div>
 
@@ -2396,9 +2460,9 @@ export default function EmilyLearningDesk() {
                         Quick Art Help
                       </div>
                       <div className="mt-3 space-y-2 text-sm text-[#5f6b79]">
-                        <p>• Inline pad cursor offset is corrected using real canvas scale.</p>
-                        <p>• Open Art Studio for bigger canvas and better pen / mouse control.</p>
-                        <p>• Use eraser, color palette, brush size, and starter stickers.</p>
+                        <p>ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ Inline pad cursor offset is corrected using real canvas scale.</p>
+                        <p>ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ Open Art Studio for bigger canvas and better pen / mouse control.</p>
+                        <p>ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ Use eraser, color palette, brush size, and starter stickers.</p>
                       </div>
                     </div>
                   </div>
@@ -2510,6 +2574,73 @@ export default function EmilyLearningDesk() {
                                   />
                                 ))}
                               </div>
+                            </div>
+
+                                                        <div className="rounded-[20px] border border-[#d9dce1] bg-white p-4">
+                              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#778392]">
+                                Selected Object
+                              </div>
+
+                              {!selectedStudioObjectId ? (
+                                <div className="mt-3 text-sm leading-6 text-[#5f6b79]">
+                                  Tap a sticker or text object on the canvas to transform it.
+                                </div>
+                              ) : (
+                                <div className="mt-3 space-y-2">
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => resizeSelectedStudioObject(10)}
+                                      className={cx(
+                                        "rounded-full border px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em]",
+                                        theme.buttonSoft,
+                                      )}
+                                    >
+                                      Bigger
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => resizeSelectedStudioObject(-10)}
+                                      className={cx(
+                                        "rounded-full border px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em]",
+                                        theme.buttonSoft,
+                                      )}
+                                    >
+                                      Smaller
+                                    </button>
+                                  </div>
+
+                                  <button
+                                    type="button"
+                                    onClick={bringSelectedStudioObjectToFront}
+                                    className={cx(
+                                      "w-full rounded-full border px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em]",
+                                      theme.buttonSoft,
+                                    )}
+                                  >
+                                    Bring Front
+                                  </button>
+
+                                  {(studioObjects.find((item) => item.id === selectedStudioObjectId)?.kind === "text") && (
+                                    <input
+                                      className={textInputClass()}
+                                      value={
+                                        studioObjects.find((item) => item.id === selectedStudioObjectId && item.kind === "text")?.text ?? ""
+                                      }
+                                      onChange={(e) => updateSelectedStudioText(e.target.value)}
+                                      placeholder="Edit selected text"
+                                    />
+                                  )}
+
+                                  <button
+                                    type="button"
+                                    onClick={deleteSelectedStudioObject}
+                                    className="w-full rounded-full border border-[#e1c7ca] bg-[#fbefef] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8d4e56]"
+                                  >
+                                    Delete Selected
+                                  </button>
+                                </div>
+                              )}
                             </div>
 
                             <div className="rounded-[20px] border border-[#d9dce1] bg-white p-4">
@@ -3088,7 +3219,7 @@ export default function EmilyLearningDesk() {
               <div className="mb-3">
                 <h2 className="text-[15px] font-semibold text-[#243040]">Guardian</h2>
                 <p className="mt-1 text-xs text-[#6a7380]">
-                  EmilyÃ¢â‚¬â„¢s Guardian module, same family system as Haley.
+                  EmilyÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s Guardian module, same family system as Haley.
                 </p>
               </div>
 
@@ -3182,7 +3313,7 @@ export default function EmilyLearningDesk() {
               <div className={cx("rounded-[20px] border p-4", theme.artPanel)}>
                 <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#778392]">
                   <PencilLine className="h-3.5 w-3.5" />
-                  TodayÃ¢â‚¬â„¢s Problem
+                  TodayÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s Problem
                 </div>
 
                 <div className="mt-3 text-3xl font-semibold text-[#243040]">
@@ -3297,7 +3428,7 @@ export default function EmilyLearningDesk() {
             >
               <div className="mb-3 flex items-start justify-between gap-3">
                 <div>
-                  <h2 className="text-[15px] font-semibold text-[#243040]">TodayÃ¢â‚¬â„¢s Tips</h2>
+                  <h2 className="text-[15px] font-semibold text-[#243040]">TodayÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s Tips</h2>
                   <p className="mt-1 text-xs text-[#6a7380]">
                     A little help goes a long way.
                   </p>

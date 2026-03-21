@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock3,
+  Copy,
   FileText,
   FolderOpen,
   Mic,
@@ -22,6 +23,7 @@ import {
   Printer,
   Save,
   Search,
+  Send,
   StickyNote,
   Tag,
   Trash2,
@@ -39,6 +41,9 @@ type ProjectStage =
   | "complete";
 
 type ProjectPriority = "high" | "medium" | "normal";
+type DocStatus = "ready" | "waiting" | "sent";
+type AttachmentKind = "photo" | "file";
+type BeamTarget = "Self" | "Customer" | "Team" | "Attorney";
 
 type Project = {
   id: string;
@@ -67,16 +72,12 @@ type Sticky = {
   text: string;
 };
 
-type DocStatus = "ready" | "waiting" | "sent";
-
 type DocItem = {
   id: string;
   label: string;
   detail: string;
   status: DocStatus;
 };
-
-type AttachmentKind = "photo" | "file";
 
 type AttachmentItem = {
   id: string;
@@ -321,23 +322,22 @@ function stageBadge(stage: ProjectStage) {
 }
 
 function priorityClasses(priority: ProjectPriority) {
-  if (priority === "high") {
-    return "border-[#d7b6b8] bg-[#fbefef] text-[#8d4e56]";
-  }
-  if (priority === "medium") {
-    return "border-[#d8caad] bg-[#faf5e9] text-[#806a43]";
-  }
+  if (priority === "high") return "border-[#d7b6b8] bg-[#fbefef] text-[#8d4e56]";
+  if (priority === "medium") return "border-[#d8caad] bg-[#faf5e9] text-[#806a43]";
   return "border-[#d5d8de] bg-[#f6f7f9] text-[#647080]";
 }
 
 function docStatusClasses(status: DocStatus) {
-  if (status === "ready") {
-    return "border-[#c7d9cd] bg-[#edf7f0] text-[#466a53]";
-  }
-  if (status === "waiting") {
-    return "border-[#d8caad] bg-[#faf5e9] text-[#806a43]";
-  }
+  if (status === "ready") return "border-[#c7d9cd] bg-[#edf7f0] text-[#466a53]";
+  if (status === "waiting") return "border-[#d8caad] bg-[#faf5e9] text-[#806a43]";
   return "border-[#c6d3ea] bg-[#edf3fb] text-[#48607f]";
+}
+
+function beamTargetClasses(target: BeamTarget) {
+  if (target === "Attorney") return "border-[#d3cae6] bg-[#f3effa] text-[#675487]";
+  if (target === "Customer") return "border-[#c6d3ea] bg-[#edf3fb] text-[#48607f]";
+  if (target === "Team") return "border-[#c7d9cd] bg-[#edf7f0] text-[#466a53]";
+  return "border-[#d5d8de] bg-[#f7f8fa] text-[#647080]";
 }
 
 function textInputClass() {
@@ -346,6 +346,59 @@ function textInputClass() {
 
 function areaInputClass() {
   return "w-full rounded-xl border border-[#d6d9de] bg-white px-3 py-2 text-sm text-[#243040] outline-none resize-y";
+}
+
+function buildBeamTitle(target: BeamTarget, project: Project | null) {
+  if (!project) return "Field update";
+  if (target === "Attorney") return `${project.customer} proof summary`;
+  if (target === "Customer") return `${project.customer} follow-up`;
+  if (target === "Team") return `${project.customer} team update`;
+  return `${project.customer} field timestamp`;
+}
+
+function buildBeamMessage(target: BeamTarget, project: Project | null, noteText: string) {
+  const clippedNote = noteText.trim() || "No note captured yet.";
+  if (!project) return clippedNote;
+
+  if (target === "Attorney") {
+    return [
+      `Timestamped field summary for ${project.customer}.`,
+      `Project: ${project.project}`,
+      `Current next action: ${project.nextAction}`,
+      "",
+      clippedNote,
+    ].join("\n");
+  }
+
+  if (target === "Customer") {
+    return [
+      `Hi ${project.customer},`,
+      `Quick follow-up from the field on ${project.project}.`,
+      `Next step: ${project.nextAction}`,
+      "",
+      clippedNote,
+    ].join("\n");
+  }
+
+  if (target === "Team") {
+    return [
+      `Team update for ${project.customer}.`,
+      `Project: ${project.project}`,
+      `Status: ${STAGE_LABELS[project.stage]}`,
+      `Next action: ${project.nextAction}`,
+      "",
+      clippedNote,
+    ].join("\n");
+  }
+
+  return [
+    `Timestamp note for self.`,
+    `Customer: ${project.customer}`,
+    `Project: ${project.project}`,
+    `Status: ${STAGE_LABELS[project.stage]}`,
+    "",
+    clippedNote,
+  ].join("\n");
 }
 
 export default function DanFieldNotebookDesk() {
@@ -370,6 +423,16 @@ export default function DanFieldNotebookDesk() {
   const [timestampedAt, setTimestampedAt] = useState<string | null>(null);
   const [liveNow, setLiveNow] = useState(new Date());
   const [attachments, setAttachments] = useState<AttachmentItem[]>([]);
+
+  const [beamOpen, setBeamOpen] = useState(false);
+  const [beamTarget, setBeamTarget] = useState<BeamTarget>("Self");
+  const [beamTitle, setBeamTitle] = useState(
+    buildBeamTitle("Self", INITIAL_PROJECTS[0] ?? null),
+  );
+  const [beamMessage, setBeamMessage] = useState(
+    buildBeamMessage("Self", INITIAL_PROJECTS[0] ?? null, noteText),
+  );
+  const [beamCopied, setBeamCopied] = useState(false);
 
   const photoInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -411,6 +474,33 @@ export default function DanFieldNotebookDesk() {
     if (!selectedProject) return [];
     return savedNotes.filter((note) => note.projectId === selectedProject.id);
   }, [savedNotes, selectedProject]);
+
+  const beamPreview = useMemo(() => {
+    const lines: string[] = [];
+    lines.push(`To: ${beamTarget}`);
+    lines.push(`Title: ${beamTitle}`);
+    if (selectedProject) {
+      lines.push(`Project: ${selectedProject.customer} — ${selectedProject.project}`);
+      lines.push(`Status: ${STAGE_LABELS[selectedProject.stage]}`);
+    }
+    lines.push(`Updated: ${updatedAt}`);
+    lines.push(`Timestamped: ${timestampedAt ?? "Not yet"}`);
+    lines.push("");
+    lines.push(beamMessage.trim() || "(blank)");
+    return lines.join("\n");
+  }, [beamTarget, beamTitle, selectedProject, updatedAt, timestampedAt, beamMessage]);
+
+  useEffect(() => {
+    setBeamTitle(buildBeamTitle(beamTarget, selectedProject));
+    setBeamMessage((prev) => {
+      const current = prev.trim();
+      const auto = buildBeamMessage(beamTarget, selectedProject, noteText);
+      if (!current || current.includes("Timestamp note for self.") || current.includes("Timestamped field summary for") || current.includes("Team update for") || current.includes("Quick follow-up from the field")) {
+        return auto;
+      }
+      return prev;
+    });
+  }, [beamTarget, selectedProject, noteText]);
 
   function handleSelectProject(id: string) {
     setSelectedProjectId(id);
@@ -641,6 +731,27 @@ export default function DanFieldNotebookDesk() {
     URL.revokeObjectURL(url);
   }
 
+  async function copyBeamCard() {
+    try {
+      await navigator.clipboard.writeText(beamPreview);
+      setBeamCopied(true);
+      window.setTimeout(() => setBeamCopied(false), 1800);
+    } catch {
+      window.alert("Copy failed on this device/browser.");
+    }
+  }
+
+  function generateBeamCard() {
+    setBeamTitle(buildBeamTitle(beamTarget, selectedProject));
+    setBeamMessage(buildBeamMessage(beamTarget, selectedProject, noteText));
+  }
+
+  function clearBeamCard() {
+    setBeamTarget("Self");
+    setBeamTitle(buildBeamTitle("Self", selectedProject));
+    setBeamMessage(buildBeamMessage("Self", selectedProject, noteText));
+  }
+
   function printContent(title: string, text: string, metaLines: string[]) {
     const w = window.open("", "_blank", "width=900,height=700");
     if (!w) return;
@@ -796,7 +907,6 @@ export default function DanFieldNotebookDesk() {
         </header>
 
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-[320px_minmax(0,1fr)_340px]">
-          {/* LEFT RAIL */}
           <section className="rounded-[24px] border border-[#d0cac0] bg-[#ebe7e0] p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)]">
             <div className="mb-3 flex items-start justify-between gap-3">
               <div>
@@ -902,17 +1012,13 @@ export default function DanFieldNotebookDesk() {
                         <input
                           className={textInputClass()}
                           value={project.customer}
-                          onChange={(e) =>
-                            updateProject(project.id, { customer: e.target.value })
-                          }
+                          onChange={(e) => updateProject(project.id, { customer: e.target.value })}
                           placeholder="Customer"
                         />
                         <input
                           className={textInputClass()}
                           value={project.project}
-                          onChange={(e) =>
-                            updateProject(project.id, { project: e.target.value })
-                          }
+                          onChange={(e) => updateProject(project.id, { project: e.target.value })}
                           placeholder="Project"
                         />
                         <input
@@ -952,35 +1058,27 @@ export default function DanFieldNotebookDesk() {
                         <input
                           className={textInputClass()}
                           value={project.contact}
-                          onChange={(e) =>
-                            updateProject(project.id, { contact: e.target.value })
-                          }
+                          onChange={(e) => updateProject(project.id, { contact: e.target.value })}
                           placeholder="Contact"
                         />
                         <input
                           className={textInputClass()}
                           value={project.location}
-                          onChange={(e) =>
-                            updateProject(project.id, { location: e.target.value })
-                          }
+                          onChange={(e) => updateProject(project.id, { location: e.target.value })}
                           placeholder="Location"
                         />
                         <textarea
                           className={areaInputClass()}
                           rows={3}
                           value={project.summary}
-                          onChange={(e) =>
-                            updateProject(project.id, { summary: e.target.value })
-                          }
+                          onChange={(e) => updateProject(project.id, { summary: e.target.value })}
                           placeholder="Summary"
                         />
                         <textarea
                           className={areaInputClass()}
                           rows={3}
                           value={project.nextAction}
-                          onChange={(e) =>
-                            updateProject(project.id, { nextAction: e.target.value })
-                          }
+                          onChange={(e) => updateProject(project.id, { nextAction: e.target.value })}
                           placeholder="Next action"
                         />
                       </div>
@@ -995,7 +1093,6 @@ export default function DanFieldNotebookDesk() {
             </div>
           </section>
 
-          {/* CENTER NOTEBOOK */}
           <section className="rounded-[24px] border border-[#d0cac0] bg-[#ebe7e0] p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)] sm:p-4">
             <div className="mb-3 flex items-start justify-between gap-3">
               <div>
@@ -1148,7 +1245,7 @@ export default function DanFieldNotebookDesk() {
                                 <div className="truncate text-sm font-medium text-[#243040]">
                                   {item.name}
                                 </div>
-                                <div className="text-xs text-[#6a7380] uppercase">
+                                <div className="text-xs uppercase text-[#6a7380]">
                                   {item.kind}
                                 </div>
                               </div>
@@ -1270,7 +1367,6 @@ export default function DanFieldNotebookDesk() {
                 </div>
               </div>
 
-              {/* ACTION RAIL */}
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-1">
                 <ToolButton icon={Mic} label="Voice" onClick={addVoicePlaceholder} />
                 <ToolButton
@@ -1292,7 +1388,6 @@ export default function DanFieldNotebookDesk() {
             </div>
           </section>
 
-          {/* RIGHT RAIL */}
           <div className="grid gap-4">
             <section className="rounded-[24px] border border-[#d0cac0] bg-[#ebe7e0] p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)]">
               <div className="mb-3 flex items-start justify-between gap-3">
@@ -1365,6 +1460,129 @@ export default function DanFieldNotebookDesk() {
 
                 {appointments.length === 0 && <EmptyCard text="No appointments left." />}
               </div>
+            </section>
+
+            <section className="rounded-[24px] border border-[#d0cac0] bg-[#ebe7e0] p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)]">
+              <div className="mb-3 flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-[15px] font-semibold text-[#243040]">Beam Card</h2>
+                  <p className="mt-1 text-xs text-[#6a7380]">
+                    Send note, update, or proof summary without making the page loud.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setBeamOpen((prev) => !prev)}
+                  className="inline-flex items-center gap-1 rounded-full border border-[#d5d8de] bg-[#f7f8fa] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#5d6978]"
+                >
+                  {beamOpen ? "Collapse" : "Open"}
+                  <ChevronRight
+                    className={cx("h-3.5 w-3.5 transition-transform", beamOpen && "rotate-90")}
+                  />
+                </button>
+              </div>
+
+              {!beamOpen ? (
+                <div className="rounded-[20px] border border-[#d9dce1] bg-[#f7f8fa] p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-semibold text-[#243040]">Beam Card</div>
+                      <div className="mt-1 text-xs text-[#6a7380]">
+                        Compact send block for self, customer, team, or attorney.
+                      </div>
+                    </div>
+                    <div
+                      className={cx(
+                        "rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]",
+                        beamTargetClasses(beamTarget),
+                      )}
+                    >
+                      Ready
+                    </div>
+                  </div>
+
+                  <div className="mt-3 rounded-[16px] border border-[#d9dce1] bg-white px-3 py-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#778392]">
+                      Quick Route
+                    </div>
+                    <div className="mt-1 text-sm font-medium text-[#243040]">{beamTarget}</div>
+                    <div className="mt-2 text-xs text-[#6a7380] line-clamp-2">
+                      {beamTitle}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="rounded-[20px] border border-[#d9dce1] bg-[#f7f8fa] p-3">
+                    <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#778392]">
+                      Send To
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {(["Self", "Customer", "Team", "Attorney"] as BeamTarget[]).map((target) => (
+                        <button
+                          key={target}
+                          type="button"
+                          onClick={() => setBeamTarget(target)}
+                          className={cx(
+                            "rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em]",
+                            beamTarget === target
+                              ? beamTargetClasses(target)
+                              : "border-[#d5d8de] bg-white text-[#5d6978]",
+                          )}
+                        >
+                          {target}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="rounded-[20px] border border-[#d9dce1] bg-[#f7f8fa] p-3">
+                    <div className="space-y-2">
+                      <input
+                        className={textInputClass()}
+                        value={beamTitle}
+                        onChange={(e) => setBeamTitle(e.target.value)}
+                        placeholder="Beam title"
+                      />
+                      <textarea
+                        className={areaInputClass()}
+                        rows={5}
+                        value={beamMessage}
+                        onChange={(e) => setBeamMessage(e.target.value)}
+                        placeholder="Beam message"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="rounded-[20px] border border-[#d9dce1] bg-white p-3">
+                    <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#778392]">
+                      Preview
+                    </div>
+                    <pre className="whitespace-pre-wrap break-words text-xs leading-6 text-[#334155]">
+                      {beamPreview}
+                    </pre>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <SmallActionButton
+                      label="Generate"
+                      icon={Send}
+                      onClick={generateBeamCard}
+                    />
+                    <SmallActionButton
+                      label={beamCopied ? "Copied" : "Copy"}
+                      icon={Copy}
+                      onClick={copyBeamCard}
+                    />
+                    <SmallActionButton
+                      label="Clear"
+                      icon={Trash2}
+                      onClick={clearBeamCard}
+                    />
+                  </div>
+                </div>
+              )}
             </section>
 
             <section className="rounded-[24px] border border-[#d0cac0] bg-[#ebe7e0] p-3 shadow-[0_12px_30px_rgba(74,63,50,0.08)]">
@@ -1512,6 +1730,8 @@ export default function DanFieldNotebookDesk() {
             </section>
           </div>
         </div>
+
+        <HomePlanetFooter />
       </div>
     </div>
   );
@@ -1584,6 +1804,23 @@ function EmptyCard({ text }: { text: string }) {
     <div className="rounded-[20px] border border-[#d9dce1] bg-[#fafafa] px-4 py-6 text-center text-sm text-[#6a7380]">
       {text}
     </div>
+  );
+}
+
+function HomePlanetFooter() {
+  const year = new Date().getFullYear();
+
+  return (
+    <footer className="mt-6 border-t border-[#b8b1a7] pt-6 pb-6 text-center">
+      <div className="flex items-center justify-center gap-2 text-[13px] font-semibold text-[#5f6f82]">
+        <span className="text-[16px]">🪐</span>
+        <span>HomePlanet © {year}. All rights reserved.</span>
+      </div>
+
+      <div className="mt-2 text-[12px] text-[#7b8693]">
+        Presence-first systems and workflows protected.
+      </div>
+    </footer>
   );
 }
 
