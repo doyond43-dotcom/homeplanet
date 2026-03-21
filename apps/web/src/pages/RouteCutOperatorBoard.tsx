@@ -1,10 +1,13 @@
 import { useMemo, useState } from "react";
 import {
+  ROUTE_OWNER_PAYMENT,
   addStopNote,
   addWalkOnStop,
   advanceStop,
+  buildCustomerPaymentMessage,
   formatEventTime,
   logCustomerContact,
+  markStopPaid,
   nextActionLabel,
   orderedStatuses,
   setSelectedStop,
@@ -38,30 +41,27 @@ export default function RouteCutOperatorBoard() {
       stops.find((stop) => stop.status === "new") ??
       null;
 
-    const parseAmount = (service: string) => {
-      const match = service.match(/\$?\d+(?:\.\d{1,2})?/);
-      if (!match) return 80;
-      return Number(match[0].replace("$", ""));
-    };
-
-    const completedRevenue = completedStops.reduce(
-      (sum, stop) => sum + parseAmount(stop.service),
-      0
-    );
+    const completedRevenue = stops
+      .filter((stop) => stop.payment.status === "paid")
+      .reduce((sum, stop) => sum + stop.payment.amountPaid, 0);
 
     const projectedRevenue = stops.reduce(
-      (sum, stop) => sum + parseAmount(stop.service),
+      (sum, stop) => sum + stop.payment.amountDue,
       0
     );
 
     const averageStopValue =
       stops.length > 0 ? Math.round(projectedRevenue / stops.length) : 0;
 
-    const unpaidJobs = completedStops.length > 0 ? 1 : 0;
+    const unpaidJobs = completedStops.filter(
+      (stop) => stop.payment.status !== "paid"
+    ).length;
+
     const maintenanceDue =
       completedStops.length >= 4
         ? "Blade sharpening recommended"
         : "No maintenance due right now";
+
     const alertItems = [
       openStops.length > 3 ? "Route still has multiple open stops." : null,
       unpaidJobs > 0 ? "At least one completed stop may still need payment." : null,
@@ -106,9 +106,12 @@ export default function RouteCutOperatorBoard() {
 
     logCustomerContact(selectedStop.id, "text");
 
-    const message = `Hi ${selectedStop.customer}, you're on the RouteCut live route. Current status: ${statusLabel(
-      selectedStop.status
-    )}.`;
+    const message =
+      selectedStop.status === "complete"
+        ? buildCustomerPaymentMessage(selectedStop)
+        : `Hi ${selectedStop.customer}, you're on the RouteCut live route. Current status: ${statusLabel(
+            selectedStop.status
+          )}.`;
 
     try {
       await navigator.clipboard.writeText(`${selectedStop.phone}\n\n${message}`);
@@ -117,6 +120,28 @@ export default function RouteCutOperatorBoard() {
       );
     } catch {
       window.alert(`Text ${selectedStop.phone}\n\n${message}`);
+    }
+  };
+
+  const handleCopyPaymentMessage = async () => {
+    if (!selectedStop) return;
+
+    const message = buildCustomerPaymentMessage(selectedStop);
+
+    try {
+      await navigator.clipboard.writeText(message);
+      window.alert(`Payment message copied.\n\n${message}`);
+    } catch {
+      window.alert(message);
+    }
+  };
+
+  const handleCopyZelle = async () => {
+    try {
+      await navigator.clipboard.writeText(ROUTE_OWNER_PAYMENT.zelle);
+      window.alert(`Zelle copied:\n${ROUTE_OWNER_PAYMENT.zelle}`);
+    } catch {
+      window.alert(`Zelle:\n${ROUTE_OWNER_PAYMENT.zelle}`);
     }
   };
 
@@ -143,6 +168,16 @@ export default function RouteCutOperatorBoard() {
     if (!note?.trim()) return;
 
     addStopNote(selectedStop.id, note);
+  };
+
+  const handleMarkPaidZelle = () => {
+    if (!selectedStop || selectedStop.payment.status === "paid") return;
+    markStopPaid(selectedStop.id, "zelle");
+  };
+
+  const handleMarkPaidCashApp = () => {
+    if (!selectedStop || selectedStop.payment.status === "paid") return;
+    markStopPaid(selectedStop.id, "cashapp");
   };
 
   return (
@@ -214,7 +249,12 @@ export default function RouteCutOperatorBoard() {
                     >
                       <div className="font-medium">{stop.customer}</div>
                       <div className="mt-1 text-xs text-white/60">{stop.address}</div>
-                      <div className="mt-2 text-xs text-white/40">{stop.service}</div>
+                      <div className="mt-2 flex items-center justify-between gap-2 text-xs text-white/40">
+                        <span>{stop.service}</span>
+                        <span>
+                          {stop.payment.status === "paid" ? "Paid" : `$${stop.payment.amountDue}`}
+                        </span>
+                      </div>
                     </button>
                   ))
                 )}
@@ -367,7 +407,7 @@ export default function RouteCutOperatorBoard() {
             )}
           </div>
 
-          {drawerOpen && (
+          {drawerOpen && selectedStop && (
             <aside className="space-y-4 rounded-2xl border border-cyan-400/20 bg-[#0B1220]/80 p-5">
               <div>
                 <div className="text-xs uppercase tracking-widest text-cyan-300/70">
@@ -415,12 +455,113 @@ export default function RouteCutOperatorBoard() {
 
               <section className="space-y-3 rounded-xl border border-cyan-400/20 bg-[#0D1728]/50 p-4">
                 <div className="text-xs uppercase tracking-[0.2em] text-cyan-300/60">
+                  Payments
+                </div>
+
+                <div className="rounded-lg border border-cyan-400/15 bg-[#09111f] p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-xs text-white/45">Status</div>
+                      <div className="mt-1 font-medium">
+                        {selectedStop.payment.status === "paid" ? "Paid" : "Unpaid"}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xs text-white/45">Amount due</div>
+                      <div className="mt-1 font-medium">
+                        ${selectedStop.payment.amountDue}
+                      </div>
+                    </div>
+                  </div>
+
+                  {selectedStop.payment.status === "paid" ? (
+                    <div className="mt-3 rounded-lg border border-green-400/20 bg-green-400/10 p-3 text-sm text-white/75">
+                      Paid via{" "}
+                      {selectedStop.payment.method === "zelle"
+                        ? "Zelle"
+                        : selectedStop.payment.method === "cashapp"
+                        ? "Cash App"
+                        : selectedStop.payment.method ?? "Payment"}{" "}
+                      {selectedStop.payment.paidAt
+                        ? `at ${formatEventTime(selectedStop.payment.paidAt)}`
+                        : ""}
+                    </div>
+                  ) : (
+                    <div className="mt-3 space-y-3">
+                      <div className="rounded-lg border border-cyan-400/15 bg-[#07101d] p-3">
+                        <div className="text-xs text-white/45">Primary rail</div>
+                        <div className="mt-1 font-medium">
+                          Zelle: {ROUTE_OWNER_PAYMENT.zelle}
+                        </div>
+                      </div>
+
+                      {ROUTE_OWNER_PAYMENT.cashApp?.trim() ? (
+                        <div className="rounded-lg border border-cyan-400/15 bg-[#07101d] p-3">
+                          <div className="text-xs text-white/45">Backup rail</div>
+                          <div className="mt-1 font-medium">
+                            Cash App: {ROUTE_OWNER_PAYMENT.cashApp}
+                          </div>
+                        </div>
+                      ) : null}
+
+                      <div className="grid gap-2">
+                        <button
+                          type="button"
+                          onClick={handleMarkPaidZelle}
+                          className="rounded-xl bg-green-500 px-4 py-2 font-medium text-black transition hover:bg-green-400"
+                        >
+                          Mark Paid — Zelle
+                        </button>
+
+                        {ROUTE_OWNER_PAYMENT.cashApp?.trim() ? (
+                          <button
+                            type="button"
+                            onClick={handleMarkPaidCashApp}
+                            className="rounded-xl border border-cyan-400/30 px-4 py-2 transition hover:bg-cyan-400/10"
+                          >
+                            Mark Paid — Cash App
+                          </button>
+                        ) : null}
+
+                        <button
+                          type="button"
+                          onClick={handleCopyPaymentMessage}
+                          className="rounded-xl border border-cyan-400/30 px-4 py-2 transition hover:bg-cyan-400/10"
+                        >
+                          Copy Payment Message
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={handleCopyZelle}
+                          className="rounded-xl border border-cyan-400/30 px-4 py-2 transition hover:bg-cyan-400/10"
+                        >
+                          Copy Zelle
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            window.open(ROUTE_OWNER_PAYMENT.paymentNodeUrl, "_blank")
+                          }
+                          className="rounded-xl border border-cyan-400/30 px-4 py-2 transition hover:bg-cyan-400/10"
+                        >
+                          Open Payment Node
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              <section className="space-y-3 rounded-xl border border-cyan-400/20 bg-[#0D1728]/50 p-4">
+                <div className="text-xs uppercase tracking-[0.2em] text-cyan-300/60">
                   Money
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="rounded-lg border border-cyan-400/15 bg-[#09111f] p-3">
-                    <div className="text-xs text-white/45">Today revenue</div>
+                    <div className="text-xs text-white/45">Collected</div>
                     <div className="mt-1 text-xl font-semibold">
                       ${routeStats.completedRevenue}
                     </div>

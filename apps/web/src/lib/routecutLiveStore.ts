@@ -15,6 +15,16 @@ export type RouteCutEventType =
   | "payment"
   | "completion";
 
+export type RouteCutPaymentMethod = "zelle" | "cashapp" | "venmo" | "card";
+
+export type RouteCutPayment = {
+  status: "unpaid" | "paid";
+  amountDue: number;
+  amountPaid: number;
+  method?: RouteCutPaymentMethod;
+  paidAt?: string;
+};
+
 export type RouteCutEvent = {
   id: string;
   type: RouteCutEventType;
@@ -34,12 +44,20 @@ export type RouteCutStop = {
   openingWindow: string;
   createdAt: string;
   events: RouteCutEvent[];
+  payment: RouteCutPayment;
 };
 
 type RouteCutState = {
   stops: RouteCutStop[];
   selectedId: string | null;
   updatedAt: string;
+};
+
+export const ROUTE_OWNER_PAYMENT = {
+  ownerName: "Johnny",
+  zelle: "863-555-0101",
+  cashApp: "$johnnyslawn",
+  paymentNodeUrl: "/planet/payments/node",
 };
 
 const STATUS_ORDER: RouteCutStatus[] = [
@@ -98,6 +116,27 @@ function createEvent(input: {
   };
 }
 
+function serviceAmount(service: string) {
+  const match = service.match(/\$?\d+(?:\.\d{1,2})?/);
+  if (!match) return 80;
+  return Number(match[0].replace("$", ""));
+}
+
+function paymentMethodLabel(method?: RouteCutPaymentMethod) {
+  switch (method) {
+    case "zelle":
+      return "Zelle";
+    case "cashapp":
+      return "Cash App";
+    case "venmo":
+      return "Venmo";
+    case "card":
+      return "Card";
+    default:
+      return "Payment";
+  }
+}
+
 function statusChangeDetail(status: RouteCutStatus, customer: string) {
   switch (status) {
     case "new":
@@ -132,6 +171,18 @@ function statusCorrectionDetail(status: RouteCutStatus, customer: string) {
   }
 }
 
+function buildPayment(
+  amountDue: number,
+  overrides?: Partial<RouteCutPayment>
+): RouteCutPayment {
+  return {
+    status: "unpaid",
+    amountDue,
+    amountPaid: 0,
+    ...overrides,
+  };
+}
+
 function findNextSelectableStopId(stops: RouteCutStop[], excludeId?: string | null) {
   for (const status of NEXT_SELECTION_PRIORITY) {
     const match = stops.find(
@@ -159,6 +210,7 @@ const initialStops: RouteCutStop[] = [
     status: "new",
     openingWindow: "9:00 AM – 10:00 AM",
     createdAt: nowIso(),
+    payment: buildPayment(80),
     events: [
       createEvent({
         type: "created",
@@ -177,6 +229,7 @@ const initialStops: RouteCutStop[] = [
     status: "scheduled",
     openingWindow: "10:00 AM – 11:30 AM",
     createdAt: nowIso(),
+    payment: buildPayment(80),
     events: [
       createEvent({
         type: "created",
@@ -200,6 +253,7 @@ const initialStops: RouteCutStop[] = [
     status: "en-route",
     openingWindow: "11:30 AM – 12:30 PM",
     createdAt: nowIso(),
+    payment: buildPayment(80),
     events: [
       createEvent({
         type: "created",
@@ -228,6 +282,7 @@ const initialStops: RouteCutStop[] = [
     status: "on-site",
     openingWindow: "1:00 PM – 2:00 PM",
     createdAt: nowIso(),
+    payment: buildPayment(80),
     events: [
       createEvent({
         type: "created",
@@ -261,6 +316,12 @@ const initialStops: RouteCutStop[] = [
     status: "complete",
     openingWindow: "Completed",
     createdAt: nowIso(),
+    payment: buildPayment(80, {
+      status: "paid",
+      amountPaid: 80,
+      method: "zelle",
+      paidAt: nowIso(),
+    }),
     events: [
       createEvent({
         type: "created",
@@ -286,6 +347,11 @@ const initialStops: RouteCutStop[] = [
         type: "completion",
         title: "Job completed",
         detail: "Service finished and the stop was closed out.",
+      }),
+      createEvent({
+        type: "payment",
+        title: "Payment received",
+        detail: "Customer paid $80 via Zelle.",
       }),
     ],
   },
@@ -446,6 +512,41 @@ export function stepBackStop(id: string) {
   emitChange();
 }
 
+export function markStopPaid(id: string, method: RouteCutPaymentMethod) {
+  const updatedStops = state.stops.map((stop) => {
+    if (stop.id !== id) return stop;
+
+    return {
+      ...stop,
+      payment: {
+        ...stop.payment,
+        status: "paid",
+        amountPaid: stop.payment.amountDue,
+        method,
+        paidAt: nowIso(),
+      },
+      events: [
+        ...stop.events,
+        createEvent({
+          type: "payment",
+          title: "Payment received",
+          detail: `Customer paid $${stop.payment.amountDue} via ${paymentMethodLabel(
+            method
+          )}.`,
+        }),
+      ],
+    };
+  });
+
+  state = {
+    ...state,
+    stops: updatedStops,
+    selectedId: id,
+  };
+
+  emitChange();
+}
+
 export function addStopNote(id: string, note: string) {
   const cleanNote = note.trim();
   if (!cleanNote) return;
@@ -474,6 +575,25 @@ export function addStopNote(id: string, note: string) {
   };
 
   emitChange();
+}
+
+export function buildCustomerPaymentMessage(stop: RouteCutStop) {
+  const lines = [
+    `Hi ${stop.customer} — your RouteCut service is ready for payment.`,
+    "",
+    `Total: $${stop.payment.amountDue}`,
+    "",
+    `Pay via Zelle:`,
+    ROUTE_OWNER_PAYMENT.zelle,
+  ];
+
+  if (ROUTE_OWNER_PAYMENT.cashApp?.trim()) {
+    lines.push("", "Or Cash App:", ROUTE_OWNER_PAYMENT.cashApp);
+  }
+
+  lines.push("", "Thank you!");
+
+  return lines.join("\n");
 }
 
 export function logCustomerContact(id: string, method: "text" | "call") {
@@ -514,6 +634,8 @@ export function addWalkOnStop(input: {
   openingWindow?: string;
 }) {
   const createdAt = nowIso();
+  const service = input.service?.trim() || "Walk-On Service";
+  const amountDue = serviceAmount(service);
 
   const newStop: RouteCutStop = {
     id: `rc-${Date.now()}`,
@@ -521,10 +643,11 @@ export function addWalkOnStop(input: {
     address: input.address?.trim() || "Address not provided",
     phone: input.phone?.trim() || "No phone provided",
     notes: input.notes?.trim() || "",
-    service: input.service?.trim() || "Walk-On Service",
+    service,
     status: "new",
     openingWindow: input.openingWindow?.trim() || "Next available opening",
     createdAt,
+    payment: buildPayment(amountDue),
     events: [
       {
         id: `rce-${Date.now()}-created`,
