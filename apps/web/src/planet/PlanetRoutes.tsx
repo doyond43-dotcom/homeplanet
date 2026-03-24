@@ -9,9 +9,11 @@ import CreatorProjects from "../pages/CreatorProjects";
 import CreatorStudio from "../pages/CreatorStudio";
 import CreatorBuild from "../pages/CreatorBuild";
 import ReleaseViewer from "../pages/ReleaseViewer";
+import StarterBoardPreview from "../pages/StarterBoardPreview";
 
-// AWNIT Demo Board
+// Demo boards
 import AwnitDemoBoard from "../pages/AwnitDemoBoard";
+import AutoRepairLiveBoard from "../pages/AutoRepairLiveBoard";
 import InvoiceView from "../pages/InvoiceView";
 
 import LifePlanet from "../pages/LifePlanet";
@@ -43,24 +45,10 @@ import RouteCutLiveView from "../pages/RouteCutLiveView";
 
 // Payment
 import HomePlanetPaymentNode from "../pages/HomePlanetPaymentNode";
+import PricingPage from "../pages/PricingPage";
+import OnboardingFlow from "../pages/OnboardingFlow";
+import OnboardingBuildTransition from "../pages/OnboardingBuildTransition";
 
-/**
- * Planet layer:
- * - /planet/creator is a special "launchpad" (CreatorCity)
- * - /planet/vehicles/awnit-demo is a special demo surface
- * - /planet/food/... exposes restaurant demo pages
- * - /planet/legal/... exposes legal demo pages
- * - /planet/guardian now redirects to the pet care timeline demo
- * - /planet/guardian/join and /planet/guardian/presence keep the original human Guardian surfaces
- * - /planet/guardian-pet is the separate pet tag demo landing
- * - /planet/emily exposes Emily's learning desk
- * - /planet/lawn/routecut exposes the RouteCut Lawn live route page
- * - /planet/routecut/operator exposes the RouteCut operator board
- * - /planet/routecut/live exposes the RouteCut customer live view
- * - /planet/payments/node exposes the HomePlanet payment node
- * - /planet/:planetId routes to PlanetOverview
- * - /planet/:planetId/:cityId routes to CityPage
- */
 export default function PlanetRoutes() {
   return (
     <Routes>
@@ -74,15 +62,41 @@ export default function PlanetRoutes() {
       <Route path="creator/release/:releaseId" element={<ReleaseViewer />} />
       <Route path="creator/*" element={<Navigate to="/planet/creator" replace />} />
 
-      {/* AWNIT */}
+      {/* Generic public demo aliases */}
+      <Route path="demo/home-services" element={<AwnitDemoBoard />} />
+      <Route path="demo/auto-service" element={<AutoRepairLiveBoard />} />
+      <Route path="demo/kitchen-flow" element={<RestaurantRushSimpleDemo />} />
+      <Route path="demo/kitchen-manual" element={<RestaurantRushManualDemo />} />
+      <Route path="demo/kitchen-live" element={<RestaurantRushLiveDemo />} />
+      <Route path="demo/restaurant" element={<RestaurantRushDemo />} />
+      <Route path="demo/example-kitchen" element={<MomsKitchenDemo />} />
+      <Route path="demo/legal-workspace" element={<JoeGrantLegalDesk />} />
+      <Route path="demo/lawn-route" element={<RouteCutLawnPage />} />
+
+      {/* Live board links */}
+      <Route path="live/:boardSlug" element={<AutoRepairLiveBoard />} />
+
+      {/* Legacy / named demo routes kept alive */}
       <Route path="vehicles/awnit-demo" element={<AwnitDemoBoard />} />
-      <Route path="vehicles/awnit-demo/invoice/:invoiceId" element={<InvoiceView />} />
+      <Route
+        path="vehicles/awnit-demo/invoice/:invoiceId"
+        element={<InvoiceView />}
+      />
       <Route path="demo/awnit" element={<AwnitDemoBoard />} />
 
       {/* Food */}
-      <Route path="food/restaurant-rush-simple" element={<RestaurantRushSimpleDemo />} />
-      <Route path="food/restaurant-rush-manual" element={<RestaurantRushManualDemo />} />
-      <Route path="food/restaurant-rush-live" element={<RestaurantRushLiveDemo />} />
+      <Route
+        path="food/restaurant-rush-simple"
+        element={<RestaurantRushSimpleDemo />}
+      />
+      <Route
+        path="food/restaurant-rush-manual"
+        element={<RestaurantRushManualDemo />}
+      />
+      <Route
+        path="food/restaurant-rush-live"
+        element={<RestaurantRushLiveDemo />}
+      />
       <Route path="food/restaurant-rush" element={<RestaurantRushDemo />} />
       <Route path="food/moms-kitchen" element={<MomsKitchenDemo />} />
 
@@ -112,7 +126,13 @@ export default function PlanetRoutes() {
       {/* Payment */}
       <Route path="payments/node" element={<HomePlanetPaymentNode />} />
 
+      {/* Onboarding */}
+      <Route path="start" element={<OnboardingFlow />} />
+      <Route path="start/building" element={<OnboardingBuildTransition />} />
+      <Route path="start/preview" element={<StarterBoardPreview />} />
+
       {/* Other special pages */}
+      <Route path="pricing" element={<PricingPage />} />
       <Route path="jeanettes" element={<JeanettesLanding />} />
       <Route path="life" element={<LifePlanet />} />
       <Route path="emily" element={<EmilyLearningDesk />} />

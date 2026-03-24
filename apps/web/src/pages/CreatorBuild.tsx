@@ -1,5 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import {
+  ArrowLeft,
+  Eye,
+  FileText,
+  Mic,
+  Save,
+  Sparkles,
+  Wand2,
+} from "lucide-react";
+
 import { supabase } from "../lib/supabaseClient";
 import { normalizeStringsDeep } from "../lib/text/normalizeText";
 import { ensureProject } from "../data/ensureProject";
@@ -16,6 +26,14 @@ type DraftRow = {
   body: string;
 };
 
+type BuildIntent =
+  | "landing-page"
+  | "live-board"
+  | "workflow-tool"
+  | "intake-flow"
+  | "payment-flow"
+  | "full-system";
+
 function inferNameFromText(input: string): string {
   const s = String(input || "").trim();
   if (!s) return "Untitled Site";
@@ -30,7 +48,9 @@ function inferNameFromText(input: string): string {
     firstLine.split(/[.!?]/).map((x) => x.trim()).filter(Boolean)[0] || firstLine;
 
   const called = firstSentence.match(/\b(called|named)\s+([A-Za-z0-9&'".\- ]{2,60})/i);
-  if (called?.[2]) return called[2].trim().replace(/^["'â€œâ€]+|["'â€œâ€]+$/g, "");
+  if (called?.[2]) {
+    return called[2].trim().replace(/^["'â€œâ€]+|["'â€œâ€]+$/g, "");
+  }
 
   const brandish = firstSentence.replace(/^i\s+(run|own|have|started)\s+/i, "").trim();
   const cleaned = brandish.replace(/^a\s+|an\s+|the\s+/i, "").trim();
@@ -39,7 +59,6 @@ function inferNameFromText(input: string): string {
   return title ? title.replace(/^["'â€œâ€]+|["'â€œâ€]+$/g, "") : "Untitled Site";
 }
 
-// Plain English -> structured BuildPreview format
 function generateStructuredBuild(input: string): string {
   const raw = String(input || "").trim();
   const name = inferNameFromText(raw);
@@ -55,11 +74,15 @@ function generateStructuredBuild(input: string): string {
   const wantsQuote = /\b(quote|estimate|pricing|price)\b/i.test(raw);
   const wantsShop = /\b(shop|store|buy|order)\b/i.test(raw);
 
-  const cta = (wantsBook && "View Schedule") || (wantsShop && "Shop") || (wantsQuote && "Get a Quote") || "Contact";
+  const cta =
+    (wantsBook && "View Schedule") ||
+    (wantsShop && "Shop") ||
+    (wantsQuote && "Get a Quote") ||
+    "Contact";
 
   return `H1: ${name}
 
-Subheadline: Built from your description â€” ready to share
+Subheadline: Built from your description — ready to share
 
 About:
 ${raw || "Describe what you do, who it's for, and what you want customers to do."}
@@ -77,20 +100,107 @@ CTA: ${cta}
 
 Contact:
 ${[
-    location ? `Location: ${location}` : "Location:",
-    phone ? `Phone: ${phone}` : "Phone:",
-    email ? `Email: ${email}` : "Email:",
-    "Instagram:",
-    "Website:",
-  ].join("\n")}
+  location ? `Location: ${location}` : "Location:",
+  phone ? `Phone: ${phone}` : "Phone:",
+  email ? `Email: ${email}` : "Email:",
+  "Instagram:",
+  "Website:",
+].join("\n")}
 `;
 }
 
+function formatIntent(intent: string) {
+  return intent
+    .replace(/[-_]+/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function inferNextSurface(
+  businessType: string,
+  intent: string
+): { href: string; label: string } {
+  const service = businessType.toLowerCase();
+
+  if (service.includes("auto") || service.includes("repair") || service.includes("car")) {
+    return {
+      href: "/planet/demo/auto-service",
+      label:
+        intent === "intake-flow"
+          ? "Open Auto Service Intake Preview"
+          : "Open Auto Service System Preview",
+    };
+  }
+
+  if (
+    service.includes("lawn") ||
+    service.includes("landscape") ||
+    service.includes("mow") ||
+    service.includes("yard")
+  ) {
+    return {
+      href: "/planet/demo/routecut",
+      label:
+        intent === "intake-flow"
+          ? "Open Lawn Intake Preview"
+          : "Open Lawn System Preview",
+    };
+  }
+
+  if (
+    service.includes("restaurant") ||
+    service.includes("kitchen") ||
+    service.includes("food") ||
+    service.includes("cafe")
+  ) {
+    return {
+      href: "/planet/demo/restaurant",
+      label:
+        intent === "intake-flow"
+          ? "Open Restaurant Intake Preview"
+          : "Open Restaurant System Preview",
+    };
+  }
+
+  return {
+    href: "/planet/demo/home-services",
+    label:
+      intent === "intake-flow"
+        ? "Open Intake System Preview"
+        : "Open Live System Preview",
+  };
+}
+
+const DEFAULT_IDEA =
+  "I run a Tampa-based dance studio that teaches hip hop and contemporary classes for kids and adults. Booking online. Contact: hello@movetampa.com";
+
 export default function CreatorBuild() {
   const navigate = useNavigate();
+  const { search } = useLocation();
+  const query = new URLSearchParams(search);
 
-  // --- Responsive layout (mobile = 1 column) ---
-  const [isNarrow, setIsNarrow] = useState(() => (typeof window !== "undefined" ? window.innerWidth < 900 : true));
+  const carriedBusinessName =
+    query.get("businessName") ||
+    query.get("business") ||
+    "";
+
+  const carriedBusinessType =
+    query.get("businessType") ||
+    query.get("service") ||
+    "service business";
+
+  const carriedIntent =
+    (query.get("buildIntent") ||
+      query.get("build") ||
+      "full-system") as BuildIntent;
+
+  const nextSurface = useMemo(
+    () => inferNextSurface(carriedBusinessType, carriedIntent),
+    [carriedBusinessType, carriedIntent]
+  );
+
+  const [isNarrow, setIsNarrow] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth < 900 : true
+  );
 
   useEffect(() => {
     const onResize = () => setIsNarrow(window.innerWidth < 900);
@@ -98,24 +208,27 @@ export default function CreatorBuild() {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  const { activeProjectId, setActiveProjectId, hydrateActiveFromStorage } = useProjectStore();
+  const { activeProjectId, setActiveProjectId, hydrateActiveFromStorage } =
+    useProjectStore();
 
-  // Human input (non-technical)
   const [idea, setIdea] = useState<string>(
-    "I run a Tampa-based dance studio that teaches hip hop and contemporary classes for kids and adults. Booking online. Contact: hello@movetampa.com"
+    carriedBusinessName || carriedBusinessType
+      ? `${carriedBusinessName || "This business"} is a ${carriedBusinessType}. We want a cleaner workflow, better visibility, and a system that feels organized for customers and staff.`
+      : DEFAULT_IDEA
   );
 
-  // Generated â€œbuild textâ€ that powers the preview + autosave
   const [buildText, setBuildText] = useState<string>(() =>
     generateStructuredBuild(
-      "I run a Tampa-based dance studio that teaches hip hop and contemporary classes for kids and adults. Booking online. Contact: hello@movetampa.com"
+      carriedBusinessName || carriedBusinessType
+        ? `${carriedBusinessName || "This business"} is a ${carriedBusinessType}. We want a cleaner workflow, better visibility, and a system that feels organized for customers and staff.`
+        : DEFAULT_IDEA
     )
   );
 
-  // Force preview refresh
   const [buildVersion, setBuildVersion] = useState<number>(1);
-
-  const [status, setStatus] = useState<"idle" | "creating" | "saving" | "saved" | "error">("idle");
+  const [status, setStatus] = useState<
+    "idle" | "creating" | "saving" | "saved" | "error"
+  >("idle");
   const [err, setErr] = useState<string | null>(null);
 
   const creatingRef = useRef<Promise<string> | null>(null);
@@ -123,8 +236,12 @@ export default function CreatorBuild() {
   const lastTitleRef = useRef<string>("");
 
   const autoName = useMemo(() => inferNameFromText(idea), [idea]);
+  const wordCount = useMemo(() => {
+    const text = idea.trim();
+    return text ? text.split(/\s+/).length : 0;
+  }, [idea]);
 
-  function appendFromVoice(chunk: any) {
+  function appendFromVoice(chunk: unknown) {
     const cleaned = String(chunk ?? "").trim();
     if (!cleaned) return;
 
@@ -142,9 +259,6 @@ export default function CreatorBuild() {
     });
   }
 
-  // Hydrate active project from BOTH:
-  // - zustand store
-  // - LocalStorage key in projectsStore.ts (authoritative fallback)
   useEffect(() => {
     hydrateActiveFromStorage?.();
 
@@ -163,7 +277,7 @@ export default function CreatorBuild() {
       creatingRef.current = (async () => {
         const p = await ensureProject("build", "Untitled Site");
         setActiveProjectId(p.id);
-        setActiveProjectIdLocal(p.id); // refresh-proof
+        setActiveProjectIdLocal(p.id);
         setStatus("idle");
         return p.id;
       })();
@@ -186,8 +300,9 @@ export default function CreatorBuild() {
       const fixedBody = normalizeStringsDeep(row.body);
       setBuildText(fixedBody);
 
-      // Extract the About block from our structured template
-      const m = fixedBody.match(/About:\s*([\s\S]*?)\n\n(?:Services:|Products:|CTA:|Contact:)/i);
+      const m = fixedBody.match(
+        /About:\s*([\s\S]*?)\n\n(?:Services:|Products:|CTA:|Contact:)/i
+      );
       if (m?.[1]) setIdea(m[1].trim());
 
       lastTitleRef.current = inferNameFromText(m?.[1] || fixedBody);
@@ -199,14 +314,23 @@ export default function CreatorBuild() {
       const nextTitle = inferNameFromText(ideaText);
       if (!nextTitle || nextTitle === lastTitleRef.current) return;
 
-      const { data: proj, error: readErr } = await supabase.from("projects").select("title").eq("id", projectId).maybeSingle();
+      const { data: proj, error: readErr } = await supabase
+        .from("projects")
+        .select("title")
+        .eq("id", projectId)
+        .maybeSingle();
       if (readErr) return;
 
       const currentTitle = (proj?.title ?? "").trim();
-      const isUntitled = !currentTitle || currentTitle.toLowerCase().includes("untitled");
+      const isUntitled =
+        !currentTitle || currentTitle.toLowerCase().includes("untitled");
       if (!isUntitled) return;
 
-      const { error: upErr } = await supabase.from("projects").update({ title: nextTitle }).eq("id", projectId);
+      const { error: upErr } = await supabase
+        .from("projects")
+        .update({ title: nextTitle })
+        .eq("id", projectId);
+
       if (!upErr) lastTitleRef.current = nextTitle;
     } catch {
       // best-effort only
@@ -219,9 +343,10 @@ export default function CreatorBuild() {
 
     setStatus("saving");
 
-    const { error } = await supabase
-      .from("project_drafts")
-      .upsert({ project_id: projectId, owner_id: authData.user.id, body }, { onConflict: "project_id" });
+    const { error } = await supabase.from("project_drafts").upsert(
+      { project_id: projectId, owner_id: authData.user.id, body },
+      { onConflict: "project_id" }
+    );
 
     if (error) throw error;
 
@@ -231,11 +356,10 @@ export default function CreatorBuild() {
     window.setTimeout(() => setStatus("idle"), 650);
   }
 
-  // Load the draft when activeProjectId is present
   useEffect(() => {
     let cancelled = false;
 
-    (async () => {
+    void (async () => {
       if (!activeProjectId) return;
       try {
         await loadDraft(activeProjectId);
@@ -268,7 +392,6 @@ export default function CreatorBuild() {
     }, 350);
   }
 
-  // Boot: if authenticated and no active project, create + save once
   useEffect(() => {
     void (async () => {
       try {
@@ -288,10 +411,6 @@ export default function CreatorBuild() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // --- Ghost repair + hard reset helpers (dev-only but safe) ---
-  const DEFAULT_IDEA =
-    "I run a Tampa-based dance studio that teaches hip hop and contemporary classes for kids and adults. Booking online. Contact: hello@movetampa.com";
-
   async function repairGhostsAndSave() {
     try {
       setErr(null);
@@ -305,8 +424,7 @@ export default function CreatorBuild() {
       setBuildText(fixedBuild);
 
       await saveDraft(pid, fixedBuild, fixedIdea);
-
-      setBuildVersion((v) => v + 1); // force preview refresh
+      setBuildVersion((v) => v + 1);
     } catch (e: any) {
       setErr(e?.message ?? String(e));
       setStatus("error");
@@ -329,275 +447,345 @@ export default function CreatorBuild() {
       setBuildText(fixedBuild);
 
       await saveDraft(pid, fixedBuild, fixedIdea);
-
-      setBuildVersion((v) => v + 1); // force preview refresh
+      setBuildVersion((v) => v + 1);
     } catch (e: any) {
       setErr(e?.message ?? String(e));
       setStatus("error");
     }
   }
-  // ------------------------------------------------------------
 
   const statusLabel =
-    (status === "creating" && "creatingâ€¦") ||
-    (status === "saving" && "savingâ€¦") ||
-    (status === "saved" && "saved âœ“") ||
-    (status === "error" && "error") ||
-    (activeProjectId ? "auto-saved" : "start typing");
+    (status === "creating" && "Creating project…") ||
+    (status === "saving" && "Saving…") ||
+    (status === "saved" && "Saved ✓") ||
+    (status === "error" && "Save error") ||
+    (activeProjectId ? "Auto-saved" : "Start describing to begin");
 
-  // Shared HP pill + soft card styles
-  const hpPill: any = {
-    height: 40,
-    padding: "0 12px",
-    borderRadius: 999,
-    border: "1px solid rgba(255,255,255,0.16)",
-    background: "rgba(255,255,255,0.06)",
-    color: "white",
-    cursor: "pointer",
-    fontWeight: 900,
-    fontSize: 12,
-    letterSpacing: 0.2,
-    whiteSpace: "nowrap",
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-  };
-
-  const hpCard: any = {
-    padding: 14,
-    borderRadius: 18,
-    border: "1px solid rgba(255,255,255,0.10)",
-    background: "rgba(0,0,0,0.22)",
-    boxShadow: "0 10px 30px rgba(0,0,0,0.25)",
-    minWidth: 0,
-  };
+  const statusTone =
+    status === "error"
+      ? "text-rose-300"
+      : status === "saved"
+      ? "text-emerald-300"
+      : "text-cyan-200";
 
   return (
-    <div style={{ padding: 18, maxWidth: 1200, margin: "0 auto" }}>
-      <div
-        style={{
-          marginBottom: 12,
-          padding: "10px 12px",
-          borderRadius: 14,
-          border: "2px solid rgba(0,255,150,0.55)",
-          background: "rgba(0,255,150,0.14)",
-          color: "white",
-          fontWeight: 900,
-        }}
-      >
-        MIC BUILD ACTIVE âœ“ (CreatorBuild.tsx)
-        <div style={{ display: "flex", gap: 10, alignItems: "center", marginTop: 10, flexWrap: "wrap" }}>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              window.print();
-            }}
-            style={{ touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}
-          >
-            Print / Save PDF
-          </button>
+    <div className="min-h-screen bg-[#06111f] text-white">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.14),transparent_30%),radial-gradient(circle_at_bottom,rgba(59,130,246,0.12),transparent_28%)]" />
 
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              void repairGhostsAndSave();
-            }}
-            style={{
-              marginLeft: 10,
-              height: 40,
-              padding: "0 12px",
-              borderRadius: 12,
-              border: "1px solid rgba(255,255,255,0.16)",
-              background: "rgba(255,255,255,0.06)",
-              color: "white",
-              cursor: "pointer",
-              fontWeight: 900,
-              fontSize: 12,
-            }}
-            title="Fix ghost characters by rewriting cleaned text back into Supabase"
-          >
-            Repair ghosts &amp; save
-          </button>
+      <div className="relative mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <section className="overflow-hidden rounded-[32px] border border-cyan-400/20 bg-white/5 shadow-[0_20px_90px_rgba(0,0,0,0.45)] backdrop-blur">
+          <div className="grid gap-6 p-6 lg:grid-cols-[1.15fr_0.85fr] lg:p-8">
+            <div>
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-cyan-300/25 bg-cyan-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200">
+                <Sparkles className="h-4 w-4" />
+                Creator Build Active
+              </div>
 
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              void resetBuildFresh();
-            }}
-            style={{
-              marginLeft: 10,
-              height: 40,
-              padding: "0 12px",
-              borderRadius: 12,
-              border: "1px solid rgba(255,120,120,0.35)",
-              background: "rgba(255,80,80,0.14)",
-              color: "white",
-              cursor: "pointer",
-              fontWeight: 900,
-              fontSize: 12,
-            }}
-            title="Nuclear option: regenerate from idea and overwrite the stored draft"
-          >
-            Reset build fresh
-          </button>
-        </div>
-      </div>
+              <h1 className="max-w-4xl text-3xl font-semibold leading-tight text-white sm:text-4xl md:text-5xl">
+                Build your business presence
+                <span className="block bg-gradient-to-r from-cyan-300 via-sky-300 to-indigo-300 bg-clip-text text-transparent">
+                  the current HomePlanet way
+                </span>
+              </h1>
 
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 14 }}>
-        <div>
-          <h1 style={{ fontSize: 22, margin: 0 }}>Creator</h1>
-          <div style={{ opacity: 0.65, fontSize: 12 }}>Describe â€¢ Build â€¢ Preview</div>
-        </div>
+              <p className="mt-4 max-w-3xl text-base leading-7 text-slate-300 sm:text-lg">
+                Describe the real business in plain language. HomePlanet turns it
+                into structured build text, saves the draft, and shows a living
+                preview beside you while you work.
+              </p>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-          <div style={{ opacity: 0.75, fontSize: 12 }}>{statusLabel}</div>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() => navigate(-1)}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white transition hover:bg-white/10"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Back
+                </button>
 
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              navigate(-1);
-            }}
-            style={hpPill}
-            title="Back"
-          >
-            â† Back
-          </button>
+                <button
+                  type="button"
+                  onClick={() => navigate("/planet/creator/projects")}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white transition hover:bg-white/10"
+                >
+                  <FileText className="h-4 w-4" />
+                  Projects
+                </button>
 
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              navigate("/creator/projects");
-            }}
-            style={hpPill}
-          >
-            Projects
-          </button>
-        </div>
-      </div>
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white transition hover:bg-white/10"
+                >
+                  <Save className="h-4 w-4" />
+                  Print / Save PDF
+                </button>
+              </div>
+            </div>
 
-      {err && (
-        <div
-          style={{
-            padding: 12,
-            borderRadius: 12,
-            border: "1px solid rgba(255,255,255,0.14)",
-            marginBottom: 12,
-          }}
+            <div className="rounded-[28px] border border-cyan-400/20 bg-slate-950/60 p-5 shadow-inner shadow-cyan-500/5">
+              <div className="mb-4 flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-cyan-400/15 text-cyan-300">
+                  <Wand2 className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-white">
+                    Build session identity
+                  </div>
+                  <div className="text-xs text-slate-400">
+                    Current project context and live status
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <div className="text-xs uppercase tracking-[0.22em] text-slate-400">
+                    Project title
+                  </div>
+                  <div className="mt-1 text-sm text-white">{autoName}</div>
+                </div>
+
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <div className="text-xs uppercase tracking-[0.22em] text-slate-400">
+                    Build intent
+                  </div>
+                  <div className="mt-1 text-sm text-white">
+                    {formatIntent(carriedIntent)}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <div className="text-xs uppercase tracking-[0.22em] text-slate-400">
+                    Save state
+                  </div>
+                  <div className={`mt-1 text-sm font-medium ${statusTone}`}>
+                    {statusLabel}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <div className="text-xs uppercase tracking-[0.22em] text-slate-400">
+                    Next surface
+                  </div>
+                  <div className="mt-1 text-sm text-white">
+                    {nextSurface.label}
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => void repairGhostsAndSave()}
+                    className="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white transition hover:bg-white/10"
+                  >
+                    Repair ghosts
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => void resetBuildFresh()}
+                    className="inline-flex items-center justify-center rounded-2xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm font-medium text-white transition hover:bg-rose-400/15"
+                  >
+                    Reset fresh
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {err ? (
+          <div className="mt-6 rounded-[24px] border border-rose-400/20 bg-rose-400/10 p-4 text-sm text-rose-100">
+            <div className="mb-1 font-semibold">Save error</div>
+            <div>{err}</div>
+          </div>
+        ) : null}
+
+        <section
+          className={`mt-8 grid gap-6 ${
+            isNarrow ? "grid-cols-1" : "lg:grid-cols-[1fr_1fr]"
+          }`}
         >
-          <div style={{ fontWeight: 800, marginBottom: 6 }}>Save error</div>
-          <div style={{ opacity: 0.85, fontSize: 13 }}>{err}</div>
-        </div>
-      )}
+          <div className="rounded-[30px] border border-white/10 bg-white/5 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.28)] backdrop-blur lg:p-6">
+            <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <div className="text-sm font-semibold uppercase tracking-[0.22em] text-cyan-200">
+                  Describe
+                </div>
+                <h2 className="mt-2 text-2xl font-semibold text-white">
+                  Tell HomePlanet what this business really is
+                </h2>
+                <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-300">
+                  Use natural language. Talk like a real owner. Mention what you
+                  do, where you are, who you serve, how customers book, and what
+                  you want people to feel or do next.
+                </p>
+              </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: isNarrow ? "1fr" : "1fr 1fr",
-          gap: 18,
-          alignItems: "start",
-        }}
-      >
-        <div style={hpCard}>
-          <div style={{ fontSize: 18, fontWeight: 900, marginBottom: 6 }}>Describe your business or idea</div>
-          <div style={{ opacity: 0.75, fontSize: 12, marginBottom: 10 }}>
-            Type a few sentences â€” or tap the mic â€” weâ€™ll turn it into a site.
-          </div>
+              <div className="rounded-2xl border border-white/10 bg-slate-950/50 px-4 py-3">
+                <div className="text-xs uppercase tracking-[0.22em] text-slate-400">
+                  Word count
+                </div>
+                <div className="mt-1 text-lg font-semibold text-white">
+                  {wordCount}
+                </div>
+              </div>
+            </div>
 
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, gap: 10 }}>
-            <div style={{ opacity: 0.65, fontSize: 12 }}>Speak it</div>
-            <VoiceDictationButton onFinal={appendFromVoice} />
-          </div>
+            <div className="mb-4 grid gap-3 sm:grid-cols-[1fr_auto]">
+              <div className="rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-sm text-slate-300">
+                Speak it, type it, or paste it. HomePlanet keeps the draft alive
+                while the preview updates beside you.
+              </div>
 
-          <textarea
-            id="creator-idea"
-            name="creator-idea"
-            value={idea}
-            onChange={(e) => {
-              const nextIdea = e.target.value;
-              setIdea(nextIdea);
+              <div className="flex items-center justify-end">
+                <div className="inline-flex items-center gap-2 rounded-2xl border border-cyan-400/15 bg-cyan-400/10 px-3 py-2 text-sm text-cyan-100">
+                  <Mic className="h-4 w-4" />
+                  <VoiceDictationButton onFinal={appendFromVoice} />
+                </div>
+              </div>
+            </div>
 
-              const nextBuild = generateStructuredBuild(nextIdea);
-              const fixedBuild = normalizeStringsDeep(nextBuild);
+            <textarea
+              id="creator-idea"
+              name="creator-idea"
+              value={idea}
+              onChange={(e) => {
+                const nextIdea = e.target.value;
+                setIdea(nextIdea);
 
-              setBuildText(fixedBuild);
-              scheduleSave(fixedBuild, nextIdea);
-            }}
-            placeholder="Example: I run a Tampa-based dance studio teaching hip hop & contemporary for kids and adults. Booking online. Contact: hello@..."
-            style={{
-              width: "100%",
-              minHeight: 280,
-              padding: 14,
-              borderRadius: 14,
-              border: "1px solid rgba(255,255,255,0.12)",
-              background: "rgba(255,255,255,0.03)",
-              outline: "none",
-              fontSize: 15,
-              lineHeight: 1.5,
-              color: "rgba(255,255,255,0.92)",
-              caretColor: "rgba(255,255,255,0.92)",
-            }}
-          />
-
-          <div style={{ display: "flex", gap: 10, alignItems: "center", marginTop: 12, flexWrap: "wrap" }}>
-            <button
-              onClick={async () => {
-                const nextBuild = generateStructuredBuild(idea);
+                const nextBuild = generateStructuredBuild(nextIdea);
                 const fixedBuild = normalizeStringsDeep(nextBuild);
 
                 setBuildText(fixedBuild);
-                setBuildVersion((v) => v + 1);
-
-                try {
-                  const pid = await ensureActiveBuildProject();
-                  setActiveProjectIdLocal(pid);
-                  await saveDraft(pid, fixedBuild, idea);
-                } catch {
-                  // best-effort; still allow studio
-                }
-
-                navigate("/creator/studio");
+                scheduleSave(fixedBuild, nextIdea);
               }}
-              style={{
-                height: 46,
-                padding: "0 16px",
-                borderRadius: 14,
-                border: "none",
-                background: "white",
-                color: "black",
-                fontWeight: 900,
-                cursor: "pointer",
-              }}
-            >
-              Launch Creator Studio
-            </button>
+              placeholder="Example: Taylor Creek Auto Repair in Okeechobee is a local shop built around trust, visibility, and real workflow..."
+              className="min-h-[320px] w-full rounded-[24px] border border-white/10 bg-slate-950/55 p-5 text-[15px] leading-7 text-white outline-none placeholder:text-slate-500 focus:border-cyan-400/40"
+            />
 
-            <div style={{ fontSize: 12, opacity: 0.75 }}>
-              <span style={{ fontWeight: 900 }}>{autoName}</span>{" "}
-              <span style={{ opacity: 0.85 }}>â€¢ Auto-generated â€” rename anytime.</span>
+            <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
+              <div className="rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-sm text-slate-300">
+                <span className="font-semibold text-white">{autoName}</span>
+                <span className="text-slate-400"> • auto-generated title</span>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const nextBuild = generateStructuredBuild(idea);
+                    const fixedBuild = normalizeStringsDeep(nextBuild);
+
+                    setBuildText(fixedBuild);
+                    setBuildVersion((v) => v + 1);
+
+                    try {
+                      const pid = await ensureActiveBuildProject();
+                      setActiveProjectIdLocal(pid);
+                      await saveDraft(pid, fixedBuild, idea);
+                    } catch {
+                      // best-effort
+                    }
+
+                    navigate(nextSurface.href);
+                  }}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:scale-[1.01]"
+                >
+                  <Eye className="h-4 w-4" />
+                  {nextSurface.label}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const nextBuild = generateStructuredBuild(idea);
+                    const fixedBuild = normalizeStringsDeep(nextBuild);
+
+                    setBuildText(fixedBuild);
+                    setBuildVersion((v) => v + 1);
+
+                    try {
+                      const pid = await ensureActiveBuildProject();
+                      setActiveProjectIdLocal(pid);
+                      await saveDraft(pid, fixedBuild, idea);
+                    } catch {
+                      // best-effort
+                    }
+
+                    navigate("/planet/creator/studio");
+                  }}
+                  className="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-medium text-white transition hover:bg-white/10"
+                >
+                  Creator Studio Assets
+                </button>
+              </div>
             </div>
           </div>
 
-          <div style={{ marginTop: 10, opacity: 0.65, fontSize: 12 }}>
-            Active Project ID: {activeProjectId ?? "none yet"}
-          </div>
-        </div>
+          <div className="rounded-[30px] border border-white/10 bg-white/5 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.28)] backdrop-blur lg:p-6">
+            <div className="mb-5 flex items-start justify-between gap-4">
+              <div>
+                <div className="text-sm font-semibold uppercase tracking-[0.22em] text-cyan-200">
+                  Preview
+                </div>
+                <h2 className="mt-2 text-2xl font-semibold text-white">
+                  Live build preview
+                </h2>
+                <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-300">
+                  This panel shows the structured output your description is
+                  generating right now.
+                </p>
+              </div>
 
-        <div style={hpCard}>
-          <BuildPreview key={buildVersion} rawText={buildText} projectId={activeProjectId} />
-        </div>
+              <div className="rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3 text-sm text-slate-300">
+                Version <span className="font-semibold text-white">{buildVersion}</span>
+              </div>
+            </div>
+
+            <div className="overflow-hidden rounded-[26px] border border-cyan-400/15 bg-slate-950/60 p-3 shadow-inner shadow-cyan-500/5">
+              <BuildPreview
+                key={buildVersion}
+                rawText={buildText}
+                projectId={activeProjectId}
+              />
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-8 rounded-[30px] border border-cyan-400/15 bg-gradient-to-r from-cyan-400/10 via-sky-400/10 to-indigo-400/10 p-6">
+          <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+            <div>
+              <div className="text-sm font-semibold uppercase tracking-[0.22em] text-cyan-200">
+                Corrected flow
+              </div>
+              <h3 className="mt-2 text-2xl font-semibold text-white">
+                System builds now go toward a system surface
+              </h3>
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-200">
+                The old branch forced you into print assets too early. This
+                version keeps Creator Studio available, but the main action now
+                points toward a live system preview based on the business type
+                and the build intent you already selected.
+              </p>
+            </div>
+
+            <div className="rounded-[26px] border border-white/10 bg-slate-950/45 p-5">
+              <div className="text-sm font-semibold text-white">
+                Flow now
+              </div>
+              <div className="mt-3 space-y-2 text-sm text-slate-300">
+                <div>1. Onboarding chooses build intent</div>
+                <div>2. Starter preview carries that intent forward</div>
+                <div>3. Creator build preserves system context</div>
+                <div>4. Main CTA opens a system preview first</div>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   );
 }
-
-

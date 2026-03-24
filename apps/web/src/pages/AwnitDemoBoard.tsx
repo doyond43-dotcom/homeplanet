@@ -835,6 +835,32 @@ export default function AwnitDemoBoard() {
   const { supported, listening, toggle, activeTargetRef } = useSpeechDictation();
   const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false);
 
+  const previewParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+
+  const displayBusinessName =
+    previewParams.get("businessName") ||
+    previewParams.get("business") ||
+    "Auto Service Demo";
+
+  const displayServiceName =
+    previewParams.get("businessType") ||
+    previewParams.get("service") ||
+    "Auto Repair Shop";
+
+  const buildIntent =
+    previewParams.get("buildIntent") ||
+    previewParams.get("build") ||
+    "";
+
+  const isGeneratedPreview = Boolean(
+    previewParams.get("businessName") ||
+      previewParams.get("business") ||
+      previewParams.get("businessType") ||
+      previewParams.get("service") ||
+      previewParams.get("buildIntent") ||
+      previewParams.get("build")
+  );
+
   const [jobs, setJobs] = useState<AwnitJobRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -1073,10 +1099,10 @@ export default function AwnitDemoBoard() {
         : type === "window"
         ? "Window"
         : type === "screen"
-        ? "Screen"
-        : type === "trim"
-          ? "Trim"
-          : "Custom";
+          ? "Screen"
+          : type === "trim"
+            ? "Trim"
+            : "Custom";
 
     const item: ScopeItem = {
       id: makeId(),
@@ -1377,6 +1403,28 @@ export default function AwnitDemoBoard() {
                   </div>
 
                   {loadError ? <div className="mt-2 text-xs text-red-300">{loadError}</div> : null}
+
+                  {isGeneratedPreview ? (
+                    <div className="mt-3 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-3 sm:p-4">
+                      <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-emerald-200/90">
+                        Generated from onboarding
+                      </div>
+
+                      <div className="mt-2 text-base font-extrabold text-white sm:text-lg">
+                        {displayBusinessName}
+                      </div>
+
+                      <div className="mt-1 text-sm text-emerald-100/90">
+                        {displayServiceName}
+                        {buildIntent ? ` • ${buildIntent}` : ""}
+                      </div>
+
+                      <div className="mt-3 text-sm leading-6 text-white/75">
+                        This board was matched to the closest live HomePlanet workflow so the business owner can
+                        immediately see what their system could look like in motion.
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
 
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
