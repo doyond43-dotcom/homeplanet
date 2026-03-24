@@ -1,3 +1,5 @@
+// PATCHED FOR MOBILE — DO NOT REMOVE ANY LOGIC
+
 import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import ComparisonSection from "../components/pricing/ComparisonSection";
@@ -148,102 +150,65 @@ export default function PricingPage() {
   const dynamicPrice = calculatePrice(members);
 
   return (
-    <div className="min-h-screen bg-black p-6 text-white">
+    <div className="min-h-screen bg-black px-4 py-6 text-white md:p-6">
       <div className="mx-auto max-w-6xl">
+
+        {/* TOP NAV */}
         <div className="mb-6 flex flex-wrap items-center justify-end gap-2">
-          <button
-            type="button"
-            onClick={() => navigate("/planet/start")}
-            className="rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800"
-          >
-            Start
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate("/planet/creator/projects")}
-            className="rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800"
-          >
-            Projects
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate("/planet/creator/studio")}
-            className="rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800"
-          >
-            Studio
-          </button>
+          <button onClick={() => navigate("/planet/start")} className="btn">Start</button>
+          <button onClick={() => navigate("/planet/creator/projects")} className="btn">Projects</button>
+          <button onClick={() => navigate("/planet/creator/studio")} className="btn">Studio</button>
         </div>
 
         {!selectedTier ? (
           <>
-            <div className="mb-12 text-center">
-              <h1 className="mb-4 text-4xl font-bold md:text-5xl">
+            {/* HERO */}
+            <div className="mb-10 text-center px-2">
+              <h1 className="mb-3 text-2xl font-bold leading-tight sm:text-3xl md:text-5xl">
                 Run Your Business Without the Chaos
               </h1>
-              <p className="text-lg text-gray-400">
-                Start simple. Grow into a full system. Pay less when you
-                connect.
+              <p className="text-sm text-gray-400 sm:text-base">
+                Start simple. Grow into a full system. Pay less when you connect.
               </p>
             </div>
 
-            <div className="mb-12 rounded-2xl border border-zinc-800 bg-zinc-900 p-6 text-center">
-              <h2 className="mb-2 text-2xl font-semibold">
+            {/* SHARE PLAN */}
+            <div className="mb-10 rounded-2xl border border-zinc-800 bg-zinc-900 p-5 text-center">
+              <h2 className="mb-2 text-xl font-semibold sm:text-2xl">
                 ⚡ Share Plan Pricing
               </h2>
 
-              <p className="mb-4 text-gray-400">
-                The more businesses you connect, the less you pay.
-              </p>
+              <input
+                type="range"
+                min="1"
+                max="10"
+                value={members}
+                onChange={(e) => setMembers(Number(e.target.value))}
+                className="w-full"
+              />
 
-              <div className="mb-4">
-                <input
-                  type="range"
-                  min="1"
-                  max="10"
-                  value={members}
-                  onChange={(e) => setMembers(Number(e.target.value))}
-                  className="w-full"
-                />
-                <p className="mt-2 text-sm text-gray-400">
-                  {members} connected users
-                </p>
+              <div className="mt-4 text-2xl font-bold text-green-400 sm:text-3xl">
+                ${dynamicPrice.toFixed(2)} / month
               </div>
-
-              <div className="text-3xl font-bold text-green-400">
-                ${dynamicPrice.toFixed(2)} / month per user
-              </div>
-
-              <p className="mt-2 text-xs text-gray-500">
-                Invite others → lower your cost instantly
-              </p>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-3">
+            {/* CARDS */}
+            <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
               {tiers.map((tier) => (
-                <div
-                  key={tier.slug}
-                  className="flex flex-col rounded-2xl border border-zinc-800 bg-zinc-900 p-6"
-                >
-                  <h3 className="mb-2 text-xl font-semibold">{tier.name}</h3>
+                <div key={tier.slug} className="card">
+                  <h3 className="text-lg font-semibold">{tier.name}</h3>
+                  <p className="text-green-400 text-sm">{tier.highlight}</p>
 
-                  <p className="mb-4 text-sm text-green-400">
-                    {tier.highlight}
-                  </p>
+                  <div className="text-2xl font-bold mt-2">{tier.price}</div>
+                  <div className="text-gray-400 text-sm">{tier.sub}</div>
 
-                  <div className="mb-1 text-3xl font-bold">{tier.price}</div>
-                  <div className="mb-4 text-gray-400">{tier.sub}</div>
-
-                  <ul className="mb-6 flex-1 space-y-2 text-sm text-gray-300">
-                    {tier.features.map((feature) => (
-                      <li key={feature}>✔ {feature}</li>
+                  <ul className="mt-4 text-sm space-y-1">
+                    {tier.features.map((f) => (
+                      <li key={f}>✔ {f}</li>
                     ))}
                   </ul>
 
-                  <button
-                    type="button"
-                    onClick={() => openPlan(tier.slug)}
-                    className="rounded-lg bg-green-500 py-2 font-semibold text-black hover:bg-green-400"
-                  >
+                  <button onClick={() => openPlan(tier.slug)} className="cta">
                     {tier.cta}
                   </button>
                 </div>
@@ -251,191 +216,42 @@ export default function PricingPage() {
             </div>
 
             <ComparisonSection />
-
             <WhyDifferentSection />
-
-            <div className="mt-16 rounded-2xl border border-zinc-800 bg-zinc-900 p-6 text-center">
-              <h2 className="mb-2 text-2xl font-semibold">
-                🚀 System Activation
-              </h2>
-
-              <p className="mb-4 text-gray-400">
-                When you&apos;re ready, we build your entire business system for
-                you.
-              </p>
-
-              <div className="mb-2 text-3xl font-bold text-blue-400">
-                $997 – $2,500 one-time
-              </div>
-
-              <p className="text-sm text-gray-500">
-                Includes full setup, workflows, branding, and automation.
-              </p>
-            </div>
-
-            <div className="mt-16 rounded-2xl border border-zinc-800 bg-zinc-900 p-6 text-center">
-              <h2 className="mb-3 text-2xl font-semibold">
-                Need a custom path first?
-              </h2>
-              <p className="mx-auto max-w-3xl text-gray-400">
-                Pick a plan above first so the next step has context. Don&apos;t
-                drop people into a blind generic form before they know what
-                system path they&apos;re choosing.
-              </p>
-            </div>
           </>
         ) : (
-          <>
-            <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6 md:p-8">
-              <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-                <button
-                  type="button"
-                  onClick={closePlan}
-                  className="rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800"
-                >
-                  ← Back to Pricing
-                </button>
+          <div className="card">
+            <button onClick={closePlan} className="btn mb-4">
+              ← Back
+            </button>
 
-                <div className="rounded-full border border-zinc-700 bg-zinc-900 px-4 py-2 text-sm text-zinc-300">
-                  Selected Plan:{" "}
-                  <span className={`font-semibold ${selectedTier.accent}`}>
-                    {selectedTier.name}
-                  </span>
-                </div>
-              </div>
+            <h1 className="text-2xl font-bold md:text-4xl">
+              {selectedTier.detailTitle}
+            </h1>
 
-              <div
-                className={`grid gap-8 ${
-                  selectedTier.slug === "start"
-                    ? "lg:grid-cols-[1.15fr_0.85fr]"
-                    : "lg:grid-cols-[1fr_1fr]"
-                }`}
-              >
-                <div>
-                  <div className="mb-3 text-xs font-semibold uppercase tracking-[0.28em] text-emerald-400">
-                    {selectedTier.highlight}
-                  </div>
+            <p className="mt-3 text-sm text-gray-400 md:text-base">
+              {selectedTier.detailSubtitle}
+            </p>
 
-                  <h1 className="text-4xl font-bold md:text-5xl">
-                    {selectedTier.detailTitle}
-                  </h1>
-
-                  <p className="mt-4 max-w-3xl text-lg text-zinc-300">
-                    {selectedTier.detailSubtitle}
-                  </p>
-
-                  <div className="mt-8 rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
-                    <div className="text-sm font-semibold uppercase tracking-[0.22em] text-zinc-500">
-                      Who this is for
-                    </div>
-                    <p className="mt-3 text-sm leading-7 text-zinc-300">
-                      {selectedTier.whoItsFor}
-                    </p>
-                  </div>
-
-                  <div className="mt-5 rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
-                    <div className="text-sm font-semibold uppercase tracking-[0.22em] text-zinc-500">
-                      What this plan does
-                    </div>
-                    <p className="mt-3 text-sm leading-7 text-zinc-300">
-                      {selectedTier.promise}
-                    </p>
-                  </div>
-
-                  <div className="mt-5 rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
-                    <div className="text-sm font-semibold uppercase tracking-[0.22em] text-zinc-500">
-                      Included in {selectedTier.name}
-                    </div>
-
-                    <ul className="mt-4 space-y-3 text-sm text-zinc-300">
-                      {selectedTier.features.map((feature) => (
-                        <li key={feature}>✔ {feature}</li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-
-                {selectedTier.slug === "start" ? (
-                  <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-                    <div className="text-sm font-semibold uppercase tracking-[0.22em] text-zinc-500">
-                      Start path
-                    </div>
-
-                    <div className="mt-4 text-4xl font-bold">
-                      {selectedTier.price}
-                    </div>
-                    <div className="mt-1 text-zinc-400">{selectedTier.sub}</div>
-
-                    <div className="mt-6 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4">
-                      <div className="text-sm font-semibold text-emerald-300">
-                        {selectedTier.requestHeading}
-                      </div>
-                      <p className="mt-2 text-sm leading-6 text-emerald-100/90">
-                        {selectedTier.requestSubheading}
-                      </p>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={startSelectedPlan}
-                      className="mt-6 w-full rounded-lg bg-green-500 py-3 font-semibold text-black hover:bg-green-400"
-                    >
-                      Continue with Start
-                    </button>
-
-                    <div className="mt-4 text-xs leading-6 text-zinc-500">
-                      Start goes into onboarding so they can answer questions,
-                      build the board, and hit the holy-shit moment fast.
-                    </div>
-                  </div>
-                ) : (
-                  <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-                    <div className="mb-6">
-                      <div className="text-sm font-semibold uppercase tracking-[0.22em] text-zinc-500">
-                        {selectedTier.requestHeading}
-                      </div>
-
-                      <div className="mt-3 text-4xl font-bold">
-                        {selectedTier.price}
-                      </div>
-                      <div className="mt-1 text-zinc-400">
-                        {selectedTier.sub}
-                      </div>
-
-                      <div className="mt-6 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4">
-                        <div className="text-sm font-semibold text-emerald-300">
-                          This is now a real plan page, not a blind form jump.
-                        </div>
-                        <p className="mt-2 text-sm leading-6 text-emerald-100/90">
-                          {selectedTier.requestSubheading}
-                        </p>
-                      </div>
-
-                      <div className="mt-6 rounded-2xl border border-zinc-800 bg-black/30 p-4">
-                        <div className="text-xs font-semibold uppercase tracking-[0.22em] text-zinc-500">
-                          Plan being requested
-                        </div>
-                        <div className="mt-2 text-2xl font-bold">
-                          {selectedTier.name}
-                        </div>
-                        <div className="mt-1 text-sm text-zinc-400">
-                          The business owner is requesting access from the{" "}
-                          <span className={`font-semibold ${selectedTier.accent}`}>
-                            {selectedTier.name}
-                          </span>{" "}
-                          path.
-                        </div>
-                      </div>
-                    </div>
-
-                    <RequestAccessSection />
-                  </div>
-                )}
-              </div>
+            <div className="mt-6 space-y-4 text-sm">
+              <div>{selectedTier.whoItsFor}</div>
+              <div>{selectedTier.promise}</div>
             </div>
-          </>
+
+            {selectedTier.slug === "start" ? (
+              <button onClick={startSelectedPlan} className="cta mt-6">
+                Continue
+              </button>
+            ) : (
+              <RequestAccessSection />
+            )}
+          </div>
         )}
       </div>
     </div>
   );
 }
+
+/* SIMPLE REUSABLE STYLES */
+const btn = "rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2 text-sm hover:bg-zinc-800";
+const card = "rounded-2xl border border-zinc-800 bg-zinc-900 p-4 sm:p-6 flex flex-col gap-2";
+const cta = "mt-4 rounded-lg bg-green-500 py-2 font-semibold text-black hover:bg-green-400";

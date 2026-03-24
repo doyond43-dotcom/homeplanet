@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const REQUEST_ACCESS_URL =
@@ -37,6 +37,17 @@ export default function CreatorCity() {
   const [workflowFiles, setWorkflowFiles] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    function handleResize() {
+      setIsMobile(window.innerWidth < 900);
+    }
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const systems = useMemo<SystemExample[]>(
     () => [
@@ -164,7 +175,7 @@ export default function CreatorCity() {
 
   const page: React.CSSProperties = {
     minHeight: "100vh",
-    padding: 24,
+    padding: isMobile ? 14 : 24,
     color: "#e5e7eb",
     background:
       "radial-gradient(1000px 700px at 15% 10%, rgba(34,197,94,0.08), transparent 58%)," +
@@ -183,7 +194,7 @@ export default function CreatorCity() {
     background:
       "linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02) 28%, rgba(2,6,23,0.42) 100%)",
     borderRadius: 24,
-    padding: 24,
+    padding: isMobile ? 18 : 24,
     boxShadow: "0 18px 50px rgba(0,0,0,0.35)",
   };
 
@@ -193,24 +204,27 @@ export default function CreatorCity() {
     alignItems: "flex-start",
     gap: 20,
     flexWrap: "wrap",
+    flexDirection: isMobile ? "column" : "row",
   };
 
   const titleWrap: React.CSSProperties = {
     display: "flex",
     flexDirection: "column",
     gap: 10,
-    maxWidth: 920,
+    maxWidth: isMobile ? "100%" : 920,
+    width: isMobile ? "100%" : "auto",
   };
 
   const titleRow: React.CSSProperties = {
     display: "flex",
-    alignItems: "center",
+    alignItems: isMobile ? "flex-start" : "center",
     gap: 12,
     flexWrap: "wrap",
+    flexDirection: isMobile ? "column" : "row",
   };
 
   const title: React.CSSProperties = {
-    fontSize: 36,
+    fontSize: isMobile ? 42 : 36,
     fontWeight: 900,
     letterSpacing: -0.5,
     lineHeight: 1.05,
@@ -218,12 +232,12 @@ export default function CreatorCity() {
 
   const livePill: React.CSSProperties = {
     borderRadius: 999,
-    padding: "7px 12px",
+    padding: isMobile ? "10px 14px" : "7px 12px",
     border: "1px solid rgba(34,197,94,0.35)",
     background: "rgba(34,197,94,0.10)",
     color: "rgba(187,247,208,1)",
     fontWeight: 900,
-    fontSize: 12,
+    fontSize: isMobile ? 14 : 12,
     letterSpacing: 0.5,
     display: "inline-flex",
     alignItems: "center",
@@ -239,7 +253,7 @@ export default function CreatorCity() {
   };
 
   const subtitle: React.CSSProperties = {
-    fontSize: 16,
+    fontSize: isMobile ? 18 : 16,
     lineHeight: 1.7,
     color: "rgba(226,232,240,0.92)",
     maxWidth: 960,
@@ -247,15 +261,15 @@ export default function CreatorCity() {
 
   const doctrinePanel: React.CSSProperties = {
     marginTop: 6,
-    maxWidth: 920,
+    maxWidth: isMobile ? "100%" : 920,
     border: "1px solid rgba(56,189,248,0.18)",
     background: "rgba(8,47,73,0.24)",
     borderRadius: 16,
-    padding: "14px 16px",
+    padding: isMobile ? "16px 16px" : "14px 16px",
   };
 
   const doctrineTitle: React.CSSProperties = {
-    fontSize: 12,
+    fontSize: isMobile ? 13 : 12,
     fontWeight: 900,
     letterSpacing: 0.6,
     color: "rgba(186,230,253,0.96)",
@@ -263,7 +277,7 @@ export default function CreatorCity() {
   };
 
   const doctrineText: React.CSSProperties = {
-    fontSize: 13,
+    fontSize: isMobile ? 16 : 13,
     lineHeight: 1.6,
     color: "rgba(226,232,240,0.92)",
   };
@@ -272,18 +286,20 @@ export default function CreatorCity() {
     display: "flex",
     gap: 10,
     flexWrap: "wrap",
-    justifyContent: "flex-end",
+    justifyContent: isMobile ? "flex-start" : "flex-end",
+    width: isMobile ? "100%" : "auto",
   };
 
   const btnBase: React.CSSProperties = {
     borderRadius: 999,
-    padding: "10px 16px",
+    padding: isMobile ? "12px 16px" : "10px 16px",
     border: "1px solid rgba(148,163,184,0.25)",
     background: "rgba(2,6,23,0.55)",
     color: "#e5e7eb",
     fontWeight: 800,
-    fontSize: 13,
+    fontSize: isMobile ? 16 : 13,
     cursor: "pointer",
+    minWidth: isMobile ? "calc(50% - 5px)" : undefined,
   };
 
   const btnPrimary: React.CSSProperties = {
@@ -294,7 +310,7 @@ export default function CreatorCity() {
 
   const topGrid: React.CSSProperties = {
     display: "grid",
-    gridTemplateColumns: "1.15fr 0.85fr",
+    gridTemplateColumns: isMobile ? "1fr" : "1.15fr 0.85fr",
     gap: 16,
     marginTop: 18,
   };
@@ -303,25 +319,26 @@ export default function CreatorCity() {
     border: "1px solid rgba(148,163,184,0.18)",
     background: "rgba(2,6,23,0.56)",
     borderRadius: 20,
-    padding: 20,
+    padding: isMobile ? 18 : 20,
     boxShadow: "0 14px 36px rgba(0,0,0,0.28)",
   };
 
   const sectionTitle: React.CSSProperties = {
     fontWeight: 900,
-    fontSize: 18,
+    fontSize: isMobile ? 22 : 18,
     marginBottom: 8,
+    lineHeight: 1.15,
   };
 
   const sectionText: React.CSSProperties = {
-    fontSize: 14,
+    fontSize: isMobile ? 17 : 14,
     lineHeight: 1.7,
     color: "rgba(226,232,240,0.88)",
   };
 
   const intentGrid: React.CSSProperties = {
     display: "grid",
-    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+    gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))",
     gap: 12,
     marginTop: 16,
   };
@@ -332,26 +349,26 @@ export default function CreatorCity() {
       : "1px solid rgba(148,163,184,0.18)",
     background: active ? "rgba(34,197,94,0.10)" : "rgba(255,255,255,0.02)",
     borderRadius: 16,
-    padding: 14,
+    padding: isMobile ? 16 : 14,
     cursor: "pointer",
-    minHeight: 108,
+    minHeight: isMobile ? undefined : 108,
   });
 
   const intentTitle: React.CSSProperties = {
     fontWeight: 900,
-    fontSize: 14,
+    fontSize: isMobile ? 17 : 14,
     marginBottom: 6,
   };
 
   const intentText: React.CSSProperties = {
-    fontSize: 12,
+    fontSize: isMobile ? 15 : 12,
     lineHeight: 1.5,
     color: "rgba(226,232,240,0.82)",
   };
 
   const intakeGrid: React.CSSProperties = {
     display: "grid",
-    gridTemplateColumns: "1fr 1fr",
+    gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
     gap: 14,
     marginTop: 18,
   };
@@ -362,8 +379,8 @@ export default function CreatorCity() {
     border: "1px solid rgba(148,163,184,0.22)",
     background: "rgba(2,6,23,0.64)",
     color: "#e5e7eb",
-    padding: "13px 14px",
-    fontSize: 14,
+    padding: isMobile ? "15px 14px" : "13px 14px",
+    fontSize: isMobile ? 17 : 14,
     outline: "none",
     boxSizing: "border-box",
   };
@@ -375,7 +392,7 @@ export default function CreatorCity() {
   };
 
   const label: React.CSSProperties = {
-    fontSize: 12,
+    fontSize: isMobile ? 15 : 12,
     fontWeight: 900,
     letterSpacing: 0.4,
     color: "rgba(186,230,253,0.94)",
@@ -383,7 +400,7 @@ export default function CreatorCity() {
 
   const textareaWide: React.CSSProperties = {
     ...inputBase,
-    minHeight: 112,
+    minHeight: isMobile ? 136 : 112,
     resize: "vertical",
   };
 
@@ -391,41 +408,43 @@ export default function CreatorCity() {
     border: "1px dashed rgba(56,189,248,0.30)",
     background: "rgba(8,47,73,0.18)",
     borderRadius: 16,
-    padding: 16,
+    padding: isMobile ? 18 : 16,
     marginTop: 14,
   };
 
   const fileMeta: React.CSSProperties = {
     marginTop: 10,
-    fontSize: 12,
+    fontSize: isMobile ? 14 : 12,
     color: "rgba(186,230,253,0.9)",
   };
 
   const submitWrap: React.CSSProperties = {
     display: "flex",
-    alignItems: "center",
+    alignItems: isMobile ? "stretch" : "center",
     justifyContent: "space-between",
     gap: 14,
     marginTop: 18,
     flexWrap: "wrap",
+    flexDirection: isMobile ? "column" : "row",
   };
 
   const submitBtn: React.CSSProperties = {
     borderRadius: 999,
-    padding: "12px 18px",
+    padding: isMobile ? "15px 18px" : "12px 18px",
     border: "1px solid rgba(34,197,94,0.45)",
     background: "rgba(34,197,94,0.12)",
     color: "rgba(187,247,208,1)",
     fontWeight: 900,
-    fontSize: 14,
+    fontSize: isMobile ? 18 : 14,
     cursor: "pointer",
+    width: isMobile ? "100%" : "auto",
   };
 
   const helperText: React.CSSProperties = {
-    fontSize: 12,
+    fontSize: isMobile ? 15 : 12,
     lineHeight: 1.6,
     color: "rgba(148,163,184,0.88)",
-    maxWidth: 680,
+    maxWidth: isMobile ? "100%" : 680,
   };
 
   const successPanel: React.CSSProperties = {
@@ -433,21 +452,22 @@ export default function CreatorCity() {
     border: "1px solid rgba(34,197,94,0.32)",
     background: "rgba(34,197,94,0.08)",
     borderRadius: 16,
-    padding: 16,
+    padding: isMobile ? 18 : 16,
     color: "rgba(220,252,231,1)",
   };
 
   const examplesLabel: React.CSSProperties = {
     marginTop: 26,
     fontWeight: 900,
-    fontSize: 13,
+    fontSize: isMobile ? 18 : 13,
     letterSpacing: 0.4,
     opacity: 0.9,
+    lineHeight: 1.3,
   };
 
   const examplesGrid: React.CSSProperties = {
     display: "grid",
-    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+    gridTemplateColumns: isMobile ? "1fr" : "repeat(2, minmax(0, 1fr))",
     gap: 14,
     marginTop: 14,
   };
@@ -456,12 +476,13 @@ export default function CreatorCity() {
     border: "1px solid rgba(148,163,184,0.20)",
     background: "rgba(2,6,23,0.52)",
     borderRadius: 16,
-    padding: 16,
+    padding: isMobile ? 18 : 16,
     cursor: "pointer",
     display: "flex",
-    alignItems: "center",
+    alignItems: isMobile ? "flex-start" : "center",
     justifyContent: "space-between",
     gap: 14,
+    flexDirection: isMobile ? "column" : "row",
   };
 
   const exampleTextWrap: React.CSSProperties = {
@@ -469,31 +490,34 @@ export default function CreatorCity() {
     flexDirection: "column",
     gap: 4,
     minWidth: 0,
+    width: "100%",
   };
 
   const exampleTitle: React.CSSProperties = {
     fontWeight: 900,
-    fontSize: 15,
-    whiteSpace: "nowrap",
+    fontSize: isMobile ? 22 : 15,
+    whiteSpace: isMobile ? "normal" : "nowrap",
     overflow: "hidden",
     textOverflow: "ellipsis",
+    lineHeight: 1.15,
   };
 
   const exampleSub: React.CSSProperties = {
-    fontSize: 12,
+    fontSize: isMobile ? 16 : 12,
     color: "rgba(226,232,240,0.76)",
     lineHeight: 1.5,
   };
 
   const tagStyle: React.CSSProperties = {
     borderRadius: 999,
-    padding: "6px 10px",
-    fontSize: 11,
+    padding: isMobile ? "8px 12px" : "6px 10px",
+    fontSize: isMobile ? 13 : 11,
     fontWeight: 900,
     border: "1px solid rgba(250,204,21,0.40)",
     color: "rgba(254,240,138,1)",
     background: "rgba(250,204,21,0.10)",
     flexShrink: 0,
+    alignSelf: isMobile ? "flex-start" : "auto",
   };
 
   const footerWrap: React.CSSProperties = {
@@ -504,7 +528,7 @@ export default function CreatorCity() {
   };
 
   const footerPrimary: React.CSSProperties = {
-    fontSize: 13,
+    fontSize: isMobile ? 14 : 13,
     color: "#94a3b8",
     fontWeight: 700,
     display: "inline-flex",
@@ -516,7 +540,7 @@ export default function CreatorCity() {
 
   const footerSecondary: React.CSSProperties = {
     marginTop: 6,
-    fontSize: 12,
+    fontSize: isMobile ? 13 : 12,
     color: "rgba(148,163,184,0.72)",
   };
 
@@ -694,7 +718,7 @@ export default function CreatorCity() {
                 now a live intake path.
               </div>
 
-              <div style={buttonRow}>
+              <div style={{ ...buttonRow, marginTop: 16 }}>
                 <button
                   style={btnPrimary}
                   onClick={() => nav("/planet/pricing")}
@@ -802,7 +826,7 @@ export default function CreatorCity() {
 
               <div style={fileWrap}>
                 <div style={label}>Upload photos of your workflow</div>
-                <div style={{ ...sectionText, marginTop: 8, fontSize: 13 }}>
+                <div style={{ ...sectionText, marginTop: 8, fontSize: isMobile ? 16 : 13 }}>
                   Upload photos of whiteboards, paper tickets, intake forms,
                   screenshots, invoices, or anything that helps us understand
                   how your business really works.
