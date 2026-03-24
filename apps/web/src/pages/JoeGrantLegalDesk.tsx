@@ -108,46 +108,46 @@ const STAGE_LABELS: Record<MatterStage, string> = {
 const INITIAL_MATTERS: Matter[] = [
   {
     id: "MAT-24018",
-    client: "Maria Ortega",
+    client: "Alex Carter",
     title: "Estate administration / probate intake",
     due: "Today · 10:30 AM",
     stage: "review",
     priority: "high",
-    summary: "Initial probate matter with family waiting on first document pass.",
-    contact: "(863) 555-0148",
+    summary: "Sample probate matter with family waiting on first document pass.",
+    contact: "(555) 014-8100",
     nextAction: "Review death certificate and asset list before callback.",
   },
   {
     id: "MAT-24022",
-    client: "Derrick Lawson",
+    client: "Jordan Hayes",
     title: "Contract dispute response deadline",
     due: "Today · 2:00 PM",
     stage: "filing",
     priority: "high",
     summary: "Response window is short and filing packet needs final review.",
-    contact: "(863) 555-0172",
+    contact: "(555) 017-2200",
     nextAction: "Finalize response packet and confirm exhibits are attached.",
   },
   {
     id: "MAT-24011",
-    client: "Angela Pierce",
+    client: "Taylor Brooks",
     title: "Guardianship follow-up",
     due: "Tomorrow · 9:00 AM",
     stage: "pending-client",
     priority: "medium",
     summary: "Waiting on client-side paperwork before next court-facing step.",
-    contact: "(863) 555-0102",
+    contact: "(555) 010-2400",
     nextAction: "Get signed physician form from client and set court prep call.",
   },
   {
     id: "MAT-24004",
-    client: "Jamal Reed",
+    client: "Morgan Ellis",
     title: "Real estate document review",
     due: "Tomorrow · 1:30 PM",
     stage: "follow-up",
     priority: "normal",
     summary: "Mostly complete, but one clarification still needs to go out.",
-    contact: "(863) 555-0160",
+    contact: "(555) 016-0000",
     nextAction: "Send revision summary and close open title question.",
   },
 ];
@@ -249,13 +249,13 @@ function formatLiveTime(date: Date) {
 function makeMatter(): Matter {
   return {
     id: `MAT-${Date.now()}`,
-    client: "New Client",
+    client: "Sample Client",
     title: "New matter",
     due: "No due date",
     stage: "intake",
     priority: "normal",
     summary: "Add matter summary.",
-    contact: "(000) 000-0000",
+    contact: "(555) 000-0000",
     nextAction: "Add next action.",
   };
 }
@@ -726,7 +726,7 @@ export default function JoeGrantLegalDesk() {
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <div className="rounded-full border border-[#c8d2e2] bg-[#eef3fb] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-[#48607f]">
-                  Joe Grant Legal Notebook Desk
+                  Harbor Legal Demo Desk
                 </div>
 
                 <div className="inline-flex items-center gap-2 rounded-full border border-[#b9ddc0] bg-[#edf9f0] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#2f7d46] shadow-[0_0_0_1px_rgba(47,125,70,0.06),0_0_18px_rgba(82,201,109,0.18)]">

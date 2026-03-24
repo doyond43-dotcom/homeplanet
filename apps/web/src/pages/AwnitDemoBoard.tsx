@@ -6,7 +6,7 @@ import { awnitListJobs, awnitUpdateJob } from "../lib/awnitJobsApi";
 import HomePlanetFooter from "../components/HomePlanetFooter";
 
 /**
- * AWNIT — Live Board (Supabase-backed)
+ * Northstar Service Demo — Live Board (Supabase-backed)
  * Single source of truth: public.awnit_jobs
  *
  * Stabilized to:
@@ -24,7 +24,8 @@ import HomePlanetFooter from "../components/HomePlanetFooter";
  * - Right workspace panel becomes mobile-friendly
  *
  * Demo seed pass:
- * - When live data is sparse, fills empty lanes with believable demo jobs
+ * - Keep the board feeling real, but not overloaded
+ * - Use only a few believable demo jobs
  * - Real jobs always stay first
  * - Demo jobs only fill missing gaps
  *
@@ -508,44 +509,6 @@ const DEMO_SEED_JOBS: AwnitJobRow[] = [
     updated_at: "2026-03-13T10:12:00.000Z",
   },
   {
-    id: "demo_scheduled_two_windows",
-    title: "Need 2 windows replaced in guest room",
-    summary: "Measure both openings, confirm stucco return depth, review grid pattern with customer.",
-    stage: "Scheduled",
-    apptDate: "2026-03-14",
-    apptTime: "1:30 PM",
-    crew: "Crew B",
-    customer: {
-      name: "John Carter",
-      phone: "(555) 777-0199",
-      email: "john.carter@example.com",
-      address: "18 Creator Ave",
-    },
-    scope_items: demoScope("demo_scheduled_two_windows", [
-      {
-        type: "window",
-        label: "Window 1",
-        quick: "Left guest room window.\nCheck rough opening and existing sill condition.\nConfirm tempered requirement.",
-      },
-      {
-        type: "window",
-        label: "Window 2",
-        quick: "Right guest room window.\nMatch visible lite pattern with adjacent front room window.",
-      },
-    ]),
-    materials: demoMaterials("demo_scheduled_two_windows", [
-      { name: "Window 1: Impact window unit" },
-      { name: "Window 2: Impact window unit" },
-      { name: "General: Flashing tape" },
-      { name: "General: Foam" },
-      { name: "General: Screws" },
-    ]),
-    tech_notes:
-      "Customer asked if one window can be privacy glass.\nNeed to verify HOA color and interior trim finish.\nGood candidate to convert fast after measurement.",
-    meta: { materialsQuickAdd: "" },
-    updated_at: "2026-03-13T10:14:00.000Z",
-  },
-  {
     id: "demo_measured_aluminum_screen",
     title: "Customer wants aluminum screen panel replaced",
     summary: "Measurements complete, waiting to finalize spline and mesh spec.",
@@ -619,45 +582,6 @@ const DEMO_SEED_JOBS: AwnitJobRow[] = [
     updated_at: "2026-03-13T10:22:00.000Z",
   },
   {
-    id: "demo_ordered_hardware_wait",
-    title: "Waiting on hardware color approval before order release",
-    summary: "Core order ready, final finish approval pending before vendor release.",
-    stage: "Ordered",
-    apptDate: "2026-03-17",
-    apptTime: "TBD",
-    crew: "Office",
-    customer: {
-      name: "Jordan Reed",
-      phone: "(555) 777-0188",
-      email: "jordan.reed@example.com",
-      address: "77 Builder Way",
-    },
-    scope_items: demoScope("demo_ordered_hardware_wait", [
-      {
-        type: "door",
-        label: "Door 1",
-        quick: "Order package ready.\nHold release until satin nickel vs matte black hardware is confirmed.",
-        done: true,
-      },
-      {
-        type: "trim",
-        label: "Trim 1",
-        quick: "Exterior trim touch-up included in install scope.\nNeed one extra stick white PVC.",
-      },
-    ]),
-    materials: demoMaterials("demo_ordered_hardware_wait", [
-      { name: "Door 1: Door slab / unit", checked: true },
-      { name: "Door 1: Hinge set", checked: true },
-      { name: "General: Screws", checked: true },
-      { name: "Trim 1: Touch-up paint" },
-      { name: "General: Caulk / sealant" },
-    ]),
-    tech_notes:
-      "Order draft built.\nNeed final hardware color text from customer before submitting.\nOnce approved, move install target to next open slot.",
-    meta: { materialsQuickAdd: "" },
-    updated_at: "2026-03-13T10:26:00.000Z",
-  },
-  {
     id: "demo_installed_retrofit",
     title: "Customer wants retrofit install wrapped up today",
     summary: "Install complete, final completion photos and walkthrough still needed.",
@@ -715,76 +639,6 @@ const DEMO_SEED_JOBS: AwnitJobRow[] = [
     },
     updated_at: "2026-03-13T10:30:00.000Z",
   },
-  {
-    id: "demo_installed_motorized_screen",
-    title: "Install 16' × 10' motorized screen on rear patio",
-    summary: "Main install finished, customer walkthrough and final trim cleanup pending.",
-    stage: "Installed",
-    apptDate: "2026-03-13",
-    apptTime: "10:30 AM",
-    crew: "Crew B",
-    customer: {
-      name: "Jamie Collins",
-      phone: "(555) 777-0166",
-      email: "jamie.collins@example.com",
-      address: "44 Presentation Blvd",
-    },
-    scope_items: demoScope("demo_installed_motorized_screen", [
-      {
-        type: "custom",
-        label: "Custom 1",
-        quick: "Motorized screen housing mounted and powered.\nNeed final remote pairing confirmation with customer.",
-        done: true,
-      },
-      {
-        type: "trim",
-        label: "Trim 1",
-        quick: "Touch-up on right side return.\nFinal bead needs smoothing after cleanup.",
-      },
-    ]),
-    materials: demoMaterials("demo_installed_motorized_screen", [
-      { name: "General: Fasteners", checked: true },
-      { name: "General: Touch-up paint" },
-      { name: "General: Caulk / sealant", checked: true },
-      { name: "General: Rags / wipes", checked: true },
-    ]),
-    tech_notes:
-      "Install is visually complete.\nNeed remote sync demonstration and final trim cleanup.\nTake wide patio photo and close-up of bottom bar alignment before moving to done.",
-    meta: { materialsQuickAdd: "" },
-    updated_at: "2026-03-13T10:33:00.000Z",
-  },
-  {
-    id: "demo_done_trim_touchup",
-    title: "Trim + caulk touchup completed at side entry",
-    summary: "Work complete, photos captured, ready for archive or follow-up.",
-    stage: "Done",
-    apptDate: "2026-03-12",
-    apptTime: "2:00 PM",
-    crew: "Crew C",
-    customer: {
-      name: "Morgan Price",
-      phone: "(555) 777-0107",
-      email: "morgan.price@example.com",
-      address: "91 Mockup Terrace",
-    },
-    scope_items: demoScope("demo_done_trim_touchup", [
-      {
-        type: "trim",
-        label: "Trim 1",
-        quick: "Completed exterior trim seal and touch-up.\nJoint lines cleaned and paint blended.",
-        done: true,
-      },
-    ]),
-    materials: demoMaterials("demo_done_trim_touchup", [
-      { name: "Trim 1: Caulk / sealant", checked: true },
-      { name: "Trim 1: Touch-up paint", checked: true },
-      { name: "General: Rags / wipes", checked: true },
-    ]),
-    tech_notes:
-      "Job complete.\nCompletion photos captured.\nCustomer happy with finish line and cleanup.\nSafe to archive after invoice confirmation.",
-    meta: { materialsQuickAdd: "" },
-    updated_at: "2026-03-13T10:36:00.000Z",
-  },
 ];
 
 function mergeWithDemoSeed(rows: AwnitJobRow[]): AwnitJobRow[] {
@@ -794,32 +648,21 @@ function mergeWithDemoSeed(rows: AwnitJobRow[]): AwnitJobRow[] {
   }));
 
   const realIds = new Set(normalizedReal.map((j) => j.id));
-  const byStage = new Map<Stage, AwnitJobRow[]>();
-
-  const orderedStages: Stage[] = ["Scheduled", "Measured", "Estimate Sent", "Ordered", "Installed", "Done"];
-
-  for (const stage of orderedStages) {
-    byStage.set(
-      stage,
-      normalizedReal.filter((j) => coerceStage(j.stage) === stage)
-    );
-  }
-
   const merged: AwnitJobRow[] = [...normalizedReal];
 
-  for (const stage of orderedStages) {
-    const existing = byStage.get(stage) || [];
-    const minimumNeeded = stage === "Installed" || stage === "Scheduled" ? 2 : 1;
+  const targetDemoStages: Stage[] = ["Scheduled", "Measured", "Estimate Sent", "Installed"];
 
-    if (existing.length >= minimumNeeded) continue;
+  for (const stage of targetDemoStages) {
+    const hasRealInStage = normalizedReal.some((j) => coerceStage(j.stage) === stage);
+    if (hasRealInStage) continue;
 
-    const filler = DEMO_SEED_JOBS.filter(
+    const filler = DEMO_SEED_JOBS.find(
       (j) => coerceStage(j.stage) === stage && !realIds.has(j.id)
-    ).slice(0, minimumNeeded - existing.length);
+    );
 
-    for (const demoJob of filler) {
-      merged.push(demoJob);
-      realIds.add(demoJob.id);
+    if (filler) {
+      merged.push(filler);
+      realIds.add(filler.id);
     }
   }
 
@@ -840,12 +683,12 @@ export default function AwnitDemoBoard() {
   const displayBusinessName =
     previewParams.get("businessName") ||
     previewParams.get("business") ||
-    "Auto Service Demo";
+    "Northstar Service Demo";
 
   const displayServiceName =
     previewParams.get("businessType") ||
     previewParams.get("service") ||
-    "Auto Repair Shop";
+    "Home Service Live Board";
 
   const buildIntent =
     previewParams.get("buildIntent") ||
@@ -881,7 +724,10 @@ export default function AwnitDemoBoard() {
   };
   const recentlyEdited = () => Date.now() - lastEditAtRef.current < 3000;
 
-  const stages: Stage[] = useMemo(() => ["Scheduled", "Measured", "Estimate Sent", "Ordered", "Installed", "Done"], []);
+  const stages: Stage[] = useMemo(
+    () => ["Scheduled", "Measured", "Estimate Sent", "Ordered", "Installed", "Done"],
+    []
+  );
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -1007,7 +853,10 @@ export default function AwnitDemoBoard() {
     return () => window.clearInterval(t);
   }, []);
 
-  const selectedJob = useMemo(() => jobs.find((j) => j.id === selectedJobId) || null, [jobs, selectedJobId]);
+  const selectedJob = useMemo(
+    () => jobs.find((j) => j.id === selectedJobId) || null,
+    [jobs, selectedJobId]
+  );
 
   function updateJobOptimistic(jobId: string, patch: Partial<AwnitJobRow>) {
     setJobs((prev) => prev.map((j) => (j.id === jobId ? { ...j, ...patch } : j)));
@@ -1141,7 +990,9 @@ export default function AwnitDemoBoard() {
   function setScopeQuick(job: AwnitJobRow, itemId: string, val: string) {
     markEdit();
     const target = (itemId ?? "").toString();
-    const next = getScope(job).map((x) => ((x.id ?? "").toString() === target ? { ...x, quick: val } : x));
+    const next = getScope(job).map((x) =>
+      (x.id ?? "").toString() === target ? { ...x, quick: val } : x
+    );
 
     updateJobOptimistic(job.id, { scope_items: next } as any);
     persistDebounced(job.id, { scope_items: next }, "scope_items");
@@ -1240,7 +1091,7 @@ export default function AwnitDemoBoard() {
     const c = job.customer || {};
     const appt = `${job.apptDate || "-"} ${job.apptTime || "-"}`.trim();
     return [
-      `AWNIT — Job`,
+      `Northstar Service Demo — Job`,
       `Customer: ${c.name || "-"}`,
       `Phone: ${c.phone || "-"}`,
       `Address: ${c.address || "-"}`,
@@ -1265,7 +1116,7 @@ export default function AwnitDemoBoard() {
   function emailHref(job: AwnitJobRow) {
     const email = (job.customer?.email || "").trim();
     if (!email) return "";
-    const subject = encodeURIComponent(`AWNIT — ${job.title || "Job"}`);
+    const subject = encodeURIComponent(`Northstar Service Demo — ${job.title || "Job"}`);
     const body = encodeURIComponent(buildTechPayload(job));
     return `mailto:${email}?subject=${subject}&body=${body}`;
   }
@@ -1280,7 +1131,7 @@ export default function AwnitDemoBoard() {
   function buildGrabListText(job: AwnitJobRow, materials: MaterialItem[]) {
     const c = job.customer || {};
     const header = [
-      `AWNIT — Materials Grab List`,
+      `Northstar Service Demo — Materials Grab List`,
       `Job: ${job.title || "-"}`,
       `Customer: ${c.name || "-"}`,
       `Address: ${c.address || "-"}`,
@@ -1385,7 +1236,7 @@ export default function AwnitDemoBoard() {
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                     <div className="min-w-0 text-xl font-extrabold tracking-tight sm:text-2xl md:text-3xl">
-                      AWNIT — Live Board
+                      Northstar Service Demo — Live Board
                     </div>
 
                     <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/25 bg-emerald-500/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-emerald-200 sm:text-xs">

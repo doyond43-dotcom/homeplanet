@@ -25,10 +25,34 @@ type AlertItem = {
 };
 
 const laneMeta = [
-  { id: "new", label: "New Tickets", short: "NEW", accent: "border-cyan-400/40", pill: "text-cyan-200 border-cyan-400/30 bg-cyan-500/10" },
-  { id: "cook", label: "Cooking", short: "COOK", accent: "border-amber-400/40", pill: "text-amber-200 border-amber-400/30 bg-amber-500/10" },
-  { id: "ready", label: "Ready", short: "READY", accent: "border-emerald-400/40", pill: "text-emerald-200 border-emerald-400/30 bg-emerald-500/10" },
-  { id: "done", label: "Completed", short: "DONE", accent: "border-zinc-400/35", pill: "text-zinc-200 border-white/10 bg-white/5" },
+  {
+    id: "new",
+    label: "New Tickets",
+    short: "NEW",
+    accent: "border-cyan-400/40",
+    pill: "text-cyan-200 border-cyan-400/30 bg-cyan-500/10",
+  },
+  {
+    id: "cook",
+    label: "Cooking",
+    short: "COOK",
+    accent: "border-amber-400/40",
+    pill: "text-amber-200 border-amber-400/30 bg-amber-500/10",
+  },
+  {
+    id: "ready",
+    label: "Ready",
+    short: "READY",
+    accent: "border-emerald-400/40",
+    pill: "text-emerald-200 border-emerald-400/30 bg-emerald-500/10",
+  },
+  {
+    id: "done",
+    label: "Completed",
+    short: "DONE",
+    accent: "border-zinc-400/35",
+    pill: "text-zinc-200 border-white/10 bg-white/5",
+  },
 ] as const;
 
 function laneLabel(id: LaneId) {
@@ -157,8 +181,12 @@ function seedTickets(now: number): Ticket[] {
   ];
 }
 
-function sampleTicket(orderNo: number): Omit<Ticket, "id" | "orderNo" | "lane" | "createdAt"> {
-  const pool: Array<Omit<Ticket, "id" | "orderNo" | "lane" | "createdAt">> = [
+function sampleTicket(
+  orderNo: number
+): Omit<Ticket, "id" | "orderNo" | "lane" | "createdAt"> {
+  const pool: Array<
+    Omit<Ticket, "id" | "orderNo" | "lane" | "createdAt">
+  > = [
     {
       table: "7",
       guestName: "Taylor",
@@ -219,7 +247,9 @@ function alertToneClass(tone: AlertTone) {
 
 export default function RestaurantRushLiveDemo() {
   const [now, setNow] = useState(Date.now());
-  const [tickets, setTickets] = useState<Ticket[]>(() => seedTickets(Date.now()));
+  const [tickets, setTickets] = useState<Ticket[]>(() =>
+    seedTickets(Date.now())
+  );
   const [alerts, setAlerts] = useState<AlertItem[]>([
     {
       id: "seed-1",
@@ -247,8 +277,11 @@ export default function RestaurantRushLiveDemo() {
 
   useEffect(() => {
     const cleanup = setInterval(() => {
-      setAlerts((prev) => prev.filter((a) => Date.now() - a.createdAt < 12000));
+      setAlerts((prev) =>
+        prev.filter((a) => Date.now() - a.createdAt < 12000)
+      );
     }, 1000);
+
     return () => clearInterval(cleanup);
   }, []);
 
@@ -336,11 +369,7 @@ export default function RestaurantRushLiveDemo() {
     }
 
     if (targetLane === "done") {
-      pushAlert(
-        "Bus Alert",
-        `Table ${ticket.table} completed • bus table`,
-        "info"
-      );
+      pushAlert("Bus Alert", `Table ${ticket.table} completed • bus table`, "info");
     }
   }
 
@@ -384,7 +413,11 @@ export default function RestaurantRushLiveDemo() {
     const doneCount = tickets.filter((t) => t.lane === "done").length;
     setTickets((prev) => prev.filter((t) => t.lane !== "done"));
     if (doneCount > 0) {
-      pushAlert("Board Update", `Cleared ${doneCount} completed ticket${doneCount > 1 ? "s" : ""}`, "info");
+      pushAlert(
+        "Board Update",
+        `Cleared ${doneCount} completed ticket${doneCount > 1 ? "s" : ""}`,
+        "info"
+      );
     }
   }
 
@@ -392,39 +425,46 @@ export default function RestaurantRushLiveDemo() {
     nextOrderRef.current = 308;
     setTickets(seedTickets(Date.now()));
     setAlerts([]);
-    pushAlert("Board Reset", "Mom's Kitchen live rush demo reset", "info");
+    pushAlert("Board Reset", "Summit Kitchen live rush demo reset", "info");
   }
 
   const grouped = useMemo(() => {
-    const map: Record<LaneId, Ticket[]> = { new: [], cook: [], ready: [], done: [] };
+    const map: Record<LaneId, Ticket[]> = {
+      new: [],
+      cook: [],
+      ready: [],
+      done: [],
+    };
     tickets.forEach((t) => map[t.lane].push(t));
     return map;
   }, [tickets]);
 
   const active = tickets.filter((t) => t.lane !== "done").length;
-  const rushCount = tickets.filter((t) => t.priority === "rush" && t.lane !== "done").length;
+  const rushCount = tickets.filter(
+    (t) => t.priority === "rush" && t.lane !== "done"
+  ).length;
 
   return (
     <div className="min-h-screen bg-[#07111b] text-white">
       <div className="mx-auto max-w-7xl px-4 py-4">
-        {/* HEADER */}
-        <header className="rounded-3xl border border-white/10 bg-white/5 p-4 mb-4">
-          <div className="flex flex-col lg:flex-row lg:justify-between gap-3">
+        <header className="mb-4 rounded-3xl border border-white/10 bg-white/5 p-4">
+          <div className="flex flex-col gap-3 lg:flex-row lg:justify-between">
             <div>
               <div className="inline-flex items-center rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-[11px] uppercase tracking-wider text-cyan-200">
                 Restaurant Rush Live Demo
               </div>
 
-              <h1 className="mt-2 text-3xl md:text-4xl font-bold">
-                Mom&apos;s Kitchen Flow Board
+              <h1 className="mt-2 text-3xl font-bold md:text-4xl">
+                Summit Kitchen Demo
               </h1>
 
-              <p className="text-white/70 mt-2 max-w-2xl">
-                Big, simple, readable. New tickets, cooking, ready, completed. Clear flow for cooks, servers, and owners.
+              <p className="mt-2 max-w-2xl text-white/70">
+                Big, simple, readable. New tickets, cooking, ready, completed.
+                Clear flow for cooks, servers, and owners.
               </p>
             </div>
 
-            <div className="flex gap-2 flex-wrap">
+            <div className="flex flex-wrap gap-2">
               <button
                 onClick={addTicket}
                 className="rounded-xl border border-cyan-400/40 bg-cyan-500/15 px-4 py-2 text-sm"
@@ -446,7 +486,7 @@ export default function RestaurantRushLiveDemo() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
+          <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4">
             <Metric label="Active Tickets" value={active} />
             <Metric label="Rush Orders" value={rushCount} />
             <Metric label="Ready Now" value={grouped.ready.length} />
@@ -454,17 +494,25 @@ export default function RestaurantRushLiveDemo() {
           </div>
         </header>
 
-        {/* LANES */}
-        <div className="flex xl:grid xl:grid-cols-4 gap-3 overflow-x-auto pb-2">
+        <div className="flex gap-3 overflow-x-auto pb-2 xl:grid xl:grid-cols-4">
           {laneMeta.map((lane) => (
-            <section key={lane.id} className="min-w-[280px] xl:min-w-0 rounded-3xl border border-white/10 bg-white/5 p-3">
-              <div className="flex justify-between mb-3">
+            <section
+              key={lane.id}
+              className="min-w-[280px] rounded-3xl border border-white/10 bg-white/5 p-3 xl:min-w-0"
+            >
+              <div className="mb-3 flex justify-between">
                 <div>
-                  <div className="text-xs text-white/50 uppercase">{lane.label}</div>
-                  <div className="text-2xl font-bold">{grouped[lane.id].length}</div>
+                  <div className="text-xs uppercase text-white/50">
+                    {lane.label}
+                  </div>
+                  <div className="text-2xl font-bold">
+                    {grouped[lane.id].length}
+                  </div>
                 </div>
 
-                <div className={`rounded-full border px-3 py-1 text-xs ${lane.pill}`}>
+                <div
+                  className={`rounded-full border px-3 py-1 text-xs ${lane.pill}`}
+                >
                   {lane.short}
                 </div>
               </div>
@@ -484,12 +532,13 @@ export default function RestaurantRushLiveDemo() {
           ))}
         </div>
 
-        {/* NOTIFICATIONS */}
         <div className="pointer-events-none fixed bottom-4 right-4 z-50 flex w-[min(92vw,360px)] flex-col gap-2">
           {alerts.slice(0, 4).map((alert) => (
             <div
               key={alert.id}
-              className={`pointer-events-auto rounded-2xl border px-4 py-3 shadow-2xl shadow-black/30 ${alertToneClass(alert.tone)}`}
+              className={`pointer-events-auto rounded-2xl border px-4 py-3 shadow-2xl shadow-black/30 ${alertToneClass(
+                alert.tone
+              )}`}
             >
               <div className="text-[10px] font-bold uppercase tracking-[0.18em] opacity-80">
                 {alert.title}
@@ -506,7 +555,7 @@ export default function RestaurantRushLiveDemo() {
 function Metric({ label, value }: { label: string; value: number }) {
   return (
     <div className="rounded-xl border border-white/10 bg-black/20 px-3 py-2">
-      <div className="text-xs text-white/50 uppercase">{label}</div>
+      <div className="text-xs uppercase text-white/50">{label}</div>
       <div className="text-xl font-semibold">{value}</div>
     </div>
   );
@@ -527,18 +576,21 @@ function TicketCard({
 
   return (
     <div className="rounded-2xl border border-white/10 bg-[#0c1623] p-3">
-      <div className="flex justify-between mb-2">
+      <div className="mb-2 flex justify-between">
         <div className="font-bold">#{ticket.orderNo}</div>
         <div className="text-sm text-white/70">{elapsed}</div>
       </div>
 
-      <div className="text-sm text-white/80 mb-2">
+      <div className="mb-2 text-sm text-white/80">
         T{ticket.table} • {ticket.guestName}
       </div>
 
       <div className="space-y-1 text-sm">
         {ticket.items.map((item, i) => (
-          <div key={i} className="border border-white/10 rounded-lg px-2 py-1">
+          <div
+            key={i}
+            className="rounded-lg border border-white/10 px-2 py-1"
+          >
             {item}
           </div>
         ))}
@@ -547,18 +599,27 @@ function TicketCard({
       {ticket.mods && (
         <div className="mt-2 flex flex-wrap gap-1">
           {ticket.mods.map((m, i) => (
-            <span key={i} className="text-xs border border-amber-400/30 bg-amber-500/10 px-2 py-1 rounded-full">
+            <span
+              key={i}
+              className="rounded-full border border-amber-400/30 bg-amber-500/10 px-2 py-1 text-xs"
+            >
               {m}
             </span>
           ))}
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-2 mt-3">
-        <button onClick={onBack} className="border border-white/10 rounded-lg py-2 text-sm">
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <button
+          onClick={onBack}
+          className="rounded-lg border border-white/10 py-2 text-sm"
+        >
           Back
         </button>
-        <button onClick={onNext} className="border border-cyan-400/30 bg-cyan-500/10 rounded-lg py-2 text-sm">
+        <button
+          onClick={onNext}
+          className="rounded-lg border border-cyan-400/30 bg-cyan-500/10 py-2 text-sm"
+        >
           Next
         </button>
       </div>

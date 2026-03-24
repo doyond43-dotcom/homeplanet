@@ -503,7 +503,7 @@ export default function RestaurantRushManualDemo() {
   function resetBoard() {
     nextOrderRef.current = 208;
     setTickets(seedTickets(Date.now()));
-    pushNotification("Mom's Kitchen rush board reset");
+    pushNotification("Summit Kitchen Demo rush board reset");
   }
 
   const grouped = useMemo(() => {
@@ -553,11 +553,11 @@ export default function RestaurantRushManualDemo() {
             <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
               <div className="min-w-0">
                 <div className="mb-2 inline-flex items-center rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-cyan-200">
-                  Mom&apos;s Kitchen Demo
+                  Summit Kitchen Demo
                 </div>
 
                 <h1 className="text-[30px] font-semibold tracking-tight text-white">
-                  Mom&apos;s Kitchen — Rush Board
+                  Summit Kitchen Demo — Rush Board
                 </h1>
 
                 <p className="mt-1 text-sm text-white/65">

@@ -15,11 +15,13 @@ import StarterBoardPreview from "../pages/StarterBoardPreview";
 import AwnitDemoBoard from "../pages/AwnitDemoBoard";
 import AutoRepairLiveBoard from "../pages/AutoRepairLiveBoard";
 import InvoiceView from "../pages/InvoiceView";
+import CommunitySaleBoard from "../pages/community/CommunitySaleBoard";
+import TransportationDispatchBoardV2 from "../pages/TransportationDispatchBoardV2";
 
 import LifePlanet from "../pages/LifePlanet";
 import JeanettesLanding from "../pages/JeanettesLanding";
 
-// Restaurant demo pages
+// Restaurant demo pages (legacy demo components remain available via explicit routes)
 import RestaurantRushSimpleDemo from "../pages/RestaurantRushSimpleDemo";
 import RestaurantRushManualDemo from "../pages/RestaurantRushManualDemo";
 import RestaurantRushLiveDemo from "../pages/RestaurantRushLiveDemo";
@@ -50,6 +52,12 @@ import OnboardingFlow from "../pages/OnboardingFlow";
 import OnboardingBuildTransition from "../pages/OnboardingBuildTransition";
 
 export default function PlanetRoutes() {
+  /**
+   * Dedicated restaurant live-board slug.
+   * This must not point at the auto-repair demo slug anymore.
+   */
+  const RESTAURANT_LIVE_TARGET = "/planet/live/peggies-diner";
+
   return (
     <Routes>
       <Route index element={<Navigate to="/planet/creator" replace />} />
@@ -60,20 +68,40 @@ export default function PlanetRoutes() {
       <Route path="creator/studio/*" element={<CreatorStudio />} />
       <Route path="creator/build" element={<CreatorBuild />} />
       <Route path="creator/release/:releaseId" element={<ReleaseViewer />} />
-      <Route path="creator/*" element={<Navigate to="/planet/creator" replace />} />
+      <Route
+        path="creator/*"
+        element={<Navigate to="/planet/creator" replace />}
+      />
 
       {/* Generic public demo aliases */}
       <Route path="demo/home-services" element={<AwnitDemoBoard />} />
       <Route path="demo/auto-service" element={<AutoRepairLiveBoard />} />
       <Route path="demo/kitchen-flow" element={<RestaurantRushSimpleDemo />} />
-      <Route path="demo/kitchen-manual" element={<RestaurantRushManualDemo />} />
-      <Route path="demo/kitchen-live" element={<RestaurantRushLiveDemo />} />
-      <Route path="demo/restaurant" element={<RestaurantRushDemo />} />
+      <Route
+        path="demo/kitchen-manual"
+        element={<RestaurantRushManualDemo />}
+      />
+
+      {/* Restaurant aliases should open the dedicated restaurant live slug */}
+      <Route
+        path="demo/kitchen-live"
+        element={<Navigate to={RESTAURANT_LIVE_TARGET} replace />}
+      />
+      <Route
+        path="demo/restaurant"
+        element={<Navigate to={RESTAURANT_LIVE_TARGET} replace />}
+      />
+
       <Route path="demo/example-kitchen" element={<MomsKitchenDemo />} />
       <Route path="demo/legal-workspace" element={<JoeGrantLegalDesk />} />
       <Route path="demo/lawn-route" element={<RouteCutLawnPage />} />
+      <Route path="demo/community-sale" element={<CommunitySaleBoard />} />
+      <Route
+        path="demo/transportation"
+        element={<TransportationDispatchBoardV2 />}
+      />
 
-      {/* Live board links */}
+      {/* Live board links (slug-driven boards) */}
       <Route path="live/:boardSlug" element={<AutoRepairLiveBoard />} />
 
       {/* Legacy / named demo routes kept alive */}
@@ -95,13 +123,39 @@ export default function PlanetRoutes() {
       />
       <Route
         path="food/restaurant-rush-live"
+        element={<Navigate to={RESTAURANT_LIVE_TARGET} replace />}
+      />
+      <Route
+        path="food/restaurant-rush"
+        element={<Navigate to={RESTAURANT_LIVE_TARGET} replace />}
+      />
+
+      {/* Keep older restaurant demos accessible explicitly */}
+      <Route
+        path="food/restaurant-rush-legacy"
+        element={<RestaurantRushDemo />}
+      />
+      <Route
+        path="food/restaurant-rush-live-classic"
         element={<RestaurantRushLiveDemo />}
       />
-      <Route path="food/restaurant-rush" element={<RestaurantRushDemo />} />
+
       <Route path="food/moms-kitchen" element={<MomsKitchenDemo />} />
 
       {/* Legal */}
       <Route path="legal/joe-grant" element={<JoeGrantLegalDesk />} />
+
+      {/* Community */}
+      <Route
+        path="community/community-sale"
+        element={<CommunitySaleBoard />}
+      />
+
+      {/* Transportation */}
+      <Route
+        path="transportation/dispatch"
+        element={<TransportationDispatchBoardV2 />}
+      />
 
       {/* Guardian */}
       <Route
@@ -113,8 +167,14 @@ export default function PlanetRoutes() {
 
       {/* Pet Guardian */}
       <Route path="guardian-pet" element={<GuardianPetTagDemo />} />
-      <Route path="guardian-pet/pet/:petId" element={<GuardianPetTagDemo />} />
-      <Route path="guardian-pet/found/:petId" element={<GuardianPetTagDemo />} />
+      <Route
+        path="guardian-pet/pet/:petId"
+        element={<GuardianPetTagDemo />}
+      />
+      <Route
+        path="guardian-pet/found/:petId"
+        element={<GuardianPetTagDemo />}
+      />
       <Route path="guardian-pet/timeline" element={<PetCareTimelinePanel />} />
 
       {/* Lawn */}
@@ -128,7 +188,10 @@ export default function PlanetRoutes() {
 
       {/* Onboarding */}
       <Route path="start" element={<OnboardingFlow />} />
-      <Route path="start/building" element={<OnboardingBuildTransition />} />
+      <Route
+        path="start/building"
+        element={<OnboardingBuildTransition />}
+      />
       <Route path="start/preview" element={<StarterBoardPreview />} />
 
       {/* Other special pages */}

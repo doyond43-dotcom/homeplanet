@@ -196,7 +196,7 @@ export default function RestaurantRushSimpleDemo() {
               </div>
 
               <h1 className="mt-2 text-3xl md:text-4xl font-bold">
-                Mom's Kitchen Flow Board
+                Summit Kitchen Demo
               </h1>
 
               <p className="text-white/70 mt-2 max-w-2xl">

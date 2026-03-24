@@ -20,42 +20,42 @@ const services = [
 ];
 
 const trustPoints = [
-  "100% recommend based on 10 reviews",
-  "Family owned and operated",
-  "Fast response times when customers need help",
-  "Professional, fair-priced, and trusted locally",
+  "Highly recommended demo service brand",
+  "Family-owned style positioning",
+  "Fast response when customers need help",
+  "Professional, fair-priced, and easy to trust",
 ];
 
 const reviewHighlights = [
   {
-    name: "Local customer",
+    name: "Demo customer",
     quote:
-      "Excellent response time. Came out ASAP to help with an emergency and did an excellent job.",
+      "Excellent response time. Came out quickly, handled the issue cleanly, and made the whole process easy.",
   },
   {
-    name: "Treasure Coast homeowner",
+    name: "Coastal homeowner",
     quote:
-      "Easy to deal with, trustworthy, and did a great job. Professional and fair on price.",
+      "Easy to deal with, trustworthy, and professional from start to finish. Fair pricing and solid work.",
   },
   {
-    name: "Screen enclosure customer",
+    name: "Enclosure customer",
     quote:
-      "Wonderful owners that care. Family-owned, professional, and highly recommended.",
+      "Friendly, professional, and highly recommended. The kind of service page that makes people want to call.",
   },
 ];
 
 const serviceAreas = [
-  "Fort Pierce",
-  "Jensen Beach",
-  "Port St. Lucie",
-  "St. Lucie County",
-  "Martin County",
-  "Palm Beach County",
-  "Okeechobee County",
+  "Coastal Service Area",
+  "Residential Repairs",
+  "Patio & Porch Work",
+  "Pool Enclosure Service",
+  "Screen Door Repairs",
+  "Homeowner Support",
+  "Fast Local Response",
 ];
 
-const phoneDisplay = "(772) 209-8910";
-const phoneHref = "tel:7722098910";
+const phoneDisplay = "(555) 010-2400";
+const phoneHref = "tel:5550102400";
 
 export default function WildingLandingPage() {
   return (
@@ -68,17 +68,17 @@ export default function WildingLandingPage() {
             <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr] xl:items-center">
               <div>
                 <div className="mb-3 inline-flex items-center rounded-full border border-cyan-400/30 bg-cyan-500/10 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.24em] text-cyan-200">
-                  Treasure Coast Screen Repair
+                  Screen Repair Demo
                 </div>
 
                 <h1 className="max-w-4xl text-[34px] font-semibold tracking-tight text-white md:text-[48px]">
-                  Wilding Enterprises Screen Repair LLC
+                  Harbor Service Demo
                 </h1>
 
                 <p className="mt-3 max-w-3xl text-base leading-7 text-white/72 md:text-lg">
                   Simple, trusted screen repair for porches, patios, pool enclosures,
-                  and screen doors across the Treasure Coast. Family owned, highly
-                  recommended, and easy to call when you need help fast.
+                  and screen doors. A clean demo page showing how a service business
+                  can look clear, credible, and easy to contact.
                 </p>
 
                 <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -86,7 +86,7 @@ export default function WildingLandingPage() {
                     href={phoneHref}
                     className="inline-flex min-h-[58px] items-center justify-center rounded-2xl border border-cyan-400/40 bg-cyan-500/15 px-5 py-3 text-lg font-semibold text-cyan-100 transition hover:bg-cyan-500/20"
                   >
-                    Call Now {phoneDisplay}
+                    Call Demo Line {phoneDisplay}
                   </a>
 
                   <a
@@ -98,10 +98,10 @@ export default function WildingLandingPage() {
                 </div>
 
                 <div className="mt-5 flex flex-wrap gap-2">
-                  <Badge>100% Recommend</Badge>
-                  <Badge>10 Reviews</Badge>
-                  <Badge>Family Owned</Badge>
-                  <Badge>Fort Pierce, FL</Badge>
+                  <Badge>Highly Rated Demo</Badge>
+                  <Badge>Fast Response</Badge>
+                  <Badge>Family-Owned Feel</Badge>
+                  <Badge>Screen Repair Flow</Badge>
                 </div>
               </div>
 
@@ -112,10 +112,10 @@ export default function WildingLandingPage() {
                   </div>
 
                   <div className="mt-4 grid grid-cols-2 gap-3">
-                    <QuickStat label="Recommend" value="100%" accent="text-cyan-100" />
-                    <QuickStat label="Reviews" value="10" accent="text-emerald-100" />
-                    <QuickStat label="Service Area" value="TC" accent="text-amber-100" />
-                    <QuickStat label="Call / Text" value="Fast" accent="text-fuchsia-100" />
+                    <QuickStat label="Recommend" value="Strong" accent="text-cyan-100" />
+                    <QuickStat label="Trust" value="High" accent="text-emerald-100" />
+                    <QuickStat label="Service" value="Screen" accent="text-amber-100" />
+                    <QuickStat label="Response" value="Fast" accent="text-fuchsia-100" />
                   </div>
 
                   <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
@@ -123,10 +123,10 @@ export default function WildingLandingPage() {
                       Why this page works
                     </div>
                     <div className="mt-3 space-y-2 text-sm leading-6 text-white/80">
-                      <div>• local company people can trust quickly</div>
-                      <div>• services are clear in seconds</div>
-                      <div>• direct click-to-call action</div>
-                      <div>• social proof right up front</div>
+                      <div>• service is understood in seconds</div>
+                      <div>• trust signals show up immediately</div>
+                      <div>• direct click-to-call action is obvious</div>
+                      <div>• demo feels real without exposing a real business</div>
                     </div>
                   </div>
                 </div>
@@ -159,7 +159,7 @@ export default function WildingLandingPage() {
           <section className="mb-5 grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
             <div className="rounded-[28px] border border-white/10 bg-white/[0.06] p-5 shadow-xl shadow-black/20 backdrop-blur">
               <div className="mb-3 text-[11px] uppercase tracking-[0.24em] text-white/45">
-                Why People Choose Wilding
+                Why People Choose Harbor Service Demo
               </div>
 
               <div className="space-y-3">
@@ -221,19 +221,19 @@ export default function WildingLandingPage() {
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               <FeatureCard
                 title="Fast Response"
-                text="People mentioned quick response and getting help when they needed it."
+                text="People notice when a business responds quickly and makes it easy to get help."
               />
               <FeatureCard
                 title="Professional Work"
-                text="Customers repeatedly described the work as clean, professional, and done right."
+                text="Trust builds fast when the work feels clean, organized, and handled right."
               />
               <FeatureCard
                 title="Fair Pricing"
-                text="Trust grows fast when people feel the pricing is honest and reasonable."
+                text="Clear and reasonable pricing makes the page feel safe to act on."
               />
               <FeatureCard
-                title="Family Owned"
-                text="That local, family-owned feeling matters. It gives the company warmth and trust."
+                title="Local Trust Feel"
+                text="That family-owned, neighbor-trust feeling still matters in service businesses."
               />
             </div>
           </section>
@@ -250,9 +250,9 @@ export default function WildingLandingPage() {
                 </h2>
 
                 <p className="mt-3 max-w-3xl text-base leading-7 text-white/75 md:text-lg">
-                  Reach out directly and keep it simple. This page is built to help
-                  customers understand the company quickly, trust it quickly, and call
-                  quickly.
+                  Reach out directly and keep it simple. This demo page is built to
+                  show how a service company can help customers understand the offer
+                  quickly, trust it quickly, and take action quickly.
                 </p>
               </div>
 
@@ -262,8 +262,8 @@ export default function WildingLandingPage() {
                 </div>
 
                 <div className="mt-3 text-3xl font-semibold text-white">{phoneDisplay}</div>
-                <div className="mt-2 text-base text-white/65">Fort Pierce, Florida</div>
-                <div className="mt-1 text-base text-white/65">Serving the Treasure Coast</div>
+                <div className="mt-2 text-base text-white/65">Demo Service Line</div>
+                <div className="mt-1 text-base text-white/65">Public-facing sample page</div>
 
                 <div className="mt-5 flex flex-col gap-3">
                   <a

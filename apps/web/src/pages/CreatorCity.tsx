@@ -41,8 +41,8 @@ export default function CreatorCity() {
   const systems = useMemo<SystemExample[]>(
     () => [
       {
-        id: "awnit",
-        title: "AWNIT Demo Service Board",
+        id: "northstar",
+        title: "Northstar Service Demo",
         subtitle: "See a service workflow turned into a live operational board.",
         to: "/planet/vehicles/awnit-demo",
         tag: "DEMO BOARD",
@@ -56,10 +56,27 @@ export default function CreatorCity() {
       },
       {
         id: "restaurant",
-        title: "Restaurant Rush Live",
-        subtitle: "See rush flow, kitchen movement, and workflow visibility.",
+        title: "Peggie’s Diner Live Board",
+        subtitle:
+          "See live ticket flow, ticket editing, manager controls, and kitchen visibility.",
         to: "/planet/food/restaurant-rush-live",
-        tag: "KITCHEN FLOW",
+        tag: "LIVE BOARD",
+      },
+      {
+        id: "community-sale",
+        title: "Community Sale Board",
+        subtitle:
+          "Photos, prices, sold status, pickup notes, and payment links in one live board.",
+        to: "/planet/community/community-sale",
+        tag: "COMMUNITY LIVE",
+      },
+      {
+        id: "transportation",
+        title: "Transportation Dispatch Demo",
+        subtitle:
+          "See ride intake, driver assignment, dispatch flow, and trip timeline visibility.",
+        to: "/planet/transportation/dispatch",
+        tag: "DISPATCH FLOW",
       },
       {
         id: "legal",
@@ -137,7 +154,9 @@ export default function CreatorCity() {
       setSubmitted(true);
     } catch (err: any) {
       console.error("CREATOR CITY ERROR:", err?.message || err);
-      alert("Creator City submission failed:\n" + (err?.message || "Unknown error"));
+      alert(
+        "Creator City submission failed:\n" + (err?.message || "Unknown error")
+      );
     } finally {
       setSubmitting(false);
     }
@@ -582,7 +601,9 @@ export default function CreatorCity() {
               </div>
 
               <div style={doctrinePanel}>
-                <div style={doctrineTitle}>PRESENCE-FIRST • NOT SURVEILLANCE</div>
+                <div style={doctrineTitle}>
+                  PRESENCE-FIRST • NOT SURVEILLANCE
+                </div>
                 <div style={doctrineText}>
                   Your data stays yours. HomePlanet is built to understand your
                   workflow, not exploit it. We do not expose your contact info
@@ -600,10 +621,16 @@ export default function CreatorCity() {
               <button style={btnBase} onClick={() => nav("/planet/pricing")}>
                 Pricing
               </button>
-              <button style={btnBase} onClick={() => nav("/planet/creator/projects")}>
+              <button
+                style={btnBase}
+                onClick={() => nav("/planet/creator/projects")}
+              >
                 Projects
               </button>
-              <button style={btnBase} onClick={() => nav("/planet/creator/studio")}>
+              <button
+                style={btnBase}
+                onClick={() => nav("/planet/creator/studio")}
+              >
                 Studio
               </button>
             </div>
@@ -668,7 +695,10 @@ export default function CreatorCity() {
               </div>
 
               <div style={buttonRow}>
-                <button style={btnPrimary} onClick={() => nav("/planet/pricing")}>
+                <button
+                  style={btnPrimary}
+                  onClick={() => nav("/planet/pricing")}
+                >
                   View Pricing
                 </button>
                 <button style={btnBase} onClick={() => nav("/planet/start")}>
@@ -696,7 +726,7 @@ export default function CreatorCity() {
                     style={inputBase}
                     value={businessType}
                     onChange={(e) => setBusinessType(e.target.value)}
-                    placeholder="Auto Repair, Lawn, Awnings, Cleaning..."
+                    placeholder="Auto Repair, Home Services, Cleaning..."
                     required
                   />
                 </div>
@@ -802,7 +832,9 @@ export default function CreatorCity() {
                   }}
                   disabled={submitting}
                 >
-                  {submitting ? "Sending business intake..." : "Send business intake"}
+                  {submitting
+                    ? "Sending business intake..."
+                    : "Send business intake"}
                 </button>
 
                 <div style={helperText}>

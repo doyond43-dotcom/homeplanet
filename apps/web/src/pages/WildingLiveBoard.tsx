@@ -386,7 +386,7 @@ async function copyToClipboard(text: string) {
 
 function buildTechText(job: Job) {
   return [
-    `WILDING — Job`,
+    `Harbor Service Demo — Job`,
     `Job #: ${job.jobNo}`,
     `Customer: ${job.customer}`,
     `Address: ${job.address}`,
@@ -406,7 +406,7 @@ function buildTechText(job: Job) {
 
 function buildGrabListText(job: Job) {
   const header = [
-    `WILDING — Materials Grab List`,
+    `Harbor Service Demo — Materials Grab List`,
     `Job #: ${job.jobNo}`,
     `Job: ${job.title}`,
     `Customer: ${job.customer}`,
@@ -449,7 +449,7 @@ function smsHref(job: Job) {
 function emailHref(job: Job) {
   const email = (job.email || "").trim();
   if (!email) return "";
-  const subject = encodeURIComponent(`WILDING — ${job.title}`);
+  const subject = encodeURIComponent(`Harbor Service Demo — ${job.title}`);
   const body = encodeURIComponent(buildTechText(job));
   return `mailto:${email}?subject=${subject}&body=${body}`;
 }
@@ -625,7 +625,7 @@ export default function WildingDemoBoard() {
             <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
               <div>
                 <h1 className="text-[38px] font-semibold tracking-tight text-white">
-                  Wilding — Live Board
+                  Harbor Service Demo — Live Board
                 </h1>
                 <p className="mt-1 text-sm text-white/65">
                   Screen repair workflow • measurements • materials • notes • estimate + invoice

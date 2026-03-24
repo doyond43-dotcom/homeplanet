@@ -15,7 +15,7 @@ function WorkspaceHome() {
         <div className="mt-6 grid gap-4 md:grid-cols-3">
 
           <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-            <div className="text-lg font-bold">AWNIT</div>
+            <div className="text-lg font-bold">Northstar Service Demo</div>
             <div className="mt-1 text-sm text-white/70">
               Door / window service workspace
             </div>
@@ -25,7 +25,7 @@ function WorkspaceHome() {
           </div>
 
           <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-            <div className="text-lg font-bold">Wilding</div>
+            <div className="text-lg font-bold">Harbor Service Demo</div>
             <div className="mt-1 text-sm text-white/70">
               Screen repair operations workspace
             </div>
@@ -35,7 +35,7 @@ function WorkspaceHome() {
           </div>
 
           <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-            <div className="text-lg font-bold">Mom's Kitchen</div>
+            <div className="text-lg font-bold">Summit Kitchen Demo</div>
             <div className="mt-1 text-sm text-white/70">
               Restaurant rush board workspace
             </div>

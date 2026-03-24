@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import ComparisonSection from "../components/pricing/ComparisonSection";
 import WhyDifferentSection from "../components/pricing/WhyDifferentSection";
 import RequestAccessSection from "../components/pricing/RequestAccessSection";
@@ -17,6 +18,7 @@ const tiers = [
       "Share Plan Enabled",
     ],
     cta: "Start Free",
+    action: "start",
   },
   {
     name: "Grow",
@@ -31,6 +33,7 @@ const tiers = [
       "Customer Messaging",
     ],
     cta: "Upgrade to Grow",
+    action: "request",
   },
   {
     name: "Pro System",
@@ -45,11 +48,13 @@ const tiers = [
       "Advanced Analytics",
     ],
     cta: "Go Pro",
+    action: "request",
   },
-];
+] as const;
 
 export default function PricingPage() {
   const [members, setMembers] = useState(1);
+  const navigate = useNavigate();
 
   function calculatePrice(count: number) {
     if (count >= 10) return 0;
@@ -59,11 +64,53 @@ export default function PricingPage() {
     return 9.97;
   }
 
+  function scrollToRequestAccess() {
+    const el = document.getElementById("request-access");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+
+    window.location.hash = "request-access";
+  }
+
+  function handleTierClick(action: "start" | "request") {
+    if (action === "start") {
+      navigate("/planet/start");
+      return;
+    }
+
+    scrollToRequestAccess();
+  }
+
   const dynamicPrice = calculatePrice(members);
 
   return (
-    <div className="min-h-screen bg-black text-white p-6">
+    <div className="min-h-screen bg-black p-6 text-white">
       <div className="mx-auto max-w-6xl">
+        <div className="mb-6 flex flex-wrap items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => navigate("/planet/start")}
+            className="rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800"
+          >
+            Start
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate("/planet/creator/projects")}
+            className="rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800"
+          >
+            Projects
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate("/planet/creator/studio")}
+            className="rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800"
+          >
+            Studio
+          </button>
+        </div>
 
         {/* HERO */}
         <div className="mb-12 text-center">
@@ -126,7 +173,11 @@ export default function PricingPage() {
                 ))}
               </ul>
 
-              <button className="rounded-lg bg-green-500 py-2 font-semibold text-black hover:bg-green-400">
+              <button
+                type="button"
+                onClick={() => handleTierClick(tier.action)}
+                className="rounded-lg bg-green-500 py-2 font-semibold text-black hover:bg-green-400"
+              >
                 {tier.cta}
               </button>
             </div>
@@ -156,9 +207,10 @@ export default function PricingPage() {
           </p>
         </div>
 
-        {/* 🚀 REQUEST ACCESS (THIS WAS MISSING) */}
-        <RequestAccessSection />
-
+        {/* REQUEST ACCESS */}
+        <div id="request-access">
+          <RequestAccessSection />
+        </div>
       </div>
     </div>
   );

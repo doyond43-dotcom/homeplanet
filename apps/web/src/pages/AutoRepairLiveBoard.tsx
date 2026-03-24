@@ -251,17 +251,6 @@ function restaurantSecondaryLabel(
   return job.customer?.trim() || "Guest name pending";
 }
 
-function countUrgentTickets(jobs: RepairJob[]) {
-  return jobs.filter((job) => {
-    const stage = job.stage.toLowerCase();
-    return (
-      stage.includes("ready") ||
-      stage.includes("grill") ||
-      stage.includes("plating")
-    );
-  }).length;
-}
-
 function normalizeRestaurantStage(stage: string) {
   const value = stage.toLowerCase();
 
@@ -369,13 +358,25 @@ export default function AutoRepairLiveBoard() {
   const stageMenuRef = useRef<HTMLDivElement | null>(null);
   const saveTimerRef = useRef<number | null>(null);
 
+  const slugHint = (liveBoardSlug || "").toLowerCase();
+  const slugForcesRestaurant =
+    slugHint.includes("restaurant") ||
+    slugHint.includes("kitchen") ||
+    slugHint.includes("diner") ||
+    slugHint.includes("peggie");
+
   const businessName =
     boardMeta?.business_name ||
     payload.businessName?.trim() ||
-    "Auto Repair Live Board";
+    (slugForcesRestaurant ? "Restaurant Live Board" : "Auto Repair Live Board");
+
   const city = boardMeta?.city || payload.city?.trim() || "Your City";
+
   const businessType =
-    boardMeta?.business_type || payload.businessType?.trim() || "Auto Repair";
+    boardMeta?.business_type ||
+    payload.businessType?.trim() ||
+    (slugForcesRestaurant ? "Restaurant" : "Auto Repair");
+
   const primaryGoal = payload.primaryGoal?.trim() || "";
 
   const config = useMemo(
