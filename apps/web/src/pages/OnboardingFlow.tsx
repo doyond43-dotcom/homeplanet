@@ -83,9 +83,7 @@ export default function OnboardingFlow() {
 
     try {
       localStorage.setItem("hp_onboarding_payload", JSON.stringify(payload));
-    } catch {
-      // ignore
-    }
+    } catch {}
 
     navigate("/planet/start/building", {
       state: payload,
@@ -106,9 +104,7 @@ export default function OnboardingFlow() {
             </h1>
 
             <p className="mt-4 text-base leading-7 text-slate-300">
-              This onboarding should end in a reveal, not a dead end. We gather
-              just enough structure, then we generate the right board for the
-              right business type.
+              This onboarding should end in a reveal, not a dead end.
             </p>
 
             <div className="mt-8 rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
@@ -122,23 +118,11 @@ export default function OnboardingFlow() {
               </div>
               <div className="mt-4 h-3 w-full overflow-hidden rounded-full bg-white/10">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-sky-400 to-indigo-400 transition-all duration-300"
+                  className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-sky-400 to-indigo-400"
                   style={{ width: `${progress}%` }}
                 />
               </div>
               <div className="mt-2 text-sm text-slate-400">{progress}% complete</div>
-            </div>
-
-            <div className="mt-8 space-y-3 text-sm text-slate-300">
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
-                Onboarding
-              </div>
-              <div className="rounded-2xl border border-cyan-400/25 bg-cyan-400/10 px-4 py-3 text-cyan-50">
-                Build animation
-              </div>
-              <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-emerald-50">
-                Reveal board
-              </div>
             </div>
           </div>
 
@@ -152,193 +136,82 @@ export default function OnboardingFlow() {
                   <input
                     value={form.ownerName}
                     onChange={(e) => update("ownerName", e.target.value)}
-                    className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 outline-none transition focus:border-cyan-400/40"
-                    placeholder="Danny Doyon"
+                    className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 outline-none"
+                    placeholder="Your name"
+                    autoComplete="name"
                   />
                 </Label>
               </StepShell>
             )}
 
             {step === 2 && (
-              <StepShell
-                title="What’s the business name?"
-                description="This becomes the identity of the preview board."
-              >
+              <StepShell title="Business name" description="">
                 <Label label="Business name">
                   <input
                     value={form.businessName}
                     onChange={(e) => update("businessName", e.target.value)}
-                    className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 outline-none transition focus:border-cyan-400/40"
-                    placeholder="Taylor Creek Auto Repair"
+                    className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 outline-none"
+                    placeholder="Your business name"
                   />
                 </Label>
               </StepShell>
             )}
 
-            {step === 3 && (
-              <StepShell
-                title="Choose the business type"
-                description="This controls which live demo gets revealed."
-              >
-                <div className="grid gap-3 md:grid-cols-2">
-                  <CategoryCard
-                    active={form.category === "auto-repair"}
-                    title="Auto Repair"
-                    subtitle="Repair orders, bay status, approvals"
-                    onClick={() => {
-                      update("category", "auto-repair");
-                      update("businessType", "Auto Repair");
-                    }}
-                  />
-                  <CategoryCard
-                    active={form.category === "home-services"}
-                    title="Home Services"
-                    subtitle="Projects, scheduling, invoices"
-                    onClick={() => {
-                      update("category", "home-services");
-                      update("businessType", "Home Services");
-                    }}
-                  />
-                  <CategoryCard
-                    active={form.category === "restaurant"}
-                    title="Restaurant"
-                    subtitle="Kitchen flow and live ops"
-                    onClick={() => {
-                      update("category", "restaurant");
-                      update("businessType", "Restaurant");
-                    }}
-                  />
-                  <CategoryCard
-                    active={form.category === "lawn"}
-                    title="Lawn / Route"
-                    subtitle="Stops, route flow, field updates"
-                    onClick={() => {
-                      update("category", "lawn");
-                      update("businessType", "Lawn Service");
-                    }}
-                  />
-                  <CategoryCard
-                    active={form.category === "legal"}
-                    title="Legal"
-                    subtitle="Case desk and intake visibility"
-                    onClick={() => {
-                      update("category", "legal");
-                      update("businessType", "Legal");
-                    }}
-                  />
-                  <CategoryCard
-                    active={form.category === "other"}
-                    title="Other"
-                    subtitle="Fallback starter preview"
-                    onClick={() => {
-                      update("category", "other");
-                      update("businessType", "Other Business");
-                    }}
-                  />
-                </div>
-              </StepShell>
-            )}
-
             {step === 4 && (
-              <StepShell
-                title="Where is the business located?"
-                description="Lets the preview feel geographically anchored."
-              >
+              <StepShell title="City" description="">
                 <Label label="City">
                   <input
                     value={form.city}
                     onChange={(e) => update("city", e.target.value)}
-                    className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 outline-none transition focus:border-cyan-400/40"
-                    placeholder="Okeechobee, Florida"
+                    className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 outline-none"
+                    placeholder="Your city"
                   />
                 </Label>
               </StepShell>
             )}
 
             {step === 5 && (
-              <StepShell
-                title="Best contact number"
-                description="Useful for live intake and customer-facing moments."
-              >
+              <StepShell title="Phone" description="">
                 <Label label="Phone">
                   <input
                     value={form.phone}
                     onChange={(e) => update("phone", e.target.value)}
-                    className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 outline-none transition focus:border-cyan-400/40"
-                    placeholder="863-555-1212"
+                    className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 outline-none"
+                    placeholder="Your phone number"
                   />
                 </Label>
               </StepShell>
             )}
 
             {step === 6 && (
-              <StepShell
-                title="How big is the team?"
-                description="Helps frame the operational feel of the board."
-              >
+              <StepShell title="Team size" description="">
                 <Label label="Team size">
                   <input
                     value={form.teamSize}
                     onChange={(e) => update("teamSize", e.target.value)}
-                    className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 outline-none transition focus:border-cyan-400/40"
-                    placeholder="3 technicians + front desk"
+                    className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 outline-none"
+                    placeholder="Your team size"
                   />
                 </Label>
               </StepShell>
             )}
 
             {step === 7 && (
-              <StepShell
-                title="What should this system improve first?"
-                description="Final step before the reveal."
-              >
+              <StepShell title="Primary goal" description="">
                 <Label label="Primary goal">
                   <textarea
                     value={form.primaryGoal}
                     onChange={(e) => update("primaryGoal", e.target.value)}
-                    className="min-h-[130px] w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 outline-none transition focus:border-cyan-400/40"
-                    placeholder="Reduce friction, show status live, and make the business feel structured."
+                    className="min-h-[130px] w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 outline-none"
+                    placeholder="What do you want this system to improve?"
                   />
                 </Label>
-
-                <div className="mt-5 rounded-[24px] border border-cyan-400/20 bg-cyan-400/10 p-4">
-                  <div className="text-xs uppercase tracking-[0.22em] text-cyan-200/70">
-                    Reveal route
-                  </div>
-                  <div className="mt-2 text-sm text-cyan-50">
-                    {getDemoRoute(form.category)}
-                  </div>
-                </div>
               </StepShell>
             )}
 
-            <div className="mt-8 flex items-center justify-between gap-4">
-              <button
-                type="button"
-                onClick={back}
-                disabled={step === 1}
-                className="rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                Back
-              </button>
-
-              {step < TOTAL_STEPS ? (
-                <button
-                  type="button"
-                  onClick={next}
-                  className="rounded-full bg-cyan-400 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:scale-[1.01]"
-                >
-                  Continue
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={generatePreviewBoard}
-                  className="rounded-full bg-gradient-to-r from-cyan-400 via-sky-400 to-indigo-400 px-7 py-3 text-sm font-semibold text-slate-950 transition hover:scale-[1.01]"
-                >
-                  Generate My Preview Board
-                </button>
-              )}
+            <div className="mt-8 flex justify-between">
+              <button onClick={back}>Back</button>
+              <button onClick={next}>Continue</button>
             </div>
           </div>
         </div>
@@ -347,67 +220,21 @@ export default function OnboardingFlow() {
   );
 }
 
-function StepShell({
-  title,
-  description,
-  children,
-}: {
-  title: string;
-  description: string;
-  children: React.ReactNode;
-}) {
+function StepShell({ title, description, children }: any) {
   return (
     <div>
-      <div className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-300/80">
-        Current step
-      </div>
-      <h2 className="mt-3 text-2xl font-semibold md:text-3xl">{title}</h2>
-      <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-400">
-        {description}
-      </p>
-      <div className="mt-8">{children}</div>
+      <h2>{title}</h2>
+      <p>{description}</p>
+      {children}
     </div>
   );
 }
 
-function Label({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
+function Label({ label, children }: any) {
   return (
-    <label className="block">
-      <div className="mb-3 text-sm font-medium text-slate-300">{label}</div>
+    <label>
+      <div>{label}</div>
       {children}
     </label>
-  );
-}
-
-function CategoryCard({
-  title,
-  subtitle,
-  active,
-  onClick,
-}: {
-  title: string;
-  subtitle: string;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`rounded-[24px] border p-4 text-left transition ${
-        active
-          ? "border-cyan-400/40 bg-cyan-400/10 shadow-[0_0_30px_rgba(34,211,238,0.12)]"
-          : "border-white/10 bg-white/[0.03] hover:bg-white/[0.05]"
-      }`}
-    >
-      <div className="text-base font-semibold">{title}</div>
-      <div className="mt-2 text-sm leading-6 text-slate-400">{subtitle}</div>
-    </button>
   );
 }
