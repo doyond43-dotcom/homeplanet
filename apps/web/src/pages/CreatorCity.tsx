@@ -175,9 +175,10 @@ export default function CreatorCity() {
     padding: isMobile ? 14 : 24,
     color: "#e5e7eb",
     background:
-      "radial-gradient(1000px 700px at 15% 10%, rgba(34,197,94,0.08), transparent 58%)," +
-      "radial-gradient(1000px 700px at 85% 12%, rgba(56,189,248,0.08), transparent 58%)," +
-      "radial-gradient(900px 800px at 50% 100%, rgba(168,85,247,0.06), transparent 52%)," +
+      "radial-gradient(1200px 760px at 6% 10%, rgba(6,182,212,0.12), transparent 52%)," +
+      "radial-gradient(980px 720px at 88% 10%, rgba(168,85,247,0.10), transparent 50%)," +
+      "radial-gradient(900px 780px at 52% 100%, rgba(37,99,235,0.09), transparent 50%)," +
+      "radial-gradient(circle at 50% 0%, rgba(255,255,255,0.03), transparent 36%)," +
       "#020617",
   };
 
@@ -192,7 +193,7 @@ export default function CreatorCity() {
       "linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02) 28%, rgba(2,6,23,0.42) 100%)",
     borderRadius: 24,
     padding: isMobile ? 16 : 24,
-    boxShadow: "0 18px 50px rgba(0,0,0,0.35)",
+    boxShadow: "0 24px 80px rgba(0,0,0,0.42)",
   };
 
   const heroTop: React.CSSProperties = {
@@ -222,6 +223,8 @@ export default function CreatorCity() {
     fontWeight: 900,
     letterSpacing: -0.5,
     lineHeight: 1.05,
+    color: "#ffffff",
+    textShadow: "0 1px 0 rgba(255,255,255,0.04)",
   };
 
   const livePill: React.CSSProperties = {
@@ -236,6 +239,7 @@ export default function CreatorCity() {
     display: "inline-flex",
     alignItems: "center",
     gap: 8,
+    boxShadow: "0 0 18px rgba(74,222,128,0.14)",
   };
 
   const pulseDot: React.CSSProperties = {
@@ -243,7 +247,7 @@ export default function CreatorCity() {
     height: 8,
     borderRadius: 999,
     background: "rgba(74,222,128,1)",
-    boxShadow: "0 0 10px rgba(74,222,128,0.8)",
+    boxShadow: "0 0 12px rgba(74,222,128,0.9)",
   };
 
   const subtitle: React.CSSProperties = {
@@ -260,6 +264,7 @@ export default function CreatorCity() {
     background: "rgba(8,47,73,0.24)",
     borderRadius: 16,
     padding: "14px 16px",
+    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
   };
 
   const doctrineTitle: React.CSSProperties = {
@@ -292,12 +297,14 @@ export default function CreatorCity() {
     fontWeight: 800,
     fontSize: 13,
     cursor: "pointer",
+    boxShadow: "0 0 0 rgba(0,0,0,0)",
   };
 
   const btnPrimary: React.CSSProperties = {
     ...btnBase,
     border: "1px solid rgba(34,197,94,0.45)",
     color: "rgba(187,247,208,1)",
+    boxShadow: "0 0 18px rgba(74,222,128,0.08)",
   };
 
   const topGrid: React.CSSProperties = {
@@ -312,13 +319,16 @@ export default function CreatorCity() {
     background: "rgba(2,6,23,0.56)",
     borderRadius: 20,
     padding: isMobile ? 16 : 20,
-    boxShadow: "0 14px 36px rgba(0,0,0,0.28)",
+    boxShadow:
+      "0 18px 42px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.03)",
   };
 
   const sectionTitle: React.CSSProperties = {
     fontWeight: 900,
     fontSize: 18,
     marginBottom: 8,
+    color: "#ffffff",
+    textShadow: "0 1px 0 rgba(255,255,255,0.04)",
   };
 
   const sectionText: React.CSSProperties = {
@@ -343,12 +353,16 @@ export default function CreatorCity() {
     padding: 14,
     cursor: "pointer",
     minHeight: 108,
+    boxShadow: active
+      ? "0 0 24px rgba(74,222,128,0.08)"
+      : "0 0 18px rgba(34,211,238,0.03)",
   });
 
   const intentTitle: React.CSSProperties = {
     fontWeight: 900,
     fontSize: 14,
     marginBottom: 6,
+    color: "#ffffff",
   };
 
   const intentText: React.CSSProperties = {
@@ -374,6 +388,7 @@ export default function CreatorCity() {
     fontSize: 14,
     outline: "none",
     boxSizing: "border-box",
+    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.02)",
   };
 
   const inputGroup: React.CSSProperties = {
@@ -401,6 +416,7 @@ export default function CreatorCity() {
     borderRadius: 16,
     padding: 16,
     marginTop: 14,
+    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
   };
 
   const fileMeta: React.CSSProperties = {
@@ -427,6 +443,7 @@ export default function CreatorCity() {
     fontWeight: 900,
     fontSize: 14,
     cursor: "pointer",
+    boxShadow: "0 0 18px rgba(74,222,128,0.08)",
   };
 
   const helperText: React.CSSProperties = {
@@ -443,6 +460,7 @@ export default function CreatorCity() {
     borderRadius: 16,
     padding: 16,
     color: "rgba(220,252,231,1)",
+    boxShadow: "0 0 22px rgba(74,222,128,0.06)",
   };
 
   const examplesLabel: React.CSSProperties = {
@@ -451,6 +469,7 @@ export default function CreatorCity() {
     fontSize: 13,
     letterSpacing: 0.4,
     opacity: 0.9,
+    color: "#f8fafc",
   };
 
   const examplesGrid: React.CSSProperties = {
@@ -470,6 +489,8 @@ export default function CreatorCity() {
     alignItems: "center",
     justifyContent: "space-between",
     gap: 14,
+    boxShadow:
+      "0 0 18px rgba(34,211,238,0.03), inset 0 1px 0 rgba(255,255,255,0.02)",
   };
 
   const exampleTextWrap: React.CSSProperties = {
@@ -485,6 +506,7 @@ export default function CreatorCity() {
     whiteSpace: isMobile ? "normal" : "nowrap",
     overflow: "hidden",
     textOverflow: "ellipsis",
+    color: "#ffffff",
   };
 
   const exampleSub: React.CSSProperties = {
