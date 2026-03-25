@@ -210,7 +210,7 @@ export default function CreatorCity() {
     display: "flex",
     flexDirection: "column",
     gap: isMobile ? 14 : 10,
-    maxWidth: 920,
+    maxWidth: 980,
     width: "100%",
   };
 
@@ -260,7 +260,16 @@ export default function CreatorCity() {
     fontSize: isMobile ? 19 : 16,
     lineHeight: isMobile ? 1.45 : 1.7,
     color: "rgba(226,232,240,0.92)",
-    maxWidth: 960,
+    maxWidth: 980,
+  };
+
+  const desktopSubHead: React.CSSProperties = {
+    fontSize: 24,
+    fontWeight: 900,
+    lineHeight: 1.08,
+    letterSpacing: -0.6,
+    color: "rgba(186,230,253,0.98)",
+    marginTop: 2,
   };
 
   const mobileHeroTitle: React.CSSProperties = {
@@ -283,7 +292,7 @@ export default function CreatorCity() {
 
   const doctrinePanel: React.CSSProperties = {
     marginTop: isMobile ? 8 : 6,
-    maxWidth: 920,
+    maxWidth: 980,
     border: "1px solid rgba(56,189,248,0.18)",
     background: "rgba(8,47,73,0.24)",
     borderRadius: 16,
@@ -356,32 +365,92 @@ export default function CreatorCity() {
     border: "1px solid rgba(148,163,184,0.18)",
     background: "rgba(2,6,23,0.56)",
     borderRadius: isMobile ? 26 : 20,
-    padding: isMobile ? 20 : 20,
+    padding: isMobile ? 18 : 20,
     boxShadow:
       "0 18px 42px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.03)",
   };
 
   const sectionTitle: React.CSSProperties = {
     fontWeight: 900,
-    fontSize: isMobile ? 32 : 18,
+    fontSize: isMobile ? 30 : 18,
     lineHeight: isMobile ? 1.02 : 1.1,
-    marginBottom: isMobile ? 14 : 8,
+    marginBottom: isMobile ? 12 : 8,
     color: "#ffffff",
     textShadow: "0 1px 0 rgba(255,255,255,0.04)",
     letterSpacing: isMobile ? -0.7 : 0,
   };
 
   const sectionText: React.CSSProperties = {
-    fontSize: isMobile ? 19 : 14,
-    lineHeight: isMobile ? 1.5 : 1.7,
+    fontSize: isMobile ? 17 : 14,
+    lineHeight: isMobile ? 1.42 : 1.7,
     color: "rgba(226,232,240,0.88)",
+  };
+
+  const impactPanel: React.CSSProperties = {
+    marginTop: isMobile ? 14 : 16,
+    border: "1px solid rgba(34,197,94,0.22)",
+    background: "rgba(20,83,45,0.16)",
+    borderRadius: isMobile ? 20 : 18,
+    padding: isMobile ? 16 : 16,
+    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
+  };
+
+  const impactHeadline: React.CSSProperties = {
+    fontSize: isMobile ? 22 : 16,
+    fontWeight: 900,
+    lineHeight: 1.08,
+    color: "#ffffff",
+    marginBottom: 6,
+    letterSpacing: isMobile ? -0.4 : 0,
+  };
+
+  const impactText: React.CSSProperties = {
+    fontSize: isMobile ? 16 : 13,
+    lineHeight: isMobile ? 1.4 : 1.65,
+    color: "rgba(220,252,231,0.92)",
+  };
+
+  const miniCompareGrid: React.CSSProperties = {
+    display: "grid",
+    gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+    gap: isMobile ? 12 : 12,
+    marginTop: isMobile ? 16 : 16,
+  };
+
+  const compareCard = (kind: "before" | "after"): React.CSSProperties => ({
+    border:
+      kind === "before"
+        ? "1px solid rgba(148,163,184,0.18)"
+        : "1px solid rgba(34,197,94,0.24)",
+    background:
+      kind === "before"
+        ? "rgba(255,255,255,0.02)"
+        : "rgba(34,197,94,0.08)",
+    borderRadius: 18,
+    padding: isMobile ? 16 : 16,
+  });
+
+  const compareTitle: React.CSSProperties = {
+    fontWeight: 900,
+    fontSize: isMobile ? 20 : 14,
+    marginBottom: isMobile ? 8 : 8,
+    color: "#ffffff",
+    lineHeight: 1.05,
+  };
+
+  const compareList: React.CSSProperties = {
+    margin: 0,
+    paddingLeft: isMobile ? 20 : 18,
+    color: "rgba(226,232,240,0.86)",
+    fontSize: isMobile ? 16 : 13,
+    lineHeight: isMobile ? 1.45 : 1.7,
   };
 
   const intentGrid: React.CSSProperties = {
     display: "grid",
     gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))",
-    gap: isMobile ? 16 : 12,
-    marginTop: isMobile ? 20 : 16,
+    gap: isMobile ? 14 : 12,
+    marginTop: isMobile ? 16 : 16,
   };
 
   const intentCard = (active: boolean): React.CSSProperties => ({
@@ -390,9 +459,9 @@ export default function CreatorCity() {
       : "1px solid rgba(148,163,184,0.18)",
     background: active ? "rgba(34,197,94,0.10)" : "rgba(255,255,255,0.02)",
     borderRadius: 20,
-    padding: isMobile ? 22 : 14,
+    padding: isMobile ? 18 : 14,
     cursor: "pointer",
-    minHeight: isMobile ? 150 : 108,
+    minHeight: isMobile ? 112 : 108,
     boxShadow: active
       ? "0 0 24px rgba(74,222,128,0.08)"
       : "0 0 18px rgba(34,211,238,0.03)",
@@ -400,34 +469,34 @@ export default function CreatorCity() {
 
   const intentTitle: React.CSSProperties = {
     fontWeight: 900,
-    fontSize: isMobile ? 24 : 14,
-    marginBottom: isMobile ? 10 : 6,
+    fontSize: isMobile ? 22 : 14,
+    marginBottom: isMobile ? 8 : 6,
     color: "#ffffff",
     lineHeight: 1.05,
     letterSpacing: isMobile ? -0.4 : 0,
   };
 
   const intentText: React.CSSProperties = {
-    fontSize: isMobile ? 17 : 12,
-    lineHeight: isMobile ? 1.45 : 1.5,
+    fontSize: isMobile ? 16 : 12,
+    lineHeight: isMobile ? 1.35 : 1.5,
     color: "rgba(226,232,240,0.82)",
   };
 
   const intakeGrid: React.CSSProperties = {
     display: "grid",
     gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
-    gap: isMobile ? 18 : 14,
-    marginTop: isMobile ? 22 : 18,
+    gap: isMobile ? 16 : 14,
+    marginTop: isMobile ? 18 : 18,
   };
 
   const inputBase: React.CSSProperties = {
     width: "100%",
-    borderRadius: isMobile ? 20 : 14,
+    borderRadius: isMobile ? 18 : 14,
     border: "1px solid rgba(148,163,184,0.22)",
     background: "rgba(2,6,23,0.64)",
     color: "#e5e7eb",
-    padding: isMobile ? "18px 18px" : "13px 14px",
-    fontSize: isMobile ? 18 : 14,
+    padding: isMobile ? "16px 16px" : "13px 14px",
+    fontSize: isMobile ? 17 : 14,
     outline: "none",
     boxSizing: "border-box",
     boxShadow: "inset 0 1px 0 rgba(255,255,255,0.02)",
@@ -436,11 +505,11 @@ export default function CreatorCity() {
   const inputGroup: React.CSSProperties = {
     display: "flex",
     flexDirection: "column",
-    gap: isMobile ? 10 : 8,
+    gap: isMobile ? 8 : 8,
   };
 
   const label: React.CSSProperties = {
-    fontSize: isMobile ? 18 : 12,
+    fontSize: isMobile ? 17 : 12,
     fontWeight: 900,
     letterSpacing: isMobile ? 0.2 : 0.4,
     color: "rgba(186,230,253,0.94)",
@@ -448,7 +517,7 @@ export default function CreatorCity() {
 
   const textareaWide: React.CSSProperties = {
     ...inputBase,
-    minHeight: isMobile ? 144 : 112,
+    minHeight: isMobile ? 110 : 112,
     resize: "vertical",
   };
 
@@ -456,14 +525,14 @@ export default function CreatorCity() {
     border: "1px dashed rgba(56,189,248,0.30)",
     background: "rgba(8,47,73,0.18)",
     borderRadius: 20,
-    padding: isMobile ? 18 : 16,
-    marginTop: isMobile ? 18 : 14,
+    padding: isMobile ? 16 : 16,
+    marginTop: isMobile ? 16 : 14,
     boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
   };
 
   const fileMeta: React.CSSProperties = {
     marginTop: 10,
-    fontSize: isMobile ? 17 : 12,
+    fontSize: isMobile ? 16 : 12,
     color: "rgba(186,230,253,0.9)",
   };
 
@@ -472,27 +541,27 @@ export default function CreatorCity() {
     alignItems: isMobile ? "stretch" : "center",
     justifyContent: "space-between",
     flexDirection: isMobile ? "column" : "row",
-    gap: isMobile ? 18 : 14,
-    marginTop: isMobile ? 24 : 18,
+    gap: isMobile ? 16 : 14,
+    marginTop: isMobile ? 20 : 18,
     flexWrap: "wrap",
   };
 
   const submitBtn: React.CSSProperties = {
     borderRadius: 999,
-    padding: isMobile ? "16px 22px" : "12px 18px",
+    padding: isMobile ? "15px 22px" : "12px 18px",
     border: "1px solid rgba(34,197,94,0.45)",
     background: "rgba(34,197,94,0.12)",
     color: "rgba(187,247,208,1)",
     fontWeight: 900,
-    fontSize: isMobile ? 21 : 14,
+    fontSize: isMobile ? 20 : 14,
     cursor: "pointer",
     boxShadow: "0 0 18px rgba(74,222,128,0.08)",
     width: isMobile ? "100%" : "auto",
   };
 
   const helperText: React.CSSProperties = {
-    fontSize: isMobile ? 17 : 12,
-    lineHeight: isMobile ? 1.55 : 1.6,
+    fontSize: isMobile ? 16 : 12,
+    lineHeight: isMobile ? 1.45 : 1.6,
     color: "rgba(148,163,184,0.88)",
     maxWidth: 680,
   };
@@ -520,7 +589,7 @@ export default function CreatorCity() {
   const examplesGrid: React.CSSProperties = {
     display: "grid",
     gridTemplateColumns: "1fr",
-    gap: isMobile ? 16 : 14,
+    gap: isMobile ? 16 : 12,
     marginTop: isMobile ? 18 : 14,
   };
 
@@ -528,13 +597,15 @@ export default function CreatorCity() {
     border: "1px solid rgba(148,163,184,0.20)",
     background: "rgba(2,6,23,0.52)",
     borderRadius: 20,
-    padding: isMobile ? 22 : 16,
+    padding: isMobile ? 22 : "14px 16px",
     cursor: "pointer",
     display: "flex",
-    alignItems: isMobile ? "flex-start" : "center",
-    justifyContent: "space-between",
-    flexDirection: isMobile ? "column" : "row",
-    gap: isMobile ? 14 : 14,
+    flexDirection: "column",
+    alignItems: "flex-start",
+    justifyContent: "flex-start",
+    gap: isMobile ? 14 : 8,
+    width: "100%",
+    maxWidth: "100%",
     boxShadow:
       "0 0 18px rgba(34,211,238,0.03), inset 0 1px 0 rgba(255,255,255,0.02)",
   };
@@ -573,7 +644,8 @@ export default function CreatorCity() {
     color: "rgba(254,240,138,1)",
     background: "rgba(250,204,21,0.10)",
     flexShrink: 0,
-    alignSelf: isMobile ? "flex-start" : "center",
+    alignSelf: "flex-start",
+    marginTop: isMobile ? 0 : 2,
   };
 
   const footerWrap: React.CSSProperties = {
@@ -632,32 +704,32 @@ export default function CreatorCity() {
     {
       id: "landing-page" as BuildIntent,
       title: "Landing Page",
-      text: "A live front door for your business with clear offer, trust, and intake.",
+      text: "Your front door. Clear offer. Intake ready.",
     },
     {
       id: "live-board" as BuildIntent,
       title: "Live Board",
-      text: "A customer-facing or team-facing board that shows jobs, stages, and activity.",
+      text: "Jobs. Status. Activity. All visible.",
     },
     {
       id: "workflow-tool" as BuildIntent,
       title: "Workflow Tool",
-      text: "A custom tool built around how your business already operates in real life.",
+      text: "Built around how you already work.",
     },
     {
       id: "intake-flow" as BuildIntent,
       title: "Intake Flow",
-      text: "Turn walk-ins, calls, texts, and paper tickets into one clean intake system.",
+      text: "Calls, texts, walk-ins → one system.",
     },
     {
       id: "payment-flow" as BuildIntent,
       title: "Payment Flow",
-      text: "Build a cleaner intake-to-payment path with clear proof and customer trust.",
+      text: "Job → payment → proof.",
     },
     {
       id: "full-system" as BuildIntent,
       title: "Full Business System",
-      text: "Landing page, board, workflow, intake, visibility, and customer communication.",
+      text: "Everything. One page. No switching.",
     },
   ];
 
@@ -678,15 +750,15 @@ export default function CreatorCity() {
               {isMobile ? (
                 <>
                   <div style={mobileHeroTitle}>
-                    This is your business.
+                    Your business is not complicated.
                     <br />
-                    LIVE.
+                    Your tools are.
                   </div>
 
                   <div style={mobileHeroSubline}>
-                    Not a website.
+                    You shouldn&apos;t need 5 apps
                     <br />
-                    A real system.
+                    and 10 clicks to do one job.
                   </div>
 
                   <button
@@ -697,31 +769,35 @@ export default function CreatorCity() {
                   </button>
 
                   <div style={subtitle}>
-                    Show us how your business actually works — what you use now,
-                    what slows you down, what customers keep calling about, and
-                    what kind of system you wish existed. HomePlanet turns that
-                    real-world workflow into a live system.
+                    HomePlanet turns your real workflow into one live page.
+                    Show us how your business actually works, where the friction
+                    is, and what should happen in one click instead of ten.
                   </div>
                 </>
               ) : (
-                <div style={subtitle}>
-                  Don&apos;t build a website. Show us how your business actually
-                  works — what you use now, what slows you down, what customers
-                  keep calling about, and what kind of system you wish existed.
-                  HomePlanet turns that real-world workflow into a live system.
-                </div>
+                <>
+                  <div style={desktopSubHead}>
+                    Your business is not complicated. Your tools are.
+                  </div>
+                  <div style={subtitle}>
+                    You shouldn&apos;t need 5 apps and 10 clicks just to do one
+                    job. HomePlanet turns your real workflow into one live page
+                    so jobs, status, customer updates, payment, and proof live
+                    together instead of across tabs, texts, and scattered tools.
+                  </div>
+                </>
               )}
 
               <div style={doctrinePanel}>
                 <div style={doctrineTitle}>
-                  PRESENCE-FIRST • NOT SURVEILLANCE
+                  PRESENCE-FIRST • ONE PAGE • REMOVE STEPS
                 </div>
                 <div style={doctrineText}>
-                  Your data stays yours. HomePlanet is built to understand your
-                  workflow, not exploit it. We do not expose your contact info
-                  publicly, and we do not treat your business like ad inventory.
-                  This intake exists to turn your real operation into a better
-                  system.
+                  If it takes more than one click, your system is broken.
+                  HomePlanet is built to remove wasted motion, not add more
+                  layers. Your business should not require five different apps,
+                  repeated entry, hidden tabs, and constant status chasing just
+                  to move one job forward.
                 </div>
               </div>
             </div>
@@ -774,12 +850,26 @@ export default function CreatorCity() {
             <div style={sectionCard}>
               <div style={sectionTitle}>This is the holy-shit moment</div>
               <div style={sectionText}>
-                The goal here is not to ask a business owner to pick from a
-                template. The goal is to let them explain how they work now,
-                where the friction is, what they wish customers could see, and
-                what kind of system would make them say, “that&apos;s mine.” This
-                is where a landing page, live board, workflow tool, or full
-                operational system begins.
+                Not because it looks cool.
+                <br />
+                Because it makes you realize how much time you&apos;ve been
+                wasting.
+                <br />
+                <br />
+                Open board. Tap once. Done.
+              </div>
+
+              <div style={impactPanel}>
+                <div style={impactHeadline}>
+                  We don&apos;t add features.
+                  <br />
+                  We remove steps.
+                </div>
+                <div style={impactText}>
+                  Show us your workflow.
+                  <br />
+                  We turn it into one page.
+                </div>
               </div>
 
               <div style={intentGrid}>
@@ -797,13 +887,36 @@ export default function CreatorCity() {
             </div>
 
             <div style={sectionCard}>
-              <div style={sectionTitle}>What businesses can tell us here</div>
+              <div style={sectionTitle}>What businesses feel immediately</div>
               <div style={sectionText}>
-                “We still run on paper.” “Customers keep calling for updates.”
-                “I need people to see where their job stands.” “I want the same
-                board you showed me, but for my shop.” “I want to build my own
-                tool from scratch.” Creator City is where those sentences get
-                turned into structure.
+                You are not broken. Your workflow is. If your team has to jump
+                between apps, repeat steps, re-enter the same info, or chase
+                status across calls and texts, that friction is costing you time
+                every single day.
+              </div>
+
+              <div style={miniCompareGrid}>
+                <div style={compareCard("before")}>
+                  <div style={compareTitle}>Before</div>
+                  <ul style={compareList}>
+                    <li>Calls for updates</li>
+                    <li>Texts everywhere</li>
+                    <li>Paper + side notes</li>
+                    <li>&quot;Where is it?&quot;</li>
+                    <li>&quot;Did we send it?&quot;</li>
+                  </ul>
+                </div>
+
+                <div style={compareCard("after")}>
+                  <div style={compareTitle}>After — one page</div>
+                  <ul style={compareList}>
+                    <li>Jobs visible</li>
+                    <li>Status visible</li>
+                    <li>Customer sees it</li>
+                    <li>Team sees it</li>
+                    <li>Payment + proof attached</li>
+                  </ul>
+                </div>
               </div>
             </div>
           </div>
@@ -812,9 +925,9 @@ export default function CreatorCity() {
         <div style={{ ...sectionCard, marginTop: isMobile ? 20 : 18 }}>
           <div style={sectionTitle}>Describe your business workflow</div>
           <div style={sectionText}>
-            Tell us what kind of business you run, how you organize now, what
-            keeps falling through the cracks, and what kind of system you want
-            us to bring to life.
+            Show us how your business actually works.
+            <br />
+            We&apos;ll remove the steps.
           </div>
 
           {submitted ? (
@@ -888,7 +1001,7 @@ export default function CreatorCity() {
                 </div>
 
                 <div style={{ ...inputGroup, gridColumn: "1 / -1" }}>
-                  <label style={label}>How do you organize jobs right now?</label>
+                  <label style={label}>How do you run jobs right now?</label>
                   <textarea
                     style={textareaWide}
                     value={currentWorkflow}
@@ -899,7 +1012,7 @@ export default function CreatorCity() {
                 </div>
 
                 <div style={{ ...inputGroup, gridColumn: "1 / -1" }}>
-                  <label style={label}>What slows you down the most?</label>
+                  <label style={label}>What wastes the most time?</label>
                   <textarea
                     style={textareaWide}
                     value={biggestFriction}
@@ -929,17 +1042,23 @@ export default function CreatorCity() {
                     style={textareaWide}
                     value={holyShiftMoment}
                     onChange={(e) => setHolyShiftMoment(e.target.value)}
-                    placeholder="A live board, a customer-facing tracker, instant intake receipts, a route view, proof timeline..."
+                    placeholder="One tap to update the customer, one board for the team, one place for status, notes, payment, and proof..."
                   />
                 </div>
               </div>
 
               <div style={fileWrap}>
                 <div style={label}>Upload photos of your workflow</div>
-                <div style={{ ...sectionText, marginTop: 8, fontSize: isMobile ? 18 : 13 }}>
-                  Upload photos of whiteboards, paper tickets, intake forms,
-                  screenshots, invoices, or anything that helps us understand
-                  how your business really works.
+                <div
+                  style={{
+                    ...sectionText,
+                    marginTop: 8,
+                    fontSize: isMobile ? 16 : 13,
+                  }}
+                >
+                  Upload anything that shows how you work today.
+                  <br />
+                  We use it to remove steps.
                 </div>
 
                 <div style={{ marginTop: 12 }}>
@@ -974,9 +1093,9 @@ export default function CreatorCity() {
 
                 <div style={helperText}>
                   This sends your workflow description into HomePlanet through
-                  the same live intake system you already built. We save it,
-                  notify it, and use it to shape the right landing page, board,
-                  tool, or full business system.
+                  the same live intake system you already built. We use it to
+                  shape the right one-page landing page, board, tool, intake
+                  path, payment flow, or full business system.
                 </div>
               </div>
             </form>
@@ -988,11 +1107,12 @@ export default function CreatorCity() {
         <div style={examplesGrid}>
           {systems.map((s) => (
             <div key={s.id} style={exampleCard} onClick={() => nav(s.to)}>
+              <div style={tagStyle}>{s.tag}</div>
+
               <div style={exampleTextWrap}>
                 <div style={exampleTitle}>{s.title}</div>
                 <div style={exampleSub}>{s.subtitle}</div>
               </div>
-              <div style={tagStyle}>{s.tag}</div>
             </div>
           ))}
         </div>
@@ -1005,7 +1125,7 @@ export default function CreatorCity() {
             HomePlanet © 2026. All rights reserved.
           </div>
           <div style={footerSecondary}>
-            Don&apos;t build a website. Show us how your business really works.
+            Your business is not complicated. Your tools are.
           </div>
         </div>
       </div>
