@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 const REQUEST_ACCESS_URL =
   "https://kcmcssyyopmvqglsddyw.supabase.co";
 const REQUEST_ACCESS_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjbWNzc3l5b3BtdnFnbHNkZHl3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg4NjUwODUsImV4cCI6MjA4NDQ0MTA4NX0.OWjhyCAzhVkMfMrBL96FLjdUUlU51B8N3mKuBvqntt4";
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXMiJ9";
 
 type SystemExample = {
   id: string;
@@ -172,7 +172,7 @@ export default function CreatorCity() {
 
   const page: React.CSSProperties = {
     minHeight: "100vh",
-    padding: isMobile ? 14 : 24,
+    padding: isMobile ? 0 : 24,
     color: "#e5e7eb",
     background:
       "radial-gradient(1200px 760px at 6% 10%, rgba(6,182,212,0.12), transparent 52%)," +
@@ -185,30 +185,33 @@ export default function CreatorCity() {
   const shell: React.CSSProperties = {
     maxWidth: 1320,
     margin: "0 auto",
+    padding: isMobile ? "14px 14px 28px" : 0,
   };
 
   const hero: React.CSSProperties = {
     border: "1px solid rgba(148,163,184,0.18)",
     background:
       "linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02) 28%, rgba(2,6,23,0.42) 100%)",
-    borderRadius: 24,
-    padding: isMobile ? 16 : 24,
+    borderRadius: isMobile ? 28 : 24,
+    padding: isMobile ? 18 : 24,
     boxShadow: "0 24px 80px rgba(0,0,0,0.42)",
+    overflow: "hidden",
   };
 
   const heroTop: React.CSSProperties = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    gap: 20,
+    gap: isMobile ? 14 : 20,
     flexWrap: "wrap",
   };
 
   const titleWrap: React.CSSProperties = {
     display: "flex",
     flexDirection: "column",
-    gap: 10,
+    gap: isMobile ? 14 : 10,
     maxWidth: 920,
+    width: "100%",
   };
 
   const titleRow: React.CSSProperties = {
@@ -219,85 +222,109 @@ export default function CreatorCity() {
   };
 
   const title: React.CSSProperties = {
-    fontSize: isMobile ? 28 : 36,
+    fontSize: isMobile ? 56 : 36,
     fontWeight: 900,
-    letterSpacing: -0.5,
-    lineHeight: 1.05,
+    letterSpacing: -1.4,
+    lineHeight: isMobile ? 0.92 : 1.05,
     color: "#ffffff",
     textShadow: "0 1px 0 rgba(255,255,255,0.04)",
+    maxWidth: "100%",
   };
 
   const livePill: React.CSSProperties = {
     borderRadius: 999,
-    padding: "7px 12px",
+    padding: isMobile ? "10px 16px" : "7px 12px",
     border: "1px solid rgba(34,197,94,0.35)",
     background: "rgba(34,197,94,0.10)",
     color: "rgba(187,247,208,1)",
     fontWeight: 900,
-    fontSize: 12,
-    letterSpacing: 0.5,
+    fontSize: isMobile ? 14 : 12,
+    letterSpacing: isMobile ? 0.8 : 0.5,
     display: "inline-flex",
     alignItems: "center",
-    gap: 8,
+    gap: 10,
     boxShadow: "0 0 18px rgba(74,222,128,0.14)",
+    width: isMobile ? "fit-content" : "auto",
   };
 
   const pulseDot: React.CSSProperties = {
-    width: 8,
-    height: 8,
+    width: isMobile ? 14 : 8,
+    height: isMobile ? 14 : 8,
     borderRadius: 999,
     background: "rgba(74,222,128,1)",
     boxShadow: "0 0 12px rgba(74,222,128,0.9)",
+    flexShrink: 0,
   };
 
   const subtitle: React.CSSProperties = {
-    fontSize: isMobile ? 14 : 16,
-    lineHeight: 1.7,
+    fontSize: isMobile ? 19 : 16,
+    lineHeight: isMobile ? 1.45 : 1.7,
     color: "rgba(226,232,240,0.92)",
     maxWidth: 960,
   };
 
+  const mobileHeroTitle: React.CSSProperties = {
+    fontSize: 42,
+    fontWeight: 900,
+    lineHeight: 0.95,
+    letterSpacing: -1.1,
+    color: "#ffffff",
+    marginTop: 2,
+  };
+
+  const mobileHeroSubline: React.CSSProperties = {
+    fontSize: 22,
+    fontWeight: 800,
+    lineHeight: 1.05,
+    letterSpacing: -0.4,
+    color: "rgba(186,230,253,0.98)",
+    marginTop: -2,
+  };
+
   const doctrinePanel: React.CSSProperties = {
-    marginTop: 6,
+    marginTop: isMobile ? 8 : 6,
     maxWidth: 920,
     border: "1px solid rgba(56,189,248,0.18)",
     background: "rgba(8,47,73,0.24)",
     borderRadius: 16,
-    padding: "14px 16px",
+    padding: isMobile ? "16px 16px" : "14px 16px",
     boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
   };
 
   const doctrineTitle: React.CSSProperties = {
-    fontSize: 12,
+    fontSize: isMobile ? 11 : 12,
     fontWeight: 900,
-    letterSpacing: 0.6,
+    letterSpacing: isMobile ? 0.9 : 0.6,
     color: "rgba(186,230,253,0.96)",
-    marginBottom: 6,
+    marginBottom: 8,
   };
 
   const doctrineText: React.CSSProperties = {
-    fontSize: 13,
-    lineHeight: 1.6,
+    fontSize: isMobile ? 18 : 13,
+    lineHeight: isMobile ? 1.48 : 1.6,
     color: "rgba(226,232,240,0.92)",
   };
 
   const buttonRow: React.CSSProperties = {
     display: "flex",
-    gap: 10,
+    gap: 12,
     flexWrap: "wrap",
-    justifyContent: "flex-end",
+    justifyContent: isMobile ? "flex-start" : "flex-end",
+    width: isMobile ? "100%" : "auto",
+    marginTop: isMobile ? 2 : 0,
   };
 
   const btnBase: React.CSSProperties = {
     borderRadius: 999,
-    padding: "10px 16px",
+    padding: isMobile ? "14px 22px" : "10px 16px",
     border: "1px solid rgba(148,163,184,0.25)",
     background: "rgba(2,6,23,0.55)",
     color: "#e5e7eb",
     fontWeight: 800,
-    fontSize: 13,
+    fontSize: isMobile ? 18 : 13,
     cursor: "pointer",
     boxShadow: "0 0 0 rgba(0,0,0,0)",
+    minWidth: isMobile ? 0 : undefined,
   };
 
   const btnPrimary: React.CSSProperties = {
@@ -307,41 +334,54 @@ export default function CreatorCity() {
     boxShadow: "0 0 18px rgba(74,222,128,0.08)",
   };
 
+  const mobilePrimaryCta: React.CSSProperties = {
+    ...btnPrimary,
+    width: "100%",
+    justifyContent: "center",
+    display: "inline-flex",
+    alignItems: "center",
+    padding: "16px 22px",
+    fontSize: 22,
+    letterSpacing: -0.3,
+  };
+
   const topGrid: React.CSSProperties = {
     display: "grid",
     gridTemplateColumns: isMobile ? "1fr" : "1.15fr 0.85fr",
-    gap: 16,
-    marginTop: 18,
+    gap: isMobile ? 18 : 16,
+    marginTop: isMobile ? 18 : 18,
   };
 
   const sectionCard: React.CSSProperties = {
     border: "1px solid rgba(148,163,184,0.18)",
     background: "rgba(2,6,23,0.56)",
-    borderRadius: 20,
-    padding: isMobile ? 16 : 20,
+    borderRadius: isMobile ? 26 : 20,
+    padding: isMobile ? 20 : 20,
     boxShadow:
       "0 18px 42px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.03)",
   };
 
   const sectionTitle: React.CSSProperties = {
     fontWeight: 900,
-    fontSize: 18,
-    marginBottom: 8,
+    fontSize: isMobile ? 32 : 18,
+    lineHeight: isMobile ? 1.02 : 1.1,
+    marginBottom: isMobile ? 14 : 8,
     color: "#ffffff",
     textShadow: "0 1px 0 rgba(255,255,255,0.04)",
+    letterSpacing: isMobile ? -0.7 : 0,
   };
 
   const sectionText: React.CSSProperties = {
-    fontSize: 14,
-    lineHeight: 1.7,
+    fontSize: isMobile ? 19 : 14,
+    lineHeight: isMobile ? 1.5 : 1.7,
     color: "rgba(226,232,240,0.88)",
   };
 
   const intentGrid: React.CSSProperties = {
     display: "grid",
     gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))",
-    gap: 12,
-    marginTop: 16,
+    gap: isMobile ? 16 : 12,
+    marginTop: isMobile ? 20 : 16,
   };
 
   const intentCard = (active: boolean): React.CSSProperties => ({
@@ -349,10 +389,10 @@ export default function CreatorCity() {
       ? "1px solid rgba(34,197,94,0.42)"
       : "1px solid rgba(148,163,184,0.18)",
     background: active ? "rgba(34,197,94,0.10)" : "rgba(255,255,255,0.02)",
-    borderRadius: 16,
-    padding: 14,
+    borderRadius: 20,
+    padding: isMobile ? 22 : 14,
     cursor: "pointer",
-    minHeight: 108,
+    minHeight: isMobile ? 150 : 108,
     boxShadow: active
       ? "0 0 24px rgba(74,222,128,0.08)"
       : "0 0 18px rgba(34,211,238,0.03)",
@@ -360,32 +400,34 @@ export default function CreatorCity() {
 
   const intentTitle: React.CSSProperties = {
     fontWeight: 900,
-    fontSize: 14,
-    marginBottom: 6,
+    fontSize: isMobile ? 24 : 14,
+    marginBottom: isMobile ? 10 : 6,
     color: "#ffffff",
+    lineHeight: 1.05,
+    letterSpacing: isMobile ? -0.4 : 0,
   };
 
   const intentText: React.CSSProperties = {
-    fontSize: 12,
-    lineHeight: 1.5,
+    fontSize: isMobile ? 17 : 12,
+    lineHeight: isMobile ? 1.45 : 1.5,
     color: "rgba(226,232,240,0.82)",
   };
 
   const intakeGrid: React.CSSProperties = {
     display: "grid",
     gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
-    gap: 14,
-    marginTop: 18,
+    gap: isMobile ? 18 : 14,
+    marginTop: isMobile ? 22 : 18,
   };
 
   const inputBase: React.CSSProperties = {
     width: "100%",
-    borderRadius: 14,
+    borderRadius: isMobile ? 20 : 14,
     border: "1px solid rgba(148,163,184,0.22)",
     background: "rgba(2,6,23,0.64)",
     color: "#e5e7eb",
-    padding: "13px 14px",
-    fontSize: 14,
+    padding: isMobile ? "18px 18px" : "13px 14px",
+    fontSize: isMobile ? 18 : 14,
     outline: "none",
     boxSizing: "border-box",
     boxShadow: "inset 0 1px 0 rgba(255,255,255,0.02)",
@@ -394,61 +436,63 @@ export default function CreatorCity() {
   const inputGroup: React.CSSProperties = {
     display: "flex",
     flexDirection: "column",
-    gap: 8,
+    gap: isMobile ? 10 : 8,
   };
 
   const label: React.CSSProperties = {
-    fontSize: 12,
+    fontSize: isMobile ? 18 : 12,
     fontWeight: 900,
-    letterSpacing: 0.4,
+    letterSpacing: isMobile ? 0.2 : 0.4,
     color: "rgba(186,230,253,0.94)",
   };
 
   const textareaWide: React.CSSProperties = {
     ...inputBase,
-    minHeight: 112,
+    minHeight: isMobile ? 144 : 112,
     resize: "vertical",
   };
 
   const fileWrap: React.CSSProperties = {
     border: "1px dashed rgba(56,189,248,0.30)",
     background: "rgba(8,47,73,0.18)",
-    borderRadius: 16,
-    padding: 16,
-    marginTop: 14,
+    borderRadius: 20,
+    padding: isMobile ? 18 : 16,
+    marginTop: isMobile ? 18 : 14,
     boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
   };
 
   const fileMeta: React.CSSProperties = {
     marginTop: 10,
-    fontSize: 12,
+    fontSize: isMobile ? 17 : 12,
     color: "rgba(186,230,253,0.9)",
   };
 
   const submitWrap: React.CSSProperties = {
     display: "flex",
-    alignItems: "center",
+    alignItems: isMobile ? "stretch" : "center",
     justifyContent: "space-between",
-    gap: 14,
-    marginTop: 18,
+    flexDirection: isMobile ? "column" : "row",
+    gap: isMobile ? 18 : 14,
+    marginTop: isMobile ? 24 : 18,
     flexWrap: "wrap",
   };
 
   const submitBtn: React.CSSProperties = {
     borderRadius: 999,
-    padding: "12px 18px",
+    padding: isMobile ? "16px 22px" : "12px 18px",
     border: "1px solid rgba(34,197,94,0.45)",
     background: "rgba(34,197,94,0.12)",
     color: "rgba(187,247,208,1)",
     fontWeight: 900,
-    fontSize: 14,
+    fontSize: isMobile ? 21 : 14,
     cursor: "pointer",
     boxShadow: "0 0 18px rgba(74,222,128,0.08)",
+    width: isMobile ? "100%" : "auto",
   };
 
   const helperText: React.CSSProperties = {
-    fontSize: 12,
-    lineHeight: 1.6,
+    fontSize: isMobile ? 17 : 12,
+    lineHeight: isMobile ? 1.55 : 1.6,
     color: "rgba(148,163,184,0.88)",
     maxWidth: 680,
   };
@@ -464,31 +508,33 @@ export default function CreatorCity() {
   };
 
   const examplesLabel: React.CSSProperties = {
-    marginTop: 26,
+    marginTop: isMobile ? 34 : 26,
     fontWeight: 900,
-    fontSize: 13,
-    letterSpacing: 0.4,
-    opacity: 0.9,
+    fontSize: isMobile ? 24 : 13,
+    letterSpacing: isMobile ? -0.4 : 0.4,
+    opacity: 0.98,
     color: "#f8fafc",
+    lineHeight: 1.05,
   };
 
   const examplesGrid: React.CSSProperties = {
     display: "grid",
-    gridTemplateColumns: isMobile ? "1fr" : "repeat(2, minmax(0, 1fr))",
-    gap: 14,
-    marginTop: 14,
+    gridTemplateColumns: "1fr",
+    gap: isMobile ? 16 : 14,
+    marginTop: isMobile ? 18 : 14,
   };
 
   const exampleCard: React.CSSProperties = {
     border: "1px solid rgba(148,163,184,0.20)",
     background: "rgba(2,6,23,0.52)",
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 20,
+    padding: isMobile ? 22 : 16,
     cursor: "pointer",
     display: "flex",
-    alignItems: "center",
+    alignItems: isMobile ? "flex-start" : "center",
     justifyContent: "space-between",
-    gap: 14,
+    flexDirection: isMobile ? "column" : "row",
+    gap: isMobile ? 14 : 14,
     boxShadow:
       "0 0 18px rgba(34,211,238,0.03), inset 0 1px 0 rgba(255,255,255,0.02)",
   };
@@ -496,45 +542,49 @@ export default function CreatorCity() {
   const exampleTextWrap: React.CSSProperties = {
     display: "flex",
     flexDirection: "column",
-    gap: 4,
+    gap: 6,
     minWidth: 0,
+    width: "100%",
   };
 
   const exampleTitle: React.CSSProperties = {
     fontWeight: 900,
-    fontSize: 15,
-    whiteSpace: isMobile ? "normal" : "nowrap",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
+    fontSize: isMobile ? 25 : 15,
+    whiteSpace: "normal",
+    overflow: "visible",
+    textOverflow: "clip",
     color: "#ffffff",
+    lineHeight: 1.08,
+    letterSpacing: isMobile ? -0.5 : 0,
   };
 
   const exampleSub: React.CSSProperties = {
-    fontSize: 12,
+    fontSize: isMobile ? 18 : 12,
     color: "rgba(226,232,240,0.76)",
-    lineHeight: 1.5,
+    lineHeight: isMobile ? 1.45 : 1.5,
   };
 
   const tagStyle: React.CSSProperties = {
     borderRadius: 999,
-    padding: "6px 10px",
-    fontSize: 11,
+    padding: isMobile ? "10px 16px" : "6px 10px",
+    fontSize: isMobile ? 16 : 11,
     fontWeight: 900,
     border: "1px solid rgba(250,204,21,0.40)",
     color: "rgba(254,240,138,1)",
     background: "rgba(250,204,21,0.10)",
     flexShrink: 0,
+    alignSelf: isMobile ? "flex-start" : "center",
   };
 
   const footerWrap: React.CSSProperties = {
-    marginTop: 34,
-    paddingTop: 18,
+    marginTop: isMobile ? 34 : 34,
+    paddingTop: isMobile ? 22 : 18,
     borderTop: "1px solid rgba(148,163,184,0.16)",
     textAlign: "center",
   };
 
   const footerPrimary: React.CSSProperties = {
-    fontSize: 13,
+    fontSize: isMobile ? 18 : 13,
     color: "#94a3b8",
     fontWeight: 700,
     display: "inline-flex",
@@ -542,18 +592,20 @@ export default function CreatorCity() {
     justifyContent: "center",
     gap: 8,
     flexWrap: "wrap",
+    lineHeight: 1.35,
   };
 
   const footerSecondary: React.CSSProperties = {
-    marginTop: 6,
-    fontSize: 12,
+    marginTop: 8,
+    fontSize: isMobile ? 16 : 12,
     color: "rgba(148,163,184,0.72)",
+    lineHeight: 1.45,
   };
 
   const footerPlanetMark: React.CSSProperties = {
     position: "relative",
-    width: 16,
-    height: 16,
+    width: isMobile ? 22 : 16,
+    height: isMobile ? 22 : 16,
     display: "inline-block",
     borderRadius: "50%",
     background:
@@ -564,10 +616,10 @@ export default function CreatorCity() {
 
   const footerPlanetRing: React.CSSProperties = {
     position: "absolute",
-    left: -3,
-    top: 6,
-    width: 22,
-    height: 7,
+    left: isMobile ? -4 : -3,
+    top: isMobile ? 8 : 6,
+    width: isMobile ? 30 : 22,
+    height: isMobile ? 9 : 7,
     border: "1.5px solid rgba(186,230,253,0.92)",
     borderRadius: "50%",
     transform: "rotate(-18deg)",
@@ -623,12 +675,42 @@ export default function CreatorCity() {
                 </div>
               </div>
 
-              <div style={subtitle}>
-                Don&apos;t build a website. Show us how your business actually
-                works — what you use now, what slows you down, what customers
-                keep calling about, and what kind of system you wish existed.
-                HomePlanet turns that real-world workflow into a live system.
-              </div>
+              {isMobile ? (
+                <>
+                  <div style={mobileHeroTitle}>
+                    This is your business.
+                    <br />
+                    LIVE.
+                  </div>
+
+                  <div style={mobileHeroSubline}>
+                    Not a website.
+                    <br />
+                    A real system.
+                  </div>
+
+                  <button
+                    style={mobilePrimaryCta}
+                    onClick={() => nav("/planet/start")}
+                  >
+                    Start My Board
+                  </button>
+
+                  <div style={subtitle}>
+                    Show us how your business actually works — what you use now,
+                    what slows you down, what customers keep calling about, and
+                    what kind of system you wish existed. HomePlanet turns that
+                    real-world workflow into a live system.
+                  </div>
+                </>
+              ) : (
+                <div style={subtitle}>
+                  Don&apos;t build a website. Show us how your business actually
+                  works — what you use now, what slows you down, what customers
+                  keep calling about, and what kind of system you wish existed.
+                  HomePlanet turns that real-world workflow into a live system.
+                </div>
+              )}
 
               <div style={doctrinePanel}>
                 <div style={doctrineTitle}>
@@ -644,10 +726,32 @@ export default function CreatorCity() {
               </div>
             </div>
 
-            <div style={buttonRow}>
-              <button style={btnPrimary} onClick={() => nav("/planet/start")}>
-                Start My Board
-              </button>
+            {!isMobile && (
+              <div style={buttonRow}>
+                <button style={btnPrimary} onClick={() => nav("/planet/start")}>
+                  Start My Board
+                </button>
+                <button style={btnBase} onClick={() => nav("/planet/pricing")}>
+                  Pricing
+                </button>
+                <button
+                  style={btnBase}
+                  onClick={() => nav("/planet/creator/projects")}
+                >
+                  Projects
+                </button>
+                <button
+                  style={btnBase}
+                  onClick={() => nav("/planet/creator/studio")}
+                >
+                  Studio
+                </button>
+              </div>
+            )}
+          </div>
+
+          {isMobile && (
+            <div style={{ ...buttonRow, marginTop: 14 }}>
               <button style={btnBase} onClick={() => nav("/planet/pricing")}>
                 Pricing
               </button>
@@ -664,7 +768,7 @@ export default function CreatorCity() {
                 Studio
               </button>
             </div>
-          </div>
+          )}
 
           <div style={topGrid}>
             <div style={sectionCard}>
@@ -705,7 +809,7 @@ export default function CreatorCity() {
           </div>
         </div>
 
-        <div style={{ ...sectionCard, marginTop: 18 }}>
+        <div style={{ ...sectionCard, marginTop: isMobile ? 20 : 18 }}>
           <div style={sectionTitle}>Describe your business workflow</div>
           <div style={sectionText}>
             Tell us what kind of business you run, how you organize now, what
@@ -832,7 +936,7 @@ export default function CreatorCity() {
 
               <div style={fileWrap}>
                 <div style={label}>Upload photos of your workflow</div>
-                <div style={{ ...sectionText, marginTop: 8, fontSize: 13 }}>
+                <div style={{ ...sectionText, marginTop: 8, fontSize: isMobile ? 18 : 13 }}>
                   Upload photos of whiteboards, paper tickets, intake forms,
                   screenshots, invoices, or anything that helps us understand
                   how your business really works.
@@ -846,6 +950,7 @@ export default function CreatorCity() {
                     onChange={(e) =>
                       setWorkflowFiles(Array.from(e.target.files || []))
                     }
+                    style={{ fontSize: isMobile ? 17 : 14 }}
                   />
                 </div>
 
