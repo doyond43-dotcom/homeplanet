@@ -326,97 +326,149 @@ function LiveVideoPanel({
   const hasPoster = Boolean(LIVE_POSTER_URL.trim());
 
   return (
-    <div className="relative overflow-hidden rounded-[24px] border border-white/10 bg-[#0f1011]">
-      <div className="aspect-[16/9] w-full">
-        {hasEmbed ? (
-          <>
-            <iframe
-              className="absolute inset-0 h-full w-full"
-              src={YOUTUBE_EMBED_URL}
-              title="Live RC boat demo"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              referrerPolicy="strict-origin-when-cross-origin"
-              allowFullScreen
-              onError={() => setEmbedFailed(true)}
-            />
-            <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.72),rgba(0,0,0,0.05)_30%,rgba(0,0,0,0.4))]" />
-          </>
-        ) : hasPoster ? (
-          <>
-            <img
-              src={LIVE_POSTER_URL}
-              alt="Featured live RC boat demo"
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-            <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.78),rgba(0,0,0,0.14)_35%,rgba(0,0,0,0.58))]" />
-          </>
-        ) : (
-          <>
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.06),transparent_35%),linear-gradient(135deg,#202226_0%,#121315_55%,#0c0d0e_100%)]" />
-            <div className="absolute inset-0 opacity-30 bg-[linear-gradient(120deg,transparent_0%,rgba(255,255,255,0.05)_35%,transparent_65%)]" />
-          </>
-        )}
+    <div className="overflow-hidden rounded-[24px] border border-white/10 bg-[#0f1011]">
+      <div className="relative">
+        <div className="relative aspect-[16/11] w-full sm:aspect-[16/9]">
+          {hasEmbed ? (
+            <>
+              <iframe
+                className="absolute inset-0 h-full w-full"
+                src={YOUTUBE_EMBED_URL}
+                title="Live RC boat demo"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerPolicy="strict-origin-when-cross-origin"
+                allowFullScreen
+                onError={() => setEmbedFailed(true)}
+              />
+              <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.82),rgba(0,0,0,0.08)_34%,rgba(0,0,0,0.48))]" />
+            </>
+          ) : hasPoster ? (
+            <>
+              <img
+                src={LIVE_POSTER_URL}
+                alt="Featured live RC boat demo"
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+              <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.82),rgba(0,0,0,0.12)_35%,rgba(0,0,0,0.56))]" />
+            </>
+          ) : (
+            <>
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.06),transparent_35%),linear-gradient(135deg,#202226_0%,#121315_55%,#0c0d0e_100%)]" />
+              <div className="absolute inset-0 opacity-30 bg-[linear-gradient(120deg,transparent_0%,rgba(255,255,255,0.05)_35%,transparent_65%)]" />
+            </>
+          )}
 
-        <div className="absolute inset-x-0 top-0 flex items-center justify-between px-4 py-3 sm:px-5">
-          <div className="flex items-center gap-2">
-            <span className="rounded-full border border-red-500/30 bg-red-500/15 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-red-200">
-              Live
-            </span>
-            <span className="text-xs text-zinc-200">
-              Marsh Runner 42 walkaround + throttle demo
-            </span>
+          <div className="absolute inset-x-0 top-0 flex items-center justify-between gap-2 px-3 py-3 sm:px-5">
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="shrink-0 rounded-full border border-red-500/30 bg-red-500/15 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-red-200">
+                Live
+              </span>
+              <span className="truncate text-[11px] text-zinc-200 sm:text-xs">
+                Marsh Runner 42 walkaround + throttle demo
+              </span>
+            </div>
+            <div className="shrink-0 rounded-full border border-white/10 bg-black/35 px-2.5 py-1 text-[11px] text-zinc-200 sm:text-xs">
+              {watchingNow} watching
+            </div>
           </div>
-          <div className="rounded-full border border-white/10 bg-black/35 px-2.5 py-1 text-xs text-zinc-200">
-            {watchingNow} watching
+
+          <div className="pointer-events-none absolute inset-x-0 bottom-[88px] hidden flex-col items-center justify-center px-6 text-center sm:flex">
+            <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full border border-white/10 bg-black/35 text-3xl text-white/90 backdrop-blur-sm">
+              ▶
+            </div>
+
+            <div className="max-w-2xl">
+              <div className="text-lg font-semibold text-white sm:text-2xl">
+                {hasEmbed
+                  ? "Live boat demo in motion"
+                  : hasPoster
+                    ? "Live boat walkaround"
+                    : "Live boat demo panel"}
+              </div>
+              <p className="mt-2 text-sm leading-6 text-zinc-200 sm:text-[15px]">
+                {hasEmbed
+                  ? "Embedded running clip loaded. This gives the page real motion now without needing local video setup first."
+                  : hasPoster
+                    ? "Live poster loaded. This can later become a muted loop or true live stream without changing the board structure."
+                    : "Builder is showing the actual hull, setup, trim, and performance live while buyers reserve and purchase directly from the same page."}
+              </p>
+            </div>
+          </div>
+
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center sm:hidden">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full border border-white/10 bg-black/45 text-2xl text-white/90 backdrop-blur-sm">
+              ▶
+            </div>
+          </div>
+
+          <div className="absolute bottom-0 left-0 right-0 hidden gap-2 border-t border-white/8 bg-black/35 p-3 sm:grid sm:grid-cols-3 sm:p-4">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2">
+              <div className="text-[10px] uppercase tracking-[0.18em] text-zinc-500">
+                Live angle
+              </div>
+              <div className="mt-1 text-sm text-zinc-200">
+                Front deck + prop clearance
+              </div>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2">
+              <div className="text-[10px] uppercase tracking-[0.18em] text-zinc-500">
+                Builder note
+              </div>
+              <div className="mt-1 text-sm text-zinc-200">
+                Running current tuned setup
+              </div>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2">
+              <div className="text-[10px] uppercase tracking-[0.18em] text-zinc-500">
+                Sale state
+              </div>
+              <div className="mt-1 text-sm text-zinc-200">
+                Buy now or reserve before live ends
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="pointer-events-none absolute inset-x-0 bottom-[88px] flex flex-col items-center justify-center px-6 text-center">
-          <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full border border-white/10 bg-black/35 text-3xl text-white/90 backdrop-blur-sm">
-            ▶
+        <div className="border-t border-white/8 p-4 sm:hidden">
+          <div className="text-lg font-semibold text-white">
+            {hasEmbed
+              ? "Live boat demo in motion"
+              : hasPoster
+                ? "Live boat walkaround"
+                : "Live boat demo panel"}
           </div>
+          <p className="mt-2 text-sm leading-6 text-zinc-300">
+            {hasEmbed
+              ? "Embedded running clip loaded. This gives the page real motion now without needing local video setup first."
+              : hasPoster
+                ? "Live poster loaded. This can later become a muted loop or true live stream without changing the board structure."
+                : "Builder is showing the actual hull, setup, trim, and performance live while buyers reserve and purchase directly from the same page."}
+          </p>
 
-          <div className="max-w-2xl">
-            <div className="text-lg font-semibold text-white sm:text-2xl">
-              {hasEmbed
-                ? "Live boat demo in motion"
-                : hasPoster
-                  ? "Live boat walkaround"
-                  : "Live boat demo panel"}
+          <div className="mt-4 grid gap-2">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-3">
+              <div className="text-[10px] uppercase tracking-[0.18em] text-zinc-500">
+                Live angle
+              </div>
+              <div className="mt-1 text-sm text-zinc-200">
+                Front deck + prop clearance
+              </div>
             </div>
-            <p className="mt-2 text-sm leading-6 text-zinc-200 sm:text-[15px]">
-              {hasEmbed
-                ? "Embedded running clip loaded. This gives the page real motion now without needing local video setup first."
-                : hasPoster
-                  ? "Live poster loaded. This can later become a muted loop or true live stream without changing the board structure."
-                  : "Builder is showing the actual hull, setup, trim, and performance live while buyers reserve and purchase directly from the same page."}
-            </p>
-          </div>
-        </div>
-
-        <div className="absolute bottom-0 left-0 right-0 grid gap-2 border-t border-white/8 bg-black/35 p-3 sm:grid-cols-3 sm:p-4">
-          <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2">
-            <div className="text-[10px] uppercase tracking-[0.18em] text-zinc-500">
-              Live angle
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-3">
+              <div className="text-[10px] uppercase tracking-[0.18em] text-zinc-500">
+                Builder note
+              </div>
+              <div className="mt-1 text-sm text-zinc-200">
+                Running current tuned setup
+              </div>
             </div>
-            <div className="mt-1 text-sm text-zinc-200">
-              Front deck + prop clearance
-            </div>
-          </div>
-          <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2">
-            <div className="text-[10px] uppercase tracking-[0.18em] text-zinc-500">
-              Builder note
-            </div>
-            <div className="mt-1 text-sm text-zinc-200">
-              Running current tuned setup
-            </div>
-          </div>
-          <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2">
-            <div className="text-[10px] uppercase tracking-[0.18em] text-zinc-500">
-              Sale state
-            </div>
-            <div className="mt-1 text-sm text-zinc-200">
-              Buy now or reserve before live ends
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-3">
+              <div className="text-[10px] uppercase tracking-[0.18em] text-zinc-500">
+                Sale state
+              </div>
+              <div className="mt-1 text-sm text-zinc-200">
+                Buy now or reserve before live ends
+              </div>
             </div>
           </div>
         </div>
@@ -476,11 +528,11 @@ export default function RcAirboatsLiveDemo() {
                 </span>
               </div>
 
-              <h1 className="mt-3 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+              <h1 className="mt-3 text-[2rem] font-semibold tracking-tight text-white sm:text-3xl">
                 RC Live Selling Board
               </h1>
 
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-300 sm:text-[15px]">
+              <p className="mt-2 max-w-3xl text-base leading-8 text-zinc-300 sm:text-[15px] sm:leading-6">
                 Don’t list your product. Show it live. Sell it live. This board
                 turns a real builder, a real boat, and real-time buyer activity
                 into a live trust layer instead of another flat product page.
@@ -521,7 +573,7 @@ export default function RcAirboatsLiveDemo() {
                   <div className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
                     Why this feels different
                   </div>
-                  <p className="mt-2 text-sm leading-6 text-zinc-300">
+                  <p className="mt-2 text-base leading-8 text-zinc-300 sm:text-sm sm:leading-6">
                     Not a catalog. Not a marketplace. A real seller showing a
                     real product live while buyer proof appears in the same
                     space.
@@ -532,7 +584,7 @@ export default function RcAirboatsLiveDemo() {
                   <div className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
                     Hot item pressure
                   </div>
-                  <p className="mt-2 text-sm leading-6 text-zinc-300">
+                  <p className="mt-2 text-base leading-8 text-zinc-300 sm:text-sm sm:leading-6">
                     Watching count, low stock, reserve actions, and sold events
                     create urgency without feeling fake or gimmicky.
                   </p>
@@ -542,7 +594,7 @@ export default function RcAirboatsLiveDemo() {
                   <div className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
                     HomePlanet angle
                   </div>
-                  <p className="mt-2 text-sm leading-6 text-zinc-300">
+                  <p className="mt-2 text-base leading-8 text-zinc-300 sm:text-sm sm:leading-6">
                     Presence-first selling. The proof of what is current, what
                     changed, and who acted becomes part of the board itself.
                   </p>
@@ -562,31 +614,31 @@ export default function RcAirboatsLiveDemo() {
             }
           >
             <div className="space-y-4">
-              <div className="overflow-hidden rounded-[24px] border border-white/10 bg-[#0f1011] p-4">
+              <div className="overflow-hidden rounded-[24px] border border-white/10 bg-[#0f1011] p-3 sm:p-4">
                 <div className="relative aspect-[4/3] overflow-hidden rounded-[20px] border border-white/10">
                   <img
                     src="/images/boats/featured-detail.jpg"
                     alt="Featured RC boat"
                     className="absolute inset-0 h-full w-full object-cover"
                   />
-                  <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.72),rgba(0,0,0,0.1))]" />
+                  <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.78),rgba(0,0,0,0.12))]" />
 
-                  <div className="absolute inset-0 flex h-full flex-col justify-between p-4">
+                  <div className="absolute inset-0 flex h-full flex-col justify-between p-4 sm:p-4">
                     <div className="flex items-start justify-between gap-3">
-                      <div>
+                      <div className="min-w-0">
                         <div className="text-[10px] uppercase tracking-[0.18em] text-zinc-300">
                           {featured.tag}
                         </div>
-                        <div className="mt-2 text-xl font-semibold text-white">
+                        <div className="mt-2 max-w-[9.5rem] text-[1.05rem] font-semibold leading-tight text-white sm:max-w-none sm:text-xl">
                           {featured.name}
                         </div>
                       </div>
-                      <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-200 backdrop-blur-sm">
+                      <span className="shrink-0 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-200 backdrop-blur-sm">
                         {featured.status}
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-2 sm:gap-3">
                       <div className="rounded-2xl border border-white/10 bg-black/35 p-3 backdrop-blur-sm">
                         <div className="text-[10px] uppercase tracking-[0.18em] text-zinc-400">
                           Top speed
@@ -609,81 +661,81 @@ export default function RcAirboatsLiveDemo() {
               </div>
 
               <div className="rounded-[24px] border border-white/10 bg-[#111214] p-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0 flex-1">
                     <div className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
                       Live sale details
                     </div>
-                    <h2 className="mt-2 text-2xl font-semibold text-white">
+                    <h2 className="mt-2 text-3xl font-semibold text-white sm:text-2xl">
                       {featured.price}
                     </h2>
-                    <p className="mt-2 text-sm leading-6 text-zinc-300">
+                    <p className="mt-2 text-base leading-8 text-zinc-300 sm:text-sm sm:leading-6">
                       {featured.note}
                     </p>
                   </div>
 
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2 text-right">
+                  <div className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-left sm:w-auto sm:min-w-[112px] sm:px-3 sm:py-2 sm:text-right">
                     <div className="text-[10px] uppercase tracking-[0.18em] text-zinc-500">
                       Watching
                     </div>
-                    <div className="mt-1 text-lg font-semibold text-white">
+                    <div className="mt-1 text-2xl font-semibold text-white sm:text-lg">
                       {featured.watching}
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                  <div className="rounded-2xl border border-white/10 bg-black/15 p-3">
+                <div className="mt-4 grid gap-3">
+                  <div className="rounded-2xl border border-white/10 bg-black/15 p-4 sm:p-3">
                     <div className="text-[10px] uppercase tracking-[0.18em] text-zinc-500">
                       Hull
                     </div>
-                    <div className="mt-1 text-sm text-zinc-200">
+                    <div className="mt-1 text-base text-zinc-200 sm:text-sm">
                       {featured.hull}
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border border-white/10 bg-black/15 p-3">
+                  <div className="rounded-2xl border border-white/10 bg-black/15 p-4 sm:p-3">
                     <div className="text-[10px] uppercase tracking-[0.18em] text-zinc-500">
                       Motor
                     </div>
-                    <div className="mt-1 text-sm text-zinc-200">
+                    <div className="mt-1 text-base text-zinc-200 sm:text-sm">
                       {featured.motor}
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border border-white/10 bg-black/15 p-3">
+                  <div className="rounded-2xl border border-white/10 bg-black/15 p-4 sm:p-3">
                     <div className="text-[10px] uppercase tracking-[0.18em] text-zinc-500">
                       Sold today
                     </div>
-                    <div className="mt-1 text-sm text-zinc-200">
+                    <div className="mt-1 text-base text-zinc-200 sm:text-sm">
                       {featured.soldToday} this model family
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <div className="mt-4 grid gap-3">
                   <button
                     type="button"
-                    className="rounded-2xl border border-emerald-500/30 bg-emerald-500/15 px-4 py-3 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-500/20"
+                    className="rounded-2xl border border-emerald-500/30 bg-emerald-500/15 px-4 py-4 text-lg font-semibold text-emerald-100 transition hover:bg-emerald-500/20 sm:py-3 sm:text-sm"
                   >
                     Buy now — {featured.price}
                   </button>
                   <button
                     type="button"
-                    className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-zinc-100 transition hover:bg-white/[0.08]"
+                    className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4 text-lg font-semibold text-zinc-100 transition hover:bg-white/[0.08] sm:py-3 sm:text-sm"
                   >
                     Reserve this build slot
                   </button>
                 </div>
 
-                <div className="mt-3 rounded-2xl border border-amber-500/20 bg-amber-500/8 px-3 py-3">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="text-sm text-amber-100">
+                <div className="mt-3 rounded-2xl border border-amber-500/20 bg-amber-500/8 px-4 py-4 sm:px-3 sm:py-3">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                    <div className="text-base text-amber-100 sm:text-sm">
                       Low stock pressure: only{" "}
                       <span className="font-semibold">{featured.stock}</span>{" "}
                       available in this live cycle.
                     </div>
-                    <div className="text-xs uppercase tracking-[0.18em] text-amber-200">
+                    <div className="text-[11px] uppercase tracking-[0.18em] text-amber-200 sm:text-xs">
                       Reserve before live ends
                     </div>
                   </div>
@@ -723,7 +775,7 @@ export default function RcAirboatsLiveDemo() {
                     )}
                   >
                     <div className="min-w-0">
-                      <div className="text-sm text-zinc-100">
+                      <div className="text-base leading-8 text-zinc-100 sm:text-sm sm:leading-normal">
                         <span className="font-semibold text-white">
                           {item.name}
                         </span>{" "}
@@ -734,6 +786,7 @@ export default function RcAirboatsLiveDemo() {
                           {item.model}
                         </span>
                       </div>
+
                       <div className="mt-1 text-xs uppercase tracking-[0.16em] text-zinc-500">
                         Live board activity
                       </div>
@@ -753,53 +806,53 @@ export default function RcAirboatsLiveDemo() {
             subtitle="Operational signals make the live page feel active, trusted, and decision-ready."
           >
             <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-[22px] border border-white/10 bg-[#111214] p-4">
+              <div className="rounded-[22px] border border-white/10 bg-[#111214] p-5 sm:p-4">
                 <div className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
                   Watching now
                 </div>
-                <div className="mt-2 text-3xl font-semibold text-white">
+                <div className="mt-2 text-4xl font-semibold text-white sm:text-3xl">
                   {watchingNow}
                 </div>
-                <p className="mt-2 text-sm leading-6 text-zinc-300">
+                <p className="mt-2 text-base leading-8 text-zinc-300 sm:text-sm sm:leading-6">
                   Live watchers create visible pressure while the builder is on
                   camera showing the actual product.
                 </p>
               </div>
 
-              <div className="rounded-[22px] border border-white/10 bg-[#111214] p-4">
+              <div className="rounded-[22px] border border-white/10 bg-[#111214] p-5 sm:p-4">
                 <div className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
                   Sold today
                 </div>
-                <div className="mt-2 text-3xl font-semibold text-white">
+                <div className="mt-2 text-4xl font-semibold text-white sm:text-3xl">
                   {soldToday}
                 </div>
-                <p className="mt-2 text-sm leading-6 text-zinc-300">
+                <p className="mt-2 text-base leading-8 text-zinc-300 sm:text-sm sm:leading-6">
                   The board shows movement and momentum instead of making the
                   seller feel isolated.
                 </p>
               </div>
 
-              <div className="rounded-[22px] border border-white/10 bg-[#111214] p-4">
+              <div className="rounded-[22px] border border-white/10 bg-[#111214] p-5 sm:p-4">
                 <div className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
                   Reserve-ready
                 </div>
-                <div className="mt-2 text-lg font-semibold text-white">
+                <div className="mt-2 text-2xl font-semibold text-white sm:text-lg">
                   Hold the spot without losing the buyer
                 </div>
-                <p className="mt-2 text-sm leading-6 text-zinc-300">
+                <p className="mt-2 text-base leading-8 text-zinc-300 sm:text-sm sm:leading-6">
                   Reserve becomes a bridge between interest and payment during a
                   live session.
                 </p>
               </div>
 
-              <div className="rounded-[22px] border border-white/10 bg-[#111214] p-4">
+              <div className="rounded-[22px] border border-white/10 bg-[#111214] p-5 sm:p-4">
                 <div className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
                   Low stock signal
                 </div>
-                <div className="mt-2 text-lg font-semibold text-white">
+                <div className="mt-2 text-2xl font-semibold text-white sm:text-lg">
                   {lowStockCount} models need attention
                 </div>
-                <p className="mt-2 text-sm leading-6 text-zinc-300">
+                <p className="mt-2 text-base leading-8 text-zinc-300 sm:text-sm sm:leading-6">
                   Stock state becomes part of the live story instead of hiding
                   behind a dead product page.
                 </p>
@@ -819,14 +872,14 @@ export default function RcAirboatsLiveDemo() {
             }
           >
             <div className="grid gap-3 lg:grid-cols-[0.9fr_1.1fr]">
-              <div className="rounded-[24px] border border-white/10 bg-[#101113] p-4">
+              <div className="rounded-[24px] border border-white/10 bg-[#101113] p-5 sm:p-4">
                 <div className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
                   Friction point validated
                 </div>
-                <h3 className="mt-2 text-lg font-semibold text-white">
+                <h3 className="mt-2 text-[2rem] font-semibold leading-tight text-white sm:text-lg">
                   Wrong image first. Corrected live.
                 </h3>
-                <p className="mt-3 text-sm leading-6 text-zinc-300">
+                <p className="mt-3 text-base leading-8 text-zinc-300 sm:text-sm sm:leading-6">
                   In the real world, the engraver sent the wrong image first and
                   then corrected it. The system should not leave that as messy
                   ambiguity. It should clearly show what is current, what is
@@ -834,19 +887,19 @@ export default function RcAirboatsLiveDemo() {
                 </p>
 
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/8 p-3">
+                  <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/8 p-4 sm:p-3">
                     <div className="text-[10px] uppercase tracking-[0.18em] text-emerald-300">
                       Current
                     </div>
-                    <div className="mt-1 text-sm text-emerald-50">
+                    <div className="mt-1 text-base text-emerald-50 sm:text-sm">
                       Correct live image pinned
                     </div>
                   </div>
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:p-3">
                     <div className="text-[10px] uppercase tracking-[0.18em] text-zinc-500">
                       Previous
                     </div>
-                    <div className="mt-1 text-sm text-zinc-200">
+                    <div className="mt-1 text-base text-zinc-200 sm:text-sm">
                       Earlier mistaken upload preserved in timeline
                     </div>
                   </div>
@@ -863,7 +916,7 @@ export default function RcAirboatsLiveDemo() {
                       <div className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
                         {event.label}
                       </div>
-                      <div className="mt-1 text-sm text-zinc-100">
+                      <div className="mt-1 text-base text-zinc-100 sm:text-sm">
                         {event.detail}
                       </div>
                     </div>
@@ -912,7 +965,7 @@ export default function RcAirboatsLiveDemo() {
                         <div className="text-[10px] uppercase tracking-[0.18em] text-zinc-500">
                           {item.tag}
                         </div>
-                        <h3 className="mt-2 text-lg font-semibold text-white">
+                        <h3 className="mt-2 text-[2rem] font-semibold leading-tight text-white sm:text-lg">
                           {item.name}
                         </h3>
                       </div>
@@ -933,52 +986,52 @@ export default function RcAirboatsLiveDemo() {
                         className="absolute inset-0 h-full w-full object-cover"
                       />
                       <div className="relative bg-black/60 p-4">
-                        <div className="text-2xl font-semibold text-white">
+                        <div className="text-4xl font-semibold text-white sm:text-2xl">
                           {item.price}
                         </div>
-                        <div className="mt-2 text-sm text-zinc-300">
+                        <div className="mt-2 text-base leading-8 text-zinc-300 sm:text-sm sm:leading-6">
                           {item.note}
                         </div>
                       </div>
                     </div>
 
                     <div className="mt-4 grid grid-cols-3 gap-2">
-                      <div className="rounded-2xl border border-white/10 bg-black/15 p-3">
+                      <div className="rounded-2xl border border-white/10 bg-black/15 p-4 sm:p-3">
                         <div className="text-[10px] uppercase tracking-[0.16em] text-zinc-500">
                           Stock
                         </div>
-                        <div className="mt-1 text-sm text-zinc-100">
+                        <div className="mt-1 text-xl text-zinc-100 sm:text-sm">
                           {item.stock}
                         </div>
                       </div>
-                      <div className="rounded-2xl border border-white/10 bg-black/15 p-3">
+                      <div className="rounded-2xl border border-white/10 bg-black/15 p-4 sm:p-3">
                         <div className="text-[10px] uppercase tracking-[0.16em] text-zinc-500">
                           Watching
                         </div>
-                        <div className="mt-1 text-sm text-zinc-100">
+                        <div className="mt-1 text-xl text-zinc-100 sm:text-sm">
                           {item.watching}
                         </div>
                       </div>
-                      <div className="rounded-2xl border border-white/10 bg-black/15 p-3">
+                      <div className="rounded-2xl border border-white/10 bg-black/15 p-4 sm:p-3">
                         <div className="text-[10px] uppercase tracking-[0.16em] text-zinc-500">
                           Sold
                         </div>
-                        <div className="mt-1 text-sm text-zinc-100">
+                        <div className="mt-1 text-xl text-zinc-100 sm:text-sm">
                           {item.soldToday}
                         </div>
                       </div>
                     </div>
 
-                    <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                    <div className="mt-4 grid gap-2">
                       <button
                         type="button"
-                        className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-zinc-100 transition hover:bg-white/[0.08]"
+                        className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4 text-lg font-semibold text-zinc-100 transition hover:bg-white/[0.08] sm:py-3 sm:text-sm"
                       >
                         View live details
                       </button>
                       <button
                         type="button"
-                        className="rounded-2xl border border-white/10 bg-black/15 px-4 py-3 text-sm font-semibold text-zinc-300 transition hover:bg-white/[0.05]"
+                        className="rounded-2xl border border-white/10 bg-black/15 px-4 py-4 text-lg font-semibold text-zinc-300 transition hover:bg-white/[0.05] sm:py-3 sm:text-sm"
                       >
                         Reserve / inquire
                       </button>
@@ -995,10 +1048,10 @@ export default function RcAirboatsLiveDemo() {
             <div className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
               Not just ecommerce
             </div>
-            <h3 className="mt-2 text-lg font-semibold text-white">
+            <h3 className="mt-2 text-[2rem] font-semibold leading-tight text-white sm:text-lg">
               Live presence commerce
             </h3>
-            <p className="mt-3 text-sm leading-6 text-zinc-300">
+            <p className="mt-3 text-base leading-8 text-zinc-300 sm:text-sm sm:leading-6">
               A real person sells a real product live while buyers watch,
               reserve, purchase, and create visible momentum.
             </p>
@@ -1008,10 +1061,10 @@ export default function RcAirboatsLiveDemo() {
             <div className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
               Stronger trust layer
             </div>
-            <h3 className="mt-2 text-lg font-semibold text-white">
+            <h3 className="mt-2 text-[2rem] font-semibold leading-tight text-white sm:text-lg">
               Current state matters
             </h3>
-            <p className="mt-3 text-sm leading-6 text-zinc-300">
+            <p className="mt-3 text-base leading-8 text-zinc-300 sm:text-sm sm:leading-6">
               The board should know what media is current, what changed, and
               when it changed so buyers are not left guessing.
             </p>
@@ -1021,10 +1074,10 @@ export default function RcAirboatsLiveDemo() {
             <div className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
               Builder advantage
             </div>
-            <h3 className="mt-2 text-lg font-semibold text-white">
+            <h3 className="mt-2 text-[2rem] font-semibold leading-tight text-white sm:text-lg">
               Show the product. Close the sale.
             </h3>
-            <p className="mt-3 text-sm leading-6 text-zinc-300">
+            <p className="mt-3 text-base leading-8 text-zinc-300 sm:text-sm sm:leading-6">
               Instead of fighting dead product listings, the craftsman can go
               live, answer questions, and sell from one operational board.
             </p>
