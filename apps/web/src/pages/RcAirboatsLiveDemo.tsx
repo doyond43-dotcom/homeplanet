@@ -39,15 +39,8 @@ type ProofEvent = {
 const LIVE_POSTER_URL = "/images/boats/live-main.jpg";
 
 /**
- * Recommended first video from the links you sent:
- * Terrys G2 Modified Flat Bottom Speed Run
- *
- * Swap this ID later if you want:
- * fcZ7w0MpH2o
- * -v0iJvVyQtk
- * BVPdBURMhP8
- * TduR6QJc7Y4
- * nXDnMvIDXGk
+ * Recommended first video from the links you sent.
+ * Swap this ID later if you want.
  */
 const YOUTUBE_VIDEO_ID = "BVPdBURMhP8";
 const YOUTUBE_EMBED_URL = `https://www.youtube.com/embed/${YOUTUBE_VIDEO_ID}?autoplay=1&mute=1&controls=1&loop=1&playlist=${YOUTUBE_VIDEO_ID}&modestbranding=1&rel=0`;
@@ -286,12 +279,14 @@ function SectionCard({
   right,
   children,
   className = "",
+  headerClassName = "",
 }: {
   title: string;
   subtitle?: string;
   right?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
+  headerClassName?: string;
 }) {
   return (
     <section
@@ -300,8 +295,13 @@ function SectionCard({
         className,
       )}
     >
-      <div className="flex flex-col gap-3 border-b border-white/8 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-        <div>
+      <div
+        className={clsx(
+          "flex flex-col gap-3 border-b border-white/8 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6",
+          headerClassName,
+        )}
+      >
+        <div className="min-w-0 flex-1">
           <div className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
             {title}
           </div>
@@ -309,7 +309,7 @@ function SectionCard({
             <div className="mt-1 text-sm text-zinc-300">{subtitle}</div>
           ) : null}
         </div>
-        {right ? <div>{right}</div> : null}
+        {right ? <div className="shrink-0">{right}</div> : null}
       </div>
       <div className="p-5 sm:p-6">{children}</div>
     </section>
@@ -554,8 +554,9 @@ export default function RcAirboatsLiveDemo() {
           <SectionCard
             title="Featured model"
             subtitle="The main live-selling card keeps the decision clear and fast."
+            headerClassName="sm:pr-8"
             right={
-              <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-200">
+              <span className="inline-flex shrink-0 items-center rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-200">
                 Hot item
               </span>
             }
