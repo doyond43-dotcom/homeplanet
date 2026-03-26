@@ -10,6 +10,7 @@ import CreatorStudio from "../pages/CreatorStudio";
 import CreatorBuild from "../pages/CreatorBuild";
 import ReleaseViewer from "../pages/ReleaseViewer";
 import StarterBoardPreview from "../pages/StarterBoardPreview";
+import RcAirboatsLiveDemo from "../pages/RcAirboatsLiveDemo";
 
 // Demo boards
 import AwnitDemoBoard from "../pages/AwnitDemoBoard";
@@ -68,6 +69,7 @@ export default function PlanetRoutes() {
       <Route path="creator/studio/*" element={<CreatorStudio />} />
       <Route path="creator/build" element={<CreatorBuild />} />
       <Route path="creator/release/:releaseId" element={<ReleaseViewer />} />
+      <Route path="creator/rc-live" element={<RcAirboatsLiveDemo />} />
       <Route
         path="creator/*"
         element={<Navigate to="/planet/creator" replace />}
