@@ -6,6 +6,12 @@ const REQUEST_ACCESS_URL =
 const REQUEST_ACCESS_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXMiJ9";
 
+/**
+ * Set this to your actual live-selling demo route if needed.
+ * I kept it isolated to one constant so the CreatorCity page stays clean.
+ */
+const LIVE_PRODUCT_DEMO_ROUTE = "/planet/creator/rc-live";
+
 type SystemExample = {
   id: string;
   title: string;
@@ -586,6 +592,237 @@ export default function CreatorCity() {
     lineHeight: 1.05,
   };
 
+  const featuredDemoCard: React.CSSProperties = {
+    marginTop: isMobile ? 18 : 16,
+    border: "1px solid rgba(250,204,21,0.26)",
+    background:
+      "linear-gradient(180deg, rgba(250,204,21,0.08), rgba(2,6,23,0.66) 22%, rgba(2,6,23,0.74) 100%)",
+    borderRadius: isMobile ? 24 : 22,
+    padding: isMobile ? 18 : 18,
+    cursor: "pointer",
+    boxShadow:
+      "0 18px 40px rgba(0,0,0,0.28), 0 0 28px rgba(250,204,21,0.06), inset 0 1px 0 rgba(255,255,255,0.04)",
+    overflow: "hidden",
+  };
+
+  const featuredDemoTop: React.CSSProperties = {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: isMobile ? 14 : 18,
+    flexDirection: isMobile ? "column" : "row",
+  };
+
+  const featuredDemoTextWrap: React.CSSProperties = {
+    display: "flex",
+    flexDirection: "column",
+    gap: isMobile ? 10 : 8,
+    minWidth: 0,
+    flex: 1,
+  };
+
+  const featuredDemoBadgeRow: React.CSSProperties = {
+    display: "flex",
+    gap: 10,
+    flexWrap: "wrap",
+    alignItems: "center",
+  };
+
+  const featuredDemoBadge: React.CSSProperties = {
+    borderRadius: 999,
+    padding: isMobile ? "9px 14px" : "6px 10px",
+    fontSize: isMobile ? 14 : 11,
+    fontWeight: 900,
+    border: "1px solid rgba(250,204,21,0.38)",
+    color: "rgba(254,240,138,1)",
+    background: "rgba(250,204,21,0.10)",
+    letterSpacing: 0.4,
+  };
+
+  const featuredDemoSecondaryBadge: React.CSSProperties = {
+    borderRadius: 999,
+    padding: isMobile ? "9px 14px" : "6px 10px",
+    fontSize: isMobile ? 14 : 11,
+    fontWeight: 900,
+    border: "1px solid rgba(34,197,94,0.30)",
+    color: "rgba(187,247,208,1)",
+    background: "rgba(34,197,94,0.08)",
+    letterSpacing: 0.4,
+  };
+
+  const featuredDemoTitle: React.CSSProperties = {
+    fontWeight: 900,
+    fontSize: isMobile ? 30 : 22,
+    color: "#ffffff",
+    lineHeight: isMobile ? 1.02 : 1.06,
+    letterSpacing: isMobile ? -0.7 : -0.35,
+  };
+
+  const featuredDemoSubline: React.CSSProperties = {
+    fontSize: isMobile ? 18 : 15,
+    lineHeight: isMobile ? 1.42 : 1.65,
+    color: "rgba(226,232,240,0.90)",
+    maxWidth: 760,
+  };
+
+  const featuredDemoSupport: React.CSSProperties = {
+    fontSize: isMobile ? 16 : 13,
+    lineHeight: isMobile ? 1.42 : 1.55,
+    color: "rgba(186,230,253,0.84)",
+    maxWidth: 760,
+  };
+
+  const featuredDemoAction: React.CSSProperties = {
+    ...btnPrimary,
+    padding: isMobile ? "14px 18px" : "10px 14px",
+    fontSize: isMobile ? 17 : 13,
+    whiteSpace: "nowrap",
+  };
+
+  const featuredDemoGrid: React.CSSProperties = {
+    display: "grid",
+    gridTemplateColumns: isMobile ? "1fr" : "1.1fr 0.9fr",
+    gap: isMobile ? 16 : 16,
+    marginTop: isMobile ? 16 : 16,
+  };
+
+  const featuredPreviewShell: React.CSSProperties = {
+    border: "1px solid rgba(148,163,184,0.18)",
+    borderRadius: isMobile ? 20 : 18,
+    background:
+      "linear-gradient(180deg, rgba(15,23,42,0.74), rgba(2,6,23,0.84))",
+    padding: isMobile ? 14 : 14,
+    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
+  };
+
+  const featuredPreviewTop: React.CSSProperties = {
+    display: "grid",
+    gridTemplateColumns: "1.15fr 0.85fr",
+    gap: 10,
+  };
+
+  const featuredPreviewVideo: React.CSSProperties = {
+    minHeight: isMobile ? 170 : 188,
+    borderRadius: 16,
+    border: "1px solid rgba(148,163,184,0.16)",
+    background:
+      "radial-gradient(circle at 40% 28%, rgba(56,189,248,0.16), transparent 32%), linear-gradient(180deg, rgba(30,41,59,0.96), rgba(15,23,42,0.92))",
+    padding: 12,
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between",
+  };
+
+  const featuredPreviewPillRow: React.CSSProperties = {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 10,
+    flexWrap: "wrap",
+  };
+
+  const previewTinyPill = (kind: "live" | "neutral" | "warn"): React.CSSProperties => ({
+    borderRadius: 999,
+    padding: "5px 8px",
+    fontSize: 10,
+    fontWeight: 900,
+    letterSpacing: 0.3,
+    border:
+      kind === "live"
+        ? "1px solid rgba(34,197,94,0.28)"
+        : kind === "warn"
+          ? "1px solid rgba(250,204,21,0.30)"
+          : "1px solid rgba(148,163,184,0.18)",
+    color:
+      kind === "live"
+        ? "rgba(187,247,208,1)"
+        : kind === "warn"
+          ? "rgba(254,240,138,1)"
+          : "rgba(226,232,240,0.88)",
+    background:
+      kind === "live"
+        ? "rgba(34,197,94,0.08)"
+        : kind === "warn"
+          ? "rgba(250,204,21,0.08)"
+          : "rgba(255,255,255,0.03)",
+  });
+
+  const featuredPreviewCenter: React.CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "column",
+    gap: 8,
+    flex: 1,
+    textAlign: "center",
+  };
+
+  const playCircle: React.CSSProperties = {
+    width: isMobile ? 50 : 56,
+    height: isMobile ? 50 : 56,
+    borderRadius: "50%",
+    border: "1px solid rgba(148,163,184,0.20)",
+    background: "rgba(2,6,23,0.46)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "#ffffff",
+    fontSize: isMobile ? 20 : 22,
+    boxShadow: "0 0 18px rgba(56,189,248,0.08)",
+  };
+
+  const featuredPreviewBottomGrid: React.CSSProperties = {
+    display: "grid",
+    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+    gap: 8,
+    marginTop: 10,
+  };
+
+  const previewMiniBox: React.CSSProperties = {
+    borderRadius: 12,
+    border: "1px solid rgba(148,163,184,0.16)",
+    background: "rgba(255,255,255,0.03)",
+    padding: "8px 9px",
+  };
+
+  const featuredPreviewSide: React.CSSProperties = {
+    minHeight: isMobile ? 170 : 188,
+    borderRadius: 16,
+    border: "1px solid rgba(250,204,21,0.18)",
+    background:
+      "linear-gradient(180deg, rgba(250,204,21,0.06), rgba(15,23,42,0.92) 34%, rgba(2,6,23,0.92))",
+    padding: 12,
+    display: "flex",
+    flexDirection: "column",
+    gap: 10,
+  };
+
+  const featuredPreviewPriceRow: React.CSSProperties = {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: 10,
+    alignItems: "flex-start",
+  };
+
+  const featuredPreviewStatRow: React.CSSProperties = {
+    display: "grid",
+    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+    gap: 8,
+  };
+
+  const featuredValueGrid: React.CSSProperties = {
+    display: "grid",
+    gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))",
+    gap: isMobile ? 10 : 10,
+  };
+
+  const featuredValueCard: React.CSSProperties = {
+    borderRadius: 16,
+    border: "1px solid rgba(148,163,184,0.16)",
+    background: "rgba(255,255,255,0.03)",
+    padding: isMobile ? 14 : 12,
+  };
+
   const examplesGrid: React.CSSProperties = {
     display: "grid",
     gridTemplateColumns: "1fr",
@@ -824,27 +1061,27 @@ export default function CreatorCity() {
                 </button>
               </div>
             )}
-          </div>
 
-          {isMobile && (
-            <div style={{ ...buttonRow, marginTop: 14 }}>
-              <button style={btnBase} onClick={() => nav("/planet/pricing")}>
-                Pricing
-              </button>
-              <button
-                style={btnBase}
-                onClick={() => nav("/planet/creator/projects")}
-              >
-                Projects
-              </button>
-              <button
-                style={btnBase}
-                onClick={() => nav("/planet/creator/studio")}
-              >
-                Studio
-              </button>
-            </div>
-          )}
+            {isMobile && (
+              <div style={{ ...buttonRow, marginTop: 14 }}>
+                <button style={btnBase} onClick={() => nav("/planet/pricing")}>
+                  Pricing
+                </button>
+                <button
+                  style={btnBase}
+                  onClick={() => nav("/planet/creator/projects")}
+                >
+                  Projects
+                </button>
+                <button
+                  style={btnBase}
+                  onClick={() => nav("/planet/creator/studio")}
+                >
+                  Studio
+                </button>
+              </div>
+            )}
+          </div>
 
           <div style={topGrid}>
             <div style={sectionCard}>
@@ -1103,6 +1340,335 @@ export default function CreatorCity() {
         </div>
 
         <div style={examplesLabel}>See what&apos;s possible right now</div>
+
+        <div
+          style={featuredDemoCard}
+          onClick={() => nav(LIVE_PRODUCT_DEMO_ROUTE)}
+        >
+          <div style={featuredDemoTop}>
+            <div style={featuredDemoTextWrap}>
+              <div style={featuredDemoBadgeRow}>
+                <div style={featuredDemoBadge}>HIGH VALUE SYSTEM</div>
+                <div style={featuredDemoSecondaryBadge}>LIVE SELLING</div>
+              </div>
+
+              <div style={featuredDemoTitle}>Live Product Selling Board</div>
+
+              <div style={featuredDemoSubline}>
+                Turn a live seller into a real-time buying event.
+              </div>
+
+              <div style={featuredDemoSupport}>
+                Live video, buyer movement, reserve pressure, and proof-state in
+                one board. This is not a flat product page. It is a revenue
+                engine with visible momentum.
+              </div>
+            </div>
+
+            <button
+              type="button"
+              style={featuredDemoAction}
+              onClick={(e) => {
+                e.stopPropagation();
+                nav(LIVE_PRODUCT_DEMO_ROUTE);
+              }}
+            >
+              View live selling demo
+            </button>
+          </div>
+
+          <div style={featuredDemoGrid}>
+            <div style={featuredPreviewShell}>
+              <div style={featuredPreviewTop}>
+                <div style={featuredPreviewVideo}>
+                  <div style={featuredPreviewPillRow}>
+                    <div style={previewTinyPill("live")}>LIVE</div>
+                    <div style={previewTinyPill("neutral")}>83 watching</div>
+                  </div>
+
+                  <div style={featuredPreviewCenter}>
+                    <div style={playCircle}>▶</div>
+                    <div
+                      style={{
+                        fontWeight: 900,
+                        fontSize: isMobile ? 18 : 15,
+                        color: "#ffffff",
+                        lineHeight: 1.08,
+                      }}
+                    >
+                      Seller live demo in motion
+                    </div>
+                    <div
+                      style={{
+                        fontSize: isMobile ? 14 : 12,
+                        color: "rgba(226,232,240,0.74)",
+                        lineHeight: 1.45,
+                        maxWidth: 260,
+                      }}
+                    >
+                      Show the product live while buyer activity builds on the
+                      same page.
+                    </div>
+                  </div>
+
+                  <div style={featuredPreviewBottomGrid}>
+                    <div style={previewMiniBox}>
+                      <div
+                        style={{
+                          fontSize: 10,
+                          color: "rgba(148,163,184,0.88)",
+                          marginBottom: 4,
+                          fontWeight: 900,
+                        }}
+                      >
+                        LIVE ANGLE
+                      </div>
+                      <div style={{ fontSize: 11, color: "#e5e7eb" }}>
+                        Product demo
+                      </div>
+                    </div>
+                    <div style={previewMiniBox}>
+                      <div
+                        style={{
+                          fontSize: 10,
+                          color: "rgba(148,163,184,0.88)",
+                          marginBottom: 4,
+                          fontWeight: 900,
+                        }}
+                      >
+                        BUILDER NOTE
+                      </div>
+                      <div style={{ fontSize: 11, color: "#e5e7eb" }}>
+                        Showing current setup
+                      </div>
+                    </div>
+                    <div style={previewMiniBox}>
+                      <div
+                        style={{
+                          fontSize: 10,
+                          color: "rgba(148,163,184,0.88)",
+                          marginBottom: 4,
+                          fontWeight: 900,
+                        }}
+                      >
+                        SALE STATE
+                      </div>
+                      <div style={{ fontSize: 11, color: "#e5e7eb" }}>
+                        Buy or reserve live
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={featuredPreviewSide}>
+                  <div style={featuredPreviewPillRow}>
+                    <div style={previewTinyPill("neutral")}>FEATURED MODEL</div>
+                    <div style={previewTinyPill("warn")}>HOT ITEM</div>
+                  </div>
+
+                  <div style={featuredPreviewPriceRow}>
+                    <div>
+                      <div
+                        style={{
+                          fontSize: isMobile ? 20 : 18,
+                          fontWeight: 900,
+                          color: "#ffffff",
+                          lineHeight: 1.06,
+                        }}
+                      >
+                        Custom Seller Item
+                      </div>
+                      <div
+                        style={{
+                          marginTop: 6,
+                          fontSize: 12,
+                          color: "rgba(226,232,240,0.74)",
+                          lineHeight: 1.45,
+                        }}
+                      >
+                        Generic wrapper for live commerce demos inside Creator
+                        City.
+                      </div>
+                    </div>
+
+                    <div style={previewTinyPill("warn")}>LOW STOCK</div>
+                  </div>
+
+                  <div
+                    style={{
+                      fontSize: isMobile ? 28 : 24,
+                      fontWeight: 900,
+                      color: "#ffffff",
+                      lineHeight: 1.02,
+                    }}
+                  >
+                    $1,495
+                  </div>
+
+                  <div
+                    style={{
+                      fontSize: 12,
+                      color: "rgba(226,232,240,0.82)",
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    Tight stock, live video, fast reserve path, and visible buyer
+                    pressure.
+                  </div>
+
+                  <div style={featuredPreviewStatRow}>
+                    <div style={previewMiniBox}>
+                      <div
+                        style={{
+                          fontSize: 10,
+                          color: "rgba(148,163,184,0.88)",
+                          marginBottom: 4,
+                          fontWeight: 900,
+                        }}
+                      >
+                        STOCK
+                      </div>
+                      <div style={{ fontSize: 12, color: "#ffffff" }}>2</div>
+                    </div>
+                    <div style={previewMiniBox}>
+                      <div
+                        style={{
+                          fontSize: 10,
+                          color: "rgba(148,163,184,0.88)",
+                          marginBottom: 4,
+                          fontWeight: 900,
+                        }}
+                      >
+                        WATCHING
+                      </div>
+                      <div style={{ fontSize: 12, color: "#ffffff" }}>34</div>
+                    </div>
+                    <div style={previewMiniBox}>
+                      <div
+                        style={{
+                          fontSize: 10,
+                          color: "rgba(148,163,184,0.88)",
+                          marginBottom: 4,
+                          fontWeight: 900,
+                        }}
+                      >
+                        SOLD TODAY
+                      </div>
+                      <div style={{ fontSize: 12, color: "#ffffff" }}>5</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style={featuredValueGrid}>
+              <div style={featuredValueCard}>
+                <div
+                  style={{
+                    fontSize: isMobile ? 16 : 12,
+                    fontWeight: 900,
+                    color: "rgba(254,240,138,1)",
+                    marginBottom: 6,
+                    letterSpacing: 0.3,
+                  }}
+                >
+                  LIVE VIDEO
+                </div>
+                <div
+                  style={{
+                    fontSize: isMobile ? 18 : 14,
+                    fontWeight: 900,
+                    color: "#ffffff",
+                    lineHeight: 1.08,
+                    marginBottom: 6,
+                  }}
+                >
+                  The seller becomes the event
+                </div>
+                <div
+                  style={{
+                    fontSize: isMobile ? 15 : 12,
+                    color: "rgba(226,232,240,0.76)",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  The product is shown live instead of being buried in a dead
+                  listing.
+                </div>
+              </div>
+
+              <div style={featuredValueCard}>
+                <div
+                  style={{
+                    fontSize: isMobile ? 16 : 12,
+                    fontWeight: 900,
+                    color: "rgba(187,247,208,1)",
+                    marginBottom: 6,
+                    letterSpacing: 0.3,
+                  }}
+                >
+                  BUYER PRESSURE
+                </div>
+                <div
+                  style={{
+                    fontSize: isMobile ? 18 : 14,
+                    fontWeight: 900,
+                    color: "#ffffff",
+                    lineHeight: 1.08,
+                    marginBottom: 6,
+                  }}
+                >
+                  Reserve momentum stays visible
+                </div>
+                <div
+                  style={{
+                    fontSize: isMobile ? 15 : 12,
+                    color: "rgba(226,232,240,0.76)",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  Watching count, low stock, and sold movement create urgency
+                  without fake gimmicks.
+                </div>
+              </div>
+
+              <div style={featuredValueCard}>
+                <div
+                  style={{
+                    fontSize: isMobile ? 16 : 12,
+                    fontWeight: 900,
+                    color: "rgba(186,230,253,1)",
+                    marginBottom: 6,
+                    letterSpacing: 0.3,
+                  }}
+                >
+                  PROOF STATE
+                </div>
+                <div
+                  style={{
+                    fontSize: isMobile ? 18 : 14,
+                    fontWeight: 900,
+                    color: "#ffffff",
+                    lineHeight: 1.08,
+                    marginBottom: 6,
+                  }}
+                >
+                  Current vs previous stays clear
+                </div>
+                <div
+                  style={{
+                    fontSize: isMobile ? 15 : 12,
+                    color: "rgba(226,232,240,0.76)",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  The board can show what is current, what changed, and what
+                  happened live.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <div style={examplesGrid}>
           {systems.map((s) => (
