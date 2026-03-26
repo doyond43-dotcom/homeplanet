@@ -22,17 +22,20 @@ import TransportationDispatchBoardV2 from "../pages/TransportationDispatchBoardV
 import LifePlanet from "../pages/LifePlanet";
 import JeanettesLanding from "../pages/JeanettesLanding";
 
-// Restaurant demo pages (legacy demo components remain available via explicit routes)
+// Restaurant demo pages
 import RestaurantRushSimpleDemo from "../pages/RestaurantRushSimpleDemo";
 import RestaurantRushManualDemo from "../pages/RestaurantRushManualDemo";
 import RestaurantRushLiveDemo from "../pages/RestaurantRushLiveDemo";
 import RestaurantRushDemo from "../pages/RestaurantRushDemo";
 import MomsKitchenDemo from "../pages/MomsKitchenDemo";
 
-// Legal demo pages
+// Legal
 import JoeGrantLegalDesk from "../pages/JoeGrantLegalDesk";
 
-// Guardian
+// 🔥 NEW GUARDIAN SYSTEM PAGE
+import PlanetGuardian from "../pages/PlanetGuardian";
+
+// Guardian existing
 import GuardianPresenceDesk from "../pages/GuardianPresenceDesk";
 import GuardianJoinDesk from "../pages/GuardianJoinDesk";
 import GuardianPetTagDemo from "../pages/GuardianPetTagDemo";
@@ -41,7 +44,7 @@ import PetCareTimelinePanel from "../components/guardian/PetCareTimelinePanel";
 // Emily
 import EmilyLearningDesk from "../pages/EmilyLearningDesk";
 
-// RouteCut Lawn
+// RouteCut
 import RouteCutLawnPage from "../pages/RouteCutLawnPage";
 import RouteCutOperatorBoard from "../pages/RouteCutOperatorBoard";
 import RouteCutLiveView from "../pages/RouteCutLiveView";
@@ -53,10 +56,6 @@ import OnboardingFlow from "../pages/OnboardingFlow";
 import OnboardingBuildTransition from "../pages/OnboardingBuildTransition";
 
 export default function PlanetRoutes() {
-  /**
-   * Dedicated restaurant live-board slug.
-   * This must not point at the auto-repair demo slug anymore.
-   */
   const RESTAURANT_LIVE_TARGET = "/planet/live/peggies-diner";
 
   return (
@@ -70,113 +69,60 @@ export default function PlanetRoutes() {
       <Route path="creator/build" element={<CreatorBuild />} />
       <Route path="creator/release/:releaseId" element={<ReleaseViewer />} />
       <Route path="creator/rc-live" element={<RcAirboatsLiveDemo />} />
-      <Route
-        path="creator/*"
-        element={<Navigate to="/planet/creator" replace />}
-      />
+      <Route path="creator/*" element={<Navigate to="/planet/creator" replace />} />
 
-      {/* Generic public demo aliases */}
+      {/* Demo */}
       <Route path="demo/home-services" element={<AwnitDemoBoard />} />
       <Route path="demo/auto-service" element={<AutoRepairLiveBoard />} />
       <Route path="demo/kitchen-flow" element={<RestaurantRushSimpleDemo />} />
-      <Route
-        path="demo/kitchen-manual"
-        element={<RestaurantRushManualDemo />}
-      />
+      <Route path="demo/kitchen-manual" element={<RestaurantRushManualDemo />} />
 
-      {/* Restaurant aliases should open the dedicated restaurant live slug */}
-      <Route
-        path="demo/kitchen-live"
-        element={<Navigate to={RESTAURANT_LIVE_TARGET} replace />}
-      />
-      <Route
-        path="demo/restaurant"
-        element={<Navigate to={RESTAURANT_LIVE_TARGET} replace />}
-      />
+      <Route path="demo/kitchen-live" element={<Navigate to={RESTAURANT_LIVE_TARGET} replace />} />
+      <Route path="demo/restaurant" element={<Navigate to={RESTAURANT_LIVE_TARGET} replace />} />
 
       <Route path="demo/example-kitchen" element={<MomsKitchenDemo />} />
       <Route path="demo/legal-workspace" element={<JoeGrantLegalDesk />} />
       <Route path="demo/lawn-route" element={<RouteCutLawnPage />} />
       <Route path="demo/community-sale" element={<CommunitySaleBoard />} />
-      <Route
-        path="demo/transportation"
-        element={<TransportationDispatchBoardV2 />}
-      />
+      <Route path="demo/transportation" element={<TransportationDispatchBoardV2 />} />
 
-      {/* Live board links (slug-driven boards) */}
+      {/* Live boards */}
       <Route path="live/:boardSlug" element={<AutoRepairLiveBoard />} />
 
-      {/* Legacy / named demo routes kept alive */}
+      {/* Legacy */}
       <Route path="vehicles/awnit-demo" element={<AwnitDemoBoard />} />
-      <Route
-        path="vehicles/awnit-demo/invoice/:invoiceId"
-        element={<InvoiceView />}
-      />
+      <Route path="vehicles/awnit-demo/invoice/:invoiceId" element={<InvoiceView />} />
       <Route path="demo/awnit" element={<AwnitDemoBoard />} />
 
       {/* Food */}
-      <Route
-        path="food/restaurant-rush-simple"
-        element={<RestaurantRushSimpleDemo />}
-      />
-      <Route
-        path="food/restaurant-rush-manual"
-        element={<RestaurantRushManualDemo />}
-      />
-      <Route
-        path="food/restaurant-rush-live"
-        element={<Navigate to={RESTAURANT_LIVE_TARGET} replace />}
-      />
-      <Route
-        path="food/restaurant-rush"
-        element={<Navigate to={RESTAURANT_LIVE_TARGET} replace />}
-      />
-
-      {/* Keep older restaurant demos accessible explicitly */}
-      <Route
-        path="food/restaurant-rush-legacy"
-        element={<RestaurantRushDemo />}
-      />
-      <Route
-        path="food/restaurant-rush-live-classic"
-        element={<RestaurantRushLiveDemo />}
-      />
-
+      <Route path="food/restaurant-rush-simple" element={<RestaurantRushSimpleDemo />} />
+      <Route path="food/restaurant-rush-manual" element={<RestaurantRushManualDemo />} />
+      <Route path="food/restaurant-rush-live" element={<Navigate to={RESTAURANT_LIVE_TARGET} replace />} />
+      <Route path="food/restaurant-rush" element={<Navigate to={RESTAURANT_LIVE_TARGET} replace />} />
+      <Route path="food/restaurant-rush-legacy" element={<RestaurantRushDemo />} />
+      <Route path="food/restaurant-rush-live-classic" element={<RestaurantRushLiveDemo />} />
       <Route path="food/moms-kitchen" element={<MomsKitchenDemo />} />
 
       {/* Legal */}
       <Route path="legal/joe-grant" element={<JoeGrantLegalDesk />} />
 
       {/* Community */}
-      <Route
-        path="community/community-sale"
-        element={<CommunitySaleBoard />}
-      />
+      <Route path="community/community-sale" element={<CommunitySaleBoard />} />
 
       {/* Transportation */}
-      <Route
-        path="transportation/dispatch"
-        element={<TransportationDispatchBoardV2 />}
-      />
+      <Route path="transportation/dispatch" element={<TransportationDispatchBoardV2 />} />
 
-      {/* Guardian */}
-      <Route
-        path="guardian"
-        element={<Navigate to="/planet/guardian-pet/timeline" replace />}
-      />
+      {/* 🔥 GUARDIAN SYSTEM ENTRY (THIS IS THE FIX) */}
+      <Route path="guardian" element={<PlanetGuardian />} />
+
+      {/* Guardian sub */}
       <Route path="guardian/join" element={<GuardianJoinDesk />} />
       <Route path="guardian/presence" element={<GuardianPresenceDesk />} />
 
       {/* Pet Guardian */}
       <Route path="guardian-pet" element={<GuardianPetTagDemo />} />
-      <Route
-        path="guardian-pet/pet/:petId"
-        element={<GuardianPetTagDemo />}
-      />
-      <Route
-        path="guardian-pet/found/:petId"
-        element={<GuardianPetTagDemo />}
-      />
+      <Route path="guardian-pet/pet/:petId" element={<GuardianPetTagDemo />} />
+      <Route path="guardian-pet/found/:petId" element={<GuardianPetTagDemo />} />
       <Route path="guardian-pet/timeline" element={<PetCareTimelinePanel />} />
 
       {/* Lawn */}
@@ -190,19 +136,16 @@ export default function PlanetRoutes() {
 
       {/* Onboarding */}
       <Route path="start" element={<OnboardingFlow />} />
-      <Route
-        path="start/building"
-        element={<OnboardingBuildTransition />}
-      />
+      <Route path="start/building" element={<OnboardingBuildTransition />} />
       <Route path="start/preview" element={<StarterBoardPreview />} />
 
-      {/* Other special pages */}
+      {/* Other */}
       <Route path="pricing" element={<PricingPage />} />
       <Route path="jeanettes" element={<JeanettesLanding />} />
       <Route path="life" element={<LifePlanet />} />
       <Route path="emily" element={<EmilyLearningDesk />} />
 
-      {/* Generic planets */}
+      {/* Generic */}
       <Route path=":planetId" element={<PlanetOverview />} />
       <Route path=":planetId/:cityId" element={<CityPage />} />
 
