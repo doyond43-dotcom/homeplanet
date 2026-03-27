@@ -1379,6 +1379,171 @@ export default function PlanetGuardian() {
           </div>
         </div>
 
+        {/* ========================= */}
+        {/* GUARDIAN PRICING SECTION */}
+        {/* ========================= */}
+        <div
+          style={{
+            marginTop: isMobile ? 22 : 24,
+            border: "1px solid rgba(148,163,184,0.16)",
+            borderRadius: isMobile ? 26 : 22,
+            padding: isMobile ? 18 : 22,
+            background:
+              "linear-gradient(180deg, rgba(255,255,255,0.04), rgba(2,6,23,0.6))",
+          }}
+        >
+          <div style={sectionTitle}>Start Guardian</div>
+
+          <div style={sectionText}>
+            One system. One board. Everyone who matters.
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: isMobile ? "1fr" : "1fr 1.1fr",
+              gap: 14,
+              marginTop: 16,
+            }}
+          >
+            <div
+              style={{
+                borderRadius: 20,
+                padding: isMobile ? 16 : 18,
+                border: "1px solid rgba(148,163,184,0.18)",
+                background: "rgba(255,255,255,0.03)",
+              }}
+            >
+              <div style={{ fontSize: 11, fontWeight: 900, color: "#94a3b8" }}>
+                SOLO
+              </div>
+
+              <div
+                style={{
+                  fontSize: isMobile ? 24 : 20,
+                  fontWeight: 900,
+                  color: "#fff",
+                  marginTop: 4,
+                }}
+              >
+                $19.95/mo
+              </div>
+
+              <div style={{ ...sectionText, marginTop: 8 }}>
+                One person, pet, or dependent. Simple Guardian layer.
+              </div>
+
+              <div style={{ marginTop: 12, display: "grid", gap: 6 }}>
+                {[
+                  "Live presence awareness",
+                  "Timeline + last-seen",
+                  "Emergency context ready",
+                ].map((item) => (
+                  <div key={item} style={{ fontSize: 13, color: "#e5e7eb" }}>
+                    • {item}
+                  </div>
+                ))}
+              </div>
+
+              <button
+                style={{
+                  marginTop: 14,
+                  width: "100%",
+                  borderRadius: 999,
+                  padding: "12px",
+                  fontWeight: 900,
+                  border: "1px solid rgba(34,197,94,0.28)",
+                  background: "rgba(34,197,94,0.1)",
+                  color: "#bbf7d0",
+                  cursor: "pointer",
+                }}
+                onClick={() => nav("/planet/start?plan=solo&system=guardian")}
+              >
+                Start Solo
+              </button>
+            </div>
+
+            <div
+              style={{
+                borderRadius: 22,
+                padding: isMobile ? 18 : 20,
+                border: "1px solid rgba(34,197,94,0.32)",
+                background:
+                  "linear-gradient(180deg, rgba(34,197,94,0.14), rgba(2,6,23,0.5))",
+                boxShadow: "0 0 30px rgba(74,222,128,0.12)",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 900,
+                  color: "#bbf7d0",
+                }}
+              >
+                MOST USED
+              </div>
+
+              <div
+                style={{
+                  fontSize: isMobile ? 28 : 24,
+                  fontWeight: 900,
+                  color: "#fff",
+                  marginTop: 4,
+                }}
+              >
+                $39.95/mo
+              </div>
+
+              <div style={{ ...sectionText, marginTop: 8 }}>
+                Full household Guardian. Kids, pets, elderly — all in one board.
+              </div>
+
+              <div style={{ marginTop: 12, display: "grid", gap: 6 }}>
+                {[
+                  "Unlimited household members",
+                  "Live household panel",
+                  "Cross-category awareness (pets + kids + elderly)",
+                  "Full response timeline system",
+                ].map((item) => (
+                  <div key={item} style={{ fontSize: 13, color: "#e5e7eb" }}>
+                    • {item}
+                  </div>
+                ))}
+              </div>
+
+              <button
+                style={{
+                  marginTop: 16,
+                  width: "100%",
+                  borderRadius: 999,
+                  padding: "14px",
+                  fontWeight: 900,
+                  border: "1px solid rgba(34,197,94,0.4)",
+                  background: "rgba(34,197,94,0.18)",
+                  color: "#bbf7d0",
+                  cursor: "pointer",
+                  fontSize: 15,
+                }}
+                onClick={() => nav("/planet/start?plan=household&system=guardian")}
+              >
+                Start Household
+              </button>
+            </div>
+          </div>
+
+          <div
+            style={{
+              marginTop: 14,
+              textAlign: "center",
+              fontSize: 12,
+              color: "#94a3b8",
+              fontWeight: 700,
+            }}
+          >
+            No setup friction • Start instantly • Expand anytime
+          </div>
+        </div>
+
         <div
           style={{
             marginTop: isMobile ? 22 : 22,
