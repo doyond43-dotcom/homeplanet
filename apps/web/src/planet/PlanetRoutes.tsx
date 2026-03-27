@@ -18,6 +18,7 @@ import AutoRepairLiveBoard from "../pages/AutoRepairLiveBoard";
 import InvoiceView from "../pages/InvoiceView";
 import CommunitySaleBoard from "../pages/community/CommunitySaleBoard";
 import TransportationDispatchBoardV2 from "../pages/TransportationDispatchBoardV2";
+import EscapeBoardDemo from "../pages/EscapeBoardDemo";
 
 import LifePlanet from "../pages/LifePlanet";
 import JeanettesLanding from "../pages/JeanettesLanding";
@@ -76,6 +77,7 @@ export default function PlanetRoutes() {
       <Route path="demo/auto-service" element={<AutoRepairLiveBoard />} />
       <Route path="demo/kitchen-flow" element={<RestaurantRushSimpleDemo />} />
       <Route path="demo/kitchen-manual" element={<RestaurantRushManualDemo />} />
+      <Route path="demo/escape-board" element={<EscapeBoardDemo />} />
 
       <Route path="demo/kitchen-live" element={<Navigate to={RESTAURANT_LIVE_TARGET} replace />} />
       <Route path="demo/restaurant" element={<Navigate to={RESTAURANT_LIVE_TARGET} replace />} />
@@ -111,6 +113,9 @@ export default function PlanetRoutes() {
 
       {/* Transportation */}
       <Route path="transportation/dispatch" element={<TransportationDispatchBoardV2 />} />
+
+      {/* Experience */}
+      <Route path="experience/escape-board" element={<EscapeBoardDemo />} />
 
       {/* 🔥 GUARDIAN SYSTEM ENTRY (THIS IS THE FIX) */}
       <Route path="guardian" element={<PlanetGuardian />} />
