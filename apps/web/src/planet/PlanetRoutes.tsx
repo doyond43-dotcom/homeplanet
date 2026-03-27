@@ -20,6 +20,9 @@ import InvoiceView from "../pages/InvoiceView";
 import CommunitySaleBoard from "../pages/community/CommunitySaleBoard";
 import TransportationDispatchBoardV2 from "../pages/TransportationDispatchBoardV2";
 import EscapeBoardDemo from "../pages/EscapeBoardDemo";
+import EscapeSessionLauncher from "../pages/EscapeSessionLauncher";
+import EscapeSessionPage from "../pages/EscapeSessionPage";
+import EscapeWatchModePage from "../pages/EscapeWatchModePage";
 
 import LifePlanet from "../pages/LifePlanet";
 import JeanettesLanding from "../pages/JeanettesLanding";
@@ -75,6 +78,9 @@ export default function PlanetRoutes() {
       <Route path="experience" element={<ExperiencePlanet />} />
       <Route path="experience/demo" element={<ExperiencePlanet />} />
       <Route path="experience/escape-board" element={<EscapeBoardDemo />} />
+      <Route path="experience/start" element={<EscapeSessionLauncher />} />
+      <Route path="experience/session/:sessionId" element={<EscapeSessionPage />} />
+      <Route path="experience/watch" element={<EscapeWatchModePage />} />
 
       {/* Demo */}
       <Route path="demo/home-services" element={<AwnitDemoBoard />} />

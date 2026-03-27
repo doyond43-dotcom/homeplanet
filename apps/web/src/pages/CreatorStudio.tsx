@@ -410,7 +410,7 @@ function StudioSurface({ mode, onBack, onBuild }: { mode: string; onBack: () => 
   @page { size: Letter; margin: 0.5in; }
 }
 `;
-  // ===== Intake: real submission wiring (mirrors PublicPage.tsx) =====
+
   const normalizeStringsDeep = (v: any): any => {
     if (typeof v === "string") return v.trim();
     if (Array.isArray(v)) return v.map(normalizeStringsDeep);
@@ -432,9 +432,9 @@ function StudioSurface({ mode, onBack, onBuild }: { mode: string; onBack: () => 
     best_time: "",
   });
 
-  const [, setIntakeSaving] = useState(false);
-  const [, setIntakeError] = useState<string | null>(null);
-  const [, setIntakeSuccess] = useState<string | null>(null);
+  const [intakeSaving, setIntakeSaving] = useState(false);
+  const [intakeError, setIntakeError] = useState<string | null>(null);
+  const [intakeSuccess, setIntakeSuccess] = useState<string | null>(null);
 
   const submitIntake = async () => {
     if (!slug) {
@@ -458,45 +458,41 @@ function StudioSurface({ mode, onBack, onBuild }: { mode: string; onBack: () => 
       return;
     }
 
-    const { data: pageRow, error: pageErr } = await supabase
-      .from("public_pages")
-      .select("id, slug")
-      .eq("slug", slug)
-      .maybeSingle();
+    try {
+      const response = await fetch("/api/creator-intake", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          slug,
+          payload: normalizeStringsDeep(intakeDraft),
+        }),
+      });
 
-    if (pageErr || !pageRow?.id) {
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(data?.error || "Failed to submit intake.");
+      }
+
       setIntakeSaving(false);
-      setIntakeError(pageErr?.message || "Could not resolve public page id for this slug.");
-      return;
-    }
+      setIntakeSuccess("Submitted successfully.");
 
-    const insert = {
-      slug: slug,
-      payload: normalizeStringsDeep(intakeDraft),
-    };
-
-    const { error } = await supabase.from("public_intake_submissions").insert(insert);
-
-    if (error) {
+      setIntakeDraft({
+        full_name: "",
+        phone: "",
+        email: "",
+        preferred_contact: "",
+        help_request: "",
+        address: "",
+        best_time: "",
+      });
+    } catch (error: any) {
       setIntakeSaving(false);
-      setIntakeError(error.message || "Failed to submit intake.");
-      return;
+      setIntakeError(error?.message || "Failed to submit intake.");
     }
-
-    setIntakeSaving(false);
-    setIntakeSuccess("Submitted successfully.");
-
-    setIntakeDraft({
-      full_name: "",
-      phone: "",
-      email: "",
-      preferred_contact: "",
-      help_request: "",
-      address: "",
-      best_time: "",
-    });
   };
-  // ===== End Intake wiring =====
 
   return (
     <div style={shell}>
@@ -526,11 +522,21 @@ function StudioSurface({ mode, onBack, onBuild }: { mode: string; onBack: () => 
             <div style={row2}>
               <div>
                 <div style={label}>Full name</div>
-                <input style={input} placeholder="Customer name" value={intakeDraft.full_name} onChange={(e) => setIntakeDraft((d) => ({ ...d, full_name: e.target.value }))} />
+                <input
+                  style={input}
+                  placeholder="Customer name"
+                  value={intakeDraft.full_name}
+                  onChange={(e) => setIntakeDraft((d) => ({ ...d, full_name: e.target.value }))}
+                />
               </div>
               <div>
                 <div style={label}>Phone</div>
-                <input style={input} placeholder="(555) 555-5555" />
+                <input
+                  style={input}
+                  placeholder="(555) 555-5555"
+                  value={intakeDraft.phone}
+                  onChange={(e) => setIntakeDraft((d) => ({ ...d, phone: e.target.value }))}
+                />
               </div>
             </div>
 
@@ -539,11 +545,21 @@ function StudioSurface({ mode, onBack, onBuild }: { mode: string; onBack: () => 
             <div style={row2}>
               <div>
                 <div style={label}>Email</div>
-                <input style={input} placeholder="email@example.com" value={intakeDraft.email} onChange={(e) => setIntakeDraft((d) => ({ ...d, email: e.target.value }))} />
+                <input
+                  style={input}
+                  placeholder="email@example.com"
+                  value={intakeDraft.email}
+                  onChange={(e) => setIntakeDraft((d) => ({ ...d, email: e.target.value }))}
+                />
               </div>
               <div>
                 <div style={label}>Preferred contact</div>
-                <input style={input} placeholder="Text / Call / Email" value={intakeDraft.preferred_contact} onChange={(e) => setIntakeDraft((d) => ({ ...d, preferred_contact: e.target.value }))} />
+                <input
+                  style={input}
+                  placeholder="Text / Call / Email"
+                  value={intakeDraft.preferred_contact}
+                  onChange={(e) => setIntakeDraft((d) => ({ ...d, preferred_contact: e.target.value }))}
+                />
               </div>
             </div>
 
@@ -551,7 +567,12 @@ function StudioSurface({ mode, onBack, onBuild }: { mode: string; onBack: () => 
 
             <div>
               <div style={label}>What do you need help with?</div>
-              <textarea style={textarea} placeholder="Describe the issue / request..." value={intakeDraft.help_request} onChange={(e) => setIntakeDraft((d) => ({ ...d, help_request: e.target.value }))} />
+              <textarea
+                style={textarea}
+                placeholder="Describe the issue / request..."
+                value={intakeDraft.help_request}
+                onChange={(e) => setIntakeDraft((d) => ({ ...d, help_request: e.target.value }))}
+              />
             </div>
 
             <div style={{ height: 12 }} />
@@ -559,19 +580,39 @@ function StudioSurface({ mode, onBack, onBuild }: { mode: string; onBack: () => 
             <div style={row2}>
               <div>
                 <div style={label}>Address (optional)</div>
-                <input style={input} placeholder="City, State" value={intakeDraft.address} onChange={(e) => setIntakeDraft((d) => ({ ...d, address: e.target.value }))} />
+                <input
+                  style={input}
+                  placeholder="City, State"
+                  value={intakeDraft.address}
+                  onChange={(e) => setIntakeDraft((d) => ({ ...d, address: e.target.value }))}
+                />
               </div>
               <div>
                 <div style={label}>Best time</div>
-                <input style={input} placeholder="Morning / Afternoon / Evening" value={intakeDraft.best_time} onChange={(e) => setIntakeDraft((d) => ({ ...d, best_time: e.target.value }))} />
+                <input
+                  style={input}
+                  placeholder="Morning / Afternoon / Evening"
+                  value={intakeDraft.best_time}
+                  onChange={(e) => setIntakeDraft((d) => ({ ...d, best_time: e.target.value }))}
+                />
               </div>
             </div>
 
             <hr style={hr} />
 
-            <button type="button" style={primary} onClick={submitIntake}>
-              Submit Intake
-            </button>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <button type="button" style={primary} onClick={submitIntake} disabled={intakeSaving}>
+                {intakeSaving ? "Submitting..." : "Submit Intake"}
+              </button>
+
+              {intakeError ? (
+                <div style={{ fontSize: 12, color: "#fca5a5", fontWeight: 700 }}>{intakeError}</div>
+              ) : null}
+
+              {intakeSuccess ? (
+                <div style={{ fontSize: 12, color: "#86efac", fontWeight: 700 }}>{intakeSuccess}</div>
+              ) : null}
+            </div>
           </div>
 
           <div style={panel}>
@@ -592,7 +633,9 @@ function StudioSurface({ mode, onBack, onBuild }: { mode: string; onBack: () => 
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                     <QRCodeImg value={publicUrl} size={240} />
                     <div style={{ marginTop: 8, fontSize: 11, color: "black", textAlign: "center", wordBreak: "break-all" }}>
-                      Scan or visit:<br /><strong>{publicUrl}</strong>
+                      Scan or visit:
+                      <br />
+                      <strong>{publicUrl}</strong>
                     </div>
                   </div>
                 ) : (
