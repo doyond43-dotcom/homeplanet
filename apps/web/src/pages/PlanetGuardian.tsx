@@ -32,6 +32,7 @@ type DemoCard = {
   description: string;
   cta: string;
   to?: string;
+  featured?: boolean;
 };
 
 type TimelineEvent = {
@@ -187,6 +188,8 @@ export default function PlanetGuardian() {
         description:
           "See the full Guardian idea the right way: everyone who matters inside one calm, readable awareness panel.",
         cta: "View household concept",
+        to: "/planet/guardian-household",
+        featured: true,
       },
       {
         id: "bella",
@@ -751,6 +754,10 @@ export default function PlanetGuardian() {
                               nav("/planet/guardian-pet");
                               return;
                             }
+                            if (member.id === "mom" || member.id === "child") {
+                              nav("/planet/guardian-household");
+                              return;
+                            }
                             window.scrollTo({ top: 1240, behavior: "smooth" });
                           }}
                           style={{
@@ -1079,79 +1086,100 @@ export default function PlanetGuardian() {
           </div>
 
           <div style={demoGrid}>
-            {demoCards.map((card) => (
-              <div
-                key={card.id}
-                style={{
-                  borderRadius: 20,
-                  border: "1px solid rgba(148,163,184,0.16)",
-                  background: "rgba(255,255,255,0.03)",
-                  padding: isMobile ? 16 : 16,
-                  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.02)",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 900,
-                    letterSpacing: 0.5,
-                    color: "rgba(254,240,138,1)",
-                    marginBottom: 6,
-                  }}
-                >
-                  {card.label}
-                </div>
+            {demoCards.map((card) => {
+              const featured = !!card.featured;
 
+              return (
                 <div
+                  key={card.id}
                   style={{
-                    fontSize: isMobile ? 22 : 18,
-                    fontWeight: 900,
-                    color: "#fff",
-                    lineHeight: 1.08,
+                    borderRadius: 20,
+                    border: featured
+                      ? "1px solid rgba(34,197,94,0.24)"
+                      : "1px solid rgba(148,163,184,0.16)",
+                    background: featured
+                      ? "linear-gradient(180deg, rgba(20,83,45,0.18), rgba(255,255,255,0.03))"
+                      : "rgba(255,255,255,0.03)",
+                    padding: isMobile ? 16 : 16,
+                    boxShadow: featured
+                      ? "0 0 26px rgba(74,222,128,0.08), inset 0 1px 0 rgba(255,255,255,0.03)"
+                      : "inset 0 1px 0 rgba(255,255,255,0.02)",
                   }}
                 >
-                  {card.title}
-                </div>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 900,
+                      letterSpacing: 0.5,
+                      color: featured ? "rgba(187,247,208,1)" : "rgba(254,240,138,1)",
+                      marginBottom: 6,
+                    }}
+                  >
+                    {card.label}
+                  </div>
 
-                <div
-                  style={{
-                    marginTop: 8,
-                    fontSize: isMobile ? 15 : 13,
-                    lineHeight: isMobile ? 1.4 : 1.58,
-                    color: "rgba(226,232,240,0.84)",
-                  }}
-                >
-                  {card.description}
-                </div>
+                  <div
+                    style={{
+                      fontSize: isMobile ? 22 : 18,
+                      fontWeight: 900,
+                      color: "#fff",
+                      lineHeight: 1.08,
+                    }}
+                  >
+                    {card.title}
+                  </div>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (card.to) {
-                      nav(card.to);
-                      return;
-                    }
-                    window.scrollTo({
-                      top: card.id === "response" ? 1780 : 760,
-                      behavior: "smooth",
-                    });
-                  }}
-                  style={{
-                    marginTop: 14,
-                    borderRadius: 999,
-                    padding: "10px 14px",
-                    fontSize: 13,
-                    fontWeight: 900,
-                    cursor: "pointer",
-                    border: "1px solid rgba(34,197,94,0.28)",
-                    background: "rgba(34,197,94,0.10)",
-                    color: "rgba(187,247,208,1)",
-                  }}
-                >
-                  {card.cta}
-                </button>
-              </div>
-            ))}
+                  <div
+                    style={{
+                      marginTop: 8,
+                      fontSize: isMobile ? 15 : 13,
+                      lineHeight: isMobile ? 1.4 : 1.58,
+                      color: "rgba(226,232,240,0.84)",
+                    }}
+                  >
+                    {card.description}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (card.id === "household") {
+                        nav("/planet/guardian-household");
+                        return;
+                      }
+
+                      if (card.to) {
+                        nav(card.to);
+                        return;
+                      }
+
+                      window.scrollTo({
+                        top: card.id === "response" ? 1780 : 760,
+                        behavior: "smooth",
+                      });
+                    }}
+                    style={{
+                      marginTop: 14,
+                      borderRadius: 999,
+                      padding: featured ? "11px 16px" : "10px 14px",
+                      fontSize: 13,
+                      fontWeight: 900,
+                      cursor: "pointer",
+                      border: featured
+                        ? "1px solid rgba(34,197,94,0.34)"
+                        : "1px solid rgba(34,197,94,0.28)",
+                      background: featured
+                        ? "rgba(34,197,94,0.14)"
+                        : "rgba(34,197,94,0.10)",
+                      color: "rgba(187,247,208,1)",
+                      boxShadow: featured ? "0 0 18px rgba(74,222,128,0.08)" : "none",
+                    }}
+                  >
+                    {card.cta}
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -1197,7 +1225,9 @@ export default function PlanetGuardian() {
               </div>
 
               <div style={{ ...sectionText, marginBottom: 14 }}>
-                You don’t call five people. You don’t guess. You open one board.
+                You don’t call five people. You don’t guess. You don’t panic.
+                <br />
+                You open one board — and everything is already there.
               </div>
 
               <div
@@ -1208,26 +1238,43 @@ export default function PlanetGuardian() {
                 }}
               >
                 {[
-                  "Last location",
-                  "Last movement",
-                  "Last interaction",
-                  "Who saw them",
-                  "Safe-zone status",
-                  "Response path",
+                  { title: "Last location", value: "School dismissal zone" },
+                  { title: "Last movement", value: "" },
+                  { title: "Last interaction", value: "Seen by front office at 2:11 PM" },
+                  { title: "Who saw them", value: "" },
+                  { title: "Safe-zone status", value: "" },
+                  { title: "Response path", value: "" },
                 ].map((item) => (
                   <div
-                    key={item}
+                    key={item.title}
                     style={{
                       borderRadius: 16,
                       border: "1px solid rgba(148,163,184,0.16)",
                       background: "rgba(255,255,255,0.03)",
                       padding: "12px 14px",
-                      fontSize: isMobile ? 15 : 13,
-                      fontWeight: 800,
-                      color: "#fff",
                     }}
                   >
-                    {item}
+                    <div
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 900,
+                        letterSpacing: 0.4,
+                        color: "rgba(148,163,184,0.9)",
+                        marginBottom: 5,
+                      }}
+                    >
+                      {item.title.toUpperCase()}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: isMobile ? 15 : 13,
+                        fontWeight: 800,
+                        color: "#fff",
+                        minHeight: 18,
+                      }}
+                    >
+                      {item.value || item.title}
+                    </div>
                   </div>
                 ))}
               </div>
