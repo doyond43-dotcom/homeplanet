@@ -11,6 +11,7 @@ import CreatorBuild from "../pages/CreatorBuild";
 import ReleaseViewer from "../pages/ReleaseViewer";
 import StarterBoardPreview from "../pages/StarterBoardPreview";
 import RcAirboatsLiveDemo from "../pages/RcAirboatsLiveDemo";
+import ExperiencePlanet from "../pages/ExperiencePlanet";
 
 // Demo boards
 import AwnitDemoBoard from "../pages/AwnitDemoBoard";
@@ -33,10 +34,8 @@ import MomsKitchenDemo from "../pages/MomsKitchenDemo";
 // Legal
 import JoeGrantLegalDesk from "../pages/JoeGrantLegalDesk";
 
-// 🔥 NEW GUARDIAN SYSTEM PAGE
+// Guardian
 import PlanetGuardian from "../pages/PlanetGuardian";
-
-// Guardian existing
 import GuardianPresenceDesk from "../pages/GuardianPresenceDesk";
 import GuardianJoinDesk from "../pages/GuardianJoinDesk";
 import GuardianPetTagDemo from "../pages/GuardianPetTagDemo";
@@ -72,16 +71,25 @@ export default function PlanetRoutes() {
       <Route path="creator/rc-live" element={<RcAirboatsLiveDemo />} />
       <Route path="creator/*" element={<Navigate to="/planet/creator" replace />} />
 
+      {/* Experience */}
+      <Route path="experience" element={<ExperiencePlanet />} />
+      <Route path="experience/demo" element={<ExperiencePlanet />} />
+      <Route path="experience/escape-board" element={<EscapeBoardDemo />} />
+
       {/* Demo */}
       <Route path="demo/home-services" element={<AwnitDemoBoard />} />
       <Route path="demo/auto-service" element={<AutoRepairLiveBoard />} />
       <Route path="demo/kitchen-flow" element={<RestaurantRushSimpleDemo />} />
       <Route path="demo/kitchen-manual" element={<RestaurantRushManualDemo />} />
       <Route path="demo/escape-board" element={<EscapeBoardDemo />} />
-
-      <Route path="demo/kitchen-live" element={<Navigate to={RESTAURANT_LIVE_TARGET} replace />} />
-      <Route path="demo/restaurant" element={<Navigate to={RESTAURANT_LIVE_TARGET} replace />} />
-
+      <Route
+        path="demo/kitchen-live"
+        element={<Navigate to={RESTAURANT_LIVE_TARGET} replace />}
+      />
+      <Route
+        path="demo/restaurant"
+        element={<Navigate to={RESTAURANT_LIVE_TARGET} replace />}
+      />
       <Route path="demo/example-kitchen" element={<MomsKitchenDemo />} />
       <Route path="demo/legal-workspace" element={<JoeGrantLegalDesk />} />
       <Route path="demo/lawn-route" element={<RouteCutLawnPage />} />
@@ -99,8 +107,14 @@ export default function PlanetRoutes() {
       {/* Food */}
       <Route path="food/restaurant-rush-simple" element={<RestaurantRushSimpleDemo />} />
       <Route path="food/restaurant-rush-manual" element={<RestaurantRushManualDemo />} />
-      <Route path="food/restaurant-rush-live" element={<Navigate to={RESTAURANT_LIVE_TARGET} replace />} />
-      <Route path="food/restaurant-rush" element={<Navigate to={RESTAURANT_LIVE_TARGET} replace />} />
+      <Route
+        path="food/restaurant-rush-live"
+        element={<Navigate to={RESTAURANT_LIVE_TARGET} replace />}
+      />
+      <Route
+        path="food/restaurant-rush"
+        element={<Navigate to={RESTAURANT_LIVE_TARGET} replace />}
+      />
       <Route path="food/restaurant-rush-legacy" element={<RestaurantRushDemo />} />
       <Route path="food/restaurant-rush-live-classic" element={<RestaurantRushLiveDemo />} />
       <Route path="food/moms-kitchen" element={<MomsKitchenDemo />} />
@@ -114,10 +128,7 @@ export default function PlanetRoutes() {
       {/* Transportation */}
       <Route path="transportation/dispatch" element={<TransportationDispatchBoardV2 />} />
 
-      {/* Experience */}
-      <Route path="experience/escape-board" element={<EscapeBoardDemo />} />
-
-      {/* 🔥 GUARDIAN SYSTEM ENTRY (THIS IS THE FIX) */}
+      {/* Guardian system entry */}
       <Route path="guardian" element={<PlanetGuardian />} />
 
       {/* Guardian sub */}

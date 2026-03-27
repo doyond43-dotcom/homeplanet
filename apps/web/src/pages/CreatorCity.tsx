@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const REQUEST_ACCESS_URL =
@@ -6,10 +6,6 @@ const REQUEST_ACCESS_URL =
 const REQUEST_ACCESS_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXMiJ9";
 
-/**
- * Set this to your actual live-selling demo route if needed.
- * I kept it isolated to one constant so the CreatorCity page stays clean.
- */
 const LIVE_PRODUCT_DEMO_ROUTE = "/planet/creator/rc-live";
 
 type SystemExample = {
@@ -30,6 +26,7 @@ type BuildIntent =
 
 export default function CreatorCity() {
   const nav = useNavigate();
+  const readySystemsRef = useRef<HTMLDivElement | null>(null);
 
   const [businessName, setBusinessName] = useState("");
   const [businessType, setBusinessType] = useState("");
@@ -55,6 +52,22 @@ export default function CreatorCity() {
   const systems = useMemo<SystemExample[]>(
     () => [
       {
+        id: "experience",
+        title: "Experience Planet",
+        subtitle:
+          "Escape rooms, classrooms, scavenger hunts, birthdays, and challenge boards in one live system.",
+        to: "/planet/experience",
+        tag: "NEW SYSTEM",
+      },
+      {
+        id: "live-product",
+        title: "Live Product Selling Board",
+        subtitle:
+          "Turn live video, reserve pressure, and proof-state into one selling board.",
+        to: LIVE_PRODUCT_DEMO_ROUTE,
+        tag: "HIGH VALUE",
+      },
+      {
         id: "northstar",
         title: "Northstar Service Demo",
         subtitle: "See a service workflow turned into a live operational board.",
@@ -72,7 +85,7 @@ export default function CreatorCity() {
         id: "restaurant",
         title: "Restaurant Live Board",
         subtitle:
-          "See live ticket flow, ticket editing, manager controls, and kitchen visibility.",
+          "See live ticket flow, manager controls, and kitchen visibility.",
         to: "/planet/food/restaurant-rush-live",
         tag: "LIVE BOARD",
       },
@@ -176,6 +189,10 @@ export default function CreatorCity() {
     }
   }
 
+  const scrollToReadySystems = () => {
+    readySystemsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   const page: React.CSSProperties = {
     minHeight: "100vh",
     padding: isMobile ? 0 : 24,
@@ -194,269 +211,156 @@ export default function CreatorCity() {
     padding: isMobile ? "14px 14px 28px" : 0,
   };
 
-  const hero: React.CSSProperties = {
+  const card: React.CSSProperties = {
     border: "1px solid rgba(148,163,184,0.18)",
     background:
-      "linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02) 28%, rgba(2,6,23,0.42) 100%)",
+      "linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015) 28%, rgba(2,6,23,0.58) 100%)",
     borderRadius: isMobile ? 28 : 24,
-    padding: isMobile ? 18 : 24,
-    boxShadow: "0 24px 80px rgba(0,0,0,0.42)",
+    boxShadow: "0 24px 80px rgba(0,0,0,0.38)",
     overflow: "hidden",
   };
 
-  const heroTop: React.CSSProperties = {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    gap: isMobile ? 14 : 20,
-    flexWrap: "wrap",
-  };
-
-  const titleWrap: React.CSSProperties = {
-    display: "flex",
-    flexDirection: "column",
-    gap: isMobile ? 14 : 10,
-    maxWidth: 980,
-    width: "100%",
-  };
-
-  const titleRow: React.CSSProperties = {
-    display: "flex",
-    alignItems: "center",
-    gap: 12,
-    flexWrap: "wrap",
+  const hero: React.CSSProperties = {
+    ...card,
+    padding: isMobile ? 18 : 24,
   };
 
   const title: React.CSSProperties = {
-    fontSize: isMobile ? 56 : 36,
+    fontSize: isMobile ? 42 : 36,
     fontWeight: 900,
-    letterSpacing: -1.4,
-    lineHeight: isMobile ? 0.92 : 1.05,
+    letterSpacing: isMobile ? -1.1 : -1.3,
+    lineHeight: isMobile ? 0.95 : 1.02,
     color: "#ffffff",
-    textShadow: "0 1px 0 rgba(255,255,255,0.04)",
-    maxWidth: "100%",
+  };
+
+  const hook: React.CSSProperties = {
+    fontSize: isMobile ? 28 : 24,
+    fontWeight: 900,
+    lineHeight: 1.08,
+    letterSpacing: isMobile ? -0.7 : -0.4,
+    color: "#ffffff",
+    marginTop: 10,
+  };
+
+  const subtext: React.CSSProperties = {
+    marginTop: 12,
+    fontSize: isMobile ? 17 : 15,
+    lineHeight: isMobile ? 1.45 : 1.65,
+    color: "rgba(226,232,240,0.86)",
+    maxWidth: 860,
   };
 
   const livePill: React.CSSProperties = {
     borderRadius: 999,
-    padding: isMobile ? "10px 16px" : "7px 12px",
+    padding: isMobile ? "10px 14px" : "7px 12px",
     border: "1px solid rgba(34,197,94,0.35)",
     background: "rgba(34,197,94,0.10)",
     color: "rgba(187,247,208,1)",
     fontWeight: 900,
-    fontSize: isMobile ? 14 : 12,
-    letterSpacing: isMobile ? 0.8 : 0.5,
+    fontSize: isMobile ? 13 : 12,
+    letterSpacing: 0.6,
     display: "inline-flex",
     alignItems: "center",
     gap: 10,
     boxShadow: "0 0 18px rgba(74,222,128,0.14)",
-    width: isMobile ? "fit-content" : "auto",
+    width: "fit-content",
   };
 
   const pulseDot: React.CSSProperties = {
-    width: isMobile ? 14 : 8,
-    height: isMobile ? 14 : 8,
+    width: isMobile ? 12 : 8,
+    height: isMobile ? 12 : 8,
     borderRadius: 999,
     background: "rgba(74,222,128,1)",
     boxShadow: "0 0 12px rgba(74,222,128,0.9)",
     flexShrink: 0,
   };
 
-  const subtitle: React.CSSProperties = {
-    fontSize: isMobile ? 19 : 16,
-    lineHeight: isMobile ? 1.45 : 1.7,
-    color: "rgba(226,232,240,0.92)",
-    maxWidth: 980,
-  };
-
-  const desktopSubHead: React.CSSProperties = {
-    fontSize: 24,
-    fontWeight: 900,
-    lineHeight: 1.08,
-    letterSpacing: -0.6,
-    color: "rgba(186,230,253,0.98)",
-    marginTop: 2,
-  };
-
-  const mobileHeroTitle: React.CSSProperties = {
-    fontSize: 42,
-    fontWeight: 900,
-    lineHeight: 0.95,
-    letterSpacing: -1.1,
-    color: "#ffffff",
-    marginTop: 2,
-  };
-
-  const mobileHeroSubline: React.CSSProperties = {
-    fontSize: 22,
-    fontWeight: 800,
-    lineHeight: 1.05,
-    letterSpacing: -0.4,
-    color: "rgba(186,230,253,0.98)",
-    marginTop: -2,
-  };
-
-  const doctrinePanel: React.CSSProperties = {
-    marginTop: isMobile ? 8 : 6,
-    maxWidth: 980,
-    border: "1px solid rgba(56,189,248,0.18)",
-    background: "rgba(8,47,73,0.24)",
-    borderRadius: 16,
-    padding: isMobile ? "16px 16px" : "14px 16px",
-    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
-  };
-
-  const doctrineTitle: React.CSSProperties = {
-    fontSize: isMobile ? 11 : 12,
-    fontWeight: 900,
-    letterSpacing: isMobile ? 0.9 : 0.6,
-    color: "rgba(186,230,253,0.96)",
-    marginBottom: 8,
-  };
-
-  const doctrineText: React.CSSProperties = {
-    fontSize: isMobile ? 18 : 13,
-    lineHeight: isMobile ? 1.48 : 1.6,
-    color: "rgba(226,232,240,0.92)",
-  };
-
-  const buttonRow: React.CSSProperties = {
+  const ctaRow: React.CSSProperties = {
     display: "flex",
     gap: 12,
     flexWrap: "wrap",
-    justifyContent: isMobile ? "flex-start" : "flex-end",
-    width: isMobile ? "100%" : "auto",
-    marginTop: isMobile ? 2 : 0,
+    marginTop: 18,
   };
 
-  const btnBase: React.CSSProperties = {
+  const primaryBtn: React.CSSProperties = {
     borderRadius: 999,
-    padding: isMobile ? "14px 22px" : "10px 16px",
-    border: "1px solid rgba(148,163,184,0.25)",
-    background: "rgba(2,6,23,0.55)",
-    color: "#e5e7eb",
-    fontWeight: 800,
-    fontSize: isMobile ? 18 : 13,
-    cursor: "pointer",
-    boxShadow: "0 0 0 rgba(0,0,0,0)",
-    minWidth: isMobile ? 0 : undefined,
-  };
-
-  const btnPrimary: React.CSSProperties = {
-    ...btnBase,
+    padding: isMobile ? "15px 20px" : "12px 18px",
     border: "1px solid rgba(34,197,94,0.45)",
+    background: "rgba(34,197,94,0.12)",
     color: "rgba(187,247,208,1)",
+    fontWeight: 900,
+    fontSize: isMobile ? 18 : 14,
+    cursor: "pointer",
     boxShadow: "0 0 18px rgba(74,222,128,0.08)",
   };
 
-  const mobilePrimaryCta: React.CSSProperties = {
-    ...btnPrimary,
-    width: "100%",
-    justifyContent: "center",
-    display: "inline-flex",
-    alignItems: "center",
-    padding: "16px 22px",
-    fontSize: 22,
-    letterSpacing: -0.3,
+  const secondaryBtn: React.CSSProperties = {
+    borderRadius: 999,
+    padding: isMobile ? "15px 20px" : "12px 18px",
+    border: "1px solid rgba(148,163,184,0.22)",
+    background: "rgba(2,6,23,0.52)",
+    color: "#e5e7eb",
+    fontWeight: 900,
+    fontSize: isMobile ? 18 : 14,
+    cursor: "pointer",
   };
 
-  const topGrid: React.CSSProperties = {
+  const quickGrid: React.CSSProperties = {
     display: "grid",
-    gridTemplateColumns: isMobile ? "1fr" : "1.15fr 0.85fr",
-    gap: isMobile ? 18 : 16,
-    marginTop: isMobile ? 18 : 18,
+    gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))",
+    gap: isMobile ? 14 : 12,
+    marginTop: 22,
+  };
+
+  const quickCard: React.CSSProperties = {
+    border: "1px solid rgba(148,163,184,0.16)",
+    background: "rgba(2,6,23,0.5)",
+    borderRadius: 20,
+    padding: isMobile ? 18 : 16,
+    minHeight: isMobile ? 118 : 108,
+    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
+  };
+
+  const quickTitle: React.CSSProperties = {
+    fontWeight: 900,
+    fontSize: isMobile ? 22 : 15,
+    color: "#ffffff",
+    lineHeight: 1.05,
+    marginBottom: 8,
+  };
+
+  const quickText: React.CSSProperties = {
+    fontSize: isMobile ? 16 : 13,
+    lineHeight: isMobile ? 1.4 : 1.55,
+    color: "rgba(226,232,240,0.8)",
   };
 
   const sectionCard: React.CSSProperties = {
-    border: "1px solid rgba(148,163,184,0.18)",
-    background: "rgba(2,6,23,0.56)",
-    borderRadius: isMobile ? 26 : 20,
+    ...card,
+    marginTop: isMobile ? 18 : 18,
     padding: isMobile ? 18 : 20,
-    boxShadow:
-      "0 18px 42px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.03)",
   };
 
   const sectionTitle: React.CSSProperties = {
     fontWeight: 900,
-    fontSize: isMobile ? 30 : 18,
-    lineHeight: isMobile ? 1.02 : 1.1,
-    marginBottom: isMobile ? 12 : 8,
-    color: "#ffffff",
-    textShadow: "0 1px 0 rgba(255,255,255,0.04)",
-    letterSpacing: isMobile ? -0.7 : 0,
-  };
-
-  const sectionText: React.CSSProperties = {
-    fontSize: isMobile ? 17 : 14,
-    lineHeight: isMobile ? 1.42 : 1.7,
-    color: "rgba(226,232,240,0.88)",
-  };
-
-  const impactPanel: React.CSSProperties = {
-    marginTop: isMobile ? 14 : 16,
-    border: "1px solid rgba(34,197,94,0.22)",
-    background: "rgba(20,83,45,0.16)",
-    borderRadius: isMobile ? 20 : 18,
-    padding: isMobile ? 16 : 16,
-    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
-  };
-
-  const impactHeadline: React.CSSProperties = {
-    fontSize: isMobile ? 22 : 16,
-    fontWeight: 900,
-    lineHeight: 1.08,
-    color: "#ffffff",
-    marginBottom: 6,
-    letterSpacing: isMobile ? -0.4 : 0,
-  };
-
-  const impactText: React.CSSProperties = {
-    fontSize: isMobile ? 16 : 13,
-    lineHeight: isMobile ? 1.4 : 1.65,
-    color: "rgba(220,252,231,0.92)",
-  };
-
-  const miniCompareGrid: React.CSSProperties = {
-    display: "grid",
-    gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
-    gap: isMobile ? 12 : 12,
-    marginTop: isMobile ? 16 : 16,
-  };
-
-  const compareCard = (kind: "before" | "after"): React.CSSProperties => ({
-    border:
-      kind === "before"
-        ? "1px solid rgba(148,163,184,0.18)"
-        : "1px solid rgba(34,197,94,0.24)",
-    background:
-      kind === "before"
-        ? "rgba(255,255,255,0.02)"
-        : "rgba(34,197,94,0.08)",
-    borderRadius: 18,
-    padding: isMobile ? 16 : 16,
-  });
-
-  const compareTitle: React.CSSProperties = {
-    fontWeight: 900,
-    fontSize: isMobile ? 20 : 14,
-    marginBottom: isMobile ? 8 : 8,
-    color: "#ffffff",
+    fontSize: isMobile ? 28 : 22,
     lineHeight: 1.05,
+    color: "#ffffff",
+    letterSpacing: isMobile ? -0.7 : -0.3,
+    marginBottom: 8,
   };
 
-  const compareList: React.CSSProperties = {
-    margin: 0,
-    paddingLeft: isMobile ? 20 : 18,
-    color: "rgba(226,232,240,0.86)",
-    fontSize: isMobile ? 16 : 13,
-    lineHeight: isMobile ? 1.45 : 1.7,
+  const sectionSub: React.CSSProperties = {
+    fontSize: isMobile ? 16 : 14,
+    lineHeight: isMobile ? 1.4 : 1.6,
+    color: "rgba(226,232,240,0.8)",
   };
 
   const intentGrid: React.CSSProperties = {
     display: "grid",
     gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))",
     gap: isMobile ? 14 : 12,
-    marginTop: isMobile ? 16 : 16,
+    marginTop: 16,
   };
 
   const intentCard = (active: boolean): React.CSSProperties => ({
@@ -467,7 +371,7 @@ export default function CreatorCity() {
     borderRadius: 20,
     padding: isMobile ? 18 : 14,
     cursor: "pointer",
-    minHeight: isMobile ? 112 : 108,
+    minHeight: isMobile ? 108 : 102,
     boxShadow: active
       ? "0 0 24px rgba(74,222,128,0.08)"
       : "0 0 18px rgba(34,211,238,0.03)",
@@ -475,24 +379,36 @@ export default function CreatorCity() {
 
   const intentTitle: React.CSSProperties = {
     fontWeight: 900,
-    fontSize: isMobile ? 22 : 14,
-    marginBottom: isMobile ? 8 : 6,
+    fontSize: isMobile ? 20 : 14,
+    marginBottom: 6,
     color: "#ffffff",
-    lineHeight: 1.05,
-    letterSpacing: isMobile ? -0.4 : 0,
+    lineHeight: 1.06,
   };
 
   const intentText: React.CSSProperties = {
-    fontSize: isMobile ? 16 : 12,
-    lineHeight: isMobile ? 1.35 : 1.5,
-    color: "rgba(226,232,240,0.82)",
+    fontSize: isMobile ? 15 : 12,
+    lineHeight: isMobile ? 1.38 : 1.5,
+    color: "rgba(226,232,240,0.8)",
   };
 
   const intakeGrid: React.CSSProperties = {
     display: "grid",
     gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
     gap: isMobile ? 16 : 14,
-    marginTop: isMobile ? 18 : 18,
+    marginTop: 18,
+  };
+
+  const inputGroup: React.CSSProperties = {
+    display: "flex",
+    flexDirection: "column",
+    gap: 8,
+  };
+
+  const label: React.CSSProperties = {
+    fontSize: isMobile ? 16 : 12,
+    fontWeight: 900,
+    letterSpacing: 0.3,
+    color: "rgba(186,230,253,0.94)",
   };
 
   const inputBase: React.CSSProperties = {
@@ -502,23 +418,10 @@ export default function CreatorCity() {
     background: "rgba(2,6,23,0.64)",
     color: "#e5e7eb",
     padding: isMobile ? "16px 16px" : "13px 14px",
-    fontSize: isMobile ? 17 : 14,
+    fontSize: isMobile ? 16 : 14,
     outline: "none",
     boxSizing: "border-box",
     boxShadow: "inset 0 1px 0 rgba(255,255,255,0.02)",
-  };
-
-  const inputGroup: React.CSSProperties = {
-    display: "flex",
-    flexDirection: "column",
-    gap: isMobile ? 8 : 8,
-  };
-
-  const label: React.CSSProperties = {
-    fontSize: isMobile ? 17 : 12,
-    fontWeight: 900,
-    letterSpacing: isMobile ? 0.2 : 0.4,
-    color: "rgba(186,230,253,0.94)",
   };
 
   const textareaWide: React.CSSProperties = {
@@ -532,14 +435,7 @@ export default function CreatorCity() {
     background: "rgba(8,47,73,0.18)",
     borderRadius: 20,
     padding: isMobile ? 16 : 16,
-    marginTop: isMobile ? 16 : 14,
-    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
-  };
-
-  const fileMeta: React.CSSProperties = {
-    marginTop: 10,
-    fontSize: isMobile ? 16 : 12,
-    color: "rgba(186,230,253,0.9)",
+    marginTop: 16,
   };
 
   const submitWrap: React.CSSProperties = {
@@ -548,8 +444,7 @@ export default function CreatorCity() {
     justifyContent: "space-between",
     flexDirection: isMobile ? "column" : "row",
     gap: isMobile ? 16 : 14,
-    marginTop: isMobile ? 20 : 18,
-    flexWrap: "wrap",
+    marginTop: 18,
   };
 
   const submitBtn: React.CSSProperties = {
@@ -559,15 +454,15 @@ export default function CreatorCity() {
     background: "rgba(34,197,94,0.12)",
     color: "rgba(187,247,208,1)",
     fontWeight: 900,
-    fontSize: isMobile ? 20 : 14,
+    fontSize: isMobile ? 19 : 14,
     cursor: "pointer",
     boxShadow: "0 0 18px rgba(74,222,128,0.08)",
     width: isMobile ? "100%" : "auto",
   };
 
   const helperText: React.CSSProperties = {
-    fontSize: isMobile ? 16 : 12,
-    lineHeight: isMobile ? 1.45 : 1.6,
+    fontSize: isMobile ? 15 : 12,
+    lineHeight: isMobile ? 1.4 : 1.6,
     color: "rgba(148,163,184,0.88)",
     maxWidth: 680,
   };
@@ -583,26 +478,22 @@ export default function CreatorCity() {
   };
 
   const examplesLabel: React.CSSProperties = {
-    marginTop: isMobile ? 34 : 26,
+    marginTop: isMobile ? 28 : 24,
     fontWeight: 900,
-    fontSize: isMobile ? 24 : 13,
-    letterSpacing: isMobile ? -0.4 : 0.4,
-    opacity: 0.98,
+    fontSize: isMobile ? 24 : 15,
+    letterSpacing: isMobile ? -0.4 : 0.2,
     color: "#f8fafc",
-    lineHeight: 1.05,
+    lineHeight: 1.06,
   };
 
   const featuredDemoCard: React.CSSProperties = {
-    marginTop: isMobile ? 18 : 16,
+    ...card,
+    marginTop: 16,
+    padding: isMobile ? 18 : 18,
     border: "1px solid rgba(250,204,21,0.26)",
     background:
       "linear-gradient(180deg, rgba(250,204,21,0.08), rgba(2,6,23,0.66) 22%, rgba(2,6,23,0.74) 100%)",
-    borderRadius: isMobile ? 24 : 22,
-    padding: isMobile ? 18 : 18,
     cursor: "pointer",
-    boxShadow:
-      "0 18px 40px rgba(0,0,0,0.28), 0 0 28px rgba(250,204,21,0.06), inset 0 1px 0 rgba(255,255,255,0.04)",
-    overflow: "hidden",
   };
 
   const featuredDemoTop: React.CSSProperties = {
@@ -613,12 +504,35 @@ export default function CreatorCity() {
     flexDirection: isMobile ? "column" : "row",
   };
 
-  const featuredDemoTextWrap: React.CSSProperties = {
-    display: "flex",
-    flexDirection: "column",
-    gap: isMobile ? 10 : 8,
-    minWidth: 0,
-    flex: 1,
+  const featuredDemoTitle: React.CSSProperties = {
+    fontWeight: 900,
+    fontSize: isMobile ? 28 : 22,
+    color: "#ffffff",
+    lineHeight: 1.04,
+    letterSpacing: isMobile ? -0.6 : -0.3,
+  };
+
+  const featuredDemoSubline: React.CSSProperties = {
+    marginTop: 8,
+    fontSize: isMobile ? 17 : 15,
+    lineHeight: isMobile ? 1.42 : 1.6,
+    color: "rgba(226,232,240,0.9)",
+    maxWidth: 760,
+  };
+
+  const featuredDemoSupport: React.CSSProperties = {
+    marginTop: 10,
+    fontSize: isMobile ? 15 : 13,
+    lineHeight: isMobile ? 1.42 : 1.55,
+    color: "rgba(186,230,253,0.84)",
+    maxWidth: 760,
+  };
+
+  const featuredDemoAction: React.CSSProperties = {
+    ...primaryBtn,
+    padding: isMobile ? "14px 18px" : "10px 14px",
+    fontSize: isMobile ? 17 : 13,
+    whiteSpace: "nowrap",
   };
 
   const featuredDemoBadgeRow: React.CSSProperties = {
@@ -626,6 +540,7 @@ export default function CreatorCity() {
     gap: 10,
     flexWrap: "wrap",
     alignItems: "center",
+    marginBottom: 12,
   };
 
   const featuredDemoBadge: React.CSSProperties = {
@@ -650,170 +565,11 @@ export default function CreatorCity() {
     letterSpacing: 0.4,
   };
 
-  const featuredDemoTitle: React.CSSProperties = {
-    fontWeight: 900,
-    fontSize: isMobile ? 30 : 22,
-    color: "#ffffff",
-    lineHeight: isMobile ? 1.02 : 1.06,
-    letterSpacing: isMobile ? -0.7 : -0.35,
-  };
-
-  const featuredDemoSubline: React.CSSProperties = {
-    fontSize: isMobile ? 18 : 15,
-    lineHeight: isMobile ? 1.42 : 1.65,
-    color: "rgba(226,232,240,0.90)",
-    maxWidth: 760,
-  };
-
-  const featuredDemoSupport: React.CSSProperties = {
-    fontSize: isMobile ? 16 : 13,
-    lineHeight: isMobile ? 1.42 : 1.55,
-    color: "rgba(186,230,253,0.84)",
-    maxWidth: 760,
-  };
-
-  const featuredDemoAction: React.CSSProperties = {
-    ...btnPrimary,
-    padding: isMobile ? "14px 18px" : "10px 14px",
-    fontSize: isMobile ? 17 : 13,
-    whiteSpace: "nowrap",
-  };
-
-  const featuredDemoGrid: React.CSSProperties = {
-    display: "grid",
-    gridTemplateColumns: isMobile ? "1fr" : "1.1fr 0.9fr",
-    gap: isMobile ? 16 : 16,
-    marginTop: isMobile ? 16 : 16,
-  };
-
-  const featuredPreviewShell: React.CSSProperties = {
-    border: "1px solid rgba(148,163,184,0.18)",
-    borderRadius: isMobile ? 20 : 18,
-    background:
-      "linear-gradient(180deg, rgba(15,23,42,0.74), rgba(2,6,23,0.84))",
-    padding: isMobile ? 14 : 14,
-    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
-  };
-
-  const featuredPreviewTop: React.CSSProperties = {
-    display: "grid",
-    gridTemplateColumns: "1.15fr 0.85fr",
-    gap: 10,
-  };
-
-  const featuredPreviewVideo: React.CSSProperties = {
-    minHeight: isMobile ? 170 : 188,
-    borderRadius: 16,
-    border: "1px solid rgba(148,163,184,0.16)",
-    background:
-      "radial-gradient(circle at 40% 28%, rgba(56,189,248,0.16), transparent 32%), linear-gradient(180deg, rgba(30,41,59,0.96), rgba(15,23,42,0.92))",
-    padding: 12,
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "space-between",
-  };
-
-  const featuredPreviewPillRow: React.CSSProperties = {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: 10,
-    flexWrap: "wrap",
-  };
-
-  const previewTinyPill = (kind: "live" | "neutral" | "warn"): React.CSSProperties => ({
-    borderRadius: 999,
-    padding: "5px 8px",
-    fontSize: 10,
-    fontWeight: 900,
-    letterSpacing: 0.3,
-    border:
-      kind === "live"
-        ? "1px solid rgba(34,197,94,0.28)"
-        : kind === "warn"
-          ? "1px solid rgba(250,204,21,0.30)"
-          : "1px solid rgba(148,163,184,0.18)",
-    color:
-      kind === "live"
-        ? "rgba(187,247,208,1)"
-        : kind === "warn"
-          ? "rgba(254,240,138,1)"
-          : "rgba(226,232,240,0.88)",
-    background:
-      kind === "live"
-        ? "rgba(34,197,94,0.08)"
-        : kind === "warn"
-          ? "rgba(250,204,21,0.08)"
-          : "rgba(255,255,255,0.03)",
-  });
-
-  const featuredPreviewCenter: React.CSSProperties = {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    flexDirection: "column",
-    gap: 8,
-    flex: 1,
-    textAlign: "center",
-  };
-
-  const playCircle: React.CSSProperties = {
-    width: isMobile ? 50 : 56,
-    height: isMobile ? 50 : 56,
-    borderRadius: "50%",
-    border: "1px solid rgba(148,163,184,0.20)",
-    background: "rgba(2,6,23,0.46)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    color: "#ffffff",
-    fontSize: isMobile ? 20 : 22,
-    boxShadow: "0 0 18px rgba(56,189,248,0.08)",
-  };
-
-  const featuredPreviewBottomGrid: React.CSSProperties = {
-    display: "grid",
-    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-    gap: 8,
-    marginTop: 10,
-  };
-
-  const previewMiniBox: React.CSSProperties = {
-    borderRadius: 12,
-    border: "1px solid rgba(148,163,184,0.16)",
-    background: "rgba(255,255,255,0.03)",
-    padding: "8px 9px",
-  };
-
-  const featuredPreviewSide: React.CSSProperties = {
-    minHeight: isMobile ? 170 : 188,
-    borderRadius: 16,
-    border: "1px solid rgba(250,204,21,0.18)",
-    background:
-      "linear-gradient(180deg, rgba(250,204,21,0.06), rgba(15,23,42,0.92) 34%, rgba(2,6,23,0.92))",
-    padding: 12,
-    display: "flex",
-    flexDirection: "column",
-    gap: 10,
-  };
-
-  const featuredPreviewPriceRow: React.CSSProperties = {
-    display: "flex",
-    justifyContent: "space-between",
-    gap: 10,
-    alignItems: "flex-start",
-  };
-
-  const featuredPreviewStatRow: React.CSSProperties = {
-    display: "grid",
-    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-    gap: 8,
-  };
-
   const featuredValueGrid: React.CSSProperties = {
     display: "grid",
     gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))",
-    gap: isMobile ? 10 : 10,
+    gap: 10,
+    marginTop: 16,
   };
 
   const featuredValueCard: React.CSSProperties = {
@@ -826,67 +582,49 @@ export default function CreatorCity() {
   const examplesGrid: React.CSSProperties = {
     display: "grid",
     gridTemplateColumns: "1fr",
-    gap: isMobile ? 16 : 12,
-    marginTop: isMobile ? 18 : 14,
+    gap: isMobile ? 14 : 12,
+    marginTop: 16,
   };
 
   const exampleCard: React.CSSProperties = {
     border: "1px solid rgba(148,163,184,0.20)",
     background: "rgba(2,6,23,0.52)",
     borderRadius: 20,
-    padding: isMobile ? 22 : "14px 16px",
+    padding: isMobile ? 18 : "14px 16px",
     cursor: "pointer",
     display: "flex",
     flexDirection: "column",
-    alignItems: "flex-start",
-    justifyContent: "flex-start",
-    gap: isMobile ? 14 : 8,
-    width: "100%",
-    maxWidth: "100%",
+    gap: isMobile ? 12 : 8,
     boxShadow:
       "0 0 18px rgba(34,211,238,0.03), inset 0 1px 0 rgba(255,255,255,0.02)",
   };
 
-  const exampleTextWrap: React.CSSProperties = {
-    display: "flex",
-    flexDirection: "column",
-    gap: 6,
-    minWidth: 0,
-    width: "100%",
-  };
-
-  const exampleTitle: React.CSSProperties = {
-    fontWeight: 900,
-    fontSize: isMobile ? 25 : 15,
-    whiteSpace: "normal",
-    overflow: "visible",
-    textOverflow: "clip",
-    color: "#ffffff",
-    lineHeight: 1.08,
-    letterSpacing: isMobile ? -0.5 : 0,
-  };
-
-  const exampleSub: React.CSSProperties = {
-    fontSize: isMobile ? 18 : 12,
-    color: "rgba(226,232,240,0.76)",
-    lineHeight: isMobile ? 1.45 : 1.5,
-  };
-
   const tagStyle: React.CSSProperties = {
     borderRadius: 999,
-    padding: isMobile ? "10px 16px" : "6px 10px",
-    fontSize: isMobile ? 16 : 11,
+    padding: isMobile ? "9px 14px" : "6px 10px",
+    fontSize: isMobile ? 14 : 11,
     fontWeight: 900,
     border: "1px solid rgba(250,204,21,0.40)",
     color: "rgba(254,240,138,1)",
     background: "rgba(250,204,21,0.10)",
-    flexShrink: 0,
-    alignSelf: "flex-start",
-    marginTop: isMobile ? 0 : 2,
+    width: "fit-content",
+  };
+
+  const exampleTitle: React.CSSProperties = {
+    fontWeight: 900,
+    fontSize: isMobile ? 24 : 15,
+    color: "#ffffff",
+    lineHeight: 1.06,
+  };
+
+  const exampleSub: React.CSSProperties = {
+    fontSize: isMobile ? 17 : 12,
+    color: "rgba(226,232,240,0.76)",
+    lineHeight: isMobile ? 1.42 : 1.5,
   };
 
   const footerWrap: React.CSSProperties = {
-    marginTop: isMobile ? 34 : 34,
+    marginTop: isMobile ? 32 : 30,
     paddingTop: isMobile ? 22 : 18,
     borderTop: "1px solid rgba(148,163,184,0.16)",
     textAlign: "center",
@@ -956,12 +694,12 @@ export default function CreatorCity() {
     {
       id: "intake-flow" as BuildIntent,
       title: "Intake Flow",
-      text: "Calls, texts, walk-ins → one system.",
+      text: "Calls, texts, walk-ins into one system.",
     },
     {
       id: "payment-flow" as BuildIntent,
       title: "Payment Flow",
-      text: "Job → payment → proof.",
+      text: "Job to payment to proof.",
     },
     {
       id: "full-system" as BuildIntent,
@@ -974,197 +712,89 @@ export default function CreatorCity() {
     <div style={page}>
       <div style={shell}>
         <div style={hero}>
-          <div style={heroTop}>
-            <div style={titleWrap}>
-              <div style={titleRow}>
-                <div style={title}>Creator City</div>
-                <div style={livePill}>
-                  <span style={pulseDot} />
-                  BUILD MY BUSINESS SYSTEM
-                </div>
-              </div>
-
-              {isMobile ? (
-                <>
-                  <div style={mobileHeroTitle}>
-                    Your business is not complicated.
-                    <br />
-                    Your tools are.
-                  </div>
-
-                  <div style={mobileHeroSubline}>
-                    You shouldn&apos;t need 5 apps
-                    <br />
-                    and 10 clicks to do one job.
-                  </div>
-
-                  <button
-                    style={mobilePrimaryCta}
-                    onClick={() => nav("/planet/start")}
-                  >
-                    Start My Board
-                  </button>
-
-                  <div style={subtitle}>
-                    HomePlanet turns your real workflow into one live page.
-                    Show us how your business actually works, where the friction
-                    is, and what should happen in one click instead of ten.
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div style={desktopSubHead}>
-                    Your business is not complicated. Your tools are.
-                  </div>
-                  <div style={subtitle}>
-                    You shouldn&apos;t need 5 apps and 10 clicks just to do one
-                    job. HomePlanet turns your real workflow into one live page
-                    so jobs, status, customer updates, payment, and proof live
-                    together instead of across tabs, texts, and scattered tools.
-                  </div>
-                </>
-              )}
-
-              <div style={doctrinePanel}>
-                <div style={doctrineTitle}>
-                  PRESENCE-FIRST • ONE PAGE • REMOVE STEPS
-                </div>
-                <div style={doctrineText}>
-                  If it takes more than one click, your system is broken.
-                  HomePlanet is built to remove wasted motion, not add more
-                  layers. Your business should not require five different apps,
-                  repeated entry, hidden tabs, and constant status chasing just
-                  to move one job forward.
-                </div>
-              </div>
-            </div>
-
-            {!isMobile && (
-              <div style={buttonRow}>
-                <button style={btnPrimary} onClick={() => nav("/planet/start")}>
-                  Start My Board
-                </button>
-                <button style={btnBase} onClick={() => nav("/planet/pricing")}>
-                  Pricing
-                </button>
-                <button
-                  style={btnBase}
-                  onClick={() => nav("/planet/creator/projects")}
-                >
-                  Projects
-                </button>
-                <button
-                  style={btnBase}
-                  onClick={() => nav("/planet/creator/studio")}
-                >
-                  Studio
-                </button>
-              </div>
-            )}
-
-            {isMobile && (
-              <div style={{ ...buttonRow, marginTop: 14 }}>
-                <button style={btnBase} onClick={() => nav("/planet/pricing")}>
-                  Pricing
-                </button>
-                <button
-                  style={btnBase}
-                  onClick={() => nav("/planet/creator/projects")}
-                >
-                  Projects
-                </button>
-                <button
-                  style={btnBase}
-                  onClick={() => nav("/planet/creator/studio")}
-                >
-                  Studio
-                </button>
-              </div>
-            )}
+          <div style={livePill}>
+            <span style={pulseDot} />
+            BUILD MY BUSINESS SYSTEM
           </div>
 
-          <div style={topGrid}>
-            <div style={sectionCard}>
-              <div style={sectionTitle}>This is the holy-shit moment</div>
-              <div style={sectionText}>
-                Not because it looks cool.
-                <br />
-                Because it makes you realize how much time you&apos;ve been
-                wasting.
-                <br />
-                <br />
-                Open board. Tap once. Done.
-              </div>
+          <div style={title}>Creator City</div>
 
-              <div style={impactPanel}>
-                <div style={impactHeadline}>
-                  We don&apos;t add features.
-                  <br />
-                  We remove steps.
-                </div>
-                <div style={impactText}>
-                  Show us your workflow.
-                  <br />
-                  We turn it into one page.
-                </div>
-              </div>
+          <div style={hook}>
+            Your business is not complicated.
+            <br />
+            Your tools are.
+          </div>
 
-              <div style={intentGrid}>
-                {intentCards.map((card) => (
-                  <div
-                    key={card.id}
-                    style={intentCard(wantsBuilt === card.id)}
-                    onClick={() => setWantsBuilt(card.id)}
-                  >
-                    <div style={intentTitle}>{card.title}</div>
-                    <div style={intentText}>{card.text}</div>
-                  </div>
-                ))}
+          <div style={subtext}>
+            Start fast. Open a live example. Use a ready system. Or send your
+            workflow and let HomePlanet remove the steps.
+          </div>
+
+          <div style={ctaRow}>
+            <button style={primaryBtn} onClick={() => nav("/planet/start")}>
+              Start My Board
+            </button>
+
+            <button
+              style={secondaryBtn}
+              onClick={() => nav(LIVE_PRODUCT_DEMO_ROUTE)}
+            >
+              See Live Example
+            </button>
+
+            <button style={secondaryBtn} onClick={scrollToReadySystems}>
+              Use Ready System
+            </button>
+
+            <button
+              style={secondaryBtn}
+              onClick={() => nav("/planet/experience")}
+            >
+              Experience Planet
+            </button>
+          </div>
+
+          <div style={quickGrid}>
+            <div style={quickCard}>
+              <div style={quickTitle}>Start your system</div>
+              <div style={quickText}>
+                Go straight into the board flow and build from intake forward.
               </div>
             </div>
 
-            <div style={sectionCard}>
-              <div style={sectionTitle}>What businesses feel immediately</div>
-              <div style={sectionText}>
-                You are not broken. Your workflow is. If your team has to jump
-                between apps, repeat steps, re-enter the same info, or chase
-                status across calls and texts, that friction is costing you time
-                every single day.
+            <div style={quickCard}>
+              <div style={quickTitle}>See it working live</div>
+              <div style={quickText}>
+                Skip the explanation. Open a system that already shows the value.
               </div>
+            </div>
 
-              <div style={miniCompareGrid}>
-                <div style={compareCard("before")}>
-                  <div style={compareTitle}>Before</div>
-                  <ul style={compareList}>
-                    <li>Calls for updates</li>
-                    <li>Texts everywhere</li>
-                    <li>Paper + side notes</li>
-                    <li>&quot;Where is it?&quot;</li>
-                    <li>&quot;Did we send it?&quot;</li>
-                  </ul>
-                </div>
-
-                <div style={compareCard("after")}>
-                  <div style={compareTitle}>After — one page</div>
-                  <ul style={compareList}>
-                    <li>Jobs visible</li>
-                    <li>Status visible</li>
-                    <li>Customer sees it</li>
-                    <li>Team sees it</li>
-                    <li>Payment + proof attached</li>
-                  </ul>
-                </div>
+            <div style={quickCard}>
+              <div style={quickTitle}>Use a ready path</div>
+              <div style={quickText}>
+                Pick a live system that already fits what you are trying to do.
               </div>
             </div>
           </div>
         </div>
 
-        <div style={{ ...sectionCard, marginTop: isMobile ? 20 : 18 }}>
-          <div style={sectionTitle}>Describe your business workflow</div>
-          <div style={sectionText}>
-            Show us how your business actually works.
-            <br />
-            We&apos;ll remove the steps.
+        <div style={sectionCard}>
+          <div style={sectionTitle}>Tell us what you need built</div>
+          <div style={sectionSub}>
+            Fast intake. Direct wording. No extra story.
+          </div>
+
+          <div style={intentGrid}>
+            {intentCards.map((cardItem) => (
+              <div
+                key={cardItem.id}
+                style={intentCard(wantsBuilt === cardItem.id)}
+                onClick={() => setWantsBuilt(cardItem.id)}
+              >
+                <div style={intentTitle}>{cardItem.title}</div>
+                <div style={intentText}>{cardItem.text}</div>
+              </div>
+            ))}
           </div>
 
           {submitted ? (
@@ -1173,19 +803,21 @@ export default function CreatorCity() {
                 Creator City intake received ⚡
               </div>
               <div style={{ lineHeight: 1.7 }}>
-                Your business workflow request was sent into HomePlanet. We
-                saved it, emailed it, and kicked back an auto-reply. This is
-                now a live intake path.
+                Your workflow request was sent into HomePlanet. It is now saved
+                as a live intake path.
               </div>
 
-              <div style={buttonRow}>
+              <div style={ctaRow}>
                 <button
-                  style={btnPrimary}
+                  style={primaryBtn}
                   onClick={() => nav("/planet/pricing")}
                 >
                   View Pricing
                 </button>
-                <button style={btnBase} onClick={() => nav("/planet/start")}>
+                <button
+                  style={secondaryBtn}
+                  onClick={() => nav("/planet/start")}
+                >
                   Open Start Flow
                 </button>
               </div>
@@ -1243,7 +875,7 @@ export default function CreatorCity() {
                     style={textareaWide}
                     value={currentWorkflow}
                     onChange={(e) => setCurrentWorkflow(e.target.value)}
-                    placeholder="Paper tickets, texts, whiteboard, memory, spreadsheets, another app..."
+                    placeholder="Paper tickets, texts, whiteboard, spreadsheets, another app..."
                     required
                   />
                 </div>
@@ -1261,13 +893,13 @@ export default function CreatorCity() {
 
                 <div style={{ ...inputGroup, gridColumn: "1 / -1" }}>
                   <label style={label}>
-                    What do customers keep asking, texting, or calling about?
+                    What do customers keep asking about?
                   </label>
                   <textarea
                     style={textareaWide}
                     value={customerQuestions}
                     onChange={(e) => setCustomerQuestions(e.target.value)}
-                    placeholder="Where am I in line? Is the job ready? Did you receive my request? When are you coming out?"
+                    placeholder="Where am I in line? Is it ready? Did you get my request?"
                   />
                 </div>
 
@@ -1279,7 +911,7 @@ export default function CreatorCity() {
                     style={textareaWide}
                     value={holyShiftMoment}
                     onChange={(e) => setHolyShiftMoment(e.target.value)}
-                    placeholder="One tap to update the customer, one board for the team, one place for status, notes, payment, and proof..."
+                    placeholder="One board for status, team, customer updates, payment, and proof..."
                   />
                 </div>
               </div>
@@ -1288,14 +920,12 @@ export default function CreatorCity() {
                 <div style={label}>Upload photos of your workflow</div>
                 <div
                   style={{
-                    ...sectionText,
+                    ...sectionSub,
                     marginTop: 8,
-                    fontSize: isMobile ? 16 : 13,
+                    fontSize: isMobile ? 15 : 13,
                   }}
                 >
-                  Upload anything that shows how you work today.
-                  <br />
-                  We use it to remove steps.
+                  Show the current mess. We use it to remove steps.
                 </div>
 
                 <div style={{ marginTop: 12 }}>
@@ -1306,11 +936,19 @@ export default function CreatorCity() {
                     onChange={(e) =>
                       setWorkflowFiles(Array.from(e.target.files || []))
                     }
-                    style={{ fontSize: isMobile ? 17 : 14 }}
+                    style={{ fontSize: isMobile ? 16 : 14 }}
                   />
                 </div>
 
-                <div style={fileMeta}>{selectedFilesLabel}</div>
+                <div
+                  style={{
+                    marginTop: 10,
+                    fontSize: isMobile ? 15 : 12,
+                    color: "rgba(186,230,253,0.9)",
+                  }}
+                >
+                  {selectedFilesLabel}
+                </div>
               </div>
 
               <div style={submitWrap}>
@@ -1329,24 +967,24 @@ export default function CreatorCity() {
                 </button>
 
                 <div style={helperText}>
-                  This sends your workflow description into HomePlanet through
-                  the same live intake system you already built. We use it to
-                  shape the right one-page landing page, board, tool, intake
-                  path, payment flow, or full business system.
+                  One direct intake. Then we shape the right board, landing page,
+                  workflow tool, payment path, or full business system.
                 </div>
               </div>
             </form>
           )}
         </div>
 
-        <div style={examplesLabel}>See what&apos;s possible right now</div>
+        <div ref={readySystemsRef} style={examplesLabel}>
+          Featured live system
+        </div>
 
         <div
           style={featuredDemoCard}
           onClick={() => nav(LIVE_PRODUCT_DEMO_ROUTE)}
         >
           <div style={featuredDemoTop}>
-            <div style={featuredDemoTextWrap}>
+            <div style={{ flex: 1, minWidth: 0 }}>
               <div style={featuredDemoBadgeRow}>
                 <div style={featuredDemoBadge}>HIGH VALUE SYSTEM</div>
                 <div style={featuredDemoSecondaryBadge}>LIVE SELLING</div>
@@ -1377,308 +1015,119 @@ export default function CreatorCity() {
             </button>
           </div>
 
-          <div style={featuredDemoGrid}>
-            <div style={featuredPreviewShell}>
-              <div style={featuredPreviewTop}>
-                <div style={featuredPreviewVideo}>
-                  <div style={featuredPreviewPillRow}>
-                    <div style={previewTinyPill("live")}>LIVE</div>
-                    <div style={previewTinyPill("neutral")}>83 watching</div>
-                  </div>
-
-                  <div style={featuredPreviewCenter}>
-                    <div style={playCircle}>▶</div>
-                    <div
-                      style={{
-                        fontWeight: 900,
-                        fontSize: isMobile ? 18 : 15,
-                        color: "#ffffff",
-                        lineHeight: 1.08,
-                      }}
-                    >
-                      Seller live demo in motion
-                    </div>
-                    <div
-                      style={{
-                        fontSize: isMobile ? 14 : 12,
-                        color: "rgba(226,232,240,0.74)",
-                        lineHeight: 1.45,
-                        maxWidth: 260,
-                      }}
-                    >
-                      Show the product live while buyer activity builds on the
-                      same page.
-                    </div>
-                  </div>
-
-                  <div style={featuredPreviewBottomGrid}>
-                    <div style={previewMiniBox}>
-                      <div
-                        style={{
-                          fontSize: 10,
-                          color: "rgba(148,163,184,0.88)",
-                          marginBottom: 4,
-                          fontWeight: 900,
-                        }}
-                      >
-                        LIVE ANGLE
-                      </div>
-                      <div style={{ fontSize: 11, color: "#e5e7eb" }}>
-                        Product demo
-                      </div>
-                    </div>
-                    <div style={previewMiniBox}>
-                      <div
-                        style={{
-                          fontSize: 10,
-                          color: "rgba(148,163,184,0.88)",
-                          marginBottom: 4,
-                          fontWeight: 900,
-                        }}
-                      >
-                        BUILDER NOTE
-                      </div>
-                      <div style={{ fontSize: 11, color: "#e5e7eb" }}>
-                        Showing current setup
-                      </div>
-                    </div>
-                    <div style={previewMiniBox}>
-                      <div
-                        style={{
-                          fontSize: 10,
-                          color: "rgba(148,163,184,0.88)",
-                          marginBottom: 4,
-                          fontWeight: 900,
-                        }}
-                      >
-                        SALE STATE
-                      </div>
-                      <div style={{ fontSize: 11, color: "#e5e7eb" }}>
-                        Buy or reserve live
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div style={featuredPreviewSide}>
-                  <div style={featuredPreviewPillRow}>
-                    <div style={previewTinyPill("neutral")}>FEATURED MODEL</div>
-                    <div style={previewTinyPill("warn")}>HOT ITEM</div>
-                  </div>
-
-                  <div style={featuredPreviewPriceRow}>
-                    <div>
-                      <div
-                        style={{
-                          fontSize: isMobile ? 20 : 18,
-                          fontWeight: 900,
-                          color: "#ffffff",
-                          lineHeight: 1.06,
-                        }}
-                      >
-                        Custom Seller Item
-                      </div>
-                      <div
-                        style={{
-                          marginTop: 6,
-                          fontSize: 12,
-                          color: "rgba(226,232,240,0.74)",
-                          lineHeight: 1.45,
-                        }}
-                      >
-                        Generic wrapper for live commerce demos inside Creator
-                        City.
-                      </div>
-                    </div>
-
-                    <div style={previewTinyPill("warn")}>LOW STOCK</div>
-                  </div>
-
-                  <div
-                    style={{
-                      fontSize: isMobile ? 28 : 24,
-                      fontWeight: 900,
-                      color: "#ffffff",
-                      lineHeight: 1.02,
-                    }}
-                  >
-                    $1,495
-                  </div>
-
-                  <div
-                    style={{
-                      fontSize: 12,
-                      color: "rgba(226,232,240,0.82)",
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    Tight stock, live video, fast reserve path, and visible buyer
-                    pressure.
-                  </div>
-
-                  <div style={featuredPreviewStatRow}>
-                    <div style={previewMiniBox}>
-                      <div
-                        style={{
-                          fontSize: 10,
-                          color: "rgba(148,163,184,0.88)",
-                          marginBottom: 4,
-                          fontWeight: 900,
-                        }}
-                      >
-                        STOCK
-                      </div>
-                      <div style={{ fontSize: 12, color: "#ffffff" }}>2</div>
-                    </div>
-                    <div style={previewMiniBox}>
-                      <div
-                        style={{
-                          fontSize: 10,
-                          color: "rgba(148,163,184,0.88)",
-                          marginBottom: 4,
-                          fontWeight: 900,
-                        }}
-                      >
-                        WATCHING
-                      </div>
-                      <div style={{ fontSize: 12, color: "#ffffff" }}>34</div>
-                    </div>
-                    <div style={previewMiniBox}>
-                      <div
-                        style={{
-                          fontSize: 10,
-                          color: "rgba(148,163,184,0.88)",
-                          marginBottom: 4,
-                          fontWeight: 900,
-                        }}
-                      >
-                        SOLD TODAY
-                      </div>
-                      <div style={{ fontSize: 12, color: "#ffffff" }}>5</div>
-                    </div>
-                  </div>
-                </div>
+          <div style={featuredValueGrid}>
+            <div style={featuredValueCard}>
+              <div
+                style={{
+                  fontSize: isMobile ? 16 : 12,
+                  fontWeight: 900,
+                  color: "rgba(254,240,138,1)",
+                  marginBottom: 6,
+                  letterSpacing: 0.3,
+                }}
+              >
+                LIVE VIDEO
+              </div>
+              <div
+                style={{
+                  fontSize: isMobile ? 18 : 14,
+                  fontWeight: 900,
+                  color: "#ffffff",
+                  lineHeight: 1.08,
+                  marginBottom: 6,
+                }}
+              >
+                The seller becomes the event
+              </div>
+              <div
+                style={{
+                  fontSize: isMobile ? 15 : 12,
+                  color: "rgba(226,232,240,0.76)",
+                  lineHeight: 1.5,
+                }}
+              >
+                The product is shown live instead of being buried in a dead listing.
               </div>
             </div>
 
-            <div style={featuredValueGrid}>
-              <div style={featuredValueCard}>
-                <div
-                  style={{
-                    fontSize: isMobile ? 16 : 12,
-                    fontWeight: 900,
-                    color: "rgba(254,240,138,1)",
-                    marginBottom: 6,
-                    letterSpacing: 0.3,
-                  }}
-                >
-                  LIVE VIDEO
-                </div>
-                <div
-                  style={{
-                    fontSize: isMobile ? 18 : 14,
-                    fontWeight: 900,
-                    color: "#ffffff",
-                    lineHeight: 1.08,
-                    marginBottom: 6,
-                  }}
-                >
-                  The seller becomes the event
-                </div>
-                <div
-                  style={{
-                    fontSize: isMobile ? 15 : 12,
-                    color: "rgba(226,232,240,0.76)",
-                    lineHeight: 1.5,
-                  }}
-                >
-                  The product is shown live instead of being buried in a dead
-                  listing.
-                </div>
+            <div style={featuredValueCard}>
+              <div
+                style={{
+                  fontSize: isMobile ? 16 : 12,
+                  fontWeight: 900,
+                  color: "rgba(187,247,208,1)",
+                  marginBottom: 6,
+                  letterSpacing: 0.3,
+                }}
+              >
+                BUYER PRESSURE
               </div>
-
-              <div style={featuredValueCard}>
-                <div
-                  style={{
-                    fontSize: isMobile ? 16 : 12,
-                    fontWeight: 900,
-                    color: "rgba(187,247,208,1)",
-                    marginBottom: 6,
-                    letterSpacing: 0.3,
-                  }}
-                >
-                  BUYER PRESSURE
-                </div>
-                <div
-                  style={{
-                    fontSize: isMobile ? 18 : 14,
-                    fontWeight: 900,
-                    color: "#ffffff",
-                    lineHeight: 1.08,
-                    marginBottom: 6,
-                  }}
-                >
-                  Reserve momentum stays visible
-                </div>
-                <div
-                  style={{
-                    fontSize: isMobile ? 15 : 12,
-                    color: "rgba(226,232,240,0.76)",
-                    lineHeight: 1.5,
-                  }}
-                >
-                  Watching count, low stock, and sold movement create urgency
-                  without fake gimmicks.
-                </div>
+              <div
+                style={{
+                  fontSize: isMobile ? 18 : 14,
+                  fontWeight: 900,
+                  color: "#ffffff",
+                  lineHeight: 1.08,
+                  marginBottom: 6,
+                }}
+              >
+                Reserve momentum stays visible
               </div>
+              <div
+                style={{
+                  fontSize: isMobile ? 15 : 12,
+                  color: "rgba(226,232,240,0.76)",
+                  lineHeight: 1.5,
+                }}
+              >
+                Watching count, low stock, and sold movement create urgency without fake gimmicks.
+              </div>
+            </div>
 
-              <div style={featuredValueCard}>
-                <div
-                  style={{
-                    fontSize: isMobile ? 16 : 12,
-                    fontWeight: 900,
-                    color: "rgba(186,230,253,1)",
-                    marginBottom: 6,
-                    letterSpacing: 0.3,
-                  }}
-                >
-                  PROOF STATE
-                </div>
-                <div
-                  style={{
-                    fontSize: isMobile ? 18 : 14,
-                    fontWeight: 900,
-                    color: "#ffffff",
-                    lineHeight: 1.08,
-                    marginBottom: 6,
-                  }}
-                >
-                  Current vs previous stays clear
-                </div>
-                <div
-                  style={{
-                    fontSize: isMobile ? 15 : 12,
-                    color: "rgba(226,232,240,0.76)",
-                    lineHeight: 1.5,
-                  }}
-                >
-                  The board can show what is current, what changed, and what
-                  happened live.
-                </div>
+            <div style={featuredValueCard}>
+              <div
+                style={{
+                  fontSize: isMobile ? 16 : 12,
+                  fontWeight: 900,
+                  color: "rgba(186,230,253,1)",
+                  marginBottom: 6,
+                  letterSpacing: 0.3,
+                }}
+              >
+                PROOF STATE
+              </div>
+              <div
+                style={{
+                  fontSize: isMobile ? 18 : 14,
+                  fontWeight: 900,
+                  color: "#ffffff",
+                  lineHeight: 1.08,
+                  marginBottom: 6,
+                }}
+              >
+                Current vs previous stays clear
+              </div>
+              <div
+                style={{
+                  fontSize: isMobile ? 15 : 12,
+                  color: "rgba(226,232,240,0.76)",
+                  lineHeight: 1.5,
+                }}
+              >
+                The board can show what is current, what changed, and what happened live.
               </div>
             </div>
           </div>
         </div>
 
+        <div style={examplesLabel}>Use a ready system</div>
+
         <div style={examplesGrid}>
           {systems.map((s) => (
             <div key={s.id} style={exampleCard} onClick={() => nav(s.to)}>
               <div style={tagStyle}>{s.tag}</div>
-
-              <div style={exampleTextWrap}>
-                <div style={exampleTitle}>{s.title}</div>
-                <div style={exampleSub}>{s.subtitle}</div>
-              </div>
+              <div style={exampleTitle}>{s.title}</div>
+              <div style={exampleSub}>{s.subtitle}</div>
             </div>
           ))}
         </div>
