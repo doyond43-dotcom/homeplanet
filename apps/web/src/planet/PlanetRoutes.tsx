@@ -13,6 +13,9 @@ import StarterBoardPreview from "../pages/StarterBoardPreview";
 import RcAirboatsLiveDemo from "../pages/RcAirboatsLiveDemo";
 import ExperiencePlanet from "../pages/ExperiencePlanet";
 
+// 🔥 ADD THIS IMPORT
+import CreationMomentPage from "../pages/CreationMomentPage";
+
 // Demo boards
 import AwnitDemoBoard from "../pages/AwnitDemoBoard";
 import AutoRepairLiveBoard from "../pages/AutoRepairLiveBoard";
@@ -74,6 +77,10 @@ export default function PlanetRoutes() {
       <Route path="creator/build" element={<CreatorBuild />} />
       <Route path="creator/release/:releaseId" element={<ReleaseViewer />} />
       <Route path="creator/rc-live" element={<RcAirboatsLiveDemo />} />
+
+      {/* 🔥 NEW SAFE ROUTE */}
+      <Route path="creator/building" element={<CreationMomentPage />} />
+
       <Route path="creator/*" element={<Navigate to="/planet/creator" replace />} />
 
       <Route path="experience" element={<ExperiencePlanet />} />
@@ -148,6 +155,7 @@ export default function PlanetRoutes() {
 
       <Route path="payments/node" element={<HomePlanetPaymentNode />} />
 
+      {/* EXISTING ONBOARDING — UNTOUCHED */}
       <Route path="start" element={<OnboardingFlow />} />
       <Route path="start/building" element={<OnboardingBuildTransition />} />
       <Route path="start/preview" element={<StarterBoardPreview />} />

@@ -178,7 +178,9 @@ export default function CreatorCity() {
         throw new Error(text || "Failed to submit Creator City intake");
       }
 
-      setSubmitted(true);
+      nav("/planet/creator/building", {
+        state: { redirectTo: "/planet/vehicles/awnit-demo" },
+      });
     } catch (err: any) {
       console.error("CREATOR CITY ERROR:", err?.message || err);
       alert(
@@ -212,11 +214,11 @@ export default function CreatorCity() {
   };
 
   const card: React.CSSProperties = {
-    border: "1px solid rgba(148,163,184,0.18)",
-    background:
-      "linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015) 28%, rgba(2,6,23,0.58) 100%)",
+    border: "1px solid rgba(255,255,255,0.12)",
+    background: "rgba(2,6,23,0.78)",
     borderRadius: isMobile ? 28 : 24,
-    boxShadow: "0 24px 80px rgba(0,0,0,0.38)",
+    boxShadow:
+      "0 24px 80px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,255,255,0.03)",
     overflow: "hidden",
   };
 
@@ -285,21 +287,21 @@ export default function CreatorCity() {
   const primaryBtn: React.CSSProperties = {
     borderRadius: 999,
     padding: isMobile ? "15px 20px" : "12px 18px",
-    border: "1px solid rgba(34,197,94,0.45)",
-    background: "rgba(34,197,94,0.12)",
-    color: "rgba(187,247,208,1)",
+    border: "1px solid rgba(34,197,94,0.30)",
+    background: "rgba(34,197,94,0.16)",
+    color: "#dcfce7",
     fontWeight: 900,
     fontSize: isMobile ? 18 : 14,
     cursor: "pointer",
-    boxShadow: "0 0 18px rgba(74,222,128,0.08)",
+    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
   };
 
   const secondaryBtn: React.CSSProperties = {
     borderRadius: 999,
     padding: isMobile ? "15px 20px" : "12px 18px",
-    border: "1px solid rgba(148,163,184,0.22)",
-    background: "rgba(2,6,23,0.52)",
-    color: "#e5e7eb",
+    border: "1px solid rgba(255,255,255,0.14)",
+    background: "rgba(255,255,255,0.045)",
+    color: "#f8fafc",
     fontWeight: 900,
     fontSize: isMobile ? 18 : 14,
     cursor: "pointer",
@@ -313,12 +315,12 @@ export default function CreatorCity() {
   };
 
   const quickCard: React.CSSProperties = {
-    border: "1px solid rgba(148,163,184,0.16)",
-    background: "rgba(2,6,23,0.5)",
+    border: "1px solid rgba(255,255,255,0.10)",
+    background: "rgba(255,255,255,0.035)",
     borderRadius: 20,
     padding: isMobile ? 18 : 16,
     minHeight: isMobile ? 118 : 108,
-    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
+    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.02)",
   };
 
   const quickTitle: React.CSSProperties = {
@@ -337,8 +339,9 @@ export default function CreatorCity() {
 
   const sectionCard: React.CSSProperties = {
     ...card,
-    marginTop: isMobile ? 18 : 18,
+    marginTop: 18,
     padding: isMobile ? 18 : 20,
+    background: "rgba(2,6,23,0.82)",
   };
 
   const sectionTitle: React.CSSProperties = {
@@ -365,16 +368,17 @@ export default function CreatorCity() {
 
   const intentCard = (active: boolean): React.CSSProperties => ({
     border: active
-      ? "1px solid rgba(34,197,94,0.42)"
-      : "1px solid rgba(148,163,184,0.18)",
-    background: active ? "rgba(34,197,94,0.10)" : "rgba(255,255,255,0.02)",
+      ? "1px solid rgba(34,197,94,0.32)"
+      : "1px solid rgba(255,255,255,0.12)",
+    background: active
+      ? "rgba(34,197,94,0.14)"
+      : "rgba(255,255,255,0.035)",
     borderRadius: 20,
     padding: isMobile ? 18 : 14,
     cursor: "pointer",
     minHeight: isMobile ? 108 : 102,
-    boxShadow: active
-      ? "0 0 24px rgba(74,222,128,0.08)"
-      : "0 0 18px rgba(34,211,238,0.03)",
+    boxShadow:
+      "inset 0 1px 0 rgba(255,255,255,0.02), 0 12px 28px rgba(0,0,0,0.18)",
   });
 
   const intentTitle: React.CSSProperties = {
@@ -414,14 +418,14 @@ export default function CreatorCity() {
   const inputBase: React.CSSProperties = {
     width: "100%",
     borderRadius: isMobile ? 18 : 14,
-    border: "1px solid rgba(148,163,184,0.22)",
-    background: "rgba(2,6,23,0.64)",
-    color: "#e5e7eb",
+    border: "1px solid rgba(255,255,255,0.18)",
+    background: "rgba(255,255,255,0.04)",
+    color: "#f8fafc",
     padding: isMobile ? "16px 16px" : "13px 14px",
     fontSize: isMobile ? 16 : 14,
     outline: "none",
     boxSizing: "border-box",
-    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.02)",
+    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
   };
 
   const textareaWide: React.CSSProperties = {
@@ -431,8 +435,8 @@ export default function CreatorCity() {
   };
 
   const fileWrap: React.CSSProperties = {
-    border: "1px dashed rgba(56,189,248,0.30)",
-    background: "rgba(8,47,73,0.18)",
+    border: "1px dashed rgba(56,189,248,0.35)",
+    background: "rgba(8,47,73,0.22)",
     borderRadius: 20,
     padding: isMobile ? 16 : 16,
     marginTop: 16,
@@ -469,8 +473,8 @@ export default function CreatorCity() {
 
   const successPanel: React.CSSProperties = {
     marginTop: 18,
-    border: "1px solid rgba(34,197,94,0.32)",
-    background: "rgba(34,197,94,0.08)",
+    border: "1px solid rgba(34,197,94,0.34)",
+    background: "rgba(34,197,94,0.10)",
     borderRadius: 16,
     padding: 16,
     color: "rgba(220,252,231,1)",
@@ -490,9 +494,9 @@ export default function CreatorCity() {
     ...card,
     marginTop: 16,
     padding: isMobile ? 18 : 18,
-    border: "1px solid rgba(250,204,21,0.26)",
+    border: "1px solid rgba(250,204,21,0.30)",
     background:
-      "linear-gradient(180deg, rgba(250,204,21,0.08), rgba(2,6,23,0.66) 22%, rgba(2,6,23,0.74) 100%)",
+      "linear-gradient(180deg, rgba(250,204,21,0.10), rgba(2,6,23,0.80) 30%, rgba(2,6,23,0.88) 100%)",
     cursor: "pointer",
   };
 
@@ -574,9 +578,10 @@ export default function CreatorCity() {
 
   const featuredValueCard: React.CSSProperties = {
     borderRadius: 16,
-    border: "1px solid rgba(148,163,184,0.16)",
-    background: "rgba(255,255,255,0.03)",
+    border: "1px solid rgba(255,255,255,0.10)",
+    background: "rgba(255,255,255,0.04)",
     padding: isMobile ? 14 : 12,
+    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.02)",
   };
 
   const examplesGrid: React.CSSProperties = {
@@ -587,8 +592,8 @@ export default function CreatorCity() {
   };
 
   const exampleCard: React.CSSProperties = {
-    border: "1px solid rgba(148,163,184,0.20)",
-    background: "rgba(2,6,23,0.52)",
+    border: "1px solid rgba(255,255,255,0.12)",
+    background: "rgba(255,255,255,0.035)",
     borderRadius: 20,
     padding: isMobile ? 18 : "14px 16px",
     cursor: "pointer",
@@ -596,7 +601,7 @@ export default function CreatorCity() {
     flexDirection: "column",
     gap: isMobile ? 12 : 8,
     boxShadow:
-      "0 0 18px rgba(34,211,238,0.03), inset 0 1px 0 rgba(255,255,255,0.02)",
+      "0 14px 40px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.02)",
   };
 
   const tagStyle: React.CSSProperties = {
