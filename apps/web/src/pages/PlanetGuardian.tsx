@@ -43,10 +43,6 @@ type TimelineEvent = {
   tone: PresenceStatus;
 };
 
-function joinClasses(...parts: Array<string | false | null | undefined>) {
-  return parts.filter(Boolean).join(" ");
-}
-
 export default function PlanetGuardian() {
   const nav = useNavigate();
   const [isMobile, setIsMobile] = useState(false);
@@ -1379,9 +1375,6 @@ export default function PlanetGuardian() {
           </div>
         </div>
 
-        {/* ========================= */}
-        {/* GUARDIAN PRICING SECTION */}
-        {/* ========================= */}
         <div
           style={{
             marginTop: isMobile ? 22 : 24,
@@ -1393,7 +1386,6 @@ export default function PlanetGuardian() {
           }}
         >
           <div style={sectionTitle}>Start Guardian</div>
-
           <div style={sectionText}>
             One system. One board. Everyone who matters.
           </div>
@@ -1457,7 +1449,7 @@ export default function PlanetGuardian() {
                   color: "#bbf7d0",
                   cursor: "pointer",
                 }}
-                onClick={() => nav("/planet/start?plan=solo&system=guardian")}
+                onClick={() => nav("/planet/guardian/start?plan=solo")}
               >
                 Start Solo
               </button>
@@ -1524,7 +1516,7 @@ export default function PlanetGuardian() {
                   cursor: "pointer",
                   fontSize: 15,
                 }}
-                onClick={() => nav("/planet/start?plan=household&system=guardian")}
+                onClick={() => nav("/planet/guardian/start?plan=household")}
               >
                 Start Household
               </button>

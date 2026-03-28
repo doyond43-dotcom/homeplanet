@@ -1,7 +1,24 @@
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 type GuardianStatus = "safe" | "active" | "attention" | "alert";
+type GuardianProtectionType = "pet" | "child" | "elder" | "medical" | "mixed";
+type GuardianPlan = "solo" | "household";
+
+type GuardianActivationRecord = {
+  source?: string;
+  plan?: GuardianPlan;
+  ownerName?: string;
+  householdName?: string;
+  phone?: string;
+  email?: string;
+  protectionType?: GuardianProtectionType;
+  notes?: string;
+  createdAt?: string;
+  presenceId?: string;
+  activationStatus?: string;
+  submittedAt?: string;
+};
 
 type HouseholdMember = {
   id: string;
@@ -111,42 +128,46 @@ function statusTone(status: GuardianStatus) {
     case "safe":
       return {
         pillBg: "rgba(34,197,94,0.14)",
-        pillBorder: "rgba(34,197,94,0.28)",
+        pillBorder: "rgba(34,197,94,0.32)",
         pillText: "#bbf7d0",
-        panelBg: "linear-gradient(180deg, rgba(20,83,45,0.28), rgba(2,6,23,0.72))",
-        panelBorder: "rgba(34,197,94,0.22)",
+        panelBg:
+          "linear-gradient(180deg, rgba(20,83,45,0.32), rgba(2,6,23,0.78))",
+        panelBorder: "rgba(34,197,94,0.26)",
       };
     case "active":
       return {
         pillBg: "rgba(59,130,246,0.14)",
-        pillBorder: "rgba(59,130,246,0.28)",
+        pillBorder: "rgba(59,130,246,0.32)",
         pillText: "#bfdbfe",
-        panelBg: "linear-gradient(180deg, rgba(30,64,175,0.22), rgba(2,6,23,0.72))",
-        panelBorder: "rgba(59,130,246,0.22)",
+        panelBg:
+          "linear-gradient(180deg, rgba(30,64,175,0.26), rgba(2,6,23,0.78))",
+        panelBorder: "rgba(59,130,246,0.26)",
       };
     case "attention":
       return {
         pillBg: "rgba(245,158,11,0.14)",
-        pillBorder: "rgba(245,158,11,0.28)",
+        pillBorder: "rgba(245,158,11,0.32)",
         pillText: "#fde68a",
-        panelBg: "linear-gradient(180deg, rgba(120,53,15,0.22), rgba(2,6,23,0.72))",
-        panelBorder: "rgba(245,158,11,0.22)",
+        panelBg:
+          "linear-gradient(180deg, rgba(120,53,15,0.26), rgba(2,6,23,0.78))",
+        panelBorder: "rgba(245,158,11,0.26)",
       };
     case "alert":
       return {
         pillBg: "rgba(236,72,153,0.14)",
-        pillBorder: "rgba(236,72,153,0.28)",
+        pillBorder: "rgba(236,72,153,0.32)",
         pillText: "#fbcfe8",
-        panelBg: "linear-gradient(180deg, rgba(131,24,67,0.26), rgba(2,6,23,0.72))",
-        panelBorder: "rgba(236,72,153,0.22)",
+        panelBg:
+          "linear-gradient(180deg, rgba(131,24,67,0.30), rgba(2,6,23,0.78))",
+        panelBorder: "rgba(236,72,153,0.26)",
       };
     default:
       return {
         pillBg: "rgba(255,255,255,0.08)",
-        pillBorder: "rgba(255,255,255,0.12)",
+        pillBorder: "rgba(255,255,255,0.14)",
         pillText: "#e5e7eb",
-        panelBg: "rgba(255,255,255,0.03)",
-        panelBorder: "rgba(255,255,255,0.10)",
+        panelBg: "rgba(255,255,255,0.04)",
+        panelBorder: "rgba(255,255,255,0.12)",
       };
   }
 }
@@ -161,7 +182,7 @@ function HomePlanetGuardianFooter() {
       style={{
         marginTop: 26,
         paddingTop: 18,
-        borderTop: "1px solid rgba(148,163,184,0.14)",
+        borderTop: "1px solid rgba(148,163,184,0.16)",
         textAlign: "center",
         color: "rgba(226,232,240,0.72)",
         fontSize: 12,
@@ -173,9 +194,103 @@ function HomePlanetGuardianFooter() {
   );
 }
 
+function useQuery() {
+  const { search } = useLocation();
+  return useMemo(() => new URLSearchParams(search), [search]);
+}
+
+function formatProtectionLabel(value?: GuardianProtectionType) {
+  switch (value) {
+    case "pet":
+      return "Pet";
+    case "child":
+      return "Child";
+    case "elder":
+      return "Elder";
+    case "medical":
+      return "Medical";
+    case "mixed":
+      return "Mixed";
+    default:
+      return "-";
+  }
+}
+
+function formatPlanLabel(value?: GuardianPlan) {
+  switch (value) {
+    case "solo":
+      return "Solo";
+    case "household":
+      return "Household";
+    default:
+      return "-";
+  }
+}
+
 export default function GuardianHouseholdBoard() {
   const navigate = useNavigate();
+  const query = useQuery();
   const [selectedId, setSelectedId] = useState<string>(members[0]?.id ?? "mom");
+  const [activation, setActivation] = useState<GuardianActivationRecord | null>(
+    null
+  );
+
+  useEffect(() => {
+    const urlPresenceId = query.get("presenceId") || "";
+    const urlOwnerName = query.get("ownerName") || "";
+    const urlHouseholdName = query.get("householdName") || "";
+    const urlPhone = query.get("phone") || "";
+    const urlEmail = query.get("email") || "";
+    const urlProtectionType = query.get("protectionType") || "";
+    const urlActivationStatus = query.get("activationStatus") || "";
+    const urlPlan = query.get("plan") || "";
+
+    try {
+      const raw = localStorage.getItem("hp_guardian_activation_record");
+      if (raw) {
+        const parsed = JSON.parse(raw) as GuardianActivationRecord;
+
+        if (!urlPresenceId || parsed.presenceId === urlPresenceId) {
+          setActivation(parsed);
+          return;
+        }
+      }
+    } catch {
+      // ignore storage parse failure
+    }
+
+    if (
+      urlPresenceId ||
+      urlOwnerName ||
+      urlHouseholdName ||
+      urlPhone ||
+      urlEmail ||
+      urlProtectionType ||
+      urlActivationStatus ||
+      urlPlan
+    ) {
+      setActivation({
+        presenceId: urlPresenceId,
+        ownerName: urlOwnerName,
+        householdName: urlHouseholdName,
+        phone: urlPhone,
+        email: urlEmail,
+        protectionType:
+          urlProtectionType === "pet" ||
+          urlProtectionType === "child" ||
+          urlProtectionType === "elder" ||
+          urlProtectionType === "medical" ||
+          urlProtectionType === "mixed"
+            ? (urlProtectionType as GuardianProtectionType)
+            : undefined,
+        activationStatus: urlActivationStatus,
+        plan:
+          urlPlan === "solo" || urlPlan === "household"
+            ? (urlPlan as GuardianPlan)
+            : undefined,
+      });
+    }
+  }, [query]);
 
   const selected = useMemo(() => {
     return members.find((member) => member.id === selectedId) ?? members[0];
@@ -198,9 +313,9 @@ export default function GuardianHouseholdBoard() {
 
   const hero: React.CSSProperties = {
     borderRadius: 28,
-    border: "1px solid rgba(34,211,238,0.16)",
-    background: "linear-gradient(180deg, rgba(2,6,23,0.84), rgba(2,6,23,0.66))",
-    boxShadow: "0 24px 90px rgba(0,0,0,0.42)",
+    border: "1px solid rgba(34,211,238,0.18)",
+    background: "linear-gradient(180deg, rgba(2,6,23,0.88), rgba(2,6,23,0.70))",
+    boxShadow: "0 24px 90px rgba(0,0,0,0.44)",
     padding: 18,
     display: "grid",
     gridTemplateColumns: "1.4fr 0.9fr",
@@ -209,9 +324,10 @@ export default function GuardianHouseholdBoard() {
 
   const card: React.CSSProperties = {
     borderRadius: 24,
-    border: "1px solid rgba(255,255,255,0.08)",
-    background: "rgba(2,6,23,0.62)",
-    boxShadow: "0 18px 60px rgba(0,0,0,0.28)",
+    border: "1px solid rgba(255,255,255,0.10)",
+    background: "rgba(2,6,23,0.70)",
+    boxShadow:
+      "0 18px 60px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.02)",
     padding: 18,
   };
 
@@ -221,13 +337,14 @@ export default function GuardianHouseholdBoard() {
     gap: 8,
     padding: "8px 12px",
     borderRadius: 999,
-    border: "1px solid rgba(34,197,94,0.18)",
-    background: "rgba(34,197,94,0.10)",
+    border: "1px solid rgba(34,197,94,0.22)",
+    background: "rgba(34,197,94,0.12)",
     color: "#dcfce7",
     fontSize: 11,
     fontWeight: 900,
     letterSpacing: 0.7,
     textTransform: "uppercase",
+    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
   };
 
   const statGrid: React.CSSProperties = {
@@ -239,8 +356,9 @@ export default function GuardianHouseholdBoard() {
 
   const statCard: React.CSSProperties = {
     borderRadius: 18,
-    border: "1px solid rgba(255,255,255,0.08)",
-    background: "rgba(255,255,255,0.03)",
+    border: "1px solid rgba(255,255,255,0.10)",
+    background: "rgba(255,255,255,0.035)",
+    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.02)",
     padding: 14,
   };
 
@@ -254,7 +372,7 @@ export default function GuardianHouseholdBoard() {
 
   const sectionSub: React.CSSProperties = {
     marginTop: 10,
-    color: "rgba(226,232,240,0.82)",
+    color: "rgba(226,232,240,0.84)",
     fontSize: 13,
     lineHeight: 1.6,
     maxWidth: 700,
@@ -264,18 +382,19 @@ export default function GuardianHouseholdBoard() {
     height: 42,
     padding: "0 16px",
     borderRadius: 999,
-    border: "1px solid rgba(255,255,255,0.12)",
-    background: "rgba(255,255,255,0.04)",
+    border: "1px solid rgba(255,255,255,0.14)",
+    background: "rgba(255,255,255,0.045)",
     color: "#f8fafc",
     fontSize: 13,
     fontWeight: 800,
     cursor: "pointer",
+    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
   };
 
   const primaryBtn: React.CSSProperties = {
     ...actionBtn,
-    border: "1px solid rgba(34,197,94,0.28)",
-    background: "rgba(34,197,94,0.12)",
+    border: "1px solid rgba(34,197,94,0.30)",
+    background: "rgba(34,197,94,0.14)",
     color: "#dcfce7",
   };
 
@@ -314,6 +433,7 @@ export default function GuardianHouseholdBoard() {
     fontSize: 11,
     fontWeight: 900,
     letterSpacing: 0.35,
+    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
   };
 
   const entryGrid: React.CSSProperties = {
@@ -352,10 +472,11 @@ export default function GuardianHouseholdBoard() {
               style={{
                 marginTop: 18,
                 borderRadius: 18,
-                border: "1px solid rgba(34,211,238,0.16)",
-                background: "rgba(8,47,73,0.18)",
+                border: "1px solid rgba(34,211,238,0.18)",
+                background: "rgba(8,47,73,0.20)",
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.02)",
                 padding: 14,
-                color: "rgba(226,232,240,0.88)",
+                color: "rgba(226,232,240,0.90)",
                 fontSize: 12,
                 lineHeight: 1.6,
               }}
@@ -402,14 +523,24 @@ export default function GuardianHouseholdBoard() {
                 fontWeight: 900,
                 letterSpacing: 1.2,
                 textTransform: "uppercase",
-                color: "rgba(148,163,184,0.8)",
+                color: "rgba(148,163,184,0.82)",
               }}
             >
               Demo status
             </div>
-            <div style={{ marginTop: 12, fontSize: 19, fontWeight: 900 }}>Household board live</div>
+            <div style={{ marginTop: 12, fontSize: 19, fontWeight: 900 }}>
+              Household board live
+            </div>
 
-            <div style={{ marginTop: 16, display: "grid", gap: 10, color: "rgba(226,232,240,0.82)", fontSize: 13 }}>
+            <div
+              style={{
+                marginTop: 16,
+                display: "grid",
+                gap: 10,
+                color: "rgba(226,232,240,0.84)",
+                fontSize: 13,
+              }}
+            >
               <div>City: Miami</div>
               <div>Mode: guardian-household</div>
               <div>Flow: Live awareness → Context → Response</div>
@@ -420,8 +551,9 @@ export default function GuardianHouseholdBoard() {
               style={{
                 marginTop: 18,
                 borderRadius: 16,
-                border: "1px solid rgba(34,211,238,0.16)",
-                background: "rgba(34,211,238,0.08)",
+                border: "1px solid rgba(34,211,238,0.18)",
+                background: "rgba(34,211,238,0.10)",
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.02)",
                 padding: 12,
                 color: "#cffafe",
                 fontSize: 12,
@@ -432,6 +564,75 @@ export default function GuardianHouseholdBoard() {
             </div>
           </div>
         </div>
+
+        {activation ? (
+          <div
+            style={{
+              ...card,
+              marginTop: 18,
+              border: "1px solid rgba(34,197,94,0.24)",
+              background:
+                "linear-gradient(180deg, rgba(20,83,45,0.20), rgba(2,6,23,0.72))",
+            }}
+          >
+            <div
+              style={{
+                fontSize: 10,
+                fontWeight: 900,
+                letterSpacing: 0.9,
+                textTransform: "uppercase",
+                color: "#a7f3d0",
+              }}
+            >
+              Presence activation
+            </div>
+
+            <div
+              style={{
+                marginTop: 12,
+                display: "grid",
+                gridTemplateColumns: "1.1fr 0.9fr",
+                gap: 16,
+                alignItems: "start",
+              }}
+            >
+              <div>
+                {activation.presenceId ? (
+                  <>
+                    <div style={smallLabel}>Presence ID</div>
+                    <div
+                      style={{
+                        marginTop: 6,
+                        fontSize: 22,
+                        fontWeight: 950,
+                        color: "#ffffff",
+                        letterSpacing: 0.6,
+                      }}
+                    >
+                      {activation.presenceId}
+                    </div>
+                  </>
+                ) : null}
+              </div>
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr 1fr 1fr",
+                  gap: 12,
+                }}
+              >
+                <InfoBox label="Owner" value={activation.ownerName || "-"} />
+                <InfoBox label="Household" value={activation.householdName || "-"} />
+                <InfoBox
+                  label="Protection"
+                  value={formatProtectionLabel(activation.protectionType)}
+                />
+                <InfoBox label="Plan" value={formatPlanLabel(activation.plan)} />
+              </div>
+            </div>
+          </div>
+        ) : null}
 
         <div style={{ ...card, marginTop: 18 }}>
           <div
@@ -445,7 +646,9 @@ export default function GuardianHouseholdBoard() {
           >
             Household active
           </div>
-          <h2 style={{ margin: "8px 0 0", fontSize: 30, fontWeight: 950 }}>One board for everyone who matters</h2>
+          <h2 style={{ margin: "8px 0 0", fontSize: 30, fontWeight: 950 }}>
+            One board for everyone who matters
+          </h2>
           <div style={{ ...sectionSub, marginTop: 8, maxWidth: "none" }}>
             This is the anchor idea. Not separate products fighting each other. One live
             household view that shows who is safe, who is active, who needs attention,
@@ -497,16 +700,26 @@ export default function GuardianHouseholdBoard() {
                     style={{
                       textAlign: "left",
                       borderRadius: 20,
-                      border: `1px solid ${active ? tone.panelBorder : "rgba(255,255,255,0.08)"}`,
-                      background: active ? tone.panelBg : "rgba(255,255,255,0.03)",
+                      border: `1px solid ${active ? tone.panelBorder : "rgba(255,255,255,0.10)"}`,
+                      background: active ? tone.panelBg : "rgba(255,255,255,0.035)",
+                      boxShadow: active
+                        ? "0 12px 34px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.02)"
+                        : "inset 0 1px 0 rgba(255,255,255,0.02)",
                       padding: 14,
                       cursor: "pointer",
                       color: "#f8fafc",
-                      boxShadow: active ? "0 12px 34px rgba(0,0,0,0.26)" : "none",
                     }}
                   >
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-                      <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: 0.8, textTransform: "uppercase", color: "rgba(148,163,184,0.78)" }}>
+                      <div
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 900,
+                          letterSpacing: 0.8,
+                          textTransform: "uppercase",
+                          color: "rgba(148,163,184,0.80)",
+                        }}
+                      >
                         {member.layer}
                       </div>
                       <div
@@ -524,14 +737,17 @@ export default function GuardianHouseholdBoard() {
                           fontSize: 10,
                           fontWeight: 900,
                           textTransform: "capitalize",
+                          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
                         }}
                       >
                         {member.status}
                       </div>
                     </div>
 
-                    <div style={{ marginTop: 10, fontSize: 24, fontWeight: 900 }}>{member.name}</div>
-                    <div style={{ marginTop: 8, fontSize: 13, color: "rgba(226,232,240,0.92)" }}>
+                    <div style={{ marginTop: 10, fontSize: 24, fontWeight: 900 }}>
+                      {member.name}
+                    </div>
+                    <div style={{ marginTop: 8, fontSize: 13, color: "rgba(226,232,240,0.94)" }}>
                       <strong>{member.location}</strong> — {member.detail}
                     </div>
 
@@ -545,7 +761,7 @@ export default function GuardianHouseholdBoard() {
                         flexWrap: "wrap",
                       }}
                     >
-                      <div style={{ fontSize: 11, color: "rgba(148,163,184,0.84)", fontWeight: 800 }}>
+                      <div style={{ fontSize: 11, color: "rgba(148,163,184,0.86)", fontWeight: 800 }}>
                         Last seen: {member.lastSeen}
                       </div>
                       <div style={{ fontSize: 11, color: "#e2e8f0", fontWeight: 900 }}>
@@ -569,10 +785,10 @@ export default function GuardianHouseholdBoard() {
               <div style={tonePill}>{selected?.status ?? "safe"}</div>
             </div>
 
-            <div style={{ marginTop: 14, fontSize: 13, color: "rgba(226,232,240,0.84)", lineHeight: 1.65 }}>
-              {selected?.layer} shows what is current, what changed, and what context needs
-              to be surfaced next. Guardian is not meant to create panic. It is meant to
-              remove guessing.
+            <div style={{ marginTop: 14, fontSize: 13, color: "rgba(226,232,240,0.86)", lineHeight: 1.65 }}>
+              {selected?.layer} shows what is current, what changed, and what context
+              needs to be surfaced next. Guardian is not meant to create panic. It is
+              meant to remove guessing.
             </div>
 
             <div
@@ -593,13 +809,21 @@ export default function GuardianHouseholdBoard() {
               style={{
                 marginTop: 18,
                 borderRadius: 18,
-                border: "1px solid rgba(255,255,255,0.08)",
-                background: "rgba(255,255,255,0.03)",
+                border: "1px solid rgba(255,255,255,0.10)",
+                background: "rgba(255,255,255,0.035)",
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.02)",
                 padding: 14,
               }}
             >
               <div style={smallCaps}>Current read</div>
-              <div style={{ marginTop: 8, fontSize: 15, lineHeight: 1.7, color: "rgba(248,250,252,0.94)" }}>
+              <div
+                style={{
+                  marginTop: 8,
+                  fontSize: 15,
+                  lineHeight: 1.7,
+                  color: "rgba(248,250,252,0.95)",
+                }}
+              >
                 {selected?.detail}
               </div>
             </div>
@@ -707,11 +931,12 @@ export default function GuardianHouseholdBoard() {
                       borderRadius: 18,
                       border: `1px solid ${tone.panelBorder}`,
                       background: tone.panelBg,
+                      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.02)",
                       padding: 14,
                     }}
                   >
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-                      <div style={{ fontSize: 11, fontWeight: 900, color: "rgba(226,232,240,0.76)" }}>
+                      <div style={{ fontSize: 11, fontWeight: 900, color: "rgba(226,232,240,0.78)" }}>
                         {event.time}
                       </div>
                       <div
@@ -728,13 +953,23 @@ export default function GuardianHouseholdBoard() {
                           color: tone.pillText,
                           fontSize: 10,
                           fontWeight: 900,
+                          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
                         }}
                       >
                         {event.status}
                       </div>
                     </div>
-                    <div style={{ marginTop: 8, fontSize: 20, fontWeight: 900 }}>{event.title}</div>
-                    <div style={{ marginTop: 6, fontSize: 13, color: "rgba(226,232,240,0.84)", lineHeight: 1.6 }}>
+                    <div style={{ marginTop: 8, fontSize: 20, fontWeight: 900 }}>
+                      {event.title}
+                    </div>
+                    <div
+                      style={{
+                        marginTop: 6,
+                        fontSize: 13,
+                        color: "rgba(226,232,240,0.86)",
+                        lineHeight: 1.6,
+                      }}
+                    >
                       {event.detail}
                     </div>
                   </div>
@@ -769,17 +1004,27 @@ function EntryCard({
     <div
       style={{
         borderRadius: 24,
-        border: active ? "1px solid rgba(34,197,94,0.22)" : "1px solid rgba(255,255,255,0.08)",
+        border: active
+          ? "1px solid rgba(34,197,94,0.24)"
+          : "1px solid rgba(255,255,255,0.10)",
         background: active
-          ? "linear-gradient(180deg, rgba(20,83,45,0.18), rgba(2,6,23,0.66))"
-          : "rgba(2,6,23,0.62)",
-        boxShadow: "0 16px 50px rgba(0,0,0,0.24)",
+          ? "linear-gradient(180deg, rgba(20,83,45,0.20), rgba(2,6,23,0.72))"
+          : "rgba(2,6,23,0.70)",
+        boxShadow:
+          "0 16px 50px rgba(0,0,0,0.26), inset 0 1px 0 rgba(255,255,255,0.02)",
         padding: 18,
       }}
     >
       <div style={smallCaps}>{eyebrow}</div>
       <div style={{ marginTop: 8, fontSize: 28, fontWeight: 950 }}>{title}</div>
-      <div style={{ marginTop: 10, fontSize: 13, lineHeight: 1.65, color: "rgba(226,232,240,0.84)" }}>
+      <div
+        style={{
+          marginTop: 10,
+          fontSize: 13,
+          lineHeight: 1.65,
+          color: "rgba(226,232,240,0.86)",
+        }}
+      >
         {body}
       </div>
       <button
@@ -790,12 +1035,15 @@ function EntryCard({
           height: 40,
           padding: "0 14px",
           borderRadius: 999,
-          border: active ? "1px solid rgba(34,197,94,0.28)" : "1px solid rgba(255,255,255,0.12)",
-          background: active ? "rgba(34,197,94,0.12)" : "rgba(255,255,255,0.04)",
+          border: active
+            ? "1px solid rgba(34,197,94,0.30)"
+            : "1px solid rgba(255,255,255,0.14)",
+          background: active ? "rgba(34,197,94,0.14)" : "rgba(255,255,255,0.045)",
           color: active ? "#dcfce7" : "#f8fafc",
           fontSize: 12,
           fontWeight: 900,
           cursor: "pointer",
+          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
         }}
       >
         {cta}
@@ -809,13 +1057,16 @@ function InfoBox({ label, value }: { label: string; value: string }) {
     <div
       style={{
         borderRadius: 16,
-        border: "1px solid rgba(255,255,255,0.08)",
-        background: "rgba(255,255,255,0.03)",
+        border: "1px solid rgba(255,255,255,0.10)",
+        background: "rgba(255,255,255,0.04)",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.02)",
         padding: 12,
       }}
     >
       <div style={smallLabel}>{label}</div>
-      <div style={{ marginTop: 6, fontSize: 16, fontWeight: 900, color: "#ffffff" }}>{value}</div>
+      <div style={{ marginTop: 6, fontSize: 16, fontWeight: 900, color: "#ffffff" }}>
+        {value}
+      </div>
     </div>
   );
 }
@@ -825,15 +1076,18 @@ function ScenarioBox({ title }: { title: string }) {
     <div
       style={{
         borderRadius: 16,
-        border: "1px solid rgba(255,255,255,0.08)",
-        background: "rgba(255,255,255,0.03)",
+        border: "1px solid rgba(255,255,255,0.10)",
+        background: "rgba(255,255,255,0.035)",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.02)",
         padding: 12,
         minHeight: 62,
         display: "flex",
         alignItems: "center",
       }}
     >
-      <div style={{ fontSize: 13, fontWeight: 800, color: "rgba(248,250,252,0.94)" }}>{title}</div>
+      <div style={{ fontSize: 13, fontWeight: 800, color: "rgba(248,250,252,0.95)" }}>
+        {title}
+      </div>
     </div>
   );
 }
@@ -843,7 +1097,7 @@ const smallCaps: React.CSSProperties = {
   fontWeight: 900,
   letterSpacing: 1.1,
   textTransform: "uppercase",
-  color: "rgba(148,163,184,0.82)",
+  color: "rgba(148,163,184,0.84)",
 };
 
 const smallLabel: React.CSSProperties = {
@@ -851,7 +1105,7 @@ const smallLabel: React.CSSProperties = {
   fontWeight: 900,
   letterSpacing: 0.9,
   textTransform: "uppercase",
-  color: "rgba(148,163,184,0.76)",
+  color: "rgba(148,163,184,0.78)",
 };
 
 const bigValue: React.CSSProperties = {

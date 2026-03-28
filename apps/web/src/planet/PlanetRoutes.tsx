@@ -43,6 +43,8 @@ import GuardianPresenceDesk from "../pages/GuardianPresenceDesk";
 import GuardianJoinDesk from "../pages/GuardianJoinDesk";
 import GuardianPetTagDemo from "../pages/GuardianPetTagDemo";
 import GuardianHouseholdBoard from "../pages/GuardianHouseholdBoard";
+import GuardianStartPage from "../pages/GuardianStartPage";
+import GuardianActivationPage from "../pages/GuardianActivationPage";
 import PetCareTimelinePanel from "../components/guardian/PetCareTimelinePanel";
 
 // Emily
@@ -66,7 +68,6 @@ export default function PlanetRoutes() {
     <Routes>
       <Route index element={<Navigate to="/planet/creator" replace />} />
 
-      {/* Creator */}
       <Route path="creator" element={<CreatorCity />} />
       <Route path="creator/projects" element={<CreatorProjects />} />
       <Route path="creator/studio/*" element={<CreatorStudio />} />
@@ -75,7 +76,6 @@ export default function PlanetRoutes() {
       <Route path="creator/rc-live" element={<RcAirboatsLiveDemo />} />
       <Route path="creator/*" element={<Navigate to="/planet/creator" replace />} />
 
-      {/* Experience */}
       <Route path="experience" element={<ExperiencePlanet />} />
       <Route path="experience/demo" element={<ExperiencePlanet />} />
       <Route path="experience/escape-board" element={<EscapeBoardDemo />} />
@@ -83,7 +83,6 @@ export default function PlanetRoutes() {
       <Route path="experience/session/:sessionId" element={<EscapeSessionPage />} />
       <Route path="experience/watch" element={<EscapeWatchModePage />} />
 
-      {/* Demo */}
       <Route path="demo/home-services" element={<AwnitDemoBoard />} />
       <Route path="demo/auto-service" element={<AutoRepairLiveBoard />} />
       <Route path="demo/kitchen-flow" element={<RestaurantRushSimpleDemo />} />
@@ -103,15 +102,12 @@ export default function PlanetRoutes() {
       <Route path="demo/community-sale" element={<CommunitySaleBoard />} />
       <Route path="demo/transportation" element={<TransportationDispatchBoardV2 />} />
 
-      {/* Live boards */}
       <Route path="live/:boardSlug" element={<AutoRepairLiveBoard />} />
 
-      {/* Legacy */}
       <Route path="vehicles/awnit-demo" element={<AwnitDemoBoard />} />
       <Route path="vehicles/awnit-demo/invoice/:invoiceId" element={<InvoiceView />} />
       <Route path="demo/awnit" element={<AwnitDemoBoard />} />
 
-      {/* Food */}
       <Route path="food/restaurant-rush-simple" element={<RestaurantRushSimpleDemo />} />
       <Route path="food/restaurant-rush-manual" element={<RestaurantRushManualDemo />} />
       <Route
@@ -126,50 +122,41 @@ export default function PlanetRoutes() {
       <Route path="food/restaurant-rush-live-classic" element={<RestaurantRushLiveDemo />} />
       <Route path="food/moms-kitchen" element={<MomsKitchenDemo />} />
 
-      {/* Legal */}
       <Route path="legal/joe-grant" element={<JoeGrantLegalDesk />} />
 
-      {/* Community */}
       <Route path="community/community-sale" element={<CommunitySaleBoard />} />
 
-      {/* Transportation */}
       <Route path="transportation/dispatch" element={<TransportationDispatchBoardV2 />} />
 
-      {/* Guardian system entry */}
       <Route path="guardian" element={<PlanetGuardian />} />
+      <Route path="guardian/start" element={<GuardianStartPage />} />
+      <Route path="guardian/activate" element={<GuardianActivationPage />} />
       <Route path="guardian-household" element={<GuardianHouseholdBoard />} />
 
-      {/* Guardian sub */}
       <Route path="guardian/join" element={<GuardianJoinDesk />} />
       <Route path="guardian/presence" element={<GuardianPresenceDesk />} />
 
-      {/* Pet Guardian */}
       <Route path="guardian-pet" element={<GuardianPetTagDemo />} />
       <Route path="guardian-pet/pet/:petId" element={<GuardianPetTagDemo />} />
       <Route path="guardian-pet/found/:petId" element={<GuardianPetTagDemo />} />
       <Route path="guardian-pet/timeline" element={<PetCareTimelinePanel />} />
 
-      {/* Lawn */}
       <Route path="lawn/routecut" element={<RouteCutLawnPage />} />
       <Route path="demo/routecut" element={<RouteCutLawnPage />} />
       <Route path="routecut/operator" element={<RouteCutOperatorBoard />} />
       <Route path="routecut/live" element={<RouteCutLiveView />} />
 
-      {/* Payment */}
       <Route path="payments/node" element={<HomePlanetPaymentNode />} />
 
-      {/* Onboarding */}
       <Route path="start" element={<OnboardingFlow />} />
       <Route path="start/building" element={<OnboardingBuildTransition />} />
       <Route path="start/preview" element={<StarterBoardPreview />} />
 
-      {/* Other */}
       <Route path="pricing" element={<PricingPage />} />
       <Route path="jeanettes" element={<JeanettesLanding />} />
       <Route path="life" element={<LifePlanet />} />
       <Route path="emily" element={<EmilyLearningDesk />} />
 
-      {/* Generic */}
       <Route path=":planetId" element={<PlanetOverview />} />
       <Route path=":planetId/:cityId" element={<CityPage />} />
 
