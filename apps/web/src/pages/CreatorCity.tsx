@@ -1,10 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+   import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
-const REQUEST_ACCESS_URL =
-  "https://kcmcssyyopmvqglsddyw.supabase.co";
-const REQUEST_ACCESS_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXMiJ9";
+import { supabase } from "../lib/supabase";
+import { resolveStarterBoardConfig } from "../lib/starterBoardConfig";
 
 const LIVE_PRODUCT_DEMO_ROUTE = "/planet/creator/rc-live";
 
@@ -24,9 +21,108 @@ type BuildIntent =
   | "payment-flow"
   | "full-system";
 
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/['’]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 48);
+}
+
+function makeBoardSlug(businessName: string) {
+  const base = slugify(businessName) || "starter-board";
+  return `${base}-${crypto.randomUUID().slice(0, 4)}`;
+}
+
+function makePresenceId(businessName: string) {
+  const base =
+    slugify(businessName).replace(/-/g, "").toUpperCase().slice(0, 8) || "BOARD";
+  return `HP-${base}-${crypto.randomUUID().slice(0, 4).toUpperCase()}`;
+}
+
+function makePresenceKey() {
+  return crypto.randomUUID();
+}
+
+function buildStarterJobs(args: {
+  boardSlug: string;
+  businessName: string;
+  businessType: string;
+  primaryGoal: string;
+  currentWorkflow: string;
+  biggestFriction: string;
+  customerQuestions: string;
+}) {
+  const config = resolveStarterBoardConfig({
+    businessType: args.businessType,
+    businessName: args.businessName,
+    primaryGoal: args.primaryGoal,
+  });
+
+  const stages = config.stages;
+  const concernSeed =
+    args.biggestFriction ||
+    args.customerQuestions ||
+    `${config.labels.concern} pending`;
+
+  const noteSeed =
+    args.currentWorkflow || args.primaryGoal || "Created from Creator City intake.";
+
+  const advisorSeed =
+    config.key === "restaurant-rush" ? "Server pending" : "Front Counter";
+
+  return [
+    {
+      board_slug: args.boardSlug,
+      ro_number: "RO-1044",
+      customer: "New Customer",
+      vehicle: `${config.labels.item} pending`,
+      concern: concernSeed,
+      stage: stages[0] || "New Intake",
+      eta: "",
+      advisor: advisorSeed,
+      notes: noteSeed,
+      phone: "",
+      appointment_date: null,
+      appointment_time: "",
+    },
+    {
+      board_slug: args.boardSlug,
+      ro_number: "RO-1045",
+      customer: "New Customer",
+      vehicle: `${config.labels.item} pending`,
+      concern: concernSeed,
+      stage: stages[1] || stages[0] || "New Intake",
+      eta: "",
+      advisor: advisorSeed,
+      notes: noteSeed,
+      phone: "",
+      appointment_date: null,
+      appointment_time: "",
+    },
+    {
+      board_slug: args.boardSlug,
+      ro_number: "RO-1046",
+      customer: "New Customer",
+      vehicle: `${config.labels.item} pending`,
+      concern: concernSeed,
+      stage: stages[2] || stages[1] || stages[0] || "New Intake",
+      eta: "",
+      advisor: advisorSeed,
+      notes: noteSeed,
+      phone: "",
+      appointment_date: null,
+      appointment_time: "",
+    },
+  ];
+}
+
 export default function CreatorCity() {
   const nav = useNavigate();
   const readySystemsRef = useRef<HTMLDivElement | null>(null);
+  const intakeFormRef = useRef<HTMLDivElement | null>(null);
 
   const [businessName, setBusinessName] = useState("");
   const [businessType, setBusinessType] = useState("");
@@ -126,11 +222,7 @@ export default function CreatorCity() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
-
-    const fileNames =
-      workflowFiles.length > 0
-        ? workflowFiles.map((file) => file.name).join(", ")
-        : "No workflow photos selected";
+    setSubmitted(false);
 
     const intentLabelMap: Record<BuildIntent, string> = {
       "landing-page": "Landing Page",
@@ -141,45 +233,53 @@ export default function CreatorCity() {
       "full-system": "Full Business System",
     };
 
-    const message = [
-      "Creator City Business Intake",
-      "",
-      `Business Type: ${businessType || "—"}`,
-      `Current Workflow: ${currentWorkflow || "—"}`,
-      `Biggest Friction: ${biggestFriction || "—"}`,
-      `Customer Questions / Status Chasing: ${customerQuestions || "—"}`,
-      `Requested Build: ${intentLabelMap[wantsBuilt]}`,
-      `Holy Shit Moment Wanted: ${holyShiftMoment || "—"}`,
-      `Workflow Photos Selected: ${fileNames}`,
-    ].join("\n");
+    const boardSlug = makeBoardSlug(businessName);
+    const presenceId = makePresenceId(businessName);
+    const presenceKey = makePresenceKey();
 
     try {
-      const res = await fetch(REQUEST_ACCESS_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          apikey: REQUEST_ACCESS_ANON_KEY,
-          Authorization: `Bearer ${REQUEST_ACCESS_ANON_KEY}`,
-        },
-        body: JSON.stringify({
-          name: businessName,
-          business: businessName,
-          type: businessType || intentLabelMap[wantsBuilt],
+      const { error: boardError } = await supabase
+        .from("starter_boards")
+        .insert({
+          board_slug: boardSlug,
+          business_name: businessName,
+          business_type: businessType || intentLabelMap[wantsBuilt],
           city,
-          contact,
-          message,
-        }),
-      });
+          owner_name: businessName,
+          phone: contact,
+          presence_id: presenceId,
+          presence_key: presenceKey,
+          starter_plan: "free_trial",
+          is_active: false,
+          claim_status: "preview",
+        });
 
-      const text = await res.text();
-      console.log("CREATOR CITY SUBMISSION:", res.status, text);
-
-      if (!res.ok) {
-        throw new Error(text || "Failed to submit Creator City intake");
+      if (boardError) {
+        throw new Error(`starter_boards insert failed: ${boardError.message}`);
       }
 
+      const starterJobs = buildStarterJobs({
+        boardSlug,
+        businessName,
+        businessType: businessType || intentLabelMap[wantsBuilt],
+        primaryGoal: holyShiftMoment,
+        currentWorkflow,
+        biggestFriction,
+        customerQuestions,
+      });
+
+      const { error: jobsError } = await supabase
+        .from("auto_repair_jobs")
+        .insert(starterJobs);
+
+      if (jobsError) {
+        throw new Error(`auto_repair_jobs insert failed: ${jobsError.message}`);
+      }
+
+      setSubmitted(true);
+
       nav("/planet/creator/building", {
-        state: { redirectTo: "/planet/vehicles/awnit-demo" },
+        state: { redirectTo: `/planet/live/${boardSlug}` },
       });
     } catch (err: any) {
       console.error("CREATOR CITY ERROR:", err?.message || err);
@@ -192,7 +292,17 @@ export default function CreatorCity() {
   }
 
   const scrollToReadySystems = () => {
-    readySystemsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    readySystemsRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
+
+  const scrollToIntakeForm = () => {
+    intakeFormRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
   };
 
   const page: React.CSSProperties = {
@@ -357,6 +467,14 @@ export default function CreatorCity() {
     fontSize: isMobile ? 16 : 14,
     lineHeight: isMobile ? 1.4 : 1.6,
     color: "rgba(226,232,240,0.8)",
+  };
+
+  const formLead: React.CSSProperties = {
+    marginTop: 10,
+    fontSize: isMobile ? 16 : 13,
+    lineHeight: isMobile ? 1.42 : 1.6,
+    color: "rgba(187,247,208,0.95)",
+    fontWeight: 800,
   };
 
   const intentGrid: React.CSSProperties = {
@@ -731,13 +849,14 @@ export default function CreatorCity() {
           </div>
 
           <div style={subtext}>
-            Start fast. Open a live example. Use a ready system. Or send your
-            workflow and let HomePlanet remove the steps.
+            Start fast. Open a live example. Use a ready system. Or fill out the
+            real Creator City intake below to instantly generate your free live
+            demo board.
           </div>
 
           <div style={ctaRow}>
-            <button style={primaryBtn} onClick={() => nav("/planet/start")}>
-              Start My Board
+            <button style={primaryBtn} onClick={scrollToIntakeForm}>
+              Start My Free Demo
             </button>
 
             <button
@@ -761,9 +880,10 @@ export default function CreatorCity() {
 
           <div style={quickGrid}>
             <div style={quickCard}>
-              <div style={quickTitle}>Start your system</div>
+              <div style={quickTitle}>Start your free live demo</div>
               <div style={quickText}>
-                Go straight into the board flow and build from intake forward.
+                Use the real intake form below. That is what creates the live
+                demo board.
               </div>
             </div>
 
@@ -783,10 +903,14 @@ export default function CreatorCity() {
           </div>
         </div>
 
-        <div style={sectionCard}>
-          <div style={sectionTitle}>Tell us what you need built</div>
+        <div ref={intakeFormRef} style={sectionCard}>
+          <div style={sectionTitle}>Start your free live demo</div>
           <div style={sectionSub}>
-            Fast intake. Direct wording. No extra story.
+            Fill out this intake and Creator City instantly generates your live
+            demo board.
+          </div>
+          <div style={formLead}>
+            This form is the real start path. It creates the demo.
           </div>
 
           <div style={intentGrid}>
@@ -808,8 +932,7 @@ export default function CreatorCity() {
                 Creator City intake received ⚡
               </div>
               <div style={{ lineHeight: 1.7 }}>
-                Your workflow request was sent into HomePlanet. It is now saved
-                as a live intake path.
+                Your workflow request was turned into a live board path.
               </div>
 
               <div style={ctaRow}>
@@ -819,11 +942,8 @@ export default function CreatorCity() {
                 >
                   View Pricing
                 </button>
-                <button
-                  style={secondaryBtn}
-                  onClick={() => nav("/planet/start")}
-                >
-                  Open Start Flow
+                <button style={secondaryBtn} onClick={scrollToReadySystems}>
+                  Use Ready System
                 </button>
               </div>
             </div>
@@ -967,13 +1087,13 @@ export default function CreatorCity() {
                   disabled={submitting}
                 >
                   {submitting
-                    ? "Sending business intake..."
-                    : "Send business intake"}
+                    ? "Building your free live demo..."
+                    : "Build My Free Demo"}
                 </button>
 
                 <div style={helperText}>
-                  One direct intake. Then we shape the right board, landing page,
-                  workflow tool, payment path, or full business system.
+                  This intake instantly creates your live demo board, then routes
+                  you into the build flow and preview path.
                 </div>
               </div>
             </form>
@@ -1151,4 +1271,4 @@ export default function CreatorCity() {
       </div>
     </div>
   );
-}
+}                                                                                                                                                                                 

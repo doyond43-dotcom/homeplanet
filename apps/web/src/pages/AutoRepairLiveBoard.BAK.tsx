@@ -94,10 +94,6 @@ type RestaurantTicketDraft = {
 
 const DEMO_BOARD_SLUG = "demo-auto-repair";
 
-function getPreviewDismissKey(boardSlug: string) {
-  return `hp_preview_dismissed_${boardSlug}`;
-}
-
 function makeRONumber(index: number) {
   return `RO-${String(1042 + index).padStart(4, "0")}`;
 }
@@ -346,9 +342,7 @@ export default function AutoRepairLiveBoard() {
     ((location.state as { onboardingPayload?: OnboardingPayload } | null)
       ?.onboardingPayload ?? {}) as OnboardingPayload;
 
-  const isExplicitDemoRoute = location.pathname === "/planet/demo/auto-service";
-  const liveBoardSlug =
-    boardSlug || payload.boardSlug || (isExplicitDemoRoute ? DEMO_BOARD_SLUG : "");
+  const liveBoardSlug = boardSlug || payload.boardSlug || DEMO_BOARD_SLUG;
 
   const [jobs, setJobs] = useState<RepairJob[]>([]);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
@@ -366,7 +360,6 @@ export default function AutoRepairLiveBoard() {
   const [ticketEditorDraft, setTicketEditorDraft] =
     useState<RestaurantTicketDraft | null>(null);
   const [isClaiming, setIsClaiming] = useState(false);
-  const [claimPanelDismissed, setClaimPanelDismissed] = useState(false);
 
   const stageMenuRef = useRef<HTMLDivElement | null>(null);
   const saveTimerRef = useRef<number | null>(null);
@@ -404,20 +397,26 @@ export default function AutoRepairLiveBoard() {
 
   const isRestaurant = config.key === "restaurant-rush";
   const isClaimed = (boardMeta?.claim_status ?? "preview") === "claimed";
-  const showClaimOverlay = !isRestaurant && !loading && !isClaimed && !claimPanelDismissed;
+  const showClaimOverlay = !isRestaurant && !loading && !isClaimed;
 
-  const stages = useMemo(() => [...config.stages], [config.stages]);
-
-  useEffect(() => {
-    try {
-      const dismissed = window.localStorage.getItem(
-        getPreviewDismissKey(liveBoardSlug),
-      );
-      setClaimPanelDismissed(dismissed === "true");
-    } catch {
-      setClaimPanelDismissed(false);
+  const stages = useMemo(() => {
+    if (isRestaurant) {
+      return [...config.stages];
     }
 
+    const dataStages = Array.from(new Set(jobs.map((job) => job.stage)));
+    const merged = [...config.stages];
+
+    for (const stage of dataStages) {
+      if (!merged.includes(stage)) {
+        merged.push(stage);
+      }
+    }
+
+    return merged;
+  }, [config.stages, isRestaurant, jobs]);
+
+  useEffect(() => {
     void loadBoardMeta();
     void loadJobs();
   }, [liveBoardSlug]);
@@ -537,11 +536,6 @@ export default function AutoRepairLiveBoard() {
   }, [isRestaurant, jobs]);
 
   async function loadBoardMeta() {
-    if (!liveBoardSlug) {
-      setBoardMeta(null);
-      return;
-    }
-
     const { data } = await supabase
       .from("starter_boards")
       .select("*")
@@ -556,14 +550,6 @@ export default function AutoRepairLiveBoard() {
   async function loadJobs() {
     setLoading(true);
     setStatusNote("");
-
-    if (!liveBoardSlug) {
-      setJobs([]);
-      setSelectedJobId(null);
-      setLoading(false);
-      setStatusNote("Missing board slug");
-      return;
-    }
 
     const { data, error } = await supabase
       .from("auto_repair_jobs")
@@ -623,12 +609,6 @@ export default function AutoRepairLiveBoard() {
     }
 
     setBoardMeta(data as StarterBoardRow);
-    try {
-      window.localStorage.removeItem(getPreviewDismissKey(liveBoardSlug));
-    } catch {
-      // ignore
-    }
-    setClaimPanelDismissed(false);
     setStatusNote("Trial started");
     setIsClaiming(false);
     window.setTimeout(() => setStatusNote(""), 1200);
@@ -803,10 +783,9 @@ export default function AutoRepairLiveBoard() {
       customer: "",
       vehicle: "",
       concern: "",
-      stage: config.stages[0] || "New Request",
+      stage: config.stages[0] || "New Intake",
       eta: "",
-      advisor:
-        config.labels.advisor === "Crew / Operator" ? "Crew / Operator" : "Front Counter",
+      advisor: "Front Counter",
       notes: "",
       phone: "",
       appointment_date: null,
@@ -885,27 +864,6 @@ export default function AutoRepairLiveBoard() {
 
   return (
     <div className="min-h-screen bg-[#050816] text-white">
-      {!isRestaurant && !loading && !isClaimed && claimPanelDismissed ? (
-        <div className="fixed bottom-5 right-5 z-[65]">
-          <button
-            type="button"
-            onClick={() => {
-              try {
-                window.localStorage.removeItem(
-                  getPreviewDismissKey(liveBoardSlug),
-                );
-              } catch {
-                // ignore
-              }
-              setClaimPanelDismissed(false);
-            }}
-            className="rounded-full border border-cyan-400/25 bg-[#081122] px-5 py-3 text-sm font-semibold text-cyan-100 shadow-[0_0_30px_rgba(0,0,0,0.35)] transition hover:bg-[#0b1730]"
-          >
-            Start 14-Day Trial
-          </button>
-        </div>
-      ) : null}
-
       <div className="mx-auto max-w-7xl px-6 py-8">
         <div className="mb-6 overflow-hidden rounded-[30px] border border-cyan-400/20 bg-gradient-to-br from-cyan-500/10 via-slate-900 to-slate-950 shadow-[0_0_80px_rgba(34,211,238,0.12)]">
           <div className="grid gap-6 px-6 py-8 md:grid-cols-[1.2fr_0.8fr] md:px-8">
@@ -1020,49 +978,6 @@ export default function AutoRepairLiveBoard() {
           </div>
         ) : null}
 
-        {boardMeta && isClaimed && !isRestaurant ? (
-          <div className="mb-6 rounded-[28px] border border-cyan-400/20 bg-cyan-400/10 p-5">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <div className="text-xs uppercase tracking-[0.24em] text-cyan-200/70">
-                  Trial active
-                </div>
-                <h2 className="mt-2 text-2xl font-semibold text-white">
-                  Your live board is active
-                </h2>
-                <p className="mt-2 max-w-3xl text-sm leading-6 text-cyan-50">
-                  Your 14-day trial has started. The next step is adding billing
-                  before the trial ends so this board can stay live without interruption.
-                </p>
-              </div>
-
-              <div className="rounded-full border border-cyan-300/25 bg-cyan-300/10 px-4 py-2 text-sm font-semibold text-cyan-100">
-                Trial running
-              </div>
-            </div>
-
-            <div className="mt-5 grid gap-4 md:grid-cols-3">
-              <ProofCard
-                label="Trial started"
-                value={formatProofDate(boardMeta.trial_started_at)}
-              />
-              <ProofCard
-                label="Trial ends"
-                value={formatProofDate(boardMeta.trial_ends_at)}
-              />
-              <ProofCard
-                label="Next billing step"
-                value="Payment method setup next"
-              />
-            </div>
-
-            <div className="mt-4 rounded-[22px] border border-white/10 bg-white/[0.03] p-4 text-sm leading-6 text-slate-300">
-              Billing collection is not wired in this board yet, so this state keeps the next
-              step visible without pretending payment setup already exists.
-            </div>
-          </div>
-        ) : null}
-
         <div className="mb-6 grid gap-4 md:grid-cols-4">
           <StatCard label={isRestaurant ? "Tickets" : "Items"} value={totals.total} />
           <StatCard label="In Progress" value={totals.inProgress} />
@@ -1134,20 +1049,20 @@ export default function AutoRepairLiveBoard() {
                               key={job.id}
                               type="button"
                               onClick={() => openRestaurantTicketEditor(job)}
-                              className="w-full rounded-[18px] border border-white/10 bg-white/[0.03] p-3 text-left transition hover:bg-white/[0.05]"
+                              className="w-full rounded-[20px] border border-white/10 bg-white/[0.03] p-4 text-left transition hover:bg-white/[0.05]"
                             >
                               <div className="flex items-start justify-between gap-3">
-                                <div className="min-w-0">
-                                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+                                <div>
+                                  <div className="text-xs uppercase tracking-[0.18em] text-slate-500">
                                     {formatTicketNumber(job.roNumber)}
                                   </div>
-                                  <div className="mt-1 truncate text-base font-semibold text-white">
+                                  <div className="mt-2 text-lg font-semibold text-white">
                                     {restaurantPrimaryLabel(
                                       job,
                                       restaurantIdentityMode,
                                     )}
                                   </div>
-                                  <div className="mt-1 truncate text-sm text-slate-400">
+                                  <div className="mt-1 text-sm text-slate-400">
                                     {restaurantSecondaryLabel(
                                       job,
                                       restaurantIdentityMode,
@@ -1156,7 +1071,7 @@ export default function AutoRepairLiveBoard() {
                                 </div>
 
                                 <div
-                                  className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${stageTone(
+                                  className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${stageTone(
                                     normalizeRestaurantStage(job.stage),
                                   )}`}
                                 >
@@ -1164,17 +1079,17 @@ export default function AutoRepairLiveBoard() {
                                 </div>
                               </div>
 
-                              <div className="mt-2 line-clamp-1 text-sm text-slate-300">
-                                {job.concern || config.labels.concern}
+                              <div className="mt-3 text-sm leading-6 text-slate-300">
+                                {job.concern || "Items Ordered pending"}
                               </div>
 
-                              <div className="mt-2 line-clamp-1 text-[11px] text-slate-500">
+                              <div className="mt-3 text-xs leading-5 text-slate-500">
                                 {job.notes || "Special instructions pending"}
                               </div>
 
-                              <div className="mt-3 flex items-center justify-between gap-3 text-[11px] text-slate-500">
-                                <span className="truncate">{job.advisor || config.labels.advisor}</span>
-                                <span className="shrink-0">{job.eta || config.labels.eta}</span>
+                              <div className="mt-4 flex items-center justify-between text-xs text-slate-500">
+                                <span>{job.advisor || "Server pending"}</span>
+                                <span>{job.eta || "Ticket Time pending"}</span>
                               </div>
                             </button>
                           );
@@ -1188,24 +1103,24 @@ export default function AutoRepairLiveBoard() {
                               setSelectedJobId(job.id);
                               setStageMenuOpen(false);
                             }}
-                            className={`w-full rounded-[18px] border p-3 text-left transition ${
+                            className={`w-full rounded-[20px] border p-4 text-left transition ${
                               selected
-                                ? "border-cyan-400/40 bg-cyan-400/10 shadow-[0_0_26px_rgba(34,211,238,0.10)]"
+                                ? "border-cyan-400/40 bg-cyan-400/10 shadow-[0_0_30px_rgba(34,211,238,0.10)]"
                                 : "border-white/10 bg-white/[0.03] hover:bg-white/[0.05]"
                             }`}
                           >
                             <div className="flex items-start justify-between gap-3">
-                              <div className="min-w-0">
-                                <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+                              <div>
+                                <div className="text-xs uppercase tracking-[0.18em] text-slate-500">
                                   {job.roNumber}
                                 </div>
-                                <div className="mt-1 truncate text-base font-semibold text-white">
-                                  {job.customer || "Customer pending"}
+                                <div className="mt-2 text-base font-semibold">
+                                  {job.customer || "New Customer"}
                                 </div>
                               </div>
 
                               <div
-                                className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${stageTone(
+                                className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${stageTone(
                                   job.stage,
                                 )}`}
                               >
@@ -1213,19 +1128,20 @@ export default function AutoRepairLiveBoard() {
                               </div>
                             </div>
 
-                            <div className="mt-2 truncate text-sm font-medium text-slate-200">
+                            <div className="mt-2 text-sm text-slate-300">
                               {job.vehicle || `${config.labels.item} pending`}
                             </div>
 
-                            <div className="mt-1 line-clamp-1 text-sm text-slate-400">
+                            <div className="mt-2 text-sm text-slate-400">
                               {job.concern || `${config.labels.concern} pending`}
                             </div>
 
-                            <div className="mt-3 flex items-center justify-between gap-3 text-[11px] text-slate-500">
-                              <span className="truncate">
-                                {job.advisor || `${config.labels.advisor} pending`}
+                            <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
+                              <span>
+                                {job.advisor ||
+                                  `${config.labels.advisor} pending`}
                               </span>
-                              <span className="shrink-0">{job.eta || `${config.labels.eta} pending`}</span>
+                              <span>{job.eta || `${config.labels.eta} pending`}</span>
                             </div>
                           </button>
                         );
@@ -1547,94 +1463,45 @@ export default function AutoRepairLiveBoard() {
       </div>
 
       {showClaimOverlay ? (
-        <div className="pointer-events-none fixed inset-0 z-[70]">
-          <div className="absolute inset-0 bg-[#020617]/58 backdrop-blur-[2px]" />
-
-          <div className="absolute inset-y-0 right-0 flex w-full justify-end p-3 md:p-5">
-            <div className="pointer-events-auto flex h-full w-full max-w-[430px] flex-col overflow-hidden rounded-[30px] border border-cyan-400/20 bg-[#081122] shadow-[0_0_80px_rgba(0,0,0,0.55)]">
-              <div className="border-b border-white/10 px-6 py-5">
-                <div className="inline-flex items-center rounded-full border border-emerald-400/25 bg-emerald-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-emerald-300">
-                  Preview board
-                </div>
-
-                <h2 className="mt-4 text-3xl font-semibold text-white">
-                  Start your 14-day free trial
-                </h2>
-
-                <p className="mt-3 text-sm leading-7 text-slate-300">
-                  This live board is already generated from your Creator City intake.
-                  Activate it to claim the dashboard, turn on your trial, and keep
-                  your Presence-first board tied to this business.
-                </p>
+        <div className="fixed inset-0 z-[70] bg-[#020617]/80 backdrop-blur-sm">
+          <div className="flex min-h-screen items-center justify-center p-5">
+            <div className="w-full max-w-[460px] rounded-[30px] border border-emerald-400/25 bg-[#081122] p-6 shadow-[0_0_80px_rgba(0,0,0,0.55)]">
+              <div className="inline-flex items-center rounded-full border border-emerald-400/25 bg-emerald-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-emerald-300">
+                Claim your system
               </div>
 
-              <div className="flex-1 overflow-y-auto px-6 py-5">
-                <div className="rounded-[24px] border border-cyan-400/20 bg-cyan-400/10 p-4">
-                  <div className="text-xs uppercase tracking-[0.22em] text-cyan-200/70">
-                    Board ready now
-                  </div>
-                  <div className="mt-3 space-y-3 text-sm text-cyan-50">
-                    <PanelRow label="Business" value={businessName} />
-                    <PanelRow label="City" value={city} />
-                    <PanelRow label="Flow" value={config.flowLabel} />
-                    <PanelRow label="Mode" value={businessType} />
-                  </div>
-                </div>
+              <h2 className="mt-4 text-3xl font-semibold text-white">
+                Your system is ready ⚡
+              </h2>
 
-                <div className="mt-4 rounded-[24px] border border-white/10 bg-white/[0.03] p-4">
-                  <div className="text-xs uppercase tracking-[0.22em] text-slate-500">
-                    What activation does
-                  </div>
-                  <div className="mt-3 space-y-3 text-sm text-slate-300">
-                    <div>• Starts your 14-day free trial</div>
-                    <div>• Claims this live board as your working dashboard</div>
-                    <div>• Turns preview status into active status</div>
-                    <div>• Keeps the board’s Presence ID locked to this system</div>
-                  </div>
-                </div>
+              <p className="mt-4 text-sm leading-7 text-slate-300">
+                This board was created from your workflow. Claim it to activate
+                your dashboard, start your 14-day trial, and lock your HomePlanet
+                presence into the board.
+              </p>
 
-                <div className="mt-4 rounded-[24px] border border-emerald-400/20 bg-emerald-400/10 p-4">
-                  <div className="text-xs uppercase tracking-[0.22em] text-emerald-200/70">
-                    HomePlanet truth layer
-                  </div>
-                  <div className="mt-2 text-sm leading-6 text-emerald-50">
-                    You can keep looking around this preview, but activation is what
-                    turns this board into your claimed live system.
-                  </div>
+              <div className="mt-5 rounded-[24px] border border-cyan-400/20 bg-cyan-400/10 p-4">
+                <div className="text-xs uppercase tracking-[0.22em] text-cyan-200/70">
+                  What happens next
+                </div>
+                <div className="mt-3 space-y-2 text-sm text-cyan-50">
+                  <div>• Start your 14-day trial</div>
+                  <div>• Claim this live board as your dashboard</div>
+                  <div>• Presence ID created automatically</div>
                 </div>
               </div>
 
-              <div className="border-t border-white/10 px-6 py-5">
-                <button
-                  type="button"
-                  onClick={() => void handleClaimBoard()}
-                  disabled={isClaiming}
-                  className="w-full rounded-full bg-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-70"
-                >
-                  {isClaiming ? "Starting your trial..." : "Start My 14-Day Free Trial"}
-                </button>
+              <button
+                type="button"
+                onClick={() => void handleClaimBoard()}
+                disabled={isClaiming}
+                className="mt-6 w-full rounded-full bg-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {isClaiming ? "Starting trial..." : "Start 14-Day Trial"}
+              </button>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    try {
-                      window.localStorage.setItem(
-                        getPreviewDismissKey(liveBoardSlug),
-                        "true",
-                      );
-                    } catch {
-                      // ignore
-                    }
-                    setClaimPanelDismissed(true);
-                  }}
-                  className="mt-3 w-full rounded-full border border-white/10 bg-white/[0.03] px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.06]"
-                >
-                  Keep Preview Open
-                </button>
-
-                <div className="mt-3 text-center text-xs text-slate-500">
-                  You can dismiss this panel for now. A sticky trial button stays available while the board is still in preview mode.
-                </div>
+              <div className="mt-3 text-center text-xs text-slate-500">
+                Preview mode ends when your system is claimed
               </div>
             </div>
           </div>

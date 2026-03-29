@@ -249,6 +249,117 @@ const awningCompany: StarterBoardConfig = {
   },
 };
 
+const curbPaintingCompany: StarterBoardConfig = {
+  key: "home-services-curb-painting",
+  familyLabel: "Curb Painting Demo",
+  boardSubtitle:
+    "Built for curb painting, address refresh, and route-based field service work with simple request-to-completion flow.",
+  createButtonLabel: "+ Add Address Job",
+  flowLabel: "New Request → Scheduled → On Route → Completed → Needs Follow-Up",
+  stages: [
+    "New Request",
+    "Scheduled",
+    "On Route",
+    "Completed",
+    "Needs Follow-Up",
+  ],
+  labels: {
+    item: "Address / Property",
+    concern: "Requested Service",
+    advisor: "Crew / Operator",
+    eta: "Route ETA",
+    phone: "Customer Phone",
+    appointmentDate: "Service Date",
+    appointmentTime: "Service Window",
+    notes: "Service Notes",
+    stage: "Stage",
+  },
+  actions: {
+    updateTitle: "Route update",
+    updateSubtitle: "Send a live service update to the customer",
+    approvalTitle: "Service confirmation",
+    approvalSubtitle: "Confirm requested curb or address work",
+    appointmentTitle: "Route confirmation",
+    appointmentSubtitle: "Confirm service date and time window",
+    completionTitle: "Service completed",
+    completionSubtitle: "Let the customer know the curb work is done",
+  },
+};
+
+const lawnRouteCompany: StarterBoardConfig = {
+  key: "home-services-lawn-route",
+  familyLabel: "Route Service Demo",
+  boardSubtitle:
+    "Built for lawn, route, and recurring field service businesses that need route visibility and customer-ready status.",
+  createButtonLabel: "+ Add Route Stop",
+  flowLabel: "New Request → Scheduled → On Route → Servicing → Completed",
+  stages: [
+    "New Request",
+    "Scheduled",
+    "On Route",
+    "Servicing",
+    "Completed",
+  ],
+  labels: {
+    item: "Address / Property",
+    concern: "Requested Service",
+    advisor: "Crew / Operator",
+    eta: "Route ETA",
+    phone: "Customer Phone",
+    appointmentDate: "Service Date",
+    appointmentTime: "Service Window",
+    notes: "Service Notes",
+    stage: "Stage",
+  },
+  actions: {
+    updateTitle: "Route update",
+    updateSubtitle: "Let the customer know where their service stands",
+    approvalTitle: "Service follow-up",
+    approvalSubtitle: "Confirm work scope or extra service request",
+    appointmentTitle: "Route confirmation",
+    appointmentSubtitle: "Confirm service timing",
+    completionTitle: "Service completed",
+    completionSubtitle: "Let the customer know the stop is complete",
+  },
+};
+
+const detailingCompany: StarterBoardConfig = {
+  key: "home-services-detailing",
+  familyLabel: "Detailing Demo",
+  boardSubtitle:
+    "Built for mobile detailing and vehicle care businesses with request-to-service flow instead of repair-shop language.",
+  createButtonLabel: "+ Add Detail Job",
+  flowLabel: "New Request → Scheduled → In Service → Finishing Up → Completed",
+  stages: [
+    "New Request",
+    "Scheduled",
+    "In Service",
+    "Finishing Up",
+    "Completed",
+  ],
+  labels: {
+    item: "Vehicle / Service",
+    concern: "Requested Service",
+    advisor: "Detailer / Operator",
+    eta: "Service ETA",
+    phone: "Customer Phone",
+    appointmentDate: "Service Date",
+    appointmentTime: "Arrival Window",
+    notes: "Service Notes",
+    stage: "Stage",
+  },
+  actions: {
+    updateTitle: "Service update",
+    updateSubtitle: "Send a detailing progress update",
+    approvalTitle: "Add-on approval",
+    approvalSubtitle: "Confirm any add-on detailing service",
+    appointmentTitle: "Detail appointment",
+    appointmentSubtitle: "Confirm service date and arrival window",
+    completionTitle: "Detail completed",
+    completionSubtitle: "Let the customer know the detailing job is done",
+  },
+};
+
 const restaurantConfig: StarterBoardConfig = {
   key: "restaurant-rush",
   familyLabel: "Restaurant Rush Demo",
@@ -293,6 +404,36 @@ export function resolveStarterBoardConfig(
   const haystack = `${businessType} ${businessName} ${primaryGoal}`;
 
   if (
+    haystack.includes("curb") ||
+    haystack.includes("address painting") ||
+    haystack.includes("curb painting") ||
+    haystack.includes("house number") ||
+    haystack.includes("address refresh")
+  ) {
+    return curbPaintingCompany;
+  }
+
+  if (
+    haystack.includes("detail") ||
+    haystack.includes("detailing") ||
+    haystack.includes("car wash") ||
+    haystack.includes("mobile wash")
+  ) {
+    return detailingCompany;
+  }
+
+  if (
+    haystack.includes("lawn") ||
+    haystack.includes("landscap") ||
+    haystack.includes("route service") ||
+    haystack.includes("trash pickup") ||
+    haystack.includes("junk pickup") ||
+    haystack.includes("pressure washing")
+  ) {
+    return lawnRouteCompany;
+  }
+
+  if (
     haystack.includes("screen") ||
     haystack.includes("rescreen") ||
     haystack.includes("lanai") ||
@@ -322,7 +463,8 @@ export function resolveStarterBoardConfig(
     haystack.includes("oil change") ||
     haystack.includes("quick service") ||
     haystack.includes("battery") ||
-    haystack.includes("fast")
+    haystack.includes("fast lube") ||
+    haystack.includes("express service")
   ) {
     return quickServiceShop;
   }
