@@ -354,6 +354,7 @@ export default function AutoRepairLiveBoard() {
   const [ticketEditorSaving, setTicketEditorSaving] = useState(false);
   const [ticketEditorDraft, setTicketEditorDraft] =
     useState<RestaurantTicketDraft | null>(null);
+  const [isClaimed, setIsClaimed] = useState(false);
 
   const stageMenuRef = useRef<HTMLDivElement | null>(null);
   const saveTimerRef = useRef<number | null>(null);
@@ -390,6 +391,7 @@ export default function AutoRepairLiveBoard() {
   );
 
   const isRestaurant = config.key === "restaurant-rush";
+  const showClaimOverlay = !isRestaurant && !isClaimed;
 
   const stages = useMemo(() => {
     if (isRestaurant) {
@@ -1416,6 +1418,51 @@ export default function AutoRepairLiveBoard() {
           ) : null}
         </div>
       </div>
+
+      {showClaimOverlay ? (
+        <div className="fixed inset-0 z-[70] bg-[#020617]/80 backdrop-blur-sm">
+          <div className="flex min-h-screen items-center justify-center p-5">
+            <div className="w-full max-w-[460px] rounded-[30px] border border-emerald-400/25 bg-[#081122] p-6 shadow-[0_0_80px_rgba(0,0,0,0.55)]">
+              <div className="inline-flex items-center rounded-full border border-emerald-400/25 bg-emerald-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-emerald-300">
+                Claim your system
+              </div>
+
+              <h2 className="mt-4 text-3xl font-semibold text-white">
+                Your system is ready ⚡
+              </h2>
+
+              <p className="mt-4 text-sm leading-7 text-slate-300">
+                This board was created from your workflow. Claim it to activate
+                your dashboard, start your 14-day trial, and lock your HomePlanet
+                presence into the board.
+              </p>
+
+              <div className="mt-5 rounded-[24px] border border-cyan-400/20 bg-cyan-400/10 p-4">
+                <div className="text-xs uppercase tracking-[0.22em] text-cyan-200/70">
+                  What happens next
+                </div>
+                <div className="mt-3 space-y-2 text-sm text-cyan-50">
+                  <div>• Start your 14-day trial</div>
+                  <div>• Claim this live board as your dashboard</div>
+                  <div>• Presence ID created automatically</div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsClaimed(true)}
+                className="mt-6 w-full rounded-full bg-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:scale-[1.01]"
+              >
+                Start 14-Day Trial
+              </button>
+
+              <div className="mt-3 text-center text-xs text-slate-500">
+                Preview mode ends when your system is claimed
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {isRestaurant && managerPanelOpen ? (
         <div className="fixed inset-0 z-50">
