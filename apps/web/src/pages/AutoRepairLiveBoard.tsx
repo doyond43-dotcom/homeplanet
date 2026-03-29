@@ -98,6 +98,10 @@ function getPreviewDismissKey(boardSlug: string) {
   return `hp_preview_dismissed_${boardSlug}`;
 }
 
+function getBoardViewModeKey(boardSlug: string) {
+  return `hp_board_view_mode_${boardSlug}`;
+}
+
 function makeRONumber(index: number) {
   return `RO-${String(1042 + index).padStart(4, "0")}`;
 }
@@ -367,6 +371,7 @@ export default function AutoRepairLiveBoard() {
     useState<RestaurantTicketDraft | null>(null);
   const [isClaiming, setIsClaiming] = useState(false);
   const [claimPanelDismissed, setClaimPanelDismissed] = useState(false);
+  const [boardViewMode, setBoardViewMode] = useState<"reveal" | "work">("reveal");
 
   const stageMenuRef = useRef<HTMLDivElement | null>(null);
   const saveTimerRef = useRef<number | null>(null);
@@ -418,6 +423,15 @@ export default function AutoRepairLiveBoard() {
       setClaimPanelDismissed(false);
     }
 
+    try {
+      const savedMode = window.localStorage.getItem(
+        getBoardViewModeKey(liveBoardSlug || "default"),
+      );
+      setBoardViewMode(savedMode === "work" ? "work" : "reveal");
+    } catch {
+      setBoardViewMode("reveal");
+    }
+
     void loadBoardMeta();
     void loadJobs();
   }, [liveBoardSlug]);
@@ -438,6 +452,18 @@ export default function AutoRepairLiveBoard() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [stageMenuOpen]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        getBoardViewModeKey(liveBoardSlug || "default"),
+        boardViewMode,
+      );
+    } catch {
+      // ignore
+    }
+  }, [boardViewMode, liveBoardSlug]);
+
 
   useEffect(() => {
     return () => {
@@ -629,6 +655,7 @@ export default function AutoRepairLiveBoard() {
       // ignore
     }
     setClaimPanelDismissed(false);
+    setBoardViewMode("work");
     setStatusNote("Trial started");
     setIsClaiming(false);
     window.setTimeout(() => setStatusNote(""), 1200);
@@ -907,161 +934,292 @@ export default function AutoRepairLiveBoard() {
       ) : null}
 
       <div className="mx-auto max-w-7xl px-6 py-8">
-        <div className="mb-6 overflow-hidden rounded-[30px] border border-cyan-400/20 bg-gradient-to-br from-cyan-500/10 via-slate-900 to-slate-950 shadow-[0_0_80px_rgba(34,211,238,0.12)]">
-          <div className="grid gap-6 px-6 py-8 md:grid-cols-[1.2fr_0.8fr] md:px-8">
-            <div>
-              <div className="inline-flex items-center rounded-full border border-emerald-400/25 bg-emerald-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-emerald-300">
-                {config.familyLabel}
-              </div>
+        {boardViewMode === "reveal" ? (
+          <>
+            <div className="mb-6 overflow-hidden rounded-[30px] border border-cyan-400/20 bg-gradient-to-br from-cyan-500/10 via-slate-900 to-slate-950 shadow-[0_0_80px_rgba(34,211,238,0.12)]">
+              <div className="grid gap-6 px-6 py-8 md:grid-cols-[1.2fr_0.8fr] md:px-8">
+                <div>
+                  <div className="inline-flex items-center rounded-full border border-emerald-400/25 bg-emerald-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-emerald-300">
+                    {config.familyLabel}
+                  </div>
 
-              <h1 className="mt-4 text-3xl font-semibold md:text-5xl">
-                {businessName}
-              </h1>
+                  <h1 className="mt-4 text-3xl font-semibold md:text-5xl">
+                    {businessName}
+                  </h1>
 
-              <p className="mt-3 max-w-3xl text-base text-slate-300 md:text-lg">
-                {config.boardSubtitle}
-              </p>
+                  <p className="mt-3 max-w-3xl text-base text-slate-300 md:text-lg">
+                    {config.boardSubtitle}
+                  </p>
 
-              <div className="mt-6 flex flex-wrap gap-3">
-                <button
-                  type="button"
-                  onClick={() => void handleAddJob()}
-                  className="rounded-full bg-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:scale-[1.01]"
-                >
-                  {config.createButtonLabel}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => void handleReload()}
-                  className="rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/5"
-                >
-                  Reload Live Data
-                </button>
-
-                {isRestaurant ? (
-                  <>
-                    <div className="rounded-full border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm font-semibold text-amber-100">
-                      Kitchen mode active
-                    </div>
+                  <div className="mt-6 flex flex-wrap gap-3">
+                    <button
+                      type="button"
+                      onClick={() => void handleAddJob()}
+                      className="rounded-full bg-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:scale-[1.01]"
+                    >
+                      {config.createButtonLabel}
+                    </button>
 
                     <button
                       type="button"
-                      onClick={() => setManagerPanelOpen(true)}
-                      className="rounded-full border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.08]"
+                      onClick={() => void handleReload()}
+                      className="rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/5"
                     >
-                      Manager Panel
+                      Reload Live Data
                     </button>
-                  </>
-                ) : null}
-              </div>
-            </div>
 
-            <div className="rounded-[26px] border border-white/10 bg-white/[0.04] p-5">
-              <div className="text-xs uppercase tracking-[0.22em] text-slate-500">
-                Demo status
-              </div>
-              <div className="mt-3 text-2xl font-semibold">Board Ready</div>
-              <div className="mt-4 space-y-2 text-sm text-slate-300">
-                <div>City: {city}</div>
-                <div>Flow: {config.flowLabel}</div>
-                <div>Mode: {businessType}</div>
-                <div>Live link: /planet/live/{liveBoardSlug}</div>
-              </div>
+                    <button
+                      type="button"
+                      onClick={() => setBoardViewMode("work")}
+                      className="rounded-full border border-white/10 bg-white/[0.03] px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.06]"
+                    >
+                      Switch to Work Mode
+                    </button>
 
-              <div className="mt-5 rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-3 text-sm text-cyan-50">
-                {loading
-                  ? "Loading from Supabase..."
-                  : saving
-                    ? "Saving to Supabase..."
-                    : isClaiming
-                      ? "Starting 14-day trial..."
-                      : statusNote || "Connected to Supabase"}
-              </div>
-            </div>
-          </div>
-        </div>
+                    {isRestaurant ? (
+                      <>
+                        <div className="rounded-full border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm font-semibold text-amber-100">
+                          Kitchen mode active
+                        </div>
 
-        {boardMeta ? (
-          <div className="mb-6 rounded-[28px] border border-emerald-400/20 bg-emerald-400/10 p-5">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <div className="text-xs uppercase tracking-[0.24em] text-emerald-200/70">
-                  HomePlanet Truth Layer
+                        <button
+                          type="button"
+                          onClick={() => setManagerPanelOpen(true)}
+                          className="rounded-full border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.08]"
+                        >
+                          Manager Panel
+                        </button>
+                      </>
+                    ) : null}
+                  </div>
                 </div>
-                <h2 className="mt-2 text-2xl font-semibold">Origin locked</h2>
-                <p className="mt-2 max-w-3xl text-sm leading-6 text-emerald-50">
-                  This starter board has a timestamped creation record tied to
-                  its Presence ID, Presence Key, board slug, and trial start.
-                </p>
-              </div>
 
-              <div className="rounded-full border border-emerald-300/25 bg-emerald-300/10 px-4 py-2 text-sm font-semibold text-emerald-100">
-                {isClaimed ? "Claimed and active" : "Presence-first timestamped"}
-              </div>
-            </div>
+                <div className="rounded-[26px] border border-white/10 bg-white/[0.04] p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-xs uppercase tracking-[0.22em] text-slate-500">
+                        Demo status
+                      </div>
+                      <div className="mt-3 text-2xl font-semibold">Board Ready</div>
+                    </div>
 
-            <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-              <ProofCard label="Presence ID" value={boardMeta.presence_id} />
-              <ProofCard label="Board slug" value={boardMeta.board_slug} />
-              <ProofCard
-                label="Created at"
-                value={formatProofDate(boardMeta.created_at)}
-              />
-              <ProofCard
-                label="Trial started"
-                value={formatProofDate(boardMeta.trial_started_at)}
-              />
-              <ProofCard
-                label="Trial ends"
-                value={formatProofDate(boardMeta.trial_ends_at)}
-              />
-            </div>
-          </div>
-        ) : null}
+                    <div className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs font-semibold text-cyan-100">
+                      {boardViewMode === "reveal" ? "Reveal" : "Work"}
+                    </div>
+                  </div>
 
-        {boardMeta && isClaimed && !isRestaurant ? (
-          <div className="mb-6 rounded-[28px] border border-cyan-400/20 bg-cyan-400/10 p-5">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <div className="text-xs uppercase tracking-[0.24em] text-cyan-200/70">
-                  Trial active
+                  <div className="mt-4 space-y-2 text-sm text-slate-300">
+                    <div>City: {city}</div>
+                    <div>Flow: {config.flowLabel}</div>
+                    <div>Mode: {businessType}</div>
+                    <div>Live link: /planet/live/{liveBoardSlug}</div>
+                  </div>
+
+                  <div className="mt-5 rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-3 text-sm text-cyan-50">
+                    {loading
+                      ? "Loading from Supabase..."
+                      : saving
+                        ? "Saving to Supabase..."
+                        : isClaiming
+                          ? "Starting 14-day trial..."
+                          : statusNote || "Connected to Supabase"}
+                  </div>
                 </div>
-                <h2 className="mt-2 text-2xl font-semibold text-white">
-                  Your live board is active
-                </h2>
-                <p className="mt-2 max-w-3xl text-sm leading-6 text-cyan-50">
-                  Your 14-day trial has started. The next step is adding billing
-                  before the trial ends so this board can stay live without interruption.
-                </p>
-              </div>
-
-              <div className="rounded-full border border-cyan-300/25 bg-cyan-300/10 px-4 py-2 text-sm font-semibold text-cyan-100">
-                Trial running
               </div>
             </div>
 
-            <div className="mt-5 grid gap-4 md:grid-cols-3">
-              <ProofCard
-                label="Trial started"
-                value={formatProofDate(boardMeta.trial_started_at)}
-              />
-              <ProofCard
-                label="Trial ends"
-                value={formatProofDate(boardMeta.trial_ends_at)}
-              />
-              <ProofCard
-                label="Next billing step"
-                value="Payment method setup next"
-              />
+            {boardMeta ? (
+              <div className="mb-6 rounded-[28px] border border-emerald-400/20 bg-emerald-400/10 p-5">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <div className="text-xs uppercase tracking-[0.24em] text-emerald-200/70">
+                      HomePlanet Truth Layer
+                    </div>
+                    <h2 className="mt-2 text-2xl font-semibold">Origin locked</h2>
+                    <p className="mt-2 max-w-3xl text-sm leading-6 text-emerald-50">
+                      This starter board has a timestamped creation record tied to
+                      its Presence ID, Presence Key, board slug, and trial start.
+                    </p>
+                  </div>
+
+                  <div className="rounded-full border border-emerald-300/25 bg-emerald-300/10 px-4 py-2 text-sm font-semibold text-emerald-100">
+                    {isClaimed ? "Claimed and active" : "Presence-first timestamped"}
+                  </div>
+                </div>
+
+                <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+                  <ProofCard label="Presence ID" value={boardMeta.presence_id} />
+                  <ProofCard label="Board slug" value={boardMeta.board_slug} />
+                  <ProofCard
+                    label="Created at"
+                    value={formatProofDate(boardMeta.created_at)}
+                  />
+                  <ProofCard
+                    label="Trial started"
+                    value={formatProofDate(boardMeta.trial_started_at)}
+                  />
+                  <ProofCard
+                    label="Trial ends"
+                    value={formatProofDate(boardMeta.trial_ends_at)}
+                  />
+                </div>
+              </div>
+            ) : null}
+
+            {boardMeta && isClaimed && !isRestaurant ? (
+              <div className="mb-6 rounded-[28px] border border-cyan-400/20 bg-cyan-400/10 p-5">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <div className="text-xs uppercase tracking-[0.24em] text-cyan-200/70">
+                      Trial active
+                    </div>
+                    <h2 className="mt-2 text-2xl font-semibold text-white">
+                      Your live board is active
+                    </h2>
+                    <p className="mt-2 max-w-3xl text-sm leading-6 text-cyan-50">
+                      Your 14-day trial has started. The next step is adding billing
+                      before the trial ends so this board can stay live without interruption.
+                    </p>
+                  </div>
+
+                  <div className="rounded-full border border-cyan-300/25 bg-cyan-300/10 px-4 py-2 text-sm font-semibold text-cyan-100">
+                    Trial running
+                  </div>
+                </div>
+
+                <div className="mt-5 grid gap-4 md:grid-cols-3">
+                  <ProofCard
+                    label="Trial started"
+                    value={formatProofDate(boardMeta.trial_started_at)}
+                  />
+                  <ProofCard
+                    label="Trial ends"
+                    value={formatProofDate(boardMeta.trial_ends_at)}
+                  />
+                  <ProofCard
+                    label="Next billing step"
+                    value="Payment method setup next"
+                  />
+                </div>
+
+                <div className="mt-4 rounded-[22px] border border-white/10 bg-white/[0.03] p-4 text-sm leading-6 text-slate-300">
+                  Billing collection is not wired in this board yet, so this state keeps the next
+                  step visible without pretending payment setup already exists.
+                </div>
+              </div>
+            ) : null}
+          </>
+        ) : (
+          <>
+            <div className="mb-4 overflow-hidden rounded-[26px] border border-cyan-400/20 bg-gradient-to-br from-cyan-500/8 via-slate-900 to-slate-950 shadow-[0_0_50px_rgba(34,211,238,0.10)]">
+              <div className="flex flex-col gap-4 px-5 py-5 md:flex-row md:items-center md:justify-between md:px-6">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="inline-flex items-center rounded-full border border-emerald-400/25 bg-emerald-400/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-emerald-300">
+                      {config.familyLabel}
+                    </div>
+                    <div className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-semibold text-slate-200">
+                      {city}
+                    </div>
+                    {boardMeta ? (
+                      <div className="inline-flex items-center rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-[11px] font-semibold text-cyan-100">
+                        {isClaimed ? "Claimed" : "Preview"}
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <h1 className="mt-3 truncate text-2xl font-semibold text-white md:text-3xl">
+                    {businessName}
+                  </h1>
+
+                  <div className="mt-2 flex flex-wrap gap-2 text-sm text-slate-300">
+                    <span>{config.flowLabel}</span>
+                    {boardMeta?.presence_id ? (
+                      <>
+                        <span className="text-slate-500">•</span>
+                        <span className="truncate">Presence ID {boardMeta.presence_id}</span>
+                      </>
+                    ) : null}
+                    {boardMeta?.trial_ends_at && isClaimed ? (
+                      <>
+                        <span className="text-slate-500">•</span>
+                        <span>Trial ends {formatProofDate(boardMeta.trial_ends_at)}</span>
+                      </>
+                    ) : null}
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={() => void handleAddJob()}
+                    className="rounded-full bg-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:scale-[1.01]"
+                  >
+                    {config.createButtonLabel}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => void handleReload()}
+                    className="rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/5"
+                  >
+                    Reload Live Data
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setBoardViewMode("reveal")}
+                    className="rounded-full border border-white/10 bg-white/[0.03] px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.06]"
+                  >
+                    Reveal View
+                  </button>
+                </div>
+              </div>
             </div>
 
-            <div className="mt-4 rounded-[22px] border border-white/10 bg-white/[0.03] p-4 text-sm leading-6 text-slate-300">
-              Billing collection is not wired in this board yet, so this state keeps the next
-              step visible without pretending payment setup already exists.
-            </div>
-          </div>
-        ) : null}
+            {(boardMeta || (isClaimed && !isRestaurant)) ? (
+              <div className="mb-4 grid gap-3 md:grid-cols-[1.2fr_0.8fr]">
+                {boardMeta ? (
+                  <div className="rounded-[22px] border border-emerald-400/20 bg-emerald-400/10 px-4 py-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <div className="text-[11px] uppercase tracking-[0.22em] text-emerald-200/70">
+                          Truth layer
+                        </div>
+                        <div className="mt-1 text-sm text-emerald-50">
+                          Presence {boardMeta.presence_id} • {boardMeta.board_slug}
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setBoardViewMode("reveal")}
+                        className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/[0.06]"
+                      >
+                        View full proof
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div />
+                )}
+
+                {boardMeta && isClaimed && !isRestaurant ? (
+                  <div className="rounded-[22px] border border-cyan-400/20 bg-cyan-400/10 px-4 py-4">
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-cyan-200/70">
+                      Trial status
+                    </div>
+                    <div className="mt-1 text-sm text-cyan-50">
+                      Trial running • Ends {formatProofDate(boardMeta.trial_ends_at)} • Billing setup next
+                    </div>
+                  </div>
+                ) : (
+                  <div />
+                )}
+              </div>
+            ) : null}
+          </>
+        )}
 
         <div className="mb-6 grid gap-4 md:grid-cols-4">
           <StatCard label={isRestaurant ? "Tickets" : "Items"} value={totals.total} />
