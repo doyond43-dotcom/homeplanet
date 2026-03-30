@@ -16,6 +16,9 @@ import ExperiencePlanet from "../pages/ExperiencePlanet";
 // 🔥 ADD THIS IMPORT
 import CreationMomentPage from "../pages/CreationMomentPage";
 
+// 🔥 NEW PARENT VIEW IMPORT
+import ParentChildView from "../pages/ParentChildView";
+
 // Demo boards
 import AwnitDemoBoard from "../pages/AwnitDemoBoard";
 import AutoRepairLiveBoard from "../pages/AutoRepairLiveBoard";
@@ -110,6 +113,9 @@ export default function PlanetRoutes() {
       <Route path="demo/transportation" element={<TransportationDispatchBoardV2 />} />
 
       <Route path="live/:boardSlug" element={<AutoRepairLiveBoard />} />
+
+      {/* 🔥 NEW PARENT VIEW ROUTE */}
+      <Route path="guardian/child/:childId" element={<ParentChildView />} />
 
       <Route path="vehicles/awnit-demo" element={<AwnitDemoBoard />} />
       <Route path="vehicles/awnit-demo/invoice/:invoiceId" element={<InvoiceView />} />
