@@ -75,6 +75,7 @@ type MessageActionCardProps = {
   subtitle: string;
   message: string;
   phone: string;
+  recipientLabel?: string;
   onCopy: (label: string, text: string) => void;
 };
 
@@ -342,6 +343,125 @@ function makeRestaurantDraft(
   };
 }
 
+
+function buildCampGuardianUpdateMessage(job: RepairJob, businessName: string) {
+  const childName = job.vehicle || "your child";
+  const zone = job.stage || "current activity";
+  const detail = job.concern ? ` Update: ${job.concern}.` : "";
+  const timing = job.eta ? ` Next move: ${job.eta}.` : "";
+  return `Hi ${job.customer || "guardian"}, this is ${businessName}. ${childName} is currently in "${zone}".${detail}${timing}`;
+}
+
+function buildCampGuardianAlertMessage(job: RepairJob, businessName: string) {
+  const childName = job.vehicle || "your child";
+  const detail = job.concern ? ` Details: ${job.concern}.` : "";
+  const note = job.notes ? ` Safety note: ${job.notes}.` : "";
+  return `Hi ${job.customer || "guardian"}, ${businessName} is requesting your attention regarding ${childName}.${detail}${note}`;
+}
+
+function buildCampGuardianCheckInMessage(job: RepairJob, businessName: string) {
+  const childName = job.vehicle || "your child";
+  return `Hi ${job.customer || "guardian"}, ${childName} has been checked in with ${businessName} for ${formatAppointment(job.appointmentDate, job.appointmentTime)}.`;
+}
+
+function buildCampGuardianCheckoutMessage(job: RepairJob, businessName: string) {
+  const childName = job.vehicle || "your child";
+  return `Hi ${job.customer || "guardian"}, ${childName} has been checked out from ${businessName}.${job.notes ? ` Notes: ${job.notes}` : ""}`;
+}
+
+function buildCampTimeline(job: RepairJob) {
+  const timeline = [
+    `${formatProofDate(job.createdAt)} → Presence created`,
+  ];
+
+  if (job.appointmentDate || job.appointmentTime) {
+    timeline.push(
+      `${formatAppointment(job.appointmentDate, job.appointmentTime)} → Check-in scheduled`,
+    );
+  }
+
+  if (job.stage) {
+    timeline.push(`${job.stage} → Current zone`);
+  }
+
+  if (job.concern) {
+    timeline.push(`${job.concern} → Live activity note`);
+  }
+
+  if (job.eta) {
+    timeline.push(`${job.eta} → Next movement target`);
+  }
+
+  return timeline;
+}
+
+function isMeaningfulCampValue(value?: string | null) {
+  const normalized = (value || "").trim().toLowerCase();
+  if (!normalized) return false;
+
+  const blocked = new Set([
+    "new customer",
+    "child name pending",
+    "child pending",
+    "guardian pending",
+    "guardian name",
+    "guardian name pending",
+    "guardian",
+    "activity pending",
+    "movement pending",
+    "supervisor pending",
+  ]);
+
+  return !blocked.has(normalized);
+}
+
+function campChildName(job: RepairJob) {
+  return isMeaningfulCampValue(job.vehicle) ? job.vehicle.trim() : "—";
+}
+
+function campGuardianName(job: RepairJob) {
+  return isMeaningfulCampValue(job.customer) ? job.customer.trim() : "—";
+}
+
+function campActivityLabel(job: RepairJob) {
+  return isMeaningfulCampValue(job.concern) ? job.concern.trim() : "—";
+}
+
+function campStaffLabel(job: RepairJob) {
+  return isMeaningfulCampValue(job.advisor) ? job.advisor.trim() : "—";
+}
+
+function campNextMoveLabel(job: RepairJob) {
+  return isMeaningfulCampValue(job.eta) ? job.eta.trim() : "—";
+}
+
+function campStatusTone(stage: string) {
+  const normalized = stage.toLowerCase();
+
+  if (normalized.includes("checked out")) {
+    return {
+      dot: "bg-indigo-300",
+      pill: "border-indigo-400/25 bg-indigo-400/10 text-indigo-100",
+      label: "Checked Out",
+    };
+  }
+
+  if (normalized.includes("with staff") || normalized.includes("break")) {
+    return {
+      dot: "bg-amber-300",
+      pill: "border-amber-400/25 bg-amber-400/10 text-amber-100",
+      label: "Needs Attention",
+    };
+  }
+
+  return {
+    dot: "bg-emerald-300",
+    pill: "border-emerald-400/25 bg-emerald-400/10 text-emerald-100",
+    label: "Safe / Active",
+  };
+}
+
+
 export default function AutoRepairLiveBoard() {
   const location = useLocation();
   const { boardSlug } = useParams<{ boardSlug: string }>();
@@ -408,6 +528,7 @@ export default function AutoRepairLiveBoard() {
   );
 
   const isRestaurant = config.key === "restaurant-rush";
+  const isCamp = config.key === "camp-guardian";
   const isClaimed = (boardMeta?.claim_status ?? "preview") === "claimed";
   const showClaimOverlay = !isRestaurant && !loading && !isClaimed && !claimPanelDismissed;
 
@@ -832,8 +953,11 @@ export default function AutoRepairLiveBoard() {
       concern: "",
       stage: config.stages[0] || "New Request",
       eta: "",
-      advisor:
-        config.labels.advisor === "Crew / Operator" ? "Crew / Operator" : "Front Counter",
+      advisor: isCamp
+        ? "Check-In Supervisor"
+        : config.labels.advisor === "Crew / Operator"
+          ? "Crew / Operator"
+          : "Front Counter",
       notes: "",
       phone: "",
       appointment_date: null,
@@ -940,7 +1064,7 @@ export default function AutoRepairLiveBoard() {
               <div className="grid gap-6 px-6 py-8 md:grid-cols-[1.2fr_0.8fr] md:px-8">
                 <div>
                   <div className="inline-flex items-center rounded-full border border-emerald-400/25 bg-emerald-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-emerald-300">
-                    {config.familyLabel}
+                    {isCamp ? "LIVE CHILD PRESENCE" : config.familyLabel}
                   </div>
 
                   <h1 className="mt-4 text-3xl font-semibold md:text-5xl">
@@ -1222,14 +1346,14 @@ export default function AutoRepairLiveBoard() {
         )}
 
         <div className="mb-6 grid gap-4 md:grid-cols-4">
-          <StatCard label={isRestaurant ? "Tickets" : "Items"} value={totals.total} />
+          <StatCard label={isRestaurant ? "Tickets" : isCamp ? "Children" : "Items"} value={totals.total} />
           <StatCard label="In Progress" value={totals.inProgress} />
           <StatCard
-            label={isRestaurant ? "Ready / Completed" : "Completed / Ready"}
+            label={isRestaurant ? "Ready / Completed" : isCamp ? "Checked Out" : "Completed / Ready"}
             value={totals.ready}
           />
           <StatCard
-            label={isRestaurant ? "New Tickets" : "New"}
+            label={isRestaurant ? "New Tickets" : isCamp ? "Checked In" : "New"}
             value={totals.newIntake}
             accent
           />
@@ -1244,12 +1368,14 @@ export default function AutoRepairLiveBoard() {
             <div className="mb-4 flex items-center justify-between gap-4">
               <div>
                 <h2 className="text-2xl font-semibold">
-                  {isRestaurant ? "Live Ticket Flow" : "Active Flow"}
+                  {isRestaurant ? "Live Ticket Flow" : isCamp ? "Live Camp Control" : "Active Flow"}
                 </h2>
                 <p className="mt-1 text-sm text-slate-400">
                   {isRestaurant
                     ? "Full-width kitchen mode keeps tickets visible across the whole board."
-                    : "Click any card to open its working drawer."}
+                    : isCamp
+                      ? "Each child card is presence-first and profile-protected. Click a card to open the controlled guardian drawer."
+                      : "Click any card to open its working drawer."}
                 </p>
               </div>
 
@@ -1280,7 +1406,7 @@ export default function AutoRepairLiveBoard() {
                   <div className="space-y-3">
                     {column.jobs.length === 0 ? (
                       <div className="rounded-2xl border border-dashed border-white/10 px-4 py-5 text-sm text-slate-500">
-                        {isRestaurant ? "No tickets here yet." : "Nothing here yet."}
+                        {isRestaurant ? "No tickets here yet." : isCamp ? "No children in this zone yet." : "Nothing here yet."}
                       </div>
                     ) : (
                       column.jobs.map((job) => {
@@ -1352,39 +1478,100 @@ export default function AutoRepairLiveBoard() {
                                 : "border-white/10 bg-white/[0.03] hover:bg-white/[0.05]"
                             }`}
                           >
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="min-w-0">
-                                <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
-                                  {job.roNumber}
+                            {isCamp ? (
+                              <>
+                                <div className="flex items-start justify-between gap-3">
+                                  <div className="min-w-0">
+                                    <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-slate-500">
+                                      <span>Protected Child Card</span>
+                                      <span className={`h-2.5 w-2.5 rounded-full ${campStatusTone(job.stage).dot}`} />
+                                    </div>
+                                    <div className="mt-1 truncate text-lg font-semibold text-white">
+                                      {campChildName(job)}
+                                    </div>
+                                    <div className="mt-1 truncate text-sm text-cyan-100">
+                                      {job.stage || "Checked In"}
+                                    </div>
+                                    <div className="mt-1 truncate text-sm text-slate-400">
+                                      With {campStaffLabel(job)}
+                                    </div>
+                                  </div>
+
+                                  <div
+                                    className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${campStatusTone(
+                                      job.stage,
+                                    ).pill}`}
+                                  >
+                                    {campStatusTone(job.stage).label}
+                                  </div>
                                 </div>
-                                <div className="mt-1 truncate text-base font-semibold text-white">
-                                  {job.customer || "Customer pending"}
+
+                                <div className="mt-3 grid gap-2 md:grid-cols-2">
+                                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2">
+                                    <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
+                                      Guardian
+                                    </div>
+                                    <div className="mt-1 line-clamp-1 text-sm text-slate-200">
+                                      {campGuardianName(job)}
+                                    </div>
+                                  </div>
+
+                                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2">
+                                    <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
+                                      Activity
+                                    </div>
+                                    <div className="mt-1 line-clamp-1 text-sm text-slate-200">
+                                      {campActivityLabel(job)}
+                                    </div>
+                                  </div>
                                 </div>
-                              </div>
 
-                              <div
-                                className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${stageTone(
-                                  job.stage,
-                                )}`}
-                              >
-                                {job.stage}
-                              </div>
-                            </div>
+                                <div className="mt-3 flex items-center justify-between gap-3 text-[11px] text-slate-500">
+                                  <span className="truncate">
+                                    Next: {campNextMoveLabel(job)}
+                                  </span>
+                                  <span className="shrink-0 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2 py-1 text-[10px] font-semibold text-emerald-100">
+                                    Profile Protected
+                                  </span>
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                <div className="flex items-start justify-between gap-3">
+                                  <div className="min-w-0">
+                                    <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+                                      {job.roNumber}
+                                    </div>
+                                    <div className="mt-1 truncate text-base font-semibold text-white">
+                                      {job.customer || "Customer pending"}
+                                    </div>
+                                  </div>
 
-                            <div className="mt-2 truncate text-sm font-medium text-slate-200">
-                              {job.vehicle || `${config.labels.item} pending`}
-                            </div>
+                                  <div
+                                    className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${stageTone(
+                                      job.stage,
+                                    )}`}
+                                  >
+                                    {job.stage}
+                                  </div>
+                                </div>
 
-                            <div className="mt-1 line-clamp-1 text-sm text-slate-400">
-                              {job.concern || `${config.labels.concern} pending`}
-                            </div>
+                                <div className="mt-2 truncate text-sm font-medium text-slate-200">
+                                  {job.vehicle || `${config.labels.item} pending`}
+                                </div>
 
-                            <div className="mt-3 flex items-center justify-between gap-3 text-[11px] text-slate-500">
-                              <span className="truncate">
-                                {job.advisor || `${config.labels.advisor} pending`}
-                              </span>
-                              <span className="shrink-0">{job.eta || `${config.labels.eta} pending`}</span>
-                            </div>
+                                <div className="mt-1 line-clamp-1 text-sm text-slate-400">
+                                  {job.concern || `${config.labels.concern} pending`}
+                                </div>
+
+                                <div className="mt-3 flex items-center justify-between gap-3 text-[11px] text-slate-500">
+                                  <span className="truncate">
+                                    {job.advisor || `${config.labels.advisor} pending`}
+                                  </span>
+                                  <span className="shrink-0">{job.eta || `${config.labels.eta} pending`}</span>
+                                </div>
+                              </>
+                            )}
                           </button>
                         );
                       })
@@ -1427,14 +1614,20 @@ export default function AutoRepairLiveBoard() {
                   <div className="mb-5 flex items-start justify-between gap-4">
                     <div>
                       <div className="text-xs uppercase tracking-[0.22em] text-slate-500">
-                        Work Item
+                        {isCamp ? "Protected Child Card" : "Work Item"}
                       </div>
                       <div className="mt-2 text-2xl font-semibold">
-                        {selectedJob.roNumber}
+                        {isCamp ? campChildName(selectedJob) : selectedJob.roNumber}
                       </div>
                       <div className="mt-1 text-sm text-slate-400">
-                        Working drawer
+                        {isCamp ? "Controlled guardian drawer" : "Working drawer"}
                       </div>
+                      {isCamp ? (
+                        <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200">
+                          <span className={`h-2.5 w-2.5 rounded-full ${campStatusTone(selectedJob.stage).dot}`} />
+                          <span>{campStatusTone(selectedJob.stage).label}</span>
+                        </div>
+                      ) : null}
                     </div>
 
                     <button
@@ -1450,36 +1643,36 @@ export default function AutoRepairLiveBoard() {
                   </div>
 
                   <div className="space-y-4">
-                    <Field label="Customer Name">
+                    <Field label={isCamp ? "Guardian Name" : "Customer Name"}>
                       <input
-                        value={selectedJob.customer}
+                        value={isCamp ? (campGuardianName(selectedJob) === "—" ? "" : selectedJob.customer) : selectedJob.customer}
                         onChange={(e) =>
                           updateLocalSelectedJob("customer", e.target.value)
                         }
                         className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 outline-none transition focus:border-cyan-400/40"
-                        placeholder="Customer name"
+                        placeholder={isCamp ? "Guardian name" : "Customer name"}
                       />
                     </Field>
 
                     <Field label={config.labels.item}>
                       <input
-                        value={selectedJob.vehicle}
+                        value={isCamp ? (campChildName(selectedJob) === "—" ? "" : selectedJob.vehicle) : selectedJob.vehicle}
                         onChange={(e) =>
                           updateLocalSelectedJob("vehicle", e.target.value)
                         }
                         className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 outline-none transition focus:border-cyan-400/40"
-                        placeholder={config.labels.item}
+                        placeholder={isCamp ? "Child name" : config.labels.item}
                       />
                     </Field>
 
                     <Field label={config.labels.concern}>
                       <input
-                        value={selectedJob.concern}
+                        value={isCamp ? (campActivityLabel(selectedJob) === "—" ? "" : selectedJob.concern) : selectedJob.concern}
                         onChange={(e) =>
                           updateLocalSelectedJob("concern", e.target.value)
                         }
                         className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 outline-none transition focus:border-cyan-400/40"
-                        placeholder={config.labels.concern}
+                        placeholder={isCamp ? "Water play" : config.labels.concern}
                       />
                     </Field>
 
@@ -1528,24 +1721,24 @@ export default function AutoRepairLiveBoard() {
 
                       <Field label={config.labels.eta}>
                         <input
-                          value={selectedJob.eta}
+                          value={isCamp ? (campNextMoveLabel(selectedJob) === "—" ? "" : selectedJob.eta) : selectedJob.eta}
                           onChange={(e) =>
                             updateLocalSelectedJob("eta", e.target.value)
                           }
                           className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 outline-none transition focus:border-cyan-400/40"
-                          placeholder={config.labels.eta}
+                          placeholder={isCamp ? "5 min rotation" : config.labels.eta}
                         />
                       </Field>
                     </div>
 
                     <Field label={config.labels.advisor}>
                       <input
-                        value={selectedJob.advisor}
+                        value={isCamp ? (campStaffLabel(selectedJob) === "—" ? "" : selectedJob.advisor) : selectedJob.advisor}
                         onChange={(e) =>
                           updateLocalSelectedJob("advisor", e.target.value)
                         }
                         className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 outline-none transition focus:border-cyan-400/40"
-                        placeholder={config.labels.advisor}
+                        placeholder={isCamp ? "Check-In Supervisor" : config.labels.advisor}
                       />
                     </Field>
 
@@ -1595,9 +1788,33 @@ export default function AutoRepairLiveBoard() {
                       />
                     </Field>
 
+                    {isCamp ? (
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div className="rounded-[24px] border border-emerald-400/20 bg-emerald-400/10 p-4">
+                          <div className="text-xs uppercase tracking-[0.22em] text-emerald-200/70">
+                            PredatorShield lock
+                          </div>
+                          <div className="mt-2 text-sm leading-6 text-emerald-50">
+                            Child profile is protected. This drawer is for movement, guardian contact, staffing, and safety notes only.
+                          </div>
+                        </div>
+
+                        <div className="rounded-[24px] border border-cyan-400/20 bg-cyan-400/10 p-4">
+                          <div className="text-xs uppercase tracking-[0.22em] text-cyan-200/70">
+                            Presence timeline
+                          </div>
+                          <div className="mt-3 space-y-2 text-sm leading-6 text-cyan-50">
+                            {buildCampTimeline(selectedJob).map((line) => (
+                              <div key={line}>{line}</div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
+
                     <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-4">
                       <div className="text-xs uppercase tracking-[0.22em] text-slate-500">
-                        Appointment summary
+                        {isCamp ? "Attendance summary" : "Appointment summary"}
                       </div>
                       <div className="mt-2 text-sm leading-6 text-slate-300">
                         {formatAppointment(
@@ -1611,10 +1828,10 @@ export default function AutoRepairLiveBoard() {
                       <div className="flex items-center justify-between gap-3">
                         <div>
                           <div className="text-xs uppercase tracking-[0.22em] text-cyan-200/70">
-                            Quick customer messages
+                            {isCamp ? "Guardian contact actions" : "Quick customer messages"}
                           </div>
                           <div className="mt-2 text-sm leading-6 text-cyan-50">
-                            Text the customer directly or copy the message first.
+                            {isCamp ? "Text the guardian directly or copy the message first." : "Text the customer directly or copy the message first."}
                           </div>
                         </div>
 
@@ -1629,39 +1846,43 @@ export default function AutoRepairLiveBoard() {
                         <MessageActionCard
                           title={config.actions.updateTitle}
                           subtitle={config.actions.updateSubtitle}
-                          message={buildStatusMessage(selectedJob, businessName)}
+                          message={isCamp ? buildCampGuardianUpdateMessage(selectedJob, businessName) : buildStatusMessage(selectedJob, businessName)}
                           phone={selectedJob.phone}
+                          recipientLabel={isCamp ? "guardian" : "customer"}
                           onCopy={copyMessage}
                         />
 
                         <MessageActionCard
                           title={config.actions.approvalTitle}
                           subtitle={config.actions.approvalSubtitle}
-                          message={buildApprovalMessage(selectedJob, businessName)}
+                          message={isCamp ? buildCampGuardianAlertMessage(selectedJob, businessName) : buildApprovalMessage(selectedJob, businessName)}
                           phone={selectedJob.phone}
+                          recipientLabel={isCamp ? "guardian" : "customer"}
                           onCopy={copyMessage}
                         />
 
                         <MessageActionCard
                           title={config.actions.appointmentTitle}
                           subtitle={config.actions.appointmentSubtitle}
-                          message={buildAppointmentMessage(selectedJob, businessName)}
+                          message={isCamp ? buildCampGuardianCheckInMessage(selectedJob, businessName) : buildAppointmentMessage(selectedJob, businessName)}
                           phone={selectedJob.phone}
+                          recipientLabel={isCamp ? "guardian" : "customer"}
                           onCopy={copyMessage}
                         />
 
                         <MessageActionCard
                           title={config.actions.completionTitle}
                           subtitle={config.actions.completionSubtitle}
-                          message={buildReadyMessage(selectedJob, businessName)}
+                          message={isCamp ? buildCampGuardianCheckoutMessage(selectedJob, businessName) : buildReadyMessage(selectedJob, businessName)}
                           phone={selectedJob.phone}
+                          recipientLabel={isCamp ? "guardian" : "customer"}
                           onCopy={copyMessage}
                         />
                       </div>
 
                       {!selectedJob.phone ? (
                         <div className="mt-4 rounded-2xl border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
-                          Add a customer phone number to enable text buttons.
+                          {isCamp ? "Add a guardian phone number to enable text buttons." : "Add a customer phone number to enable text buttons."}
                         </div>
                       ) : null}
                     </div>
@@ -1671,8 +1892,9 @@ export default function AutoRepairLiveBoard() {
                         Save mode
                       </div>
                       <div className="mt-2 text-sm leading-6 text-emerald-50">
-                        Changes save automatically to Supabase and stay after
-                        refresh.
+                        {isCamp
+                          ? "Child movement, guardian contact info, and safety notes save automatically to Supabase and stay after refresh."
+                          : "Changes save automatically to Supabase and stay after refresh."}
                       </div>
                     </div>
 
@@ -1681,7 +1903,7 @@ export default function AutoRepairLiveBoard() {
                       onClick={() => void handleDeleteSelected()}
                       className="w-full rounded-full border border-red-400/25 bg-red-400/10 px-5 py-3 text-sm font-semibold text-red-200 transition hover:bg-red-400/15"
                     >
-                      Delete Item
+                      {isCamp ? "Delete Child Card" : "Delete Item"}
                     </button>
                   </div>
                 </>
@@ -1691,10 +1913,11 @@ export default function AutoRepairLiveBoard() {
                     <div className="text-xs uppercase tracking-[0.24em] text-slate-500">
                       Working drawer
                     </div>
-                    <h3 className="mt-3 text-2xl font-semibold">Select a card</h3>
+                    <h3 className="mt-3 text-2xl font-semibold">{isCamp ? "Select a child card" : "Select a card"}</h3>
                     <p className="mt-3 max-w-sm text-sm leading-7 text-slate-400">
-                      Click any card on the left to open the details drawer, edit
-                      it, and watch the board update live.
+                      {isCamp
+                        ? "Click any child card on the left to open the controlled drawer, log movement, and keep guardian-safe presence visible live."
+                        : "Click any card on the left to open the details drawer, edit it, and watch the board update live."}
                     </p>
                   </div>
                 </div>
@@ -2016,7 +2239,7 @@ export default function AutoRepairLiveBoard() {
                   />
                 </Field>
 
-                <Field label="Customer Name">
+                <Field label={isCamp ? "Guardian Name" : "Customer Name"}>
                   <input
                     value={ticketEditorDraft.customer}
                     onChange={(e) =>
@@ -2172,6 +2395,7 @@ function MessageActionCard({
   subtitle,
   message,
   phone,
+  recipientLabel = "customer",
   onCopy,
 }: MessageActionCardProps) {
   const hasPhone = Boolean(phone.trim());
@@ -2192,7 +2416,7 @@ function MessageActionCard({
               : "cursor-not-allowed bg-white/10 text-slate-500"
           }`}
         >
-          Text customer
+          Text {recipientLabel}
         </button>
 
         <button

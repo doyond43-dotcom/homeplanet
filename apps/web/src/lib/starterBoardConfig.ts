@@ -391,6 +391,46 @@ const restaurantConfig: StarterBoardConfig = {
   },
 };
 
+const campGuardian: StarterBoardConfig = {
+  key: "camp-guardian",
+  familyLabel: "Camp Guardian System",
+  boardSubtitle:
+    "Built for camps, youth programs, and child activity environments that need live presence, safety visibility, and timestamped movement across the day.",
+  createButtonLabel: "+ Add Child",
+  flowLabel:
+    "Checked In → Water Course → Break / Hydration → Lunch Zone → Activity Zone → With Staff → Checked Out",
+  stages: [
+    "Checked In",
+    "Water Course",
+    "Break / Hydration",
+    "Lunch Zone",
+    "Activity Zone",
+    "With Staff",
+    "Checked Out",
+  ],
+  labels: {
+    item: "Child Name",
+    concern: "Activity / Status",
+    advisor: "Staff / Supervisor",
+    eta: "Next Move / Timing",
+    phone: "Guardian Contact",
+    appointmentDate: "Check-In Date",
+    appointmentTime: "Check-In Time",
+    notes: "Safety Notes",
+    stage: "Current Zone",
+  },
+  actions: {
+    updateTitle: "Movement update",
+    updateSubtitle: "Log a child movement or live activity update",
+    approvalTitle: "Guardian attention",
+    approvalSubtitle: "Send a guardian-facing attention or awareness message",
+    appointmentTitle: "Check-in confirmation",
+    appointmentSubtitle: "Confirm arrival or attendance timing",
+    completionTitle: "Checkout confirmation",
+    completionSubtitle: "Notify that the child has been checked out",
+  },
+};
+
 function normalize(value?: string) {
   return (value || "").toLowerCase();
 }
@@ -402,6 +442,21 @@ export function resolveStarterBoardConfig(
   const businessName = normalize(input.businessName);
   const primaryGoal = normalize(input.primaryGoal);
   const haystack = `${businessType} ${businessName} ${primaryGoal}`;
+
+  if (
+    haystack.includes("camp") ||
+    haystack.includes("summer camp") ||
+    haystack.includes("kids camp") ||
+    haystack.includes("youth") ||
+    haystack.includes("child") ||
+    haystack.includes("children") ||
+    haystack.includes("kid") ||
+    haystack.includes("daycare") ||
+    haystack.includes("after school") ||
+    haystack.includes("student activity")
+  ) {
+    return campGuardian;
+  }
 
   if (
     haystack.includes("curb") ||
