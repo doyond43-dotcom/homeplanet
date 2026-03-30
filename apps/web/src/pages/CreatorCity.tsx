@@ -1,9 +1,10 @@
-   import { useEffect, useMemo, useRef, useState } from "react";
+     import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { resolveStarterBoardConfig } from "../lib/starterBoardConfig";
 
 const LIVE_PRODUCT_DEMO_ROUTE = "/planet/creator/rc-live";
+const LIVE_CAMP_GUARDIAN_ROUTE = "/planet/live/camp-aquaflow-5593";
 
 type SystemExample = {
   id: string;
@@ -148,14 +149,6 @@ export default function CreatorCity() {
   const systems = useMemo<SystemExample[]>(
     () => [
       {
-        id: "experience",
-        title: "Experience Planet",
-        subtitle:
-          "Escape rooms, classrooms, scavenger hunts, birthdays, and challenge boards in one live system.",
-        to: "/planet/experience",
-        tag: "NEW SYSTEM",
-      },
-      {
         id: "live-product",
         title: "Live Product Selling Board",
         subtitle:
@@ -169,6 +162,14 @@ export default function CreatorCity() {
         subtitle: "See a service workflow turned into a live operational board.",
         to: "/planet/vehicles/awnit-demo",
         tag: "DEMO BOARD",
+      },
+      {
+        id: "experience",
+        title: "Experience Planet",
+        subtitle:
+          "Escape rooms, classrooms, scavenger hunts, birthdays, and challenge boards in one live system.",
+        to: "/planet/experience",
+        tag: "NEW SYSTEM",
       },
       {
         id: "routecut",
@@ -612,9 +613,9 @@ export default function CreatorCity() {
     ...card,
     marginTop: 16,
     padding: isMobile ? 18 : 18,
-    border: "1px solid rgba(250,204,21,0.30)",
+    border: "1px solid rgba(34,197,94,0.30)",
     background:
-      "linear-gradient(180deg, rgba(250,204,21,0.10), rgba(2,6,23,0.80) 30%, rgba(2,6,23,0.88) 100%)",
+      "linear-gradient(180deg, rgba(34,197,94,0.10), rgba(2,6,23,0.80) 30%, rgba(2,6,23,0.88) 100%)",
     cursor: "pointer",
   };
 
@@ -670,9 +671,9 @@ export default function CreatorCity() {
     padding: isMobile ? "9px 14px" : "6px 10px",
     fontSize: isMobile ? 14 : 11,
     fontWeight: 900,
-    border: "1px solid rgba(250,204,21,0.38)",
-    color: "rgba(254,240,138,1)",
-    background: "rgba(250,204,21,0.10)",
+    border: "1px solid rgba(34,197,94,0.38)",
+    color: "rgba(187,247,208,1)",
+    background: "rgba(34,197,94,0.10)",
     letterSpacing: 0.4,
   };
 
@@ -681,9 +682,9 @@ export default function CreatorCity() {
     padding: isMobile ? "9px 14px" : "6px 10px",
     fontSize: isMobile ? 14 : 11,
     fontWeight: 900,
-    border: "1px solid rgba(34,197,94,0.30)",
-    color: "rgba(187,247,208,1)",
-    background: "rgba(34,197,94,0.08)",
+    border: "1px solid rgba(56,189,248,0.34)",
+    color: "rgba(186,230,253,1)",
+    background: "rgba(56,189,248,0.08)",
     letterSpacing: 0.4,
   };
 
@@ -861,9 +862,9 @@ export default function CreatorCity() {
 
             <button
               style={secondaryBtn}
-              onClick={() => nav(LIVE_PRODUCT_DEMO_ROUTE)}
+              onClick={() => nav(LIVE_CAMP_GUARDIAN_ROUTE)}
             >
-              See Live Example
+              See Camp Guardian Live
             </button>
 
             <button style={secondaryBtn} onClick={scrollToReadySystems}>
@@ -1106,25 +1107,23 @@ export default function CreatorCity() {
 
         <div
           style={featuredDemoCard}
-          onClick={() => nav(LIVE_PRODUCT_DEMO_ROUTE)}
+          onClick={() => nav(LIVE_CAMP_GUARDIAN_ROUTE)}
         >
           <div style={featuredDemoTop}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={featuredDemoBadgeRow}>
-                <div style={featuredDemoBadge}>HIGH VALUE SYSTEM</div>
-                <div style={featuredDemoSecondaryBadge}>LIVE SELLING</div>
+                <div style={featuredDemoBadge}>LIVE SAFETY SYSTEM</div>
+                <div style={featuredDemoSecondaryBadge}>PARENT VIEW ACTIVE</div>
               </div>
 
-              <div style={featuredDemoTitle}>Live Product Selling Board</div>
+              <div style={featuredDemoTitle}>Camp Guardian</div>
 
               <div style={featuredDemoSubline}>
-                Turn a live seller into a real-time buying event.
+                Live child presence, guardian visibility, protected movement tracking, and parent-facing real-time status.
               </div>
 
               <div style={featuredDemoSupport}>
-                Live video, buyer movement, reserve pressure, and proof-state in
-                one board. This is not a flat product page. It is a revenue
-                engine with visible momentum.
+                Camps, youth programs, activity groups, and supervised child environments can run live with movement visibility, guardian-safe links, and proof-style timelines in one system.
               </div>
             </div>
 
@@ -1133,48 +1132,14 @@ export default function CreatorCity() {
               style={featuredDemoAction}
               onClick={(e) => {
                 e.stopPropagation();
-                nav(LIVE_PRODUCT_DEMO_ROUTE);
+                nav(LIVE_CAMP_GUARDIAN_ROUTE);
               }}
             >
-              View live selling demo
+              Open Camp Guardian
             </button>
           </div>
 
           <div style={featuredValueGrid}>
-            <div style={featuredValueCard}>
-              <div
-                style={{
-                  fontSize: isMobile ? 16 : 12,
-                  fontWeight: 900,
-                  color: "rgba(254,240,138,1)",
-                  marginBottom: 6,
-                  letterSpacing: 0.3,
-                }}
-              >
-                LIVE VIDEO
-              </div>
-              <div
-                style={{
-                  fontSize: isMobile ? 18 : 14,
-                  fontWeight: 900,
-                  color: "#ffffff",
-                  lineHeight: 1.08,
-                  marginBottom: 6,
-                }}
-              >
-                The seller becomes the event
-              </div>
-              <div
-                style={{
-                  fontSize: isMobile ? 15 : 12,
-                  color: "rgba(226,232,240,0.76)",
-                  lineHeight: 1.5,
-                }}
-              >
-                The product is shown live instead of being buried in a dead listing.
-              </div>
-            </div>
-
             <div style={featuredValueCard}>
               <div
                 style={{
@@ -1185,7 +1150,7 @@ export default function CreatorCity() {
                   letterSpacing: 0.3,
                 }}
               >
-                BUYER PRESSURE
+                LIVE CHILD PRESENCE
               </div>
               <div
                 style={{
@@ -1196,7 +1161,7 @@ export default function CreatorCity() {
                   marginBottom: 6,
                 }}
               >
-                Reserve momentum stays visible
+                See where each child is right now
               </div>
               <div
                 style={{
@@ -1205,7 +1170,7 @@ export default function CreatorCity() {
                   lineHeight: 1.5,
                 }}
               >
-                Watching count, low stock, and sold movement create urgency without fake gimmicks.
+                Checked in, activity zone, hydration, with staff, and checked out all stay visible live.
               </div>
             </div>
 
@@ -1219,7 +1184,7 @@ export default function CreatorCity() {
                   letterSpacing: 0.3,
                 }}
               >
-                PROOF STATE
+                PARENT VIEW
               </div>
               <div
                 style={{
@@ -1230,7 +1195,7 @@ export default function CreatorCity() {
                   marginBottom: 6,
                 }}
               >
-                Current vs previous stays clear
+                Guardian-safe status from a protected link
               </div>
               <div
                 style={{
@@ -1239,7 +1204,41 @@ export default function CreatorCity() {
                   lineHeight: 1.5,
                 }}
               >
-                The board can show what is current, what changed, and what happened live.
+                Open the parent view directly from the child card and show real-time movement without exposing the whole system.
+              </div>
+            </div>
+
+            <div style={featuredValueCard}>
+              <div
+                style={{
+                  fontSize: isMobile ? 16 : 12,
+                  fontWeight: 900,
+                  color: "rgba(254,240,138,1)",
+                  marginBottom: 6,
+                  letterSpacing: 0.3,
+                }}
+              >
+                PREDATORSHIELD BASE
+              </div>
+              <div
+                style={{
+                  fontSize: isMobile ? 18 : 14,
+                  fontWeight: 900,
+                  color: "#ffffff",
+                  lineHeight: 1.08,
+                  marginBottom: 6,
+                }}
+              >
+                Child profile stays controlled
+              </div>
+              <div
+                style={{
+                  fontSize: isMobile ? 15 : 12,
+                  color: "rgba(226,232,240,0.76)",
+                  lineHeight: 1.5,
+                }}
+              >
+                Movement, guardian contact, timelines, and notes stay visible while the profile remains protected.
               </div>
             </div>
           </div>
@@ -1271,4 +1270,4 @@ export default function CreatorCity() {
       </div>
     </div>
   );
-}                                                                                                                                                                                 
+}                                                                                      
