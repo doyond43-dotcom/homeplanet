@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import QRCode from "qrcode";
 
 type GuardianProfileType = "child" | "elder" | "pet" | "medical";
 
@@ -111,31 +112,6 @@ function buildAbsoluteGuardianLink(path: string) {
   return path;
 }
 
-function makeQrPattern(value: string) {
-  const source = value || "guardian";
-  const cells = 17;
-  const out: boolean[][] = [];
-
-  for (let row = 0; row < cells; row += 1) {
-    const currentRow: boolean[] = [];
-
-    for (let col = 0; col < cells; col += 1) {
-      const charCode = source.charCodeAt((row * cells + col) % source.length);
-      const on =
-        ((row * 13 + col * 7 + charCode) % 11 < 5) ||
-        (row < 4 && col < 4) ||
-        (row < 4 && col > cells - 5) ||
-        (row > cells - 5 && col < 4);
-
-      currentRow.push(on);
-    }
-
-    out.push(currentRow);
-  }
-
-  return out;
-}
-
 export default function GuardianActivationPage() {
   const navigate = useNavigate();
 
@@ -152,6 +128,7 @@ export default function GuardianActivationPage() {
   const [activationComplete, setActivationComplete] = useState(false);
   const [hasLoadedStorage, setHasLoadedStorage] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState("");
 
   useEffect(() => {
     const storedPresenceId = localStorage.getItem("guardianPresenceId");
@@ -219,7 +196,6 @@ export default function GuardianActivationPage() {
 
   useEffect(() => {
     if (!copied) return;
-
     const timer = window.setTimeout(() => setCopied(false), 1800);
     return () => window.clearTimeout(timer);
   }, [copied]);
@@ -247,10 +223,39 @@ export default function GuardianActivationPage() {
   const latestProfileLink = latestProfile
     ? buildAbsoluteGuardianLink(latestProfileRoute)
     : "";
-  const qrPattern = useMemo(
-    () => makeQrPattern(latestProfileLink || presenceId || "guardian"),
-    [latestProfileLink, presenceId]
-  );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function buildQr() {
+      if (!latestProfileLink) {
+        setQrDataUrl("");
+        return;
+      }
+
+      try {
+        const dataUrl = await QRCode.toDataURL(latestProfileLink, {
+          width: 220,
+          margin: 1,
+          errorCorrectionLevel: "M",
+        });
+
+        if (!cancelled) {
+          setQrDataUrl(dataUrl);
+        }
+      } catch {
+        if (!cancelled) {
+          setQrDataUrl("");
+        }
+      }
+    }
+
+    buildQr();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [latestProfileLink]);
 
   async function handleCopyLink() {
     if (!latestProfileLink) return;
@@ -736,22 +741,21 @@ export default function GuardianActivationPage() {
                     </div>
 
                     <div className="mx-auto flex h-[140px] w-[140px] items-center justify-center rounded-[18px] border border-white/10 bg-white p-2 shadow-[0_0_0_1px_rgba(255,255,255,0.04)]">
-                      <div className="grid grid-cols-[repeat(17,minmax(0,1fr))] gap-[2px]">
-                        {qrPattern.flatMap((row, rowIndex) =>
-                          row.map((cell, colIndex) => (
-                            <span
-                              key={`${rowIndex}-${colIndex}`}
-                              className={`block h-[5px] w-[5px] ${
-                                cell ? "bg-black" : "bg-transparent"
-                              }`}
-                            />
-                          ))
-                        )}
-                      </div>
+                      {qrDataUrl ? (
+                        <img
+                          src={qrDataUrl}
+                          alt="Guardian QR code"
+                          className="h-[124px] w-[124px] rounded-[10px]"
+                        />
+                      ) : (
+                        <div className="flex h-[124px] w-[124px] items-center justify-center rounded-[10px] bg-slate-100 text-[11px] text-slate-500">
+                          Building QR...
+                        </div>
+                      )}
                     </div>
 
                     <div className="mt-3 text-center text-xs text-slate-400">
-                      Placeholder QR
+                      Scannable QR
                     </div>
                   </div>
 
