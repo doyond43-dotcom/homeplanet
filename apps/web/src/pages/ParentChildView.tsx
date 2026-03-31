@@ -134,7 +134,6 @@ export default function ParentChildView() {
         return;
       }
 
-      // 1) Shared source of truth for QR scans across devices
       const { data: guardianRow, error: guardianError } = await supabase
         .from("guardian_children")
         .select("*")
@@ -147,7 +146,6 @@ export default function ParentChildView() {
         return;
       }
 
-      // 2) Local fallback for same-browser testing / legacy local flow
       const localGuardianChild = getStoredGuardianChild(childId);
 
       if (localGuardianChild) {
@@ -156,7 +154,6 @@ export default function ParentChildView() {
         return;
       }
 
-      // 3) Legacy fallback so older route usage still works
       const { data, error } = await supabase
         .from("auto_repair_jobs")
         .select("*")
@@ -190,68 +187,75 @@ export default function ParentChildView() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#050816] text-white flex items-center justify-center">
-        Loading child data...
+      <div className="flex min-h-screen items-center justify-center bg-[#050816] text-white">
+        Loading Guardian page...
       </div>
     );
   }
 
   if (guardianChild) {
     return (
-      <div className="min-h-screen bg-[#050816] text-white p-6">
-        <div className="max-w-3xl mx-auto">
-          <div className="mb-6">
-            <div className="text-xs text-cyan-400 uppercase tracking-widest">
-              LIVE CHILD PRESENCE
+      <div className="min-h-screen bg-[#050816] text-white">
+        <div className="mx-auto max-w-3xl px-6 py-8 md:px-8 md:py-10">
+          <div className="mb-6 flex flex-wrap items-center gap-2">
+            <span className="rounded-full border border-cyan-400/20 bg-cyan-500/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-cyan-100">
+              Guardian public demo
+            </span>
+            <span className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-emerald-100">
+              Live child presence
+            </span>
+          </div>
+
+          <div className="mb-8">
+            <div className="text-xs uppercase tracking-widest text-cyan-400">
+              Live child presence
             </div>
-            <h1 className="text-3xl font-semibold mt-2">
+            <h1 className="mt-2 text-4xl font-semibold leading-tight text-white md:text-5xl">
               {guardianChild.childName || "Child"}
             </h1>
-            <div className="text-sm text-slate-400 mt-1">
+            <div className="mt-3 text-lg text-slate-300">
               Guardian: {guardianChild.ownerName || "—"}
             </div>
             {guardianChild.householdName ? (
-              <div className="text-sm text-slate-500 mt-1">
+              <div className="mt-1 text-lg text-slate-400">
                 Household: {guardianChild.householdName}
               </div>
             ) : null}
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-400">
+              This is a public-facing Guardian demo page showing a safe, shareable child presence
+              view.
+            </p>
           </div>
 
-          <div className="bg-[#0b1a24] border border-cyan-500/20 rounded-xl p-5 mb-6">
-            <div className="flex justify-between items-center gap-6">
+          <div className="mb-6 rounded-[28px] border border-cyan-500/20 bg-[#0b1a24] p-6 shadow-[0_18px_60px_rgba(0,0,0,0.35)]">
+            <div className="flex items-center justify-between gap-6">
               <div>
                 <div className="text-sm text-slate-400">Current Activity</div>
-                <div className="text-xl font-medium mt-1">
-                  Safe & active
-                </div>
+                <div className="mt-2 text-3xl font-semibold text-white">Safe & active</div>
 
-                <div className="text-sm text-slate-400 mt-2">
+                <div className="mt-4 text-sm text-slate-300">
                   Zone: {guardianChild.safeZone || "Not set"}
                 </div>
 
-                <div className="text-sm text-slate-400 mt-1">
+                <div className="mt-2 text-sm text-slate-300">
                   Contact: {guardianChild.contactInfo || "—"}
                 </div>
               </div>
 
               <div className="text-right">
-                <div className="text-green-400 text-sm">
-                  ● Safe & Active
-                </div>
+                <div className="text-xl font-semibold text-emerald-400">● Safe & Active</div>
               </div>
             </div>
           </div>
 
-          <div className="bg-[#0b1a24] border border-cyan-500/20 rounded-xl p-5 mb-6">
-            <div className="text-sm text-slate-400 mb-3">
-              Activity Timeline
-            </div>
+          <div className="mb-6 rounded-[28px] border border-cyan-500/20 bg-[#0b1a24] p-6 shadow-[0_18px_60px_rgba(0,0,0,0.35)]">
+            <div className="mb-4 text-xl font-semibold text-white">Activity Timeline</div>
 
-            <div className="space-y-2">
+            <div className="space-y-3">
               {guardianTimeline.map((line, i) => (
                 <div
                   key={i}
-                  className="text-sm text-white/80 border-l border-cyan-500/30 pl-3"
+                  className="border-l border-cyan-500/30 pl-4 text-base text-white/85"
                 >
                   {line}
                 </div>
@@ -259,12 +263,12 @@ export default function ParentChildView() {
             </div>
           </div>
 
-          <div className="bg-[#0b1a24] border border-emerald-500/20 rounded-xl p-5">
-            <div className="text-sm text-slate-400 mb-2">
-              Guardian Notes
-            </div>
-            <div className="text-emerald-300 text-sm">
-              {guardianChild.notes || guardianChild.subtitle || "Guardian child profile is active and ready to share."}
+          <div className="rounded-[28px] border border-emerald-500/20 bg-[#0b1a24] p-6 shadow-[0_18px_60px_rgba(0,0,0,0.35)]">
+            <div className="mb-3 text-xl font-semibold text-white">Guardian Notes</div>
+            <div className="text-lg text-emerald-300">
+              {guardianChild.notes ||
+                guardianChild.subtitle ||
+                "Guardian child profile is active and ready to share."}
             </div>
           </div>
         </div>
@@ -274,7 +278,7 @@ export default function ParentChildView() {
 
   if (!child) {
     return (
-      <div className="min-h-screen bg-[#050816] text-white flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-[#050816] text-white">
         Child not found
       </div>
     );
@@ -288,55 +292,54 @@ export default function ParentChildView() {
   ].filter(Boolean);
 
   return (
-    <div className="min-h-screen bg-[#050816] text-white p-6">
-      <div className="max-w-3xl mx-auto">
-        <div className="mb-6">
-          <div className="text-xs text-cyan-400 uppercase tracking-widest">
-            LIVE CHILD PRESENCE
-          </div>
-          <h1 className="text-3xl font-semibold mt-2">
-            {child.vehicle || "Child"}
-          </h1>
-          <div className="text-sm text-slate-400 mt-1">
-            Guardian: {child.customer || "—"}
-          </div>
+    <div className="min-h-screen bg-[#050816] text-white">
+      <div className="mx-auto max-w-3xl px-6 py-8 md:px-8 md:py-10">
+        <div className="mb-6 flex flex-wrap items-center gap-2">
+          <span className="rounded-full border border-cyan-400/20 bg-cyan-500/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-cyan-100">
+            Legacy fallback
+          </span>
+          <span className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-emerald-100">
+            Live child presence
+          </span>
         </div>
 
-        <div className="bg-[#0b1a24] border border-cyan-500/20 rounded-xl p-5 mb-6">
-          <div className="flex justify-between items-center">
+        <div className="mb-8">
+          <div className="text-xs uppercase tracking-widest text-cyan-400">
+            Live child presence
+          </div>
+          <h1 className="mt-2 text-4xl font-semibold leading-tight text-white md:text-5xl">
+            {child.vehicle || "Child"}
+          </h1>
+          <div className="mt-3 text-lg text-slate-300">Guardian: {child.customer || "—"}</div>
+        </div>
+
+        <div className="mb-6 rounded-[28px] border border-cyan-500/20 bg-[#0b1a24] p-6 shadow-[0_18px_60px_rgba(0,0,0,0.35)]">
+          <div className="flex items-center justify-between gap-6">
             <div>
               <div className="text-sm text-slate-400">Current Activity</div>
-              <div className="text-xl font-medium mt-1">
+              <div className="mt-2 text-3xl font-semibold text-white">
                 {child.concern || "—"}
               </div>
 
-              <div className="text-sm text-slate-400 mt-2">
-                Zone: {child.stage || "—"}
-              </div>
+              <div className="mt-4 text-sm text-slate-300">Zone: {child.stage || "—"}</div>
 
-              <div className="text-sm text-slate-400 mt-1">
-                Staff: {child.advisor || "—"}
-              </div>
+              <div className="mt-2 text-sm text-slate-300">Staff: {child.advisor || "—"}</div>
             </div>
 
             <div className="text-right">
-              <div className="text-green-400 text-sm">
-                ● Safe & Active
-              </div>
+              <div className="text-xl font-semibold text-emerald-400">● Safe & Active</div>
             </div>
           </div>
         </div>
 
-        <div className="bg-[#0b1a24] border border-cyan-500/20 rounded-xl p-5 mb-6">
-          <div className="text-sm text-slate-400 mb-3">
-            Activity Timeline
-          </div>
+        <div className="mb-6 rounded-[28px] border border-cyan-500/20 bg-[#0b1a24] p-6 shadow-[0_18px_60px_rgba(0,0,0,0.35)]">
+          <div className="mb-4 text-xl font-semibold text-white">Activity Timeline</div>
 
-          <div className="space-y-2">
+          <div className="space-y-3">
             {timeline.map((line, i) => (
               <div
                 key={i}
-                className="text-sm text-white/80 border-l border-cyan-500/30 pl-3"
+                className="border-l border-cyan-500/30 pl-4 text-base text-white/85"
               >
                 {line}
               </div>
@@ -345,13 +348,9 @@ export default function ParentChildView() {
         </div>
 
         {child.notes && (
-          <div className="bg-[#0b1a24] border border-emerald-500/20 rounded-xl p-5">
-            <div className="text-sm text-slate-400 mb-2">
-              Notes
-            </div>
-            <div className="text-emerald-300 text-sm">
-              {child.notes}
-            </div>
+          <div className="rounded-[28px] border border-emerald-500/20 bg-[#0b1a24] p-6 shadow-[0_18px_60px_rgba(0,0,0,0.35)]">
+            <div className="mb-3 text-xl font-semibold text-white">Notes</div>
+            <div className="text-lg text-emerald-300">{child.notes}</div>
           </div>
         )}
       </div>

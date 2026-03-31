@@ -282,11 +282,7 @@ export default function GuardianActivationPage() {
       type: selectedType,
       name: profileName.trim(),
       status: "active",
-      subtitle: makeProfileSubtitle(
-        selectedType,
-        safeZone.trim(),
-        contactInfo.trim()
-      ),
+      subtitle: makeProfileSubtitle(selectedType, safeZone.trim(), contactInfo.trim()),
       createdAt: new Date().toISOString(),
     };
 
@@ -296,10 +292,7 @@ export default function GuardianActivationPage() {
     setActivationComplete(true);
 
     if (hasLoadedStorage) {
-      localStorage.setItem(
-        "guardianActivationProfiles",
-        JSON.stringify(updatedProfiles)
-      );
+      localStorage.setItem("guardianActivationProfiles", JSON.stringify(updatedProfiles));
     }
 
     if (selectedType === "child") {
@@ -369,8 +362,8 @@ export default function GuardianActivationPage() {
               </h1>
 
               <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300 md:text-base">
-                This is the activation bridge. The moment payment completes, Guardian should
-                feel real instantly: presence created, household ready, and next action clear.
+                This is the activation bridge. The moment payment completes, Guardian should feel
+                real instantly: presence created, household ready, and next action clear.
               </p>
 
               <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -523,9 +516,7 @@ export default function GuardianActivationPage() {
                 {selectedMeta.eyebrow}
               </div>
               <div className="mt-2 text-xl font-semibold text-white">{selectedMeta.label}</div>
-              <div className="mt-2 text-sm leading-7 text-slate-300">
-                {selectedMeta.description}
-              </div>
+              <div className="mt-2 text-sm leading-7 text-slate-300">{selectedMeta.description}</div>
 
               <div className="mt-6 grid gap-4 md:grid-cols-2">
                 <label className="block">
@@ -683,11 +674,11 @@ export default function GuardianActivationPage() {
                     Next build step
                   </div>
                   <div className="mt-1 text-base font-semibold text-white">
-                    QR / link generation panel
+                    Public demo share panel
                   </div>
                   <div className="mt-1 text-sm text-cyan-50/80">
-                    After this page is in place, we build the shareable link + QR delivery panel so
-                    the system becomes instantly usable.
+                    Once a profile is added, Guardian generates a public-facing demo link and QR
+                    that feels intentional, clear, and ready to scan.
                   </div>
                 </div>
               </div>
@@ -748,19 +739,21 @@ export default function GuardianActivationPage() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <div className="text-[10px] uppercase tracking-[0.24em] text-emerald-200">
-                    QR / share panel
+                    Public demo share
                   </div>
                   <h2 className="mt-2 text-2xl font-semibold text-white">
-                    {latestProfile ? `${latestProfile.name} is ready to share` : "Waiting for first profile"}
+                    {latestProfile
+                      ? `${latestProfile.name} is ready to share`
+                      : "Waiting for first profile"}
                   </h2>
                   <p className="mt-2 text-sm leading-7 text-slate-300">
-                    The second the first Guardian layer is created, the user should receive a live
-                    link and scannable access point they can actually use.
+                    This creates the public-facing Guardian demo moment: one clean link, one clean
+                    QR, and a scan experience that feels ready instead of internal.
                   </p>
                 </div>
 
                 <div className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-100">
-                  Live handoff
+                  Demo-safe
                 </div>
               </div>
 
@@ -768,7 +761,7 @@ export default function GuardianActivationPage() {
                 <div className="mt-5 grid gap-5 xl:grid-cols-[180px_minmax(0,1fr)]">
                   <div className="rounded-[24px] border border-white/10 bg-black/20 p-4">
                     <div className="mb-3 text-[10px] uppercase tracking-[0.22em] text-slate-400">
-                      QR preview
+                      Scan preview
                     </div>
 
                     <div className="mx-auto flex h-[140px] w-[140px] items-center justify-center rounded-[18px] border border-white/10 bg-white p-2 shadow-[0_0_0_1px_rgba(255,255,255,0.04)]">
@@ -785,15 +778,13 @@ export default function GuardianActivationPage() {
                       )}
                     </div>
 
-                    <div className="mt-3 text-center text-xs text-slate-400">
-                      Scannable QR
-                    </div>
+                    <div className="mt-3 text-center text-xs text-slate-400">Scannable QR</div>
                   </div>
 
                   <div className="space-y-4">
                     <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                       <div className="text-[10px] uppercase tracking-[0.22em] text-slate-400">
-                        Generated profile
+                        Public demo profile
                       </div>
                       <div className="mt-1 text-lg font-semibold text-white">
                         {latestProfile.name}
@@ -805,7 +796,7 @@ export default function GuardianActivationPage() {
 
                     <div className="rounded-2xl border border-cyan-500/20 bg-cyan-500/10 p-4">
                       <div className="text-[10px] uppercase tracking-[0.22em] text-cyan-100">
-                        Shareable Guardian link
+                        Public share link
                       </div>
                       <div className="mt-2 break-all rounded-xl border border-white/10 bg-black/20 px-3 py-3 text-sm text-white">
                         {latestProfileLink}
@@ -835,16 +826,17 @@ export default function GuardianActivationPage() {
                         Why this matters
                       </div>
                       <div className="mt-2 text-sm leading-7 text-slate-300">
-                        This is the bridge from setup to real-world use. The user should not leave
-                        activation wondering what happens next. They should leave with something
-                        live, shareable, and usable immediately.
+                        The person scanning should feel like they opened a clean Guardian page on
+                        purpose. No internal-tool confusion. No awkward handoff. Just a clear,
+                        public-facing demo moment.
                       </div>
                     </div>
                   </div>
                 </div>
               ) : (
                 <div className="mt-5 rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-5 text-sm text-slate-400">
-                  Add the first Guardian profile to generate the shareable link and QR preview panel.
+                  Add the first Guardian profile to generate the public demo share link and QR
+                  panel.
                 </div>
               )}
             </div>
