@@ -1,722 +1,817 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { supabase } from "../lib/supabase";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-type GuardianPlan = "solo" | "household";
-type GuardianProtectionType = "pet" | "child" | "elder" | "medical" | "mixed";
+type GuardianProfileType = "child" | "elder" | "pet" | "medical";
 
-type GuardianActivationPayload = {
-  source?: string;
-  plan: GuardianPlan;
-  ownerName: string;
-  householdName: string;
-  phone: string;
-  email: string;
-  protectionType: GuardianProtectionType;
-  notes?: string;
-  createdAt?: string;
-  presenceId?: string;
-  activationStatus?: "pending" | "submitted";
+type GuardianProfile = {
+  id: string;
+  type: GuardianProfileType;
+  name: string;
+  status: "active" | "pending";
+  subtitle: string;
+  createdAt: string;
 };
 
-type GuardianActivationRecord = GuardianActivationPayload & {
-  presenceId: string;
-  activationStatus: "pending";
-  submittedAt: string;
+const PROFILE_TYPE_META: Record<
+  GuardianProfileType,
+  {
+    label: string;
+    eyebrow: string;
+    description: string;
+    chip: string;
+  }
+> = {
+  child: {
+    label: "Child Guardian",
+    eyebrow: "CHILD SAFETY LAYER",
+    description:
+      "Create a live child safety layer with pickup clarity, contact context, and safe-zone readiness.",
+    chip: "School-safe",
+  },
+  elder: {
+    label: "Elder Guardian",
+    eyebrow: "ELDER SAFETY LAYER",
+    description:
+      "Add an elder profile for presence awareness, last-seen context, and response support when something feels off.",
+    chip: "Response-ready",
+  },
+  pet: {
+    label: "Pet Guardian",
+    eyebrow: "PET GUARDIAN LAYER",
+    description:
+      "Set up a pet rescue layer with scan-to-contact, tag visibility, and instant owner context.",
+    chip: "Tag-ready",
+  },
+  medical: {
+    label: "Medical Guardian",
+    eyebrow: "MEDICAL IDENTITY LAYER",
+    description:
+      "Prepare an emergency context layer with essential contact and identity details available when needed.",
+    chip: "Emergency-ready",
+  },
 };
 
-function useQuery() {
-  const { search } = useLocation();
-  return useMemo(() => new URLSearchParams(search), [search]);
+function makePresenceId() {
+  const stamp = Date.now().toString(36).toUpperCase();
+  const random = Math.random().toString(36).slice(2, 7).toUpperCase();
+  return `PG-${stamp}-${random}`;
 }
 
-function generatePresenceId() {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let id = "HP-GDN-";
-
-  for (let i = 0; i < 6; i += 1) {
-    id += chars[Math.floor(Math.random() * chars.length)];
+function makeProfileSubtitle(type: GuardianProfileType, safeZone: string, contact: string) {
+  if (type === "child") {
+    return safeZone
+      ? `Safe zone: ${safeZone}`
+      : contact
+      ? `Primary contact: ${contact}`
+      : "Pickup clarity and safe-zone readiness";
   }
 
-  return id;
+  if (type === "elder") {
+    return safeZone
+      ? `Primary place: ${safeZone}`
+      : contact
+      ? `Primary contact: ${contact}`
+      : "Presence awareness and response support";
+  }
+
+  if (type === "pet") {
+    return safeZone
+      ? `Home base: ${safeZone}`
+      : contact
+      ? `Owner contact: ${contact}`
+      : "Scan-to-contact rescue layer";
+  }
+
+  return contact
+    ? `Emergency contact: ${contact}`
+    : "Identity and emergency context ready";
+}
+
+function makeProfileRoute(type: GuardianProfileType, profileId: string) {
+  if (type === "child") {
+    return `/planet/guardian/child/${profileId}`;
+  }
+
+  if (type === "pet") {
+    return `/planet/guardian-pet/pet/${profileId}`;
+  }
+
+  if (type === "elder") {
+    return `/planet/guardian/presence?profile=${profileId}&type=elder`;
+  }
+
+  return `/planet/guardian/presence?profile=${profileId}&type=medical`;
+}
+
+function buildAbsoluteGuardianLink(path: string) {
+  if (typeof window !== "undefined" && window.location?.origin) {
+    return `${window.location.origin}${path}`;
+  }
+
+  return path;
+}
+
+function makeQrPattern(value: string) {
+  const source = value || "guardian";
+  const cells = 17;
+  const out: boolean[][] = [];
+
+  for (let row = 0; row < cells; row += 1) {
+    const currentRow: boolean[] = [];
+
+    for (let col = 0; col < cells; col += 1) {
+      const charCode = source.charCodeAt((row * cells + col) % source.length);
+      const on =
+        ((row * 13 + col * 7 + charCode) % 11 < 5) ||
+        (row < 4 && col < 4) ||
+        (row < 4 && col > cells - 5) ||
+        (row > cells - 5 && col < 4);
+
+      currentRow.push(on);
+    }
+
+    out.push(currentRow);
+  }
+
+  return out;
 }
 
 export default function GuardianActivationPage() {
-  const nav = useNavigate();
-  const location = useLocation();
-  const query = useQuery();
+  const navigate = useNavigate();
 
-  const statePayload =
-    location.state && typeof location.state === "object"
-      ? (location.state as Partial<GuardianActivationPayload>)
-      : null;
-
-  const [submittedVisual, setSubmittedVisual] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState("");
-
-  const fallbackPlan =
-    query.get("plan") === "solo" || query.get("plan") === "household"
-      ? (query.get("plan") as GuardianPlan)
-      : "household";
-
-  const fallbackProtectionType =
-    query.get("protectionType") === "pet" ||
-    query.get("protectionType") === "child" ||
-    query.get("protectionType") === "elder" ||
-    query.get("protectionType") === "medical" ||
-    query.get("protectionType") === "mixed"
-      ? (query.get("protectionType") as GuardianProtectionType)
-      : "mixed";
-
-  const [payload, setPayload] = useState<GuardianActivationPayload>({
-    plan: fallbackPlan,
-    ownerName: query.get("ownerName") || "",
-    householdName: query.get("householdName") || "",
-    phone: query.get("phone") || "",
-    email: query.get("email") || "",
-    protectionType: fallbackProtectionType,
-    notes: query.get("notes") || "",
-    source: "guardian_start",
-    presenceId: "",
-    activationStatus: "pending",
-  });
+  const [selectedType, setSelectedType] = useState<GuardianProfileType>("child");
+  const [ownerName, setOwnerName] = useState("");
+  const [householdName, setHouseholdName] = useState("");
+  const [contactInfo, setContactInfo] = useState("");
+  const [profileName, setProfileName] = useState("");
+  const [safeZone, setSafeZone] = useState("");
+  const [notes, setNotes] = useState("");
+  const [presenceId, setPresenceId] = useState("");
+  const [activatedAt, setActivatedAt] = useState("");
+  const [profiles, setProfiles] = useState<GuardianProfile[]>([]);
+  const [activationComplete, setActivationComplete] = useState(false);
+  const [hasLoadedStorage, setHasLoadedStorage] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    if (statePayload) {
-      setPayload((prev) => ({
-        ...prev,
-        ...statePayload,
-        plan:
-          statePayload.plan === "solo" || statePayload.plan === "household"
-            ? statePayload.plan
-            : prev.plan,
-        protectionType:
-          statePayload.protectionType === "pet" ||
-          statePayload.protectionType === "child" ||
-          statePayload.protectionType === "elder" ||
-          statePayload.protectionType === "medical" ||
-          statePayload.protectionType === "mixed"
-            ? statePayload.protectionType
-            : prev.protectionType,
-      }));
+    const storedPresenceId = localStorage.getItem("guardianPresenceId");
+    const storedActivatedAt = localStorage.getItem("guardianActivatedAt");
+    const storedProfiles = localStorage.getItem("guardianActivationProfiles");
+    const storedOwnerName = localStorage.getItem("guardianOwnerName");
+    const storedHouseholdName = localStorage.getItem("guardianHouseholdName");
+    const storedContactInfo = localStorage.getItem("guardianContactInfo");
 
-      if (statePayload.presenceId) {
-        setSubmittedVisual(true);
-      }
+    const nextPresenceId = storedPresenceId || makePresenceId();
+    const nextActivatedAt = storedActivatedAt || new Date().toISOString();
 
-      return;
+    setPresenceId(nextPresenceId);
+    setActivatedAt(nextActivatedAt);
+
+    if (!storedPresenceId) {
+      localStorage.setItem("guardianPresenceId", nextPresenceId);
     }
 
-    try {
-      const activationRaw = localStorage.getItem("hp_guardian_activation_record");
-      if (activationRaw) {
-        const activationRecord = JSON.parse(activationRaw) as Partial<GuardianActivationRecord>;
-
-        setPayload((prev) => ({
-          ...prev,
-          ...activationRecord,
-          plan:
-            activationRecord.plan === "solo" || activationRecord.plan === "household"
-              ? activationRecord.plan
-              : prev.plan,
-          protectionType:
-            activationRecord.protectionType === "pet" ||
-            activationRecord.protectionType === "child" ||
-            activationRecord.protectionType === "elder" ||
-            activationRecord.protectionType === "medical" ||
-            activationRecord.protectionType === "mixed"
-              ? activationRecord.protectionType
-              : prev.protectionType,
-        }));
-
-        if (activationRecord.presenceId) {
-          setSubmittedVisual(true);
-        }
-
-        return;
-      }
-    } catch {
-      // fall through to start payload
+    if (!storedActivatedAt) {
+      localStorage.setItem("guardianActivatedAt", nextActivatedAt);
     }
 
-    try {
-      const raw = localStorage.getItem("hp_guardian_start_payload");
-      if (!raw) return;
-
-      const parsed = JSON.parse(raw) as Partial<GuardianActivationPayload>;
-      setPayload((prev) => ({
-        ...prev,
-        ...parsed,
-        plan:
-          parsed.plan === "solo" || parsed.plan === "household"
-            ? parsed.plan
-            : prev.plan,
-        protectionType:
-          parsed.protectionType === "pet" ||
-          parsed.protectionType === "child" ||
-          parsed.protectionType === "elder" ||
-          parsed.protectionType === "medical" ||
-          parsed.protectionType === "mixed"
-            ? parsed.protectionType
-            : prev.protectionType,
-      }));
-    } catch {
-      // keep current fallback payload
-    }
-  }, [statePayload]);
-
-  const page: React.CSSProperties = {
-    minHeight: "100vh",
-    color: "#e5e7eb",
-    background:
-      "radial-gradient(1100px 720px at 8% 4%, rgba(34,197,94,0.08), transparent 45%)," +
-      "radial-gradient(920px 720px at 100% 2%, rgba(56,189,248,0.10), transparent 42%)," +
-      "radial-gradient(1000px 820px at 50% 100%, rgba(59,130,246,0.10), transparent 48%)," +
-      "#04070c",
-    padding: "20px 14px 28px",
-  };
-
-  const shell: React.CSSProperties = {
-    maxWidth: 1180,
-    margin: "0 auto",
-  };
-
-  const grid: React.CSSProperties = {
-    display: "grid",
-    gridTemplateColumns: "1.04fr 0.96fr",
-    gap: 18,
-  };
-
-  const card: React.CSSProperties = {
-    border: "1px solid rgba(148,163,184,0.16)",
-    borderRadius: 24,
-    padding: 22,
-    background:
-      "linear-gradient(180deg, rgba(255,255,255,0.04), rgba(2,6,23,0.58))",
-    boxShadow:
-      "0 24px 80px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.04)",
-  };
-
-  const sectionTitle: React.CSSProperties = {
-    fontSize: 22,
-    fontWeight: 900,
-    color: "#fff",
-    margin: 0,
-  };
-
-  const title: React.CSSProperties = {
-    fontSize: 38,
-    fontWeight: 900,
-    lineHeight: 1.02,
-    letterSpacing: -1,
-    color: "#fff",
-    margin: 0,
-  };
-
-  const text: React.CSSProperties = {
-    fontSize: 14,
-    lineHeight: 1.65,
-    color: "rgba(226,232,240,0.88)",
-  };
-
-  const label: React.CSSProperties = {
-    fontSize: 11,
-    fontWeight: 900,
-    letterSpacing: 0.6,
-    textTransform: "uppercase",
-    color: "rgba(148,163,184,0.92)",
-    marginBottom: 6,
-  };
-
-  const infoGrid: React.CSSProperties = {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: 12,
-    marginTop: 14,
-  };
-
-  const infoCard: React.CSSProperties = {
-    borderRadius: 18,
-    border: "1px solid rgba(148,163,184,0.16)",
-    background: "rgba(255,255,255,0.03)",
-    padding: 16,
-  };
-
-  const statusRow: React.CSSProperties = {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: 12,
-    marginTop: 14,
-  };
-
-  const capturedStatus: React.CSSProperties = {
-    borderRadius: 18,
-    border: "1px solid rgba(34,197,94,0.28)",
-    background: "rgba(34,197,94,0.10)",
-    padding: 16,
-  };
-
-  const pendingStatus: React.CSSProperties = {
-    borderRadius: 18,
-    border: "1px solid rgba(56,189,248,0.22)",
-    background: "rgba(8,47,73,0.22)",
-    padding: 16,
-  };
-
-  const planLabel = payload.plan === "solo" ? "Solo" : "Household";
-
-  const protectionLabel =
-    payload.protectionType === "pet"
-      ? "Pet"
-      : payload.protectionType === "child"
-      ? "Child"
-      : payload.protectionType === "elder"
-      ? "Elder"
-      : payload.protectionType === "medical"
-      ? "Medical"
-      : "Mixed";
-
-  function buildHouseholdPath() {
-    const params = new URLSearchParams({
-      plan: payload.plan,
-      guardian: "1",
-      ownerName: payload.ownerName || "",
-      householdName: payload.householdName || "",
-      phone: payload.phone || "",
-      email: payload.email || "",
-      protectionType: payload.protectionType,
-      presenceId: payload.presenceId || "",
-      activationStatus: payload.activationStatus || "pending",
-    });
-
-    return `/planet/guardian-household?${params.toString()}`;
-  }
-
-  function handleEnterDemo() {
-    nav(buildHouseholdPath());
-  }
-
-  async function handleSubmitActivation() {
-    if (submittedVisual && payload.presenceId) {
-      return;
-    }
-
-    setIsSubmitting(true);
-    setSubmitError("");
-
-    try {
-      const presenceId = payload.presenceId || generatePresenceId();
-
-      const activationRecord: GuardianActivationRecord = {
-        ...payload,
-        presenceId,
-        activationStatus: "pending",
-        submittedAt: new Date().toISOString(),
-      };
-
-      const { error } = await supabase.from("guardian_activations").insert({
-        presence_id: activationRecord.presenceId,
-        source: activationRecord.source || "guardian_start",
-        plan: activationRecord.plan,
-        owner_name: activationRecord.ownerName,
-        household_name: activationRecord.householdName,
-        phone: activationRecord.phone,
-        email: activationRecord.email,
-        protection_type: activationRecord.protectionType,
-        notes: activationRecord.notes || "",
-        activation_status: activationRecord.activationStatus,
-        created_at: activationRecord.createdAt || new Date().toISOString(),
-        submitted_at: activationRecord.submittedAt,
-      });
-
-      if (error) {
-        throw error;
-      }
-
+    if (storedProfiles) {
       try {
-        localStorage.setItem(
-          "hp_guardian_activation_record",
-          JSON.stringify(activationRecord)
-        );
+        const parsed = JSON.parse(storedProfiles) as GuardianProfile[];
+        const safeProfiles = Array.isArray(parsed) ? parsed : [];
+        setProfiles(safeProfiles);
+        setActivationComplete(safeProfiles.length > 0);
       } catch {
-        // ignore local storage failure
+        setProfiles([]);
+        setActivationComplete(false);
       }
-
-      setPayload((prev) => ({
-        ...prev,
-        presenceId,
-        activationStatus: "pending",
-      }));
-
-      setSubmittedVisual(true);
-    } catch (error: any) {
-      const message =
-        typeof error?.message === "string"
-          ? error.message
-          : "Activation submit failed.";
-      setSubmitError(message);
-    } finally {
-      setIsSubmitting(false);
+    } else {
+      setProfiles([]);
+      setActivationComplete(false);
     }
+
+    if (storedOwnerName) setOwnerName(storedOwnerName);
+    if (storedHouseholdName) setHouseholdName(storedHouseholdName);
+    if (storedContactInfo) setContactInfo(storedContactInfo);
+
+    setHasLoadedStorage(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hasLoadedStorage) return;
+    localStorage.setItem("guardianOwnerName", ownerName);
+  }, [ownerName, hasLoadedStorage]);
+
+  useEffect(() => {
+    if (!hasLoadedStorage) return;
+    localStorage.setItem("guardianHouseholdName", householdName);
+  }, [householdName, hasLoadedStorage]);
+
+  useEffect(() => {
+    if (!hasLoadedStorage) return;
+    localStorage.setItem("guardianContactInfo", contactInfo);
+  }, [contactInfo, hasLoadedStorage]);
+
+  useEffect(() => {
+    if (!hasLoadedStorage) return;
+    localStorage.setItem("guardianActivationProfiles", JSON.stringify(profiles));
+  }, [profiles, hasLoadedStorage]);
+
+  useEffect(() => {
+    if (!copied) return;
+
+    const timer = window.setTimeout(() => setCopied(false), 1800);
+    return () => window.clearTimeout(timer);
+  }, [copied]);
+
+  const selectedMeta = PROFILE_TYPE_META[selectedType];
+
+  const counts = useMemo(() => {
+    return {
+      child: profiles.filter((profile) => profile.type === "child").length,
+      elder: profiles.filter((profile) => profile.type === "elder").length,
+      pet: profiles.filter((profile) => profile.type === "pet").length,
+      medical: profiles.filter((profile) => profile.type === "medical").length,
+    };
+  }, [profiles]);
+
+  const readyForSubmit =
+    ownerName.trim().length > 0 &&
+    contactInfo.trim().length > 0 &&
+    profileName.trim().length > 0;
+
+  const latestProfile = profiles[0] || null;
+  const latestProfileRoute = latestProfile
+    ? makeProfileRoute(latestProfile.type, latestProfile.id)
+    : "";
+  const latestProfileLink = latestProfile
+    ? buildAbsoluteGuardianLink(latestProfileRoute)
+    : "";
+  const qrPattern = useMemo(
+    () => makeQrPattern(latestProfileLink || presenceId || "guardian"),
+    [latestProfileLink, presenceId]
+  );
+
+  async function handleCopyLink() {
+    if (!latestProfileLink) return;
+
+    try {
+      await navigator.clipboard.writeText(latestProfileLink);
+      setCopied(true);
+    } catch {
+      setCopied(false);
+    }
+  }
+
+  function handleOpenGeneratedLink() {
+    if (!latestProfileRoute) return;
+    navigate(latestProfileRoute);
+  }
+
+  function handleAddProfile() {
+    if (!readyForSubmit) return;
+
+    const nextProfile: GuardianProfile = {
+      id: `${selectedType}-${Date.now()}`,
+      type: selectedType,
+      name: profileName.trim(),
+      status: "active",
+      subtitle: makeProfileSubtitle(
+        selectedType,
+        safeZone.trim(),
+        contactInfo.trim()
+      ),
+      createdAt: new Date().toISOString(),
+    };
+
+    const updatedProfiles = [nextProfile, ...profiles];
+
+    setProfiles(updatedProfiles);
+    setActivationComplete(true);
+
+    if (hasLoadedStorage) {
+      localStorage.setItem(
+        "guardianActivationProfiles",
+        JSON.stringify(updatedProfiles)
+      );
+    }
+
+    setProfileName("");
+    setSafeZone("");
+    setNotes("");
+  }
+
+  function handleContinueToHousehold() {
+    navigate("/planet/guardian-household");
+  }
+
+  function handleOpenGuardianHome() {
+    navigate("/planet/guardian");
+  }
+
+  function handleOpenBellaDemo() {
+    navigate("/planet/guardian-pet/pet/bella-demo");
   }
 
   return (
-    <div style={page}>
-      <div style={shell}>
-        <div style={grid}>
-          <div style={card}>
-            <div
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                borderRadius: 999,
-                padding: "8px 12px",
-                border: "1px solid rgba(56,189,248,0.28)",
-                background: "rgba(56,189,248,0.10)",
-                color: "rgba(186,230,253,1)",
-                fontSize: 11,
-                fontWeight: 900,
-                letterSpacing: 0.5,
-                marginBottom: 14,
-              }}
-            >
-              <span
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: 999,
-                  background: "rgba(56,189,248,1)",
-                  boxShadow: "0 0 12px rgba(56,189,248,0.8)",
-                }}
-              />
-              GUARDIAN ACTIVATION
+    <div className="min-h-screen bg-[#020611] text-white">
+      <div className="mx-auto flex w-full max-w-[1500px] flex-col gap-6 px-4 py-6 md:px-6 lg:px-8">
+        <div className="rounded-[28px] border border-emerald-500/20 bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.12),_rgba(2,6,17,0.96)_42%)] p-6 shadow-[0_0_0_1px_rgba(16,185,129,0.05),0_18px_60px_rgba(0,0,0,0.45)] md:p-8">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+            <div className="max-w-3xl">
+              <div className="mb-4 flex flex-wrap items-center gap-2">
+                <span className="rounded-full border border-emerald-400/30 bg-emerald-500/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-emerald-200">
+                  Guardian Activated
+                </span>
+                <span className="rounded-full border border-cyan-400/20 bg-cyan-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-100">
+                  Presence First
+                </span>
+              </div>
+
+              <h1 className="max-w-4xl text-3xl font-semibold leading-tight text-white md:text-5xl">
+                Your Guardian system is live. Now set up who matters.
+              </h1>
+
+              <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300 md:text-base">
+                This is the activation bridge. The moment payment completes, Guardian should
+                feel real instantly: presence created, household ready, and next action clear.
+              </p>
+
+              <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                {(
+                  [
+                    { key: "child", label: "Child Guardian", value: counts.child },
+                    { key: "elder", label: "Elder Guardian", value: counts.elder },
+                    { key: "pet", label: "Pet Guardian", value: counts.pet },
+                    { key: "medical", label: "Medical Guardian", value: counts.medical },
+                  ] as const
+                ).map((item) => (
+                  <div
+                    key={item.key}
+                    className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
+                  >
+                    <div className="text-[10px] uppercase tracking-[0.24em] text-slate-400">
+                      {item.label}
+                    </div>
+                    <div className="mt-2 text-2xl font-semibold text-white">{item.value}</div>
+                    <div className="mt-1 text-xs text-slate-400">
+                      Active profiles created during this activation.
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <h1 style={title}>
-              Activation
-              <br />
-              ready to review.
-            </h1>
+            <div className="w-full max-w-md rounded-[24px] border border-white/10 bg-black/25 p-5">
+              <div className="text-[10px] uppercase tracking-[0.24em] text-slate-400">
+                Activation status
+              </div>
+              <div className="mt-3 text-xl font-semibold text-white">System ready</div>
 
-            <div style={{ ...text, marginTop: 12 }}>
-              The Guardian request is captured, staged, and ready to move
-              forward without losing the household context.
-            </div>
+              <div className="mt-4 space-y-3 text-sm text-slate-300">
+                <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-3">
+                  <div className="text-[10px] uppercase tracking-[0.22em] text-emerald-200">
+                    Presence ID
+                  </div>
+                  <div className="mt-1 font-medium text-white">{presenceId || "Preparing..."}</div>
+                </div>
 
-            <div style={statusRow}>
-              <div style={capturedStatus}>
-                <div style={label}>Status</div>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 10,
-                  }}
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+                  <div className="text-[10px] uppercase tracking-[0.22em] text-slate-400">
+                    Activated at
+                  </div>
+                  <div className="mt-1 font-medium text-white">
+                    {activatedAt
+                      ? new Date(activatedAt).toLocaleString()
+                      : "Creating activation timestamp..."}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+                  <div className="text-[10px] uppercase tracking-[0.22em] text-slate-400">
+                    Next move
+                  </div>
+                  <div className="mt-1 text-white">
+                    Add the first person, pet, or medical profile to complete the live handoff.
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-5 grid gap-2 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={handleContinueToHousehold}
+                  className="rounded-2xl border border-emerald-400/25 bg-emerald-500/15 px-4 py-3 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-500/20"
                 >
-                  <span
-                    style={{
-                      width: 10,
-                      height: 10,
-                      borderRadius: 999,
-                      background: "rgba(74,222,128,1)",
-                      boxShadow: "0 0 14px rgba(74,222,128,0.8)",
-                    }}
+                  Open household board
+                </button>
+                <button
+                  type="button"
+                  onClick={handleOpenGuardianHome}
+                  className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.08]"
+                >
+                  View Guardian home
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {activationComplete ? (
+          <div className="rounded-[24px] border border-emerald-500/20 bg-emerald-500/10 p-4 text-emerald-50 shadow-[0_12px_40px_rgba(0,0,0,0.3)]">
+            <div className="text-[10px] uppercase tracking-[0.24em] text-emerald-200">
+              Activation confirmed
+            </div>
+            <div className="mt-2 text-lg font-semibold text-white">
+              Guardian is now active with at least one live profile.
+            </div>
+            <div className="mt-1 text-sm text-emerald-100/90">
+              Next step after this page: generate the shareable link / QR experience. That is the
+              second build step right after this.
+            </div>
+          </div>
+        ) : null}
+
+        <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="rounded-[28px] border border-white/10 bg-[#06101f]/90 p-5 shadow-[0_18px_60px_rgba(0,0,0,0.35)] md:p-6">
+            <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+              <div>
+                <div className="text-[10px] uppercase tracking-[0.24em] text-slate-400">
+                  Set up who matters
+                </div>
+                <h2 className="mt-2 text-2xl font-semibold text-white">
+                  Create the first Guardian layer
+                </h2>
+                <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-300">
+                  Keep this fast. No friction. The buyer should feel the system responding the
+                  second they land here.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              {(Object.keys(PROFILE_TYPE_META) as GuardianProfileType[]).map((type) => {
+                const meta = PROFILE_TYPE_META[type];
+                const active = selectedType === type;
+
+                return (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => setSelectedType(type)}
+                    className={`rounded-[22px] border p-4 text-left transition ${
+                      active
+                        ? "border-emerald-400/35 bg-emerald-500/12 shadow-[0_0_0_1px_rgba(16,185,129,0.08)]"
+                        : "border-white/10 bg-white/[0.03] hover:bg-white/[0.05]"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-[10px] uppercase tracking-[0.22em] text-slate-400">
+                        {meta.eyebrow}
+                      </div>
+                      <span className="rounded-full border border-white/10 bg-black/20 px-2 py-1 text-[10px] font-medium text-slate-300">
+                        {meta.chip}
+                      </span>
+                    </div>
+                    <div className="mt-3 text-lg font-semibold text-white">{meta.label}</div>
+                    <div className="mt-2 text-sm leading-6 text-slate-300">
+                      {meta.description}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="mt-6 rounded-[24px] border border-white/10 bg-black/20 p-5">
+              <div className="text-[10px] uppercase tracking-[0.24em] text-slate-400">
+                {selectedMeta.eyebrow}
+              </div>
+              <div className="mt-2 text-xl font-semibold text-white">{selectedMeta.label}</div>
+              <div className="mt-2 text-sm leading-7 text-slate-300">
+                {selectedMeta.description}
+              </div>
+
+              <div className="mt-6 grid gap-4 md:grid-cols-2">
+                <label className="block">
+                  <div className="mb-2 text-xs font-medium uppercase tracking-[0.18em] text-slate-400">
+                    Owner name
+                  </div>
+                  <input
+                    value={ownerName}
+                    onChange={(event) => setOwnerName(event.target.value)}
+                    placeholder="Daniel Doyon"
+                    className="w-full rounded-2xl border border-white/10 bg-[#071221] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-emerald-400/35"
                   />
-                  <div
-                    style={{
-                      fontSize: 18,
-                      fontWeight: 900,
-                      color: "#fff",
-                    }}
-                  >
-                    Captured
-                  </div>
-                </div>
-              </div>
+                </label>
 
-              <div style={pendingStatus}>
-                <div style={label}>Status</div>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 10,
-                  }}
-                >
-                  <span
-                    style={{
-                      width: 10,
-                      height: 10,
-                      borderRadius: 999,
-                      background: "rgba(56,189,248,1)",
-                      boxShadow: "0 0 14px rgba(56,189,248,0.7)",
-                    }}
+                <label className="block">
+                  <div className="mb-2 text-xs font-medium uppercase tracking-[0.18em] text-slate-400">
+                    Household name
+                  </div>
+                  <input
+                    value={householdName}
+                    onChange={(event) => setHouseholdName(event.target.value)}
+                    placeholder="Doyon Household"
+                    className="w-full rounded-2xl border border-white/10 bg-[#071221] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-emerald-400/35"
                   />
-                  <div
-                    style={{
-                      fontSize: 18,
-                      fontWeight: 900,
-                      color: "#fff",
-                    }}
-                  >
-                    Activation pending
-                  </div>
-                </div>
-              </div>
-            </div>
+                </label>
 
-            <div style={{ ...card, marginTop: 18, padding: 18 }}>
-              <h2 style={sectionTitle}>Captured Guardian details</h2>
-
-              <div style={infoGrid}>
-                <div style={infoCard}>
-                  <div style={label}>Selected plan</div>
-                  <div
-                    style={{
-                      color: "#fff",
-                      fontSize: 20,
-                      fontWeight: 900,
-                    }}
-                  >
-                    {planLabel}
+                <label className="block">
+                  <div className="mb-2 text-xs font-medium uppercase tracking-[0.18em] text-slate-400">
+                    Primary contact
                   </div>
-                </div>
+                  <input
+                    value={contactInfo}
+                    onChange={(event) => setContactInfo(event.target.value)}
+                    placeholder="Phone or email"
+                    className="w-full rounded-2xl border border-white/10 bg-[#071221] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-emerald-400/35"
+                  />
+                </label>
 
-                <div style={infoCard}>
-                  <div style={label}>Protection type</div>
-                  <div
-                    style={{
-                      color: "#fff",
-                      fontSize: 20,
-                      fontWeight: 900,
-                    }}
-                  >
-                    {protectionLabel}
+                <label className="block">
+                  <div className="mb-2 text-xs font-medium uppercase tracking-[0.18em] text-slate-400">
+                    Name to protect
                   </div>
-                </div>
+                  <input
+                    value={profileName}
+                    onChange={(event) => setProfileName(event.target.value)}
+                    placeholder={
+                      selectedType === "child"
+                        ? "Lucas"
+                        : selectedType === "elder"
+                        ? "Grandpa Joe"
+                        : selectedType === "pet"
+                        ? "Bella"
+                        : "Medical profile"
+                    }
+                    className="w-full rounded-2xl border border-white/10 bg-[#071221] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-emerald-400/35"
+                  />
+                </label>
 
-                <div style={infoCard}>
-                  <div style={label}>Owner name</div>
-                  <div
-                    style={{
-                      color: "#fff",
-                      fontSize: 18,
-                      fontWeight: 800,
-                    }}
-                  >
-                    {payload.ownerName || "—"}
+                <label className="block">
+                  <div className="mb-2 text-xs font-medium uppercase tracking-[0.18em] text-slate-400">
+                    Safe zone / anchor location
                   </div>
-                </div>
+                  <input
+                    value={safeZone}
+                    onChange={(event) => setSafeZone(event.target.value)}
+                    placeholder={
+                      selectedType === "child"
+                        ? "School dismissal zone"
+                        : selectedType === "elder"
+                        ? "Living room"
+                        : selectedType === "pet"
+                        ? "Home base"
+                        : "Primary hospital"
+                    }
+                    className="w-full rounded-2xl border border-white/10 bg-[#071221] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-emerald-400/35"
+                  />
+                </label>
 
-                <div style={infoCard}>
-                  <div style={label}>Household name</div>
-                  <div
-                    style={{
-                      color: "#fff",
-                      fontSize: 18,
-                      fontWeight: 800,
-                    }}
-                  >
-                    {payload.householdName || "—"}
+                <label className="block">
+                  <div className="mb-2 text-xs font-medium uppercase tracking-[0.18em] text-slate-400">
+                    Notes
                   </div>
-                </div>
-
-                <div style={infoCard}>
-                  <div style={label}>Contact phone</div>
-                  <div
-                    style={{
-                      color: "#fff",
-                      fontSize: 18,
-                      fontWeight: 800,
-                    }}
-                  >
-                    {payload.phone || "—"}
-                  </div>
-                </div>
-
-                <div style={infoCard}>
-                  <div style={label}>Contact email</div>
-                  <div
-                    style={{
-                      color: "#fff",
-                      fontSize: 18,
-                      fontWeight: 800,
-                    }}
-                  >
-                    {payload.email || "—"}
-                  </div>
-                </div>
+                  <input
+                    value={notes}
+                    onChange={(event) => setNotes(event.target.value)}
+                    placeholder="Optional setup notes"
+                    className="w-full rounded-2xl border border-white/10 bg-[#071221] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-emerald-400/35"
+                  />
+                </label>
               </div>
 
-              {payload.notes ? (
-                <div
-                  style={{
-                    marginTop: 14,
-                    borderRadius: 18,
-                    border: "1px solid rgba(148,163,184,0.16)",
-                    background: "rgba(255,255,255,0.03)",
-                    padding: 16,
-                  }}
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={handleAddProfile}
+                  disabled={!readyForSubmit}
+                  className="rounded-2xl border border-emerald-400/30 bg-emerald-500/15 px-5 py-3 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <div style={label}>Notes</div>
-                  <div style={{ ...text, marginTop: 4 }}>{payload.notes}</div>
+                  Add {selectedMeta.label}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleContinueToHousehold}
+                  className="rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.08]"
+                >
+                  Continue to household board
+                </button>
+              </div>
+
+              {!readyForSubmit ? (
+                <div className="mt-3 text-xs text-slate-400">
+                  Enter owner name, primary contact, and a name to protect to activate the first
+                  layer.
                 </div>
               ) : null}
             </div>
           </div>
 
-          <div style={card}>
-            <h2 style={sectionTitle}>Next move</h2>
-            <div style={{ ...text, marginTop: 8 }}>
-              You can enter the Guardian household demo immediately, or submit
-              the activation request and mint the Presence ID now.
-            </div>
+          <div className="flex flex-col gap-6">
+            <div className="rounded-[28px] border border-white/10 bg-[#06101f]/90 p-5 shadow-[0_18px_60px_rgba(0,0,0,0.35)] md:p-6">
+              <div className="text-[10px] uppercase tracking-[0.24em] text-slate-400">
+                Activation summary
+              </div>
+              <h2 className="mt-2 text-2xl font-semibold text-white">Live handoff status</h2>
+              <p className="mt-2 text-sm leading-7 text-slate-300">
+                This is what the buyer should feel right after purchase: not waiting, not guessing,
+                already moving.
+              </p>
 
-            <div style={{ ...card, marginTop: 18, padding: 18 }}>
-              <div style={label}>Activation checkpoint</div>
-              <div style={{ ...text, fontSize: 13 }}>
-                Captured data is being held in flow so the household can move
-                into Guardian without dropping the plan, owner, contact, or
-                protection type.
+              <div className="mt-5 space-y-3">
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                  <div className="text-[10px] uppercase tracking-[0.22em] text-slate-400">
+                    Household
+                  </div>
+                  <div className="mt-1 text-base font-semibold text-white">
+                    {householdName.trim() || "Household pending name"}
+                  </div>
+                  <div className="mt-1 text-sm text-slate-400">
+                    Owner: {ownerName.trim() || "Not set yet"}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                  <div className="text-[10px] uppercase tracking-[0.22em] text-slate-400">
+                    Primary contact
+                  </div>
+                  <div className="mt-1 text-base font-semibold text-white">
+                    {contactInfo.trim() || "No contact entered yet"}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-cyan-500/20 bg-cyan-500/10 p-4">
+                  <div className="text-[10px] uppercase tracking-[0.22em] text-cyan-100">
+                    Next build step
+                  </div>
+                  <div className="mt-1 text-base font-semibold text-white">
+                    QR / link generation panel
+                  </div>
+                  <div className="mt-1 text-sm text-cyan-50/80">
+                    After this page is in place, we build the shareable link + QR delivery panel so
+                    the system becomes instantly usable.
+                  </div>
+                </div>
               </div>
             </div>
 
-            {submittedVisual ? (
-              <div
-                style={{
-                  marginTop: 16,
-                  borderRadius: 18,
-                  border: "1px solid rgba(34,197,94,0.28)",
-                  background: "rgba(34,197,94,0.10)",
-                  padding: 16,
-                }}
-              >
-                <div style={label}>Activation request</div>
-                <div
-                  style={{
-                    color: "#fff",
-                    fontWeight: 900,
-                    fontSize: 18,
-                  }}
+            <div className="rounded-[28px] border border-white/10 bg-[#06101f]/90 p-5 shadow-[0_18px_60px_rgba(0,0,0,0.35)] md:p-6">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-[10px] uppercase tracking-[0.24em] text-slate-400">
+                    Profiles created
+                  </div>
+                  <h2 className="mt-2 text-2xl font-semibold text-white">Guardian roster</h2>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleOpenBellaDemo}
+                  className="rounded-2xl border border-emerald-400/25 bg-emerald-500/12 px-4 py-2 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-500/20"
                 >
-                  Activation recorded
-                </div>
+                  Open Bella demo
+                </button>
+              </div>
 
-                <div style={{ ...text, marginTop: 8, fontSize: 13 }}>
-                  Presence-aware activation has been saved and is ready across
-                  Guardian flow.
-                </div>
-
-                {payload.presenceId ? (
-                  <div style={{ marginTop: 12 }}>
-                    <div style={label}>Presence ID</div>
+              <div className="mt-5 space-y-3">
+                {profiles.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-5 text-sm text-slate-400">
+                    No profiles added yet. Add the first child, elder, pet, or medical profile to
+                    complete the activation handoff.
+                  </div>
+                ) : (
+                  profiles.map((profile) => (
                     <div
-                      style={{
-                        color: "#fff",
-                        fontWeight: 900,
-                        fontSize: 20,
-                        letterSpacing: 0.6,
-                      }}
+                      key={profile.id}
+                      className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
                     >
-                      {payload.presenceId}
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="text-[10px] uppercase tracking-[0.22em] text-slate-400">
+                            {PROFILE_TYPE_META[profile.type].eyebrow}
+                          </div>
+                          <div className="mt-1 text-lg font-semibold text-white">
+                            {profile.name}
+                          </div>
+                          <div className="mt-1 text-sm text-slate-300">{profile.subtitle}</div>
+                        </div>
+
+                        <span className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-100">
+                          {profile.status}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-[28px] border border-emerald-500/15 bg-[#06101f]/90 p-5 shadow-[0_18px_60px_rgba(0,0,0,0.35)] md:p-6">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <div className="text-[10px] uppercase tracking-[0.24em] text-emerald-200">
+                    QR / share panel
+                  </div>
+                  <h2 className="mt-2 text-2xl font-semibold text-white">
+                    {latestProfile ? `${latestProfile.name} is ready to share` : "Waiting for first profile"}
+                  </h2>
+                  <p className="mt-2 text-sm leading-7 text-slate-300">
+                    The second the first Guardian layer is created, the user should receive a live
+                    link and scannable access point they can actually use.
+                  </p>
+                </div>
+
+                <div className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-100">
+                  Live handoff
+                </div>
+              </div>
+
+              {latestProfile ? (
+                <div className="mt-5 grid gap-5 xl:grid-cols-[180px_minmax(0,1fr)]">
+                  <div className="rounded-[24px] border border-white/10 bg-black/20 p-4">
+                    <div className="mb-3 text-[10px] uppercase tracking-[0.22em] text-slate-400">
+                      QR preview
+                    </div>
+
+                    <div className="mx-auto flex h-[140px] w-[140px] items-center justify-center rounded-[18px] border border-white/10 bg-white p-2 shadow-[0_0_0_1px_rgba(255,255,255,0.04)]">
+                      <div className="grid grid-cols-[repeat(17,minmax(0,1fr))] gap-[2px]">
+                        {qrPattern.flatMap((row, rowIndex) =>
+                          row.map((cell, colIndex) => (
+                            <span
+                              key={`${rowIndex}-${colIndex}`}
+                              className={`block h-[5px] w-[5px] ${
+                                cell ? "bg-black" : "bg-transparent"
+                              }`}
+                            />
+                          ))
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="mt-3 text-center text-xs text-slate-400">
+                      Placeholder QR
                     </div>
                   </div>
-                ) : null}
-              </div>
-            ) : null}
 
-            {submitError ? (
-              <div
-                style={{
-                  marginTop: 16,
-                  borderRadius: 18,
-                  border: "1px solid rgba(248,113,113,0.28)",
-                  background: "rgba(127,29,29,0.24)",
-                  padding: 16,
-                  color: "#fecaca",
-                  fontSize: 13,
-                  lineHeight: 1.6,
-                }}
-              >
-                {submitError}
-              </div>
-            ) : null}
+                  <div className="space-y-4">
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                      <div className="text-[10px] uppercase tracking-[0.22em] text-slate-400">
+                        Generated profile
+                      </div>
+                      <div className="mt-1 text-lg font-semibold text-white">
+                        {latestProfile.name}
+                      </div>
+                      <div className="mt-1 text-sm text-slate-300">
+                        {PROFILE_TYPE_META[latestProfile.type].label} • {latestProfile.subtitle}
+                      </div>
+                    </div>
 
-            <div
-              style={{
-                display: "grid",
-                gap: 12,
-                marginTop: 22,
-              }}
-            >
-              <button
-                type="button"
-                onClick={handleEnterDemo}
-                style={{
-                  borderRadius: 999,
-                  border: "1px solid rgba(34,197,94,0.34)",
-                  background: "rgba(34,197,94,0.16)",
-                  color: "rgba(187,247,208,1)",
-                  fontWeight: 900,
-                  fontSize: 14,
-                  padding: "14px 20px",
-                  cursor: "pointer",
-                }}
-              >
-                Enter Guardian Demo
-              </button>
+                    <div className="rounded-2xl border border-cyan-500/20 bg-cyan-500/10 p-4">
+                      <div className="text-[10px] uppercase tracking-[0.22em] text-cyan-100">
+                        Shareable Guardian link
+                      </div>
+                      <div className="mt-2 break-all rounded-xl border border-white/10 bg-black/20 px-3 py-3 text-sm text-white">
+                        {latestProfileLink}
+                      </div>
 
-              <button
-                type="button"
-                onClick={handleSubmitActivation}
-                disabled={isSubmitting || (submittedVisual && Boolean(payload.presenceId))}
-                style={{
-                  borderRadius: 999,
-                  border: "1px solid rgba(56,189,248,0.24)",
-                  background:
-                    submittedVisual && payload.presenceId
-                      ? "rgba(34,197,94,0.12)"
-                      : "rgba(56,189,248,0.10)",
-                  color:
-                    submittedVisual && payload.presenceId
-                      ? "rgba(187,247,208,1)"
-                      : "rgba(186,230,253,1)",
-                  fontWeight: 900,
-                  fontSize: 14,
-                  padding: "14px 20px",
-                  cursor:
-                    isSubmitting || (submittedVisual && payload.presenceId)
-                      ? "default"
-                      : "pointer",
-                  opacity:
-                    isSubmitting || (submittedVisual && payload.presenceId) ? 0.95 : 1,
-                }}
-              >
-                {isSubmitting
-                  ? "Submitting..."
-                  : submittedVisual && payload.presenceId
-                  ? "Activation Submitted"
-                  : "Submit Activation Request"}
-              </button>
+                      <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                        <button
+                          type="button"
+                          onClick={handleCopyLink}
+                          className="rounded-2xl border border-emerald-400/30 bg-emerald-500/15 px-5 py-3 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-500/20"
+                        >
+                          {copied ? "Copied" : "Copy link"}
+                        </button>
 
-              <button
-                type="button"
-                onClick={() => nav("/planet/guardian/start")}
-                style={{
-                  borderRadius: 999,
-                  border: "1px solid rgba(148,163,184,0.18)",
-                  background: "rgba(255,255,255,0.04)",
-                  color: "#fff",
-                  fontWeight: 800,
-                  fontSize: 13,
-                  padding: "12px 16px",
-                  cursor: "pointer",
-                }}
-              >
-                Back to Start
-              </button>
+                        <button
+                          type="button"
+                          onClick={handleOpenGeneratedLink}
+                          className="rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.08]"
+                        >
+                          Open link
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                      <div className="text-[10px] uppercase tracking-[0.22em] text-slate-400">
+                        Why this matters
+                      </div>
+                      <div className="mt-2 text-sm leading-7 text-slate-300">
+                        This is the bridge from setup to real-world use. The user should not leave
+                        activation wondering what happens next. They should leave with something
+                        live, shareable, and usable immediately.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-5 rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-5 text-sm text-slate-400">
+                  Add the first Guardian profile to generate the shareable link and QR preview panel.
+                </div>
+              )}
             </div>
           </div>
         </div>
