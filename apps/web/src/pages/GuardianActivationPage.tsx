@@ -302,7 +302,6 @@ export default function GuardianActivationPage() {
       );
     }
 
-    // Save child profiles to Supabase so QR scans work across devices.
     if (selectedType === "child") {
       try {
         const { error } = await supabase.from("guardian_children").upsert(
@@ -318,6 +317,7 @@ export default function GuardianActivationPage() {
             subtitle: nextProfile.subtitle,
             status: nextProfile.status,
             created_at: nextProfile.createdAt,
+            is_demo: true,
           },
           {
             onConflict: "id",
