@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "../lib/supabase";
 import QRCode from "qrcode";
 
 type GuardianProfileType = "child" | "elder" | "pet" | "medical";
@@ -273,7 +274,7 @@ export default function GuardianActivationPage() {
     navigate(latestProfileRoute);
   }
 
-  function handleAddProfile() {
+  async function handleAddProfile() {
     if (!readyForSubmit) return;
 
     const nextProfile: GuardianProfile = {
@@ -299,6 +300,36 @@ export default function GuardianActivationPage() {
         "guardianActivationProfiles",
         JSON.stringify(updatedProfiles)
       );
+    }
+
+    // Save child profiles to Supabase so QR scans work across devices.
+    if (selectedType === "child") {
+      try {
+        const { error } = await supabase.from("guardian_children").upsert(
+          {
+            id: nextProfile.id,
+            name: nextProfile.name,
+            type: nextProfile.type,
+            safe_zone: safeZone.trim(),
+            contact: contactInfo.trim(),
+            owner_name: ownerName.trim(),
+            household_name: householdName.trim(),
+            notes: notes.trim(),
+            subtitle: nextProfile.subtitle,
+            status: nextProfile.status,
+            created_at: nextProfile.createdAt,
+          },
+          {
+            onConflict: "id",
+          }
+        );
+
+        if (error) {
+          console.warn("Guardian child save failed:", error.message);
+        }
+      } catch (error) {
+        console.warn("Guardian child save failed:", error);
+      }
     }
 
     setProfileName("");

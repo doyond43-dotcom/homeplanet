@@ -35,6 +35,21 @@ type GuardianChildRecord = {
   notes: string;
   createdAt: string;
   subtitle: string;
+  status: string;
+};
+
+type GuardianChildRow = {
+  id: string;
+  name: string | null;
+  type: string | null;
+  safe_zone: string | null;
+  contact: string | null;
+  owner_name: string | null;
+  household_name: string | null;
+  notes: string | null;
+  subtitle: string | null;
+  status: string | null;
+  created_at: string | null;
 };
 
 function formatTime(value?: string) {
@@ -77,10 +92,32 @@ function getStoredGuardianChild(childId?: string): GuardianChildRecord | null {
       notes: "",
       createdAt: match.createdAt,
       subtitle: match.subtitle,
+      status: match.status,
     };
   } catch {
     return null;
   }
+}
+
+function mapGuardianRowToRecord(row: GuardianChildRow): GuardianChildRecord {
+  return {
+    id: row.id,
+    ownerName: row.owner_name || "",
+    householdName: row.household_name || "",
+    contactInfo: row.contact || "",
+    childName: row.name || "Child",
+    safeZone: row.safe_zone || "",
+    notes: row.notes || "",
+    createdAt: row.created_at || new Date().toISOString(),
+    subtitle:
+      row.subtitle ||
+      (row.safe_zone
+        ? `Safe zone: ${row.safe_zone}`
+        : row.contact
+        ? `Primary contact: ${row.contact}`
+        : "Guardian child profile is active and ready to share."),
+    status: row.status || "active",
+  };
 }
 
 export default function ParentChildView() {
@@ -97,6 +134,20 @@ export default function ParentChildView() {
         return;
       }
 
+      // 1) Shared source of truth for QR scans across devices
+      const { data: guardianRow, error: guardianError } = await supabase
+        .from("guardian_children")
+        .select("*")
+        .eq("id", childId)
+        .single();
+
+      if (!guardianError && guardianRow) {
+        setGuardianChild(mapGuardianRowToRecord(guardianRow as GuardianChildRow));
+        setLoading(false);
+        return;
+      }
+
+      // 2) Local fallback for same-browser testing / legacy local flow
       const localGuardianChild = getStoredGuardianChild(childId);
 
       if (localGuardianChild) {
@@ -105,6 +156,7 @@ export default function ParentChildView() {
         return;
       }
 
+      // 3) Legacy fallback so older route usage still works
       const { data, error } = await supabase
         .from("auto_repair_jobs")
         .select("*")
@@ -212,7 +264,7 @@ export default function ParentChildView() {
               Guardian Notes
             </div>
             <div className="text-emerald-300 text-sm">
-              {guardianChild.subtitle || "Guardian child profile is active and ready to share."}
+              {guardianChild.notes || guardianChild.subtitle || "Guardian child profile is active and ready to share."}
             </div>
           </div>
         </div>
