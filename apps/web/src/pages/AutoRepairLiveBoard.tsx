@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { resolveStarterBoardConfig } from "../lib/starterBoardConfig";
 
@@ -460,7 +460,6 @@ function campStatusTone(stage: string) {
 
 export default function AutoRepairLiveBoard() {
   const location = useLocation();
-  const navigate = useNavigate();
   const { boardSlug } = useParams<{ boardSlug: string }>();
 
   const payload =
@@ -689,7 +688,7 @@ export default function AutoRepairLiveBoard() {
   }
 
   function openParentView(jobId: string) {
-    navigate(getParentViewPath(jobId));
+    window.location.href = `${window.location.origin}${getParentViewPath(jobId)}`;
   }
 
   async function copyParentViewLink(jobId: string) {
