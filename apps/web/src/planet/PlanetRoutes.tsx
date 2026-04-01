@@ -52,6 +52,8 @@ import GuardianPetTagDemo from "../pages/GuardianPetTagDemo";
 import GuardianHouseholdBoard from "../pages/GuardianHouseholdBoard";
 import GuardianStartPage from "../pages/GuardianStartPage";
 import GuardianActivationPage from "../pages/GuardianActivationPage";
+import GuardianPanicPage from "../pages/GuardianPanicPage";
+import GuardianPanicLiveBoard from "../pages/GuardianPanicLiveBoard";
 import PetCareTimelinePanel from "../components/guardian/PetCareTimelinePanel";
 
 // Emily
@@ -139,6 +141,8 @@ export default function PlanetRoutes() {
       <Route path="guardian" element={<PlanetGuardian />} />
       <Route path="guardian/start" element={<GuardianStartPage />} />
       <Route path="guardian/activate" element={<GuardianActivationPage />} />
+      <Route path="guardian/panic" element={<GuardianPanicPage />} />
+      <Route path="guardian/panic/:incidentId" element={<GuardianPanicLiveBoard />} />
       <Route path="guardian-household" element={<GuardianHouseholdBoard />} />
 
       <Route path="guardian/join" element={<GuardianJoinDesk />} />

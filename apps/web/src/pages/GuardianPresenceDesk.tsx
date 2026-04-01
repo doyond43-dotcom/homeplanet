@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
 import {
   Shield,
@@ -19,6 +20,7 @@ import {
   Route,
   Link2,
   MessageSquare,
+  Siren,
 } from "lucide-react";
 
 import GuardianPanel from "../components/guardian/GuardianPanel";
@@ -156,6 +158,8 @@ function formatPhone(phone: string) {
 }
 
 export default function GuardianPresenceDesk() {
+  const navigate = useNavigate();
+
   const [mode, setMode] = useState<GuardianMode>("elder");
   const [actionNote, setActionNote] = useState(
     "Guardian standing by. Select an action when needed.",
@@ -170,6 +174,11 @@ export default function GuardianPresenceDesk() {
     Math.random().toString(36).slice(2, 8).toUpperCase(),
   );
   const timelineRef = useRef<HTMLDivElement | null>(null);
+
+  const [panicHoldProgress, setPanicHoldProgress] = useState(0);
+  const holdTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const holdStartRef = useRef<number | null>(null);
+  const HOLD_DURATION = 1800;
 
   const timeline = DEMO_TIMELINES[mode];
 
@@ -255,6 +264,14 @@ export default function GuardianPresenceDesk() {
 
     setPairedDeviceName(inferredDevice);
   }, [isPaired]);
+
+  useEffect(() => {
+    return () => {
+      if (holdTimerRef.current) {
+        clearInterval(holdTimerRef.current);
+      }
+    };
+  }, []);
 
   function handleModeChange(nextMode: GuardianMode) {
     setMode(nextMode);
@@ -415,18 +432,122 @@ export default function GuardianPresenceDesk() {
     handleTextContact();
   }
 
+  function buildPanicState() {
+    const panicType =
+      mode === "elder" ? "elder" : mode === "child" ? "child" : "medical";
+
+    const locationLabel =
+      profile.homeBase ||
+      profile.location ||
+      profile.destination ||
+      "Location updating...";
+
+    return {
+      guardianProfile: {
+        name: profile.name,
+        type: panicType,
+        status: profile.status,
+        label: profile.label,
+        locationLabel,
+        notes:
+          mode === "child"
+            ? `Guardian route watch active. Contact: ${profile.contactName}. Destination: ${profile.destination ?? "Not set"}.`
+            : `Guardian protection active. Contact: ${profile.contactName}.`,
+        contactName: profile.contactName,
+        contactRelation: profile.contactRelation,
+        contactPhone: profile.contactPhone,
+        wearerPhone: profile.wearerPhone,
+        homeBase: profile.homeBase ?? "",
+        destination: profile.destination ?? "",
+        destinationPhone: profile.destinationPhone ?? "",
+        routeState: profile.routeState ?? "",
+        pairedDeviceName,
+        isPaired,
+      },
+    };
+  }
+
+  function handleOpenPanicMode() {
+    setActionNote("Opening Guardian Panic Mode.");
+    addLog("PANIC MODE", "Guardian Panic Mode opened from Presence Desk.");
+    navigate("/planet/guardian/panic", { state: buildPanicState() });
+  }
+
+  function startPanicHold() {
+    if (holdTimerRef.current) return;
+
+    holdStartRef.current = Date.now();
+
+    holdTimerRef.current = setInterval(() => {
+      if (!holdStartRef.current) return;
+
+      const elapsed = Date.now() - holdStartRef.current;
+      const progress = Math.min(elapsed / HOLD_DURATION, 1);
+
+      setPanicHoldProgress(progress);
+
+      if (progress >= 1) {
+        if (holdTimerRef.current) {
+          clearInterval(holdTimerRef.current);
+          holdTimerRef.current = null;
+        }
+        holdStartRef.current = null;
+        setPanicHoldProgress(0);
+        handleOpenPanicMode();
+      }
+    }, 16);
+  }
+
+  function cancelPanicHold() {
+    if (holdTimerRef.current) {
+      clearInterval(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+    holdStartRef.current = null;
+    setPanicHoldProgress(0);
+  }
+
   return (
     <div className="min-h-screen bg-[#0b1020] text-white">
       <div className="mx-auto max-w-[1300px] px-6 py-8">
         <header className="mb-6 rounded-3xl border border-blue-400/20 bg-gradient-to-r from-blue-900/40 to-purple-900/40 p-6 shadow-[0_0_0_1px_rgba(96,165,250,0.06),0_12px_40px_rgba(0,0,0,0.25)]">
-          <div className="flex items-center gap-3">
-            <Shield className="h-6 w-6 text-blue-300" />
-            <h1 className="text-xl font-semibold tracking-wide">Planet Guardian</h1>
-          </div>
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <div className="flex items-center gap-3">
+                <Shield className="h-6 w-6 text-blue-300" />
+                <h1 className="text-xl font-semibold tracking-wide">Planet Guardian</h1>
+              </div>
 
-          <p className="mt-2 text-sm text-blue-200/80">
-            Guardian preserves and communicates a person’s situation when they cannot.
-          </p>
+              <p className="mt-2 text-sm text-blue-200/80">
+                Guardian preserves and communicates a person’s situation when they cannot.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <button
+                onMouseDown={startPanicHold}
+                onMouseUp={cancelPanicHold}
+                onMouseLeave={cancelPanicHold}
+                onTouchStart={startPanicHold}
+                onTouchEnd={cancelPanicHold}
+                onTouchCancel={cancelPanicHold}
+                className="relative inline-flex overflow-hidden items-center justify-center gap-2 rounded-2xl border border-red-400/35 bg-red-500/12 px-5 py-4 text-sm font-semibold uppercase tracking-[0.24em] text-red-200 transition hover:scale-[1.01] hover:bg-red-500/20 select-none"
+              >
+                <div
+                  className="absolute inset-y-0 left-0 bg-red-500/30 transition-[width] duration-75"
+                  style={{ width: `${panicHoldProgress * 100}%` }}
+                />
+                <span className="relative flex items-center gap-2">
+                  <Siren className="h-4 w-4" />
+                  {panicHoldProgress > 0 ? "Hold to activate..." : "Activate Panic Mode"}
+                </span>
+              </button>
+
+              <div className="text-center text-[11px] uppercase tracking-[0.22em] text-red-200/55">
+                Press and hold
+              </div>
+            </div>
+          </div>
         </header>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[300px_1fr_300px]">
@@ -669,6 +790,12 @@ export default function GuardianPresenceDesk() {
             </div>
 
             <Action
+              icon={Siren}
+              label="Activate Panic Mode"
+              onClick={handleOpenPanicMode}
+              tone="red"
+            />
+            <Action
               icon={Phone}
               label="Call Wearer"
               onClick={handleCallWearer}
@@ -808,7 +935,7 @@ function Action({
   icon: LucideIcon;
   label: string;
   onClick?: () => void;
-  tone?: "blue" | "green" | "purple" | "orange";
+  tone?: "blue" | "green" | "purple" | "orange" | "red";
 }) {
   const toneClasses =
     tone === "green"
@@ -817,7 +944,9 @@ function Action({
         ? "border-purple-400/35 bg-purple-900/20 hover:bg-purple-800/30 text-purple-50"
         : tone === "orange"
           ? "border-amber-400/35 bg-amber-900/20 hover:bg-amber-800/30 text-amber-50"
-          : "border-blue-400/35 bg-blue-900/20 hover:bg-blue-800/30 text-blue-50";
+          : tone === "red"
+            ? "border-red-400/35 bg-red-900/20 hover:bg-red-800/30 text-red-50"
+            : "border-blue-400/35 bg-blue-900/20 hover:bg-blue-800/30 text-blue-50";
 
   return (
     <button
