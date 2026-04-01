@@ -20,6 +20,14 @@ type GuardianActivationRecord = {
   submittedAt?: string;
 };
 
+type ProtectedMember = {
+  id: string;
+  type: "child" | "elder" | "pet" | "medical";
+  name: string;
+  location: string;
+  notes: string;
+};
+
 type HouseholdMember = {
   id: string;
   name: string;
@@ -29,6 +37,7 @@ type HouseholdMember = {
   lastSeen: string;
   status: GuardianStatus;
   actionLabel: string;
+  type: "child" | "elder" | "pet" | "medical";
 };
 
 type TimelineEvent = {
@@ -38,90 +47,6 @@ type TimelineEvent = {
   detail: string;
   status: GuardianStatus;
 };
-
-const members: HouseholdMember[] = [
-  {
-    id: "mom",
-    name: "Mom",
-    layer: "Household Anchor",
-    location: "Home",
-    detail: "Phone present. Normal movement pattern.",
-    lastSeen: "Live now",
-    status: "safe",
-    actionLabel: "View household state",
-  },
-  {
-    id: "maya",
-    name: "Maya",
-    layer: "Child Safety Layer",
-    location: "School",
-    detail: "Checked in. Dismissal window approaching.",
-    lastSeen: "2m ago",
-    status: "active",
-    actionLabel: "View school timeline",
-  },
-  {
-    id: "bella",
-    name: "Bella",
-    layer: "Pet Guardian Demo",
-    location: "Neighborhood scan zone",
-    detail: "Tag active. Last scan visible. Owner contact ready.",
-    lastSeen: "7m ago",
-    status: "safe",
-    actionLabel: "Open Bella demo",
-  },
-  {
-    id: "grandpa-joe",
-    name: "Grandpa Joe",
-    layer: "Elder Safety Layer",
-    location: "Living room",
-    detail: "No movement pattern change yet, but check-in window nearing.",
-    lastSeen: "18m ago",
-    status: "attention",
-    actionLabel: "Review response flow",
-  },
-  {
-    id: "medical-profile",
-    name: "Medical profile",
-    layer: "Emergency Identity Layer",
-    location: "Ready",
-    detail: "Emergency context can speak on behalf of the person when needed.",
-    lastSeen: "Prepared",
-    status: "active",
-    actionLabel: "View emergency layer",
-  },
-];
-
-const timeline: TimelineEvent[] = [
-  {
-    id: "evt-1",
-    time: "2:08 PM",
-    title: "Normal presence confirmed",
-    detail: "Household member visible in expected zone with normal pattern.",
-    status: "safe",
-  },
-  {
-    id: "evt-2",
-    time: "2:17 PM",
-    title: "Pattern changed",
-    detail: "Movement slowed and expected interaction window was missed.",
-    status: "attention",
-  },
-  {
-    id: "evt-3",
-    time: "2:21 PM",
-    title: "Guardian escalates context",
-    detail: "Last location, timeline, identity, and response context surfaced together.",
-    status: "active",
-  },
-  {
-    id: "evt-4",
-    time: "2:23 PM",
-    title: "Emergency assist ready",
-    detail: "Guardian can now support contact, return-to-safety, and speak-on-behalf flow.",
-    status: "alert",
-  },
-];
 
 function statusTone(status: GuardianStatus) {
   switch (status) {
@@ -172,7 +97,54 @@ function statusTone(status: GuardianStatus) {
   }
 }
 
-function countByStatus(status: GuardianStatus) {
+function protectionLabel(type: ProtectedMember["type"]) {
+  switch (type) {
+    case "child":
+      return "Child Safety Layer";
+    case "elder":
+      return "Elder Safety Layer";
+    case "pet":
+      return "Pet Guardian Layer";
+    case "medical":
+      return "Medical Identity Layer";
+    default:
+      return "Protected Layer";
+  }
+}
+
+function actionLabel(type: ProtectedMember["type"]) {
+  switch (type) {
+    case "child":
+      return "Protected child layer";
+    case "elder":
+      return "Protected elder layer";
+    case "pet":
+      return "Protected pet layer";
+    case "medical":
+      return "Protected medical layer";
+    default:
+      return "Protected layer";
+  }
+}
+
+function detailCopy(member: ProtectedMember) {
+  const location = member.location?.trim();
+  const notes = member.notes?.trim();
+
+  if (location && notes) return `${location} � ${notes}`;
+  if (location) return `Primary location: ${location}`;
+  if (notes) return notes;
+  return "Protected Guardian layer active.";
+}
+
+function derivedStatus(type: ProtectedMember["type"], index: number): GuardianStatus {
+  if (type === "elder") return "attention";
+  if (type === "medical") return "active";
+  if (type === "pet") return index === 0 ? "active" : "safe";
+  return index === 0 ? "active" : "safe";
+}
+
+function countByStatus(members: HouseholdMember[], status: GuardianStatus) {
   return members.filter((member) => member.status === status).length;
 }
 
@@ -189,114 +161,132 @@ function HomePlanetGuardianFooter() {
         letterSpacing: 0.2,
       }}
     >
-      Planet Guardian — one live safety system for anyone who matters.
+      Planet Guardian � one live safety system for anyone who matters.
     </div>
   );
 }
 
-function useQuery() {
-  const { search } = useLocation();
-  return useMemo(() => new URLSearchParams(search), [search]);
-}
-
-function formatProtectionLabel(value?: GuardianProtectionType) {
-  switch (value) {
-    case "pet":
-      return "Pet";
-    case "child":
-      return "Child";
-    case "elder":
-      return "Elder";
-    case "medical":
-      return "Medical";
-    case "mixed":
-      return "Mixed";
-    default:
-      return "-";
-  }
-}
-
-function formatPlanLabel(value?: GuardianPlan) {
-  switch (value) {
-    case "solo":
-      return "Solo";
-    case "household":
-      return "Household";
-    default:
-      return "-";
-  }
-}
-
-export default function GuardianHouseholdBoard() {
+export default function GuardianHomePage() {
   const navigate = useNavigate();
-  const query = useQuery();
-  const [selectedId, setSelectedId] = useState<string>(members[0]?.id ?? "mom");
-  const [activation, setActivation] = useState<GuardianActivationRecord | null>(
-    null
-  );
+  const location = useLocation();
+
+  const [ownerName, setOwnerName] = useState("");
+  const [householdName, setHouseholdName] = useState("");
+  const [contactInfo, setContactInfo] = useState("");
+  const [presenceId, setPresenceId] = useState("");
+  const [activation, setActivation] = useState<GuardianActivationRecord | null>(null);
+  const [protectedMembers, setProtectedMembers] = useState<ProtectedMember[]>([]);
+  const [selectedId, setSelectedId] = useState("");
 
   useEffect(() => {
-    const urlPresenceId = query.get("presenceId") || "";
-    const urlOwnerName = query.get("ownerName") || "";
-    const urlHouseholdName = query.get("householdName") || "";
-    const urlPhone = query.get("phone") || "";
-    const urlEmail = query.get("email") || "";
-    const urlProtectionType = query.get("protectionType") || "";
-    const urlActivationStatus = query.get("activationStatus") || "";
-    const urlPlan = query.get("plan") || "";
+    setOwnerName(localStorage.getItem("guardianOwnerName") || "");
+    setHouseholdName(localStorage.getItem("guardianHouseholdName") || "");
+    setContactInfo(localStorage.getItem("guardianContactInfo") || "");
+    setPresenceId(localStorage.getItem("guardianPresenceId") || "");
 
     try {
-      const raw = localStorage.getItem("hp_guardian_activation_record");
-      if (raw) {
-        const parsed = JSON.parse(raw) as GuardianActivationRecord;
+      const rawActivation = localStorage.getItem("hp_guardian_activation_record");
+      if (rawActivation) {
+        const parsed = JSON.parse(rawActivation) as GuardianActivationRecord;
+        setActivation(parsed);
+      }
+    } catch {
+      setActivation(null);
+    }
 
-        if (!urlPresenceId || parsed.presenceId === urlPresenceId) {
-          setActivation(parsed);
+    try {
+      const rawMembers = localStorage.getItem("guardianProtectedMembers");
+      if (rawMembers) {
+        const parsed = JSON.parse(rawMembers) as ProtectedMember[];
+        if (Array.isArray(parsed)) {
+          setProtectedMembers(parsed);
+          if (parsed[0]?.id) {
+            setSelectedId(parsed[0].id);
+          }
           return;
         }
       }
     } catch {
-      // ignore storage parse failure
+      // ignore
     }
 
-    if (
-      urlPresenceId ||
-      urlOwnerName ||
-      urlHouseholdName ||
-      urlPhone ||
-      urlEmail ||
-      urlProtectionType ||
-      urlActivationStatus ||
-      urlPlan
-    ) {
-      setActivation({
-        presenceId: urlPresenceId,
-        ownerName: urlOwnerName,
-        householdName: urlHouseholdName,
-        phone: urlPhone,
-        email: urlEmail,
-        protectionType:
-          urlProtectionType === "pet" ||
-          urlProtectionType === "child" ||
-          urlProtectionType === "elder" ||
-          urlProtectionType === "medical" ||
-          urlProtectionType === "mixed"
-            ? (urlProtectionType as GuardianProtectionType)
-            : undefined,
-        activationStatus: urlActivationStatus,
-        plan:
-          urlPlan === "solo" || urlPlan === "household"
-            ? (urlPlan as GuardianPlan)
-            : undefined,
-      });
+    setProtectedMembers([]);
+  }, [location.key]);
+
+  const members = useMemo<HouseholdMember[]>(() => {
+    return protectedMembers.map((member, index) => ({
+      id: member.id,
+      name: member.name,
+      layer: protectionLabel(member.type),
+      location: member.location?.trim() || "Protected zone",
+      detail: detailCopy(member),
+      lastSeen: index === 0 ? "Live now" : "Protected",
+      status: derivedStatus(member.type, index),
+      actionLabel: actionLabel(member.type),
+      type: member.type,
+    }));
+  }, [protectedMembers]);
+
+  useEffect(() => {
+    if (!members.length) {
+      setSelectedId("");
+      return;
     }
-  }, [query]);
+
+    if (!selectedId || !members.some((member) => member.id === selectedId)) {
+      setSelectedId(members[0].id);
+    }
+  }, [members, selectedId]);
 
   const selected = useMemo(() => {
     return members.find((member) => member.id === selectedId) ?? members[0];
-  }, [selectedId]);
+  }, [members, selectedId]);
 
   const selectedTone = statusTone(selected?.status ?? "safe");
+
+  const timeline = useMemo<TimelineEvent[]>(() => {
+    const baseTime = new Date();
+    const formatTime = (offsetMinutes: number) =>
+      new Date(baseTime.getTime() - offsetMinutes * 60 * 1000).toLocaleTimeString([], {
+        hour: "numeric",
+        minute: "2-digit",
+      });
+
+    return [
+      {
+        id: "evt-1",
+        time: formatTime(12),
+        title: "Guardian intake captured",
+        detail: `${ownerName || "Guardian"} completed the protected intake layer.`,
+        status: "safe",
+      },
+      {
+        id: "evt-2",
+        time: formatTime(8),
+        title: "Presence locked",
+        detail: presenceId
+          ? `Presence ID ${presenceId} was created and attached to this Guardian system.`
+          : "Presence-first origin was created for this Guardian system.",
+        status: "active",
+      },
+      {
+        id: "evt-3",
+        time: formatTime(5),
+        title: "Protected roster built",
+        detail: protectedMembers.length
+          ? `${protectedMembers.length} protected ${protectedMembers.length === 1 ? "member was" : "members were"} added before dashboard entry.`
+          : "Protected roster is still empty.",
+        status: protectedMembers.length ? "active" : "attention",
+      },
+      {
+        id: "evt-4",
+        time: formatTime(1),
+        title: "Protected dashboard opened",
+        detail: "Guardian is now inside the live protected dashboard.",
+        status: "safe",
+      },
+    ];
+  }, [ownerName, presenceId, protectedMembers.length]);
 
   const shell: React.CSSProperties = {
     minHeight: "100vh",
@@ -436,13 +426,6 @@ export default function GuardianHouseholdBoard() {
     boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
   };
 
-  const entryGrid: React.CSSProperties = {
-    display: "grid",
-    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-    gap: 16,
-    marginTop: 18,
-  };
-
   const scenarioGrid: React.CSSProperties = {
     display: "grid",
     gridTemplateColumns: "1fr 0.95fr",
@@ -455,17 +438,15 @@ export default function GuardianHouseholdBoard() {
       <div style={wrap}>
         <div style={hero}>
           <div>
-            <div style={pill}>Planet Guardian • Household Active</div>
+            <div style={pill}>Planet Guardian � Protected Home</div>
             <h1 style={{ ...sectionTitle, marginTop: 14 }}>
-              Know where everyone is.
+              This is your protected
               <br />
-              Know what’s happening.
-              <br />
-              In real time.
+              Guardian dashboard.
             </h1>
             <div style={sectionSub}>
-              Family. Kids. Pets. Elderly. Medical. One live safety system built as a
-              presence layer for anyone who matters.
+              Guardian intake was captured. Presence was locked. The protected roster is now visible
+              inside one calm live board for the people and animals who matter.
             </div>
 
             <div
@@ -491,27 +472,26 @@ export default function GuardianHouseholdBoard() {
                   marginBottom: 6,
                 }}
               >
-                Presence-first • Live awareness • Response-ready
+                Presence-first � Protected roster � Live awareness
               </div>
-              Planet Guardian is not a pet tag, not a child tracker, and not just a
-              medical alert. It is one calm awareness system that keeps the people and
-              animals who matter inside a single readable truth layer.
+              Guardian should start protected, activate protected, and end protected. This page is
+              the live home of the real roster captured during intake.
             </div>
 
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 16 }}>
               <button
                 type="button"
                 style={primaryBtn}
-                onClick={() => navigate("/planet/guardian-pet/pet/bella-demo")}
+                onClick={() => navigate("/planet/guardian")}
               >
-                Open Bella demo
+                Back to Guardian
               </button>
               <button
                 type="button"
                 style={actionBtn}
-                onClick={() => navigate("/planet/guardian")}
+                onClick={() => navigate("/planet/guardian/onboarding?plan=household")}
               >
-                View Guardian structure
+                Edit protected intake
               </button>
             </div>
           </div>
@@ -526,10 +506,11 @@ export default function GuardianHouseholdBoard() {
                 color: "rgba(148,163,184,0.82)",
               }}
             >
-              Demo status
+              Protected system
             </div>
+
             <div style={{ marginTop: 12, fontSize: 19, fontWeight: 900 }}>
-              Household board live
+              {householdName || ownerName || "Guardian household"}
             </div>
 
             <div
@@ -541,98 +522,97 @@ export default function GuardianHouseholdBoard() {
                 fontSize: 13,
               }}
             >
-              <div>City: Miami</div>
-              <div>Mode: guardian-household</div>
-              <div>Flow: Live awareness → Context → Response</div>
-              <div>Board: /planet/guardian-household</div>
+              <div>Guardian: {ownerName || "-"}</div>
+              <div>Contact: {contactInfo || "-"}</div>
+              <div>Protected members: {protectedMembers.length}</div>
+              <div>Board: /planet/guardian/home</div>
             </div>
 
             <div
               style={{
                 marginTop: 18,
                 borderRadius: 16,
-                border: "1px solid rgba(34,211,238,0.18)",
-                background: "rgba(34,211,238,0.10)",
+                border: "1px solid rgba(34,197,94,0.18)",
+                background: "rgba(34,197,94,0.10)",
                 boxShadow: "inset 0 1px 0 rgba(255,255,255,0.02)",
                 padding: 12,
-                color: "#cffafe",
+                color: "#dcfce7",
                 fontSize: 12,
                 fontWeight: 800,
               }}
             >
-              This is the calm household view — one board for everyone who matters.
+              This board now reflects the protected roster captured during signup.
             </div>
           </div>
         </div>
 
-        {activation ? (
+        <div
+          style={{
+            ...card,
+            marginTop: 18,
+            border: "1px solid rgba(34,197,94,0.24)",
+            background:
+              "linear-gradient(180deg, rgba(20,83,45,0.20), rgba(2,6,23,0.72))",
+          }}
+        >
           <div
             style={{
-              ...card,
-              marginTop: 18,
-              border: "1px solid rgba(34,197,94,0.24)",
-              background:
-                "linear-gradient(180deg, rgba(20,83,45,0.20), rgba(2,6,23,0.72))",
+              fontSize: 10,
+              fontWeight: 900,
+              letterSpacing: 0.9,
+              textTransform: "uppercase",
+              color: "#a7f3d0",
             }}
           >
-            <div
-              style={{
-                fontSize: 10,
-                fontWeight: 900,
-                letterSpacing: 0.9,
-                textTransform: "uppercase",
-                color: "#a7f3d0",
-              }}
-            >
-              Presence activation
+            Presence activation
+          </div>
+
+          <div
+            style={{
+              marginTop: 12,
+              display: "grid",
+              gridTemplateColumns: "1.1fr 0.9fr",
+              gap: 16,
+              alignItems: "start",
+            }}
+          >
+            <div>
+              {presenceId ? (
+                <>
+                  <div style={smallLabel}>Presence ID</div>
+                  <div
+                    style={{
+                      marginTop: 6,
+                      fontSize: 22,
+                      fontWeight: 950,
+                      color: "#ffffff",
+                      letterSpacing: 0.6,
+                    }}
+                  >
+                    {presenceId}
+                  </div>
+                </>
+              ) : (
+                <div style={{ color: "rgba(226,232,240,0.75)", fontSize: 13 }}>
+                  Presence ID will appear here once locked.
+                </div>
+              )}
             </div>
 
             <div
               style={{
-                marginTop: 12,
                 display: "grid",
-                gridTemplateColumns: "1.1fr 0.9fr",
-                gap: 16,
-                alignItems: "start",
+                gridTemplateColumns: "1fr 1fr 1fr 1fr",
+                gap: 12,
               }}
             >
-              <div>
-                {activation.presenceId ? (
-                  <>
-                    <div style={smallLabel}>Presence ID</div>
-                    <div
-                      style={{
-                        marginTop: 6,
-                        fontSize: 22,
-                        fontWeight: 950,
-                        color: "#ffffff",
-                        letterSpacing: 0.6,
-                      }}
-                    >
-                      {activation.presenceId}
-                    </div>
-                  </>
-                ) : null}
-              </div>
-
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr 1fr 1fr",
-                  gap: 12,
-                }}
-              >
-                <InfoBox label="Owner" value={activation.ownerName || "-"} />
-                <InfoBox label="Household" value={activation.householdName || "-"} />
-                <InfoBox
-                  label="Protection"
-                  value={formatProtectionLabel(activation.protectionType)}
-                />
-                <InfoBox label="Plan" value={formatPlanLabel(activation.plan)} />
-              </div>
+              <InfoBox label="Owner" value={ownerName || activation?.ownerName || "-"} />
+              <InfoBox label="Household" value={householdName || activation?.householdName || "-"} />
+              <InfoBox label="Members" value={String(protectedMembers.length)} />
+              <InfoBox label="Plan" value={activation?.plan || "household"} />
             </div>
           </div>
-        ) : null}
+        </div>
 
         <div style={{ ...card, marginTop: 18 }}>
           <div
@@ -650,27 +630,26 @@ export default function GuardianHouseholdBoard() {
             One board for everyone who matters
           </h2>
           <div style={{ ...sectionSub, marginTop: 8, maxWidth: "none" }}>
-            This is the anchor idea. Not separate products fighting each other. One live
-            household view that shows who is safe, who is active, who needs attention,
-            and what happened last.
+            This board now uses the actual protected roster captured during intake instead of demo
+            filler. The right side should feel owned, not fake.
           </div>
 
           <div style={statGrid}>
             <div style={statCard}>
               <div style={smallLabel}>Household</div>
-              <div style={bigValue}>Active</div>
+              <div style={bigValue}>{householdName || "Active"}</div>
             </div>
             <div style={statCard}>
               <div style={smallLabel}>Safe</div>
-              <div style={bigValue}>{countByStatus("safe")}</div>
+              <div style={bigValue}>{countByStatus(members, "safe")}</div>
             </div>
             <div style={statCard}>
               <div style={smallLabel}>Active</div>
-              <div style={bigValue}>{countByStatus("active")}</div>
+              <div style={bigValue}>{countByStatus(members, "active")}</div>
             </div>
             <div style={statCard}>
               <div style={smallLabel}>Attention</div>
-              <div style={bigValue}>{countByStatus("attention") + countByStatus("alert")}</div>
+              <div style={bigValue}>{countByStatus(members, "attention") + countByStatus(members, "alert")}</div>
             </div>
           </div>
         </div>
@@ -679,99 +658,117 @@ export default function GuardianHouseholdBoard() {
           <div style={card}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
               <div>
-                <div style={smallCaps}>Live safety panel</div>
+                <div style={smallCaps}>Live protected roster</div>
                 <div style={{ marginTop: 6, fontSize: 28, fontWeight: 950 }}>
                   Household active
                 </div>
               </div>
-              <div style={pill}>One board • live awareness</div>
+              <div style={pill}>Protected home � live awareness</div>
             </div>
 
-            <div style={memberGrid}>
-              {members.map((member) => {
-                const tone = statusTone(member.status);
-                const active = selectedId === member.id;
+            {members.length ? (
+              <div style={memberGrid}>
+                {members.map((member) => {
+                  const tone = statusTone(member.status);
+                  const active = selectedId === member.id;
 
-                return (
-                  <button
-                    key={member.id}
-                    type="button"
-                    onClick={() => setSelectedId(member.id)}
-                    style={{
-                      textAlign: "left",
-                      borderRadius: 20,
-                      border: `1px solid ${active ? tone.panelBorder : "rgba(255,255,255,0.10)"}`,
-                      background: active ? tone.panelBg : "rgba(255,255,255,0.035)",
-                      boxShadow: active
-                        ? "0 12px 34px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.02)"
-                        : "inset 0 1px 0 rgba(255,255,255,0.02)",
-                      padding: 14,
-                      cursor: "pointer",
-                      color: "#f8fafc",
-                    }}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-                      <div
-                        style={{
-                          fontSize: 11,
-                          fontWeight: 900,
-                          letterSpacing: 0.8,
-                          textTransform: "uppercase",
-                          color: "rgba(148,163,184,0.80)",
-                        }}
-                      >
-                        {member.layer}
-                      </div>
-                      <div
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          minWidth: 70,
-                          height: 28,
-                          padding: "0 10px",
-                          borderRadius: 999,
-                          border: `1px solid ${tone.pillBorder}`,
-                          background: tone.pillBg,
-                          color: tone.pillText,
-                          fontSize: 10,
-                          fontWeight: 900,
-                          textTransform: "capitalize",
-                          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
-                        }}
-                      >
-                        {member.status}
-                      </div>
-                    </div>
-
-                    <div style={{ marginTop: 10, fontSize: 24, fontWeight: 900 }}>
-                      {member.name}
-                    </div>
-                    <div style={{ marginTop: 8, fontSize: 13, color: "rgba(226,232,240,0.94)" }}>
-                      <strong>{member.location}</strong> — {member.detail}
-                    </div>
-
-                    <div
+                  return (
+                    <button
+                      key={member.id}
+                      type="button"
+                      onClick={() => setSelectedId(member.id)}
                       style={{
-                        marginTop: 12,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        gap: 10,
-                        flexWrap: "wrap",
+                        textAlign: "left",
+                        borderRadius: 20,
+                        border: `1px solid ${active ? tone.panelBorder : "rgba(255,255,255,0.10)"}`,
+                        background: active ? tone.panelBg : "rgba(255,255,255,0.035)",
+                        boxShadow: active
+                          ? "0 12px 34px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.02)"
+                          : "inset 0 1px 0 rgba(255,255,255,0.02)",
+                        padding: 14,
+                        cursor: "pointer",
+                        color: "#f8fafc",
                       }}
                     >
-                      <div style={{ fontSize: 11, color: "rgba(148,163,184,0.86)", fontWeight: 800 }}>
-                        Last seen: {member.lastSeen}
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                        <div
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 900,
+                            letterSpacing: 0.8,
+                            textTransform: "uppercase",
+                            color: "rgba(148,163,184,0.80)",
+                          }}
+                        >
+                          {member.layer}
+                        </div>
+                        <div
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            minWidth: 70,
+                            height: 28,
+                            padding: "0 10px",
+                            borderRadius: 999,
+                            border: `1px solid ${tone.pillBorder}`,
+                            background: tone.pillBg,
+                            color: tone.pillText,
+                            fontSize: 10,
+                            fontWeight: 900,
+                            textTransform: "capitalize",
+                            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
+                          }}
+                        >
+                          {member.status}
+                        </div>
                       </div>
-                      <div style={{ fontSize: 11, color: "#e2e8f0", fontWeight: 900 }}>
-                        {member.actionLabel}
+
+                      <div style={{ marginTop: 10, fontSize: 24, fontWeight: 900 }}>
+                        {member.name}
                       </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+                      <div style={{ marginTop: 8, fontSize: 13, color: "rgba(226,232,240,0.94)" }}>
+                        <strong>{member.location}</strong> � {member.detail}
+                      </div>
+
+                      <div
+                        style={{
+                          marginTop: 12,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          gap: 10,
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <div style={{ fontSize: 11, color: "rgba(148,163,184,0.86)", fontWeight: 800 }}>
+                          Last seen: {member.lastSeen}
+                        </div>
+                        <div style={{ fontSize: 11, color: "#e2e8f0", fontWeight: 900 }}>
+                          {member.actionLabel}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div
+                style={{
+                  marginTop: 14,
+                  borderRadius: 18,
+                  border: "1px dashed rgba(255,255,255,0.14)",
+                  background: "rgba(255,255,255,0.03)",
+                  padding: 16,
+                  color: "rgba(226,232,240,0.78)",
+                  fontSize: 14,
+                  lineHeight: 1.7,
+                }}
+              >
+                No protected members are stored yet. Go back to Guardian intake, add the child, pet,
+                elder, or medical layer, then return here.
+              </div>
+            )}
           </div>
 
           <div style={drawer}>
@@ -779,16 +776,16 @@ export default function GuardianHouseholdBoard() {
               <div>
                 <div style={smallCaps}>Working drawer</div>
                 <div style={{ marginTop: 6, fontSize: 32, fontWeight: 950 }}>
-                  {selected?.name}
+                  {selected?.name || "Protected member"}
                 </div>
               </div>
               <div style={tonePill}>{selected?.status ?? "safe"}</div>
             </div>
 
             <div style={{ marginTop: 14, fontSize: 13, color: "rgba(226,232,240,0.86)", lineHeight: 1.65 }}>
-              {selected?.layer} shows what is current, what changed, and what context
-              needs to be surfaced next. Guardian is not meant to create panic. It is
-              meant to remove guessing.
+              {selected
+                ? `${selected.layer} shows what is current, what changed, and what context needs to be surfaced next. Guardian is meant to remove guessing, not create it.`
+                : "Select a protected member to view the working drawer."}
             </div>
 
             <div
@@ -824,7 +821,7 @@ export default function GuardianHouseholdBoard() {
                   color: "rgba(248,250,252,0.95)",
                 }}
               >
-                {selected?.detail}
+                {selected?.detail || "Protected member details appear here."}
               </div>
             </div>
 
@@ -832,18 +829,9 @@ export default function GuardianHouseholdBoard() {
               <button
                 type="button"
                 style={primaryBtn}
-                onClick={() => {
-                  if (selected?.id === "bella") {
-                    navigate("/planet/guardian-pet/pet/bella-demo");
-                    return;
-                  }
-                  if (selected?.id === "medical-profile") {
-                    navigate("/planet/guardian");
-                    return;
-                  }
-                }}
+                onClick={() => navigate("/planet/guardian/onboarding?plan=household")}
               >
-                {selected?.actionLabel ?? "Open layer"}
+                Edit protected roster
               </button>
 
               <button
@@ -857,39 +845,15 @@ export default function GuardianHouseholdBoard() {
           </div>
         </div>
 
-        <div style={entryGrid}>
-          <EntryCard
-            eyebrow="Household"
-            title="Live household panel"
-            body="See the full Guardian idea the right way: everyone who matters inside one calm, readable awareness panel."
-            cta="You are here"
-            onClick={() => navigate("/planet/guardian-household")}
-            active
-          />
-          <EntryCard
-            eyebrow="Pet demo"
-            title="Bella Pet Tag Demo"
-            body="Public-facing pet rescue flow with scan-to-contact, finder actions, and care timeline visibility."
-            cta="Open Bella demo"
-            onClick={() => navigate("/planet/guardian-pet/pet/bella-demo")}
-          />
-          <EntryCard
-            eyebrow="Response flow"
-            title="Response timeline layer"
-            body="See how Guardian should surface last-seen context, presence trail, and response-ready truth."
-            cta="Back to Guardian structure"
-            onClick={() => navigate("/planet/guardian")}
-          />
-        </div>
-
         <div style={scenarioGrid}>
           <div style={card}>
-            <div style={smallCaps}>Real-world scenario</div>
+            <div style={smallCaps}>Protected system summary</div>
             <h3 style={{ margin: "8px 0 0", fontSize: 30, fontWeight: 950 }}>
-              A child doesn’t come home.
+              Starts protected. Ends protected.
             </h3>
             <div style={{ ...sectionSub, marginTop: 10, maxWidth: "none" }}>
-              You don’t call five people. You don’t guess. You open one board.
+              The Guardian should feel real from intake through activation through dashboard entry.
+              This page is the protected result of the information you just entered.
             </div>
 
             <div
@@ -900,15 +864,15 @@ export default function GuardianHouseholdBoard() {
                 gap: 12,
               }}
             >
-              <ScenarioBox title="Last location" />
-              <ScenarioBox title="Last movement" />
-              <ScenarioBox title="Last interaction" />
-              <ScenarioBox title="Who saw them" />
-              <ScenarioBox title="Safe-zone status" />
-              <ScenarioBox title="Response path" />
+              <ScenarioBox title={`Guardian: ${ownerName || "-"}`} />
+              <ScenarioBox title={`Household: ${householdName || "-"}`} />
+              <ScenarioBox title={`Contact: ${contactInfo || "-"}`} />
+              <ScenarioBox title={`Protected members: ${protectedMembers.length}`} />
+              <ScenarioBox title={`Presence ID: ${presenceId || "-"}`} />
+              <ScenarioBox title="Truth layer active" />
             </div>
 
-            <div style={{ marginTop: 16, color: "#dcfce7", fontWeight: 900 }}>That’s Guardian.</div>
+            <div style={{ marginTop: 16, color: "#dcfce7", fontWeight: 900 }}>This is Guardian.</div>
           </div>
 
           <div style={card}>
@@ -917,8 +881,7 @@ export default function GuardianHouseholdBoard() {
               Context before panic
             </h3>
             <div style={{ ...sectionSub, marginTop: 10, maxWidth: "none" }}>
-              Guardian should know what happened before the emergency, what is current
-              now, and what responders need next.
+              Guardian should know what was captured, what is current now, and what needs attention next.
             </div>
 
             <div style={{ marginTop: 18, display: "grid", gap: 12 }}>
@@ -981,73 +944,6 @@ export default function GuardianHouseholdBoard() {
 
         <HomePlanetGuardianFooter />
       </div>
-    </div>
-  );
-}
-
-function EntryCard({
-  eyebrow,
-  title,
-  body,
-  cta,
-  onClick,
-  active = false,
-}: {
-  eyebrow: string;
-  title: string;
-  body: string;
-  cta: string;
-  onClick: () => void;
-  active?: boolean;
-}) {
-  return (
-    <div
-      style={{
-        borderRadius: 24,
-        border: active
-          ? "1px solid rgba(34,197,94,0.24)"
-          : "1px solid rgba(255,255,255,0.10)",
-        background: active
-          ? "linear-gradient(180deg, rgba(20,83,45,0.20), rgba(2,6,23,0.72))"
-          : "rgba(2,6,23,0.70)",
-        boxShadow:
-          "0 16px 50px rgba(0,0,0,0.26), inset 0 1px 0 rgba(255,255,255,0.02)",
-        padding: 18,
-      }}
-    >
-      <div style={smallCaps}>{eyebrow}</div>
-      <div style={{ marginTop: 8, fontSize: 28, fontWeight: 950 }}>{title}</div>
-      <div
-        style={{
-          marginTop: 10,
-          fontSize: 13,
-          lineHeight: 1.65,
-          color: "rgba(226,232,240,0.86)",
-        }}
-      >
-        {body}
-      </div>
-      <button
-        type="button"
-        onClick={onClick}
-        style={{
-          marginTop: 16,
-          height: 40,
-          padding: "0 14px",
-          borderRadius: 999,
-          border: active
-            ? "1px solid rgba(34,197,94,0.30)"
-            : "1px solid rgba(255,255,255,0.14)",
-          background: active ? "rgba(34,197,94,0.14)" : "rgba(255,255,255,0.045)",
-          color: active ? "#dcfce7" : "#f8fafc",
-          fontSize: 12,
-          fontWeight: 900,
-          cursor: "pointer",
-          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
-        }}
-      >
-        {cta}
-      </button>
     </div>
   );
 }
