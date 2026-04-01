@@ -820,6 +820,36 @@ export default function GuardianPresenceDesk() {
               tone="orange"
             />
 
+            <div className="rounded-2xl border border-cyan-400/20 bg-cyan-900/10 p-4 shadow-[0_10px_28px_rgba(0,0,0,0.20)]">
+              <div className="text-xs uppercase tracking-wider text-cyan-200/70">
+                Guardian Control
+              </div>
+              <p className="mt-2 text-sm text-cyan-100/75">
+                Jump between command center, protected profile controls, and the core Guardian surfaces.
+              </p>
+
+              <div className="mt-4 space-y-2">
+                <Action
+                  icon={Shield}
+                  label="Open Planet Guardian"
+                  onClick={() => navigate("/planet/guardian")}
+                  tone="blue"
+                />
+                <Action
+                  icon={UserRound}
+                  label="Manage Protected Profile"
+                  onClick={() => navigate("/planet/guardian/child/child-1775005350413")}
+                  tone="green"
+                />
+                <Action
+                  icon={Link2}
+                  label="Open Panic Console"
+                  onClick={() => navigate("/planet/guardian/panic")}
+                  tone="purple"
+                />
+              </div>
+            </div>
+
             <div className="rounded-2xl border border-blue-400/20 bg-blue-900/20 p-4 shadow-[0_10px_28px_rgba(0,0,0,0.20)]">
               <div className="text-xs uppercase tracking-wider text-blue-200/70">
                 Wearer
