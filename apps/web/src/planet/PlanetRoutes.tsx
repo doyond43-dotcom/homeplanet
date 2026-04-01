@@ -50,6 +50,7 @@ import GuardianPresenceDesk from "../pages/GuardianPresenceDesk";
 import GuardianJoinDesk from "../pages/GuardianJoinDesk";
 import GuardianPetTagDemo from "../pages/GuardianPetTagDemo";
 import GuardianHouseholdBoard from "../pages/GuardianHouseholdBoard";
+import GuardianHomePage from "../pages/GuardianHomePage";
 import GuardianStartPage from "../pages/GuardianStartPage";
 import GuardianActivationPage from "../pages/GuardianActivationPage";
 import GuardianOnboardingPage from "../pages/GuardianOnboardingPage";
@@ -146,6 +147,7 @@ export default function PlanetRoutes() {
       <Route path="guardian/panic" element={<GuardianPanicPage />} />
       <Route path="guardian/panic/:incidentId" element={<GuardianPanicLiveBoard />} />
       <Route path="guardian-household" element={<GuardianHouseholdBoard />} />
+      <Route path="guardian/home" element={<GuardianHomePage />} />
 
       <Route path="guardian/join" element={<GuardianJoinDesk />} />
       <Route path="guardian/presence" element={<GuardianPresenceDesk />} />
@@ -181,3 +183,4 @@ export default function PlanetRoutes() {
     </Routes>
   );
 }
+

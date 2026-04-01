@@ -61,7 +61,7 @@ export default function GuardianActivationPage() {
   }, [ownerName, householdName, phone]);
 
   function handleEnterGuardian() {
-    navigate("/planet/guardian-household", {
+    navigate("/planet/guardian/home", {
       state: {
         fromActivation: true,
         guardianProfile: {
@@ -224,3 +224,4 @@ export default function GuardianActivationPage() {
     </div>
   );
 }
+
