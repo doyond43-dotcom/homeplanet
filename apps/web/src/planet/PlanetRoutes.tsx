@@ -13,11 +13,12 @@ import StarterBoardPreview from "../pages/StarterBoardPreview";
 import RcAirboatsLiveDemo from "../pages/RcAirboatsLiveDemo";
 import ExperiencePlanet from "../pages/ExperiencePlanet";
 
-// 🔥 ADD THIS IMPORT
+// Creation moment
 import CreationMomentPage from "../pages/CreationMomentPage";
 
-// 🔥 NEW PARENT VIEW IMPORT
+// Guardian child views
 import ParentChildView from "../pages/ParentChildView";
+import GuardianPublicProfilePage from "../pages/GuardianPublicProfilePage";
 
 // Demo boards
 import AwnitDemoBoard from "../pages/AwnitDemoBoard";
@@ -80,10 +81,7 @@ export default function PlanetRoutes() {
       <Route path="creator/build" element={<CreatorBuild />} />
       <Route path="creator/release/:releaseId" element={<ReleaseViewer />} />
       <Route path="creator/rc-live" element={<RcAirboatsLiveDemo />} />
-
-      {/* 🔥 NEW SAFE ROUTE */}
       <Route path="creator/building" element={<CreationMomentPage />} />
-
       <Route path="creator/*" element={<Navigate to="/planet/creator" replace />} />
 
       <Route path="experience" element={<ExperiencePlanet />} />
@@ -113,9 +111,6 @@ export default function PlanetRoutes() {
       <Route path="demo/transportation" element={<TransportationDispatchBoardV2 />} />
 
       <Route path="live/:boardSlug" element={<AutoRepairLiveBoard />} />
-
-      {/* 🔥 NEW PARENT VIEW ROUTE */}
-      <Route path="guardian/child/:childId" element={<ParentChildView />} />
 
       <Route path="vehicles/awnit-demo" element={<AwnitDemoBoard />} />
       <Route path="vehicles/awnit-demo/invoice/:invoiceId" element={<InvoiceView />} />
@@ -149,6 +144,9 @@ export default function PlanetRoutes() {
       <Route path="guardian/join" element={<GuardianJoinDesk />} />
       <Route path="guardian/presence" element={<GuardianPresenceDesk />} />
 
+      <Route path="guardian/child/:childId" element={<ParentChildView />} />
+      <Route path="guardian/public/:profileId" element={<GuardianPublicProfilePage />} />
+
       <Route path="guardian-pet" element={<GuardianPetTagDemo />} />
       <Route path="guardian-pet/pet/:petId" element={<GuardianPetTagDemo />} />
       <Route path="guardian-pet/found/:petId" element={<GuardianPetTagDemo />} />
@@ -161,7 +159,6 @@ export default function PlanetRoutes() {
 
       <Route path="payments/node" element={<HomePlanetPaymentNode />} />
 
-      {/* EXISTING ONBOARDING — UNTOUCHED */}
       <Route path="start" element={<OnboardingFlow />} />
       <Route path="start/building" element={<OnboardingBuildTransition />} />
       <Route path="start/preview" element={<StarterBoardPreview />} />

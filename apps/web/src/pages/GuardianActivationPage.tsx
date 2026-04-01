@@ -64,24 +64,24 @@ function makeProfileSubtitle(type: GuardianProfileType, safeZone: string, contac
     return safeZone
       ? `Safe zone: ${safeZone}`
       : contact
-      ? `Primary contact: ${contact}`
-      : "Pickup clarity and safe-zone readiness";
+        ? `Primary contact: ${contact}`
+        : "Pickup clarity and safe-zone readiness";
   }
 
   if (type === "elder") {
     return safeZone
       ? `Primary place: ${safeZone}`
       : contact
-      ? `Primary contact: ${contact}`
-      : "Presence awareness and response support";
+        ? `Primary contact: ${contact}`
+        : "Presence awareness and response support";
   }
 
   if (type === "pet") {
     return safeZone
       ? `Home base: ${safeZone}`
       : contact
-      ? `Owner contact: ${contact}`
-      : "Scan-to-contact rescue layer";
+        ? `Owner contact: ${contact}`
+        : "Scan-to-contact rescue layer";
   }
 
   return contact
@@ -91,7 +91,7 @@ function makeProfileSubtitle(type: GuardianProfileType, safeZone: string, contac
 
 function makeProfileRoute(type: GuardianProfileType, profileId: string) {
   if (type === "child") {
-    return `/planet/guardian/child/${profileId}`;
+    return `/planet/guardian/public/${profileId}`;
   }
 
   if (type === "pet") {
@@ -314,7 +314,7 @@ export default function GuardianActivationPage() {
           },
           {
             onConflict: "id",
-          }
+          },
         );
 
         if (error) {
@@ -566,10 +566,10 @@ export default function GuardianActivationPage() {
                       selectedType === "child"
                         ? "Lucas"
                         : selectedType === "elder"
-                        ? "Grandpa Joe"
-                        : selectedType === "pet"
-                        ? "Bella"
-                        : "Medical profile"
+                          ? "Grandpa Joe"
+                          : selectedType === "pet"
+                            ? "Bella"
+                            : "Medical profile"
                     }
                     className="w-full rounded-2xl border border-white/10 bg-[#071221] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-emerald-400/35"
                   />
@@ -586,10 +586,10 @@ export default function GuardianActivationPage() {
                       selectedType === "child"
                         ? "School dismissal zone"
                         : selectedType === "elder"
-                        ? "Living room"
-                        : selectedType === "pet"
-                        ? "Home base"
-                        : "Primary hospital"
+                          ? "Living room"
+                          : selectedType === "pet"
+                            ? "Home base"
+                            : "Primary hospital"
                     }
                     className="w-full rounded-2xl border border-white/10 bg-[#071221] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-emerald-400/35"
                   />
