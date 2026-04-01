@@ -1449,7 +1449,7 @@ export default function PlanetGuardian() {
                   color: "#bbf7d0",
                   cursor: "pointer",
                 }}
-                onClick={() => nav("/planet/guardian/start?plan=solo")}
+                onClick={() => nav("/planet/guardian/onboarding?plan=solo")}
               >
                 Start Solo
               </button>
@@ -1516,7 +1516,7 @@ export default function PlanetGuardian() {
                   cursor: "pointer",
                   fontSize: 15,
                 }}
-                onClick={() => nav("/planet/guardian/start?plan=household")}
+                onClick={() => nav("/planet/guardian/onboarding?plan=household")}
               >
                 Start Household
               </button>
