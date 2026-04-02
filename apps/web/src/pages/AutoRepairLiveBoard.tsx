@@ -683,17 +683,55 @@ export default function AutoRepairLiveBoard() {
     };
   }, [isRestaurant, jobs]);
 
-  function getParentViewPath(jobId: string) {
-    return `/planet/guardian/child/${jobId}`;
+  function getParentViewPath(job: RepairJob) {
+    const childName = (job.vehicle || "").trim().toLowerCase();
+
+    try {
+      const rawMembers = window.localStorage.getItem("guardianProtectedMembers");
+
+      if (rawMembers) {
+        const parsed = JSON.parse(rawMembers) as Array<{
+          id?: string;
+          type?: string;
+          name?: string;
+        }>;
+
+        if (Array.isArray(parsed)) {
+          const childMembers = parsed.filter(
+            (member) =>
+              member &&
+              typeof member.id === "string" &&
+              member.id.trim().length > 0 &&
+              member.type === "child",
+          );
+
+          const exactMatch = childMembers.find(
+            (member) => (member.name || "").trim().toLowerCase() === childName,
+          );
+
+          if (exactMatch?.id) {
+            return `/planet/guardian/child/${exactMatch.id}`;
+          }
+
+          if (childMembers[0]?.id) {
+            return `/planet/guardian/child/${childMembers[0].id}`;
+          }
+        }
+      }
+    } catch {
+      // ignore and fall back to board job id
+    }
+
+    return `/planet/guardian/child/${job.id}`;
   }
 
-  function openParentView(jobId: string) {
-    window.location.href = `${window.location.origin}${getParentViewPath(jobId)}`;
+  function openParentView(job: RepairJob) {
+    window.location.href = `${window.location.origin}${getParentViewPath(job)}`;
   }
 
-  async function copyParentViewLink(jobId: string) {
+  async function copyParentViewLink(job: RepairJob) {
     const origin = window.location.origin;
-    const href = `${origin}${getParentViewPath(jobId)}`;
+    const href = `${origin}${getParentViewPath(job)}`;
 
     try {
       await navigator.clipboard.writeText(href);
@@ -1588,7 +1626,7 @@ export default function AutoRepairLiveBoard() {
                               <div className="mt-3 grid gap-2">
                                 <button
                                   type="button"
-                                  onClick={() => openParentView(job.id)}
+                                  onClick={() => openParentView(job)}
                                   className="w-full rounded-full border border-cyan-400/25 bg-cyan-400/10 px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/15"
                                 >
                                   Open Parent View
@@ -1596,7 +1634,7 @@ export default function AutoRepairLiveBoard() {
 
                                 <button
                                   type="button"
-                                  onClick={() => void copyParentViewLink(job.id)}
+                                  onClick={() => void copyParentViewLink(job)}
                                   className="w-full rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.06]"
                                 >
                                   Copy Parent Link
@@ -1732,7 +1770,7 @@ export default function AutoRepairLiveBoard() {
                       <div className="grid gap-3 md:grid-cols-2">
                         <button
                           type="button"
-                          onClick={() => openParentView(selectedJob.id)}
+                          onClick={() => openParentView(selectedJob)}
                           className="w-full rounded-full border border-cyan-400/25 bg-cyan-400/10 px-4 py-3 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/15"
                         >
                           Open Parent View
@@ -1740,7 +1778,7 @@ export default function AutoRepairLiveBoard() {
 
                         <button
                           type="button"
-                          onClick={() => void copyParentViewLink(selectedJob.id)}
+                          onClick={() => void copyParentViewLink(selectedJob)}
                           className="w-full rounded-full border border-white/10 bg-white/[0.03] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.06]"
                         >
                           Copy Parent Link
@@ -2727,3 +2765,4 @@ function NotificationLine({
     </div>
   );
 }
+

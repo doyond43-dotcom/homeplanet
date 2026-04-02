@@ -12,6 +12,8 @@ import ReleaseViewer from "../pages/ReleaseViewer";
 import StarterBoardPreview from "../pages/StarterBoardPreview";
 import RcAirboatsLiveDemo from "../pages/RcAirboatsLiveDemo";
 import ExperiencePlanet from "../pages/ExperiencePlanet";
+import PresenceGridPreview from "../pages/PresenceGridPreview";
+import HayleyLiveBoard from "../pages/HayleyLiveBoard";
 
 // Creation moment
 import CreationMomentPage from "../pages/CreationMomentPage";
@@ -85,6 +87,7 @@ export default function PlanetRoutes() {
       <Route path="creator/build" element={<CreatorBuild />} />
       <Route path="creator/release/:releaseId" element={<ReleaseViewer />} />
       <Route path="creator/rc-live" element={<RcAirboatsLiveDemo />} />
+      <Route path="creator/hayley-live" element={<HayleyLiveBoard />} />
       <Route path="creator/building" element={<CreationMomentPage />} />
       <Route path="creator/*" element={<Navigate to="/planet/creator" replace />} />
 
@@ -176,6 +179,8 @@ export default function PlanetRoutes() {
       <Route path="life" element={<LifePlanet />} />
       <Route path="emily" element={<EmilyLearningDesk />} />
 
+      <Route path="dev/presence-grid" element={<PresenceGridPreview />} />
+
       <Route path=":planetId" element={<PlanetOverview />} />
       <Route path=":planetId/:cityId" element={<CityPage />} />
 
@@ -183,4 +188,3 @@ export default function PlanetRoutes() {
     </Routes>
   );
 }
-

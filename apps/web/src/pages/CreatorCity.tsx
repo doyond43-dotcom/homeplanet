@@ -1,7 +1,4 @@
-     import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "../lib/supabase";
-import { resolveStarterBoardConfig } from "../lib/starterBoardConfig";
+ import React, { useEffect, useMemo, useRef, useState } from "react";
 
 const LIVE_PRODUCT_DEMO_ROUTE = "/planet/creator/rc-live";
 const LIVE_CAMP_GUARDIAN_ROUTE = "/planet/live/camp-aquaflow-5593";
@@ -26,121 +23,87 @@ function slugify(value: string) {
   return value
     .toLowerCase()
     .trim()
-    .replace(/['’]/g, "")
+    .replace(/["'’]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 48);
 }
 
-function makeBoardSlug(businessName: string) {
-  const base = slugify(businessName) || "starter-board";
-  return `${base}-${crypto.randomUUID().slice(0, 4)}`;
-}
-
-function makePresenceId(businessName: string) {
-  const base =
-    slugify(businessName).replace(/-/g, "").toUpperCase().slice(0, 8) || "BOARD";
-  return `HP-${base}-${crypto.randomUUID().slice(0, 4).toUpperCase()}`;
-}
-
-function makePresenceKey() {
-  return crypto.randomUUID();
-}
-
-function buildStarterJobs(args: {
-  boardSlug: string;
-  businessName: string;
+function fakeResolveStarterBoardConfig(args: {
   businessType: string;
+  businessName: string;
   primaryGoal: string;
-  currentWorkflow: string;
-  biggestFriction: string;
-  customerQuestions: string;
 }) {
-  const config = resolveStarterBoardConfig({
-    businessType: args.businessType,
-    businessName: args.businessName,
-    primaryGoal: args.primaryGoal,
-  });
+  const bt = args.businessType.toLowerCase();
 
-  const stages = config.stages;
-  const concernSeed =
-    args.biggestFriction ||
-    args.customerQuestions ||
-    `${config.labels.concern} pending`;
+  if (bt.includes("restaurant") || bt.includes("food") || bt.includes("kitchen")) {
+    return {
+      key: "restaurant-rush",
+      familyLabel: "Restaurant Rush",
+      boardSubtitle: "Live ticket flow, manager controls, and kitchen visibility.",
+      labels: { item: "Ticket", concern: "Order" },
+      stages: ["New Ticket", "On Grill", "Plating", "Ready", "Completed"],
+    };
+  }
 
-  const noteSeed =
-    args.currentWorkflow || args.primaryGoal || "Created from Creator City intake.";
+  if (bt.includes("lawn") || bt.includes("landscape") || bt.includes("route")) {
+    return {
+      key: "routecut-live",
+      familyLabel: "RouteCut Live",
+      boardSubtitle: "Routing, next-stop flow, and customer-facing live status.",
+      labels: { item: "Stop", concern: "Route" },
+      stages: ["Queued", "Assigned", "En Route", "On Site", "Completed"],
+    };
+  }
 
-  const advisorSeed =
-    config.key === "restaurant-rush" ? "Server pending" : "Front Counter";
+  if (bt.includes("camp") || bt.includes("guardian") || bt.includes("child")) {
+    return {
+      key: "guardian-live",
+      familyLabel: "Guardian Live",
+      boardSubtitle: "Presence, protection, visibility, and guardian-safe status.",
+      labels: { item: "Profile", concern: "Status" },
+      stages: ["Checked In", "With Staff", "Activity Zone", "Hydration", "Checked Out"],
+    };
+  }
 
-  return [
-    {
-      board_slug: args.boardSlug,
-      ro_number: "RO-1044",
-      customer: "New Customer",
-      vehicle: `${config.labels.item} pending`,
-      concern: concernSeed,
-      stage: stages[0] || "New Intake",
-      eta: "",
-      advisor: advisorSeed,
-      notes: noteSeed,
-      phone: "",
-      appointment_date: null,
-      appointment_time: "",
-    },
-    {
-      board_slug: args.boardSlug,
-      ro_number: "RO-1045",
-      customer: "New Customer",
-      vehicle: `${config.labels.item} pending`,
-      concern: concernSeed,
-      stage: stages[1] || stages[0] || "New Intake",
-      eta: "",
-      advisor: advisorSeed,
-      notes: noteSeed,
-      phone: "",
-      appointment_date: null,
-      appointment_time: "",
-    },
-    {
-      board_slug: args.boardSlug,
-      ro_number: "RO-1046",
-      customer: "New Customer",
-      vehicle: `${config.labels.item} pending`,
-      concern: concernSeed,
-      stage: stages[2] || stages[1] || stages[0] || "New Intake",
-      eta: "",
-      advisor: advisorSeed,
-      notes: noteSeed,
-      phone: "",
-      appointment_date: null,
-      appointment_time: "",
-    },
-  ];
+  return {
+    key: "auto-repair-general",
+    familyLabel: "Starter Live Board",
+    boardSubtitle: "Operational workflow, live stages, and customer visibility.",
+    labels: { item: "Job", concern: "Concern" },
+    stages: ["New Intake", "Diagnosing", "In Progress", "Ready", "Completed"],
+  };
 }
 
-export default function CreatorCity() {
-  const nav = useNavigate();
+export default function CreatorCityPreview() {
+  const [warmMode, setWarmMode] = useState(true);
   const readySystemsRef = useRef<HTMLDivElement | null>(null);
   const intakeFormRef = useRef<HTMLDivElement | null>(null);
 
-  const [businessName, setBusinessName] = useState("");
-  const [businessType, setBusinessType] = useState("");
-  const [city, setCity] = useState("");
-  const [contact, setContact] = useState("");
-  const [currentWorkflow, setCurrentWorkflow] = useState("");
-  const [biggestFriction, setBiggestFriction] = useState("");
-  const [customerQuestions, setCustomerQuestions] = useState("");
+  const [businessName, setBusinessName] = useState("Taylor Creek Auto Repair");
+  const [businessType, setBusinessType] = useState("Auto Repair");
+  const [city, setCity] = useState("Okeechobee");
+  const [contact, setContact] = useState("you@business.com");
+  const [currentWorkflow, setCurrentWorkflow] = useState(
+    "Paper tickets, phone calls, text messages, and whiteboard updates.",
+  );
+  const [biggestFriction, setBiggestFriction] = useState(
+    "Customers call for updates, notes get lost, and nobody knows the exact stage.",
+  );
+  const [customerQuestions, setCustomerQuestions] = useState(
+    "Is it ready yet? Where am I in line? Did you get my request?",
+  );
   const [wantsBuilt, setWantsBuilt] = useState<BuildIntent>("full-system");
-  const [holyShiftMoment, setHolyShiftMoment] = useState("");
+  const [holyShiftMoment, setHolyShiftMoment] = useState(
+    "One board for status, team, customer updates, payment, and proof.",
+  );
   const [workflowFiles, setWorkflowFiles] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth <= 768);
+    const check = () => setIsMobile(window.innerWidth <= 920);
     check();
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
@@ -181,8 +144,7 @@ export default function CreatorCity() {
       {
         id: "restaurant",
         title: "Restaurant Live Board",
-        subtitle:
-          "See live ticket flow, manager controls, and kitchen visibility.",
+        subtitle: "See live ticket flow, manager controls, and kitchen visibility.",
         to: "/planet/food/restaurant-rush-live",
         tag: "LIVE BOARD",
       },
@@ -216,319 +178,517 @@ export default function CreatorCity() {
   const selectedFilesLabel =
     workflowFiles.length === 0
       ? "No workflow photos selected yet"
-      : `${workflowFiles.length} workflow photo${
-          workflowFiles.length === 1 ? "" : "s"
-        } selected`;
+      : `${workflowFiles.length} workflow photo${workflowFiles.length === 1 ? "" : "s"} selected`;
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setSubmitting(true);
-    setSubmitted(false);
+  const intentLabelMap: Record<BuildIntent, string> = {
+    "landing-page": "Landing Page",
+    "live-board": "Live Board",
+    "workflow-tool": "Workflow Tool",
+    "intake-flow": "Intake Flow",
+    "payment-flow": "Payment Flow",
+    "full-system": "Full Business System",
+  };
 
-    const intentLabelMap: Record<BuildIntent, string> = {
-      "landing-page": "Landing Page",
-      "live-board": "Live Board",
-      "workflow-tool": "Workflow Tool",
-      "intake-flow": "Intake Flow",
-      "payment-flow": "Payment Flow",
-      "full-system": "Full Business System",
-    };
+  const resolvedBusinessLabel =
+    businessType.trim() || intentLabelMap[wantsBuilt] || "Full Business System";
 
-    const boardSlug = makeBoardSlug(businessName);
-    const presenceId = makePresenceId(businessName);
-    const presenceKey = makePresenceKey();
-
-    try {
-      const { error: boardError } = await supabase
-        .from("starter_boards")
-        .insert({
-          board_slug: boardSlug,
-          business_name: businessName,
-          business_type: businessType || intentLabelMap[wantsBuilt],
-          city,
-          owner_name: businessName,
-          phone: contact,
-          presence_id: presenceId,
-          presence_key: presenceKey,
-          starter_plan: "free_trial",
-          is_active: false,
-          claim_status: "preview",
-        });
-
-      if (boardError) {
-        throw new Error(`starter_boards insert failed: ${boardError.message}`);
-      }
-
-      const starterJobs = buildStarterJobs({
-        boardSlug,
+  const configPreview = useMemo(
+    () =>
+      fakeResolveStarterBoardConfig({
+        businessType: resolvedBusinessLabel,
         businessName,
-        businessType: businessType || intentLabelMap[wantsBuilt],
         primaryGoal: holyShiftMoment,
-        currentWorkflow,
-        biggestFriction,
-        customerQuestions,
-      });
+      }),
+    [resolvedBusinessLabel, businessName, holyShiftMoment],
+  );
 
-      const { error: jobsError } = await supabase
-        .from("auto_repair_jobs")
-        .insert(starterJobs);
+  const previewStages = configPreview.stages.slice(0, 4);
 
-      if (jobsError) {
-        throw new Error(`auto_repair_jobs insert failed: ${jobsError.message}`);
-      }
+  const trajectorySteps = [
+    { id: "intake", title: "Intake", status: "complete", text: "Mission entry point ready" },
+    {
+      id: "config",
+      title: "Config",
+      status: businessName || businessType || city || contact ? "active" : "idle",
+      text: "Business profile and live board type",
+    },
+    {
+      id: "build",
+      title: "Build",
+      status: currentWorkflow || biggestFriction ? "armed" : "idle",
+      text: "Workflow truth and friction mapped",
+    },
+    {
+      id: "launch",
+      title: "Launch",
+      status: holyShiftMoment || workflowFiles.length > 0 ? "armed" : "idle",
+      text: "Board preview path preparing",
+    },
+  ];
 
-      setSubmitted(true);
+  const missionFeed = [
+    { label: "Presence lock", value: businessName ? "READY" : "WAITING", active: !!businessName },
+    { label: "Board family", value: configPreview.familyLabel || "STARTER", active: true },
+    { label: "Primary route", value: "/planet/creator/building", active: true },
+    {
+      label: "Live redirect",
+      value: businessName
+        ? `/planet/live/${slugify(businessName) || "starter-board"}-*`
+        : "/planet/live/<boardSlug>",
+      active: !!businessName,
+    },
+    {
+      label: "Truth intake",
+      value: currentWorkflow || biggestFriction || customerQuestions ? "CAPTURING" : "PENDING",
+      active: !!(currentWorkflow || biggestFriction || customerQuestions),
+    },
+    {
+      label: "Workflow photos",
+      value: workflowFiles.length > 0 ? `${workflowFiles.length} LINKED` : "NONE",
+      active: workflowFiles.length > 0,
+    },
+  ];
 
-      nav("/planet/creator/building", {
-        state: { redirectTo: `/planet/live/${boardSlug}` },
-      });
-    } catch (err: any) {
-      console.error("CREATOR CITY ERROR:", err?.message || err);
-      alert(
-        "Creator City submission failed:\n" + (err?.message || "Unknown error"),
-      );
-    } finally {
-      setSubmitting(false);
-    }
-  }
+  const buildSequence = [
+    {
+      title: "Assigning Presence ID",
+      text: businessName ? `HP-${slugify(businessName).replace(/-/g, "").toUpperCase().slice(0, 8) || "BOARD"}-DEMO` : "Waiting for business name",
+      complete: !!businessName,
+    },
+    {
+      title: "Mapping board family",
+      text: configPreview.boardSubtitle,
+      complete: !!resolvedBusinessLabel,
+    },
+    {
+      title: "Loading live stages",
+      text: previewStages.length > 0 ? previewStages.join(" → ") : "Awaiting business type",
+      complete: previewStages.length > 0,
+    },
+    {
+      title: "Capturing friction truth",
+      text: biggestFriction || customerQuestions || "Waiting for live workflow friction input",
+      complete: !!(biggestFriction || customerQuestions),
+    },
+    {
+      title: "Preparing first board items",
+      text: currentWorkflow || holyShiftMoment || "Waiting for workflow or holy shift moment",
+      complete: !!(currentWorkflow || holyShiftMoment),
+    },
+  ];
 
   const scrollToReadySystems = () => {
-    readySystemsRef.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
+    readySystemsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const scrollToIntakeForm = () => {
-    intakeFormRef.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
+    intakeFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setSubmitted(false);
+    setTimeout(() => {
+      setSubmitting(false);
+      setSubmitted(true);
+    }, 1200);
   };
 
   const page: React.CSSProperties = {
     minHeight: "100vh",
-    padding: isMobile ? 0 : 24,
+    padding: isMobile ? 0 : 22,
     color: "#e5e7eb",
-    background:
-      "radial-gradient(1200px 760px at 6% 10%, rgba(6,182,212,0.12), transparent 52%)," +
-      "radial-gradient(980px 720px at 88% 10%, rgba(168,85,247,0.10), transparent 50%)," +
-      "radial-gradient(900px 780px at 52% 100%, rgba(37,99,235,0.09), transparent 50%)," +
-      "radial-gradient(circle at 50% 0%, rgba(255,255,255,0.03), transparent 36%)," +
-      "#020617",
+    background: warmMode
+      ? "radial-gradient(1200px 760px at 8% 10%, rgba(6,182,212,0.12), transparent 52%)," +
+        "radial-gradient(980px 720px at 88% 8%, rgba(59,130,246,0.10), transparent 48%)," +
+        "radial-gradient(1200px 980px at 50% 100%, rgba(245,158,11,0.08), transparent 54%)," +
+        "linear-gradient(180deg, #06070c 0%, #08111f 52%, #05070c 100%)"
+      : "radial-gradient(1200px 760px at 8% 10%, rgba(6,182,212,0.14), transparent 52%)," +
+        "radial-gradient(980px 720px at 88% 8%, rgba(59,130,246,0.12), transparent 48%)," +
+        "radial-gradient(1200px 980px at 50% 100%, rgba(34,197,94,0.08), transparent 54%)," +
+        "linear-gradient(180deg, #01040d 0%, #020617 52%, #01040d 100%)",
+    fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
   };
 
   const shell: React.CSSProperties = {
-    maxWidth: 1320,
+    maxWidth: 1450,
     margin: "0 auto",
-    padding: isMobile ? "14px 14px 28px" : 0,
+    padding: isMobile ? "12px 12px 28px" : 0,
   };
 
-  const card: React.CSSProperties = {
-    border: "1px solid rgba(255,255,255,0.12)",
-    background: "rgba(2,6,23,0.78)",
-    borderRadius: isMobile ? 28 : 24,
-    boxShadow:
-      "0 24px 80px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,255,255,0.03)",
+  const frame: React.CSSProperties = {
+    borderRadius: 28,
+    border: warmMode
+      ? "1px solid rgba(245,158,11,0.10)"
+      : "1px solid rgba(148,163,184,0.14)",
+    background: warmMode
+      ? "linear-gradient(180deg, rgba(14,18,30,0.95), rgba(8,12,24,0.97) 18%, rgba(7,10,20,0.99) 100%)"
+      : "linear-gradient(180deg, rgba(8,15,30,0.92), rgba(2,6,23,0.96) 18%, rgba(2,6,23,0.98) 100%)",
+    boxShadow: warmMode
+      ? "0 30px 120px rgba(0,0,0,0.52), 0 0 40px rgba(245,158,11,0.06), inset 0 1px 0 rgba(255,255,255,0.04), inset 0 0 0 1px rgba(255,255,255,0.02)"
+      : "0 30px 120px rgba(0,0,0,0.48), inset 0 1px 0 rgba(255,255,255,0.04), inset 0 0 0 1px rgba(255,255,255,0.02)",
     overflow: "hidden",
   };
 
-  const hero: React.CSSProperties = {
-    ...card,
-    padding: isMobile ? 18 : 24,
+  const topBar: React.CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 14,
+    padding: isMobile ? "14px 14px 12px" : "14px 18px 12px",
+    borderBottom: "1px solid rgba(148,163,184,0.12)",
+    background:
+      "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))",
+    flexWrap: "wrap",
+  };
+
+  const topBarLeft: React.CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    flexWrap: "wrap",
+  };
+
+  const windowDot = (color: string): React.CSSProperties => ({
+    width: 10,
+    height: 10,
+    borderRadius: 999,
+    background: color,
+    boxShadow: `0 0 10px ${color}`,
+  });
+
+  const topBadge: React.CSSProperties = {
+    borderRadius: 999,
+    padding: isMobile ? "8px 12px" : "6px 10px",
+    border: "1px solid rgba(34,197,94,0.30)",
+    background: "rgba(34,197,94,0.12)",
+    color: "#bbf7d0",
+    fontWeight: 900,
+    fontSize: isMobile ? 13 : 11,
+    letterSpacing: 0.5,
+  };
+
+  const topBadgeBlue: React.CSSProperties = {
+    borderRadius: 999,
+    padding: isMobile ? "8px 12px" : "6px 10px",
+    border: "1px solid rgba(56,189,248,0.30)",
+    background: "rgba(56,189,248,0.10)",
+    color: "#bae6fd",
+    fontWeight: 900,
+    fontSize: isMobile ? 13 : 11,
+    letterSpacing: 0.5,
+  };
+
+  const cockpitGrid: React.CSSProperties = {
+    display: "grid",
+    gridTemplateColumns: isMobile ? "1fr" : "280px minmax(0, 1fr) 330px",
+    gap: 14,
+    padding: isMobile ? 14 : 16,
+    alignItems: "start",
+  };
+
+  const panel: React.CSSProperties = {
+    borderRadius: 22,
+    border: warmMode
+      ? "1px solid rgba(245,158,11,0.10)"
+      : "1px solid rgba(148,163,184,0.14)",
+    background: warmMode
+      ? "linear-gradient(180deg, rgba(255,255,255,0.040), rgba(255,255,255,0.018))"
+      : "linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.015))",
+    boxShadow: warmMode
+      ? "0 20px 50px rgba(0,0,0,0.34), 0 0 24px rgba(245,158,11,0.04), inset 0 1px 0 rgba(255,255,255,0.03)"
+      : "0 20px 50px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.03)",
+    overflow: "hidden",
+  };
+
+  const panelHeader: React.CSSProperties = {
+    padding: "14px 14px 12px",
+    borderBottom: "1px solid rgba(148,163,184,0.12)",
+    background:
+      "linear-gradient(180deg, rgba(56,189,248,0.08), rgba(255,255,255,0.01))",
+  };
+
+  const panelKicker: React.CSSProperties = {
+    fontSize: isMobile ? 12 : 11,
+    fontWeight: 900,
+    letterSpacing: 1,
+    color: "rgba(125,211,252,0.95)",
+    textTransform: "uppercase",
+  };
+
+  const panelTitle: React.CSSProperties = {
+    marginTop: 6,
+    fontSize: isMobile ? 22 : 18,
+    fontWeight: 900,
+    lineHeight: 1.04,
+    color: "#ffffff",
+    letterSpacing: isMobile ? -0.5 : -0.3,
+  };
+
+  const panelSub: React.CSSProperties = {
+    marginTop: 8,
+    fontSize: isMobile ? 15 : 13,
+    lineHeight: 1.5,
+    color: "rgba(226,232,240,0.78)",
+  };
+
+  const panelBody: React.CSSProperties = { padding: 14 };
+
+  const heroCore: React.CSSProperties = {
+    ...panel,
+    minHeight: isMobile ? "auto" : 320,
+    position: "relative",
+    overflow: "hidden",
+    background: warmMode
+      ? "radial-gradient(700px 420px at 20% 0%, rgba(56,189,248,0.10), transparent 55%)," +
+        "radial-gradient(620px 420px at 100% 10%, rgba(245,158,11,0.10), transparent 48%)," +
+        "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))"
+      : "radial-gradient(700px 420px at 20% 0%, rgba(56,189,248,0.12), transparent 55%)," +
+        "radial-gradient(620px 420px at 100% 10%, rgba(34,197,94,0.10), transparent 48%)," +
+        "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))",
   };
 
   const title: React.CSSProperties = {
-    fontSize: isMobile ? 42 : 36,
+    fontSize: isMobile ? 42 : 48,
     fontWeight: 900,
-    letterSpacing: isMobile ? -1.1 : -1.3,
-    lineHeight: isMobile ? 0.95 : 1.02,
+    letterSpacing: isMobile ? -1.3 : -1.6,
+    lineHeight: isMobile ? 0.96 : 0.94,
     color: "#ffffff",
+    maxWidth: 760,
   };
 
   const hook: React.CSSProperties = {
-    fontSize: isMobile ? 28 : 24,
-    fontWeight: 900,
-    lineHeight: 1.08,
-    letterSpacing: isMobile ? -0.7 : -0.4,
-    color: "#ffffff",
     marginTop: 10,
+    fontSize: isMobile ? 25 : 26,
+    fontWeight: 900,
+    lineHeight: 1.06,
+    letterSpacing: isMobile ? -0.7 : -0.6,
+    color: "#ffffff",
+    maxWidth: 820,
   };
 
   const subtext: React.CSSProperties = {
-    marginTop: 12,
+    marginTop: 14,
     fontSize: isMobile ? 17 : 15,
-    lineHeight: isMobile ? 1.45 : 1.65,
+    lineHeight: 1.66,
     color: "rgba(226,232,240,0.86)",
     maxWidth: 860,
-  };
-
-  const livePill: React.CSSProperties = {
-    borderRadius: 999,
-    padding: isMobile ? "10px 14px" : "7px 12px",
-    border: "1px solid rgba(34,197,94,0.35)",
-    background: "rgba(34,197,94,0.10)",
-    color: "rgba(187,247,208,1)",
-    fontWeight: 900,
-    fontSize: isMobile ? 13 : 12,
-    letterSpacing: 0.6,
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 10,
-    boxShadow: "0 0 18px rgba(74,222,128,0.14)",
-    width: "fit-content",
-  };
-
-  const pulseDot: React.CSSProperties = {
-    width: isMobile ? 12 : 8,
-    height: isMobile ? 12 : 8,
-    borderRadius: 999,
-    background: "rgba(74,222,128,1)",
-    boxShadow: "0 0 12px rgba(74,222,128,0.9)",
-    flexShrink: 0,
   };
 
   const ctaRow: React.CSSProperties = {
     display: "flex",
     gap: 12,
     flexWrap: "wrap",
-    marginTop: 18,
+    marginTop: 20,
   };
 
   const primaryBtn: React.CSSProperties = {
     borderRadius: 999,
-    padding: isMobile ? "15px 20px" : "12px 18px",
-    border: "1px solid rgba(34,197,94,0.30)",
-    background: "rgba(34,197,94,0.16)",
+    padding: isMobile ? "15px 18px" : "12px 16px",
+    border: "1px solid rgba(34,197,94,0.34)",
+    background: "rgba(34,197,94,0.14)",
     color: "#dcfce7",
     fontWeight: 900,
-    fontSize: isMobile ? 18 : 14,
+    fontSize: isMobile ? 17 : 14,
     cursor: "pointer",
-    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
+    boxShadow: "0 0 18px rgba(34,197,94,0.10), inset 0 1px 0 rgba(255,255,255,0.04)",
   };
 
   const secondaryBtn: React.CSSProperties = {
     borderRadius: 999,
-    padding: isMobile ? "15px 20px" : "12px 18px",
+    padding: isMobile ? "15px 18px" : "12px 16px",
     border: "1px solid rgba(255,255,255,0.14)",
     background: "rgba(255,255,255,0.045)",
     color: "#f8fafc",
     fontWeight: 900,
-    fontSize: isMobile ? 18 : 14,
+    fontSize: isMobile ? 17 : 14,
     cursor: "pointer",
   };
 
-  const quickGrid: React.CSSProperties = {
+  const statusGrid: React.CSSProperties = {
     display: "grid",
     gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))",
-    gap: isMobile ? 14 : 12,
-    marginTop: 22,
+    gap: 10,
+    marginTop: 20,
   };
 
-  const quickCard: React.CSSProperties = {
+  const statusCard: React.CSSProperties = {
+    borderRadius: 18,
     border: "1px solid rgba(255,255,255,0.10)",
     background: "rgba(255,255,255,0.035)",
-    borderRadius: 20,
-    padding: isMobile ? 18 : 16,
-    minHeight: isMobile ? 118 : 108,
+    padding: isMobile ? 14 : 12,
     boxShadow: "inset 0 1px 0 rgba(255,255,255,0.02)",
   };
 
-  const quickTitle: React.CSSProperties = {
+  const statusLabel: React.CSSProperties = {
+    fontSize: isMobile ? 13 : 11,
     fontWeight: 900,
-    fontSize: isMobile ? 22 : 15,
-    color: "#ffffff",
-    lineHeight: 1.05,
-    marginBottom: 8,
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
+    color: "rgba(125,211,252,0.92)",
   };
 
-  const quickText: React.CSSProperties = {
-    fontSize: isMobile ? 16 : 13,
-    lineHeight: isMobile ? 1.4 : 1.55,
-    color: "rgba(226,232,240,0.8)",
-  };
-
-  const sectionCard: React.CSSProperties = {
-    ...card,
-    marginTop: 18,
-    padding: isMobile ? 18 : 20,
-    background: "rgba(2,6,23,0.82)",
-  };
-
-  const sectionTitle: React.CSSProperties = {
+  const statusValue: React.CSSProperties = {
+    marginTop: 8,
+    fontSize: isMobile ? 20 : 18,
     fontWeight: 900,
-    fontSize: isMobile ? 28 : 22,
-    lineHeight: 1.05,
     color: "#ffffff",
-    letterSpacing: isMobile ? -0.7 : -0.3,
-    marginBottom: 8,
+    lineHeight: 1.08,
   };
 
-  const sectionSub: React.CSSProperties = {
+  const statusText: React.CSSProperties = {
+    marginTop: 6,
+    fontSize: isMobile ? 14 : 12,
+    lineHeight: 1.5,
+    color: "rgba(226,232,240,0.76)",
+  };
+
+  const trajectoryList: React.CSSProperties = { display: "flex", flexDirection: "column", gap: 12 };
+
+  const trajectoryItem = (status: string): React.CSSProperties => ({
+    borderRadius: 18,
+    border:
+      status === "active"
+        ? "1px solid rgba(56,189,248,0.34)"
+        : status === "armed"
+          ? "1px solid rgba(250,204,21,0.30)"
+          : status === "complete"
+            ? "1px solid rgba(34,197,94,0.30)"
+            : "1px solid rgba(255,255,255,0.10)",
+    background:
+      status === "active"
+        ? "rgba(56,189,248,0.10)"
+        : status === "armed"
+          ? "rgba(250,204,21,0.08)"
+          : status === "complete"
+            ? "rgba(34,197,94,0.10)"
+            : "rgba(255,255,255,0.03)",
+    padding: isMobile ? 14 : 12,
+  });
+
+  const trajectoryTop: React.CSSProperties = { display: "flex", alignItems: "center", gap: 10 };
+
+  const trajectoryDot = (status: string): React.CSSProperties => ({
+    width: 12,
+    height: 12,
+    borderRadius: 999,
+    background:
+      status === "active"
+        ? "rgba(56,189,248,1)"
+        : status === "armed"
+          ? "rgba(250,204,21,1)"
+          : status === "complete"
+            ? "rgba(34,197,94,1)"
+            : "rgba(148,163,184,0.8)",
+    boxShadow:
+      status === "active"
+        ? "0 0 14px rgba(56,189,248,0.9)"
+        : status === "armed"
+          ? "0 0 12px rgba(250,204,21,0.7)"
+          : status === "complete"
+            ? "0 0 12px rgba(34,197,94,0.75)"
+            : "none",
+    flexShrink: 0,
+  });
+
+  const trajectoryTitle: React.CSSProperties = { fontWeight: 900, fontSize: isMobile ? 17 : 14, color: "#ffffff" };
+  const trajectoryStatus: React.CSSProperties = {
+    marginLeft: "auto",
+    fontSize: isMobile ? 12 : 11,
+    fontWeight: 900,
+    letterSpacing: 0.7,
+    color: "rgba(226,232,240,0.72)",
+  };
+  const trajectoryText: React.CSSProperties = {
+    marginTop: 8,
+    fontSize: isMobile ? 14 : 12,
+    lineHeight: 1.5,
+    color: "rgba(226,232,240,0.76)",
+  };
+
+  const missionFeedList: React.CSSProperties = {
+    display: "grid",
+    gridTemplateColumns: isMobile ? "1fr" : "repeat(2, minmax(0, 1fr))",
+    gap: 10,
+  };
+
+  const missionFeedItem: React.CSSProperties = {
+    borderRadius: 16,
+    border: "1px solid rgba(255,255,255,0.10)",
+    background: "rgba(255,255,255,0.03)",
+    padding: isMobile ? 14 : 12,
+  };
+
+  const feedLabel: React.CSSProperties = {
+    fontSize: isMobile ? 12 : 11,
+    fontWeight: 900,
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
+    color: "rgba(148,163,184,0.92)",
+  };
+
+  const feedValue = (active: boolean): React.CSSProperties => ({
+    marginTop: 8,
     fontSize: isMobile ? 16 : 14,
-    lineHeight: isMobile ? 1.4 : 1.6,
-    color: "rgba(226,232,240,0.8)",
-  };
+    fontWeight: 900,
+    lineHeight: 1.15,
+    color: active ? "#ffffff" : "rgba(226,232,240,0.54)",
+    wordBreak: "break-word",
+  });
 
+  const sectionCard: React.CSSProperties = { ...panel, marginTop: 14 };
+  const sectionBody: React.CSSProperties = { padding: isMobile ? 14 : 16 };
   const formLead: React.CSSProperties = {
     marginTop: 10,
-    fontSize: isMobile ? 16 : 13,
-    lineHeight: isMobile ? 1.42 : 1.6,
-    color: "rgba(187,247,208,0.95)",
+    fontSize: isMobile ? 15 : 13,
+    lineHeight: 1.55,
+    color: "rgba(187,247,208,0.96)",
     fontWeight: 800,
   };
 
   const intentGrid: React.CSSProperties = {
     display: "grid",
     gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))",
-    gap: isMobile ? 14 : 12,
+    gap: 12,
     marginTop: 16,
   };
 
   const intentCard = (active: boolean): React.CSSProperties => ({
-    border: active
-      ? "1px solid rgba(34,197,94,0.32)"
-      : "1px solid rgba(255,255,255,0.12)",
-    background: active
-      ? "rgba(34,197,94,0.14)"
-      : "rgba(255,255,255,0.035)",
-    borderRadius: 20,
-    padding: isMobile ? 18 : 14,
+    border: active ? "1px solid rgba(34,197,94,0.32)" : "1px solid rgba(255,255,255,0.12)",
+    background: active ? "rgba(34,197,94,0.14)" : "rgba(255,255,255,0.035)",
+    borderRadius: 18,
+    padding: isMobile ? 16 : 14,
     cursor: "pointer",
-    minHeight: isMobile ? 108 : 102,
-    boxShadow:
-      "inset 0 1px 0 rgba(255,255,255,0.02), 0 12px 28px rgba(0,0,0,0.18)",
+    minHeight: isMobile ? 102 : 96,
+    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.02), 0 10px 28px rgba(0,0,0,0.18)",
   });
 
   const intentTitle: React.CSSProperties = {
     fontWeight: 900,
-    fontSize: isMobile ? 20 : 14,
+    fontSize: isMobile ? 19 : 14,
     marginBottom: 6,
     color: "#ffffff",
     lineHeight: 1.06,
   };
 
   const intentText: React.CSSProperties = {
-    fontSize: isMobile ? 15 : 12,
-    lineHeight: isMobile ? 1.38 : 1.5,
+    fontSize: isMobile ? 14 : 12,
+    lineHeight: 1.5,
     color: "rgba(226,232,240,0.8)",
   };
 
   const intakeGrid: React.CSSProperties = {
     display: "grid",
     gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
-    gap: isMobile ? 16 : 14,
+    gap: isMobile ? 15 : 14,
     marginTop: 18,
   };
 
-  const inputGroup: React.CSSProperties = {
-    display: "flex",
-    flexDirection: "column",
-    gap: 8,
-  };
+  const inputGroup: React.CSSProperties = { display: "flex", flexDirection: "column", gap: 8 };
 
   const label: React.CSSProperties = {
-    fontSize: isMobile ? 16 : 12,
+    fontSize: isMobile ? 15 : 12,
     fontWeight: 900,
     letterSpacing: 0.3,
     color: "rgba(186,230,253,0.94)",
@@ -536,28 +696,24 @@ export default function CreatorCity() {
 
   const inputBase: React.CSSProperties = {
     width: "100%",
-    borderRadius: isMobile ? 18 : 14,
-    border: "1px solid rgba(255,255,255,0.18)",
+    borderRadius: isMobile ? 16 : 14,
+    border: "1px solid rgba(255,255,255,0.16)",
     background: "rgba(255,255,255,0.04)",
     color: "#f8fafc",
-    padding: isMobile ? "16px 16px" : "13px 14px",
+    padding: isMobile ? "15px 15px" : "13px 14px",
     fontSize: isMobile ? 16 : 14,
     outline: "none",
     boxSizing: "border-box",
     boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
   };
 
-  const textareaWide: React.CSSProperties = {
-    ...inputBase,
-    minHeight: isMobile ? 110 : 112,
-    resize: "vertical",
-  };
+  const textareaWide: React.CSSProperties = { ...inputBase, minHeight: isMobile ? 108 : 112, resize: "vertical" };
 
   const fileWrap: React.CSSProperties = {
     border: "1px dashed rgba(56,189,248,0.35)",
     background: "rgba(8,47,73,0.22)",
-    borderRadius: 20,
-    padding: isMobile ? 16 : 16,
+    borderRadius: 18,
+    padding: 16,
     marginTop: 16,
   };
 
@@ -577,7 +733,7 @@ export default function CreatorCity() {
     background: "rgba(34,197,94,0.12)",
     color: "rgba(187,247,208,1)",
     fontWeight: 900,
-    fontSize: isMobile ? 19 : 14,
+    fontSize: isMobile ? 18 : 14,
     cursor: "pointer",
     boxShadow: "0 0 18px rgba(74,222,128,0.08)",
     width: isMobile ? "100%" : "auto",
@@ -585,7 +741,7 @@ export default function CreatorCity() {
 
   const helperText: React.CSSProperties = {
     fontSize: isMobile ? 15 : 12,
-    lineHeight: isMobile ? 1.4 : 1.6,
+    lineHeight: 1.6,
     color: "rgba(148,163,184,0.88)",
     maxWidth: 680,
   };
@@ -600,25 +756,104 @@ export default function CreatorCity() {
     boxShadow: "0 0 22px rgba(74,222,128,0.06)",
   };
 
-  const examplesLabel: React.CSSProperties = {
-    marginTop: isMobile ? 28 : 24,
+  const buildSequenceWrap: React.CSSProperties = { display: "flex", flexDirection: "column", gap: 10 };
+  const buildSequenceItem: React.CSSProperties = {
+    borderRadius: 16,
+    border: "1px solid rgba(255,255,255,0.10)",
+    background: "rgba(255,255,255,0.03)",
+    padding: isMobile ? 13 : 12,
+  };
+  const buildSequenceTop: React.CSSProperties = { display: "flex", alignItems: "center", gap: 10 };
+  const buildSequenceDot = (complete: boolean): React.CSSProperties => ({
+    width: 10,
+    height: 10,
+    borderRadius: 999,
+    background: complete ? "rgba(34,197,94,1)" : "rgba(56,189,248,1)",
+    boxShadow: complete ? "0 0 12px rgba(34,197,94,0.8)" : "0 0 12px rgba(56,189,248,0.7)",
+    flexShrink: 0,
+  });
+  const buildSequenceTitle: React.CSSProperties = { fontSize: isMobile ? 15 : 13, fontWeight: 900, color: "#ffffff" };
+  const buildSequenceText: React.CSSProperties = {
+    marginTop: 8,
+    fontSize: isMobile ? 14 : 12,
+    lineHeight: 1.52,
+    color: "rgba(226,232,240,0.78)",
+  };
+
+  const sideActionGrid: React.CSSProperties = { display: "grid", gridTemplateColumns: "1fr", gap: 10 };
+  const sideActionBtn: React.CSSProperties = {
+    width: "100%",
+    textAlign: "left",
+    borderRadius: 16,
+    padding: isMobile ? "14px 14px" : "12px 13px",
+    border: "1px solid rgba(255,255,255,0.12)",
+    background: "rgba(255,255,255,0.04)",
+    color: "#f8fafc",
     fontWeight: 900,
-    fontSize: isMobile ? 24 : 15,
-    letterSpacing: isMobile ? -0.4 : 0.2,
+    fontSize: isMobile ? 16 : 13,
+    cursor: "pointer",
+    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.02)",
+  };
+
+  const sideHint: React.CSSProperties = {
+    marginTop: 8,
+    fontSize: isMobile ? 14 : 12,
+    lineHeight: 1.5,
+    color: "rgba(226,232,240,0.72)",
+  };
+
+  const stageGrid: React.CSSProperties = { display: "grid", gridTemplateColumns: "1fr", gap: 10 };
+  const stageCard: React.CSSProperties = {
+    borderRadius: 16,
+    border: "1px solid rgba(255,255,255,0.10)",
+    background: "rgba(255,255,255,0.03)",
+    padding: isMobile ? 13 : 12,
+  };
+  const stageTag: React.CSSProperties = {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 8,
+    borderRadius: 999,
+    padding: "5px 9px",
+    border: "1px solid rgba(56,189,248,0.30)",
+    background: "rgba(56,189,248,0.08)",
+    color: "rgba(186,230,253,1)",
+    fontSize: 11,
+    fontWeight: 900,
+    letterSpacing: 0.6,
+  };
+  const stageName: React.CSSProperties = {
+    marginTop: 8,
+    fontSize: isMobile ? 17 : 14,
+    fontWeight: 900,
+    color: "#ffffff",
+    lineHeight: 1.08,
+  };
+  const stageText: React.CSSProperties = {
+    marginTop: 6,
+    fontSize: isMobile ? 14 : 12,
+    lineHeight: 1.5,
+    color: "rgba(226,232,240,0.74)",
+  };
+
+  const examplesLabel: React.CSSProperties = {
+    marginTop: 22,
+    fontWeight: 900,
+    fontSize: isMobile ? 24 : 18,
+    letterSpacing: isMobile ? -0.4 : -0.2,
     color: "#f8fafc",
     lineHeight: 1.06,
   };
 
   const featuredDemoCard: React.CSSProperties = {
-    ...card,
-    marginTop: 16,
-    padding: isMobile ? 18 : 18,
+    ...panel,
+    marginTop: 14,
     border: "1px solid rgba(34,197,94,0.30)",
     background:
       "linear-gradient(180deg, rgba(34,197,94,0.10), rgba(2,6,23,0.80) 30%, rgba(2,6,23,0.88) 100%)",
     cursor: "pointer",
   };
-
+  const featuredDemoInner: React.CSSProperties = { padding: isMobile ? 16 : 18 };
   const featuredDemoTop: React.CSSProperties = {
     display: "flex",
     justifyContent: "space-between",
@@ -626,7 +861,6 @@ export default function CreatorCity() {
     gap: isMobile ? 14 : 18,
     flexDirection: isMobile ? "column" : "row",
   };
-
   const featuredDemoTitle: React.CSSProperties = {
     fontWeight: 900,
     fontSize: isMobile ? 28 : 22,
@@ -634,30 +868,26 @@ export default function CreatorCity() {
     lineHeight: 1.04,
     letterSpacing: isMobile ? -0.6 : -0.3,
   };
-
   const featuredDemoSubline: React.CSSProperties = {
     marginTop: 8,
     fontSize: isMobile ? 17 : 15,
-    lineHeight: isMobile ? 1.42 : 1.6,
+    lineHeight: 1.42,
     color: "rgba(226,232,240,0.9)",
     maxWidth: 760,
   };
-
   const featuredDemoSupport: React.CSSProperties = {
     marginTop: 10,
     fontSize: isMobile ? 15 : 13,
-    lineHeight: isMobile ? 1.42 : 1.55,
+    lineHeight: 1.55,
     color: "rgba(186,230,253,0.84)",
     maxWidth: 760,
   };
-
   const featuredDemoAction: React.CSSProperties = {
     ...primaryBtn,
     padding: isMobile ? "14px 18px" : "10px 14px",
     fontSize: isMobile ? 17 : 13,
     whiteSpace: "nowrap",
   };
-
   const featuredDemoBadgeRow: React.CSSProperties = {
     display: "flex",
     gap: 10,
@@ -665,7 +895,6 @@ export default function CreatorCity() {
     alignItems: "center",
     marginBottom: 12,
   };
-
   const featuredDemoBadge: React.CSSProperties = {
     borderRadius: 999,
     padding: isMobile ? "9px 14px" : "6px 10px",
@@ -676,7 +905,6 @@ export default function CreatorCity() {
     background: "rgba(34,197,94,0.10)",
     letterSpacing: 0.4,
   };
-
   const featuredDemoSecondaryBadge: React.CSSProperties = {
     borderRadius: 999,
     padding: isMobile ? "9px 14px" : "6px 10px",
@@ -687,14 +915,12 @@ export default function CreatorCity() {
     background: "rgba(56,189,248,0.08)",
     letterSpacing: 0.4,
   };
-
   const featuredValueGrid: React.CSSProperties = {
     display: "grid",
     gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))",
     gap: 10,
     marginTop: 16,
   };
-
   const featuredValueCard: React.CSSProperties = {
     borderRadius: 16,
     border: "1px solid rgba(255,255,255,0.10)",
@@ -705,11 +931,10 @@ export default function CreatorCity() {
 
   const examplesGrid: React.CSSProperties = {
     display: "grid",
-    gridTemplateColumns: "1fr",
-    gap: isMobile ? 14 : 12,
-    marginTop: 16,
+    gridTemplateColumns: isMobile ? "1fr" : "repeat(2, minmax(0, 1fr))",
+    gap: 12,
+    marginTop: 14,
   };
-
   const exampleCard: React.CSSProperties = {
     border: "1px solid rgba(255,255,255,0.12)",
     background: "rgba(255,255,255,0.035)",
@@ -719,10 +944,8 @@ export default function CreatorCity() {
     display: "flex",
     flexDirection: "column",
     gap: isMobile ? 12 : 8,
-    boxShadow:
-      "0 14px 40px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.02)",
+    boxShadow: "0 14px 40px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.02)",
   };
-
   const tagStyle: React.CSSProperties = {
     borderRadius: 999,
     padding: isMobile ? "9px 14px" : "6px 10px",
@@ -733,27 +956,24 @@ export default function CreatorCity() {
     background: "rgba(250,204,21,0.10)",
     width: "fit-content",
   };
-
   const exampleTitle: React.CSSProperties = {
     fontWeight: 900,
-    fontSize: isMobile ? 24 : 15,
+    fontSize: isMobile ? 22 : 15,
     color: "#ffffff",
     lineHeight: 1.06,
   };
-
   const exampleSub: React.CSSProperties = {
-    fontSize: isMobile ? 17 : 12,
+    fontSize: isMobile ? 16 : 12,
     color: "rgba(226,232,240,0.76)",
-    lineHeight: isMobile ? 1.42 : 1.5,
+    lineHeight: 1.5,
   };
 
   const footerWrap: React.CSSProperties = {
-    marginTop: isMobile ? 32 : 30,
-    paddingTop: isMobile ? 22 : 18,
+    marginTop: 28,
+    paddingTop: 20,
     borderTop: "1px solid rgba(148,163,184,0.16)",
     textAlign: "center",
   };
-
   const footerPrimary: React.CSSProperties = {
     fontSize: isMobile ? 18 : 13,
     color: "#94a3b8",
@@ -765,14 +985,12 @@ export default function CreatorCity() {
     flexWrap: "wrap",
     lineHeight: 1.35,
   };
-
   const footerSecondary: React.CSSProperties = {
     marginTop: 8,
     fontSize: isMobile ? 16 : 12,
     color: "rgba(148,163,184,0.72)",
     lineHeight: 1.45,
   };
-
   const footerPlanetMark: React.CSSProperties = {
     position: "relative",
     width: isMobile ? 22 : 16,
@@ -784,7 +1002,6 @@ export default function CreatorCity() {
     boxShadow: "0 0 10px rgba(56,189,248,0.45)",
     flexShrink: 0,
   };
-
   const footerPlanetRing: React.CSSProperties = {
     position: "absolute",
     left: isMobile ? -4 : -3,
@@ -800,474 +1017,429 @@ export default function CreatorCity() {
   };
 
   const intentCards = [
-    {
-      id: "landing-page" as BuildIntent,
-      title: "Landing Page",
-      text: "Your front door. Clear offer. Intake ready.",
-    },
-    {
-      id: "live-board" as BuildIntent,
-      title: "Live Board",
-      text: "Jobs. Status. Activity. All visible.",
-    },
-    {
-      id: "workflow-tool" as BuildIntent,
-      title: "Workflow Tool",
-      text: "Built around how you already work.",
-    },
-    {
-      id: "intake-flow" as BuildIntent,
-      title: "Intake Flow",
-      text: "Calls, texts, walk-ins into one system.",
-    },
-    {
-      id: "payment-flow" as BuildIntent,
-      title: "Payment Flow",
-      text: "Job to payment to proof.",
-    },
-    {
-      id: "full-system" as BuildIntent,
-      title: "Full Business System",
-      text: "Everything. One page. No switching.",
-    },
+    { id: "landing-page" as BuildIntent, title: "Landing Page", text: "Your front door. Clear offer. Intake ready." },
+    { id: "live-board" as BuildIntent, title: "Live Board", text: "Jobs. Status. Activity. All visible." },
+    { id: "workflow-tool" as BuildIntent, title: "Workflow Tool", text: "Built around how you already work." },
+    { id: "intake-flow" as BuildIntent, title: "Intake Flow", text: "Calls, texts, walk-ins into one system." },
+    { id: "payment-flow" as BuildIntent, title: "Payment Flow", text: "Job to payment to proof." },
+    { id: "full-system" as BuildIntent, title: "Full Business System", text: "Everything. One page. No switching." },
   ];
 
   return (
     <div style={page}>
       <div style={shell}>
-        <div style={hero}>
-          <div style={livePill}>
-            <span style={pulseDot} />
-            BUILD MY BUSINESS SYSTEM
+        <div style={frame}>
+          <div style={topBar}>
+            <div style={topBarLeft}>
+              <span style={windowDot("#fb7185")} />
+              <span style={windowDot("#fbbf24")} />
+              <span style={windowDot("#4ade80")} />
+              <div style={topBadge}>CREATOR CITY MISSION SURFACE</div>
+              <div style={topBadgeBlue}>LIVE BOARD GENERATOR</div>
+            </div>
+
+            <div style={topBarLeft}>
+              <button
+                type="button"
+                onClick={() => setWarmMode((v) => !v)}
+                style={{
+                  ...topBadgeBlue,
+                  cursor: "pointer",
+                  background: warmMode ? "rgba(245,158,11,0.10)" : "rgba(56,189,248,0.10)",
+                  border: warmMode ? "1px solid rgba(245,158,11,0.28)" : "1px solid rgba(56,189,248,0.30)",
+                  color: warmMode ? "#fde68a" : "#bae6fd",
+                }}
+              >
+                {warmMode ? "WARM MODE ON" : "COOL MODE ON"}
+              </button>
+              <div style={topBadgeBlue}>PRIMARY ROUTE /planet/creator/building</div>
+              <div style={topBadge}>FREE TRIAL PREVIEW</div>
+            </div>
           </div>
 
-          <div style={title}>Creator City</div>
+          <div style={cockpitGrid}>
+            <div style={panel}>
+              <div style={panelHeader}>
+                <div style={panelKicker}>Trajectory</div>
+                <div style={panelTitle}>Business launch path</div>
+                <div style={panelSub}>Where the user is in the mission right now.</div>
+              </div>
 
-          <div style={hook}>
-            Your business is not complicated.
-            <br />
-            Your tools are.
-          </div>
+              <div style={panelBody}>
+                <div style={trajectoryList}>
+                  {trajectorySteps.map((step) => (
+                    <div key={step.id} style={trajectoryItem(step.status)}>
+                      <div style={trajectoryTop}>
+                        <span style={trajectoryDot(step.status)} />
+                        <div style={trajectoryTitle}>{step.title}</div>
+                        <div style={trajectoryStatus}>{step.status.toUpperCase()}</div>
+                      </div>
+                      <div style={trajectoryText}>{step.text}</div>
+                    </div>
+                  ))}
+                </div>
 
-          <div style={subtext}>
-            Start fast. Open a live example. Use a ready system. Or fill out the
-            real Creator City intake below to instantly generate your free live
-            demo board.
-          </div>
-
-          <div style={ctaRow}>
-            <button style={primaryBtn} onClick={scrollToIntakeForm}>
-              Start My Free Demo
-            </button>
-
-            <button
-              style={secondaryBtn}
-              onClick={() => nav(LIVE_CAMP_GUARDIAN_ROUTE)}
-            >
-              See Camp Guardian Live
-            </button>
-
-            <button style={secondaryBtn} onClick={scrollToReadySystems}>
-              Use Ready System
-            </button>
-
-            <button
-              style={secondaryBtn}
-              onClick={() => nav("/planet/experience")}
-            >
-              Experience Planet
-            </button>
-          </div>
-
-          <div style={quickGrid}>
-            <div style={quickCard}>
-              <div style={quickTitle}>Start your free live demo</div>
-              <div style={quickText}>
-                Use the real intake form below. That is what creates the live
-                demo board.
+                <div style={{ marginTop: 14 }}>
+                  <div
+                    style={{
+                      borderRadius: 18,
+                      border: "1px solid rgba(255,255,255,0.10)",
+                      background: "rgba(255,255,255,0.03)",
+                      padding: isMobile ? 14 : 12,
+                    }}
+                  >
+                    <div style={panelKicker}>Live board family</div>
+                    <div
+                      style={{
+                        marginTop: 8,
+                        fontSize: isMobile ? 18 : 15,
+                        fontWeight: 900,
+                        color: "#ffffff",
+                        lineHeight: 1.08,
+                      }}
+                    >
+                      {configPreview.familyLabel}
+                    </div>
+                    <div style={panelSub}>{configPreview.boardSubtitle}</div>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div style={quickCard}>
-              <div style={quickTitle}>See it working live</div>
-              <div style={quickText}>
-                Skip the explanation. Open a system that already shows the value.
+            <div>
+              <div style={heroCore}>
+                <div style={{ padding: isMobile ? 16 : 18 }}>
+                  <div style={topBadge}>BUILD MY BUSINESS SYSTEM</div>
+
+                  <div style={title}>Creator City</div>
+
+                  <div style={hook}>
+                    Your business is not complicated.
+                    <br />
+                    Your tools are.
+                  </div>
+
+                  <div style={subtext}>
+                    This is wrapped like a mission surface. One center screen for
+                    live truth, one left rail for trajectory, one right rail for actions.
+                    This preview is visual-only so you can study the feel before touching your live file. This pass adds a little more HomePlanet warmth without losing the cockpit clarity.
+                  </div>
+
+                  <div style={ctaRow}>
+                    <button style={primaryBtn} onClick={scrollToIntakeForm}>Start My Free Demo</button>
+                    <button style={secondaryBtn}>See Camp Guardian Live</button>
+                    <button style={secondaryBtn} onClick={scrollToReadySystems}>Use Ready System</button>
+                    <button style={secondaryBtn}>Experience Planet</button>
+                  </div>
+
+                  <div style={statusGrid}>
+                    <div style={statusCard}>
+                      <div style={statusLabel}>Mission role</div>
+                      <div style={statusValue}>Live demo intake</div>
+                      <div style={statusText}>This form is still the real start path that creates the board.</div>
+                    </div>
+
+                    <div style={statusCard}>
+                      <div style={statusLabel}>Resolved build type</div>
+                      <div style={statusValue}>{resolvedBusinessLabel}</div>
+                      <div style={statusText}>Automatically matched into a starter board family.</div>
+                    </div>
+
+                    <div style={statusCard}>
+                      <div style={statusLabel}>Stage preview</div>
+                      <div style={statusValue}>{previewStages.length > 0 ? previewStages[0] : "Waiting"}</div>
+                      <div style={statusText}>The board can already predict the first live stages.</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div style={sectionCard}>
+                <div style={panelHeader}>
+                  <div style={panelKicker}>System truth</div>
+                  <div style={panelTitle}>Mission feed</div>
+                  <div style={panelSub}>Real board preparation signals based on the live intake state.</div>
+                </div>
+
+                <div style={sectionBody}>
+                  <div style={missionFeedList}>
+                    {missionFeed.map((item) => (
+                      <div key={item.label} style={missionFeedItem}>
+                        <div style={feedLabel}>{item.label}</div>
+                        <div style={feedValue(item.active)}>{item.value}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div ref={intakeFormRef} style={sectionCard}>
+                <div style={panelHeader}>
+                  <div style={panelKicker}>Mission intake</div>
+                  <div style={panelTitle}>Start your free live demo</div>
+                  <div style={panelSub}>Fill out this intake and Creator City instantly generates your live demo board.</div>
+                </div>
+
+                <div style={sectionBody}>
+                  <div style={formLead}>This form is still the real start path. It creates the demo.</div>
+
+                  <div style={intentGrid}>
+                    {intentCards.map((cardItem) => (
+                      <div
+                        key={cardItem.id}
+                        style={intentCard(wantsBuilt === cardItem.id)}
+                        onClick={() => setWantsBuilt(cardItem.id)}
+                      >
+                        <div style={intentTitle}>{cardItem.title}</div>
+                        <div style={intentText}>{cardItem.text}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {submitted ? (
+                    <div style={successPanel}>
+                      <div style={{ fontWeight: 900, fontSize: 18, marginBottom: 8 }}>
+                        Creator City intake received ⚡
+                      </div>
+                      <div style={{ lineHeight: 1.7 }}>
+                        Your workflow request was turned into a live board path.
+                      </div>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleSubmit}>
+                      <div style={intakeGrid}>
+                        <div style={inputGroup}>
+                          <label style={label}>Business name</label>
+                          <input style={inputBase} value={businessName} onChange={(e) => setBusinessName(e.target.value)} />
+                        </div>
+
+                        <div style={inputGroup}>
+                          <label style={label}>Business type</label>
+                          <input style={inputBase} value={businessType} onChange={(e) => setBusinessType(e.target.value)} />
+                        </div>
+
+                        <div style={inputGroup}>
+                          <label style={label}>City</label>
+                          <input style={inputBase} value={city} onChange={(e) => setCity(e.target.value)} />
+                        </div>
+
+                        <div style={inputGroup}>
+                          <label style={label}>Email or preferred contact</label>
+                          <input style={inputBase} value={contact} onChange={(e) => setContact(e.target.value)} />
+                        </div>
+
+                        <div style={{ ...inputGroup, gridColumn: "1 / -1" }}>
+                          <label style={label}>How do you run jobs right now?</label>
+                          <textarea style={textareaWide} value={currentWorkflow} onChange={(e) => setCurrentWorkflow(e.target.value)} />
+                        </div>
+
+                        <div style={{ ...inputGroup, gridColumn: "1 / -1" }}>
+                          <label style={label}>What wastes the most time?</label>
+                          <textarea style={textareaWide} value={biggestFriction} onChange={(e) => setBiggestFriction(e.target.value)} />
+                        </div>
+
+                        <div style={{ ...inputGroup, gridColumn: "1 / -1" }}>
+                          <label style={label}>What do customers keep asking about?</label>
+                          <textarea style={textareaWide} value={customerQuestions} onChange={(e) => setCustomerQuestions(e.target.value)} />
+                        </div>
+
+                        <div style={{ ...inputGroup, gridColumn: "1 / -1" }}>
+                          <label style={label}>What would make you say “holy shit, this solves it”?</label>
+                          <textarea style={textareaWide} value={holyShiftMoment} onChange={(e) => setHolyShiftMoment(e.target.value)} />
+                        </div>
+                      </div>
+
+                      <div style={fileWrap}>
+                        <div style={label}>Upload photos of your workflow</div>
+                        <div style={{ ...panelSub, marginTop: 8 }}>Show the current mess. We use it to remove steps.</div>
+                        <div style={{ marginTop: 12 }}>
+                          <input
+                            type="file"
+                            multiple
+                            accept="image/*"
+                            onChange={(e) => setWorkflowFiles(Array.from(e.target.files || []))}
+                            style={{ fontSize: isMobile ? 16 : 14 }}
+                          />
+                        </div>
+                        <div style={{ marginTop: 10, fontSize: isMobile ? 15 : 12, color: "rgba(186,230,253,0.9)" }}>
+                          {selectedFilesLabel}
+                        </div>
+                      </div>
+
+                      <div style={submitWrap}>
+                        <button
+                          type="submit"
+                          style={{
+                            ...submitBtn,
+                            opacity: submitting ? 0.7 : 1,
+                            cursor: submitting ? "progress" : "pointer",
+                          }}
+                          disabled={submitting}
+                        >
+                          {submitting ? "Building your free live demo..." : "Build My Free Demo"}
+                        </button>
+
+                        <div style={helperText}>
+                          This preview simulates the intake flow so you can feel the cockpit layout.
+                        </div>
+                      </div>
+                    </form>
+                  )}
+                </div>
               </div>
             </div>
 
-            <div style={quickCard}>
-              <div style={quickTitle}>Use a ready path</div>
-              <div style={quickText}>
-                Pick a live system that already fits what you are trying to do.
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div ref={intakeFormRef} style={sectionCard}>
-          <div style={sectionTitle}>Start your free live demo</div>
-          <div style={sectionSub}>
-            Fill out this intake and Creator City instantly generates your live
-            demo board.
-          </div>
-          <div style={formLead}>
-            This form is the real start path. It creates the demo.
-          </div>
-
-          <div style={intentGrid}>
-            {intentCards.map((cardItem) => (
-              <div
-                key={cardItem.id}
-                style={intentCard(wantsBuilt === cardItem.id)}
-                onClick={() => setWantsBuilt(cardItem.id)}
-              >
-                <div style={intentTitle}>{cardItem.title}</div>
-                <div style={intentText}>{cardItem.text}</div>
-              </div>
-            ))}
-          </div>
-
-          {submitted ? (
-            <div style={successPanel}>
-              <div style={{ fontWeight: 900, fontSize: 18, marginBottom: 8 }}>
-                Creator City intake received ⚡
-              </div>
-              <div style={{ lineHeight: 1.7 }}>
-                Your workflow request was turned into a live board path.
-              </div>
-
-              <div style={ctaRow}>
-                <button
-                  style={primaryBtn}
-                  onClick={() => nav("/planet/pricing")}
-                >
-                  View Pricing
-                </button>
-                <button style={secondaryBtn} onClick={scrollToReadySystems}>
-                  Use Ready System
-                </button>
-              </div>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit}>
-              <div style={intakeGrid}>
-                <div style={inputGroup}>
-                  <label style={label}>Business name</label>
-                  <input
-                    style={inputBase}
-                    value={businessName}
-                    onChange={(e) => setBusinessName(e.target.value)}
-                    placeholder="Taylor Creek Auto Repair"
-                    required
-                  />
+            <div style={{ display: "grid", gap: 14 }}>
+              <div style={panel}>
+                <div style={panelHeader}>
+                  <div style={panelKicker}>Actions</div>
+                  <div style={panelTitle}>Launch controls</div>
+                  <div style={panelSub}>No clutter. Just the next actions that matter.</div>
                 </div>
 
-                <div style={inputGroup}>
-                  <label style={label}>Business type</label>
-                  <input
-                    style={inputBase}
-                    value={businessType}
-                    onChange={(e) => setBusinessType(e.target.value)}
-                    placeholder="Auto Repair, Home Services, Cleaning..."
-                    required
-                  />
-                </div>
+                <div style={panelBody}>
+                  <div style={sideActionGrid}>
+                    <button style={sideActionBtn} onClick={scrollToIntakeForm}>Start my free demo</button>
+                    <button style={sideActionBtn}>Open Camp Guardian</button>
+                    <button style={sideActionBtn} onClick={scrollToReadySystems}>Use ready system</button>
+                    <button style={sideActionBtn}>Open Experience Planet</button>
+                    <button style={sideActionBtn}>Open product selling board</button>
+                  </div>
 
-                <div style={inputGroup}>
-                  <label style={label}>City</label>
-                  <input
-                    style={inputBase}
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    placeholder="Okeechobee"
-                    required
-                  />
-                </div>
-
-                <div style={inputGroup}>
-                  <label style={label}>Email or preferred contact</label>
-                  <input
-                    style={inputBase}
-                    value={contact}
-                    onChange={(e) => setContact(e.target.value)}
-                    placeholder="you@business.com"
-                    required
-                  />
-                </div>
-
-                <div style={{ ...inputGroup, gridColumn: "1 / -1" }}>
-                  <label style={label}>How do you run jobs right now?</label>
-                  <textarea
-                    style={textareaWide}
-                    value={currentWorkflow}
-                    onChange={(e) => setCurrentWorkflow(e.target.value)}
-                    placeholder="Paper tickets, texts, whiteboard, spreadsheets, another app..."
-                    required
-                  />
-                </div>
-
-                <div style={{ ...inputGroup, gridColumn: "1 / -1" }}>
-                  <label style={label}>What wastes the most time?</label>
-                  <textarea
-                    style={textareaWide}
-                    value={biggestFriction}
-                    onChange={(e) => setBiggestFriction(e.target.value)}
-                    placeholder="Calls for updates, lost notes, unclear stages, scheduling chaos, intake confusion..."
-                    required
-                  />
-                </div>
-
-                <div style={{ ...inputGroup, gridColumn: "1 / -1" }}>
-                  <label style={label}>
-                    What do customers keep asking about?
-                  </label>
-                  <textarea
-                    style={textareaWide}
-                    value={customerQuestions}
-                    onChange={(e) => setCustomerQuestions(e.target.value)}
-                    placeholder="Where am I in line? Is it ready? Did you get my request?"
-                  />
-                </div>
-
-                <div style={{ ...inputGroup, gridColumn: "1 / -1" }}>
-                  <label style={label}>
-                    What would make you say “holy shit, this solves it”?
-                  </label>
-                  <textarea
-                    style={textareaWide}
-                    value={holyShiftMoment}
-                    onChange={(e) => setHolyShiftMoment(e.target.value)}
-                    placeholder="One board for status, team, customer updates, payment, and proof..."
-                  />
+                  <div style={sideHint}>
+                    This rail is the spacecraft command concept translated into Creator City: fewer choices, better orientation. The warmer glow helps it feel less cold and more HomePlanet.
+                  </div>
                 </div>
               </div>
 
-              <div style={fileWrap}>
-                <div style={label}>Upload photos of your workflow</div>
-                <div
-                  style={{
-                    ...sectionSub,
-                    marginTop: 8,
-                    fontSize: isMobile ? 15 : 13,
-                  }}
-                >
-                  Show the current mess. We use it to remove steps.
+              <div style={panel}>
+                <div style={panelHeader}>
+                  <div style={panelKicker}>Live build feed</div>
+                  <div style={panelTitle}>Board assembly preview</div>
+                  <div style={panelSub}>What the user should feel happening while Creator City is preparing the board.</div>
                 </div>
 
-                <div style={{ marginTop: 12 }}>
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={(e) =>
-                      setWorkflowFiles(Array.from(e.target.files || []))
-                    }
-                    style={{ fontSize: isMobile ? 16 : 14 }}
-                  />
-                </div>
-
-                <div
-                  style={{
-                    marginTop: 10,
-                    fontSize: isMobile ? 15 : 12,
-                    color: "rgba(186,230,253,0.9)",
-                  }}
-                >
-                  {selectedFilesLabel}
+                <div style={panelBody}>
+                  <div style={buildSequenceWrap}>
+                    {buildSequence.map((item) => (
+                      <div key={item.title} style={buildSequenceItem}>
+                        <div style={buildSequenceTop}>
+                          <span style={buildSequenceDot(item.complete)} />
+                          <div style={buildSequenceTitle}>{item.title}</div>
+                        </div>
+                        <div style={buildSequenceText}>{item.text}</div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
 
-              <div style={submitWrap}>
-                <button
-                  type="submit"
-                  style={{
-                    ...submitBtn,
-                    opacity: submitting ? 0.7 : 1,
-                    cursor: submitting ? "progress" : "pointer",
-                  }}
-                  disabled={submitting}
-                >
-                  {submitting
-                    ? "Building your free live demo..."
-                    : "Build My Free Demo"}
-                </button>
-
-                <div style={helperText}>
-                  This intake instantly creates your live demo board, then routes
-                  you into the build flow and preview path.
+              <div style={panel}>
+                <div style={panelHeader}>
+                  <div style={panelKicker}>Stage preview</div>
+                  <div style={panelTitle}>{configPreview.familyLabel}</div>
+                  <div style={panelSub}>Early stage mapping based on the business type and intent.</div>
                 </div>
-              </div>
-            </form>
-          )}
-        </div>
 
-        <div ref={readySystemsRef} style={examplesLabel}>
-          Featured live system
-        </div>
-
-        <div
-          style={featuredDemoCard}
-          onClick={() => nav(LIVE_CAMP_GUARDIAN_ROUTE)}
-        >
-          <div style={featuredDemoTop}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={featuredDemoBadgeRow}>
-                <div style={featuredDemoBadge}>LIVE SAFETY SYSTEM</div>
-                <div style={featuredDemoSecondaryBadge}>PARENT VIEW ACTIVE</div>
-              </div>
-
-              <div style={featuredDemoTitle}>Camp Guardian</div>
-
-              <div style={featuredDemoSubline}>
-                Live child presence, guardian visibility, protected movement tracking, and parent-facing real-time status.
-              </div>
-
-              <div style={featuredDemoSupport}>
-                Camps, youth programs, activity groups, and supervised child environments can run live with movement visibility, guardian-safe links, and proof-style timelines in one system.
-              </div>
-            </div>
-
-            <button
-              type="button"
-              style={featuredDemoAction}
-              onClick={(e) => {
-                e.stopPropagation();
-                nav(LIVE_CAMP_GUARDIAN_ROUTE);
-              }}
-            >
-              Open Camp Guardian
-            </button>
-          </div>
-
-          <div style={featuredValueGrid}>
-            <div style={featuredValueCard}>
-              <div
-                style={{
-                  fontSize: isMobile ? 16 : 12,
-                  fontWeight: 900,
-                  color: "rgba(187,247,208,1)",
-                  marginBottom: 6,
-                  letterSpacing: 0.3,
-                }}
-              >
-                LIVE CHILD PRESENCE
-              </div>
-              <div
-                style={{
-                  fontSize: isMobile ? 18 : 14,
-                  fontWeight: 900,
-                  color: "#ffffff",
-                  lineHeight: 1.08,
-                  marginBottom: 6,
-                }}
-              >
-                See where each child is right now
-              </div>
-              <div
-                style={{
-                  fontSize: isMobile ? 15 : 12,
-                  color: "rgba(226,232,240,0.76)",
-                  lineHeight: 1.5,
-                }}
-              >
-                Checked in, activity zone, hydration, with staff, and checked out all stay visible live.
-              </div>
-            </div>
-
-            <div style={featuredValueCard}>
-              <div
-                style={{
-                  fontSize: isMobile ? 16 : 12,
-                  fontWeight: 900,
-                  color: "rgba(186,230,253,1)",
-                  marginBottom: 6,
-                  letterSpacing: 0.3,
-                }}
-              >
-                PARENT VIEW
-              </div>
-              <div
-                style={{
-                  fontSize: isMobile ? 18 : 14,
-                  fontWeight: 900,
-                  color: "#ffffff",
-                  lineHeight: 1.08,
-                  marginBottom: 6,
-                }}
-              >
-                Guardian-safe status from a protected link
-              </div>
-              <div
-                style={{
-                  fontSize: isMobile ? 15 : 12,
-                  color: "rgba(226,232,240,0.76)",
-                  lineHeight: 1.5,
-                }}
-              >
-                Open the parent view directly from the child card and show real-time movement without exposing the whole system.
-              </div>
-            </div>
-
-            <div style={featuredValueCard}>
-              <div
-                style={{
-                  fontSize: isMobile ? 16 : 12,
-                  fontWeight: 900,
-                  color: "rgba(254,240,138,1)",
-                  marginBottom: 6,
-                  letterSpacing: 0.3,
-                }}
-              >
-                PREDATORSHIELD BASE
-              </div>
-              <div
-                style={{
-                  fontSize: isMobile ? 18 : 14,
-                  fontWeight: 900,
-                  color: "#ffffff",
-                  lineHeight: 1.08,
-                  marginBottom: 6,
-                }}
-              >
-                Child profile stays controlled
-              </div>
-              <div
-                style={{
-                  fontSize: isMobile ? 15 : 12,
-                  color: "rgba(226,232,240,0.76)",
-                  lineHeight: 1.5,
-                }}
-              >
-                Movement, guardian contact, timelines, and notes stay visible while the profile remains protected.
+                <div style={panelBody}>
+                  <div style={stageGrid}>
+                    {previewStages.map((stage, index) => (
+                      <div key={`${stage}-${index}`} style={stageCard}>
+                        <div style={stageTag}>STAGE {index + 1}</div>
+                        <div style={stageName}>{stage}</div>
+                        <div style={stageText}>This becomes part of the live board workflow once the intake is submitted.</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <div style={examplesLabel}>Use a ready system</div>
+          <div style={{ padding: isMobile ? "0 14px 24px" : "0 16px 28px" }}>
+            <div ref={readySystemsRef} style={examplesLabel}>Featured live system</div>
 
-        <div style={examplesGrid}>
-          {systems.map((s) => (
-            <div key={s.id} style={exampleCard} onClick={() => nav(s.to)}>
-              <div style={tagStyle}>{s.tag}</div>
-              <div style={exampleTitle}>{s.title}</div>
-              <div style={exampleSub}>{s.subtitle}</div>
+            <div style={featuredDemoCard}>
+              <div style={featuredDemoInner}>
+                <div style={featuredDemoTop}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={featuredDemoBadgeRow}>
+                      <div style={featuredDemoBadge}>LIVE SAFETY SYSTEM</div>
+                      <div style={featuredDemoSecondaryBadge}>PARENT VIEW ACTIVE</div>
+                    </div>
+
+                    <div style={featuredDemoTitle}>Camp Guardian</div>
+
+                    <div style={featuredDemoSubline}>
+                      Live child presence, guardian visibility, protected movement tracking, and parent-facing real-time status.
+                    </div>
+
+                    <div style={featuredDemoSupport}>
+                      Camps, youth programs, activity groups, and supervised child environments can run live with movement visibility, guardian-safe links, and proof-style timelines in one system.
+                    </div>
+                  </div>
+
+                  <button type="button" style={featuredDemoAction}>Open Camp Guardian</button>
+                </div>
+
+                <div style={featuredValueGrid}>
+                  {[{
+                    k: "LIVE CHILD PRESENCE",
+                    t: "See where each child is right now",
+                    d: "Checked in, activity zone, hydration, with staff, and checked out all stay visible live.",
+                    c: "rgba(187,247,208,1)",
+                  }, {
+                    k: "PARENT VIEW",
+                    t: "Guardian-safe status from a protected link",
+                    d: "Open the parent view directly from the child card and show real-time movement without exposing the whole system.",
+                    c: "rgba(186,230,253,1)",
+                  }, {
+                    k: "PREDATORSHIELD BASE",
+                    t: "Child profile stays controlled",
+                    d: "Movement, guardian contact, timelines, and notes stay visible while the profile remains protected.",
+                    c: "rgba(254,240,138,1)",
+                  }].map((item) => (
+                    <div key={item.k} style={featuredValueCard}>
+                      <div style={{ fontSize: isMobile ? 16 : 12, fontWeight: 900, color: item.c, marginBottom: 6, letterSpacing: 0.3 }}>
+                        {item.k}
+                      </div>
+                      <div style={{ fontSize: isMobile ? 18 : 14, fontWeight: 900, color: "#ffffff", lineHeight: 1.08, marginBottom: 6 }}>
+                        {item.t}
+                      </div>
+                      <div style={{ fontSize: isMobile ? 15 : 12, color: "rgba(226,232,240,0.76)", lineHeight: 1.5 }}>
+                        {item.d}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-          ))}
-        </div>
 
-        <div style={footerWrap}>
-          <div style={footerPrimary}>
-            <span style={footerPlanetMark}>
-              <span style={footerPlanetRing} />
-            </span>
-            HomePlanet © 2026. All rights reserved.
-          </div>
-          <div style={footerSecondary}>
-            Your business is not complicated. Your tools are.
+            <div style={examplesLabel}>Use a ready system</div>
+
+            <div style={examplesGrid}>
+              {systems.map((s) => (
+                <div key={s.id} style={exampleCard}>
+                  <div style={tagStyle}>{s.tag}</div>
+                  <div style={exampleTitle}>{s.title}</div>
+                  <div style={exampleSub}>{s.subtitle}</div>
+                </div>
+              ))}
+            </div>
+
+            <div style={footerWrap}>
+              <div style={footerPrimary}>
+                <span style={footerPlanetMark}>
+                  <span style={footerPlanetRing} />
+                </span>
+                HomePlanet © 2026. All rights reserved.
+              </div>
+              <div style={footerSecondary}>Your business is not complicated. Your tools are.</div>
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
-}                                                                                      
+}
+        
