@@ -257,9 +257,7 @@ export default function CreatorCityPreview() {
     {
       title: "Assigning Presence ID",
       text: businessName
-        ? `HP-${
-            slugify(businessName).replace(/-/g, "").toUpperCase().slice(0, 8) || "BOARD"
-          }-DEMO`
+        ? `HP-${slugify(businessName).replace(/-/g, "").toUpperCase().slice(0, 8) || "BOARD"}-DEMO`
         : "Waiting for business name",
       complete: !!businessName,
     },
@@ -322,7 +320,7 @@ export default function CreatorCityPreview() {
   const shell: React.CSSProperties = {
     maxWidth: 1450,
     margin: "0 auto",
-    padding: isMobile ? "10px 10px 24px" : 0,
+    padding: isMobile ? "10px 10px 22px" : 0,
   };
 
   const frame: React.CSSProperties = {
@@ -343,7 +341,7 @@ export default function CreatorCityPreview() {
     display: "flex",
     alignItems: isMobile ? "stretch" : "center",
     justifyContent: "space-between",
-    gap: isMobile ? 10 : 14,
+    gap: 10,
     padding: isMobile ? "12px 12px 10px" : "14px 18px 12px",
     borderBottom: "1px solid rgba(148,163,184,0.12)",
     background:
@@ -382,7 +380,7 @@ export default function CreatorCityPreview() {
     background: "rgba(34,197,94,0.12)",
     color: "#bbf7d0",
     fontWeight: 900,
-    fontSize: isMobile ? 11 : 11,
+    fontSize: 11,
     letterSpacing: 0.5,
     lineHeight: 1.1,
   };
@@ -394,7 +392,7 @@ export default function CreatorCityPreview() {
     background: "rgba(56,189,248,0.10)",
     color: "#bae6fd",
     fontWeight: 900,
-    fontSize: isMobile ? 11 : 11,
+    fontSize: 11,
     letterSpacing: 0.5,
     lineHeight: 1.1,
   };
@@ -450,7 +448,7 @@ export default function CreatorCityPreview() {
     fontWeight: 900,
     lineHeight: 1.04,
     color: "#ffffff",
-    letterSpacing: isMobile ? -0.3 : -0.3,
+    letterSpacing: -0.3,
   };
 
   const panelSub: React.CSSProperties = {
@@ -552,12 +550,12 @@ export default function CreatorCityPreview() {
     borderRadius: 16,
     border: "1px solid rgba(255,255,255,0.10)",
     background: "rgba(255,255,255,0.035)",
-    padding: isMobile ? 12 : 12,
+    padding: 12,
     boxShadow: "inset 0 1px 0 rgba(255,255,255,0.02)",
   };
 
   const statusLabel: React.CSSProperties = {
-    fontSize: isMobile ? 11 : 11,
+    fontSize: 11,
     fontWeight: 900,
     letterSpacing: 0.8,
     textTransform: "uppercase",
@@ -599,7 +597,7 @@ export default function CreatorCityPreview() {
           : status === "complete"
             ? "rgba(34,197,94,0.10)"
             : "rgba(255,255,255,0.03)",
-    padding: isMobile ? 12 : 12,
+    padding: 12,
   });
 
   const trajectoryTop: React.CSSProperties = {
@@ -655,7 +653,7 @@ export default function CreatorCityPreview() {
 
   const missionFeedList: React.CSSProperties = {
     display: "grid",
-    gridTemplateColumns: isMobile ? "1fr" : "repeat(2, minmax(0, 1fr))",
+    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
     gap: 10,
   };
 
@@ -663,12 +661,12 @@ export default function CreatorCityPreview() {
     borderRadius: 14,
     border: "1px solid rgba(255,255,255,0.10)",
     background: "rgba(255,255,255,0.03)",
-    padding: isMobile ? 12 : 12,
+    padding: 12,
     minWidth: 0,
   };
 
   const feedLabel: React.CSSProperties = {
-    fontSize: isMobile ? 10 : 11,
+    fontSize: 10,
     fontWeight: 900,
     letterSpacing: 0.8,
     textTransform: "uppercase",
@@ -677,7 +675,7 @@ export default function CreatorCityPreview() {
 
   const feedValue = (active: boolean): React.CSSProperties => ({
     marginTop: 8,
-    fontSize: isMobile ? 14 : 14,
+    fontSize: 14,
     fontWeight: 900,
     lineHeight: 1.15,
     color: active ? "#ffffff" : "rgba(226,232,240,0.54)",
@@ -706,7 +704,7 @@ export default function CreatorCityPreview() {
     border: active ? "1px solid rgba(34,197,94,0.32)" : "1px solid rgba(255,255,255,0.12)",
     background: active ? "rgba(34,197,94,0.14)" : "rgba(255,255,255,0.035)",
     borderRadius: 16,
-    padding: isMobile ? 14 : 14,
+    padding: 14,
     cursor: "pointer",
     minHeight: isMobile ? 88 : 96,
     boxShadow: "inset 0 1px 0 rgba(255,255,255,0.02), 0 10px 28px rgba(0,0,0,0.18)",
@@ -744,7 +742,7 @@ export default function CreatorCityPreview() {
 
   const inputBase: React.CSSProperties = {
     width: "100%",
-    borderRadius: isMobile ? 14 : 14,
+    borderRadius: 14,
     border: "1px solid rgba(255,255,255,0.16)",
     background: "rgba(255,255,255,0.04)",
     color: "#f8fafc",
@@ -774,7 +772,7 @@ export default function CreatorCityPreview() {
     alignItems: isMobile ? "stretch" : "center",
     justifyContent: "space-between",
     flexDirection: isMobile ? "column" : "row",
-    gap: isMobile ? 14 : 14,
+    gap: 14,
     marginTop: 16,
   };
 
@@ -814,7 +812,7 @@ export default function CreatorCityPreview() {
     borderRadius: 14,
     border: "1px solid rgba(255,255,255,0.10)",
     background: "rgba(255,255,255,0.03)",
-    padding: isMobile ? 12 : 12,
+    padding: 12,
   };
 
   const buildSequenceTop: React.CSSProperties = { display: "flex", alignItems: "center", gap: 10 };
@@ -824,9 +822,7 @@ export default function CreatorCityPreview() {
     height: 10,
     borderRadius: 999,
     background: complete ? "rgba(34,197,94,1)" : "rgba(56,189,248,1)",
-    boxShadow: complete
-      ? "0 0 12px rgba(34,197,94,0.8)"
-      : "0 0 12px rgba(56,189,248,0.7)",
+    boxShadow: complete ? "0 0 12px rgba(34,197,94,0.8)" : "0 0 12px rgba(56,189,248,0.7)",
     flexShrink: 0,
   });
 
@@ -873,7 +869,7 @@ export default function CreatorCityPreview() {
     borderRadius: 14,
     border: "1px solid rgba(255,255,255,0.10)",
     background: "rgba(255,255,255,0.03)",
-    padding: isMobile ? 12 : 12,
+    padding: 12,
   };
 
   const stageTag: React.CSSProperties = {
@@ -975,7 +971,7 @@ export default function CreatorCityPreview() {
   const featuredDemoBadge: React.CSSProperties = {
     borderRadius: 999,
     padding: isMobile ? "8px 12px" : "6px 10px",
-    fontSize: isMobile ? 11 : 11,
+    fontSize: 11,
     fontWeight: 900,
     border: "1px solid rgba(34,197,94,0.38)",
     color: "rgba(187,247,208,1)",
@@ -986,7 +982,7 @@ export default function CreatorCityPreview() {
   const featuredDemoSecondaryBadge: React.CSSProperties = {
     borderRadius: 999,
     padding: isMobile ? "8px 12px" : "6px 10px",
-    fontSize: isMobile ? 11 : 11,
+    fontSize: 11,
     fontWeight: 900,
     border: "1px solid rgba(56,189,248,0.34)",
     color: "rgba(186,230,253,1)",
@@ -1005,7 +1001,7 @@ export default function CreatorCityPreview() {
     borderRadius: 14,
     border: "1px solid rgba(255,255,255,0.10)",
     background: "rgba(255,255,255,0.04)",
-    padding: isMobile ? 12 : 12,
+    padding: 12,
     boxShadow: "inset 0 1px 0 rgba(255,255,255,0.02)",
   };
 
@@ -1031,7 +1027,7 @@ export default function CreatorCityPreview() {
   const tagStyle: React.CSSProperties = {
     borderRadius: 999,
     padding: isMobile ? "8px 12px" : "6px 10px",
-    fontSize: isMobile ? 11 : 11,
+    fontSize: 11,
     fontWeight: 900,
     border: "1px solid rgba(250,204,21,0.40)",
     color: "rgba(254,240,138,1)",
@@ -1104,41 +1100,18 @@ export default function CreatorCityPreview() {
     pointerEvents: "none",
   };
 
-  const mobileSectionOrderStyle: React.CSSProperties = isMobile
-    ? { display: "grid", gap: 10 }
-    : {};
+  const mobilePreviewPanel: React.CSSProperties = {
+    ...panel,
+    marginTop: 10,
+  };
 
   const intentCards = [
-    {
-      id: "landing-page" as BuildIntent,
-      title: "Landing Page",
-      text: "Your front door. Clear offer. Intake ready.",
-    },
-    {
-      id: "live-board" as BuildIntent,
-      title: "Live Board",
-      text: "Jobs. Status. Activity. All visible.",
-    },
-    {
-      id: "workflow-tool" as BuildIntent,
-      title: "Workflow Tool",
-      text: "Built around how you already work.",
-    },
-    {
-      id: "intake-flow" as BuildIntent,
-      title: "Intake Flow",
-      text: "Calls, texts, walk-ins into one system.",
-    },
-    {
-      id: "payment-flow" as BuildIntent,
-      title: "Payment Flow",
-      text: "Job to payment to proof.",
-    },
-    {
-      id: "full-system" as BuildIntent,
-      title: "Full Business System",
-      text: "Everything. One page. No switching.",
-    },
+    { id: "landing-page" as BuildIntent, title: "Landing Page", text: "Your front door. Clear offer. Intake ready." },
+    { id: "live-board" as BuildIntent, title: "Live Board", text: "Jobs. Status. Activity. All visible." },
+    { id: "workflow-tool" as BuildIntent, title: "Workflow Tool", text: "Built around how you already work." },
+    { id: "intake-flow" as BuildIntent, title: "Intake Flow", text: "Calls, texts, walk-ins into one system." },
+    { id: "payment-flow" as BuildIntent, title: "Payment Flow", text: "Job to payment to proof." },
+    { id: "full-system" as BuildIntent, title: "Full Business System", text: "Everything. One page. No switching." },
   ];
 
   return (
@@ -1151,7 +1124,6 @@ export default function CreatorCityPreview() {
               <span style={windowDot("#fbbf24")} />
               <span style={windowDot("#4ade80")} />
               <div style={topBadge}>CREATOR CITY MISSION SURFACE</div>
-              {!isMobile && <div style={topBadgeBlue}>LIVE BOARD GENERATOR</div>}
             </div>
 
             <div style={topBarLeft}>
@@ -1162,17 +1134,15 @@ export default function CreatorCityPreview() {
                   ...topBadgeBlue,
                   cursor: "pointer",
                   background: warmMode ? "rgba(245,158,11,0.10)" : "rgba(56,189,248,0.10)",
-                  border: warmMode
-                    ? "1px solid rgba(245,158,11,0.28)"
-                    : "1px solid rgba(56,189,248,0.30)",
+                  border: warmMode ? "1px solid rgba(245,158,11,0.28)" : "1px solid rgba(56,189,248,0.30)",
                   color: warmMode ? "#fde68a" : "#bae6fd",
                 }}
               >
                 {warmMode ? "WARM MODE ON" : "COOL MODE ON"}
               </button>
 
+              {!isMobile && <div style={topBadgeBlue}>LIVE BOARD GENERATOR</div>}
               <div style={topBarPrimaryBadge}>PRIMARY ROUTE /planet/creator/building</div>
-
               {!isMobile && <div style={topBadge}>FREE TRIAL PREVIEW</div>}
             </div>
           </div>
@@ -1206,14 +1176,14 @@ export default function CreatorCityPreview() {
                         borderRadius: 18,
                         border: "1px solid rgba(255,255,255,0.10)",
                         background: "rgba(255,255,255,0.03)",
-                        padding: isMobile ? 14 : 12,
+                        padding: 12,
                       }}
                     >
                       <div style={panelKicker}>Live board family</div>
                       <div
                         style={{
                           marginTop: 8,
-                          fontSize: isMobile ? 18 : 15,
+                          fontSize: 15,
                           fontWeight: 900,
                           color: "#ffffff",
                           lineHeight: 1.08,
@@ -1228,7 +1198,7 @@ export default function CreatorCityPreview() {
               </div>
             )}
 
-            <div style={mobileSectionOrderStyle}>
+            <div>
               <div style={heroCore}>
                 <div style={heroPadding}>
                   <button
@@ -1251,29 +1221,31 @@ export default function CreatorCityPreview() {
                     This is wrapped like a mission surface. One center screen for live truth,
                     one left rail for trajectory, one right rail for actions. This preview is
                     visual-only so you can study the feel before touching your live file.
-                    This pass adds a little more HomePlanet warmth without losing the cockpit
-                    clarity.
                   </div>
 
                   <div style={ctaRow}>
                     <button style={primaryBtn} onClick={scrollToIntakeForm}>
                       Start My Free Demo
                     </button>
-                    <button
-                      style={secondaryBtn}
-                      onClick={() => openRoute(LIVE_CAMP_GUARDIAN_ROUTE)}
-                    >
-                      See Camp Guardian Live
-                    </button>
                     <button style={secondaryBtn} onClick={scrollToReadySystems}>
                       Use Ready System
                     </button>
-                    <button
-                      style={secondaryBtn}
-                      onClick={() => openRoute("/planet/experience")}
-                    >
-                      Experience Planet
-                    </button>
+                    {!isMobile && (
+                      <button
+                        style={secondaryBtn}
+                        onClick={() => openRoute(LIVE_CAMP_GUARDIAN_ROUTE)}
+                      >
+                        See Camp Guardian Live
+                      </button>
+                    )}
+                    {!isMobile && (
+                      <button
+                        style={secondaryBtn}
+                        onClick={() => openRoute("/planet/experience")}
+                      >
+                        Experience Planet
+                      </button>
+                    )}
                   </div>
 
                   <div style={statusGrid}>
@@ -1307,141 +1279,54 @@ export default function CreatorCityPreview() {
               </div>
 
               {isMobile && (
-                <>
-                  <div style={panel}>
-                    <div style={panelHeader}>
-                      <div style={panelKicker}>Actions</div>
-                      <div style={panelTitle}>Launch controls</div>
-                      <div style={panelSub}>The next actions that matter.</div>
-                    </div>
-
-                    <div style={panelBody}>
-                      <div style={sideActionGrid}>
-                        <button style={sideActionBtn} onClick={scrollToIntakeForm}>
-                          Start my free demo
-                        </button>
-                        <button
-                          style={sideActionBtn}
-                          onClick={() => openRoute(LIVE_CAMP_GUARDIAN_ROUTE)}
-                        >
-                          Open Camp Guardian
-                        </button>
-                        <button style={sideActionBtn} onClick={scrollToReadySystems}>
-                          Use ready system
-                        </button>
-                        <button
-                          style={sideActionBtn}
-                          onClick={() => openRoute("/planet/experience")}
-                        >
-                          Open Experience Planet
-                        </button>
-                        <button
-                          style={sideActionBtn}
-                          onClick={() => openRoute(LIVE_PRODUCT_DEMO_ROUTE)}
-                        >
-                          Open product selling board
-                        </button>
-                      </div>
-
-                      <div style={sideHint}>
-                        Fewer choices. Better orientation. Still feels like a cockpit, just cleaner
-                        on mobile.
-                      </div>
+                <div style={mobilePreviewPanel}>
+                  <div style={panelHeader}>
+                    <div style={panelKicker}>Live preview</div>
+                    <div style={panelTitle}>{configPreview.familyLabel}</div>
+                    <div style={panelSub}>
+                      A fast preview of what the board turns into after intake.
                     </div>
                   </div>
 
-                  <div style={panel}>
-                    <div style={panelHeader}>
-                      <div style={panelKicker}>Trajectory</div>
-                      <div style={panelTitle}>Business launch path</div>
-                      <div style={panelSub}>Where the user is in the mission right now.</div>
-                    </div>
-
-                    <div style={panelBody}>
-                      <div style={trajectoryList}>
-                        {trajectorySteps.map((step) => (
-                          <div key={step.id} style={trajectoryItem(step.status)}>
-                            <div style={trajectoryTop}>
-                              <span style={trajectoryDot(step.status)} />
-                              <div style={trajectoryTitle}>{step.title}</div>
-                              <div style={trajectoryStatus}>{step.status.toUpperCase()}</div>
-                            </div>
-                            <div style={trajectoryText}>{step.text}</div>
-                          </div>
-                        ))}
+                  <div style={panelBody}>
+                    <div style={{ display: "grid", gap: 10 }}>
+                      <div style={stageCard}>
+                        <div style={stageTag}>FIRST STAGE</div>
+                        <div style={stageName}>{previewStages[0] || "Waiting"}</div>
+                        <div style={stageText}>{configPreview.boardSubtitle}</div>
                       </div>
 
-                      <div style={{ marginTop: 12 }}>
-                        <div
-                          style={{
-                            borderRadius: 16,
-                            border: "1px solid rgba(255,255,255,0.10)",
-                            background: "rgba(255,255,255,0.03)",
-                            padding: 12,
-                          }}
-                        >
-                          <div style={panelKicker}>Live board family</div>
-                          <div
-                            style={{
-                              marginTop: 8,
-                              fontSize: 16,
-                              fontWeight: 900,
-                              color: "#ffffff",
-                              lineHeight: 1.08,
-                            }}
-                          >
-                            {configPreview.familyLabel}
-                          </div>
-                          <div style={panelSub}>{configPreview.boardSubtitle}</div>
+                      <div style={stageCard}>
+                        <div style={stageTag}>LIVE REDIRECT</div>
+                        <div style={stageName}>
+                          {businessName
+                            ? `/planet/live/${slugify(businessName) || "starter-board"}-*`
+                            : "/planet/live/<boardSlug>"}
+                        </div>
+                        <div style={stageText}>
+                          Your intake creates the path into the live board.
                         </div>
                       </div>
                     </div>
                   </div>
+                </div>
+              )}
 
-                  <div style={panel}>
+              {!isMobile && (
+                <>
+                  <div style={sectionCard}>
                     <div style={panelHeader}>
-                      <div style={panelKicker}>Live build feed</div>
-                      <div style={panelTitle}>Board assembly preview</div>
-                      <div style={panelSub}>
-                        What the user should feel happening while Creator City is preparing the
-                        board.
-                      </div>
+                      <div style={panelKicker}>System truth</div>
+                      <div style={panelTitle}>Mission feed</div>
+                      <div style={panelSub}>Real board preparation signals based on the live intake state.</div>
                     </div>
 
-                    <div style={panelBody}>
-                      <div style={buildSequenceWrap}>
-                        {buildSequence.map((item) => (
-                          <div key={item.title} style={buildSequenceItem}>
-                            <div style={buildSequenceTop}>
-                              <span style={buildSequenceDot(item.complete)} />
-                              <div style={buildSequenceTitle}>{item.title}</div>
-                            </div>
-                            <div style={buildSequenceText}>{item.text}</div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div style={panel}>
-                    <div style={panelHeader}>
-                      <div style={panelKicker}>Stage preview</div>
-                      <div style={panelTitle}>{configPreview.familyLabel}</div>
-                      <div style={panelSub}>
-                        Early stage mapping based on the business type and intent.
-                      </div>
-                    </div>
-
-                    <div style={panelBody}>
-                      <div style={stageGrid}>
-                        {previewStages.map((stage, index) => (
-                          <div key={`${stage}-${index}`} style={stageCard}>
-                            <div style={stageTag}>STAGE {index + 1}</div>
-                            <div style={stageName}>{stage}</div>
-                            <div style={stageText}>
-                              This becomes part of the live board workflow once the intake is
-                              submitted.
-                            </div>
+                    <div style={sectionBody}>
+                      <div style={missionFeedList}>
+                        {missionFeed.map((item) => (
+                          <div key={item.label} style={missionFeedItem}>
+                            <div style={feedLabel}>{item.label}</div>
+                            <div style={feedValue(item.active)}>{item.value}</div>
                           </div>
                         ))}
                       </div>
@@ -1450,40 +1335,15 @@ export default function CreatorCityPreview() {
                 </>
               )}
 
-              <div style={sectionCard}>
-                <div style={panelHeader}>
-                  <div style={panelKicker}>System truth</div>
-                  <div style={panelTitle}>Mission feed</div>
-                  <div style={panelSub}>
-                    Real board preparation signals based on the live intake state.
-                  </div>
-                </div>
-
-                <div style={sectionBody}>
-                  <div style={missionFeedList}>
-                    {missionFeed.map((item) => (
-                      <div key={item.label} style={missionFeedItem}>
-                        <div style={feedLabel}>{item.label}</div>
-                        <div style={feedValue(item.active)}>{item.value}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
               <div ref={intakeFormRef} style={sectionCard}>
                 <div style={panelHeader}>
                   <div style={panelKicker}>Mission intake</div>
                   <div style={panelTitle}>Start your free live demo</div>
-                  <div style={panelSub}>
-                    Fill out this intake and Creator City instantly generates your live demo board.
-                  </div>
+                  <div style={panelSub}>Fill out this intake and Creator City instantly generates your live demo board.</div>
                 </div>
 
                 <div style={sectionBody}>
-                  <div style={formLead}>
-                    This form is still the real start path. It creates the demo.
-                  </div>
+                  <div style={formLead}>This form is still the real start path. It creates the demo.</div>
 
                   <div style={intentGrid}>
                     {intentCards.map((cardItem) => (
@@ -1512,102 +1372,58 @@ export default function CreatorCityPreview() {
                       <div style={intakeGrid}>
                         <div style={inputGroup}>
                           <label style={label}>Business name</label>
-                          <input
-                            style={inputBase}
-                            value={businessName}
-                            onChange={(e) => setBusinessName(e.target.value)}
-                          />
+                          <input style={inputBase} value={businessName} onChange={(e) => setBusinessName(e.target.value)} />
                         </div>
 
                         <div style={inputGroup}>
                           <label style={label}>Business type</label>
-                          <input
-                            style={inputBase}
-                            value={businessType}
-                            onChange={(e) => setBusinessType(e.target.value)}
-                          />
+                          <input style={inputBase} value={businessType} onChange={(e) => setBusinessType(e.target.value)} />
                         </div>
 
                         <div style={inputGroup}>
                           <label style={label}>City</label>
-                          <input
-                            style={inputBase}
-                            value={city}
-                            onChange={(e) => setCity(e.target.value)}
-                          />
+                          <input style={inputBase} value={city} onChange={(e) => setCity(e.target.value)} />
                         </div>
 
                         <div style={inputGroup}>
                           <label style={label}>Email or preferred contact</label>
-                          <input
-                            style={inputBase}
-                            value={contact}
-                            onChange={(e) => setContact(e.target.value)}
-                          />
+                          <input style={inputBase} value={contact} onChange={(e) => setContact(e.target.value)} />
                         </div>
 
                         <div style={{ ...inputGroup, gridColumn: "1 / -1" }}>
                           <label style={label}>How do you run jobs right now?</label>
-                          <textarea
-                            style={textareaWide}
-                            value={currentWorkflow}
-                            onChange={(e) => setCurrentWorkflow(e.target.value)}
-                          />
+                          <textarea style={textareaWide} value={currentWorkflow} onChange={(e) => setCurrentWorkflow(e.target.value)} />
                         </div>
 
                         <div style={{ ...inputGroup, gridColumn: "1 / -1" }}>
                           <label style={label}>What wastes the most time?</label>
-                          <textarea
-                            style={textareaWide}
-                            value={biggestFriction}
-                            onChange={(e) => setBiggestFriction(e.target.value)}
-                          />
+                          <textarea style={textareaWide} value={biggestFriction} onChange={(e) => setBiggestFriction(e.target.value)} />
                         </div>
 
                         <div style={{ ...inputGroup, gridColumn: "1 / -1" }}>
                           <label style={label}>What do customers keep asking about?</label>
-                          <textarea
-                            style={textareaWide}
-                            value={customerQuestions}
-                            onChange={(e) => setCustomerQuestions(e.target.value)}
-                          />
+                          <textarea style={textareaWide} value={customerQuestions} onChange={(e) => setCustomerQuestions(e.target.value)} />
                         </div>
 
                         <div style={{ ...inputGroup, gridColumn: "1 / -1" }}>
-                          <label style={label}>
-                            What would make you say “holy shit, this solves it”?
-                          </label>
-                          <textarea
-                            style={textareaWide}
-                            value={holyShiftMoment}
-                            onChange={(e) => setHolyShiftMoment(e.target.value)}
-                          />
+                          <label style={label}>What would make you say “holy shit, this solves it”?</label>
+                          <textarea style={textareaWide} value={holyShiftMoment} onChange={(e) => setHolyShiftMoment(e.target.value)} />
                         </div>
                       </div>
 
                       <div style={fileWrap}>
                         <div style={label}>Upload photos of your workflow</div>
-                        <div style={{ ...panelSub, marginTop: 8 }}>
-                          Show the current mess. We use it to remove steps.
-                        </div>
+                        <div style={{ ...panelSub, marginTop: 8 }}>Show the current mess. We use it to remove steps.</div>
                         <div style={{ marginTop: 12 }}>
                           <input
                             type="file"
                             multiple
                             accept="image/*"
-                            onChange={(e) =>
-                              setWorkflowFiles(Array.from(e.target.files || []))
-                            }
+                            onChange={(e) => setWorkflowFiles(Array.from(e.target.files || []))}
                             style={{ fontSize: isMobile ? 16 : 14, width: "100%" }}
                           />
                         </div>
-                        <div
-                          style={{
-                            marginTop: 10,
-                            fontSize: isMobile ? 14 : 12,
-                            color: "rgba(186,230,253,0.9)",
-                          }}
-                        >
+                        <div style={{ marginTop: 10, fontSize: isMobile ? 14 : 12, color: "rgba(186,230,253,0.9)" }}>
                           {selectedFilesLabel}
                         </div>
                       </div>
@@ -1622,14 +1438,11 @@ export default function CreatorCityPreview() {
                           }}
                           disabled={submitting}
                         >
-                          {submitting
-                            ? "Building your free live demo..."
-                            : "Build My Free Demo"}
+                          {submitting ? "Building your free live demo..." : "Build My Free Demo"}
                         </button>
 
                         <div style={helperText}>
-                          This preview simulates the intake flow so you can feel the cockpit
-                          layout.
+                          This preview simulates the intake flow so you can feel the cockpit layout.
                         </div>
                       </div>
                     </form>
@@ -1649,36 +1462,16 @@ export default function CreatorCityPreview() {
 
                   <div style={panelBody}>
                     <div style={sideActionGrid}>
-                      <button style={sideActionBtn} onClick={scrollToIntakeForm}>
-                        Start my free demo
-                      </button>
-                      <button
-                        style={sideActionBtn}
-                        onClick={() => openRoute(LIVE_CAMP_GUARDIAN_ROUTE)}
-                      >
-                        Open Camp Guardian
-                      </button>
-                      <button style={sideActionBtn} onClick={scrollToReadySystems}>
-                        Use ready system
-                      </button>
-                      <button
-                        style={sideActionBtn}
-                        onClick={() => openRoute("/planet/experience")}
-                      >
-                        Open Experience Planet
-                      </button>
-                      <button
-                        style={sideActionBtn}
-                        onClick={() => openRoute(LIVE_PRODUCT_DEMO_ROUTE)}
-                      >
-                        Open product selling board
-                      </button>
+                      <button style={sideActionBtn} onClick={scrollToIntakeForm}>Start my free demo</button>
+                      <button style={sideActionBtn} onClick={() => openRoute(LIVE_CAMP_GUARDIAN_ROUTE)}>Open Camp Guardian</button>
+                      <button style={sideActionBtn} onClick={scrollToReadySystems}>Use ready system</button>
+                      <button style={sideActionBtn} onClick={() => openRoute("/planet/experience")}>Open Experience Planet</button>
+                      <button style={sideActionBtn} onClick={() => openRoute(LIVE_PRODUCT_DEMO_ROUTE)}>Open product selling board</button>
                     </div>
 
                     <div style={sideHint}>
                       This rail is the spacecraft command concept translated into Creator City:
-                      fewer choices, better orientation. The warmer glow helps it feel less cold
-                      and more HomePlanet.
+                      fewer choices, better orientation.
                     </div>
                   </div>
                 </div>
@@ -1687,10 +1480,7 @@ export default function CreatorCityPreview() {
                   <div style={panelHeader}>
                     <div style={panelKicker}>Live build feed</div>
                     <div style={panelTitle}>Board assembly preview</div>
-                    <div style={panelSub}>
-                      What the user should feel happening while Creator City is preparing the
-                      board.
-                    </div>
+                    <div style={panelSub}>What the user should feel happening while Creator City is preparing the board.</div>
                   </div>
 
                   <div style={panelBody}>
@@ -1712,9 +1502,7 @@ export default function CreatorCityPreview() {
                   <div style={panelHeader}>
                     <div style={panelKicker}>Stage preview</div>
                     <div style={panelTitle}>{configPreview.familyLabel}</div>
-                    <div style={panelSub}>
-                      Early stage mapping based on the business type and intent.
-                    </div>
+                    <div style={panelSub}>Early stage mapping based on the business type and intent.</div>
                   </div>
 
                   <div style={panelBody}>
@@ -1723,10 +1511,7 @@ export default function CreatorCityPreview() {
                         <div key={`${stage}-${index}`} style={stageCard}>
                           <div style={stageTag}>STAGE {index + 1}</div>
                           <div style={stageName}>{stage}</div>
-                          <div style={stageText}>
-                            This becomes part of the live board workflow once the intake is
-                            submitted.
-                          </div>
+                          <div style={stageText}>This becomes part of the live board workflow once the intake is submitted.</div>
                         </div>
                       ))}
                     </div>
@@ -1737,118 +1522,102 @@ export default function CreatorCityPreview() {
           </div>
 
           <div style={{ padding: isMobile ? "0 10px 20px" : "0 16px 28px" }}>
-            <div ref={readySystemsRef} style={examplesLabel}>
-              Featured live system
-            </div>
+            {isMobile ? (
+              <>
+                <div ref={readySystemsRef} style={examplesLabel}>Ready systems</div>
 
-            <div
-              style={featuredDemoCard}
-              onClick={() => openRoute(LIVE_CAMP_GUARDIAN_ROUTE)}
-            >
-              <div style={featuredDemoInner}>
-                <div style={featuredDemoTop}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={featuredDemoBadgeRow}>
-                      <div style={featuredDemoBadge}>LIVE SAFETY SYSTEM</div>
-                      <div style={featuredDemoSecondaryBadge}>PARENT VIEW ACTIVE</div>
-                    </div>
-
-                    <div style={featuredDemoTitle}>Camp Guardian</div>
-
-                    <div style={featuredDemoSubline}>
-                      Live child presence, guardian visibility, protected movement tracking,
-                      and parent-facing real-time status.
-                    </div>
-
-                    <div style={featuredDemoSupport}>
-                      Camps, youth programs, activity groups, and supervised child environments
-                      can run live with movement visibility, guardian-safe links, and proof-style
-                      timelines in one system.
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    style={featuredDemoAction}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openRoute(LIVE_CAMP_GUARDIAN_ROUTE);
-                    }}
-                  >
-                    Open Camp Guardian
-                  </button>
-                </div>
-
-                <div style={featuredValueGrid}>
-                  {[
-                    {
-                      k: "LIVE CHILD PRESENCE",
-                      t: "See where each child is right now",
-                      d: "Checked in, activity zone, hydration, with staff, and checked out all stay visible live.",
-                      c: "rgba(187,247,208,1)",
-                    },
-                    {
-                      k: "PARENT VIEW",
-                      t: "Guardian-safe status from a protected link",
-                      d: "Open the parent view directly from the child card and show real-time movement without exposing the whole system.",
-                      c: "rgba(186,230,253,1)",
-                    },
-                    {
-                      k: "PREDATORSHIELD BASE",
-                      t: "Child profile stays controlled",
-                      d: "Movement, guardian contact, timelines, and notes stay visible while the profile remains protected.",
-                      c: "rgba(254,240,138,1)",
-                    },
-                  ].map((item) => (
-                    <div key={item.k} style={featuredValueCard}>
-                      <div
-                        style={{
-                          fontSize: isMobile ? 13 : 12,
-                          fontWeight: 900,
-                          color: item.c,
-                          marginBottom: 6,
-                          letterSpacing: 0.3,
-                        }}
-                      >
-                        {item.k}
-                      </div>
-                      <div
-                        style={{
-                          fontSize: isMobile ? 16 : 14,
-                          fontWeight: 900,
-                          color: "#ffffff",
-                          lineHeight: 1.08,
-                          marginBottom: 6,
-                        }}
-                      >
-                        {item.t}
-                      </div>
-                      <div
-                        style={{
-                          fontSize: isMobile ? 13 : 12,
-                          color: "rgba(226,232,240,0.76)",
-                          lineHeight: 1.5,
-                        }}
-                      >
-                        {item.d}
-                      </div>
+                <div style={examplesGrid}>
+                  {systems.slice(0, 4).map((s) => (
+                    <div key={s.id} style={exampleCard} onClick={() => openRoute(s.to)}>
+                      <div style={tagStyle}>{s.tag}</div>
+                      <div style={exampleTitle}>{s.title}</div>
+                      <div style={exampleSub}>{s.subtitle}</div>
                     </div>
                   ))}
                 </div>
-              </div>
-            </div>
+              </>
+            ) : (
+              <>
+                <div ref={readySystemsRef} style={examplesLabel}>Featured live system</div>
 
-            <div style={examplesLabel}>Use a ready system</div>
+                <div style={featuredDemoCard} onClick={() => openRoute(LIVE_CAMP_GUARDIAN_ROUTE)}>
+                  <div style={featuredDemoInner}>
+                    <div style={featuredDemoTop}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={featuredDemoBadgeRow}>
+                          <div style={featuredDemoBadge}>LIVE SAFETY SYSTEM</div>
+                          <div style={featuredDemoSecondaryBadge}>PARENT VIEW ACTIVE</div>
+                        </div>
 
-            <div style={examplesGrid}>
-              {systems.map((s) => (
-                <div key={s.id} style={exampleCard} onClick={() => openRoute(s.to)}>
-                  <div style={tagStyle}>{s.tag}</div>
-                  <div style={exampleTitle}>{s.title}</div>
-                  <div style={exampleSub}>{s.subtitle}</div>
+                        <div style={featuredDemoTitle}>Camp Guardian</div>
+
+                        <div style={featuredDemoSubline}>
+                          Live child presence, guardian visibility, protected movement tracking, and parent-facing real-time status.
+                        </div>
+
+                        <div style={featuredDemoSupport}>
+                          Camps, youth programs, activity groups, and supervised child environments can run live with movement visibility, guardian-safe links, and proof-style timelines in one system.
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        style={featuredDemoAction}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openRoute(LIVE_CAMP_GUARDIAN_ROUTE);
+                        }}
+                      >
+                        Open Camp Guardian
+                      </button>
+                    </div>
+
+                    <div style={featuredValueGrid}>
+                      {[{
+                        k: "LIVE CHILD PRESENCE",
+                        t: "See where each child is right now",
+                        d: "Checked in, activity zone, hydration, with staff, and checked out all stay visible live.",
+                        c: "rgba(187,247,208,1)",
+                      }, {
+                        k: "PARENT VIEW",
+                        t: "Guardian-safe status from a protected link",
+                        d: "Open the parent view directly from the child card and show real-time movement without exposing the whole system.",
+                        c: "rgba(186,230,253,1)",
+                      }, {
+                        k: "PREDATORSHIELD BASE",
+                        t: "Child profile stays controlled",
+                        d: "Movement, guardian contact, timelines, and notes stay visible while the profile remains protected.",
+                        c: "rgba(254,240,138,1)",
+                      }].map((item) => (
+                        <div key={item.k} style={featuredValueCard}>
+                          <div style={{ fontSize: 12, fontWeight: 900, color: item.c, marginBottom: 6, letterSpacing: 0.3 }}>
+                            {item.k}
+                          </div>
+                          <div style={{ fontSize: 14, fontWeight: 900, color: "#ffffff", lineHeight: 1.08, marginBottom: 6 }}>
+                            {item.t}
+                          </div>
+                          <div style={{ fontSize: 12, color: "rgba(226,232,240,0.76)", lineHeight: 1.5 }}>
+                            {item.d}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              ))}
-            </div>
+
+                <div style={examplesLabel}>Use a ready system</div>
+
+                <div style={examplesGrid}>
+                  {systems.map((s) => (
+                    <div key={s.id} style={exampleCard} onClick={() => openRoute(s.to)}>
+                      <div style={tagStyle}>{s.tag}</div>
+                      <div style={exampleTitle}>{s.title}</div>
+                      <div style={exampleSub}>{s.subtitle}</div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
 
             <div style={footerWrap}>
               <div style={footerPrimary}>
@@ -1857,9 +1626,7 @@ export default function CreatorCityPreview() {
                 </span>
                 HomePlanet © 2026. All rights reserved.
               </div>
-              <div style={footerSecondary}>
-                Your business is not complicated. Your tools are.
-              </div>
+              <div style={footerSecondary}>Your business is not complicated. Your tools are.</div>
             </div>
           </div>
         </div>
