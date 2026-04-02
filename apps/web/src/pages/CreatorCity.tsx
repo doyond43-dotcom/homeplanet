@@ -1,4 +1,4 @@
- import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
 const LIVE_PRODUCT_DEMO_ROUTE = "/planet/creator/rc-live";
 const LIVE_CAMP_GUARDIAN_ROUTE = "/planet/live/camp-aquaflow-5593";
@@ -76,6 +76,9 @@ function fakeResolveStarterBoardConfig(args: {
 }
 
 export default function CreatorCityPreview() {
+  const openRoute = (to: string) => {
+    window.location.href = to;
+  };
   const [warmMode, setWarmMode] = useState(true);
   const readySystemsRef = useRef<HTMLDivElement | null>(null);
   const intakeFormRef = useRef<HTMLDivElement | null>(null);
@@ -1109,7 +1112,13 @@ export default function CreatorCityPreview() {
             <div>
               <div style={heroCore}>
                 <div style={{ padding: isMobile ? 16 : 18 }}>
-                  <div style={topBadge}>BUILD MY BUSINESS SYSTEM</div>
+                  <button
+                    type="button"
+                    style={{ ...topBadge, cursor: "pointer" }}
+                    onClick={scrollToIntakeForm}
+                  >
+                    BUILD MY BUSINESS SYSTEM
+                  </button>
 
                   <div style={title}>Creator City</div>
 
@@ -1127,9 +1136,9 @@ export default function CreatorCityPreview() {
 
                   <div style={ctaRow}>
                     <button style={primaryBtn} onClick={scrollToIntakeForm}>Start My Free Demo</button>
-                    <button style={secondaryBtn}>See Camp Guardian Live</button>
+                    <button style={secondaryBtn} onClick={() => openRoute(LIVE_CAMP_GUARDIAN_ROUTE)}>See Camp Guardian Live</button>
                     <button style={secondaryBtn} onClick={scrollToReadySystems}>Use Ready System</button>
-                    <button style={secondaryBtn}>Experience Planet</button>
+                    <button style={secondaryBtn} onClick={() => openRoute("/planet/experience")}>Experience Planet</button>
                   </div>
 
                   <div style={statusGrid}>
@@ -1300,10 +1309,10 @@ export default function CreatorCityPreview() {
                 <div style={panelBody}>
                   <div style={sideActionGrid}>
                     <button style={sideActionBtn} onClick={scrollToIntakeForm}>Start my free demo</button>
-                    <button style={sideActionBtn}>Open Camp Guardian</button>
+                    <button style={sideActionBtn} onClick={() => openRoute(LIVE_CAMP_GUARDIAN_ROUTE)}>Open Camp Guardian</button>
                     <button style={sideActionBtn} onClick={scrollToReadySystems}>Use ready system</button>
-                    <button style={sideActionBtn}>Open Experience Planet</button>
-                    <button style={sideActionBtn}>Open product selling board</button>
+                    <button style={sideActionBtn} onClick={() => openRoute("/planet/experience")}>Open Experience Planet</button>
+                    <button style={sideActionBtn} onClick={() => openRoute(LIVE_PRODUCT_DEMO_ROUTE)}>Open product selling board</button>
                   </div>
 
                   <div style={sideHint}>
@@ -1359,7 +1368,7 @@ export default function CreatorCityPreview() {
           <div style={{ padding: isMobile ? "0 14px 24px" : "0 16px 28px" }}>
             <div ref={readySystemsRef} style={examplesLabel}>Featured live system</div>
 
-            <div style={featuredDemoCard}>
+            <div style={featuredDemoCard} onClick={() => openRoute(LIVE_CAMP_GUARDIAN_ROUTE)}>
               <div style={featuredDemoInner}>
                 <div style={featuredDemoTop}>
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -1379,7 +1388,16 @@ export default function CreatorCityPreview() {
                     </div>
                   </div>
 
-                  <button type="button" style={featuredDemoAction}>Open Camp Guardian</button>
+                  <button
+                    type="button"
+                    style={featuredDemoAction}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openRoute(LIVE_CAMP_GUARDIAN_ROUTE);
+                    }}
+                  >
+                    Open Camp Guardian
+                  </button>
                 </div>
 
                 <div style={featuredValueGrid}>
@@ -1419,7 +1437,7 @@ export default function CreatorCityPreview() {
 
             <div style={examplesGrid}>
               {systems.map((s) => (
-                <div key={s.id} style={exampleCard}>
+                <div key={s.id} style={exampleCard} onClick={() => openRoute(s.to)}>
                   <div style={tagStyle}>{s.tag}</div>
                   <div style={exampleTitle}>{s.title}</div>
                   <div style={exampleSub}>{s.subtitle}</div>
@@ -1442,4 +1460,3 @@ export default function CreatorCityPreview() {
     </div>
   );
 }
-        
