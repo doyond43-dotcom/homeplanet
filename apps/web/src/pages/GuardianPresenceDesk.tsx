@@ -21,6 +21,11 @@ import {
   Link2,
   MessageSquare,
   Siren,
+  Eye,
+  Lock,
+  Users,
+  Radio,
+  Clock3,
 } from "lucide-react";
 
 import GuardianPanel from "../components/guardian/GuardianPanel";
@@ -173,6 +178,9 @@ export default function GuardianPresenceDesk() {
   const [pairingCode] = useState(() =>
     Math.random().toString(36).slice(2, 8).toUpperCase(),
   );
+  const [publicPreviewEnabled, setPublicPreviewEnabled] = useState(true);
+  const [contactButtonEnabled, setContactButtonEnabled] = useState(true);
+  const [timelinePreviewEnabled, setTimelinePreviewEnabled] = useState(false);
   const timelineRef = useRef<HTMLDivElement | null>(null);
 
   const [panicHoldProgress, setPanicHoldProgress] = useState(0);
@@ -226,6 +234,33 @@ export default function GuardianPresenceDesk() {
       routeState: "Monitoring",
     };
   }, [mode]);
+
+  const householdMembers = useMemo(
+    () => [
+      {
+        id: "haley",
+        name: "Haley D.",
+        label: "Child",
+        status: mode === "child" ? "Active" : "Standby",
+        selected: mode === "child",
+      },
+      {
+        id: "mary",
+        name: "Mary Johnson",
+        label: "Elder",
+        status: mode === "elder" ? "Active" : "Standby",
+        selected: mode === "elder",
+      },
+      {
+        id: "daniel",
+        name: "Daniel R.",
+        label: "Medical",
+        status: mode === "medical" ? "Active" : "Standby",
+        selected: mode === "medical",
+      },
+    ],
+    [mode],
+  );
 
   function addLog(title: string, detail: string) {
     setActionLogs((prev) => [
@@ -508,403 +543,586 @@ export default function GuardianPresenceDesk() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0b1020] text-white">
-      <div className="mx-auto max-w-[1300px] px-6 py-8">
-        <header className="mb-6 rounded-3xl border border-blue-400/20 bg-gradient-to-r from-blue-900/40 to-purple-900/40 p-6 shadow-[0_0_0_1px_rgba(96,165,250,0.06),0_12px_40px_rgba(0,0,0,0.25)]">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <div className="flex items-center gap-3">
-                <Shield className="h-6 w-6 text-blue-300" />
-                <h1 className="text-xl font-semibold tracking-wide">Planet Guardian</h1>
-              </div>
-
-              <p className="mt-2 text-sm text-blue-200/80">
-                Guardian preserves and communicates a person’s situation when they cannot.
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <button
-                onMouseDown={startPanicHold}
-                onMouseUp={cancelPanicHold}
-                onMouseLeave={cancelPanicHold}
-                onTouchStart={startPanicHold}
-                onTouchEnd={cancelPanicHold}
-                onTouchCancel={cancelPanicHold}
-                className="relative inline-flex overflow-hidden items-center justify-center gap-2 rounded-2xl border border-red-400/35 bg-red-500/12 px-5 py-4 text-sm font-semibold uppercase tracking-[0.24em] text-red-200 transition hover:scale-[1.01] hover:bg-red-500/20 select-none"
-              >
-                <div
-                  className="absolute inset-y-0 left-0 bg-red-500/30 transition-[width] duration-75"
-                  style={{ width: `${panicHoldProgress * 100}%` }}
-                />
-                <span className="relative flex items-center gap-2">
-                  <Siren className="h-4 w-4" />
-                  {panicHoldProgress > 0 ? "Hold to activate..." : "Activate Panic Mode"}
-                </span>
-              </button>
-
-              <div className="text-center text-[11px] uppercase tracking-[0.22em] text-red-200/55">
-                Press and hold
-              </div>
-            </div>
-          </div>
-        </header>
-
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[300px_1fr_300px]">
-          <section className="space-y-3">
-            <div className="text-sm uppercase tracking-wider text-blue-200/70">
-              Guardian Modes
-            </div>
-
-            <ModeButton
-              active={mode === "elder"}
-              label="Elder Mode"
-              icon={Shield}
-              onClick={() => handleModeChange("elder")}
-            />
-            <ModeButton
-              active={mode === "child"}
-              label="Child Mode"
-              icon={Bike}
-              onClick={() => handleModeChange("child")}
-            />
-            <ModeButton
-              active={mode === "medical"}
-              label="Medical Mode"
-              icon={Activity}
-              onClick={() => handleModeChange("medical")}
-            />
-          </section>
-
-          <section className="space-y-4">
-            <div className="rounded-2xl border border-blue-400/20 bg-blue-900/20 p-5 shadow-[0_10px_28px_rgba(0,0,0,0.20)]">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <h3 className="text-lg font-semibold">{profile.name}</h3>
-                  <p className="text-sm text-blue-200">{profile.label}</p>
+    <div className="min-h-screen bg-[#07111f] text-white">
+      <div className="mx-auto max-w-[1480px] px-4 py-4 md:px-6 md:py-6">
+        <div className="overflow-hidden rounded-[28px] border border-cyan-400/15 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.12),transparent_30%),radial-gradient(circle_at_top_right,rgba(168,85,247,0.10),transparent_30%),linear-gradient(180deg,rgba(8,15,28,0.98),rgba(4,10,20,1))] shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
+          <header className="border-b border-white/10 px-4 py-4 md:px-6">
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-cyan-400/25 bg-cyan-400/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-cyan-100">
+                    <Shield className="h-3.5 w-3.5" />
+                    Planet Guardian
+                  </span>
+                  <span className="inline-flex items-center rounded-full border border-purple-400/25 bg-purple-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-purple-100">
+                    Protected Command
+                  </span>
+                  <span className="inline-flex items-center rounded-full border border-emerald-400/25 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-emerald-100">
+                    {isPaired ? "Wearer Linked" : "Waiting to Pair"}
+                  </span>
                 </div>
 
-                <div
-                  className={`rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] ${
-                    isPaired
-                      ? "border-emerald-400/35 bg-emerald-900/20 text-emerald-100"
-                      : "border-amber-400/35 bg-amber-900/20 text-amber-100"
-                  }`}
+                <div className="mt-4">
+                  <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
+                    Guardian Presence Desk
+                  </h1>
+                  <p className="mt-2 max-w-3xl text-sm text-cyan-100/75 md:text-[15px]">
+                    Live protection, location continuity, impact awareness, and contact control
+                    in one calm command surface.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex w-full flex-col items-stretch gap-2 sm:w-auto">
+                <button
+                  onMouseDown={startPanicHold}
+                  onMouseUp={cancelPanicHold}
+                  onMouseLeave={cancelPanicHold}
+                  onTouchStart={startPanicHold}
+                  onTouchEnd={cancelPanicHold}
+                  onTouchCancel={cancelPanicHold}
+                  className="relative inline-flex overflow-hidden items-center justify-center gap-2 rounded-2xl border border-red-400/35 bg-red-500/12 px-5 py-4 text-sm font-semibold uppercase tracking-[0.24em] text-red-100 transition hover:scale-[1.01] hover:bg-red-500/20 select-none"
                 >
-                  {isPaired ? "Paired" : "Not Paired"}
+                  <div
+                    className="absolute inset-y-0 left-0 bg-red-500/30 transition-[width] duration-75"
+                    style={{ width: `${panicHoldProgress * 100}%` }}
+                  />
+                  <span className="relative flex items-center gap-2">
+                    <Siren className="h-4 w-4" />
+                    {panicHoldProgress > 0 ? "Hold to activate..." : "Activate Panic Mode"}
+                  </span>
+                </button>
+
+                <div className="text-center text-[11px] uppercase tracking-[0.22em] text-red-200/55">
+                  Press and hold
                 </div>
               </div>
-
-              <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
-                <Info label="Status" value={profile.status} icon={Shield} />
-                <Info label="Location" value={profile.location} icon={MapPin} />
-                <Info label="Battery" value="86%" icon={Battery} />
-              </div>
-
-              {mode === "child" && (
-                <div className="mt-4 grid gap-3 md:grid-cols-3">
-                  <Info label="Home Base" value={profile.homeBase ?? "Home"} icon={Home} />
-                  <Info
-                    label="Destination"
-                    value={profile.destination ?? "School"}
-                    icon={School}
-                  />
-                  <Info
-                    label="Current State"
-                    value={profile.routeState ?? "On Route"}
-                    icon={Route}
-                  />
-                </div>
-              )}
             </div>
+          </header>
 
-            <div className="rounded-2xl border border-cyan-400/20 bg-cyan-900/10 p-5 shadow-[0_10px_28px_rgba(0,0,0,0.20)]">
-              <div className="flex items-center gap-2">
-                <Link2 className="h-4 w-4 text-cyan-300" />
-                <div className="text-sm uppercase tracking-wider text-cyan-200/80">
-                  Guardian Pairing
+          <div className="grid grid-cols-1 gap-4 p-4 lg:grid-cols-[280px_minmax(0,1fr)_320px] md:p-6">
+            <aside className="space-y-4">
+              <CockpitCard
+                kicker="Household"
+                title="Protected members"
+                sub="Switch the active protection lens."
+              >
+                <div className="space-y-2">
+                  {householdMembers.map((member) => (
+                    <button
+                      key={member.id}
+                      onClick={() =>
+                        handleModeChange(
+                          member.id === "haley"
+                            ? "child"
+                            : member.id === "mary"
+                              ? "elder"
+                              : "medical",
+                        )
+                      }
+                      className={[
+                        "w-full rounded-2xl border px-4 py-3 text-left transition",
+                        member.selected
+                          ? "border-cyan-400/35 bg-cyan-500/10 shadow-[0_10px_28px_rgba(0,0,0,0.20)]"
+                          : "border-white/10 bg-white/[0.03] hover:bg-white/[0.05]",
+                      ].join(" ")}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <div className="text-sm font-semibold text-white">{member.name}</div>
+                          <div className="text-xs uppercase tracking-[0.18em] text-cyan-100/55">
+                            {member.label}
+                          </div>
+                        </div>
+                        <div
+                          className={[
+                            "rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em]",
+                            member.selected
+                              ? "border border-emerald-400/35 bg-emerald-500/10 text-emerald-100"
+                              : "border border-white/10 bg-white/[0.04] text-white/65",
+                          ].join(" ")}
+                        >
+                          {member.status}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
                 </div>
+              </CockpitCard>
+
+              <CockpitCard
+                kicker="Guardian modes"
+                title="Protection mode"
+                sub="Pick the watch pattern."
+              >
+                <div className="space-y-2">
+                  <ModeButton
+                    active={mode === "elder"}
+                    label="Elder Mode"
+                    icon={Shield}
+                    onClick={() => handleModeChange("elder")}
+                  />
+                  <ModeButton
+                    active={mode === "child"}
+                    label="Child Mode"
+                    icon={Bike}
+                    onClick={() => handleModeChange("child")}
+                  />
+                  <ModeButton
+                    active={mode === "medical"}
+                    label="Medical Mode"
+                    icon={Activity}
+                    onClick={() => handleModeChange("medical")}
+                  />
+                </div>
+              </CockpitCard>
+
+              <CockpitCard
+                kicker="Live state"
+                title="Protection snapshot"
+                sub="What Guardian sees right now."
+              >
+                <div className="grid gap-3">
+                  <MiniStat
+                    icon={Radio}
+                    label="Sensor state"
+                    value={sensorStatus}
+                  />
+                  <MiniStat
+                    icon={MapPin}
+                    label="Location"
+                    value={profile.location}
+                  />
+                  <MiniStat
+                    icon={Clock3}
+                    label="Route state"
+                    value={profile.routeState ?? "Monitoring"}
+                  />
+                </div>
+              </CockpitCard>
+            </aside>
+
+            <main className="space-y-4">
+              <CockpitCard
+                kicker="Selected profile"
+                title={profile.name}
+                sub={profile.label}
+              >
+                <div className="grid gap-4">
+                  <div className="rounded-[22px] border border-cyan-400/20 bg-cyan-500/[0.05] p-4 shadow-[0_12px_30px_rgba(0,0,0,0.18)]">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <div className="text-lg font-semibold text-white">{profile.name}</div>
+                        <div className="mt-1 text-sm text-cyan-100/70">{profile.label}</div>
+                      </div>
+
+                      <div
+                        className={`rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] ${
+                          isPaired
+                            ? "border-emerald-400/35 bg-emerald-900/20 text-emerald-100"
+                            : "border-amber-400/35 bg-amber-900/20 text-amber-100"
+                        }`}
+                      >
+                        {isPaired ? "Paired" : "Not Paired"}
+                      </div>
+                    </div>
+
+                    <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+                      <Info label="Status" value={profile.status} icon={Shield} />
+                      <Info label="Location" value={profile.location} icon={MapPin} />
+                      <Info label="Battery" value="86%" icon={Battery} />
+                    </div>
+
+                    {mode === "child" && (
+                      <div className="mt-3 grid gap-3 md:grid-cols-3">
+                        <Info label="Home Base" value={profile.homeBase ?? "Home"} icon={Home} />
+                        <Info
+                          label="Destination"
+                          value={profile.destination ?? "School"}
+                          icon={School}
+                        />
+                        <Info
+                          label="Current State"
+                          value={profile.routeState ?? "On Route"}
+                          icon={Route}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+                    <CockpitInner
+                      kicker="Pairing"
+                      title="Wearer device link"
+                      sub="Device continuity and quick relay tools."
+                    >
+                      <div className="grid gap-3 md:grid-cols-3">
+                        <Info
+                          label="Pair Status"
+                          value={isPaired ? "Wearer device linked" : "Waiting to pair"}
+                          icon={Shield}
+                        />
+                        <Info label="Device" value={pairedDeviceName} icon={Smartphone} />
+                        <Info label="Pair Code" value={pairingCode} icon={Copy} />
+                      </div>
+
+                      <div className="mt-4 grid grid-cols-2 gap-2">
+                        {!isPaired ? (
+                          <Action
+                            icon={Link2}
+                            label="Pair Device"
+                            onClick={handlePairDevice}
+                            tone="green"
+                          />
+                        ) : (
+                          <Action
+                            icon={Link2}
+                            label="Unpair Device"
+                            onClick={handleUnpairDevice}
+                            tone="orange"
+                          />
+                        )}
+
+                        <Action
+                          icon={MessageSquare}
+                          label="Quick I'm OK"
+                          onClick={handleQuickTextOkay}
+                          tone="blue"
+                        />
+                        <Action
+                          icon={Bell}
+                          label="Quick Need Help"
+                          onClick={handleQuickTextHelp}
+                          tone="purple"
+                        />
+                        <Action
+                          icon={Phone}
+                          label="Text Contact"
+                          onClick={handleTextContact}
+                          tone="green"
+                        />
+                        <Action
+                          icon={Copy}
+                          label="Copy Pair Code"
+                          onClick={async () => {
+                            try {
+                              await navigator.clipboard.writeText(pairingCode);
+                              setActionNote("Pair code copied.");
+                              addLog("PAIR CODE", `Pair code copied: ${pairingCode}`);
+                            } catch {
+                              setActionNote("Pair code copy failed.");
+                            }
+                          }}
+                          tone="blue"
+                        />
+                      </div>
+                    </CockpitInner>
+
+                    <CockpitInner
+                      kicker="Response"
+                      title="Guardian response"
+                      sub="Action notes and live status."
+                    >
+                      <div className="rounded-2xl border border-purple-400/20 bg-purple-500/[0.05] p-4">
+                        <div className="text-sm text-purple-100/90">{actionNote}</div>
+                        <div className="mt-2 text-xs text-purple-200/65">{sensorStatus}</div>
+                      </div>
+
+                      {impactPromptOpen && (
+                        <div className="mt-3 rounded-2xl border border-amber-400/30 bg-amber-500/[0.08] p-4">
+                          <div className="flex items-start gap-3">
+                            <AlertTriangle className="mt-0.5 h-5 w-5 text-amber-300" />
+                            <div className="flex-1">
+                              <div className="text-xs font-semibold uppercase tracking-[0.20em] text-amber-200/90">
+                                Guardian Check
+                              </div>
+                              <div className="mt-2 text-sm text-amber-50">
+                                {impactPromptText || "Possible impact detected. Are you okay?"}
+                              </div>
+                              <div className="mt-4 grid grid-cols-2 gap-2">
+                                <Action
+                                  icon={CheckCircle2}
+                                  label="I'm OK"
+                                  onClick={handleImpactOkay}
+                                  tone="green"
+                                />
+                                <Action
+                                  icon={Bell}
+                                  label="Need Help"
+                                  onClick={handleImpactNeedHelp}
+                                  tone="orange"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </CockpitInner>
+                  </div>
+                </div>
+              </CockpitCard>
+
+              <div className="grid gap-4 xl:grid-cols-[1fr_0.9fr]">
+                <CockpitCard
+                  kicker="Timeline truth"
+                  title="Guardian timeline"
+                  sub="Continuity, movement, and event truth."
+                >
+                  <div ref={timelineRef} className="space-y-3">
+                    {timeline.map((e, i) => (
+                      <div
+                        key={`${e.time}-${e.title}-${i}`}
+                        className="rounded-2xl border border-white/10 bg-black/25 p-4"
+                      >
+                        <div className="text-xs uppercase tracking-[0.18em] text-cyan-300/75">
+                          {e.time}
+                        </div>
+                        <div className="mt-1 text-sm font-semibold text-white">{e.title}</div>
+                        <div className="mt-1 text-sm text-slate-300">{e.detail}</div>
+                      </div>
+                    ))}
+                  </div>
+                </CockpitCard>
+
+                <CockpitCard
+                  kicker="Action log"
+                  title="Recent Guardian actions"
+                  sub="Operator actions and relays."
+                >
+                  <div className="space-y-3">
+                    {actionLogs.length === 0 ? (
+                      <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm text-slate-300">
+                        No actions triggered yet.
+                      </div>
+                    ) : (
+                      actionLogs.map((log) => (
+                        <div
+                          key={log.id}
+                          className="rounded-2xl border border-white/10 bg-black/20 p-4"
+                        >
+                          <div className="text-xs uppercase tracking-[0.18em] text-purple-300/75">
+                            {log.time}
+                          </div>
+                          <div className="mt-1 text-sm font-semibold text-white">{log.title}</div>
+                          <div className="mt-1 text-sm text-slate-300">{log.detail}</div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </CockpitCard>
               </div>
 
-              <div className="mt-3 grid gap-3 md:grid-cols-3">
-                <Info
-                  label="Pair Status"
-                  value={isPaired ? "Wearer device linked" : "Waiting to pair"}
-                  icon={Shield}
-                />
-                <Info label="Device" value={pairedDeviceName} icon={Smartphone} />
-                <Info label="Pair Code" value={pairingCode} icon={Copy} />
-              </div>
+              <CockpitCard
+                kicker="Guardian module"
+                title="Reusable Guardian panel"
+                sub="Core Guardian module running inside Planet Guardian."
+              >
+                <GuardianPanel initialSession={guardianModuleSession} variant="monitor" />
+              </CockpitCard>
+            </main>
 
-              <div className="mt-4 grid grid-cols-2 gap-2">
-                {!isPaired ? (
+            <aside className="space-y-4">
+              <CockpitCard
+                kicker="Actions"
+                title="Guardian actions"
+                sub="Fast actions that matter."
+              >
+                <div className="space-y-2">
                   <Action
-                    icon={Link2}
-                    label="Pair Device"
-                    onClick={handlePairDevice}
+                    icon={Siren}
+                    label="Activate Panic Mode"
+                    onClick={handleOpenPanicMode}
+                    tone="red"
+                  />
+                  <Action
+                    icon={Phone}
+                    label="Call Wearer"
+                    onClick={handleCallWearer}
+                    tone="blue"
+                  />
+                  <Action
+                    icon={Bell}
+                    label="Text Contact"
+                    onClick={handleTextContact}
                     tone="green"
                   />
-                ) : (
                   <Action
-                    icon={Link2}
-                    label="Unpair Device"
-                    onClick={handleUnpairDevice}
+                    icon={Copy}
+                    label="Share Location"
+                    onClick={handleShareLocation}
+                    tone="purple"
+                  />
+                  <Action
+                    icon={HeartPulse}
+                    label="Replay Timeline"
+                    onClick={handleReplayTimeline}
                     tone="orange"
                   />
-                )}
+                </div>
+              </CockpitCard>
 
-                <Action
-                  icon={MessageSquare}
-                  label="Quick I'm OK"
-                  onClick={handleQuickTextOkay}
-                  tone="blue"
-                />
-                <Action
-                  icon={Bell}
-                  label="Quick Need Help"
-                  onClick={handleQuickTextHelp}
-                  tone="purple"
-                />
-                <Action
-                  icon={Phone}
-                  label="Call Dad"
-                  onClick={handleTextContact}
-                  tone="green"
-                />
-                <Action
-                  icon={Copy}
-                  label="Copy Pair Code"
-                  onClick={async () => {
-                    try {
-                      await navigator.clipboard.writeText(pairingCode);
-                      setActionNote("Pair code copied.");
-                      addLog("PAIR CODE", `Pair code copied: ${pairingCode}`);
-                    } catch {
-                      setActionNote("Pair code copy failed.");
-                    }
-                  }}
-                  tone="blue"
-                />
-              </div>
-            </div>
+              <CockpitCard
+                kicker="Visibility"
+                title="Public / protected controls"
+                sub="Control what the outside layer can see."
+              >
+                <div className="space-y-3">
+                  <ToggleRow
+                    icon={Eye}
+                    label="Public preview"
+                    value={publicPreviewEnabled}
+                    onClick={() => setPublicPreviewEnabled((v) => !v)}
+                  />
+                  <ToggleRow
+                    icon={Phone}
+                    label="Contact button"
+                    value={contactButtonEnabled}
+                    onClick={() => setContactButtonEnabled((v) => !v)}
+                  />
+                  <ToggleRow
+                    icon={Clock3}
+                    label="Timeline preview"
+                    value={timelinePreviewEnabled}
+                    onClick={() => setTimelinePreviewEnabled((v) => !v)}
+                  />
 
-            {impactPromptOpen && (
-              <div className="rounded-2xl border border-amber-400/30 bg-amber-900/20 p-5 shadow-[0_10px_28px_rgba(0,0,0,0.20)]">
-                <div className="flex items-start gap-3">
-                  <AlertTriangle className="mt-0.5 h-5 w-5 text-amber-300" />
-                  <div className="flex-1">
-                    <div className="text-sm font-semibold uppercase tracking-wider text-amber-200/90">
-                      Guardian Check
+                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                    <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-cyan-200/70">
+                      <Lock className="h-4 w-4 text-cyan-300" />
+                      Public preview
                     </div>
-                    <div className="mt-2 text-sm text-amber-50">
-                      {impactPromptText || "Possible impact detected. Are you okay?"}
+                    <div className="mt-3 text-sm text-white">
+                      {publicPreviewEnabled ? profile.name : "Protected Member"}
                     </div>
-                    <div className="mt-4 grid grid-cols-2 gap-2">
-                      <Action
-                        icon={CheckCircle2}
-                        label="I'm OK"
-                        onClick={handleImpactOkay}
-                        tone="green"
-                      />
-                      <Action
-                        icon={Bell}
-                        label="Need Help"
-                        onClick={handleImpactNeedHelp}
-                        tone="orange"
-                      />
-                      <Action
-                        icon={MessageSquare}
-                        label="Quick I'm OK"
-                        onClick={handleQuickTextOkay}
-                        tone="blue"
-                      />
-                      <Action
-                        icon={Bell}
-                        label="Quick Need Help"
-                        onClick={handleQuickTextHelp}
-                        tone="purple"
-                      />
+                    <div className="mt-1 text-sm text-slate-300">
+                      {publicPreviewEnabled ? profile.status : "Guardian protected"}
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {contactButtonEnabled && (
+                        <span className="rounded-full border border-emerald-400/25 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-100">
+                          Contact Enabled
+                        </span>
+                      )}
+                      <span className="rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-100">
+                        {timelinePreviewEnabled ? "Timeline Visible" : "Timeline Hidden"}
+                      </span>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
+              </CockpitCard>
 
-            <div
-              ref={timelineRef}
-              className="rounded-2xl border border-blue-400/20 bg-blue-950/40 p-5 shadow-[0_10px_28px_rgba(0,0,0,0.20)]"
-            >
-              <div className="mb-3 text-sm uppercase tracking-wider text-blue-200/70">
-                Guardian Timeline
-              </div>
+              <CockpitCard
+                kicker="Contacts"
+                title="Guardian contacts"
+                sub="Fast reference and relay context."
+              >
+                <div className="space-y-3">
+                  <ContactCard
+                    title="Wearer"
+                    name={profile.name}
+                    subtitle={profile.label}
+                    phone={formatPhone(profile.wearerPhone)}
+                    icon={UserRound}
+                  />
 
-              <div className="space-y-3">
-                {timeline.map((e, i) => (
-                  <div
-                    key={`${e.time}-${e.title}-${i}`}
-                    className="rounded-xl border border-blue-400/10 bg-black/30 p-3"
-                  >
-                    <div className="text-xs text-blue-300">{e.time}</div>
-                    <div className="font-medium">{e.title}</div>
-                    <div className="text-sm text-gray-300">{e.detail}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
+                  <ContactCard
+                    title="Primary Contact"
+                    name={profile.contactName}
+                    subtitle={profile.contactRelation}
+                    phone={formatPhone(profile.contactPhone)}
+                    icon={Smartphone}
+                  />
 
-            <div className="rounded-2xl border border-purple-400/20 bg-purple-900/20 p-5 shadow-[0_10px_28px_rgba(0,0,0,0.20)]">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-purple-300" />
-                <h3 className="text-sm uppercase tracking-wider text-purple-200/80">
-                  Guardian Response
-                </h3>
-              </div>
-
-              <p className="mt-3 text-sm text-purple-100/90">{actionNote}</p>
-              <p className="mt-2 text-xs text-purple-200/70">{sensorStatus}</p>
-
-              <div className="mt-4 space-y-3">
-                {actionLogs.length === 0 ? (
-                  <div className="rounded-xl border border-purple-400/10 bg-black/20 p-3 text-sm text-gray-300">
-                    No actions triggered yet.
-                  </div>
-                ) : (
-                  actionLogs.map((log) => (
-                    <div
-                      key={log.id}
-                      className="rounded-xl border border-purple-400/10 bg-black/20 p-3"
-                    >
-                      <div className="text-xs text-purple-300">{log.time}</div>
-                      <div className="font-medium">{log.title}</div>
-                      <div className="text-sm text-gray-300">{log.detail}</div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          </section>
-
-          <section className="space-y-3">
-            <div className="text-sm uppercase tracking-wider text-blue-200/70">
-              Guardian Actions
-            </div>
-
-            <Action
-              icon={Siren}
-              label="Activate Panic Mode"
-              onClick={handleOpenPanicMode}
-              tone="red"
-            />
-            <Action
-              icon={Phone}
-              label="Call Wearer"
-              onClick={handleCallWearer}
-              tone="blue"
-            />
-            <Action
-              icon={Bell}
-              label="Text Contact"
-              onClick={handleTextContact}
-              tone="green"
-            />
-            <Action
-              icon={Copy}
-              label="Share Location"
-              onClick={handleShareLocation}
-              tone="purple"
-            />
-            <Action
-              icon={HeartPulse}
-              label="Replay Timeline"
-              onClick={handleReplayTimeline}
-              tone="orange"
-            />
-
-            <div className="rounded-2xl border border-cyan-400/20 bg-cyan-900/10 p-4 shadow-[0_10px_28px_rgba(0,0,0,0.20)]">
-              <div className="text-xs uppercase tracking-wider text-cyan-200/70">
-                Guardian Control
-              </div>
-              <p className="mt-2 text-sm text-cyan-100/75">
-                Jump between command center, protected profile controls, and the core Guardian surfaces.
-              </p>
-
-              <div className="mt-4 space-y-2">
-                <Action
-                  icon={Shield}
-                  label="Open Planet Guardian"
-                  onClick={() => navigate("/planet/guardian")}
-                  tone="blue"
-                />
-                <Action
-                  icon={UserRound}
-                  label="Manage Protected Profile"
-                  onClick={() => navigate("/planet/guardian/child/child-1775005350413")}
-                  tone="green"
-                />
-                <Action
-                  icon={Link2}
-                  label="Open Panic Console"
-                  onClick={() => navigate("/planet/guardian/panic")}
-                  tone="purple"
-                />
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-blue-400/20 bg-blue-900/20 p-4 shadow-[0_10px_28px_rgba(0,0,0,0.20)]">
-              <div className="text-xs uppercase tracking-wider text-blue-200/70">
-                Wearer
-              </div>
-              <div className="mt-2 flex items-center gap-2 text-sm font-medium">
-                <UserRound className="h-4 w-4 text-blue-300" />
-                <span>{profile.name}</span>
-              </div>
-              <div className="mt-1 flex items-center gap-2 text-sm text-blue-100/85">
-                <Phone className="h-4 w-4 text-blue-300" />
-                <span>{formatPhone(profile.wearerPhone)}</span>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-blue-400/20 bg-blue-900/20 p-4 shadow-[0_10px_28px_rgba(0,0,0,0.20)]">
-              <div className="text-xs uppercase tracking-wider text-blue-200/70">
-                Primary Contact
-              </div>
-              <div className="mt-2 text-sm font-medium">{profile.contactName}</div>
-              <div className="mt-1 text-xs text-blue-200/70">{profile.contactRelation}</div>
-              <div className="mt-2 flex items-center gap-2 text-sm text-blue-100/85">
-                <Smartphone className="h-4 w-4 text-blue-300" />
-                <span>{formatPhone(profile.contactPhone)}</span>
-              </div>
-            </div>
-
-            {mode === "child" && (
-              <div className="rounded-2xl border border-blue-400/20 bg-blue-900/20 p-4 shadow-[0_10px_28px_rgba(0,0,0,0.20)]">
-                <div className="text-xs uppercase tracking-wider text-blue-200/70">
-                  Destination
+                  {mode === "child" && (
+                    <ContactCard
+                      title="Destination"
+                      name={profile.destination ?? "School"}
+                      subtitle="School"
+                      phone={formatPhone(profile.destinationPhone ?? "")}
+                      icon={School}
+                    />
+                  )}
                 </div>
-                <div className="mt-2 text-sm font-medium">{profile.destination}</div>
-                <div className="mt-1 text-xs text-blue-200/70">School</div>
-                <div className="mt-2 flex items-center gap-2 text-sm text-blue-100/85">
-                  <Phone className="h-4 w-4 text-blue-300" />
-                  <span>{formatPhone(profile.destinationPhone ?? "")}</span>
-                </div>
-              </div>
-            )}
-          </section>
-        </div>
+              </CockpitCard>
 
-        <div className="mt-6 rounded-3xl border border-blue-400/20 bg-gradient-to-r from-blue-950/40 to-purple-950/30 p-4 shadow-[0_10px_30px_rgba(0,0,0,0.25)]">
-          <div className="mb-3">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-blue-200/80">
-              Guardian Module Test
-            </h2>
-            <p className="mt-1 text-sm text-blue-100/70">
-              Reusable Guardian panel running inside Planet Guardian the HomePlanet way.
-            </p>
+              <CockpitCard
+                kicker="Guardian control"
+                title="Core surfaces"
+                sub="Jump into linked Guardian surfaces."
+              >
+                <div className="space-y-2">
+                  <Action
+                    icon={Shield}
+                    label="Open Planet Guardian"
+                    onClick={() => navigate("/planet/guardian")}
+                    tone="blue"
+                  />
+                  <Action
+                    icon={Users}
+                    label="Manage Protected Profile"
+                    onClick={() => navigate("/planet/guardian/child/child-1775005350413")}
+                    tone="green"
+                  />
+                  <Action
+                    icon={Link2}
+                    label="Open Panic Console"
+                    onClick={() => navigate("/planet/guardian/panic")}
+                    tone="purple"
+                  />
+                </div>
+              </CockpitCard>
+            </aside>
           </div>
-
-          <GuardianPanel initialSession={guardianModuleSession} variant="monitor" />
         </div>
       </div>
+    </div>
+  );
+}
+
+function CockpitCard({
+  kicker,
+  title,
+  sub,
+  children,
+}: {
+  kicker: string;
+  title: string;
+  sub?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.03] shadow-[0_12px_30px_rgba(0,0,0,0.20)]">
+      <div className="border-b border-white/10 bg-white/[0.02] px-4 py-4">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-200/70">
+          {kicker}
+        </div>
+        <div className="mt-1 text-lg font-semibold text-white">{title}</div>
+        {sub ? <div className="mt-1 text-sm text-slate-300">{sub}</div> : null}
+      </div>
+      <div className="p-4">{children}</div>
+    </section>
+  );
+}
+
+function CockpitInner({
+  kicker,
+  title,
+  sub,
+  children,
+}: {
+  kicker: string;
+  title: string;
+  sub?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-[22px] border border-white/10 bg-white/[0.025] p-4">
+      <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-200/70">
+        {kicker}
+      </div>
+      <div className="mt-1 text-base font-semibold text-white">{title}</div>
+      {sub ? <div className="mt-1 text-sm text-slate-300">{sub}</div> : null}
+      <div className="mt-4">{children}</div>
     </div>
   );
 }
@@ -924,13 +1142,13 @@ function ModeButton({
     <button
       onClick={onClick}
       className={[
-        "flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition shadow-[0_6px_18px_rgba(0,0,0,0.18)]",
+        "flex w-full items-center gap-3 rounded-2xl border px-4 py-3 text-left transition shadow-[0_6px_18px_rgba(0,0,0,0.18)]",
         active
-          ? "border-purple-400 bg-purple-900/30 text-white"
-          : "border-blue-400/25 bg-black/25 text-white hover:bg-blue-900/20",
+          ? "border-cyan-400/35 bg-cyan-500/10 text-white"
+          : "border-white/10 bg-black/20 text-white hover:bg-white/[0.05]",
       ].join(" ")}
     >
-      <Icon className="h-4 w-4" />
+      <Icon className="h-4 w-4 text-cyan-300" />
       <span>{label}</span>
     </button>
   );
@@ -946,11 +1164,95 @@ function Info({
   icon: LucideIcon;
 }) {
   return (
-    <div className="flex items-center gap-2 rounded-lg border border-blue-400/10 bg-black/30 p-2">
-      <Icon className="h-4 w-4 text-blue-300" />
-      <div>
-        <div className="text-xs text-blue-200/70">{label}</div>
-        <div className="text-sm">{value}</div>
+    <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-black/25 p-3">
+      <Icon className="h-4 w-4 text-cyan-300" />
+      <div className="min-w-0">
+        <div className="text-xs uppercase tracking-[0.16em] text-cyan-200/60">{label}</div>
+        <div className="text-sm text-white">{value}</div>
+      </div>
+    </div>
+  );
+}
+
+function MiniStat({
+  label,
+  value,
+  icon: Icon,
+}: {
+  label: string;
+  value: string;
+  icon: LucideIcon;
+}) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-black/20 p-3">
+      <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-cyan-200/65">
+        <Icon className="h-4 w-4 text-cyan-300" />
+        {label}
+      </div>
+      <div className="mt-2 text-sm text-white">{value}</div>
+    </div>
+  );
+}
+
+function ToggleRow({
+  icon: Icon,
+  label,
+  value,
+  onClick,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: boolean;
+  onClick?: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex w-full items-center justify-between gap-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-left transition hover:bg-white/[0.05]"
+    >
+      <div className="flex items-center gap-3">
+        <Icon className="h-4 w-4 text-cyan-300" />
+        <span className="text-sm text-white">{label}</span>
+      </div>
+
+      <div
+        className={[
+          "rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em]",
+          value
+            ? "border border-emerald-400/35 bg-emerald-500/10 text-emerald-100"
+            : "border border-white/10 bg-white/[0.04] text-white/65",
+        ].join(" ")}
+      >
+        {value ? "On" : "Off"}
+      </div>
+    </button>
+  );
+}
+
+function ContactCard({
+  title,
+  name,
+  subtitle,
+  phone,
+  icon: Icon,
+}: {
+  title: string;
+  name: string;
+  subtitle: string;
+  phone: string;
+  icon: LucideIcon;
+}) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+      <div className="text-xs uppercase tracking-[0.18em] text-cyan-200/65">{title}</div>
+      <div className="mt-2 flex items-center gap-2 text-sm font-medium text-white">
+        <Icon className="h-4 w-4 text-cyan-300" />
+        <span>{name}</span>
+      </div>
+      <div className="mt-1 text-xs text-slate-400">{subtitle}</div>
+      <div className="mt-2 flex items-center gap-2 text-sm text-cyan-50/85">
+        <Phone className="h-4 w-4 text-cyan-300" />
+        <span>{phone}</span>
       </div>
     </div>
   );

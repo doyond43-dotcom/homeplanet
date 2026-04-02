@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import HomePlanetFooter from "../components/HomePlanetFooter";
 
@@ -314,7 +314,7 @@ function getCareTypePill(type: CareEventType) {
       return "border-white/20 bg-white/10 text-white";
     default:
       return "border-white/20 bg-white/10 text-white";
-    }
+  }
 }
 
 function careTypeLabel(type: CareEventType) {
@@ -416,12 +416,12 @@ function GuardianShell({
   children,
   pet,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   pet: DemoPet;
 }) {
   return (
     <div className="min-h-screen bg-[#050816] text-white">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute left-[-120px] top-[-60px] h-[320px] w-[320px] rounded-full bg-fuchsia-500/12 blur-3xl" />
         <div className="absolute right-[-90px] top-[140px] h-[320px] w-[320px] rounded-full bg-cyan-400/12 blur-3xl" />
         <div className="absolute bottom-[-100px] left-[20%] h-[280px] w-[280px] rounded-full bg-emerald-400/10 blur-3xl" />
@@ -472,9 +472,7 @@ function GuardianShell({
           </div>
         </header>
 
-        <div className="flex-1">
-          {children}
-        </div>
+        <div className="flex-1">{children}</div>
 
         <HomePlanetFooter />
       </div>
@@ -799,6 +797,15 @@ function GuardianPetPage({ pet }: { pet: DemoPet }) {
 
             <div className="mt-6 rounded-[24px] border border-amber-300/20 bg-amber-300/10 p-4 text-sm leading-6 text-amber-100/90">
               {pet.emergencyNote}
+            </div>
+
+            <div className="mt-4">
+              <Link
+                to="/planet/guardian/join"
+                className="block rounded-[22px] border border-cyan-300/30 bg-cyan-400/15 px-4 py-4 text-center text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/22"
+              >
+                Create Your Pet Tag
+              </Link>
             </div>
           </div>
 
