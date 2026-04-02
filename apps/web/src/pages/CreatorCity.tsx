@@ -118,60 +118,56 @@ export default function CreatorCityPreview() {
       {
         id: "live-product",
         title: "Live Product Selling Board",
-        subtitle:
-          "Turn live video, reserve pressure, and proof-state into one selling board.",
+        subtitle: "Live selling with proof and reserve pressure.",
         to: LIVE_PRODUCT_DEMO_ROUTE,
         tag: "HIGH VALUE",
       },
       {
         id: "northstar",
         title: "Northstar Service Demo",
-        subtitle: "See a service workflow turned into a live operational board.",
+        subtitle: "Service workflow turned into a live board.",
         to: "/planet/vehicles/awnit-demo",
         tag: "DEMO BOARD",
       },
       {
         id: "experience",
         title: "Experience Planet",
-        subtitle:
-          "Escape rooms, classrooms, scavenger hunts, birthdays, and challenge boards in one live system.",
+        subtitle: "Live experiences, games, classes, and challenge boards.",
         to: "/planet/experience",
         tag: "NEW SYSTEM",
       },
       {
         id: "routecut",
         title: "RouteCut Live Lawn Flow",
-        subtitle: "See routing, next-stop flow, and customer-facing live status.",
+        subtitle: "Routing, next-stop flow, and live status.",
         to: "/planet/lawn/routecut",
         tag: "LIVE ROUTE",
       },
       {
         id: "restaurant",
         title: "Restaurant Live Board",
-        subtitle: "See live ticket flow, manager controls, and kitchen visibility.",
+        subtitle: "Kitchen flow, ticket stages, and manager visibility.",
         to: "/planet/food/restaurant-rush-live",
         tag: "LIVE BOARD",
       },
       {
         id: "community-sale",
         title: "Community Sale Board",
-        subtitle:
-          "Photos, prices, sold status, pickup notes, and payment links in one live board.",
+        subtitle: "Sell, track, price, and manage pickup in one board.",
         to: "/planet/community/community-sale",
         tag: "COMMUNITY LIVE",
       },
       {
         id: "transportation",
         title: "Transportation Dispatch Demo",
-        subtitle:
-          "See ride intake, driver assignment, dispatch flow, and trip timeline visibility.",
+        subtitle: "Driver assignment, dispatch flow, and trip visibility.",
         to: "/planet/transportation/dispatch",
         tag: "DISPATCH FLOW",
       },
       {
         id: "legal",
         title: "Legal Workspace Demo",
-        subtitle: "See evidence, timeline structure, and proof-style organization.",
+        subtitle: "Timeline, evidence, and proof-style organization.",
         to: "/planet/legal/joe-grant",
         tag: "WORKSPACE",
       },
@@ -181,7 +177,7 @@ export default function CreatorCityPreview() {
 
   const selectedFilesLabel =
     workflowFiles.length === 0
-      ? "No workflow photos selected yet"
+      ? "No workflow photos selected"
       : `${workflowFiles.length} workflow photo${workflowFiles.length === 1 ? "" : "s"} selected`;
 
   const intentLabelMap: Record<BuildIntent, string> = {
@@ -209,24 +205,24 @@ export default function CreatorCityPreview() {
   const previewStages = configPreview.stages.slice(0, 4);
 
   const trajectorySteps = [
-    { id: "intake", title: "Intake", status: "complete", text: "Mission entry point ready" },
+    { id: "intake", title: "Intake", status: "complete", text: "Ready" },
     {
       id: "config",
       title: "Config",
       status: businessName || businessType || city || contact ? "active" : "idle",
-      text: "Business profile and live board type",
+      text: "Profile and board type",
     },
     {
       id: "build",
       title: "Build",
       status: currentWorkflow || biggestFriction ? "armed" : "idle",
-      text: "Workflow truth and friction mapped",
+      text: "Workflow and friction",
     },
     {
       id: "launch",
       title: "Launch",
       status: holyShiftMoment || workflowFiles.length > 0 ? "armed" : "idle",
-      text: "Board preview path preparing",
+      text: "Board path ready",
     },
   ];
 
@@ -255,30 +251,30 @@ export default function CreatorCityPreview() {
 
   const buildSequence = [
     {
-      title: "Assigning Presence ID",
+      title: "Presence ID",
       text: businessName
         ? `HP-${slugify(businessName).replace(/-/g, "").toUpperCase().slice(0, 8) || "BOARD"}-DEMO`
         : "Waiting for business name",
       complete: !!businessName,
     },
     {
-      title: "Mapping board family",
-      text: configPreview.boardSubtitle,
+      title: "Board family",
+      text: configPreview.familyLabel,
       complete: !!resolvedBusinessLabel,
     },
     {
-      title: "Loading live stages",
+      title: "Live stages",
       text: previewStages.length > 0 ? previewStages.join(" → ") : "Awaiting business type",
       complete: previewStages.length > 0,
     },
     {
-      title: "Capturing friction truth",
-      text: biggestFriction || customerQuestions || "Waiting for live workflow friction input",
+      title: "Friction",
+      text: biggestFriction || customerQuestions || "Waiting for workflow friction",
       complete: !!(biggestFriction || customerQuestions),
     },
     {
-      title: "Preparing first board items",
-      text: currentWorkflow || holyShiftMoment || "Waiting for workflow or holy shift moment",
+      title: "Workflow",
+      text: currentWorkflow || holyShiftMoment || "Waiting for workflow input",
       complete: !!(currentWorkflow || holyShiftMoment),
     },
   ];
@@ -503,7 +499,7 @@ export default function CreatorCityPreview() {
     fontSize: isMobile ? 15 : 15,
     lineHeight: 1.58,
     color: "rgba(226,232,240,0.86)",
-    maxWidth: 860,
+    maxWidth: 760,
   };
 
   const ctaRow: React.CSSProperties = {
@@ -856,13 +852,6 @@ export default function CreatorCityPreview() {
     boxShadow: "inset 0 1px 0 rgba(255,255,255,0.02)",
   };
 
-  const sideHint: React.CSSProperties = {
-    marginTop: 8,
-    fontSize: isMobile ? 13 : 12,
-    lineHeight: 1.5,
-    color: "rgba(226,232,240,0.72)",
-  };
-
   const stageGrid: React.CSSProperties = { display: "grid", gridTemplateColumns: "1fr", gap: 10 };
 
   const stageCard: React.CSSProperties = {
@@ -942,14 +931,6 @@ export default function CreatorCityPreview() {
     fontSize: isMobile ? 15 : 15,
     lineHeight: 1.42,
     color: "rgba(226,232,240,0.9)",
-    maxWidth: 760,
-  };
-
-  const featuredDemoSupport: React.CSSProperties = {
-    marginTop: 10,
-    fontSize: isMobile ? 13 : 13,
-    lineHeight: 1.55,
-    color: "rgba(186,230,253,0.84)",
     maxWidth: 760,
   };
 
@@ -1106,12 +1087,12 @@ export default function CreatorCityPreview() {
   };
 
   const intentCards = [
-    { id: "landing-page" as BuildIntent, title: "Landing Page", text: "Your front door. Clear offer. Intake ready." },
-    { id: "live-board" as BuildIntent, title: "Live Board", text: "Jobs. Status. Activity. All visible." },
-    { id: "workflow-tool" as BuildIntent, title: "Workflow Tool", text: "Built around how you already work." },
-    { id: "intake-flow" as BuildIntent, title: "Intake Flow", text: "Calls, texts, walk-ins into one system." },
-    { id: "payment-flow" as BuildIntent, title: "Payment Flow", text: "Job to payment to proof." },
-    { id: "full-system" as BuildIntent, title: "Full Business System", text: "Everything. One page. No switching." },
+    { id: "landing-page" as BuildIntent, title: "Landing Page", text: "Clear front door" },
+    { id: "live-board" as BuildIntent, title: "Live Board", text: "Jobs and status live" },
+    { id: "workflow-tool" as BuildIntent, title: "Workflow Tool", text: "Built around your process" },
+    { id: "intake-flow" as BuildIntent, title: "Intake Flow", text: "Calls, texts, walk-ins" },
+    { id: "payment-flow" as BuildIntent, title: "Payment Flow", text: "Job to payment" },
+    { id: "full-system" as BuildIntent, title: "Full Business System", text: "Everything in one place" },
   ];
 
   return (
@@ -1123,7 +1104,7 @@ export default function CreatorCityPreview() {
               <span style={windowDot("#fb7185")} />
               <span style={windowDot("#fbbf24")} />
               <span style={windowDot("#4ade80")} />
-              <div style={topBadge}>CREATOR CITY MISSION SURFACE</div>
+              <div style={topBadge}>CREATOR CITY</div>
             </div>
 
             <div style={topBarLeft}>
@@ -1143,7 +1124,7 @@ export default function CreatorCityPreview() {
 
               {!isMobile && <div style={topBadgeBlue}>LIVE BOARD GENERATOR</div>}
               <div style={topBarPrimaryBadge}>PRIMARY ROUTE /planet/creator/building</div>
-              {!isMobile && <div style={topBadge}>FREE TRIAL PREVIEW</div>}
+              {!isMobile && <div style={topBadge}>FREE TRIAL</div>}
             </div>
           </div>
 
@@ -1151,9 +1132,9 @@ export default function CreatorCityPreview() {
             {!isMobile && (
               <div style={panel}>
                 <div style={panelHeader}>
-                  <div style={panelKicker}>Trajectory</div>
+                  <div style={panelKicker}>Launch path</div>
                   <div style={panelTitle}>Business launch path</div>
-                  <div style={panelSub}>Where the user is in the mission right now.</div>
+                  <div style={panelSub}>Intake to launch.</div>
                 </div>
 
                 <div style={panelBody}>
@@ -1179,7 +1160,7 @@ export default function CreatorCityPreview() {
                         padding: 12,
                       }}
                     >
-                      <div style={panelKicker}>Live board family</div>
+                      <div style={panelKicker}>Board family</div>
                       <div
                         style={{
                           marginTop: 8,
@@ -1201,13 +1182,15 @@ export default function CreatorCityPreview() {
             <div>
               <div style={heroCore}>
                 <div style={heroPadding}>
-                  <button
-                    type="button"
-                    style={{ ...topBadge, cursor: "pointer" }}
-                    onClick={scrollToIntakeForm}
-                  >
-                    BUILD MY BUSINESS SYSTEM
-                  </button>
+                  {!isMobile && (
+                    <button
+                      type="button"
+                      style={{ ...topBadge, cursor: "pointer" }}
+                      onClick={scrollToIntakeForm}
+                    >
+                      BUILD MY BUSINESS SYSTEM
+                    </button>
+                  )}
 
                   <div style={title}>Creator City</div>
 
@@ -1217,11 +1200,7 @@ export default function CreatorCityPreview() {
                     Your tools are.
                   </div>
 
-                  <div style={subtext}>
-                    This is wrapped like a mission surface. One center screen for live truth,
-                    one left rail for trajectory, one right rail for actions. This preview is
-                    visual-only so you can study the feel before touching your live file.
-                  </div>
+                  <div style={subtext}>Build your workflow into a live board.</div>
 
                   <div style={ctaRow}>
                     <button style={primaryBtn} onClick={scrollToIntakeForm}>
@@ -1235,7 +1214,7 @@ export default function CreatorCityPreview() {
                         style={secondaryBtn}
                         onClick={() => openRoute(LIVE_CAMP_GUARDIAN_ROUTE)}
                       >
-                        See Camp Guardian Live
+                        Camp Guardian
                       </button>
                     )}
                     {!isMobile && (
@@ -1250,29 +1229,23 @@ export default function CreatorCityPreview() {
 
                   <div style={statusGrid}>
                     <div style={statusCard}>
-                      <div style={statusLabel}>Mission role</div>
-                      <div style={statusValue}>Live demo intake</div>
-                      <div style={statusText}>
-                        This form is still the real start path that creates the board.
-                      </div>
+                      <div style={statusLabel}>Live demo</div>
+                      <div style={statusValue}>Intake</div>
+                      <div style={statusText}>Your intake builds the board.</div>
                     </div>
 
                     <div style={statusCard}>
-                      <div style={statusLabel}>Resolved build type</div>
+                      <div style={statusLabel}>Board type</div>
                       <div style={statusValue}>{resolvedBusinessLabel}</div>
-                      <div style={statusText}>
-                        Automatically matched into a starter board family.
-                      </div>
+                      <div style={statusText}>Matched into a starter board family.</div>
                     </div>
 
                     <div style={statusCard}>
-                      <div style={statusLabel}>Stage preview</div>
+                      <div style={statusLabel}>First stage</div>
                       <div style={statusValue}>
                         {previewStages.length > 0 ? previewStages[0] : "Waiting"}
                       </div>
-                      <div style={statusText}>
-                        The board can already predict the first live stages.
-                      </div>
+                      <div style={statusText}>The board predicts the first stages.</div>
                     </div>
                   </div>
                 </div>
@@ -1283,9 +1256,7 @@ export default function CreatorCityPreview() {
                   <div style={panelHeader}>
                     <div style={panelKicker}>Live preview</div>
                     <div style={panelTitle}>{configPreview.familyLabel}</div>
-                    <div style={panelSub}>
-                      A fast preview of what the board turns into after intake.
-                    </div>
+                    <div style={panelSub}>Fast board preview.</div>
                   </div>
 
                   <div style={panelBody}>
@@ -1303,9 +1274,7 @@ export default function CreatorCityPreview() {
                             ? `/planet/live/${slugify(businessName) || "starter-board"}-*`
                             : "/planet/live/<boardSlug>"}
                         </div>
-                        <div style={stageText}>
-                          Your intake creates the path into the live board.
-                        </div>
+                        <div style={stageText}>Your intake creates the board path.</div>
                       </div>
                     </div>
                   </div>
@@ -1313,37 +1282,35 @@ export default function CreatorCityPreview() {
               )}
 
               {!isMobile && (
-                <>
-                  <div style={sectionCard}>
-                    <div style={panelHeader}>
-                      <div style={panelKicker}>System truth</div>
-                      <div style={panelTitle}>Mission feed</div>
-                      <div style={panelSub}>Real board preparation signals based on the live intake state.</div>
-                    </div>
+                <div style={sectionCard}>
+                  <div style={panelHeader}>
+                    <div style={panelKicker}>System truth</div>
+                    <div style={panelTitle}>Mission feed</div>
+                    <div style={panelSub}>Live intake signals.</div>
+                  </div>
 
-                    <div style={sectionBody}>
-                      <div style={missionFeedList}>
-                        {missionFeed.map((item) => (
-                          <div key={item.label} style={missionFeedItem}>
-                            <div style={feedLabel}>{item.label}</div>
-                            <div style={feedValue(item.active)}>{item.value}</div>
-                          </div>
-                        ))}
-                      </div>
+                  <div style={sectionBody}>
+                    <div style={missionFeedList}>
+                      {missionFeed.map((item) => (
+                        <div key={item.label} style={missionFeedItem}>
+                          <div style={feedLabel}>{item.label}</div>
+                          <div style={feedValue(item.active)}>{item.value}</div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                </>
+                </div>
               )}
 
               <div ref={intakeFormRef} style={sectionCard}>
                 <div style={panelHeader}>
                   <div style={panelKicker}>Mission intake</div>
                   <div style={panelTitle}>Start your free live demo</div>
-                  <div style={panelSub}>Fill out this intake and Creator City instantly generates your live demo board.</div>
+                  <div style={panelSub}>Fill this out. We’ll turn it into a live board.</div>
                 </div>
 
                 <div style={sectionBody}>
-                  <div style={formLead}>This form is still the real start path. It creates the demo.</div>
+                  <div style={formLead}>This intake creates the demo.</div>
 
                   <div style={intentGrid}>
                     {intentCards.map((cardItem) => (
@@ -1364,7 +1331,7 @@ export default function CreatorCityPreview() {
                         Creator City intake received ⚡
                       </div>
                       <div style={{ lineHeight: 1.7 }}>
-                        Your workflow request was turned into a live board path.
+                        Your request was turned into a live board path.
                       </div>
                     </div>
                   ) : (
@@ -1412,8 +1379,8 @@ export default function CreatorCityPreview() {
                       </div>
 
                       <div style={fileWrap}>
-                        <div style={label}>Upload photos of your workflow</div>
-                        <div style={{ ...panelSub, marginTop: 8 }}>Show the current mess. We use it to remove steps.</div>
+                        <div style={label}>Upload workflow photos</div>
+                        <div style={{ ...panelSub, marginTop: 8 }}>Show your current setup.</div>
                         <div style={{ marginTop: 12 }}>
                           <input
                             type="file"
@@ -1442,7 +1409,7 @@ export default function CreatorCityPreview() {
                         </button>
 
                         <div style={helperText}>
-                          This preview simulates the intake flow so you can feel the cockpit layout.
+                          Your intake becomes a live board preview.
                         </div>
                       </div>
                     </form>
@@ -1457,7 +1424,7 @@ export default function CreatorCityPreview() {
                   <div style={panelHeader}>
                     <div style={panelKicker}>Actions</div>
                     <div style={panelTitle}>Launch controls</div>
-                    <div style={panelSub}>No clutter. Just the next actions that matter.</div>
+                    <div style={panelSub}>Next actions only.</div>
                   </div>
 
                   <div style={panelBody}>
@@ -1468,19 +1435,14 @@ export default function CreatorCityPreview() {
                       <button style={sideActionBtn} onClick={() => openRoute("/planet/experience")}>Open Experience Planet</button>
                       <button style={sideActionBtn} onClick={() => openRoute(LIVE_PRODUCT_DEMO_ROUTE)}>Open product selling board</button>
                     </div>
-
-                    <div style={sideHint}>
-                      This rail is the spacecraft command concept translated into Creator City:
-                      fewer choices, better orientation.
-                    </div>
                   </div>
                 </div>
 
                 <div style={panel}>
                   <div style={panelHeader}>
-                    <div style={panelKicker}>Live build feed</div>
+                    <div style={panelKicker}>Build feed</div>
                     <div style={panelTitle}>Board assembly preview</div>
-                    <div style={panelSub}>What the user should feel happening while Creator City is preparing the board.</div>
+                    <div style={panelSub}>Live board build signals.</div>
                   </div>
 
                   <div style={panelBody}>
@@ -1502,7 +1464,7 @@ export default function CreatorCityPreview() {
                   <div style={panelHeader}>
                     <div style={panelKicker}>Stage preview</div>
                     <div style={panelTitle}>{configPreview.familyLabel}</div>
-                    <div style={panelSub}>Early stage mapping based on the business type and intent.</div>
+                    <div style={panelSub}>Early stage map.</div>
                   </div>
 
                   <div style={panelBody}>
@@ -1511,7 +1473,7 @@ export default function CreatorCityPreview() {
                         <div key={`${stage}-${index}`} style={stageCard}>
                           <div style={stageTag}>STAGE {index + 1}</div>
                           <div style={stageName}>{stage}</div>
-                          <div style={stageText}>This becomes part of the live board workflow once the intake is submitted.</div>
+                          <div style={stageText}>Part of the live board workflow.</div>
                         </div>
                       ))}
                     </div>
@@ -1538,7 +1500,7 @@ export default function CreatorCityPreview() {
               </>
             ) : (
               <>
-                <div ref={readySystemsRef} style={examplesLabel}>Featured live system</div>
+                <div ref={readySystemsRef} style={examplesLabel}>Featured system</div>
 
                 <div style={featuredDemoCard} onClick={() => openRoute(LIVE_CAMP_GUARDIAN_ROUTE)}>
                   <div style={featuredDemoInner}>
@@ -1552,11 +1514,7 @@ export default function CreatorCityPreview() {
                         <div style={featuredDemoTitle}>Camp Guardian</div>
 
                         <div style={featuredDemoSubline}>
-                          Live child presence, guardian visibility, protected movement tracking, and parent-facing real-time status.
-                        </div>
-
-                        <div style={featuredDemoSupport}>
-                          Camps, youth programs, activity groups, and supervised child environments can run live with movement visibility, guardian-safe links, and proof-style timelines in one system.
+                          Live child presence, parent view, and protected status.
                         </div>
                       </div>
 
@@ -1574,19 +1532,19 @@ export default function CreatorCityPreview() {
 
                     <div style={featuredValueGrid}>
                       {[{
-                        k: "LIVE CHILD PRESENCE",
-                        t: "See where each child is right now",
-                        d: "Checked in, activity zone, hydration, with staff, and checked out all stay visible live.",
+                        k: "LIVE PRESENCE",
+                        t: "See where each child is",
+                        d: "Real-time movement and status.",
                         c: "rgba(187,247,208,1)",
                       }, {
                         k: "PARENT VIEW",
-                        t: "Guardian-safe status from a protected link",
-                        d: "Open the parent view directly from the child card and show real-time movement without exposing the whole system.",
+                        t: "Guardian-safe live status",
+                        d: "Open a protected view from the child card.",
                         c: "rgba(186,230,253,1)",
                       }, {
-                        k: "PREDATORSHIELD BASE",
-                        t: "Child profile stays controlled",
-                        d: "Movement, guardian contact, timelines, and notes stay visible while the profile remains protected.",
+                        k: "PROTECTED PROFILE",
+                        t: "Public + protected layers",
+                        d: "Visibility stays controlled.",
                         c: "rgba(254,240,138,1)",
                       }].map((item) => (
                         <div key={item.k} style={featuredValueCard}>
