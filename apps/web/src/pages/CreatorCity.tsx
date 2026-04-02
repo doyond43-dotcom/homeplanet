@@ -79,6 +79,7 @@ export default function CreatorCityPreview() {
   const openRoute = (to: string) => {
     window.location.href = to;
   };
+
   const [warmMode, setWarmMode] = useState(true);
   const readySystemsRef = useRef<HTMLDivElement | null>(null);
   const intakeFormRef = useRef<HTMLDivElement | null>(null);
@@ -255,7 +256,11 @@ export default function CreatorCityPreview() {
   const buildSequence = [
     {
       title: "Assigning Presence ID",
-      text: businessName ? `HP-${slugify(businessName).replace(/-/g, "").toUpperCase().slice(0, 8) || "BOARD"}-DEMO` : "Waiting for business name",
+      text: businessName
+        ? `HP-${
+            slugify(businessName).replace(/-/g, "").toUpperCase().slice(0, 8) || "BOARD"
+          }-DEMO`
+        : "Waiting for business name",
       complete: !!businessName,
     },
     {
@@ -317,11 +322,11 @@ export default function CreatorCityPreview() {
   const shell: React.CSSProperties = {
     maxWidth: 1450,
     margin: "0 auto",
-    padding: isMobile ? "12px 12px 28px" : 0,
+    padding: isMobile ? "10px 10px 24px" : 0,
   };
 
   const frame: React.CSSProperties = {
-    borderRadius: 28,
+    borderRadius: isMobile ? 22 : 28,
     border: warmMode
       ? "1px solid rgba(245,158,11,0.10)"
       : "1px solid rgba(148,163,184,0.14)",
@@ -336,21 +341,30 @@ export default function CreatorCityPreview() {
 
   const topBar: React.CSSProperties = {
     display: "flex",
-    alignItems: "center",
+    alignItems: isMobile ? "stretch" : "center",
     justifyContent: "space-between",
-    gap: 14,
-    padding: isMobile ? "14px 14px 12px" : "14px 18px 12px",
+    gap: isMobile ? 10 : 14,
+    padding: isMobile ? "12px 12px 10px" : "14px 18px 12px",
     borderBottom: "1px solid rgba(148,163,184,0.12)",
     background:
       "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))",
     flexWrap: "wrap",
+    flexDirection: isMobile ? "column" : "row",
   };
 
   const topBarLeft: React.CSSProperties = {
     display: "flex",
     alignItems: "center",
-    gap: 10,
+    gap: 8,
     flexWrap: "wrap",
+  };
+
+  const topBarMobileRow: React.CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    flexWrap: "wrap",
+    width: "100%",
   };
 
   const windowDot = (color: string): React.CSSProperties => ({
@@ -363,36 +377,46 @@ export default function CreatorCityPreview() {
 
   const topBadge: React.CSSProperties = {
     borderRadius: 999,
-    padding: isMobile ? "8px 12px" : "6px 10px",
+    padding: isMobile ? "7px 11px" : "6px 10px",
     border: "1px solid rgba(34,197,94,0.30)",
     background: "rgba(34,197,94,0.12)",
     color: "#bbf7d0",
     fontWeight: 900,
-    fontSize: isMobile ? 13 : 11,
+    fontSize: isMobile ? 11 : 11,
     letterSpacing: 0.5,
+    lineHeight: 1.1,
   };
 
   const topBadgeBlue: React.CSSProperties = {
     borderRadius: 999,
-    padding: isMobile ? "8px 12px" : "6px 10px",
+    padding: isMobile ? "7px 11px" : "6px 10px",
     border: "1px solid rgba(56,189,248,0.30)",
     background: "rgba(56,189,248,0.10)",
     color: "#bae6fd",
     fontWeight: 900,
-    fontSize: isMobile ? 13 : 11,
+    fontSize: isMobile ? 11 : 11,
     letterSpacing: 0.5,
+    lineHeight: 1.1,
+  };
+
+  const topBarPrimaryBadge: React.CSSProperties = {
+    ...topBadgeBlue,
+    maxWidth: isMobile ? "100%" : "unset",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: isMobile ? "nowrap" : "normal",
   };
 
   const cockpitGrid: React.CSSProperties = {
     display: "grid",
     gridTemplateColumns: isMobile ? "1fr" : "280px minmax(0, 1fr) 330px",
-    gap: 14,
-    padding: isMobile ? 14 : 16,
+    gap: isMobile ? 10 : 14,
+    padding: isMobile ? 10 : 16,
     alignItems: "start",
   };
 
   const panel: React.CSSProperties = {
-    borderRadius: 22,
+    borderRadius: isMobile ? 18 : 22,
     border: warmMode
       ? "1px solid rgba(245,158,11,0.10)"
       : "1px solid rgba(148,163,184,0.14)",
@@ -406,14 +430,14 @@ export default function CreatorCityPreview() {
   };
 
   const panelHeader: React.CSSProperties = {
-    padding: "14px 14px 12px",
+    padding: isMobile ? "12px 12px 10px" : "14px 14px 12px",
     borderBottom: "1px solid rgba(148,163,184,0.12)",
     background:
       "linear-gradient(180deg, rgba(56,189,248,0.08), rgba(255,255,255,0.01))",
   };
 
   const panelKicker: React.CSSProperties = {
-    fontSize: isMobile ? 12 : 11,
+    fontSize: isMobile ? 10 : 11,
     fontWeight: 900,
     letterSpacing: 1,
     color: "rgba(125,211,252,0.95)",
@@ -422,21 +446,21 @@ export default function CreatorCityPreview() {
 
   const panelTitle: React.CSSProperties = {
     marginTop: 6,
-    fontSize: isMobile ? 22 : 18,
+    fontSize: isMobile ? 18 : 18,
     fontWeight: 900,
     lineHeight: 1.04,
     color: "#ffffff",
-    letterSpacing: isMobile ? -0.5 : -0.3,
+    letterSpacing: isMobile ? -0.3 : -0.3,
   };
 
   const panelSub: React.CSSProperties = {
     marginTop: 8,
-    fontSize: isMobile ? 15 : 13,
+    fontSize: isMobile ? 13 : 13,
     lineHeight: 1.5,
     color: "rgba(226,232,240,0.78)",
   };
 
-  const panelBody: React.CSSProperties = { padding: 14 };
+  const panelBody: React.CSSProperties = { padding: isMobile ? 12 : 14 };
 
   const heroCore: React.CSSProperties = {
     ...panel,
@@ -452,80 +476,88 @@ export default function CreatorCityPreview() {
         "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))",
   };
 
+  const heroPadding: React.CSSProperties = {
+    padding: isMobile ? 14 : 18,
+  };
+
   const title: React.CSSProperties = {
-    fontSize: isMobile ? 42 : 48,
+    fontSize: isMobile ? 32 : 48,
     fontWeight: 900,
-    letterSpacing: isMobile ? -1.3 : -1.6,
+    letterSpacing: isMobile ? -1.1 : -1.6,
     lineHeight: isMobile ? 0.96 : 0.94,
     color: "#ffffff",
     maxWidth: 760,
+    marginTop: isMobile ? 10 : 0,
   };
 
   const hook: React.CSSProperties = {
     marginTop: 10,
-    fontSize: isMobile ? 25 : 26,
+    fontSize: isMobile ? 21 : 26,
     fontWeight: 900,
-    lineHeight: 1.06,
-    letterSpacing: isMobile ? -0.7 : -0.6,
+    lineHeight: 1.04,
+    letterSpacing: isMobile ? -0.45 : -0.6,
     color: "#ffffff",
     maxWidth: 820,
   };
 
   const subtext: React.CSSProperties = {
-    marginTop: 14,
-    fontSize: isMobile ? 17 : 15,
-    lineHeight: 1.66,
+    marginTop: 12,
+    fontSize: isMobile ? 15 : 15,
+    lineHeight: 1.58,
     color: "rgba(226,232,240,0.86)",
     maxWidth: 860,
   };
 
   const ctaRow: React.CSSProperties = {
-    display: "flex",
-    gap: 12,
-    flexWrap: "wrap",
-    marginTop: 20,
+    display: "grid",
+    gridTemplateColumns: isMobile ? "1fr" : "repeat(4, max-content)",
+    gap: 10,
+    marginTop: 18,
+    alignItems: "stretch",
   };
 
   const primaryBtn: React.CSSProperties = {
     borderRadius: 999,
-    padding: isMobile ? "15px 18px" : "12px 16px",
+    padding: isMobile ? "14px 16px" : "12px 16px",
     border: "1px solid rgba(34,197,94,0.34)",
     background: "rgba(34,197,94,0.14)",
     color: "#dcfce7",
     fontWeight: 900,
-    fontSize: isMobile ? 17 : 14,
+    fontSize: isMobile ? 16 : 14,
     cursor: "pointer",
     boxShadow: "0 0 18px rgba(34,197,94,0.10), inset 0 1px 0 rgba(255,255,255,0.04)",
+    width: isMobile ? "100%" : "auto",
   };
 
   const secondaryBtn: React.CSSProperties = {
     borderRadius: 999,
-    padding: isMobile ? "15px 18px" : "12px 16px",
+    padding: isMobile ? "14px 16px" : "12px 16px",
     border: "1px solid rgba(255,255,255,0.14)",
     background: "rgba(255,255,255,0.045)",
     color: "#f8fafc",
     fontWeight: 900,
-    fontSize: isMobile ? 17 : 14,
+    fontSize: isMobile ? 16 : 14,
     cursor: "pointer",
+    width: isMobile ? "100%" : "auto",
   };
 
   const statusGrid: React.CSSProperties = {
     display: "grid",
     gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))",
     gap: 10,
-    marginTop: 20,
+    marginTop: 18,
   };
 
   const statusCard: React.CSSProperties = {
-    borderRadius: 18,
+    borderRadius: 16,
     border: "1px solid rgba(255,255,255,0.10)",
     background: "rgba(255,255,255,0.035)",
-    padding: isMobile ? 14 : 12,
+    padding: isMobile ? 12 : 12,
     boxShadow: "inset 0 1px 0 rgba(255,255,255,0.02)",
   };
 
   const statusLabel: React.CSSProperties = {
-    fontSize: isMobile ? 13 : 11,
+    fontSize: isMobile ? 11 : 11,
     fontWeight: 900,
     letterSpacing: 0.8,
     textTransform: "uppercase",
@@ -534,7 +566,7 @@ export default function CreatorCityPreview() {
 
   const statusValue: React.CSSProperties = {
     marginTop: 8,
-    fontSize: isMobile ? 20 : 18,
+    fontSize: isMobile ? 18 : 18,
     fontWeight: 900,
     color: "#ffffff",
     lineHeight: 1.08,
@@ -542,15 +574,15 @@ export default function CreatorCityPreview() {
 
   const statusText: React.CSSProperties = {
     marginTop: 6,
-    fontSize: isMobile ? 14 : 12,
+    fontSize: isMobile ? 13 : 12,
     lineHeight: 1.5,
     color: "rgba(226,232,240,0.76)",
   };
 
-  const trajectoryList: React.CSSProperties = { display: "flex", flexDirection: "column", gap: 12 };
+  const trajectoryList: React.CSSProperties = { display: "flex", flexDirection: "column", gap: 10 };
 
   const trajectoryItem = (status: string): React.CSSProperties => ({
-    borderRadius: 18,
+    borderRadius: 16,
     border:
       status === "active"
         ? "1px solid rgba(56,189,248,0.34)"
@@ -567,10 +599,15 @@ export default function CreatorCityPreview() {
           : status === "complete"
             ? "rgba(34,197,94,0.10)"
             : "rgba(255,255,255,0.03)",
-    padding: isMobile ? 14 : 12,
+    padding: isMobile ? 12 : 12,
   });
 
-  const trajectoryTop: React.CSSProperties = { display: "flex", alignItems: "center", gap: 10 };
+  const trajectoryTop: React.CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    flexWrap: "wrap",
+  };
 
   const trajectoryDot = (status: string): React.CSSProperties => ({
     width: 12,
@@ -595,17 +632,23 @@ export default function CreatorCityPreview() {
     flexShrink: 0,
   });
 
-  const trajectoryTitle: React.CSSProperties = { fontWeight: 900, fontSize: isMobile ? 17 : 14, color: "#ffffff" };
+  const trajectoryTitle: React.CSSProperties = {
+    fontWeight: 900,
+    fontSize: isMobile ? 15 : 14,
+    color: "#ffffff",
+  };
+
   const trajectoryStatus: React.CSSProperties = {
     marginLeft: "auto",
-    fontSize: isMobile ? 12 : 11,
+    fontSize: isMobile ? 10 : 11,
     fontWeight: 900,
     letterSpacing: 0.7,
     color: "rgba(226,232,240,0.72)",
   };
+
   const trajectoryText: React.CSSProperties = {
     marginTop: 8,
-    fontSize: isMobile ? 14 : 12,
+    fontSize: isMobile ? 13 : 12,
     lineHeight: 1.5,
     color: "rgba(226,232,240,0.76)",
   };
@@ -617,14 +660,15 @@ export default function CreatorCityPreview() {
   };
 
   const missionFeedItem: React.CSSProperties = {
-    borderRadius: 16,
+    borderRadius: 14,
     border: "1px solid rgba(255,255,255,0.10)",
     background: "rgba(255,255,255,0.03)",
-    padding: isMobile ? 14 : 12,
+    padding: isMobile ? 12 : 12,
+    minWidth: 0,
   };
 
   const feedLabel: React.CSSProperties = {
-    fontSize: isMobile ? 12 : 11,
+    fontSize: isMobile ? 10 : 11,
     fontWeight: 900,
     letterSpacing: 0.8,
     textTransform: "uppercase",
@@ -633,18 +677,19 @@ export default function CreatorCityPreview() {
 
   const feedValue = (active: boolean): React.CSSProperties => ({
     marginTop: 8,
-    fontSize: isMobile ? 16 : 14,
+    fontSize: isMobile ? 14 : 14,
     fontWeight: 900,
     lineHeight: 1.15,
     color: active ? "#ffffff" : "rgba(226,232,240,0.54)",
     wordBreak: "break-word",
   });
 
-  const sectionCard: React.CSSProperties = { ...panel, marginTop: 14 };
-  const sectionBody: React.CSSProperties = { padding: isMobile ? 14 : 16 };
+  const sectionCard: React.CSSProperties = { ...panel, marginTop: 10 };
+  const sectionBody: React.CSSProperties = { padding: isMobile ? 12 : 16 };
+
   const formLead: React.CSSProperties = {
     marginTop: 10,
-    fontSize: isMobile ? 15 : 13,
+    fontSize: isMobile ? 14 : 13,
     lineHeight: 1.55,
     color: "rgba(187,247,208,0.96)",
     fontWeight: 800,
@@ -652,46 +697,46 @@ export default function CreatorCityPreview() {
 
   const intentGrid: React.CSSProperties = {
     display: "grid",
-    gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))",
-    gap: 12,
-    marginTop: 16,
+    gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(3, minmax(0, 1fr))",
+    gap: 10,
+    marginTop: 14,
   };
 
   const intentCard = (active: boolean): React.CSSProperties => ({
     border: active ? "1px solid rgba(34,197,94,0.32)" : "1px solid rgba(255,255,255,0.12)",
     background: active ? "rgba(34,197,94,0.14)" : "rgba(255,255,255,0.035)",
-    borderRadius: 18,
-    padding: isMobile ? 16 : 14,
+    borderRadius: 16,
+    padding: isMobile ? 14 : 14,
     cursor: "pointer",
-    minHeight: isMobile ? 102 : 96,
+    minHeight: isMobile ? 88 : 96,
     boxShadow: "inset 0 1px 0 rgba(255,255,255,0.02), 0 10px 28px rgba(0,0,0,0.18)",
   });
 
   const intentTitle: React.CSSProperties = {
     fontWeight: 900,
-    fontSize: isMobile ? 19 : 14,
+    fontSize: isMobile ? 15 : 14,
     marginBottom: 6,
     color: "#ffffff",
     lineHeight: 1.06,
   };
 
   const intentText: React.CSSProperties = {
-    fontSize: isMobile ? 14 : 12,
-    lineHeight: 1.5,
+    fontSize: isMobile ? 12 : 12,
+    lineHeight: 1.45,
     color: "rgba(226,232,240,0.8)",
   };
 
   const intakeGrid: React.CSSProperties = {
     display: "grid",
     gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
-    gap: isMobile ? 15 : 14,
-    marginTop: 18,
+    gap: isMobile ? 12 : 14,
+    marginTop: 16,
   };
 
   const inputGroup: React.CSSProperties = { display: "flex", flexDirection: "column", gap: 8 };
 
   const label: React.CSSProperties = {
-    fontSize: isMobile ? 15 : 12,
+    fontSize: isMobile ? 14 : 12,
     fontWeight: 900,
     letterSpacing: 0.3,
     color: "rgba(186,230,253,0.94)",
@@ -699,25 +744,29 @@ export default function CreatorCityPreview() {
 
   const inputBase: React.CSSProperties = {
     width: "100%",
-    borderRadius: isMobile ? 16 : 14,
+    borderRadius: isMobile ? 14 : 14,
     border: "1px solid rgba(255,255,255,0.16)",
     background: "rgba(255,255,255,0.04)",
     color: "#f8fafc",
-    padding: isMobile ? "15px 15px" : "13px 14px",
+    padding: isMobile ? "14px 14px" : "13px 14px",
     fontSize: isMobile ? 16 : 14,
     outline: "none",
     boxSizing: "border-box",
     boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
   };
 
-  const textareaWide: React.CSSProperties = { ...inputBase, minHeight: isMobile ? 108 : 112, resize: "vertical" };
+  const textareaWide: React.CSSProperties = {
+    ...inputBase,
+    minHeight: isMobile ? 104 : 112,
+    resize: "vertical",
+  };
 
   const fileWrap: React.CSSProperties = {
     border: "1px dashed rgba(56,189,248,0.35)",
     background: "rgba(8,47,73,0.22)",
-    borderRadius: 18,
-    padding: 16,
-    marginTop: 16,
+    borderRadius: 16,
+    padding: 14,
+    marginTop: 14,
   };
 
   const submitWrap: React.CSSProperties = {
@@ -725,25 +774,25 @@ export default function CreatorCityPreview() {
     alignItems: isMobile ? "stretch" : "center",
     justifyContent: "space-between",
     flexDirection: isMobile ? "column" : "row",
-    gap: isMobile ? 16 : 14,
-    marginTop: 18,
+    gap: isMobile ? 14 : 14,
+    marginTop: 16,
   };
 
   const submitBtn: React.CSSProperties = {
     borderRadius: 999,
-    padding: isMobile ? "15px 22px" : "12px 18px",
+    padding: isMobile ? "14px 18px" : "12px 18px",
     border: "1px solid rgba(34,197,94,0.45)",
     background: "rgba(34,197,94,0.12)",
     color: "rgba(187,247,208,1)",
     fontWeight: 900,
-    fontSize: isMobile ? 18 : 14,
+    fontSize: isMobile ? 17 : 14,
     cursor: "pointer",
     boxShadow: "0 0 18px rgba(74,222,128,0.08)",
     width: isMobile ? "100%" : "auto",
   };
 
   const helperText: React.CSSProperties = {
-    fontSize: isMobile ? 15 : 12,
+    fontSize: isMobile ? 13 : 12,
     lineHeight: 1.6,
     color: "rgba(148,163,184,0.88)",
     maxWidth: 680,
@@ -760,58 +809,73 @@ export default function CreatorCityPreview() {
   };
 
   const buildSequenceWrap: React.CSSProperties = { display: "flex", flexDirection: "column", gap: 10 };
+
   const buildSequenceItem: React.CSSProperties = {
-    borderRadius: 16,
+    borderRadius: 14,
     border: "1px solid rgba(255,255,255,0.10)",
     background: "rgba(255,255,255,0.03)",
-    padding: isMobile ? 13 : 12,
+    padding: isMobile ? 12 : 12,
   };
+
   const buildSequenceTop: React.CSSProperties = { display: "flex", alignItems: "center", gap: 10 };
+
   const buildSequenceDot = (complete: boolean): React.CSSProperties => ({
     width: 10,
     height: 10,
     borderRadius: 999,
     background: complete ? "rgba(34,197,94,1)" : "rgba(56,189,248,1)",
-    boxShadow: complete ? "0 0 12px rgba(34,197,94,0.8)" : "0 0 12px rgba(56,189,248,0.7)",
+    boxShadow: complete
+      ? "0 0 12px rgba(34,197,94,0.8)"
+      : "0 0 12px rgba(56,189,248,0.7)",
     flexShrink: 0,
   });
-  const buildSequenceTitle: React.CSSProperties = { fontSize: isMobile ? 15 : 13, fontWeight: 900, color: "#ffffff" };
+
+  const buildSequenceTitle: React.CSSProperties = {
+    fontSize: isMobile ? 14 : 13,
+    fontWeight: 900,
+    color: "#ffffff",
+  };
+
   const buildSequenceText: React.CSSProperties = {
     marginTop: 8,
-    fontSize: isMobile ? 14 : 12,
+    fontSize: isMobile ? 13 : 12,
     lineHeight: 1.52,
     color: "rgba(226,232,240,0.78)",
+    wordBreak: "break-word",
   };
 
   const sideActionGrid: React.CSSProperties = { display: "grid", gridTemplateColumns: "1fr", gap: 10 };
+
   const sideActionBtn: React.CSSProperties = {
     width: "100%",
     textAlign: "left",
-    borderRadius: 16,
-    padding: isMobile ? "14px 14px" : "12px 13px",
+    borderRadius: 14,
+    padding: isMobile ? "13px 13px" : "12px 13px",
     border: "1px solid rgba(255,255,255,0.12)",
     background: "rgba(255,255,255,0.04)",
     color: "#f8fafc",
     fontWeight: 900,
-    fontSize: isMobile ? 16 : 13,
+    fontSize: isMobile ? 15 : 13,
     cursor: "pointer",
     boxShadow: "inset 0 1px 0 rgba(255,255,255,0.02)",
   };
 
   const sideHint: React.CSSProperties = {
     marginTop: 8,
-    fontSize: isMobile ? 14 : 12,
+    fontSize: isMobile ? 13 : 12,
     lineHeight: 1.5,
     color: "rgba(226,232,240,0.72)",
   };
 
   const stageGrid: React.CSSProperties = { display: "grid", gridTemplateColumns: "1fr", gap: 10 };
+
   const stageCard: React.CSSProperties = {
-    borderRadius: 16,
+    borderRadius: 14,
     border: "1px solid rgba(255,255,255,0.10)",
     background: "rgba(255,255,255,0.03)",
-    padding: isMobile ? 13 : 12,
+    padding: isMobile ? 12 : 12,
   };
+
   const stageTag: React.CSSProperties = {
     display: "inline-flex",
     alignItems: "center",
@@ -825,38 +889,42 @@ export default function CreatorCityPreview() {
     fontWeight: 900,
     letterSpacing: 0.6,
   };
+
   const stageName: React.CSSProperties = {
     marginTop: 8,
-    fontSize: isMobile ? 17 : 14,
+    fontSize: isMobile ? 16 : 14,
     fontWeight: 900,
     color: "#ffffff",
     lineHeight: 1.08,
   };
+
   const stageText: React.CSSProperties = {
     marginTop: 6,
-    fontSize: isMobile ? 14 : 12,
+    fontSize: isMobile ? 13 : 12,
     lineHeight: 1.5,
     color: "rgba(226,232,240,0.74)",
   };
 
   const examplesLabel: React.CSSProperties = {
-    marginTop: 22,
+    marginTop: isMobile ? 18 : 22,
     fontWeight: 900,
-    fontSize: isMobile ? 24 : 18,
-    letterSpacing: isMobile ? -0.4 : -0.2,
+    fontSize: isMobile ? 22 : 18,
+    letterSpacing: isMobile ? -0.3 : -0.2,
     color: "#f8fafc",
     lineHeight: 1.06,
   };
 
   const featuredDemoCard: React.CSSProperties = {
     ...panel,
-    marginTop: 14,
+    marginTop: 12,
     border: "1px solid rgba(34,197,94,0.30)",
     background:
       "linear-gradient(180deg, rgba(34,197,94,0.10), rgba(2,6,23,0.80) 30%, rgba(2,6,23,0.88) 100%)",
     cursor: "pointer",
   };
-  const featuredDemoInner: React.CSSProperties = { padding: isMobile ? 16 : 18 };
+
+  const featuredDemoInner: React.CSSProperties = { padding: isMobile ? 14 : 18 };
+
   const featuredDemoTop: React.CSSProperties = {
     display: "flex",
     justifyContent: "space-between",
@@ -864,121 +932,135 @@ export default function CreatorCityPreview() {
     gap: isMobile ? 14 : 18,
     flexDirection: isMobile ? "column" : "row",
   };
+
   const featuredDemoTitle: React.CSSProperties = {
     fontWeight: 900,
-    fontSize: isMobile ? 28 : 22,
+    fontSize: isMobile ? 24 : 22,
     color: "#ffffff",
     lineHeight: 1.04,
-    letterSpacing: isMobile ? -0.6 : -0.3,
+    letterSpacing: isMobile ? -0.5 : -0.3,
   };
+
   const featuredDemoSubline: React.CSSProperties = {
     marginTop: 8,
-    fontSize: isMobile ? 17 : 15,
+    fontSize: isMobile ? 15 : 15,
     lineHeight: 1.42,
     color: "rgba(226,232,240,0.9)",
     maxWidth: 760,
   };
+
   const featuredDemoSupport: React.CSSProperties = {
     marginTop: 10,
-    fontSize: isMobile ? 15 : 13,
+    fontSize: isMobile ? 13 : 13,
     lineHeight: 1.55,
     color: "rgba(186,230,253,0.84)",
     maxWidth: 760,
   };
+
   const featuredDemoAction: React.CSSProperties = {
     ...primaryBtn,
-    padding: isMobile ? "14px 18px" : "10px 14px",
-    fontSize: isMobile ? 17 : 13,
+    padding: isMobile ? "13px 16px" : "10px 14px",
+    fontSize: isMobile ? 16 : 13,
     whiteSpace: "nowrap",
   };
+
   const featuredDemoBadgeRow: React.CSSProperties = {
     display: "flex",
-    gap: 10,
+    gap: 8,
     flexWrap: "wrap",
     alignItems: "center",
     marginBottom: 12,
   };
+
   const featuredDemoBadge: React.CSSProperties = {
     borderRadius: 999,
-    padding: isMobile ? "9px 14px" : "6px 10px",
-    fontSize: isMobile ? 14 : 11,
+    padding: isMobile ? "8px 12px" : "6px 10px",
+    fontSize: isMobile ? 11 : 11,
     fontWeight: 900,
     border: "1px solid rgba(34,197,94,0.38)",
     color: "rgba(187,247,208,1)",
     background: "rgba(34,197,94,0.10)",
     letterSpacing: 0.4,
   };
+
   const featuredDemoSecondaryBadge: React.CSSProperties = {
     borderRadius: 999,
-    padding: isMobile ? "9px 14px" : "6px 10px",
-    fontSize: isMobile ? 14 : 11,
+    padding: isMobile ? "8px 12px" : "6px 10px",
+    fontSize: isMobile ? 11 : 11,
     fontWeight: 900,
     border: "1px solid rgba(56,189,248,0.34)",
     color: "rgba(186,230,253,1)",
     background: "rgba(56,189,248,0.08)",
     letterSpacing: 0.4,
   };
+
   const featuredValueGrid: React.CSSProperties = {
     display: "grid",
     gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))",
     gap: 10,
-    marginTop: 16,
+    marginTop: 14,
   };
+
   const featuredValueCard: React.CSSProperties = {
-    borderRadius: 16,
+    borderRadius: 14,
     border: "1px solid rgba(255,255,255,0.10)",
     background: "rgba(255,255,255,0.04)",
-    padding: isMobile ? 14 : 12,
+    padding: isMobile ? 12 : 12,
     boxShadow: "inset 0 1px 0 rgba(255,255,255,0.02)",
   };
 
   const examplesGrid: React.CSSProperties = {
     display: "grid",
     gridTemplateColumns: isMobile ? "1fr" : "repeat(2, minmax(0, 1fr))",
-    gap: 12,
-    marginTop: 14,
+    gap: 10,
+    marginTop: 12,
   };
+
   const exampleCard: React.CSSProperties = {
     border: "1px solid rgba(255,255,255,0.12)",
     background: "rgba(255,255,255,0.035)",
-    borderRadius: 20,
-    padding: isMobile ? 18 : "14px 16px",
+    borderRadius: 18,
+    padding: isMobile ? 15 : "14px 16px",
     cursor: "pointer",
     display: "flex",
     flexDirection: "column",
-    gap: isMobile ? 12 : 8,
+    gap: isMobile ? 10 : 8,
     boxShadow: "0 14px 40px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.02)",
   };
+
   const tagStyle: React.CSSProperties = {
     borderRadius: 999,
-    padding: isMobile ? "9px 14px" : "6px 10px",
-    fontSize: isMobile ? 14 : 11,
+    padding: isMobile ? "8px 12px" : "6px 10px",
+    fontSize: isMobile ? 11 : 11,
     fontWeight: 900,
     border: "1px solid rgba(250,204,21,0.40)",
     color: "rgba(254,240,138,1)",
     background: "rgba(250,204,21,0.10)",
     width: "fit-content",
   };
+
   const exampleTitle: React.CSSProperties = {
     fontWeight: 900,
-    fontSize: isMobile ? 22 : 15,
+    fontSize: isMobile ? 19 : 15,
     color: "#ffffff",
     lineHeight: 1.06,
   };
+
   const exampleSub: React.CSSProperties = {
-    fontSize: isMobile ? 16 : 12,
+    fontSize: isMobile ? 14 : 12,
     color: "rgba(226,232,240,0.76)",
     lineHeight: 1.5,
   };
 
   const footerWrap: React.CSSProperties = {
-    marginTop: 28,
-    paddingTop: 20,
+    marginTop: 24,
+    paddingTop: 18,
     borderTop: "1px solid rgba(148,163,184,0.16)",
     textAlign: "center",
   };
+
   const footerPrimary: React.CSSProperties = {
-    fontSize: isMobile ? 18 : 13,
+    fontSize: isMobile ? 14 : 13,
     color: "#94a3b8",
     fontWeight: 700,
     display: "inline-flex",
@@ -988,16 +1070,18 @@ export default function CreatorCityPreview() {
     flexWrap: "wrap",
     lineHeight: 1.35,
   };
+
   const footerSecondary: React.CSSProperties = {
     marginTop: 8,
-    fontSize: isMobile ? 16 : 12,
+    fontSize: isMobile ? 13 : 12,
     color: "rgba(148,163,184,0.72)",
     lineHeight: 1.45,
   };
+
   const footerPlanetMark: React.CSSProperties = {
     position: "relative",
-    width: isMobile ? 22 : 16,
-    height: isMobile ? 22 : 16,
+    width: isMobile ? 18 : 16,
+    height: isMobile ? 18 : 16,
     display: "inline-block",
     borderRadius: "50%",
     background:
@@ -1005,12 +1089,13 @@ export default function CreatorCityPreview() {
     boxShadow: "0 0 10px rgba(56,189,248,0.45)",
     flexShrink: 0,
   };
+
   const footerPlanetRing: React.CSSProperties = {
     position: "absolute",
-    left: isMobile ? -4 : -3,
-    top: isMobile ? 8 : 6,
-    width: isMobile ? 30 : 22,
-    height: isMobile ? 9 : 7,
+    left: isMobile ? -3 : -3,
+    top: isMobile ? 6 : 6,
+    width: isMobile ? 25 : 22,
+    height: isMobile ? 8 : 7,
     border: "1.5px solid rgba(186,230,253,0.92)",
     borderRadius: "50%",
     transform: "rotate(-18deg)",
@@ -1019,13 +1104,41 @@ export default function CreatorCityPreview() {
     pointerEvents: "none",
   };
 
+  const mobileSectionOrderStyle: React.CSSProperties = isMobile
+    ? { display: "grid", gap: 10 }
+    : {};
+
   const intentCards = [
-    { id: "landing-page" as BuildIntent, title: "Landing Page", text: "Your front door. Clear offer. Intake ready." },
-    { id: "live-board" as BuildIntent, title: "Live Board", text: "Jobs. Status. Activity. All visible." },
-    { id: "workflow-tool" as BuildIntent, title: "Workflow Tool", text: "Built around how you already work." },
-    { id: "intake-flow" as BuildIntent, title: "Intake Flow", text: "Calls, texts, walk-ins into one system." },
-    { id: "payment-flow" as BuildIntent, title: "Payment Flow", text: "Job to payment to proof." },
-    { id: "full-system" as BuildIntent, title: "Full Business System", text: "Everything. One page. No switching." },
+    {
+      id: "landing-page" as BuildIntent,
+      title: "Landing Page",
+      text: "Your front door. Clear offer. Intake ready.",
+    },
+    {
+      id: "live-board" as BuildIntent,
+      title: "Live Board",
+      text: "Jobs. Status. Activity. All visible.",
+    },
+    {
+      id: "workflow-tool" as BuildIntent,
+      title: "Workflow Tool",
+      text: "Built around how you already work.",
+    },
+    {
+      id: "intake-flow" as BuildIntent,
+      title: "Intake Flow",
+      text: "Calls, texts, walk-ins into one system.",
+    },
+    {
+      id: "payment-flow" as BuildIntent,
+      title: "Payment Flow",
+      text: "Job to payment to proof.",
+    },
+    {
+      id: "full-system" as BuildIntent,
+      title: "Full Business System",
+      text: "Everything. One page. No switching.",
+    },
   ];
 
   return (
@@ -1033,12 +1146,12 @@ export default function CreatorCityPreview() {
       <div style={shell}>
         <div style={frame}>
           <div style={topBar}>
-            <div style={topBarLeft}>
+            <div style={topBarMobileRow}>
               <span style={windowDot("#fb7185")} />
               <span style={windowDot("#fbbf24")} />
               <span style={windowDot("#4ade80")} />
               <div style={topBadge}>CREATOR CITY MISSION SURFACE</div>
-              <div style={topBadgeBlue}>LIVE BOARD GENERATOR</div>
+              {!isMobile && <div style={topBadgeBlue}>LIVE BOARD GENERATOR</div>}
             </div>
 
             <div style={topBarLeft}>
@@ -1049,69 +1162,75 @@ export default function CreatorCityPreview() {
                   ...topBadgeBlue,
                   cursor: "pointer",
                   background: warmMode ? "rgba(245,158,11,0.10)" : "rgba(56,189,248,0.10)",
-                  border: warmMode ? "1px solid rgba(245,158,11,0.28)" : "1px solid rgba(56,189,248,0.30)",
+                  border: warmMode
+                    ? "1px solid rgba(245,158,11,0.28)"
+                    : "1px solid rgba(56,189,248,0.30)",
                   color: warmMode ? "#fde68a" : "#bae6fd",
                 }}
               >
                 {warmMode ? "WARM MODE ON" : "COOL MODE ON"}
               </button>
-              <div style={topBadgeBlue}>PRIMARY ROUTE /planet/creator/building</div>
-              <div style={topBadge}>FREE TRIAL PREVIEW</div>
+
+              <div style={topBarPrimaryBadge}>PRIMARY ROUTE /planet/creator/building</div>
+
+              {!isMobile && <div style={topBadge}>FREE TRIAL PREVIEW</div>}
             </div>
           </div>
 
           <div style={cockpitGrid}>
-            <div style={panel}>
-              <div style={panelHeader}>
-                <div style={panelKicker}>Trajectory</div>
-                <div style={panelTitle}>Business launch path</div>
-                <div style={panelSub}>Where the user is in the mission right now.</div>
-              </div>
-
-              <div style={panelBody}>
-                <div style={trajectoryList}>
-                  {trajectorySteps.map((step) => (
-                    <div key={step.id} style={trajectoryItem(step.status)}>
-                      <div style={trajectoryTop}>
-                        <span style={trajectoryDot(step.status)} />
-                        <div style={trajectoryTitle}>{step.title}</div>
-                        <div style={trajectoryStatus}>{step.status.toUpperCase()}</div>
-                      </div>
-                      <div style={trajectoryText}>{step.text}</div>
-                    </div>
-                  ))}
+            {!isMobile && (
+              <div style={panel}>
+                <div style={panelHeader}>
+                  <div style={panelKicker}>Trajectory</div>
+                  <div style={panelTitle}>Business launch path</div>
+                  <div style={panelSub}>Where the user is in the mission right now.</div>
                 </div>
 
-                <div style={{ marginTop: 14 }}>
-                  <div
-                    style={{
-                      borderRadius: 18,
-                      border: "1px solid rgba(255,255,255,0.10)",
-                      background: "rgba(255,255,255,0.03)",
-                      padding: isMobile ? 14 : 12,
-                    }}
-                  >
-                    <div style={panelKicker}>Live board family</div>
+                <div style={panelBody}>
+                  <div style={trajectoryList}>
+                    {trajectorySteps.map((step) => (
+                      <div key={step.id} style={trajectoryItem(step.status)}>
+                        <div style={trajectoryTop}>
+                          <span style={trajectoryDot(step.status)} />
+                          <div style={trajectoryTitle}>{step.title}</div>
+                          <div style={trajectoryStatus}>{step.status.toUpperCase()}</div>
+                        </div>
+                        <div style={trajectoryText}>{step.text}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div style={{ marginTop: 14 }}>
                     <div
                       style={{
-                        marginTop: 8,
-                        fontSize: isMobile ? 18 : 15,
-                        fontWeight: 900,
-                        color: "#ffffff",
-                        lineHeight: 1.08,
+                        borderRadius: 18,
+                        border: "1px solid rgba(255,255,255,0.10)",
+                        background: "rgba(255,255,255,0.03)",
+                        padding: isMobile ? 14 : 12,
                       }}
                     >
-                      {configPreview.familyLabel}
+                      <div style={panelKicker}>Live board family</div>
+                      <div
+                        style={{
+                          marginTop: 8,
+                          fontSize: isMobile ? 18 : 15,
+                          fontWeight: 900,
+                          color: "#ffffff",
+                          lineHeight: 1.08,
+                        }}
+                      >
+                        {configPreview.familyLabel}
+                      </div>
+                      <div style={panelSub}>{configPreview.boardSubtitle}</div>
                     </div>
-                    <div style={panelSub}>{configPreview.boardSubtitle}</div>
                   </div>
                 </div>
               </div>
-            </div>
+            )}
 
-            <div>
+            <div style={mobileSectionOrderStyle}>
               <div style={heroCore}>
-                <div style={{ padding: isMobile ? 16 : 18 }}>
+                <div style={heroPadding}>
                   <button
                     type="button"
                     style={{ ...topBadge, cursor: "pointer" }}
@@ -1129,45 +1248,215 @@ export default function CreatorCityPreview() {
                   </div>
 
                   <div style={subtext}>
-                    This is wrapped like a mission surface. One center screen for
-                    live truth, one left rail for trajectory, one right rail for actions.
-                    This preview is visual-only so you can study the feel before touching your live file. This pass adds a little more HomePlanet warmth without losing the cockpit clarity.
+                    This is wrapped like a mission surface. One center screen for live truth,
+                    one left rail for trajectory, one right rail for actions. This preview is
+                    visual-only so you can study the feel before touching your live file.
+                    This pass adds a little more HomePlanet warmth without losing the cockpit
+                    clarity.
                   </div>
 
                   <div style={ctaRow}>
-                    <button style={primaryBtn} onClick={scrollToIntakeForm}>Start My Free Demo</button>
-                    <button style={secondaryBtn} onClick={() => openRoute(LIVE_CAMP_GUARDIAN_ROUTE)}>See Camp Guardian Live</button>
-                    <button style={secondaryBtn} onClick={scrollToReadySystems}>Use Ready System</button>
-                    <button style={secondaryBtn} onClick={() => openRoute("/planet/experience")}>Experience Planet</button>
+                    <button style={primaryBtn} onClick={scrollToIntakeForm}>
+                      Start My Free Demo
+                    </button>
+                    <button
+                      style={secondaryBtn}
+                      onClick={() => openRoute(LIVE_CAMP_GUARDIAN_ROUTE)}
+                    >
+                      See Camp Guardian Live
+                    </button>
+                    <button style={secondaryBtn} onClick={scrollToReadySystems}>
+                      Use Ready System
+                    </button>
+                    <button
+                      style={secondaryBtn}
+                      onClick={() => openRoute("/planet/experience")}
+                    >
+                      Experience Planet
+                    </button>
                   </div>
 
                   <div style={statusGrid}>
                     <div style={statusCard}>
                       <div style={statusLabel}>Mission role</div>
                       <div style={statusValue}>Live demo intake</div>
-                      <div style={statusText}>This form is still the real start path that creates the board.</div>
+                      <div style={statusText}>
+                        This form is still the real start path that creates the board.
+                      </div>
                     </div>
 
                     <div style={statusCard}>
                       <div style={statusLabel}>Resolved build type</div>
                       <div style={statusValue}>{resolvedBusinessLabel}</div>
-                      <div style={statusText}>Automatically matched into a starter board family.</div>
+                      <div style={statusText}>
+                        Automatically matched into a starter board family.
+                      </div>
                     </div>
 
                     <div style={statusCard}>
                       <div style={statusLabel}>Stage preview</div>
-                      <div style={statusValue}>{previewStages.length > 0 ? previewStages[0] : "Waiting"}</div>
-                      <div style={statusText}>The board can already predict the first live stages.</div>
+                      <div style={statusValue}>
+                        {previewStages.length > 0 ? previewStages[0] : "Waiting"}
+                      </div>
+                      <div style={statusText}>
+                        The board can already predict the first live stages.
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
 
+              {isMobile && (
+                <>
+                  <div style={panel}>
+                    <div style={panelHeader}>
+                      <div style={panelKicker}>Actions</div>
+                      <div style={panelTitle}>Launch controls</div>
+                      <div style={panelSub}>The next actions that matter.</div>
+                    </div>
+
+                    <div style={panelBody}>
+                      <div style={sideActionGrid}>
+                        <button style={sideActionBtn} onClick={scrollToIntakeForm}>
+                          Start my free demo
+                        </button>
+                        <button
+                          style={sideActionBtn}
+                          onClick={() => openRoute(LIVE_CAMP_GUARDIAN_ROUTE)}
+                        >
+                          Open Camp Guardian
+                        </button>
+                        <button style={sideActionBtn} onClick={scrollToReadySystems}>
+                          Use ready system
+                        </button>
+                        <button
+                          style={sideActionBtn}
+                          onClick={() => openRoute("/planet/experience")}
+                        >
+                          Open Experience Planet
+                        </button>
+                        <button
+                          style={sideActionBtn}
+                          onClick={() => openRoute(LIVE_PRODUCT_DEMO_ROUTE)}
+                        >
+                          Open product selling board
+                        </button>
+                      </div>
+
+                      <div style={sideHint}>
+                        Fewer choices. Better orientation. Still feels like a cockpit, just cleaner
+                        on mobile.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={panel}>
+                    <div style={panelHeader}>
+                      <div style={panelKicker}>Trajectory</div>
+                      <div style={panelTitle}>Business launch path</div>
+                      <div style={panelSub}>Where the user is in the mission right now.</div>
+                    </div>
+
+                    <div style={panelBody}>
+                      <div style={trajectoryList}>
+                        {trajectorySteps.map((step) => (
+                          <div key={step.id} style={trajectoryItem(step.status)}>
+                            <div style={trajectoryTop}>
+                              <span style={trajectoryDot(step.status)} />
+                              <div style={trajectoryTitle}>{step.title}</div>
+                              <div style={trajectoryStatus}>{step.status.toUpperCase()}</div>
+                            </div>
+                            <div style={trajectoryText}>{step.text}</div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div style={{ marginTop: 12 }}>
+                        <div
+                          style={{
+                            borderRadius: 16,
+                            border: "1px solid rgba(255,255,255,0.10)",
+                            background: "rgba(255,255,255,0.03)",
+                            padding: 12,
+                          }}
+                        >
+                          <div style={panelKicker}>Live board family</div>
+                          <div
+                            style={{
+                              marginTop: 8,
+                              fontSize: 16,
+                              fontWeight: 900,
+                              color: "#ffffff",
+                              lineHeight: 1.08,
+                            }}
+                          >
+                            {configPreview.familyLabel}
+                          </div>
+                          <div style={panelSub}>{configPreview.boardSubtitle}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={panel}>
+                    <div style={panelHeader}>
+                      <div style={panelKicker}>Live build feed</div>
+                      <div style={panelTitle}>Board assembly preview</div>
+                      <div style={panelSub}>
+                        What the user should feel happening while Creator City is preparing the
+                        board.
+                      </div>
+                    </div>
+
+                    <div style={panelBody}>
+                      <div style={buildSequenceWrap}>
+                        {buildSequence.map((item) => (
+                          <div key={item.title} style={buildSequenceItem}>
+                            <div style={buildSequenceTop}>
+                              <span style={buildSequenceDot(item.complete)} />
+                              <div style={buildSequenceTitle}>{item.title}</div>
+                            </div>
+                            <div style={buildSequenceText}>{item.text}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={panel}>
+                    <div style={panelHeader}>
+                      <div style={panelKicker}>Stage preview</div>
+                      <div style={panelTitle}>{configPreview.familyLabel}</div>
+                      <div style={panelSub}>
+                        Early stage mapping based on the business type and intent.
+                      </div>
+                    </div>
+
+                    <div style={panelBody}>
+                      <div style={stageGrid}>
+                        {previewStages.map((stage, index) => (
+                          <div key={`${stage}-${index}`} style={stageCard}>
+                            <div style={stageTag}>STAGE {index + 1}</div>
+                            <div style={stageName}>{stage}</div>
+                            <div style={stageText}>
+                              This becomes part of the live board workflow once the intake is
+                              submitted.
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+
               <div style={sectionCard}>
                 <div style={panelHeader}>
                   <div style={panelKicker}>System truth</div>
                   <div style={panelTitle}>Mission feed</div>
-                  <div style={panelSub}>Real board preparation signals based on the live intake state.</div>
+                  <div style={panelSub}>
+                    Real board preparation signals based on the live intake state.
+                  </div>
                 </div>
 
                 <div style={sectionBody}>
@@ -1186,11 +1475,15 @@ export default function CreatorCityPreview() {
                 <div style={panelHeader}>
                   <div style={panelKicker}>Mission intake</div>
                   <div style={panelTitle}>Start your free live demo</div>
-                  <div style={panelSub}>Fill out this intake and Creator City instantly generates your live demo board.</div>
+                  <div style={panelSub}>
+                    Fill out this intake and Creator City instantly generates your live demo board.
+                  </div>
                 </div>
 
                 <div style={sectionBody}>
-                  <div style={formLead}>This form is still the real start path. It creates the demo.</div>
+                  <div style={formLead}>
+                    This form is still the real start path. It creates the demo.
+                  </div>
 
                   <div style={intentGrid}>
                     {intentCards.map((cardItem) => (
@@ -1219,58 +1512,102 @@ export default function CreatorCityPreview() {
                       <div style={intakeGrid}>
                         <div style={inputGroup}>
                           <label style={label}>Business name</label>
-                          <input style={inputBase} value={businessName} onChange={(e) => setBusinessName(e.target.value)} />
+                          <input
+                            style={inputBase}
+                            value={businessName}
+                            onChange={(e) => setBusinessName(e.target.value)}
+                          />
                         </div>
 
                         <div style={inputGroup}>
                           <label style={label}>Business type</label>
-                          <input style={inputBase} value={businessType} onChange={(e) => setBusinessType(e.target.value)} />
+                          <input
+                            style={inputBase}
+                            value={businessType}
+                            onChange={(e) => setBusinessType(e.target.value)}
+                          />
                         </div>
 
                         <div style={inputGroup}>
                           <label style={label}>City</label>
-                          <input style={inputBase} value={city} onChange={(e) => setCity(e.target.value)} />
+                          <input
+                            style={inputBase}
+                            value={city}
+                            onChange={(e) => setCity(e.target.value)}
+                          />
                         </div>
 
                         <div style={inputGroup}>
                           <label style={label}>Email or preferred contact</label>
-                          <input style={inputBase} value={contact} onChange={(e) => setContact(e.target.value)} />
+                          <input
+                            style={inputBase}
+                            value={contact}
+                            onChange={(e) => setContact(e.target.value)}
+                          />
                         </div>
 
                         <div style={{ ...inputGroup, gridColumn: "1 / -1" }}>
                           <label style={label}>How do you run jobs right now?</label>
-                          <textarea style={textareaWide} value={currentWorkflow} onChange={(e) => setCurrentWorkflow(e.target.value)} />
+                          <textarea
+                            style={textareaWide}
+                            value={currentWorkflow}
+                            onChange={(e) => setCurrentWorkflow(e.target.value)}
+                          />
                         </div>
 
                         <div style={{ ...inputGroup, gridColumn: "1 / -1" }}>
                           <label style={label}>What wastes the most time?</label>
-                          <textarea style={textareaWide} value={biggestFriction} onChange={(e) => setBiggestFriction(e.target.value)} />
+                          <textarea
+                            style={textareaWide}
+                            value={biggestFriction}
+                            onChange={(e) => setBiggestFriction(e.target.value)}
+                          />
                         </div>
 
                         <div style={{ ...inputGroup, gridColumn: "1 / -1" }}>
                           <label style={label}>What do customers keep asking about?</label>
-                          <textarea style={textareaWide} value={customerQuestions} onChange={(e) => setCustomerQuestions(e.target.value)} />
+                          <textarea
+                            style={textareaWide}
+                            value={customerQuestions}
+                            onChange={(e) => setCustomerQuestions(e.target.value)}
+                          />
                         </div>
 
                         <div style={{ ...inputGroup, gridColumn: "1 / -1" }}>
-                          <label style={label}>What would make you say “holy shit, this solves it”?</label>
-                          <textarea style={textareaWide} value={holyShiftMoment} onChange={(e) => setHolyShiftMoment(e.target.value)} />
+                          <label style={label}>
+                            What would make you say “holy shit, this solves it”?
+                          </label>
+                          <textarea
+                            style={textareaWide}
+                            value={holyShiftMoment}
+                            onChange={(e) => setHolyShiftMoment(e.target.value)}
+                          />
                         </div>
                       </div>
 
                       <div style={fileWrap}>
                         <div style={label}>Upload photos of your workflow</div>
-                        <div style={{ ...panelSub, marginTop: 8 }}>Show the current mess. We use it to remove steps.</div>
+                        <div style={{ ...panelSub, marginTop: 8 }}>
+                          Show the current mess. We use it to remove steps.
+                        </div>
                         <div style={{ marginTop: 12 }}>
                           <input
                             type="file"
                             multiple
                             accept="image/*"
-                            onChange={(e) => setWorkflowFiles(Array.from(e.target.files || []))}
-                            style={{ fontSize: isMobile ? 16 : 14 }}
+                            onChange={(e) =>
+                              setWorkflowFiles(Array.from(e.target.files || []))
+                            }
+                            style={{ fontSize: isMobile ? 16 : 14, width: "100%" }}
                           />
                         </div>
-                        <div style={{ marginTop: 10, fontSize: isMobile ? 15 : 12, color: "rgba(186,230,253,0.9)" }}>
+                        <div
+                          style={{
+                            marginTop: 10,
+                            fontSize: isMobile ? 14 : 12,
+                            color: "rgba(186,230,253,0.9)",
+                          }}
+                        >
                           {selectedFilesLabel}
                         </div>
                       </div>
@@ -1285,11 +1622,14 @@ export default function CreatorCityPreview() {
                           }}
                           disabled={submitting}
                         >
-                          {submitting ? "Building your free live demo..." : "Build My Free Demo"}
+                          {submitting
+                            ? "Building your free live demo..."
+                            : "Build My Free Demo"}
                         </button>
 
                         <div style={helperText}>
-                          This preview simulates the intake flow so you can feel the cockpit layout.
+                          This preview simulates the intake flow so you can feel the cockpit
+                          layout.
                         </div>
                       </div>
                     </form>
@@ -1298,77 +1638,113 @@ export default function CreatorCityPreview() {
               </div>
             </div>
 
-            <div style={{ display: "grid", gap: 14 }}>
-              <div style={panel}>
-                <div style={panelHeader}>
-                  <div style={panelKicker}>Actions</div>
-                  <div style={panelTitle}>Launch controls</div>
-                  <div style={panelSub}>No clutter. Just the next actions that matter.</div>
-                </div>
-
-                <div style={panelBody}>
-                  <div style={sideActionGrid}>
-                    <button style={sideActionBtn} onClick={scrollToIntakeForm}>Start my free demo</button>
-                    <button style={sideActionBtn} onClick={() => openRoute(LIVE_CAMP_GUARDIAN_ROUTE)}>Open Camp Guardian</button>
-                    <button style={sideActionBtn} onClick={scrollToReadySystems}>Use ready system</button>
-                    <button style={sideActionBtn} onClick={() => openRoute("/planet/experience")}>Open Experience Planet</button>
-                    <button style={sideActionBtn} onClick={() => openRoute(LIVE_PRODUCT_DEMO_ROUTE)}>Open product selling board</button>
+            {!isMobile && (
+              <div style={{ display: "grid", gap: 14 }}>
+                <div style={panel}>
+                  <div style={panelHeader}>
+                    <div style={panelKicker}>Actions</div>
+                    <div style={panelTitle}>Launch controls</div>
+                    <div style={panelSub}>No clutter. Just the next actions that matter.</div>
                   </div>
 
-                  <div style={sideHint}>
-                    This rail is the spacecraft command concept translated into Creator City: fewer choices, better orientation. The warmer glow helps it feel less cold and more HomePlanet.
+                  <div style={panelBody}>
+                    <div style={sideActionGrid}>
+                      <button style={sideActionBtn} onClick={scrollToIntakeForm}>
+                        Start my free demo
+                      </button>
+                      <button
+                        style={sideActionBtn}
+                        onClick={() => openRoute(LIVE_CAMP_GUARDIAN_ROUTE)}
+                      >
+                        Open Camp Guardian
+                      </button>
+                      <button style={sideActionBtn} onClick={scrollToReadySystems}>
+                        Use ready system
+                      </button>
+                      <button
+                        style={sideActionBtn}
+                        onClick={() => openRoute("/planet/experience")}
+                      >
+                        Open Experience Planet
+                      </button>
+                      <button
+                        style={sideActionBtn}
+                        onClick={() => openRoute(LIVE_PRODUCT_DEMO_ROUTE)}
+                      >
+                        Open product selling board
+                      </button>
+                    </div>
+
+                    <div style={sideHint}>
+                      This rail is the spacecraft command concept translated into Creator City:
+                      fewer choices, better orientation. The warmer glow helps it feel less cold
+                      and more HomePlanet.
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div style={panel}>
-                <div style={panelHeader}>
-                  <div style={panelKicker}>Live build feed</div>
-                  <div style={panelTitle}>Board assembly preview</div>
-                  <div style={panelSub}>What the user should feel happening while Creator City is preparing the board.</div>
-                </div>
+                <div style={panel}>
+                  <div style={panelHeader}>
+                    <div style={panelKicker}>Live build feed</div>
+                    <div style={panelTitle}>Board assembly preview</div>
+                    <div style={panelSub}>
+                      What the user should feel happening while Creator City is preparing the
+                      board.
+                    </div>
+                  </div>
 
-                <div style={panelBody}>
-                  <div style={buildSequenceWrap}>
-                    {buildSequence.map((item) => (
-                      <div key={item.title} style={buildSequenceItem}>
-                        <div style={buildSequenceTop}>
-                          <span style={buildSequenceDot(item.complete)} />
-                          <div style={buildSequenceTitle}>{item.title}</div>
+                  <div style={panelBody}>
+                    <div style={buildSequenceWrap}>
+                      {buildSequence.map((item) => (
+                        <div key={item.title} style={buildSequenceItem}>
+                          <div style={buildSequenceTop}>
+                            <span style={buildSequenceDot(item.complete)} />
+                            <div style={buildSequenceTitle}>{item.title}</div>
+                          </div>
+                          <div style={buildSequenceText}>{item.text}</div>
                         </div>
-                        <div style={buildSequenceText}>{item.text}</div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={panel}>
+                  <div style={panelHeader}>
+                    <div style={panelKicker}>Stage preview</div>
+                    <div style={panelTitle}>{configPreview.familyLabel}</div>
+                    <div style={panelSub}>
+                      Early stage mapping based on the business type and intent.
+                    </div>
+                  </div>
+
+                  <div style={panelBody}>
+                    <div style={stageGrid}>
+                      {previewStages.map((stage, index) => (
+                        <div key={`${stage}-${index}`} style={stageCard}>
+                          <div style={stageTag}>STAGE {index + 1}</div>
+                          <div style={stageName}>{stage}</div>
+                          <div style={stageText}>
+                            This becomes part of the live board workflow once the intake is
+                            submitted.
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
-
-              <div style={panel}>
-                <div style={panelHeader}>
-                  <div style={panelKicker}>Stage preview</div>
-                  <div style={panelTitle}>{configPreview.familyLabel}</div>
-                  <div style={panelSub}>Early stage mapping based on the business type and intent.</div>
-                </div>
-
-                <div style={panelBody}>
-                  <div style={stageGrid}>
-                    {previewStages.map((stage, index) => (
-                      <div key={`${stage}-${index}`} style={stageCard}>
-                        <div style={stageTag}>STAGE {index + 1}</div>
-                        <div style={stageName}>{stage}</div>
-                        <div style={stageText}>This becomes part of the live board workflow once the intake is submitted.</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
 
-          <div style={{ padding: isMobile ? "0 14px 24px" : "0 16px 28px" }}>
-            <div ref={readySystemsRef} style={examplesLabel}>Featured live system</div>
+          <div style={{ padding: isMobile ? "0 10px 20px" : "0 16px 28px" }}>
+            <div ref={readySystemsRef} style={examplesLabel}>
+              Featured live system
+            </div>
 
-            <div style={featuredDemoCard} onClick={() => openRoute(LIVE_CAMP_GUARDIAN_ROUTE)}>
+            <div
+              style={featuredDemoCard}
+              onClick={() => openRoute(LIVE_CAMP_GUARDIAN_ROUTE)}
+            >
               <div style={featuredDemoInner}>
                 <div style={featuredDemoTop}>
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -1380,11 +1756,14 @@ export default function CreatorCityPreview() {
                     <div style={featuredDemoTitle}>Camp Guardian</div>
 
                     <div style={featuredDemoSubline}>
-                      Live child presence, guardian visibility, protected movement tracking, and parent-facing real-time status.
+                      Live child presence, guardian visibility, protected movement tracking,
+                      and parent-facing real-time status.
                     </div>
 
                     <div style={featuredDemoSupport}>
-                      Camps, youth programs, activity groups, and supervised child environments can run live with movement visibility, guardian-safe links, and proof-style timelines in one system.
+                      Camps, youth programs, activity groups, and supervised child environments
+                      can run live with movement visibility, guardian-safe links, and proof-style
+                      timelines in one system.
                     </div>
                   </div>
 
@@ -1401,30 +1780,56 @@ export default function CreatorCityPreview() {
                 </div>
 
                 <div style={featuredValueGrid}>
-                  {[{
-                    k: "LIVE CHILD PRESENCE",
-                    t: "See where each child is right now",
-                    d: "Checked in, activity zone, hydration, with staff, and checked out all stay visible live.",
-                    c: "rgba(187,247,208,1)",
-                  }, {
-                    k: "PARENT VIEW",
-                    t: "Guardian-safe status from a protected link",
-                    d: "Open the parent view directly from the child card and show real-time movement without exposing the whole system.",
-                    c: "rgba(186,230,253,1)",
-                  }, {
-                    k: "PREDATORSHIELD BASE",
-                    t: "Child profile stays controlled",
-                    d: "Movement, guardian contact, timelines, and notes stay visible while the profile remains protected.",
-                    c: "rgba(254,240,138,1)",
-                  }].map((item) => (
+                  {[
+                    {
+                      k: "LIVE CHILD PRESENCE",
+                      t: "See where each child is right now",
+                      d: "Checked in, activity zone, hydration, with staff, and checked out all stay visible live.",
+                      c: "rgba(187,247,208,1)",
+                    },
+                    {
+                      k: "PARENT VIEW",
+                      t: "Guardian-safe status from a protected link",
+                      d: "Open the parent view directly from the child card and show real-time movement without exposing the whole system.",
+                      c: "rgba(186,230,253,1)",
+                    },
+                    {
+                      k: "PREDATORSHIELD BASE",
+                      t: "Child profile stays controlled",
+                      d: "Movement, guardian contact, timelines, and notes stay visible while the profile remains protected.",
+                      c: "rgba(254,240,138,1)",
+                    },
+                  ].map((item) => (
                     <div key={item.k} style={featuredValueCard}>
-                      <div style={{ fontSize: isMobile ? 16 : 12, fontWeight: 900, color: item.c, marginBottom: 6, letterSpacing: 0.3 }}>
+                      <div
+                        style={{
+                          fontSize: isMobile ? 13 : 12,
+                          fontWeight: 900,
+                          color: item.c,
+                          marginBottom: 6,
+                          letterSpacing: 0.3,
+                        }}
+                      >
                         {item.k}
                       </div>
-                      <div style={{ fontSize: isMobile ? 18 : 14, fontWeight: 900, color: "#ffffff", lineHeight: 1.08, marginBottom: 6 }}>
+                      <div
+                        style={{
+                          fontSize: isMobile ? 16 : 14,
+                          fontWeight: 900,
+                          color: "#ffffff",
+                          lineHeight: 1.08,
+                          marginBottom: 6,
+                        }}
+                      >
                         {item.t}
                       </div>
-                      <div style={{ fontSize: isMobile ? 15 : 12, color: "rgba(226,232,240,0.76)", lineHeight: 1.5 }}>
+                      <div
+                        style={{
+                          fontSize: isMobile ? 13 : 12,
+                          color: "rgba(226,232,240,0.76)",
+                          lineHeight: 1.5,
+                        }}
+                      >
                         {item.d}
                       </div>
                     </div>
@@ -1452,7 +1857,9 @@ export default function CreatorCityPreview() {
                 </span>
                 HomePlanet © 2026. All rights reserved.
               </div>
-              <div style={footerSecondary}>Your business is not complicated. Your tools are.</div>
+              <div style={footerSecondary}>
+                Your business is not complicated. Your tools are.
+              </div>
             </div>
           </div>
         </div>
