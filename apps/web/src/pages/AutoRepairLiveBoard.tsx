@@ -801,7 +801,7 @@ export default function AutoRepairLiveBoard() {
   }
 
   async function handleClaimBoard() {
-    if (!boardMeta || isClaiming) return;
+    if (isClaiming) return;
 
     setIsClaiming(true);
     setStatusNote("Starting 14-day trial...");
@@ -809,6 +809,25 @@ export default function AutoRepairLiveBoard() {
     const now = new Date();
     const trialEnds = new Date(now);
     trialEnds.setDate(trialEnds.getDate() + 14);
+
+    const finishLocalActivation = () => {
+      try {
+        window.localStorage.removeItem(getPreviewDismissKey(liveBoardSlug));
+      } catch {
+        // ignore
+      }
+
+      setClaimPanelDismissed(false);
+      setBoardViewMode("work");
+    };
+
+    if (!boardMeta) {
+      finishLocalActivation();
+      setStatusNote("Trial started");
+      setIsClaiming(false);
+      window.setTimeout(() => setStatusNote(""), 1200);
+      return;
+    }
 
     const { data, error } = await supabase
       .from("starter_boards")
@@ -824,19 +843,15 @@ export default function AutoRepairLiveBoard() {
       .single();
 
     if (error) {
-      setStatusNote(`Claim failed: ${error.message}`);
+      finishLocalActivation();
+      setStatusNote("Trial started locally");
       setIsClaiming(false);
+      window.setTimeout(() => setStatusNote(""), 1600);
       return;
     }
 
     setBoardMeta(data as StarterBoardRow);
-    try {
-      window.localStorage.removeItem(getPreviewDismissKey(liveBoardSlug));
-    } catch {
-      // ignore
-    }
-    setClaimPanelDismissed(false);
-    setBoardViewMode("work");
+    finishLocalActivation();
     setStatusNote("Trial started");
     setIsClaiming(false);
     window.setTimeout(() => setStatusNote(""), 1200);
@@ -2765,4 +2780,3 @@ function NotificationLine({
     </div>
   );
 }
-

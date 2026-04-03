@@ -154,7 +154,15 @@ export default function HomePlanetPaymentNode() {
     window.location.href = `sms:${phone}?&body=${encodeURIComponent(message)}`;
   };
 
-  const handleContinueToLiveBoard = () => {
+  const handleStartTrial = () => {
+  if (redirectTo) {
+    window.location.assign(redirectTo);
+    return;
+  }
+  window.location.reload();
+};
+
+const handleContinueToLiveBoard = () => {
     if (!redirectTo) {
       window.alert("No live board destination was attached to this payment flow yet.");
       return;
