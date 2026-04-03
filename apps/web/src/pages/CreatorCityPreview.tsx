@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 
 const LIVE_PRODUCT_DEMO_ROUTE = "/planet/creator/rc-live";
 const LIVE_CAMP_GUARDIAN_ROUTE = "/planet/live/camp-aquaflow-5593";
-const PAYMENT_NODE_ROUTE = "/planet/payments/node";
 
 type SystemExample = {
   id: string;
@@ -76,7 +75,7 @@ function fakeResolveStarterBoardConfig(args: {
   };
 }
 
-export default function CreatorCity() {
+export default function CreatorCityPreview() {
   const openRoute = (to: string) => {
     window.location.href = to;
   };
@@ -104,7 +103,7 @@ export default function CreatorCity() {
   );
   const [workflowFiles, setWorkflowFiles] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
-  const [reserveReady, setReserveReady] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -222,8 +221,8 @@ export default function CreatorCity() {
     {
       id: "launch",
       title: "Launch",
-      status: reserveReady ? "active" : holyShiftMoment || workflowFiles.length > 0 ? "armed" : "idle",
-      text: reserveReady ? "Reserve step ready" : "Board path ready",
+      status: holyShiftMoment || workflowFiles.length > 0 ? "armed" : "idle",
+      text: "Board path ready",
     },
   ];
 
@@ -231,11 +230,6 @@ export default function CreatorCity() {
     { label: "Presence lock", value: businessName ? "READY" : "WAITING", active: !!businessName },
     { label: "Board family", value: configPreview.familyLabel || "STARTER", active: true },
     { label: "Primary route", value: "/planet/creator/building", active: true },
-    {
-      label: "Reserve route",
-      value: PAYMENT_NODE_ROUTE,
-      active: reserveReady,
-    },
     {
       label: "Live redirect",
       value: businessName
@@ -247,6 +241,11 @@ export default function CreatorCity() {
       label: "Truth intake",
       value: currentWorkflow || biggestFriction || customerQuestions ? "CAPTURING" : "PENDING",
       active: !!(currentWorkflow || biggestFriction || customerQuestions),
+    },
+    {
+      label: "Workflow photos",
+      value: workflowFiles.length > 0 ? `${workflowFiles.length} LINKED` : "NONE",
+      active: workflowFiles.length > 0,
     },
   ];
 
@@ -269,31 +268,14 @@ export default function CreatorCity() {
       complete: previewStages.length > 0,
     },
     {
-      title: "Trust step",
-      text: reserveReady
-        ? "Reserve step is ready. Payment holds the build slot before live assembly."
-        : "Reserve step appears right after intake.",
-      complete: reserveReady,
+      title: "Friction",
+      text: biggestFriction || customerQuestions || "Waiting for workflow friction",
+      complete: !!(biggestFriction || customerQuestions),
     },
     {
       title: "Workflow",
       text: currentWorkflow || holyShiftMoment || "Waiting for workflow input",
       complete: !!(currentWorkflow || holyShiftMoment),
-    },
-  ];
-
-  const reserveHighlights = [
-    {
-      label: "What happens now",
-      value: "Your intake is locked in and your build slot is ready to reserve.",
-    },
-    {
-      label: "Why reserve",
-      value: "This keeps the flow clean: intake first, then trust, then reserve, then live build.",
-    },
-    {
-      label: "Payment route",
-      value: PAYMENT_NODE_ROUTE,
     },
   ];
 
@@ -308,16 +290,11 @@ export default function CreatorCity() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    setReserveReady(false);
+    setSubmitted(false);
     setTimeout(() => {
       setSubmitting(false);
-      setReserveReady(true);
+      setSubmitted(true);
     }, 1200);
-  };
-
-  const resetIntake = () => {
-    setReserveReady(false);
-    intakeFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const page: React.CSSProperties = {
@@ -815,54 +792,14 @@ export default function CreatorCity() {
     maxWidth: 680,
   };
 
-  const reservePanel: React.CSSProperties = {
+  const successPanel: React.CSSProperties = {
     marginTop: 18,
     border: "1px solid rgba(34,197,94,0.34)",
-    background:
-      "linear-gradient(180deg, rgba(34,197,94,0.12), rgba(8,15,30,0.86) 36%, rgba(2,6,23,0.92) 100%)",
+    background: "rgba(34,197,94,0.10)",
     borderRadius: 16,
     padding: 16,
     color: "rgba(220,252,231,1)",
     boxShadow: "0 0 22px rgba(74,222,128,0.06)",
-  };
-
-  const reserveGrid: React.CSSProperties = {
-    display: "grid",
-    gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))",
-    gap: 10,
-    marginTop: 14,
-  };
-
-  const reserveCard: React.CSSProperties = {
-    borderRadius: 14,
-    border: "1px solid rgba(255,255,255,0.10)",
-    background: "rgba(255,255,255,0.04)",
-    padding: 12,
-  };
-
-  const reserveCardLabel: React.CSSProperties = {
-    fontSize: 10,
-    fontWeight: 900,
-    letterSpacing: 0.8,
-    textTransform: "uppercase",
-    color: "rgba(187,247,208,0.92)",
-  };
-
-  const reserveCardValue: React.CSSProperties = {
-    marginTop: 8,
-    fontSize: isMobile ? 14 : 13,
-    lineHeight: 1.55,
-    color: "#ffffff",
-    fontWeight: 800,
-    wordBreak: "break-word",
-  };
-
-  const reserveCtaRow: React.CSSProperties = {
-    display: "grid",
-    gridTemplateColumns: isMobile ? "1fr" : "max-content max-content",
-    gap: 10,
-    marginTop: 16,
-    alignItems: "stretch",
   };
 
   const buildSequenceWrap: React.CSSProperties = { display: "flex", flexDirection: "column", gap: 10 };
@@ -1187,7 +1124,7 @@ export default function CreatorCity() {
 
               {!isMobile && <div style={topBadgeBlue}>LIVE BOARD GENERATOR</div>}
               <div style={topBarPrimaryBadge}>PRIMARY ROUTE /planet/creator/building</div>
-              {!isMobile && <div style={topBadge}>{reserveReady ? "RESERVE READY" : "FREE TRIAL"}</div>}
+              {!isMobile && <div style={topBadge}>FREE TRIAL</div>}
             </div>
           </div>
 
@@ -1304,11 +1241,11 @@ export default function CreatorCity() {
                     </div>
 
                     <div style={statusCard}>
-                      <div style={statusLabel}>Next step</div>
-                      <div style={statusValue}>{reserveReady ? "Reserve" : previewStages.length > 0 ? previewStages[0] : "Waiting"}</div>
-                      <div style={statusText}>
-                        {reserveReady ? "Trust-first build hold is ready." : "The board predicts the first stages."}
+                      <div style={statusLabel}>First stage</div>
+                      <div style={statusValue}>
+                        {previewStages.length > 0 ? previewStages[0] : "Waiting"}
                       </div>
+                      <div style={statusText}>The board predicts the first stages.</div>
                     </div>
                   </div>
                 </div>
@@ -1325,25 +1262,19 @@ export default function CreatorCity() {
                   <div style={panelBody}>
                     <div style={{ display: "grid", gap: 10 }}>
                       <div style={stageCard}>
-                        <div style={stageTag}>{reserveReady ? "RESERVE STEP" : "FIRST STAGE"}</div>
-                        <div style={stageName}>{reserveReady ? "Reserve Your Build" : previewStages[0] || "Waiting"}</div>
-                        <div style={stageText}>
-                          {reserveReady ? "Intake is complete. Reserve your build slot to move into the live build path." : configPreview.boardSubtitle}
-                        </div>
+                        <div style={stageTag}>FIRST STAGE</div>
+                        <div style={stageName}>{previewStages[0] || "Waiting"}</div>
+                        <div style={stageText}>{configPreview.boardSubtitle}</div>
                       </div>
 
                       <div style={stageCard}>
-                        <div style={stageTag}>{reserveReady ? "PAYMENT ROUTE" : "LIVE REDIRECT"}</div>
+                        <div style={stageTag}>LIVE REDIRECT</div>
                         <div style={stageName}>
-                          {reserveReady
-                            ? PAYMENT_NODE_ROUTE
-                            : businessName
-                              ? `/planet/live/${slugify(businessName) || "starter-board"}-*`
-                              : "/planet/live/<boardSlug>"}
+                          {businessName
+                            ? `/planet/live/${slugify(businessName) || "starter-board"}-*`
+                            : "/planet/live/<boardSlug>"}
                         </div>
-                        <div style={stageText}>
-                          {reserveReady ? "Trust comes first. Reserve before live build." : "Your intake creates the board path."}
-                        </div>
+                        <div style={stageText}>Your intake creates the board path.</div>
                       </div>
                     </div>
                   </div>
@@ -1375,17 +1306,11 @@ export default function CreatorCity() {
                 <div style={panelHeader}>
                   <div style={panelKicker}>Mission intake</div>
                   <div style={panelTitle}>Start your free live demo</div>
-                  <div style={panelSub}>
-                    {reserveReady
-                      ? "Your intake is in. Reserve the build slot to move forward."
-                      : "Fill this out. We’ll turn it into a live board."}
-                  </div>
+                  <div style={panelSub}>Fill this out. We’ll turn it into a live board.</div>
                 </div>
 
                 <div style={sectionBody}>
-                  <div style={formLead}>
-                    {reserveReady ? "Your intake created the reserve step." : "This intake creates the demo."}
-                  </div>
+                  <div style={formLead}>This intake creates the demo.</div>
 
                   <div style={intentGrid}>
                     {intentCards.map((cardItem) => (
@@ -1400,45 +1325,13 @@ export default function CreatorCity() {
                     ))}
                   </div>
 
-                  {reserveReady ? (
-                    <div style={reservePanel}>
+                  {submitted ? (
+                    <div style={successPanel}>
                       <div style={{ fontWeight: 900, fontSize: 18, marginBottom: 8 }}>
-                        Reserve Your Build ⚡
+                        Creator City intake received ⚡
                       </div>
-
-                      <div style={{ lineHeight: 1.7, color: "rgba(220,252,231,0.96)" }}>
-                        Your intake is locked in. The next step is simple: reserve the build so the flow moves cleanly into payment and live assembly.
-                      </div>
-
-                      <div style={reserveGrid}>
-                        {reserveHighlights.map((item) => (
-                          <div key={item.label} style={reserveCard}>
-                            <div style={reserveCardLabel}>{item.label}</div>
-                            <div style={reserveCardValue}>{item.value}</div>
-                          </div>
-                        ))}
-                      </div>
-
-                      <div style={reserveCtaRow}>
-                        <button
-                          type="button"
-                          style={submitBtn}
-                          onClick={() => openRoute(PAYMENT_NODE_ROUTE)}
-                        >
-                          Reserve Your Build
-                        </button>
-
-                        <button
-                          type="button"
-                          style={secondaryBtn}
-                          onClick={resetIntake}
-                        >
-                          Edit Intake
-                        </button>
-                      </div>
-
-                      <div style={{ ...helperText, marginTop: 12, maxWidth: "100%" }}>
-                        Trust-first flow. No weird friction. Intake first, reserve second, live build next.
+                      <div style={{ lineHeight: 1.7 }}>
+                        Your request was turned into a live board path.
                       </div>
                     </div>
                   ) : (
@@ -1512,11 +1405,11 @@ export default function CreatorCity() {
                           }}
                           disabled={submitting}
                         >
-                          {submitting ? "Preparing your reserve step..." : "Build My Free Demo"}
+                          {submitting ? "Building your free live demo..." : "Build My Free Demo"}
                         </button>
 
                         <div style={helperText}>
-                          Your intake becomes a trust-first reserve step before live build.
+                          Your intake becomes a live board preview.
                         </div>
                       </div>
                     </form>
@@ -1536,14 +1429,7 @@ export default function CreatorCity() {
 
                   <div style={panelBody}>
                     <div style={sideActionGrid}>
-                      <button style={sideActionBtn} onClick={scrollToIntakeForm}>
-                        {reserveReady ? "Go to reserve step" : "Start my free demo"}
-                      </button>
-                      {reserveReady && (
-                        <button style={sideActionBtn} onClick={() => openRoute(PAYMENT_NODE_ROUTE)}>
-                          Open payment node
-                        </button>
-                      )}
+                      <button style={sideActionBtn} onClick={scrollToIntakeForm}>Start my free demo</button>
                       <button style={sideActionBtn} onClick={() => openRoute(LIVE_CAMP_GUARDIAN_ROUTE)}>Open Camp Guardian</button>
                       <button style={sideActionBtn} onClick={scrollToReadySystems}>Use ready system</button>
                       <button style={sideActionBtn} onClick={() => openRoute("/planet/experience")}>Open Experience Planet</button>
@@ -1583,15 +1469,11 @@ export default function CreatorCity() {
 
                   <div style={panelBody}>
                     <div style={stageGrid}>
-                      {(reserveReady ? ["Reserve Your Build", ...previewStages.slice(0, 3)] : previewStages).map((stage, index) => (
+                      {previewStages.map((stage, index) => (
                         <div key={`${stage}-${index}`} style={stageCard}>
                           <div style={stageTag}>STAGE {index + 1}</div>
                           <div style={stageName}>{stage}</div>
-                          <div style={stageText}>
-                            {index === 0 && reserveReady
-                              ? "Trust-first hold before live build."
-                              : "Part of the live board workflow."}
-                          </div>
+                          <div style={stageText}>Part of the live board workflow.</div>
                         </div>
                       ))}
                     </div>
