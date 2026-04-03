@@ -60,6 +60,9 @@ import GuardianPanicPage from "../pages/GuardianPanicPage";
 import GuardianPanicLiveBoard from "../pages/GuardianPanicLiveBoard";
 import PetCareTimelinePanel from "../components/guardian/PetCareTimelinePanel";
 
+// ✅ NEW — Fulfillment Board
+import PetTagFulfillmentBoard from "../pages/PetTagFulfillmentBoard";
+
 // Emily
 import EmilyLearningDesk from "../pages/EmilyLearningDesk";
 
@@ -103,14 +106,8 @@ export default function PlanetRoutes() {
       <Route path="demo/kitchen-flow" element={<RestaurantRushSimpleDemo />} />
       <Route path="demo/kitchen-manual" element={<RestaurantRushManualDemo />} />
       <Route path="demo/escape-board" element={<EscapeBoardDemo />} />
-      <Route
-        path="demo/kitchen-live"
-        element={<Navigate to={RESTAURANT_LIVE_TARGET} replace />}
-      />
-      <Route
-        path="demo/restaurant"
-        element={<Navigate to={RESTAURANT_LIVE_TARGET} replace />}
-      />
+      <Route path="demo/kitchen-live" element={<Navigate to={RESTAURANT_LIVE_TARGET} replace />} />
+      <Route path="demo/restaurant" element={<Navigate to={RESTAURANT_LIVE_TARGET} replace />} />
       <Route path="demo/example-kitchen" element={<MomsKitchenDemo />} />
       <Route path="demo/legal-workspace" element={<JoeGrantLegalDesk />} />
       <Route path="demo/lawn-route" element={<RouteCutLawnPage />} />
@@ -125,14 +122,8 @@ export default function PlanetRoutes() {
 
       <Route path="food/restaurant-rush-simple" element={<RestaurantRushSimpleDemo />} />
       <Route path="food/restaurant-rush-manual" element={<RestaurantRushManualDemo />} />
-      <Route
-        path="food/restaurant-rush-live"
-        element={<Navigate to={RESTAURANT_LIVE_TARGET} replace />}
-      />
-      <Route
-        path="food/restaurant-rush"
-        element={<Navigate to={RESTAURANT_LIVE_TARGET} replace />}
-      />
+      <Route path="food/restaurant-rush-live" element={<Navigate to={RESTAURANT_LIVE_TARGET} replace />} />
+      <Route path="food/restaurant-rush" element={<Navigate to={RESTAURANT_LIVE_TARGET} replace />} />
       <Route path="food/restaurant-rush-legacy" element={<RestaurantRushDemo />} />
       <Route path="food/restaurant-rush-live-classic" element={<RestaurantRushLiveDemo />} />
       <Route path="food/moms-kitchen" element={<MomsKitchenDemo />} />
@@ -154,6 +145,9 @@ export default function PlanetRoutes() {
 
       <Route path="guardian/join" element={<GuardianJoinDesk />} />
       <Route path="guardian/presence" element={<GuardianPresenceDesk />} />
+
+      {/* 🔥 NEW ROUTE */}
+      <Route path="guardian/fulfillment" element={<PetTagFulfillmentBoard />} />
 
       <Route path="guardian/child/:childId" element={<ParentChildView />} />
       <Route path="guardian/public/:profileId" element={<GuardianPublicProfilePage />} />
