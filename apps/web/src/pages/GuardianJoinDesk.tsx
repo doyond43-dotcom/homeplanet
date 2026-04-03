@@ -1,7 +1,20 @@
 import { useState } from "react";
-import { Shield, Mail, CheckCircle2 } from "lucide-react";
+import {
+  Shield,
+  Mail,
+  CheckCircle2,
+  CreditCard,
+  QrCode,
+} from "lucide-react";
 
-type OrderStage = "waiting" | "confirmed" | "production" | "shipped" | "delivered";
+type OrderStage =
+  | "waiting"
+  | "confirmed"
+  | "payment-pending"
+  | "payment-received"
+  | "production"
+  | "shipped"
+  | "delivered";
 
 function nowStamp() {
   return new Date().toLocaleTimeString([], {
@@ -41,18 +54,26 @@ export default function GuardianJoinDesk() {
       return;
     }
 
-    setOrderStage("confirmed");
+    setOrderStage("payment-pending");
     setLastUpdate(nowStamp());
 
-    // placeholder for later real SMS trigger
     console.log(
-      `SMS: ${mailing.fullName}'s pet tag order confirmed. Future updates will follow.`
+      `Order confirmed for ${mailing.fullName}. Waiting for payment to start production.`
+    );
+  }
+
+  function handlePaymentReceived() {
+    setOrderStage("payment-received");
+    setLastUpdate(nowStamp());
+
+    console.log(
+      `Payment received for ${mailing.fullName}. Order is ready to move into production.`
     );
   }
 
   return (
     <div className="min-h-screen bg-[#0b1020] text-white">
-      <div className="mx-auto max-w-[760px] px-6 py-8">
+      <div className="mx-auto max-w-[820px] px-6 py-8">
         <header className="mb-6 rounded-3xl border border-blue-400/20 bg-gradient-to-r from-blue-900/40 to-purple-900/40 p-6">
           <div className="flex items-center gap-3">
             <Shield className="h-6 w-6 text-blue-300" />
@@ -144,6 +165,60 @@ export default function GuardianJoinDesk() {
               </p>
 
               <div className="mt-4 space-y-2 text-sm text-white/70">
+                <div>• Payment Pending</div>
+                <div>• In Production</div>
+                <div>• Shipped</div>
+                <div>• Delivered</div>
+              </div>
+
+              <div className="mt-4 text-xs text-white/55">
+                We’ll send updates here and by text.
+              </div>
+
+              {lastUpdate ? (
+                <div className="mt-2 text-xs text-blue-200/65">Last update: {lastUpdate}</div>
+              ) : null}
+            </>
+          )}
+
+          {orderStage === "payment-pending" && (
+            <>
+              <div className="mt-2 flex items-center gap-2 text-base font-semibold text-emerald-300">
+                <CheckCircle2 className="h-5 w-5" />
+                Order Confirmed
+              </div>
+              <p className="mt-1 text-sm text-white/80">
+                Your pet tag request has been received successfully.
+              </p>
+
+              <div className="mt-4 space-y-2 text-sm text-white/70">
+                <div>• Payment Pending</div>
+                <div>• In Production</div>
+                <div>• Shipped</div>
+                <div>• Delivered</div>
+              </div>
+
+              <div className="mt-4 text-xs text-white/55">
+                We’ll send updates here and by text.
+              </div>
+
+              {lastUpdate ? (
+                <div className="mt-2 text-xs text-blue-200/65">Last update: {lastUpdate}</div>
+              ) : null}
+            </>
+          )}
+
+          {orderStage === "payment-received" && (
+            <>
+              <div className="mt-2 flex items-center gap-2 text-base font-semibold text-emerald-300">
+                <CheckCircle2 className="h-5 w-5" />
+                Payment Received
+              </div>
+              <p className="mt-1 text-sm text-white/80">
+                Payment has been received. Your tag is ready to move into production.
+              </p>
+
+              <div className="mt-4 space-y-2 text-sm text-white/70">
                 <div>• In Production</div>
                 <div>• Shipped</div>
                 <div>• Delivered</div>
@@ -206,6 +281,50 @@ export default function GuardianJoinDesk() {
               City/State/ZIP: {mailing.city || "—"} {mailing.state || "—"} {mailing.zip || "—"} <br />
               Email: {mailing.email || "—"}
             </div>
+          </section>
+        )}
+
+        {orderStage === "payment-pending" && (
+          <section className="mt-6 rounded-3xl border border-cyan-400/20 bg-cyan-900/15 p-5">
+            <div className="flex items-center gap-2 text-sm uppercase text-cyan-200/80">
+              <CreditCard className="h-4 w-4" />
+              Complete Payment
+            </div>
+
+            <p className="mt-3 text-sm text-white/80">
+              Your tag order is confirmed. Payment starts production.
+            </p>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              <a
+                href="/planet/payments/node"
+                className="flex items-center justify-center gap-2 rounded-2xl border border-cyan-400/30 bg-cyan-500/15 px-4 py-3 text-sm font-medium text-cyan-50 transition hover:bg-cyan-500/25"
+              >
+                <QrCode className="h-4 w-4" />
+                Pay with Cash App
+              </a>
+
+              <a
+                href="/planet/payments/node"
+                className="flex items-center justify-center gap-2 rounded-2xl border border-cyan-400/30 bg-cyan-500/15 px-4 py-3 text-sm font-medium text-cyan-50 transition hover:bg-cyan-500/25"
+              >
+                <QrCode className="h-4 w-4" />
+                Pay with Zelle
+              </a>
+
+              <button
+                type="button"
+                onClick={handlePaymentReceived}
+                className="flex items-center justify-center gap-2 rounded-2xl border border-emerald-400/30 bg-emerald-500/15 px-4 py-3 text-sm font-medium text-emerald-50 transition hover:bg-emerald-500/25"
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                Mark Payment Received
+              </button>
+            </div>
+
+            <p className="mt-3 text-xs text-white/55">
+              Once payment is received, the tag moves into production.
+            </p>
           </section>
         )}
       </div>

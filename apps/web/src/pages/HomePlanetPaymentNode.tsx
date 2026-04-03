@@ -19,6 +19,14 @@ type RailConfig = {
   payUrl: string | null;
 };
 
+const PET_TAG_PAYMENT = {
+  ownerName: "Daniel Doyon",
+  cashApp: "$homeplanetsystems",
+  zelle: "dannyscandys@gmail.com",
+  cashAppQr: "/payment/cashapp-qr.png",
+  zelleQr: "/payment/zelle-qr.png",
+};
+
 function OwnerNav({ stopId }: { stopId: string | null }) {
   const operatorUrl = "/planet/routecut/operator";
   const liveUrl = stopId ? `/planet/routecut/live?stopId=${stopId}` : "/planet/routecut/live";
@@ -63,7 +71,7 @@ function OwnerNav({ stopId }: { stopId: string | null }) {
 }
 
 export default function HomePlanetPaymentNode() {
-  const [activeRail, setActiveRail] = useState<PaymentRail>("zelle");
+  const [activeRail, setActiveRail] = useState<PaymentRail>("cashapp");
   const [paidMarked, setPaidMarked] = useState(false);
   const { stops, selectedId } = useRouteCutStore();
 
@@ -81,12 +89,12 @@ export default function HomePlanetPaymentNode() {
       return {
         id: "cashapp",
         label: "Cash App",
-        qrSrc: "/payment/cashapp-qr.png",
-        accountName: ROUTE_OWNER_PAYMENT.ownerName,
-        handle: ROUTE_OWNER_PAYMENT.cashApp,
+        qrSrc: PET_TAG_PAYMENT.cashAppQr,
+        accountName: PET_TAG_PAYMENT.ownerName,
+        handle: PET_TAG_PAYMENT.cashApp,
         helper: "Scan with Cash App to send instantly.",
-        payUrl: ROUTE_OWNER_PAYMENT.cashApp
-          ? `https://cash.app/${ROUTE_OWNER_PAYMENT.cashApp.replace("$", "")}`
+        payUrl: PET_TAG_PAYMENT.cashApp
+          ? `https://cash.app/${PET_TAG_PAYMENT.cashApp.replace("$", "")}`
           : null,
       };
     }
@@ -94,9 +102,9 @@ export default function HomePlanetPaymentNode() {
     return {
       id: "zelle",
       label: "Zelle",
-      qrSrc: "/payment/zelle-qr.png",
-      accountName: ROUTE_OWNER_PAYMENT.ownerName,
-      handle: ROUTE_OWNER_PAYMENT.zelle,
+      qrSrc: PET_TAG_PAYMENT.zelleQr,
+      accountName: PET_TAG_PAYMENT.ownerName,
+      handle: PET_TAG_PAYMENT.zelle,
       helper: "Scan with Zelle to send instantly.",
       payUrl: null,
     };
@@ -105,7 +113,7 @@ export default function HomePlanetPaymentNode() {
   const handleMarkPaid = () => {
     setPaidMarked(true);
     window.alert(
-      "Payment marked on this screen. The next step is tying this directly to the live route payment state if you want customer-side confirmation here too."
+      "Payment marked on this screen. Next step is wiring this directly into the pet tag order status, proof timeline, and fulfillment board."
     );
   };
 
@@ -119,9 +127,11 @@ export default function HomePlanetPaymentNode() {
   };
 
   const handleTextPayment = async () => {
-    if (!stop) return;
+    const message = stop
+      ? buildCustomerPaymentMessage(stop)
+      : `HomePlanet Payment Node: your pet tag order is ready for payment. Pay with ${rail.label} using ${rail.handle}.`;
 
-    const message = buildCustomerPaymentMessage(stop);
+    const phone = stop?.phone ?? "8635320683";
 
     try {
       await navigator.clipboard.writeText(message);
@@ -129,7 +139,7 @@ export default function HomePlanetPaymentNode() {
       // ignore clipboard failure
     }
 
-    window.location.href = `sms:${stop.phone}?&body=${encodeURIComponent(message)}`;
+    window.location.href = `sms:${phone}?&body=${encodeURIComponent(message)}`;
   };
 
   const paymentSummary = stop
@@ -139,7 +149,12 @@ export default function HomePlanetPaymentNode() {
         amountDue: stop.payment.amountDue,
         status: stop.payment.status,
       }
-    : null;
+    : {
+        customer: "Pet Tag Order",
+        service: "Guardian Pet Tag",
+        amountDue: 25,
+        status: "unpaid" as const,
+      };
 
   return (
     <div className="min-h-screen bg-[#050814] text-white">
@@ -160,7 +175,7 @@ export default function HomePlanetPaymentNode() {
                 </h1>
                 <p className="mt-3 max-w-2xl text-sm leading-7 text-white/65 sm:text-base">
                   Choose your payment rail and scan to send. Once paid, the
-                  service record can reflect payment immediately.
+                  order can reflect payment immediately.
                 </p>
               </div>
 
@@ -237,7 +252,7 @@ export default function HomePlanetPaymentNode() {
                   {paymentSummary && (
                     <div className="rounded-2xl border border-cyan-400/15 bg-[#091524] p-4">
                       <div className="text-[11px] uppercase tracking-[0.28em] text-cyan-300/60">
-                        Current stop
+                        Current order
                       </div>
                       <div className="mt-2 text-lg font-semibold text-white">
                         {paymentSummary.customer}
@@ -261,9 +276,9 @@ export default function HomePlanetPaymentNode() {
                       HomePlanet flow
                     </div>
                     <div className="mt-2 text-sm leading-7 text-white/65">
-                      Customer scans the QR, sends payment, and the payment
-                      event can be attached to the service record, invoice,
-                      proof timeline, or live board.
+                      Customer chooses the rail, scans, pays, and the payment
+                      event can attach to the pet tag order, fulfillment board,
+                      proof timeline, or invoice record.
                     </div>
                   </div>
 
@@ -291,7 +306,7 @@ export default function HomePlanetPaymentNode() {
                   <div className="w-full rounded-[24px] border border-white/10 bg-white p-4 shadow-[0_10px_30px_rgba(0,0,0,0.3)]">
                     <div className="mb-4 text-center">
                       <div className="text-lg font-semibold text-black">
-                        {ROUTE_OWNER_PAYMENT.ownerName}
+                        {PET_TAG_PAYMENT.ownerName}
                       </div>
                       <div className="mt-1 text-sm text-slate-500">
                         {rail.handle || "Configure payment handle"}
@@ -316,7 +331,7 @@ export default function HomePlanetPaymentNode() {
                       {rail.label}
                     </div>
                     <div className="mt-1 text-base font-semibold text-white">
-                      {rail.accountName}
+                      {PET_TAG_PAYMENT.ownerName}
                     </div>
                     <div className="mt-1 text-sm text-cyan-200/80">
                       {rail.handle || "Not configured"}
@@ -344,8 +359,8 @@ export default function HomePlanetPaymentNode() {
                   </div>
 
                   <div className="rounded-2xl border border-cyan-400/15 bg-[#091524] p-4 text-sm leading-6 text-white/70">
-                    This same node can be reused on invoice pages, service
-                    pages, completion pages, and live boards.
+                    This same node can be reused on invoice pages, pet tag
+                    pages, service completion pages, and live boards.
                   </div>
                 </div>
               </div>
@@ -356,15 +371,13 @@ export default function HomePlanetPaymentNode() {
                 </div>
 
                 <div className="mt-4 grid gap-3">
-                  {stop ? (
-                    <button
-                      type="button"
-                      onClick={handleTextPayment}
-                      className="rounded-2xl bg-green-400 px-4 py-3 font-semibold text-black transition hover:bg-green-300"
-                    >
-                      Text Payment
-                    </button>
-                  ) : null}
+                  <button
+                    type="button"
+                    onClick={handleTextPayment}
+                    className="rounded-2xl bg-green-400 px-4 py-3 font-semibold text-black transition hover:bg-green-300"
+                  >
+                    Text Payment
+                  </button>
 
                   <button
                     type="button"
@@ -388,8 +401,8 @@ export default function HomePlanetPaymentNode() {
                 {paidMarked && (
                   <div className="mt-4 rounded-2xl border border-green-400/25 bg-green-400/10 p-4 text-sm leading-6 text-green-100">
                     Payment marked on this device. Next step is wiring this
-                    into the real proof timeline, invoice record, or live job
-                    board.
+                    into the real pet tag order status, fulfillment board, and
+                    proof timeline.
                   </div>
                 )}
               </div>
