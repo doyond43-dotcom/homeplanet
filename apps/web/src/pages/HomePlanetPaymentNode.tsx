@@ -77,6 +77,9 @@ export default function HomePlanetPaymentNode() {
 
   const params = new URLSearchParams(window.location.search);
   const stopIdFromQuery = params.get("stopId");
+  const rawRedirectTo = params.get("redirectTo");
+  const redirectTo =
+    rawRedirectTo && rawRedirectTo.startsWith("/") ? rawRedirectTo : null;
 
   const stop =
     getStopById(stopIdFromQuery) ??
@@ -112,6 +115,15 @@ export default function HomePlanetPaymentNode() {
 
   const handleMarkPaid = () => {
     setPaidMarked(true);
+
+    if (redirectTo) {
+      window.alert(
+        "Payment marked on this screen. Next step is wiring this directly into the live order status, proof timeline, and fulfillment board. Continuing to your live board now."
+      );
+      window.location.assign(redirectTo);
+      return;
+    }
+
     window.alert(
       "Payment marked on this screen. Next step is wiring this directly into the pet tag order status, proof timeline, and fulfillment board."
     );
@@ -140,6 +152,15 @@ export default function HomePlanetPaymentNode() {
     }
 
     window.location.href = `sms:${phone}?&body=${encodeURIComponent(message)}`;
+  };
+
+  const handleContinueToLiveBoard = () => {
+    if (!redirectTo) {
+      window.alert("No live board destination was attached to this payment flow yet.");
+      return;
+    }
+
+    window.location.assign(redirectTo);
   };
 
   const paymentSummary = stop
@@ -177,6 +198,11 @@ export default function HomePlanetPaymentNode() {
                   Choose your payment rail and scan to send. Once paid, the
                   order can reflect payment immediately.
                 </p>
+                {redirectTo ? (
+                  <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-green-400/30 bg-green-400/10 px-3 py-1.5 text-xs font-medium text-green-200 shadow-[0_0_18px_rgba(74,222,128,0.10)]">
+                    Live board ready after payment
+                  </div>
+                ) : null}
               </div>
 
               <div className="inline-flex items-center gap-2 self-start rounded-full border border-green-400/30 bg-green-400/10 px-3 py-1.5 text-xs font-medium text-green-200 shadow-[0_0_18px_rgba(74,222,128,0.10)]">
@@ -386,6 +412,16 @@ export default function HomePlanetPaymentNode() {
                   >
                     I Paid
                   </button>
+
+                  {redirectTo ? (
+                    <button
+                      type="button"
+                      onClick={handleContinueToLiveBoard}
+                      className="rounded-2xl border border-green-400/25 bg-green-400/10 px-4 py-3 font-medium text-green-100 transition hover:bg-green-400/15"
+                    >
+                      Continue to Live Board
+                    </button>
+                  ) : null}
 
                   {rail.payUrl ? (
                     <button

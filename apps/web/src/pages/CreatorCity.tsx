@@ -1423,7 +1423,7 @@ export default function CreatorCity() {
                         <button
                           type="button"
                           style={submitBtn}
-                          onClick={() => openRoute(PAYMENT_NODE_ROUTE)}
+                          onClick={() => openRoute(reservePaymentRoute)}
                         >
                           Reserve Your Build
                         </button>
@@ -1540,7 +1540,7 @@ export default function CreatorCity() {
                         {reserveReady ? "Go to reserve step" : "Start my free demo"}
                       </button>
                       {reserveReady && (
-                        <button style={sideActionBtn} onClick={() => openRoute(PAYMENT_NODE_ROUTE)}>
+                        <button style={sideActionBtn} onClick={() => openRoute(reservePaymentRoute)}>
                           Open payment node
                         </button>
                       )}
