@@ -204,6 +204,8 @@ export default function CreatorCity() {
   );
 
   const previewStages = configPreview.stages.slice(0, 4);
+  const liveBoardRoute = `/planet/live/${slugify(businessName) || "starter-board"}`;
+  const reservePaymentRoute = `${PAYMENT_NODE_ROUTE}?redirectTo=${encodeURIComponent(liveBoardRoute)}`;
 
   const trajectorySteps = [
     { id: "intake", title: "Intake", status: "complete", text: "Ready" },
@@ -1714,3 +1716,5 @@ export default function CreatorCity() {
     </div>
   );
 }
+
+
