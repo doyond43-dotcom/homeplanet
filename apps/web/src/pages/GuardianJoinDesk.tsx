@@ -1,5 +1,13 @@
 import { useMemo, useState } from "react";
-import { CheckCircle2, Phone, Shield, Tag, UserRound } from "lucide-react";
+import {
+  CheckCircle2,
+  Mail,
+  MapPin,
+  Phone,
+  Shield,
+  Tag,
+  UserRound,
+} from "lucide-react";
 
 function formatPhone(phone: string) {
   const digits = phone.replace(/\D/g, "");
@@ -30,16 +38,45 @@ function nowStamp() {
   });
 }
 
+type ShippingForm = {
+  fullName: string;
+  street: string;
+  city: string;
+  state: string;
+  zip: string;
+  email: string;
+};
+
+const INITIAL_SHIPPING: ShippingForm = {
+  fullName: "",
+  street: "",
+  city: "",
+  state: "",
+  zip: "",
+  email: "",
+};
+
 export default function GuardianJoinDesk() {
   const [petName, setPetName] = useState("");
   const [ownerName, setOwnerName] = useState("");
   const [phone, setPhone] = useState("");
   const [petType, setPetType] = useState("Dog");
+
   const [createdAt, setCreatedAt] = useState<string | null>(null);
   const [isCreated, setIsCreated] = useState(false);
+  const [showShipping, setShowShipping] = useState(false);
+  const [shippingSubmittedAt, setShippingSubmittedAt] = useState<string | null>(null);
+  const [isShippingSubmitted, setIsShippingSubmitted] = useState(false);
+
   const [statusNote, setStatusNote] = useState(
     "Enter your pet and owner details to create a live Guardian pet tag.",
   );
+
+  const [shippingStatusNote, setShippingStatusNote] = useState(
+    "After your pet tag is ready, enter your mailing details so we know where to send it.",
+  );
+
+  const [shipping, setShipping] = useState<ShippingForm>(INITIAL_SHIPPING);
 
   const previewName = petName.trim() || "Your Pet";
   const previewOwner = ownerName.trim() || "Owner Name";
@@ -57,12 +94,53 @@ export default function GuardianJoinDesk() {
 
     setIsCreated(true);
     setCreatedAt(nowStamp());
-    setStatusNote(`${previewName}'s Guardian pet tag preview is now ready.`);
+    setStatusNote(`${previewName}'s live Guardian pet page is now ready.`);
+    setShowShipping(false);
+    setIsShippingSubmitted(false);
+    setShippingSubmittedAt(null);
+    setShippingStatusNote(
+      "After your pet tag is ready, enter your mailing details so we know where to send it.",
+    );
+  }
+
+  function handleOpenShipping() {
+    if (!isCreated) return;
+    setShowShipping(true);
+    setShippingStatusNote("Enter your mailing details below so we can send your tag.");
+  }
+
+  function updateShipping<K extends keyof ShippingForm>(
+    field: K,
+    value: ShippingForm[K],
+  ) {
+    setShipping((current) => ({
+      ...current,
+      [field]: value,
+    }));
+  }
+
+  function handleSubmitShipping() {
+    if (
+      !shipping.fullName.trim() ||
+      !shipping.street.trim() ||
+      !shipping.city.trim() ||
+      !shipping.state.trim() ||
+      !shipping.zip.trim()
+    ) {
+      setShippingStatusNote("Enter full name, street, city, state, and ZIP first.");
+      return;
+    }
+
+    setIsShippingSubmitted(true);
+    setShippingSubmittedAt(nowStamp());
+    setShippingStatusNote(
+      `Shipping details captured for ${shipping.fullName.trim()}. ${previewName}'s tag is ready to be mailed.`,
+    );
   }
 
   return (
     <div className="min-h-screen bg-[#0b1020] text-white">
-      <div className="mx-auto max-w-[860px] px-6 py-8">
+      <div className="mx-auto max-w-[960px] px-6 py-8">
         <header className="mb-6 rounded-3xl border border-cyan-400/20 bg-gradient-to-r from-cyan-900/35 to-blue-900/35 p-6 shadow-[0_0_0_1px_rgba(34,211,238,0.06),0_12px_40px_rgba(0,0,0,0.28)]">
           <div className="flex items-center gap-3">
             <Shield className="h-6 w-6 text-cyan-300" />
@@ -162,7 +240,128 @@ export default function GuardianJoinDesk() {
                     Created at {createdAt}
                   </div>
                 )}
+
+                {isCreated ? (
+                  <div className="mt-4">
+                    <button
+                      type="button"
+                      onClick={handleOpenShipping}
+                      className="flex w-full items-center justify-center gap-2 rounded-2xl border border-amber-300/35 bg-amber-500/15 px-4 py-3 text-sm font-medium text-amber-50 transition hover:bg-amber-500/25"
+                    >
+                      <Mail className="h-4 w-4" />
+                      <span>Send My Tag</span>
+                    </button>
+                    <p className="mt-3 text-xs text-emerald-100/65">
+                      Next: enter your mailing details so we know where to send your real tag.
+                    </p>
+                  </div>
+                ) : null}
               </div>
+
+              {showShipping ? (
+                <div className="rounded-2xl border border-amber-300/20 bg-amber-900/10 p-4">
+                  <div className="flex items-center gap-2 text-sm uppercase tracking-wider text-amber-200/85">
+                    <MapPin className="h-4 w-4 text-amber-300" />
+                    Mailing Details
+                  </div>
+
+                  <div className="mt-2 text-sm text-amber-100/75">
+                    Where should we send {previewName}&apos;s tag?
+                  </div>
+
+                  <div className="mt-4 space-y-4">
+                    <label className="block">
+                      <span className="mb-2 block text-sm text-amber-100/85">Full Name</span>
+                      <input
+                        value={shipping.fullName}
+                        onChange={(e) => updateShipping("fullName", e.target.value)}
+                        placeholder="Dan Doyon"
+                        className="w-full rounded-2xl border border-amber-300/20 bg-[#0c1730] px-4 py-3 text-base text-white outline-none placeholder:text-amber-100/35"
+                      />
+                    </label>
+
+                    <label className="block">
+                      <span className="mb-2 block text-sm text-amber-100/85">Street Address</span>
+                      <input
+                        value={shipping.street}
+                        onChange={(e) => updateShipping("street", e.target.value)}
+                        placeholder="123 Main St"
+                        className="w-full rounded-2xl border border-amber-300/20 bg-[#0c1730] px-4 py-3 text-base text-white outline-none placeholder:text-amber-100/35"
+                      />
+                    </label>
+
+                    <div className="grid gap-4 sm:grid-cols-3">
+                      <label className="block sm:col-span-1">
+                        <span className="mb-2 block text-sm text-amber-100/85">City</span>
+                        <input
+                          value={shipping.city}
+                          onChange={(e) => updateShipping("city", e.target.value)}
+                          placeholder="Okeechobee"
+                          className="w-full rounded-2xl border border-amber-300/20 bg-[#0c1730] px-4 py-3 text-base text-white outline-none placeholder:text-amber-100/35"
+                        />
+                      </label>
+
+                      <label className="block sm:col-span-1">
+                        <span className="mb-2 block text-sm text-amber-100/85">State</span>
+                        <input
+                          value={shipping.state}
+                          onChange={(e) => updateShipping("state", e.target.value)}
+                          placeholder="FL"
+                          className="w-full rounded-2xl border border-amber-300/20 bg-[#0c1730] px-4 py-3 text-base text-white outline-none placeholder:text-amber-100/35"
+                        />
+                      </label>
+
+                      <label className="block sm:col-span-1">
+                        <span className="mb-2 block text-sm text-amber-100/85">ZIP</span>
+                        <input
+                          value={shipping.zip}
+                          onChange={(e) => updateShipping("zip", e.target.value)}
+                          placeholder="34972"
+                          className="w-full rounded-2xl border border-amber-300/20 bg-[#0c1730] px-4 py-3 text-base text-white outline-none placeholder:text-amber-100/35"
+                        />
+                      </label>
+                    </div>
+
+                    <label className="block">
+                      <span className="mb-2 block text-sm text-amber-100/85">
+                        Email (optional)
+                      </span>
+                      <input
+                        value={shipping.email}
+                        onChange={(e) => updateShipping("email", e.target.value)}
+                        placeholder="you@example.com"
+                        className="w-full rounded-2xl border border-amber-300/20 bg-[#0c1730] px-4 py-3 text-base text-white outline-none placeholder:text-amber-100/35"
+                      />
+                    </label>
+
+                    <button
+                      type="button"
+                      onClick={handleSubmitShipping}
+                      className="flex w-full items-center justify-center gap-2 rounded-2xl border border-amber-300/35 bg-amber-500/15 px-4 py-3 text-sm font-medium text-amber-50 transition hover:bg-amber-500/25"
+                    >
+                      <Mail className="h-4 w-4" />
+                      <span>Submit Mailing Details</span>
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+
+              {showShipping ? (
+                <div className="rounded-2xl border border-sky-400/20 bg-sky-900/10 p-4">
+                  <div className="text-sm uppercase tracking-wider text-sky-200/80">
+                    Shipping Status
+                  </div>
+                  <div className="mt-2 text-base font-semibold">
+                    {isShippingSubmitted ? "Ready to mail" : "Waiting for mailing details"}
+                  </div>
+                  <div className="mt-1 text-sm text-sky-100/75">{shippingStatusNote}</div>
+                  {shippingSubmittedAt ? (
+                    <div className="mt-2 text-xs text-sky-200/70">
+                      Submitted at {shippingSubmittedAt}
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
 
             <div className="space-y-5">
@@ -242,6 +441,34 @@ export default function GuardianJoinDesk() {
                   </div>
                 </div>
               </div>
+
+              {isShippingSubmitted ? (
+                <div className="rounded-2xl border border-emerald-400/20 bg-emerald-900/15 p-4">
+                  <div className="text-sm uppercase tracking-wider text-emerald-200/80">
+                    Mail Summary
+                  </div>
+                  <div className="mt-3 space-y-2 text-sm text-emerald-100/80">
+                    <p>
+                      <span className="font-semibold text-white">Ship to:</span>{" "}
+                      {shipping.fullName}
+                    </p>
+                    <p>
+                      <span className="font-semibold text-white">Address:</span>{" "}
+                      {shipping.street}
+                    </p>
+                    <p>
+                      <span className="font-semibold text-white">City / State / ZIP:</span>{" "}
+                      {shipping.city}, {shipping.state} {shipping.zip}
+                    </p>
+                    {shipping.email ? (
+                      <p>
+                        <span className="font-semibold text-white">Email:</span>{" "}
+                        {shipping.email}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
             </div>
           </div>
         </section>
