@@ -801,35 +801,43 @@ export default function AutoRepairLiveBoard() {
   }
 
   async function handleClaimBoard() {
-    if (isClaiming) return;
+  if (isClaiming) return;
 
-    setIsClaiming(true);
-    setStatusNote("Starting 14-day trial...");
+  setIsClaiming(true);
+  setStatusNote("Starting 14-day trial...");
 
-    const now = new Date();
-    const trialEnds = new Date(now);
-    trialEnds.setDate(trialEnds.getDate() + 14);
+  const now = new Date();
+  const trialEnds = new Date(now);
+  trialEnds.setDate(trialEnds.getDate() + 14);
 
-    const finishLocalActivation = () => {
-      try {
-        window.localStorage.removeItem(getPreviewDismissKey(liveBoardSlug));
-      } catch {
-        // ignore
-      }
+  const activationPayload = {
+    businessName: boardMeta?.business_name || payload.businessName || businessName,
+    ownerName: boardMeta?.owner_name || payload.ownerName || "",
+    businessType: boardMeta?.business_type || payload.businessType || businessType,
+    city: boardMeta?.city || payload.city || city,
+    primaryGoal: payload.primaryGoal || "",
+    boardSlug: liveBoardSlug,
+    presenceId: boardMeta?.presence_id || payload.presenceId || "",
+    presenceKey: boardMeta?.presence_key || payload.presenceKey || "",
+  };
 
-      setClaimPanelDismissed(false);
-      setBoardViewMode("work");
-    };
+  try {
+    window.localStorage.removeItem(getPreviewDismissKey(liveBoardSlug));
+  } catch {
+    // ignore
+  }
 
-    if (!boardMeta) {
-      finishLocalActivation();
-      setStatusNote("Trial started");
-      setIsClaiming(false);
-      window.setTimeout(() => setStatusNote(""), 1200);
-      return;
-    }
+  try {
+    window.localStorage.setItem(
+      "hp_onboarding_payload",
+      JSON.stringify(activationPayload),
+    );
+  } catch {
+    // ignore
+  }
 
-    const { data, error } = await supabase
+  if (boardMeta) {
+    void supabase
       .from("starter_boards")
       .update({
         claim_status: "claimed",
@@ -838,24 +846,11 @@ export default function AutoRepairLiveBoard() {
         trial_started_at: now.toISOString(),
         trial_ends_at: trialEnds.toISOString(),
       })
-      .eq("board_slug", liveBoardSlug)
-      .select("*")
-      .single();
-
-    if (error) {
-      finishLocalActivation();
-      setStatusNote("Trial started locally");
-      setIsClaiming(false);
-      window.setTimeout(() => setStatusNote(""), 1600);
-      return;
-    }
-
-    setBoardMeta(data as StarterBoardRow);
-    finishLocalActivation();
-    setStatusNote("Trial started");
-    setIsClaiming(false);
-    window.setTimeout(() => setStatusNote(""), 1200);
+      .eq("board_slug", liveBoardSlug);
   }
+
+  window.location.href = "/planet/start/building";
+}
 
   function updateLocalSelectedJob<K extends keyof RepairJob>(
     key: K,
@@ -2780,3 +2775,4 @@ function NotificationLine({
     </div>
   );
 }
+
