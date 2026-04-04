@@ -489,6 +489,7 @@ export default function AutoRepairLiveBoard() {
     useState<RestaurantTicketDraft | null>(null);
   const [isClaiming, setIsClaiming] = useState(false);
   const [claimPanelDismissed, setClaimPanelDismissed] = useState(false);
+  const [localClaimed, setLocalClaimed] = useState(false);
   const [boardViewMode, setBoardViewMode] = useState<"reveal" | "work">(
     "reveal",
   );
@@ -529,7 +530,8 @@ export default function AutoRepairLiveBoard() {
 
   const isRestaurant = config.key === "restaurant-rush";
   const isCamp = config.key === "camp-guardian";
-  const isClaimed = (boardMeta?.claim_status ?? "preview") === "claimed";
+  const isClaimed =
+    localClaimed || (boardMeta?.claim_status ?? "preview") === "claimed";
   const showClaimOverlay =
     !isRestaurant && !loading && !isClaimed && !claimPanelDismissed;
 
@@ -826,6 +828,14 @@ export default function AutoRepairLiveBoard() {
   } catch {
     // ignore
   }
+
+  try {
+    window.localStorage.setItem(getLocalClaimKey(liveBoardSlug), "true");
+  } catch {
+    // ignore
+  }
+
+  setLocalClaimed(true);
 
   try {
     window.localStorage.setItem(
@@ -2775,4 +2785,10 @@ function NotificationLine({
     </div>
   );
 }
+
+
+
+
+
+
 
