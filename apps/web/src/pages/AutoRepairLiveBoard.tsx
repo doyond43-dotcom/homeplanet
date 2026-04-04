@@ -465,9 +465,23 @@ export default function AutoRepairLiveBoard() {
   const location = useLocation();
   const { boardSlug } = useParams<{ boardSlug: string }>();
 
-  const payload =
+  const payload = useMemo<OnboardingPayload>(() => {
+  const statePayload =
     ((location.state as { onboardingPayload?: OnboardingPayload } | null)
-      ?.onboardingPayload ?? {}) as OnboardingPayload;
+      ?.onboardingPayload ?? null) as OnboardingPayload | null;
+
+  if (statePayload) {
+    return statePayload;
+  }
+
+  try {
+    const raw = window.localStorage.getItem("hp_onboarding_payload");
+    if (!raw) return {} as OnboardingPayload;
+    return JSON.parse(raw) as OnboardingPayload;
+  } catch {
+    return {} as OnboardingPayload;
+  }
+}, [location.state]);
 
   const isExplicitDemoRoute = location.pathname === "/planet/demo/auto-service";
   const liveBoardSlug =
@@ -544,7 +558,18 @@ export default function AutoRepairLiveBoard() {
     }
   })();
   const showClaimOverlay =
-    !isRestaurant && !loading && !isClaimed && !claimPanelDismissed;
+  !isRestaurant && !loading && !isClaimed && !claimPanelDismissed;
+
+const presenceId =
+  boardMeta?.presence_id ||
+  payload.presenceId ||
+  "creating...";
+
+const boardSlugDisplay =
+  liveBoardSlug || payload.boardSlug || "—";
+
+const isActiveBoard =
+  isClaimed || boardMeta?.is_active === true;
 
   const stages = useMemo(() => [...config.stages], [config.stages]);
 
@@ -1157,6 +1182,34 @@ window.location.href = "/planet/start/building";
       ) : null}
 
       <div className="mx-auto max-w-7xl px-6 py-8">
+  <div className="mb-4 rounded-xl border border-cyan-400/20 bg-[#061226] px-4 py-3 shadow-[0_0_20px_rgba(34,211,238,0.08)]">
+    <div className="flex flex-col gap-2 text-xs md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-wrap items-center gap-3 text-cyan-200">
+        <span className="opacity-60">Presence ID:</span>
+        <span className="font-mono text-cyan-300">
+          {presenceId}
+        </span>
+
+        <span className="opacity-40">|</span>
+
+        <span className="opacity-60">Slug:</span>
+        <span className="font-mono text-cyan-300">
+          {boardSlugDisplay}
+        </span>
+
+        <span className="opacity-40">|</span>
+
+        <span className="opacity-60">Status:</span>
+        <span className={`font-semibold ${isActiveBoard ? "text-emerald-300" : "text-amber-300"}`}>
+          {isActiveBoard ? "Active" : "Preview"}
+        </span>
+      </div>
+
+      <div className="text-right text-[11px] text-white/40">
+        Presence-first • Timestamp anchored
+      </div>
+    </div>
+  </div>
         {boardViewMode === "reveal" ? (
           <>
             <div className="mb-6 overflow-hidden rounded-[30px] border border-cyan-400/20 bg-gradient-to-br from-cyan-500/10 via-slate-900 to-slate-950 shadow-[0_0_80px_rgba(34,211,238,0.12)]">
@@ -2802,6 +2855,11 @@ function NotificationLine({
     </div>
   );
 }
+
+
+
+
+
 
 
 

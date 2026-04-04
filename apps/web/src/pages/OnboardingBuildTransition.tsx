@@ -63,7 +63,24 @@ async function ensureStarterBoard(payload: OnboardingPayload) {
   const city = payload.city?.trim() || "";
   const phone = "";
 
-  const baseSlug = slugify(businessName) || `starter-${randomSuffix()}`;
+  const providedSlug = payload.boardSlug?.trim() || "";
+  const baseSlug = providedSlug || slugify(businessName) || `starter-${randomSuffix()}`;
+
+  if (providedSlug) {
+    const existingBySlug = await supabase
+      .from("starter_boards")
+      .select("board_slug,presence_id,presence_key")
+      .eq("board_slug", providedSlug)
+      .maybeSingle();
+
+    if (existingBySlug.data) {
+      return {
+        boardSlug: existingBySlug.data.board_slug,
+        presenceId: existingBySlug.data.presence_id,
+        presenceKey: existingBySlug.data.presence_key,
+      };
+    }
+  }
 
   const existing = await supabase
     .from("starter_boards")
@@ -81,11 +98,14 @@ async function ensureStarterBoard(payload: OnboardingPayload) {
     };
   }
 
-  let boardSlug = baseSlug;
   let inserted = null;
 
   for (let i = 0; i < 5; i += 1) {
-    const trySlug = i === 0 ? boardSlug : `${baseSlug}-${randomSuffix()}`;
+    const trySlug =
+      i === 0
+        ? baseSlug
+        : providedSlug || `${baseSlug}-${randomSuffix()}`;
+
     const presenceId = makePresenceId(trySlug);
     const presenceKey = makePresenceKey();
 
@@ -167,9 +187,9 @@ export default function OnboardingBuildTransition() {
     void (async () => {
       try {
         if (
-          payload.businessType?.toLowerCase().includes("auto") &&
-          !payload.boardSlug
-        ) {
+  payload.businessType?.toLowerCase().includes("auto") &&
+  (!payload.boardSlug || !payload.presenceId || !payload.presenceKey)
+) {
           const identity = await ensureStarterBoard(payload);
           if (!alive) return;
 
@@ -476,3 +496,5 @@ export default function OnboardingBuildTransition() {
     </div>
   );
 }
+
+
