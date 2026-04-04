@@ -99,6 +99,9 @@ function getPreviewDismissKey(boardSlug: string) {
   return `hp_preview_dismissed_${boardSlug}`;
 }
 
+function getLocalClaimKey(boardSlug: string) {
+  return `hp_board_claimed_${boardSlug}`;
+}
 function getBoardViewModeKey(boardSlug: string) {
   return `hp_board_view_mode_${boardSlug}`;
 }
@@ -531,7 +534,15 @@ export default function AutoRepairLiveBoard() {
   const isRestaurant = config.key === "restaurant-rush";
   const isCamp = config.key === "camp-guardian";
   const isClaimed =
-    localClaimed || (boardMeta?.claim_status ?? "preview") === "claimed";
+  localClaimed ||
+  (boardMeta?.claim_status ?? "preview") === "claimed" ||
+  (() => {
+    try {
+      return window.localStorage.getItem(getLocalClaimKey(liveBoardSlug)) === "true";
+    } catch {
+      return false;
+    }
+  })();
   const showClaimOverlay =
     !isRestaurant && !loading && !isClaimed && !claimPanelDismissed;
 
@@ -859,7 +870,13 @@ export default function AutoRepairLiveBoard() {
       .eq("board_slug", liveBoardSlug);
   }
 
-  window.location.href = "/planet/start/building";
+  try {
+  window.localStorage.setItem(getLocalClaimKey(liveBoardSlug), "true");
+} catch {
+  // ignore
+}
+
+window.location.href = "/planet/start/building";
 }
 
   function updateLocalSelectedJob<K extends keyof RepairJob>(
@@ -2785,6 +2802,7 @@ function NotificationLine({
     </div>
   );
 }
+
 
 
 
