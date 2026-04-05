@@ -103,6 +103,15 @@ type RestaurantTicketDraft = {
 
 const DEMO_BOARD_SLUG = "demo-auto-repair";
 
+function createPresenceId() {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let result = "HP-";
+  for (let i = 0; i < 8; i += 1) {
+    result += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return result;
+}
+
 function getPreviewDismissKey(boardSlug: string) {
   return `hp_preview_dismissed_${boardSlug}`;
 }
@@ -800,40 +809,22 @@ export default function AutoRepairLiveBoard() {
   const { boardSlug } = useParams<{ boardSlug: string }>();
 
   const payload = useMemo<OnboardingPayload>(() => {
-    const rawState = (location.state as OnboardingPayload | { onboardingPayload?: OnboardingPayload } | null) ?? null;
+  const statePayload =
+    ((location.state as { onboardingPayload?: OnboardingPayload } | null)
+      ?.onboardingPayload ?? null) as OnboardingPayload | null;
 
-    const nestedPayload =
-      ((rawState as { onboardingPayload?: OnboardingPayload } | null)?.onboardingPayload ??
-        null) as OnboardingPayload | null;
+  if (statePayload) {
+    return statePayload;
+  }
 
-    if (nestedPayload) {
-      return nestedPayload;
-    }
-
-    const directState = rawState as OnboardingPayload | null;
-
-    if (
-      directState &&
-      typeof directState === "object" &&
-      (
-        !!directState.boardSlug ||
-        !!directState.businessName ||
-        !!directState.businessType ||
-        !!directState.presenceId ||
-        !!directState.presenceKey
-      )
-    ) {
-      return directState;
-    }
-
-    try {
-      const raw = window.localStorage.getItem("hp_onboarding_payload");
-      if (!raw) return {} as OnboardingPayload;
-      return JSON.parse(raw) as OnboardingPayload;
-    } catch {
-      return {} as OnboardingPayload;
-    }
-  }, [location.state]);
+  try {
+    const raw = window.localStorage.getItem("hp_onboarding_payload");
+    if (!raw) return {} as OnboardingPayload;
+    return JSON.parse(raw) as OnboardingPayload;
+  } catch {
+    return {} as OnboardingPayload;
+  }
+}, [location.state]);
 
   const isExplicitDemoRoute = location.pathname === "/planet/demo/auto-service";
   const liveBoardSlug =
@@ -954,7 +945,7 @@ export default function AutoRepairLiveBoard() {
 const presenceId =
   boardMeta?.presence_id ||
   scopedPayload.presenceId ||
-  "—";
+  "HP-LOCKING";
 
 const boardSlugDisplay =
   liveBoardSlug || scopedPayload.boardSlug || " ";
@@ -1198,20 +1189,55 @@ const isActiveBoard =
       return null;
     }
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("starter_boards")
       .select("*")
       .eq("board_slug", liveBoardSlug)
       .maybeSingle();
 
-    if (data) {
-      setBoardMeta(data as StarterBoardRow);
-    } else {
+    if (error || !data) {
       setBoardMeta(null);
+      setBoardMetaLoaded(true);
+      return null;
     }
 
+    let resolvedMeta = data as StarterBoardRow;
+
+    if (!resolvedMeta.presence_id || !resolvedMeta.presence_key) {
+      const fallbackPresenceId =
+        resolvedMeta.presence_id ||
+        scopedPayload.presenceId ||
+        createPresenceId();
+
+      const fallbackPresenceKey =
+        resolvedMeta.presence_key ||
+        scopedPayload.presenceKey ||
+        crypto.randomUUID();
+
+      const { data: repairedData, error: repairError } = await supabase
+        .from("starter_boards")
+        .update({
+          presence_id: fallbackPresenceId,
+          presence_key: fallbackPresenceKey,
+        })
+        .eq("board_slug", liveBoardSlug)
+        .select("*")
+        .single();
+
+      if (!repairError && repairedData) {
+        resolvedMeta = repairedData as StarterBoardRow;
+      } else {
+        resolvedMeta = {
+          ...resolvedMeta,
+          presence_id: fallbackPresenceId,
+          presence_key: fallbackPresenceKey,
+        };
+      }
+    }
+
+    setBoardMeta(resolvedMeta);
     setBoardMetaLoaded(true);
-    return data as StarterBoardRow | null;
+    return resolvedMeta;
   }
 
   async function loadJobs(metaOverride?: StarterBoardRow | null) {
@@ -1731,21 +1757,32 @@ window.location.href = "/planet/start/building";
 
       <div className="mx-auto max-w-7xl px-6 py-8">
   <div className="mb-4 rounded-xl border border-cyan-400/20 bg-[#061226] px-4 py-3 shadow-[0_0_20px_rgba(34,211,238,0.08)]">
-    <div className="flex flex-col gap-2 text-xs md:flex-row md:items-center md:justify-between">
+    <div className="flex flex-col gap-3 text-xs md:flex-row md:items-center md:justify-between">
       <div className="flex flex-wrap items-center gap-3 text-cyan-200">
         <span className="opacity-60">Presence ID:</span>
-        <span className="font-mono text-cyan-300">
+        <span className="inline-flex items-center gap-2 rounded-full border border-cyan-400/25 bg-cyan-400/10 px-3 py-1 font-mono text-cyan-300 shadow-[0_0_16px_rgba(34,211,238,0.10)]">
+          <span className="h-2 w-2 rounded-full bg-emerald-300" />
           {presenceId}
         </span>
+        <button
+          type="button"
+          onClick={() => void copyMessage("Presence ID", presenceId)}
+          className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-medium text-white/70 transition hover:border-cyan-400/30 hover:bg-cyan-400/10 hover:text-cyan-100"
+        >
+          Copy ID
+        </button>
+        <span className="inline-flex items-center rounded-full border border-emerald-400/25 bg-emerald-400/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-200">
+          Presence Locked
+        </span>
 
-        <span className="opacity-40">|</span>
+        <span className="opacity-30">|</span>
 
         <span className="opacity-60">Slug:</span>
         <span className="font-mono text-cyan-300">
           {boardSlugDisplay}
         </span>
 
-        <span className="opacity-40">|</span>
+        <span className="opacity-30">|</span>
 
         <span className="opacity-60">Status:</span>
         <span className={`font-semibold ${isActiveBoard ? "text-emerald-300" : "text-amber-300"}`}>
@@ -1753,8 +1790,8 @@ window.location.href = "/planet/start/building";
         </span>
       </div>
 
-      <div className="text-right text-[11px] text-white/40">
-        Presence-first   Timestamp anchored
+      <div className="text-right text-[11px] uppercase tracking-[0.18em] text-white/40">
+        Presence-first Â· Timestamp anchored
       </div>
     </div>
   </div>
