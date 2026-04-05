@@ -16,6 +16,13 @@ type OnboardingPayload = {
 
 type RepairStage = string;
 
+type ProofClip = {
+  id: string;
+  label: string;
+  note: string;
+  createdAt: string;
+};
+
 type RepairJob = {
   id: string;
   roNumber: string;
@@ -30,6 +37,7 @@ type RepairJob = {
   appointmentDate: string;
   appointmentTime: string;
   createdAt: string;
+  proof?: ProofClip[];
 };
 
 type DbRepairJob = {
@@ -106,9 +114,76 @@ function getBoardViewModeKey(boardSlug: string) {
   return `hp_board_view_mode_${boardSlug}`;
 }
 
+function getProofStoreKey(boardSlug: string) {
+  return `hp_proof_capture_${boardSlug}`;
+}
+
 function makeRONumber(index: number) {
   return `RO-${String(1042 + index).padStart(4, "0")}`;
 }
+
+
+function readStoredProofMap(boardSlug: string) {
+  if (!boardSlug) return {} as Record<string, ProofClip[]>;
+
+  try {
+    const raw = window.localStorage.getItem(getProofStoreKey(boardSlug));
+    if (!raw) return {} as Record<string, ProofClip[]>;
+    const parsed = JSON.parse(raw) as Record<string, ProofClip[]>;
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {} as Record<string, ProofClip[]>;
+  }
+}
+
+function writeStoredProofMap(
+  boardSlug: string,
+  nextMap: Record<string, ProofClip[]>,
+) {
+  if (!boardSlug) return;
+
+  try {
+    window.localStorage.setItem(getProofStoreKey(boardSlug), JSON.stringify(nextMap));
+  } catch {
+    // ignore
+  }
+}
+
+function mergeProofIntoJobs(boardSlug: string, rows: RepairJob[]) {
+  const proofMap = readStoredProofMap(boardSlug);
+
+  return rows.map((job) => ({
+    ...job,
+    proof: proofMap[job.id] || [],
+  }));
+}
+
+function proofStatus(job: RepairJob) {
+  const count = job.proof?.length || 0;
+
+  if (count >= 3) {
+    return {
+      label: "Proof locked",
+      tone: "border-emerald-400/25 bg-emerald-400/10 text-emerald-200",
+      dot: "bg-emerald-300",
+    };
+  }
+
+  if (count >= 1) {
+    return {
+      label: "Proof started",
+      tone: "border-cyan-400/25 bg-cyan-400/10 text-cyan-200",
+      dot: "bg-cyan-300",
+    };
+  }
+
+  return {
+    label: "No proof yet",
+    tone: "border-white/10 bg-white/[0.04] text-slate-300",
+    dot: "bg-slate-500",
+  };
+}
+
 
 function dbToUi(row: DbRepairJob): RepairJob {
   return {
@@ -510,6 +585,9 @@ export default function AutoRepairLiveBoard() {
   const [boardViewMode, setBoardViewMode] = useState<"reveal" | "work">(
     "reveal",
   );
+  const [boardMetaLoaded, setBoardMetaLoaded] = useState(false);
+  const [proofCaptureRunningJobId, setProofCaptureRunningJobId] = useState<string | null>(null);
+  const [proofNoteDraft, setProofNoteDraft] = useState("");
 
   const stageMenuRef = useRef<HTMLDivElement | null>(null);
   const saveTimerRef = useRef<number | null>(null);
@@ -529,9 +607,17 @@ export default function AutoRepairLiveBoard() {
   const city = boardMeta?.city || payload.city?.trim() || "Your City";
 
   const businessType =
-    boardMeta?.business_type ||
+    boardMeta?.business_type?.trim() ||
     payload.businessType?.trim() ||
     (slugForcesRestaurant ? "Restaurant" : "Auto Repair");
+
+  const stageConfigReady =
+    Boolean(boardMeta?.business_type?.trim()) ||
+    Boolean(payload.businessType?.trim()) ||
+    isExplicitDemoRoute ||
+    slugForcesRestaurant ||
+    !liveBoardSlug ||
+    boardMetaLoaded;
 
   const primaryGoal = payload.primaryGoal?.trim() || "";
 
@@ -566,7 +652,7 @@ const presenceId =
   "creating...";
 
 const boardSlugDisplay =
-  liveBoardSlug || payload.boardSlug || "�";
+  liveBoardSlug || payload.boardSlug || " ";
 
 const isActiveBoard =
   isClaimed || boardMeta?.is_active === true;
@@ -592,8 +678,12 @@ const isActiveBoard =
       setBoardViewMode("reveal");
     }
 
-    void loadBoardMeta();
-    void loadJobs();
+    setBoardMetaLoaded(false);
+
+    void (async () => {
+      await loadBoardMeta();
+      await loadJobs();
+    })();
   }, [liveBoardSlug]);
 
   useEffect(() => {
@@ -647,6 +737,10 @@ const isActiveBoard =
     () => jobs.find((job) => job.id === selectedJobId) ?? null,
     [jobs, selectedJobId],
   );
+
+  useEffect(() => {
+    setProofNoteDraft("");
+  }, [selectedJobId]);
 
   const grouped = useMemo(() => {
     if (isRestaurant) {
@@ -784,7 +878,8 @@ const isActiveBoard =
   async function loadBoardMeta() {
     if (!liveBoardSlug) {
       setBoardMeta(null);
-      return;
+      setBoardMetaLoaded(true);
+      return null;
     }
 
     const { data } = await supabase
@@ -795,7 +890,12 @@ const isActiveBoard =
 
     if (data) {
       setBoardMeta(data as StarterBoardRow);
+    } else {
+      setBoardMeta(null);
     }
+
+    setBoardMetaLoaded(true);
+    return data as StarterBoardRow | null;
   }
 
   async function loadJobs() {
@@ -822,7 +922,10 @@ const isActiveBoard =
       return;
     }
 
-    const nextJobs = (data as DbRepairJob[]).map(dbToUi);
+    const nextJobs = mergeProofIntoJobs(
+      liveBoardSlug,
+      (data as DbRepairJob[]).map(dbToUi),
+    );
     setJobs(nextJobs);
 
     if (!isRestaurant && nextJobs.length > 0) {
@@ -994,7 +1097,11 @@ window.location.href = "/planet/start/building";
 
       const updatedJob = dbToUi(data as DbRepairJob);
       setJobs((current) =>
-        current.map((job) => (job.id === updatedJob.id ? updatedJob : job)),
+        current.map((job) =>
+          job.id === updatedJob.id
+            ? { ...updatedJob, proof: job.proof || [] }
+            : job,
+        ),
       );
       setTicketEditorSaving(false);
       setStatusNote("Saved");
@@ -1028,7 +1135,7 @@ window.location.href = "/planet/start/building";
       return;
     }
 
-    const createdJob = dbToUi(data as DbRepairJob);
+    const createdJob = { ...dbToUi(data as DbRepairJob), proof: [] };
     setJobs((current) => [createdJob, ...current]);
     setTicketEditorSaving(false);
     setStatusNote("Created");
@@ -1061,6 +1168,12 @@ window.location.href = "/planet/start/building";
   }
 
   async function handleAddJob() {
+    if (!stageConfigReady) {
+      setStatusNote("Loading board type before creating the next item...");
+      window.setTimeout(() => setStatusNote(""), 1400);
+      return;
+    }
+
     if (isRestaurant) {
       openRestaurantTicketEditor();
       return;
@@ -1100,7 +1213,7 @@ window.location.href = "/planet/start/building";
       return;
     }
 
-    const createdJob = dbToUi(data as DbRepairJob);
+    const createdJob = { ...dbToUi(data as DbRepairJob), proof: [] };
     setJobs((current) => [createdJob, ...current]);
     setSelectedJobId(createdJob.id);
     setStageMenuOpen(false);
@@ -1126,6 +1239,10 @@ window.location.href = "/planet/start/building";
       return;
     }
 
+    const proofMap = readStoredProofMap(liveBoardSlug);
+    delete proofMap[selectedJob.id];
+    writeStoredProofMap(liveBoardSlug, proofMap);
+
     const next = jobs.filter((job) => job.id !== selectedJob.id);
     setJobs(next);
     setSelectedJobId(next[0]?.id ?? null);
@@ -1140,10 +1257,82 @@ window.location.href = "/planet/start/building";
     setStatusNote("Reloading live data...");
     setSelectedJobId(null);
     setStageMenuOpen(false);
+    setBoardMetaLoaded(false);
     await loadBoardMeta();
     await loadJobs();
     setSaving(false);
     setStatusNote("Loaded live board data");
+    window.setTimeout(() => setStatusNote(""), 1000);
+  }
+
+  function updateProofForJob(jobId: string, updater: (current: ProofClip[]) => ProofClip[]) {
+    const proofMap = readStoredProofMap(liveBoardSlug);
+    const currentProof = proofMap[jobId] || [];
+    const nextProof = updater(currentProof);
+
+    proofMap[jobId] = nextProof;
+    writeStoredProofMap(liveBoardSlug, proofMap);
+
+    setJobs((current) =>
+      current.map((job) =>
+        job.id === jobId
+          ? {
+              ...job,
+              proof: nextProof,
+            }
+          : job,
+      ),
+    );
+  }
+
+  function addProofClip(label: string, defaultNote = "") {
+    if (!selectedJob) return;
+
+    const note = (proofNoteDraft || defaultNote).trim();
+
+    updateProofForJob(selectedJob.id, (current) => [
+      {
+        id:
+          typeof crypto !== "undefined" && "randomUUID" in crypto
+            ? crypto.randomUUID()
+            : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        label,
+        note,
+        createdAt: new Date().toISOString(),
+      },
+      ...current,
+    ]);
+
+    setProofNoteDraft("");
+    setStatusNote("Proof captured");
+    window.setTimeout(() => setStatusNote(""), 1000);
+  }
+
+  function startProofCapture() {
+    if (!selectedJob) return;
+    setProofCaptureRunningJobId(selectedJob.id);
+    setStatusNote("Proof capture started");
+    window.setTimeout(() => setStatusNote(""), 1000);
+  }
+
+  function stopProofCapture() {
+    if (!selectedJob) return;
+    const activeJobId = proofCaptureRunningJobId;
+    setProofCaptureRunningJobId(null);
+
+    if (activeJobId === selectedJob.id) {
+      addProofClip("Capture stopped", "Proof recording session closed");
+    }
+  }
+
+  function clearProofForSelected() {
+    if (!selectedJob) return;
+
+    updateProofForJob(selectedJob.id, () => []);
+    setProofCaptureRunningJobId((current) =>
+      current === selectedJob.id ? null : current,
+    );
+    setStatusNote("Proof cleared");
     window.setTimeout(() => setStatusNote(""), 1000);
   }
 
@@ -1206,7 +1395,7 @@ window.location.href = "/planet/start/building";
       </div>
 
       <div className="text-right text-[11px] text-white/40">
-        Presence-first � Timestamp anchored
+        Presence-first   Timestamp anchored
       </div>
     </div>
   </div>
@@ -1783,6 +1972,24 @@ window.location.href = "/planet/start/building";
                                 {job.eta || `${config.labels.eta} pending`}
                               </span>
                             </div>
+
+                            <div className="mt-3 flex items-center justify-between gap-3">
+                              {job.proof?.length ? (
+                                <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/12 px-2.5 py-1 text-[10px] font-semibold text-emerald-100">
+                                  <span className="h-2 w-2 rounded-full bg-emerald-300" />
+                                  <span>VERIFIED ({job.proof.length})</span>
+                                </div>
+                              ) : (
+                                <div className="inline-flex items-center gap-2 rounded-full border border-red-400/25 bg-red-400/10 px-2.5 py-1 text-[10px] font-semibold text-red-100">
+                                  <span className="h-2 w-2 rounded-full bg-red-300" />
+                                  <span>NO PROOF</span>
+                                </div>
+                              )}
+
+                              <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
+                                {job.proof?.length || 0} proof
+                              </div>
+                            </div>
                           </button>
                         );
                       })
@@ -1833,6 +2040,17 @@ window.location.href = "/planet/start/building";
                       <div className="mt-1 text-sm text-slate-400">
                         {isCamp ? "Controlled guardian drawer" : "Working drawer"}
                       </div>
+                      {!isCamp ? (
+                        <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-violet-400/20 bg-violet-400/10 px-3 py-1.5 text-xs font-semibold text-violet-100">
+                          <span
+                            className={`h-2.5 w-2.5 rounded-full ${proofStatus(selectedJob).dot}`}
+                          />
+                          <span>{proofStatus(selectedJob).label}</span>
+                          <span className="text-violet-200/70">
+                            {selectedJob.proof?.length || 0} logged
+                          </span>
+                        </div>
+                      ) : null}
                       {isCamp ? (
                         <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200">
                           <span
@@ -2094,6 +2312,170 @@ window.location.href = "/planet/start/building";
                         )}
                       </div>
                     </div>
+
+                    {!isCamp ? (
+                      <div className="rounded-[24px] border border-violet-400/20 bg-violet-400/10 p-4">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <div className="text-xs uppercase tracking-[0.22em] text-violet-200/70">
+                              Proof capture
+                            </div>
+                            <div className="mt-2 text-sm leading-6 text-violet-50">
+                              Turn this work item into visible proof. Capture the hidden issue, the work in progress, and the finished result so price and labor make sense without extra explaining.
+                            </div>
+                            <div className="mt-2 text-[10px] text-violet-100/60">
+                              Jobs with proof close faster and get approved instantly.
+                            </div>
+                          </div>
+
+                          <div
+                            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${proofStatus(
+                              selectedJob,
+                            ).tone}`}
+                          >
+                            <span
+                              className={`h-2.5 w-2.5 rounded-full ${proofStatus(selectedJob).dot}`}
+                            />
+                            <span>{proofStatus(selectedJob).label}</span>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 grid gap-3 md:grid-cols-2">
+                          <button
+                            type="button"
+                            onClick={startProofCapture}
+                            disabled={proofCaptureRunningJobId === selectedJob.id}
+                            className="rounded-full border border-violet-300/30 bg-violet-300/15 px-4 py-3 text-sm font-semibold text-violet-50 transition hover:bg-violet-300/20 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {proofCaptureRunningJobId === selectedJob.id
+                              ? "Capture Running"
+                              : "Start Capture"}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={stopProofCapture}
+                            disabled={proofCaptureRunningJobId !== selectedJob.id}
+                            className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            Stop Capture
+                          </button>
+                        </div>
+
+                        <div className="mt-4">
+                          <label className="text-xs uppercase tracking-[0.22em] text-slate-400">
+                            Proof note
+                          </label>
+                          <textarea
+                            value={proofNoteDraft}
+                            onChange={(e) => setProofNoteDraft(e.target.value)}
+                            className="mt-2 min-h-[88px] w-full rounded-2xl border border-white/10 bg-[#070d1a] px-4 py-3 text-sm outline-none transition focus:border-violet-300/40"
+                            placeholder="What did you find, remove, expose, or complete?"
+                          />
+                        </div>
+
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              addProofClip("Hidden issue found", "Customer could not see this without teardown or access.")
+                            }
+                            className="rounded-full border border-amber-400/25 bg-amber-400/10 px-3 py-2 text-xs font-semibold text-amber-100 transition hover:bg-amber-400/15"
+                          >
+                            Hidden Issue
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              addProofClip("Safety concern", "Immediate attention recommended before continuing.")
+                            }
+                            className="rounded-full border border-red-400/25 bg-red-400/10 px-3 py-2 text-xs font-semibold text-red-100 transition hover:bg-red-400/15"
+                          >
+                            Safety
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              addProofClip("Work in progress", "Active labor, teardown, cleaning, or install in progress.")
+                            }
+                            className="rounded-full border border-cyan-400/25 bg-cyan-400/10 px-3 py-2 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-400/15"
+                          >
+                            In Progress
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              addProofClip("Completed work", "Finished result verified and ready to show.")
+                            }
+                            className="rounded-full border border-emerald-400/25 bg-emerald-400/10 px-3 py-2 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-400/15"
+                          >
+                            Completed
+                          </button>
+                        </div>
+
+                        <div className="mt-4 rounded-[22px] border border-white/10 bg-[#070d1a] p-3">
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="text-xs uppercase tracking-[0.22em] text-slate-500">
+                              Proof timeline
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={clearProofForSelected}
+                              disabled={!selectedJob.proof?.length}
+                              className="rounded-full border border-white/10 px-3 py-1 text-[11px] font-semibold text-slate-300 transition hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              Clear
+                            </button>
+                          </div>
+
+                          <div className="mt-3 space-y-2">
+                            {selectedJob.proof?.length ? (
+                              selectedJob.proof.map((clip) => (
+                                <div
+                                  key={clip.id}
+                                  className="rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-3"
+                                >
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div>
+                                      <div className="text-sm font-semibold text-white">
+                                        {clip.label === "Safety concern" && "⚠️ Safety issue documented"}
+                                        {clip.label === "Hidden issue found" && "🔍 Hidden issue uncovered"}
+                                        {clip.label === "Work in progress" && "🛠 Work in progress captured"}
+                                        {clip.label === "Completed work" && "✅ Work completed and verified"}
+                                        {clip.label !== "Safety concern" &&
+                                          clip.label !== "Hidden issue found" &&
+                                          clip.label !== "Work in progress" &&
+                                          clip.label !== "Completed work" &&
+                                          clip.label}
+                                      </div>
+                                      <div className="mt-1 text-[11px] uppercase tracking-[0.18em] text-slate-500">
+                                        {formatProofDate(clip.createdAt)}
+                                      </div>
+                                    </div>
+
+                                    <div className="rounded-full border border-violet-400/20 bg-violet-400/10 px-2.5 py-1 text-[10px] font-semibold text-violet-100">
+                                      Proof
+                                    </div>
+                                  </div>
+
+                                  <div className="mt-2 text-sm leading-6 text-slate-300">
+                                    {clip.note || "No extra note added yet."}
+                                  </div>
+                                </div>
+                              ))
+                            ) : (
+                              <div className="rounded-2xl border border-dashed border-white/10 px-4 py-5 text-sm text-slate-500">
+                                No proof moments captured yet. Start with what the customer cannot see, then log the work that made the result possible.
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
 
                     <div className="rounded-[24px] border border-cyan-400/20 bg-cyan-400/10 p-4">
                       <div className="flex items-center justify-between gap-3">
@@ -2855,16 +3237,4 @@ function NotificationLine({
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
