@@ -800,22 +800,40 @@ export default function AutoRepairLiveBoard() {
   const { boardSlug } = useParams<{ boardSlug: string }>();
 
   const payload = useMemo<OnboardingPayload>(() => {
-  const statePayload =
-    ((location.state as { onboardingPayload?: OnboardingPayload } | null)
-      ?.onboardingPayload ?? null) as OnboardingPayload | null;
+    const rawState = (location.state as OnboardingPayload | { onboardingPayload?: OnboardingPayload } | null) ?? null;
 
-  if (statePayload) {
-    return statePayload;
-  }
+    const nestedPayload =
+      ((rawState as { onboardingPayload?: OnboardingPayload } | null)?.onboardingPayload ??
+        null) as OnboardingPayload | null;
 
-  try {
-    const raw = window.localStorage.getItem("hp_onboarding_payload");
-    if (!raw) return {} as OnboardingPayload;
-    return JSON.parse(raw) as OnboardingPayload;
-  } catch {
-    return {} as OnboardingPayload;
-  }
-}, [location.state]);
+    if (nestedPayload) {
+      return nestedPayload;
+    }
+
+    const directState = rawState as OnboardingPayload | null;
+
+    if (
+      directState &&
+      typeof directState === "object" &&
+      (
+        !!directState.boardSlug ||
+        !!directState.businessName ||
+        !!directState.businessType ||
+        !!directState.presenceId ||
+        !!directState.presenceKey
+      )
+    ) {
+      return directState;
+    }
+
+    try {
+      const raw = window.localStorage.getItem("hp_onboarding_payload");
+      if (!raw) return {} as OnboardingPayload;
+      return JSON.parse(raw) as OnboardingPayload;
+    } catch {
+      return {} as OnboardingPayload;
+    }
+  }, [location.state]);
 
   const isExplicitDemoRoute = location.pathname === "/planet/demo/auto-service";
   const liveBoardSlug =
@@ -936,7 +954,7 @@ export default function AutoRepairLiveBoard() {
 const presenceId =
   boardMeta?.presence_id ||
   scopedPayload.presenceId ||
-  "creating...";
+  "—";
 
 const boardSlugDisplay =
   liveBoardSlug || scopedPayload.boardSlug || " ";
@@ -3578,3 +3596,4 @@ function NotificationLine({
     </div>
   );
 }
+

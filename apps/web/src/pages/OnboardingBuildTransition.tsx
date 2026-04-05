@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import { resolveStarterBoardConfig } from "../lib/starterBoardConfig";
 
 type OnboardingPayload = {
   businessName?: string;
@@ -8,494 +9,450 @@ type OnboardingPayload = {
   businessType?: string;
   city?: string;
   primaryGoal?: string;
-  demoRoute?: string;
   boardSlug?: string;
   presenceId?: string;
   presenceKey?: string;
+  starterPlan?: string;
 };
 
-const PHASES = [
-  "Reading your business type",
-  "Structuring your live workflow",
-  "Building your preview board",
-  "Linking customer-facing flow",
-  "Preparing reveal",
-];
+type StarterBoardRow = {
+  id?: string;
+  board_slug: string;
+  business_name: string | null;
+  business_type: string | null;
+  city: string | null;
+  owner_name: string | null;
+  phone: string | null;
+  presence_id: string | null;
+  presence_key: string | null;
+  starter_plan: string | null;
+  is_active: boolean | null;
+  claim_status: string | null;
+  created_at?: string | null;
+};
 
-const PHASE_TIMINGS_MS = [1200, 1200, 1400, 1400, 1800];
-const INITIAL_PROGRESS = 78;
-const REVEAL_CARD_HOLD_MS = 1900;
-const COUNTDOWN_STEP_MS = 850;
-const BOARD_HANDOFF_FADE_MS = 550;
-
-function clamp(value: number, min: number, max: number) {
-  return Math.min(Math.max(value, min), max);
-}
+type AutoRepairJobSeed = {
+  board_slug: string;
+  ro_number: string;
+  customer: string;
+  vehicle: string;
+  concern: string;
+  stage: string;
+  eta: string;
+  advisor: string;
+  notes: string;
+  phone: string;
+  appointment_date: string;
+  appointment_time: string;
+};
 
 function slugify(value: string) {
   return value
     .toLowerCase()
     .trim()
+    .replace(/['".,!?/\\]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 60);
 }
 
-function randomSuffix() {
-  return Math.random().toString(36).slice(2, 6);
+function normalizeBusinessName(value?: string) {
+  return (value ?? "").trim();
 }
 
-function makePresenceId(slug: string) {
-  return `HP-${slug.replace(/-/g, "").toUpperCase().slice(0, 10)}-${Math.random()
-    .toString(36)
-    .slice(2, 6)
-    .toUpperCase()}`;
+function normalizeOwnerName(value?: string) {
+  return (value ?? "").trim();
 }
 
-function makePresenceKey() {
-  return Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+function normalizeBusinessType(value?: string) {
+  return (value ?? "auto-repair").trim();
+}
+
+function normalizeCity(value?: string) {
+  return (value ?? "").trim();
+}
+
+function createPresenceId() {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let result = "HP-";
+  for (let i = 0; i < 8; i += 1) {
+    result += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return result;
+}
+
+function ensureBoardSlug(payload: OnboardingPayload) {
+  const fromPayload = (payload.boardSlug ?? "").trim();
+  if (fromPayload) return fromPayload;
+
+  const businessName = normalizeBusinessName(payload.businessName);
+  const city = normalizeCity(payload.city);
+  const base = [businessName || "starter-board", city].filter(Boolean).join("-");
+  const slugBase = slugify(base || "starter-board");
+  const suffix = Math.floor(1000 + Math.random() * 9000);
+  return `${slugBase}-${suffix}`;
+}
+
+function todayDate() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function defaultAppointmentTime() {
+  return "09:00";
+}
+
+function buildSeedJob(
+  boardSlug: string,
+  payload: OnboardingPayload,
+): AutoRepairJobSeed {
+  const businessType = normalizeBusinessType(payload.businessType);
+  const boardConfig = resolveStarterBoardConfig(businessType);
+
+  const firstStage =
+    boardConfig?.stages?.[0]?.id ??
+    boardConfig?.stages?.[0]?.label ??
+    "new";
+
+  const contactName =
+    normalizeOwnerName(payload.ownerName) ||
+    normalizeBusinessName(payload.businessName) ||
+    "Customer";
+
+  const businessName = normalizeBusinessName(payload.businessName);
+
+  return {
+    board_slug: boardSlug,
+    ro_number: `RO-${String(Math.floor(1000 + Math.random() * 9000))}`,
+    customer: contactName,
+    vehicle: businessType === "auto-repair" ? "Vehicle pending" : "New job",
+    concern:
+      payload.primaryGoal?.trim() ||
+      `New ${businessName ? `${businessName} ` : ""}${businessType} intake`,
+    stage: firstStage,
+    eta: "TBD",
+    advisor: normalizeOwnerName(payload.ownerName) || "Front Desk",
+    notes: "Starter job created during onboarding transition.",
+    phone: "",
+    appointment_date: todayDate(),
+    appointment_time: defaultAppointmentTime(),
+  };
+}
+
+async function getStarterBoardBySlug(boardSlug: string) {
+  const { data, error } = await supabase
+    .from("starter_boards")
+    .select("*")
+    .eq("board_slug", boardSlug)
+    .limit(1)
+    .maybeSingle<StarterBoardRow>();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+async function createStarterBoard(
+  payload: OnboardingPayload,
+  boardSlug: string,
+) {
+  const insertRow: StarterBoardRow = {
+    board_slug: boardSlug,
+    business_name: normalizeBusinessName(payload.businessName) || null,
+    business_type: normalizeBusinessType(payload.businessType) || null,
+    city: normalizeCity(payload.city) || null,
+    owner_name: normalizeOwnerName(payload.ownerName) || null,
+    phone: null,
+    presence_id: payload.presenceId?.trim() || createPresenceId(),
+    presence_key: payload.presenceKey?.trim() || crypto.randomUUID(),
+    starter_plan: payload.starterPlan?.trim() || "free",
+    is_active: true,
+    claim_status: "starter",
+  };
+
+  const { data, error } = await supabase
+    .from("starter_boards")
+    .insert(insertRow)
+    .select("*")
+    .single<StarterBoardRow>();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+async function updateStarterBoard(
+  existing: StarterBoardRow,
+  payload: OnboardingPayload,
+  boardSlug: string,
+) {
+  const patch: Partial<StarterBoardRow> = {
+    board_slug: boardSlug,
+    business_name:
+      existing.business_name ??
+      normalizeBusinessName(payload.businessName) ??
+      null,
+    business_type:
+      existing.business_type ??
+      normalizeBusinessType(payload.businessType) ??
+      null,
+    city: existing.city ?? normalizeCity(payload.city) ?? null,
+    owner_name:
+      existing.owner_name ?? normalizeOwnerName(payload.ownerName) ?? null,
+    presence_id:
+      existing.presence_id ??
+      payload.presenceId?.trim() ??
+      createPresenceId(),
+    presence_key:
+      existing.presence_key ??
+      payload.presenceKey?.trim() ??
+      crypto.randomUUID(),
+    starter_plan:
+      existing.starter_plan ?? payload.starterPlan?.trim() ?? "free",
+    is_active: existing.is_active ?? true,
+    claim_status: existing.claim_status ?? "starter",
+  };
+
+  const { data, error } = await supabase
+    .from("starter_boards")
+    .update(patch)
+    .eq("board_slug", boardSlug)
+    .select("*")
+    .single<StarterBoardRow>();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
 }
 
 async function ensureStarterBoard(payload: OnboardingPayload) {
-  const businessName = payload.businessName?.trim() || "Starter Board";
-  const ownerName = payload.ownerName?.trim() || "";
-  const businessType = payload.businessType?.trim() || "";
-  const city = payload.city?.trim() || "";
-  const phone = "";
+  const boardSlug = ensureBoardSlug(payload);
 
-  const providedSlug = payload.boardSlug?.trim() || "";
-  const baseSlug = providedSlug || slugify(businessName) || `starter-${randomSuffix()}`;
+  let existing = await getStarterBoardBySlug(boardSlug);
 
-  if (providedSlug) {
-    const existingBySlug = await supabase
-      .from("starter_boards")
-      .select("board_slug,presence_id,presence_key")
-      .eq("board_slug", providedSlug)
-      .maybeSingle();
-
-    if (existingBySlug.data) {
-      return {
-        boardSlug: existingBySlug.data.board_slug,
-        presenceId: existingBySlug.data.presence_id,
-        presenceKey: existingBySlug.data.presence_key,
-      };
-    }
+  if (!existing) {
+    return createStarterBoard(payload, boardSlug);
   }
 
-  const existing = await supabase
-    .from("starter_boards")
-    .select("board_slug,presence_id,presence_key")
-    .eq("business_name", businessName)
-    .eq("owner_name", ownerName)
-    .limit(1)
-    .maybeSingle();
+  const missingPresence = !existing.presence_id || !existing.presence_key;
+  const missingCore =
+    !existing.business_name || !existing.business_type || !existing.board_slug;
 
-  if (existing.data) {
-    return {
-      boardSlug: existing.data.board_slug,
-      presenceId: existing.data.presence_id,
-      presenceKey: existing.data.presence_key,
-    };
+  if (missingPresence || missingCore) {
+    existing = await updateStarterBoard(existing, payload, boardSlug);
   }
 
-  let inserted = null;
+  return existing;
+}
 
-  for (let i = 0; i < 5; i += 1) {
-    const trySlug =
-      i === 0
-        ? baseSlug
-        : providedSlug || `${baseSlug}-${randomSuffix()}`;
+async function ensureStarterJob(
+  board: StarterBoardRow,
+  payload: OnboardingPayload,
+) {
+  const { count, error: countError } = await supabase
+    .from("auto_repair_jobs")
+    .select("*", { count: "exact", head: true })
+    .eq("board_slug", board.board_slug);
 
-    const presenceId = makePresenceId(trySlug);
-    const presenceKey = makePresenceKey();
-
-    const result = await supabase
-      .from("starter_boards")
-      .insert({
-        board_slug: trySlug,
-        business_name: businessName,
-        business_type: businessType,
-        city,
-        owner_name: ownerName,
-        phone,
-        presence_id: presenceId,
-        presence_key: presenceKey,
-      })
-      .select("board_slug,presence_id,presence_key")
-      .single();
-
-    if (!result.error && result.data) {
-      inserted = result.data;
-      break;
-    }
+  if (countError) {
+    throw countError;
   }
 
-  if (!inserted) {
-    throw new Error("Could not create starter board identity.");
+  if ((count ?? 0) > 0) {
+    return;
   }
 
-  return {
-    boardSlug: inserted.board_slug,
-    presenceId: inserted.presence_id,
-    presenceKey: inserted.presence_key,
-  };
+  const seedJob = buildSeedJob(board.board_slug, payload);
+
+  const { error: insertError } = await supabase
+    .from("auto_repair_jobs")
+    .insert(seedJob);
+
+  if (insertError) {
+    throw insertError;
+  }
 }
 
 export default function OnboardingBuildTransition() {
   const navigate = useNavigate();
   const location = useLocation();
+  const hasStartedRef = useRef(false);
 
   const payload = useMemo<OnboardingPayload>(() => {
-    const statePayload = (location.state as OnboardingPayload | null) ?? null;
-
-    if (statePayload) {
-      try {
-        localStorage.setItem("hp_onboarding_payload", JSON.stringify(statePayload));
-      } catch {
-        // ignore
-      }
-      return statePayload;
-    }
-
-    try {
-      const raw = localStorage.getItem("hp_onboarding_payload");
-      if (!raw) return {};
-      return JSON.parse(raw) as OnboardingPayload;
-    } catch {
-      return {};
-    }
+    return (location.state as OnboardingPayload | null) ?? {};
   }, [location.state]);
 
-  const businessName = payload.businessName?.trim() || "Your Business";
-  const ownerName = payload.ownerName?.trim() || "you";
-
-  const totalBuildMs = useMemo(
-    () => PHASE_TIMINGS_MS.reduce((sum, duration) => sum + duration, 0),
-    [],
-  );
-
-  const [phaseIndex, setPhaseIndex] = useState(0);
-  const [progress, setProgress] = useState(INITIAL_PROGRESS);
-  const [showReveal, setShowReveal] = useState(false);
-  const [countdownValue, setCountdownValue] = useState<number | null>(null);
-  const [handoffFading, setHandoffFading] = useState(false);
-  const [finalPayload, setFinalPayload] = useState<OnboardingPayload>(payload);
+  const [status, setStatus] = useState<
+    "idle" | "creating" | "hydrating" | "finalizing" | "error"
+  >("idle");
+  const [statusLabel, setStatusLabel] = useState("Preparing your live board...");
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    setFinalPayload(payload);
-  }, [payload]);
+    if (hasStartedRef.current) return;
+    hasStartedRef.current = true;
 
-  useEffect(() => {
-    let alive = true;
-
-    void (async () => {
+    const run = async () => {
       try {
-        if (
-          !payload.boardSlug ||
-          !payload.presenceId ||
-          !payload.presenceKey
-        ) {
-          const identity = await ensureStarterBoard(payload);
-          if (!alive) return;
+        setStatus("creating");
+        setStatusLabel("Locking your live board identity...");
 
-          const nextPayload = { ...payload, ...identity };
-          setFinalPayload(nextPayload);
+        const board = await ensureStarterBoard(payload);
 
-          try {
-            localStorage.setItem("hp_onboarding_payload", JSON.stringify(nextPayload));
-          } catch {
-            // ignore
-          }
+        if (!board?.board_slug || !board?.presence_id || !board?.presence_key) {
+          throw new Error("Starter board did not return a real board identity.");
         }
-      } catch {
-        // keep moving even if identity creation fails
-      }
-    })();
 
-    return () => {
-      alive = false;
-    };
-  }, [payload]);
+        setStatus("hydrating");
+        setStatusLabel("Loading board structure...");
 
-  useEffect(() => {
-    const startedAt = window.performance.now();
-    let frameId = 0;
+        await ensureStarterJob(board, payload);
 
-    const updateFrame = (now: number) => {
-      const elapsed = Math.min(now - startedAt, totalBuildMs);
+        setStatus("finalizing");
+        setStatusLabel("Opening your live board...");
 
-      let remaining = elapsed;
-      let nextPhaseIndex = 0;
+        navigate(`/planet/live/${board.board_slug}`, {
+          replace: true,
+          state: {
+            businessName: board.business_name ?? payload.businessName ?? "",
+            ownerName: board.owner_name ?? payload.ownerName ?? "",
+            businessType:
+              board.business_type ?? payload.businessType ?? "auto-repair",
+            city: board.city ?? payload.city ?? "",
+            primaryGoal: payload.primaryGoal ?? "",
+            boardSlug: board.board_slug,
+            presenceId: board.presence_id,
+            presenceKey: board.presence_key,
+            starterPlan: board.starter_plan ?? payload.starterPlan ?? "free",
+            onboardingLocked: true,
+          },
+        });
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Unable to complete onboarding transition.";
 
-      for (let i = 0; i < PHASE_TIMINGS_MS.length; i += 1) {
-        if (remaining < PHASE_TIMINGS_MS[i]) {
-          nextPhaseIndex = i;
-          break;
-        }
-        remaining -= PHASE_TIMINGS_MS[i];
-        nextPhaseIndex = i;
-      }
-
-      setPhaseIndex(nextPhaseIndex);
-
-      const ratio = clamp(elapsed / totalBuildMs, 0, 1);
-      const eased = 1 - Math.pow(1 - ratio, 1.9);
-      const nextProgress = Math.round(
-        INITIAL_PROGRESS + (100 - INITIAL_PROGRESS) * eased,
-      );
-      setProgress(clamp(nextProgress, INITIAL_PROGRESS, 100));
-
-      if (elapsed < totalBuildMs) {
-        frameId = window.requestAnimationFrame(updateFrame);
+        setStatus("error");
+        setErrorMessage(message);
+        setStatusLabel("We hit a problem locking your live board.");
       }
     };
 
-    frameId = window.requestAnimationFrame(updateFrame);
-
-    const revealStartTimer = window.setTimeout(() => {
-      setShowReveal(true);
-    }, totalBuildMs);
-
-    const countdown3Timer = window.setTimeout(() => {
-      setCountdownValue(3);
-    }, totalBuildMs + REVEAL_CARD_HOLD_MS);
-
-    const countdown2Timer = window.setTimeout(() => {
-      setCountdownValue(2);
-    }, totalBuildMs + REVEAL_CARD_HOLD_MS + COUNTDOWN_STEP_MS);
-
-    const countdown1Timer = window.setTimeout(() => {
-      setCountdownValue(1);
-    }, totalBuildMs + REVEAL_CARD_HOLD_MS + COUNTDOWN_STEP_MS * 2);
-
-    const fadeTimer = window.setTimeout(() => {
-      setHandoffFading(true);
-    }, totalBuildMs + REVEAL_CARD_HOLD_MS + COUNTDOWN_STEP_MS * 3);
-
-    const navigateTimer = window.setTimeout(() => {
-      const targetRoute = finalPayload.boardSlug
-        ? `/planet/live/${finalPayload.boardSlug}`
-        : finalPayload.demoRoute || "/planet/demo/auto-service";
-
-      navigate(targetRoute, {
-        replace: true,
-        state: {
-          fromOnboarding: true,
-          onboardingPayload: finalPayload,
-        },
-      });
-    }, totalBuildMs + REVEAL_CARD_HOLD_MS + COUNTDOWN_STEP_MS * 3 + BOARD_HANDOFF_FADE_MS);
-
-    return () => {
-      window.cancelAnimationFrame(frameId);
-      window.clearTimeout(revealStartTimer);
-      window.clearTimeout(countdown3Timer);
-      window.clearTimeout(countdown2Timer);
-      window.clearTimeout(countdown1Timer);
-      window.clearTimeout(fadeTimer);
-      window.clearTimeout(navigateTimer);
-    };
-  }, [navigate, totalBuildMs, finalPayload]);
-
-  const isFinalPhase = phaseIndex === PHASES.length - 1;
+    void run();
+  }, [navigate, payload]);
 
   return (
-    <div
-      className="relative min-h-screen overflow-hidden bg-[#050816] text-white"
-      style={{
-        opacity: handoffFading ? 0 : 1,
-        transform: handoffFading ? "scale(0.992)" : "scale(1)",
-        transition: `opacity ${BOARD_HANDOFF_FADE_MS}ms ease, transform ${BOARD_HANDOFF_FADE_MS}ms ease`,
-      }}
-    >
-      {!showReveal ? (
-        <div className="mx-auto flex min-h-screen w-full max-w-5xl items-center px-6 py-10">
-          <div className="w-full overflow-hidden rounded-[32px] border border-cyan-400/20 bg-white/5 shadow-[0_0_80px_rgba(34,211,238,0.10)] backdrop-blur">
-            <div className="border-b border-white/10 px-6 py-5 md:px-8">
-              <div className="mb-3 flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-300/80">
-                    HomePlanet Build
-                  </p>
-                  <h1 className="mt-2 text-2xl font-semibold md:text-4xl">
-                    Bringing {businessName} to life
-                  </h1>
-                  <p className="mt-2 max-w-2xl text-sm text-slate-300 md:text-base">
-                    We’re turning your onboarding into a working live preview for{" "}
-                    {ownerName}.
-                  </p>
-                </div>
+    <div className="min-h-screen bg-[#050816] text-white">
+      <div className="mx-auto flex min-h-screen max-w-4xl items-center justify-center px-6 py-16">
+        <div className="w-full max-w-2xl rounded-[28px] border border-white/10 bg-white/[0.04] p-8 shadow-[0_30px_120px_rgba(0,0,0,0.45)] backdrop-blur">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-emerald-200">
+            HomePlanet Build
+          </div>
 
-                <div className="shrink-0 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 text-sm font-semibold text-cyan-200">
-                  Step 8 of 8
-                </div>
-              </div>
+          <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+            Building your live board
+          </h1>
 
-              <div className="mt-5 h-3 w-full overflow-hidden rounded-full bg-white/10">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-sky-400 to-indigo-400"
-                  style={{
-                    width: `${progress}%`,
-                    transition: "width 180ms linear",
-                  }}
-                />
-              </div>
+          <p className="mt-3 text-sm leading-6 text-white/70 sm:text-base">
+            {statusLabel}
+          </p>
 
-              <div className="mt-2 flex items-center justify-between text-xs text-slate-400">
-                <span>{isFinalPhase ? "Locking in your reveal" : "Continuing your setup"}</span>
-                <span>{progress}%</span>
-              </div>
+          <div className="mt-8 space-y-4">
+            <div className="h-2 overflow-hidden rounded-full bg-white/10">
+              <div
+                className={`h-full rounded-full bg-emerald-400 transition-all duration-500 ${
+                  status === "idle"
+                    ? "w-[8%]"
+                    : status === "creating"
+                      ? "w-[38%]"
+                      : status === "hydrating"
+                        ? "w-[68%]"
+                        : status === "finalizing"
+                          ? "w-[96%]"
+                          : "w-[100%] bg-red-400"
+                }`}
+              />
             </div>
 
-            <div className="grid gap-8 px-6 py-8 md:grid-cols-[1.3fr_0.9fr] md:px-8">
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div
+                className={`rounded-2xl border p-4 ${
+                  status === "creating" ||
+                  status === "hydrating" ||
+                  status === "finalizing"
+                    ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-100"
+                    : "border-white/10 bg-white/[0.03] text-white/55"
+                }`}
+              >
+                <div className="text-xs font-semibold uppercase tracking-[0.18em]">
+                  Identity
+                </div>
+                <div className="mt-2 text-sm">Starter board locked</div>
+              </div>
+
+              <div
+                className={`rounded-2xl border p-4 ${
+                  status === "hydrating" || status === "finalizing"
+                    ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-100"
+                    : "border-white/10 bg-white/[0.03] text-white/55"
+                }`}
+              >
+                <div className="text-xs font-semibold uppercase tracking-[0.18em]">
+                  Structure
+                </div>
+                <div className="mt-2 text-sm">Board rows prepared</div>
+              </div>
+
+              <div
+                className={`rounded-2xl border p-4 ${
+                  status === "finalizing"
+                    ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-100"
+                    : "border-white/10 bg-white/[0.03] text-white/55"
+                }`}
+              >
+                <div className="text-xs font-semibold uppercase tracking-[0.18em]">
+                  Launch
+                </div>
+                <div className="mt-2 text-sm">Opening live board</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8 rounded-2xl border border-white/10 bg-black/20 p-4 text-sm text-white/65">
+            <div className="font-medium text-white/80">Incoming setup</div>
+            <div className="mt-2 grid gap-2 sm:grid-cols-2">
               <div>
-                <div className="inline-flex items-center rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-emerald-300">
-                  Live build in progress
-                </div>
-
-                <h2 className="mt-5 text-3xl font-semibold leading-tight">
-                  {isFinalPhase
-                    ? "Your board is almost ready."
-                    : "Your preview board is being assembled right now."}
-                </h2>
-
-                <p className="mt-4 max-w-2xl text-base text-slate-300">
-                  {isFinalPhase
-                    ? "The structure is in place. Mission control is taking a beat to lock in the final reveal."
-                    : "The system is converting your answers into a real business-ready preview so the landing feels structured, useful, and immediate."}
-                </p>
-
-                <div className="mt-8 space-y-3">
-                  {PHASES.map((phase, index) => {
-                    const active = index === phaseIndex;
-                    const complete = index < phaseIndex;
-
-                    return (
-                      <div
-                        key={phase}
-                        className={`rounded-2xl border px-4 py-4 transition-all duration-300 ${
-                          active
-                            ? "border-cyan-400/40 bg-cyan-400/10 shadow-[0_0_30px_rgba(34,211,238,0.14)]"
-                            : complete
-                              ? "border-emerald-400/25 bg-emerald-400/10"
-                              : "border-white/10 bg-white/[0.03]"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between gap-4">
-                          <div className="text-sm font-medium md:text-base">{phase}</div>
-                          <div
-                            className={`text-xs font-semibold uppercase tracking-[0.22em] ${
-                              active
-                                ? "text-cyan-200"
-                                : complete
-                                  ? "text-emerald-300"
-                                  : "text-slate-500"
-                            }`}
-                          >
-                            {complete ? "Done" : active ? "Running" : "Queued"}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                <span className="text-white/45">Business:</span>{" "}
+                {payload.businessName?.trim() || "Starter Board"}
               </div>
-
-              <div className="rounded-[28px] border border-white/10 bg-[#071124] p-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
-                  Build summary
-                </p>
-
-                <div className="mt-5 space-y-4">
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                    <div className="text-xs uppercase tracking-[0.22em] text-slate-500">
-                      Business
-                    </div>
-                    <div className="mt-2 text-lg font-semibold text-white">
-                      {businessName}
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                    <div className="text-xs uppercase tracking-[0.22em] text-slate-500">
-                      Type
-                    </div>
-                    <div className="mt-2 text-lg font-semibold text-white">
-                      {finalPayload.businessType || "General Business"}
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                    <div className="text-xs uppercase tracking-[0.22em] text-slate-500">
-                      Live slug
-                    </div>
-                    <div className="mt-2 text-sm font-semibold text-white break-all">
-                      {finalPayload.boardSlug || "creating..."}
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/10 p-4">
-                    <div className="text-xs uppercase tracking-[0.22em] text-cyan-200/70">
-                      Presence ID
-                    </div>
-                    <div className="mt-2 text-sm leading-6 text-cyan-50">
-                      {finalPayload.presenceId || "creating..."}
-                    </div>
-                  </div>
-                </div>
+              <div>
+                <span className="text-white/45">Type:</span>{" "}
+                {payload.businessType?.trim() || "auto-repair"}
+              </div>
+              <div>
+                <span className="text-white/45">Owner:</span>{" "}
+                {payload.ownerName?.trim() || "Not provided"}
+              </div>
+              <div>
+                <span className="text-white/45">City:</span>{" "}
+                {payload.city?.trim() || "Not provided"}
               </div>
             </div>
           </div>
-        </div>
-      ) : (
-        <div className="mx-auto flex min-h-screen w-full max-w-5xl items-center justify-center px-6 py-10">
-          <div className="w-full max-w-3xl rounded-[36px] border border-cyan-400/20 bg-white/5 px-8 py-14 text-center shadow-[0_0_90px_rgba(34,211,238,0.10)] backdrop-blur">
-            <div className="mx-auto mb-4 inline-flex items-center rounded-full border border-cyan-400/25 bg-cyan-400/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-cyan-200">
-              HomePlanet Mission Control
+
+          {status === "error" ? (
+            <div className="mt-6 rounded-2xl border border-red-400/30 bg-red-400/10 p-4 text-sm text-red-100">
+              {errorMessage}
             </div>
-
-            <div className="mx-auto mb-8 h-24 w-24 rounded-full border border-cyan-400/25 bg-cyan-400/10 shadow-[0_0_45px_rgba(34,211,238,0.14)]" />
-
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-300/80">
-              System ready
-            </p>
-
-            <h1 className="mt-4 text-4xl font-bold tracking-tight md:text-5xl">
-              {businessName}
-            </h1>
-
-            <p className="mt-4 text-lg text-slate-300">
-              Your live board has been created
-            </p>
-
-            <div className="mx-auto mt-8 max-w-md rounded-2xl border border-white/10 bg-[#071124] px-5 py-4">
-              <div className="text-xs uppercase tracking-[0.22em] text-slate-500">
-                Deployment
-              </div>
-
-              <div className="mt-3 text-xl font-semibold text-white">
-                {countdownValue === null ? "Mission locked" : `Opening in ${countdownValue}`}
-              </div>
-
-              <div className="mt-3 h-[2px] w-full overflow-hidden rounded-full bg-white/8">
-                <div
-                  className="h-full rounded-full bg-cyan-300/70 transition-all duration-700"
-                  style={{
-                    width:
-                      countdownValue === null
-                        ? "20%"
-                        : countdownValue === 3
-                          ? "42%"
-                          : countdownValue === 2
-                            ? "68%"
-                            : "94%",
-                  }}
-                />
-              </div>
-            </div>
-          </div>
+          ) : null}
         </div>
-      )}
+      </div>
     </div>
   );
 }
