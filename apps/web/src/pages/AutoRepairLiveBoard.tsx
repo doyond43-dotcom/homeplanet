@@ -114,6 +114,163 @@ function getBoardViewModeKey(boardSlug: string) {
   return `hp_board_view_mode_${boardSlug}`;
 }
 
+
+function toTitleCaseFromSlug(value: string) {
+  return (value || "")
+    .split("-")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function isGenericLiveBoardName(value?: string | null) {
+  const lower = (value || "").trim().toLowerCase();
+  return (
+    !lower ||
+    lower === "auto repair live board" ||
+    lower === "restaurant live board" ||
+    lower === "live board" ||
+    lower === "home services live" ||
+    lower === "auto repair demo" ||
+    lower === "starter live board"
+  );
+}
+
+function makeBoardTitle(value: string) {
+  const trimmed = (value || "").trim();
+  if (!trimmed) return "Live Board";
+  return /live board$/i.test(trimmed) ? trimmed : `${trimmed} Live Board`;
+}
+
+
+function normalizeBusinessTypeForLiveBoard(rawType: string, slugHint: string) {
+  const value = (rawType || "").trim();
+  const lower = value.toLowerCase();
+  const slug = (slugHint || "").toLowerCase();
+
+  if (
+    lower.includes("contractor") ||
+    lower.includes("home service") ||
+    lower.includes("home-service") ||
+    lower.includes("handyman") ||
+    lower.includes("plumb") ||
+    lower.includes("electric") ||
+    lower.includes("hvac") ||
+    lower.includes("roof") ||
+    lower.includes("landscap") ||
+    lower.includes("pressure wash") ||
+    lower.includes("cleaning service") ||
+    lower.includes("home repair") ||
+    lower.includes("home repairs") ||
+    slug.includes("contractor") ||
+    slug.includes("home-service") ||
+    slug.includes("home-service") ||
+    slug.includes("home-services") ||
+    slug.includes("plumb") ||
+    slug.includes("electric") ||
+    slug.includes("hvac") ||
+    slug.includes("roof") ||
+    slug.includes("home-repair") ||
+    slug.includes("home-repairs")
+  ) {
+    return "Home Services";
+  }
+
+  if (
+    lower.includes("detail") ||
+    lower.includes("detailing") ||
+    lower.includes("car wash") ||
+    slug.includes("detail")
+  ) {
+    return "Auto Detailing";
+  }
+
+  if (!value && slug.includes("restaurant")) {
+    return "Restaurant";
+  }
+
+  return value || "General";
+}
+
+function resolveLiveBoardConfig(args: {
+  businessType: string;
+  businessName: string;
+  primaryGoal: string;
+}) {
+  const bt = normalizeBusinessTypeForLiveBoard(
+    args.businessType || "",
+    args.businessName || "",
+  ).toLowerCase();
+
+  if (bt.includes("home services")) {
+    return {
+      key: "home-services-live",
+      familyLabel: "Home Services Live",
+      boardSubtitle:
+        "Built for contractors and field-service teams with scheduling, travel, on-site work, and completion flow.",
+      createButtonLabel: "+ Add Service Request",
+      flowLabel: "New Request → Scheduled → En Route → On Site → Completed",
+      stages: ["New Request", "Scheduled", "En Route", "On Site", "Completed"],
+      labels: {
+        item: "Property / Job",
+        concern: "Requested Service",
+        advisor: "Crew / Coordinator",
+        eta: "Arrival / Service ETA",
+        phone: "Customer Phone",
+        appointmentDate: "Service Date",
+        appointmentTime: "Arrival Window",
+        notes: "Service Notes",
+        stage: "Stage",
+      },
+      actions: {
+        updateTitle: "Service update",
+        updateSubtitle: "General update to the customer",
+        approvalTitle: "Scope approval",
+        approvalSubtitle: "Ask customer to approve the next service step",
+        appointmentTitle: "Visit confirmation",
+        appointmentSubtitle: "Confirm service date and arrival window",
+        completionTitle: "Service completed",
+        completionSubtitle: "Let the customer know the job is complete",
+      },
+    };
+  }
+
+  if (bt.includes("auto detailing")) {
+    return {
+      key: "auto-detail-live",
+      familyLabel: "Auto Detail Live",
+      boardSubtitle:
+        "Built for detailing flow with check-in, active service work, final pass, and ready status.",
+      createButtonLabel: "+ Add Detail Job",
+      flowLabel: "Check-In → Prep → Detailing → Final Check → Ready",
+      stages: ["Check-In", "Prep", "Detailing", "Final Check", "Ready"],
+      labels: {
+        item: "Vehicle / Service",
+        concern: "Detail Request",
+        advisor: "Detail Lead",
+        eta: "Service ETA",
+        phone: "Customer Phone",
+        appointmentDate: "Service Date",
+        appointmentTime: "Arrival Window",
+        notes: "Service Notes",
+        stage: "Stage",
+      },
+      actions: {
+        updateTitle: "Service update",
+        updateSubtitle: "General detailing update to the customer",
+        approvalTitle: "Add-on approval",
+        approvalSubtitle: "Ask customer to approve any extra detailing step",
+        appointmentTitle: "Detail appointment",
+        appointmentSubtitle: "Confirm date and arrival window",
+        completionTitle: "Detail completed",
+        completionSubtitle: "Let the customer know the detail is complete",
+      },
+    };
+  }
+
+  return resolveStarterBoardConfig(args);
+}
+
 function getProofStoreKey(boardSlug: string) {
   return `hp_proof_capture_${boardSlug}`;
 }
@@ -319,6 +476,108 @@ function formatProofDate(value?: string | null) {
 function formatTicketNumber(roNumber: string) {
   const match = roNumber.match(/(\d+)/);
   return match ? `Ticket #${match[1]}` : roNumber;
+}
+
+
+function normalizeStageForConfig(
+  stage: string,
+  configKey: string,
+  allowedStages: string[],
+) {
+  if (!stage) return allowedStages[0] || "";
+  if (allowedStages.includes(stage)) return stage;
+
+  const value = stage.toLowerCase();
+
+  if (configKey === "home-services-live") {
+    if (
+      value.includes("new intake") ||
+      value.includes("check-in") ||
+      value.includes("drive-in") ||
+      value.includes("new ticket") ||
+      value.includes("new request")
+    ) {
+      return "New Request";
+    }
+
+    if (
+      value.includes("diagnos") ||
+      value.includes("approval") ||
+      value.includes("quote") ||
+      value.includes("findings") ||
+      value.includes("site visit") ||
+      value.includes("scheduled") ||
+      value.includes("measure")
+    ) {
+      return "Scheduled";
+    }
+
+    if (value.includes("en route") || value.includes("on route")) {
+      return "En Route";
+    }
+
+    if (
+      value.includes("in bay") ||
+      value.includes("repair") ||
+      value.includes("install") ||
+      value.includes("service") ||
+      value.includes("on site") ||
+      value.includes("material ordered")
+    ) {
+      return "On Site";
+    }
+
+    if (
+      value.includes("ready") ||
+      value.includes("done") ||
+      value.includes("complete")
+    ) {
+      return "Completed";
+    }
+  }
+
+  if (configKey === "auto-detail-live") {
+    if (
+      value.includes("new intake") ||
+      value.includes("new request") ||
+      value.includes("check-in") ||
+      value.includes("drive-in")
+    ) {
+      return "Check-In";
+    }
+
+    if (value.includes("prep") || value.includes("scheduled")) {
+      return "Prep";
+    }
+
+    if (
+      value.includes("diagnos") ||
+      value.includes("in bay") ||
+      value.includes("repair") ||
+      value.includes("detail") ||
+      value.includes("in service")
+    ) {
+      return "Detailing";
+    }
+
+    if (
+      value.includes("waiting approval") ||
+      value.includes("final") ||
+      value.includes("approval")
+    ) {
+      return "Final Check";
+    }
+
+    if (
+      value.includes("ready") ||
+      value.includes("done") ||
+      value.includes("complete")
+    ) {
+      return "Ready";
+    }
+  }
+
+  return allowedStages[0] || stage;
 }
 
 function restaurantPrimaryLabel(
@@ -599,17 +858,45 @@ export default function AutoRepairLiveBoard() {
     slugHint.includes("diner") ||
     slugHint.includes("peggie");
 
-  const businessName =
-    boardMeta?.business_name ||
-    payload.businessName?.trim() ||
-    (slugForcesRestaurant ? "Restaurant Live Board" : "Auto Repair Live Board");
+  const payloadMatchesBoard =
+    !liveBoardSlug ||
+    !payload.boardSlug ||
+    payload.boardSlug === liveBoardSlug;
 
-  const city = boardMeta?.city || payload.city?.trim() || "Your City";
+  const scopedPayload = payloadMatchesBoard ? payload : ({} as OnboardingPayload);
+
+  const normalizedPayloadType = normalizeBusinessTypeForLiveBoard(
+    `${scopedPayload.businessType?.trim() || ""} ${scopedPayload.businessName?.trim() || ""}`,
+    slugHint,
+  );
+
+  const normalizedBoardType = normalizeBusinessTypeForLiveBoard(
+    `${boardMeta?.business_type?.trim() || ""} ${boardMeta?.business_name?.trim() || ""}`,
+    slugHint,
+  );
 
   const businessType =
-    boardMeta?.business_type?.trim() ||
-    payload.businessType?.trim() ||
-    (slugForcesRestaurant ? "Restaurant" : "Auto Repair");
+    normalizedBoardType ||
+    normalizedPayloadType ||
+    (slugForcesRestaurant ? "Restaurant" : "General");
+
+  const inferredBusinessName = slugHint ? toTitleCaseFromSlug(slugHint) : "";
+
+  const rawBoardName =
+    boardMeta?.business_name?.trim() ||
+    scopedPayload.businessName?.trim() ||
+    "";
+
+  const businessName =
+    rawBoardName && !isGenericLiveBoardName(rawBoardName)
+      ? rawBoardName
+      : inferredBusinessName ||
+        rawBoardName ||
+        (slugForcesRestaurant ? "Restaurant" : "Live Board");
+
+  const boardTitle = makeBoardTitle(businessName);
+
+  const city = boardMeta?.city || scopedPayload.city?.trim() || "Your City";
 
   const stageConfigReady =
     Boolean(boardMeta?.business_type?.trim()) ||
@@ -619,11 +906,11 @@ export default function AutoRepairLiveBoard() {
     !liveBoardSlug ||
     boardMetaLoaded;
 
-  const primaryGoal = payload.primaryGoal?.trim() || "";
+  const primaryGoal = scopedPayload.primaryGoal?.trim() || "";
 
   const config = useMemo(
     () =>
-      resolveStarterBoardConfig({
+      resolveLiveBoardConfig({
         businessType,
         businessName,
         primaryGoal,
@@ -648,16 +935,27 @@ export default function AutoRepairLiveBoard() {
 
 const presenceId =
   boardMeta?.presence_id ||
-  payload.presenceId ||
+  scopedPayload.presenceId ||
   "creating...";
 
 const boardSlugDisplay =
-  liveBoardSlug || payload.boardSlug || " ";
+  liveBoardSlug || scopedPayload.boardSlug || " ";
 
 const isActiveBoard =
   isClaimed || boardMeta?.is_active === true;
 
   const stages = useMemo(() => [...config.stages], [config.stages]);
+
+  const actionConfig = config.actions || {
+    updateTitle: "Status update",
+    updateSubtitle: "General update to the customer",
+    approvalTitle: "Approval request",
+    approvalSubtitle: "Ask customer to approve the next step",
+    appointmentTitle: "Appointment confirmation",
+    appointmentSubtitle: "Confirm date and time with the customer",
+    completionTitle: "Completion message",
+    completionSubtitle: "Let the customer know the job is complete",
+  };
 
   useEffect(() => {
     try {
@@ -681,8 +979,8 @@ const isActiveBoard =
     setBoardMetaLoaded(false);
 
     void (async () => {
-      await loadBoardMeta();
-      await loadJobs();
+      const meta = await loadBoardMeta();
+      await loadJobs(meta);
     })();
   }, [liveBoardSlug]);
 
@@ -898,7 +1196,7 @@ const isActiveBoard =
     return data as StarterBoardRow | null;
   }
 
-  async function loadJobs() {
+  async function loadJobs(metaOverride?: StarterBoardRow | null) {
     setLoading(true);
     setStatusNote("");
 
@@ -922,13 +1220,56 @@ const isActiveBoard =
       return;
     }
 
-    const nextJobs = mergeProofIntoJobs(
+    const effectiveNameSource =
+      metaOverride?.business_name?.trim() ||
+      boardMeta?.business_name?.trim() ||
+      scopedPayload.businessName?.trim() ||
+      inferredBusinessName ||
+      "";
+
+    const effectiveType = normalizeBusinessTypeForLiveBoard(
+      `${metaOverride?.business_type?.trim() || boardMeta?.business_type?.trim() || scopedPayload.businessType?.trim() || ""} ${effectiveNameSource}`,
+      slugHint,
+    );
+
+    const effectiveConfig = resolveLiveBoardConfig({
+      businessType: effectiveType,
+      businessName: effectiveNameSource,
+      primaryGoal,
+    });
+
+    const rawJobs = mergeProofIntoJobs(
       liveBoardSlug,
       (data as DbRepairJob[]).map(dbToUi),
     );
+
+    const nextJobs = rawJobs.map((job) => ({
+      ...job,
+      stage: normalizeStageForConfig(
+        job.stage,
+        effectiveConfig.key,
+        effectiveConfig.stages,
+      ),
+    }));
+
     setJobs(nextJobs);
 
-    if (!isRestaurant && nextJobs.length > 0) {
+    const jobsNeedingStageFix = nextJobs.filter(
+      (job, index) => job.stage !== rawJobs[index]?.stage,
+    );
+
+    if (jobsNeedingStageFix.length) {
+      void Promise.all(
+        jobsNeedingStageFix.map((job) =>
+          supabase
+            .from("auto_repair_jobs")
+            .update({ stage: job.stage })
+            .eq("id", job.id),
+        ),
+      );
+    }
+
+    if (effectiveConfig.key !== "restaurant-rush" && nextJobs.length > 0) {
       setSelectedJobId((current) =>
         current && nextJobs.some((job) => job.id === current)
           ? current
@@ -1258,8 +1599,8 @@ window.location.href = "/planet/start/building";
     setSelectedJobId(null);
     setStageMenuOpen(false);
     setBoardMetaLoaded(false);
-    await loadBoardMeta();
-    await loadJobs();
+    const meta = await loadBoardMeta();
+    await loadJobs(meta);
     setSaving(false);
     setStatusNote("Loaded live board data");
     window.setTimeout(() => setStatusNote(""), 1000);
@@ -1409,7 +1750,7 @@ window.location.href = "/planet/start/building";
                   </div>
 
                   <h1 className="mt-4 text-3xl font-semibold md:text-5xl">
-                    {businessName}
+                    {boardTitle}
                   </h1>
 
                   <p className="mt-3 max-w-3xl text-base text-slate-300 md:text-lg">
@@ -1594,7 +1935,7 @@ window.location.href = "/planet/start/building";
                   </div>
 
                   <h1 className="mt-3 truncate text-2xl font-semibold text-white md:text-3xl">
-                    {businessName}
+                    {boardTitle}
                   </h1>
 
                   <div className="mt-2 flex flex-wrap gap-2 text-sm text-slate-300">
@@ -2501,8 +2842,8 @@ window.location.href = "/planet/start/building";
 
                       <div className="mt-4 grid gap-3">
                         <MessageActionCard
-                          title={config.actions.updateTitle}
-                          subtitle={config.actions.updateSubtitle}
+                          title={actionConfig.updateTitle}
+                          subtitle={actionConfig.updateSubtitle}
                           message={
                             isCamp
                               ? buildCampGuardianUpdateMessage(
@@ -2517,8 +2858,8 @@ window.location.href = "/planet/start/building";
                         />
 
                         <MessageActionCard
-                          title={config.actions.approvalTitle}
-                          subtitle={config.actions.approvalSubtitle}
+                          title={actionConfig.approvalTitle}
+                          subtitle={actionConfig.approvalSubtitle}
                           message={
                             isCamp
                               ? buildCampGuardianAlertMessage(
@@ -2533,8 +2874,8 @@ window.location.href = "/planet/start/building";
                         />
 
                         <MessageActionCard
-                          title={config.actions.appointmentTitle}
-                          subtitle={config.actions.appointmentSubtitle}
+                          title={actionConfig.appointmentTitle}
+                          subtitle={actionConfig.appointmentSubtitle}
                           message={
                             isCamp
                               ? buildCampGuardianCheckInMessage(
@@ -2549,8 +2890,8 @@ window.location.href = "/planet/start/building";
                         />
 
                         <MessageActionCard
-                          title={config.actions.completionTitle}
-                          subtitle={config.actions.completionSubtitle}
+                          title={actionConfig.completionTitle}
+                          subtitle={actionConfig.completionSubtitle}
                           message={
                             isCamp
                               ? buildCampGuardianCheckoutMessage(
@@ -3237,4 +3578,3 @@ function NotificationLine({
     </div>
   );
 }
-

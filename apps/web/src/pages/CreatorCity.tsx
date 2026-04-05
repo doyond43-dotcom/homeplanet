@@ -67,8 +67,38 @@ function fakeResolveStarterBoardConfig(args: {
     };
   }
 
+  if (
+    bt.includes("contractor") ||
+    bt.includes("contractors") ||
+    bt.includes("home service") ||
+    bt.includes("home services") ||
+    bt.includes("handyman") ||
+    bt.includes("construction") ||
+    bt.includes("remodel") ||
+    bt.includes("renovation") ||
+    bt.includes("repair")
+  ) {
+    return {
+      key: "home-services-live",
+      familyLabel: "Home Services Live",
+      boardSubtitle: "Scheduling, field movement, on-site work, and completion proof.",
+      labels: { item: "Job", concern: "Service Request" },
+      stages: ["New Request", "Scheduled", "En Route", "On Site", "Completed"],
+    };
+  }
+
+  if (bt.includes("detail") || bt.includes("detailing") || bt.includes("car wash")) {
+    return {
+      key: "auto-detail-live",
+      familyLabel: "Auto Detail Live",
+      boardSubtitle: "Check-in, active detail work, final quality pass, and ready status.",
+      labels: { item: "Vehicle", concern: "Detail Request" },
+      stages: ["Check-In", "Prep", "Detailing", "Final Check", "Ready"],
+    };
+  }
+
   return {
-    key: "auto-repair-general",
+    key: "starter-live-board",
     familyLabel: "Starter Live Board",
     boardSubtitle: "Operational workflow, live stages, and customer visibility.",
     labels: { item: "Job", concern: "Concern" },
@@ -85,23 +115,15 @@ export default function CreatorCity() {
   const readySystemsRef = useRef<HTMLDivElement | null>(null);
   const intakeFormRef = useRef<HTMLDivElement | null>(null);
 
-  const [businessName, setBusinessName] = useState("Taylor Creek Auto Repair");
-  const [businessType, setBusinessType] = useState("Auto Repair");
-  const [city, setCity] = useState("Okeechobee");
-  const [contact, setContact] = useState("you@business.com");
-  const [currentWorkflow, setCurrentWorkflow] = useState(
-    "Paper tickets, phone calls, text messages, and whiteboard updates.",
-  );
-  const [biggestFriction, setBiggestFriction] = useState(
-    "Customers call for updates, notes get lost, and nobody knows the exact stage.",
-  );
-  const [customerQuestions, setCustomerQuestions] = useState(
-    "Is it ready yet? Where am I in line? Did you get my request?",
-  );
+  const [businessName, setBusinessName] = useState("");
+  const [businessType, setBusinessType] = useState("");
+  const [city, setCity] = useState("");
+  const [contact, setContact] = useState("");
+  const [currentWorkflow, setCurrentWorkflow] = useState("");
+  const [biggestFriction, setBiggestFriction] = useState("");
+  const [customerQuestions, setCustomerQuestions] = useState("");
   const [wantsBuilt, setWantsBuilt] = useState<BuildIntent>("full-system");
-  const [holyShiftMoment, setHolyShiftMoment] = useState(
-    "One board for status, team, customer updates, payment, and proof.",
-  );
+  const [holyShiftMoment, setHolyShiftMoment] = useState("");
   const [workflowFiles, setWorkflowFiles] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [reserveReady, setReserveReady] = useState(false);
@@ -1448,42 +1470,82 @@ export default function CreatorCity() {
                       <div style={intakeGrid}>
                         <div style={inputGroup}>
                           <label style={label}>Business name</label>
-                          <input style={inputBase} value={businessName} onChange={(e) => setBusinessName(e.target.value)} />
+                          <input
+                            style={inputBase}
+                            value={businessName}
+                            placeholder="Taylor Creek Contractors"
+                            onChange={(e) => setBusinessName(e.target.value)}
+                          />
                         </div>
 
                         <div style={inputGroup}>
                           <label style={label}>Business type</label>
-                          <input style={inputBase} value={businessType} onChange={(e) => setBusinessType(e.target.value)} />
+                          <input
+                            style={inputBase}
+                            value={businessType}
+                            placeholder="Home Services"
+                            onChange={(e) => setBusinessType(e.target.value)}
+                          />
                         </div>
 
                         <div style={inputGroup}>
                           <label style={label}>City</label>
-                          <input style={inputBase} value={city} onChange={(e) => setCity(e.target.value)} />
+                          <input
+                            style={inputBase}
+                            value={city}
+                            placeholder="Okeechobee"
+                            onChange={(e) => setCity(e.target.value)}
+                          />
                         </div>
 
                         <div style={inputGroup}>
                           <label style={label}>Email or preferred contact</label>
-                          <input style={inputBase} value={contact} onChange={(e) => setContact(e.target.value)} />
+                          <input
+                            style={inputBase}
+                            value={contact}
+                            placeholder="you@business.com"
+                            onChange={(e) => setContact(e.target.value)}
+                          />
                         </div>
 
                         <div style={{ ...inputGroup, gridColumn: "1 / -1" }}>
                           <label style={label}>How do you run jobs right now?</label>
-                          <textarea style={textareaWide} value={currentWorkflow} onChange={(e) => setCurrentWorkflow(e.target.value)} />
+                          <textarea
+                            style={textareaWide}
+                            value={currentWorkflow}
+                            placeholder="Calls, texts, paper tickets, whiteboards, spreadsheets, or whatever you're doing now."
+                            onChange={(e) => setCurrentWorkflow(e.target.value)}
+                          />
                         </div>
 
                         <div style={{ ...inputGroup, gridColumn: "1 / -1" }}>
                           <label style={label}>What wastes the most time?</label>
-                          <textarea style={textareaWide} value={biggestFriction} onChange={(e) => setBiggestFriction(e.target.value)} />
+                          <textarea
+                            style={textareaWide}
+                            value={biggestFriction}
+                            placeholder="What keeps breaking the flow, creating delays, or causing confusion?"
+                            onChange={(e) => setBiggestFriction(e.target.value)}
+                          />
                         </div>
 
                         <div style={{ ...inputGroup, gridColumn: "1 / -1" }}>
                           <label style={label}>What do customers keep asking about?</label>
-                          <textarea style={textareaWide} value={customerQuestions} onChange={(e) => setCustomerQuestions(e.target.value)} />
+                          <textarea
+                            style={textareaWide}
+                            value={customerQuestions}
+                            placeholder="What do they call, text, or ask about over and over?"
+                            onChange={(e) => setCustomerQuestions(e.target.value)}
+                          />
                         </div>
 
                         <div style={{ ...inputGroup, gridColumn: "1 / -1" }}>
                           <label style={label}>What would make you say “holy shit, this solves it”?</label>
-                          <textarea style={textareaWide} value={holyShiftMoment} onChange={(e) => setHolyShiftMoment(e.target.value)} />
+                          <textarea
+                            style={textareaWide}
+                            value={holyShiftMoment}
+                            placeholder="What would make the system instantly feel worth it?"
+                            onChange={(e) => setHolyShiftMoment(e.target.value)}
+                          />
                         </div>
                       </div>
 
@@ -1716,5 +1778,3 @@ export default function CreatorCity() {
     </div>
   );
 }
-
-

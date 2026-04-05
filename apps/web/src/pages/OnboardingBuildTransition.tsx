@@ -182,14 +182,19 @@ export default function OnboardingBuildTransition() {
   const [finalPayload, setFinalPayload] = useState<OnboardingPayload>(payload);
 
   useEffect(() => {
+    setFinalPayload(payload);
+  }, [payload]);
+
+  useEffect(() => {
     let alive = true;
 
     void (async () => {
       try {
         if (
-  payload.businessType?.toLowerCase().includes("auto") &&
-  (!payload.boardSlug || !payload.presenceId || !payload.presenceKey)
-) {
+          !payload.boardSlug ||
+          !payload.presenceId ||
+          !payload.presenceKey
+        ) {
           const identity = await ensureStarterBoard(payload);
           if (!alive) return;
 
@@ -268,11 +273,9 @@ export default function OnboardingBuildTransition() {
     }, totalBuildMs + REVEAL_CARD_HOLD_MS + COUNTDOWN_STEP_MS * 3);
 
     const navigateTimer = window.setTimeout(() => {
-      const targetRoute =
-        finalPayload.businessType?.toLowerCase().includes("auto") &&
-        finalPayload.boardSlug
-          ? `/planet/live/${finalPayload.boardSlug}`
-          : "/planet/demo/auto-service";
+      const targetRoute = finalPayload.boardSlug
+        ? `/planet/live/${finalPayload.boardSlug}`
+        : finalPayload.demoRoute || "/planet/demo/auto-service";
 
       navigate(targetRoute, {
         replace: true,
@@ -496,5 +499,3 @@ export default function OnboardingBuildTransition() {
     </div>
   );
 }
-
-
