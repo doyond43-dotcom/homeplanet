@@ -14,6 +14,10 @@ import RcAirboatsLiveDemo from "../pages/RcAirboatsLiveDemo";
 import ExperiencePlanet from "../pages/ExperiencePlanet";
 import PresenceGridPreview from "../pages/PresenceGridPreview";
 import HayleyLiveBoard from "../pages/HayleyLiveBoard";
+import MealBoardDemo from "../pages/MealBoardDemo";
+import MealLaunchFlow from "../pages/MealLaunchFlow";
+import MealBusinessDemo from "../pages/MealBusinessDemo";
+import BigDaveEatsLive from "../pages/BigDaveEatsLive";
 
 // Creation moment
 import CreationMomentPage from "../pages/CreationMomentPage";
@@ -42,6 +46,7 @@ import RestaurantRushManualDemo from "../pages/RestaurantRushManualDemo";
 import RestaurantRushLiveDemo from "../pages/RestaurantRushLiveDemo";
 import RestaurantRushDemo from "../pages/RestaurantRushDemo";
 import MomsKitchenDemo from "../pages/MomsKitchenDemo";
+import MealBusinessLiveDemo from "../pages/MealBusinessLiveDemo";
 
 // Legal
 import JoeGrantLegalDesk from "../pages/JoeGrantLegalDesk";
@@ -84,6 +89,7 @@ export default function PlanetRoutes() {
     <Routes>
       <Route index element={<Navigate to="/planet/creator" replace />} />
 
+      {/* CREATOR */}
       <Route path="creator" element={<CreatorCity />} />
       <Route path="creator/projects" element={<CreatorProjects />} />
       <Route path="creator/studio/*" element={<CreatorStudio />} />
@@ -91,9 +97,11 @@ export default function PlanetRoutes() {
       <Route path="creator/release/:releaseId" element={<ReleaseViewer />} />
       <Route path="creator/rc-live" element={<RcAirboatsLiveDemo />} />
       <Route path="creator/hayley-live" element={<HayleyLiveBoard />} />
+      <Route path="creator/big-dave-eats" element={<BigDaveEatsLive />} />
       <Route path="creator/building" element={<CreationMomentPage />} />
       <Route path="creator/*" element={<Navigate to="/planet/creator" replace />} />
 
+      {/* EXPERIENCE */}
       <Route path="experience" element={<ExperiencePlanet />} />
       <Route path="experience/demo" element={<ExperiencePlanet />} />
       <Route path="experience/escape-board" element={<EscapeBoardDemo />} />
@@ -101,6 +109,7 @@ export default function PlanetRoutes() {
       <Route path="experience/session/:sessionId" element={<EscapeSessionPage />} />
       <Route path="experience/watch" element={<EscapeWatchModePage />} />
 
+      {/* DEMOS */}
       <Route path="demo/home-services" element={<AwnitDemoBoard />} />
       <Route path="demo/auto-service" element={<AutoRepairLiveBoard />} />
       <Route path="demo/kitchen-flow" element={<RestaurantRushSimpleDemo />} />
@@ -113,13 +122,18 @@ export default function PlanetRoutes() {
       <Route path="demo/lawn-route" element={<RouteCutLawnPage />} />
       <Route path="demo/community-sale" element={<CommunitySaleBoard />} />
       <Route path="demo/transportation" element={<TransportationDispatchBoardV2 />} />
+      <Route path="demo/meal-board" element={<MealBoardDemo />} />
+      <Route path="demo/meal-business" element={<MealBusinessDemo />} />
 
+      {/* LIVE BOARD */}
       <Route path="live/:boardSlug" element={<AutoRepairLiveBoard />} />
 
+      {/* VEHICLES */}
       <Route path="vehicles/awnit-demo" element={<AwnitDemoBoard />} />
       <Route path="vehicles/awnit-demo/invoice/:invoiceId" element={<InvoiceView />} />
       <Route path="demo/awnit" element={<AwnitDemoBoard />} />
 
+      {/* FOOD */}
       <Route path="food/restaurant-rush-simple" element={<RestaurantRushSimpleDemo />} />
       <Route path="food/restaurant-rush-manual" element={<RestaurantRushManualDemo />} />
       <Route path="food/restaurant-rush-live" element={<Navigate to={RESTAURANT_LIVE_TARGET} replace />} />
@@ -128,12 +142,22 @@ export default function PlanetRoutes() {
       <Route path="food/restaurant-rush-live-classic" element={<RestaurantRushLiveDemo />} />
       <Route path="food/moms-kitchen" element={<MomsKitchenDemo />} />
 
+      {/* LIFESTYLE */}
+      <Route path="lifestyle/meal-demo" element={<MealBusinessDemo />} />
+      <Route path="lifestyle/meal-live" element={<MealBusinessLiveDemo />} />
+      <Route path="lifestyle/meal-start" element={<MealLaunchFlow />} />
+      <Route path="lifestyle/meal-board-demo" element={<MealBoardDemo />} />
+
+      {/* LEGAL */}
       <Route path="legal/joe-grant" element={<JoeGrantLegalDesk />} />
 
+      {/* COMMUNITY */}
       <Route path="community/community-sale" element={<CommunitySaleBoard />} />
 
+      {/* TRANSPORT */}
       <Route path="transportation/dispatch" element={<TransportationDispatchBoardV2 />} />
 
+      {/* GUARDIAN */}
       <Route path="guardian" element={<PlanetGuardian />} />
       <Route path="guardian/start" element={<GuardianStartPage />} />
       <Route path="guardian/activate" element={<GuardianActivationPage />} />
@@ -142,42 +166,42 @@ export default function PlanetRoutes() {
       <Route path="guardian/panic/:incidentId" element={<GuardianPanicLiveBoard />} />
       <Route path="guardian-household" element={<GuardianHouseholdBoard />} />
       <Route path="guardian/home" element={<GuardianHomePage />} />
-
       <Route path="guardian/join" element={<GuardianJoinDesk />} />
       <Route path="guardian/presence" element={<GuardianPresenceDesk />} />
-
-      {/* 🔥 NEW ROUTE */}
       <Route path="guardian/fulfillment" element={<PetTagFulfillmentBoard />} />
-
       <Route path="guardian/child/:childId" element={<ParentChildView />} />
       <Route path="guardian/public/:profileId" element={<GuardianPublicProfilePage />} />
-
       <Route path="guardian-pet" element={<GuardianPetTagDemo />} />
       <Route path="guardian-pet/pet/:petId" element={<GuardianPetTagDemo />} />
       <Route path="guardian-pet/found/:petId" element={<GuardianPetTagDemo />} />
       <Route path="guardian-pet/timeline" element={<PetCareTimelinePanel />} />
 
+      {/* ROUTECUT */}
       <Route path="lawn/routecut" element={<RouteCutLawnPage />} />
       <Route path="demo/routecut" element={<RouteCutLawnPage />} />
       <Route path="routecut/operator" element={<RouteCutOperatorBoard />} />
       <Route path="routecut/live" element={<RouteCutLiveView />} />
 
+      {/* PAYMENTS */}
       <Route path="payments/node" element={<HomePlanetPaymentNode />} />
 
+      {/* START */}
       <Route path="start" element={<OnboardingFlow />} />
       <Route path="start/building" element={<OnboardingBuildTransition />} />
       <Route path="start/preview" element={<StarterBoardPreview />} />
 
+      {/* STATIC */}
       <Route path="pricing" element={<PricingPage />} />
       <Route path="jeanettes" element={<JeanettesLanding />} />
       <Route path="life" element={<LifePlanet />} />
       <Route path="emily" element={<EmilyLearningDesk />} />
 
+      {/* DEV */}
       <Route path="dev/presence-grid" element={<PresenceGridPreview />} />
 
+      {/* FALLBACK */}
       <Route path=":planetId" element={<PlanetOverview />} />
       <Route path=":planetId/:cityId" element={<CityPage />} />
-
       <Route path="*" element={<Navigate to="/planet/creator" replace />} />
     </Routes>
   );

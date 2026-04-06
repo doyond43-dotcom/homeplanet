@@ -51,9 +51,6 @@ type PreviewAction = {
   type: InsightAction;
   title: string;
   detail: string;
-  confidence: "High" | "Medium" | "Low";
-  slotsChanged: number;
-  impact: string[];
   nextBoard: BoardState;
   changedCells: string[];
 };
@@ -122,8 +119,8 @@ function smartFillRow(
   current.forEach((id) => {
     const meal = MEALS.find((m) => m.id === id);
     if (!meal) return;
-    if (meal.protein) proteinCount += 1;
-    else nonProteinCount += 1;
+    if (meal.protein) proteinCount++;
+    else nonProteinCount++;
   });
 
   return current.map((slot) => {
@@ -144,8 +141,8 @@ function smartFillRow(
 
     if (chosen) {
       used.add(chosen.id);
-      if (chosen.protein) proteinCount += 1;
-      else nonProteinCount += 1;
+      if (chosen.protein) proteinCount++;
+      else nonProteinCount++;
       return chosen.id;
     }
 
@@ -164,12 +161,6 @@ function rowHealthClasses(tone: RowHealthTone) {
   if (tone === "warn") return "border-amber-400/30 bg-amber-500/15 text-amber-100";
   if (tone === "locked") return "border-yellow-400/30 bg-yellow-500/20 text-yellow-100";
   return "border-cyan-400/30 bg-cyan-500/15 text-cyan-100";
-}
-
-function confidenceClasses(confidence: PreviewAction["confidence"]) {
-  if (confidence === "High") return "border-emerald-400/30 bg-emerald-500/12 text-emerald-100";
-  if (confidence === "Medium") return "border-amber-400/30 bg-amber-500/12 text-amber-100";
-  return "border-rose-400/30 bg-rose-500/12 text-rose-100";
 }
 
 function getRowHealth(
@@ -282,15 +273,15 @@ export default function MealBoardDemo() {
     return () => window.clearTimeout(timeout);
   }, [pulseKey]);
 
-  const displayBoard = previewAction?.nextBoard ?? board;
-
-  function clearPreviewQuietly() {
-    setPreviewAction(null);
+  function getDisplayBoard() {
+    return previewAction?.nextBoard ?? board;
   }
+
+  const displayBoard = getDisplayBoard();
 
   function setMeal(row: MealRowKey, day: number, mealId: string) {
     const previous = board[row][day];
-    clearPreviewQuietly();
+    setPreviewAction(null);
 
     setBoard((prev) => {
       const next = { ...prev, [row]: [...prev[row]] };
@@ -302,13 +293,13 @@ export default function MealBoardDemo() {
       const meal = MEALS.find((m) => m.id === mealId);
       pushActivity(
         "info",
-        `${row} updated • ${DAYS[day]}`,
+        `${row} updated â€¢ ${DAYS[day]}`,
         meal ? `${meal.name} was placed into ${row.toLowerCase()}.` : "Meal slot updated."
       );
       flashArea(`${row}-${day}`);
       setSystemMode("Responding live");
     } else if (previous) {
-      pushActivity("warn", `${row} cleared • ${DAYS[day]}`, `A ${row.toLowerCase()} slot was removed from the week.`);
+      pushActivity("warn", `${row} cleared â€¢ ${DAYS[day]}`, `A ${row.toLowerCase()} slot was removed from the week.`);
       flashArea(`${row}-${day}`);
       setSystemMode("Adjusting coverage");
     }
@@ -317,7 +308,7 @@ export default function MealBoardDemo() {
   function clearSlot(row: MealRowKey, day: number) {
     const existing = board[row][day];
     if (!existing) return;
-    clearPreviewQuietly();
+    setPreviewAction(null);
 
     setBoard((prev) => {
       const next = { ...prev, [row]: [...prev[row]] };
@@ -325,14 +316,14 @@ export default function MealBoardDemo() {
       return next;
     });
 
-    pushActivity("warn", `${row} cleared • ${DAYS[day]}`, `${row} on ${DAYS[day]} is now open again.`);
+    pushActivity("warn", `${row} cleared â€¢ ${DAYS[day]}`, `${row} on ${DAYS[day]} is now open again.`);
     flashArea(`${row}-${day}`);
     setSystemMode("Adjusting coverage");
   }
 
   function toggleLock(row: MealRowKey) {
     const nextValue = !lockedRows[row];
-    clearPreviewQuietly();
+    setPreviewAction(null);
     setLockedRows((prev) => ({ ...prev, [row]: nextValue }));
     pushActivity(
       nextValue ? "good" : "info",
@@ -346,7 +337,7 @@ export default function MealBoardDemo() {
   }
 
   function autoFill() {
-    clearPreviewQuietly();
+    setPreviewAction(null);
 
     let filledSlots = 0;
     let balancedRows = 0;
@@ -403,17 +394,12 @@ export default function MealBoardDemo() {
       return replacement;
     });
 
-    const changedCells = getChangedCells(board, nextBoard);
-
     return {
       type: "shuffle-lunch",
-      title: `${row} rotation proposed`,
-      detail: `${row} has a cleaner rotation staged and ready for approval.`,
-      confidence: "High",
-      slotsChanged: changedCells.length,
-      impact: ["Variety improved", "Repetition reduced"],
+      title: `${row} preview ready`,
+      detail: `${row} rotation has been staged. Review the highlighted changes and apply when ready.`,
       nextBoard,
-      changedCells,
+      changedCells: getChangedCells(board, nextBoard),
     };
   }
 
@@ -425,17 +411,13 @@ export default function MealBoardDemo() {
 
     const nextBoard = cloneBoard(board);
     nextBoard.Dinner = smartFillRow("Dinner", board.Dinner, mealsByType);
-    const changedCells = getChangedCells(board, nextBoard);
 
     return {
       type: "fill-dinner",
-      title: "Dinner refresh proposed",
+      title: "Dinner improvement ready",
       detail: "The system staged a stronger dinner row to reduce friction and tighten variety.",
-      confidence: changedCells.length >= 3 ? "High" : "Medium",
-      slotsChanged: changedCells.length,
-      impact: ["Dinner coverage improved", "Variety tightened"],
       nextBoard,
-      changedCells,
+      changedCells: getChangedCells(board, nextBoard),
     };
   }
 
@@ -447,17 +429,12 @@ export default function MealBoardDemo() {
       nextBoard[row] = smartFillRow(row, board[row].map(() => null), mealsByType);
     }
 
-    const changedCells = getChangedCells(board, nextBoard);
-
     return {
       type: "rebalance-protein",
-      title: "Protein rebalance proposed",
-      detail: "The system staged a cleaner protein spread and a more trustworthy weekly mix.",
-      confidence: "High",
-      slotsChanged: changedCells.length,
-      impact: ["Protein spread improved", "Week rebalanced"],
+      title: "Rebalanced week ready",
+      detail: "The system staged a cleaner protein balance and broader spread across the week.",
       nextBoard,
-      changedCells,
+      changedCells: getChangedCells(board, nextBoard),
     };
   }
 
@@ -469,39 +446,54 @@ export default function MealBoardDemo() {
       nextBoard[row] = smartFillRow(row, board[row], mealsByType);
     }
 
-    const changedCells = getChangedCells(board, nextBoard);
-
     return {
       type: "complete-week",
-      title: "Week completion proposed",
-      detail: "The system staged a finished week without disturbing your locked structure.",
-      confidence: changedCells.length >= 4 ? "High" : "Medium",
-      slotsChanged: changedCells.length,
-      impact: ["Coverage improved", "Open slots reduced"],
+      title: "Completion preview ready",
+      detail: "The system staged a finished week without disturbing locked rows.",
       nextBoard,
-      changedCells,
+      changedCells: getChangedCells(board, nextBoard),
     };
   }
 
   function runInsightAction(action: InsightAction) {
-    let preview: PreviewAction | null = null;
-
     if (action === "shuffle-lunch") {
-      preview = buildShuffleRowPreview("Lunch");
-    } else if (action === "fill-dinner") {
-      preview = buildFillDinnerPreview();
-    } else if (action === "rebalance-protein") {
-      preview = buildRebalancePreview();
-    } else if (action === "complete-week") {
-      preview = buildCompleteWeekPreview();
+      const preview = buildShuffleRowPreview("Lunch");
+      if (!preview) return;
+      setPreviewAction(preview);
+      pushActivity("info", "Lunch preview generated", "The system staged a lunch rotation for review.");
+      setSystemMode("Preview ready");
+      flashArea("Lunch");
+      return;
     }
 
-    if (!preview) return;
+    if (action === "fill-dinner") {
+      const preview = buildFillDinnerPreview();
+      if (!preview) return;
+      setPreviewAction(preview);
+      pushActivity("info", "Dinner preview generated", "The system staged an improved dinner row for approval.");
+      setSystemMode("Preview ready");
+      flashArea("Dinner");
+      return;
+    }
 
-    setPreviewAction(preview);
-    pushActivity("info", `${preview.title}`, `The system staged a proposed fix and highlighted ${preview.slotsChanged} slot${preview.slotsChanged === 1 ? "" : "s"} for review.`);
-    setSystemMode("Preview ready");
-    flashArea(preview.changedCells[0] ? preview.changedCells[0].split("-")[0] : "board");
+    if (action === "rebalance-protein") {
+      const preview = buildRebalancePreview();
+      if (!preview) return;
+      setPreviewAction(preview);
+      pushActivity("info", "Rebalance preview generated", "The system staged a better protein spread across the week.");
+      setSystemMode("Preview ready");
+      flashArea("board");
+      return;
+    }
+
+    if (action === "complete-week") {
+      const preview = buildCompleteWeekPreview();
+      if (!preview) return;
+      setPreviewAction(preview);
+      pushActivity("info", "Completion preview generated", "The system staged open-slot fills for your approval.");
+      setSystemMode("Preview ready");
+      flashArea("board");
+    }
   }
 
   function applyPreview() {
@@ -510,8 +502,8 @@ export default function MealBoardDemo() {
     setBoard(previewAction.nextBoard);
     pushActivity(
       "good",
-      `${previewAction.title} applied`,
-      `${previewAction.slotsChanged} slot${previewAction.slotsChanged === 1 ? "" : "s"} updated. ${previewAction.impact.join(" • ")}.`
+      `${previewAction.title.replace(" ready", "")} applied`,
+      `The proposed system change is now live on the board.`
     );
     setSystemMode("Responding live");
 
@@ -526,13 +518,13 @@ export default function MealBoardDemo() {
 
   function dismissPreview() {
     if (!previewAction) return;
-    pushActivity("warn", "Preview dismissed", "The staged system change was reviewed but not applied.");
+    pushActivity("warn", "Preview dismissed", "The staged system change was not applied.");
     setPreviewAction(null);
     setSystemMode("Stable system");
   }
 
   function clearAll() {
-    clearPreviewQuietly();
+    setPreviewAction(null);
     setBoard(createEmptyBoard());
     pushActivity("warn", "Board cleared", "All meal slots were reset. The system is ready to build again.");
     flashArea("board");
@@ -680,13 +672,13 @@ export default function MealBoardDemo() {
             <h1 className="text-2xl font-bold">Meal Board</h1>
             <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-white/70">
               <span>{filled}/{total} slots filled</span>
-              <span>•</span>
+              <span>â€¢</span>
               <span>{systemStatus}</span>
-              <span>•</span>
+              <span>â€¢</span>
               <span>{systemMode}</span>
               {previewAction ? (
                 <>
-                  <span>•</span>
+                  <span>â€¢</span>
                   <span className="text-cyan-200">Preview staged</span>
                 </>
               ) : null}
@@ -696,7 +688,7 @@ export default function MealBoardDemo() {
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => {
-                clearPreviewQuietly();
+                setPreviewAction(null);
                 setProteinOnly((v) => !v);
                 pushActivity(
                   "info",
@@ -713,7 +705,7 @@ export default function MealBoardDemo() {
             </button>
             <button
               onClick={() => {
-                clearPreviewQuietly();
+                setPreviewAction(null);
                 setLowSodiumOnly((v) => !v);
                 pushActivity(
                   "info",
@@ -740,50 +732,25 @@ export default function MealBoardDemo() {
         {previewAction ? (
           <div className="rounded-2xl border border-cyan-400/30 bg-cyan-500/10 p-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <div className="space-y-1">
-                <div className="text-xs uppercase tracking-[0.18em] text-cyan-100/70">
-                  System suggestion preview
-                </div>
-
-                <div className="text-lg font-semibold text-white">
-                  {previewAction.title}
-                </div>
-
-                <div className="text-sm text-white/80">
-                  {previewAction.detail}
-                </div>
-
-                <div className="flex flex-wrap gap-2 pt-2 text-xs">
-                  <span className={`rounded-lg border px-2 py-1 ${confidenceClasses(previewAction.confidence)}`}>
-                    Confidence: {previewAction.confidence}
-                  </span>
-
-                  <span className="rounded-lg border border-blue-400/30 bg-blue-500/12 px-2 py-1 text-blue-100">
-                    {previewAction.slotsChanged} slot{previewAction.slotsChanged === 1 ? "" : "s"} adjusted
-                  </span>
-
-                  {previewAction.impact.map((tag) => (
-                    <span
-                      key={tag}
-                      className="rounded-lg border border-white/12 bg-white/6 px-2 py-1 text-white/90"
-                    >
-                      {tag}
-                    </span>
-                  ))}
+              <div>
+                <div className="text-[11px] uppercase tracking-[0.18em] text-cyan-100/70">System suggestion preview</div>
+                <div className="mt-1 text-lg font-semibold text-white">{previewAction.title}</div>
+                <div className="mt-1 text-sm text-white/75">{previewAction.detail}</div>
+                <div className="mt-2 text-xs text-cyan-100/80">
+                  {previewAction.changedCells.length} highlighted slot{previewAction.changedCells.length === 1 ? "" : "s"} ready to apply
                 </div>
               </div>
 
               <div className="flex gap-2">
                 <button
                   onClick={applyPreview}
-                  className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500"
+                  className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white"
                 >
                   Apply fix
                 </button>
-
                 <button
                   onClick={dismissPreview}
-                  className="rounded-xl bg-white/10 px-4 py-2 text-sm text-white hover:bg-white/20"
+                  className="rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white hover:bg-white/20"
                 >
                   Dismiss
                 </button>
@@ -815,7 +782,7 @@ export default function MealBoardDemo() {
                     onClick={() => toggleLock(row)}
                     className={`text-xs px-2 py-1 rounded ${lockedRows[row] ? "bg-yellow-600 text-black" : "bg-[#1a2238]"}`}
                   >
-                    {lockedRows[row] ? "?? Locked" : "Lock"}
+                    {lockedRows[row] ? "ðŸ”’ Locked" : "Lock"}
                   </button>
                 </div>
 
@@ -824,7 +791,7 @@ export default function MealBoardDemo() {
                     const mealId = displayBoard[row][i];
                     const meal = MEALS.find((m) => m.id === mealId);
                     const cellKey = `${row}-${i}`;
-                    const isPreviewCell = previewAction?.changedCells.includes(cellKey) ?? false;
+                    const isPreviewCell = previewAction?.changedCells.includes(cellKey);
 
                     return (
                       <div
@@ -846,13 +813,13 @@ export default function MealBoardDemo() {
                           ) : null}
                         </div>
 
-                        <div className="h-12 flex items-center justify-center rounded bg-[#071224] px-1 text-center text-xs">
-                          {meal ? meal.name : "—"}
+                        <div className="h-12 flex items-center justify-center text-xs text-center bg-[#071224] rounded px-1">
+                          {meal ? meal.name : "â€”"}
                         </div>
 
                         <div className="flex gap-1">
                           <select
-                            className="flex-1 rounded bg-[#1a2238] p-1 text-xs"
+                            className="flex-1 text-xs bg-[#1a2238] rounded p-1"
                             value={mealId || ""}
                             onChange={(e) => setMeal(row, i, e.target.value)}
                           >
@@ -864,8 +831,8 @@ export default function MealBoardDemo() {
                             ))}
                           </select>
 
-                          <button onClick={() => clearSlot(row, i)} className="rounded bg-[#1a2238] px-2 text-xs">
-                            ?
+                          <button onClick={() => clearSlot(row, i)} className="px-2 text-xs bg-[#1a2238] rounded">
+                            âœ•
                           </button>
                         </div>
                       </div>
@@ -876,7 +843,7 @@ export default function MealBoardDemo() {
             ))}
           </div>
 
-          <aside className="h-fit space-y-4 rounded-2xl bg-[#0c1932] p-4 xl:sticky xl:top-6">
+          <aside className="rounded-2xl bg-[#0c1932] p-4 space-y-4 h-fit xl:sticky xl:top-6">
             <div>
               <div className="text-[11px] uppercase tracking-[0.18em] text-cyan-200/70">System feedback</div>
               <h2 className="mt-1 text-lg font-semibold">Live insights</h2>
@@ -922,7 +889,7 @@ export default function MealBoardDemo() {
                   <div className="mt-1 text-sm leading-5 text-white/75">{insight.detail}</div>
                   {insight.action && insight.action !== "none" ? (
                     <button
-                      onClick={() => runInsightAction(insight.action)}
+                      onClick={() => runInsightAction(insight.action!)}
                       className="mt-3 rounded-lg bg-white/10 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-white/20"
                     >
                       {insight.actionLabel ?? "Preview fix"}

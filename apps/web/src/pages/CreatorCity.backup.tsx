@@ -3,7 +3,6 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 const LIVE_PRODUCT_DEMO_ROUTE = "/planet/creator/rc-live";
 const LIVE_CAMP_GUARDIAN_ROUTE = "/planet/live/camp-aquaflow-5593";
 const PAYMENT_NODE_ROUTE = "/planet/payments/node";
-const MEAL_BUSINESS_ROUTE = "/planet/lifestyle/meal-start";
 
 type SystemExample = {
   id: string;
@@ -45,23 +44,7 @@ function fakeResolveStarterBoardConfig(args: {
       boardSubtitle: "Live ticket flow, manager controls, and kitchen visibility.",
       labels: { item: "Ticket", concern: "Order" },
       stages: ["New Ticket", "On Grill", "Plating", "Ready", "Completed"],
-    }
-
-  if (
-    bt.includes("meal") ||
-    bt.includes("prep") ||
-    bt.includes("delivery") ||
-    bt.includes("weekly food") ||
-    bt.includes("ready prep")
-  ) {
-    return {
-      key: "meal-business-system",
-      familyLabel: "Meal Business System",
-      boardSubtitle: "Customer preferences, food guardrails, weekly planning, and live board adjustments.",
-      labels: { item: "Week", concern: "Meal Preference" },
-      stages: ["Preference Intake", "Build Week", "Optimize", "Customer Ready", "Live Adjustments"],
     };
-  };
   }
 
   if (bt.includes("lawn") || bt.includes("landscape") || bt.includes("route")) {
@@ -191,13 +174,6 @@ export default function CreatorCity() {
         tag: "LIVE BOARD",
       },
       {
-        id: "meal-business",
-        title: "Meal Business System",
-        subtitle: "Weekly planning, customer preferences, and live food decision control.",
-        to: MEAL_BUSINESS_ROUTE,
-        tag: "MEAL SYSTEM",
-      },
-      {
         id: "community-sale",
         title: "Community Sale Board",
         subtitle: "Sell, track, price, and manage pickup in one board.",
@@ -249,9 +225,7 @@ export default function CreatorCity() {
     [resolvedBusinessLabel, businessName, holyShiftMoment],
   );
 
-  
-  const isMealBusinessMode = /meal|prep|delivery|weekly food/i.test(resolvedBusinessLabel);
-const previewStages = configPreview.stages.slice(0, 4);
+  const previewStages = configPreview.stages.slice(0, 4);
   const liveBoardRoute = `/planet/live/${slugify(businessName) || "starter-board"}`;
   const reservePaymentRoute = `${PAYMENT_NODE_ROUTE}?redirectTo=${encodeURIComponent(liveBoardRoute)}`;
 
@@ -355,30 +329,13 @@ const previewStages = configPreview.stages.slice(0, 4);
     intakeFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  const previewMealBusinessMode = () => {
-    setBusinessName("Ready Prep Weekly");
-    setBusinessType("Meal Business System");
-    setCity("Your City");
-    setContact("");
-    setCurrentWorkflow("Customer preferences, avoid-food guardrails, weekly board generation, and live adjustments.");
-    setBiggestFriction("Too many repeated questions, food preferences, and weekly decision overload.");
-    setCustomerQuestions("What can I eat, what should be avoided, and what does my week look like?");
-    setHolyShiftMoment("Customers stop filling out dead forms. Their preferences become a live weekly system instantly.");
-    setWantsBuilt("full-system");
-    setReserveReady($false);
-    intakeFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     setReserveReady(false);
     setTimeout(() => {
       setSubmitting(false);
-
-      const boardSlug = slugify(businessName || "starter-board");
-
-      window.location.href = `/planet/creator/building?boardSlug=${boardSlug}&businessName=${encodeURIComponent(businessName)}&businessType=${encodeURIComponent(businessType)}&city=${encodeURIComponent(city)}&primaryGoal=${encodeURIComponent(holyShiftMoment)}`;
+      setReserveReady(true);
     }, 1200);
   };
 
@@ -1325,36 +1282,18 @@ const previewStages = configPreview.stages.slice(0, 4);
                   <div style={title}>Creator City</div>
 
                   <div style={hook}>
-                    {isMealBusinessMode ? (
-                      <>
-                        Launch your meal business
-                        <br />
-                        as a live system.
-                      </>
-                    ) : (
-                      <>
-                        Your business is not complicated.
-                        <br />
-                        Your tools are.
-                      </>
-                    )}
+                    Your business is not complicated.
+                    <br />
+                    Your tools are.
                   </div>
 
-                  <div style={subtext}>
-                    {isMealBusinessMode
-                      ? "Intake, weekly planning, customer preferences, food guardrails, and live decision control — all in one place."
-                      : "Build your workflow into a live board."}
-                  </div>
+                  <div style={subtext}>Build your workflow into a live board.</div>
 
                   <div style={ctaRow}>
                     <button style={primaryBtn} onClick={scrollToIntakeForm}>
                       Start My Free Demo
                     </button>
-                    
-                    <button style={secondaryBtn} onClick={previewMealBusinessMode}>
-                      Meal Business System
-                    </button>
-<button style={secondaryBtn} onClick={scrollToReadySystems}>
+                    <button style={secondaryBtn} onClick={scrollToReadySystems}>
                       Use Ready System
                     </button>
                     {!isMobile && (
@@ -1664,14 +1603,7 @@ const previewStages = configPreview.stages.slice(0, 4);
                       <button style={sideActionBtn} onClick={scrollToIntakeForm}>
                         {reserveReady ? "Go to reserve step" : "Start my free demo"}
                       </button>
-                      
-                      <button style={sideActionBtn} onClick={previewMealBusinessMode}>
-                        Preview meal business mode
-                      </button>
-                      <button style={sideActionBtn} onClick={() => openRoute(MEAL_BUSINESS_ROUTE)}>
-                        Open meal launch flow
-                      </button>
-{reserveReady && (
+                      {reserveReady && (
                         <button style={sideActionBtn} onClick={() => openRoute(reservePaymentRoute)}>
                           Open payment node
                         </button>
@@ -1846,8 +1778,3 @@ const previewStages = configPreview.stages.slice(0, 4);
     </div>
   );
 }
-
-
-
-
-

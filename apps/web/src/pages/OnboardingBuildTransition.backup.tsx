@@ -284,21 +284,8 @@ export default function OnboardingBuildTransition() {
   const hasStartedRef = useRef(false);
 
   const payload = useMemo<OnboardingPayload>(() => {
-    const statePayload = (location.state as OnboardingPayload | null) ?? {};
-    const params = new URLSearchParams(location.search);
-
-    return {
-      businessName: statePayload.businessName ?? params.get("businessName") ?? "",
-      ownerName: statePayload.ownerName ?? params.get("ownerName") ?? "",
-      businessType: statePayload.businessType ?? params.get("businessType") ?? "auto-repair",
-      city: statePayload.city ?? params.get("city") ?? "",
-      primaryGoal: statePayload.primaryGoal ?? params.get("primaryGoal") ?? "",
-      boardSlug: statePayload.boardSlug ?? params.get("boardSlug") ?? "",
-      presenceId: statePayload.presenceId ?? params.get("presenceId") ?? "",
-      presenceKey: statePayload.presenceKey ?? params.get("presenceKey") ?? "",
-      starterPlan: statePayload.starterPlan ?? params.get("starterPlan") ?? "free",
-    };
-  }, [location.state, location.search]);
+    return (location.state as OnboardingPayload | null) ?? {};
+  }, [location.state]);
 
   const [status, setStatus] = useState<
     "idle" | "creating" | "hydrating" | "finalizing" | "error"
