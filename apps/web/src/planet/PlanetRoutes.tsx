@@ -19,6 +19,8 @@ import MealLaunchFlow from "../pages/MealLaunchFlow";
 import MealBusinessDemo from "../pages/MealBusinessDemo";
 import BigDaveEatsLive from "../pages/BigDaveEatsLive";
 import SkateZoneDemo from "../pages/SkateZoneDemo";
+import SkateZoneQrDemo from "../pages/SkateZoneQrDemo";
+import SkateZonePublicWaiverPage from "../pages/SkateZonePublicWaiverPage";
 
 // Creation moment
 import CreationMomentPage from "../pages/CreationMomentPage";
@@ -126,6 +128,7 @@ export default function PlanetRoutes() {
       <Route path="demo/meal-board" element={<MealBoardDemo />} />
       <Route path="demo/meal-business" element={<MealBusinessDemo />} />
       <Route path="demo/skatezone" element={<SkateZoneDemo />} />
+      <Route path="demo/skatezone-qr" element={<SkateZoneQrDemo />} />
 
       {/* LIVE BOARD */}
       <Route path="live/:boardSlug" element={<AutoRepairLiveBoard />} />
@@ -152,6 +155,10 @@ export default function PlanetRoutes() {
 
       {/* ICE */}
       <Route path="ice/skatezone-demo" element={<SkateZoneDemo />} />
+      <Route path="ice/skatezone-qr-demo" element={<SkateZoneQrDemo />} />
+
+      {/* PUBLIC WAIVER */}
+      <Route path="waiver/:waiverId" element={<SkateZonePublicWaiverPage />} />
 
       {/* LEGAL */}
       <Route path="legal/joe-grant" element={<JoeGrantLegalDesk />} />
