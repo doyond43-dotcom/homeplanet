@@ -22,6 +22,10 @@ import SkateZoneDemo from "../pages/SkateZoneDemo";
 import SkateZoneQrDemo from "../pages/SkateZoneQrDemo";
 import SkateZonePublicWaiverPage from "../pages/SkateZonePublicWaiverPage";
 
+import BeautySalonLiveBoard from "../pages/BeautySalonLiveBoard";
+import BeautySalonBookingPage from "../pages/BeautySalonBookingPage";
+import BeautySalonLandingPage from "../pages/BeautySalonLandingPage"; // ✅ ADDED
+
 // Creation moment
 import CreationMomentPage from "../pages/CreationMomentPage";
 
@@ -68,7 +72,7 @@ import GuardianPanicPage from "../pages/GuardianPanicPage";
 import GuardianPanicLiveBoard from "../pages/GuardianPanicLiveBoard";
 import PetCareTimelinePanel from "../components/guardian/PetCareTimelinePanel";
 
-// ✅ NEW — Fulfillment Board
+// Fulfillment
 import PetTagFulfillmentBoard from "../pages/PetTagFulfillmentBoard";
 
 // Emily
@@ -129,6 +133,7 @@ export default function PlanetRoutes() {
       <Route path="demo/meal-business" element={<MealBusinessDemo />} />
       <Route path="demo/skatezone" element={<SkateZoneDemo />} />
       <Route path="demo/skatezone-qr" element={<SkateZoneQrDemo />} />
+      <Route path="demo/beauty-color-me-crazy" element={<BeautySalonLiveBoard />} />
 
       {/* LIVE BOARD */}
       <Route path="live/:boardSlug" element={<AutoRepairLiveBoard />} />
@@ -156,6 +161,11 @@ export default function PlanetRoutes() {
       {/* ICE */}
       <Route path="ice/skatezone-demo" element={<SkateZoneDemo />} />
       <Route path="ice/skatezone-qr-demo" element={<SkateZoneQrDemo />} />
+
+      {/* BEAUTY */}
+      <Route path="beauty/color-me-crazy/start" element={<BeautySalonLandingPage />} />
+      <Route path="beauty/color-me-crazy/book" element={<BeautySalonBookingPage />} />
+      <Route path="beauty/color-me-crazy" element={<BeautySalonLiveBoard />} />
 
       {/* PUBLIC WAIVER */}
       <Route path="waiver/:waiverId" element={<SkateZonePublicWaiverPage />} />
