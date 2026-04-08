@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+ import { useEffect, useMemo, useState } from "react";
 
 type Child = {
   id: string;
@@ -19,6 +19,8 @@ type Family = {
   createdAt: number;
   waiverQrToken: string | null;
 };
+
+const STORAGE_KEY = "hp_skatezone_qr_demo_families";
 
 function countRentals(children: Child[]) {
   return children.filter((child) => child.rental).length;
@@ -43,7 +45,24 @@ function waiverTone(status: WaiverStatus) {
 }
 
 function createQrLink(token: string) {
-  return `https://homeplanet.city/waiver/qr/${token}`;
+  return `/planet/waiver/${token}`;
+}
+
+function loadFamilies(): Family[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveFamilies(families: Family[]) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(families));
 }
 
 export default function SkateZoneQrDemo() {
@@ -58,6 +77,34 @@ export default function SkateZoneQrDemo() {
   const [waiverAgree, setWaiverAgree] = useState(false);
   const [waiverSignature, setWaiverSignature] = useState("");
   const [completionNotice, setCompletionNotice] = useState("");
+
+  useEffect(() => {
+    const storedFamilies = loadFamilies();
+    setFamilies(storedFamilies);
+    if (storedFamilies.length > 0) {
+      setSelectedFamily(storedFamilies[0]);
+    }
+  }, []);
+
+  useEffect(() => {
+    saveFamilies(families);
+  }, [families]);
+
+  useEffect(() => {
+    function handleStorage(event: StorageEvent) {
+      if (event.key !== STORAGE_KEY) return;
+      const nextFamilies = loadFamilies();
+      setFamilies(nextFamilies);
+
+      setSelectedFamily((current) => {
+        if (!current) return nextFamilies[0] ?? null;
+        return nextFamilies.find((family) => family.id === current.id) ?? current;
+      });
+    }
+
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
 
   function addChild() {
     setChildren((prev) => [
@@ -139,11 +186,11 @@ export default function SkateZoneQrDemo() {
   }
 
   function prepareQrCode() {
-    if (!selectedFamily) return;
+    if (!selectedFamilyLive) return;
 
-    const token = selectedFamily.waiverQrToken ?? crypto.randomUUID();
+    const token = selectedFamilyLive.waiverQrToken ?? crypto.randomUUID();
 
-    updateFamily(selectedFamily.id, (family) => ({
+    updateFamily(selectedFamilyLive.id, (family) => ({
       ...family,
       waiverStatus: "qr_ready",
       waiverQrToken: token,
@@ -153,15 +200,15 @@ export default function SkateZoneQrDemo() {
   }
 
   function simulateQrScan() {
-    if (!selectedFamily) return;
+    if (!selectedFamilyLive) return;
 
-    updateFamily(selectedFamily.id, (family) => ({
+    updateFamily(selectedFamilyLive.id, (family) => ({
       ...family,
       waiverStatus: "scanned",
     }));
 
     setWaiverAgree(false);
-    setWaiverSignature(selectedFamily.parentName);
+    setWaiverSignature(selectedFamilyLive.parentName);
     setQrSheetOpen(false);
     setWaiverOpen(true);
   }
@@ -177,15 +224,15 @@ export default function SkateZoneQrDemo() {
   }
 
   function completeWaiverFlow() {
-    if (!selectedFamily) return;
+    if (!selectedFamilyLive) return;
     if (!waiverAgree || !waiverSignature.trim()) return;
 
-    updateFamily(selectedFamily.id, (family) => ({
+    updateFamily(selectedFamilyLive.id, (family) => ({
       ...family,
       waiverStatus: "signed",
     }));
 
-    setCompletionNotice(`Waiver completed for ${selectedFamily.parentName}`);
+    setCompletionNotice(`Waiver completed for ${selectedFamilyLive.parentName}`);
     closeWaiverFlow();
 
     window.setTimeout(() => {
@@ -193,18 +240,22 @@ export default function SkateZoneQrDemo() {
     }, 2200);
   }
 
+  const selectedFamilyLive = selectedFamily
+    ? families.find((family) => family.id === selectedFamily.id) ?? selectedFamily
+    : null;
+
   const selectedSummary = useMemo(() => {
-    if (!selectedFamily) return null;
+    if (!selectedFamilyLive) return null;
 
     return {
-      rentals: countRentals(selectedFamily.children),
-      firstTimers: countFirstTimers(selectedFamily.children),
-      skaters: selectedFamily.children.length,
-      waiverQrLink: selectedFamily.waiverQrToken
-        ? createQrLink(selectedFamily.waiverQrToken)
+      rentals: countRentals(selectedFamilyLive.children),
+      firstTimers: countFirstTimers(selectedFamilyLive.children),
+      skaters: selectedFamilyLive.children.length,
+      waiverQrLink: selectedFamilyLive.waiverQrToken
+        ? createQrLink(selectedFamilyLive.waiverQrToken)
         : null,
     };
-  }, [selectedFamily]);
+  }, [selectedFamilyLive]);
 
   return (
     <div className="min-h-screen bg-[#020817] text-white p-4">
@@ -387,10 +438,10 @@ export default function SkateZoneQrDemo() {
         </div>
 
         <div className="rounded-xl border border-white/5 bg-[#081129] p-4">
-          {selectedFamily ? (
+          {selectedFamilyLive ? (
             <div className="space-y-4">
               <div>
-                <h2 className="text-2xl font-bold">{selectedFamily.parentName}</h2>
+                <h2 className="text-2xl font-bold">{selectedFamilyLive.parentName}</h2>
                 <div className="text-xs opacity-50">Checked in just now</div>
               </div>
 
@@ -399,7 +450,7 @@ export default function SkateZoneQrDemo() {
                   Parent Contact
                 </div>
                 <div className="mt-1 text-sm">
-                  {selectedFamily.phone || "No phone added"}
+                  {selectedFamilyLive.phone || "No phone added"}
                 </div>
               </div>
 
@@ -409,7 +460,7 @@ export default function SkateZoneQrDemo() {
                 </div>
 
                 <div className="mt-2 space-y-2">
-                  {selectedFamily.children.map((child) => (
+                  {selectedFamilyLive.children.map((child) => (
                     <div
                       key={child.id}
                       className="rounded-md border border-white/5 bg-[#020817] px-3 py-3 text-sm"
@@ -446,12 +497,12 @@ export default function SkateZoneQrDemo() {
               <div className="rounded-lg border border-white/5 bg-[#121b34] p-3 space-y-2">
                 <div className="flex items-center justify-between text-sm">
                   <span className="opacity-70">Waiver Status</span>
-                  <span className={waiverTone(selectedFamily.waiverStatus)}>
-                    {selectedFamily.waiverStatus === "signed"
+                  <span className={waiverTone(selectedFamilyLive.waiverStatus)}>
+                    {selectedFamilyLive.waiverStatus === "signed"
                       ? "✅ Signed"
-                      : selectedFamily.waiverStatus === "scanned"
+                      : selectedFamilyLive.waiverStatus === "scanned"
                       ? "📱 Scanned"
-                      : selectedFamily.waiverStatus === "qr_ready"
+                      : selectedFamilyLive.waiverStatus === "qr_ready"
                       ? "🔳 QR Ready"
                       : "⚠️ Pending"}
                   </span>
@@ -473,7 +524,7 @@ export default function SkateZoneQrDemo() {
                 </div>
               </div>
 
-              {selectedFamily.waiverStatus === "signed" ? (
+              {selectedFamilyLive.waiverStatus === "signed" ? (
                 <button
                   type="button"
                   disabled
@@ -481,7 +532,7 @@ export default function SkateZoneQrDemo() {
                 >
                   ✅ Waiver Signed
                 </button>
-              ) : selectedFamily.waiverStatus === "scanned" ? (
+              ) : selectedFamilyLive.waiverStatus === "scanned" ? (
                 <button
                   type="button"
                   onClick={() => setWaiverOpen(true)}
@@ -489,7 +540,7 @@ export default function SkateZoneQrDemo() {
                 >
                   Continue QR Waiver
                 </button>
-              ) : selectedFamily.waiverStatus === "qr_ready" ? (
+              ) : selectedFamilyLive.waiverStatus === "qr_ready" ? (
                 <button
                   type="button"
                   onClick={() => setQrSheetOpen(true)}
@@ -527,14 +578,14 @@ export default function SkateZoneQrDemo() {
         </div>
       </div>
 
-      {qrSheetOpen && selectedFamily ? (
+      {qrSheetOpen && selectedFamilyLive ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
           <div className="w-full max-w-2xl rounded-2xl border border-white/10 bg-[#081129] shadow-2xl">
             <div className="flex items-start justify-between border-b border-white/10 p-5">
               <div>
                 <h2 className="text-2xl font-bold">QR Waiver Ready</h2>
                 <div className="mt-1 text-sm opacity-60">
-                  {selectedFamily.parentName} • {selectedFamily.phone || "No phone on file"}
+                  {selectedFamilyLive.parentName} • {selectedFamilyLive.phone || "No phone on file"}
                 </div>
               </div>
 
@@ -604,23 +655,23 @@ export default function SkateZoneQrDemo() {
                 <div className="rounded-xl border border-white/10 bg-[#121b34] p-4 space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span className="opacity-70">Parent</span>
-                    <span>{selectedFamily.parentName}</span>
+                    <span>{selectedFamilyLive.parentName}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="opacity-70">Phone</span>
-                    <span>{selectedFamily.phone || "—"}</span>
+                    <span>{selectedFamilyLive.phone || "—"}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="opacity-70">Skaters</span>
-                    <span>{selectedFamily.children.length}</span>
+                    <span>{selectedFamilyLive.children.length}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="opacity-70">Rentals</span>
-                    <span>{countRentals(selectedFamily.children)}</span>
+                    <span>{countRentals(selectedFamilyLive.children)}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="opacity-70">First-Time Skaters</span>
-                    <span>{countFirstTimers(selectedFamily.children)}</span>
+                    <span>{countFirstTimers(selectedFamilyLive.children)}</span>
                   </div>
                 </div>
 
@@ -647,15 +698,15 @@ export default function SkateZoneQrDemo() {
         </div>
       ) : null}
 
-      {waiverOpen && selectedFamily ? (
+      {waiverOpen && selectedFamilyLive ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
           <div className="w-full max-w-3xl rounded-2xl border border-white/10 bg-[#081129] shadow-2xl">
             <div className="flex items-start justify-between border-b border-white/10 p-5">
               <div>
                 <h2 className="text-2xl font-bold">QR Family Waiver</h2>
                 <div className="mt-1 text-sm opacity-60">
-                  {selectedFamily.parentName} • {selectedFamily.children.length} skater
-                  {selectedFamily.children.length > 1 ? "s" : ""}
+                  {selectedFamilyLive.parentName} • {selectedFamilyLive.children.length} skater
+                  {selectedFamilyLive.children.length > 1 ? "s" : ""}
                 </div>
               </div>
 
@@ -685,7 +736,7 @@ export default function SkateZoneQrDemo() {
                   <div className="text-sm font-semibold">Covered Skaters</div>
 
                   <div className="mt-3 space-y-2">
-                    {selectedFamily.children.map((child) => (
+                    {selectedFamilyLive.children.map((child) => (
                       <div
                         key={child.id}
                         className="flex items-center justify-between rounded-lg border border-white/5 bg-[#020817] px-3 py-3 text-sm"
@@ -759,23 +810,23 @@ export default function SkateZoneQrDemo() {
                 <div className="rounded-xl border border-white/10 bg-[#121b34] p-4 space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span className="opacity-70">Parent</span>
-                    <span>{selectedFamily.parentName}</span>
+                    <span>{selectedFamilyLive.parentName}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="opacity-70">Phone</span>
-                    <span>{selectedFamily.phone || "—"}</span>
+                    <span>{selectedFamilyLive.phone || "—"}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="opacity-70">Skaters</span>
-                    <span>{selectedFamily.children.length}</span>
+                    <span>{selectedFamilyLive.children.length}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="opacity-70">Rentals</span>
-                    <span>{countRentals(selectedFamily.children)}</span>
+                    <span>{countRentals(selectedFamilyLive.children)}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="opacity-70">First-Time Skaters</span>
-                    <span>{countFirstTimers(selectedFamily.children)}</span>
+                    <span>{countFirstTimers(selectedFamilyLive.children)}</span>
                   </div>
                 </div>
 
@@ -808,4 +859,4 @@ export default function SkateZoneQrDemo() {
       ) : null}
     </div>
   );
-}
+}                                                                                                                                                                                                                                  
