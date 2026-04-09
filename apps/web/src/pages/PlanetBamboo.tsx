@@ -248,14 +248,14 @@ function zoneCenter(zone: ZoneConfig) {
 }
 
 function pulseClassByRole(role: CrewMember["role"]) {
-  if (role === "you") return "bg-cyan-300 shadow-[0_0_20px_rgba(34,211,238,0.7)]";
+  if (role === "you") return "bg-cyan-300 shadow-[0_0_28px_rgba(34,211,238,0.92)]";
   if (role === "responder") return "bg-rose-300 shadow-[0_0_20px_rgba(251,113,133,0.7)]";
   if (role === "family") return "bg-emerald-300 shadow-[0_0_20px_rgba(74,222,128,0.65)]";
   return "bg-amber-300 shadow-[0_0_20px_rgba(251,191,36,0.65)]";
 }
 
 function ringClassByRole(role: CrewMember["role"]) {
-  if (role === "you") return "ring-cyan-300/60";
+  if (role === "you") return "ring-cyan-300/80";
   if (role === "responder") return "ring-rose-300/60";
   if (role === "family") return "ring-emerald-300/60";
   return "ring-amber-300/60";
@@ -558,7 +558,9 @@ export default function PlanetBamboo() {
     setHelpActive(true);
     setHelpAccepted(false);
 
-    const responder = crew.find((member) => member.role === "responder") ?? baseCrew.find((member) => member.role === "responder");
+    const responder =
+      crew.find((member) => member.role === "responder") ??
+      baseCrew.find((member) => member.role === "responder");
 
     if (responder) {
       setCrew((current) =>
@@ -676,7 +678,7 @@ export default function PlanetBamboo() {
                 <div>
                   <div className="text-[11px] uppercase tracking-[0.24em] text-white/45">Live terrain map</div>
                   <div className="mt-1 text-sm text-white/72">
-                    Manual pings now. Live location optional. Responder relay ready.
+                    Manual pings only. This is not GPS tracking. Live location is optional and controlled by you.
                   </div>
                 </div>
                 <div className="text-right">
@@ -743,25 +745,47 @@ export default function PlanetBamboo() {
                           className="absolute -translate-x-1/2 -translate-y-1/2"
                           style={{ left: `${member.x}%`, top: `${member.y}%` }}
                         >
-                          <div
-                            className={`relative flex h-5 w-5 items-center justify-center rounded-full ring-4 ${
-                              ringClassByRole(member.role)
-                            } ${pulseClassByRole(member.role)} ${
-                              isSelectedMemberZone ? "scale-110" : ""
-                            } ${member.id === "you" && pingFlash ? "scale-125" : ""} transition-transform duration-200`}
-                          >
+                          <div className="relative flex flex-col items-center">
+                            {member.id === "you" && (
+                              <div className="-mt-1 mb-2 rounded-full bg-cyan-400/92 px-1.5 py-[1px] text-[8px] font-bold tracking-[0.14em] text-black shadow-[0_0_16px_rgba(34,211,238,0.5)]">
+                                YOU
+                              </div>
+                            )}
+
                             <div
-                              className={`absolute inset-[-10px] rounded-full border ${
-                                member.role === "responder"
-                                  ? "border-rose-300/35"
-                                  : member.role === "you"
-                                    ? "border-cyan-300/35"
-                                    : "border-white/18"
-                              } animate-ping`}
-                              style={{ animationDuration: `${2.4 + (mapPulse % 3) * 0.2}s` }}
-                            />
+                              className={`relative flex h-5 w-5 items-center justify-center rounded-full ring-4 ${
+                                ringClassByRole(member.role)
+                              } ${pulseClassByRole(member.role)} ${
+                                isSelectedMemberZone ? "scale-110" : ""
+                              } ${
+                                member.id === "you"
+                                  ? `scale-125 shadow-[0_0_28px_rgba(34,211,238,0.95)] ${pingFlash ? "scale-[1.45]" : ""}`
+                                  : ""
+                              } transition-transform duration-200`}
+                            >
+                              <div
+                                className={`absolute inset-[-10px] rounded-full border ${
+                                  member.role === "responder"
+                                    ? "border-rose-300/35"
+                                    : member.role === "you"
+                                      ? "border-cyan-300/35"
+                                      : "border-white/18"
+                                } animate-ping`}
+                                style={{ animationDuration: `${2.4 + (mapPulse % 3) * 0.2}s` }}
+                              />
+                              {member.id === "you" && (
+                                <div className="absolute inset-[-14px] rounded-full border border-cyan-300/45 animate-ping" />
+                              )}
+                            </div>
                           </div>
-                          <div className="mt-2 min-w-[88px] rounded-full border border-white/10 bg-[#07131d]/90 px-2 py-1 text-[10px] font-semibold tracking-[0.12em] text-white/80 backdrop-blur">
+
+                          <div
+                            className={`mt-2 min-w-[88px] rounded-full border px-2 py-1 text-[10px] font-semibold tracking-[0.12em] backdrop-blur ${
+                              member.id === "you"
+                                ? "border-cyan-300/30 bg-cyan-500/15 text-cyan-50 shadow-[0_0_16px_rgba(34,211,238,0.18)]"
+                                : "border-white/10 bg-[#07131d]/90 text-white/80"
+                            }`}
+                          >
                             {member.name}
                           </div>
                         </button>
@@ -814,7 +838,7 @@ export default function PlanetBamboo() {
                       {locationSharingEnabled ? "Live sharing on" : "Share location"}
                     </div>
                     <div className="mt-1 text-sm leading-5 text-white/68">
-                      Optional browser location for a stronger presence layer.
+                      Optional browser location you control. Manual pings still work without it.
                     </div>
                   </button>
 
