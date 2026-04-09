@@ -7,6 +7,7 @@ import CityPage from "../pages/CityPage";
 import CreatorCity from "../pages/CreatorCity";
 import CreatorProjects from "../pages/CreatorProjects";
 import CreatorStudio from "../pages/CreatorStudio";
+import CreatorStudioBoard from "../pages/CreatorStudioBoard";
 import CreatorBuild from "../pages/CreatorBuild";
 import ReleaseViewer from "../pages/ReleaseViewer";
 import StarterBoardPreview from "../pages/StarterBoardPreview";
@@ -24,7 +25,7 @@ import SkateZonePublicWaiverPage from "../pages/SkateZonePublicWaiverPage";
 
 import BeautySalonLiveBoard from "../pages/BeautySalonLiveBoard";
 import BeautySalonBookingPage from "../pages/BeautySalonBookingPage";
-import BeautySalonLandingPage from "../pages/BeautySalonLandingPage"; // ✅ ADDED
+import BeautySalonLandingPage from "../pages/BeautySalonLandingPage";
 
 // Creation moment
 import CreationMomentPage from "../pages/CreationMomentPage";
@@ -43,6 +44,7 @@ import EscapeBoardDemo from "../pages/EscapeBoardDemo";
 import EscapeSessionLauncher from "../pages/EscapeSessionLauncher";
 import EscapeSessionPage from "../pages/EscapeSessionPage";
 import EscapeWatchModePage from "../pages/EscapeWatchModePage";
+import PlanetBamboo from "../pages/PlanetBamboo";
 
 import LifePlanet from "../pages/LifePlanet";
 import JeanettesLanding from "../pages/JeanettesLanding";
@@ -100,6 +102,7 @@ export default function PlanetRoutes() {
       <Route path="creator" element={<CreatorCity />} />
       <Route path="creator/projects" element={<CreatorProjects />} />
       <Route path="creator/studio/*" element={<CreatorStudio />} />
+      <Route path="creator/studio-board" element={<CreatorStudioBoard />} />
       <Route path="creator/build" element={<CreatorBuild />} />
       <Route path="creator/release/:releaseId" element={<ReleaseViewer />} />
       <Route path="creator/rc-live" element={<RcAirboatsLiveDemo />} />
@@ -134,6 +137,7 @@ export default function PlanetRoutes() {
       <Route path="demo/skatezone" element={<SkateZoneDemo />} />
       <Route path="demo/skatezone-qr" element={<SkateZoneQrDemo />} />
       <Route path="demo/beauty-color-me-crazy" element={<BeautySalonLiveBoard />} />
+      <Route path="demo/bamboo" element={<PlanetBamboo />} />
 
       {/* LIVE BOARD */}
       <Route path="live/:boardSlug" element={<AutoRepairLiveBoard />} />
@@ -178,6 +182,9 @@ export default function PlanetRoutes() {
 
       {/* TRANSPORT */}
       <Route path="transportation/dispatch" element={<TransportationDispatchBoardV2 />} />
+
+      {/* BAMBOO */}
+      <Route path="bamboo" element={<PlanetBamboo />} />
 
       {/* GUARDIAN */}
       <Route path="guardian" element={<PlanetGuardian />} />
