@@ -30,6 +30,13 @@ type ActivityLogItem = {
   text: string;
 };
 
+type QuickAction = {
+  id: string;
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+};
+
 function energyStyles(energy?: CreatorCardEnergy) {
   switch (energy) {
     case "live":
@@ -69,47 +76,6 @@ function energyStyles(energy?: CreatorCardEnergy) {
 function createInitialLanes(): CreatorLane[] {
   return [
     {
-      id: "idea-bank",
-      title: "Idea Bank",
-      subtitle: "Hooks, concepts, stream plans, and sparks.",
-      cards: [
-        {
-          id: "idea-1",
-          title: "Late-night ranked comeback reaction",
-          detail: "Turn the best comeback moment into a short and a stream opener.",
-          type: "Content Idea",
-          status: "Unbuilt",
-          tag: "Tonight",
-          energy: "idea",
-        },
-        {
-          id: "idea-2",
-          title: "Prom color transformation recap",
-          detail: "Before/after reel concept with fast cuts and one clean voice line.",
-          type: "Reel Idea",
-          status: "Outline",
-          tag: "Salon",
-          energy: "idea",
-        },
-      ],
-    },
-    {
-      id: "live-now",
-      title: "Live Now",
-      subtitle: "What is active right now on stream or on camera.",
-      cards: [
-        {
-          id: "live-1",
-          title: "Creator session: night stream",
-          detail: "Phone on tripod live. Desktop board open. Watching for clip moments.",
-          type: "Live Session",
-          status: "Active",
-          tag: "LIVE",
-          energy: "live",
-        },
-      ],
-    },
-    {
       id: "clip-moments",
       title: "Clip Moments",
       subtitle: "Marked moments pulled from stream or recording.",
@@ -121,15 +87,6 @@ function createInitialLanes(): CreatorLane[] {
           type: "Clip",
           status: "Captured",
           tag: "Highlight",
-          energy: "edit",
-        },
-        {
-          id: "clip-2",
-          title: "Viewer asked for part 2",
-          detail: "Good follow-up angle. Could become next stream hook.",
-          type: "Audience Moment",
-          status: "Marked",
-          tag: "Follow-up",
           energy: "edit",
         },
       ],
@@ -212,7 +169,7 @@ function getLaneForCard(lanes: CreatorLane[], cardId: string) {
 
 export default function CreatorStudioBoard() {
   const [lanes, setLanes] = useState<CreatorLane[]>(() => createInitialLanes());
-  const [selectedCardId, setSelectedCardId] = useState<string>("live-1");
+  const [selectedCardId, setSelectedCardId] = useState<string>("clip-1");
   const [clipModalOpen, setClipModalOpen] = useState(false);
   const [clipDraft, setClipDraft] = useState<ClipMomentDraft>({
     title: "",
@@ -313,31 +270,35 @@ export default function CreatorStudioBoard() {
     addLog(`Clip moment saved: "${newCard.title}" → Clip Moments`);
   };
 
-  const moveSelectedCardToLane = (
-    targetLaneId: "in-edit" | "ready-to-drop",
+  const moveCardToLane = (
+    cardId: string,
+    targetLaneId: string,
     updates: Partial<CreatorCard>,
     movementLabel: string,
   ) => {
-    if (!selectedCard || !selectedLane || selectedLane.id === targetLaneId) return;
+    const sourceLane = getLaneForCard(lanes, cardId);
+    const sourceCard = allCards.find((card) => card.id === cardId);
 
-    const movingCard: CreatorCard = {
-      ...selectedCard,
+    if (!sourceLane || !sourceCard || sourceLane.id === targetLaneId) return;
+
+    const movedCard: CreatorCard = {
+      ...sourceCard,
       ...updates,
     };
 
     setLanes((prev) =>
       prev.map((lane) => {
-        if (lane.id === selectedLane.id) {
+        if (lane.id === sourceLane.id) {
           return {
             ...lane,
-            cards: lane.cards.filter((card) => card.id !== selectedCard.id),
+            cards: lane.cards.filter((card) => card.id !== cardId),
           };
         }
 
         if (lane.id === targetLaneId) {
           return {
             ...lane,
-            cards: [movingCard, ...lane.cards],
+            cards: [movedCard, ...lane.cards],
           };
         }
 
@@ -345,12 +306,28 @@ export default function CreatorStudioBoard() {
       }),
     );
 
-    setSelectedCardId(movingCard.id);
-    addLog(`${movementLabel}: "${movingCard.title}"`);
+    setSelectedCardId(movedCard.id);
+    addLog(`${movementLabel}: "${movedCard.title}"`);
+  };
+
+  const moveSelectedToClipMoments = () => {
+    if (!selectedCard) return;
+    moveCardToLane(
+      selectedCard.id,
+      "clip-moments",
+      {
+        status: "Marked",
+        tag: "Clip Plan",
+        energy: "edit",
+      },
+      "Moved to Clip Moments",
+    );
   };
 
   const moveSelectedToEdit = () => {
-    moveSelectedCardToLane(
+    if (!selectedCard) return;
+    moveCardToLane(
+      selectedCard.id,
       "in-edit",
       {
         status: "Working",
@@ -363,7 +340,9 @@ export default function CreatorStudioBoard() {
   };
 
   const moveSelectedToReady = () => {
-    moveSelectedCardToLane(
+    if (!selectedCard) return;
+    moveCardToLane(
+      selectedCard.id,
       "ready-to-drop",
       {
         status: "Ready",
@@ -376,7 +355,9 @@ export default function CreatorStudioBoard() {
   };
 
   const moveReadyBackToEdit = () => {
-    moveSelectedCardToLane(
+    if (!selectedCard) return;
+    moveCardToLane(
+      selectedCard.id,
       "in-edit",
       {
         status: "Working",
@@ -387,13 +368,74 @@ export default function CreatorStudioBoard() {
     );
   };
 
-  const canMoveToEdit =
-    !!selectedCard &&
-    !!selectedLane &&
-    (selectedLane.id === "clip-moments" || selectedLane.id === "ready-to-drop");
+  const moveSelectedToIdeaBank = () => {
+    if (!selectedCard) return;
+    moveCardToLane(
+      selectedCard.id,
+      "clip-moments",
+      {
+        status: "Reframed",
+        tag: "Reworked",
+        energy: "edit",
+      },
+      "Reworked back into Clip Moments",
+    );
+  };
 
-  const canMoveToReady =
-    !!selectedCard && !!selectedLane && selectedLane.id === "in-edit";
+  const quickActions = useMemo<QuickAction[]>(() => {
+    if (!selectedCard || !selectedLane) return [];
+
+    switch (selectedLane.id) {
+      case "clip-moments":
+        return [
+          {
+            id: "clip-mark",
+            label: "Mark Clip",
+            onClick: openClipModal,
+          },
+          {
+            id: "clip-to-edit",
+            label: "Move to Edit",
+            onClick: moveSelectedToEdit,
+          },
+        ];
+
+      case "in-edit":
+        return [
+          {
+            id: "edit-to-ready",
+            label: "Ready to Drop",
+            onClick: moveSelectedToReady,
+          },
+          {
+            id: "edit-to-clip",
+            label: "Back to Clip Moments",
+            onClick: moveSelectedToClipMoments,
+          },
+        ];
+
+      case "ready-to-drop":
+        return [
+          {
+            id: "ready-to-edit",
+            label: "Back to Edit",
+            onClick: moveReadyBackToEdit,
+          },
+        ];
+
+      case "collabs-requests":
+        return [
+          {
+            id: "collab-to-idea",
+            label: "Move to Idea Bank",
+            onClick: moveSelectedToIdeaBank,
+          },
+        ];
+
+      default:
+        return [];
+    }
+  }, [selectedCard, selectedLane]);
 
   const page: React.CSSProperties = {
     minHeight: "100vh",
@@ -602,6 +644,124 @@ export default function CreatorStudioBoard() {
     color: "rgba(226,232,240,0.72)",
   };
 
+  const orientationGrid: React.CSSProperties = {
+    display: "grid",
+    gridTemplateColumns: "minmax(0, 1.05fr) minmax(0, 0.95fr)",
+    gap: 16,
+    padding: 16,
+    borderBottom: "1px solid rgba(148,163,184,0.12)",
+    alignItems: "start",
+  };
+
+  const orientationPanel: React.CSSProperties = {
+    borderRadius: 22,
+    border: "1px solid rgba(255,255,255,0.10)",
+    background: "rgba(255,255,255,0.03)",
+    overflow: "hidden",
+  };
+
+  const orientationHeader: React.CSSProperties = {
+    padding: 14,
+    borderBottom: "1px solid rgba(255,255,255,0.08)",
+    background: "linear-gradient(180deg, rgba(56,189,248,0.06), rgba(255,255,255,0.01))",
+  };
+
+  const orientationBody: React.CSSProperties = {
+    padding: 14,
+    display: "grid",
+    gap: 12,
+  };
+
+  const startStepGrid: React.CSSProperties = {
+    display: "grid",
+    gap: 10,
+  };
+
+  const startStep: React.CSSProperties = {
+    borderRadius: 16,
+    border: "1px solid rgba(255,255,255,0.08)",
+    background: "rgba(255,255,255,0.03)",
+    padding: 12,
+  };
+
+  const startStepTop: React.CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    flexWrap: "wrap",
+  };
+
+  const startStepNumber: React.CSSProperties = {
+    width: 22,
+    height: 22,
+    borderRadius: 999,
+    background: "rgba(56,189,248,0.12)",
+    border: "1px solid rgba(56,189,248,0.24)",
+    color: "#bae6fd",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 11,
+    fontWeight: 900,
+    flexShrink: 0,
+  };
+
+  const startStepTitle: React.CSSProperties = {
+    fontSize: 14,
+    fontWeight: 900,
+    color: "#ffffff",
+    lineHeight: 1.12,
+  };
+
+  const startStepText: React.CSSProperties = {
+    marginTop: 8,
+    fontSize: 12,
+    lineHeight: 1.55,
+    color: "rgba(226,232,240,0.76)",
+  };
+
+  const helperChipRow: React.CSSProperties = {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 8,
+  };
+
+  const helperChip: React.CSSProperties = {
+    borderRadius: 999,
+    padding: "6px 10px",
+    border: "1px solid rgba(255,255,255,0.10)",
+    background: "rgba(255,255,255,0.04)",
+    color: "#cbd5e1",
+    fontWeight: 800,
+    fontSize: 11,
+  };
+
+  const laneMeaningGrid: React.CSSProperties = {
+    display: "grid",
+    gap: 10,
+  };
+
+  const laneMeaningCard: React.CSSProperties = {
+    borderRadius: 16,
+    border: "1px solid rgba(255,255,255,0.08)",
+    background: "rgba(255,255,255,0.03)",
+    padding: 12,
+  };
+
+  const laneMeaningTitle: React.CSSProperties = {
+    fontSize: 13,
+    fontWeight: 900,
+    color: "#ffffff",
+    lineHeight: 1.1,
+  };
+
+  const laneMeaningText: React.CSSProperties = {
+    marginTop: 6,
+    fontSize: 12,
+    lineHeight: 1.5,
+    color: "rgba(226,232,240,0.74)",
+  };
+
   const contentGrid: React.CSSProperties = {
     display: "grid",
     gridTemplateColumns: "minmax(0, 1fr) 320px",
@@ -784,10 +944,15 @@ export default function CreatorStudioBoard() {
     cursor: "pointer",
   };
 
-  const actionBtnDisabled: React.CSSProperties = {
-    ...actionBtn,
-    opacity: 0.42,
-    cursor: "not-allowed",
+  const actionHelperBox: React.CSSProperties = {
+    marginTop: 10,
+    borderRadius: 12,
+    border: "1px solid rgba(255,255,255,0.08)",
+    background: "rgba(255,255,255,0.03)",
+    padding: 10,
+    fontSize: 12,
+    lineHeight: 1.5,
+    color: "rgba(226,232,240,0.74)",
   };
 
   const activityList: React.CSSProperties = {
@@ -889,6 +1054,17 @@ export default function CreatorStudioBoard() {
     fontWeight: 700,
   };
 
+  const selectedLaneHelpText =
+    selectedLane?.id === "clip-moments"
+      ? "This lane holds saved moments worth turning into real content."
+      : selectedLane?.id === "in-edit"
+        ? "This lane is where content is actively being worked on."
+        : selectedLane?.id === "ready-to-drop"
+          ? "This lane means the content is finished and ready to publish."
+          : selectedLane?.id === "collabs-requests"
+            ? "This lane holds paid asks, invites, and creator opportunities."
+            : "Select a card to see what it means.";
+
   return (
     <div style={page}>
       <div style={shell}>
@@ -921,9 +1097,8 @@ export default function CreatorStudioBoard() {
                   </div>
 
                   <div style={heroText}>
-                    This is the placeholder structure for the real creator backend page.
-                    Ideas, live sessions, clip moments, edits, drops, requests, and collabs
-                    all live in one creator-native workflow.
+                    This board helps creators move from live moments to saved clips,
+                    then into edits, then into ready-to-post content without losing track.
                   </div>
 
                   <div style={heroActions}>
@@ -955,13 +1130,110 @@ export default function CreatorStudioBoard() {
                     <div style={pulseCard}>
                       <div style={pulseLabel}>Clip moments</div>
                       <div style={pulseValue}>{String(clipMomentCount).padStart(2, "0")}</div>
-                      <div style={pulseText}>Captured and waiting for edit pass.</div>
+                      <div style={pulseText}>Saved content moments waiting for edit flow.</div>
                     </div>
 
                     <div style={pulseCard}>
                       <div style={pulseLabel}>Requests</div>
                       <div style={pulseValue}>{String(requestCount).padStart(2, "0")}</div>
-                      <div style={pulseText}>Commissions and collab invites open.</div>
+                      <div style={pulseText}>Paid asks, collabs, and open opportunities.</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style={orientationGrid}>
+            <div style={orientationPanel}>
+              <div style={orientationHeader}>
+                <div style={badge()}>START HERE</div>
+              </div>
+
+              <div style={orientationBody}>
+                <div style={startStepGrid}>
+                  <div style={startStep}>
+                    <div style={startStepTop}>
+                      <div style={startStepNumber}>1</div>
+                      <div style={startStepTitle}>Mark a clip moment</div>
+                    </div>
+                    <div style={startStepText}>
+                      Use <strong>Mark Clip Moment</strong> whenever something happens during a stream,
+                      recording, or creator session that is worth saving.
+                    </div>
+                  </div>
+
+                  <div style={startStep}>
+                    <div style={startStepTop}>
+                      <div style={startStepNumber}>2</div>
+                      <div style={startStepTitle}>Move it into edit</div>
+                    </div>
+                    <div style={startStepText}>
+                      When a saved moment deserves real work, select it and use
+                      <strong> Move to Edit</strong> so it becomes active work.
+                    </div>
+                  </div>
+
+                  <div style={startStep}>
+                    <div style={startStepTop}>
+                      <div style={startStepNumber}>3</div>
+                      <div style={startStepTitle}>Mark it ready to drop</div>
+                    </div>
+                    <div style={startStepText}>
+                      Once the content is finished, move it into
+                      <strong> Ready to Drop</strong> so you know it is publish-ready.
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <div style={sideLabel}>Sample creator flow</div>
+                  <div style={{ ...sideText, marginTop: 8 }}>
+                    Go live → notice a strong moment → save it → edit it → post it.
+                  </div>
+                </div>
+
+                <div style={helperChipRow}>
+                  <div style={helperChip}>Live moment</div>
+                  <div style={helperChip}>Saved clip</div>
+                  <div style={helperChip}>Edit pass</div>
+                  <div style={helperChip}>Ready to publish</div>
+                </div>
+              </div>
+            </div>
+
+            <div style={orientationPanel}>
+              <div style={orientationHeader}>
+                <div style={badge()}>WHAT THE LANES MEAN</div>
+              </div>
+
+              <div style={orientationBody}>
+                <div style={laneMeaningGrid}>
+                  <div style={laneMeaningCard}>
+                    <div style={laneMeaningTitle}>Clip Moments</div>
+                    <div style={laneMeaningText}>
+                      Saved moments worth keeping. These are candidate clips and creator highlights.
+                    </div>
+                  </div>
+
+                  <div style={laneMeaningCard}>
+                    <div style={laneMeaningTitle}>In Edit</div>
+                    <div style={laneMeaningText}>
+                      Content currently being worked on. This is the active production lane.
+                    </div>
+                  </div>
+
+                  <div style={laneMeaningCard}>
+                    <div style={laneMeaningTitle}>Ready to Drop</div>
+                    <div style={laneMeaningText}>
+                      Finished content that is ready to publish, post, or release.
+                    </div>
+                  </div>
+
+                  <div style={laneMeaningCard}>
+                    <div style={laneMeaningTitle}>Collabs / Requests</div>
+                    <div style={laneMeaningText}>
+                      Paid asks, commissions, invitations, and creator opportunities.
                     </div>
                   </div>
                 </div>
@@ -1045,46 +1317,46 @@ export default function CreatorStudioBoard() {
                   <div style={sideText}>
                     {selectedLane ? `Current lane: ${selectedLane.title}` : "Waiting for lane context."}
                   </div>
+                  <div style={actionHelperBox}>{selectedLaneHelpText}</div>
                 </div>
 
                 <div style={sideBlock}>
                   <div style={sideLabel}>Quick actions</div>
                   <div style={{ ...sideText, marginTop: 8 }}>
-                    Real creator workflow movement starts here.
+                    These are the controls for the selected card. Use them to move work through the creator flow.
                   </div>
 
                   <div style={{ marginTop: 12 }} />
 
                   <div style={actionGrid}>
-                    <button type="button" style={actionBtn} onClick={openClipModal}>
-                      Mark Clip
-                    </button>
+                    {quickActions.length > 0 ? (
+                      quickActions.map((action) => (
+                        <button
+                          key={action.id}
+                          type="button"
+                          style={actionBtn}
+                          onClick={action.onClick}
+                          disabled={action.disabled}
+                        >
+                          {action.label}
+                        </button>
+                      ))
+                    ) : (
+                      <div style={{ ...sideText, marginTop: 0 }}>
+                        No actions available for this lane yet.
+                      </div>
+                    )}
+                  </div>
 
-                    <button
-                      type="button"
-                      style={canMoveToEdit ? actionBtn : actionBtnDisabled}
-                      onClick={canMoveToEdit ? moveSelectedToEdit : undefined}
-                    >
-                      Move to Edit
-                    </button>
-
-                    <button
-                      type="button"
-                      style={canMoveToReady ? actionBtn : actionBtnDisabled}
-                      onClick={canMoveToReady ? moveSelectedToReady : undefined}
-                    >
-                      Ready to Drop
-                    </button>
-
-                    <button
-                      type="button"
-                      style={
-                        selectedLane?.id === "ready-to-drop" ? actionBtn : actionBtnDisabled
-                      }
-                      onClick={selectedLane?.id === "ready-to-drop" ? moveReadyBackToEdit : undefined}
-                    >
-                      Back to Edit
-                    </button>
+                  <div style={actionHelperBox}>
+                    {selectedLane?.id === "clip-moments" &&
+                      "Use Mark Clip to save another moment, or Move to Edit when this one deserves real work."}
+                    {selectedLane?.id === "in-edit" &&
+                      "Use Ready to Drop when the content is finished, or send it back if it still needs shaping."}
+                    {selectedLane?.id === "ready-to-drop" &&
+                      "Use Back to Edit if it needs another pass before publishing."}
+                    {selectedLane?.id === "collabs-requests" &&
+                      "Use Move to Idea Bank when an incoming request becomes a real content direction."}
                   </div>
                 </div>
 
@@ -1102,9 +1374,8 @@ export default function CreatorStudioBoard() {
                 <div style={sideBlock}>
                   <div style={sideLabel}>Why this board exists</div>
                   <div style={sideText}>
-                    Creator City needs its own native system. Not storefront-first.
-                    Not commerce-first. This board is about creation, capture, editing,
-                    posting, and creator momentum.
+                    Creator City needs its own native system. Not storefront-first. Not commerce-first.
+                    This board is about creation, capture, editing, posting, and creator momentum.
                   </div>
                 </div>
               </div>

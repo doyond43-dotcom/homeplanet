@@ -1,25 +1,6 @@
-// LiveShopTV.tsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getSupabase } from "../lib/supabase";
-
-/**
- * LiveShopTV
- * - Default: reads + listens to public_intake_submissions filtered by slug
- * - Special case: slug === "awnit" reads + listens to public.awnit_leads (no slug column)
- * - UI micro-upgrade:
- *   - Live presence strip
- *   - Ask the Room bar
- *   - Subtle pulse on fresh activity
- * - Layout fix:
- *   - Recent section scrolls inside the board
- *   - Footer stays visible
- * - Persistence fix:
- *   - Ask the Room now writes to Supabase instead of only local state
- * - Room UX:
- *   - ROOM QUESTION badge
- *   - Resolve button hides room card from board
- */
 
 type IntakeRow = {
   id: string;
@@ -49,44 +30,36 @@ type Row = {
   payload: any;
 };
 
-type PresenceUser = {
-  id: string;
-  label: string;
-  status: "active" | "idle";
-};
-
 function safeText(x: unknown, max = 90): string {
   const s = (typeof x === "string" ? x : JSON.stringify(x ?? "")).replace(/\s+/g, " ").trim();
   if (!s) return "";
-  return s.length > max ? s.slice(0, max - 1) + "…" : s;
-}
-
-function isRoomPayload(payload: any) {
-  const p = payload ?? {};
-  return p.status === "room" || p.best_time === "room";
+  return s.length > max ? `${s.slice(0, max - 1)}…` : s;
 }
 
 function extractSummary(payload: any) {
   const p = payload ?? {};
-  const isRoom = isRoomPayload(p);
 
   return {
-    isRoom,
-    name: safeText(p.name || p.customer_name || p.first_name || p.full_name || "", 28) || "New customer",
-    vehicle: isRoom
-      ? "Room"
-      : safeText(
-          p.vehicle ||
-            p.car ||
-            p.make_model ||
-            p.vehicle_info ||
-            p.vehicleText ||
-            p.project_type ||
-            p.projectType ||
-            "",
-          42
-        ) || "Vehicle not specified",
-    message: safeText(p.message || p.notes || p.problem || p.issue || "", 160) || "No message provided",
+    name:
+      safeText(
+        p.name || p.customer_name || p.first_name || p.full_name || "",
+        28,
+      ) || "New customer",
+    vehicle:
+      safeText(
+        p.vehicle ||
+          p.car ||
+          p.make_model ||
+          p.vehicle_info ||
+          p.vehicleText ||
+          p.project_type ||
+          p.projectType ||
+          "",
+        42,
+      ) || "Vehicle not specified",
+    message:
+      safeText(p.message || p.notes || p.problem || p.issue || "", 160) ||
+      "No message provided",
   };
 }
 
@@ -117,7 +90,7 @@ function sortDescByCreatedAt(a: Row, b: Row) {
 function mergeUpsert(prev: Row[], incoming: Row, limit = 30) {
   const map = new Map<string, Row>();
   for (const r of prev) map.set(r.id, r);
-  map.set(incoming.id, { ...(map.get(incoming.id) ?? ({} as any)), ...incoming });
+  map.set(incoming.id, { ...(map.get(incoming.id) ?? ({} as Row)), ...incoming });
   return Array.from(map.values()).sort(sortDescByCreatedAt).slice(0, limit);
 }
 
@@ -158,65 +131,19 @@ function PulseDot({ active }: { active: boolean }) {
     <span
       className={[
         "ml-2 inline-block h-2.5 w-2.5 rounded-full transition-all duration-500",
-        active ? "bg-emerald-400 shadow-[0_0_14px_rgba(52,211,153,.85)]" : "bg-transparent shadow-none",
+        active
+          ? "bg-emerald-400 shadow-[0_0_14px_rgba(52,211,153,.85)]"
+          : "bg-transparent shadow-none",
       ].join(" ")}
       aria-hidden="true"
     />
   );
 }
 
-function PresenceChip({ user }: { user: PresenceUser }) {
-  const isActive = user.status === "active";
-
-  return (
-    <div className="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-950/60 px-3 py-1.5 text-sm font-semibold text-slate-100">
-      <span>{user.label}</span>
-      <span
-        className={[
-          "inline-block h-2.5 w-2.5 rounded-full",
-          isActive ? "bg-emerald-400 shadow-[0_0_14px_rgba(52,211,153,.85)]" : "bg-slate-500",
-        ].join(" ")}
-      />
-    </div>
-  );
-}
-
-function AskRoomBar({
-  value,
-  onChange,
-  onSend,
-  sending,
-}: {
-  value: string;
-  onChange: (next: string) => void;
-  onSend: () => void;
-  sending: boolean;
-}) {
-  return (
-    <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900/30 p-4">
-      <div className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Ask the room</div>
-      <div className="flex gap-2">
-        <input
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") onSend();
-          }}
-          placeholder="Anyone see the small prybar?"
-          className="h-11 flex-1 rounded-xl border border-slate-700 bg-slate-950/70 px-4 text-sm text-slate-100 outline-none placeholder:text-slate-500 disabled:opacity-60"
-          disabled={sending}
-        />
-        <button
-          type="button"
-          onClick={onSend}
-          disabled={sending}
-          className="h-11 rounded-xl border border-blue-500/30 bg-blue-500/15 px-4 text-sm font-semibold text-blue-100 hover:bg-blue-500/20 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {sending ? "Sending…" : "Send"}
-        </button>
-      </div>
-    </div>
-  );
+function isFreshArrival(iso: string, seconds = 18) {
+  const t = new Date(iso).getTime();
+  if (!Number.isFinite(t)) return false;
+  return Date.now() - t <= seconds * 1000;
 }
 
 export default function LiveShopTV() {
@@ -230,9 +157,6 @@ export default function LiveShopTV() {
   const [connected, setConnected] = useState(false);
   const [lastErr, setLastErr] = useState<string | null>(null);
   const [pulseIds, setPulseIds] = useState<Record<string, boolean>>({});
-  const [askRoomValue, setAskRoomValue] = useState("");
-  const [sendingRoom, setSendingRoom] = useState(false);
-  const [resolvedIds, setResolvedIds] = useState<Record<string, boolean>>({});
 
   const inFlightLoadRef = useRef(false);
   const lastFullSyncAtRef = useRef<number>(0);
@@ -240,16 +164,6 @@ export default function LiveShopTV() {
   const [, bump] = useState(0);
 
   const supabase = getSupabase();
-
-  const presenceUsers = useMemo<PresenceUser[]>(
-    () => [
-      { id: "1", label: "D&D", status: connected ? "active" : "idle" },
-      { id: "2", label: "Tech2244", status: connected ? "active" : "idle" },
-      { id: "3", label: "MikeA", status: rows.length > 0 ? "active" : "idle" },
-      { id: "4", label: "LuisR", status: rows.length > 2 ? "active" : "idle" },
-    ],
-    [connected, rows.length]
-  );
 
   function flashPulse(id: string) {
     setPulseIds((prev) => ({ ...prev, [id]: true }));
@@ -267,79 +181,6 @@ export default function LiveShopTV() {
       });
       delete pulseTimersRef.current[id];
     }, 1800);
-  }
-
-  function resolveRoomCard(id: string) {
-    setResolvedIds((prev) => ({ ...prev, [id]: true }));
-  }
-
-  async function handleAskRoomSend() {
-    const msg = askRoomValue.trim();
-    if (!msg || sendingRoom) return;
-
-    setSendingRoom(true);
-    setLastErr(null);
-
-    try {
-      if (isAwnit) {
-        const { data, error } = await supabase
-          .from("awnit_leads")
-          .insert([
-            {
-              name: "Tech2244",
-              project_type: "Repair",
-              best_time: "room",
-              notes: msg,
-            },
-          ])
-          .select("id, created_at, name, phone, email, address, project_type, best_time, notes, status, photo_urls")
-          .single();
-
-        if (error) throw error;
-
-        const normalized = normalizeAwnitLead(data as AwnitLeadRow);
-        setRows((prev) => mergeUpsert(prev, normalized, 30));
-        flashPulse(normalized.id);
-      } else {
-        const payload = {
-          name: "Tech2244",
-          project_type: "Room",
-          message: msg,
-          notes: msg,
-          status: "room",
-        };
-
-        const { data, error } = await supabase
-          .from("public_intake_submissions")
-          .insert([
-            {
-              slug: shopSlug,
-              payload,
-              converted_service_id: null,
-            },
-          ])
-          .select("id, created_at, slug, payload, converted_service_id")
-          .single();
-
-        if (error) throw error;
-
-        const normalized = normalizeIntakeRow(data as IntakeRow);
-        setRows((prev) => mergeUpsert(prev, normalized, 30));
-        flashPulse(normalized.id);
-      }
-
-      setStatus("Room update");
-      window.setTimeout(() => setStatus("Listening…"), 1200);
-      setAskRoomValue("");
-      lastFullSyncAtRef.current = Date.now();
-    } catch (err: any) {
-      const msgText = err?.message || String(err);
-      setLastErr(msgText);
-      setStatus("Room send failed");
-      window.setTimeout(() => setStatus("Listening…"), 1800);
-    } finally {
-      setSendingRoom(false);
-    }
   }
 
   useEffect(() => {
@@ -420,7 +261,9 @@ export default function LiveShopTV() {
     if (isAwnit) {
       const { data, error } = await supabase
         .from("awnit_leads")
-        .select("id, created_at, name, phone, email, address, project_type, best_time, notes, status, photo_urls")
+        .select(
+          "id, created_at, name, phone, email, address, project_type, best_time, notes, status, photo_urls",
+        )
         .order("created_at", { ascending: false })
         .limit(30);
 
@@ -433,7 +276,9 @@ export default function LiveShopTV() {
         return;
       }
 
-      const normalized = (data ?? []).map((r: any) => normalizeAwnitLead(r as AwnitLeadRow));
+      const normalized = (data ?? []).map((r: any) =>
+        normalizeAwnitLead(r as AwnitLeadRow),
+      );
       setRows(() => normalized.slice().sort(sortDescByCreatedAt).slice(0, 30));
       lastFullSyncAtRef.current = Date.now();
       setConnected(true);
@@ -457,7 +302,9 @@ export default function LiveShopTV() {
       return;
     }
 
-    const normalized = (data ?? []).map((r: any) => normalizeIntakeRow(r as IntakeRow));
+    const normalized = (data ?? []).map((r: any) =>
+      normalizeIntakeRow(r as IntakeRow),
+    );
     setRows(() => normalized.slice().sort(sortDescByCreatedAt).slice(0, 30));
     lastFullSyncAtRef.current = Date.now();
     setConnected(true);
@@ -482,8 +329,12 @@ export default function LiveShopTV() {
       }
 
       const dbNewest = (data?.[0] as any)?.created_at ?? null;
-      if (dbNewest && localNewest && dbNewest !== localNewest) loadLatest("Resyncing…");
-      if (dbNewest && !localNewest) loadLatest("Loading…");
+      if (dbNewest && localNewest && dbNewest !== localNewest) {
+        loadLatest("Resyncing…");
+      }
+      if (dbNewest && !localNewest) {
+        loadLatest("Loading…");
+      }
       return;
     }
 
@@ -500,15 +351,18 @@ export default function LiveShopTV() {
     }
 
     const dbNewest = (data?.[0] as any)?.created_at ?? null;
-    if (dbNewest && localNewest && dbNewest !== localNewest) loadLatest("Resyncing…");
-    if (dbNewest && !localNewest) loadLatest("Loading…");
+    if (dbNewest && localNewest && dbNewest !== localNewest) {
+      loadLatest("Resyncing…");
+    }
+    if (dbNewest && !localNewest) {
+      loadLatest("Loading…");
+    }
   }
 
   useEffect(() => {
     setRows([]);
     setConnected(false);
     setLastErr(null);
-    setResolvedIds({});
     loadLatest("Loading…");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shopSlug]);
@@ -528,10 +382,14 @@ export default function LiveShopTV() {
         if (ch?.topic === `realtime:${channelName}`) {
           try {
             supabase.removeChannel(ch);
-          } catch {}
+          } catch {
+            // ignore
+          }
         }
       }
-    } catch {}
+    } catch {
+      // ignore
+    }
 
     const tableName = isAwnit ? "awnit_leads" : "public_intake_submissions";
     const changeBase: any = { schema: "public", table: tableName };
@@ -552,7 +410,10 @@ export default function LiveShopTV() {
       .channel(channelName)
       .on("postgres_changes", insertSpec, (evt) => {
         const rowAny = evt.new as any;
-        const normalized = isAwnit ? normalizeAwnitLead(rowAny as AwnitLeadRow) : normalizeIntakeRow(rowAny as IntakeRow);
+        const normalized = isAwnit
+          ? normalizeAwnitLead(rowAny as AwnitLeadRow)
+          : normalizeIntakeRow(rowAny as IntakeRow);
+
         setRows((prev) => mergeUpsert(prev, normalized, 30));
         flashPulse(normalized.id);
         setStatus("New arrival");
@@ -560,7 +421,10 @@ export default function LiveShopTV() {
       })
       .on("postgres_changes", updateSpec, (evt) => {
         const rowAny = evt.new as any;
-        const normalized = isAwnit ? normalizeAwnitLead(rowAny as AwnitLeadRow) : normalizeIntakeRow(rowAny as IntakeRow);
+        const normalized = isAwnit
+          ? normalizeAwnitLead(rowAny as AwnitLeadRow)
+          : normalizeIntakeRow(rowAny as IntakeRow);
+
         setRows((prev) => mergeUpsert(prev, normalized, 30));
         flashPulse(normalized.id);
       })
@@ -571,7 +435,9 @@ export default function LiveShopTV() {
         }
       })
       .subscribe((s) => {
-        if (s === "SUBSCRIBED") loadLatest("Syncing…");
+        if (s === "SUBSCRIBED") {
+          loadLatest("Syncing…");
+        }
         if (s === "TIMED_OUT" || s === "CHANNEL_ERROR") {
           setConnected(false);
           setStatus("Reconnecting…");
@@ -584,21 +450,24 @@ export default function LiveShopTV() {
       if (age > 10_000) driftCheck();
     }, 20_000);
 
-    const ticker = window.setInterval(() => bump((x) => (x + 1) % 10_000), 15_000);
+    const ticker = window.setInterval(() => bump((x) => (x + 1) % 10000), 15_000);
 
     return () => {
       window.clearInterval(heartbeat);
       window.clearInterval(ticker);
       try {
         supabase.removeChannel(channel);
-      } catch {}
+      } catch {
+        // ignore
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shopSlug]);
 
-  const visibleRows = rows.filter((r) => !resolvedIds[r.id]);
-  const newest = visibleRows[0] ?? null;
-  const recentRows = newest ? visibleRows.slice(1, 8) : visibleRows.slice(0, 8);
+  const newest = rows[0] ?? null;
+  const recentRows = newest ? rows.slice(1, 8) : rows.slice(0, 8);
+  const newestExpanded = newest ? isFreshArrival(newest.created_at, 18) : false;
+  const newestSummary = newest ? extractSummary(newest.payload) : null;
 
   return (
     <div className="h-screen w-screen overflow-hidden bg-slate-950 p-6 text-slate-100">
@@ -614,11 +483,19 @@ export default function LiveShopTV() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="text-xl font-bold">
                 {connected ? status : "Reconnecting…"}{" "}
-                <span className="text-xs font-semibold text-slate-400">/{shopSlug || "no-slug"}</span>
-                {isAwnit ? <span className="ml-2 text-xs font-semibold text-emerald-300">(awnit_leads)</span> : null}
+                <span className="text-xs font-semibold text-slate-400">
+                  /{shopSlug || "no-slug"}
+                </span>
+                {isAwnit ? (
+                  <span className="ml-2 text-xs font-semibold text-emerald-300">
+                    (awnit_leads)
+                  </span>
+                ) : null}
               </div>
+
               <div className="text-xs text-slate-400">
-                Rows: <span className="font-semibold text-slate-200">{visibleRows.length}</span>
+                Rows:{" "}
+                <span className="font-semibold text-slate-200">{rows.length}</span>
               </div>
             </div>
 
@@ -627,100 +504,90 @@ export default function LiveShopTV() {
                 {lastErr}
               </div>
             ) : null}
-
-            <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-900/20 p-4">
-              <div className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Live now</div>
-              <div className="flex flex-wrap gap-2">
-                {presenceUsers.map((user) => (
-                  <PresenceChip key={user.id} user={user} />
-                ))}
-              </div>
-
-              <AskRoomBar
-                value={askRoomValue}
-                onChange={setAskRoomValue}
-                onSend={handleAskRoomSend}
-                sending={sendingRoom}
-              />
-            </div>
           </div>
 
           <div className="mt-6 flex min-h-0 flex-1 flex-col overflow-hidden">
-            {!newest ? (
+            {!newest || !newestSummary ? (
               <div className="text-lg text-slate-400">No arrivals yet.</div>
             ) : (
               <>
                 <div className="shrink-0">
-                  <div className="text-xs font-semibold text-slate-400">Newest arrival</div>
+                  <div className="text-xs font-semibold text-slate-400">
+                    Newest arrival
+                  </div>
 
                   <div
-                    className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-900/30 p-6"
-                    style={{ boxShadow: "0 0 0 1px rgba(148,163,184,.20), 0 0 30px rgba(59,130,246,.14)" }}
+                    className={[
+                      "mt-2 w-full rounded-2xl border border-slate-800 bg-slate-900/30 transition-all duration-500",
+                      newestExpanded ? "p-7" : "p-5",
+                    ].join(" ")}
+                    style={{
+                      boxShadow: newestExpanded
+                        ? "0 0 0 1px rgba(148,163,184,.22), 0 0 36px rgba(59,130,246,.18)"
+                        : "0 0 0 1px rgba(148,163,184,.18), 0 0 24px rgba(59,130,246,.10)",
+                    }}
                   >
-                    {extractSummary(newest.payload).isRoom ? (
-                      <div className="mb-3 flex items-center justify-between gap-3">
-                        <span className="inline-flex items-center rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-emerald-300">
-                          Room Question
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => resolveRoomCard(newest.id)}
-                          className="rounded-lg border border-slate-700 bg-slate-950/70 px-3 py-1 text-xs font-semibold text-slate-300 hover:bg-slate-900"
-                        >
-                          Resolve
-                        </button>
-                      </div>
-                    ) : null}
-
                     <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0 text-4xl font-extrabold">
-                        {extractSummary(newest.payload).vehicle}
+                      <div
+                        className={[
+                          "min-w-0 font-extrabold leading-none transition-all duration-500",
+                          newestExpanded ? "text-5xl" : "text-4xl",
+                        ].join(" ")}
+                      >
+                        {newestSummary.vehicle}
                         <PulseDot active={!!pulseIds[newest.id]} />
                       </div>
+
                       <div className="shrink-0 rounded-full border border-slate-700 bg-slate-950/60 px-3 py-1 text-sm font-semibold text-slate-200">
                         {ageShort(newest.created_at)}
                       </div>
                     </div>
 
-                    <div className="mt-2 text-xl text-slate-200">{extractSummary(newest.payload).message}</div>
+                    <div
+                      className={[
+                        "mt-3 text-slate-200 transition-all duration-500",
+                        newestExpanded ? "text-2xl" : "text-xl",
+                      ].join(" ")}
+                    >
+                      {newestSummary.message}
+                    </div>
+
                     <div className="mt-3 text-base text-slate-400">
-                      {extractSummary(newest.payload).name} • {formatTime(newest.created_at)}
+                      {newestSummary.name} • {formatTime(newest.created_at)}
                     </div>
                   </div>
                 </div>
 
                 <div className="mt-6 flex min-h-0 flex-1 flex-col overflow-hidden">
-                  <div className="shrink-0 text-xs font-semibold text-slate-400">Recent</div>
+                  <div className="shrink-0 text-xs font-semibold text-slate-400">
+                    Recent
+                  </div>
 
                   <div className="mt-2 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
                     {recentRows.map((r) => {
                       const s = extractSummary(r.payload);
-                      return (
-                        <div key={r.id} className="rounded-xl border border-slate-800 bg-slate-950/30 px-4 py-3">
-                          {s.isRoom ? (
-                            <div className="mb-2 flex items-center justify-between gap-3">
-                              <span className="inline-flex items-center rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-300">
-                                Room Question
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => resolveRoomCard(r.id)}
-                                className="rounded-lg border border-slate-700 bg-slate-950/70 px-2.5 py-1 text-[10px] font-semibold text-slate-300 hover:bg-slate-900"
-                              >
-                                Resolve
-                              </button>
-                            </div>
-                          ) : null}
 
+                      return (
+                        <div
+                          key={r.id}
+                          className="rounded-xl border border-slate-800 bg-slate-950/30 px-4 py-3"
+                        >
                           <div className="flex items-center justify-between gap-3">
                             <div className="min-w-0">
                               <div className="truncate text-base font-semibold text-slate-100">
                                 {s.vehicle}
                                 <PulseDot active={!!pulseIds[r.id]} />
-                                <span className="font-normal text-slate-400"> — {s.name}</span>
+                                <span className="font-normal text-slate-400">
+                                  {" "}
+                                  — {s.name}
+                                </span>
                               </div>
-                              <div className="mt-1 truncate text-sm text-slate-300">{s.message}</div>
+
+                              <div className="mt-1 truncate text-sm text-slate-300">
+                                {s.message}
+                              </div>
                             </div>
+
                             <div className="shrink-0 text-sm text-slate-400">
                               <span className="mr-2">{ageShort(r.created_at)}</span>
                               {formatTime(r.created_at)}
@@ -729,7 +596,12 @@ export default function LiveShopTV() {
                         </div>
                       );
                     })}
-                    {recentRows.length === 0 ? <div className="mt-2 text-sm text-slate-500">No rows yet.</div> : null}
+
+                    {recentRows.length === 0 ? (
+                      <div className="mt-2 text-sm text-slate-500">
+                        No rows yet.
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               </>
@@ -737,7 +609,8 @@ export default function LiveShopTV() {
           </div>
 
           <div className="mt-4 shrink-0 text-xs text-slate-500">
-            TV view: read-only. Staff uses <span className="text-slate-300">/live/{shopSlug}/board</span>.
+            TV view: read-only. Staff uses{" "}
+            <span className="text-slate-300">/live/{shopSlug}/board</span>.
           </div>
         </div>
       </div>

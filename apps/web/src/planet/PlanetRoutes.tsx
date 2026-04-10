@@ -5,6 +5,8 @@ import CityPage from "../pages/CityPage";
 
 // Creator planet special pages
 import CreatorCity from "../pages/CreatorCity";
+import CreatorLanding from "../pages/CreatorLanding";
+import CreatorSystems from "../pages/CreatorSystems";
 import CreatorProjects from "../pages/CreatorProjects";
 import CreatorStudio from "../pages/CreatorStudio";
 import CreatorStudioBoard from "../pages/CreatorStudioBoard";
@@ -37,6 +39,7 @@ import GuardianPublicProfilePage from "../pages/GuardianPublicProfilePage";
 // Demo boards
 import AwnitDemoBoard from "../pages/AwnitDemoBoard";
 import AutoRepairLiveBoard from "../pages/AutoRepairLiveBoard";
+import DemoAutoRepairBoard from "../pages/DemoAutoRepairBoard";
 import InvoiceView from "../pages/InvoiceView";
 import CommunitySaleBoard from "../pages/community/CommunitySaleBoard";
 import TransportationDispatchBoardV2 from "../pages/TransportationDispatchBoardV2";
@@ -100,6 +103,8 @@ export default function PlanetRoutes() {
 
       {/* CREATOR */}
       <Route path="creator" element={<CreatorCity />} />
+      <Route path="creator/start" element={<CreatorLanding />} />
+      <Route path="creator/systems" element={<CreatorSystems />} />
       <Route path="creator/projects" element={<CreatorProjects />} />
       <Route path="creator/studio/*" element={<CreatorStudio />} />
       <Route path="creator/studio-board" element={<CreatorStudioBoard />} />
@@ -122,6 +127,7 @@ export default function PlanetRoutes() {
       {/* DEMOS */}
       <Route path="demo/home-services" element={<AwnitDemoBoard />} />
       <Route path="demo/auto-service" element={<AutoRepairLiveBoard />} />
+      <Route path="demo/auto-service-sample" element={<DemoAutoRepairBoard />} />
       <Route path="demo/kitchen-flow" element={<RestaurantRushSimpleDemo />} />
       <Route path="demo/kitchen-manual" element={<RestaurantRushManualDemo />} />
       <Route path="demo/escape-board" element={<EscapeBoardDemo />} />
