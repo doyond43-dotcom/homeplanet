@@ -116,57 +116,12 @@ function formatIntent(intent: string) {
 }
 
 function inferNextSurface(
-  businessType: string,
-  intent: string
+  _businessType: string,
+  _intent: string
 ): { href: string; label: string } {
-  const service = businessType.toLowerCase();
-
-  if (service.includes("auto") || service.includes("repair") || service.includes("car")) {
-    return {
-      href: "/planet/demo/auto-service",
-      label:
-        intent === "intake-flow"
-          ? "Open Auto Service Intake Preview"
-          : "Open Auto Service System Preview",
-    };
-  }
-
-  if (
-    service.includes("lawn") ||
-    service.includes("landscape") ||
-    service.includes("mow") ||
-    service.includes("yard")
-  ) {
-    return {
-      href: "/planet/demo/routecut",
-      label:
-        intent === "intake-flow"
-          ? "Open Lawn Intake Preview"
-          : "Open Lawn System Preview",
-    };
-  }
-
-  if (
-    service.includes("restaurant") ||
-    service.includes("kitchen") ||
-    service.includes("food") ||
-    service.includes("cafe")
-  ) {
-    return {
-      href: "/planet/demo/restaurant",
-      label:
-        intent === "intake-flow"
-          ? "Open Restaurant Intake Preview"
-          : "Open Restaurant System Preview",
-    };
-  }
-
   return {
-    href: "/planet/demo/home-services",
-    label:
-      intent === "intake-flow"
-        ? "Open Intake System Preview"
-        : "Open Live System Preview",
+    href: "/planet/creator/studio",
+    label: "Open Creator Studio",
   };
 }
 
@@ -762,13 +717,13 @@ export default function CreatorBuild() {
                 Corrected flow
               </div>
               <h3 className="mt-2 text-2xl font-semibold text-white">
-                System builds now go toward a system surface
+                Creator Build now leads into the creator surface
               </h3>
               <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-200">
-                The old branch forced you into print assets too early. This
-                version keeps Creator Studio available, but the main action now
-                points toward a live system preview based on the business type
-                and the build intent you already selected.
+                Creator Build is the landing-page and asset surface. This is where
+                the business presence gets written, shaped, previewed, and saved
+                before it branches into Creator Studio assets, print pieces, and
+                connected live system surfaces.
               </p>
             </div>
 
@@ -777,10 +732,10 @@ export default function CreatorBuild() {
                 Flow now
               </div>
               <div className="mt-3 space-y-2 text-sm text-slate-300">
-                <div>1. Onboarding chooses build intent</div>
-                <div>2. Starter preview carries that intent forward</div>
-                <div>3. Creator build preserves system context</div>
-                <div>4. Main CTA opens a system preview first</div>
+                <div>1. Creator City starts the business build</div>
+                <div>2. Creator Build shapes the landing page and business presence</div>
+                <div>3. Creator Studio handles assets, print pieces, and supporting surfaces</div>
+                <div>4. Live boards and customer/staff systems stay connected as part of the same DNA</div>
               </div>
             </div>
           </div>
