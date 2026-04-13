@@ -406,10 +406,46 @@ export default function CreatorCity() {
     e.preventDefault();
     setSubmitting(true);
     setReserveReady(false);
+
     setTimeout(() => {
       setSubmitting(false);
 
       const boardSlug = slugify(businessName || "starter-board");
+
+      const initialJob = {
+        id: `job-${Date.now()}`,
+        customer: businessName || "New Customer",
+        service: businessType || "Custom Order",
+        stage: "Deposit Needed",
+        createdAt: new Date().toISOString(),
+
+        payment: {
+          status: "deposit-requested",
+          depositRequired: true,
+          depositAmount: 25,
+          totalAmount: 100,
+          paidAmount: 0,
+          remainingAmount: 100,
+          method: null,
+          paidAt: null,
+        },
+      };
+
+      localStorage.setItem(
+        "hp_starter_payload",
+        JSON.stringify({
+          boardSlug,
+          businessName,
+          businessType,
+          city,
+          contact,
+          currentWorkflow,
+          biggestFriction,
+          customerQuestions,
+          holyShiftMoment,
+          initialJob,
+        }),
+      );
 
       window.location.href = `/planet/creator/building?boardSlug=${boardSlug}&businessName=${encodeURIComponent(
         businessName,

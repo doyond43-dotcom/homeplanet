@@ -1068,16 +1068,17 @@ const isActiveBoard =
   };
 
   const paymentProfile = useMemo(() => {
-    const dbCash = (boardMeta as { cashapp_cashtag?: string } | null)?.cashapp_cashtag || "";
-    const dbZelle = (boardMeta as { zelle_value?: string } | null)?.zelle_value || "";
-
     const stored = readStoredPaymentProfile(liveBoardSlug);
+    const fallbackZelle =
+      stored.zelleValue ||
+      boardMeta?.claim_email ||
+      "";
 
     return {
-      cashAppCashtag: sanitizeCashAppCashtag(dbCash || stored.cashAppCashtag),
-      zelleValue: (dbZelle || stored.zelleValue || "").trim(),
+      cashAppCashtag: stored.cashAppCashtag,
+      zelleValue: fallbackZelle,
     };
-  }, [liveBoardSlug, boardMeta]);
+  }, [liveBoardSlug, boardMeta?.claim_email]);
 
   useEffect(() => {
     try {
@@ -3943,6 +3944,5 @@ function NotificationLine({
     </div>
   );
 }
-
 
 

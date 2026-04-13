@@ -953,10 +953,7 @@ export default function AutoRepairLiveBoard() {
     "reveal",
   );
   const [boardMetaLoaded, setBoardMetaLoaded] = useState(false);
-  const [proofCaptureRunningJobId, setProofCaptureRunningJobId] = useState<string | null>(null);
-  const [proofNoteDraft, setProofNoteDraft] = useState("");
-  const [paymentAmountDraft, setPaymentAmountDraft] = useState("");
-  const [paymentMemoDraft, setPaymentMemoDraft] = useState("");
+System.Text.RegularExpressions.MatchEvaluator
 
   const stageMenuRef = useRef<HTMLDivElement | null>(null);
   const saveTimerRef = useRef<number | null>(null);
@@ -1056,28 +1053,7 @@ const isActiveBoard =
 
   const stages = useMemo(() => [...config.stages], [config.stages]);
 
-  const actionConfig = config.actions || {
-    updateTitle: "Status update",
-    updateSubtitle: "General update to the customer",
-    approvalTitle: "Approval request",
-    approvalSubtitle: "Ask customer to approve the next step",
-    appointmentTitle: "Appointment confirmation",
-    appointmentSubtitle: "Confirm date and time with the customer",
-    completionTitle: "Completion message",
-    completionSubtitle: "Let the customer know the job is complete",
-  };
-
-  const paymentProfile = useMemo(() => {
-    const dbCash = (boardMeta as { cashapp_cashtag?: string } | null)?.cashapp_cashtag || "";
-    const dbZelle = (boardMeta as { zelle_value?: string } | null)?.zelle_value || "";
-
-    const stored = readStoredPaymentProfile(liveBoardSlug);
-
-    return {
-      cashAppCashtag: sanitizeCashAppCashtag(dbCash || stored.cashAppCashtag),
-      zelleValue: (dbZelle || stored.zelleValue || "").trim(),
-    };
-  }, [liveBoardSlug, boardMeta]);
+System.Text.RegularExpressions.MatchEvaluator
 
   useEffect(() => {
     try {
@@ -1158,19 +1134,7 @@ const isActiveBoard =
     [jobs, selectedJobId],
   );
 
-  useEffect(() => {
-    setProofNoteDraft("");
-  }, [selectedJobId]);
-
-  useEffect(() => {
-    if (!selectedJob || isRestaurant || isCamp) return;
-    setPaymentAmountDraft("");
-    setPaymentMemoDraft(
-      [selectedJob.roNumber, selectedJob.customer || selectedJob.vehicle]
-        .filter(Boolean)
-        .join(" · "),
-    );
-  }, [selectedJobId, isRestaurant, isCamp, selectedJob]);
+System.Text.RegularExpressions.MatchEvaluator
 
   const paymentMemo = paymentMemoDraft.trim();
   const paymentAmount = sanitizeMoneyInput(paymentAmountDraft);
@@ -3060,7 +3024,7 @@ window.location.href = "/planet/start/building";
                                 </div>
                                 <div className="mt-1 text-xs text-slate-400">
                                   {paymentProfile.cashAppCashtag
-                                    ? `$${paymentProfile.cashAppCashtag}`
+                                    ? `${paymentProfile.cashAppCashtag}`
                                     : "Add cashAppCashtag in local payment profile"}
                                 </div>
                               </div>

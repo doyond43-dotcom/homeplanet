@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { resolveStarterBoardConfig } from "../lib/starterBoardConfig";
@@ -101,10 +101,6 @@ type RestaurantTicketDraft = {
   notes: string;
 };
 
-type PaymentProfile = {
-  cashAppCashtag: string;
-  zelleValue: string;
-};
 const DEMO_BOARD_SLUG = "demo-auto-repair";
 
 function createPresenceId() {
@@ -128,101 +124,6 @@ function getBoardViewModeKey(boardSlug: string) {
 }
 
 
-function getPaymentProfileStoreKey(boardSlug: string) {
-  return `hp_payment_profile_${boardSlug}`;
-}
-
-function sanitizeCashAppCashtag(value: string) {
-  return (value || "").trim().replace(/^\$/, "").replace(/[^\w]/g, "");
-}
-
-function sanitizeMoneyInput(value: string) {
-  const cleaned = (value || "").replace(/[^\d.]/g, "");
-  const parts = cleaned.split(".");
-  if (parts.length <= 1) return cleaned;
-  return `${parts[0]}.${parts.slice(1).join("").replace(/\./g, "")}`;
-}
-
-function readStoredPaymentProfile(boardSlug: string): PaymentProfile {
-  if (!boardSlug) {
-    return {
-      cashAppCashtag: "",
-      zelleValue: "",
-    };
-  }
-
-  try {
-    const raw = window.localStorage.getItem(getPaymentProfileStoreKey(boardSlug));
-    if (!raw) {
-      return {
-        cashAppCashtag: "",
-        zelleValue: "",
-      };
-    }
-
-    const parsed = JSON.parse(raw) as Partial<PaymentProfile>;
-    return {
-      cashAppCashtag: sanitizeCashAppCashtag(parsed.cashAppCashtag || ""),
-      zelleValue: (parsed.zelleValue || "").trim(),
-    };
-  } catch {
-    return {
-      cashAppCashtag: "",
-      zelleValue: "",
-    };
-  }
-}
-
-function buildCashAppUrl(cashtag: string) {
-  const cleanTag = sanitizeCashAppCashtag(cashtag);
-  return cleanTag ? `https://cash.app/$${cleanTag}` : "";
-}
-
-function buildPaymentQrSrc(value: string) {
-  if (!value) return "";
-  return `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(
-    value,
-  )}`;
-}
-
-function buildZelleQrPayload(args: {
-  businessName: string;
-  zelleValue: string;
-  amount: string;
-  memo: string;
-}) {
-  const lines = [
-    args.businessName || "Payment",
-    `Zelle to: ${args.zelleValue}`,
-  ];
-
-  if (args.amount) {
-    lines.push(`Amount: ${args.amount}`);
-  }
-
-  if (args.memo) {
-    lines.push(`Memo: ${args.memo}`);
-  }
-
-  return lines.join("\n");
-}
-
-function buildZelleActionHref(value: string) {
-  const trimmed = (value || "").trim();
-  if (!trimmed) return "";
-
-  if (trimmed.includes("@")) {
-    return `mailto:${trimmed}`;
-  }
-
-  const digits = trimmed.replace(/[^\d+]/g, "");
-  return digits ? `tel:${digits}` : "";
-}
-
-function openExternalLink(href: string) {
-  if (!href) return;
-  window.open(href, "_blank", "noopener,noreferrer");
-}
 function toTitleCaseFromSlug(value: string) {
   return (value || "")
     .split("-")
@@ -317,7 +218,7 @@ function resolveLiveBoardConfig(args: {
       boardSubtitle:
         "Built for contractors and field-service teams with scheduling, travel, on-site work, and completion flow.",
       createButtonLabel: "+ Add Service Request",
-      flowLabel: "New Request â†’ Scheduled â†’ En Route â†’ On Site â†’ Completed",
+      flowLabel: "New Request → Scheduled → En Route → On Site → Completed",
       stages: ["New Request", "Scheduled", "En Route", "On Site", "Completed"],
       labels: {
         item: "Property / Job",
@@ -350,7 +251,7 @@ function resolveLiveBoardConfig(args: {
       boardSubtitle:
         "Built for detailing flow with check-in, active service work, final pass, and ready status.",
       createButtonLabel: "+ Add Detail Job",
-      flowLabel: "Check-In â†’ Prep â†’ Detailing â†’ Final Check â†’ Ready",
+      flowLabel: "Check-In → Prep → Detailing → Final Check → Ready",
       stages: ["Check-In", "Prep", "Detailing", "Final Check", "Ready"],
       labels: {
         item: "Vehicle / Service",
@@ -575,7 +476,7 @@ function openTextMessage(phone: string, text: string) {
 }
 
 function formatProofDate(value?: string | null) {
-  if (!value) return "â€”";
+  if (!value) return "—";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleString();
@@ -814,24 +715,24 @@ function buildCampGuardianCheckoutMessage(job: RepairJob, businessName: string) 
 }
 
 function buildCampTimeline(job: RepairJob) {
-  const timeline = [`${formatProofDate(job.createdAt)} â†’ Presence created`];
+  const timeline = [`${formatProofDate(job.createdAt)} → Presence created`];
 
   if (job.appointmentDate || job.appointmentTime) {
     timeline.push(
-      `${formatAppointment(job.appointmentDate, job.appointmentTime)} â†’ Check-in scheduled`,
+      `${formatAppointment(job.appointmentDate, job.appointmentTime)} → Check-in scheduled`,
     );
   }
 
   if (job.stage) {
-    timeline.push(`${job.stage} â†’ Current zone`);
+    timeline.push(`${job.stage} → Current zone`);
   }
 
   if (job.concern) {
-    timeline.push(`${job.concern} â†’ Live activity note`);
+    timeline.push(`${job.concern} → Live activity note`);
   }
 
   if (job.eta) {
-    timeline.push(`${job.eta} â†’ Next movement target`);
+    timeline.push(`${job.eta} → Next movement target`);
   }
 
   return timeline;
@@ -858,23 +759,23 @@ function isMeaningfulCampValue(value?: string | null) {
 }
 
 function campChildName(job: RepairJob) {
-  return isMeaningfulCampValue(job.vehicle) ? job.vehicle.trim() : "â€”";
+  return isMeaningfulCampValue(job.vehicle) ? job.vehicle.trim() : "—";
 }
 
 function campGuardianName(job: RepairJob) {
-  return isMeaningfulCampValue(job.customer) ? job.customer.trim() : "â€”";
+  return isMeaningfulCampValue(job.customer) ? job.customer.trim() : "—";
 }
 
 function campActivityLabel(job: RepairJob) {
-  return isMeaningfulCampValue(job.concern) ? job.concern.trim() : "â€”";
+  return isMeaningfulCampValue(job.concern) ? job.concern.trim() : "—";
 }
 
 function campStaffLabel(job: RepairJob) {
-  return isMeaningfulCampValue(job.advisor) ? job.advisor.trim() : "â€”";
+  return isMeaningfulCampValue(job.advisor) ? job.advisor.trim() : "—";
 }
 
 function campNextMoveLabel(job: RepairJob) {
-  return isMeaningfulCampValue(job.eta) ? job.eta.trim() : "â€”";
+  return isMeaningfulCampValue(job.eta) ? job.eta.trim() : "—";
 }
 
 function campStatusTone(stage: string) {
@@ -955,8 +856,6 @@ export default function AutoRepairLiveBoard() {
   const [boardMetaLoaded, setBoardMetaLoaded] = useState(false);
   const [proofCaptureRunningJobId, setProofCaptureRunningJobId] = useState<string | null>(null);
   const [proofNoteDraft, setProofNoteDraft] = useState("");
-  const [paymentAmountDraft, setPaymentAmountDraft] = useState("");
-  const [paymentMemoDraft, setPaymentMemoDraft] = useState("");
 
   const stageMenuRef = useRef<HTMLDivElement | null>(null);
   const saveTimerRef = useRef<number | null>(null);
@@ -1067,18 +966,6 @@ const isActiveBoard =
     completionSubtitle: "Let the customer know the job is complete",
   };
 
-  const paymentProfile = useMemo(() => {
-    const dbCash = (boardMeta as { cashapp_cashtag?: string } | null)?.cashapp_cashtag || "";
-    const dbZelle = (boardMeta as { zelle_value?: string } | null)?.zelle_value || "";
-
-    const stored = readStoredPaymentProfile(liveBoardSlug);
-
-    return {
-      cashAppCashtag: sanitizeCashAppCashtag(dbCash || stored.cashAppCashtag),
-      zelleValue: (dbZelle || stored.zelleValue || "").trim(),
-    };
-  }, [liveBoardSlug, boardMeta]);
-
   useEffect(() => {
     try {
       const dismissed = window.localStorage.getItem(
@@ -1162,30 +1049,6 @@ const isActiveBoard =
     setProofNoteDraft("");
   }, [selectedJobId]);
 
-  useEffect(() => {
-    if (!selectedJob || isRestaurant || isCamp) return;
-    setPaymentAmountDraft("");
-    setPaymentMemoDraft(
-      [selectedJob.roNumber, selectedJob.customer || selectedJob.vehicle]
-        .filter(Boolean)
-        .join(" · "),
-    );
-  }, [selectedJobId, isRestaurant, isCamp, selectedJob]);
-
-  const paymentMemo = paymentMemoDraft.trim();
-  const paymentAmount = sanitizeMoneyInput(paymentAmountDraft);
-  const cashAppUrl = buildCashAppUrl(paymentProfile.cashAppCashtag);
-  const cashAppQrSrc = buildPaymentQrSrc(cashAppUrl);
-  const zelleActionHref = buildZelleActionHref(paymentProfile.zelleValue);
-  const zelleQrPayload = paymentProfile.zelleValue
-    ? buildZelleQrPayload({
-        businessName,
-        zelleValue: paymentProfile.zelleValue,
-        amount: paymentAmount,
-        memo: paymentMemo,
-      })
-    : "";
-  const zelleQrSrc = buildPaymentQrSrc(zelleQrPayload);
   const grouped = useMemo(() => {
     if (isRestaurant) {
       return stages.map((stage) => ({
@@ -1928,7 +1791,7 @@ window.location.href = "/planet/start/building";
       </div>
 
       <div className="text-right text-[11px] uppercase tracking-[0.18em] text-white/40">
-        Presence-first Â· Timestamp anchored
+        Presence-first · Timestamp anchored
       </div>
     </div>
   </div>
@@ -2134,13 +1997,13 @@ window.location.href = "/planet/start/building";
                     <span>{config.flowLabel}</span>
                     {boardMeta?.presence_id ? (
                       <>
-                        <span className="text-slate-500">â€¢</span>
+                        <span className="text-slate-500">•</span>
                         <span className="truncate">Presence ID {boardMeta.presence_id}</span>
                       </>
                     ) : null}
                     {boardMeta?.trial_ends_at && isClaimed ? (
                       <>
-                        <span className="text-slate-500">â€¢</span>
+                        <span className="text-slate-500">•</span>
                         <span>Trial ends {formatProofDate(boardMeta.trial_ends_at)}</span>
                       </>
                     ) : null}
@@ -2185,7 +2048,7 @@ window.location.href = "/planet/start/building";
                           Truth layer
                         </div>
                         <div className="mt-1 text-sm text-emerald-50">
-                          Presence {boardMeta.presence_id} â€¢ {boardMeta.board_slug}
+                          Presence {boardMeta.presence_id} • {boardMeta.board_slug}
                         </div>
                       </div>
 
@@ -2208,7 +2071,7 @@ window.location.href = "/planet/start/building";
                       Trial status
                     </div>
                     <div className="mt-1 text-sm text-cyan-50">
-                      Trial running â€¢ Ends {formatProofDate(boardMeta.trial_ends_at)} â€¢ Billing setup next
+                      Trial running • Ends {formatProofDate(boardMeta.trial_ends_at)} • Billing setup next
                     </div>
                   </div>
                 ) : (
@@ -2631,7 +2494,7 @@ window.location.href = "/planet/start/building";
                       <input
                         value={
                           isCamp
-                            ? campGuardianName(selectedJob) === "â€”"
+                            ? campGuardianName(selectedJob) === "—"
                               ? ""
                               : selectedJob.customer
                             : selectedJob.customer
@@ -2648,7 +2511,7 @@ window.location.href = "/planet/start/building";
                       <input
                         value={
                           isCamp
-                            ? campChildName(selectedJob) === "â€”"
+                            ? campChildName(selectedJob) === "—"
                               ? ""
                               : selectedJob.vehicle
                             : selectedJob.vehicle
@@ -2665,7 +2528,7 @@ window.location.href = "/planet/start/building";
                       <input
                         value={
                           isCamp
-                            ? campActivityLabel(selectedJob) === "â€”"
+                            ? campActivityLabel(selectedJob) === "—"
                               ? ""
                               : selectedJob.concern
                             : selectedJob.concern
@@ -2687,7 +2550,7 @@ window.location.href = "/planet/start/building";
                             className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-left outline-none transition hover:border-cyan-400/30"
                           >
                             <span>{selectedJob.stage}</span>
-                            <span className="text-slate-400">â–¾</span>
+                            <span className="text-slate-400">▾</span>
                           </button>
 
                           {stageMenuOpen ? (
@@ -2711,7 +2574,7 @@ window.location.href = "/planet/start/building";
                                   >
                                     <span>{stage}</span>
                                     {active ? (
-                                      <span className="text-cyan-300">âœ“</span>
+                                      <span className="text-cyan-300">✓</span>
                                     ) : null}
                                   </button>
                                 );
@@ -2725,7 +2588,7 @@ window.location.href = "/planet/start/building";
                         <input
                           value={
                             isCamp
-                              ? campNextMoveLabel(selectedJob) === "â€”"
+                              ? campNextMoveLabel(selectedJob) === "—"
                                 ? ""
                                 : selectedJob.eta
                               : selectedJob.eta
@@ -2743,7 +2606,7 @@ window.location.href = "/planet/start/building";
                       <input
                         value={
                           isCamp
-                            ? campStaffLabel(selectedJob) === "â€”"
+                            ? campStaffLabel(selectedJob) === "—"
                               ? ""
                               : selectedJob.advisor
                             : selectedJob.advisor
@@ -2975,10 +2838,10 @@ window.location.href = "/planet/start/building";
                                   <div className="flex items-start justify-between gap-3">
                                     <div>
                                       <div className="text-sm font-semibold text-white">
-                                        {clip.label === "Safety concern" && "âš ï¸ Safety issue documented"}
-                                        {clip.label === "Hidden issue found" && "ðŸ” Hidden issue uncovered"}
-                                        {clip.label === "Work in progress" && "ðŸ›  Work in progress captured"}
-                                        {clip.label === "Completed work" && "âœ… Work completed and verified"}
+                                        {clip.label === "Safety concern" && "⚠️ Safety issue documented"}
+                                        {clip.label === "Hidden issue found" && "🔍 Hidden issue uncovered"}
+                                        {clip.label === "Work in progress" && "🛠 Work in progress captured"}
+                                        {clip.label === "Completed work" && "✅ Work completed and verified"}
                                         {clip.label !== "Safety concern" &&
                                           clip.label !== "Hidden issue found" &&
                                           clip.label !== "Work in progress" &&
@@ -3010,179 +2873,6 @@ window.location.href = "/planet/start/building";
                       </div>
                     ) : null}
 
-                    {!isCamp ? (
-                      <div className="rounded-[24px] border border-emerald-400/20 bg-emerald-400/10 p-4">
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div>
-                            <div className="text-xs uppercase tracking-[0.22em] text-emerald-200/70">
-                              Payment
-                            </div>
-                            <div className="mt-2 text-sm leading-6 text-emerald-50">
-                              Let the customer scan or tap and pay fast without Stripe or extra checkout friction.
-                            </div>
-                          </div>
-
-                          {copiedMessage ? (
-                            <div className="rounded-full border border-emerald-400/20 px-3 py-1 text-xs text-emerald-100">
-                              {copiedMessage}
-                            </div>
-                          ) : null}
-                        </div>
-
-                        <div className="mt-4 grid gap-4 md:grid-cols-2">
-                          <Field label="Payment Amount">
-                            <input
-                              value={paymentAmountDraft}
-                              onChange={(e) =>
-                                setPaymentAmountDraft(sanitizeMoneyInput(e.target.value))
-                              }
-                              className="w-full rounded-2xl border border-white/10 bg-[#070d1a] px-4 py-3 outline-none transition focus:border-emerald-400/40"
-                              placeholder="125.00"
-                            />
-                          </Field>
-
-                          <Field label="Payment Memo">
-                            <input
-                              value={paymentMemoDraft}
-                              onChange={(e) => setPaymentMemoDraft(e.target.value)}
-                              className="w-full rounded-2xl border border-white/10 bg-[#070d1a] px-4 py-3 outline-none transition focus:border-emerald-400/40"
-                              placeholder="RO-1042 · John"
-                            />
-                          </Field>
-                        </div>
-
-                        <div className="mt-4 grid gap-4 md:grid-cols-2">
-                          <div className="rounded-[22px] border border-white/10 bg-[#070d1a] p-4">
-                            <div className="flex items-center justify-between gap-3">
-                              <div>
-                                <div className="text-sm font-semibold text-white">
-                                  Cash App
-                                </div>
-                                <div className="mt-1 text-xs text-slate-400">
-                                  {paymentProfile.cashAppCashtag
-                                    ? `$${paymentProfile.cashAppCashtag}`
-                                    : "Add cashAppCashtag in local payment profile"}
-                                </div>
-                              </div>
-
-                              <div className="rounded-full border border-emerald-400/25 bg-emerald-400/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-100">
-                                Scan or tap
-                              </div>
-                            </div>
-
-                            <div className="mt-4 flex items-center justify-center rounded-[20px] border border-white/10 bg-white px-4 py-4">
-                              {cashAppQrSrc ? (
-                                <img
-                                  src={cashAppQrSrc}
-                                  alt="Cash App payment QR"
-                                  className="h-[170px] w-[170px] rounded-xl"
-                                />
-                              ) : (
-                                <div className="flex h-[170px] w-[170px] items-center justify-center rounded-xl border border-dashed border-slate-300/20 bg-slate-950 text-center text-xs text-slate-500">
-                                  Cash App handle missing
-                                </div>
-                              )}
-                            </div>
-
-                            <div className="mt-4 grid gap-2">
-                              <button
-                                type="button"
-                                onClick={() => openExternalLink(cashAppUrl)}
-                                disabled={!cashAppUrl}
-                                className="rounded-full bg-emerald-300 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-50"
-                              >
-                                Open Cash App
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => void copyMessage("Cash App link", cashAppUrl)}
-                                disabled={!cashAppUrl}
-                                className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-50"
-                              >
-                                Copy Cash App Link
-                              </button>
-                            </div>
-                          </div>
-
-                          <div className="rounded-[22px] border border-white/10 bg-[#070d1a] p-4">
-                            <div className="flex items-center justify-between gap-3">
-                              <div>
-                                <div className="text-sm font-semibold text-white">
-                                  Zelle
-                                </div>
-                                <div className="mt-1 break-all text-xs text-slate-400">
-                                  {paymentProfile.zelleValue || "Add zelleValue in local payment profile"}
-                                </div>
-                              </div>
-
-                              <div className="rounded-full border border-cyan-400/25 bg-cyan-400/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-100">
-                                Copy fast
-                              </div>
-                            </div>
-
-                            <div className="mt-4 flex items-center justify-center rounded-[20px] border border-white/10 bg-white px-4 py-4">
-                              {zelleQrSrc ? (
-                                <img
-                                  src={zelleQrSrc}
-                                  alt="Zelle payment QR"
-                                  className="h-[170px] w-[170px] rounded-xl"
-                                />
-                              ) : (
-                                <div className="flex h-[170px] w-[170px] items-center justify-center rounded-xl border border-dashed border-slate-300/20 bg-slate-950 text-center text-xs text-slate-500">
-                                  Zelle destination missing
-                                </div>
-                              )}
-                            </div>
-
-                            <div className="mt-4 grid gap-2">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  paymentProfile.zelleValue
-                                    ? void copyMessage("Zelle", paymentProfile.zelleValue)
-                                    : undefined
-                                }
-                                disabled={!paymentProfile.zelleValue}
-                                className="rounded-full bg-cyan-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-50"
-                              >
-                                Copy Zelle
-                              </button>
-
-                              <div className="grid gap-2 sm:grid-cols-2">
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    paymentMemo
-                                      ? void copyMessage("Payment memo", paymentMemo)
-                                      : undefined
-                                  }
-                                  disabled={!paymentMemo}
-                                  className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-50"
-                                >
-                                  Copy Memo
-                                </button>
-
-                                <button
-                                  type="button"
-                                  onClick={() => openExternalLink(zelleActionHref)}
-                                  disabled={!zelleActionHref}
-                                  className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-50"
-                                >
-                                  Open Zelle Contact
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        {(!paymentProfile.cashAppCashtag || !paymentProfile.zelleValue) ? (
-                          <div className="mt-4 rounded-2xl border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
-                            Payment profile is not fully configured yet. Add local payment values for this board to turn on both methods.
-                          </div>
-                        ) : null}
-                      </div>
-                    ) : null}
                     <div className="rounded-[24px] border border-cyan-400/20 bg-cyan-400/10 p-4">
                       <div className="flex items-center justify-between gap-3">
                         <div>
@@ -3362,10 +3052,10 @@ window.location.href = "/planet/start/building";
                     What activation does
                   </div>
                   <div className="mt-3 space-y-3 text-sm text-slate-300">
-                    <div>â€¢ Starts your 14-day free trial</div>
-                    <div>â€¢ Claims this live board as your working dashboard</div>
-                    <div>â€¢ Turns preview status into active status</div>
-                    <div>â€¢ Keeps the boardâ€™s Presence ID locked to this system</div>
+                    <div>• Starts your 14-day free trial</div>
+                    <div>• Claims this live board as your working dashboard</div>
+                    <div>• Turns preview status into active status</div>
+                    <div>• Keeps the board’s Presence ID locked to this system</div>
                   </div>
                 </div>
 
@@ -3457,7 +3147,7 @@ window.location.href = "/planet/start/building";
                 <div className="space-y-5">
                   <div className="rounded-[24px] border border-cyan-400/20 bg-cyan-400/10 p-4">
                     <div className="text-xs uppercase tracking-[0.22em] text-cyan-200/70">
-                      Todayâ€™s snapshot
+                      Today’s snapshot
                     </div>
 
                     <div className="mt-4 grid grid-cols-2 gap-3">
@@ -3943,6 +3633,4 @@ function NotificationLine({
     </div>
   );
 }
-
-
 
