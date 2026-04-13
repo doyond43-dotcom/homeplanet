@@ -24,6 +24,7 @@ import BigDaveEatsLive from "../pages/BigDaveEatsLive";
 import SkateZoneDemo from "../pages/SkateZoneDemo";
 import SkateZoneQrDemo from "../pages/SkateZoneQrDemo";
 import SkateZonePublicWaiverPage from "../pages/SkateZonePublicWaiverPage";
+import PredatorShieldIntervention from "../pages/PredatorShieldIntervention";
 
 import BeautySalonLiveBoard from "../pages/BeautySalonLiveBoard";
 import BeautySalonBookingPage from "../pages/BeautySalonBookingPage";
@@ -39,7 +40,6 @@ import GuardianPublicProfilePage from "../pages/GuardianPublicProfilePage";
 // Demo boards
 import AwnitDemoBoard from "../pages/AwnitDemoBoard";
 import AutoRepairLiveBoard from "../pages/AutoRepairLiveBoard";
-import DemoAutoRepairBoard from "../pages/DemoAutoRepairBoard";
 import InvoiceView from "../pages/InvoiceView";
 import CommunitySaleBoard from "../pages/community/CommunitySaleBoard";
 import TransportationDispatchBoardV2 from "../pages/TransportationDispatchBoardV2";
@@ -90,6 +90,7 @@ import RouteCutLiveView from "../pages/RouteCutLiveView";
 
 // Payment
 import HomePlanetPaymentNode from "../pages/HomePlanetPaymentNode";
+import NoScreenshotPaymentsDemo from "../pages/NoScreenshotPaymentsDemo";
 import PricingPage from "../pages/PricingPage";
 import OnboardingFlow from "../pages/OnboardingFlow";
 import OnboardingBuildTransition from "../pages/OnboardingBuildTransition";
@@ -127,7 +128,6 @@ export default function PlanetRoutes() {
       {/* DEMOS */}
       <Route path="demo/home-services" element={<AwnitDemoBoard />} />
       <Route path="demo/auto-service" element={<AutoRepairLiveBoard />} />
-      <Route path="demo/auto-service-sample" element={<DemoAutoRepairBoard />} />
       <Route path="demo/kitchen-flow" element={<RestaurantRushSimpleDemo />} />
       <Route path="demo/kitchen-manual" element={<RestaurantRushManualDemo />} />
       <Route path="demo/escape-board" element={<EscapeBoardDemo />} />
@@ -144,6 +144,7 @@ export default function PlanetRoutes() {
       <Route path="demo/skatezone-qr" element={<SkateZoneQrDemo />} />
       <Route path="demo/beauty-color-me-crazy" element={<BeautySalonLiveBoard />} />
       <Route path="demo/bamboo" element={<PlanetBamboo />} />
+      <Route path="demo/no-screenshot-payments" element={<NoScreenshotPaymentsDemo />} />
 
       {/* LIVE BOARD */}
       <Route path="live/:boardSlug" element={<AutoRepairLiveBoard />} />
@@ -192,6 +193,9 @@ export default function PlanetRoutes() {
       {/* BAMBOO */}
       <Route path="bamboo" element={<PlanetBamboo />} />
 
+      {/* PREDATORSHIELD */}
+      <Route path="predatorshield/test" element={<PredatorShieldIntervention />} />
+
       {/* GUARDIAN */}
       <Route path="guardian" element={<PlanetGuardian />} />
       <Route path="guardian/start" element={<GuardianStartPage />} />
@@ -219,6 +223,7 @@ export default function PlanetRoutes() {
 
       {/* PAYMENTS */}
       <Route path="payments/node" element={<HomePlanetPaymentNode />} />
+      <Route path="payments/no-screenshot" element={<NoScreenshotPaymentsDemo />} />
 
       {/* START */}
       <Route path="start" element={<OnboardingFlow />} />
