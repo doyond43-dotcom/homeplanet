@@ -63,6 +63,10 @@ const currency = new Intl.NumberFormat("en-US", {
   currency: "USD",
 });
 
+function generatePresenceId() {
+  return `HP-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+}
+
 const statusMeta: Record<
   PaymentStatus,
   {
@@ -126,7 +130,7 @@ const scenarios: ScenarioConfig[] = [
   {
     id: "custom-order",
     label: "Custom order",
-    customer: "Matthew M.",
+    customer: "",
     service: "Logo deposit",
     amount: "75",
     paymentMethod: "Zelle",
@@ -138,7 +142,7 @@ const scenarios: ScenarioConfig[] = [
   {
     id: "salon",
     label: "Salon",
-    customer: "Jessica R.",
+    customer: "",
     service: "Color appointment deposit",
     amount: "45",
     paymentMethod: "Tap to Pay",
@@ -150,7 +154,7 @@ const scenarios: ScenarioConfig[] = [
   {
     id: "auto",
     label: "Auto",
-    customer: "Marcus T.",
+    customer: "",
     service: "Brake parts deposit",
     amount: "185",
     paymentMethod: "Zelle",
@@ -162,7 +166,7 @@ const scenarios: ScenarioConfig[] = [
   {
     id: "food",
     label: "Food",
-    customer: "Hayley D.",
+    customer: "",
     service: "Family meal order",
     amount: "62",
     paymentMethod: "QR",
@@ -287,7 +291,9 @@ function SectionCard({
     >
       <div className="flex items-start justify-between gap-4 border-b border-white/8 px-5 py-4 sm:px-6">
         <div>
-          <h2 className="text-[17px] font-semibold text-white sm:text-[19px]">{title}</h2>
+          <h2 className="text-[17px] font-semibold text-white sm:text-[19px]">
+            {title}
+          </h2>
           {subcopy ? <p className="mt-1 text-sm text-slate-400">{subcopy}</p> : null}
         </div>
         {right ? <div className="shrink-0">{right}</div> : null}
@@ -301,7 +307,7 @@ export default function NoScreenshotPaymentsDemo() {
   const [orders, setOrders] = useState<PaymentOrder[]>(seededOrders);
   const [timeline, setTimeline] = useState<PaymentEvent[]>(startingTimeline);
   const [scenarioId, setScenarioId] = useState<ScenarioId>("custom-order");
-  const [customerName, setCustomerName] = useState("Matthew M.");
+  const [customerName, setCustomerName] = useState("");
   const [serviceName, setServiceName] = useState("Logo deposit");
   const [amount, setAmount] = useState("75");
   const [copied, setCopied] = useState(false);
@@ -321,7 +327,7 @@ export default function NoScreenshotPaymentsDemo() {
 
   useEffect(() => {
     if (processingFlow) return;
-    setCustomerName(activeScenario.customer);
+    setCustomerName("");
     setServiceName(activeScenario.service);
     setAmount(activeScenario.amount);
   }, [activeScenario, processingFlow]);
@@ -397,7 +403,7 @@ export default function NoScreenshotPaymentsDemo() {
 
     const parsedAmount = Number(amount);
     const safeAmount = Number.isFinite(parsedAmount) && parsedAmount > 0 ? parsedAmount : 75;
-    const safeCustomer = customerName.trim() || "Walk-in Customer";
+    const safeCustomer = customerName.trim() || generatePresenceId();
     const safeService = serviceName.trim() || "Live order";
 
     setProcessingFlow(true);
@@ -569,7 +575,9 @@ export default function NoScreenshotPaymentsDemo() {
                 <Wallet className="h-5 w-5" />
               </div>
               <div>
-                <div className="text-xs uppercase tracking-[0.18em] text-slate-500">Gross tracked</div>
+                <div className="text-xs uppercase tracking-[0.18em] text-slate-500">
+                  Gross tracked
+                </div>
                 <div className="mt-1 text-2xl font-semibold text-white">
                   {currency.format(totals.gross)}
                 </div>
@@ -583,7 +591,9 @@ export default function NoScreenshotPaymentsDemo() {
                 <Clock3 className="h-5 w-5" />
               </div>
               <div>
-                <div className="text-xs uppercase tracking-[0.18em] text-slate-500">Live orders</div>
+                <div className="text-xs uppercase tracking-[0.18em] text-slate-500">
+                  Live orders
+                </div>
                 <div className="mt-1 text-2xl font-semibold text-white">{totals.liveCount}</div>
               </div>
             </div>
@@ -607,7 +617,9 @@ export default function NoScreenshotPaymentsDemo() {
                 <ShieldCheck className="h-5 w-5" />
               </div>
               <div>
-                <div className="text-xs uppercase tracking-[0.18em] text-slate-500">Truth state</div>
+                <div className="text-xs uppercase tracking-[0.18em] text-slate-500">
+                  Truth state
+                </div>
                 <div className="mt-1 text-2xl font-semibold text-white">Live</div>
               </div>
             </div>
@@ -653,7 +665,9 @@ export default function NoScreenshotPaymentsDemo() {
                   </div>
 
                   <div className="rounded-2xl border border-white/8 bg-black/20 p-3">
-                    <div className="text-xs uppercase tracking-[0.18em] text-slate-500">Verification</div>
+                    <div className="text-xs uppercase tracking-[0.18em] text-slate-500">
+                      Verification
+                    </div>
                     <div className="mt-2 flex items-center gap-2 text-white">
                       <ShieldCheck className="h-4 w-4 text-amber-300" />
                       Automatic truth match
@@ -661,7 +675,9 @@ export default function NoScreenshotPaymentsDemo() {
                   </div>
 
                   <div className="rounded-2xl border border-white/8 bg-black/20 p-3">
-                    <div className="text-xs uppercase tracking-[0.18em] text-slate-500">Release action</div>
+                    <div className="text-xs uppercase tracking-[0.18em] text-slate-500">
+                      Release action
+                    </div>
                     <div className="mt-2 flex items-center gap-2 text-white">
                       <ArrowRight className="h-4 w-4 text-sky-300" />
                       Work moves instantly
@@ -677,7 +693,7 @@ export default function NoScreenshotPaymentsDemo() {
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
                     className="w-full rounded-2xl border border-white/10 bg-[#071120] px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-amber-400/35"
-                    placeholder="Matthew M."
+                    placeholder="Leave blank to auto-generate Presence ID"
                   />
                 </label>
 
@@ -730,7 +746,9 @@ export default function NoScreenshotPaymentsDemo() {
 
               <div className="grid gap-3 lg:grid-cols-2">
                 <div className="rounded-[24px] border border-white/8 bg-black/20 p-4">
-                  <div className="text-xs uppercase tracking-[0.18em] text-slate-500">Customer view</div>
+                  <div className="text-xs uppercase tracking-[0.18em] text-slate-500">
+                    Customer view
+                  </div>
                   <div className="mt-3 text-base font-semibold text-white">
                     {activeScenario.customerViewLabel}
                   </div>
@@ -740,7 +758,9 @@ export default function NoScreenshotPaymentsDemo() {
                 </div>
 
                 <div className="rounded-[24px] border border-white/8 bg-black/20 p-4">
-                  <div className="text-xs uppercase tracking-[0.18em] text-slate-500">Business view</div>
+                  <div className="text-xs uppercase tracking-[0.18em] text-slate-500">
+                    Business view
+                  </div>
                   <div className="mt-3 text-base font-semibold text-white">
                     {activeScenario.businessViewLabel}
                   </div>
@@ -927,8 +947,8 @@ export default function NoScreenshotPaymentsDemo() {
                     event.kind === "system"
                       ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-200"
                       : event.kind === "staff"
-                      ? "border-violet-500/20 bg-violet-500/10 text-violet-200"
-                      : "border-sky-500/20 bg-sky-500/10 text-sky-200";
+                        ? "border-violet-500/20 bg-violet-500/10 text-violet-200"
+                        : "border-sky-500/20 bg-sky-500/10 text-sky-200";
 
                   return (
                     <div

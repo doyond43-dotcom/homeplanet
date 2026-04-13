@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 const LIVE_PRODUCT_DEMO_ROUTE = "/planet/creator/rc-live";
 const LIVE_CAMP_GUARDIAN_ROUTE = "/planet/live/camp-aquaflow-5593";
 const PAYMENT_NODE_ROUTE = "/planet/payments/node";
+const PAYMENT_DESK_DEMO_ROUTE = "/planet/payments/no-screenshot";
 const MEAL_BUSINESS_ROUTE = "/planet/lifestyle/meal-start";
 
 type SystemExample = {
@@ -170,6 +171,13 @@ export default function CreatorCity() {
 
   const systems = useMemo<SystemExample[]>(
     () => [
+      {
+        id: "payments",
+        title: "No Screenshot Payments",
+        subtitle: "Customer pays. System confirms. Work keeps moving.",
+        to: PAYMENT_DESK_DEMO_ROUTE,
+        tag: "PAYMENT DESK",
+      },
       {
         id: "live-product",
         title: "Live Product Selling Board",
@@ -2098,7 +2106,7 @@ export default function CreatorCity() {
 
           <div style={{ padding: isCompact ? "0 10px 20px" : "0 16px 28px" }}>
             {!isCompact ? (
-              <div style={panel}>
+              <div ref={readySystemsRef} style={panel}>
                 <div style={panelHeader}>
                   <div style={panelKicker}>Creator systems</div>
                   <div style={panelTitle}>Ready systems now live on their own page</div>
@@ -2142,6 +2150,83 @@ export default function CreatorCity() {
                         Open Creator Studio
                       </button>
                     </div>
+                  </div>
+
+                  <div style={examplesLabel}>Featured proof inside Creator City</div>
+
+                  <div
+                    style={featuredDemoCard}
+                    onClick={() => openRoute(PAYMENT_DESK_DEMO_ROUTE)}
+                  >
+                    <div style={featuredDemoInner}>
+                      <div style={featuredDemoBadgeRow}>
+                        <div style={featuredDemoBadge}>LIVE PAYMENT DESK</div>
+                        <div style={featuredDemoSecondaryBadge}>NO SCREENSHOT PAYMENTS</div>
+                      </div>
+
+                      <div style={featuredDemoTop}>
+                        <div>
+                          <div style={featuredDemoTitle}>No Screenshot Payments</div>
+                          <div style={featuredDemoSubline}>
+                            Customer pays. System confirms. Work keeps moving. This is the clean
+                            proof page for showing how HomePlanet handles payment truth without
+                            screenshots, text chasing, or manual verification.
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          style={featuredDemoAction}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openRoute(PAYMENT_DESK_DEMO_ROUTE);
+                          }}
+                        >
+                          Open live demo
+                        </button>
+                      </div>
+
+                      <div style={featuredValueGrid}>
+                        <div style={featuredValueCard}>
+                          <div style={feedLabel}>Problem</div>
+                          <div style={feedValue(true)}>
+                            “Did you send it?” should not be a workflow.
+                          </div>
+                        </div>
+
+                        <div style={featuredValueCard}>
+                          <div style={feedLabel}>What it proves</div>
+                          <div style={feedValue(true)}>
+                            Payment becomes visible truth the second it happens.
+                          </div>
+                        </div>
+
+                        <div style={featuredValueCard}>
+                          <div style={feedLabel}>Best use</div>
+                          <div style={feedValue(true)}>
+                            Send as a direct standalone proof page or open from Creator City.
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={examplesLabel}>More live system examples</div>
+
+                  <div style={examplesGrid}>
+                    {systems
+                      .filter((item) => item.id !== "payments")
+                      .map((item) => (
+                        <div
+                          key={item.id}
+                          style={exampleCard}
+                          onClick={() => openRoute(item.to)}
+                        >
+                          <div style={tagStyle}>{item.tag}</div>
+                          <div style={exampleTitle}>{item.title}</div>
+                          <div style={exampleSub}>{item.subtitle}</div>
+                        </div>
+                      ))}
                   </div>
                 </div>
               </div>
