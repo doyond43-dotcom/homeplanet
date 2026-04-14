@@ -22,7 +22,7 @@ function readBoardSlugFromQuery() {
 }
 
 function makeLiveBoardHref(boardSlug: string) {
-  return boardSlug ? `/planet/beauty/color-me-crazy${boardSlug}` : "/planet/creator/start";
+  return boardSlug ? "/planet/beauty/color-me-crazy?board=$boardSlug" : "/planet/creator/start";
 }
 
 export default function ColorMeCrazyLanding() {
