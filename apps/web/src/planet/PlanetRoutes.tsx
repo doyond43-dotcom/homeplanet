@@ -128,7 +128,7 @@ export default function PlanetRoutes() {
 
       {/* DEMOS */}
       <Route path="demo/home-services" element={<AwnitDemoBoard />} />
-      <Route path="demo/auto-service" element={<AutoRepairLiveBoard />} />
+      <Route path="demo/auto-service" element={<BeautySalonLiveBoard />} />
       <Route path="demo/kitchen-flow" element={<RestaurantRushSimpleDemo />} />
       <Route path="demo/kitchen-manual" element={<RestaurantRushManualDemo />} />
       <Route path="demo/escape-board" element={<EscapeBoardDemo />} />
@@ -148,7 +148,7 @@ export default function PlanetRoutes() {
       <Route path="demo/no-screenshot-payments" element={<NoScreenshotPaymentsDemo />} />
 
       {/* LIVE BOARD */}
-      <Route path="live/:boardSlug" element={<AutoRepairLiveBoard />} />
+      <Route path="live/:boardSlug" element={<BeautySalonLiveBoard />} />
 
       {/* VEHICLES */}
       <Route path="vehicles/awnit-demo" element={<AwnitDemoBoard />} />
