@@ -605,6 +605,9 @@ function sanitizePhone(phone: string) {
   return phone.replace(/[^\d+]/g, "");
 }
 
+function runAfterInvoiceUiCommit(action: () => void) {
+  window.setTimeout(action, 120);
+}
 function openTextMessage(phone: string, text: string) {
   const cleanedPhone = sanitizePhone(phone);
   const encoded = encodeURIComponent(text);
@@ -1095,7 +1098,27 @@ const boardSlugDisplay =
 const isActiveBoard =
   isClaimed || boardMeta?.is_active === true;
 
-  const stages = useMemo(() => [...config.stages], [config.stages]);
+  const stages = useMemo(() => {
+    const nextStages = [...config.stages];
+
+    if (
+      !isRestaurant &&
+      !isCamp &&
+      !nextStages.includes("Awaiting Payment")
+    ) {
+      const readyIndex = nextStages.findIndex((stage) =>
+        stage.toLowerCase().includes("ready"),
+      );
+
+      if (readyIndex >= 0) {
+        nextStages.splice(readyIndex, 0, "Awaiting Payment");
+      } else {
+        nextStages.push("Awaiting Payment");
+      }
+    }
+
+    return nextStages;
+  }, [config.stages, isRestaurant, isCamp]);
 
   const actionConfig = config.actions || {
     updateTitle: "Status update",
@@ -1871,8 +1894,17 @@ window.location.href = "/planet/start/building";
     window.setTimeout(() => setStatusNote(""), 1000);
   }
 
-  function logInvoiceToTimeline(action: InvoiceTimelineAction, amount: string, memo: string) {
+    function logInvoiceToTimeline(action: InvoiceTimelineAction, amount: string, memo: string) {
     if (!selectedJob) return;
+
+    const invoiceActionLabel = formatInvoiceTimelineAction(action);
+    const nextStage = !isRestaurant && !isCamp ? "Awaiting Payment" : selectedJob.stage;
+    const nextNote = buildInvoiceTimelineNote({
+      amount,
+      memo,
+      cashAppCashtag: paymentProfile.cashAppCashtag,
+      zelleValue: paymentProfile.zelleValue,
+    });
 
     updateProofForJob(selectedJob.id, (current) => [
       {
@@ -1880,20 +1912,54 @@ window.location.href = "/planet/start/building";
           typeof crypto !== "undefined" && "randomUUID" in crypto
             ? crypto.randomUUID()
             : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-        label: formatInvoiceTimelineAction(action),
-        note: buildInvoiceTimelineNote({
-          amount,
-          memo,
-          cashAppCashtag: paymentProfile.cashAppCashtag,
-          zelleValue: paymentProfile.zelleValue,
-        }),
+        label: invoiceActionLabel,
+        note: nextNote,
         createdAt: new Date().toISOString(),
       },
       ...current,
     ]);
 
-    setStatusNote(formatInvoiceTimelineAction(action));
-    window.setTimeout(() => setStatusNote(""), 1000);
+    if (!isRestaurant && !isCamp && selectedJob.stage !== nextStage) {
+      updateProofForJob(selectedJob.id, (current) => [
+        {
+          id:
+            typeof crypto !== "undefined" && "randomUUID" in crypto
+              ? crypto.randomUUID()
+              : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+          label: "Stage changed",
+          note: Moved to  via invoice action,
+          createdAt: new Date().toISOString(),
+        },
+        ...current,
+      ]);
+
+      setJobs((current) =>
+        current.map((job) =>
+          job.id === selectedJob.id
+            ? {
+                ...job,
+                stage: nextStage,
+              }
+            : job,
+        ),
+      );
+    }
+
+    setStatusNote(${invoiceActionLabel} Â· );
+    window.setTimeout(() => setStatusNote(""), 1200);
+
+    if (!isRestaurant && !isCamp && selectedJob.stage !== nextStage) {
+      void supabase
+        .from("auto_repair_jobs")
+        .update({ stage: nextStage })
+        .eq("id", selectedJob.id)
+        .then(({ error }) => {
+          if (error) {
+            setStatusNote(Invoice logged, but stage update failed: );
+            window.setTimeout(() => setStatusNote(""), 1800);
+          }
+        });
+    }
   }
 
   function startProofCapture() {
@@ -3266,33 +3332,6 @@ window.location.href = "/planet/start/building";
                         paymentMemo={paymentMemo}
                         paymentProfile={paymentProfile}
                         onCopy={copyMessage}
-                        onInvoiceAction={(action, invoiceText) => {
-                          const amountForLog = paymentAmount || "0.00";
-                          const memoForLog =
-                            paymentMemo ||
-                            selectedJob.roNumber ||
-                            "Invoice";
-
-                          if (!isRestaurant && !isCamp) {
-                            setJobs((current) =>
-                              current.map((job) =>
-                                job.id === selectedJob.id
-                                  ? {
-                                      ...job,
-                                      stage: "Awaiting Payment",
-                                    }
-                                  : job,
-                              ),
-                            );
-
-                            void supabase
-                              .from("auto_repair_jobs")
-                              .update({ stage: "Awaiting Payment" })
-                              .eq("id", selectedJob.id);
-                          }
-
-                          logInvoiceToTimeline(action, amountForLog, memoForLog);
-                        }}
                       />
                     ) : null}
 

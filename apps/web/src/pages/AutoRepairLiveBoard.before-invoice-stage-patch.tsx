@@ -3266,33 +3266,6 @@ window.location.href = "/planet/start/building";
                         paymentMemo={paymentMemo}
                         paymentProfile={paymentProfile}
                         onCopy={copyMessage}
-                        onInvoiceAction={(action, invoiceText) => {
-                          const amountForLog = paymentAmount || "0.00";
-                          const memoForLog =
-                            paymentMemo ||
-                            selectedJob.roNumber ||
-                            "Invoice";
-
-                          if (!isRestaurant && !isCamp) {
-                            setJobs((current) =>
-                              current.map((job) =>
-                                job.id === selectedJob.id
-                                  ? {
-                                      ...job,
-                                      stage: "Awaiting Payment",
-                                    }
-                                  : job,
-                              ),
-                            );
-
-                            void supabase
-                              .from("auto_repair_jobs")
-                              .update({ stage: "Awaiting Payment" })
-                              .eq("id", selectedJob.id);
-                          }
-
-                          logInvoiceToTimeline(action, amountForLog, memoForLog);
-                        }}
                       />
                     ) : null}
 
@@ -4056,9 +4029,6 @@ function NotificationLine({
     </div>
   );
 }
-
-
-
 
 
 

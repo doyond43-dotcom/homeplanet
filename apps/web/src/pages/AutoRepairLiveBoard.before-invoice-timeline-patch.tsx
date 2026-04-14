@@ -24,8 +24,6 @@ type ProofClip = {
   createdAt: string;
 };
 
-type InvoiceTimelineAction = "copied" | "texted" | "emailed" | "shared";
-
 type RepairJob = {
   id: string;
   roNumber: string;
@@ -426,43 +424,6 @@ function mergeProofIntoJobs(boardSlug: string, rows: RepairJob[]) {
   }));
 }
 
-
-function formatInvoiceTimelineAction(action: InvoiceTimelineAction) {
-  switch (action) {
-    case "copied":
-      return "Invoice Copied";
-    case "texted":
-      return "Invoice Texted";
-    case "emailed":
-      return "Invoice Emailed";
-    case "shared":
-      return "Invoice Shared";
-    default:
-      return "Invoice Updated";
-  }
-}
-
-function buildInvoiceTimelineNote(args: {
-  amount: string;
-  memo: string;
-  cashAppCashtag?: string;
-  zelleValue?: string;
-}) {
-  const lines = [
-    `Amount: $${args.amount || "0.00"}`,
-    `Memo: ${args.memo || "â€”"}`,
-  ];
-
-  if (args.cashAppCashtag) {
-    lines.push(`Cash App: $${args.cashAppCashtag}`);
-  }
-
-  if (args.zelleValue) {
-    lines.push(`Zelle: ${args.zelleValue}`);
-  }
-
-  return lines.join(" Â· ");
-}
 function proofStatus(job: RepairJob) {
   const count = job.proof?.length || 0;
 
@@ -997,7 +958,6 @@ export default function AutoRepairLiveBoard() {
   const [proofNoteDraft, setProofNoteDraft] = useState("");
   const [paymentAmountDraft, setPaymentAmountDraft] = useState("");
   const [paymentMemoDraft, setPaymentMemoDraft] = useState("");
-  const [invoicePanelKey, setInvoicePanelKey] = useState(0);
 
   const stageMenuRef = useRef<HTMLDivElement | null>(null);
   const saveTimerRef = useRef<number | null>(null);
@@ -1868,31 +1828,6 @@ window.location.href = "/planet/start/building";
 
     setProofNoteDraft("");
     setStatusNote("Proof captured");
-    window.setTimeout(() => setStatusNote(""), 1000);
-  }
-
-  function logInvoiceToTimeline(action: InvoiceTimelineAction, amount: string, memo: string) {
-    if (!selectedJob) return;
-
-    updateProofForJob(selectedJob.id, (current) => [
-      {
-        id:
-          typeof crypto !== "undefined" && "randomUUID" in crypto
-            ? crypto.randomUUID()
-            : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-        label: formatInvoiceTimelineAction(action),
-        note: buildInvoiceTimelineNote({
-          amount,
-          memo,
-          cashAppCashtag: paymentProfile.cashAppCashtag,
-          zelleValue: paymentProfile.zelleValue,
-        }),
-        createdAt: new Date().toISOString(),
-      },
-      ...current,
-    ]);
-
-    setStatusNote(formatInvoiceTimelineAction(action));
     window.setTimeout(() => setStatusNote(""), 1000);
   }
 
@@ -3266,33 +3201,6 @@ window.location.href = "/planet/start/building";
                         paymentMemo={paymentMemo}
                         paymentProfile={paymentProfile}
                         onCopy={copyMessage}
-                        onInvoiceAction={(action, invoiceText) => {
-                          const amountForLog = paymentAmount || "0.00";
-                          const memoForLog =
-                            paymentMemo ||
-                            selectedJob.roNumber ||
-                            "Invoice";
-
-                          if (!isRestaurant && !isCamp) {
-                            setJobs((current) =>
-                              current.map((job) =>
-                                job.id === selectedJob.id
-                                  ? {
-                                      ...job,
-                                      stage: "Awaiting Payment",
-                                    }
-                                  : job,
-                              ),
-                            );
-
-                            void supabase
-                              .from("auto_repair_jobs")
-                              .update({ stage: "Awaiting Payment" })
-                              .eq("id", selectedJob.id);
-                          }
-
-                          logInvoiceToTimeline(action, amountForLog, memoForLog);
-                        }}
                       />
                     ) : null}
 
@@ -4056,10 +3964,6 @@ function NotificationLine({
     </div>
   );
 }
-
-
-
-
 
 
 
