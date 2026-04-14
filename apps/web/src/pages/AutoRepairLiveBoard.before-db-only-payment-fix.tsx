@@ -1327,7 +1327,8 @@ const isActiveBoard =
     }
 
     const { data, error } = await supabase
-      .from("starter_boards").select("*").eq("board_slug", boardSlug).single()
+      .from("starter_boards")
+      .select("*")
       .eq("board_slug", liveBoardSlug)
       .maybeSingle();
 
@@ -3942,8 +3943,6 @@ function NotificationLine({
     </div>
   );
 }
-
-
 
 
 
