@@ -11,7 +11,7 @@ type BookingForm = {
   notes: string;
 };
 
-const BOARD_SLUG = "color-me-crazy";
+const BOARD_SLUG = "color-me-crazy-demo";
 
 const INITIAL_FORM: BookingForm = {
   name: "",
