@@ -210,8 +210,15 @@ export default function CreatorCity() {
         id: "restaurant",
         title: "Restaurant Live Board",
         subtitle: "Kitchen flow, ticket stages, and manager visibility.",
-        to: "/planet/food/restaurant-rush-live",
+        to: "/planet/live/peggies-diner",
         tag: "LIVE BOARD",
+      },
+      {
+        id: "color-me-crazy",
+        title: "Beauty Live Board",
+        subtitle: "Booking, chair flow, and payment in one clean beauty system.",
+        to: "/planet/beauty/color-me-crazy/home?board=color-me-crazy-demo",
+        tag: "BEAUTY LIVE",
       },
       {
         id: "meal-business",
