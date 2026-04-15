@@ -2263,11 +2263,28 @@ export default function CreatorCity() {
                           <div style={exampleSub}>{item.subtitle}</div>
                         </div>
                       ))}
-                  </div>
+                   </div>
                 </div>
               </div>
             ) : null}
 
+            {/* Talk to a human */}
+            <div className="mt-10 border-t border-neutral-800 pt-6 flex flex-col items-center gap-3">
+              <a
+                href="https://instagram.com/homeplanetlive"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center justify-center rounded-xl border border-neutral-700 bg-black/50 px-5 py-3 text-sm font-semibold text-white hover:border-neutral-500"
+              >
+                Talk to a human
+              </a>
+
+              <p className="text-xs text-neutral-600 text-center max-w-sm">
+                No accounts. No spam. No data traps. Just build and run your system.
+              </p>
+            </div>
+
+            {/* Footer */}
             <div style={footerWrap}>
               <div style={footerPrimary}>
                 <span style={footerPlanetMark}>
@@ -2279,6 +2296,7 @@ export default function CreatorCity() {
                 Your business is not complicated. Your tools are.
               </div>
             </div>
+
           </div>
         </div>
       </div>
