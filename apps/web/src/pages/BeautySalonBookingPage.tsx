@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 type BookingForm = {
@@ -11,7 +11,13 @@ type BookingForm = {
   notes: string;
 };
 
-const BOARD_SLUG = "color-me-crazy-demo";
+type StarterPayload = {
+  boardSlug?: string;
+  businessName?: string;
+  businessType?: string;
+};
+
+const FALLBACK_BOARD_SLUG = "color-me-crazy-demo";
 
 const INITIAL_FORM: BookingForm = {
   name: "",
@@ -23,7 +29,89 @@ const INITIAL_FORM: BookingForm = {
   notes: "",
 };
 
+function readStarterPayload(): StarterPayload {
+  if (typeof window === "undefined") return {};
+
+  try {
+    const raw = window.localStorage.getItem("hp_starter_payload");
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as StarterPayload;
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function resolveServiceOptions(businessName: string, businessType: string) {
+  const combined = `${businessName} ${businessType}`.toLowerCase();
+
+  if (
+    combined.includes("trash") ||
+    combined.includes("garbage") ||
+    combined.includes("bin cleaning") ||
+    combined.includes("can cleaning") ||
+    combined.includes("clean cans")
+  ) {
+    return [
+      "One-Time Can Cleaning",
+      "Monthly Can Cleaning",
+      "Two Can Cleaning",
+      "Three Can Cleaning",
+      "HOA / Multi-Home Service",
+      "Quote Request",
+    ];
+  }
+
+  if (
+    combined.includes("salon") ||
+    combined.includes("beauty") ||
+    combined.includes("hair") ||
+    combined.includes("stylist") ||
+    combined.includes("color me crazy")
+  ) {
+    return [
+      "Haircut",
+      "Color",
+      "Blowout",
+      "Highlights",
+      "Balayage",
+      "Treatment",
+    ];
+  }
+
+  return [
+    "Standard Service",
+    "Priority Service",
+    "Recurring Service",
+    "Consultation",
+    "Quote Request",
+    "Custom Request",
+  ];
+}
+
 export default function BeautySalonBookingPage() {
+  const starterPayload = useMemo(() => readStarterPayload(), []);
+
+  const boardSlug = useMemo(() => {
+    if (typeof window === "undefined") return starterPayload.boardSlug || FALLBACK_BOARD_SLUG;
+    const params = new URLSearchParams(window.location.search);
+    return params.get("board") || starterPayload.boardSlug || FALLBACK_BOARD_SLUG;
+  }, [starterPayload.boardSlug]);
+
+  const businessName = useMemo(() => {
+    const name = starterPayload.businessName?.trim();
+    return name || "Beauty Live Board";
+  }, [starterPayload.businessName]);
+
+  const businessType = useMemo(() => {
+    return starterPayload.businessType?.trim() || "";
+  }, [starterPayload.businessType]);
+
+  const serviceOptions = useMemo(
+    () => resolveServiceOptions(businessName, businessType),
+    [businessName, businessType]
+  );
+
   const [form, setForm] = useState<BookingForm>(INITIAL_FORM);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -48,7 +136,7 @@ export default function BeautySalonBookingPage() {
     setLoading(true);
 
     const payload = {
-      board_slug: BOARD_SLUG,
+      board_slug: boardSlug,
       customer_name: form.name.trim(),
       phone: form.phone.trim(),
       service: form.service.trim(),
@@ -83,12 +171,12 @@ export default function BeautySalonBookingPage() {
             </div>
             <h1 className="text-3xl font-semibold tracking-tight">You’re booked in.</h1>
             <p className="mt-3 text-sm text-neutral-400">
-              The request is now on the Color Me Crazy live board.
+              The request is now on the {businessName} live board.
             </p>
 
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               <a
-                href="/planet/beauty/color-me-crazy"
+                href={`/planet/beauty/color-me-crazy?board=${encodeURIComponent(boardSlug)}`}
                 className="rounded-xl border border-neutral-700 bg-neutral-900 px-4 py-3 text-sm font-semibold text-white"
               >
                 View Live Board
@@ -113,13 +201,13 @@ export default function BeautySalonBookingPage() {
         <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
           <section className="rounded-[30px] border border-neutral-800 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.07),transparent_30%),linear-gradient(180deg,#161616_0%,#0a0a0a_100%)] p-8 lg:p-10">
             <div className="inline-flex rounded-full border border-fuchsia-500/30 bg-fuchsia-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-fuchsia-300">
-              Color Me Crazy
+              {businessName}
             </div>
             <h1 className="mt-5 text-4xl font-semibold tracking-tight sm:text-5xl">
-              Book your salon appointment.
+              Book your appointment.
             </h1>
             <p className="mt-4 max-w-lg text-base text-neutral-300">
-              Clean. Fast. No phone tag. Drop your request and it hits the live salon board.
+              Clean. Fast. No phone tag. Drop your request and it hits the live board.
             </p>
 
             <div className="mt-8 grid gap-3 sm:grid-cols-3">
@@ -170,17 +258,16 @@ export default function BeautySalonBookingPage() {
                 className="w-full rounded-xl border border-neutral-700 bg-black px-4 py-3 text-white focus:border-white focus:outline-none"
               >
                 <option value="">Select Service</option>
-                <option value="Haircut">Haircut</option>
-                <option value="Color">Color</option>
-                <option value="Blowout">Blowout</option>
-                <option value="Highlights">Highlights</option>
-                <option value="Balayage">Balayage</option>
-                <option value="Treatment">Treatment</option>
+                {serviceOptions.map((service) => (
+                  <option key={service} value={service}>
+                    {service}
+                  </option>
+                ))}
               </select>
 
               <input
                 name="stylist"
-                placeholder="Preferred Stylist (optional)"
+                placeholder="Preferred Contact or Tech (optional)"
                 value={form.stylist}
                 onChange={handleChange}
                 className="w-full rounded-xl border border-neutral-700 bg-black px-4 py-3 text-white placeholder:text-neutral-500 focus:border-white focus:outline-none"

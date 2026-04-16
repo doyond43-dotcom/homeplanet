@@ -17,7 +17,12 @@ type Appointment = {
   created_at: string;
 };
 
-const DEFAULT_BOARD_SLUG = "color-me-crazy-demo";
+type StarterPayload = {
+  boardSlug?: string;
+  businessName?: string;
+};
+
+const FALLBACK_BOARD_SLUG = "color-me-crazy-demo";
 const CASH_APP_CASHTAG = "$YourRealCashtag";
 const ZELLE_CONTACT = "your@email.com";
 
@@ -93,20 +98,42 @@ function guessAmountFromService(service: string) {
   return "125.00";
 }
 
+function readStarterPayload(): StarterPayload {
+  if (typeof window === "undefined") return {};
+
+  try {
+    const raw = window.localStorage.getItem("hp_starter_payload");
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as StarterPayload;
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
 export default function BeautySalonLiveBoard() {
+  const starterPayload = useMemo(() => readStarterPayload(), []);
+
+  const boardSlug = useMemo(() => {
+    if (typeof window === "undefined") return starterPayload.boardSlug || FALLBACK_BOARD_SLUG;
+    const params = new URLSearchParams(window.location.search);
+    return params.get("board") || starterPayload.boardSlug || FALLBACK_BOARD_SLUG;
+  }, [starterPayload.boardSlug]);
+
+  const boardTitle = useMemo(() => {
+    const name = starterPayload.businessName?.trim();
+    return name || "Beauty Live Board";
+  }, [starterPayload.businessName]);
+
+  const defaultPaymentMemo = useMemo(() => `${boardTitle} appointment`, [boardTitle]);
+
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [selectedAppointmentId, setSelectedAppointmentId] = useState<string | null>(null);
   const [paymentAmount, setPaymentAmount] = useState("125.00");
-  const [paymentMemo, setPaymentMemo] = useState("Color Me Crazy appointment");
+  const [paymentMemo, setPaymentMemo] = useState(defaultPaymentMemo);
   const [copiedLabel, setCopiedLabel] = useState<string | null>(null);
-
-  const boardSlug = useMemo(() => {
-    if (typeof window === "undefined") return DEFAULT_BOARD_SLUG;
-    const params = new URLSearchParams(window.location.search);
-    return params.get("board") || DEFAULT_BOARD_SLUG;
-  }, []);
 
   async function fetchAppointments() {
     const { data, error } = await supabase
@@ -170,8 +197,12 @@ export default function BeautySalonLiveBoard() {
   function clearPaymentSelection() {
     setSelectedAppointmentId(null);
     setPaymentAmount("125.00");
-    setPaymentMemo("Color Me Crazy appointment");
+    setPaymentMemo(defaultPaymentMemo);
   }
+
+  useEffect(() => {
+    setPaymentMemo(defaultPaymentMemo);
+  }, [defaultPaymentMemo]);
 
   useEffect(() => {
     fetchAppointments();
@@ -263,7 +294,7 @@ export default function BeautySalonLiveBoard() {
                 </div>
               </div>
 
-              <h1 className="mt-1 text-2xl font-semibold tracking-tight">Color Me Crazy</h1>
+              <h1 className="mt-1 text-2xl font-semibold tracking-tight">{boardTitle}</h1>
               <p className="mt-1 max-w-2xl text-xs text-neutral-400">
                 Booking hits the board live. Move each appointment through the chair, then take
                 payment from the same flow without bouncing into a separate app mess.
