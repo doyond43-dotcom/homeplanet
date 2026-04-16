@@ -210,7 +210,7 @@ export default function CreatorCity() {
         id: "restaurant",
         title: "Restaurant Live Board",
         subtitle: "Kitchen flow, ticket stages, and manager visibility.",
-        to: "/planet/live/peggies-diner",
+        to: "/planet/food/restaurant-rush-live",
         tag: "LIVE BOARD",
       },
       {
@@ -233,6 +233,13 @@ export default function CreatorCity() {
         subtitle: "Sell, track, price, and manage pickup in one board.",
         to: "/planet/community/community-sale",
         tag: "COMMUNITY LIVE",
+      },
+      {
+        id: "child-safety",
+        title: "Child Safety System",
+        subtitle: "Unsafe conversation detection, intervention, and Guardian alert layer.",
+        to: "/planet/predator-shield",
+        tag: "SAFETY LAYER",
       },
       {
         id: "transportation",
@@ -286,19 +293,19 @@ export default function CreatorCity() {
 
   const trajectorySteps = [
     { id: "intake", title: "Intake", status: "complete", text: "Ready" },
-    {
+      {
       id: "config",
       title: "Config",
       status: businessName || businessType || city || contact ? "active" : "idle",
       text: "Profile and board type",
     },
-    {
+      {
       id: "build",
       title: "Build",
       status: currentWorkflow || biggestFriction ? "armed" : "idle",
       text: "Workflow and friction",
     },
-    {
+      {
       id: "launch",
       title: "Launch",
       status: reserveReady
@@ -312,21 +319,21 @@ export default function CreatorCity() {
 
   const missionFeed = [
     { label: "Presence lock", value: businessName ? "READY" : "WAITING", active: !!businessName },
-    { label: "Board family", value: configPreview.familyLabel || "STARTER", active: true },
-    { label: "Primary route", value: "/planet/creator/building", active: true },
-    {
+      { label: "Board family", value: configPreview.familyLabel || "STARTER", active: true },
+      { label: "Primary route", value: "/planet/creator/building", active: true },
+      {
       label: "Reserve route",
       value: PAYMENT_NODE_ROUTE,
       active: reserveReady,
     },
-    {
+      {
       label: "Live redirect",
       value: businessName
         ? `/planet/live/${slugify(businessName) || "starter-board"}-*`
         : "/planet/live/<boardSlug>",
       active: !!businessName,
     },
-    {
+      {
       label: "Truth intake",
       value:
         currentWorkflow || biggestFriction || customerQuestions ? "CAPTURING" : "PENDING",
@@ -342,24 +349,24 @@ export default function CreatorCity() {
         : "Waiting for business name",
       complete: !!businessName,
     },
-    {
+      {
       title: "Board family",
       text: configPreview.familyLabel,
       complete: !!resolvedBusinessLabel,
     },
-    {
+      {
       title: "Live stages",
       text: previewStages.length > 0 ? previewStages.join(" → ") : "Awaiting business type",
       complete: previewStages.length > 0,
     },
-    {
+      {
       title: "Trust step",
       text: reserveReady
         ? "Reserve step is ready. Payment holds the build slot before live assembly."
         : "Reserve step appears right after intake.",
       complete: reserveReady,
     },
-    {
+      {
       title: "Workflow",
       text: currentWorkflow || holyShiftMoment || "Waiting for workflow input",
       complete: !!(currentWorkflow || holyShiftMoment),
@@ -371,11 +378,11 @@ export default function CreatorCity() {
       label: "What happens now",
       value: "Your intake is locked in and your build slot is ready to reserve.",
     },
-    {
+      {
       label: "Why reserve",
       value: "This keeps the flow clean: intake first, then trust, then reserve, then live build.",
     },
-    {
+      {
       label: "Payment route",
       value: PAYMENT_NODE_ROUTE,
     },
@@ -1428,15 +1435,15 @@ export default function CreatorCity() {
 
   const intentCards = [
     { id: "landing-page" as BuildIntent, title: "Landing Page", text: "Clear front door" },
-    { id: "live-board" as BuildIntent, title: "Live Board", text: "Jobs and status live" },
-    {
+      { id: "live-board" as BuildIntent, title: "Live Board", text: "Jobs and status live" },
+      {
       id: "workflow-tool" as BuildIntent,
       title: "Workflow Tool",
       text: "Built around your process",
     },
-    { id: "intake-flow" as BuildIntent, title: "Intake Flow", text: "Calls, texts, walk-ins" },
-    { id: "payment-flow" as BuildIntent, title: "Payment Flow", text: "Job to payment" },
-    {
+      { id: "intake-flow" as BuildIntent, title: "Intake Flow", text: "Calls, texts, walk-ins" },
+      { id: "payment-flow" as BuildIntent, title: "Payment Flow", text: "Job to payment" },
+      {
       id: "full-system" as BuildIntent,
       title: "Full Business System",
       text: "Everything in one place",
@@ -2310,3 +2317,9 @@ export default function CreatorCity() {
     </div>
   );
 }
+
+
+
+
+
+

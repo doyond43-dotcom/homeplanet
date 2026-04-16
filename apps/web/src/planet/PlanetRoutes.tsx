@@ -242,10 +242,14 @@ export default function PlanetRoutes() {
       <Route path="dev/presence-grid" element={<PresenceGridPreview />} />
 
       {/* FALLBACK */}
-      <Route path=":planetId" element={<PlanetOverview />} />
+            {/* PREDATOR SHIELD */}
+      <Route path="predator-shield" element={<PredatorShieldIntervention />} />
+      <Route path="predator-shield/test" element={<PredatorShieldIntervention />} />
+<Route path=":planetId" element={<PlanetOverview />} />
       <Route path=":planetId/:cityId" element={<CityPage />} />
       <Route path="*" element={<Navigate to="/planet/creator" replace />} />
     </Routes>
   );
 }
+
 
