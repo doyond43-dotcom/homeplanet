@@ -168,6 +168,13 @@ export default function CreatorSystems() {
             tag: "DEMO BOARD",
           },
           {
+            id: "child-safety",
+            title: "Child Safety System",
+            subtitle: "Unsafe conversation detection, intervention, and Guardian alert layer.",
+            to: "/planet/predator-shield",
+            tag: "SAFETY LAYER",
+          },
+          {
             id: "legal",
             title: "Legal Workspace Demo",
             subtitle: "Timeline, evidence, and proof-style organization.",
