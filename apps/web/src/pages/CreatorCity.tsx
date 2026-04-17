@@ -193,13 +193,13 @@ export default function CreatorCity() {
         tag: "DEMO BOARD",
       },
       {
-        id: "experience",
-        title: "Experience Planet",
-        subtitle: "Live experiences, games, classes, and challenge boards.",
-        to: "/planet/experience",
-        tag: "NEW SYSTEM",
-      },
       {
+        id: "child-safety",
+        title: "Child Safety System",
+        subtitle: "Unsafe conversation detection, intervention, and Guardian alert layer.",
+        to: "/planet/predator-shield",
+        tag: "SAFETY LAYER",
+      },
         id: "routecut",
         title: "RouteCut Live Lawn Flow",
         subtitle: "Routing, next-stop flow, and live status.",
@@ -2310,6 +2310,10 @@ export default function CreatorCity() {
     </div>
   );
 }
+
+
+
+
 
 
 
