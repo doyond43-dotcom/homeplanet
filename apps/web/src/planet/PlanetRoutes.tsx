@@ -97,7 +97,7 @@ import OnboardingFlow from "../pages/OnboardingFlow";
 import OnboardingBuildTransition from "../pages/OnboardingBuildTransition";
 
 export default function PlanetRoutes() {
-  const RESTAURANT_LIVE_TARGET = "/planet/live/peggies-diner";
+  const RESTAURANT_LIVE_TARGET = "/planet/food/restaurant-rush-live-classic";
 
   return (
     <Routes>
@@ -132,8 +132,8 @@ export default function PlanetRoutes() {
       <Route path="demo/kitchen-flow" element={<RestaurantRushSimpleDemo />} />
       <Route path="demo/kitchen-manual" element={<RestaurantRushManualDemo />} />
       <Route path="demo/escape-board" element={<EscapeBoardDemo />} />
-      <Route path="demo/kitchen-live" element={<Navigate to={RESTAURANT_LIVE_TARGET} replace />} />
-      <Route path="demo/restaurant" element={<Navigate to={RESTAURANT_LIVE_TARGET} replace />} />
+      <Route path="demo/kitchen-live" element={<RestaurantRushLiveDemo />} />
+      <Route path="demo/restaurant" element={<RestaurantRushLiveDemo />} />
       <Route path="demo/example-kitchen" element={<MomsKitchenDemo />} />
       <Route path="demo/legal-workspace" element={<JoeGrantLegalDesk />} />
       <Route path="demo/lawn-route" element={<RouteCutLawnPage />} />
@@ -158,8 +158,8 @@ export default function PlanetRoutes() {
       {/* FOOD */}
       <Route path="food/restaurant-rush-simple" element={<RestaurantRushSimpleDemo />} />
       <Route path="food/restaurant-rush-manual" element={<RestaurantRushManualDemo />} />
-      <Route path="food/restaurant-rush-live" element={<Navigate to={RESTAURANT_LIVE_TARGET} replace />} />
-      <Route path="food/restaurant-rush" element={<Navigate to={RESTAURANT_LIVE_TARGET} replace />} />
+      <Route path="food/restaurant-rush-live" element={<RestaurantRushLiveDemo />} />
+      <Route path="food/restaurant-rush" element={<RestaurantRushLiveDemo />} />
       <Route path="food/restaurant-rush-legacy" element={<RestaurantRushDemo />} />
       <Route path="food/restaurant-rush-live-classic" element={<RestaurantRushLiveDemo />} />
       <Route path="food/moms-kitchen" element={<MomsKitchenDemo />} />
@@ -251,5 +251,6 @@ export default function PlanetRoutes() {
     </Routes>
   );
 }
+
 
 

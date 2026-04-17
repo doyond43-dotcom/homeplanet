@@ -235,13 +235,6 @@ export default function CreatorCity() {
         tag: "COMMUNITY LIVE",
       },
       {
-        id: "child-safety",
-        title: "Child Safety System",
-        subtitle: "Unsafe conversation detection, intervention, and Guardian alert layer.",
-        to: "/planet/predator-shield",
-        tag: "SAFETY LAYER",
-      },
-      {
         id: "transportation",
         title: "Transportation Dispatch Demo",
         subtitle: "Driver assignment, dispatch flow, and trip visibility.",
@@ -2317,6 +2310,9 @@ export default function CreatorCity() {
     </div>
   );
 }
+
+
+
 
 
 
