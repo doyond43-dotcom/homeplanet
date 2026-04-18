@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo, useState } from "react";
+﻿import React, { useEffect, useMemo, useState } from "react";
 
 const TAYLOR_CREEK_INTAKE_ROUTE = "/c/taylor-creek";
 const TAYLOR_CREEK_STAFF_ROUTE = "/planet/demo/auto-service-sample";
 const TAYLOR_CREEK_BOARD_ROUTE = "/live/taylor-creek/board";
 const TAYLOR_CREEK_SERVICE_ROUTE = "/service/taylor-creek";
 const NORTHSTAR_DEMO_ROUTE = "/planet/vehicles/awnit-demo";
+const CAMP_GUARDIAN_DEMO_ROUTE = "/planet/demo/camp-aquaflow";
 
 type SystemCard = {
   id: string;
@@ -90,7 +91,7 @@ export default function CreatorSystems() {
         id: "creator-core",
         label: "CREATOR CORE",
         title: "The creator floor",
-        text: "These are the boards and spaces that feel most native to Creator City — studio flow, projects, live selling, and creator-first execution.",
+        text: "These are the boards and spaces that feel most native to Creator City â€” studio flow, projects, live selling, and creator-first execution.",
         items: [
           {
             id: "creator-studio",
@@ -168,6 +169,13 @@ export default function CreatorSystems() {
             tag: "DEMO BOARD",
           },
           {
+            id: "camp-guardian",
+            title: "Camp Guardian System",
+            subtitle: "Live child presence, zone movement, guardian messaging, and camp safety visibility.",
+            to: CAMP_GUARDIAN_DEMO_ROUTE,
+            tag: "CAMP SAFETY",
+          },
+          {
             id: "child-safety",
             title: "Child Safety System",
             subtitle: "Unsafe conversation detection, intervention, and Guardian alert layer.",
@@ -187,7 +195,7 @@ export default function CreatorSystems() {
         id: "adjacent",
         label: "ADJACENT SYSTEMS",
         title: "Creator-adjacent systems",
-        text: "These connect to creator logic through scheduling, customer flow, operations, fulfillment, or live service movement — close enough to belong without crowding the main build page.",
+        text: "These connect to creator logic through scheduling, customer flow, operations, fulfillment, or live service movement â€” close enough to belong without crowding the main build page.",
         items: [
           {
             id: "meal-business",
@@ -706,7 +714,7 @@ export default function CreatorSystems() {
             ))}
 
             <div style={footer}>
-              HomePlanet © 2026. Creator demos, systems, and live board paths.
+              HomePlanet Â© 2026. Creator demos, systems, and live board paths.
             </div>
           </div>
         </div>
