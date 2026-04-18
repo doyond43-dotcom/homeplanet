@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+﻿import { Routes, Route, Navigate } from "react-router-dom";
 
 import PlanetOverview from "../pages/PlanetOverview";
 import CityPage from "../pages/CityPage";
@@ -41,6 +41,7 @@ import GuardianPublicProfilePage from "../pages/GuardianPublicProfilePage";
 // Demo boards
 import AwnitDemoBoard from "../pages/AwnitDemoBoard";
 import AutoRepairLiveBoard from "../pages/AutoRepairLiveBoard";
+import CampAquaflowStandalone from "../pages/CampAquaflowStandalone";
 import InvoiceView from "../pages/InvoiceView";
 import CommunitySaleBoard from "../pages/community/CommunitySaleBoard";
 import TransportationDispatchBoardV2 from "../pages/TransportationDispatchBoardV2";
@@ -129,6 +130,7 @@ export default function PlanetRoutes() {
       {/* DEMOS */}
       <Route path="demo/home-services" element={<AwnitDemoBoard />} />
       <Route path="demo/auto-service" element={<BeautySalonLiveBoard />} />
+      <Route path="demo/camp-aquaflow" element={<CampAquaflowStandalone />} />
       <Route path="demo/kitchen-flow" element={<RestaurantRushSimpleDemo />} />
       <Route path="demo/kitchen-manual" element={<RestaurantRushManualDemo />} />
       <Route path="demo/escape-board" element={<EscapeBoardDemo />} />
@@ -242,15 +244,12 @@ export default function PlanetRoutes() {
       <Route path="dev/presence-grid" element={<PresenceGridPreview />} />
 
       {/* FALLBACK */}
-            {/* PREDATOR SHIELD */}
+      {/* PREDATOR SHIELD */}
       <Route path="predator-shield" element={<PredatorShieldIntervention />} />
       <Route path="predator-shield/test" element={<PredatorShieldIntervention />} />
-<Route path=":planetId" element={<PlanetOverview />} />
+      <Route path=":planetId" element={<PlanetOverview />} />
       <Route path=":planetId/:cityId" element={<CityPage />} />
       <Route path="*" element={<Navigate to="/planet/creator" replace />} />
     </Routes>
   );
 }
-
-
-
