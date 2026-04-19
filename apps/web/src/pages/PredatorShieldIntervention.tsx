@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   Shield,
@@ -709,7 +709,7 @@ export default function PredatorShieldIntervention() {
 
                   <div className="mt-2 text-sm leading-7 text-slate-300">
                     {unsafeDetected
-                      ? "This isn’t safe."
+                      ? "This conversation shows signs of manipulation."
                       : "No active unsafe pattern in this loaded example."}
                   </div>
                 </div>
@@ -724,7 +724,7 @@ export default function PredatorShieldIntervention() {
                   {unsafeDetected ? (
                     <div className="rounded-2xl border border-red-400/15 bg-red-400/10 px-4 py-3">
                       <div className="font-semibold text-red-100">
-                        Pressure • Secrecy • Meet-up push
+                        Pressure | Secrecy | Meet-up push
                       </div>
                       <div className="mt-2 text-sm leading-6 text-slate-300">
                         This person is applying pressure and trying to move the
@@ -785,7 +785,7 @@ export default function PredatorShieldIntervention() {
               </div>
 
               <div className="mt-4 text-center text-xs text-slate-500">
-                PredatorShield Active • HomePlanet Safety Layer
+                PredatorShield Active | HomePlanet Safety Layer
               </div>
             </div>
 
@@ -883,7 +883,7 @@ export default function PredatorShieldIntervention() {
                           >
                             <div className="font-semibold">{guardian.name}</div>
                             <div className="mt-1 text-xs text-slate-400">
-                              {guardian.relationship} • {guardian.phone}
+                              {guardian.relationship} â€¢ {guardian.phone}
                             </div>
                           </button>
                         );
@@ -911,7 +911,7 @@ export default function PredatorShieldIntervention() {
                           className="rounded-2xl border border-white/10 bg-black/10 px-3 py-3 text-sm text-slate-300"
                         >
                           <div className="mb-1 text-[10px] uppercase tracking-[0.18em] text-slate-500">
-                            {message.role} • {message.at}
+                            {message.role} â€¢ {message.at}
                           </div>
                           <div>{message.text}</div>
                         </div>
@@ -960,3 +960,5 @@ export default function PredatorShieldIntervention() {
     </div>
   );
 }
+
+

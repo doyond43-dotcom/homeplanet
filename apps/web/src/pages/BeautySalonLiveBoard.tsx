@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useLocation, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
 type AppointmentStatus = "scheduled" | "in-progress" | "done";
@@ -18,6 +19,11 @@ type Appointment = {
 };
 
 type StarterPayload = {
+  boardSlug?: string;
+  businessName?: string;
+};
+
+type LiveBoardLocationState = {
   boardSlug?: string;
   businessName?: string;
 };
@@ -112,18 +118,35 @@ function readStarterPayload(): StarterPayload {
 }
 
 export default function BeautySalonLiveBoard() {
+  const { boardSlug: routeBoardSlug } = useParams();
+  const location = useLocation();
+  const locationState = (location.state as LiveBoardLocationState | null) ?? {};
   const starterPayload = useMemo(() => readStarterPayload(), []);
 
   const boardSlug = useMemo(() => {
-    if (typeof window === "undefined") return starterPayload.boardSlug || FALLBACK_BOARD_SLUG;
-    const params = new URLSearchParams(window.location.search);
-    return params.get("board") || starterPayload.boardSlug || FALLBACK_BOARD_SLUG;
-  }, [starterPayload.boardSlug]);
+    if (routeBoardSlug?.trim()) return routeBoardSlug.trim();
+
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const boardFromQuery = params.get("board")?.trim();
+      if (boardFromQuery) return boardFromQuery;
+    }
+
+    if (locationState.boardSlug?.trim()) return locationState.boardSlug.trim();
+    if (starterPayload.boardSlug?.trim()) return starterPayload.boardSlug.trim();
+
+    return FALLBACK_BOARD_SLUG;
+  }, [routeBoardSlug, locationState.boardSlug, starterPayload.boardSlug]);
 
   const boardTitle = useMemo(() => {
-    const name = starterPayload.businessName?.trim();
-    return name || "Beauty Live Board";
-  }, [starterPayload.businessName]);
+    const nameFromState = locationState.businessName?.trim();
+    if (nameFromState) return nameFromState;
+
+    const nameFromStarter = starterPayload.businessName?.trim();
+    if (nameFromStarter) return nameFromStarter;
+
+    return "Beauty Live Board";
+  }, [locationState.businessName, starterPayload.businessName]);
 
   const defaultPaymentMemo = useMemo(() => `${boardTitle} appointment`, [boardTitle]);
 
@@ -160,7 +183,7 @@ export default function BeautySalonLiveBoard() {
     const previous = appointments;
 
     setAppointments((current) =>
-      current.map((appt) => (appt.id === id ? { ...appt, status } : appt))
+      current.map((appt) => (appt.id === id ? { ...appt, status } : appt)),
     );
 
     const { error } = await supabase
@@ -232,7 +255,7 @@ export default function BeautySalonLiveBoard() {
               return a.created_at.localeCompare(b.created_at);
             });
           });
-        }
+        },
       )
       .on(
         "postgres_changes",
@@ -246,9 +269,9 @@ export default function BeautySalonLiveBoard() {
           if (updatedRow.board_slug !== boardSlug) return;
 
           setAppointments((current) =>
-            current.map((appt) => (appt.id === updatedRow.id ? updatedRow : appt))
+            current.map((appt) => (appt.id === updatedRow.id ? updatedRow : appt)),
           );
-        }
+        },
       )
       .subscribe();
 
@@ -266,17 +289,17 @@ export default function BeautySalonLiveBoard() {
 
   const selectedAppointment = useMemo(
     () => appointments.find((appt) => appt.id === selectedAppointmentId) || null,
-    [appointments, selectedAppointmentId]
+    [appointments, selectedAppointmentId],
   );
 
   const cashAppUrl = useMemo(
     () => buildCashAppUrl(paymentAmount, paymentMemo),
-    [paymentAmount, paymentMemo]
+    [paymentAmount, paymentMemo],
   );
 
   const zelleCopyText = useMemo(
     () => buildZelleCopy(paymentAmount, paymentMemo),
-    [paymentAmount, paymentMemo]
+    [paymentAmount, paymentMemo],
   );
 
   return (

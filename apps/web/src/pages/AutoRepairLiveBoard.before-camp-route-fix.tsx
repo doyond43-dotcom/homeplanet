@@ -948,32 +948,28 @@ export default function AutoRepairLiveBoard() {
   const { boardSlug } = useParams<{ boardSlug: string }>();
 
   const payload = useMemo<OnboardingPayload>(() => {
-    const statePayload =
-      ((location.state as { onboardingPayload?: OnboardingPayload } | null)
-        ?.onboardingPayload ?? null) as OnboardingPayload | null;
+  const statePayload =
+    ((location.state as { onboardingPayload?: OnboardingPayload } | null)
+      ?.onboardingPayload ?? null) as OnboardingPayload | null;
 
-    if (statePayload) {
-      return statePayload;
-    }
+  if (statePayload) {
+    return statePayload;
+  }
 
-    if (boardSlug) {
-      return {} as OnboardingPayload;
-    }
-
-    try {
-      const raw = window.localStorage.getItem("hp_onboarding_payload");
-      if (!raw) return {} as OnboardingPayload;
-      return JSON.parse(raw) as OnboardingPayload;
-    } catch {
-      return {} as OnboardingPayload;
-    }
-  }, [location.state, boardSlug]);
+  try {
+    const raw = window.localStorage.getItem("hp_onboarding_payload");
+    if (!raw) return {} as OnboardingPayload;
+    return JSON.parse(raw) as OnboardingPayload;
+  } catch {
+    return {} as OnboardingPayload;
+  }
+}, [location.state]);
 
   const isExplicitDemoRoute = location.pathname === "/planet/demo/auto-service";
   const liveBoardSlug =
-    boardSlug || (isExplicitDemoRoute ? DEMO_BOARD_SLUG : payload.boardSlug || "");
-
-  const isForcedCampDemo = liveBoardSlug === "camp-aquaflow-5593";
+    boardSlug ||
+    payload.boardSlug ||
+    (isExplicitDemoRoute ? DEMO_BOARD_SLUG : "");
 
   const [jobs, setJobs] = useState<RepairJob[]>([]);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
@@ -1013,12 +1009,6 @@ export default function AutoRepairLiveBoard() {
     slugHint.includes("diner") ||
     slugHint.includes("peggie");
 
-  const slugForcesCamp =
-    slugHint.includes("camp") ||
-    slugHint.includes("guardian") ||
-    slugHint.includes("child") ||
-    slugHint.includes("aquaflow");
-
   const payloadMatchesBoard =
     !liveBoardSlug ||
     !payload.boardSlug ||
@@ -1037,46 +1027,27 @@ export default function AutoRepairLiveBoard() {
   );
 
   const businessType =
-    isForcedCampDemo
-      ? "Camp Guardian"
-      : normalizedBoardType ||
-        normalizedPayloadType ||
-        (slugForcesCamp
-          ? "Camp Guardian"
-          : slugForcesRestaurant
-            ? "Restaurant"
-            : "General");
+    normalizedBoardType ||
+    normalizedPayloadType ||
+    (slugForcesRestaurant ? "Restaurant" : "General");
 
   const inferredBusinessName = slugHint ? toTitleCaseFromSlug(slugHint) : "";
 
-  const forcedCampName = slugForcesCamp ? "Camp Aquaflow" : "";
-
   const rawBoardName =
-    isForcedCampDemo
-      ? "Camp Aquaflow"
-      : forcedCampName ||
-        boardMeta?.business_name?.trim() ||
-        scopedPayload.businessName?.trim() ||
-        "";
+    boardMeta?.business_name?.trim() ||
+    scopedPayload.businessName?.trim() ||
+    "";
 
   const businessName =
-    isForcedCampDemo
-      ? "Camp Aquaflow"
-      : forcedCampName ||
-        (rawBoardName && !isGenericLiveBoardName(rawBoardName)
-          ? rawBoardName
-          : inferredBusinessName ||
-            rawBoardName ||
-            (slugForcesRestaurant ? "Restaurant" : "Live Board"));
+    rawBoardName && !isGenericLiveBoardName(rawBoardName)
+      ? rawBoardName
+      : inferredBusinessName ||
+        rawBoardName ||
+        (slugForcesRestaurant ? "Restaurant" : "Live Board");
 
   const boardTitle = makeBoardTitle(businessName);
 
-  const city =
-    isForcedCampDemo
-      ? "Okeechobee"
-      : slugForcesCamp
-        ? (boardMeta?.city || "Okeechobee")
-        : (boardMeta?.city || scopedPayload.city?.trim() || "Your City");
+  const city = boardMeta?.city || scopedPayload.city?.trim() || "Your City";
 
   const stageConfigReady =
     Boolean(boardMeta?.business_type?.trim()) ||
@@ -1391,12 +1362,6 @@ const isActiveBoard =
 
   async function loadBoardMeta() {
     if (!liveBoardSlug) {
-      setBoardMeta(null);
-      setBoardMetaLoaded(true);
-      return null;
-    }
-
-    if (isForcedCampDemo) {
       setBoardMeta(null);
       setBoardMetaLoaded(true);
       return null;
@@ -1972,9 +1937,6 @@ window.location.href = "/planet/start/building";
 
   return (
     <div className="min-h-screen bg-[#050816] text-white">
-  <div className="sticky top-0 z-[120] border-b border-red-500/40 bg-red-500 px-4 py-3 text-center text-sm font-bold text-black">
-    DEBUG MARKER :: AUTOREPAIRLIVEBOARD.TSX IS RENDERING
-  </div>
       {!isRestaurant && !loading && !isClaimed && claimPanelDismissed ? (
         <div className="fixed bottom-5 right-5 z-[65]">
           <button
@@ -2114,8 +2076,6 @@ window.location.href = "/planet/start/building";
                     <div>City: {city}</div>
                     <div>Flow: {config.flowLabel}</div>
                     <div>Mode: {businessType}</div>
-                    <div>Config Key: {config.key}</div>
-                    <div>Slug Hint: {slugHint}</div>
                     <div>Live link: /planet/live/{liveBoardSlug}</div>
                   </div>
 
@@ -4096,11 +4056,6 @@ function NotificationLine({
     </div>
   );
 }
-
-
-
-
-
 
 
 

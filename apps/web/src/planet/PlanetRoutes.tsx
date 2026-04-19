@@ -30,6 +30,7 @@ import BeautySalonLiveBoard from "../pages/BeautySalonLiveBoard";
 import BeautySalonBookingPage from "../pages/BeautySalonBookingPage";
 import BeautySalonLandingPage from "../pages/BeautySalonLandingPage";
 import ColorMeCrazyLanding from "../pages/ColorMeCrazyLanding";
+import LiveBoardRouter from "../pages/LiveBoardRouter";
 
 // Creation moment
 import CreationMomentPage from "../pages/CreationMomentPage";
@@ -40,7 +41,6 @@ import GuardianPublicProfilePage from "../pages/GuardianPublicProfilePage";
 
 // Demo boards
 import AwnitDemoBoard from "../pages/AwnitDemoBoard";
-import AutoRepairLiveBoard from "../pages/AutoRepairLiveBoard";
 import CampAquaflowStandalone from "../pages/CampAquaflowStandalone";
 import InvoiceView from "../pages/InvoiceView";
 import CommunitySaleBoard from "../pages/community/CommunitySaleBoard";
@@ -98,8 +98,6 @@ import OnboardingFlow from "../pages/OnboardingFlow";
 import OnboardingBuildTransition from "../pages/OnboardingBuildTransition";
 
 export default function PlanetRoutes() {
-  const RESTAURANT_LIVE_TARGET = "/planet/food/restaurant-rush-live-classic";
-
   return (
     <Routes>
       <Route index element={<Navigate to="/planet/creator" replace />} />
@@ -150,7 +148,7 @@ export default function PlanetRoutes() {
       <Route path="demo/no-screenshot-payments" element={<NoScreenshotPaymentsDemo />} />
 
       {/* LIVE BOARD */}
-      <Route path="live/:boardSlug" element={<BeautySalonLiveBoard />} />
+      <Route path="live/:boardSlug" element={<LiveBoardRouter />} />
 
       {/* VEHICLES */}
       <Route path="vehicles/awnit-demo" element={<AwnitDemoBoard />} />
@@ -244,7 +242,6 @@ export default function PlanetRoutes() {
       <Route path="dev/presence-grid" element={<PresenceGridPreview />} />
 
       {/* FALLBACK */}
-      {/* PREDATOR SHIELD */}
       <Route path="predator-shield" element={<PredatorShieldIntervention />} />
       <Route path="predator-shield/test" element={<PredatorShieldIntervention />} />
       <Route path=":planetId" element={<PlanetOverview />} />

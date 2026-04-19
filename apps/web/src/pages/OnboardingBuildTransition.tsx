@@ -13,6 +13,7 @@ type OnboardingPayload = {
   presenceId?: string;
   presenceKey?: string;
   starterPlan?: string;
+  phone?: string;
 };
 
 type StarterBoardRow = {
@@ -72,6 +73,11 @@ function normalizeCity(value?: string) {
   return (value ?? "").trim();
 }
 
+function normalizePhone(value?: string) {
+  const trimmed = (value ?? "").trim();
+  return trimmed || "N/A";
+}
+
 function createPresenceId() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let result = "HP-";
@@ -106,33 +112,44 @@ function buildSeedJob(
   payload: OnboardingPayload,
 ): AutoRepairJobSeed {
   const businessType = normalizeBusinessType(payload.businessType);
-  const boardConfig = resolveStarterBoardConfig(businessType);
-
-  const firstStage =
-    boardConfig?.stages?.[0]?.id ??
-    boardConfig?.stages?.[0]?.label ??
-    "new";
-
-  const contactName =
-    normalizeOwnerName(payload.ownerName) ||
-    normalizeBusinessName(payload.businessName) ||
-    "Customer";
-
   const businessName = normalizeBusinessName(payload.businessName);
+  const ownerName = normalizeOwnerName(payload.ownerName);
+  const phone = normalizePhone(payload.phone);
+
+  const boardConfig = resolveStarterBoardConfig({
+    businessType,
+    businessName,
+    primaryGoal: payload.primaryGoal,
+  });
+
+  const firstStage = boardConfig.stages?.[0] || "New Intake";
+
+  const contactName = ownerName || businessName || "Customer";
+  const isCampFlow = boardConfig.key === "camp-guardian";
 
   return {
     board_slug: boardSlug,
-    ro_number: `RO-${String(Math.floor(1000 + Math.random() * 9000))}`,
+    ro_number: isCampFlow
+      ? `CH-${String(Math.floor(1000 + Math.random() * 9000))}`
+      : `RO-${String(Math.floor(1000 + Math.random() * 9000))}`,
     customer: contactName,
-    vehicle: businessType === "auto-repair" ? "Vehicle pending" : "New job",
+    vehicle: isCampFlow
+      ? "Child pending"
+      : businessType === "auto-repair"
+        ? "Vehicle pending"
+        : "New job",
     concern:
       payload.primaryGoal?.trim() ||
-      `New ${businessName ? `${businessName} ` : ""}${businessType} intake`,
+      (isCampFlow
+        ? "New child presence intake"
+        : `New ${businessName ? `${businessName} ` : ""}${businessType} intake`),
     stage: firstStage,
-    eta: "TBD",
-    advisor: normalizeOwnerName(payload.ownerName) || "Front Desk",
-    notes: "Starter job created during onboarding transition.",
-    phone: "",
+    eta: isCampFlow ? "Check-in pending" : "TBD",
+    advisor: ownerName || (isCampFlow ? "Staff / Supervisor" : "Front Desk"),
+    notes: isCampFlow
+      ? "Starter child card created during onboarding transition."
+      : "Starter job created during onboarding transition.",
+    phone,
     appointment_date: todayDate(),
     appointment_time: defaultAppointmentTime(),
   };
@@ -163,7 +180,7 @@ async function createStarterBoard(
     business_type: normalizeBusinessType(payload.businessType) || null,
     city: normalizeCity(payload.city) || null,
     owner_name: normalizeOwnerName(payload.ownerName) || null,
-    phone: null,
+    phone: normalizePhone(payload.phone),
     presence_id: payload.presenceId?.trim() || createPresenceId(),
     presence_key: payload.presenceKey?.trim() || crypto.randomUUID(),
     starter_plan: payload.starterPlan?.trim() || "free",
@@ -202,6 +219,7 @@ async function updateStarterBoard(
     city: existing.city ?? normalizeCity(payload.city) ?? null,
     owner_name:
       existing.owner_name ?? normalizeOwnerName(payload.ownerName) ?? null,
+    phone: existing.phone ?? normalizePhone(payload.phone),
     presence_id:
       existing.presence_id ??
       payload.presenceId?.trim() ??
@@ -241,7 +259,10 @@ async function ensureStarterBoard(payload: OnboardingPayload) {
 
   const missingPresence = !existing.presence_id || !existing.presence_key;
   const missingCore =
-    !existing.business_name || !existing.business_type || !existing.board_slug;
+    !existing.business_name ||
+    !existing.business_type ||
+    !existing.board_slug ||
+    !existing.phone;
 
   if (missingPresence || missingCore) {
     existing = await updateStarterBoard(existing, payload, boardSlug);
@@ -288,15 +309,21 @@ export default function OnboardingBuildTransition() {
     const params = new URLSearchParams(location.search);
 
     return {
-      businessName: statePayload.businessName ?? params.get("businessName") ?? "",
+      businessName:
+        statePayload.businessName ?? params.get("businessName") ?? "",
       ownerName: statePayload.ownerName ?? params.get("ownerName") ?? "",
-      businessType: statePayload.businessType ?? params.get("businessType") ?? "auto-repair",
+      businessType:
+        statePayload.businessType ??
+        params.get("businessType") ??
+        "auto-repair",
       city: statePayload.city ?? params.get("city") ?? "",
       primaryGoal: statePayload.primaryGoal ?? params.get("primaryGoal") ?? "",
       boardSlug: statePayload.boardSlug ?? params.get("boardSlug") ?? "",
       presenceId: statePayload.presenceId ?? params.get("presenceId") ?? "",
       presenceKey: statePayload.presenceKey ?? params.get("presenceKey") ?? "",
-      starterPlan: statePayload.starterPlan ?? params.get("starterPlan") ?? "free",
+      starterPlan:
+        statePayload.starterPlan ?? params.get("starterPlan") ?? "free",
+      phone: statePayload.phone ?? params.get("phone") ?? "",
     };
   }, [location.state, location.search]);
 
@@ -329,6 +356,36 @@ export default function OnboardingBuildTransition() {
         setStatus("finalizing");
         setStatusLabel("Opening your live board...");
 
+        const boardConfig = resolveStarterBoardConfig({
+          businessType:
+            board.business_type ?? payload.businessType ?? "auto-repair",
+          businessName: board.business_name ?? payload.businessName ?? "",
+          primaryGoal: payload.primaryGoal ?? "",
+        });
+
+        const isCampFlow = boardConfig.key === "camp-guardian";
+
+        if (isCampFlow) {
+          navigate("/planet/demo/camp-aquaflow", {
+            replace: true,
+            state: {
+              businessName: board.business_name ?? payload.businessName ?? "",
+              ownerName: board.owner_name ?? payload.ownerName ?? "",
+              businessType:
+                board.business_type ?? payload.businessType ?? "auto-repair",
+              city: board.city ?? payload.city ?? "",
+              primaryGoal: payload.primaryGoal ?? "",
+              boardSlug: board.board_slug,
+              presenceId: board.presence_id,
+              presenceKey: board.presence_key,
+              starterPlan: board.starter_plan ?? payload.starterPlan ?? "free",
+              phone: board.phone ?? payload.phone ?? "",
+              onboardingLocked: true,
+            },
+          });
+          return;
+        }
+
         navigate(`/planet/live/${board.board_slug}`, {
           replace: true,
           state: {
@@ -342,6 +399,7 @@ export default function OnboardingBuildTransition() {
             presenceId: board.presence_id,
             presenceKey: board.presence_key,
             starterPlan: board.starter_plan ?? payload.starterPlan ?? "free",
+            phone: board.phone ?? payload.phone ?? "",
             onboardingLocked: true,
           },
         });
