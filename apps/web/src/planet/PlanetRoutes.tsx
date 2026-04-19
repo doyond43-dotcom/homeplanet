@@ -1,4 +1,4 @@
-﻿import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 import PlanetOverview from "../pages/PlanetOverview";
 import CityPage from "../pages/CityPage";
@@ -26,10 +26,13 @@ import SkateZoneQrDemo from "../pages/SkateZoneQrDemo";
 import SkateZonePublicWaiverPage from "../pages/SkateZonePublicWaiverPage";
 import PredatorShieldIntervention from "../pages/PredatorShieldIntervention";
 
+import AutoRepairLiveBoard from "../pages/AutoRepairLiveBoard";
+import AutoRepairLiveBoardSample from "../pages/AutoRepairLiveBoardSample";
 import BeautySalonLiveBoard from "../pages/BeautySalonLiveBoard";
 import BeautySalonBookingPage from "../pages/BeautySalonBookingPage";
 import BeautySalonLandingPage from "../pages/BeautySalonLandingPage";
 import ColorMeCrazyLanding from "../pages/ColorMeCrazyLanding";
+import GuardianMobilityLiveBoard from "../pages/GuardianMobilityLiveBoard";
 import LiveBoardRouter from "../pages/LiveBoardRouter";
 
 // Creation moment
@@ -127,7 +130,8 @@ export default function PlanetRoutes() {
 
       {/* DEMOS */}
       <Route path="demo/home-services" element={<AwnitDemoBoard />} />
-      <Route path="demo/auto-service" element={<BeautySalonLiveBoard />} />
+      <Route path="demo/auto-service" element={<AutoRepairLiveBoardSample />} />
+      <Route path="demo/auto-service-sample" element={<AutoRepairLiveBoardSample />} />
       <Route path="demo/camp-aquaflow" element={<CampAquaflowStandalone />} />
       <Route path="demo/kitchen-flow" element={<RestaurantRushSimpleDemo />} />
       <Route path="demo/kitchen-manual" element={<RestaurantRushManualDemo />} />
@@ -153,6 +157,7 @@ export default function PlanetRoutes() {
       {/* VEHICLES */}
       <Route path="vehicles/awnit-demo" element={<AwnitDemoBoard />} />
       <Route path="vehicles/awnit-demo/invoice/:invoiceId" element={<InvoiceView />} />
+      <Route path="vehicles/guardian-mobility-live" element={<GuardianMobilityLiveBoard />} />
       <Route path="demo/awnit" element={<AwnitDemoBoard />} />
 
       {/* FOOD */}
@@ -250,3 +255,4 @@ export default function PlanetRoutes() {
     </Routes>
   );
 }
+
