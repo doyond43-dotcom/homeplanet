@@ -1,9 +1,9 @@
-﻿import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 const TAYLOR_CREEK_INTAKE_ROUTE = "/c/taylor-creek";
 const TAYLOR_CREEK_STAFF_ROUTE = "/planet/demo/auto-service-sample";
 const TAYLOR_CREEK_BOARD_ROUTE = "/live/taylor-creek/board";
-const TAYLOR_CREEK_SERVICE_ROUTE = "/service/taylor-creek";
+const TAYLOR_CREEK_SERVICE_ROUTE = "/planet/demo/auto-service-sample";
 const NORTHSTAR_DEMO_ROUTE = "/planet/vehicles/awnit-demo";
 const CAMP_GUARDIAN_DEMO_ROUTE = "/planet/demo/camp-aquaflow";
 
@@ -91,7 +91,7 @@ export default function CreatorSystems() {
         id: "creator-core",
         label: "CREATOR CORE",
         title: "The creator floor",
-        text: "These are the boards and spaces that feel most native to Creator City â€” studio flow, projects, live selling, and creator-first execution.",
+        text: "These are the boards and spaces that feel most native to Creator City — studio flow, projects, live selling, and creator-first execution.",
         items: [
           {
             id: "creator-studio",
@@ -195,7 +195,7 @@ export default function CreatorSystems() {
         id: "adjacent",
         label: "ADJACENT SYSTEMS",
         title: "Creator-adjacent systems",
-        text: "These connect to creator logic through scheduling, customer flow, operations, fulfillment, or live service movement â€” close enough to belong without crowding the main build page.",
+        text: "These connect to creator logic through scheduling, customer flow, operations, fulfillment, or live service movement — close enough to belong without crowding the main build page.",
         items: [
           {
             id: "meal-business",
@@ -714,7 +714,7 @@ export default function CreatorSystems() {
             ))}
 
             <div style={footer}>
-              HomePlanet Â© 2026. Creator demos, systems, and live board paths.
+              HomePlanet © 2026. Creator demos, systems, and live board paths.
             </div>
           </div>
         </div>
@@ -722,3 +722,5 @@ export default function CreatorSystems() {
     </div>
   );
 }
+
+
