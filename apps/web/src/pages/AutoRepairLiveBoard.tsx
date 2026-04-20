@@ -3,6 +3,11 @@ import { useLocation, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { resolveStarterBoardConfig } from "../lib/starterBoardConfig";
 import AutoRepairInvoicePanel from "../components/AutoRepairInvoicePanel";
+import {
+  evaluatePredictionSignals,
+  mapRepairJobsToPredictionItems,
+  defaultRepairPredictionPolicy,
+} from "../lib/predictionEngine";
 
 type OnboardingPayload = {
   businessName?: string;
@@ -1304,6 +1309,15 @@ const isActiveBoard =
     };
   }, [isRestaurant, jobs, stages]);
 
+  const predictedSignals = useMemo(() => {
+    return evaluatePredictionSignals(
+      mapRepairJobsToPredictionItems(jobs),
+      {
+        policy: defaultRepairPredictionPolicy(stages),
+      },
+    );
+  }, [jobs, stages]);
+
   const restaurantSnapshot = useMemo(() => {
     if (!isRestaurant) return null;
 
@@ -2352,6 +2366,55 @@ window.location.href = "/planet/start/building";
             value={totals.newIntake}
             accent
           />
+        </div>
+
+        <div className="mb-6 rounded-[24px] border border-amber-400/20 bg-amber-400/10 p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="text-xs uppercase tracking-[0.22em] text-amber-200/70">
+                Prediction Layer
+              </div>
+              <div className="mt-2 text-sm leading-6 text-amber-50">
+                Pattern recognition flags missing proof, stuck stages, payment gaps, and suspicious progression before they turn into trust problems.
+              </div>
+            </div>
+
+            <div className="rounded-full border border-amber-300/25 bg-amber-300/10 px-3 py-1 text-xs font-semibold text-amber-100">
+              {predictedSignals.length} signal{predictedSignals.length === 1 ? "" : "s"}
+            </div>
+          </div>
+
+          <div className="mt-4 space-y-3">
+            {predictedSignals.length ? (
+              predictedSignals.slice(0, 6).map((signal) => (
+                <div
+                  key={signal.id}
+                  className="rounded-2xl border border-white/10 bg-black/10 px-4 py-3"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="text-sm font-semibold text-white">
+                      {signal.title}
+                    </div>
+                    <div className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-200">
+                      {signal.severity}
+                    </div>
+                  </div>
+
+                  <div className="mt-2 text-sm leading-6 text-slate-300">
+                    {signal.detail}
+                  </div>
+
+                  <div className="mt-2 text-[11px] uppercase tracking-[0.18em] text-slate-500">
+                    {signal.itemLabel}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="rounded-2xl border border-dashed border-white/10 px-4 py-5 text-sm text-slate-400">
+                No prediction signals yet.
+              </div>
+            )}
+          </div>
         </div>
 
         <div
@@ -4102,6 +4165,9 @@ function NotificationLine({
     </div>
   );
 }
+
+
+
 
 
 
