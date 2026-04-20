@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { resolveStarterBoardConfig } from "../lib/starterBoardConfig";
+import { createReceiptRecord, attachReceiptToJob, upsertStoredReceipt, buildReceiptStorageKey, readStoredReceipts } from "../lib/receiptEngine";
 import AutoRepairInvoicePanel from "../components/AutoRepairInvoicePanel";
 
 type OnboardingPayload = {
@@ -1249,6 +1250,20 @@ const isActiveBoard =
       })
     : "";
   const zelleQrSrc = buildPaymentQrSrc(zelleQrPayload);
+
+  const jobReceipts = useMemo(() => {
+    if (!liveBoardSlug || !selectedJob) return [];
+
+    const storageKey = buildReceiptStorageKey({
+      boardSlug: liveBoardSlug,
+      presenceId,
+    });
+
+    const allReceipts = readStoredReceipts(storageKey);
+
+    return allReceipts.filter((receipt) => receipt.jobId === selectedJob.id);
+  }, [liveBoardSlug, presenceId, selectedJob]);
+
   const grouped = useMemo(() => {
     if (isRestaurant) {
       return stages.map((stage) => ({
@@ -3297,11 +3312,44 @@ window.location.href = "/planet/start/building";
                         paymentProfile={paymentProfile}
                         onCopy={copyMessage}
                         onInvoiceAction={(action, invoiceText) => {
-                          const amountForLog = paymentAmount || "0.00";
+                          const amountForLog = paymentAmountDraft || "0.00";
                           const memoForLog =
-                            paymentMemo ||
-                            selectedJob.roNumber ||
-                            "Invoice";
+                            paymentMemoDraft || selectedJob.roNumber || "Invoice";
+
+                          const storageKey = buildReceiptStorageKey({
+                            boardSlug: liveBoardSlug,
+                            presenceId,
+                          });
+
+                          const paymentMethod =
+                            paymentProfile.cashAppCashtag
+                              ? "cash-app"
+                              : paymentProfile.zelleValue
+                                ? "zelle"
+                                : "unknown";
+
+                          let receipt = createReceiptRecord({
+                            presenceId,
+                            source: "manual",
+                            vendorName: businessName,
+                            amountTotal: amountForLog,
+                            paymentMethod,
+                            transactionAt: new Date().toISOString(),
+                            boardSlug: liveBoardSlug,
+                            jobId: selectedJob.id,
+                            customerName: selectedJob.customer,
+                            notes: memoForLog,
+                            tags: ["invoice", "live-board", "auto-repair"],
+                          });
+
+                          receipt = attachReceiptToJob(receipt, {
+                            boardSlug: liveBoardSlug,
+                            jobId: selectedJob.id,
+                            customerName: selectedJob.customer,
+                            label: selectedJob.roNumber,
+                          });
+
+                          upsertStoredReceipt(storageKey, receipt);
 
                           if (!isRestaurant && !isCamp) {
                             setJobs((current) =>
@@ -3324,6 +3372,88 @@ window.location.href = "/planet/start/building";
                           logInvoiceToTimeline(action, amountForLog, memoForLog);
                         }}
                       />
+                    ) : null}
+
+                    {!isCamp ? (
+                      <div className="rounded-[24px] border border-emerald-400/20 bg-emerald-400/10 p-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <div className="text-xs uppercase tracking-[0.22em] text-emerald-200/70">
+                              Receipts
+                            </div>
+                            <div className="mt-2 text-sm leading-6 text-emerald-50">
+                              Stored receipt records tied to this job.
+                            </div>
+                          </div>
+
+                          <div className="rounded-full border border-emerald-300/25 bg-emerald-300/10 px-3 py-1 text-xs font-semibold text-emerald-100">
+                            {jobReceipts.length} receipt{jobReceipts.length === 1 ? "" : "s"}
+                          </div>
+                        </div>
+
+                        <div className="mt-4 space-y-3">
+                          {jobReceipts.length ? (
+                            jobReceipts.map((receipt) => (
+                              <div
+                                key={receipt.id}
+                                className="rounded-2xl border border-white/10 bg-black/10 px-4 py-3"
+                              >
+                                <div className="flex flex-wrap items-center justify-between gap-3">
+                                  <div className="text-sm font-semibold text-white">
+                                    {receipt.vendorName}
+                                  </div>
+
+                                  <div className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-200">
+                                    {receipt.paymentMethod !== "unknown" ? receipt.paymentMethod : "pending"}
+                                  </div>
+                                </div>
+
+                                <div className="mt-2 text-sm text-slate-300">
+                                  Amount: ${receipt.amountTotal?.toFixed ? receipt.amountTotal.toFixed(2) : receipt.amountTotal}
+                                </div>
+
+                                <div className="mt-1 text-sm text-slate-300">
+                                  {receipt.notes || "No receipt note added."}
+                                </div>
+
+                                <div className="mt-3 flex gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const text = `RECEIPT — ${receipt.vendorName}
+
+Customer: ${receipt.customerName || "Unknown"}
+RO: ${receipt.jobId || "-"}
+
+Amount: ${receipt.amountTotal}
+Note: ${receipt.notes || "-"}
+Method: ${receipt.paymentMethod !== "unknown" ? receipt.paymentMethod : "pending"}
+
+Board: ${liveBoardSlug}
+Presence ID: ${presenceId}
+
+— HomePlanet Proof`;
+
+                                      void navigator.clipboard.writeText(text);
+                                    }}
+                                    className="rounded-full border border-white/10 px-3 py-1 text-xs text-white transition hover:bg-white/10"
+                                  >
+                                    Copy Proof
+                                  </button>
+                                </div>
+
+                                <div className="mt-2 text-[11px] uppercase tracking-[0.18em] text-slate-500">
+                                  {receipt.createdAt}
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="rounded-2xl border border-dashed border-white/10 px-4 py-5 text-sm text-slate-400">
+                              No receipts stored for this job yet.
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     ) : null}
 
                     <div className="rounded-[24px] border border-cyan-400/20 bg-cyan-400/10 p-4">
@@ -4086,6 +4216,12 @@ function NotificationLine({
     </div>
   );
 }
+
+
+
+
+
+
 
 
 
