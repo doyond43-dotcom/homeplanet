@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+﻿import { Routes, Route, Navigate } from "react-router-dom";
 
 import PlanetOverview from "../pages/PlanetOverview";
 import CityPage from "../pages/CityPage";
@@ -31,6 +31,7 @@ import AutoRepairLiveBoardSample from "../pages/AutoRepairLiveBoardSample";
 import BeautySalonLiveBoard from "../pages/BeautySalonLiveBoard";
 import BeautySalonBookingPage from "../pages/BeautySalonBookingPage";
 import BeautySalonLandingPage from "../pages/BeautySalonLandingPage";
+import ButcherLivestockTruthBoard from "../pages/ButcherLivestockTruthBoard";
 import ColorMeCrazyLanding from "../pages/ColorMeCrazyLanding";
 import GuardianMobilityLiveBoard from "../pages/GuardianMobilityLiveBoard";
 import LiveBoardRouter from "../pages/LiveBoardRouter";
@@ -154,6 +155,9 @@ export default function PlanetRoutes() {
       {/* LIVE BOARD */}
       <Route path="live/:boardSlug" element={<LiveBoardRouter />} />
 
+      {/* LIVESTOCK */}
+      <Route path="livestock/truth/:animalSlug" element={<ButcherLivestockTruthBoard />} />
+
       {/* VEHICLES */}
       <Route path="vehicles/awnit-demo" element={<AwnitDemoBoard />} />
       <Route path="vehicles/awnit-demo/invoice/:invoiceId" element={<InvoiceView />} />
@@ -255,5 +259,4 @@ export default function PlanetRoutes() {
     </Routes>
   );
 }
-
 
