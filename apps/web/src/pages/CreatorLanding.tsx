@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 
 export default function CreatorLanding() {
   const open = (to: string) => {
@@ -114,7 +114,7 @@ export default function CreatorLanding() {
         <div style={subtitle}>Run your creator world from one place.</div>
 
         <div style={text}>
-          Streams, clips, edits, drops, requests, and live selling — organized
+          Streams, clips, edits, drops, requests, and live selling â€” organized
           without the chaos.
         </div>
 
@@ -126,40 +126,48 @@ export default function CreatorLanding() {
         </div>
 
         <div style={buttonGrid}>
-          <button
-            type="button"
-            style={primaryBtn}
-            onClick={() => open("/planet/creator")}
-          >
-            Launch Creator City
-          </button>
+  <button
+    type="button"
+    style={primaryBtn}
+    onClick={() => open("/planet/creator")}
+  >
+    Launch Creator City
+  </button>
 
-          <button
-            type="button"
-            style={secondaryBtn}
-            onClick={() => open("/planet/creator/studio-board")}
-          >
-            Open Creator Studio
-          </button>
+  <button
+    type="button"
+    style={secondaryBtn}
+    onClick={() => open("/planet/creator/studio-board")}
+  >
+    Open Creator Studio
+  </button>
 
-          <button
-            type="button"
-            style={secondaryBtn}
-            onClick={() => open("/planet/creator/systems")}
-          >
-            Open Live Systems
-          </button>
+  <button
+    type="button"
+    style={secondaryBtn}
+    onClick={() => open("/planet/creator/systems")}
+  >
+    Open Live Systems
+  </button>
 
-          <button
-            type="button"
-            style={secondaryBtn}
-            onClick={() => open("/planet/creator/projects")}
-          >
-            Open Projects
-          </button>
-        </div>
+  <button
+    type="button"
+    style={secondaryBtn}
+    onClick={() => open("/planet/guardian-pet")}
+  >
+    View Guardian Demo
+  </button>
 
-        <div style={footer}>
+  <button
+    type="button"
+    style={secondaryBtn}
+    onClick={() => open("/planet/creator/projects")}
+  >
+    Open Projects
+  </button>
+</div>
+
+<div style={footer}>
           Made for streamers, editors, gamers, stylists, live sellers, and
           creator-first businesses.
         </div>
@@ -167,3 +175,5 @@ export default function CreatorLanding() {
     </div>
   );
 }
+
+
