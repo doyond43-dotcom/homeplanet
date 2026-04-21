@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+﻿import { useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 type BookingForm = {
@@ -92,23 +92,17 @@ function resolveServiceOptions(businessName: string, businessType: string) {
 export default function BeautySalonBookingPage() {
   const starterPayload = useMemo(() => readStarterPayload(), []);
 
-  const boardSlug = useMemo(() => {
-    if (typeof window === "undefined") return starterPayload.boardSlug || FALLBACK_BOARD_SLUG;
-    const params = new URLSearchParams(window.location.search);
-    return params.get("board") || starterPayload.boardSlug || FALLBACK_BOARD_SLUG;
-  }, [starterPayload.boardSlug]);
+const boardSlug = useMemo(() => {
+  if (typeof window === "undefined") return FALLBACK_BOARD_SLUG;
+  const params = new URLSearchParams(window.location.search);
+  return params.get("board") || FALLBACK_BOARD_SLUG;
+}, []);
 
-  const businessName = useMemo(() => {
-    const name = starterPayload.businessName?.trim();
-    return name || "Beauty Live Board";
-  }, [starterPayload.businessName]);
-
-  const businessType = useMemo(() => {
-    return starterPayload.businessType?.trim() || "";
-  }, [starterPayload.businessType]);
+const businessName = "Color Me Crazy";
+const businessType = "beauty salon";
 
   const serviceOptions = useMemo(
-    () => resolveServiceOptions(businessName, businessType),
+    () => resolveServiceOptions("Color Me Crazy", "beauty salon"),
     [businessName, businessType]
   );
 
@@ -169,7 +163,7 @@ export default function BeautySalonBookingPage() {
             <div className="mx-auto mb-4 inline-flex rounded-full border border-emerald-600/40 bg-emerald-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-emerald-300">
               Appointment received
             </div>
-            <h1 className="text-3xl font-semibold tracking-tight">You’re booked in.</h1>
+            <h1 className="text-3xl font-semibold tracking-tight">You're booked in.</h1>
             <p className="mt-3 text-sm text-neutral-400">
               The request is now on the {businessName} live board.
             </p>
@@ -313,3 +307,4 @@ export default function BeautySalonBookingPage() {
     </div>
   );
 }
+

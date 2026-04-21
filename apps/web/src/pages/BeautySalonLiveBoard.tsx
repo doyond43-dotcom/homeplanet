@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
@@ -16,6 +16,16 @@ type Appointment = {
   notes: string | null;
   status: AppointmentStatus;
   created_at: string;
+};
+
+type AppointmentDraft = {
+  customer_name: string;
+  phone: string;
+  service: string;
+  stylist: string;
+  notes: string;
+  appointment_date: string;
+  appointment_time: string;
 };
 
 type StarterPayload = {
@@ -124,29 +134,25 @@ export default function BeautySalonLiveBoard() {
   const starterPayload = useMemo(() => readStarterPayload(), []);
 
   const boardSlug = useMemo(() => {
-    if (routeBoardSlug?.trim()) return routeBoardSlug.trim();
+  if (routeBoardSlug?.trim()) return routeBoardSlug.trim();
 
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const boardFromQuery = params.get("board")?.trim();
-      if (boardFromQuery) return boardFromQuery;
-    }
+  if (typeof window !== "undefined") {
+    const params = new URLSearchParams(window.location.search);
+    const boardFromQuery = params.get("board")?.trim();
+    if (boardFromQuery) return boardFromQuery;
+  }
 
-    if (locationState.boardSlug?.trim()) return locationState.boardSlug.trim();
-    if (starterPayload.boardSlug?.trim()) return starterPayload.boardSlug.trim();
+  if (locationState.boardSlug?.trim()) return locationState.boardSlug.trim();
 
-    return FALLBACK_BOARD_SLUG;
-  }, [routeBoardSlug, locationState.boardSlug, starterPayload.boardSlug]);
+  return FALLBACK_BOARD_SLUG;
+}, [routeBoardSlug, locationState.boardSlug]);
 
-  const boardTitle = useMemo(() => {
-    const nameFromState = locationState.businessName?.trim();
-    if (nameFromState) return nameFromState;
+const boardTitle = useMemo(() => {
+  const nameFromState = locationState.businessName?.trim();
+  if (nameFromState) return nameFromState;
 
-    const nameFromStarter = starterPayload.businessName?.trim();
-    if (nameFromStarter) return nameFromStarter;
-
-    return "Beauty Live Board";
-  }, [locationState.businessName, starterPayload.businessName]);
+  return "Color Me Crazy";
+}, [locationState.businessName]);
 
   const defaultPaymentMemo = useMemo(() => `${boardTitle} appointment`, [boardTitle]);
 
@@ -157,6 +163,10 @@ export default function BeautySalonLiveBoard() {
   const [paymentAmount, setPaymentAmount] = useState("125.00");
   const [paymentMemo, setPaymentMemo] = useState(defaultPaymentMemo);
   const [copiedLabel, setCopiedLabel] = useState<string | null>(null);
+  const [paymentPulse, setPaymentPulse] = useState(false);
+  const paymentPanelRef = useRef<HTMLElement | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState<AppointmentDraft | null>(null);
 
   async function fetchAppointments() {
     const { data, error } = await supabase
@@ -200,6 +210,159 @@ export default function BeautySalonLiveBoard() {
     setUpdatingId(null);
   }
 
+  function startEditing(appt: Appointment) {
+    setEditingId(appt.id);
+    setEditDraft({
+      customer_name: appt.customer_name || "",
+      phone: appt.phone || "",
+      service: appt.service || "",
+      stylist: appt.stylist || "",
+      notes: appt.notes || "",
+      appointment_date: appt.appointment_date || "",
+      appointment_time: appt.appointment_time || "",
+    });
+  }
+
+  function cancelEditing() {
+    setEditingId(null);
+    setEditDraft(null);
+  }
+
+  function updateEditDraft<K extends keyof AppointmentDraft>(field: K, value: AppointmentDraft[K]) {
+    setEditDraft((current) =>
+      current
+        ? {
+            ...current,
+            [field]: value,
+          }
+        : current,
+    );
+  }
+
+  async function saveAppointmentEdit(id: string) {
+    if (!editDraft) return;
+
+    const payload = {
+      customer_name: editDraft.customer_name.trim(),
+      phone: editDraft.phone.trim(),
+      service: editDraft.service.trim(),
+      stylist: editDraft.stylist.trim() || null,
+      notes: editDraft.notes.trim() || null,
+      appointment_date: editDraft.appointment_date,
+      appointment_time: editDraft.appointment_time,
+    };
+
+    const previous = appointments;
+
+    setAppointments((current) =>
+      current.map((appt) =>
+        appt.id === id
+          ? {
+              ...appt,
+              ...payload,
+              stylist: payload.stylist,
+              notes: payload.notes,
+            }
+          : appt,
+      ),
+    );
+
+    if (selectedAppointmentId === id) {
+      setPaymentAmount(guessAmountFromService(payload.service || ""));
+      setPaymentMemo(buildAppointmentMemo({
+        ...(previous.find((appt) => appt.id === id) || {
+          id,
+          board_slug: boardSlug,
+          customer_name: payload.customer_name,
+          phone: payload.phone,
+          service: payload.service,
+          stylist: payload.stylist,
+          appointment_date: payload.appointment_date,
+          appointment_time: payload.appointment_time,
+          notes: payload.notes,
+          status: "scheduled",
+          created_at: new Date().toISOString(),
+        }),
+        customer_name: payload.customer_name,
+        phone: payload.phone,
+        service: payload.service,
+        stylist: payload.stylist,
+        appointment_date: payload.appointment_date,
+        appointment_time: payload.appointment_time,
+        notes: payload.notes,
+      }));
+    }
+
+    const { error } = await supabase
+      .from("salon_appointments")
+      .update(payload)
+      .eq("id", id);
+
+    if (error) {
+      console.error("salon_appointments edit failed:", error);
+      setAppointments(previous);
+      alert(`Save failed: ${error.message}`);
+      return;
+    }
+
+    setEditingId(null);
+    setEditDraft(null);
+  }
+
+  async function markPaidAndComplete(id: string) {
+  const previous = appointments;
+
+  // Optimistic UI update
+  setAppointments((current) =>
+    current.map((appt) =>
+      appt.id === id ? { ...appt, status: "done" } : appt
+    )
+  );
+
+  try {
+    const { error } = await supabase
+      .from("salon_appointments")
+      .update({ status: "done" })
+      .eq("id", id);
+
+    if (error) {
+      console.error("Payment status update failed:", error);
+      setAppointments(previous);
+      alert("Failed to mark as paid/done.");
+    }
+  } catch (err) {
+    console.error(err);
+    setAppointments(previous);
+  }
+}
+
+async function deleteAppointment(id: string) {
+    const target = appointments.find((appt) => appt.id === id) || null;
+    const label = target?.customer_name?.trim() || "this appointment";
+
+    const confirmed = window.confirm(`Delete ${label}?`);
+    if (!confirmed) return;
+
+    const previous = appointments;
+    setAppointments((current) => current.filter((appt) => appt.id !== id));
+
+    if (selectedAppointmentId === id) {
+      setSelectedAppointmentId(null);
+      setPaymentMemo(defaultPaymentMemo);
+    }
+
+    const { error } = await supabase
+      .from("salon_appointments")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      console.error("salon_appointments delete failed:", error);
+      setAppointments(previous);
+      alert(`Delete failed: ${error.message}`);
+    }
+  }
+
   async function copyText(value: string, label: string) {
     try {
       await navigator.clipboard.writeText(value);
@@ -215,6 +378,11 @@ export default function BeautySalonLiveBoard() {
     setSelectedAppointmentId(appt.id);
     setPaymentAmount(guessAmountFromService(appt.service || ""));
     setPaymentMemo(buildAppointmentMemo(appt));
+
+// OPTIONAL: auto-complete immediately on selection (comment this out if too aggressive)
+setTimeout(() => {
+  markPaidAndComplete(appt.id);
+}, 300);
   }
 
   function clearPaymentSelection() {
@@ -367,97 +535,206 @@ export default function BeautySalonLiveBoard() {
                     ) : (
                       <div className="space-y-3">
                         {stage.items.map((appt) => {
-                          const isSelected = appt.id === selectedAppointmentId;
+  const isSelected = appt.id === selectedAppointmentId;
+  const isEditing = appt.id === editingId;
+  const formValue = isEditing && editDraft ? editDraft : null;
 
-                          return (
-                            <article
-                              key={appt.id}
-                              onClick={() => selectAppointmentForPayment(appt)}
-                              className={`cursor-pointer rounded-2xl border p-4 transition ${
-                                isSelected
-                                  ? "border-emerald-400/40 bg-emerald-500/10 shadow-[0_0_0_1px_rgba(52,211,153,0.08)]"
-                                  : "border-neutral-800 bg-black/50"
-                              }`}
-                            >
-                              <div className="flex items-start justify-between gap-3">
-                                <div>
-                                  <h3 className="text-base font-semibold">{appt.customer_name}</h3>
-                                  <p className="mt-1 text-sm text-neutral-400">
-                                    {formatDate(appt.appointment_date)} ·{" "}
-                                    {formatTime(appt.appointment_time)}
-                                  </p>
-                                </div>
-                                <div className="rounded-full border border-fuchsia-500/20 bg-fuchsia-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-fuchsia-300">
-                                  {appt.service}
-                                </div>
-                              </div>
+  return (
+    <article
+      key={appt.id}
+      onClick={() => {
+        if (!isEditing) selectAppointmentForPayment(appt);
+      }}
+      className={`cursor-pointer rounded-2xl border p-4 transition ${
+        isSelected
+          ? "border-emerald-400/40 bg-emerald-500/10 shadow-[0_0_0_1px_rgba(52,211,153,0.08)]"
+          : "border-neutral-800 bg-black/50"
+      }`}
+    >
+      <div className="space-y-2">
+  <div className="flex items-center justify-between gap-2">
+    <div className="flex-1 min-w-0">
+      {isEditing && formValue ? (
+        <input
+          type="text"
+          value={formValue.customer_name}
+          onChange={(event) => updateEditDraft("customer_name", event.target.value)}
+          onClick={(event) => event.stopPropagation()}
+          className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-base font-semibold text-white outline-none"
+        />
+      ) : (
+        <h3 className="text-base font-semibold">{appt.customer_name}</h3>
+      )}
+    </div>
+  </div>
 
-                              <div className="mt-3 space-y-1 text-sm text-neutral-300">
-                                <div>Phone: {appt.phone}</div>
-                                {appt.stylist ? <div>Stylist: {appt.stylist}</div> : null}
-                                {appt.notes ? (
-                                  <div className="text-neutral-400">Notes: {appt.notes}</div>
-                                ) : null}
-                              </div>
+  <div className="flex flex-wrap items-center gap-2">
+    {isEditing && formValue ? (
+      <input
+        type="text"
+        value={formValue.service}
+        onChange={(event) => updateEditDraft("service", event.target.value)}
+        onClick={(event) => event.stopPropagation()}
+        className="rounded-full border border-fuchsia-500/20 bg-fuchsia-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-fuchsia-300 outline-none"
+      />
+    ) : (
+      <div className="rounded-full border border-fuchsia-500/20 bg-fuchsia-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-fuchsia-300">
+        {appt.service}
+      </div>
+    )}
 
-                              <div className="mt-3 flex items-center justify-between gap-3">
-                                <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-300">
-                                  {isSelected ? "Payment selected" : "Click to load payment"}
-                                </div>
-                              </div>
+    <div className="flex items-center gap-2">
+      {isEditing ? (
+        <>
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              void saveAppointmentEdit(appt.id);
+            }}
+            className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-300"
+          >
+            Save
+          </button>
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              cancelEditing();
+            }}
+            className="rounded-full border border-neutral-700 px-2.5 py-1 text-[11px] text-neutral-300"
+          >
+            Cancel
+          </button>
+        </>
+      ) : (
+        <>
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              startEditing(appt);
+            }}
+            className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-2.5 py-1 text-[11px] text-cyan-300"
+          >
+            Edit
+          </button>
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              void deleteAppointment(appt.id);
+            }}
+            className="rounded-full border border-rose-500/20 bg-rose-500/10 px-2.5 py-1 text-[11px] text-rose-300"
+          >
+            Delete
+          </button>
+        </>
+      )}
+    </div>
+  </div>
+</div>
 
-                              <div className="mt-3 grid gap-2 sm:grid-cols-3">
-                                <button
-                                  type="button"
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                    updateStatus(appt.id, "scheduled");
-                                  }}
-                                  disabled={updatingId === appt.id}
-                                  className={`rounded-xl border px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] ${
-                                    appt.status === "scheduled"
-                                      ? "border-white bg-white text-black"
-                                      : "border-neutral-700 bg-neutral-950 text-neutral-300"
-                                  }`}
-                                >
-                                  Scheduled
-                                </button>
+<div className="mt-3 space-y-2 text-sm text-neutral-300">
+        {isEditing && formValue ? (
+          <>
+            <input
+              type="text"
+              value={formValue.phone}
+              onChange={(event) => updateEditDraft("phone", event.target.value)}
+              onClick={(event) => event.stopPropagation()}
+              className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none"
+              placeholder="Phone"
+            />
+            <input
+              type="text"
+              value={formValue.stylist}
+              onChange={(event) => updateEditDraft("stylist", event.target.value)}
+              onClick={(event) => event.stopPropagation()}
+              className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none"
+              placeholder="Stylist"
+            />
+            <textarea
+              value={formValue.notes}
+              onChange={(event) => updateEditDraft("notes", event.target.value)}
+              onClick={(event) => event.stopPropagation()}
+              className="min-h-[88px] w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none"
+              placeholder="Notes"
+            />
+          </>
+        ) : (
+          <>
+            <div>Phone: {appt.phone}</div>
+            {appt.stylist ? <div>Stylist: {appt.stylist}</div> : null}
+            {appt.notes ? (
+              <div className="text-neutral-400">Notes: {appt.notes}</div>
+            ) : null}
+          </>
+        )}
+      </div>
 
-                                <button
-                                  type="button"
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                    updateStatus(appt.id, "in-progress");
-                                  }}
-                                  disabled={updatingId === appt.id}
-                                  className={`rounded-xl border px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] ${
-                                    appt.status === "in-progress"
-                                      ? "border-white bg-white text-black"
-                                      : "border-neutral-700 bg-neutral-950 text-neutral-300"
-                                  }`}
-                                >
-                                  In Progress
-                                </button>
+      {!isEditing ? (
+        <>
+          <div className="mt-3 flex items-center justify-between gap-3">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-300">
+              {isSelected ? "Payment selected" : "Click to load payment"}
+            </div>
+          </div>
 
-                                <button
-                                  type="button"
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                    updateStatus(appt.id, "done");
-                                  }}
-                                  disabled={updatingId === appt.id}
-                                  className={`rounded-xl border px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] ${
-                                    appt.status === "done"
-                                      ? "border-white bg-white text-black"
-                                      : "border-neutral-700 bg-neutral-950 text-neutral-300"
-                                  }`}
-                                >
-                                  Done
-                                </button>
-                              </div>
-                            </article>
-                          );
-                        })}
+          <div className="mt-3 grid gap-2 sm:grid-cols-3">
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                updateStatus(appt.id, "scheduled");
+              }}
+              disabled={updatingId === appt.id}
+              className={`rounded-xl border px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] ${
+                appt.status === "scheduled"
+                  ? "border-white bg-white text-black"
+                  : "border-neutral-700 bg-neutral-950 text-neutral-300"
+              }`}
+            >
+              Scheduled
+            </button>
+
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                updateStatus(appt.id, "in-progress");
+              }}
+              disabled={updatingId === appt.id}
+              className={`rounded-xl border px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] ${
+                appt.status === "in-progress"
+                  ? "border-white bg-white text-black"
+                  : "border-neutral-700 bg-neutral-950 text-neutral-300"
+              }`}
+            >
+              In Progress
+            </button>
+
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                updateStatus(appt.id, "done");
+              }}
+              disabled={updatingId === appt.id}
+              className={`rounded-xl border px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] ${
+                appt.status === "done"
+                  ? "border-white bg-white text-black"
+                  : "border-neutral-700 bg-neutral-950 text-neutral-300"
+              }`}
+            >
+              Done
+            </button>
+          </div>
+        </>
+      ) : null}
+    </article>
+  );
+})}
                       </div>
                     )}
                   </section>
@@ -466,7 +743,12 @@ export default function BeautySalonLiveBoard() {
             )}
           </div>
 
-          <aside className="sticky top-3 h-fit rounded-[28px] border border-cyan-900/60 bg-[linear-gradient(180deg,rgba(12,30,36,0.96)_0%,rgba(8,14,20,0.98)_100%)] p-4 shadow-[0_0_0_1px_rgba(34,211,238,0.06)]">
+          <aside
+            ref={paymentPanelRef}
+            className={`sticky top-3 h-fit rounded-[28px] border border-cyan-900/60 bg-[linear-gradient(180deg,rgba(12,30,36,0.96)_0%,rgba(8,14,20,0.98)_100%)] p-4 shadow-[0_0_0_1px_rgba(34,211,238,0.06)] transition-all duration-500 ${
+              paymentPulse ? "ring-2 ring-cyan-300/70 shadow-[0_0_0_1px_rgba(34,211,238,0.16),0_0_28px_rgba(34,211,238,0.18)]" : ""
+            }`}
+          >
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-cyan-300/80">
@@ -494,8 +776,8 @@ export default function BeautySalonLiveBoard() {
                       {selectedAppointment.customer_name}
                     </h3>
                     <p className="mt-1 text-sm text-neutral-200">
-                      {selectedAppointment.service} ·{" "}
-                      {formatDate(selectedAppointment.appointment_date)} ·{" "}
+                      {selectedAppointment.service} Â·{" "}
+                      {formatDate(selectedAppointment.appointment_date)} Â·{" "}
                       {formatTime(selectedAppointment.appointment_time)}
                     </p>
                     <p className="mt-1 text-sm text-neutral-300">
@@ -585,6 +867,15 @@ export default function BeautySalonLiveBoard() {
                       ? "Copied Cash App Link"
                       : "Copy Cash App Link"}
                   </button>
+
+<div className="mt-3 rounded-xl border border-white/10 bg-black/30 p-3 text-xs text-white/60">
+  Demo payment QR (not real)
+  <img
+    src="/payment/cashapp-demo-qr.png"
+    alt="Demo Cash App QR"
+    className="mt-2 h-28 w-28 rounded-md border border-white/10"
+  />
+</div>
                 </div>
               </div>
 
@@ -622,6 +913,15 @@ export default function BeautySalonLiveBoard() {
                       ? "Copied Zelle Details"
                       : "Copy Zelle Details"}
                   </button>
+
+<div className="mt-3 rounded-xl border border-white/10 bg-black/30 p-3 text-xs text-white/60">
+  Demo payment QR (not real)
+  <img
+    src="/payment/zelle-demo-qr.png"
+    alt="Demo Zelle QR"
+    className="mt-2 h-28 w-28 rounded-md border border-white/10"
+  />
+</div>
                 </div>
               </div>
             </div>
@@ -636,3 +936,11 @@ export default function BeautySalonLiveBoard() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
