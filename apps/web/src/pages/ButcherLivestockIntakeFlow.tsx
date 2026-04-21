@@ -11,6 +11,7 @@ import {
   Tractor,
   UserRound,
 } from "lucide-react";
+import { supabase } from "../lib/supabase";
 
 type IntakeStage =
   | "animal-dropoff"
@@ -19,6 +20,15 @@ type IntakeStage =
   | "confirm-lock";
 
 type AnimalType = "Beef Steer" | "Beef Cow" | "Hog" | "Lamb" | "Goat" | "Other";
+
+type LivestockStage =
+  | "animal-received"
+  | "origin-locked"
+  | "processing-instructions"
+  | "cut-pack-stage"
+  | "boxed-frozen"
+  | "ready-for-pickup"
+  | "paid-released";
 
 const STAGES: Array<{
   key: IntakeStage;
@@ -69,6 +79,8 @@ export default function ButcherLivestockIntakeFlow() {
   const navigate = useNavigate();
 
   const [currentStage] = useState<IntakeStage>("animal-dropoff");
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string>("");
 
   const [ownerName, setOwnerName] = useState("Daniel Doyon");
   const [phone, setPhone] = useState("");
@@ -124,33 +136,48 @@ export default function ButcherLivestockIntakeFlow() {
     [],
   );
 
-  function handleContinue() {
-    navigate(`/planet/livestock/truth/${animalSlug}`, {
-      state: {
-        animalId,
-        animalSlug,
-        ownerName,
-        farmSource,
-        intakeAt,
-        weightIn,
-        currentStage: "animal-received",
-        animalType,
-        processingInstructions,
-        cutRequests,
-        packagingNotes,
-        boxCount: 0,
-        freezerStatus: "Not frozen yet",
-        freezerLocation: "Not assigned yet",
-        pickupStatus: "Not ready for pickup",
-        paymentStatus: "Unpaid",
-        receiptStatus: "Not issued yet",
-        proofStatus: "Intake locked",
-        estimatedYield: "Estimated 490–530 lb packaged",
-        finalYield: "Pending final packaged weight",
-        amountDue: "$1,180.00",
-        paymentMethod: "Zelle / Cash App / In-person",
-      },
-    });
+  async function handleContinue() {
+    setIsSaving(true);
+    setSaveError("");
+
+    const payload = {
+      animal_id: animalId,
+      animal_slug: animalSlug,
+      owner_name: ownerName.trim() || "Customer",
+      phone: phone.trim(),
+      farm_source: farmSource.trim() || "Unknown source",
+      intake_at: intakeAt,
+      weight_in: weightIn.trim() || "Pending weight",
+      animal_type: animalType,
+      current_stage: "animal-received" as LivestockStage,
+      processing_instructions: processingInstructions,
+      cut_requests: cutRequests,
+      packaging_notes: packagingNotes,
+      box_count: 0,
+      freezer_status: "Not frozen yet",
+      freezer_location: "Not assigned yet",
+      pickup_status: "Not ready for pickup",
+      payment_status: "Unpaid",
+      receipt_status: "Not issued yet",
+      proof_status: "Intake locked",
+      estimated_yield: "Estimated 490â€“530 lb packaged",
+      final_yield: "Pending final packaged weight",
+      amount_due: "$1,180.00",
+      payment_method: "Zelle / Cash App / In-person",
+    };
+
+    const { error } = await supabase
+      .from("livestock_records")
+      .upsert(payload, { onConflict: "animal_slug" });
+
+    if (error) {
+      setSaveError(error.message || "Unable to save livestock intake record.");
+      setIsSaving(false);
+      return;
+    }
+
+    setIsSaving(false);
+    navigate(`/planet/livestock/truth/${animalSlug}`);
   }
 
   return (
@@ -405,6 +432,12 @@ export default function ButcherLivestockIntakeFlow() {
               </div>
             </div>
 
+            {saveError ? (
+              <div className="rounded-2xl border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+                {saveError}
+              </div>
+            ) : null}
+
             <div className="flex items-center justify-between gap-4">
               <button
                 type="button"
@@ -416,9 +449,10 @@ export default function ButcherLivestockIntakeFlow() {
               <button
                 type="button"
                 onClick={handleContinue}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-cyan-300 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:brightness-110"
+                disabled={isSaving}
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-cyan-300 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
               >
-                Continue
+                {isSaving ? "Saving..." : "Continue"}
                 <ArrowRight className="h-4 w-4" />
               </button>
             </div>
@@ -472,7 +506,7 @@ export default function ButcherLivestockIntakeFlow() {
                     key={item}
                     className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-200"
                   >
-                    • {item}
+                    â€¢ {item}
                   </div>
                 ))}
               </div>

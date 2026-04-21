@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useParams } from "react-router-dom";
 import {
   BadgeCheck,
   Box,
@@ -16,6 +16,7 @@ import {
   Tractor,
   UserRound,
 } from "lucide-react";
+import { supabase } from "../lib/supabase";
 
 type LivestockStage =
   | "animal-received"
@@ -59,7 +60,31 @@ type LivestockRecord = {
   paymentMethod: string;
 };
 
-type IntakeNavState = Partial<LivestockRecord>;
+type LivestockRow = {
+  animal_id: string;
+  animal_slug: string;
+  owner_name: string;
+  phone: string | null;
+  farm_source: string;
+  intake_at: string;
+  weight_in: string;
+  animal_type: string;
+  current_stage: LivestockStage;
+  processing_instructions: string[];
+  cut_requests: string[];
+  packaging_notes: string[];
+  box_count: number;
+  freezer_status: string;
+  freezer_location: string;
+  pickup_status: string;
+  payment_status: string;
+  receipt_status: string;
+  proof_status: string;
+  estimated_yield: string;
+  final_yield: string;
+  amount_due: string;
+  payment_method: string;
+};
 
 const STAGES: Array<{
   key: LivestockStage;
@@ -113,12 +138,12 @@ const STAGES: Array<{
 
 const SAMPLE_RECORD: LivestockRecord = {
   animalId: "STEER-4821",
-  animalSlug: "steer-4821-doyon",
+  animalSlug: "steer-4821-daniel-doyon",
   ownerName: "Daniel Doyon",
   farmSource: "Taylor Creek Cattle, Okeechobee",
-  intakeAt: "April 18, 2026 • 8:42 AM",
-  weightIn: "1,228 lb",
-  currentStage: "boxed-frozen",
+  intakeAt: "April 20, 2026 at 8:42 AM",
+  weightIn: "1228 lb",
+  currentStage: "animal-received",
   animalType: "Beef Steer",
   processingInstructions: [
     "Customer requested standard family cut sheet.",
@@ -138,15 +163,15 @@ const SAMPLE_RECORD: LivestockRecord = {
     "Each box labeled with animal ID and owner name.",
     "Mixed cuts separated by type for easier freezer loading.",
   ],
-  boxCount: 11,
-  freezerStatus: "Frozen and staged",
-  freezerLocation: "Freezer B • Rack 2 • Right Side",
-  pickupStatus: "Waiting on customer pickup",
+  boxCount: 0,
+  freezerStatus: "Not frozen yet",
+  freezerLocation: "Not assigned yet",
+  pickupStatus: "Not ready for pickup",
   paymentStatus: "Unpaid",
-  receiptStatus: "Ready to lock at release",
-  proofStatus: "Proof in motion",
+  receiptStatus: "Not issued yet",
+  proofStatus: "Intake locked",
   estimatedYield: "Estimated 490–530 lb packaged",
-  finalYield: "512 lb packaged",
+  finalYield: "Pending final packaged weight",
   amountDue: "$1,180.00",
   paymentMethod: "Zelle / Cash App / In-person",
 };
@@ -156,38 +181,65 @@ const SAMPLE_PROOF: ProofItem[] = [
     id: "proof-1",
     title: "Intake photo locked",
     note: "Animal received and tagged at intake with source and owner confirmed.",
-    timestamp: "April 18, 2026 • 8:44 AM",
+    timestamp: "April 20, 2026 • 8:44 AM",
     stage: "animal-received",
   },
   {
     id: "proof-2",
     title: "Origin tied to source",
     note: "Farm source, owner, and animal ID matched before processing.",
-    timestamp: "April 18, 2026 • 8:49 AM",
+    timestamp: "April 20, 2026 • 8:49 AM",
     stage: "origin-locked",
   },
   {
     id: "proof-3",
     title: "Processing sheet confirmed",
     note: "Cut instructions reviewed and locked to this animal record.",
-    timestamp: "April 18, 2026 • 9:10 AM",
+    timestamp: "April 20, 2026 • 9:10 AM",
     stage: "processing-instructions",
   },
   {
     id: "proof-4",
     title: "Pack stage captured",
     note: "Cut and pack workflow documented with timestamped stage note.",
-    timestamp: "April 19, 2026 • 2:18 PM",
+    timestamp: "April 21, 2026 • 2:18 PM",
     stage: "cut-pack-stage",
   },
   {
     id: "proof-5",
     title: "Frozen hold confirmed",
     note: "Final boxes counted, labeled, and placed into freezer storage.",
-    timestamp: "April 19, 2026 • 6:02 PM",
+    timestamp: "April 21, 2026 • 6:02 PM",
     stage: "boxed-frozen",
   },
 ];
+
+function mapRowToRecord(row: LivestockRow): LivestockRecord {
+  return {
+    animalId: row.animal_id,
+    animalSlug: row.animal_slug,
+    ownerName: row.owner_name,
+    farmSource: row.farm_source,
+    intakeAt: row.intake_at,
+    weightIn: row.weight_in,
+    currentStage: row.current_stage,
+    animalType: row.animal_type,
+    processingInstructions: row.processing_instructions ?? [],
+    cutRequests: row.cut_requests ?? [],
+    packagingNotes: row.packaging_notes ?? [],
+    boxCount: row.box_count ?? 0,
+    freezerStatus: row.freezer_status,
+    freezerLocation: row.freezer_location,
+    pickupStatus: row.pickup_status,
+    paymentStatus: row.payment_status,
+    receiptStatus: row.receipt_status,
+    proofStatus: row.proof_status,
+    estimatedYield: row.estimated_yield,
+    finalYield: row.final_yield,
+    amountDue: row.amount_due,
+    paymentMethod: row.payment_method,
+  };
+}
 
 function getStageIndex(stage: LivestockStage): number {
   return STAGES.findIndex((item) => item.key === stage);
@@ -216,15 +268,44 @@ function statusClasses(kind: "complete" | "active" | "upcoming"): string {
 }
 
 export default function ButcherLivestockTruthBoard() {
-  const location = useLocation();
-  const navState = (location.state as IntakeNavState | null) ?? null;
+  const { animalSlug = "" } = useParams();
 
-  const [record] = useState<LivestockRecord>(() => ({
-    ...SAMPLE_RECORD,
-    ...navState,
-  }));
-
+  const [record, setRecord] = useState<LivestockRecord>(SAMPLE_RECORD);
   const [proof] = useState<ProofItem[]>(SAMPLE_PROOF);
+  const [loading, setLoading] = useState(true);
+  const [stageSaving, setStageSaving] = useState(false);
+  const [stageError, setStageError] = useState("");
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadRecord() {
+      if (!animalSlug) {
+        setLoading(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("livestock_records")
+        .select("*")
+        .eq("animal_slug", animalSlug)
+        .maybeSingle();
+
+      if (!isMounted) return;
+
+      if (!error && data) {
+        setRecord(mapRowToRecord(data as LivestockRow));
+      }
+
+      setLoading(false);
+    }
+
+    loadRecord();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [animalSlug]);
 
   const currentStageMeta = useMemo(
     () => STAGES.find((stage) => stage.key === record.currentStage) ?? STAGES[0],
@@ -237,6 +318,30 @@ export default function ButcherLivestockTruthBoard() {
   }, [record.currentStage]);
 
   const proofCount = proof.length;
+
+  async function handleStageUpdate(nextStage: LivestockStage) {
+    if (!record.animalSlug || nextStage === record.currentStage) return;
+
+    setStageSaving(true);
+    setStageError("");
+
+    const { error } = await supabase
+      .from("livestock_records")
+      .update({ current_stage: nextStage })
+      .eq("animal_slug", record.animalSlug);
+
+    if (error) {
+      setStageError(error.message || "Unable to update stage.");
+      setStageSaving(false);
+      return;
+    }
+
+    setRecord((prev) => ({
+      ...prev,
+      currentStage: nextStage,
+    }));
+    setStageSaving(false);
+  }
 
   return (
     <div className="min-h-screen bg-[#07111f] text-white">
@@ -287,7 +392,9 @@ export default function ButcherLivestockTruthBoard() {
                   <div className="text-[11px] uppercase tracking-[0.2em] text-slate-400">
                     Progress
                   </div>
-                  <div className="mt-2 text-sm font-semibold text-white">{completionPercent}%</div>
+                  <div className="mt-2 text-sm font-semibold text-white">
+                    {loading ? "..." : `${completionPercent}%`}
+                  </div>
                 </div>
               </div>
             </div>
@@ -327,27 +434,78 @@ export default function ButcherLivestockTruthBoard() {
             </div>
 
             <div className="rounded-3xl border border-cyan-400/20 bg-cyan-400/10 p-4">
-              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <div className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/80">
-                    Current Truth Position
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-cyan-100/80">
+                      Current Truth Position
+                    </div>
+                    <div className="mt-1 text-lg font-semibold text-white">
+                      {currentStageMeta.label}
+                    </div>
+                    <div className="mt-1 text-sm text-cyan-50/80">{currentStageMeta.desc}</div>
                   </div>
-                  <div className="mt-1 text-lg font-semibold text-white">
-                    {currentStageMeta.label}
+
+                  <div className="min-w-[220px]">
+                    <div className="mb-2 flex items-center justify-between text-xs text-cyan-50/80">
+                      <span>Chain progress</span>
+                      <span>{completionPercent}% complete</span>
+                    </div>
+                    <div className="h-2.5 overflow-hidden rounded-full bg-white/10">
+                      <div
+                        className="h-full rounded-full bg-cyan-300 transition-all"
+                        style={{ width: `${completionPercent}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="mt-1 text-sm text-cyan-50/80">{currentStageMeta.desc}</div>
                 </div>
 
-                <div className="min-w-[220px]">
-                  <div className="mb-2 flex items-center justify-between text-xs text-cyan-50/80">
-                    <span>Chain progress</span>
-                    <span>{completionPercent}% complete</span>
-                  </div>
-                  <div className="h-2.5 overflow-hidden rounded-full bg-white/10">
-                    <div
-                      className="h-full rounded-full bg-cyan-300 transition-all"
-                      style={{ width: `${completionPercent}%` }}
-                    />
+                <div className="rounded-2xl border border-white/10 bg-[#071523]/70 p-4">
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <div className="text-[11px] uppercase tracking-[0.18em] text-slate-400">
+                          Stage Controls
+                        </div>
+                        <div className="mt-1 text-sm text-slate-200">
+                          Move this animal through the real processing chain.
+                        </div>
+                      </div>
+                      {stageSaving ? (
+                        <div className="text-sm font-semibold text-cyan-100">Saving...</div>
+                      ) : null}
+                    </div>
+
+                    <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+                      {STAGES.map((stage) => {
+                        const active = stage.key === record.currentStage;
+
+                        return (
+                          <button
+                            key={stage.key}
+                            type="button"
+                            onClick={() => handleStageUpdate(stage.key)}
+                            disabled={stageSaving || active}
+                            className={`rounded-2xl border px-3 py-3 text-left text-sm transition ${
+                              active
+                                ? "cursor-default border-cyan-300/30 bg-cyan-300/15 text-cyan-50"
+                                : "border-white/10 bg-white/[0.03] text-slate-200 hover:border-cyan-300/20 hover:bg-cyan-300/10"
+                            } disabled:opacity-70`}
+                          >
+                            <div className="font-semibold">{stage.label}</div>
+                            <div className="mt-1 text-xs text-slate-400">
+                              {active ? "Current stage" : "Set as current"}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {stageError ? (
+                      <div className="rounded-2xl border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+                        {stageError}
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               </div>
@@ -616,9 +774,8 @@ export default function ButcherLivestockTruthBoard() {
                   Receipt truth layer
                 </div>
                 <p className="mt-2 text-sm leading-6 text-emerald-50/90">
-                  Final release is not just a payment mark. It is the verified handoff event tied
-                  to animal ID, origin, processing chain, box count, and customer release
-                  timestamp.
+                  Final release is not just a payment mark. It is the verified handoff event tied to
+                  animal ID, origin, processing chain, box count, and customer release timestamp.
                 </p>
               </div>
             </div>
@@ -654,10 +811,10 @@ export default function ButcherLivestockTruthBoard() {
                 Animal origin ? processing truth ? customer proof
               </h2>
               <p className="mt-3 text-sm leading-6 text-cyan-50/90">
-                The customer should be able to look at this board and immediately understand: this
-                was my animal, from this source, with these instructions, processed through these
-                stages, boxed like this, frozen here, and released only after verified payment and
-                receipt.
+                The customer should be able to look at this board and immediately understand:
+                this was my animal, from this source, with these instructions, processed through
+                these stages, boxed like this, frozen here, and released only after verified payment
+                and receipt.
               </p>
             </div>
           </div>
