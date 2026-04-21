@@ -30,6 +30,10 @@ type LivestockStage =
   | "ready-for-pickup"
   | "paid-released";
 
+type ExistingLivestockRow = {
+  animal_slug: string;
+};
+
 const STAGES: Array<{
   key: IntakeStage;
   label: string;
@@ -75,12 +79,38 @@ function buildAnimalSlug(animalId: string, ownerName: string): string {
   return `${slugify(animalId)}-${slugify(ownerName)}`;
 }
 
+function getCurrentIntakeLabel(): string {
+  const now = new Date();
+
+  const month = now.toLocaleString("en-US", { month: "long" });
+  const day = now.getDate();
+  const year = now.getFullYear();
+
+  const time = now.toLocaleString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+
+  return `${month} ${day}, ${year} at ${time}`;
+}
+
+function getCurrentTimeBadge(): string {
+  const now = new Date();
+  return now.toLocaleString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+}
+
 export default function ButcherLivestockIntakeFlow() {
   const navigate = useNavigate();
 
   const [currentStage] = useState<IntakeStage>("animal-dropoff");
   const [isSaving, setIsSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string>("");
+  const [saveError, setSaveError] = useState("");
+  const [notice, setNotice] = useState("");
 
   const [ownerName, setOwnerName] = useState("Daniel Doyon");
   const [phone, setPhone] = useState("");
@@ -88,7 +118,8 @@ export default function ButcherLivestockIntakeFlow() {
   const [animalType, setAnimalType] = useState<AnimalType>("Beef Steer");
   const [tagNumber, setTagNumber] = useState("4821");
   const [weightIn, setWeightIn] = useState("1228 lb");
-  const [intakeAt] = useState("April 20, 2026 at 8:42 AM");
+  const [intakeAt] = useState(getCurrentIntakeLabel());
+  const [intakeTimeBadge] = useState(getCurrentTimeBadge());
 
   const animalId = useMemo(() => buildAnimalId(tagNumber), [tagNumber]);
   const animalSlug = useMemo(
@@ -136,48 +167,102 @@ export default function ButcherLivestockIntakeFlow() {
     [],
   );
 
-  async function handleContinue() {
-    setIsSaving(true);
+  async function handleLockIntake() {
+    if (isSaving) return;
+
     setSaveError("");
+    setNotice("");
 
-    const payload = {
-      animal_id: animalId,
-      animal_slug: animalSlug,
-      owner_name: ownerName.trim() || "Customer",
-      phone: phone.trim(),
-      farm_source: farmSource.trim() || "Unknown source",
-      intake_at: intakeAt,
-      weight_in: weightIn.trim() || "Pending weight",
-      animal_type: animalType,
-      current_stage: "animal-received" as LivestockStage,
-      processing_instructions: processingInstructions,
-      cut_requests: cutRequests,
-      packaging_notes: packagingNotes,
-      box_count: 0,
-      freezer_status: "Not frozen yet",
-      freezer_location: "Not assigned yet",
-      pickup_status: "Not ready for pickup",
-      payment_status: "Unpaid",
-      receipt_status: "Not issued yet",
-      proof_status: "Intake locked",
-      estimated_yield: "Estimated 490–530 lb packaged",
-      final_yield: "Pending final packaged weight",
-      amount_due: "$1,180.00",
-      payment_method: "Zelle / Cash App / In-person",
-    };
+    const trimmedOwner = ownerName.trim();
+    const trimmedPhone = phone.trim();
+    const trimmedFarmSource = farmSource.trim();
+    const trimmedTagNumber = tagNumber.trim();
+    const trimmedWeightIn = weightIn.trim();
 
-    const { error } = await supabase
-      .from("livestock_records")
-      .upsert(payload, { onConflict: "animal_slug" });
-
-    if (error) {
-      setSaveError(error.message || "Unable to save livestock intake record.");
-      setIsSaving(false);
+    if (!trimmedOwner) {
+      setSaveError("Owner / Customer is required.");
       return;
     }
 
-    setIsSaving(false);
-    navigate(`/planet/livestock/truth/${animalSlug}`);
+    if (!trimmedFarmSource) {
+      setSaveError("Farm / Source is required.");
+      return;
+    }
+
+    if (!trimmedTagNumber) {
+      setSaveError("Tag / Animal Number is required.");
+      return;
+    }
+
+    if (!trimmedWeightIn) {
+      setSaveError("Weight In is required.");
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      const { data: existingRecord, error: existingError } = await supabase
+        .from("livestock_records")
+        .select("animal_slug")
+        .eq("animal_slug", animalSlug)
+        .maybeSingle();
+
+      if (existingError) {
+        setSaveError(existingError.message || "Unable to check existing livestock record.");
+        setIsSaving(false);
+        return;
+      }
+
+      if (existingRecord) {
+        setNotice("This animal record already exists. Opening existing truth board.");
+        setIsSaving(false);
+        navigate(`/planet/livestock/truth/${animalSlug}`);
+        return;
+      }
+
+      const payload = {
+        animal_id: animalId,
+        animal_slug: animalSlug,
+        owner_name: trimmedOwner,
+        phone: trimmedPhone || null,
+        farm_source: trimmedFarmSource,
+        intake_at: intakeAt,
+        weight_in: trimmedWeightIn,
+        animal_type: animalType,
+        current_stage: "animal-received" as LivestockStage,
+        processing_instructions: processingInstructions,
+        cut_requests: cutRequests,
+        packaging_notes: packagingNotes,
+        box_count: 0,
+        freezer_status: "Not frozen yet",
+        freezer_location: "Not assigned yet",
+        pickup_status: "Not ready for pickup",
+        payment_status: "Unpaid",
+        receipt_status: "Not issued yet",
+        proof_status: "Intake locked",
+        estimated_yield: "Estimated 490–530 lb packaged",
+        final_yield: "Pending final packaged weight",
+        amount_due: "$1,180.00",
+        payment_method: "Zelle / Cash App / In-person",
+      };
+
+      const { error: insertError } = await supabase.from("livestock_records").insert(payload);
+
+      if (insertError) {
+        setSaveError(insertError.message || "Unable to lock intake record.");
+        setIsSaving(false);
+        return;
+      }
+
+      setIsSaving(false);
+      navigate(`/planet/livestock/truth/${animalSlug}`);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to lock intake record.";
+      setSaveError(message);
+      setIsSaving(false);
+    }
   }
 
   return (
@@ -224,7 +309,7 @@ export default function ButcherLivestockIntakeFlow() {
                   <div className="text-[11px] uppercase tracking-[0.2em] text-slate-400">
                     Intake Time
                   </div>
-                  <div className="mt-2 text-sm font-semibold text-white">08:42</div>
+                  <div className="mt-2 text-sm font-semibold text-white">{intakeTimeBadge}</div>
                 </div>
 
                 <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3">
@@ -421,6 +506,18 @@ export default function ButcherLivestockIntakeFlow() {
 
                 <label className="block">
                   <div className="mb-2 text-[11px] uppercase tracking-[0.18em] text-slate-400">
+                    Weight In
+                  </div>
+                  <input
+                    value={weightIn}
+                    onChange={(e) => setWeightIn(e.target.value)}
+                    className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500"
+                    placeholder="1228 lb"
+                  />
+                </label>
+
+                <label className="block md:col-span-2">
+                  <div className="mb-2 text-[11px] uppercase tracking-[0.18em] text-slate-400">
                     Generated Animal ID
                   </div>
                   <input
@@ -438,6 +535,12 @@ export default function ButcherLivestockIntakeFlow() {
               </div>
             ) : null}
 
+            {notice ? (
+              <div className="rounded-2xl border border-cyan-400/20 bg-cyan-500/10 px-4 py-3 text-sm text-cyan-100">
+                {notice}
+              </div>
+            ) : null}
+
             <div className="flex items-center justify-between gap-4">
               <button
                 type="button"
@@ -448,11 +551,11 @@ export default function ButcherLivestockIntakeFlow() {
 
               <button
                 type="button"
-                onClick={handleContinue}
+                onClick={handleLockIntake}
                 disabled={isSaving}
                 className="inline-flex items-center justify-center gap-2 rounded-2xl bg-cyan-300 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
               >
-                {isSaving ? "Saving..." : "Continue"}
+                {isSaving ? "Locking Intake..." : "Lock Intake + Open Truth Board"}
                 <ArrowRight className="h-4 w-4" />
               </button>
             </div>

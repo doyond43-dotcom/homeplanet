@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+ï»¿import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import {
   BadgeCheck,
@@ -17,6 +17,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
+import LivestockProofCapture from "../components/LivestockProofCapture";
 
 type LivestockStage =
   | "animal-received"
@@ -86,6 +87,16 @@ type LivestockRow = {
   payment_method: string;
 };
 
+type LivestockProofRow = {
+  id: string;
+  animal_slug: string;
+  stage: LivestockStage | null;
+  title: string | null;
+  note: string | null;
+  media_url: string | null;
+  created_at: string;
+};
+
 const STAGES: Array<{
   key: LivestockStage;
   label: string;
@@ -136,6 +147,49 @@ const STAGES: Array<{
   },
 ];
 
+function formatProofTimestamp(value: string | null | undefined): string {
+  if (!value) return "Timestamp pending";
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+
+  const datePart = parsed.toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  const timePart = parsed.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+
+  return `${datePart} â€¢ ${timePart}`;
+}
+
+function normalizeProofStage(stage: LivestockStage | null | undefined): LivestockStage {
+  if (!stage) return "animal-received";
+
+  const match = STAGES.find((item) => item.key === stage);
+  return match ? match.key : "animal-received";
+}
+
+function getStageLabel(stage: LivestockStage): string {
+  return STAGES.find((item) => item.key === stage)?.label ?? "Proof captured";
+}
+
+function mapProofRowToItem(row: LivestockProofRow): ProofItem {
+  const stage = normalizeProofStage(row.stage);
+
+  return {
+    id: row.id,
+    title: row.title?.trim() || getStageLabel(stage),
+    note: row.note?.trim() || "Proof captured and locked to this animal record.",
+    timestamp: formatProofTimestamp(row.created_at),
+    stage,
+  };
+}
+
 const SAMPLE_RECORD: LivestockRecord = {
   animalId: "STEER-4821",
   animalSlug: "steer-4821-daniel-doyon",
@@ -170,49 +224,13 @@ const SAMPLE_RECORD: LivestockRecord = {
   paymentStatus: "Unpaid",
   receiptStatus: "Not issued yet",
   proofStatus: "Intake locked",
-  estimatedYield: "Estimated 490–530 lb packaged",
+  estimatedYield: "Estimated 490â€“530 lb packaged",
   finalYield: "Pending final packaged weight",
   amountDue: "$1,180.00",
   paymentMethod: "Zelle / Cash App / In-person",
 };
 
-const SAMPLE_PROOF: ProofItem[] = [
-  {
-    id: "proof-1",
-    title: "Intake photo locked",
-    note: "Animal received and tagged at intake with source and owner confirmed.",
-    timestamp: "April 20, 2026 • 8:44 AM",
-    stage: "animal-received",
-  },
-  {
-    id: "proof-2",
-    title: "Origin tied to source",
-    note: "Farm source, owner, and animal ID matched before processing.",
-    timestamp: "April 20, 2026 • 8:49 AM",
-    stage: "origin-locked",
-  },
-  {
-    id: "proof-3",
-    title: "Processing sheet confirmed",
-    note: "Cut instructions reviewed and locked to this animal record.",
-    timestamp: "April 20, 2026 • 9:10 AM",
-    stage: "processing-instructions",
-  },
-  {
-    id: "proof-4",
-    title: "Pack stage captured",
-    note: "Cut and pack workflow documented with timestamped stage note.",
-    timestamp: "April 21, 2026 • 2:18 PM",
-    stage: "cut-pack-stage",
-  },
-  {
-    id: "proof-5",
-    title: "Frozen hold confirmed",
-    note: "Final boxes counted, labeled, and placed into freezer storage.",
-    timestamp: "April 21, 2026 • 6:02 PM",
-    stage: "boxed-frozen",
-  },
-];
+const SAMPLE_PROOF: ProofItem[] = [];
 
 function mapRowToRecord(row: LivestockRow): LivestockRecord {
   return {
@@ -271,7 +289,7 @@ export default function ButcherLivestockTruthBoard() {
   const { animalSlug = "" } = useParams();
 
   const [record, setRecord] = useState<LivestockRecord>(SAMPLE_RECORD);
-  const [proof] = useState<ProofItem[]>(SAMPLE_PROOF);
+  const [proof, setProof] = useState<ProofItem[]>(SAMPLE_PROOF);
   const [loading, setLoading] = useState(true);
   const [stageSaving, setStageSaving] = useState(false);
   const [stageError, setStageError] = useState("");
@@ -280,10 +298,7 @@ export default function ButcherLivestockTruthBoard() {
     let isMounted = true;
 
     async function loadRecord() {
-      if (!animalSlug) {
-        setLoading(false);
-        return;
-      }
+      if (!animalSlug) return;
 
       const { data, error } = await supabase
         .from("livestock_records")
@@ -296,14 +311,72 @@ export default function ButcherLivestockTruthBoard() {
       if (!error && data) {
         setRecord(mapRowToRecord(data as LivestockRow));
       }
-
-      setLoading(false);
     }
 
-    loadRecord();
+    async function loadProof() {
+      if (!animalSlug) {
+        if (isMounted) setProof([]);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("livestock_proof")
+        .select("id, animal_slug, stage, title, note, media_url, created_at")
+        .eq("animal_slug", animalSlug)
+        .order("created_at", { ascending: false });
+
+      if (!isMounted) return;
+
+      if (error) {
+        console.error("livestock_proof load failed:", error);
+        setProof([]);
+        return;
+      }
+
+      setProof(((data ?? []) as LivestockProofRow[]).map(mapProofRowToItem));
+    }
+
+    async function loadBoard() {
+      if (!animalSlug) {
+        setProof([]);
+        setLoading(false);
+        return;
+      }
+
+      await Promise.all([loadRecord(), loadProof()]);
+
+      if (isMounted) {
+        setLoading(false);
+      }
+    }
+
+    void loadBoard();
+
+    if (!animalSlug) {
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    const channel = supabase
+      .channel(`livestock-proof-${animalSlug}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "livestock_proof",
+          filter: `animal_slug=eq.${animalSlug}`,
+        },
+        () => {
+          void loadProof();
+        },
+      )
+      .subscribe();
 
     return () => {
       isMounted = false;
+      void supabase.removeChannel(channel);
     };
   }, [animalSlug]);
 
@@ -666,7 +739,21 @@ export default function ButcherLivestockTruthBoard() {
                 happening.
               </p>
 
+              <div className="mt-5">
+                <LivestockProofCapture
+                  animalId={record.animalId}
+                  animalSlug={record.animalSlug}
+                  currentStage={record.currentStage}
+                />
+              </div>
+
               <div className="mt-5 grid gap-3">
+                {proof.length === 0 ? (
+                  <div className="rounded-3xl border border-dashed border-white/10 bg-white/[0.03] p-4 text-sm text-slate-400">
+                    No proof captured yet.
+                  </div>
+                ) : null}
+
                 {proof.map((item) => (
                   <div
                     key={item.id}
@@ -677,7 +764,7 @@ export default function ButcherLivestockTruthBoard() {
                         <div className="flex flex-wrap items-center gap-2">
                           <h3 className="text-sm font-semibold text-white">{item.title}</h3>
                           <span className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-100">
-                            {STAGES.find((stage) => stage.key === item.stage)?.shortLabel}
+                            {STAGES.find((stage) => stage.key === item.stage)?.shortLabel ?? "Proof"}
                           </span>
                         </div>
                         <p className="mt-2 text-sm leading-6 text-slate-300">{item.note}</p>
@@ -735,7 +822,7 @@ export default function ButcherLivestockTruthBoard() {
                 <div className="mt-3 space-y-2">
                   {record.packagingNotes.map((note) => (
                     <div key={note} className="text-sm leading-6 text-cyan-50/90">
-                      • {note}
+                      â€¢ {note}
                     </div>
                   ))}
                 </div>
@@ -796,9 +883,9 @@ export default function ButcherLivestockTruthBoard() {
                   Current prediction snapshot
                 </div>
                 <div className="mt-3 space-y-2 text-sm leading-6 text-slate-200">
-                  <div>• Similar intake weights usually land around 10–12 final boxes.</div>
-                  <div>• Packaged yield range was predicted correctly before final freeze.</div>
-                  <div>• Release timing can be forecast once pack-stage rhythm stabilizes.</div>
+                  <div>â€¢ Similar intake weights usually land around 10â€“12 final boxes.</div>
+                  <div>â€¢ Packaged yield range was predicted correctly before final freeze.</div>
+                  <div>â€¢ Release timing can be forecast once pack-stage rhythm stabilizes.</div>
                 </div>
               </div>
             </div>
