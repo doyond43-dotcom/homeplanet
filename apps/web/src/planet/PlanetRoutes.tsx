@@ -31,6 +31,7 @@ import AutoRepairLiveBoardSample from "../pages/AutoRepairLiveBoardSample";
 import BeautySalonLiveBoard from "../pages/BeautySalonLiveBoard";
 import BeautySalonBookingPage from "../pages/BeautySalonBookingPage";
 import BeautySalonLandingPage from "../pages/BeautySalonLandingPage";
+import ButcherLivestockIntakeFlow from "../pages/ButcherLivestockIntakeFlow";
 import ButcherLivestockTruthBoard from "../pages/ButcherLivestockTruthBoard";
 import ColorMeCrazyLanding from "../pages/ColorMeCrazyLanding";
 import GuardianMobilityLiveBoard from "../pages/GuardianMobilityLiveBoard";
@@ -156,6 +157,7 @@ export default function PlanetRoutes() {
       <Route path="live/:boardSlug" element={<LiveBoardRouter />} />
 
       {/* LIVESTOCK */}
+      <Route path="livestock/intake" element={<ButcherLivestockIntakeFlow />} />
       <Route path="livestock/truth/:animalSlug" element={<ButcherLivestockTruthBoard />} />
 
       {/* VEHICLES */}
@@ -259,4 +261,3 @@ export default function PlanetRoutes() {
     </Routes>
   );
 }
-

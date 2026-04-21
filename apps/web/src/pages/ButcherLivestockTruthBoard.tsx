@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
 import {
   BadgeCheck,
   Box,
@@ -58,6 +59,8 @@ type LivestockRecord = {
   paymentMethod: string;
 };
 
+type IntakeNavState = Partial<LivestockRecord>;
+
 const STAGES: Array<{
   key: LivestockStage;
   label: string;
@@ -113,7 +116,7 @@ const SAMPLE_RECORD: LivestockRecord = {
   animalSlug: "steer-4821-doyon",
   ownerName: "Daniel Doyon",
   farmSource: "Taylor Creek Cattle, Okeechobee",
-  intakeAt: "April 18, 2026 â€¢ 8:42 AM",
+  intakeAt: "April 18, 2026 • 8:42 AM",
   weightIn: "1,228 lb",
   currentStage: "boxed-frozen",
   animalType: "Beef Steer",
@@ -137,12 +140,12 @@ const SAMPLE_RECORD: LivestockRecord = {
   ],
   boxCount: 11,
   freezerStatus: "Frozen and staged",
-  freezerLocation: "Freezer B â€¢ Rack 2 â€¢ Right Side",
+  freezerLocation: "Freezer B • Rack 2 • Right Side",
   pickupStatus: "Waiting on customer pickup",
   paymentStatus: "Unpaid",
   receiptStatus: "Ready to lock at release",
   proofStatus: "Proof in motion",
-  estimatedYield: "Estimated 490â€“530 lb packaged",
+  estimatedYield: "Estimated 490–530 lb packaged",
   finalYield: "512 lb packaged",
   amountDue: "$1,180.00",
   paymentMethod: "Zelle / Cash App / In-person",
@@ -153,35 +156,35 @@ const SAMPLE_PROOF: ProofItem[] = [
     id: "proof-1",
     title: "Intake photo locked",
     note: "Animal received and tagged at intake with source and owner confirmed.",
-    timestamp: "April 18, 2026 â€¢ 8:44 AM",
+    timestamp: "April 18, 2026 • 8:44 AM",
     stage: "animal-received",
   },
   {
     id: "proof-2",
     title: "Origin tied to source",
     note: "Farm source, owner, and animal ID matched before processing.",
-    timestamp: "April 18, 2026 â€¢ 8:49 AM",
+    timestamp: "April 18, 2026 • 8:49 AM",
     stage: "origin-locked",
   },
   {
     id: "proof-3",
     title: "Processing sheet confirmed",
     note: "Cut instructions reviewed and locked to this animal record.",
-    timestamp: "April 18, 2026 â€¢ 9:10 AM",
+    timestamp: "April 18, 2026 • 9:10 AM",
     stage: "processing-instructions",
   },
   {
     id: "proof-4",
     title: "Pack stage captured",
     note: "Cut and pack workflow documented with timestamped stage note.",
-    timestamp: "April 19, 2026 â€¢ 2:18 PM",
+    timestamp: "April 19, 2026 • 2:18 PM",
     stage: "cut-pack-stage",
   },
   {
     id: "proof-5",
     title: "Frozen hold confirmed",
     note: "Final boxes counted, labeled, and placed into freezer storage.",
-    timestamp: "April 19, 2026 â€¢ 6:02 PM",
+    timestamp: "April 19, 2026 • 6:02 PM",
     stage: "boxed-frozen",
   },
 ];
@@ -213,7 +216,14 @@ function statusClasses(kind: "complete" | "active" | "upcoming"): string {
 }
 
 export default function ButcherLivestockTruthBoard() {
-  const [record] = useState<LivestockRecord>(SAMPLE_RECORD);
+  const location = useLocation();
+  const navState = (location.state as IntakeNavState | null) ?? null;
+
+  const [record] = useState<LivestockRecord>(() => ({
+    ...SAMPLE_RECORD,
+    ...navState,
+  }));
+
   const [proof] = useState<ProofItem[]>(SAMPLE_PROOF);
 
   const currentStageMeta = useMemo(
@@ -353,7 +363,8 @@ export default function ButcherLivestockTruthBoard() {
                 <h2 className="text-xl font-semibold text-white">Origin Card</h2>
               </div>
               <p className="mt-2 text-sm leading-6 text-slate-300">
-                This is the original animal record. Everything in this system ties back to this identity.
+                This is the original animal record. Everything in this system ties back to this
+                identity.
               </p>
 
               <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -506,7 +517,7 @@ export default function ButcherLivestockTruthBoard() {
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="text-sm font-semibold text-white"> {item.title}</h3>
+                          <h3 className="text-sm font-semibold text-white">{item.title}</h3>
                           <span className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-100">
                             {STAGES.find((stage) => stage.key === item.stage)?.shortLabel}
                           </span>
@@ -566,7 +577,7 @@ export default function ButcherLivestockTruthBoard() {
                 <div className="mt-3 space-y-2">
                   {record.packagingNotes.map((note) => (
                     <div key={note} className="text-sm leading-6 text-cyan-50/90">
-                      â€¢ {note}
+                      • {note}
                     </div>
                   ))}
                 </div>
@@ -605,8 +616,9 @@ export default function ButcherLivestockTruthBoard() {
                   Receipt truth layer
                 </div>
                 <p className="mt-2 text-sm leading-6 text-emerald-50/90">
-                  Final release is not just a payment mark. It is the verified handoff event tied to
-                  animal ID, origin, processing chain, box count, and customer release timestamp.
+                  Final release is not just a payment mark. It is the verified handoff event tied
+                  to animal ID, origin, processing chain, box count, and customer release
+                  timestamp.
                 </p>
               </div>
             </div>
@@ -627,9 +639,9 @@ export default function ButcherLivestockTruthBoard() {
                   Current prediction snapshot
                 </div>
                 <div className="mt-3 space-y-2 text-sm leading-6 text-slate-200">
-                  <div>â€¢ Similar intake weights usually land around 10â€“12 final boxes.</div>
-                  <div>â€¢ Packaged yield range was predicted correctly before final freeze.</div>
-                  <div>â€¢ Release timing can be forecast once pack-stage rhythm stabilizes.</div>
+                  <div>• Similar intake weights usually land around 10–12 final boxes.</div>
+                  <div>• Packaged yield range was predicted correctly before final freeze.</div>
+                  <div>• Release timing can be forecast once pack-stage rhythm stabilizes.</div>
                 </div>
               </div>
             </div>
@@ -639,13 +651,13 @@ export default function ButcherLivestockTruthBoard() {
                 Customer Proof View
               </div>
               <h2 className="mt-2 text-xl font-semibold text-white">
-                Animal origin â†’ processing truth â†’ customer proof
+                Animal origin ? processing truth ? customer proof
               </h2>
               <p className="mt-3 text-sm leading-6 text-cyan-50/90">
-                The customer should be able to look at this board and immediately understand:
-                this was my animal, from this source, with these instructions, processed through
-                these stages, boxed like this, frozen here, and released only after verified
-                payment and receipt.
+                The customer should be able to look at this board and immediately understand: this
+                was my animal, from this source, with these instructions, processed through these
+                stages, boxed like this, frozen here, and released only after verified payment and
+                receipt.
               </p>
             </div>
           </div>
@@ -654,11 +666,3 @@ export default function ButcherLivestockTruthBoard() {
     </div>
   );
 }
-
-
-
-
-
-
-
-
