@@ -168,7 +168,7 @@ export default function CreatorCityPreview() {
         id: "legal",
         title: "Legal Workspace Demo",
         subtitle: "Timeline, evidence, and proof-style organization.",
-        to: "/planet/legal/joe-grant",
+        to: "/planet/legal/alex-carter",
         tag: "WORKSPACE",
       },
     ],
@@ -1596,3 +1596,4 @@ export default function CreatorCityPreview() {
     </div>
   );
 }
+

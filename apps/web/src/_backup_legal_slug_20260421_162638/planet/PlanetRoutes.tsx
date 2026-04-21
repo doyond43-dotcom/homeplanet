@@ -195,7 +195,7 @@ export default function PlanetRoutes() {
       <Route path="waiver/:waiverId" element={<SkateZonePublicWaiverPage />} />
 
       {/* LEGAL */}
-      <Route path="legal/alex-carter" element={<JoeGrantLegalDesk />} />
+      <Route path="legal/joe-grant" element={<JoeGrantLegalDesk />} />
 
       {/* COMMUNITY */}
       <Route path="community/community-sale" element={<CommunitySaleBoard />} />

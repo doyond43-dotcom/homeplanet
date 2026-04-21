@@ -1,7 +1,7 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
 const LIVE_PRODUCT_DEMO_ROUTE = "/planet/creator/rc-live";
-const LIVE_CAMP_GUARDIAN_ROUTE = "/planet/demo/camp-aquaflow";
+const LIVE_CAMP_GUARDIAN_ROUTE = "/planet/live/camp-aquaflow-5593";
 const PAYMENT_NODE_ROUTE = "/planet/payments/node";
 const PAYMENT_DESK_DEMO_ROUTE = "/planet/payments/no-screenshot";
 const MEAL_BUSINESS_ROUTE = "/planet/lifestyle/meal-start";
@@ -26,7 +26,7 @@ function slugify(value: string) {
   return value
     .toLowerCase()
     .trim()
-    .replace(/["'â€™]/g, "")
+    .replace(/["'’]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 48);
@@ -210,8 +210,15 @@ export default function CreatorCity() {
         id: "restaurant",
         title: "Restaurant Live Board",
         subtitle: "Kitchen flow, ticket stages, and manager visibility.",
-        to: "/planet/food/restaurant-rush-live",
+        to: "/planet/live/peggies-diner",
         tag: "LIVE BOARD",
+      },
+      {
+        id: "color-me-crazy",
+        title: "Beauty Live Board",
+        subtitle: "Booking, chair flow, and payment in one clean beauty system.",
+        to: "/planet/beauty/color-me-crazy/home?board=color-me-crazy-demo",
+        tag: "BEAUTY LIVE",
       },
       {
         id: "meal-business",
@@ -238,7 +245,7 @@ export default function CreatorCity() {
         id: "legal",
         title: "Legal Workspace Demo",
         subtitle: "Timeline, evidence, and proof-style organization.",
-        to: "/planet/legal/alex-carter",
+        to: "/planet/legal/joe-grant",
         tag: "WORKSPACE",
       },
     ],
@@ -342,7 +349,7 @@ export default function CreatorCity() {
     },
     {
       title: "Live stages",
-      text: previewStages.length > 0 ? previewStages.join(" â†’ ") : "Awaiting business type",
+      text: previewStages.length > 0 ? previewStages.join(" → ") : "Awaiting business type",
       complete: previewStages.length > 0,
     },
     {
@@ -1829,7 +1836,7 @@ export default function CreatorCity() {
                   <div style={panelSub}>
                     {reserveReady
                       ? "Your intake is in. Reserve the build slot to move forward."
-                      : "Fill this out. Weâ€™ll turn it into a live board."}
+                      : "Fill this out. We’ll turn it into a live board."}
                   </div>
                 </div>
 
@@ -1856,7 +1863,7 @@ export default function CreatorCity() {
                   {reserveReady ? (
                     <div style={reservePanel}>
                       <div style={{ fontWeight: 900, fontSize: 18, marginBottom: 8 }}>
-                        Reserve Your Build âš¡
+                        Reserve Your Build ⚡
                       </div>
 
                       <div style={{ lineHeight: 1.7, color: "rgba(220,252,231,0.96)" }}>
@@ -1971,7 +1978,7 @@ export default function CreatorCity() {
 
                         <div style={{ ...inputGroup, gridColumn: "1 / -1" }}>
                           <label style={label}>
-                            What would make you say â€œholy shit, this solves itâ€?
+                            What would make you say “holy shit, this solves it”?
                           </label>
                           <textarea
                             style={textareaWide}
@@ -2226,7 +2233,7 @@ export default function CreatorCity() {
                         <div style={featuredValueCard}>
                           <div style={feedLabel}>Problem</div>
                           <div style={feedValue(true)}>
-                            â€œDid you send it?â€ should not be a workflow.
+                            “Did you send it?” should not be a workflow.
                           </div>
                         </div>
 
@@ -2290,7 +2297,7 @@ export default function CreatorCity() {
                 <span style={footerPlanetMark}>
                   <span style={footerPlanetRing} />
                 </span>
-                HomePlanet Â© 2026. All rights reserved.
+                HomePlanet © 2026. All rights reserved.
               </div>
               <div style={footerSecondary}>
                 Your business is not complicated. Your tools are.
@@ -2303,6 +2310,4 @@ export default function CreatorCity() {
     </div>
   );
 }
-
-
 

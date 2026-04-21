@@ -1,4 +1,4 @@
-﻿     import { useEffect, useMemo, useRef, useState } from "react";
+     import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { resolveStarterBoardConfig } from "../lib/starterBoardConfig";
@@ -26,7 +26,7 @@ function slugify(value: string) {
   return value
     .toLowerCase()
     .trim()
-    .replace(/['â€™]/g, "")
+    .replace(/['’]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 48);
@@ -206,7 +206,7 @@ export default function CreatorCity() {
         id: "legal",
         title: "Legal Workspace Demo",
         subtitle: "See evidence, timeline structure, and proof-style organization.",
-        to: "/planet/legal/alex-carter",
+        to: "/planet/legal/joe-grant",
         tag: "WORKSPACE",
       },
     ],
@@ -930,7 +930,7 @@ export default function CreatorCity() {
           {submitted ? (
             <div style={successPanel}>
               <div style={{ fontWeight: 900, fontSize: 18, marginBottom: 8 }}>
-                Creator City intake received âš¡
+                Creator City intake received ⚡
               </div>
               <div style={{ lineHeight: 1.7 }}>
                 Your workflow request was turned into a live board path.
@@ -1031,7 +1031,7 @@ export default function CreatorCity() {
 
                 <div style={{ ...inputGroup, gridColumn: "1 / -1" }}>
                   <label style={label}>
-                    What would make you say â€œholy shit, this solves itâ€?
+                    What would make you say “holy shit, this solves it”?
                   </label>
                   <textarea
                     style={textareaWide}
@@ -1261,7 +1261,7 @@ export default function CreatorCity() {
             <span style={footerPlanetMark}>
               <span style={footerPlanetRing} />
             </span>
-            HomePlanet Â© 2026. All rights reserved.
+            HomePlanet © 2026. All rights reserved.
           </div>
           <div style={footerSecondary}>
             Your business is not complicated. Your tools are.
