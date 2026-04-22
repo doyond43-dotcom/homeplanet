@@ -3,6 +3,11 @@ import { Link, useSearchParams } from "react-router-dom";
 import { CheckCircle2, ExternalLink, QrCode } from "lucide-react";
 import { supabase } from "../lib/supabase";
 
+const chime =
+  typeof Audio !== "undefined"
+    ? new Audio("/sounds/homeplanet-chime.wav")
+    : null;
+
 type PaymentMethod = "cashapp" | "zelle";
 
 type MailingState = {
@@ -273,6 +278,15 @@ export default function GuardianJoinDesk() {
         setSubmitError(`Order saved, but email sending failed: ${functionError.message}`);
       } else {
         setEmailState("sent");
+
+        try {
+          if (chime) {
+            chime.currentTime = 0;
+            chime.play();
+          }
+        } catch (e) {
+          console.log("Chime blocked by browser");
+        }
       }
     } catch (error) {
       const message =
