@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { CheckCircle2, ExternalLink, QrCode } from "lucide-react";
+import { supabase } from "../lib/supabase";
 
 type PaymentMethod = "cashapp" | "zelle";
 
@@ -22,6 +23,8 @@ type PetProfile = {
   color: string;
   notes: string;
 };
+
+type EmailState = "idle" | "sending" | "sent" | "failed";
 
 const FIRST_PET_SETUP = 25;
 const FIRST_PET_MONTHLY = 5;
@@ -100,7 +103,13 @@ function createEmptyPets(count: number): PetProfile[] {
 }
 
 function petSummaryLine(pet: PetProfile) {
-  const parts = [pet.type.trim(), pet.breed.trim(), pet.age.trim(), pet.color.trim()].filter(Boolean);
+  const parts = [
+    pet.type.trim(),
+    pet.breed.trim(),
+    pet.age.trim(),
+    pet.color.trim(),
+  ].filter(Boolean);
+
   return parts.length ? parts.join(" • ") : "Profile not entered yet";
 }
 
@@ -120,22 +129,26 @@ export default function GuardianJoinDesk() {
     city: "",
     state: "",
     zip: "",
-    email: "dannyscandys@gmail.com",
+    email: "",
     phone: ORDER_CONTACT_PHONE,
   });
 
   const [pets, setPets] = useState<PetProfile[]>(() => createEmptyPets(petCount));
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cashapp");
+  const [paymentMethod] = useState<PaymentMethod>("cashapp");
   const [paymentAmount, setPaymentAmount] = useState(pricing.setupTotal.toFixed(2));
   const [paymentMemo, setPaymentMemo] = useState(buildPetAwareMemo("", petCount, []));
   const [copiedLabel, setCopiedLabel] = useState<string | null>(null);
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [paymentMarked, setPaymentMarked] = useState(false);
   const [orderId, setOrderId] = useState(makeOrderId());
+  const [submittingOrder, setSubmittingOrder] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [emailState, setEmailState] = useState<EmailState>("idle");
 
   useEffect(() => {
     setPets((current) => {
       if (current.length === petCount) return current;
+
       if (current.length < petCount) {
         return [
           ...current,
@@ -149,6 +162,7 @@ export default function GuardianJoinDesk() {
           })),
         ];
       }
+
       return current.slice(0, petCount);
     });
 
@@ -179,6 +193,7 @@ export default function GuardianJoinDesk() {
       mailing.city.trim() &&
       mailing.state.trim() &&
       mailing.zip.trim() &&
+      mailing.email.trim() &&
       pets.every(
         (pet) =>
           pet.name.trim() &&
@@ -200,15 +215,73 @@ export default function GuardianJoinDesk() {
     }
   }
 
-  function placeOrder() {
+  async function placeOrder() {
     if (!isValid()) {
-      alert("Please complete the buyer, shipping, and pet profile information first.");
+      alert("Please complete the buyer, shipping, pet profile, and confirmation email fields first.");
       return;
     }
 
-    setOrderPlaced(true);
-    setPaymentMarked(false);
-    setOrderId(makeOrderId());
+    setSubmittingOrder(true);
+    setSubmitError("");
+    setEmailState("idle");
+
+    const nextOrderId = makeOrderId();
+
+    const orderPayload = {
+      order_id: nextOrderId,
+      customer_name: mailing.fullName.trim(),
+      customer_email: mailing.email.trim(),
+      customer_phone: mailing.phone.trim() || null,
+      shipping_address: mailing.address.trim(),
+      shipping_city: mailing.city.trim(),
+      shipping_state: mailing.state.trim(),
+      shipping_zip: mailing.zip.trim(),
+      payment_method: paymentMethod,
+      payment_amount: Number(paymentAmount || pricing.setupTotal.toFixed(2)),
+      payment_memo: paymentMemo,
+      pet_count: pricing.petCount,
+      setup_total: pricing.setupTotal,
+      monthly_total: pricing.monthlyTotal,
+      pets,
+      status: "pending_payment",
+      payment_marked: false,
+    };
+
+    try {
+      const { error: insertError } = await supabase
+        .from("guardian_orders")
+        .insert(orderPayload);
+
+      if (insertError) {
+        throw new Error(insertError.message);
+      }
+
+      setOrderId(nextOrderId);
+      setOrderPlaced(true);
+      setPaymentMarked(false);
+      setEmailState("sending");
+
+      const { error: functionError } = await supabase.functions.invoke(
+        "send-guardian-order-email",
+        {
+          body: orderPayload,
+        },
+      );
+
+      if (functionError) {
+        setEmailState("failed");
+        setSubmitError(`Order saved, but email sending failed: ${functionError.message}`);
+      } else {
+        setEmailState("sent");
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to save order.";
+      setSubmitError(message);
+      alert(message);
+    } finally {
+      setSubmittingOrder(false);
+    }
   }
 
   function markPaid() {
@@ -216,6 +289,7 @@ export default function GuardianJoinDesk() {
       alert("Place the order first so the payment ties to a real order.");
       return;
     }
+
     setPaymentMarked(true);
   }
 
@@ -234,6 +308,27 @@ export default function GuardianJoinDesk() {
   const firstPet = pets[0];
   const selectedOrderTitle =
     firstPet?.name?.trim() || mailing.fullName || "Pet tag order";
+
+  const receiptStatusLabel = paymentMarked
+    ? "Paid"
+    : orderPlaced
+      ? "Pending Payment"
+      : "Not Placed";
+
+  const receiptStatusText = paymentMarked
+    ? "Payment received"
+    : orderPlaced
+      ? "Waiting for payment"
+      : "Checkout not submitted";
+
+  const emailStatusText =
+    emailState === "sent"
+      ? "Confirmation sent"
+      : emailState === "failed"
+        ? "Order saved, email pending"
+        : emailState === "sending"
+          ? "Sending confirmation"
+          : "No confirmation sent yet";
 
   return (
     <div className="min-h-screen bg-black px-4 py-4 text-white">
@@ -317,13 +412,13 @@ export default function GuardianJoinDesk() {
 
                 <div className="grid gap-3 sm:grid-cols-2">
                   <input
-                    placeholder="Email (optional)"
+                    placeholder="Confirmation email"
                     value={mailing.email}
                     onChange={(e) => updateField("email", e.target.value)}
                     className="w-full rounded-xl border border-neutral-800 bg-black/60 px-4 py-3 text-sm text-white outline-none placeholder:text-neutral-500"
                   />
                   <input
-                    placeholder="Phone (optional)"
+                    placeholder="Phone"
                     value={mailing.phone}
                     onChange={(e) => updateField("phone", e.target.value)}
                     className="w-full rounded-xl border border-neutral-800 bg-black/60 px-4 py-3 text-sm text-white outline-none placeholder:text-neutral-500"
@@ -484,13 +579,20 @@ export default function GuardianJoinDesk() {
                 </div>
               </div>
 
+              {submitError ? (
+                <div className="mt-4 rounded-2xl border border-rose-500/20 bg-rose-500/10 p-4 text-sm text-rose-100">
+                  {submitError}
+                </div>
+              ) : null}
+
               <div className="mt-4 flex flex-wrap gap-2">
                 <button
                   type="button"
-                  onClick={placeOrder}
-                  className="inline-flex items-center justify-center rounded-xl bg-white px-4 py-3 text-sm font-semibold text-black"
+                  onClick={() => void placeOrder()}
+                  disabled={submittingOrder}
+                  className="inline-flex items-center justify-center rounded-xl bg-white px-4 py-3 text-sm font-semibold text-black disabled:opacity-60"
                 >
-                  Place Order
+                  {submittingOrder ? "Saving Order..." : "Place Order"}
                 </button>
 
                 <button
@@ -516,7 +618,7 @@ export default function GuardianJoinDesk() {
                   </p>
                 </div>
                 <div className="rounded-full border border-neutral-700 bg-black px-3 py-1 text-xs font-semibold text-neutral-300">
-                  {paymentMarked ? "Paid" : orderPlaced ? "Pending Payment" : "Not Placed"}
+                  {receiptStatusLabel}
                 </div>
               </div>
 
@@ -529,6 +631,12 @@ export default function GuardianJoinDesk() {
                   <span className="text-neutral-500">Customer:</span>{" "}
                   <span className="font-semibold text-white">
                     {mailing.fullName || "Not entered yet"}
+                  </span>
+                </div>
+                <div className="mt-2">
+                  <span className="text-neutral-500">Confirmation email:</span>{" "}
+                  <span className="font-semibold text-white">
+                    {mailing.email || "Not entered yet"}
                   </span>
                 </div>
                 <div className="mt-2">
@@ -551,19 +659,15 @@ export default function GuardianJoinDesk() {
                 </div>
                 <div className="mt-2">
                   <span className="text-neutral-500">Payment method:</span>{" "}
-                  <span className="font-semibold text-white">
-                    {paymentMethod === "cashapp" ? "Cash App" : "Zelle"}
-                  </span>
+                  <span className="font-semibold text-white">Cash App primary / Zelle backup</span>
                 </div>
                 <div className="mt-2">
                   <span className="text-neutral-500">Status:</span>{" "}
-                  <span className="font-semibold text-white">
-                    {paymentMarked
-                      ? "Payment received"
-                      : orderPlaced
-                        ? "Waiting for payment"
-                        : "Checkout not submitted"}
-                  </span>
+                  <span className="font-semibold text-white">{receiptStatusText}</span>
+                </div>
+                <div className="mt-2">
+                  <span className="text-neutral-500">Email status:</span>{" "}
+                  <span className="font-semibold text-white">{emailStatusText}</span>
                 </div>
 
                 <div className="mt-4 border-t border-neutral-800 pt-4">
@@ -629,7 +733,7 @@ export default function GuardianJoinDesk() {
                   {selectedOrderTitle}
                 </h3>
                 <p className="mt-1 text-sm text-neutral-200">
-                  {pricing.petCount} pet{pricing.petCount > 1 ? "s" : ""} • Setup {currency(pricing.setupTotal)}
+                  {pricing.petCount} pet{petCount > 1 ? "s" : ""} • Setup {currency(pricing.setupTotal)}
                 </p>
                 <p className="mt-1 text-sm text-neutral-300">
                   Monthly {currency(pricing.monthlyTotal)}/month
@@ -785,4 +889,3 @@ export default function GuardianJoinDesk() {
     </div>
   );
 }
-

@@ -1,4 +1,4 @@
-import { type ReactNode, useMemo, useState } from "react";
+﻿import { type ReactNode, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import HomePlanetFooter from "../components/HomePlanetFooter";
 
@@ -55,6 +55,11 @@ type CareTimelineEvent = {
 };
 
 const PET_BASE_PATH = "/planet/guardian-pet";
+
+const FIRST_PET_SETUP = 25;
+const FIRST_PET_MONTHLY = 5;
+const EXTRA_PET_SETUP = 15;
+const EXTRA_PET_MONTHLY = 3;
 
 const DEMO_PET: DemoPet = {
   id: "bella-demo",
@@ -143,7 +148,7 @@ const BELLA_CARE_TIMELINE: CareTimelineEvent[] = [
     time: "4:10 PM",
     title: "Service visit recorded",
     detail:
-      "Dog walker / pet service demo: service provider scanned the tag, opened Bella’s timeline, and logged the visit.",
+      "Dog walker / pet service demo: service provider scanned the tag, opened Bella's timeline, and logged the visit.",
     type: "service",
     proof: "Presence-ready service event",
   },
@@ -165,6 +170,20 @@ const INITIAL_FINDER_FORM: FinderFormState = {
 
 function cn(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
+}
+
+function currency(value: number) {
+  return `$${value}`;
+}
+
+function getPricing(petCount: number) {
+  const extraPets = Math.max(0, petCount - 1);
+  return {
+    petCount,
+    extraPets,
+    setupTotal: FIRST_PET_SETUP + extraPets * EXTRA_PET_SETUP,
+    monthlyTotal: FIRST_PET_MONTHLY + extraPets * EXTRA_PET_MONTHLY,
+  };
 }
 
 function getStatusPill(status: PetStatus) {
@@ -350,7 +369,7 @@ function PetCareTimelinePreview({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200">
-            Bella’s care timeline
+            Bella's care timeline
           </p>
           <h3 className="mt-2 text-2xl font-semibold text-white sm:text-3xl">
             More than a lost pet page
@@ -482,6 +501,8 @@ function GuardianShell({
 
 function GuardianSalesPage({ pet }: { pet: DemoPet }) {
   const scanDemoLink = `${PET_BASE_PATH}/pet/${pet.id}`;
+  const [petCount, setPetCount] = useState(1);
+  const pricing = getPricing(petCount);
 
   return (
     <div className="space-y-6">
@@ -502,25 +523,91 @@ function GuardianSalesPage({ pet }: { pet: DemoPet }) {
             real recovery system.
           </p>
 
+          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            <MetricCard value="$25 + $5/mo" label="first pet" />
+            <MetricCard value="$15 + $3/mo" label="each extra pet" />
+            <MetricCard value="multi-pet ready" label="single or household flow" />
+          </div>
+
+          <div className="mt-6 rounded-[24px] border border-emerald-300/20 bg-emerald-400/10 p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-100">
+              Live pricing
+            </p>
+
+            <div className="mt-4 space-y-3 text-sm text-white/85">
+              <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-[#08101f] px-4 py-3">
+                <span>First pet</span>
+                <span>{currency(FIRST_PET_SETUP)} setup + {currency(FIRST_PET_MONTHLY)}/month</span>
+              </div>
+              <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-[#08101f] px-4 py-3">
+                <span>Extra pets</span>
+                <span>{currency(EXTRA_PET_SETUP)} setup + {currency(EXTRA_PET_MONTHLY)}/month each</span>
+              </div>
+            </div>
+
+            <div className="mt-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200">
+                Choose pet count
+              </p>
+
+              <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                {[1, 2, 3].map((count) => (
+                  <button
+                    key={count}
+                    type="button"
+                    onClick={() => setPetCount(count)}
+                    className={cn(
+                      "rounded-2xl border px-4 py-4 text-left transition",
+                      petCount === count
+                        ? "border-cyan-300/35 bg-cyan-400/15"
+                        : "border-white/10 bg-white/5 hover:bg-white/10"
+                    )}
+                  >
+                    <div className="text-base font-semibold text-white">
+                      {count} {count === 1 ? "pet" : "pets"}
+                    </div>
+                    <div className="mt-1 text-xs text-white/60">
+                      {count === 1 ? "Single-pet setup" : `${count - 1} extra pet${count - 1 > 1 ? "s" : ""}`}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-2xl border border-white/10 bg-[#08101f] px-4 py-4">
+                <div className="text-xs uppercase tracking-[0.18em] text-white/55">setup total</div>
+                <div className="mt-2 text-2xl font-semibold text-white">{currency(pricing.setupTotal)}</div>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-[#08101f] px-4 py-4">
+                <div className="text-xs uppercase tracking-[0.18em] text-white/55">monthly total</div>
+                <div className="mt-2 text-2xl font-semibold text-white">{currency(pricing.monthlyTotal)}/month</div>
+              </div>
+            </div>
+
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Link
+                to={`/planet/guardian/join?pets=${petCount}`}
+                className="rounded-2xl border border-cyan-300/35 bg-cyan-400/18 px-5 py-3 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/26"
+              >
+                Start tag order
+              </Link>
+              <Link
+                to={scanDemoLink}
+                className="rounded-2xl border border-white/15 bg-white/6 px-5 py-3 text-sm font-semibold text-white/90 transition hover:bg-white/10"
+              >
+                Scan Bella's live rescue page
+              </Link>
+            </div>
+          </div>
+
           <div className="mt-6 flex flex-wrap gap-3">
-            <Link
-              to={scanDemoLink}
-              className="rounded-2xl border border-cyan-300/35 bg-cyan-400/18 px-5 py-3 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/26"
-            >
-              Scan Bella’s live rescue page
-            </Link>
             <Link
               to={`${PET_BASE_PATH}/found/${pet.id}`}
               className="rounded-2xl border border-white/15 bg-white/6 px-5 py-3 text-sm font-semibold text-white/90 transition hover:bg-white/10"
             >
               Open finder report page
             </Link>
-          </div>
-
-          <div className="mt-8 grid gap-3 sm:grid-cols-3">
-            <MetricCard value="1 scan" label="opens the live pet page" />
-            <MetricCard value="3 taps" label="call, text, or report found" />
-            <MetricCard value="1 system" label="for families, vets, services" />
           </div>
 
           <p className="mt-6 text-sm leading-6 text-white/68">
@@ -563,7 +650,7 @@ function GuardianSalesPage({ pet }: { pet: DemoPet }) {
                 </div>
 
                 <p className="mt-4 text-sm leading-6 text-white/75">
-                  “If I’m lost, please scan.” The tag becomes a live rescue page with
+                  "If I'm lost, please scan." The tag becomes a live rescue page with
                   owner contact, rescue radar activity, notes, and a finder report flow.
                 </p>
               </div>
@@ -650,7 +737,7 @@ function GuardianSalesPage({ pet }: { pet: DemoPet }) {
                 Planet Guardian Pet
               </div>
               <h4 className="mt-4 text-xl font-semibold text-white">
-                If I’m lost, please scan
+                If I'm lost, please scan
               </h4>
               <div className="mt-5 grid h-36 w-36 place-items-center rounded-2xl border border-white/15 bg-white">
                 <div className="grid h-24 w-24 grid-cols-6 gap-[2px] rounded-md bg-white p-[6px]">
@@ -683,7 +770,7 @@ function GuardianSalesPage({ pet }: { pet: DemoPet }) {
               lost pets get home faster by turning a pet tag into a live rescue page.
             </p>
             <p>
-              When someone scans the tag, they immediately see the pet’s name, photo,
+              When someone scans the tag, they immediately see the pet's name, photo,
               status, owner contact options, and a simple way to report where the pet
               was found.
             </p>
@@ -696,7 +783,7 @@ function GuardianSalesPage({ pet }: { pet: DemoPet }) {
               grooming, and vet logs as timestamped pet service events.
             </p>
             <p className="font-semibold text-cyan-100">
-              Powered by HomePlanet — a real-world safety layer built for faster reunions
+              Powered by HomePlanet - a real-world safety layer built for faster reunions
               and trustworthy pet care records.
             </p>
           </div>
@@ -706,7 +793,7 @@ function GuardianSalesPage({ pet }: { pet: DemoPet }) {
               to={scanDemoLink}
               className="rounded-2xl border border-cyan-300/35 bg-cyan-400/15 px-5 py-3 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/22"
             >
-              Open Bella’s live rescue page
+              Open Bella's live rescue page
             </Link>
             <Link
               to={`${PET_BASE_PATH}/found/${pet.id}`}
@@ -801,7 +888,7 @@ function GuardianPetPage({ pet }: { pet: DemoPet }) {
 
             <div className="mt-4">
               <Link
-                to="/planet/guardian/join"
+                to="/planet/guardian/join?pets=1"
                 className="block rounded-[22px] border border-cyan-300/30 bg-cyan-400/15 px-4 py-4 text-center text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/22"
               >
                 Create Your Pet Tag
@@ -972,7 +1059,7 @@ function GuardianFoundPage({ pet }: { pet: DemoPet }) {
                     Report captured
                   </h3>
                   <p className="mt-2 text-sm leading-6 text-white/75">
-                    This is the demo state for today’s pitch. Later we can save reports
+                    This is the demo state for today's pitch. Later we can save reports
                     into Supabase and notify the owner live.
                   </p>
                 </div>
