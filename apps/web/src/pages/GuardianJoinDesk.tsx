@@ -1,333 +1,788 @@
-import { useState } from "react";
-import {
-  Shield,
-  Mail,
-  CheckCircle2,
-  CreditCard,
-  QrCode,
-} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { CheckCircle2, ExternalLink, QrCode } from "lucide-react";
 
-type OrderStage =
-  | "waiting"
-  | "confirmed"
-  | "payment-pending"
-  | "payment-received"
-  | "production"
-  | "shipped"
-  | "delivered";
+type PaymentMethod = "cashapp" | "zelle";
 
-function nowStamp() {
-  return new Date().toLocaleTimeString([], {
-    hour: "numeric",
-    minute: "2-digit",
-  });
+type MailingState = {
+  fullName: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+  email: string;
+  phone: string;
+};
+
+type PetProfile = {
+  name: string;
+  type: string;
+  breed: string;
+  age: string;
+  color: string;
+  notes: string;
+};
+
+const FIRST_PET_SETUP = 25;
+const FIRST_PET_MONTHLY = 5;
+const EXTRA_PET_SETUP = 15;
+const EXTRA_PET_MONTHLY = 3;
+
+const CASH_APP_CASHTAG = "$YourRealCashtag";
+const ZELLE_CONTACT = "dannyscandys@gmail.com";
+const ORDER_CONTACT_PHONE = "863-532-0683";
+
+function currency(value: number) {
+  return `$${value.toFixed(2)}`;
+}
+
+function parsePetCount(value: string | null) {
+  const parsed = Number(value ?? "1");
+  if (!Number.isFinite(parsed) || parsed < 1) return 1;
+  return Math.floor(parsed);
+}
+
+function getPricing(petCount: number) {
+  const extraPets = Math.max(0, petCount - 1);
+  return {
+    petCount,
+    extraPets,
+    setupTotal: FIRST_PET_SETUP + extraPets * EXTRA_PET_SETUP,
+    monthlyTotal: FIRST_PET_MONTHLY + extraPets * EXTRA_PET_MONTHLY,
+  };
+}
+
+function buildCashAppUrl(amount: string, memo: string) {
+  const cashtag = CASH_APP_CASHTAG.replace("$", "");
+  const params = new URLSearchParams();
+
+  if (amount) params.set("amount", amount);
+  if (memo) params.set("note", memo);
+
+  return `https://cash.app/$${cashtag}${params.toString() ? `?${params.toString()}` : ""}`;
+}
+
+function buildZelleCopy(amount: string, memo: string) {
+  return `Send ${amount ? `$${amount}` : "payment"} to ${ZELLE_CONTACT}${memo ? ` | Memo: ${memo}` : ""}`;
+}
+
+function buildPetAwareMemo(
+  fullName: string,
+  petCount: number,
+  pets: PetProfile[],
+) {
+  const firstPetName = pets[0]?.name?.trim();
+
+  if (firstPetName) {
+    const petLabel =
+      petCount > 1 ? `${firstPetName} + ${petCount - 1} more` : firstPetName;
+    return `Guardian Pet Tag - ${petLabel} - ${petCount} pet${petCount > 1 ? "s" : ""}`;
+  }
+
+  const buyer = fullName.trim() || "customer";
+  return `Guardian Pet Tag - ${buyer} - ${petCount} pet${petCount > 1 ? "s" : ""}`;
+}
+
+function makeOrderId() {
+  const part = Math.random().toString(36).slice(2, 8).toUpperCase();
+  return `GPT-${part}`;
+}
+
+function createEmptyPets(count: number): PetProfile[] {
+  return Array.from({ length: count }, () => ({
+    name: "",
+    type: "",
+    breed: "",
+    age: "",
+    color: "",
+    notes: "",
+  }));
+}
+
+function petSummaryLine(pet: PetProfile) {
+  const parts = [pet.type.trim(), pet.breed.trim(), pet.age.trim(), pet.color.trim()].filter(Boolean);
+  return parts.length ? parts.join(" • ") : "Profile not entered yet";
+}
+
+function buildQrImageUrl(data: string) {
+  return `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(data)}`;
 }
 
 export default function GuardianJoinDesk() {
-  const [mailing, setMailing] = useState({
+  const [searchParams] = useSearchParams();
+
+  const petCount = parsePetCount(searchParams.get("pets"));
+  const pricing = useMemo(() => getPricing(petCount), [petCount]);
+
+  const [mailing, setMailing] = useState<MailingState>({
     fullName: "",
     address: "",
     city: "",
     state: "",
     zip: "",
-    email: "",
+    email: "dannyscandys@gmail.com",
+    phone: ORDER_CONTACT_PHONE,
   });
 
-  const [orderStage, setOrderStage] = useState<OrderStage>("waiting");
-  const [lastUpdate, setLastUpdate] = useState<string | null>(null);
+  const [pets, setPets] = useState<PetProfile[]>(() => createEmptyPets(petCount));
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cashapp");
+  const [paymentAmount, setPaymentAmount] = useState(pricing.setupTotal.toFixed(2));
+  const [paymentMemo, setPaymentMemo] = useState(buildPetAwareMemo("", petCount, []));
+  const [copiedLabel, setCopiedLabel] = useState<string | null>(null);
+  const [orderPlaced, setOrderPlaced] = useState(false);
+  const [paymentMarked, setPaymentMarked] = useState(false);
+  const [orderId, setOrderId] = useState(makeOrderId());
 
-  function updateField(field: string, value: string) {
+  useEffect(() => {
+    setPets((current) => {
+      if (current.length === petCount) return current;
+      if (current.length < petCount) {
+        return [
+          ...current,
+          ...Array.from({ length: petCount - current.length }, () => ({
+            name: "",
+            type: "",
+            breed: "",
+            age: "",
+            color: "",
+            notes: "",
+          })),
+        ];
+      }
+      return current.slice(0, petCount);
+    });
+
+    setPaymentAmount(pricing.setupTotal.toFixed(2));
+  }, [petCount, pricing.setupTotal]);
+
+  useEffect(() => {
+    setPaymentMemo(buildPetAwareMemo(mailing.fullName, petCount, pets));
+  }, [mailing.fullName, petCount, pets]);
+
+  function updateField(field: keyof MailingState, value: string) {
     setMailing((prev) => ({
       ...prev,
       [field]: value,
     }));
   }
 
-  function handleSubmitMailingDetails() {
-    if (
-      !mailing.fullName.trim() ||
-      !mailing.address.trim() ||
-      !mailing.city.trim() ||
-      !mailing.state.trim() ||
-      !mailing.zip.trim()
-    ) {
+  function updatePet(index: number, field: keyof PetProfile, value: string) {
+    setPets((prev) =>
+      prev.map((pet, i) => (i === index ? { ...pet, [field]: value } : pet)),
+    );
+  }
+
+  function isValid() {
+    return (
+      mailing.fullName.trim() &&
+      mailing.address.trim() &&
+      mailing.city.trim() &&
+      mailing.state.trim() &&
+      mailing.zip.trim() &&
+      pets.every(
+        (pet) =>
+          pet.name.trim() &&
+          pet.type.trim() &&
+          pet.breed.trim() &&
+          pet.age.trim(),
+      )
+    );
+  }
+
+  async function copyText(value: string, label: string) {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopiedLabel(label);
+      window.setTimeout(() => setCopiedLabel(null), 1600);
+    } catch (error) {
+      console.error(`Failed to copy ${label}:`, error);
+      alert(`Could not copy ${label}.`);
+    }
+  }
+
+  function placeOrder() {
+    if (!isValid()) {
+      alert("Please complete the buyer, shipping, and pet profile information first.");
       return;
     }
 
-    setOrderStage("payment-pending");
-    setLastUpdate(nowStamp());
-
-    console.log(
-      `Order confirmed for ${mailing.fullName}. Waiting for payment to start production.`
-    );
+    setOrderPlaced(true);
+    setPaymentMarked(false);
+    setOrderId(makeOrderId());
   }
 
-  function handlePaymentReceived() {
-    setOrderStage("payment-received");
-    setLastUpdate(nowStamp());
-
-    console.log(
-      `Payment received for ${mailing.fullName}. Order is ready to move into production.`
-    );
+  function markPaid() {
+    if (!orderPlaced) {
+      alert("Place the order first so the payment ties to a real order.");
+      return;
+    }
+    setPaymentMarked(true);
   }
+
+  const cashAppUrl = useMemo(
+    () => buildCashAppUrl(paymentAmount, paymentMemo),
+    [paymentAmount, paymentMemo],
+  );
+
+  const zelleCopyText = useMemo(
+    () => buildZelleCopy(paymentAmount, paymentMemo),
+    [paymentAmount, paymentMemo],
+  );
+
+  const cashAppQr = useMemo(() => buildQrImageUrl(cashAppUrl), [cashAppUrl]);
+
+  const firstPet = pets[0];
+  const selectedOrderTitle =
+    firstPet?.name?.trim() || mailing.fullName || "Pet tag order";
 
   return (
-    <div className="min-h-screen bg-[#0b1020] text-white">
-      <div className="mx-auto max-w-[820px] px-6 py-8">
-        <header className="mb-6 rounded-3xl border border-blue-400/20 bg-gradient-to-r from-blue-900/40 to-purple-900/40 p-6">
-          <div className="flex items-center gap-3">
-            <Shield className="h-6 w-6 text-blue-300" />
-            <h1 className="text-xl font-semibold">Create Your Pet Tag</h1>
-          </div>
+    <div className="min-h-screen bg-black px-4 py-4 text-white">
+      <div className="mx-auto max-w-7xl">
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px] xl:items-start">
+          <div className="min-w-0">
+            <div className="rounded-[28px] border border-neutral-800 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.08),transparent_28%),linear-gradient(180deg,#171717_0%,#0a0a0a_100%)] p-4">
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="inline-flex rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">
+                  Guardian Checkout
+                </div>
+                <div className="rounded-full border border-neutral-700 bg-black/60 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-300">
+                  {petCount} pet{petCount > 1 ? "s" : ""}
+                </div>
+              </div>
 
-          <p className="mt-2 text-sm text-blue-200/80">
-            No pair code. No device linking. Just create your pet tag and we’ll send it.
-          </p>
-        </header>
+              <h1 className="mt-1 text-2xl font-semibold tracking-tight">
+                Buy your pet tag today
+              </h1>
+              <p className="mt-1 max-w-2xl text-xs text-neutral-400">
+                Simple transaction. Shipping info, pet info, payment amount, memo, and one clean payment move.
+              </p>
 
-        <section className="rounded-3xl border border-yellow-400/20 bg-yellow-900/10 p-5">
-          <div className="mb-3 text-sm uppercase text-yellow-200/80">
-            Mailing Details
-          </div>
-
-          <div className="grid gap-3">
-            <input
-              placeholder="Full Name"
-              value={mailing.fullName}
-              onChange={(e) => updateField("fullName", e.target.value)}
-              className="rounded-xl bg-[#0c1730] p-3 text-white outline-none placeholder:text-white/45"
-            />
-            <input
-              placeholder="Street Address"
-              value={mailing.address}
-              onChange={(e) => updateField("address", e.target.value)}
-              className="rounded-xl bg-[#0c1730] p-3 text-white outline-none placeholder:text-white/45"
-            />
-
-            <div className="grid grid-cols-3 gap-2">
-              <input
-                placeholder="City"
-                value={mailing.city}
-                onChange={(e) => updateField("city", e.target.value)}
-                className="rounded-xl bg-[#0c1730] p-3 text-white outline-none placeholder:text-white/45"
-              />
-              <input
-                placeholder="State"
-                value={mailing.state}
-                onChange={(e) => updateField("state", e.target.value)}
-                className="rounded-xl bg-[#0c1730] p-3 text-white outline-none placeholder:text-white/45"
-              />
-              <input
-                placeholder="ZIP"
-                value={mailing.zip}
-                onChange={(e) => updateField("zip", e.target.value)}
-                className="rounded-xl bg-[#0c1730] p-3 text-white outline-none placeholder:text-white/45"
-              />
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Link
+                  to="/planet/guardian-pet"
+                  className="inline-flex items-center justify-center rounded-xl border border-neutral-700 bg-neutral-950 px-4 py-3 text-sm font-semibold text-white"
+                >
+                  Back to Sales Page
+                </Link>
+              </div>
             </div>
 
-            <input
-              placeholder="Email (optional)"
-              value={mailing.email}
-              onChange={(e) => updateField("email", e.target.value)}
-              className="rounded-xl bg-[#0c1730] p-3 text-white outline-none placeholder:text-white/45"
-            />
+            <div className="mt-3 rounded-[28px] border border-neutral-800 bg-neutral-950 p-4">
+              <div className="mb-4 flex items-start justify-between gap-4 border-b border-neutral-800 pb-4">
+                <div>
+                  <h2 className="text-xl font-semibold">Buyer + Shipping</h2>
+                  <p className="mt-1 text-sm text-neutral-500">
+                    This is all the customer needs to complete the order.
+                  </p>
+                </div>
+                <div className="rounded-full border border-neutral-700 bg-black px-3 py-1 text-xs font-semibold text-neutral-300">
+                  Order
+                </div>
+              </div>
+
+              <div className="grid gap-3">
+                <input
+                  placeholder="Full Name"
+                  value={mailing.fullName}
+                  onChange={(e) => updateField("fullName", e.target.value)}
+                  className="w-full rounded-xl border border-neutral-800 bg-black/60 px-4 py-3 text-sm text-white outline-none placeholder:text-neutral-500"
+                />
+                <input
+                  placeholder="Street Address"
+                  value={mailing.address}
+                  onChange={(e) => updateField("address", e.target.value)}
+                  className="w-full rounded-xl border border-neutral-800 bg-black/60 px-4 py-3 text-sm text-white outline-none placeholder:text-neutral-500"
+                />
+
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <input
+                    placeholder="City"
+                    value={mailing.city}
+                    onChange={(e) => updateField("city", e.target.value)}
+                    className="w-full rounded-xl border border-neutral-800 bg-black/60 px-4 py-3 text-sm text-white outline-none placeholder:text-neutral-500"
+                  />
+                  <input
+                    placeholder="State"
+                    value={mailing.state}
+                    onChange={(e) => updateField("state", e.target.value)}
+                    className="w-full rounded-xl border border-neutral-800 bg-black/60 px-4 py-3 text-sm text-white outline-none placeholder:text-neutral-500"
+                  />
+                  <input
+                    placeholder="ZIP"
+                    value={mailing.zip}
+                    onChange={(e) => updateField("zip", e.target.value)}
+                    className="w-full rounded-xl border border-neutral-800 bg-black/60 px-4 py-3 text-sm text-white outline-none placeholder:text-neutral-500"
+                  />
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <input
+                    placeholder="Email (optional)"
+                    value={mailing.email}
+                    onChange={(e) => updateField("email", e.target.value)}
+                    className="w-full rounded-xl border border-neutral-800 bg-black/60 px-4 py-3 text-sm text-white outline-none placeholder:text-neutral-500"
+                  />
+                  <input
+                    placeholder="Phone (optional)"
+                    value={mailing.phone}
+                    onChange={(e) => updateField("phone", e.target.value)}
+                    className="w-full rounded-xl border border-neutral-800 bg-black/60 px-4 py-3 text-sm text-white outline-none placeholder:text-neutral-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-3 rounded-[28px] border border-neutral-800 bg-neutral-950 p-4">
+              <div className="mb-4 flex items-start justify-between gap-4 border-b border-neutral-800 pb-4">
+                <div>
+                  <h2 className="text-xl font-semibold">Pet Profile{petCount > 1 ? "s" : ""}</h2>
+                  <p className="mt-1 text-sm text-neutral-500">
+                    This is the real animal identity the tag order is for.
+                  </p>
+                </div>
+                <div className="rounded-full border border-neutral-700 bg-black px-3 py-1 text-xs font-semibold text-neutral-300">
+                  {petCount} profile{petCount > 1 ? "s" : ""}
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                {pets.map((pet, index) => (
+                  <div
+                    key={index}
+                    className="rounded-2xl border border-neutral-800 bg-black/40 p-4"
+                  >
+                    <div className="mb-3 text-sm font-semibold text-white">
+                      Pet {index + 1}
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <input
+                        placeholder="Pet Name"
+                        value={pet.name}
+                        onChange={(e) => updatePet(index, "name", e.target.value)}
+                        className="w-full rounded-xl border border-neutral-800 bg-black/60 px-4 py-3 text-sm text-white outline-none placeholder:text-neutral-500"
+                      />
+                      <input
+                        placeholder="Type (Dog, Cat, etc)"
+                        value={pet.type}
+                        onChange={(e) => updatePet(index, "type", e.target.value)}
+                        className="w-full rounded-xl border border-neutral-800 bg-black/60 px-4 py-3 text-sm text-white outline-none placeholder:text-neutral-500"
+                      />
+                      <input
+                        placeholder="Breed"
+                        value={pet.breed}
+                        onChange={(e) => updatePet(index, "breed", e.target.value)}
+                        className="w-full rounded-xl border border-neutral-800 bg-black/60 px-4 py-3 text-sm text-white outline-none placeholder:text-neutral-500"
+                      />
+                      <input
+                        placeholder="Age"
+                        value={pet.age}
+                        onChange={(e) => updatePet(index, "age", e.target.value)}
+                        className="w-full rounded-xl border border-neutral-800 bg-black/60 px-4 py-3 text-sm text-white outline-none placeholder:text-neutral-500"
+                      />
+                      <input
+                        placeholder="Color / markings"
+                        value={pet.color}
+                        onChange={(e) => updatePet(index, "color", e.target.value)}
+                        className="w-full rounded-xl border border-neutral-800 bg-black/60 px-4 py-3 text-sm text-white outline-none placeholder:text-neutral-500 sm:col-span-2"
+                      />
+                    </div>
+
+                    <textarea
+                      placeholder="Allergies, meds, temperament, emergency notes"
+                      value={pet.notes}
+                      onChange={(e) => updatePet(index, "notes", e.target.value)}
+                      className="mt-3 min-h-[96px] w-full rounded-xl border border-neutral-800 bg-black/60 px-4 py-3 text-sm text-white outline-none placeholder:text-neutral-500"
+                    />
+
+                    <div className="mt-3 rounded-xl border border-neutral-800 bg-neutral-950 p-3 text-sm text-neutral-400">
+                      {pet.name.trim() ? (
+                        <>
+                          <div className="font-semibold text-white">{pet.name}</div>
+                          <div className="mt-1">{petSummaryLine(pet)}</div>
+                          {pet.notes.trim() ? (
+                            <div className="mt-2 text-neutral-500">Notes: {pet.notes}</div>
+                          ) : null}
+                        </>
+                      ) : (
+                        <div>Pet profile not entered yet.</div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-3 rounded-[28px] border border-neutral-800 bg-neutral-950 p-4">
+              <div className="mb-4 flex items-start justify-between gap-4 border-b border-neutral-800 pb-4">
+                <div>
+                  <h2 className="text-xl font-semibold">Order Summary</h2>
+                  <p className="mt-1 text-sm text-neutral-500">
+                    Fast pricing, no confusion.
+                  </p>
+                </div>
+                <div className="rounded-full border border-neutral-700 bg-black px-3 py-1 text-xs font-semibold text-neutral-300">
+                  {orderId}
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="rounded-2xl border border-neutral-800 bg-black/40 p-4">
+                  <div className="text-xs uppercase tracking-[0.18em] text-neutral-500">
+                    Pet count
+                  </div>
+                  <div className="mt-2 text-2xl font-semibold text-white">
+                    {pricing.petCount}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-neutral-800 bg-black/40 p-4">
+                  <div className="text-xs uppercase tracking-[0.18em] text-neutral-500">
+                    First pet
+                  </div>
+                  <div className="mt-2 text-sm font-semibold text-white">
+                    {currency(FIRST_PET_SETUP)} + {currency(FIRST_PET_MONTHLY)}/mo
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-neutral-800 bg-black/40 p-4">
+                  <div className="text-xs uppercase tracking-[0.18em] text-neutral-500">
+                    Extra pets
+                  </div>
+                  <div className="mt-2 text-sm font-semibold text-white">
+                    {currency(EXTRA_PET_SETUP)} + {currency(EXTRA_PET_MONTHLY)}/mo each
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4">
+                  <div className="text-xs uppercase tracking-[0.18em] text-emerald-300/80">
+                    Setup total
+                  </div>
+                  <div className="mt-2 text-2xl font-semibold text-white">
+                    {currency(pricing.setupTotal)}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl border border-neutral-800 bg-black/40 p-4">
+                  <div className="text-xs uppercase tracking-[0.18em] text-neutral-500">
+                    Monthly total
+                  </div>
+                  <div className="mt-2 text-2xl font-semibold text-white">
+                    {currency(pricing.monthlyTotal)}/mo
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-neutral-800 bg-black/40 p-4">
+                  <div className="text-xs uppercase tracking-[0.18em] text-neutral-500">
+                    Payment memo
+                  </div>
+                  <div className="mt-2 text-sm font-semibold text-white">
+                    {paymentMemo}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={placeOrder}
+                  className="inline-flex items-center justify-center rounded-xl bg-white px-4 py-3 text-sm font-semibold text-black"
+                >
+                  Place Order
+                </button>
+
+                <button
+                  type="button"
+                  onClick={markPaid}
+                  className={`inline-flex items-center justify-center rounded-xl px-4 py-3 text-sm font-semibold ${
+                    orderPlaced
+                      ? "border border-emerald-400/30 bg-emerald-500/15 text-emerald-50"
+                      : "cursor-not-allowed border border-neutral-800 bg-neutral-900 text-neutral-500"
+                  }`}
+                >
+                  Mark Paid
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-3 rounded-[28px] border border-neutral-800 bg-neutral-950 p-4">
+              <div className="mb-4 flex items-start justify-between gap-4 border-b border-neutral-800 pb-4">
+                <div>
+                  <h2 className="text-xl font-semibold">Receipt State</h2>
+                  <p className="mt-1 text-sm text-neutral-500">
+                    Quick receipt-style confirmation.
+                  </p>
+                </div>
+                <div className="rounded-full border border-neutral-700 bg-black px-3 py-1 text-xs font-semibold text-neutral-300">
+                  {paymentMarked ? "Paid" : orderPlaced ? "Pending Payment" : "Not Placed"}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-neutral-800 bg-black/40 p-4 text-sm text-neutral-300">
+                <div>
+                  <span className="text-neutral-500">Order ID:</span>{" "}
+                  <span className="font-semibold text-white">{orderId}</span>
+                </div>
+                <div className="mt-2">
+                  <span className="text-neutral-500">Customer:</span>{" "}
+                  <span className="font-semibold text-white">
+                    {mailing.fullName || "Not entered yet"}
+                  </span>
+                </div>
+                <div className="mt-2">
+                  <span className="text-neutral-500">Ship to:</span>{" "}
+                  <span className="font-semibold text-white">
+                    {mailing.address
+                      ? `${mailing.address}, ${mailing.city}, ${mailing.state} ${mailing.zip}`
+                      : "Not entered yet"}
+                  </span>
+                </div>
+                <div className="mt-2">
+                  <span className="text-neutral-500">Setup charge:</span>{" "}
+                  <span className="font-semibold text-white">{currency(pricing.setupTotal)}</span>
+                </div>
+                <div className="mt-2">
+                  <span className="text-neutral-500">Monthly:</span>{" "}
+                  <span className="font-semibold text-white">
+                    {currency(pricing.monthlyTotal)}/month
+                  </span>
+                </div>
+                <div className="mt-2">
+                  <span className="text-neutral-500">Payment method:</span>{" "}
+                  <span className="font-semibold text-white">
+                    {paymentMethod === "cashapp" ? "Cash App" : "Zelle"}
+                  </span>
+                </div>
+                <div className="mt-2">
+                  <span className="text-neutral-500">Status:</span>{" "}
+                  <span className="font-semibold text-white">
+                    {paymentMarked
+                      ? "Payment received"
+                      : orderPlaced
+                        ? "Waiting for payment"
+                        : "Checkout not submitted"}
+                  </span>
+                </div>
+
+                <div className="mt-4 border-t border-neutral-800 pt-4">
+                  <div className="text-xs uppercase tracking-[0.18em] text-neutral-500">
+                    Pet profile{petCount > 1 ? "s" : ""}
+                  </div>
+
+                  <div className="mt-3 space-y-3">
+                    {pets.map((pet, index) => (
+                      <div
+                        key={index}
+                        className="rounded-xl border border-neutral-800 bg-neutral-950 p-3"
+                      >
+                        <div className="font-semibold text-white">
+                          {pet.name.trim() || `Pet ${index + 1}`}
+                        </div>
+                        <div className="mt-1 text-neutral-400">{petSummaryLine(pet)}</div>
+                        {pet.notes.trim() ? (
+                          <div className="mt-2 text-neutral-500">Notes: {pet.notes}</div>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {paymentMarked ? (
+                <div className="mt-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4">
+                  <div className="flex items-center gap-2 text-emerald-200">
+                    <CheckCircle2 className="h-4 w-4" />
+                    <span className="text-sm font-semibold">
+                      Payment marked received. This order is ready for fulfillment.
+                    </span>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </div>
+
+          <aside className="sticky top-3 h-fit rounded-[28px] border border-cyan-900/60 bg-[linear-gradient(180deg,rgba(12,30,36,0.96)_0%,rgba(8,14,20,0.98)_100%)] p-4 shadow-[0_0_0_1px_rgba(34,211,238,0.06)]">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-cyan-300/80">
+                  Payment Layer
+                </p>
+                <h2 className="mt-1 text-2xl font-semibold text-white">Take payment fast</h2>
+              </div>
+              <div className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-300">
+                {orderPlaced ? "Order Ready" : "Ready"}
+              </div>
+            </div>
+
+            <p className="mt-2 text-sm text-neutral-300">
+              Cash App is the fastest pay-now path. Zelle stays here as backup only.
+            </p>
+
+            <div className="mt-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-emerald-300">
+                  Selected Order
+                </p>
+                <h3 className="mt-2 text-lg font-semibold text-white">
+                  {selectedOrderTitle}
+                </h3>
+                <p className="mt-1 text-sm text-neutral-200">
+                  {pricing.petCount} pet{pricing.petCount > 1 ? "s" : ""} • Setup {currency(pricing.setupTotal)}
+                </p>
+                <p className="mt-1 text-sm text-neutral-300">
+                  Monthly {currency(pricing.monthlyTotal)}/month
+                </p>
+                {firstPet?.type?.trim() || firstPet?.breed?.trim() ? (
+                  <p className="mt-1 text-sm text-neutral-400">
+                    {petSummaryLine(firstPet)}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="mt-4 grid gap-3">
+              <label className="block">
+                <span className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.22em] text-neutral-400">
+                  Payment Amount
+                </span>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={paymentAmount}
+                  onChange={(event) => setPaymentAmount(event.target.value)}
+                  className="w-full rounded-xl border border-neutral-800 bg-black/60 px-4 py-3 text-sm text-white outline-none placeholder:text-neutral-500"
+                  placeholder="25.00"
+                />
+              </label>
+
+              <label className="block">
+                <span className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.22em] text-neutral-400">
+                  Payment Memo
+                </span>
+                <input
+                  type="text"
+                  value={paymentMemo}
+                  onChange={(event) => setPaymentMemo(event.target.value)}
+                  className="w-full rounded-xl border border-neutral-800 bg-black/60 px-4 py-3 text-sm text-white outline-none placeholder:text-neutral-500"
+                  placeholder="Guardian Pet Tag"
+                />
+              </label>
+            </div>
+
+            <div className="mt-4 rounded-2xl border border-cyan-400/20 bg-cyan-400/10 p-3">
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <div className="text-sm font-semibold text-white">Cash App</div>
+                <div className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-300">
+                  Primary
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-neutral-800 bg-neutral-950 p-3 text-sm text-neutral-300">
+                Amount: <span className="font-semibold text-white">${paymentAmount || "0.00"}</span>
+                <br />
+                Memo: <span className="font-semibold text-white">{paymentMemo || "No memo"}</span>
+              </div>
+
+              <div className="mt-3 rounded-2xl border border-neutral-800 bg-neutral-950 p-4">
+                <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-neutral-400">
+                  <QrCode className="h-4 w-4" />
+                  Scan to pay
+                </div>
+
+                <div className="flex justify-center">
+                  <img
+                    src={cashAppQr}
+                    alt="Cash App payment QR"
+                    className="h-56 w-56 rounded-2xl border border-white/10 bg-white p-3"
+                  />
+                </div>
+
+                <p className="mt-3 text-center text-xs leading-5 text-neutral-400">
+                  On desktop: scan this QR with your phone to open Cash App fast.
+                </p>
+              </div>
+
+              <div className="mt-3 grid gap-2">
+                <a
+                  href={cashAppUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-400 px-4 py-3 text-sm font-semibold text-black"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  Pay with Cash App
+                </a>
+                <button
+                  type="button"
+                  onClick={() => copyText(cashAppUrl, "Cash App link")}
+                  className="inline-flex items-center justify-center rounded-xl border border-neutral-700 bg-neutral-950 px-4 py-3 text-sm font-semibold text-white"
+                >
+                  {copiedLabel === "Cash App link" ? "Copied Cash App Link" : "Copy Cash App Link"}
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-2xl border border-neutral-800 bg-black/50 p-4">
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-white">Zelle</p>
+                  <p className="mt-1 text-xs text-neutral-400">{ZELLE_CONTACT}</p>
+                </div>
+                <div className="rounded-full border border-fuchsia-500/20 bg-fuchsia-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-fuchsia-300">
+                  Backup
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-neutral-800 bg-neutral-950 p-3 text-sm text-neutral-300">
+                Send to: <span className="font-semibold text-white">{ZELLE_CONTACT}</span>
+                <br />
+                Memo: <span className="font-semibold text-white">{paymentMemo || "No memo"}</span>
+                <br />
+                Phone: <span className="font-semibold text-white">{ORDER_CONTACT_PHONE}</span>
+              </div>
+
+              <div className="mt-3 grid gap-2">
+                <button
+                  type="button"
+                  onClick={() => copyText(zelleCopyText, "Zelle payment details")}
+                  className="inline-flex items-center justify-center rounded-xl bg-white px-4 py-3 text-sm font-semibold text-black"
+                >
+                  {copiedLabel === "Zelle payment details"
+                    ? "Copied Zelle Details"
+                    : "Copy Zelle Details"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => copyText(paymentMemo, "memo")}
+                  className="inline-flex items-center justify-center rounded-xl border border-neutral-700 bg-neutral-950 px-4 py-3 text-sm font-semibold text-white"
+                >
+                  {copiedLabel === "memo" ? "Copied Memo" : "Copy Memo Only"}
+                </button>
+              </div>
+            </div>
 
             <button
-              onClick={handleSubmitMailingDetails}
-              className="mt-2 flex items-center justify-center gap-2 rounded-2xl border border-yellow-400/35 bg-yellow-600/20 px-4 py-3 transition hover:bg-yellow-600/30"
+              type="button"
+              onClick={markPaid}
+              className={`mt-4 w-full rounded-2xl border px-4 py-3 text-sm font-semibold transition ${
+                orderPlaced
+                  ? "border-emerald-400/30 bg-emerald-500/15 text-emerald-50 hover:bg-emerald-500/25"
+                  : "cursor-not-allowed border-neutral-800 bg-neutral-900 text-neutral-500"
+              }`}
+              disabled={!orderPlaced}
             >
-              <Mail className="h-4 w-4" />
-              Submit Mailing Details
+              Mark Paid
             </button>
-          </div>
-        </section>
 
-        <section className="mt-6 rounded-3xl border border-blue-400/20 bg-blue-900/20 p-5">
-          <div className="text-sm uppercase text-blue-200/80">Order Status</div>
-
-          {orderStage === "waiting" && (
-            <>
-              <div className="mt-2 text-base font-semibold">Waiting for mailing details</div>
-              <p className="mt-1 text-sm text-white/70">
-                Enter your mailing details so we can confirm your order.
-              </p>
-            </>
-          )}
-
-          {orderStage === "confirmed" && (
-            <>
-              <div className="mt-2 flex items-center gap-2 text-base font-semibold text-emerald-300">
-                <CheckCircle2 className="h-5 w-5" />
-                Order Confirmed
-              </div>
-              <p className="mt-1 text-sm text-white/80">
-                Your pet tag request has been received successfully.
-              </p>
-
-              <div className="mt-4 space-y-2 text-sm text-white/70">
-                <div>• Payment Pending</div>
-                <div>• In Production</div>
-                <div>• Shipped</div>
-                <div>• Delivered</div>
-              </div>
-
-              <div className="mt-4 text-xs text-white/55">
-                We’ll send updates here and by text.
-              </div>
-
-              {lastUpdate ? (
-                <div className="mt-2 text-xs text-blue-200/65">Last update: {lastUpdate}</div>
-              ) : null}
-            </>
-          )}
-
-          {orderStage === "payment-pending" && (
-            <>
-              <div className="mt-2 flex items-center gap-2 text-base font-semibold text-emerald-300">
-                <CheckCircle2 className="h-5 w-5" />
-                Order Confirmed
-              </div>
-              <p className="mt-1 text-sm text-white/80">
-                Your pet tag request has been received successfully.
-              </p>
-
-              <div className="mt-4 space-y-2 text-sm text-white/70">
-                <div>• Payment Pending</div>
-                <div>• In Production</div>
-                <div>• Shipped</div>
-                <div>• Delivered</div>
-              </div>
-
-              <div className="mt-4 text-xs text-white/55">
-                We’ll send updates here and by text.
-              </div>
-
-              {lastUpdate ? (
-                <div className="mt-2 text-xs text-blue-200/65">Last update: {lastUpdate}</div>
-              ) : null}
-            </>
-          )}
-
-          {orderStage === "payment-received" && (
-            <>
-              <div className="mt-2 flex items-center gap-2 text-base font-semibold text-emerald-300">
-                <CheckCircle2 className="h-5 w-5" />
-                Payment Received
-              </div>
-              <p className="mt-1 text-sm text-white/80">
-                Payment has been received. Your tag is ready to move into production.
-              </p>
-
-              <div className="mt-4 space-y-2 text-sm text-white/70">
-                <div>• In Production</div>
-                <div>• Shipped</div>
-                <div>• Delivered</div>
-              </div>
-
-              <div className="mt-4 text-xs text-white/55">
-                We’ll send updates here and by text.
-              </div>
-
-              {lastUpdate ? (
-                <div className="mt-2 text-xs text-blue-200/65">Last update: {lastUpdate}</div>
-              ) : null}
-            </>
-          )}
-
-          {orderStage === "production" && (
-            <>
-              <div className="mt-2 text-base font-semibold text-yellow-300">In Production</div>
-              <p className="mt-1 text-sm text-white/80">
-                Your pet tag is currently being prepared.
-              </p>
-              {lastUpdate ? (
-                <div className="mt-2 text-xs text-blue-200/65">Last update: {lastUpdate}</div>
-              ) : null}
-            </>
-          )}
-
-          {orderStage === "shipped" && (
-            <>
-              <div className="mt-2 text-base font-semibold text-cyan-300">Shipped</div>
-              <p className="mt-1 text-sm text-white/80">
-                Your pet tag has shipped. Tracking information will appear here.
-              </p>
-              {lastUpdate ? (
-                <div className="mt-2 text-xs text-blue-200/65">Last update: {lastUpdate}</div>
-              ) : null}
-            </>
-          )}
-
-          {orderStage === "delivered" && (
-            <>
-              <div className="mt-2 text-base font-semibold text-emerald-300">Delivered</div>
-              <p className="mt-1 text-sm text-white/80">
-                Your pet tag has been delivered.
-              </p>
-              {lastUpdate ? (
-                <div className="mt-2 text-xs text-blue-200/65">Last update: {lastUpdate}</div>
-              ) : null}
-            </>
-          )}
-        </section>
-
-        {orderStage !== "waiting" && (
-          <section className="mt-6 rounded-3xl border border-emerald-400/20 bg-emerald-900/10 p-5">
-            <div className="text-sm uppercase text-emerald-200/80">Mail Summary</div>
-
-            <div className="mt-2 text-sm text-white/80">
-              Ship to: {mailing.fullName || "—"} <br />
-              Address: {mailing.address || "—"} <br />
-              City/State/ZIP: {mailing.city || "—"} {mailing.state || "—"} {mailing.zip || "—"} <br />
-              Email: {mailing.email || "—"}
+            <div className="mt-3 rounded-2xl border border-neutral-800 bg-black/40 p-4 text-xs leading-6 text-neutral-400">
+              Desktop flow: press Place Order, scan the Cash App QR with your phone, pay, then mark paid. Use Zelle only if needed as backup.
             </div>
-          </section>
-        )}
-
-        {orderStage === "payment-pending" && (
-          <section className="mt-6 rounded-3xl border border-cyan-400/20 bg-cyan-900/15 p-5">
-            <div className="flex items-center gap-2 text-sm uppercase text-cyan-200/80">
-              <CreditCard className="h-4 w-4" />
-              Complete Payment
-            </div>
-
-            <p className="mt-3 text-sm text-white/80">
-              Your tag order is confirmed. Payment starts production.
-            </p>
-
-            <div className="mt-4 grid gap-3 sm:grid-cols-3">
-              <a
-                href="/planet/payments/node"
-                className="flex items-center justify-center gap-2 rounded-2xl border border-cyan-400/30 bg-cyan-500/15 px-4 py-3 text-sm font-medium text-cyan-50 transition hover:bg-cyan-500/25"
-              >
-                <QrCode className="h-4 w-4" />
-                Pay with Cash App
-              </a>
-
-              <a
-                href="/planet/payments/node"
-                className="flex items-center justify-center gap-2 rounded-2xl border border-cyan-400/30 bg-cyan-500/15 px-4 py-3 text-sm font-medium text-cyan-50 transition hover:bg-cyan-500/25"
-              >
-                <QrCode className="h-4 w-4" />
-                Pay with Zelle
-              </a>
-
-              <button
-                type="button"
-                onClick={handlePaymentReceived}
-                className="flex items-center justify-center gap-2 rounded-2xl border border-emerald-400/30 bg-emerald-500/15 px-4 py-3 text-sm font-medium text-emerald-50 transition hover:bg-emerald-500/25"
-              >
-                <CheckCircle2 className="h-4 w-4" />
-                Mark Payment Received
-              </button>
-            </div>
-
-            <p className="mt-3 text-xs text-white/55">
-              Once payment is received, the tag moves into production.
-            </p>
-          </section>
-        )}
+          </aside>
+        </div>
       </div>
     </div>
   );
 }
+
