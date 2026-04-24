@@ -1,4 +1,4 @@
-ï»¿import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 const TAYLOR_CREEK_INTAKE_ROUTE = "/c/taylor-creek";
 const TAYLOR_CREEK_STAFF_ROUTE = "/planet/demo/auto-service-sample";
@@ -88,7 +88,7 @@ export default function CreatorSystems() {
         id: "creator-core",
         label: "CREATOR CORE",
         title: "The creator floor",
-        text: "Core creator systems â€” studio, projects, live selling, execution.",
+        text: "Core creator systems — studio, projects, live selling, execution.",
         items: [
           {
             id: "creator-studio",
@@ -247,7 +247,7 @@ export default function CreatorSystems() {
       ))}
 
       <div style={{ marginTop: 40, opacity: 0.6 }}>
-        HomePlanet Â© 2026. Creator systems.
+        HomePlanet © 2026. Creator systems.
       </div>
     </div>
   );
