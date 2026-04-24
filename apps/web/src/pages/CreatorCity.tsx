@@ -5,6 +5,8 @@ const LIVE_CAMP_GUARDIAN_ROUTE = "/planet/demo/camp-aquaflow";
 const PAYMENT_NODE_ROUTE = "/planet/payments/node";
 const PAYMENT_DESK_DEMO_ROUTE = "/planet/payments/no-screenshot";
 const MEAL_BUSINESS_ROUTE = "/planet/lifestyle/meal-start";
+const CREATOR_SYSTEMS_ROUTE = "/planet/creator/systems";
+const CREATOR_STUDIO_ROUTE = "/planet/creator/studio";
 
 type SystemExample = {
   id: string;
@@ -22,6 +24,36 @@ type BuildIntent =
   | "payment-flow"
   | "full-system";
 
+type StarterBoardConfig = {
+  key: string;
+  familyLabel: string;
+  boardSubtitle: string;
+  labels: {
+    item: string;
+    concern: string;
+  };
+  stages: string[];
+};
+
+type TrajectoryStep = {
+  id: string;
+  title: string;
+  status: "complete" | "active" | "armed" | "idle";
+  text: string;
+};
+
+type FeedItem = {
+  label: string;
+  value: string;
+  active: boolean;
+};
+
+type BuildSequenceItem = {
+  title: string;
+  text: string;
+  complete: boolean;
+};
+
 function slugify(value: string) {
   return value
     .toLowerCase()
@@ -36,7 +68,7 @@ function fakeResolveStarterBoardConfig(args: {
   businessType: string;
   businessName: string;
   primaryGoal: string;
-}) {
+}): StarterBoardConfig {
   const bt = args.businessType.toLowerCase();
 
   if (bt.includes("restaurant") || bt.includes("food") || bt.includes("kitchen")) {
@@ -132,12 +164,7 @@ function fakeResolveStarterBoardConfig(args: {
 }
 
 export default function CreatorCity() {
-  const openRoute = (to: string) => {
-    window.location.href = to;
-  };
-
-  const [warmMode, setWarmMode] = useState(true);
-  const readySystemsRef = useRef<HTMLDivElement | null>(null);
+  const [warmMode, setWarmMode] = useState(false);
   const intakeFormRef = useRef<HTMLDivElement | null>(null);
 
   const [businessName, setBusinessName] = useState("");
@@ -169,6 +196,10 @@ export default function CreatorCity() {
 
   const isCompact = isMobile || isTablet;
 
+  const openRoute = (to: string) => {
+    window.location.href = to;
+  };
+
   const systems = useMemo<SystemExample[]>(
     () => [
       {
@@ -183,35 +214,35 @@ export default function CreatorCity() {
         title: "Live Product Selling Board",
         subtitle: "Live selling with proof and reserve pressure.",
         to: LIVE_PRODUCT_DEMO_ROUTE,
-        tag: "HIGH VALUE",
+        tag: "SELL LIVE",
       },
       {
         id: "northstar",
         title: "Northstar Service Demo",
         subtitle: "Service workflow turned into a live board.",
-        to: "/planet/vehicles/awnit-demo",
-        tag: "DEMO BOARD",
+        to: "/planet/demo/home-services",
+        tag: "SERVICE LIVE",
       },
       {
         id: "child-safety",
         title: "Child Safety System",
         subtitle: "Unsafe conversation detection, intervention, and Guardian alert layer.",
         to: "/planet/predator-shield",
-        tag: "SAFETY LAYER",
+        tag: "DETECTION LIVE",
       },
       {
         id: "routecut",
         title: "RouteCut Live Lawn Flow",
         subtitle: "Routing, next-stop flow, and live status.",
-        to: "/planet/lawn/routecut",
-        tag: "LIVE ROUTE",
+        to: "/planet/demo/lawn-route",
+        tag: "ROUTE LIVE",
       },
       {
         id: "restaurant",
         title: "Restaurant Live Board",
         subtitle: "Kitchen flow, ticket stages, and manager visibility.",
-        to: "/planet/food/restaurant-rush-live",
-        tag: "LIVE BOARD",
+        to: "/planet/demo/restaurant",
+        tag: "LIVE SYSTEM",
       },
       {
         id: "color-me-crazy",
@@ -231,15 +262,15 @@ export default function CreatorCity() {
         id: "community-sale",
         title: "Community Sale Board",
         subtitle: "Sell, track, price, and manage pickup in one board.",
-        to: "/planet/community/community-sale",
+        to: "/planet/demo/community-sale",
         tag: "COMMUNITY LIVE",
       },
       {
         id: "transportation",
         title: "Transportation Dispatch Demo",
         subtitle: "Driver assignment, dispatch flow, and trip visibility.",
-        to: "/planet/transportation/dispatch",
-        tag: "DISPATCH FLOW",
+        to: "/planet/demo/transportation",
+        tag: "ACTIVE FLOW",
       },
       {
         id: "legal",
@@ -284,21 +315,21 @@ export default function CreatorCity() {
   const liveBoardRoute = `/planet/live/${slugify(businessName) || "starter-board"}`;
   const reservePaymentRoute = `${PAYMENT_NODE_ROUTE}?redirectTo=${encodeURIComponent(liveBoardRoute)}`;
 
-  const trajectorySteps = [
+  const trajectorySteps: TrajectoryStep[] = [
     { id: "intake", title: "Intake", status: "complete", text: "Ready" },
-      {
+    {
       id: "config",
       title: "Config",
       status: businessName || businessType || city || contact ? "active" : "idle",
       text: "Profile and board type",
     },
-      {
+    {
       id: "build",
       title: "Build",
       status: currentWorkflow || biggestFriction ? "armed" : "idle",
       text: "Workflow and friction",
     },
-      {
+    {
       id: "launch",
       title: "Launch",
       status: reserveReady
@@ -310,23 +341,19 @@ export default function CreatorCity() {
     },
   ];
 
-  const missionFeed = [
+  const missionFeed: FeedItem[] = [
     { label: "Presence lock", value: businessName ? "READY" : "WAITING", active: !!businessName },
-      { label: "Board family", value: configPreview.familyLabel || "STARTER", active: true },
-      { label: "Primary route", value: "/planet/creator/building", active: true },
-      {
-      label: "Reserve route",
-      value: PAYMENT_NODE_ROUTE,
-      active: reserveReady,
-    },
-      {
+    { label: "Board family", value: configPreview.familyLabel || "STARTER", active: true },
+    { label: "Primary route", value: "/planet/creator/building", active: true },
+    { label: "Reserve route", value: PAYMENT_NODE_ROUTE, active: reserveReady },
+    {
       label: "Live redirect",
       value: businessName
         ? `/planet/live/${slugify(businessName) || "starter-board"}-*`
         : "/planet/live/<boardSlug>",
       active: !!businessName,
     },
-      {
+    {
       label: "Truth intake",
       value:
         currentWorkflow || biggestFriction || customerQuestions ? "CAPTURING" : "PENDING",
@@ -334,7 +361,7 @@ export default function CreatorCity() {
     },
   ];
 
-  const buildSequence = [
+  const buildSequence: BuildSequenceItem[] = [
     {
       title: "Presence ID",
       text: businessName
@@ -342,24 +369,24 @@ export default function CreatorCity() {
         : "Waiting for business name",
       complete: !!businessName,
     },
-      {
+    {
       title: "Board family",
       text: configPreview.familyLabel,
       complete: !!resolvedBusinessLabel,
     },
-      {
+    {
       title: "Live stages",
       text: previewStages.length > 0 ? previewStages.join(" → ") : "Awaiting business type",
       complete: previewStages.length > 0,
     },
-      {
+    {
       title: "Trust step",
       text: reserveReady
         ? "Reserve step is ready. Payment holds the build slot before live assembly."
         : "Reserve step appears right after intake.",
       complete: reserveReady,
     },
-      {
+    {
       title: "Workflow",
       text: currentWorkflow || holyShiftMoment || "Waiting for workflow input",
       complete: !!(currentWorkflow || holyShiftMoment),
@@ -371,19 +398,34 @@ export default function CreatorCity() {
       label: "What happens now",
       value: "Your intake is locked in and your build slot is ready to reserve.",
     },
-      {
+    {
       label: "Why reserve",
       value: "This keeps the flow clean: intake first, then trust, then reserve, then live build.",
     },
-      {
+    {
       label: "Payment route",
       value: PAYMENT_NODE_ROUTE,
     },
   ];
 
-  const scrollToReadySystems = () => {
-    openRoute("/planet/creator/systems");
-  };
+  const intentCards = [
+    { id: "landing-page" as BuildIntent, title: "Landing Page", text: "Clear front door" },
+    { id: "live-board" as BuildIntent, title: "Live Board", text: "Jobs and status live" },
+    {
+      id: "workflow-tool" as BuildIntent,
+      title: "Workflow Tool",
+      text: "Built around your process",
+    },
+    { id: "intake-flow" as BuildIntent, title: "Intake Flow", text: "Calls, texts, walk-ins" },
+    { id: "payment-flow" as BuildIntent, title: "Payment Flow", text: "Job to payment" },
+    {
+      id: "full-system" as BuildIntent,
+      title: "Full Business System",
+      text: "Everything in one place",
+    },
+  ];
+
+  const scrollToCreatorSystems = () => openRoute(CREATOR_SYSTEMS_ROUTE);
 
   const scrollToIntakeForm = () => {
     intakeFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -425,7 +467,6 @@ export default function CreatorCity() {
         service: businessType || "Custom Order",
         stage: "Deposit Needed",
         createdAt: new Date().toISOString(),
-
         payment: {
           status: "deposit-requested",
           depositRequired: true,
@@ -459,7 +500,7 @@ export default function CreatorCity() {
       )}&businessType=${encodeURIComponent(businessType)}&city=${encodeURIComponent(
         city,
       )}&primaryGoal=${encodeURIComponent(holyShiftMoment)}`;
-    }, 1200);
+    }, 900);
   };
 
   const resetIntake = () => {
@@ -469,1117 +510,392 @@ export default function CreatorCity() {
 
   const page: React.CSSProperties = {
     minHeight: "100vh",
-    padding: isMobile ? 0 : 22,
-    color: "#e5e7eb",
     background: warmMode
-      ? "radial-gradient(1200px 760px at 8% 10%, rgba(6,182,212,0.12), transparent 52%)," +
-        "radial-gradient(980px 720px at 88% 8%, rgba(59,130,246,0.10), transparent 48%)," +
-        "radial-gradient(1200px 980px at 50% 100%, rgba(245,158,11,0.08), transparent 54%)," +
-        "linear-gradient(180deg, #06070c 0%, #08111f 52%, #05070c 100%)"
-      : "radial-gradient(1200px 760px at 8% 10%, rgba(6,182,212,0.14), transparent 52%)," +
-        "radial-gradient(980px 720px at 88% 8%, rgba(59,130,246,0.12), transparent 48%)," +
-        "radial-gradient(1200px 980px at 50% 100%, rgba(34,197,94,0.08), transparent 54%)," +
-        "linear-gradient(180deg, #01040d 0%, #020617 52%, #01040d 100%)",
-    fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+      ? "radial-gradient(900px 600px at 10% 10%, rgba(255,180,80,0.18), transparent 55%)," +
+        "radial-gradient(800px 500px at 85% 5%, rgba(255,120,60,0.12), transparent 50%)," +
+        "radial-gradient(1000px 700px at 50% 100%, rgba(255,200,120,0.10), transparent 60%)," +
+        "linear-gradient(180deg, #0b0b0d 0%, #121018 55%, #0b0b0d 100%)"
+      : "radial-gradient(900px 600px at 10% 10%, rgba(56,189,248,0.18), transparent 55%)," +
+        "radial-gradient(800px 500px at 85% 5%, rgba(59,130,246,0.14), transparent 50%)," +
+        "radial-gradient(1000px 700px at 50% 100%, rgba(34,197,94,0.10), transparent 60%)," +
+        "linear-gradient(180deg, #020617 0%, #020617 60%, #01040d 100%)",
+    color: "#fff",
+    padding: isCompact ? 14 : 22,
+    transition: "background 0.6s ease",
+    fontFamily:
+      'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
   };
 
   const shell: React.CSSProperties = {
-    maxWidth: 1450,
+    maxWidth: 1180,
     margin: "0 auto",
-    padding: isMobile ? "10px 10px 22px" : isTablet ? "12px 12px 24px" : 0,
   };
 
   const frame: React.CSSProperties = {
     borderRadius: isCompact ? 22 : 28,
-    border: warmMode
-      ? "1px solid rgba(245,158,11,0.10)"
-      : "1px solid rgba(148,163,184,0.14)",
-    background: warmMode
-      ? "linear-gradient(180deg, rgba(14,18,30,0.95), rgba(8,12,24,0.97) 18%, rgba(7,10,20,0.99) 100%)"
-      : "linear-gradient(180deg, rgba(8,15,30,0.92), rgba(2,6,23,0.96) 18%, rgba(2,6,23,0.98) 100%)",
-    boxShadow: warmMode
-      ? "0 30px 120px rgba(0,0,0,0.52), 0 0 40px rgba(245,158,11,0.06), inset 0 1px 0 rgba(255,255,255,0.04), inset 0 0 0 1px rgba(255,255,255,0.02)"
-      : "0 30px 120px rgba(0,0,0,0.48), inset 0 1px 0 rgba(255,255,255,0.04), inset 0 0 0 1px rgba(255,255,255,0.02)",
+    border: "1px solid rgba(255,255,255,0.10)",
+    background: "rgba(7,11,19,0.90)",
+    boxShadow: "0 24px 90px rgba(0,0,0,0.45)",
     overflow: "hidden",
   };
 
   const topBar: React.CSSProperties = {
     display: "flex",
-    alignItems: isCompact ? "stretch" : "center",
+    alignItems: "center",
     justifyContent: "space-between",
     gap: 10,
-    padding: isCompact ? "12px 12px 10px" : "14px 18px 12px",
-    borderBottom: "1px solid rgba(148,163,184,0.12)",
-    background: "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))",
+    padding: isCompact ? "12px" : "12px 16px",
+    borderBottom: "1px solid rgba(255,255,255,0.10)",
     flexWrap: "wrap",
-    flexDirection: isCompact ? "column" : "row",
-  };
-
-  const topBarLeft: React.CSSProperties = {
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-    flexWrap: "wrap",
-  };
-
-  const topBarMobileRow: React.CSSProperties = {
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-    flexWrap: "wrap",
-    width: "100%",
   };
 
   const windowDot = (color: string): React.CSSProperties => ({
-    width: 10,
-    height: 10,
+    width: 9,
+    height: 9,
     borderRadius: 999,
     background: color,
     boxShadow: `0 0 10px ${color}`,
   });
 
-  const topBadge: React.CSSProperties = {
-    borderRadius: 999,
-    padding: isCompact ? "7px 11px" : "6px 10px",
-    border: "1px solid rgba(34,197,94,0.30)",
-    background: "rgba(34,197,94,0.12)",
-    color: "#bbf7d0",
-    fontWeight: 900,
-    fontSize: 11,
-    letterSpacing: 0.5,
-    lineHeight: 1.1,
+  const pill = (tone: "blue" | "green" | "gold" = "blue"): React.CSSProperties => {
+    const background =
+      tone === "green" ? "#70f2a3" : tone === "gold" ? "#f8d36b" : "#67e8f9";
+
+    return {
+      display: "inline-flex",
+      alignItems: "center",
+      width: "fit-content",
+      borderRadius: 999,
+      padding: "5px 8px",
+      background,
+      color: "#001018",
+      fontSize: 11,
+      fontWeight: 900,
+      letterSpacing: 0.4,
+      lineHeight: 1,
+      textRendering: "geometricPrecision",
+      whiteSpace: "nowrap",
+    };
   };
 
-  const topBadgeBlue: React.CSSProperties = {
+  const ghostPill: React.CSSProperties = {
+    display: "inline-flex",
+    alignItems: "center",
+    width: "fit-content",
     borderRadius: 999,
-    padding: isCompact ? "7px 11px" : "6px 10px",
-    border: "1px solid rgba(56,189,248,0.30)",
-    background: "rgba(56,189,248,0.10)",
-    color: "#bae6fd",
-    fontWeight: 900,
+    padding: "6px 10px",
+    border: "1px solid rgba(255,255,255,0.14)",
+    background: "rgba(255,255,255,0.04)",
+    color: "rgba(255,255,255,0.84)",
     fontSize: 11,
-    letterSpacing: 0.5,
-    lineHeight: 1.1,
-  };
-
-  const topBarPrimaryBadge: React.CSSProperties = {
-    ...topBadgeBlue,
-    maxWidth: isCompact ? "100%" : "unset",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: isCompact ? "nowrap" : "normal",
+    fontWeight: 900,
+    letterSpacing: 0.4,
+    lineHeight: 1,
+    whiteSpace: "nowrap",
   };
 
   const cockpitGrid: React.CSSProperties = {
     display: "grid",
-    gridTemplateColumns: isCompact ? "1fr" : "280px minmax(0, 1fr) 330px",
-    gap: isCompact ? 10 : 14,
-    padding: isCompact ? 10 : 16,
+    gridTemplateColumns: isCompact ? "1fr" : "220px minmax(0, 1fr) 250px",
+    gap: 14,
+    padding: isCompact ? 12 : 16,
     alignItems: "start",
   };
 
   const panel: React.CSSProperties = {
-    borderRadius: isCompact ? 18 : 22,
+    borderRadius: 18,
     border: warmMode
-      ? "1px solid rgba(245,158,11,0.10)"
-      : "1px solid rgba(148,163,184,0.14)",
+      ? "1px solid rgba(255,180,80,0.18)"
+      : "1px solid rgba(255,255,255,0.10)",
     background: warmMode
-      ? "linear-gradient(180deg, rgba(255,255,255,0.040), rgba(255,255,255,0.018))"
-      : "linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.015))",
+      ? "linear-gradient(135deg, rgba(255,200,140,0.055), rgba(255,255,255,0.020))"
+      : "linear-gradient(135deg, rgba(255,255,255,0.065), rgba(255,255,255,0.025))",
     boxShadow: warmMode
-      ? "0 20px 50px rgba(0,0,0,0.34), 0 0 24px rgba(245,158,11,0.04), inset 0 1px 0 rgba(255,255,255,0.03)"
-      : "0 20px 50px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.03)",
+      ? "0 25px 60px rgba(0,0,0,0.45), 0 0 35px rgba(255,160,80,0.08), inset 0 1px 0 rgba(255,255,255,0.04)"
+      : "0 18px 50px rgba(0,0,0,0.28)",
     overflow: "hidden",
+    transition: "all 0.35s ease",
   };
 
   const panelHeader: React.CSSProperties = {
-    padding: isCompact ? "12px 12px 10px" : "14px 14px 12px",
-    borderBottom: "1px solid rgba(148,163,184,0.12)",
-    background: "linear-gradient(180deg, rgba(56,189,248,0.08), rgba(255,255,255,0.01))",
+    padding: 14,
+    borderBottom: "1px solid rgba(255,255,255,0.09)",
   };
 
-  const panelKicker: React.CSSProperties = {
-    fontSize: isCompact ? 10 : 11,
+  const panelBody: React.CSSProperties = {
+    padding: 14,
+  };
+
+  const kicker: React.CSSProperties = {
+    color: "#67e8f9",
+    fontSize: 11,
     fontWeight: 900,
-    letterSpacing: 1,
-    color: "rgba(125,211,252,0.95)",
+    letterSpacing: 1.1,
     textTransform: "uppercase",
   };
 
   const panelTitle: React.CSSProperties = {
     marginTop: 6,
-    fontSize: isCompact ? 18 : 18,
+    fontSize: 18,
     fontWeight: 900,
-    lineHeight: 1.04,
-    color: "#ffffff",
-    letterSpacing: -0.3,
+    letterSpacing: -0.35,
+    color: "#fff",
+    lineHeight: 1.08,
   };
 
-  const panelSub: React.CSSProperties = {
-    marginTop: 8,
-    fontSize: isCompact ? 13 : 13,
-    lineHeight: 1.5,
-    color: "rgba(226,232,240,0.78)",
+  const muted: React.CSSProperties = {
+    marginTop: 6,
+    color: "rgba(255,255,255,0.64)",
+    fontSize: 13,
+    lineHeight: 1.45,
   };
 
-  const panelBody: React.CSSProperties = { padding: isCompact ? 12 : 14 };
-
-  const heroCore: React.CSSProperties = {
-    ...panel,
-    minHeight: isCompact ? "auto" : 320,
-    position: "relative",
-    overflow: "hidden",
-    background: warmMode
-      ? "radial-gradient(700px 420px at 20% 0%, rgba(56,189,248,0.10), transparent 55%)," +
-        "radial-gradient(620px 420px at 100% 10%, rgba(245,158,11,0.10), transparent 48%)," +
-        "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))"
-      : "radial-gradient(700px 420px at 20% 0%, rgba(56,189,248,0.12), transparent 55%)," +
-        "radial-gradient(620px 420px at 100% 10%, rgba(34,197,94,0.10), transparent 48%)," +
-        "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))",
+  const card: React.CSSProperties = {
+    borderRadius: 16,
+    border: "1px solid rgba(255,255,255,0.10)",
+    background: "rgba(255,255,255,0.035)",
+    padding: 14,
   };
 
-  const heroPadding: React.CSSProperties = {
-    padding: isCompact ? 14 : 18,
+  const buttonBase: React.CSSProperties = {
+    border: "1px solid rgba(255,255,255,0.12)",
+    background: "rgba(255,255,255,0.045)",
+    color: "#fff",
+    borderRadius: 999,
+    padding: isCompact ? "13px 15px" : "11px 14px",
+    fontSize: isCompact ? 15 : 13,
+    fontWeight: 900,
+    cursor: "pointer",
+  };
+
+  const primaryButton: React.CSSProperties = {
+    ...buttonBase,
+    border: "1px solid rgba(112,242,163,0.45)",
+    background: "#70f2a3",
+    color: "#001018",
+    boxShadow: warmMode
+      ? "0 0 22px rgba(74,222,128,0.25)"
+      : "0 0 10px rgba(34,197,94,0.08)",
+    transition: "box-shadow 0.35s ease",
+  };
+
+  const sideButton: React.CSSProperties = {
+    width: "100%",
+    textAlign: "left",
+    borderRadius: 14,
+    padding: "12px 13px",
+    border: "1px solid rgba(255,255,255,0.10)",
+    background: "rgba(255,255,255,0.035)",
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: 900,
+    cursor: "pointer",
   };
 
   const title: React.CSSProperties = {
-    fontSize: isMobile ? 32 : isTablet ? 40 : 48,
-    fontWeight: 900,
-    letterSpacing: isMobile ? -1.1 : -1.6,
-    lineHeight: isMobile ? 0.96 : 0.94,
-    color: "#ffffff",
-    maxWidth: 760,
-    marginTop: isCompact ? 10 : 0,
+    margin: 0,
+    fontSize: isMobile ? 36 : 48,
+    lineHeight: 0.95,
+    letterSpacing: -1.6,
+    fontWeight: 950,
+    color: "#fff",
   };
 
-  const hook: React.CSSProperties = {
+  const routeText: React.CSSProperties = {
     marginTop: 10,
-    fontSize: isMobile ? 21 : isTablet ? 24 : 26,
-    fontWeight: 900,
-    lineHeight: 1.04,
-    letterSpacing: isMobile ? -0.45 : -0.6,
-    color: "#ffffff",
-    maxWidth: 820,
-  };
-
-  const subtext: React.CSSProperties = {
-    marginTop: 12,
-    fontSize: isCompact ? 15 : 15,
-    lineHeight: 1.58,
-    color: "rgba(226,232,240,0.86)",
-    maxWidth: 760,
-  };
-
-  const ctaRow: React.CSSProperties = {
-    display: "grid",
-    gridTemplateColumns: isMobile
-      ? "1fr"
-      : isTablet
-        ? "1fr 1fr"
-        : "repeat(4, max-content)",
-    gap: 10,
-    marginTop: 18,
-    alignItems: "stretch",
-  };
-
-  const primaryBtn: React.CSSProperties = {
-    borderRadius: 999,
-    padding: isCompact ? "14px 16px" : "12px 16px",
-    border: "1px solid rgba(34,197,94,0.34)",
-    background: "rgba(34,197,94,0.14)",
-    color: "#dcfce7",
-    fontWeight: 900,
-    fontSize: isCompact ? 16 : 14,
-    cursor: "pointer",
-    boxShadow: "0 0 18px rgba(34,197,94,0.10), inset 0 1px 0 rgba(255,255,255,0.04)",
-    width: isCompact ? "100%" : "auto",
-  };
-
-  const secondaryBtn: React.CSSProperties = {
-    borderRadius: 999,
-    padding: isCompact ? "14px 16px" : "12px 16px",
-    border: "1px solid rgba(255,255,255,0.14)",
-    background: "rgba(255,255,255,0.045)",
-    color: "#f8fafc",
-    fontWeight: 900,
-    fontSize: isCompact ? 16 : 14,
-    cursor: "pointer",
-    width: isCompact ? "100%" : "auto",
-  };
-
-  const statusGrid: React.CSSProperties = {
-    display: "grid",
-    gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))",
-    gap: 10,
-    marginTop: 18,
-  };
-
-  const statusCard: React.CSSProperties = {
-    borderRadius: 16,
-    border: "1px solid rgba(255,255,255,0.10)",
-    background: "rgba(255,255,255,0.035)",
-    padding: 12,
-    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.02)",
-  };
-
-  const statusLabel: React.CSSProperties = {
-    fontSize: 11,
-    fontWeight: 900,
-    letterSpacing: 0.8,
-    textTransform: "uppercase",
-    color: "rgba(125,211,252,0.92)",
-  };
-
-  const statusValue: React.CSSProperties = {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: 900,
-    color: "#ffffff",
-    lineHeight: 1.08,
-  };
-
-  const statusText: React.CSSProperties = {
-    marginTop: 6,
-    fontSize: isCompact ? 13 : 12,
-    lineHeight: 1.5,
-    color: "rgba(226,232,240,0.76)",
-  };
-
-  const creatorPathsCard: React.CSSProperties = {
-    ...panel,
-    marginTop: 10,
-    border: warmMode
-      ? "1px solid rgba(244,114,182,0.16)"
-      : "1px solid rgba(56,189,248,0.16)",
-    background: warmMode
-      ? "radial-gradient(780px 260px at 0% 0%, rgba(244,114,182,0.07), transparent 42%), radial-gradient(560px 220px at 100% 0%, rgba(56,189,248,0.06), transparent 38%), linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015))"
-      : "radial-gradient(780px 260px at 0% 0%, rgba(56,189,248,0.07), transparent 42%), radial-gradient(560px 220px at 100% 0%, rgba(34,197,94,0.06), transparent 38%), linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015))",
-  };
-
-  const creatorPathsWrap: React.CSSProperties = {
-    padding: isCompact ? 14 : 16,
-  };
-
-  const creatorPathsHeader: React.CSSProperties = {
-    maxWidth: 760,
-  };
-
-  const creatorPathsEyebrow: React.CSSProperties = {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 8,
-    borderRadius: 999,
-    padding: "6px 10px",
-    border: "1px solid rgba(244,114,182,0.24)",
-    background: "rgba(244,114,182,0.08)",
-    color: "#fbcfe8",
-    fontSize: 11,
-    fontWeight: 900,
-    letterSpacing: 0.8,
-  };
-
-  const creatorPathsTitle: React.CSSProperties = {
-    marginTop: 12,
-    fontSize: isMobile ? 24 : isTablet ? 26 : 28,
-    fontWeight: 900,
-    lineHeight: 1.02,
-    letterSpacing: isMobile ? -0.6 : -0.8,
-    color: "#ffffff",
-    maxWidth: 720,
-  };
-
-  const creatorPathsText: React.CSSProperties = {
-    marginTop: 10,
-    fontSize: 14,
-    lineHeight: 1.6,
-    color: "rgba(226,232,240,0.82)",
-    maxWidth: 760,
-  };
-
-  const creatorPathsGrid: React.CSSProperties = {
-    display: "grid",
-    gridTemplateColumns: isMobile
-      ? "1fr"
-      : isTablet
-        ? "1fr 1fr"
-        : "repeat(4, minmax(0, 1fr))",
-    gap: 10,
-    marginTop: 16,
-  };
-
-  const creatorPathCard: React.CSSProperties = {
-    borderRadius: 18,
-    border: "1px solid rgba(255,255,255,0.10)",
-    background: "rgba(255,255,255,0.035)",
-    padding: 14,
-    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.02)",
-    display: "flex",
-    flexDirection: "column",
-    gap: 10,
-  };
-
-  const creatorPathTag: React.CSSProperties = {
-    borderRadius: 999,
-    padding: "6px 10px",
-    border: "1px solid rgba(255,255,255,0.10)",
-    background: "rgba(255,255,255,0.04)",
-    color: "#cbd5e1",
+    color: "rgba(255,255,255,0.24)",
     fontSize: 10,
-    fontWeight: 900,
-    letterSpacing: 0.7,
-    width: "fit-content",
-    textTransform: "uppercase",
-  };
-
-  const creatorPathTitle: React.CSSProperties = {
-    fontSize: isCompact ? 18 : 16,
-    fontWeight: 900,
-    color: "#ffffff",
-    lineHeight: 1.08,
-  };
-
-  const creatorPathText: React.CSSProperties = {
-    fontSize: isCompact ? 13 : 12,
-    lineHeight: 1.55,
-    color: "rgba(226,232,240,0.74)",
-    flex: 1,
-  };
-
-  const creatorPathBtn: React.CSSProperties = {
-    borderRadius: 999,
-    padding: "11px 14px",
-    border: "1px solid rgba(255,255,255,0.12)",
-    background: "rgba(255,255,255,0.04)",
-    color: "#f8fafc",
-    fontWeight: 900,
-    fontSize: 13,
-    cursor: "pointer",
-    width: "100%",
-  };
-
-  const trajectoryList: React.CSSProperties = {
-    display: "flex",
-    flexDirection: "column",
-    gap: 10,
-  };
-
-  const trajectoryItem = (status: string): React.CSSProperties => ({
-    borderRadius: 16,
-    border:
-      status === "active"
-        ? "1px solid rgba(56,189,248,0.34)"
-        : status === "armed"
-          ? "1px solid rgba(250,204,21,0.30)"
-          : status === "complete"
-            ? "1px solid rgba(34,197,94,0.30)"
-            : "1px solid rgba(255,255,255,0.10)",
-    background:
-      status === "active"
-        ? "rgba(56,189,248,0.10)"
-        : status === "armed"
-          ? "rgba(250,204,21,0.08)"
-          : status === "complete"
-            ? "rgba(34,197,94,0.10)"
-            : "rgba(255,255,255,0.03)",
-    padding: 12,
-  });
-
-  const trajectoryTop: React.CSSProperties = {
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-    flexWrap: "wrap",
-  };
-
-  const trajectoryDot = (status: string): React.CSSProperties => ({
-    width: 12,
-    height: 12,
-    borderRadius: 999,
-    background:
-      status === "active"
-        ? "rgba(56,189,248,1)"
-        : status === "armed"
-          ? "rgba(250,204,21,1)"
-          : status === "complete"
-            ? "rgba(34,197,94,1)"
-            : "rgba(148,163,184,0.8)",
-    boxShadow:
-      status === "active"
-        ? "0 0 14px rgba(56,189,248,0.9)"
-        : status === "armed"
-          ? "0 0 12px rgba(250,204,21,0.7)"
-          : status === "complete"
-            ? "0 0 12px rgba(34,197,94,0.75)"
-            : "none",
-    flexShrink: 0,
-  });
-
-  const trajectoryTitle: React.CSSProperties = {
-    fontWeight: 900,
-    fontSize: isCompact ? 15 : 14,
-    color: "#ffffff",
-  };
-
-  const trajectoryStatus: React.CSSProperties = {
-    marginLeft: "auto",
-    fontSize: isCompact ? 10 : 11,
-    fontWeight: 900,
-    letterSpacing: 0.7,
-    color: "rgba(226,232,240,0.72)",
-  };
-
-  const trajectoryText: React.CSSProperties = {
-    marginTop: 8,
-    fontSize: isCompact ? 13 : 12,
-    lineHeight: 1.5,
-    color: "rgba(226,232,240,0.76)",
-  };
-
-  const missionFeedList: React.CSSProperties = {
-    display: "grid",
-    gridTemplateColumns: isTablet ? "repeat(2, minmax(0, 1fr))" : "repeat(2, minmax(0, 1fr))",
-    gap: 10,
-  };
-
-  const missionFeedItem: React.CSSProperties = {
-    borderRadius: 14,
-    border: "1px solid rgba(255,255,255,0.10)",
-    background: "rgba(255,255,255,0.03)",
-    padding: 12,
-    minWidth: 0,
-  };
-
-  const feedLabel: React.CSSProperties = {
-    fontSize: 10,
-    fontWeight: 900,
-    letterSpacing: 0.8,
-    textTransform: "uppercase",
-    color: "rgba(148,163,184,0.92)",
-  };
-
-  const feedValue = (active: boolean): React.CSSProperties => ({
-    marginTop: 8,
-    fontSize: 14,
-    fontWeight: 900,
-    lineHeight: 1.15,
-    color: active ? "#ffffff" : "rgba(226,232,240,0.54)",
     wordBreak: "break-word",
-  });
-
-  const sectionCard: React.CSSProperties = { ...panel, marginTop: 10 };
-  const sectionBody: React.CSSProperties = { padding: isCompact ? 12 : 16 };
-
-  const formLead: React.CSSProperties = {
-    marginTop: 10,
-    fontSize: isCompact ? 14 : 13,
-    lineHeight: 1.55,
-    color: "rgba(187,247,208,0.96)",
-    fontWeight: 800,
   };
 
-  const intentGrid: React.CSSProperties = {
-    display: "grid",
-    gridTemplateColumns: isMobile ? "1fr 1fr" : isTablet ? "repeat(3, minmax(0, 1fr))" : "repeat(3, minmax(0, 1fr))",
-    gap: 10,
-    marginTop: 14,
-  };
-
-  const intentCard = (active: boolean): React.CSSProperties => ({
-    border: active ? "1px solid rgba(34,197,94,0.32)" : "1px solid rgba(255,255,255,0.12)",
-    background: active ? "rgba(34,197,94,0.14)" : "rgba(255,255,255,0.035)",
-    borderRadius: 16,
-    padding: 14,
-    cursor: "pointer",
-    minHeight: isCompact ? 88 : 96,
-    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.02), 0 10px 28px rgba(0,0,0,0.18)",
-  });
-
-  const intentTitle: React.CSSProperties = {
-    fontWeight: 900,
-    fontSize: isCompact ? 15 : 14,
-    marginBottom: 6,
-    color: "#ffffff",
-    lineHeight: 1.06,
-  };
-
-  const intentText: React.CSSProperties = {
-    fontSize: isCompact ? 12 : 12,
-    lineHeight: 1.45,
-    color: "rgba(226,232,240,0.8)",
-  };
-
-  const intakeGrid: React.CSSProperties = {
-    display: "grid",
-    gridTemplateColumns: isCompact ? "1fr" : "1fr 1fr",
-    gap: isCompact ? 12 : 14,
-    marginTop: 16,
-  };
-
-  const inputGroup: React.CSSProperties = { display: "flex", flexDirection: "column", gap: 8 };
-
-  const label: React.CSSProperties = {
-    fontSize: isCompact ? 14 : 12,
-    fontWeight: 900,
-    letterSpacing: 0.3,
+  const fieldLabel: React.CSSProperties = {
     color: "rgba(186,230,253,0.94)",
+    fontSize: 12,
+    fontWeight: 900,
+    letterSpacing: 0.2,
   };
 
   const inputBase: React.CSSProperties = {
     width: "100%",
     borderRadius: 14,
-    border: "1px solid rgba(255,255,255,0.16)",
-    background: "rgba(255,255,255,0.04)",
-    color: "#f8fafc",
-    padding: isCompact ? "14px 14px" : "13px 14px",
+    border: "1px solid rgba(255,255,255,0.13)",
+    background: "rgba(255,255,255,0.045)",
+    color: "#fff",
+    padding: isCompact ? "13px 13px" : "12px 13px",
     fontSize: isCompact ? 16 : 14,
     outline: "none",
     boxSizing: "border-box",
-    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
   };
 
-  const textareaWide: React.CSSProperties = {
+  const textareaBase: React.CSSProperties = {
     ...inputBase,
-    minHeight: isCompact ? 104 : 112,
+    minHeight: 104,
     resize: "vertical",
   };
 
-  const fileWrap: React.CSSProperties = {
-    border: "1px dashed rgba(56,189,248,0.35)",
-    background: "rgba(8,47,73,0.22)",
-    borderRadius: 16,
-    padding: 14,
-    marginTop: 14,
-  };
-
-  const submitWrap: React.CSSProperties = {
-    display: "flex",
-    alignItems: isCompact ? "stretch" : "center",
-    justifyContent: "space-between",
-    flexDirection: isCompact ? "column" : "row",
-    gap: 14,
-    marginTop: 16,
-  };
-
-  const submitBtn: React.CSSProperties = {
+  const liveDot: React.CSSProperties = {
+    width: 6,
+    height: 6,
     borderRadius: 999,
-    padding: isCompact ? "14px 18px" : "12px 18px",
-    border: "1px solid rgba(34,197,94,0.45)",
-    background: "rgba(34,197,94,0.12)",
-    color: "rgba(187,247,208,1)",
-    fontWeight: 900,
-    fontSize: isCompact ? 17 : 14,
-    cursor: "pointer",
-    boxShadow: "0 0 18px rgba(74,222,128,0.08)",
-    width: isCompact ? "100%" : "auto",
+    background: "#67e8f9",
+    boxShadow: "0 0 12px rgba(103,232,249,0.8)",
+    flex: "0 0 auto",
   };
 
-  const helperText: React.CSSProperties = {
-    fontSize: isCompact ? 13 : 12,
-    lineHeight: 1.6,
-    color: "rgba(148,163,184,0.88)",
-    maxWidth: 680,
+  const cityLight = (tone: "live" | "ready" | "armed" | "idle" | "alert" = "live"): React.CSSProperties => {
+    const colors = {
+      live: { bg: "#67e8f9", glow: "rgba(103,232,249,0.80)" },
+      ready: { bg: "#70f2a3", glow: "rgba(112,242,163,0.72)" },
+      armed: { bg: "#f8d36b", glow: "rgba(248,211,107,0.68)" },
+      idle: { bg: "rgba(255,255,255,0.35)", glow: "rgba(255,255,255,0.16)" },
+      alert: { bg: "#fb7185", glow: "rgba(251,113,133,0.72)" },
+    }[tone];
+
+    return {
+      width: 6,
+      height: 6,
+      borderRadius: 999,
+      background: colors.bg,
+      boxShadow: `0 0 12px ${colors.glow}`,
+      flex: "0 0 auto",
+    };
   };
 
-  const reservePanel: React.CSSProperties = {
-    marginTop: 18,
-    border: "1px solid rgba(34,197,94,0.34)",
-    background:
-      "linear-gradient(180deg, rgba(34,197,94,0.12), rgba(8,15,30,0.86) 36%, rgba(2,6,23,0.92) 100%)",
-    borderRadius: 16,
-    padding: 16,
-    color: "rgba(220,252,231,1)",
-    boxShadow: "0 0 22px rgba(74,222,128,0.06)",
-  };
-
-  const reserveGrid: React.CSSProperties = {
-    display: "grid",
-    gridTemplateColumns: isCompact ? "1fr" : "repeat(3, minmax(0, 1fr))",
-    gap: 10,
-    marginTop: 14,
-  };
-
-  const reserveCard: React.CSSProperties = {
-    borderRadius: 14,
-    border: "1px solid rgba(255,255,255,0.10)",
-    background: "rgba(255,255,255,0.04)",
-    padding: 12,
-  };
-
-  const reserveCardLabel: React.CSSProperties = {
-    fontSize: 10,
-    fontWeight: 900,
-    letterSpacing: 0.8,
-    textTransform: "uppercase",
-    color: "rgba(187,247,208,0.92)",
-  };
-
-  const reserveCardValue: React.CSSProperties = {
-    marginTop: 8,
-    fontSize: isCompact ? 14 : 13,
-    lineHeight: 1.55,
-    color: "#ffffff",
-    fontWeight: 800,
-    wordBreak: "break-word",
-  };
-
-  const reserveCtaRow: React.CSSProperties = {
-    display: "grid",
-    gridTemplateColumns: isCompact ? "1fr" : "max-content max-content",
-    gap: 10,
-    marginTop: 16,
-    alignItems: "stretch",
-  };
-
-  const buildSequenceWrap: React.CSSProperties = {
-    display: "flex",
-    flexDirection: "column",
-    gap: 10,
-  };
-
-  const buildSequenceItem: React.CSSProperties = {
-    borderRadius: 14,
-    border: "1px solid rgba(255,255,255,0.10)",
-    background: "rgba(255,255,255,0.03)",
-    padding: 12,
-  };
-
-  const buildSequenceTop: React.CSSProperties = { display: "flex", alignItems: "center", gap: 10 };
-
-  const buildSequenceDot = (complete: boolean): React.CSSProperties => ({
-    width: 10,
-    height: 10,
-    borderRadius: 999,
-    background: complete ? "rgba(34,197,94,1)" : "rgba(56,189,248,1)",
-    boxShadow: complete ? "0 0 12px rgba(34,197,94,0.8)" : "0 0 12px rgba(56,189,248,0.7)",
-    flexShrink: 0,
+  const stepTone = (status: TrajectoryStep["status"]): React.CSSProperties => ({
+    ...card,
+    border:
+      status === "active"
+        ? "1px solid rgba(103,232,249,0.36)"
+        : status === "armed"
+          ? "1px solid rgba(248,211,107,0.34)"
+          : status === "complete"
+            ? "1px solid rgba(112,242,163,0.34)"
+            : "1px solid rgba(255,255,255,0.10)",
   });
 
-  const buildSequenceTitle: React.CSSProperties = {
-    fontSize: isCompact ? 14 : 13,
-    fontWeight: 900,
-    color: "#ffffff",
-  };
-
-  const buildSequenceText: React.CSSProperties = {
-    marginTop: 8,
-    fontSize: isCompact ? 13 : 12,
-    lineHeight: 1.52,
-    color: "rgba(226,232,240,0.78)",
-    wordBreak: "break-word",
-  };
-
-  const sideActionGrid: React.CSSProperties = {
-    display: "grid",
-    gridTemplateColumns: "1fr",
-    gap: 10,
-  };
-
-  const sideActionBtn: React.CSSProperties = {
-    width: "100%",
-    textAlign: "left",
-    borderRadius: 14,
-    padding: isCompact ? "13px 13px" : "12px 13px",
-    border: "1px solid rgba(255,255,255,0.12)",
-    background: "rgba(255,255,255,0.04)",
-    color: "#f8fafc",
-    fontWeight: 900,
-    fontSize: isCompact ? 15 : 13,
+  const intentCard = (active: boolean): React.CSSProperties => ({
+    ...card,
     cursor: "pointer",
-    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.02)",
-  };
-
-  const stageGrid: React.CSSProperties = { display: "grid", gridTemplateColumns: "1fr", gap: 10 };
-
-  const stageCard: React.CSSProperties = {
-    borderRadius: 14,
-    border: "1px solid rgba(255,255,255,0.10)",
-    background: "rgba(255,255,255,0.03)",
-    padding: 12,
-  };
-
-  const stageTag: React.CSSProperties = {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 8,
-    borderRadius: 999,
-    padding: "5px 9px",
-    border: "1px solid rgba(56,189,248,0.30)",
-    background: "rgba(56,189,248,0.08)",
-    color: "rgba(186,230,253,1)",
-    fontSize: 11,
-    fontWeight: 900,
-    letterSpacing: 0.6,
-  };
-
-  const stageName: React.CSSProperties = {
-    marginTop: 8,
-    fontSize: isCompact ? 16 : 14,
-    fontWeight: 900,
-    color: "#ffffff",
-    lineHeight: 1.08,
-  };
-
-  const stageText: React.CSSProperties = {
-    marginTop: 6,
-    fontSize: isCompact ? 13 : 12,
-    lineHeight: 1.5,
-    color: "rgba(226,232,240,0.74)",
-  };
-
-  const examplesLabel: React.CSSProperties = {
-    marginTop: isCompact ? 18 : 22,
-    fontWeight: 900,
-    fontSize: isMobile ? 22 : isTablet ? 24 : 18,
-    letterSpacing: isMobile ? -0.3 : -0.2,
-    color: "#f8fafc",
-    lineHeight: 1.06,
-  };
-
-  const featuredDemoCard: React.CSSProperties = {
-    ...panel,
-    marginTop: 12,
-    border: "1px solid rgba(34,197,94,0.30)",
-    background:
-      "linear-gradient(180deg, rgba(34,197,94,0.10), rgba(2,6,23,0.80) 30%, rgba(2,6,23,0.88) 100%)",
-    cursor: "pointer",
-  };
-
-  const featuredDemoInner: React.CSSProperties = { padding: isCompact ? 14 : 18 };
-
-  const featuredDemoTop: React.CSSProperties = {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    gap: isCompact ? 14 : 18,
-    flexDirection: isCompact ? "column" : "row",
-  };
-
-  const featuredDemoTitle: React.CSSProperties = {
-    fontWeight: 900,
-    fontSize: isCompact ? 24 : 22,
-    color: "#ffffff",
-    lineHeight: 1.04,
-    letterSpacing: isCompact ? -0.5 : -0.3,
-  };
-
-  const featuredDemoSubline: React.CSSProperties = {
-    marginTop: 8,
-    fontSize: 15,
-    lineHeight: 1.42,
-    color: "rgba(226,232,240,0.9)",
-    maxWidth: 760,
-  };
-
-  const featuredDemoAction: React.CSSProperties = {
-    ...primaryBtn,
-    padding: isCompact ? "13px 16px" : "10px 14px",
-    fontSize: isCompact ? 16 : 13,
-    whiteSpace: "nowrap",
-  };
-
-  const featuredDemoBadgeRow: React.CSSProperties = {
-    display: "flex",
-    gap: 8,
-    flexWrap: "wrap",
-    alignItems: "center",
-    marginBottom: 12,
-  };
-
-  const featuredDemoBadge: React.CSSProperties = {
-    borderRadius: 999,
-    padding: isCompact ? "8px 12px" : "6px 10px",
-    fontSize: 11,
-    fontWeight: 900,
-    border: "1px solid rgba(34,197,94,0.38)",
-    color: "rgba(187,247,208,1)",
-    background: "rgba(34,197,94,0.10)",
-    letterSpacing: 0.4,
-  };
-
-  const featuredDemoSecondaryBadge: React.CSSProperties = {
-    borderRadius: 999,
-    padding: isCompact ? "8px 12px" : "6px 10px",
-    fontSize: 11,
-    fontWeight: 900,
-    border: "1px solid rgba(56,189,248,0.34)",
-    color: "rgba(186,230,253,1)",
-    background: "rgba(56,189,248,0.08)",
-    letterSpacing: 0.4,
-  };
-
-  const featuredValueGrid: React.CSSProperties = {
-    display: "grid",
-    gridTemplateColumns: isCompact ? "1fr" : "repeat(3, minmax(0, 1fr))",
-    gap: 10,
-    marginTop: 14,
-  };
-
-  const featuredValueCard: React.CSSProperties = {
-    borderRadius: 14,
-    border: "1px solid rgba(255,255,255,0.10)",
-    background: "rgba(255,255,255,0.04)",
-    padding: 12,
-    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.02)",
-  };
-
-  const examplesGrid: React.CSSProperties = {
-    display: "grid",
-    gridTemplateColumns: isMobile
-      ? "1fr"
-      : isTablet
-        ? "1fr 1fr"
-        : "repeat(2, minmax(0, 1fr))",
-    gap: 10,
-    marginTop: 12,
-  };
-
-  const exampleCard: React.CSSProperties = {
-    border: "1px solid rgba(255,255,255,0.12)",
-    background: "rgba(255,255,255,0.035)",
-    borderRadius: 18,
-    padding: isCompact ? 15 : "14px 16px",
-    cursor: "pointer",
-    display: "flex",
-    flexDirection: "column",
-    gap: isCompact ? 10 : 8,
-    boxShadow: "0 14px 40px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.02)",
-  };
-
-  const tagStyle: React.CSSProperties = {
-    borderRadius: 999,
-    padding: isCompact ? "8px 12px" : "6px 10px",
-    fontSize: 11,
-    fontWeight: 900,
-    border: "1px solid rgba(250,204,21,0.40)",
-    color: "rgba(254,240,138,1)",
-    background: "rgba(250,204,21,0.10)",
-    width: "fit-content",
-  };
-
-  const exampleTitle: React.CSSProperties = {
-    fontWeight: 900,
-    fontSize: isCompact ? 19 : 15,
-    color: "#ffffff",
-    lineHeight: 1.06,
-  };
-
-  const exampleSub: React.CSSProperties = {
-    fontSize: isCompact ? 14 : 12,
-    color: "rgba(226,232,240,0.76)",
-    lineHeight: 1.5,
-  };
-
-  const footerWrap: React.CSSProperties = {
-    marginTop: 24,
-    paddingTop: 18,
-    borderTop: "1px solid rgba(148,163,184,0.16)",
-    textAlign: "center",
-  };
-
-  const footerPrimary: React.CSSProperties = {
-    fontSize: isCompact ? 14 : 13,
-    color: "#94a3b8",
-    fontWeight: 700,
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    flexWrap: "wrap",
-    lineHeight: 1.35,
-  };
-
-  const footerSecondary: React.CSSProperties = {
-    marginTop: 8,
-    fontSize: isCompact ? 13 : 12,
-    color: "rgba(148,163,184,0.72)",
-    lineHeight: 1.45,
-  };
-
-  const footerPlanetMark: React.CSSProperties = {
-    position: "relative",
-    width: isCompact ? 18 : 16,
-    height: isCompact ? 18 : 16,
-    display: "inline-block",
-    borderRadius: "50%",
-    background:
-      "radial-gradient(circle at 35% 35%, #7dd3fc 0%, #38bdf8 45%, #1d4ed8 100%)",
-    boxShadow: "0 0 10px rgba(56,189,248,0.45)",
-    flexShrink: 0,
-  };
-
-  const footerPlanetRing: React.CSSProperties = {
-    position: "absolute",
-    left: -3,
-    top: 6,
-    width: isCompact ? 25 : 22,
-    height: isCompact ? 8 : 7,
-    border: "1.5px solid rgba(186,230,253,0.92)",
-    borderRadius: "50%",
-    transform: "rotate(-18deg)",
-    opacity: 0.95,
-    boxShadow: "0 0 6px rgba(125,211,252,0.25)",
-    pointerEvents: "none",
-  };
-
-  const mobilePreviewPanel: React.CSSProperties = {
-    ...panel,
-    marginTop: 10,
-  };
-
-  const intentCards = [
-    { id: "landing-page" as BuildIntent, title: "Landing Page", text: "Clear front door" },
-      { id: "live-board" as BuildIntent, title: "Live Board", text: "Jobs and status live" },
-      {
-      id: "workflow-tool" as BuildIntent,
-      title: "Workflow Tool",
-      text: "Built around your process",
-    },
-      { id: "intake-flow" as BuildIntent, title: "Intake Flow", text: "Calls, texts, walk-ins" },
-      { id: "payment-flow" as BuildIntent, title: "Payment Flow", text: "Job to payment" },
-      {
-      id: "full-system" as BuildIntent,
-      title: "Full Business System",
-      text: "Everything in one place",
-    },
-  ];
-
-  const compactReadySystemsSection = (
-    <div style={sectionCard}>
-      <div style={panelHeader}>
-        <div style={panelKicker}>Creator systems</div>
-        <div style={panelTitle}>Live systems moved into their own page</div>
-        <div style={panelSub}>
-          Creator City stays focused on the intake and build path. Open the full systems library separately.
-        </div>
-      </div>
-
-      <div style={sectionBody}>
-        <div
-          style={{
-            display: "grid",
-            gap: 10,
-          }}
-        >
-          <div style={stageCard}>
-            <div style={stageTag}>SEPARATE PAGE</div>
-            <div style={stageName}>CreatorSystems</div>
-            <div style={stageText}>
-              Studio boards, live selling, and every ready demo system now live at /planet/creator/systems.
-            </div>
-          </div>
-
-          <button type="button" style={primaryBtn} onClick={scrollToReadySystems}>
-            Open Creator Systems
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+    border: active ? "1px solid rgba(112,242,163,0.40)" : "1px solid rgba(255,255,255,0.10)",
+    background: active ? "rgba(112,242,163,0.12)" : "rgba(255,255,255,0.035)",
+  });
 
   return (
     <div style={page}>
+      <style>
+        {`
+          @keyframes hpLivePulse {
+            0% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(103,232,249,.55); }
+            70% { transform: scale(1.18); opacity: .82; box-shadow: 0 0 0 7px rgba(103,232,249,0); }
+            100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(103,232,249,0); }
+          }
+        `}
+      </style>
+
       <div style={shell}>
         <div style={frame}>
           <div style={topBar}>
-            <div style={topBarMobileRow}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
               <span style={windowDot("#fb7185")} />
-              <span style={windowDot("#fbbf24")} />
-              <span style={windowDot("#4ade80")} />
-              <div style={topBadge}>CREATOR CITY</div>
+              <span style={windowDot("#f8d36b")} />
+              <span style={windowDot("#70f2a3")} />
+              <span style={pill("green")}>CREATOR CITY</span>
             </div>
 
-            <div style={topBarLeft}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
               <button
                 type="button"
                 onClick={() => setWarmMode((v) => !v)}
                 style={{
-                  ...topBadgeBlue,
+                  ...ghostPill,
                   cursor: "pointer",
-                  background: warmMode ? "rgba(245,158,11,0.10)" : "rgba(56,189,248,0.10)",
+                  background: warmMode
+                    ? "linear-gradient(180deg, rgba(255,180,80,0.25), rgba(255,120,60,0.12))"
+                    : "linear-gradient(180deg, rgba(56,189,248,0.18), rgba(59,130,246,0.10))",
                   border: warmMode
-                    ? "1px solid rgba(245,158,11,0.28)"
-                    : "1px solid rgba(56,189,248,0.30)",
+                    ? "1px solid rgba(255,180,80,0.45)"
+                    : "1px solid rgba(56,189,248,0.40)",
                   color: warmMode ? "#fde68a" : "#bae6fd",
+                  boxShadow: warmMode
+                    ? "0 0 14px rgba(255,160,80,0.45)"
+                    : "0 0 14px rgba(56,189,248,0.45)",
                 }}
               >
                 {warmMode ? "WARM MODE ON" : "COOL MODE ON"}
               </button>
-
-              {!isCompact && <div style={topBadgeBlue}>LIVE BOARD GENERATOR</div>}
-              <div style={topBarPrimaryBadge}>PRIMARY ROUTE /planet/creator/building</div>
-              {!isCompact && (
-                <div style={topBadge}>{reserveReady ? "RESERVE READY" : "FREE TRIAL"}</div>
-              )}
+              {!isMobile ? <span style={pill("blue")}>LIVE BOARD GENERATOR</span> : null}
+              {!isMobile ? <span style={ghostPill}>PRIMARY ROUTE /planet/creator/building</span> : null}
+              {!isMobile ? <span style={pill("green")}>{reserveReady ? "RESERVE READY" : "FREE TRIAL"}</span> : null}
             </div>
           </div>
 
           <div style={cockpitGrid}>
-            {!isCompact && (
-              <div style={panel}>
-                <div style={panelHeader}>
-                  <div style={panelKicker}>Launch path</div>
-                  <div style={panelTitle}>Business launch path</div>
-                  <div style={panelSub}>Intake to launch.</div>
-                </div>
+            {!isCompact ? (
+              <aside style={{ display: "grid", gap: 14 }}>
+                <div style={panel}>
+                  <div style={panelHeader}>
+                    <div style={kicker}>Launch path</div>
+                    <div style={panelTitle}>Business launch path</div>
+                    <div style={muted}>Intake to launch.</div>
+                  </div>
 
-                <div style={panelBody}>
-                  <div style={trajectoryList}>
+                  <div style={{ ...panelBody, display: "grid", gap: 10 }}>
                     {trajectorySteps.map((step) => (
-                      <div key={step.id} style={trajectoryItem(step.status)}>
-                        <div style={trajectoryTop}>
-                          <span style={trajectoryDot(step.status)} />
-                          <div style={trajectoryTitle}>{step.title}</div>
-                          <div style={trajectoryStatus}>{step.status.toUpperCase()}</div>
+                      <div key={step.id} style={stepTone(step.status)}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <span
+                            style={{
+                              width: 8,
+                              height: 8,
+                              borderRadius: 999,
+                              background:
+                                step.status === "complete"
+                                  ? "#70f2a3"
+                                  : step.status === "active"
+                                    ? "#67e8f9"
+                                    : step.status === "armed"
+                                      ? "#f8d36b"
+                                      : "rgba(255,255,255,0.35)",
+                            }}
+                          />
+                          <strong style={{ flex: 1, fontSize: 13 }}>{step.title}</strong>
+                          <span style={{ fontSize: 10, fontWeight: 900, color: "rgba(255,255,255,0.5)" }}>
+                            {step.status.toUpperCase()}
+                          </span>
                         </div>
-                        <div style={trajectoryText}>{step.text}</div>
+                        <div style={muted}>{step.text}</div>
                       </div>
                     ))}
                   </div>
+                </div>
 
-                  <div style={{ marginTop: 14 }}>
-                    <div
-                      style={{
-                        borderRadius: 18,
-                        border: "1px solid rgba(255,255,255,0.10)",
-                        background: "rgba(255,255,255,0.03)",
-                        padding: 12,
-                      }}
-                    >
-                      <div style={panelKicker}>Board family</div>
-                      <div
-                        style={{
-                          marginTop: 8,
-                          fontSize: 15,
-                          fontWeight: 900,
-                          color: "#ffffff",
-                          lineHeight: 1.08,
-                        }}
-                      >
-                        {configPreview.familyLabel}
-                      </div>
-                      <div style={panelSub}>{configPreview.boardSubtitle}</div>
-                    </div>
+                <div style={panel}>
+                  <div style={panelHeader}>
+                    <div style={kicker}>Board family</div>
+                    <div style={panelTitle}>{configPreview.familyLabel}</div>
+                    <div style={muted}>{configPreview.boardSubtitle}</div>
                   </div>
                 </div>
-              </div>
-            )}
+              </aside>
+            ) : null}
 
-            <div>
-              <div style={heroCore}>
-                <div style={heroPadding}>
-                  {!isCompact && (
-                    <button
-                      type="button"
-                      style={{ ...topBadge, cursor: "pointer" }}
-                      onClick={scrollToIntakeForm}
-                    >
-                      BUILD MY BUSINESS SYSTEM
-                    </button>
-                  )}
+            <main style={{ display: "grid", gap: 14 }}>
+              <section style={panel}>
+                <div style={{ ...panelBody, padding: isCompact ? 16 : 18 }}>
+                  <span style={pill("green")}>BUILD MY BUSINESS SYSTEM</span>
 
-                  <div style={title}>Creator City</div>
+                  <h1 style={{ ...title, marginTop: 12 }}>Creator City</h1>
 
-                  <div style={hook}>
+                  <div
+                    style={{
+                      marginTop: 10,
+                      maxWidth: 760,
+                      fontSize: isMobile ? 22 : 27,
+                      lineHeight: 1.05,
+                      fontWeight: 950,
+                      letterSpacing: -0.65,
+                    }}
+                  >
                     {isMealBusinessMode ? (
                       <>
                         Launch your meal business
@@ -1595,429 +911,368 @@ export default function CreatorCity() {
                     )}
                   </div>
 
-                  <div style={subtext}>
+                  <div style={{ ...muted, fontSize: 15 }}>
                     {isMealBusinessMode
                       ? "Intake, weekly planning, customer preferences, food guardrails, and live decision control all in one place."
                       : "Build your workflow into a live board."}
                   </div>
 
-                  <div style={ctaRow}>
-                    <button style={primaryBtn} onClick={scrollToIntakeForm}>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: 9,
+                      marginTop: 18,
+                    }}
+                  >
+                    <button style={primaryButton} onClick={scrollToIntakeForm}>
                       Start My Free Demo
                     </button>
-
-                    <button style={secondaryBtn} onClick={previewMealBusinessMode}>
+                    <button style={buttonBase} onClick={previewMealBusinessMode}>
                       Meal Business System
                     </button>
-
-                    <button style={secondaryBtn} onClick={scrollToReadySystems}>
+                    <button style={buttonBase} onClick={scrollToCreatorSystems}>
                       Open Creator Systems
                     </button>
-
-                    {!isCompact && (
-                      <button
-                        style={secondaryBtn}
-                        onClick={() => openRoute(LIVE_CAMP_GUARDIAN_ROUTE)}
-                      >
-                        Camp Guardian
-                      </button>
-                    )}
-
-                    {!isCompact && (
-                      <button
-                        style={secondaryBtn}
-                        onClick={() => openRoute("/planet/experience")}
-                      >
-                        Experience Planet
-                      </button>
-                    )}
+                    <button style={buttonBase} onClick={() => openRoute(LIVE_CAMP_GUARDIAN_ROUTE)}>
+                      Camp Guardian
+                    </button>
+                    <button style={buttonBase} onClick={() => openRoute("/planet/experience")}>
+                      Experience Planet
+                    </button>
                   </div>
 
-                  <div style={statusGrid}>
-                    <div style={statusCard}>
-                      <div style={statusLabel}>Live demo</div>
-                      <div style={statusValue}>Intake</div>
-                      <div style={statusText}>Your intake builds the board.</div>
-                    </div>
-
-                    <div style={statusCard}>
-                      <div style={statusLabel}>Board type</div>
-                      <div style={statusValue}>{resolvedBusinessLabel}</div>
-                      <div style={statusText}>Matched into a starter board family.</div>
-                    </div>
-
-                    <div style={statusCard}>
-                      <div style={statusLabel}>Next step</div>
-                      <div style={statusValue}>
-                        {reserveReady ? "Reserve" : previewStages.length > 0 ? previewStages[0] : "Waiting"}
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))",
+                      gap: 10,
+                      marginTop: 18,
+                    }}
+                  >
+                    {[
+                      ["Live demo", "Intake", "Your intake builds the board."],
+                      ["Board type", resolvedBusinessLabel, "Matched into a starter board family."],
+                      [
+                        "Next step",
+                        reserveReady ? "Reserve" : previewStages[0] || "Waiting",
+                        reserveReady ? "Trust-first build hold is ready." : "The board predicts the first stages.",
+                      ],
+                    ].map(([labelText, value, detail]) => (
+                      <div key={labelText} style={card}>
+                        <div style={kicker}>{labelText}</div>
+                        <div style={{ marginTop: 7, fontSize: 17, fontWeight: 900 }}>{value}</div>
+                        <div style={muted}>{detail}</div>
                       </div>
-                      <div style={statusText}>
-                        {reserveReady
-                          ? "Trust-first build hold is ready."
-                          : "The board predicts the first stages."}
-                      </div>
-                    </div>
+                    ))}
                   </div>
                 </div>
-              </div>
+              </section>
 
-              <div style={creatorPathsCard}>
-                <div style={creatorPathsWrap}>
-                  <div style={creatorPathsHeader}>
-                    <div style={creatorPathsEyebrow}>CREATOR PATHS</div>
-
-                    <div style={creatorPathsTitle}>
-                      Pick the creator path you actually need.
-                    </div>
-
-                    <div style={creatorPathsText}>
-                      Creator City should orient fast. Not dump a fake cockpit on the homepage.
-                      Choose your lane, then go deeper into the real system that fits how you create.
-                    </div>
+              <section style={panel}>
+                <div style={panelBody}>
+                  <div style={kicker}>Creator paths</div>
+                  <div style={{ ...panelTitle, fontSize: isMobile ? 24 : 28 }}>
+                    Pick the creator path you actually need.
+                  </div>
+                  <div style={muted}>
+                    Creator City should orient fast. Choose your lane, then go deeper into the
+                    real system that fits how you create.
                   </div>
 
-                  <div style={creatorPathsGrid}>
-                    <div style={creatorPathCard}>
-                      <div style={creatorPathTag}>Creator Studio</div>
-                      <div style={creatorPathTitle}>
-                        Ideas, clips, edits, drops, and creator momentum.
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: isMobile ? "1fr" : isTablet ? "1fr 1fr" : "repeat(4, minmax(0, 1fr))",
+                      gap: 10,
+                      marginTop: 16,
+                    }}
+                  >
+                    {[
+                      {
+                        tag: "MOMENT LAB",
+                        title: "Creator Studio",
+                        text: "Ideas, clips, edits, drops, and creator momentum.",
+                        action: "Open Creator Studio",
+                        to: CREATOR_STUDIO_ROUTE,
+                      },
+                      {
+                        tag: "SELL LIVE",
+                        title: "Live Selling",
+                        text: "For creators who actually sell while live.",
+                        action: "Open Live Selling",
+                        to: LIVE_PRODUCT_DEMO_ROUTE,
+                      },
+                      {
+                        tag: "LIVE SYSTEM",
+                        title: "Creator Systems",
+                        text: "Open every live creator system and demo board in one place.",
+                        action: "Open Creator Systems",
+                        to: CREATOR_SYSTEMS_ROUTE,
+                      },
+                      {
+                        tag: "BUILD PATH",
+                        title: "Build Your System",
+                        text: "Start a custom creator setup from intake.",
+                        action: "Start My Free Demo",
+                        to: "",
+                      },
+                    ].map((item) => (
+                      <div key={item.title} style={card}>
+                        <span style={pill("blue")}>{item.tag}</span>
+                        <div style={{ marginTop: 12, fontSize: 16, fontWeight: 950, lineHeight: 1.08 }}>
+                          {item.title}
+                        </div>
+                        <div style={{ ...muted, minHeight: isMobile ? "auto" : 58 }}>{item.text}</div>
+                        <button
+                          type="button"
+                          style={{
+                            ...buttonBase,
+                            width: "100%",
+                            marginTop: 10,
+                            borderRadius: 14,
+                          }}
+                          onClick={() => (item.to ? openRoute(item.to) : scrollToIntakeForm())}
+                        >
+                          {item.action}
+                        </button>
                       </div>
-                      <div style={creatorPathText}>
-                        The real creator board. Built for streamers, editors, gamers,
-                        stylists, and live personalities.
-                      </div>
-                      <button
-                        type="button"
-                        style={creatorPathBtn}
-                        onClick={() => openRoute("/planet/creator/studio-board")}
-                      >
-                        Open Creator Studio
-                      </button>
-                    </div>
-
-                    <div style={creatorPathCard}>
-                      <div style={creatorPathTag}>Live Selling</div>
-                      <div style={creatorPathTitle}>
-                        For creators who actually sell while live.
-                      </div>
-                      <div style={creatorPathText}>
-                        Use the selling board only when the creator flow is truly commerce-first.
-                      </div>
-                      <button
-                        type="button"
-                        style={creatorPathBtn}
-                        onClick={() => openRoute(LIVE_PRODUCT_DEMO_ROUTE)}
-                      >
-                        Open Live Selling
-                      </button>
-                    </div>
-
-                    <div style={creatorPathCard}>
-                      <div style={creatorPathTag}>Creator Systems</div>
-                      <div style={creatorPathTitle}>
-                        Open every live creator system and demo board in one place.
-                      </div>
-                      <div style={creatorPathText}>
-                        Use the systems page when you want the full HomePlanet demo lineup without burying it inside intake.
-                      </div>
-                      <button
-                        type="button"
-                        style={creatorPathBtn}
-                        onClick={() => openRoute("/planet/creator/systems")}
-                      >
-                        Open Creator Systems
-                      </button>
-                    </div>
-
-                    <div style={creatorPathCard}>
-                      <div style={creatorPathTag}>Build Your System</div>
-                      <div style={creatorPathTitle}>
-                        Start a custom creator setup from intake.
-                      </div>
-                      <div style={creatorPathText}>
-                        Use intake when your workflow needs a custom HomePlanet system.
-                      </div>
-                      <button
-                        type="button"
-                        style={creatorPathBtn}
-                        onClick={scrollToIntakeForm}
-                      >
-                        Start My Free Demo
-                      </button>
-                    </div>
+                    ))}
                   </div>
                 </div>
-              </div>
+              </section>
 
-              {isCompact && compactReadySystemsSection}
-
-              {isCompact && (
-                <div style={mobilePreviewPanel}>
+              {!isCompact ? (
+                <section style={panel}>
                   <div style={panelHeader}>
-                    <div style={panelKicker}>Live preview</div>
-                    <div style={panelTitle}>{configPreview.familyLabel}</div>
-                    <div style={panelSub}>Fast board preview.</div>
-                  </div>
-
-                  <div style={panelBody}>
-                    <div style={{ display: "grid", gap: 10 }}>
-                      <div style={stageCard}>
-                        <div style={stageTag}>{reserveReady ? "RESERVE STEP" : "FIRST STAGE"}</div>
-                        <div style={stageName}>
-                          {reserveReady ? "Reserve Your Build" : previewStages[0] || "Waiting"}
-                        </div>
-                        <div style={stageText}>
-                          {reserveReady
-                            ? "Intake is complete. Reserve your build slot to move into the live build path."
-                            : configPreview.boardSubtitle}
-                        </div>
-                      </div>
-
-                      <div style={stageCard}>
-                        <div style={stageTag}>{reserveReady ? "PAYMENT ROUTE" : "LIVE REDIRECT"}</div>
-                        <div style={stageName}>
-                          {reserveReady
-                            ? PAYMENT_NODE_ROUTE
-                            : businessName
-                              ? `/planet/live/${slugify(businessName) || "starter-board"}-*`
-                              : "/planet/live/<boardSlug>"}
-                        </div>
-                        <div style={stageText}>
-                          {reserveReady
-                            ? "Trust comes first. Reserve before live build."
-                            : "Your intake creates the board path."}
-                        </div>
-                      </div>
-
-                      {isTablet && (
-                        <div style={stageCard}>
-                          <div style={stageTag}>MISSION FEED</div>
-                          <div style={stageName}>Compact system truth</div>
-                          <div style={{ ...stageText, marginTop: 8 }}>
-                            {missionFeed.slice(0, 4).map((item) => (
-                              <div key={item.label} style={{ marginBottom: 8 }}>
-                                <strong style={{ color: "#ffffff" }}>{item.label}:</strong>{" "}
-                                {item.value}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {!isCompact && (
-                <div style={sectionCard}>
-                  <div style={panelHeader}>
-                    <div style={panelKicker}>System truth</div>
+                    <div style={kicker}>System truth</div>
                     <div style={panelTitle}>Mission feed</div>
-                    <div style={panelSub}>Live intake signals.</div>
+                    <div style={muted}>Live intake signals.</div>
                   </div>
 
-                  <div style={sectionBody}>
-                    <div style={missionFeedList}>
-                      {missionFeed.map((item) => (
-                        <div key={item.label} style={missionFeedItem}>
-                          <div style={feedLabel}>{item.label}</div>
-                          <div style={feedValue(item.active)}>{item.value}</div>
+                  <div
+                    style={{
+                      ...panelBody,
+                      display: "grid",
+                      gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                      gap: 10,
+                    }}
+                  >
+                    {missionFeed.map((item) => (
+                      <div key={item.label} style={card}>
+                        <div style={kicker}>{item.label}</div>
+                        <div
+                          style={{
+                            marginTop: 8,
+                            color: item.active ? "#fff" : "rgba(255,255,255,0.48)",
+                            fontSize: 13,
+                            fontWeight: 900,
+                            wordBreak: "break-word",
+                          }}
+                        >
+                          {item.value}
                         </div>
-                      ))}
-                    </div>
+                      </div>
+                    ))}
                   </div>
-                </div>
-              )}
+                </section>
+              ) : null}
 
-              <div ref={intakeFormRef} style={sectionCard}>
+              <section ref={intakeFormRef} style={panel}>
                 <div style={panelHeader}>
-                  <div style={panelKicker}>Mission intake</div>
+                  <div style={kicker}>Mission intake</div>
                   <div style={panelTitle}>Start your free live demo</div>
-                  <div style={panelSub}>
+                  <div style={muted}>
                     {reserveReady
                       ? "Your intake is in. Reserve the build slot to move forward."
                       : "Fill this out. We’ll turn it into a live board."}
                   </div>
                 </div>
 
-                <div style={sectionBody}>
-                  <div style={formLead}>
-                    {reserveReady
-                      ? "Your intake created the reserve step."
-                      : "This intake creates the demo."}
+                <div style={panelBody}>
+                  <div
+                    style={{
+                      color: reserveReady ? "#70f2a3" : "rgba(187,247,208,0.96)",
+                      fontSize: 13,
+                      fontWeight: 900,
+                      marginBottom: 14,
+                    }}
+                  >
+                    {reserveReady ? "Your intake created the reserve step." : "This intake creates the demo."}
                   </div>
 
-                  <div style={intentGrid}>
-                    {intentCards.map((cardItem) => (
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(3, minmax(0, 1fr))",
+                      gap: 10,
+                    }}
+                  >
+                    {intentCards.map((item) => (
                       <div
-                        key={cardItem.id}
-                        style={intentCard(wantsBuilt === cardItem.id)}
-                        onClick={() => setWantsBuilt(cardItem.id)}
+                        key={item.id}
+                        style={intentCard(wantsBuilt === item.id)}
+                        onClick={() => setWantsBuilt(item.id)}
                       >
-                        <div style={intentTitle}>{cardItem.title}</div>
-                        <div style={intentText}>{cardItem.text}</div>
+                        <div style={{ fontSize: 14, fontWeight: 950 }}>{item.title}</div>
+                        <div style={muted}>{item.text}</div>
                       </div>
                     ))}
                   </div>
 
                   {reserveReady ? (
-                    <div style={reservePanel}>
-                      <div style={{ fontWeight: 900, fontSize: 18, marginBottom: 8 }}>
-                        Reserve Your Build ⚡
-                      </div>
-
-                      <div style={{ lineHeight: 1.7, color: "rgba(220,252,231,0.96)" }}>
+                    <div
+                      style={{
+                        ...card,
+                        marginTop: 16,
+                        border: "1px solid rgba(112,242,163,0.40)",
+                        background:
+                          "linear-gradient(180deg, rgba(112,242,163,0.12), rgba(255,255,255,0.035))",
+                      }}
+                    >
+                      <div style={{ fontSize: 19, fontWeight: 950 }}>Reserve Your Build</div>
+                      <div style={{ ...muted, color: "rgba(220,252,231,0.92)" }}>
                         Your intake is locked in. The next step is simple: reserve the build
                         so the flow moves cleanly into payment and live assembly.
                       </div>
 
-                      <div style={reserveGrid}>
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))",
+                          gap: 10,
+                          marginTop: 14,
+                        }}
+                      >
                         {reserveHighlights.map((item) => (
-                          <div key={item.label} style={reserveCard}>
-                            <div style={reserveCardLabel}>{item.label}</div>
-                            <div style={reserveCardValue}>{item.value}</div>
+                          <div key={item.label} style={card}>
+                            <div style={kicker}>{item.label}</div>
+                            <div style={{ ...muted, color: "#fff", fontWeight: 800 }}>
+                              {item.value}
+                            </div>
                           </div>
                         ))}
                       </div>
 
-                      <div style={reserveCtaRow}>
-                        <button
-                          type="button"
-                          style={submitBtn}
-                          onClick={() => openRoute(reservePaymentRoute)}
-                        >
+                      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 16 }}>
+                        <button type="button" style={primaryButton} onClick={() => openRoute(reservePaymentRoute)}>
                           Reserve Your Build
                         </button>
-
-                        <button
-                          type="button"
-                          style={secondaryBtn}
-                          onClick={resetIntake}
-                        >
+                        <button type="button" style={buttonBase} onClick={resetIntake}>
                           Edit Intake
                         </button>
-                      </div>
-
-                      <div style={{ ...helperText, marginTop: 12, maxWidth: "100%" }}>
-                        Trust-first flow. No weird friction. Intake first, reserve second,
-                        live build next.
                       </div>
                     </div>
                   ) : (
                     <form onSubmit={handleSubmit}>
-                      <div style={intakeGrid}>
-                        <div style={inputGroup}>
-                          <label style={label}>Business name</label>
-                          <input
-                            style={inputBase}
-                            value={businessName}
-                            placeholder="Taylor Creek Contractors"
-                            onChange={(e) => setBusinessName(e.target.value)}
-                          />
-                        </div>
-
-                        <div style={inputGroup}>
-                          <label style={label}>Business type</label>
-                          <input
-                            style={inputBase}
-                            value={businessType}
-                            placeholder="Home Services"
-                            onChange={(e) => setBusinessType(e.target.value)}
-                          />
-                        </div>
-
-                        <div style={inputGroup}>
-                          <label style={label}>City</label>
-                          <input
-                            style={inputBase}
-                            value={city}
-                            placeholder="Okeechobee"
-                            onChange={(e) => setCity(e.target.value)}
-                          />
-                        </div>
-
-                        <div style={inputGroup}>
-                          <label style={label}>Email or preferred contact</label>
-                          <input
-                            style={inputBase}
-                            value={contact}
-                            placeholder="you@business.com"
-                            onChange={(e) => setContact(e.target.value)}
-                          />
-                        </div>
-
-                        <div style={{ ...inputGroup, gridColumn: "1 / -1" }}>
-                          <label style={label}>How do you run jobs right now?</label>
-                          <textarea
-                            style={textareaWide}
-                            value={currentWorkflow}
-                            placeholder="Calls, texts, paper tickets, whiteboards, spreadsheets, or whatever you're doing now."
-                            onChange={(e) => setCurrentWorkflow(e.target.value)}
-                          />
-                        </div>
-
-                        <div style={{ ...inputGroup, gridColumn: "1 / -1" }}>
-                          <label style={label}>What wastes the most time?</label>
-                          <textarea
-                            style={textareaWide}
-                            value={biggestFriction}
-                            placeholder="What keeps breaking the flow, creating delays, or causing confusion?"
-                            onChange={(e) => setBiggestFriction(e.target.value)}
-                          />
-                        </div>
-
-                        <div style={{ ...inputGroup, gridColumn: "1 / -1" }}>
-                          <label style={label}>What do customers keep asking about?</label>
-                          <textarea
-                            style={textareaWide}
-                            value={customerQuestions}
-                            placeholder="What do they call, text, or ask about over and over?"
-                            onChange={(e) => setCustomerQuestions(e.target.value)}
-                          />
-                        </div>
-
-                        <div style={{ ...inputGroup, gridColumn: "1 / -1" }}>
-                          <label style={label}>
-                            What would make you say “holy shit, this solves it”?
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: isCompact ? "1fr" : "1fr 1fr",
+                          gap: 13,
+                          marginTop: 16,
+                        }}
+                      >
+                        {[
+                          ["Business name", businessName, setBusinessName, "Taylor Creek Contractors"],
+                          ["Business type", businessType, setBusinessType, "Home Services"],
+                          ["City", city, setCity, "Okeechobee"],
+                          ["Email or preferred contact", contact, setContact, "you@business.com"],
+                        ].map(([labelText, value, setter, placeholder]) => (
+                          <label key={labelText as string} style={{ display: "grid", gap: 8 }}>
+                            <span style={fieldLabel}>{labelText as string}</span>
+                            <input
+                              style={inputBase}
+                              value={value as string}
+                              placeholder={placeholder as string}
+                              onChange={(e) =>
+                                (setter as React.Dispatch<React.SetStateAction<string>>)(e.target.value)
+                              }
+                            />
                           </label>
-                          <textarea
-                            style={textareaWide}
-                            value={holyShiftMoment}
-                            placeholder="What would make the system instantly feel worth it?"
-                            onChange={(e) => setHolyShiftMoment(e.target.value)}
-                          />
-                        </div>
+                        ))}
+
+                        {[
+                          [
+                            "How do you run jobs right now?",
+                            currentWorkflow,
+                            setCurrentWorkflow,
+                            "Calls, texts, paper tickets, whiteboards, spreadsheets, or whatever you're doing now.",
+                          ],
+                          [
+                            "What wastes the most time?",
+                            biggestFriction,
+                            setBiggestFriction,
+                            "What keeps breaking the flow, creating delays, or causing confusion?",
+                          ],
+                          [
+                            "What do customers keep asking about?",
+                            customerQuestions,
+                            setCustomerQuestions,
+                            "What do they call, text, or ask about over and over?",
+                          ],
+                          [
+                            "What would make you say “holy shit, this solves it”?",
+                            holyShiftMoment,
+                            setHolyShiftMoment,
+                            "What would make the system instantly feel worth it?",
+                          ],
+                        ].map(([labelText, value, setter, placeholder]) => (
+                          <label
+                            key={labelText as string}
+                            style={{ display: "grid", gap: 8, gridColumn: "1 / -1" }}
+                          >
+                            <span style={fieldLabel}>{labelText as string}</span>
+                            <textarea
+                              style={textareaBase}
+                              value={value as string}
+                              placeholder={placeholder as string}
+                              onChange={(e) =>
+                                (setter as React.Dispatch<React.SetStateAction<string>>)(e.target.value)
+                              }
+                            />
+                          </label>
+                        ))}
                       </div>
 
-                      <div style={fileWrap}>
-                        <div style={label}>Upload workflow photos</div>
-                        <div style={{ ...panelSub, marginTop: 8 }}>Show your current setup.</div>
-                        <div style={{ marginTop: 12 }}>
-                          <input
-                            type="file"
-                            multiple
-                            accept="image/*"
-                            onChange={(e) => setWorkflowFiles(Array.from(e.target.files || []))}
-                            style={{ fontSize: isCompact ? 16 : 14, width: "100%" }}
-                          />
-                        </div>
-                        <div
-                          style={{
-                            marginTop: 10,
-                            fontSize: isCompact ? 14 : 12,
-                            color: "rgba(186,230,253,0.9)",
-                          }}
-                        >
+                      <div
+                        style={{
+                          marginTop: 14,
+                          borderRadius: 16,
+                          border: "1px dashed rgba(103,232,249,0.35)",
+                          background: "rgba(8,47,73,0.18)",
+                          padding: 14,
+                        }}
+                      >
+                        <div style={fieldLabel}>Upload workflow photos</div>
+                        <div style={muted}>Show your current setup.</div>
+                        <input
+                          type="file"
+                          multiple
+                          accept="image/*"
+                          onChange={(e) => setWorkflowFiles(Array.from(e.target.files || []))}
+                          style={{ marginTop: 12, width: "100%", fontSize: isCompact ? 16 : 14 }}
+                        />
+                        <div style={{ ...muted, color: "rgba(186,230,253,0.9)" }}>
                           {selectedFilesLabel}
                         </div>
                       </div>
 
-                      <div style={submitWrap}>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: isCompact ? "stretch" : "center",
+                          justifyContent: "space-between",
+                          gap: 14,
+                          flexDirection: isCompact ? "column" : "row",
+                          marginTop: 16,
+                        }}
+                      >
                         <button
                           type="submit"
                           style={{
-                            ...submitBtn,
-                            opacity: submitting ? 0.7 : 1,
+                            ...primaryButton,
+                            opacity: submitting ? 0.72 : 1,
                             cursor: submitting ? "progress" : "pointer",
                           }}
                           disabled={submitting}
@@ -2025,306 +1280,319 @@ export default function CreatorCity() {
                           {submitting ? "Preparing your reserve step..." : "Build My Free Demo"}
                         </button>
 
-                        <div style={helperText}>
+                        <div style={{ ...muted, maxWidth: 520 }}>
                           Your intake becomes a trust-first reserve step before live build.
                         </div>
                       </div>
                     </form>
                   )}
                 </div>
-              </div>
-            </div>
+              </section>
+            </main>
 
-            {!isCompact && (
-              <div style={{ display: "grid", gap: 14 }}>
+            {!isCompact ? (
+              <aside style={{ display: "grid", gap: 14 }}>
                 <div style={panel}>
                   <div style={panelHeader}>
-                    <div style={panelKicker}>Actions</div>
+                    <div style={kicker}>Actions</div>
                     <div style={panelTitle}>Launch controls</div>
-                    <div style={panelSub}>Next actions only.</div>
+                    <div style={muted}>Next actions only.</div>
                   </div>
 
-                  <div style={panelBody}>
-                    <div style={sideActionGrid}>
-                      <button style={sideActionBtn} onClick={scrollToIntakeForm}>
-                        {reserveReady ? "Go to reserve step" : "Start my free demo"}
+                  <div style={{ ...panelBody, display: "grid", gap: 10 }}>
+                    <button style={sideButton} onClick={scrollToIntakeForm}>
+                      {reserveReady ? "Go to reserve step" : "Start my free demo"}
+                    </button>
+                    <button style={sideButton} onClick={previewMealBusinessMode}>
+                      Preview meal business mode
+                    </button>
+                    <button style={sideButton} onClick={() => openRoute(MEAL_BUSINESS_ROUTE)}>
+                      Open meal launch flow
+                    </button>
+                    {reserveReady ? (
+                      <button style={sideButton} onClick={() => openRoute(reservePaymentRoute)}>
+                        Open payment node
                       </button>
-
-                      <button style={sideActionBtn} onClick={previewMealBusinessMode}>
-                        Preview meal business mode
-                      </button>
-
-                      <button style={sideActionBtn} onClick={() => openRoute(MEAL_BUSINESS_ROUTE)}>
-                        Open meal launch flow
-                      </button>
-
-                      {reserveReady && (
-                        <button
-                          style={sideActionBtn}
-                          onClick={() => openRoute(reservePaymentRoute)}
-                        >
-                          Open payment node
-                        </button>
-                      )}
-
-                      <button
-                        style={sideActionBtn}
-                        onClick={() => openRoute(LIVE_CAMP_GUARDIAN_ROUTE)}
-                      >
-                        Open Camp Guardian
-                      </button>
-
-                      <button style={sideActionBtn} onClick={scrollToReadySystems}>
-                        Open creator systems
-                      </button>
-
-                      <button
-                        style={sideActionBtn}
-                        onClick={() => openRoute("/planet/experience")}
-                      >
-                        Open Experience Planet
-                      </button>
-
-                      <button
-                        style={sideActionBtn}
-                        onClick={() => openRoute(LIVE_PRODUCT_DEMO_ROUTE)}
-                      >
-                        Open product selling board
-                      </button>
-                    </div>
+                    ) : null}
+                    <button style={sideButton} onClick={() => openRoute(LIVE_CAMP_GUARDIAN_ROUTE)}>
+                      Open Camp Guardian
+                    </button>
+                    <button style={sideButton} onClick={scrollToCreatorSystems}>
+                      Open creator systems
+                    </button>
+                    <button style={sideButton} onClick={() => openRoute("/planet/experience")}>
+                      Open Experience Planet
+                    </button>
+                    <button style={sideButton} onClick={() => openRoute(LIVE_PRODUCT_DEMO_ROUTE)}>
+                      Open product selling board
+                    </button>
                   </div>
                 </div>
 
                 <div style={panel}>
                   <div style={panelHeader}>
-                    <div style={panelKicker}>Build feed</div>
+                    <div style={kicker}>Build feed</div>
                     <div style={panelTitle}>Board assembly preview</div>
-                    <div style={panelSub}>Live board build signals.</div>
+                    <div style={muted}>Live board build signals.</div>
                   </div>
 
-                  <div style={panelBody}>
-                    <div style={buildSequenceWrap}>
-                      {buildSequence.map((item) => (
-                        <div key={item.title} style={buildSequenceItem}>
-                          <div style={buildSequenceTop}>
-                            <span style={buildSequenceDot(item.complete)} />
-                            <div style={buildSequenceTitle}>{item.title}</div>
-                          </div>
-                          <div style={buildSequenceText}>{item.text}</div>
+                  <div style={{ ...panelBody, display: "grid", gap: 10 }}>
+                    {buildSequence.map((item) => (
+                      <div key={item.title} style={card}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <span
+                            style={{
+                              ...cityLight(item.complete ? "ready" : "live"),
+                              animation:
+                                warmMode && !item.complete
+                                  ? "hpLivePulse 1.6s ease-out infinite"
+                                  : "none",
+                            }}
+                          />
+                          <strong style={{ fontSize: 13 }}>{item.title}</strong>
                         </div>
-                      ))}
-                    </div>
+                        <div style={muted}>{item.text}</div>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
                 <div style={panel}>
                   <div style={panelHeader}>
-                    <div style={panelKicker}>Stage preview</div>
+                    <div style={kicker}>Stage preview</div>
                     <div style={panelTitle}>{configPreview.familyLabel}</div>
-                    <div style={panelSub}>Early stage map.</div>
+                    <div style={muted}>Early stage map.</div>
                   </div>
 
-                  <div style={panelBody}>
-                    <div style={stageGrid}>
-                      {(reserveReady
-                        ? ["Reserve Your Build", ...previewStages.slice(0, 3)]
-                        : previewStages
-                      ).map((stage, index) => (
-                        <div key={`${stage}-${index}`} style={stageCard}>
-                          <div style={stageTag}>STAGE {index + 1}</div>
-                          <div style={stageName}>{stage}</div>
-                          <div style={stageText}>
+                  <div style={{ ...panelBody, display: "grid", gap: 10 }}>
+                    {(reserveReady ? ["Reserve Your Build", ...previewStages.slice(0, 3)] : previewStages).map(
+                      (stage, index) => (
+                        <div key={`${stage}-${index}`} style={card}>
+                          <span style={pill("blue")}>STAGE {index + 1}</span>
+                          <div style={{ marginTop: 10, fontSize: 14, fontWeight: 950 }}>
+                            {stage}
+                          </div>
+                          <div style={muted}>
                             {index === 0 && reserveReady
                               ? "Trust-first hold before live build."
                               : "Part of the live board workflow."}
                           </div>
                         </div>
-                      ))}
-                    </div>
+                      ),
+                    )}
                   </div>
                 </div>
-              </div>
-            )}
+              </aside>
+            ) : null}
           </div>
 
-          <div style={{ padding: isCompact ? "0 10px 20px" : "0 16px 28px" }}>
-            {!isCompact ? (
-              <div ref={readySystemsRef} style={panel}>
-                <div style={panelHeader}>
-                  <div style={panelKicker}>Creator systems</div>
-                  <div style={panelTitle}>Ready systems now live on their own page</div>
-                  <div style={panelSub}>
-                    Creator City stays locked on intake and build. Use the systems page when you want the full live demo lineup.
+          <div style={{ padding: isCompact ? "0 12px 24px" : "0 16px 28px" }}>
+            <section style={panel}>
+              <div style={panelHeader}>
+                <div style={kicker}>Creator systems</div>
+                <div style={panelTitle}>Ready systems now live on their own page</div>
+                <div style={muted}>
+                  Creator City stays locked on intake and build. Use the systems page when you want the full live demo lineup.
+                </div>
+              </div>
+
+              <div style={panelBody}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: isCompact ? "1fr" : "minmax(0, 1fr) auto",
+                    gap: 14,
+                    alignItems: "center",
+                  }}
+                >
+                  <div style={card}>
+                    <span style={pill("blue")}>SEPARATE DEMO PAGE</span>
+                    <div style={{ marginTop: 10, fontSize: 16, fontWeight: 950 }}>
+                      /planet/creator/systems
+                    </div>
+                    <div style={muted}>
+                      Open Creator Studio, live selling, Experience Planet, and the full HomePlanet demo board library without cluttering the intake flow.
+                    </div>
+                  </div>
+
+                  <div style={{ display: "grid", gap: 10 }}>
+                    <button type="button" style={primaryButton} onClick={scrollToCreatorSystems}>
+                      Open Creator Systems
+                    </button>
+                    <button type="button" style={buttonBase} onClick={() => openRoute(CREATOR_STUDIO_ROUTE)}>
+                      Open Creator Studio
+                    </button>
                   </div>
                 </div>
 
-                <div style={panelBody}>
+                <div style={{ marginTop: 22, fontSize: 20, fontWeight: 950 }}>
+                  Featured proof inside Creator City
+                </div>
+
+                <div
+                  style={{
+                    ...card,
+                    marginTop: 12,
+                    cursor: "pointer",
+                    border: "1px solid rgba(112,242,163,0.28)",
+                    background:
+                      "linear-gradient(180deg, rgba(112,242,163,0.10), rgba(255,255,255,0.035))",
+                  }}
+                  onClick={() => openRoute(PAYMENT_DESK_DEMO_ROUTE)}
+                >
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <span style={pill("green")}>LIVE PAYMENT DESK</span>
+                    <span style={pill("blue")}>NO SCREENSHOT PAYMENTS</span>
+                  </div>
+
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns: isTablet ? "1fr" : "minmax(0, 1fr) auto",
+                      gridTemplateColumns: isCompact ? "1fr" : "minmax(0, 1fr) auto",
                       gap: 14,
-                      alignItems: "center",
+                      marginTop: 14,
+                      alignItems: "start",
                     }}
                   >
-                    <div style={{ display: "grid", gap: 10 }}>
-                      <div style={stageCard}>
-                        <div style={stageTag}>SEPARATE DEMO PAGE</div>
-                        <div style={stageName}>/planet/creator/systems</div>
-                        <div style={stageText}>
-                          Open Creator Studio, live selling, Experience Planet, and the full HomePlanet demo board library without cluttering the intake flow.
-                        </div>
-                      </div>
-
-                      <div style={helperText}>
-                        This keeps mobile and tablet cleaner, tighter, and easier to understand.
+                    <div>
+                      <div style={{ fontSize: 22, fontWeight: 950 }}>No Screenshot Payments</div>
+                      <div style={{ ...muted, fontSize: 15 }}>
+                        Customer pays. System confirms. Work keeps moving. This is the clean proof page for showing how HomePlanet handles payment truth without screenshots, text chasing, or manual verification.
                       </div>
                     </div>
 
-                    <div style={{ display: "grid", gap: 10 }}>
-                      <button type="button" style={primaryBtn} onClick={scrollToReadySystems}>
-                        Open Creator Systems
-                      </button>
-                      <button
-                        type="button"
-                        style={secondaryBtn}
-                        onClick={() => openRoute("/planet/creator/studio-board")}
-                      >
-                        Open Creator Studio
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      style={primaryButton}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openRoute(PAYMENT_DESK_DEMO_ROUTE);
+                      }}
+                    >
+                      Open live demo
+                    </button>
                   </div>
-
-                  <div style={examplesLabel}>Featured proof inside Creator City</div>
 
                   <div
-                    style={featuredDemoCard}
-                    onClick={() => openRoute(PAYMENT_DESK_DEMO_ROUTE)}
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: isCompact ? "1fr" : "repeat(3, minmax(0, 1fr))",
+                      gap: 10,
+                      marginTop: 14,
+                    }}
                   >
-                    <div style={featuredDemoInner}>
-                      <div style={featuredDemoBadgeRow}>
-                        <div style={featuredDemoBadge}>LIVE PAYMENT DESK</div>
-                        <div style={featuredDemoSecondaryBadge}>NO SCREENSHOT PAYMENTS</div>
+                    {[
+                      ["Problem", "“Did you send it?” should not be a workflow."],
+                      ["What it proves", "Payment becomes visible truth the second it happens."],
+                      ["Best use", "Send as a direct standalone proof page or open from Creator City."],
+                    ].map(([labelText, value]) => (
+                      <div key={labelText} style={card}>
+                        <div style={kicker}>{labelText}</div>
+                        <div style={{ ...muted, color: "#fff", fontWeight: 800 }}>{value}</div>
                       </div>
-
-                      <div style={featuredDemoTop}>
-                        <div>
-                          <div style={featuredDemoTitle}>No Screenshot Payments</div>
-                          <div style={featuredDemoSubline}>
-                            Customer pays. System confirms. Work keeps moving. This is the clean
-                            proof page for showing how HomePlanet handles payment truth without
-                            screenshots, text chasing, or manual verification.
-                          </div>
-                        </div>
-
-                        <button
-                          type="button"
-                          style={featuredDemoAction}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openRoute(PAYMENT_DESK_DEMO_ROUTE);
-                          }}
-                        >
-                          Open live demo
-                        </button>
-                      </div>
-
-                      <div style={featuredValueGrid}>
-                        <div style={featuredValueCard}>
-                          <div style={feedLabel}>Problem</div>
-                          <div style={feedValue(true)}>
-                            “Did you send it?” should not be a workflow.
-                          </div>
-                        </div>
-
-                        <div style={featuredValueCard}>
-                          <div style={feedLabel}>What it proves</div>
-                          <div style={feedValue(true)}>
-                            Payment becomes visible truth the second it happens.
-                          </div>
-                        </div>
-
-                        <div style={featuredValueCard}>
-                          <div style={feedLabel}>Best use</div>
-                          <div style={feedValue(true)}>
-                            Send as a direct standalone proof page or open from Creator City.
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                    ))}
                   </div>
+                </div>
 
-                  <div style={examplesLabel}>More live system examples</div>
+                <div style={{ marginTop: 22, fontSize: 20, fontWeight: 950 }}>
+                  More live system examples
+                </div>
 
-                  <div style={examplesGrid}>
-                    {systems
-                      .filter((item) => item.id !== "payments")
-                      .map((item) => (
-                        <div
-                          key={item.id}
-                          style={exampleCard}
-                          onClick={() => openRoute(item.to)}
-                        >
-                          <div style={tagStyle}>{item.tag}</div>
-                          <div style={exampleTitle}>{item.title}</div>
-                          <div style={exampleSub}>{item.subtitle}</div>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: isMobile ? "1fr" : isTablet ? "1fr 1fr" : "repeat(2, minmax(0, 1fr))",
+                    gap: 10,
+                    marginTop: 12,
+                  }}
+                >
+                  {systems
+                    .filter((item) => item.id !== "payments")
+                    .map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        style={{
+                          ...card,
+                          textAlign: "left",
+                          color: "#fff",
+                          cursor: "pointer",
+                        }}
+                        onClick={() => openRoute(item.to)}
+                      >
+                        <span style={pill("blue")}>{item.tag}</span>
+                        <div style={{ marginTop: 12, fontSize: 16, fontWeight: 950 }}>
+                          {item.title}
                         </div>
-                      ))}
-                   </div>
+                        <div style={muted}>{item.subtitle}</div>
+                        <div style={routeText}>{item.to}</div>
+                      </button>
+                    ))}
                 </div>
               </div>
-            ) : null}
+            </section>
 
-            {/* Talk to a human */}
-            <div className="mt-10 border-t border-neutral-800 pt-6 flex flex-col items-center gap-3">
+            <div
+              style={{
+                marginTop: 30,
+                paddingTop: 22,
+                borderTop: "1px solid rgba(255,255,255,0.10)",
+                display: "grid",
+                justifyItems: "center",
+                gap: 10,
+              }}
+            >
               <a
                 href="https://instagram.com/homeplanetlive"
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center justify-center rounded-xl border border-neutral-700 bg-black/50 px-5 py-3 text-sm font-semibold text-white hover:border-neutral-500"
+                style={{
+                  ...buttonBase,
+                  textDecoration: "none",
+                  borderRadius: 14,
+                }}
               >
                 Talk to a human
               </a>
 
-              <p className="text-xs text-neutral-600 text-center max-w-sm">
+              <p
+                style={{
+                  margin: 0,
+                  maxWidth: 460,
+                  textAlign: "center",
+                  color: "rgba(255,255,255,0.42)",
+                  fontSize: 12,
+                  lineHeight: 1.5,
+                }}
+              >
                 No accounts. No spam. No data traps. Just build and run your system.
               </p>
-            </div>
 
-            {/* Footer */}
-            <div style={footerWrap}>
-              <div style={footerPrimary}>
-                <span style={footerPlanetMark}>
-                  <span style={footerPlanetRing} />
-                </span>
+              <div
+                style={{
+                  marginTop: 10,
+                  color: "rgba(255,255,255,0.46)",
+                  fontSize: 12,
+                  textAlign: "center",
+                }}
+              >
                 HomePlanet © 2026. All rights reserved.
               </div>
-              <div style={footerSecondary}>
+
+              <div
+                style={{
+                  color: "rgba(255,255,255,0.42)",
+                  fontSize: 12,
+                  textAlign: "center",
+                }}
+              >
                 Your business is not complicated. Your tools are.
               </div>
             </div>
-
           </div>
         </div>
       </div>
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
