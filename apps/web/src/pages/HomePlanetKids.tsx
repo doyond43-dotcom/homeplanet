@@ -77,7 +77,7 @@ export default function HomePlanetKids() {
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <button
-                onClick={() => navigate("/planet/creator/studio")}
+                onClick={() => navigate("/planet/kids/start")}
                 className="rounded-2xl bg-slate-950 px-6 py-4 text-base font-black text-white shadow-lg shadow-slate-300 transition hover:-translate-y-0.5 hover:bg-slate-800"
               >
                 🚀 Enter Creator Space
@@ -309,7 +309,7 @@ export default function HomePlanetKids() {
         </p>
 
         <button
-          onClick={() => navigate("/planet/creator/studio")}
+          onClick={() => navigate("/planet/kids/start")}
           className="mt-8 rounded-2xl bg-slate-950 px-8 py-4 text-base font-black text-white shadow-lg shadow-slate-300 transition hover:-translate-y-0.5 hover:bg-slate-800"
         >
           🚀 Launch Creator Space

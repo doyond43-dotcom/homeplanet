@@ -26,6 +26,9 @@ import SkateZoneQrDemo from "../pages/SkateZoneQrDemo";
 import SkateZonePublicWaiverPage from "../pages/SkateZonePublicWaiverPage";
 import PredatorShieldIntervention from "../pages/PredatorShieldIntervention";
 import HomePlanetKids from "../pages/HomePlanetKids";
+import HomePlanetKidsStart from "../pages/HomePlanetKidsStart";
+import HomePlanetKidsSpace from "../pages/HomePlanetKidsSpace";
+import HomePlanetKidsProject from "../pages/HomePlanetKidsProject";
 
 import AutoRepairLiveBoard from "../pages/AutoRepairLiveBoard";
 import AutoRepairLiveBoardSample from "../pages/AutoRepairLiveBoardSample";
@@ -37,6 +40,12 @@ import ButcherLivestockTruthBoard from "../pages/ButcherLivestockTruthBoard";
 import ColorMeCrazyLanding from "../pages/ColorMeCrazyLanding";
 import GuardianMobilityLiveBoard from "../pages/GuardianMobilityLiveBoard";
 import LiveBoardRouter from "../pages/LiveBoardRouter";
+
+// SAFARI
+import SafariSalesPage from "../pages/SafariSalesPage";
+import SafariAnimalPage from "../pages/SafariAnimalPage";
+import SafariMomentPage from "../pages/SafariMomentPage";
+import SafariLiveBoard from "../pages/SafariLiveBoard";
 
 // Creation moment
 import CreationMomentPage from "../pages/CreationMomentPage";
@@ -110,6 +119,9 @@ export default function PlanetRoutes() {
 
       {/* HOMEPLANET KIDS */}
       <Route path="kids" element={<HomePlanetKids />} />
+      <Route path="kids/start" element={<HomePlanetKidsStart />} />
+      <Route path="kids/space/:slug" element={<HomePlanetKidsSpace />} />
+      <Route path="kids/project/:projectId" element={<HomePlanetKidsProject />} />
 
       {/* CREATOR */}
       <Route path="creator" element={<CreatorCity />} />
@@ -157,104 +169,18 @@ export default function PlanetRoutes() {
       <Route path="demo/bamboo" element={<PlanetBamboo />} />
       <Route path="demo/no-screenshot-payments" element={<NoScreenshotPaymentsDemo />} />
 
+      {/* SAFARI */}
+      <Route path="safari" element={<SafariSalesPage />} />
+      <Route path="safari/moment/:momentId" element={<SafariMomentPage />} />
+      <Route path="safari/:animalSlug" element={<SafariAnimalPage />} />
+
       {/* LIVE BOARD */}
+      <Route path="live/safari-demo" element={<SafariLiveBoard />} />
       <Route path="live/:boardSlug" element={<LiveBoardRouter />} />
 
       {/* LIVESTOCK */}
       <Route path="livestock/intake" element={<ButcherLivestockIntakeFlow />} />
       <Route path="livestock/truth/:animalSlug" element={<ButcherLivestockTruthBoard />} />
-
-      {/* VEHICLES */}
-      <Route path="vehicles/awnit-demo" element={<AwnitDemoBoard />} />
-      <Route path="vehicles/awnit-demo/invoice/:invoiceId" element={<InvoiceView />} />
-      <Route path="vehicles/guardian-mobility-live" element={<GuardianMobilityLiveBoard />} />
-      <Route path="demo/awnit" element={<AwnitDemoBoard />} />
-
-      {/* FOOD */}
-      <Route path="food/restaurant-rush-simple" element={<RestaurantRushSimpleDemo />} />
-      <Route path="food/restaurant-rush-manual" element={<RestaurantRushManualDemo />} />
-      <Route path="food/restaurant-rush-live" element={<RestaurantRushLiveDemo />} />
-      <Route path="food/restaurant-rush" element={<RestaurantRushLiveDemo />} />
-      <Route path="food/restaurant-rush-legacy" element={<RestaurantRushDemo />} />
-      <Route path="food/restaurant-rush-live-classic" element={<RestaurantRushLiveDemo />} />
-      <Route path="food/moms-kitchen" element={<MomsKitchenDemo />} />
-
-      {/* LIFESTYLE */}
-      <Route path="lifestyle/meal-demo" element={<MealBusinessDemo />} />
-      <Route path="lifestyle/meal-live" element={<MealBusinessLiveDemo />} />
-      <Route path="lifestyle/meal-start" element={<MealLaunchFlow />} />
-      <Route path="lifestyle/meal-board-demo" element={<MealBoardDemo />} />
-
-      {/* ICE */}
-      <Route path="ice/skatezone-demo" element={<SkateZoneDemo />} />
-      <Route path="ice/skatezone-qr-demo" element={<SkateZoneQrDemo />} />
-
-      {/* BEAUTY */}
-      <Route path="beauty/color-me-crazy/start" element={<BeautySalonLandingPage />} />
-      <Route path="beauty/color-me-crazy/book" element={<BeautySalonBookingPage />} />
-      <Route path="beauty/color-me-crazy" element={<BeautySalonLiveBoard />} />
-      <Route path="beauty/color-me-crazy/home" element={<ColorMeCrazyLanding />} />
-
-      {/* PUBLIC WAIVER */}
-      <Route path="waiver/:waiverId" element={<SkateZonePublicWaiverPage />} />
-
-      {/* LEGAL */}
-      <Route path="legal/alex-carter" element={<JoeGrantLegalDesk />} />
-
-      {/* COMMUNITY */}
-      <Route path="community/community-sale" element={<CommunitySaleBoard />} />
-
-      {/* TRANSPORT */}
-      <Route path="transportation/dispatch" element={<TransportationDispatchBoardV2 />} />
-
-      {/* BAMBOO */}
-      <Route path="bamboo" element={<PlanetBamboo />} />
-
-      {/* PREDATORSHIELD */}
-      <Route path="predatorshield/test" element={<PredatorShieldIntervention />} />
-
-      {/* GUARDIAN */}
-      <Route path="guardian" element={<PlanetGuardian />} />
-      <Route path="guardian/start" element={<GuardianStartPage />} />
-      <Route path="guardian/activate" element={<GuardianActivationPage />} />
-      <Route path="guardian/onboarding" element={<GuardianOnboardingPage />} />
-      <Route path="guardian/panic" element={<GuardianPanicPage />} />
-      <Route path="guardian/panic/:incidentId" element={<GuardianPanicLiveBoard />} />
-      <Route path="guardian-household" element={<GuardianHouseholdBoard />} />
-      <Route path="guardian/home" element={<GuardianHomePage />} />
-      <Route path="guardian/join" element={<GuardianJoinDesk />} />
-      <Route path="guardian/presence" element={<GuardianPresenceDesk />} />
-      <Route path="guardian/fulfillment" element={<PetTagFulfillmentBoard />} />
-      <Route path="guardian/child/:childId" element={<ParentChildView />} />
-      <Route path="guardian/public/:profileId" element={<GuardianPublicProfilePage />} />
-      <Route path="guardian-pet" element={<GuardianPetTagDemo />} />
-      <Route path="guardian-pet/pet/:petId" element={<GuardianPetTagDemo />} />
-      <Route path="guardian-pet/found/:petId" element={<GuardianPetTagDemo />} />
-      <Route path="guardian-pet/timeline" element={<PetCareTimelinePanel />} />
-
-      {/* ROUTECUT */}
-      <Route path="lawn/routecut" element={<RouteCutLawnPage />} />
-      <Route path="demo/routecut" element={<RouteCutLawnPage />} />
-      <Route path="routecut/operator" element={<RouteCutOperatorBoard />} />
-      <Route path="routecut/live" element={<RouteCutLiveView />} />
-
-      {/* PAYMENTS */}
-      <Route path="payments/node" element={<HomePlanetPaymentNode />} />
-      <Route path="payments/no-screenshot" element={<NoScreenshotPaymentsDemo />} />
-
-      {/* START */}
-      <Route path="start" element={<OnboardingFlow />} />
-      <Route path="start/building" element={<OnboardingBuildTransition />} />
-      <Route path="start/preview" element={<StarterBoardPreview />} />
-
-      {/* STATIC */}
-      <Route path="pricing" element={<PricingPage />} />
-      <Route path="jeanettes" element={<JeanettesLanding />} />
-      <Route path="life" element={<LifePlanet />} />
-      <Route path="emily" element={<EmilyLearningDesk />} />
-
-      {/* DEV */}
-      <Route path="dev/presence-grid" element={<PresenceGridPreview />} />
 
       {/* FALLBACK */}
       <Route path="predator-shield" element={<PredatorShieldIntervention />} />
@@ -265,4 +191,3 @@ export default function PlanetRoutes() {
     </Routes>
   );
 }
-

@@ -6,7 +6,6 @@ export default function SafariSalesPage() {
   return (
     <main className="min-h-screen bg-[#06120d] text-white px-4 py-10">
       <section className="mx-auto max-w-6xl space-y-10">
-
         {/* HERO */}
         <div className="text-center space-y-5">
           <p className="text-xs uppercase tracking-[0.3em] text-emerald-300/70">
@@ -37,6 +36,13 @@ export default function SafariSalesPage() {
               className="rounded-2xl border border-white/20 px-6 py-4 font-bold"
             >
               View Live Board
+            </button>
+
+            <button
+              onClick={() => navigate("/planet/creator/start")}
+              className="rounded-2xl bg-emerald-400 px-6 py-4 font-black text-[#06120d]"
+            >
+              Get this for my business
             </button>
           </div>
         </div>
@@ -78,6 +84,7 @@ export default function SafariSalesPage() {
             <p className="mt-1 text-xs text-white/50">Create instant take-home experiences</p>
           </div>
         </div>
+
         {/* PROOF SECTION */}
         <div className="grid md:grid-cols-2 gap-6">
           <div className="rounded-[2rem] border border-white/10 p-6 bg-white/[0.04]">
@@ -108,7 +115,31 @@ export default function SafariSalesPage() {
                 No staff chasing payments. No missed opportunities.
               </p>
             </div>
+          </div>
+        </div>
 
+        {/* HOW IT WORKS FOR YOUR BUSINESS */}
+        <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6">
+          <p className="text-xs font-bold uppercase tracking-[0.25em] text-emerald-200/70">
+            How it works for your business
+          </p>
+
+          <h2 className="mt-3 text-3xl font-black">
+            You place the signs. Staff uses a phone. Guests unlock the memories.
+          </h2>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-4">
+            {[
+              "We generate your QR signs",
+              "You place them at exhibits or stations",
+              "Staff attaches photos from their phone",
+              "Guests unlock memories instantly"
+            ].map((item, i) => (
+              <div key={i} className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                <p className="text-xs text-white/40">BUSINESS STEP {i + 1}</p>
+                <p className="mt-2 font-bold">{item}</p>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -129,19 +160,46 @@ export default function SafariSalesPage() {
             See it happen live
           </h3>
 
-          <button
-            onClick={() => navigate("/planet/safari/sloth")}
-            className="rounded-2xl bg-emerald-400 px-8 py-5 font-black text-[#06120d] text-lg"
-          >
-            Start Demo
-          </button>
+          <div className="flex flex-wrap justify-center gap-4">
+            <button
+              onClick={() => navigate("/planet/safari/sloth")}
+              className="rounded-2xl bg-emerald-400 px-8 py-5 font-black text-[#06120d] text-lg"
+            >
+              Start Demo
+            </button>
+
+            <button
+              onClick={() => navigate("/planet/creator/start")}
+              className="rounded-2xl border border-emerald-300/30 bg-white/10 px-8 py-5 font-black text-white text-lg"
+            >
+              Get this for my business
+            </button>
+          </div>
         </div>
 
+        {/* TALK TO US */}
+        <div className="rounded-[2rem] border border-emerald-300/20 bg-emerald-400/[0.08] p-6 text-center">
+          <p className="text-xs font-bold uppercase tracking-[0.25em] text-emerald-200/70">
+            Ready to use this at your location?
+          </p>
+
+          <h2 className="mt-3 text-3xl font-black">
+            We can turn your real guest moments into a live proof system.
+          </h2>
+
+          <p className="mx-auto mt-3 max-w-2xl text-white/65">
+            Safari parks, camps, skate zones, events, and experience businesses can use this same system
+            without forcing guests into apps or accounts.
+          </p>
+
+          <button
+            onClick={() => navigate("/planet/creator/start")}
+            className="mt-6 rounded-2xl bg-white px-8 py-5 text-lg font-black text-[#06120d]"
+          >
+            Talk to us about my business
+          </button>
+        </div>
       </section>
     </main>
   );
 }
-
-
-
-
