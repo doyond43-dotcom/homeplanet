@@ -1,12 +1,12 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const TAYLOR_CREEK_INTAKE_ROUTE = "/c/taylor-creek";
 const TAYLOR_CREEK_STAFF_ROUTE = "/planet/demo/auto-service-sample";
-const TAYLOR_CREEK_BOARD_ROUTE = "/planet/live/taylor-creek";
+const TAYLOR_CREEK_BOARD_ROUTE = "/live/taylor-creek/board";
 const TAYLOR_CREEK_SERVICE_ROUTE = "/planet/demo/auto-service-sample";
 
-const COMMUNITY_SALE_ROUTE = "/planet/live/community-sale-demo";
-const NORTHSTAR_DEMO_ROUTE = "/planet/live/northstar-service-demo";
+const COMMUNITY_SALE_ROUTE = "/planet/demo/community-sale";
+const NORTHSTAR_DEMO_ROUTE = "/planet/demo/home-services";
 const CAMP_GUARDIAN_DEMO_ROUTE = "/planet/demo/camp-aquaflow";
 const SAFARI_LIVE_ROUTE = "/planet/live/safari-demo";
 
@@ -150,7 +150,7 @@ export default function CreatorSystems() {
             id: "restaurant",
             title: "Restaurant Live Board",
             subtitle: "Kitchen flow and visibility.",
-            to: "/planet/food/restaurant-rush-live",
+            to: "/planet/demo/restaurant",
             tag: "LIVE SYSTEM",
             liveState: "Orders flowing",
             isLive: true,
@@ -168,7 +168,7 @@ export default function CreatorSystems() {
             id: "transportation",
             title: "Dispatch Demo",
             subtitle: "Driver and trip flow.",
-            to: "/planet/transportation/dispatch",
+            to: "/planet/demo/transportation",
             tag: "ACTIVE FLOW",
             liveState: "Dispatch ready",
             isLive: true,
@@ -177,7 +177,7 @@ export default function CreatorSystems() {
             id: "routecut",
             title: "RouteCut Lawn Flow",
             subtitle: "Routing and live status.",
-            to: "/planet/lawn/routecut",
+            to: "/planet/demo/lawn-route",
             tag: "ROUTE LIVE",
             liveState: "Routes ready",
             isLive: true,
@@ -498,7 +498,7 @@ export default function CreatorSystems() {
             fontSize: 11,
           }}
         >
-          HomePlanet © 2026. Creator systems.
+          HomePlanet � 2026. Creator systems.
         </div>
       </div>
     </div>
