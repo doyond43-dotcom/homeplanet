@@ -1,4 +1,4 @@
-﻿import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 import PlanetOverview from "../pages/PlanetOverview";
 import CityPage from "../pages/CityPage";
@@ -25,6 +25,7 @@ import SkateZoneDemo from "../pages/SkateZoneDemo";
 import SkateZoneQrDemo from "../pages/SkateZoneQrDemo";
 import SkateZonePublicWaiverPage from "../pages/SkateZonePublicWaiverPage";
 import PredatorShieldIntervention from "../pages/PredatorShieldIntervention";
+import HomePlanetKids from "../pages/HomePlanetKids";
 
 import AutoRepairLiveBoard from "../pages/AutoRepairLiveBoard";
 import AutoRepairLiveBoardSample from "../pages/AutoRepairLiveBoardSample";
@@ -106,6 +107,9 @@ export default function PlanetRoutes() {
   return (
     <Routes>
       <Route index element={<Navigate to="/planet/creator" replace />} />
+
+      {/* HOMEPLANET KIDS */}
+      <Route path="kids" element={<HomePlanetKids />} />
 
       {/* CREATOR */}
       <Route path="creator" element={<CreatorCity />} />
@@ -261,3 +265,4 @@ export default function PlanetRoutes() {
     </Routes>
   );
 }
+
