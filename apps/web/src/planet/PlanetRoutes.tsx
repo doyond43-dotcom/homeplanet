@@ -167,7 +167,8 @@ export default function PlanetRoutes() {
       <Route path="demo/skatezone-qr" element={<SkateZoneQrDemo />} />
       <Route path="demo/beauty-color-me-crazy" element={<BeautySalonLiveBoard />} />
       <Route path="demo/bamboo" element={<PlanetBamboo />} />
-      <Route path="demo/no-screenshot-payments" element={<NoScreenshotPaymentsDemo />} />
+            <Route path="demo/no-screenshot-payments" element={<NoScreenshotPaymentsDemo />} />
+      <Route path="payments/no-screenshot" element={<NoScreenshotPaymentsDemo />} />
 
       {/* SAFARI */}
       <Route path="safari" element={<SafariSalesPage />} />
