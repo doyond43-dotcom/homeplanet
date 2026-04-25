@@ -4,7 +4,7 @@ export default function SafariSalesPage() {
   const navigate = useNavigate();
 
   return (
-    <main className="min-h-screen bg-[#06120d] text-white px-4 py-10">
+    <main className="min-h-screen bg-gradient-to-b from-[#051b16] via-[#03120f] to-[#020807] text-white px-4 py-10">
       <section className="mx-auto max-w-6xl space-y-10">
         {/* HERO */}
         <div className="text-center space-y-5">
@@ -40,7 +40,7 @@ export default function SafariSalesPage() {
 
             <button
               onClick={() => navigate("/planet/creator/start")}
-              className="rounded-2xl bg-emerald-400 px-6 py-4 font-black text-[#06120d]"
+              className="rounded-2xl bg-[#2bbd8e] hover:bg-[#34d399] px-6 py-4 font-black text-black"
             >
               Get this for my business
             </button>
@@ -55,7 +55,7 @@ export default function SafariSalesPage() {
             "Staff attaches photo memory",
             "Guest unlocks paid memory"
           ].map((step, i) => (
-            <div key={i} className="rounded-2xl border border-white/10 p-5 bg-white/[0.04]">
+            <div key={i} className="rounded-2xl border border-[#24483f] p-5 bg-[#0b1714]">
               <p className="text-xs text-white/40">STEP {i + 1}</p>
               <p className="mt-2 font-bold">{step}</p>
             </div>
@@ -64,22 +64,22 @@ export default function SafariSalesPage() {
 
         {/* WHO THIS IS FOR */}
         <div className="grid gap-4 md:grid-cols-4">
-          <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-center">
+          <div className="rounded-2xl border border-white/10 bg-black/25 p-4 text-center">
             <p className="font-black">Zoos & Animal Parks</p>
             <p className="mt-1 text-xs text-white/50">Monetize every guest interaction</p>
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-center">
+          <div className="rounded-2xl border border-white/10 bg-black/25 p-4 text-center">
             <p className="font-black">Camps</p>
             <p className="mt-1 text-xs text-white/50">Capture moments parents actually value</p>
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-center">
+          <div className="rounded-2xl border border-white/10 bg-black/25 p-4 text-center">
             <p className="font-black">Skate Zones</p>
             <p className="mt-1 text-xs text-white/50">Turn sessions into proof + memories</p>
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-center">
+          <div className="rounded-2xl border border-white/10 bg-black/25 p-4 text-center">
             <p className="font-black">Events</p>
             <p className="mt-1 text-xs text-white/50">Create instant take-home experiences</p>
           </div>
@@ -87,7 +87,7 @@ export default function SafariSalesPage() {
 
         {/* PROOF SECTION */}
         <div className="grid md:grid-cols-2 gap-6">
-          <div className="rounded-[2rem] border border-white/10 p-6 bg-white/[0.04]">
+          <div className="rounded-[2rem] border border-[#1b3f36] p-6 bg-[#08120f]">
             <h2 className="text-2xl font-black">Real-time operator visibility</h2>
             <p className="mt-3 text-white/60">
               Staff sees every interaction live. No confusion. No missing moments.
@@ -95,14 +95,14 @@ export default function SafariSalesPage() {
             </p>
           </div>
 
-          <div className="rounded-[2rem] border border-white/10 p-6 bg-white/[0.04]">
+          <div className="rounded-[2rem] border border-[#1b3f36] p-6 bg-[#08120f]">
             <h2 className="text-2xl font-black">Built-in monetization</h2>
             <p className="mt-3 text-white/60">
               Photo memories, VIP add-ons, feeding experiences — tied directly
               to the exact moment they happened.
             </p>
-            <div className="mt-6 rounded-2xl border border-emerald-300/20 bg-emerald-400/[0.08] p-5">
-              <p className="text-xs font-bold uppercase tracking-[0.25em] text-emerald-200/70">
+            <div className="mt-6 rounded-2xl border border-[#2bbd8e] bg-[#123f34] p-5 shadow-[0_0_20px_rgba(43,189,142,0.12)]">
+              <p className="text-xs font-bold uppercase tracking-[0.25em] text-emerald-200/80">
                 Real Example
               </p>
 
@@ -119,7 +119,7 @@ export default function SafariSalesPage() {
         </div>
 
         {/* HOW IT WORKS FOR YOUR BUSINESS */}
-        <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6">
+        <div className="rounded-[2rem] border border-[#1b3f36] bg-[#08120f] p-6">
           <p className="text-xs font-bold uppercase tracking-[0.25em] text-emerald-200/70">
             How it works for your business
           </p>
@@ -135,7 +135,7 @@ export default function SafariSalesPage() {
               "Staff attaches photos from their phone",
               "Guests unlock memories instantly"
             ].map((item, i) => (
-              <div key={i} className="rounded-2xl border border-white/10 bg-black/20 p-4">
+              <div key={i} className="rounded-2xl border border-[#24483f] bg-[#0b1714] p-4">
                 <p className="text-xs text-white/40">BUSINESS STEP {i + 1}</p>
                 <p className="mt-2 font-bold">{item}</p>
               </div>
@@ -144,7 +144,7 @@ export default function SafariSalesPage() {
         </div>
 
         {/* NO BULLSHIT SECTION */}
-        <div className="rounded-[2rem] border border-emerald-300/20 bg-emerald-400/[0.05] p-6 text-center">
+        <div className="rounded-[2rem] border border-[#1c6b58] bg-[#0a3a31] p-6 text-center">
           <h2 className="text-2xl font-black">
             No apps. No accounts. No friction.
           </h2>
@@ -163,14 +163,14 @@ export default function SafariSalesPage() {
           <div className="flex flex-wrap justify-center gap-4">
             <button
               onClick={() => navigate("/planet/safari/sloth")}
-              className="rounded-2xl bg-emerald-400 px-8 py-5 font-black text-[#06120d] text-lg"
+              className="rounded-2xl bg-[#2bbd8e] hover:bg-[#34d399] px-8 py-5 font-black text-black text-lg"
             >
               Start Demo
             </button>
 
             <button
               onClick={() => navigate("/planet/creator/start")}
-              className="rounded-2xl border border-emerald-300/30 bg-white/10 px-8 py-5 font-black text-white text-lg"
+              className="rounded-2xl border border-white/20 bg-black/25 px-8 py-5 font-black text-white text-lg"
             >
               Get this for my business
             </button>
@@ -178,8 +178,8 @@ export default function SafariSalesPage() {
         </div>
 
         {/* TALK TO US */}
-        <div className="rounded-[2rem] border border-emerald-300/20 bg-emerald-400/[0.08] p-6 text-center">
-          <p className="text-xs font-bold uppercase tracking-[0.25em] text-emerald-200/70">
+        <div className="rounded-[2rem] border border-[#2bbd8e] bg-[#123f34] p-6 text-center shadow-[0_0_20px_rgba(43,189,142,0.12)]">
+          <p className="text-xs font-bold uppercase tracking-[0.25em] text-emerald-200/80">
             Ready to use this at your location?
           </p>
 
@@ -187,7 +187,7 @@ export default function SafariSalesPage() {
             We can turn your real guest moments into a live proof system.
           </h2>
 
-          <p className="mx-auto mt-3 max-w-2xl text-white/65">
+          <p className="mx-auto mt-3 max-w-2xl text-white/70">
             Safari parks, camps, skate zones, events, and experience businesses can use this same system
             without forcing guests into apps or accounts.
           </p>
