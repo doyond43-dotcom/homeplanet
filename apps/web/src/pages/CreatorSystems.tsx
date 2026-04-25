@@ -8,6 +8,8 @@ const TAYLOR_CREEK_SERVICE_ROUTE = "/planet/demo/auto-service-sample";
 const COMMUNITY_SALE_ROUTE = "/planet/demo/community-sale";
 const NORTHSTAR_DEMO_ROUTE = "/planet/demo/home-services";
 const CAMP_GUARDIAN_DEMO_ROUTE = "/planet/demo/camp-aquaflow";
+const SAFARI_SYSTEM_ROUTE = "/planet/safari";
+const SAFARI_EXPERIENCE_ROUTE = "/planet/safari/sloth";
 const SAFARI_LIVE_ROUTE = "/planet/live/safari-demo";
 
 type SystemCard = {
@@ -50,7 +52,7 @@ export default function CreatorSystems() {
     window.location.href = to;
   };
 
-  const sections = useMemo<SystemSection[]>(
+  const sections = useMemo(
     () => [
       {
         id: "creation-moment",
@@ -227,21 +229,30 @@ export default function CreatorSystems() {
             isLive: true,
           },
           {
-            id: "safari",
+            id: "safari-experience",
             title: "Safari Experience",
-            subtitle: "Animal-driven story and presence system.",
-            to: "/planet/safari",
-            tag: "STORY WORLD",
+            subtitle: "Guest-facing animal moment demo.",
+            to: SAFARI_EXPERIENCE_ROUTE,
+            tag: "GUEST DEMO",
             liveState: "Experience ready",
+            isLive: true,
+          },
+          {
+            id: "safari-system",
+            title: "Safari System Page",
+            subtitle: "Proof, memory, and revenue landing page.",
+            to: SAFARI_SYSTEM_ROUTE,
+            tag: "SALES PAGE",
+            liveState: "System page ready",
             isLive: true,
           },
           {
             id: "safari-live",
             title: "Safari Live Board",
-            subtitle: "Live safari event and movement board.",
+            subtitle: "Operator view for live safari moments.",
             to: SAFARI_LIVE_ROUTE,
-            tag: "LIVE SYSTEM",
-            liveState: "Movement board active",
+            tag: "LIVE BOARD",
+            liveState: "Board active",
             isLive: true,
           },
         ],
@@ -492,15 +503,21 @@ export default function CreatorSystems() {
         <div
           style={{
             marginTop: 38,
-            paddingTop: 14,
+            paddingTop: 16,
             borderTop: "1px solid rgba(255,255,255,0.1)",
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 8,
+            justifyContent: "space-between",
             color: "rgba(255,255,255,0.46)",
             fontSize: 11,
           }}
         >
-          HomePlanet © 2026. Creator systems.
+          <span>HomePlanet Creator Systems</span>
+          <span>Live boards, demos, intakes, and standalone worlds</span>
         </div>
       </div>
     </div>
   );
 }
+
