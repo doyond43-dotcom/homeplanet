@@ -301,100 +301,48 @@ export default function CreatorSystems() {
       </style>
 
       <div style={{ maxWidth: 1000, margin: "0 auto" }}>
-        <div style={{ marginBottom: 42 }}>
+        <div style={{ marginBottom: 24 }}>
           <div
             style={{
               display: "inline-flex",
-              padding: "6px 10px",
-              border: "1px solid rgba(110, 231, 183, 0.28)",
-              background: "rgba(110, 231, 183, 0.08)",
+              padding: "5px 9px",
+              border: "1px solid rgba(255,255,255,0.18)",
               borderRadius: 999,
               fontSize: 11,
-              fontWeight: 900,
-              letterSpacing: 1.2,
-              color: "#6ee7b7",
-              marginBottom: 14,
-              textTransform: "uppercase",
+              letterSpacing: 0.8,
+              opacity: 0.82,
+              marginBottom: 10,
             }}
           >
-            Creator Systems
+            CREATOR SYSTEMS
           </div>
 
           <h1
             style={{
               margin: 0,
-              maxWidth: 820,
-              fontSize: isMobile ? 34 : 58,
-              lineHeight: 0.95,
-              letterSpacing: -2.2,
-              fontWeight: 950,
+              fontSize: isMobile ? 28 : 38,
+              lineHeight: 1,
+              letterSpacing: -1.2,
             }}
           >
-            Explore live systems
-            <br />
-            <span style={{ color: "#6ee7b7" }}>
-              already running.
-            </span>
+            Real systems. Live truth. No fake states.
           </h1>
 
           <p
             style={{
-              marginTop: 16,
-              maxWidth: 680,
-              color: "rgba(255,255,255,0.68)",
-              fontSize: isMobile ? 14 : 16,
-              lineHeight: 1.55,
+              marginTop: 10,
+              maxWidth: 700,
+              color: "rgba(255,255,255,0.72)",
+              fontSize: isMobile ? 14 : 15,
+              lineHeight: 1.45,
             }}
           >
-            {totalSystems} systems are wired into Creator City. Every card opens a working system, not a mockup, not a concept. Real intake, real boards, real flow.
+            {totalSystems} systems wired into Creator City. Each card opens a
+            working board, demo, intake, or system page.
           </p>
-
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: 10,
-              marginTop: 20,
-            }}
-          >
-            <button
-              type="button"
-              onClick={() => openRoute("/planet/safari/sloth")}
-              style={{
-                border: "none",
-                background: "#6ee7b7",
-                color: "#03120f",
-                borderRadius: 999,
-                padding: "11px 16px",
-                fontSize: 13,
-                fontWeight: 950,
-                cursor: "pointer",
-                boxShadow: "0 14px 34px rgba(110,231,183,0.18)",
-              }}
-            >
-              Start a live demo
-            </button>
-
-            <button
-              type="button"
-              onClick={() => openRoute("/planet/creator")}
-              style={{
-                border: "1px solid rgba(255,255,255,0.16)",
-                background: "rgba(255,255,255,0.06)",
-                color: "#fff",
-                borderRadius: 999,
-                padding: "11px 16px",
-                fontSize: 13,
-                fontWeight: 850,
-                cursor: "pointer",
-              }}
-            >
-              Back to Creator City
-            </button>
-          </div>
         </div>
 
-        <div style={{ display: "grid", gap: 28 }}>
+        <div style={{ display: "grid", gap: 22 }}>
           {sections.map((section) => (
             <section key={section.id}>
               <div style={{ marginBottom: 10 }}>
@@ -450,12 +398,12 @@ export default function CreatorSystems() {
                       textAlign: "left",
                       border: "1px solid rgba(255,255,255,0.14)",
                       background:
-                        "linear-gradient(135deg, rgba(255,255,255,0.09), rgba(255,255,255,0.03))",
+                        "linear-gradient(135deg, rgba(255,255,255,0.075), rgba(255,255,255,0.025))",
                       color: "#fff",
                       borderRadius: 16,
                       padding: 14,
                       cursor: "pointer",
-                      boxShadow: "0 20px 50px rgba(0,0,0,0.35)",
+                      boxShadow: "0 14px 38px rgba(0,0,0,0.24)",
                     }}
                   >
                     <div
@@ -572,6 +520,4 @@ export default function CreatorSystems() {
     </div>
   );
 }
-
-
 

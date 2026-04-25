@@ -137,11 +137,15 @@ export default function SafariLiveBoard() {
               </div>
             ) : (
               <div className="mt-5 space-y-3">
-                {moments.map((moment) => (
+                {moments.map((moment, index) => (
                   <button
                     key={moment.id}
                     onClick={() => navigate(`/planet/safari/moment/${moment.id}`)}
-                    className="w-full rounded-2xl border border-white/10 bg-black/25 p-4 text-left transition hover:bg-white/10"
+                    className={`w-full rounded-2xl border p-4 text-left transition hover:bg-white/10 ${
+                      index === 0
+                        ? "border-[#2bbd8e]/40 bg-[#123f34]"
+                        : "border-white/10 bg-black/25"
+                    }`}
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex gap-4">
@@ -165,6 +169,11 @@ export default function SafariLiveBoard() {
                           {moment.photoAddedAt && (
                             <p className="mt-1 text-xs font-bold text-emerald-300">
                               Photo added {moment.photoAddedAt}
+                            </p>
+                          )}
+                          {index === 0 && (
+                            <p className="mt-2 text-xs font-black uppercase tracking-widest text-emerald-200">
+                              First live demo moment auto-created
                             </p>
                           )}
                         </div>
