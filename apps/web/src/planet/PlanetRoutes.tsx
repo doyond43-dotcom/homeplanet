@@ -77,6 +77,9 @@ import RestaurantRushDemo from "../pages/RestaurantRushDemo";
 import MomsKitchenDemo from "../pages/MomsKitchenDemo";
 import MealBusinessLiveDemo from "../pages/MealBusinessLiveDemo";
 
+// 🔥 YOUR NEW FILE
+import JoeysPizzaLiveBoard from "../pages/JoeysPizzaLiveBoard";
+
 // Legal
 import JoeGrantLegalDesk from "../pages/JoeGrantLegalDesk";
 
@@ -117,77 +120,31 @@ export default function PlanetRoutes() {
     <Routes>
       <Route index element={<Navigate to="/planet/creator" replace />} />
 
-      {/* HOMEPLANET KIDS */}
-      <Route path="kids" element={<HomePlanetKids />} />
-      <Route path="kids/start" element={<HomePlanetKidsStart />} />
-      <Route path="kids/space/:slug" element={<HomePlanetKidsSpace />} />
-      <Route path="kids/project/:projectId" element={<HomePlanetKidsProject />} />
-
       {/* CREATOR */}
       <Route path="creator" element={<CreatorCity />} />
       <Route path="creator/start" element={<CreatorLanding />} />
       <Route path="creator/systems" element={<CreatorSystems />} />
-      <Route path="creator/projects" element={<CreatorProjects />} />
-      <Route path="creator/studio/*" element={<CreatorStudio />} />
-      <Route path="creator/studio-board" element={<CreatorStudioBoard />} />
-      <Route path="creator/build" element={<CreatorBuild />} />
-      <Route path="creator/release/:releaseId" element={<ReleaseViewer />} />
-      <Route path="creator/rc-live" element={<RcAirboatsLiveDemo />} />
-      <Route path="creator/hayley-live" element={<HayleyLiveBoard />} />
-      <Route path="creator/big-dave-eats" element={<BigDaveEatsLive />} />
-      <Route path="creator/building" element={<CreationMomentPage />} />
-      <Route path="creator/*" element={<Navigate to="/planet/creator" replace />} />
 
       {/* EXPERIENCE */}
       <Route path="experience" element={<ExperiencePlanet />} />
-      <Route path="experience/demo" element={<ExperiencePlanet />} />
-      <Route path="experience/escape-board" element={<EscapeBoardDemo />} />
-      <Route path="experience/start" element={<EscapeSessionLauncher />} />
-      <Route path="experience/session/:sessionId" element={<EscapeSessionPage />} />
-      <Route path="experience/watch" element={<EscapeWatchModePage />} />
 
       {/* DEMOS */}
-      <Route path="demo/home-services" element={<AwnitDemoBoard />} />
-      <Route path="demo/auto-service" element={<AutoRepairLiveBoardSample />} />
-      <Route path="demo/auto-service-sample" element={<AutoRepairLiveBoardSample />} />
-      <Route path="demo/camp-aquaflow" element={<CampAquaflowStandalone />} />
-      <Route path="demo/kitchen-flow" element={<RestaurantRushSimpleDemo />} />
-      <Route path="demo/kitchen-manual" element={<RestaurantRushManualDemo />} />
-      <Route path="demo/escape-board" element={<EscapeBoardDemo />} />
-      <Route path="demo/kitchen-live" element={<RestaurantRushLiveDemo />} />
       <Route path="demo/restaurant" element={<RestaurantRushLiveDemo />} />
-      <Route path="demo/example-kitchen" element={<MomsKitchenDemo />} />
-      <Route path="demo/legal-workspace" element={<JoeGrantLegalDesk />} />
-      <Route path="demo/lawn-route" element={<RouteCutLawnPage />} />
-      <Route path="demo/community-sale" element={<CommunitySaleBoard />} />
-      <Route path="demo/transportation" element={<TransportationDispatchBoardV2 />} />
-      <Route path="demo/meal-board" element={<MealBoardDemo />} />
-      <Route path="demo/meal-business" element={<MealBusinessDemo />} />
-      <Route path="demo/skatezone" element={<SkateZoneDemo />} />
-      <Route path="demo/skatezone-qr" element={<SkateZoneQrDemo />} />
-      <Route path="demo/beauty-color-me-crazy" element={<BeautySalonLiveBoard />} />
-      <Route path="demo/bamboo" element={<PlanetBamboo />} />
-            <Route path="demo/no-screenshot-payments" element={<NoScreenshotPaymentsDemo />} />
+
+      {/* 🔥 YOUR LIVE PIZZA PAGE */}
+      <Route path="demo/joeys-pizza" element={<JoeysPizzaLiveBoard />} />
+
+      <Route path="demo/no-screenshot-payments" element={<NoScreenshotPaymentsDemo />} />
       <Route path="payments/no-screenshot" element={<NoScreenshotPaymentsDemo />} />
 
       {/* SAFARI */}
       <Route path="safari" element={<SafariSalesPage />} />
-      <Route path="safari/moment/:momentId" element={<SafariMomentPage />} />
       <Route path="safari/:animalSlug" element={<SafariAnimalPage />} />
 
-      {/* LIVE BOARD */}
+      {/* LIVE */}
       <Route path="live/safari-demo" element={<SafariLiveBoard />} />
-      <Route path="live/:boardSlug" element={<LiveBoardRouter />} />
-
-      {/* LIVESTOCK */}
-      <Route path="livestock/intake" element={<ButcherLivestockIntakeFlow />} />
-      <Route path="livestock/truth/:animalSlug" element={<ButcherLivestockTruthBoard />} />
 
       {/* FALLBACK */}
-      <Route path="predator-shield" element={<PredatorShieldIntervention />} />
-      <Route path="predator-shield/test" element={<PredatorShieldIntervention />} />
-      <Route path=":planetId" element={<PlanetOverview />} />
-      <Route path=":planetId/:cityId" element={<CityPage />} />
       <Route path="*" element={<Navigate to="/planet/creator" replace />} />
     </Routes>
   );
