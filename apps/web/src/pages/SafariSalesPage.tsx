@@ -1,10 +1,67 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+
+type SafariMoment = {
+  id: string;
+  animalSlug: string;
+  animalName: string;
+  animalType: string;
+  emoji: string;
+  title: string;
+  createdAt: string;
+  boardSlug: string;
+  source: "qr-scan";
+  unlocked: boolean;
+  photoDataUrl?: string;
+  photoAddedAt?: string;
+};
+
+function seedSafariDemoMoment() {
+  const now = new Date();
+
+  const demoMoment: SafariMoment = {
+    id: `demo-safari-${now.getTime()}`,
+    animalSlug: "sloth",
+    animalName: "Slow Moe",
+    animalType: "Sloth Encounter",
+    emoji: "🦥",
+    title: "Guest scanned Sloth QR",
+    createdAt: now.toLocaleString([], {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    }),
+    boardSlug: "safari-demo",
+    source: "qr-scan",
+    unlocked: false,
+  };
+
+  const existingFeed = JSON.parse(localStorage.getItem("hp:safari-feed") || "[]") as SafariMoment[];
+
+  const filteredFeed = existingFeed.filter((item) => item.id !== demoMoment.id);
+  const nextFeed = [demoMoment, ...filteredFeed];
+
+  localStorage.setItem("hp:safari-feed", JSON.stringify(nextFeed));
+  localStorage.setItem(`hp:safari-moment:${demoMoment.id}`, JSON.stringify(demoMoment));
+  localStorage.setItem("hp:safari-demo-first-moment-id", demoMoment.id);
+}
 
 export default function SafariSalesPage() {
   const navigate = useNavigate();
+  const [startingDemo, setStartingDemo] = useState(false);
+
+  function handleStartDemo() {
+    setStartingDemo(true);
+    seedSafariDemoMoment();
+
+    window.setTimeout(() => {
+      navigate("/planet/live/safari-demo");
+    }, 1800);
+  }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[#051b16] via-[#03120f] to-[#020807] text-white px-4 py-10">
+    <main className="relative min-h-screen bg-gradient-to-b from-[#051b16] via-[#03120f] to-[#020807] text-white px-4 py-10">
       <section className="mx-auto max-w-6xl space-y-10">
         {/* HERO */}
         <div className="text-center space-y-5">
@@ -25,7 +82,7 @@ export default function SafariSalesPage() {
 
           <div className="flex justify-center gap-4 mt-6 flex-wrap">
             <button
-              onClick={() => navigate("/planet/safari/sloth")}
+              onClick={handleStartDemo}
               className="rounded-2xl bg-white px-6 py-4 font-black text-[#06120d]"
             >
               Try Live Demo
@@ -40,7 +97,7 @@ export default function SafariSalesPage() {
 
             <button
               onClick={() => navigate("/planet/creator/start")}
-              className="rounded-2xl bg-[#2bbd8e] hover:bg-[#34d399] px-6 py-4 font-black text-black"
+              className="rounded-2xl bg-[#26b383] hover:bg-[#2fc896] px-6 py-4 font-black text-black"
             >
               Get this for my business
             </button>
@@ -162,8 +219,8 @@ export default function SafariSalesPage() {
 
           <div className="flex flex-wrap justify-center gap-4">
             <button
-              onClick={() => navigate("/planet/safari/sloth")}
-              className="rounded-2xl bg-[#2bbd8e] hover:bg-[#34d399] px-8 py-5 font-black text-black text-lg"
+              onClick={handleStartDemo}
+              className="rounded-2xl bg-[#26b383] hover:bg-[#2fc896] px-8 py-5 font-black text-black text-lg"
             >
               Start Demo
             </button>
@@ -200,6 +257,32 @@ export default function SafariSalesPage() {
           </button>
         </div>
       </section>
+
+      {startingDemo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 px-4">
+          <div className="max-w-md rounded-[2rem] border border-[#2bbd8e]/40 bg-[#08120f] p-8 text-center shadow-[0_0_40px_rgba(43,189,142,0.18)]">
+            <p className="text-xs font-black uppercase tracking-[0.3em] text-emerald-300/80">
+              HomePlanet Safari
+            </p>
+
+            <h2 className="mt-4 text-3xl font-black">
+              Generating live system...
+            </h2>
+
+            <div className="mt-6 space-y-3 text-left text-sm text-white/70">
+              <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                ✓ Locking first guest moment
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                ✓ Creating board event
+              </div>
+              <div className="rounded-2xl border border-[#2bbd8e]/40 bg-[#123f34] p-4 font-bold text-emerald-100">
+                ✓ Board is now live
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
