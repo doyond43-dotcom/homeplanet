@@ -27,6 +27,7 @@ type PetProfile = {
   age: string;
   color: string;
   notes: string;
+  photoDataUrl: string;
 };
 
 type EmailState = "idle" | "sending" | "sent" | "failed";
@@ -104,6 +105,7 @@ function createEmptyPets(count: number): PetProfile[] {
     age: "",
     color: "",
     notes: "",
+    photoDataUrl: "",
   }));
 }
 
@@ -164,6 +166,7 @@ export default function GuardianJoinDesk() {
             age: "",
             color: "",
             notes: "",
+            photoDataUrl: "",
           })),
         ];
       }
@@ -191,7 +194,35 @@ export default function GuardianJoinDesk() {
     );
   }
 
-  function isValid() {
+  
+
+  function updatePetPhoto(index: number, file: File | undefined) {
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      alert("Please choose a photo file.");
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const result = typeof reader.result === "string" ? reader.result : "";
+      updatePet(index, "photoDataUrl", result);
+    };
+
+    reader.onerror = () => {
+      alert("Could not load that pet photo. Please try another image.");
+    };
+
+    reader.readAsDataURL(file);
+  }
+
+  function removePetPhoto(index: number) {
+    updatePet(index, "photoDataUrl", "");
+  }
+
+function isValid() {
     return (
       mailing.fullName.trim() &&
       mailing.address.trim() &&
@@ -462,6 +493,58 @@ export default function GuardianJoinDesk() {
                   >
                     <div className="mb-3 text-sm font-semibold text-white">
                       Pet {index + 1}
+                    </div>
+
+                    
+
+                    <div className="mb-4 rounded-2xl border border-cyan-400/15 bg-cyan-400/5 p-4">
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                        <div className="h-28 w-28 overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-950">
+                          {pet.photoDataUrl ? (
+                            <img
+                              src={pet.photoDataUrl}
+                              alt={`${pet.name || `Pet ${index + 1}`} preview`}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center px-3 text-center text-xs text-neutral-500">
+                              Pet photo preview
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300">
+                            Pet Photo
+                          </div>
+                          <p className="mt-1 text-sm leading-6 text-neutral-400">
+                            Add or take a photo so the tag order has a real visual identity.
+                          </p>
+
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            <label className="inline-flex cursor-pointer items-center justify-center rounded-xl border border-cyan-400/25 bg-cyan-400/10 px-4 py-3 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/20">
+                              Add / Take Photo
+                              <input
+                                type="file"
+                                accept="image/*"
+                                capture="environment"
+                                onChange={(event) => updatePetPhoto(index, event.target.files?.[0])}
+                                className="hidden"
+                              />
+                            </label>
+
+                            {pet.photoDataUrl ? (
+                              <button
+                                type="button"
+                                onClick={() => removePetPhoto(index)}
+                                className="inline-flex items-center justify-center rounded-xl border border-neutral-700 bg-neutral-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-neutral-900"
+                              >
+                                Remove Photo
+                              </button>
+                            ) : null}
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
                     <div className="grid gap-3 sm:grid-cols-2">
@@ -903,3 +986,5 @@ export default function GuardianJoinDesk() {
     </div>
   );
 }
+
+
