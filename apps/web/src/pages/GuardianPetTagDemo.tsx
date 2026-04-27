@@ -215,12 +215,12 @@ function getStatusPill(status: PetStatus) {
 }
 
 function buildSmsHref(number: string, body: string) {
-  const cleanNumber = number.replace(/[^\d+]/g, "");
-  return `sms:${cleanNumber}?body=${encodeURIComponent(body)}`;
+  const cleanNumber = number.replace(/\D/g, "");
+  return `sms:${cleanNumber}&body=${encodeURIComponent(body)}`;
 }
 
 function buildTelHref(number: string) {
-  const cleanNumber = number.replace(/[^\d+]/g, "");
+  const cleanNumber = number.replace(/\D/g, "");
   return `tel:${cleanNumber}`;
 }
 
@@ -624,7 +624,7 @@ function GuardianSalesPage({ pet }: { pet: DemoPet }) {
               className="h-[68vh] w-full object-cover object-center lg:h-full"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#050816] via-[#050816]/35 to-transparent" />
-            <div className="hidden xl:block xl:absolute xl:inset-x-0 xl:bottom-0 xl:p-6">
+            <div className="hidden md:block md:absolute md:inset-x-0 md:bottom-0 md:p-6">
               <div className="rounded-[24px] border border-white/15 bg-black/35 p-5 backdrop-blur-md">
                 <div className="flex items-start justify-between gap-4">
                   <div>
@@ -1115,6 +1115,8 @@ export default function GuardianPetTagDemo() {
     </GuardianShell>
   );
 }
+
+
 
 
 
