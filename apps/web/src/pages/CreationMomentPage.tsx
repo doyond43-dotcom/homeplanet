@@ -1,4 +1,4 @@
-ï»¿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 export default function CreationMomentPage() {
@@ -7,10 +7,10 @@ export default function CreationMomentPage() {
   const [step, setStep] = useState(0);
 
   const steps = [
-    "Building your systemâ€¦",
-    "Assigning Presence IDâ€¦",
-    "Locking originâ€¦",
-    "Preparing live boardâ€¦",
+    "Building your system…",
+    "Assigning Presence ID…",
+    "Locking origin…",
+    "Preparing system home…",
   ];
 
   const query = useMemo(() => new URLSearchParams(location.search), [location.search]);
@@ -93,7 +93,7 @@ export default function CreationMomentPage() {
             marginBottom: 10,
           }}
         >
-          Creating your system
+          Launching your HomePlanet system
         </div>
 
         <div
@@ -104,7 +104,7 @@ export default function CreationMomentPage() {
             marginBottom: 18,
           }}
         >
-          {businessName} â€¢ {businessType} â€¢ {city}
+          {businessName} • {businessType} • {city}
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -172,4 +172,5 @@ export default function CreationMomentPage() {
     </div>
   );
 }
+
 

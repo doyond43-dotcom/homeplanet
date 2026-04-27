@@ -10,6 +10,9 @@ import CreatorSystems from "../pages/CreatorSystems";
 import CreatorProjects from "../pages/CreatorProjects";
 import CreatorStudio from "../pages/CreatorStudio";
 import CreatorStudioBoard from "../pages/CreatorStudioBoard";
+import CreatorMomentPage from "../pages/CreatorMomentPage";
+import StaffBoardPage from "../pages/StaffBoardPage";
+import LobbyBoardPage from "../pages/LobbyBoardPage";
 import CreatorBuild from "../pages/CreatorBuild";
 import ReleaseViewer from "../pages/ReleaseViewer";
 import StarterBoardPreview from "../pages/StarterBoardPreview";
@@ -113,6 +116,7 @@ import NoScreenshotPaymentsDemo from "../pages/NoScreenshotPaymentsDemo";
 import PricingPage from "../pages/PricingPage";
 import OnboardingFlow from "../pages/OnboardingFlow";
 import OnboardingBuildTransition from "../pages/OnboardingBuildTransition";
+import SystemHomePage from "../pages/SystemHomePage";
 
 export default function PlanetRoutes() {
   return (
@@ -131,6 +135,7 @@ export default function PlanetRoutes() {
       <Route path="creator/systems" element={<CreatorSystems />} />
       <Route path="creator/projects" element={<CreatorProjects />} />
       <Route path="creator/studio/*" element={<CreatorStudio />} />
+      <Route path="creator/:slug/moment" element={<CreatorMomentPage />} />
       <Route path="creator/studio-board" element={<CreatorStudioBoard />} />
       <Route path="creator/build" element={<CreatorBuild />} />
       <Route path="creator/release/:releaseId" element={<ReleaseViewer />} />
@@ -138,6 +143,7 @@ export default function PlanetRoutes() {
       <Route path="creator/hayley-live" element={<HayleyLiveBoard />} />
       <Route path="creator/big-dave-eats" element={<BigDaveEatsLive />} />
       <Route path="creator/building" element={<CreationMomentPage />} />
+      <Route path="system/:slug" element={<SystemHomePage />} />
       <Route path="creator/*" element={<Navigate to="/planet/creator" replace />} />
 
       {/* EXPERIENCE */}
@@ -197,6 +203,10 @@ export default function PlanetRoutes() {
       <Route path="safari/moment/:momentId" element={<SafariMomentPage />} />
       <Route path="safari/:animalSlug" element={<SafariAnimalPage />} />
 
+      {/* CONNECTED BOARDS */}
+      <Route path="staff/:slug" element={<StaffBoardPage />} />
+      <Route path="lobby/:slug" element={<LobbyBoardPage />} />
+
       {/* LIVE BOARD */}
       <Route path="live/safari-demo" element={<SafariLiveBoard />} />
       <Route path="live/:boardSlug" element={<LiveBoardRouter />} />
@@ -229,3 +239,4 @@ export default function PlanetRoutes() {
     </Routes>
   );
 }
+

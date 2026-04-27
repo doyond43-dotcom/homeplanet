@@ -949,6 +949,45 @@ function campStatusTone(stage: string) {
   };
 }
 
+
+type LiveBoardMomentClip = {
+  id: string;
+  name: string;
+  type: string;
+  createdAt: string;
+};
+
+type LiveBoardMoment = {
+  id: string;
+  boardSlug: string;
+  jobId: string | null;
+  momentType: string;
+  note: string;
+  clips: LiveBoardMomentClip[];
+  createdAt: string;
+};
+
+function readLiveBoardSlugFromPath(): string {
+  try {
+    const parts = window.location.pathname.split("/").filter(Boolean);
+    const liveIndex = parts.indexOf("live");
+    if (liveIndex >= 0 && parts[liveIndex + 1]) return parts[liveIndex + 1];
+  } catch {}
+  return "live-board";
+}
+
+function readBoardMoments(boardSlug: string): LiveBoardMoment[] {
+  try {
+    const raw = localStorage.getItem(`hp-board-moments:${boardSlug}`);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveBoardMoments(boardSlug: string, moments: LiveBoardMoment[]) {
+  localStorage.setItem(`hp-board-moments:${boardSlug}`, JSON.stringify(moments));
+}
 export default function AutoRepairLiveBoard() {
   const location = useLocation();
   const { boardSlug } = useParams<{ boardSlug: string }>();
@@ -985,6 +1024,7 @@ export default function AutoRepairLiveBoard() {
 
   const [jobs, setJobs] = useState<RepairJob[]>([]);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  const workDrawerRef = useRef<HTMLDivElement | null>(null);
   const [stageMenuOpen, setStageMenuOpen] = useState(false);
   const [copiedMessage, setCopiedMessage] = useState("");
   const [loading, setLoading] = useState(true);
@@ -1010,6 +1050,54 @@ export default function AutoRepairLiveBoard() {
   const [paymentAmountDraft, setPaymentAmountDraft] = useState("");
   const [paymentMemoDraft, setPaymentMemoDraft] = useState("");
   const [invoicePanelKey, setInvoicePanelKey] = useState(0);
+
+  const [momentPanelOpen, setMomentPanelOpen] = useState(false);
+  const [momentType, setMomentType] = useState("Customer Drop-Off");
+  const [momentNote, setMomentNote] = useState("");
+  const [momentClips, setMomentClips] = useState<LiveBoardMomentClip[]>([]);
+  const [boardMoments, setBoardMoments] = useState<LiveBoardMoment[]>(() =>
+    readBoardMoments(readLiveBoardSlugFromPath()),
+  );
+
+  function handleMomentFiles(event: any) {
+    const files = Array.from(event.target.files || []) as File[];
+
+    const created = files.map((file) => ({
+      id: `${file.name}-${file.size}-${file.lastModified}-${crypto.randomUUID()}`,
+      name: file.name,
+      type: file.type.startsWith("video/") ? "video" : "image",
+      createdAt: new Date().toISOString(),
+    }));
+
+    setMomentClips((current) => [...current, ...created]);
+    event.target.value = "";
+  }
+
+  function saveLiveBoardMoment() {
+    const boardSlug = readLiveBoardSlugFromPath();
+
+    const nextMoment: LiveBoardMoment = {
+      id: crypto.randomUUID(),
+      boardSlug,
+      jobId: selectedJobId,
+      momentType,
+      note: momentNote.trim(),
+      clips: momentClips,
+      createdAt: new Date().toISOString(),
+    };
+
+    const nextMoments = [nextMoment, ...boardMoments];
+
+    setBoardMoments(nextMoments);
+    saveBoardMoments(boardSlug, nextMoments);
+
+    setMomentNote("");
+    setMomentClips([]);
+    setMomentPanelOpen(false);
+    setStatusNote("Moment saved to live board");
+    window.setTimeout(() => setStatusNote(""), 1600);
+  }
+
 
   const stageMenuRef = useRef<HTMLDivElement | null>(null);
   const saveTimerRef = useRef<number | null>(null);
@@ -1324,6 +1412,17 @@ const isActiveBoard =
     };
   }, [isRestaurant, jobs, stages]);
 
+  function focusWorkDrawer(jobId: string) {
+    setSelectedJobId(jobId);
+    setStageMenuOpen(false);
+
+    window.setTimeout(() => {
+      workDrawerRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 80);
+  }
   const predictedSignals = useMemo(() => {
     return evaluatePredictionSignals(
       mapRepairJobsToPredictionItems(jobs),
@@ -2007,9 +2106,113 @@ window.location.href = "/planet/start/building";
 
   return (
     <div className="min-h-screen bg-[#050816] text-white">
-  <div className="sticky top-0 z-[120] border-b border-red-500/40 bg-red-500 px-4 py-3 text-center text-sm font-bold text-black">
-    DEBUG MARKER :: AUTOREPAIRLIVEBOARD.TSX IS RENDERING
-  </div>
+      <div className="mx-auto max-w-7xl px-4 pt-4">
+        <div className="rounded-[22px] border border-emerald-300/15 bg-emerald-300/10 p-4 shadow-[0_18px_50px_rgba(0,0,0,0.25)]">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <div className="text-[11px] font-black uppercase tracking-[0.22em] text-emerald-200/80">
+                Live Board Moment
+              </div>
+              <div className="mt-1 text-lg font-black text-white">
+                Add Moment / Attach Proof
+              </div>
+              <div className="mt-1 max-w-3xl text-sm leading-6 text-emerald-50/75">
+                This adds proof to the existing board. It does not create a new business system.
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setMomentPanelOpen((v) => !v)}
+              className="rounded-full border border-emerald-300/25 bg-emerald-300/10 px-4 py-2 text-sm font-bold text-emerald-50 transition hover:bg-emerald-300/15"
+            >
+              {momentPanelOpen ? "Close Moment" : "Add Moment"}
+            </button>
+          </div>
+
+          {momentPanelOpen ? (
+            <div className="mt-4 grid gap-3 rounded-[18px] border border-white/10 bg-black/20 p-4">
+              <select
+                value={momentType}
+                onChange={(e) => setMomentType(e.target.value)}
+                className="h-11 rounded-xl border border-white/10 bg-slate-950 px-3 text-sm font-bold text-white outline-none"
+              >
+                <option>Customer Drop-Off</option>
+                <option>Diagnosis / Inspection</option>
+                <option>Repair In Progress</option>
+                <option>Waiting Approval</option>
+                <option>Ready For Pickup</option>
+                <option>Customer Pick-Up</option>
+                <option>Maintenance Complete</option>
+                <option>General Board Update</option>
+              </select>
+
+              <textarea
+                value={momentNote}
+                onChange={(e) => setMomentNote(e.target.value)}
+                placeholder="What happened? Example: Customer dropped off vehicle, inspection started."
+                className="min-h-[82px] rounded-xl border border-white/10 bg-slate-950 px-3 py-3 text-sm text-white outline-none placeholder:text-slate-500"
+              />
+
+              <input
+                type="file"
+                accept="image/*,video/*"
+                multiple
+                onChange={handleMomentFiles}
+                className="rounded-xl border border-white/10 bg-slate-950 px-3 py-3 text-sm text-slate-300"
+              />
+
+              {momentClips.length ? (
+                <div className="grid gap-2 md:grid-cols-2">
+                  {momentClips.map((clip) => (
+                    <div key={clip.id} className="rounded-xl border border-white/10 bg-white/[0.04] p-3 text-sm text-slate-200">
+                      <div className="font-bold">{clip.name}</div>
+                      <div className="mt-1 text-xs text-slate-400">{clip.type}</div>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+
+              <button
+                type="button"
+                onClick={saveLiveBoardMoment}
+                disabled={!momentNote.trim() && momentClips.length === 0}
+                className="rounded-full bg-emerald-300 px-5 py-3 text-sm font-black text-slate-950 transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Save Moment to This Board
+              </button>
+            </div>
+          ) : null}
+
+          {boardMoments.length ? (
+            <div className="mt-4 grid gap-2">
+              <div className="text-[11px] font-black uppercase tracking-[0.22em] text-emerald-200/70">
+                Recent Moments
+              </div>
+
+              {boardMoments.slice(0, 4).map((moment) => (
+                <div key={moment.id} className="rounded-2xl border border-white/10 bg-white/[0.04] p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="font-bold text-white">{moment.momentType}</div>
+                    <div className="text-xs text-slate-400">
+                      {new Date(moment.createdAt).toLocaleString()}
+                    </div>
+                  </div>
+
+                  {moment.note ? (
+                    <div className="mt-2 text-sm leading-6 text-slate-300">{moment.note}</div>
+                  ) : null}
+
+                  <div className="mt-2 text-xs font-bold text-emerald-100/75">
+                    {moment.clips.length} {moment.clips.length === 1 ? "clip" : "clips"} attached
+                    {moment.jobId ? ` • linked job ${moment.jobId}` : " • board-level moment"}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      </div>
       {!isRestaurant && !loading && !isClaimed && claimPanelDismissed ? (
         <div className="fixed bottom-5 right-5 z-[65]">
           <button
@@ -2383,54 +2586,7 @@ window.location.href = "/planet/start/building";
           />
         </div>
 
-        <div className="mb-6 rounded-[24px] border border-amber-400/20 bg-amber-400/10 p-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <div className="text-xs uppercase tracking-[0.22em] text-amber-200/70">
-                Prediction Layer
-              </div>
-              <div className="mt-2 text-sm leading-6 text-amber-50">
-                Pattern recognition flags missing proof, stuck stages, payment gaps, and suspicious progression before they turn into trust problems.
-              </div>
-            </div>
 
-            <div className="rounded-full border border-amber-300/25 bg-amber-300/10 px-3 py-1 text-xs font-semibold text-amber-100">
-              {predictedSignals.length} signal{predictedSignals.length === 1 ? "" : "s"}
-            </div>
-          </div>
-
-          <div className="mt-4 space-y-3">
-            {predictedSignals.length ? (
-              predictedSignals.slice(0, 6).map((signal) => (
-                <div
-                  key={signal.id}
-                  className="rounded-2xl border border-white/10 bg-black/10 px-4 py-3"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="text-sm font-semibold text-white">
-                      {signal.title}
-                    </div>
-                    <div className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-200">
-                      {signal.severity}
-                    </div>
-                  </div>
-
-                  <div className="mt-2 text-sm leading-6 text-slate-300">
-                    {signal.detail}
-                  </div>
-
-                  <div className="mt-2 text-[11px] uppercase tracking-[0.18em] text-slate-500">
-                    {signal.itemLabel}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="rounded-2xl border border-dashed border-white/10 px-4 py-5 text-sm text-slate-400">
-                No prediction signals yet.
-              </div>
-            )}
-          </div>
-        </div>
 
         <div
           className={`grid gap-6 ${
@@ -2461,8 +2617,70 @@ window.location.href = "/planet/start/building";
               </div>
             </div>
 
+            <div className="mb-4 rounded-[22px] border border-cyan-300/15 bg-cyan-300/5 p-4">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="text-[11px] uppercase tracking-[0.22em] text-cyan-200/70">
+                    Needs Attention
+                  </div>
+                  <div className="mt-1 text-xs leading-5 text-cyan-50/70">
+                    What needs action right now.
+                  </div>
+                </div>
+
+                <div className="rounded-full border border-cyan-300/25 bg-cyan-300/10 px-3 py-1 text-xs font-semibold text-cyan-100">
+                  {predictedSignals.length} active
+                </div>
+              </div>
+
+              <div className="grid gap-2">
+                {predictedSignals.length ? (
+                  predictedSignals.slice(0, 5).map((signal) => (
+                    <button
+                      key={signal.id}
+                      type="button"
+                      onClick={() => {
+                        const target = jobs.find((job: any) => {
+                          const label = String(signal.itemLabel || "").toLowerCase();
+                          return (
+                            String(job.id || "").toLowerCase() === label ||
+                            String(job.repair_order || "").toLowerCase() === label ||
+                            String(job.order_number || "").toLowerCase() === label ||
+                            String(job.ticket_id || "").toLowerCase() === label ||
+                            String(job.roNumber || "").toLowerCase() === label
+                          );
+                        });
+
+                        if (target) {
+                          focusWorkDrawer((target as any).id);
+                        }
+                      }}
+                      className="rounded-2xl border border-white/10 bg-white/[0.045] px-3 py-3 text-left transition hover:border-cyan-300/30 hover:bg-cyan-300/10"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="truncate text-xs font-black text-white">
+                          {signal.itemLabel}
+                        </div>
+                        <div className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.14em] text-slate-200">
+                          {signal.severity}
+                        </div>
+                      </div>
+
+                      <div className="mt-1 text-sm font-bold text-cyan-50">
+                        {signal.title}
+                      </div>
+                    </button>
+                  ))
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-white/10 px-4 py-4 text-sm text-slate-400">
+                    Nothing needs attention right now.
+                  </div>
+                )}
+              </div>
+            </div>
             <div
               className={`grid gap-4 ${
+
                 isRestaurant
                   ? "md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5"
                   : "md:grid-cols-2 2xl:grid-cols-3"
@@ -2555,20 +2773,24 @@ window.location.href = "/planet/start/building";
                               key={job.id}
                               className={`rounded-[18px] border p-3 transition ${
                                 selected
-                                  ? "border-cyan-400/40 bg-cyan-400/10 shadow-[0_0_26px_rgba(34,211,238,0.10)]"
+                                  ? "border-cyan-300 bg-cyan-400/15 shadow-[0_0_34px_rgba(34,211,238,0.42)] ring-1 ring-cyan-300/35"
                                   : "border-white/10 bg-white/[0.03]"
                               }`}
                             >
                               <button
                                 type="button"
                                 onClick={() => {
-                                  setSelectedJobId(job.id);
-                                  setStageMenuOpen(false);
+                                  focusWorkDrawer(job.id);
                                 }}
                                 className="w-full text-left"
                               >
                                 <div className="flex items-start justify-between gap-3">
                                   <div className="min-w-0">
+                                    {selected ? (
+                                      <div className="mb-1 text-[10px] font-black uppercase tracking-[0.18em] text-cyan-300">
+                                        Viewing
+                                      </div>
+                                    ) : null}
                                     <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-slate-500">
                                       <span>Protected Child Card</span>
                                       <span
@@ -2651,17 +2873,21 @@ window.location.href = "/planet/start/building";
                             key={job.id}
                             type="button"
                             onClick={() => {
-                              setSelectedJobId(job.id);
-                              setStageMenuOpen(false);
+                              focusWorkDrawer(job.id);
                             }}
                             className={`w-full rounded-[18px] border p-3 text-left transition ${
                               selected
-                                ? "border-cyan-400/40 bg-cyan-400/10 shadow-[0_0_26px_rgba(34,211,238,0.10)]"
+                                ? "border-cyan-300 bg-cyan-400/15 shadow-[0_0_34px_rgba(34,211,238,0.42)] ring-1 ring-cyan-300/35"
                                 : "border-white/10 bg-white/[0.03] hover:bg-white/[0.05]"
                             }`}
                           >
                             <div className="flex items-start justify-between gap-3">
                               <div className="min-w-0">
+                                {selected ? (
+                                  <div className="mb-1 text-[10px] font-black uppercase tracking-[0.18em] text-cyan-300">
+                                    Viewing
+                                  </div>
+                                ) : null}
                                 <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
                                   {job.roNumber}
                                 </div>
@@ -3627,7 +3853,7 @@ window.location.href = "/planet/start/building";
                   </div>
                 </>
               ) : (
-                <div className="flex h-full min-h-[520px] items-center justify-center rounded-[24px] border border-dashed border-white/10 bg-white/[0.02] p-8 text-center">
+                <div ref={workDrawerRef} className="flex h-full min-h-[520px] items-center justify-center rounded-[24px] border border-dashed border-white/10 bg-white/[0.02] p-8 text-center">
                   <div>
                     <div className="text-xs uppercase tracking-[0.24em] text-slate-500">
                       Working drawer
@@ -3660,12 +3886,12 @@ window.location.href = "/planet/start/building";
                 </div>
 
                 <h2 className="mt-4 text-3xl font-semibold text-white">
-                  Start your 14-day free trial
+                  Preview board ready
                 </h2>
 
                 <p className="mt-3 text-sm leading-7 text-slate-300">
                   This live board is already generated from your Creator City intake.
-                  Activate it to claim the dashboard, turn on your trial, and keep
+                  Review it as a generated preview board and keep
                   your Presence-first board tied to this business.
                 </p>
               </div>
@@ -3714,8 +3940,8 @@ window.location.href = "/planet/start/building";
                   className="w-full rounded-full bg-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   {isClaiming
-                    ? "Starting your trial..."
-                    : "Start My 14-Day Free Trial"}
+                    ? "Opening preview..."
+                    : "Keep Preview Open"}
                 </button>
 
                 <button
@@ -3737,7 +3963,7 @@ window.location.href = "/planet/start/building";
                 </button>
 
                 <div className="mt-3 text-center text-xs text-slate-500">
-                  You can dismiss this panel for now. A sticky trial button stays available while the board is still in preview mode.
+                  Preview stays open while you review the generated board.
                 </div>
               </div>
             </div>
@@ -4269,6 +4495,14 @@ function NotificationLine({
     </div>
   );
 }
+
+
+
+
+
+
+
+
 
 
 
