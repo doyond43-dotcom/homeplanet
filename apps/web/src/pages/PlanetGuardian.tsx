@@ -1418,11 +1418,11 @@ export default function PlanetGuardian() {
                   marginTop: 4,
                 }}
               >
-                $19.95/mo
+                $14.95/mo
               </div>
 
               <div style={{ ...sectionText, marginTop: 8 }}>
-                One person, pet, or dependent. Simple Guardian layer.
+                One person or dependent. Expand anytime.
               </div>
 
               <div style={{ marginTop: 12, display: "grid", gap: 6 }}>
@@ -1487,7 +1487,7 @@ export default function PlanetGuardian() {
               </div>
 
               <div style={{ ...sectionText, marginTop: 8 }}>
-                Full household Guardian. Kids, pets, elderly — all in one board.
+                Full household Guardian. Kids, pets, elderly — all in one live board.
               </div>
 
               <div style={{ marginTop: 12, display: "grid", gap: 6 }}>
@@ -1558,3 +1558,5 @@ export default function PlanetGuardian() {
     </div>
   );
 }
+
+

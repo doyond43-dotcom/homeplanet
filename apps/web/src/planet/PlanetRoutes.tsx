@@ -158,6 +158,7 @@ export default function PlanetRoutes() {
       <Route path="guardian" element={<PlanetGuardian />} />
       <Route path="guardian-pet" element={<GuardianPetTagDemo />} />
       <Route path="guardian-pet/pet/:petId" element={<GuardianPetTagDemo />} />
+      <Route path="guardian-pet/found/:petId" element={<GuardianPetTagDemo />} />
       <Route path="guardian-pet/bella" element={<GuardianBellaPreview />} />
       <Route path="guardian-join" element={<GuardianJoinDesk />} />
       <Route path="guardian/presence" element={<GuardianPresenceDesk />} />
@@ -240,3 +241,4 @@ export default function PlanetRoutes() {
     </Routes>
   );
 }
+

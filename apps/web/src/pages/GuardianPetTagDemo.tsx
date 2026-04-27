@@ -68,8 +68,7 @@ const DEMO_PET: DemoPet = {
   breed: "Golden Retriever",
   age: "3 years old",
   color: "Golden",
-  photoUrl:
-    "https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=1400&q=80",
+  photoUrl: "/images/bella-demo.jpg",
   ownerName: "Dan",
   callNumber: "863-532-0683",
   textNumber: "863-532-0683",
@@ -89,7 +88,7 @@ const VAMP_PET: DemoPet = {
   breed: "Domestic Long Hair",
   age: "3 years old",
   color: "Black",
-  photoUrl: "/images/vamp.jpg",
+  photoUrl: "/images/bella-demo.jpg",
   ownerName: "HAYLEY",
   callNumber: "903-246-6394",
   textNumber: "903-246-6394",
@@ -502,7 +501,7 @@ function GuardianShell({
                 Finder Report
               </Link>
               <Link
-                to="/planet/guardian-pet/timeline"
+                to="/planet/guardian"
                 className="rounded-full border border-emerald-300/25 bg-emerald-400/10 px-4 py-2 text-sm font-medium text-emerald-100 transition hover:bg-emerald-400/18"
               >
                 Main Guardian
@@ -607,7 +606,7 @@ function GuardianSalesPage({ pet }: { pet: DemoPet }) {
 
             <div className="mt-5 flex flex-wrap gap-3">
               <Link
-                to={`/planet/guardian/join?pets=${petCount}`}
+                to={`/planet/guardian-join?item=pet-tag&pets=${petCount}`}
                 className="rounded-2xl border border-cyan-300/35 bg-cyan-400/18 px-5 py-3 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/26"
               >
                 Start tag order
@@ -638,9 +637,7 @@ function GuardianSalesPage({ pet }: { pet: DemoPet }) {
 
         <div className="overflow-hidden rounded-[32px] border border-white/10 bg-white/6 backdrop-blur-xl">
           <div className="relative h-full min-h-[380px]">
-            <img
-              src="/images/vamp.jpg"
-              alt={`${pet.name} demo pet`}
+            <img src="/images/pet-tag-sales.jpg" alt={`${pet.name} demo pet`}
               className="h-[68vh] w-full object-cover object-center lg:h-full"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#050816] via-[#050816]/35 to-transparent" />
@@ -880,7 +877,7 @@ function GuardianPetPage({ pet }: { pet: DemoPet }) {
 
             <div className="mt-4">
               <Link
-                to="/planet/guardian/join?pets=1"
+                to="/planet/guardian-join?item=pet-tag&pets=1"
                 className="block rounded-[22px] border border-cyan-300/30 bg-cyan-400/15 px-4 py-4 text-center text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/22"
               >
                 Create Your Pet Tag
@@ -1136,6 +1133,23 @@ export default function GuardianPetTagDemo() {
     </GuardianShell>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
