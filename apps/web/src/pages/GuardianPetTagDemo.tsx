@@ -62,14 +62,34 @@ const EXTRA_PET_SETUP = 15;
 const EXTRA_PET_MONTHLY = 3;
 
 const DEMO_PET: DemoPet = {
+  id: "bella-demo",
+  name: "Bella",
+  type: "Dog",
+  breed: "Golden Retriever",
+  age: "3 years old",
+  color: "Golden",
+  photoUrl:
+    "https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=1400&q=80",
+  ownerName: "Dan",
+  callNumber: "863-532-0683",
+  textNumber: "863-532-0683",
+  emergencyNote:
+    "If Bella is safe with you, please tap Report Found Location so we can respond quickly.",
+  temperament:
+    "Friendly and gentle. May be nervous if scared. Responds to Bella. Loves treats and a calm voice.",
+  lastSeen: "Near Taylor Creek / neighborhood park area",
+  rewardText: "Reward available upon safe return.",
+  status: "missing",
+};
+
+const VAMP_PET: DemoPet = {
   id: "vamp",
   name: "Vamp",
-  type: "Dog",
+  type: "Cat",
   breed: "Domestic Long Hair",
   age: "3 years old",
   color: "Black",
-  photoUrl:
-    "/images/vamp.jpg",
+  photoUrl: "/images/vamp.jpg",
   ownerName: "HAYLEY",
   callNumber: "903-246-6394",
   textNumber: "903-246-6394",
@@ -624,7 +644,7 @@ function GuardianSalesPage({ pet }: { pet: DemoPet }) {
               className="h-[68vh] w-full object-cover object-center lg:h-full"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#050816] via-[#050816]/35 to-transparent" />
-            <div className="hidden sm:block sm:absolute sm:inset-x-0 sm:bottom-0 sm:p-6">
+            <div className="hidden md:block absolute inset-x-0 bottom-0 p-5 sm:p-6">
               <div className="rounded-[24px] border border-white/15 bg-black/35 p-5 backdrop-blur-md">
                 <div className="flex items-start justify-between gap-4">
                   <div>
@@ -1066,7 +1086,8 @@ function GuardianFoundPage({ pet }: { pet: DemoPet }) {
 
 export default function GuardianPetTagDemo() {
   const location = useLocation();
-  const pet = DEMO_PET;
+  const isVampRoute = location.pathname.includes("/vamp");
+  const pet = isVampRoute ? VAMP_PET : DEMO_PET;
 
   const currentStep = useMemo(() => {
     if (location.pathname.includes("/guardian-pet/found/")) return "found";
@@ -1115,6 +1136,7 @@ export default function GuardianPetTagDemo() {
     </GuardianShell>
   );
 }
+
 
 
 
