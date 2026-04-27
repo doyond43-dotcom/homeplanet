@@ -624,7 +624,7 @@ function GuardianSalesPage({ pet }: { pet: DemoPet }) {
               className="h-[68vh] w-full object-cover object-center lg:h-full"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#050816] via-[#050816]/35 to-transparent" />
-            <div className="hidden md:block md:absolute md:inset-x-0 md:bottom-0 md:p-6">
+            <div className="hidden sm:block sm:absolute sm:inset-x-0 sm:bottom-0 sm:p-6">
               <div className="rounded-[24px] border border-white/15 bg-black/35 p-5 backdrop-blur-md">
                 <div className="flex items-start justify-between gap-4">
                   <div>
@@ -1115,6 +1115,8 @@ export default function GuardianPetTagDemo() {
     </GuardianShell>
   );
 }
+
+
 
 
 
