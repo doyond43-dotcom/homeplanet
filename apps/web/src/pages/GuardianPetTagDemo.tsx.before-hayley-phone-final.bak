@@ -70,9 +70,9 @@ const DEMO_PET: DemoPet = {
   color: "Black",
   photoUrl:
     "/images/vamp.jpg",
-  ownerName: "HAYLEY",
-  callNumber: "903-246-6394",
-  textNumber: "903-246-6394",
+  ownerName: "Dan",
+  callNumber: "863-532-0683",
+  textNumber: "863-532-0683",
   emergencyNote:
     "If Vamp is safe with you, please tap Report Found Location so we can respond quickly.",
   temperament:
@@ -1143,7 +1143,6 @@ export default function GuardianPetTagDemo() {
     </GuardianShell>
   );
 }
-
 
 
 
