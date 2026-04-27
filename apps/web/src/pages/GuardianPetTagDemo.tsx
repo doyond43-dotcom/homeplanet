@@ -621,10 +621,10 @@ function GuardianSalesPage({ pet }: { pet: DemoPet }) {
             <img
               src="/images/vamp.jpg"
               alt={`${pet.name} demo pet`}
-              className="h-full w-full object-cover"
+              className="h-[68vh] w-full object-cover object-center lg:h-full"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#050816] via-[#050816]/35 to-transparent" />
-            <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6">
+            <div className="hidden xl:block xl:absolute xl:inset-x-0 xl:bottom-0 xl:p-6">
               <div className="rounded-[24px] border border-white/15 bg-black/35 p-5 backdrop-blur-md">
                 <div className="flex items-start justify-between gap-4">
                   <div>
@@ -817,41 +817,13 @@ function GuardianPetPage({ pet }: { pet: DemoPet }) {
     <div className="space-y-6">
       <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
         <section className="overflow-hidden rounded-[32px] border border-white/10 bg-white/6 backdrop-blur-xl">
-          <div className="relative h-full min-h-[360px]">
+          <div className="relative min-h-[360px]">
             <img
               src={pet.photoUrl}
               alt={pet.name}
-              className="h-full w-full object-cover"
+              className="h-[68vh] w-full object-cover object-center lg:h-full"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#050816] via-[#050816]/30 to-transparent" />
-
-            <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6">
-              <div className="rounded-[24px] border border-white/15 bg-black/35 p-5 backdrop-blur-md">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200/90">
-                  You found Vamp
-                </p>
-                <div className="mt-3 flex flex-wrap items-center gap-3">
-                  <h2 className="text-3xl font-semibold text-white sm:text-4xl">
-                    {pet.name}
-                  </h2>
-                  <span
-                    className={cn(
-                      "rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em]",
-                      getStatusPill(pet.status).classes
-                    )}
-                  >
-                    {getStatusPill(pet.status).label}
-                  </span>
-                </div>
-                <p className="mt-2 text-sm text-white/75 sm:text-base">
-                  {pet.breed} • {pet.age} • {pet.color}
-                </p>
-                <p className="mt-4 max-w-2xl text-sm leading-6 text-white/80">
-                  Thank you for helping. If {pet.name} is safe with you, please use one
-                  of the actions below so the owner can respond quickly.
-                </p>
-              </div>
-            </div>
+            <div className="hidden lg:block absolute inset-0 bg-gradient-to-t from-[#050816] via-[#050816]/30 to-transparent" />
           </div>
         </section>
 
@@ -1143,6 +1115,13 @@ export default function GuardianPetTagDemo() {
     </GuardianShell>
   );
 }
+
+
+
+
+
+
+
 
 
 
