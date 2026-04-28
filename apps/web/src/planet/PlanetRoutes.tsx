@@ -169,6 +169,7 @@ export default function PlanetRoutes() {
       <Route path="guardian/panic" element={<GuardianPanicPage />} />
       <Route path="guardian/panic/live" element={<GuardianPanicLiveBoard />} />
       <Route path="guardian/household" element={<GuardianHouseholdBoard />} />
+      <Route path="guardian-household" element={<GuardianHouseholdBoard />} />
       <Route path="guardian/public/:guardianId" element={<GuardianPublicProfilePage />} />
       <Route path="guardian/mobility" element={<GuardianMobilityLiveBoard />} />
       <Route path="guardian/pet-care" element={<PetCareTimelinePanel />} />
@@ -241,4 +242,5 @@ export default function PlanetRoutes() {
     </Routes>
   );
 }
+
 
