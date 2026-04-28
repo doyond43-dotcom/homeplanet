@@ -519,7 +519,7 @@ function GuardianShell({
 }
 
 function GuardianSalesPage({ pet }: { pet: DemoPet }) {
-  const scanDemoLink = `${PET_BASE_PATH}/pet/${pet.id}`;
+  const scanDemoLink = `${PET_BASE_PATH}/pet/vamp`;
   const [petCount, setPetCount] = useState(1);
   const pricing = getPricing(petCount);
 
@@ -1133,6 +1133,7 @@ export default function GuardianPetTagDemo() {
     </GuardianShell>
   );
 }
+
 
 
 
