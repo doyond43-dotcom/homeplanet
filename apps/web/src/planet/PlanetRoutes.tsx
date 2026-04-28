@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 
 import PlanetOverview from "../pages/PlanetOverview";
 import CityPage from "../pages/CityPage";
+import FoundLayer from "../pages/FoundLayer";
 
 // Creator planet special pages
 import CreatorCity from "../pages/CreatorCity";
@@ -154,6 +155,9 @@ export default function PlanetRoutes() {
       <Route path="experience/session/:sessionId" element={<EscapeSessionPage />} />
       <Route path="experience/watch" element={<EscapeWatchModePage />} />
 
+      {/* FOUND LAYER */}
+      <Route path="found-layer" element={<FoundLayer />} />
+
       {/* GUARDIAN */}
       <Route path="guardian" element={<PlanetGuardian />} />
       <Route path="guardian-pet" element={<GuardianPetTagDemo />} />
@@ -242,5 +246,4 @@ export default function PlanetRoutes() {
     </Routes>
   );
 }
-
 

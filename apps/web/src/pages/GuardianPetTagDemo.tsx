@@ -627,11 +627,16 @@ function GuardianSalesPage({ pet }: { pet: DemoPet }) {
             >
               Open finder report page
             </Link>
+            <Link
+              to="/planet/found-layer"
+              className="rounded-2xl border border-cyan-300/25 bg-cyan-400/10 px-5 py-3 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/18"
+            >
+              Not just for pets
+            </Link>
           </div>
 
           <p className="mt-6 text-sm leading-6 text-white/68">
-            Designed for pet owners, shelters, rescues, vets, groomers, walkers, sitters,
-            and neighborhoods.
+            Designed for pet owners, shelters, rescues, vets, groomers, walkers, sitters, and neighborhoods. This same found layer can also work on tools, bikes, jackets, vehicles, and gear.
           </p>
         </div>
 
@@ -1133,6 +1138,8 @@ export default function GuardianPetTagDemo() {
     </GuardianShell>
   );
 }
+
+
 
 
 
