@@ -1,9 +1,10 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+﻿import { Routes, Route, Navigate } from "react-router-dom";
 
 import PlanetOverview from "../pages/PlanetOverview";
 import CityPage from "../pages/CityPage";
 import FoundLayer from "../pages/FoundLayer";
 import OnlyTheEssentialsBoard from "../pages/OnlyTheEssentialsBoard";
+import StartPage from "../pages/StartPage";
 
 // Creator planet special pages
 import CreatorCity from "../pages/CreatorCity";
@@ -123,7 +124,10 @@ import SystemHomePage from "../pages/SystemHomePage";
 export default function PlanetRoutes() {
   return (
     <Routes>
-      <Route index element={<Navigate to="/planet/creator" replace />} />
+      <Route index element={<Navigate to="/planet/start" replace />} />
+
+      {/* HOMEPLANET ENTRY */}
+      <Route path="start" element={<StartPage />} />
 
       {/* HOMEPLANET KIDS */}
       <Route path="kids" element={<HomePlanetKids />} />
@@ -244,7 +248,7 @@ export default function PlanetRoutes() {
       <Route path="predator-shield/test" element={<PredatorShieldIntervention />} />
       <Route path=":planetId" element={<PlanetOverview />} />
       <Route path=":planetId/:cityId" element={<CityPage />} />
-      <Route path="*" element={<Navigate to="/planet/creator" replace />} />
+      <Route path="*" element={<Navigate to="/planet/start" replace />} />
     </Routes>
   );
 }
