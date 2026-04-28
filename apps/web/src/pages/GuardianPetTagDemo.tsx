@@ -245,7 +245,7 @@ function buildTelHref(number: string) {
 
 function MetricCard({ value, label }: { value: string; label: string }) {
   return (
-    <div className="rounded-[24px] border border-white/10 bg-white/5 p-4">
+    <div className="rounded-[24px] border border-cyan-300/12 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.08),transparent_42%),rgba(255,255,255,0.045)] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
       <div className="text-2xl font-semibold text-white">{value}</div>
       <div className="mt-1 text-sm text-white/65">{label}</div>
     </div>
@@ -254,7 +254,7 @@ function MetricCard({ value, label }: { value: string; label: string }) {
 
 function InfoPanel({ title, body }: { title: string; body: string }) {
   return (
-    <div className="rounded-[24px] border border-white/10 bg-white/5 p-4">
+    <div className="rounded-[24px] border border-cyan-300/12 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.08),transparent_42%),rgba(255,255,255,0.045)] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200">
         {title}
       </p>
@@ -273,7 +273,7 @@ function StepCard({
   body: string;
 }) {
   return (
-    <div className="rounded-[26px] border border-white/10 bg-white/5 p-5">
+    <div className="rounded-[26px] border border-cyan-300/12 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.07),transparent_42%),rgba(255,255,255,0.045)] p-5">
       <div className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200">
         {index}
       </div>
@@ -303,7 +303,7 @@ function RadarPanel({
         {events.map((event, index) => (
           <div
             key={`${event.time}-${event.title}-${index}`}
-            className="flex gap-4 rounded-[22px] border border-white/10 bg-white/5 p-4"
+            className="flex gap-4 rounded-[22px] border border-cyan-300/12 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.08),transparent_42%),rgba(255,255,255,0.045)] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
           >
             <div className="flex flex-col items-center">
               <div className="mt-1 h-3 w-3 rounded-full bg-cyan-300 shadow-[0_0_18px_rgba(34,211,238,0.5)]" />
@@ -384,7 +384,7 @@ function PetCareTimelinePreview({
   events: CareTimelineEvent[];
 }) {
   return (
-    <section className="rounded-[32px] border border-white/10 bg-white/6 p-6 backdrop-blur-xl sm:p-8">
+    <section className="rounded-[32px] border border-cyan-300/12 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.06),transparent_38%),rgba(255,255,255,0.045)] p-6 backdrop-blur-xl sm:p-8">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200">
@@ -416,7 +416,7 @@ function PetCareTimelinePreview({
           {events.slice(0, 5).map((event) => (
             <div
               key={event.id}
-              className="rounded-[24px] border border-white/10 bg-[#08101f] p-4"
+              className="rounded-[24px] border border-cyan-300/14 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.08),transparent_44%),#08101f] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.035)]"
             >
               <div className="flex flex-wrap items-center gap-3">
                 <span
@@ -526,7 +526,7 @@ function GuardianSalesPage({ pet }: { pet: DemoPet }) {
   return (
     <div className="space-y-6">
       <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="rounded-[32px] border border-white/10 bg-white/6 p-6 backdrop-blur-xl sm:p-8">
+        <div className="rounded-[32px] border border-cyan-300/12 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.06),transparent_38%),rgba(255,255,255,0.045)] p-6 backdrop-blur-xl sm:p-8">
           <div className="inline-flex items-center gap-2 rounded-full border border-amber-300/25 bg-amber-300/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-amber-200">
             Pet Guardian demo
           </div>
@@ -698,7 +698,7 @@ function GuardianSalesPage({ pet }: { pet: DemoPet }) {
 
       <PetCareTimelinePreview events={Vamp_CARE_TIMELINE} />
 
-      <section className="rounded-[32px] border border-white/10 bg-white/6 p-6 backdrop-blur-xl sm:p-8">
+      <section className="rounded-[32px] border border-cyan-300/12 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.06),transparent_38%),rgba(255,255,255,0.045)] p-6 backdrop-blur-xl sm:p-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200">
@@ -744,7 +744,7 @@ function GuardianSalesPage({ pet }: { pet: DemoPet }) {
       </section>
 
       <section className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-        <div className="rounded-[32px] border border-white/10 bg-white/6 p-6 backdrop-blur-xl sm:p-8">
+        <div className="rounded-[32px] border border-cyan-300/12 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.06),transparent_38%),rgba(255,255,255,0.045)] p-6 backdrop-blur-xl sm:p-8">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200">
             Prototype tag wording
           </p>
@@ -776,7 +776,7 @@ function GuardianSalesPage({ pet }: { pet: DemoPet }) {
           </div>
         </div>
 
-        <div className="rounded-[32px] border border-white/10 bg-white/6 p-6 backdrop-blur-xl sm:p-8">
+        <div className="rounded-[32px] border border-cyan-300/12 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.06),transparent_38%),rgba(255,255,255,0.045)] p-6 backdrop-blur-xl sm:p-8">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200">
             Quick brochure copy
           </p>
@@ -845,7 +845,7 @@ function GuardianPetPage({ pet }: { pet: DemoPet }) {
         </section>
 
         <section className="space-y-6">
-          <div className="rounded-[32px] border border-white/10 bg-white/6 p-6 backdrop-blur-xl sm:p-8">
+          <div className="rounded-[32px] border border-cyan-300/12 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.06),transparent_38%),rgba(255,255,255,0.045)] p-6 backdrop-blur-xl sm:p-8">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200">
               Immediate actions
             </p>
@@ -892,7 +892,7 @@ function GuardianPetPage({ pet }: { pet: DemoPet }) {
             <InfoPanel title="Reward" body={pet.rewardText} />
           </div>
 
-          <div className="rounded-[32px] border border-white/10 bg-white/6 p-6 backdrop-blur-xl sm:p-8">
+          <div className="rounded-[32px] border border-cyan-300/12 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.06),transparent_38%),rgba(255,255,255,0.045)] p-6 backdrop-blur-xl sm:p-8">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200">
               Why this works
             </p>
@@ -949,7 +949,7 @@ function GuardianFoundPage({ pet }: { pet: DemoPet }) {
   return (
     <div className="space-y-6">
       <div className="grid gap-6 xl:grid-cols-[0.92fr_1.08fr]">
-        <section className="rounded-[32px] border border-white/10 bg-white/6 p-6 backdrop-blur-xl sm:p-8">
+        <section className="rounded-[32px] border border-cyan-300/12 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.06),transparent_38%),rgba(255,255,255,0.045)] p-6 backdrop-blur-xl sm:p-8">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200">
             Finder report
           </p>
@@ -1026,7 +1026,7 @@ function GuardianFoundPage({ pet }: { pet: DemoPet }) {
         </section>
 
         <section className="space-y-6">
-          <div className="rounded-[32px] border border-white/10 bg-white/6 p-6 backdrop-blur-xl sm:p-8">
+          <div className="rounded-[32px] border border-cyan-300/12 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.06),transparent_38%),rgba(255,255,255,0.045)] p-6 backdrop-blur-xl sm:p-8">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200">
               Live preview
             </p>
@@ -1037,11 +1037,11 @@ function GuardianFoundPage({ pet }: { pet: DemoPet }) {
             </div>
           </div>
 
-          <div className="rounded-[32px] border border-white/10 bg-white/6 p-6 backdrop-blur-xl sm:p-8">
+          <div className="rounded-[32px] border border-cyan-300/12 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.06),transparent_38%),rgba(255,255,255,0.045)] p-6 backdrop-blur-xl sm:p-8">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200">
               Status
             </p>
-            <div className="mt-5 rounded-[24px] border border-white/10 bg-white/5 p-5">
+            <div className="mt-5 rounded-[24px] border border-cyan-300/12 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.07),transparent_42%),rgba(255,255,255,0.045)] p-5">
               {submitted ? (
                 <div>
                   <h3 className="text-xl font-semibold text-emerald-200">
@@ -1133,6 +1133,7 @@ export default function GuardianPetTagDemo() {
     </GuardianShell>
   );
 }
+
 
 
 
