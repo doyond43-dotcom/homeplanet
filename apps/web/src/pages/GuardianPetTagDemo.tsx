@@ -88,7 +88,7 @@ const VAMP_PET: DemoPet = {
   breed: "Domestic Long Hair",
   age: "3 years old",
   color: "Black",
-  photoUrl: "/images/bella-demo.jpg",
+  photoUrl: "/images/guardian/vamp.jpg",
   ownerName: "HAYLEY",
   callNumber: "903-246-6394",
   textNumber: "903-246-6394",
@@ -1133,6 +1133,7 @@ export default function GuardianPetTagDemo() {
     </GuardianShell>
   );
 }
+
 
 
 
