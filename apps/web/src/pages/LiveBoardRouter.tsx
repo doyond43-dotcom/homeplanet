@@ -4,6 +4,8 @@ import { supabase } from "../lib/supabase";
 import BeautySalonLiveBoard from "./BeautySalonLiveBoard";
 import CampAquaflowStandalone from "./CampAquaflowStandalone";
 import AutoRepairLiveBoard from "./AutoRepairLiveBoard";
+import { getLiveBoardTemplate } from "../config/liveBoardTemplates";
+import TemplateLiveBoard from "./TemplateLiveBoard";
 
 type LiveBoardLocationState = {
   businessType?: string;
@@ -167,38 +169,27 @@ export default function LiveBoardRouter() {
     [starterBoard, locationState, starterPayload, resolvedBoardSlug],
   );
 
+  // 🔥 Template lookup (safe layer)
+  const template = useMemo(() => {
+    if (!resolvedBoardSlug) return null;
+    return getLiveBoardTemplate(resolvedBoardSlug);
+  }, [resolvedBoardSlug]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#050816] text-white">
         <div className="mx-auto flex min-h-screen max-w-4xl items-center justify-center px-6 py-16">
           <div className="w-full max-w-2xl rounded-[28px] border border-white/10 bg-white/[0.04] p-8 shadow-[0_30px_120px_rgba(0,0,0,0.45)] backdrop-blur">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-emerald-200">
-              Live Board Router
-            </div>
-
-            <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-              Loading the correct live board
-            </h1>
-
-            <p className="mt-3 text-sm leading-6 text-white/70 sm:text-base">
-              Checking board identity and routing into the right HomePlanet system...
-            </p>
-
-            <div className="mt-8 h-2 overflow-hidden rounded-full bg-white/10">
-              <div className="h-full w-[72%] rounded-full bg-emerald-400 transition-all duration-500" />
-            </div>
-
-            <div className="mt-8 rounded-2xl border border-white/10 bg-black/20 p-4 text-sm text-white/65">
-              <div className="font-medium text-white/80">Incoming live board</div>
-              <div className="mt-2">
-                <span className="text-white/45">Board slug:</span>{" "}
-                {resolvedBoardSlug || "Not provided"}
-              </div>
-            </div>
+            <h1 className="text-3xl font-semibold">Loading live board…</h1>
           </div>
         </div>
       </div>
     );
+  }
+
+  // 🔥 TEMPLATE ROUTE (REAL BOARD NOW)
+  if (template) {
+    return <TemplateLiveBoard template={template} />;
   }
 
   if (looksLikeCamp(routingInput)) {

@@ -15,11 +15,26 @@ type Job = {
 
 type JobForm = Omit<Job, "id">;
 
-const BUSINESS_NAME = "Only The Essentials Cleaning LLC";
-const BUSINESS_PHONE = "863-801-3179";
-const SERVICE_AREA = "Okeechobee & surrounding areas";
-const CASH_APP_CASHTAG = "$OnlyTheEssentials";
-const ZELLE_CONTACT = "863-801-3179";
+type BoardTemplate = {
+  businessName?: string;
+  phone?: string;
+  serviceArea?: string;
+  payment?: {
+    cashApp?: string;
+    zelle?: string;
+  };
+  sampleJobs?: Array<Omit<Job, "id">>;
+};
+
+type BoardProps = {
+  template?: BoardTemplate;
+};
+
+const FALLBACK_BUSINESS_NAME = "Only The Essentials Cleaning LLC";
+const FALLBACK_BUSINESS_PHONE = "863-801-3179";
+const FALLBACK_SERVICE_AREA = "Okeechobee & surrounding areas";
+const FALLBACK_CASH_APP_CASHTAG = "$OnlyTheEssentials";
+const FALLBACK_ZELLE_CONTACT = "863-801-3179";
 
 const EMPTY_FORM: JobForm = {
   client: "",
@@ -110,14 +125,14 @@ function makeId() {
   return `job-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
-function buildPaymentMemo(job: Job) {
-  return `Only The Essentials - ${job.service} - ${job.client}`;
+function buildPaymentMemo(job: Job, businessName: string) {
+  return `${businessName} - ${job.service} - ${job.client}`;
 }
 
-function buildCashAppUrl(job: Job) {
-  const cashtag = CASH_APP_CASHTAG.replace("$", "");
+function buildCashAppUrl(job: Job, cashAppCashtag: string, businessName: string) {
+  const cashtag = cashAppCashtag.replace("$", "");
   const params = new URLSearchParams();
-  params.set("note", buildPaymentMemo(job));
+  params.set("note", buildPaymentMemo(job, businessName));
   return `https://cash.app/$${cashtag}?${params.toString()}`;
 }
 
@@ -125,8 +140,29 @@ function buildQrImageUrl(data: string) {
   return `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(data)}`;
 }
 
-export default function OnlyTheEssentialsBoard() {
-  const [jobs, setJobs] = useState<Job[]>(INITIAL_JOBS);
+function buildTemplateJobs(template?: BoardTemplate): Job[] {
+  if (!template?.sampleJobs?.length) return INITIAL_JOBS;
+
+  return template.sampleJobs.map((job, index) => ({
+    id: `template-job-${index + 1}`,
+    client: job.client,
+    service: job.service,
+    time: job.time,
+    location: job.location,
+    notes: job.notes,
+    status: job.status,
+    paid: job.paid,
+  }));
+}
+
+export default function OnlyTheEssentialsBoard({ template }: BoardProps) {
+  const businessName = template?.businessName || FALLBACK_BUSINESS_NAME;
+  const businessPhone = template?.phone || FALLBACK_BUSINESS_PHONE;
+  const serviceArea = template?.serviceArea || FALLBACK_SERVICE_AREA;
+  const cashAppCashtag = template?.payment?.cashApp || FALLBACK_CASH_APP_CASHTAG;
+  const zelleContact = template?.payment?.zelle || FALLBACK_ZELLE_CONTACT;
+
+  const [jobs, setJobs] = useState<Job[]>(() => buildTemplateJobs(template));
   const [activeTab, setActiveTab] = useState<JobStatus>("scheduled");
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -347,7 +383,7 @@ export default function OnlyTheEssentialsBoard() {
               </div>
 
               <h1 className="mt-3 text-3xl font-black tracking-tight text-white sm:text-5xl">
-                {BUSINESS_NAME}
+                {businessName}
               </h1>
 
               <p className="mt-2 max-w-2xl text-sm leading-6 text-white/72 sm:text-base">
@@ -356,11 +392,11 @@ export default function OnlyTheEssentialsBoard() {
               </p>
 
               <div className="mt-4 flex flex-wrap gap-2 text-sm">
-                <a href={telHref(BUSINESS_PHONE)} className="rounded-full border border-white/12 bg-black/25 px-3 py-1 text-white/78">
-                  Call/Text: {BUSINESS_PHONE}
+                <a href={telHref(businessPhone)} className="rounded-full border border-white/12 bg-black/25 px-3 py-1 text-white/78">
+                  Call/Text: {businessPhone}
                 </a>
                 <span className="rounded-full border border-white/12 bg-black/25 px-3 py-1 text-white/78">
-                  Serving {SERVICE_AREA}
+                  Serving {serviceArea}
                 </span>
               </div>
             </div>
@@ -491,22 +527,22 @@ export default function OnlyTheEssentialsBoard() {
                     Payment Layer
                   </div>
                   <div className="mt-3 rounded-xl border border-white/10 bg-black/30 p-3 text-sm text-white/75">
-                    Memo: <span className="font-bold text-white">{buildPaymentMemo(selectedJob)}</span>
+                    Memo: <span className="font-bold text-white">{buildPaymentMemo(selectedJob, businessName)}</span>
                     <br />
-                    Cash App: <span className="font-bold text-white">{CASH_APP_CASHTAG}</span>
+                    Cash App: <span className="font-bold text-white">{cashAppCashtag}</span>
                     <br />
-                    Zelle: <span className="font-bold text-white">{ZELLE_CONTACT}</span>
+                    Zelle: <span className="font-bold text-white">{zelleContact}</span>
                   </div>
 
                   <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
                     <img
-                      src={buildQrImageUrl(buildCashAppUrl(selectedJob))}
+                      src={buildQrImageUrl(buildCashAppUrl(selectedJob, cashAppCashtag, businessName))}
                       alt="Payment QR"
                       className="h-36 w-36 rounded-2xl border border-white/10 bg-white p-2"
                     />
                     <div className="flex flex-1 flex-col gap-2">
                       <a
-                        href={buildCashAppUrl(selectedJob)}
+                        href={buildCashAppUrl(selectedJob, cashAppCashtag, businessName)}
                         target="_blank"
                         rel="noreferrer"
                         className="rounded-xl bg-cyan-300 px-4 py-3 text-center text-sm font-bold text-black"
@@ -515,7 +551,7 @@ export default function OnlyTheEssentialsBoard() {
                       </a>
                       <button
                         type="button"
-                        onClick={() => copyText(buildPaymentMemo(selectedJob))}
+                        onClick={() => copyText(buildPaymentMemo(selectedJob, businessName))}
                         className="rounded-xl border border-white/15 px-4 py-3 text-sm font-bold text-white/85"
                       >
                         Copy Memo
@@ -532,10 +568,10 @@ export default function OnlyTheEssentialsBoard() {
                 </div>
 
                 <div className="grid gap-2 sm:grid-cols-2">
-                  <a href={telHref(BUSINESS_PHONE)} className="rounded-xl border border-pink-300/25 bg-pink-400/10 px-4 py-3 text-center text-sm font-bold text-pink-100">
+                  <a href={telHref(businessPhone)} className="rounded-xl border border-pink-300/25 bg-pink-400/10 px-4 py-3 text-center text-sm font-bold text-pink-100">
                     Call
                   </a>
-                  <a href={smsHref(BUSINESS_PHONE)} className="rounded-xl border border-cyan-300/25 bg-cyan-400/10 px-4 py-3 text-center text-sm font-bold text-cyan-100">
+                  <a href={smsHref(businessPhone)} className="rounded-xl border border-cyan-300/25 bg-cyan-400/10 px-4 py-3 text-center text-sm font-bold text-cyan-100">
                     Text
                   </a>
                   <button type="button" onClick={() => openEditForm(selectedJob)} className="rounded-xl border border-white/15 px-4 py-3 text-sm font-bold text-white/85">
