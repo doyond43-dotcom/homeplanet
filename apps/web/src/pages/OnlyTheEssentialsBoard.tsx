@@ -18,6 +18,8 @@ type JobForm = Omit<Job, "id">;
 const BUSINESS_NAME = "Only The Essentials Cleaning LLC";
 const BUSINESS_PHONE = "863-801-3179";
 const SERVICE_AREA = "Okeechobee & surrounding areas";
+const CASH_APP_CASHTAG = "$OnlyTheEssentials";
+const ZELLE_CONTACT = "863-801-3179";
 
 const EMPTY_FORM: JobForm = {
   client: "",
@@ -108,12 +110,32 @@ function makeId() {
   return `job-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
+function buildPaymentMemo(job: Job) {
+  return `Only The Essentials - ${job.service} - ${job.client}`;
+}
+
+function buildCashAppUrl(job: Job) {
+  const cashtag = CASH_APP_CASHTAG.replace("$", "");
+  const params = new URLSearchParams();
+  params.set("note", buildPaymentMemo(job));
+  return `https://cash.app/$${cashtag}?${params.toString()}`;
+}
+
+function buildQrImageUrl(data: string) {
+  return `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(data)}`;
+}
+
 export default function OnlyTheEssentialsBoard() {
   const [jobs, setJobs] = useState<Job[]>(INITIAL_JOBS);
   const [activeTab, setActiveTab] = useState<JobStatus>("scheduled");
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<JobForm>(EMPTY_FORM);
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+
+  const selectedJob = selectedJobId
+    ? jobs.find((job) => job.id === selectedJobId) ?? null
+    : null;
 
   const counts = useMemo(() => {
     return {
@@ -220,11 +242,25 @@ export default function OnlyTheEssentialsBoard() {
     if (!confirmed) return;
 
     setJobs((current) => current.filter((job) => job.id !== jobId));
+    if (selectedJobId === jobId) setSelectedJobId(null);
+  }
+
+  async function copyText(value: string) {
+    try {
+      await navigator.clipboard.writeText(value);
+      alert("Copied.");
+    } catch {
+      alert("Could not copy.");
+    }
   }
 
   function renderJob(job: Job) {
     return (
-      <div key={job.id} className={`rounded-[24px] border p-4 ${statusClasses(job.status)}`}>
+      <div
+        key={job.id}
+        onClick={() => setSelectedJobId(job.id)}
+        className={`cursor-pointer rounded-[24px] border p-4 transition hover:scale-[1.01] ${statusClasses(job.status)}`}
+      >
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="text-lg font-semibold text-white">{job.client}</div>
@@ -243,34 +279,31 @@ export default function OnlyTheEssentialsBoard() {
         </div>
 
         <div className="mt-4 flex flex-wrap gap-2">
-          <a href={telHref(BUSINESS_PHONE)} className="rounded-xl border border-pink-300/25 bg-pink-400/10 px-3 py-2 text-xs font-semibold text-pink-100">
-            Call
-          </a>
-          <a href={smsHref(BUSINESS_PHONE)} className="rounded-xl border border-cyan-300/25 bg-cyan-400/10 px-3 py-2 text-xs font-semibold text-cyan-100">
-            Text
-          </a>
+          <button type="button" onClick={(e) => { e.stopPropagation(); setSelectedJobId(job.id); }} className="rounded-xl border border-pink-300/25 bg-pink-400/10 px-3 py-2 text-xs font-semibold text-pink-100">
+            Open
+          </button>
 
           {job.status === "scheduled" ? (
-            <button type="button" onClick={() => updateJobStatus(job.id, "in-progress")} className="rounded-xl bg-white px-3 py-2 text-xs font-semibold text-black">
+            <button type="button" onClick={(e) => { e.stopPropagation(); updateJobStatus(job.id, "in-progress"); }} className="rounded-xl bg-white px-3 py-2 text-xs font-semibold text-black">
               Start Job
             </button>
           ) : null}
 
           {job.status === "in-progress" ? (
-            <button type="button" onClick={() => updateJobStatus(job.id, "done")} className="rounded-xl border border-emerald-300/25 bg-emerald-400/15 px-3 py-2 text-xs font-semibold text-emerald-100">
+            <button type="button" onClick={(e) => { e.stopPropagation(); updateJobStatus(job.id, "done"); }} className="rounded-xl border border-emerald-300/25 bg-emerald-400/15 px-3 py-2 text-xs font-semibold text-emerald-100">
               Mark Done
             </button>
           ) : null}
 
-          <button type="button" onClick={() => togglePaid(job.id)} className="rounded-xl border border-amber-300/25 bg-amber-300/10 px-3 py-2 text-xs font-semibold text-amber-100">
+          <button type="button" onClick={(e) => { e.stopPropagation(); togglePaid(job.id); }} className="rounded-xl border border-amber-300/25 bg-amber-300/10 px-3 py-2 text-xs font-semibold text-amber-100">
             {job.paid ? "Mark Unpaid" : "Mark Paid"}
           </button>
 
-          <button type="button" onClick={() => openEditForm(job)} className="rounded-xl border border-white/15 bg-white/8 px-3 py-2 text-xs font-semibold text-white/85">
+          <button type="button" onClick={(e) => { e.stopPropagation(); openEditForm(job); }} className="rounded-xl border border-white/15 bg-white/8 px-3 py-2 text-xs font-semibold text-white/85">
             Edit
           </button>
 
-          <button type="button" onClick={() => deleteJob(job.id)} className="rounded-xl border border-rose-300/25 bg-rose-400/10 px-3 py-2 text-xs font-semibold text-rose-100">
+          <button type="button" onClick={(e) => { e.stopPropagation(); deleteJob(job.id); }} className="rounded-xl border border-rose-300/25 bg-rose-400/10 px-3 py-2 text-xs font-semibold text-rose-100">
             Delete
           </button>
         </div>
@@ -290,8 +323,6 @@ export default function OnlyTheEssentialsBoard() {
             {count}
           </span>
         </div>
-
-        
 
         <div className="space-y-4">
           {jobsByStatus(status).map(renderJob)}
@@ -397,6 +428,127 @@ export default function OnlyTheEssentialsBoard() {
           {renderColumn("in-progress", "In Progress", "Currently being handled.", counts.inProgress)}
           {renderColumn("done", "Done", "Finished and ready.", counts.done)}
         </section>
+
+        {selectedJob ? (
+          <div className="fixed inset-0 z-50 bg-black/70 p-4 backdrop-blur-sm">
+            <div className="ml-auto flex h-full max-w-xl flex-col overflow-hidden rounded-[30px] border border-pink-300/20 bg-[#10080d] shadow-2xl">
+              <div className="border-b border-white/10 p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="text-xs font-bold uppercase tracking-[0.22em] text-pink-200">
+                      Job Command Drawer
+                    </div>
+                    <h2 className="mt-1 text-3xl font-black">{selectedJob.client}</h2>
+                    <p className="mt-1 text-sm font-semibold text-pink-100">{selectedJob.service}</p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedJobId(null)}
+                    className="rounded-xl border border-white/15 px-3 py-2 text-sm text-white/80"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex-1 space-y-4 overflow-y-auto p-5">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <div className="text-xs uppercase tracking-[0.18em] text-white/45">Time</div>
+                    <div className="mt-1 font-bold">{selectedJob.time || "Not set"}</div>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <div className="text-xs uppercase tracking-[0.18em] text-white/45">Area</div>
+                    <div className="mt-1 font-bold">{selectedJob.location || "Not set"}</div>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-pink-300/20 bg-pink-400/10 p-4">
+                  <div className="text-xs font-bold uppercase tracking-[0.22em] text-pink-200">
+                    Needs Attention
+                  </div>
+                  <div className="mt-3 space-y-2 text-sm text-white/82">
+                    <div>⏰ Upcoming job time: {selectedJob.time || "time not set"}</div>
+                    <div>📩 Reschedule note: watch for client text updates before heading out.</div>
+                    <div>🧼 Supply note: check Windex / towels before the next house.</div>
+                    <div>🧴 Route note: exterior or pool jobs may need extra chlorine or cleaner.</div>
+                    <div>📊 Weekly note: {counts.done} completed jobs on this board so far.</div>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <div className="text-xs font-bold uppercase tracking-[0.22em] text-white/45">
+                    Job Notes
+                  </div>
+                  <p className="mt-3 text-sm leading-6 text-white/72">
+                    {selectedJob.notes || "No notes yet."}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-cyan-300/20 bg-cyan-400/10 p-4">
+                  <div className="text-xs font-bold uppercase tracking-[0.22em] text-cyan-200">
+                    Payment Layer
+                  </div>
+                  <div className="mt-3 rounded-xl border border-white/10 bg-black/30 p-3 text-sm text-white/75">
+                    Memo: <span className="font-bold text-white">{buildPaymentMemo(selectedJob)}</span>
+                    <br />
+                    Cash App: <span className="font-bold text-white">{CASH_APP_CASHTAG}</span>
+                    <br />
+                    Zelle: <span className="font-bold text-white">{ZELLE_CONTACT}</span>
+                  </div>
+
+                  <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+                    <img
+                      src={buildQrImageUrl(buildCashAppUrl(selectedJob))}
+                      alt="Payment QR"
+                      className="h-36 w-36 rounded-2xl border border-white/10 bg-white p-2"
+                    />
+                    <div className="flex flex-1 flex-col gap-2">
+                      <a
+                        href={buildCashAppUrl(selectedJob)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="rounded-xl bg-cyan-300 px-4 py-3 text-center text-sm font-bold text-black"
+                      >
+                        Open Cash App
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => copyText(buildPaymentMemo(selectedJob))}
+                        className="rounded-xl border border-white/15 px-4 py-3 text-sm font-bold text-white/85"
+                      >
+                        Copy Memo
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => togglePaid(selectedJob.id)}
+                        className="rounded-xl border border-amber-300/25 bg-amber-300/10 px-4 py-3 text-sm font-bold text-amber-100"
+                      >
+                        {selectedJob.paid ? "Mark Unpaid" : "Mark Paid"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <a href={telHref(BUSINESS_PHONE)} className="rounded-xl border border-pink-300/25 bg-pink-400/10 px-4 py-3 text-center text-sm font-bold text-pink-100">
+                    Call
+                  </a>
+                  <a href={smsHref(BUSINESS_PHONE)} className="rounded-xl border border-cyan-300/25 bg-cyan-400/10 px-4 py-3 text-center text-sm font-bold text-cyan-100">
+                    Text
+                  </a>
+                  <button type="button" onClick={() => openEditForm(selectedJob)} className="rounded-xl border border-white/15 px-4 py-3 text-sm font-bold text-white/85">
+                    Edit Job
+                  </button>
+                  <button type="button" onClick={() => deleteJob(selectedJob.id)} className="rounded-xl border border-rose-300/25 bg-rose-400/10 px-4 py-3 text-sm font-bold text-rose-100">
+                    Delete Job
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
 
         {showForm ? (
           <div className="fixed inset-0 z-50 bg-black/70 p-4 backdrop-blur-sm">
