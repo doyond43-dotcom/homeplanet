@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import PlanetOverview from "../pages/PlanetOverview";
 import CityPage from "../pages/CityPage";
 import FoundLayer from "../pages/FoundLayer";
+import OnlyTheEssentialsBoard from "../pages/OnlyTheEssentialsBoard";
 
 // Creator planet special pages
 import CreatorCity from "../pages/CreatorCity";
@@ -181,6 +182,7 @@ export default function PlanetRoutes() {
 
       {/* DEMOS */}
       <Route path="demo/home-services" element={<AwnitDemoBoard />} />
+      <Route path="demo/cleaning-board" element={<OnlyTheEssentialsBoard />} />
       <Route path="demo/auto-service" element={<AutoRepairLiveBoardSample />} />
       <Route path="demo/auto-service-sample" element={<AutoRepairLiveBoardSample />} />
       <Route path="demo/camp-aquaflow" element={<CampAquaflowStandalone />} />
@@ -246,4 +248,3 @@ export default function PlanetRoutes() {
     </Routes>
   );
 }
-
