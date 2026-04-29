@@ -1,4 +1,4 @@
-﻿import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 export default function OnlyTheEssentialsLanding() {
   const navigate = useNavigate();
@@ -16,6 +16,10 @@ export default function OnlyTheEssentialsLanding() {
 
         <h1 className="text-3xl font-bold tracking-tight mt-3">
           Cleaning that keeps life moving.
+
+        <div className="mt-5 flex justify-center">
+          
+        </div>
         </h1>
 
         <p className="text-sm text-gray-400 mt-3 leading-6">
@@ -74,4 +78,8 @@ export default function OnlyTheEssentialsLanding() {
     </div>
   );
 }
+
+
+
+
 

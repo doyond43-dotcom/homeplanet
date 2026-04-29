@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { getSupabase } from "../lib/supabase";
 
@@ -63,6 +63,7 @@ try {
 } catch {}
 
 setSubmitted(true);
+    navigate("/planet/demo/only-the-essentials/messages");
   }
 
   if (submitted) {
@@ -101,7 +102,7 @@ setSubmitted(true);
           onClick={() => navigate("/planet/only-the-essentials")}
           className="mb-6 text-sm text-white/50 hover:text-white"
         >
-          ← Back
+          ? Back
         </button>
 
         <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
@@ -139,4 +140,5 @@ setSubmitted(true);
     </main>
   );
 }
+
 

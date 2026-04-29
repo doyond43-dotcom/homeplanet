@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import BeautySalonLiveBoard from "./BeautySalonLiveBoard";
@@ -169,7 +169,7 @@ export default function LiveBoardRouter() {
     [starterBoard, locationState, starterPayload, resolvedBoardSlug],
   );
 
-  // 🔥 Template lookup (safe layer)
+  // ðŸ”¥ Template lookup (safe layer)
   const template = useMemo(() => {
     if (!resolvedBoardSlug) return null;
     return getLiveBoardTemplate(resolvedBoardSlug);
@@ -180,14 +180,14 @@ export default function LiveBoardRouter() {
       <div className="min-h-screen bg-[#050816] text-white">
         <div className="mx-auto flex min-h-screen max-w-4xl items-center justify-center px-6 py-16">
           <div className="w-full max-w-2xl rounded-[28px] border border-white/10 bg-white/[0.04] p-8 shadow-[0_30px_120px_rgba(0,0,0,0.45)] backdrop-blur">
-            <h1 className="text-3xl font-semibold">Loading live board…</h1>
+            <h1 className="text-3xl font-semibold">Loading live boardâ€¦</h1>
           </div>
         </div>
       </div>
     );
   }
 
-  // 🔥 TEMPLATE ROUTE (REAL BOARD NOW)
+  // ðŸ”¥ TEMPLATE ROUTE (REAL BOARD NOW)
   if (template) {
     return <TemplateLiveBoard template={template} />;
   }
@@ -196,9 +196,14 @@ export default function LiveBoardRouter() {
     return <CampAquaflowStandalone />;
   }
 
+  if (resolvedBoardSlug === "taylor-creek") {
+    return <AutoRepairLiveBoard />;
+  }
+
   if (looksLikeAuto(routingInput)) {
     return <AutoRepairLiveBoard />;
   }
 
   return <BeautySalonLiveBoard />;
 }
+
