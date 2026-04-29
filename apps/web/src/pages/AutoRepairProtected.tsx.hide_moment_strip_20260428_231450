@@ -1,0 +1,48 @@
+﻿import React from "react";
+import AutoRepairLiveBoard from "../pages/AutoRepairLiveBoard";
+
+import { useScopedAccess } from "../lib/homeplanetAccessRuntime";
+import { canViewPrivateBoard, redactPrivateBoardData } from "../lib/homeplanetAccess";
+
+const BOARD_ID = "taylor-creek-auto-repair";
+
+export default function AutoRepairProtected() {
+  const { key } = useScopedAccess();
+
+  const access = canViewPrivateBoard(key, BOARD_ID);
+
+  // 🚨 TEMP: just show mode (no data blocking yet)
+  const modeLabel = access.allowed
+    ? "PRIVATE OWNER VIEW"
+    : "PUBLIC SAFE VIEW";
+
+  return (
+    <>
+      <AutoRepairLiveBoard />
+
+      {/* ACCESS INDICATOR (NON-BREAKING) */}
+      <div
+        style={{
+          position: "fixed",
+          bottom: 16,
+          right: 16,
+          zIndex: 99999,
+          padding: "10px 14px",
+          borderRadius: 999,
+          fontSize: 12,
+          fontWeight: 800,
+          background: access.allowed
+            ? "rgba(20,83,45,0.95)"
+            : "rgba(69,26,3,0.95)",
+          color: "white",
+          border: access.allowed
+            ? "1px solid rgba(34,197,94,0.5)"
+            : "1px solid rgba(251,191,36,0.6)",
+          boxShadow: "0 16px 40px rgba(0,0,0,0.25)",
+        }}
+      >
+        {modeLabel}
+      </div>
+    </>
+  );
+}
