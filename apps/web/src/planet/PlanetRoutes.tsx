@@ -5,6 +5,8 @@ import CityPage from "../pages/CityPage";
 import FoundLayer from "../pages/FoundLayer";
 import FoundItemPage from "../pages/FoundItemPage";
 import OnlyTheEssentialsBoard from "../pages/OnlyTheEssentialsBoard";
+import OnlyTheEssentialsLanding from "../pages/OnlyTheEssentialsLanding";
+import OnlyTheEssentialsRequest from "../pages/OnlyTheEssentialsRequest";
 import StartPage from "../pages/StartPage";
 
 import CreatorCity from "../pages/CreatorCity";
@@ -104,6 +106,12 @@ export default function PlanetRoutes() {
       <Route index element={<Navigate to="/planet/start" replace />} />
 
       <Route path="start" element={<StartPage />} />
+
+      {/* ONLY THE ESSENTIALS */}
+      <Route path="only-the-essentials" element={<OnlyTheEssentialsLanding />} />
+      <Route path="only-the-essentials/request" element={<OnlyTheEssentialsRequest />} />
+      <Route path="cleaning/only-the-essentials" element={<OnlyTheEssentialsLanding />} />
+      <Route path="demo/only-the-essentials" element={<OnlyTheEssentialsBoard />} />
 
       <Route path="kids" element={<HomePlanetKids />} />
       <Route path="kids/start" element={<HomePlanetKidsStart />} />
