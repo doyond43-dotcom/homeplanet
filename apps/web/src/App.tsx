@@ -1,14 +1,13 @@
 ﻿import { BrowserRouter, Routes, Route, Navigate, Outlet, useSearchParams } from "react-router-dom";
 
-import TaylorCreekPublicDemoBoard from "./pages/TaylorCreekPublicDemoBoard";
-import TaylorCreekStaffDemoBoard from "./pages/TaylorCreekStaffDemoBoard";
+import TaylorCreekRealDemoBoard from "./pages/TaylorCreekRealDemoBoard";
+import TaylorCreekRealDemoStaffBoard from "./pages/TaylorCreekRealDemoStaffBoard";
 
 import PublicPage from "./routes/PublicPage";
 import TenantPublicPage from "./routes/TenantPublicPage";
 import LiveShopTV from "./routes/LiveShopTV";
 import LiveIntakeBoard from "./routes/LiveIntakeBoard";
 import PrintWorkOrder from "./routes/PrintWorkOrder";
-import JanetsLiveTVBoard from "./routes/JanetsLiveTVBoard";
 
 import ServiceRoutes from "./service/ServiceRoutes";
 import CityRoutes from "./routes/CityRoutes";
@@ -75,49 +74,35 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-
-        {/* SERVICE */}
         <Route path="/service/*" element={<ServiceRoutes />} />
-
-        {/* CITY */}
         <Route path="/city/*" element={<CityRoutes />} />
 
-        {/* LEGAL */}
         <Route path="/legal-demo" element={<LegalDemoBoard />} />
 
-        {/* NOTEBOOKS */}
         <Route path="/dan-field-notebook-desk" element={<DanFieldNotebookDesk />} />
         <Route path="/lee-student-notebook-desk" element={<LeeStudentNotebookDesk />} />
 
-        {/* CORE */}
         <Route path="/planet/*" element={<PlanetRoutes />} />
         <Route path="/creator/*" element={<CreatorRoutes />} />
         <Route path="/app/*" element={<WorkspaceRoutes />} />
 
-        {/* PRESS */}
         <Route path="/press" element={<PressPage />} />
         <Route path="/press/taylor-creek" element={<PressKitTaylorCreek />} />
 
-        {/* TAYLOR CREEK */}
         <Route path="/taylor-creek" element={<TaylorCreekSite />} />
-
-        {/* PUBLIC */}
         <Route path="/c/:slug" element={<PublicPage />} />
 
-        {/* LIVE AWNIT */}
         <Route path="/live/awnit" element={<LiveAwnitIntake />} />
 
-        {/* DEMO BOARDS (SAFE — WORKING) */}
-        <Route path="/live/taylor-creek-demo/board" element={<TaylorCreekPublicDemoBoard />} />
-        <Route path="/live/taylor-creek-demo/staff" element={<TaylorCreekStaffDemoBoard />} />
+        {/* SAFE TAYLOR CREEK DEMO ROUTES */}
+        <Route path="/live/taylor-creek-demo/board" element={<TaylorCreekRealDemoBoard />} />
+        <Route path="/live/taylor-creek-demo/staff" element={<TaylorCreekRealDemoStaffBoard />} />
 
-        
-        {/* FORCE SAFE DEMO FOR TAYLOR CREEK */}
+        {/* FORCE REAL TAYLOR CREEK PUBLIC LINKS TO SAFE DEMO */}
         <Route path="/live/taylor-creek" element={<Navigate to="/live/taylor-creek-demo/board" replace />} />
         <Route path="/live/taylor-creek/board" element={<Navigate to="/live/taylor-creek-demo/board" replace />} />
         <Route path="/live/taylor-creek/staff" element={<Navigate to="/live/taylor-creek-demo/staff" replace />} />
 
-{/* LIVE SYSTEM */}
         <Route path="/live/:slug" element={<LiveShell />}>
           <Route index element={<LiveShopTV />} />
           <Route path="staff" element={<LiveIntakeBoard />} />
@@ -125,30 +110,25 @@ export default function App() {
           <Route path="work-order/:id" element={<PrintWorkOrder />} />
         </Route>
 
-        {/* BEAM */}
         <Route path="/beam/staff" element={<BeamScreen />} />
         <Route path="/beam/open/:claimId" element={<BeamOpen />} />
         <Route path="/beam/:sessionId" element={<BeamReceive />} />
 
-        {/* CARD */}
         <Route path="/cards/measurement" element={<MeasurementCardPlaceholder />} />
 
-        {/* DISPATCH */}
         <Route path="/wilding-dispatch" element={<WildingLiveBoardDispatch />} />
 
-        {/* TENANT */}
         <Route path="/:slug/*" element={<TenantPublicPage />} />
 
-        {/* ROOT */}
         <Route path="/" element={<Navigate to="/city" replace />} />
 
-        {/* FALLBACK */}
         <Route path="*" element={<NotFound />} />
-
       </Routes>
     </BrowserRouter>
   );
 }
+
+
 
 
 
