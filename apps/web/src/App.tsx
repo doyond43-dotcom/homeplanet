@@ -1,10 +1,12 @@
-import { BrowserRouter, Routes, Route, Navigate, Outlet, useSearchParams } from "react-router-dom";
+﻿import { BrowserRouter, Routes, Route, Navigate, Outlet, useSearchParams } from "react-router-dom";
+
+import TaylorCreekPublicDemoBoard from "./pages/TaylorCreekPublicDemoBoard";
+import TaylorCreekStaffDemoBoard from "./pages/TaylorCreekStaffDemoBoard";
 
 import PublicPage from "./routes/PublicPage";
 import TenantPublicPage from "./routes/TenantPublicPage";
 import LiveShopTV from "./routes/LiveShopTV";
 import LiveIntakeBoard from "./routes/LiveIntakeBoard";
-import LiveAlias from "./routes/LiveAlias";
 import PrintWorkOrder from "./routes/PrintWorkOrder";
 import JanetsLiveTVBoard from "./routes/JanetsLiveTVBoard";
 
@@ -25,12 +27,10 @@ import DanFieldNotebookDesk from "./pages/DanFieldNotebookDesk";
 import LeeStudentNotebookDesk from "./pages/LeeStudentNotebookDesk";
 import NotFound from "./pages/NotFound";
 
-/* BEAM ROUTES */
 import BeamScreen from "./routes/BeamScreen";
 import BeamReceive from "./routes/BeamReceive";
 import BeamOpen from "./routes/BeamOpen";
 
-/* WILDING DISPATCH BOARD */
 import WildingLiveBoardDispatch from "./pages/WildingLiveBoardDispatch";
 
 function LiveShell() {
@@ -49,36 +49,21 @@ function MeasurementCardPlaceholder() {
       <div className="mx-auto max-w-3xl rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
         <div className="text-xs uppercase tracking-[0.2em] text-cyan-300/80">Beam Card</div>
         <div className="mt-1 text-2xl font-extrabold">Door Measurement Card</div>
-        <div className="mt-2 text-sm text-slate-300">
-          This is the real <span className="font-mono">/cards/measurement</span> route.
-        </div>
-
-        <div className="mt-4 rounded-xl border border-emerald-700/40 bg-emerald-950/20 p-3 text-sm text-emerald-100">
-          Good news: the panel is now opening a real card route instead of redirecting back to the AWNIT board.
-        </div>
 
         <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
           <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-3">
             <div className="text-xs text-slate-400">Beam</div>
-            <div className="mt-1 font-mono text-sm text-slate-100">{beam || "—"}</div>
+            <div className="mt-1 font-mono text-sm">{beam || "-"}</div>
           </div>
 
           <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-3">
-            <div className="text-xs text-slate-400">Session ID</div>
-            <div className="mt-1 break-all font-mono text-sm text-slate-100">{sessionId || "—"}</div>
+            <div className="text-xs text-slate-400">Session</div>
+            <div className="mt-1 font-mono text-sm">{sessionId || "-"}</div>
           </div>
 
           <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-3">
             <div className="text-xs text-slate-400">Code</div>
-            <div className="mt-1 font-mono text-sm text-slate-100">{code || "—"}</div>
-          </div>
-        </div>
-
-        <div className="mt-5 rounded-xl border border-slate-800 bg-slate-950/60 p-4">
-          <div className="text-sm font-bold text-slate-100">Next step</div>
-          <div className="mt-2 text-sm text-slate-300">
-            Once this displays correctly in the right-side Beam Workspace, we replace this placeholder with the real
-            measurement card UI.
+            <div className="mt-1 font-mono text-sm">{code || "-"}</div>
           </div>
         </div>
       </div>
@@ -90,32 +75,23 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* SERVICE SYSTEM */}
+
+        {/* SERVICE */}
         <Route path="/service/*" element={<ServiceRoutes />} />
 
-        {/* CITY LAYER */}
+        {/* CITY */}
         <Route path="/city/*" element={<CityRoutes />} />
 
-        {/* LEGAL DEMO */}
+        {/* LEGAL */}
         <Route path="/legal-demo" element={<LegalDemoBoard />} />
-        <Route path="/legal-evidence-board" element={<Navigate to="/legal-demo" replace />} />
-        <Route path="/planet/legal/demo" element={<LegalDemoBoard />} />
 
-        {/* DAN FIELD NOTEBOOK DESK */}
+        {/* NOTEBOOKS */}
         <Route path="/dan-field-notebook-desk" element={<DanFieldNotebookDesk />} />
-        <Route path="/field-desk" element={<Navigate to="/dan-field-notebook-desk" replace />} />
-
-        {/* LEE STUDENT NOTEBOOK DESK */}
         <Route path="/lee-student-notebook-desk" element={<LeeStudentNotebookDesk />} />
-        <Route path="/lee-desk" element={<Navigate to="/lee-student-notebook-desk" replace />} />
 
-        {/* PLANET CORE */}
+        {/* CORE */}
         <Route path="/planet/*" element={<PlanetRoutes />} />
-
-        {/* CREATOR */}
         <Route path="/creator/*" element={<CreatorRoutes />} />
-
-        {/* WORKSPACE */}
         <Route path="/app/*" element={<WorkspaceRoutes />} />
 
         {/* PRESS */}
@@ -124,23 +100,23 @@ export default function App() {
 
         {/* TAYLOR CREEK */}
         <Route path="/taylor-creek" element={<TaylorCreekSite />} />
-        <Route path="/Taylor-Creek" element={<Navigate to="/taylor-creek" replace />} />
 
-        {/* PUBLIC INTAKE */}
+        {/* PUBLIC */}
         <Route path="/c/:slug" element={<PublicPage />} />
 
-        {/* AWNIT LIVE */}
+        {/* LIVE AWNIT */}
         <Route path="/live/awnit" element={<LiveAwnitIntake />} />
 
-        {/* JANET'S LIVE TV BOARD */}
-        <Route path="/janets-live-tv-board" element={<JanetsLiveTVBoard />} />
+        {/* DEMO BOARDS (SAFE — WORKING) */}
+        <Route path="/live/taylor-creek-demo/board" element={<TaylorCreekPublicDemoBoard />} />
+        <Route path="/live/taylor-creek-demo/staff" element={<TaylorCreekStaffDemoBoard />} />
 
         {/* LIVE SYSTEM */}
         <Route path="/live/:slug" element={<LiveShell />}>
           <Route index element={<LiveShopTV />} />
           <Route path="staff" element={<LiveIntakeBoard />} />
-          <Route path="work-order/:id" element={<PrintWorkOrder />} />
           <Route path="board" element={<LiveShopTV />} />
+          <Route path="work-order/:id" element={<PrintWorkOrder />} />
         </Route>
 
         {/* BEAM */}
@@ -151,10 +127,10 @@ export default function App() {
         {/* CARD */}
         <Route path="/cards/measurement" element={<MeasurementCardPlaceholder />} />
 
-        {/* WILDING DISPATCH BOARD */}
+        {/* DISPATCH */}
         <Route path="/wilding-dispatch" element={<WildingLiveBoardDispatch />} />
 
-        {/* TENANT PUBLIC */}
+        {/* TENANT */}
         <Route path="/:slug/*" element={<TenantPublicPage />} />
 
         {/* ROOT */}
@@ -162,7 +138,10 @@ export default function App() {
 
         {/* FALLBACK */}
         <Route path="*" element={<NotFound />} />
+
       </Routes>
     </BrowserRouter>
   );
 }
+
+

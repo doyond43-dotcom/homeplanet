@@ -35,12 +35,12 @@ export default function StartPage() {
           Start a Business Board
         </button>
 
-        {/* LIVE DEMO */}
+        {/* LIVE SYSTEMS (FIXED) */}
         <button
-          onClick={() => navigate("/planet/live/peggies-diner")}
+          onClick={() => navigate("/planet/creator/systems")}
           className="w-full border border-gray-700 py-4 rounded-2xl text-lg active:scale-[0.98]"
         >
-          View Live Boards
+          Explore Live Systems
         </button>
 
         {/* GUARDIAN / PET */}
