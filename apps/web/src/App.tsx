@@ -111,7 +111,13 @@ export default function App() {
         <Route path="/live/taylor-creek-demo/board" element={<TaylorCreekPublicDemoBoard />} />
         <Route path="/live/taylor-creek-demo/staff" element={<TaylorCreekStaffDemoBoard />} />
 
-        {/* LIVE SYSTEM */}
+        
+        {/* FORCE SAFE DEMO FOR TAYLOR CREEK */}
+        <Route path="/live/taylor-creek" element={<Navigate to="/live/taylor-creek-demo/board" replace />} />
+        <Route path="/live/taylor-creek/board" element={<Navigate to="/live/taylor-creek-demo/board" replace />} />
+        <Route path="/live/taylor-creek/staff" element={<Navigate to="/live/taylor-creek-demo/staff" replace />} />
+
+{/* LIVE SYSTEM */}
         <Route path="/live/:slug" element={<LiveShell />}>
           <Route index element={<LiveShopTV />} />
           <Route path="staff" element={<LiveIntakeBoard />} />
@@ -143,5 +149,6 @@ export default function App() {
     </BrowserRouter>
   );
 }
+
 
 
