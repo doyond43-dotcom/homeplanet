@@ -120,7 +120,7 @@ export default function OnlyTheEssentialsMessagesBoard() {
     items: CleaningRequest[];
   }) {
     return (
-      <section className="rounded-3xl border border-white/10 bg-white/[0.035] p-5">
+      <section className="rounded-3xl border border-rose-200/20 bg-white/\[0\.035\] p-5">
         <div className="mb-4 flex items-center justify-between gap-3">
           <h2 className="text-lg font-semibold text-white">{title}</h2>
           <span className="rounded-full bg-white/10 px-3 py-1 text-xs text-white/70">
@@ -141,7 +141,7 @@ export default function OnlyTheEssentialsMessagesBoard() {
                   setSelected(request);
                   setScheduledFor("");
                 }}
-                className="w-full rounded-2xl border border-white/10 bg-black/30 p-4 text-left transition hover:border-rose-200/40 hover:bg-white/[0.06]"
+                className="w-full rounded-2xl border border-white/8 bg-black/30 p-4 text-left transition hover:border-rose-200/40 hover:bg-white/[0.06]"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -161,7 +161,7 @@ export default function OnlyTheEssentialsMessagesBoard() {
           })}
 
           {!items.length && (
-            <div className="rounded-2xl border border-dashed border-white/10 p-4 text-sm text-white/40">
+            <div className="rounded-2xl border border-dashed border-white/8 p-4 text-sm text-white/40">
               No requests here right now.
             </div>
           )}
@@ -171,9 +171,9 @@ export default function OnlyTheEssentialsMessagesBoard() {
   }
 
   return (
-    <main className="min-h-screen bg-black text-white">
+    <main className="min-h-screen pt-4 bg-black text-white">
       <div className="mx-auto max-w-7xl">
-        <header className="mb-6 rounded-[2rem] border border-white/10 bg-gradient-to-br from-black via-[#130d10] to-[#2b141d] p-6 shadow-2xl">
+        <header className="mb-6 rounded-[2rem] border border-white/8 bg-gradient-to-br from-black via-[#130d10] to-[#2b141d] p-6 shadow-2xl">
           <p className="text-sm font-medium uppercase tracking-[0.35em] text-rose-100/70">
             Only The Essentials
           </p>
@@ -199,7 +199,7 @@ export default function OnlyTheEssentialsMessagesBoard() {
 
             <button
               onClick={loadRequests}
-              className="rounded-3xl border border-white/10 bg-white/[0.035] p-5"
+              className="rounded-3xl border border-rose-200/20 bg-white/\[0\.035\] p-5"
             >
               Refresh requests
             </button>
@@ -207,7 +207,7 @@ export default function OnlyTheEssentialsMessagesBoard() {
         </header>
 
         {loading ? (
-          <div className="rounded-3xl border border-white/10 bg-white/[0.035] p-5">
+          <div className="rounded-3xl border border-rose-200/20 bg-white/\[0\.035\] p-5">
             Loading requests...
           </div>
         ) : (
@@ -222,8 +222,8 @@ export default function OnlyTheEssentialsMessagesBoard() {
 
       {selected && (
         <div className="fixed inset-0 z-50 bg-black/70 p-4 backdrop-blur-sm">
-          <div className="ml-auto flex h-full w-full max-w-xl flex-col overflow-hidden rounded-[2rem] border border-white/10 bg-[#100c0e] shadow-2xl">
-            <div className="border-b border-white/10 p-5">
+          <div className="ml-auto flex h-full w-full max-w-xl flex-col overflow-hidden rounded-[2rem] border border-white/8 bg-[#100c0e] shadow-2xl">
+            <div className="border-b border-white/8 p-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-xs uppercase tracking-[0.3em] text-rose-100/60">
@@ -239,7 +239,7 @@ export default function OnlyTheEssentialsMessagesBoard() {
 
                 <button
                   onClick={() => setSelected(null)}
-                  className="rounded-3xl border border-white/10 bg-white/[0.035] p-5"
+                  className="rounded-3xl border border-rose-200/20 bg-white/\[0\.035\] p-5"
                 >
                   Close
                 </button>
@@ -247,7 +247,7 @@ export default function OnlyTheEssentialsMessagesBoard() {
             </div>
 
             <div className="flex-1 space-y-5 overflow-y-auto p-5">
-              <div className="rounded-3xl border border-white/10 bg-white/[0.035] p-5">
+              <div className="rounded-3xl border border-rose-200/20 bg-white/\[0\.035\] p-5">
                 <p className="text-sm font-semibold text-white">Customer message</p>
                 <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-white/70">
                   {selectedMessage || "No message added."}
@@ -255,7 +255,7 @@ export default function OnlyTheEssentialsMessagesBoard() {
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-3xl border border-white/10 bg-white/[0.035] p-5">
+                <div className="rounded-3xl border border-rose-200/20 bg-white/\[0\.035\] p-5">
                   <p className="text-xs uppercase tracking-[0.22em] text-white/35">
                     Phone
                   </p>
@@ -264,7 +264,7 @@ export default function OnlyTheEssentialsMessagesBoard() {
                   </p>
                 </div>
 
-                <div className="rounded-3xl border border-white/10 bg-white/[0.035] p-5">
+                <div className="rounded-3xl border border-rose-200/20 bg-white/\[0\.035\] p-5">
                   <p className="text-xs uppercase tracking-[0.22em] text-white/35">
                     Email
                   </p>
@@ -273,7 +273,7 @@ export default function OnlyTheEssentialsMessagesBoard() {
                   </p>
                 </div>
 
-                <div className="rounded-3xl border border-white/10 bg-white/[0.035] p-5">
+                <div className="rounded-3xl border border-rose-200/20 bg-white/\[0\.035\] p-5">
                   <p className="text-xs uppercase tracking-[0.22em] text-white/35">
                     Address
                   </p>
@@ -282,7 +282,7 @@ export default function OnlyTheEssentialsMessagesBoard() {
                   </p>
                 </div>
 
-                <div className="rounded-3xl border border-white/10 bg-white/[0.035] p-5">
+                <div className="rounded-3xl border border-rose-200/20 bg-white/\[0\.035\] p-5">
                   <p className="text-xs uppercase tracking-[0.22em] text-white/35">
                     Customer preferred time
                   </p>
@@ -295,7 +295,7 @@ export default function OnlyTheEssentialsMessagesBoard() {
                 </div>
               </div>
 
-              <div className="rounded-3xl border border-white/10 bg-white/[0.035] p-5">
+              <div className="rounded-3xl border border-rose-200/20 bg-white/\[0\.035\] p-5">
                 <label className="text-sm font-semibold text-white">
                   Staff Scheduled For
                 </label>
@@ -303,7 +303,7 @@ export default function OnlyTheEssentialsMessagesBoard() {
                   value={scheduledFor}
                   onChange={(event) => setScheduledFor(event.target.value)}
                   placeholder="Example: Friday at 10:30 AM"
-                  className="mt-3 w-full rounded-2xl border border-white/10 bg-black/35 px-4 py-3 text-sm text-white outline-none placeholder:text-white/30 focus:border-rose-100/40"
+                  className="mt-3 w-full rounded-2xl border border-white/8 bg-black/35 px-4 py-3 text-sm text-white outline-none placeholder:text-white/30 focus:border-rose-100/40"
                 />
                 <p className="mt-2 text-xs leading-5 text-white/45">
                   Staff-only note for confirming the real appointment after talking/texting.
@@ -311,7 +311,7 @@ export default function OnlyTheEssentialsMessagesBoard() {
               </div>
             </div>
 
-            <div className="border-t border-white/10 p-5">
+            <div className="border-t border-white/8 p-5">
               <div className="grid gap-3 sm:grid-cols-2">
                 <button
                   type="button"
@@ -336,7 +336,7 @@ export default function OnlyTheEssentialsMessagesBoard() {
                     }
                     window.location.href = `sms:${selectedPhone}?&body=${textBody}`;
                   }}
-                  className="rounded-full border border-white/10 bg-white/[0.035] px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-white/10">
+                  className="rounded-full border border-white/8 bg-[rgba(120,20,40,0.08)] px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-white/10">
                   Text Customer
                 </button>
 
@@ -349,7 +349,7 @@ export default function OnlyTheEssentialsMessagesBoard() {
                     }
                     window.location.href = `sms:${selectedPhone}?&body=${confirmTextBody}`;
                   }}
-                  className="rounded-full border border-white/10 bg-white/[0.08] px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-white/12 sm:col-span-2">
+                  className="rounded-full border border-white/8 bg-white/[0.08] px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-white/12 sm:col-span-2">
                   Confirm Scheduled + Text Customer
                 </button>
               </div>
@@ -364,6 +364,19 @@ export default function OnlyTheEssentialsMessagesBoard() {
     </main>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
