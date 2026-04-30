@@ -320,7 +320,7 @@ export default function OnlyTheEssentialsBoard({ template }: BoardProps) {
           </button>
 
           {job.status === "scheduled" ? (
-            <button type="button" onClick={(e) => { e.stopPropagation(); updateJobStatus(job.id, "in-progress"); }} className="rounded-xl bg-white px-3 py-2 text-xs font-semibold text-black">
+            <button type="button" onClick={(e) => { e.stopPropagation(); updateJobStatus(job.id, "in-progress"); }} className="rounded-xl bg-white/90 px-3 py-2 text-xs font-semibold text-black">
               Start Job
             </button>
           ) : null}
@@ -398,7 +398,7 @@ export default function OnlyTheEssentialsBoard({ template }: BoardProps) {
 
                 <a
                   href="/planet/only-the-essentials"
-                  className="rounded-2xl border border-white/15 bg-white px-5 py-3 text-sm font-bold text-black shadow-sm hover:bg-rose-50"
+                  className="rounded-2xl border border-white/15 bg-white/90 px-5 py-3 text-sm font-bold text-black shadow-sm hover:bg-white/95"
                 >
                   Open Customer Page
                 </a>
@@ -438,7 +438,7 @@ export default function OnlyTheEssentialsBoard({ template }: BoardProps) {
           <button
             type="button"
             onClick={() => openAddForm("scheduled")}
-            className="mt-5 w-full rounded-2xl bg-white px-4 py-3 text-sm font-bold text-black sm:w-auto"
+            className="mt-5 w-full rounded-2xl bg-white/90 px-4 py-3 text-sm font-bold text-black sm:w-auto"
           >
             + Add New Job
           </button>
@@ -552,7 +552,7 @@ export default function OnlyTheEssentialsBoard({ template }: BoardProps) {
                     <img
                       src={buildQrImageUrl(buildCashAppUrl(selectedJob, cashAppCashtag, businessName))}
                       alt="Payment QR"
-                      className="h-36 w-36 rounded-2xl border border-white/10 bg-white p-2"
+                      className="h-36 w-36 rounded-2xl border border-white/10 bg-white/90 p-2"
                     />
                     <div className="flex flex-1 flex-col gap-2">
                       <a
@@ -638,7 +638,7 @@ export default function OnlyTheEssentialsBoard({ template }: BoardProps) {
               </div>
 
               <div className="mt-5 flex flex-wrap gap-3">
-                <button type="button" onClick={saveJob} className="rounded-xl bg-white px-5 py-3 text-sm font-bold text-black">
+                <button type="button" onClick={saveJob} className="rounded-xl bg-white/90 px-5 py-3 text-sm font-bold text-black">
                   Save Job
                 </button>
                 <button type="button" onClick={closeForm} className="rounded-xl border border-white/15 px-5 py-3 text-sm font-bold text-white/80">
@@ -652,6 +652,7 @@ export default function OnlyTheEssentialsBoard({ template }: BoardProps) {
     </main>
   );
 }
+
 
 
 
