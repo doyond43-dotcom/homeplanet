@@ -108,6 +108,27 @@ export default function OnlyTheEssentialsMessagesBoard() {
     `Hi ${selectedName}, this is Only The Essentials Cleaning. I received your request and wanted to confirm the details with you.`
   );
 
+  async function deleteSelectedRequest() {
+    if (!selected?.id) return;
+
+    const confirmed = window.confirm("Delete this request from the messages board?");
+    if (!confirmed) return;
+
+    const { error } = await supabase
+      .from("cleaning_requests")
+      .delete()
+      .eq("id", selected.id);
+
+    if (error) {
+      console.error("Only The Essentials request delete error:", error);
+      alert("Could not delete this request.");
+      return;
+    }
+
+    setRequests((current) => current.filter((request) => request.id !== selected.id));
+    setSelected(null);
+  }
+
   const confirmTextBody = encodeURIComponent(
     `Hi ${selectedName}, this is Only The Essentials Cleaning. We have you scheduled for ${scheduledFor || "your confirmed appointment time"}. Reply here if anything changes.`
   );
@@ -352,6 +373,14 @@ export default function OnlyTheEssentialsMessagesBoard() {
                   className="rounded-full border border-white/8 bg-white/[0.08] px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-white/12 sm:col-span-2">
                   Confirm Scheduled + Text Customer
                 </button>
+
+                <button
+                  type="button"
+                  onClick={deleteSelectedRequest}
+                  className="rounded-full border border-rose-300/25 bg-rose-500/12 px-5 py-3 text-center text-sm font-semibold text-rose-100 transition hover:bg-rose-500/20 sm:col-span-2"
+                >
+                  Delete Request
+                </button>
               </div>
 
               <p className="mt-3 text-center text-xs text-white/35">
@@ -364,6 +393,9 @@ export default function OnlyTheEssentialsMessagesBoard() {
     </main>
   );
 }
+
+
+
 
 
 
