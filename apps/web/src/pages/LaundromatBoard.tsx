@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 
-type JobStatus = "scheduled" | "in-progress" | "done";
+type JobStatus = "Queued" | "in-progress" | "Ready";
 
 type Job = {
   id: string;
@@ -30,7 +30,7 @@ type BoardProps = {
   template?: BoardTemplate;
 };
 
-const FALLBACK_BUSINESS_NAME = "Only The Essentials Cleaning LLC";
+const FALLBACK_BUSINESS_NAME = "Taylor Creek Laundry";
 const FALLBACK_BUSINESS_PHONE = "863-801-3179";
 const FALLBACK_SERVICE_AREA = "Okeechobee & surrounding areas";
 const FALLBACK_CASH_APP_CASHTAG = "$OnlyTheEssentials";
@@ -42,7 +42,7 @@ const EMPTY_FORM: JobForm = {
   time: "",
   location: "",
   notes: "",
-  status: "scheduled",
+  status: "Queued",
   paid: false,
 };
 
@@ -50,65 +50,65 @@ const INITIAL_JOBS: Job[] = [
   {
     id: "job-1",
     client: "Mrs. Johnson",
-    service: "Residential Cleaning",
+    service: "Wash & Fold",
     time: "9:00 AM",
     location: "Taylor Creek",
-    notes: "Dog inside, friendly. Focus kitchen and floors.",
-    status: "scheduled",
+    notes: "Pickup - 2 bags, fragrance-free.",
+    status: "Queued",
     paid: false,
   },
   {
     id: "job-2",
     client: "Lakeview Airbnb",
-    service: "Move-In / Move-Out Clean",
+    service: "Pickup & Delivery",
     time: "11:30 AM",
     location: "Lakeview Estates",
-    notes: "Key under mat. Focus bathrooms, fridge, and floors.",
-    status: "scheduled",
+    notes: "Pickup and delivery order, 3 bags.",
+    status: "Queued",
     paid: false,
   },
   {
     id: "job-3",
     client: "Martinez Family",
-    service: "Deep Clean",
+    service: "Comforters / Bulk Items",
     time: "2:00 PM",
     location: "Okeechobee Blvd",
-    notes: "First-time client. Extra attention to baseboards.",
-    status: "scheduled",
+    notes: "King comforter and blanket set.",
+    status: "Queued",
     paid: false,
   },
   {
     id: "job-4",
     client: "Mr. Daniels",
-    service: "Exterior Light Cleaning",
+    service: "Bulk Laundry",
     time: "8:12 AM",
     location: "Riverside Dr",
-    notes: "Patio, entryway, and driveway rinse.",
+    notes: "Bulk towels and work clothes.",
     status: "in-progress",
     paid: false,
   },
   {
     id: "job-5",
     client: "Sarah K.",
-    service: "Residential Cleaning",
+    service: "Wash & Fold",
     time: "7:45 AM",
     location: "Okeechobee",
-    notes: "Completed morning clean.",
-    status: "done",
+    notes: "Washed, folded, and ready for pickup.",
+    status: "Ready",
     paid: true,
   },
 ];
 
 const STATUS_TABS: Array<{ key: JobStatus; label: string }> = [
-  { key: "scheduled", label: "Scheduled" },
-  { key: "in-progress", label: "Active" },
-  { key: "done", label: "Done" },
+  { key: "Queued", label: "Queued" },
+  { key: "in-progress", label: "Washing / Drying" },
+  { key: "Ready", label: "Ready" },
 ];
 
 function statusClasses(status: JobStatus) {
-  if (status === "scheduled") return "border-white/14 bg-white/5";
+  if (status === "Queued") return "border-white/14 bg-white/5";
   if (status === "in-progress") {
-    return "border-pink-300/30 bg-pink-400/10 shadow-[0_0_30px_rgba(244,114,182,0.12)]";
+    return "border-cyan-300/30 bg-cyan-400/6 shadow-[0_0_18px_rgba(56,189,248,0.08)]";
   }
   return "border-emerald-300/24 bg-emerald-400/10";
 }
@@ -155,7 +155,7 @@ function buildTemplateJobs(template?: BoardTemplate): Job[] {
   }));
 }
 
-export default function OnlyTheEssentialsBoard({ template }: BoardProps) {
+export default function LaundromatBoard({ template }: BoardProps) {
   const businessName = template?.businessName || FALLBACK_BUSINESS_NAME;
   const businessPhone = template?.phone || FALLBACK_BUSINESS_PHONE;
   const serviceArea = template?.serviceArea || FALLBACK_SERVICE_AREA;
@@ -163,7 +163,7 @@ export default function OnlyTheEssentialsBoard({ template }: BoardProps) {
   const zelleContact = template?.payment?.zelle || FALLBACK_ZELLE_CONTACT;
 
   const [jobs, setJobs] = useState<Job[]>(() => buildTemplateJobs(template));
-  const [activeTab, setActiveTab] = useState<JobStatus>("scheduled");
+  const [activeTab, setActiveTab] = useState<JobStatus>("Queued");
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<JobForm>(EMPTY_FORM);
@@ -175,9 +175,9 @@ export default function OnlyTheEssentialsBoard({ template }: BoardProps) {
 
   const counts = useMemo(() => {
     return {
-      scheduled: jobs.filter((job) => job.status === "scheduled").length,
+      Queued: jobs.filter((job) => job.status === "Queued").length,
       inProgress: jobs.filter((job) => job.status === "in-progress").length,
-      done: jobs.filter((job) => job.status === "done").length,
+      Ready: jobs.filter((job) => job.status === "Ready").length,
       unpaid: jobs.filter((job) => !job.paid).length,
     };
   }, [jobs]);
@@ -190,7 +190,7 @@ export default function OnlyTheEssentialsBoard({ template }: BoardProps) {
     setForm((current) => ({ ...current, [field]: value }));
   }
 
-  function openAddForm(status: JobStatus = "scheduled") {
+  function openAddForm(status: JobStatus = "Queued") {
     setEditingId(null);
     setForm({ ...EMPTY_FORM, status });
     setShowForm(true);
@@ -300,7 +300,7 @@ export default function OnlyTheEssentialsBoard({ template }: BoardProps) {
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="text-lg font-semibold text-white">{job.client}</div>
-            <div className="mt-1 text-sm font-semibold text-pink-100">{job.service}</div>
+            <div className="mt-1 text-sm font-semibold text-cyan-100">{job.service}</div>
           </div>
 
           <div className="rounded-full border border-white/12 bg-black/30 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/75">
@@ -315,19 +315,19 @@ export default function OnlyTheEssentialsBoard({ template }: BoardProps) {
         </div>
 
         <div className="mt-4 flex flex-wrap gap-2">
-          <button type="button" onClick={(e) => { e.stopPropagation(); setSelectedJobId(job.id); }} className="rounded-xl border border-pink-300/25 bg-pink-400/10 px-3 py-2 text-xs font-semibold text-pink-100">
+          <button type="button" onClick={(e) => { e.stopPropagation(); setSelectedJobId(job.id); }} className="rounded-xl border border-cyan-300/25 bg-cyan-400/6 px-3 py-2 text-xs font-semibold text-cyan-100">
             Open
           </button>
 
-          {job.status === "scheduled" ? (
+          {job.status === "Queued" ? (
             <button type="button" onClick={(e) => { e.stopPropagation(); updateJobStatus(job.id, "in-progress"); }} className="rounded-xl bg-white/90 px-3 py-2 text-xs font-semibold text-black">
-              Start Job
+              Start Wash
             </button>
           ) : null}
 
           {job.status === "in-progress" ? (
-            <button type="button" onClick={(e) => { e.stopPropagation(); updateJobStatus(job.id, "done"); }} className="rounded-xl border border-emerald-300/25 bg-emerald-400/15 px-3 py-2 text-xs font-semibold text-emerald-100">
-              Mark Done
+            <button type="button" onClick={(e) => { e.stopPropagation(); updateJobStatus(job.id, "Ready"); }} className="rounded-xl border border-emerald-300/25 bg-emerald-400/15 px-3 py-2 text-xs font-semibold text-emerald-100">
+              Ready for Pickup
             </button>
           ) : null}
 
@@ -349,13 +349,19 @@ export default function OnlyTheEssentialsBoard({ template }: BoardProps) {
 
   function renderColumn(status: JobStatus, title: string, subtitle: string, count: number) {
     return (
-      <section className="rounded-[30px] border border-white/12 bg-white/5 p-4">
+      <section
+  className={`rounded-[30px] border p-4 ${
+    status === "in-progress"
+      ? "border-cyan-300/20 bg-cyan-400/6"
+      : "border-white/12 bg-white/5"
+  }`}
+>
         <div className="mb-4 flex items-center justify-between border-b border-white/10 pb-4">
           <div>
             <h2 className="text-2xl font-black">{title}</h2>
             <p className="text-sm text-white/55">{subtitle}</p>
           </div>
-          <span className="rounded-full bg-pink-400/12 px-3 py-1 text-xs font-semibold text-pink-100">
+          <span className="rounded-full bg-cyan-400/8 px-3 py-1 text-xs font-semibold text-cyan-100">
             {count}
           </span>
         </div>
@@ -373,13 +379,13 @@ export default function OnlyTheEssentialsBoard({ template }: BoardProps) {
   }
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_12%_8%,rgba(244,114,182,0.16),transparent_28%),radial-gradient(circle_at_88%_12%,rgba(250,204,21,0.10),transparent_26%),#050509] px-4 py-5 text-white sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_12%_8%,rgba(56,189,248,0.16),transparent_28%),radial-gradient(circle_at_88%_12%,rgba(34,197,94,0.10),transparent_26%),#050509] px-4 py-5 text-white sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
-<header className="rounded-[32px] border border-pink-200/18 bg-[linear-gradient(135deg,rgba(244,114,182,0.13),rgba(255,255,255,0.045)_42%,rgba(250,204,21,0.06))] p-5 sm:p-7">
+<header className="rounded-[32px] border border-cyan-200/18 bg-[linear-gradient(135deg,rgba(56,189,248,0.13),rgba(255,255,255,0.045)_42%,rgba(34,197,94,0.06))] p-5 sm:p-7">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <div className="inline-flex rounded-full border border-pink-300/30 bg-pink-400/12 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-pink-100">
-                Live Cleaning Board
+              <div className="inline-flex rounded-full border border-cyan-300/30 bg-cyan-400/8 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-100">
+                Live Laundry Board
               </div>
 
               <h1 className="mt-3 text-3xl font-black tracking-tight text-white sm:text-5xl">
@@ -387,8 +393,7 @@ export default function OnlyTheEssentialsBoard({ template }: BoardProps) {
               </h1>
 
               <p className="mt-2 max-w-2xl text-sm leading-6 text-white/72 sm:text-base">
-                Detail-oriented, reliable, professional. A simple daily board for residential cleaning,
-                deep cleans, move-out cleans, exterior light cleaning, and pool cleaning services.
+                Detail-oriented, reliable, professional. A simple daily board for wash and fold, pickup and delivery, comforters, bulk laundry, and simple customer drop-off jobs.
               </p>
 
               <div className="mt-4 flex flex-wrap gap-2 text-sm">
@@ -405,13 +410,20 @@ export default function OnlyTheEssentialsBoard({ template }: BoardProps) {
 
                 <a
                   href="/planet/demo/only-the-essentials/messages"
-                  className="rounded-2xl border border-pink-300/40 bg-pink-500/20 px-5 py-3 text-sm font-bold text-pink-50 shadow-sm hover:bg-pink-500/30"
+                  className="rounded-2xl border border-cyan-300/40 bg-cyan-500/12 px-5 py-3 text-sm font-bold text-cyan-50 shadow-sm hover:bg-cyan-500/18"
                 >
                   Customer Requests
                 </a>
                 <span className="rounded-full border border-white/12 bg-black/25 px-3 py-1 text-white/78">
                   Serving {serviceArea}
                 </span>
+
+                <a
+                  href="/planet/demo/only-the-essentials"
+                  className="rounded-2xl border border-pink-300/35 bg-pink-500/12 px-5 py-3 text-sm font-bold text-pink-50 shadow-sm hover:bg-pink-500/18"
+                >
+                  Connected: Cleaning Board
+                </a>
               </div>
             </div>
 
@@ -420,27 +432,27 @@ export default function OnlyTheEssentialsBoard({ template }: BoardProps) {
                 <div className="text-2xl font-black">{jobs.length}</div>
                 <div className="text-xs uppercase tracking-[0.16em] text-white/50">Jobs today</div>
               </div>
-              <div className="rounded-2xl border border-pink-300/18 bg-pink-400/10 p-4">
-                <div className="text-2xl font-black">{counts.scheduled}</div>
-                <div className="text-xs uppercase tracking-[0.16em] text-white/50">Scheduled</div>
+              <div className="rounded-2xl border border-pink-300/18 bg-cyan-400/6 p-4">
+                <div className="text-2xl font-black">{counts.Queued}</div>
+                <div className="text-xs uppercase tracking-[0.16em] text-white/50">Queued</div>
               </div>
               <div className="rounded-2xl border border-amber-300/18 bg-amber-300/10 p-4">
                 <div className="text-2xl font-black">{counts.inProgress}</div>
-                <div className="text-xs uppercase tracking-[0.16em] text-white/50">Active</div>
+                <div className="text-xs uppercase tracking-[0.16em] text-white/50">Washing / Drying</div>
               </div>
               <div className="rounded-2xl border border-emerald-300/18 bg-emerald-400/10 p-4">
-                <div className="text-2xl font-black">{counts.done}</div>
-                <div className="text-xs uppercase tracking-[0.16em] text-white/50">Done</div>
+                <div className="text-2xl font-black">{counts.Ready}</div>
+                <div className="text-xs uppercase tracking-[0.16em] text-white/50">Ready</div>
               </div>
             </div>
           </div>
 
           <button
             type="button"
-            onClick={() => openAddForm("scheduled")}
+            onClick={() => openAddForm("Queued")}
             className="mt-5 w-full rounded-2xl bg-white/90 px-4 py-3 text-sm font-bold text-black sm:w-auto"
           >
-            + Add New Job
+            + Add Laundry Job
           </button>
         </header>
 
@@ -452,7 +464,7 @@ export default function OnlyTheEssentialsBoard({ template }: BoardProps) {
               onClick={() => setActiveTab(tab.key)}
               className={`rounded-xl px-3 py-3 text-xs font-bold ${
                 activeTab === tab.key
-                  ? "bg-pink-400/18 text-pink-100"
+                  ? "bg-cyan-400/10 text-cyan-100"
                   : "text-white/55"
               }`}
             >
@@ -462,34 +474,34 @@ export default function OnlyTheEssentialsBoard({ template }: BoardProps) {
         </div>
 
         <section className="mt-5 lg:hidden">
-          {activeTab === "scheduled"
-            ? renderColumn("scheduled", "Scheduled", "Booked and waiting.", counts.scheduled)
+          {activeTab === "Queued"
+            ? renderColumn("Queued", "Queued", "Booked and waiting.", counts.Queued)
             : null}
           {activeTab === "in-progress"
-            ? renderColumn("in-progress", "In Progress", "Currently being handled.", counts.inProgress)
+            ? renderColumn("in-progress", "Washing / Drying", "Laundry currently being handled.", counts.inProgress)
             : null}
-          {activeTab === "done"
-            ? renderColumn("done", "Done", "Finished and ready.", counts.done)
+          {activeTab === "Ready"
+            ? renderColumn("Ready", "Ready for Pickup", "Finished and ready.", counts.Ready)
             : null}
         </section>
 
         <section className="mt-5 hidden gap-5 lg:grid lg:grid-cols-3">
-          {renderColumn("scheduled", "Scheduled", "Booked and waiting.", counts.scheduled)}
-          {renderColumn("in-progress", "In Progress", "Currently being handled.", counts.inProgress)}
-          {renderColumn("done", "Done", "Finished and ready.", counts.done)}
+          {renderColumn("Queued", "Queued", "Booked and waiting.", counts.Queued)}
+          {renderColumn("in-progress", "Washing / Drying", "Laundry currently being handled.", counts.inProgress)}
+          {renderColumn("Ready", "Ready for Pickup", "Finished and ready.", counts.Ready)}
         </section>
 
         {selectedJob ? (
           <div className="fixed inset-0 z-50 bg-black/70 p-4 backdrop-blur-sm">
-            <div className="ml-auto flex h-full max-w-xl flex-col overflow-hidden rounded-[30px] border border-pink-300/20 bg-[#10080d] shadow-2xl">
+            <div className="ml-auto flex h-full max-w-xl flex-col overflow-hidden rounded-[30px] border border-pink-300/20 bg-[#06121a] shadow-2xl">
 <div className="border-b border-white/10 p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <div className="text-xs font-bold uppercase tracking-[0.22em] text-pink-200">
+                    <div className="text-xs font-bold uppercase tracking-[0.22em] text-cyan-200">
                       Job Command Drawer
                     </div>
                     <h2 className="mt-1 text-3xl font-black">{selectedJob.client}</h2>
-                    <p className="mt-1 text-sm font-semibold text-pink-100">{selectedJob.service}</p>
+                    <p className="mt-1 text-sm font-semibold text-cyan-100">{selectedJob.service}</p>
                   </div>
 
                   <button
@@ -514,16 +526,16 @@ export default function OnlyTheEssentialsBoard({ template }: BoardProps) {
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-pink-300/20 bg-pink-400/10 p-4">
-                  <div className="text-xs font-bold uppercase tracking-[0.22em] text-pink-200">
+                <div className="rounded-2xl border border-pink-300/20 bg-cyan-400/6 p-4">
+                  <div className="text-xs font-bold uppercase tracking-[0.22em] text-cyan-200">
                     Needs Attention
                   </div>
                   <div className="mt-3 space-y-2 text-sm text-white/82">
                     <div>⏰ Upcoming job time: {selectedJob.time || "time not set"}</div>
                     <div>📩 Reschedule note: watch for client text updates before heading out.</div>
-                    <div>🧼 Supply note: check Windex / towels before the next house.</div>
-                    <div>🧴 Route note: exterior or pool jobs may need extra chlorine or cleaner.</div>
-                    <div>📊 Weekly note: {counts.done} completed jobs on this board so far.</div>
+                    <div>🧼 Supply note: check detergent, dryer sheets, and laundry bags.</div>
+                    <div>🧴 Route note: bulk items may need extra dryer time or special handling.</div>
+                    <div>📊 Weekly note: {counts.Ready} completed jobs on this board so far.</div>
                   </div>
                 </div>
 
@@ -536,7 +548,7 @@ export default function OnlyTheEssentialsBoard({ template }: BoardProps) {
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-cyan-300/20 bg-cyan-400/10 p-4">
+                <div className="rounded-2xl border border-cyan-300/20 bg-cyan-400/6 p-4">
                   <div className="text-xs font-bold uppercase tracking-[0.22em] text-cyan-200">
                     Payment Layer
                   </div>
@@ -582,10 +594,10 @@ export default function OnlyTheEssentialsBoard({ template }: BoardProps) {
                 </div>
 
                 <div className="grid gap-2 sm:grid-cols-2">
-                  <a href={telHref(businessPhone)} className="rounded-xl border border-pink-300/25 bg-pink-400/10 px-4 py-3 text-center text-sm font-bold text-pink-100">
+                  <a href={telHref(businessPhone)} className="rounded-xl border border-cyan-300/25 bg-cyan-400/6 px-4 py-3 text-center text-sm font-bold text-cyan-100">
                     Call
                   </a>
-                  <a href={smsHref(businessPhone)} className="rounded-xl border border-cyan-300/25 bg-cyan-400/10 px-4 py-3 text-center text-sm font-bold text-cyan-100">
+                  <a href={smsHref(businessPhone)} className="rounded-xl border border-cyan-300/25 bg-cyan-400/6 px-4 py-3 text-center text-sm font-bold text-cyan-100">
                     Text
                   </a>
                   <button type="button" onClick={() => openEditForm(selectedJob)} className="rounded-xl border border-white/15 px-4 py-3 text-sm font-bold text-white/85">
@@ -602,14 +614,14 @@ export default function OnlyTheEssentialsBoard({ template }: BoardProps) {
 
         {showForm ? (
           <div className="fixed inset-0 z-50 bg-black/70 p-4 backdrop-blur-sm">
-            <div className="mx-auto max-w-2xl rounded-[28px] border border-pink-300/20 bg-[#10080d] p-5 shadow-2xl">
+            <div className="mx-auto max-w-2xl rounded-[28px] border border-pink-300/20 bg-[#06121a] p-5 shadow-2xl">
 <div className="flex items-start justify-between gap-4">
                 <div>
-                  <div className="text-xs font-bold uppercase tracking-[0.22em] text-pink-200">
-                    {editingId ? "Edit Job" : "Add New Job"}
+                  <div className="text-xs font-bold uppercase tracking-[0.22em] text-cyan-200">
+                    {editingId ? "Edit Job" : "Add Laundry Job"}
                   </div>
                   <h2 className="mt-1 text-2xl font-black">
-                    {editingId ? "Update cleaning job" : "Create cleaning job"}
+                    {editingId ? "Update laundry job" : "Create laundry job"}
                   </h2>
                 </div>
                 <button type="button" onClick={closeForm} className="rounded-xl border border-white/15 px-3 py-2 text-sm text-white/80">
@@ -624,9 +636,9 @@ export default function OnlyTheEssentialsBoard({ template }: BoardProps) {
                 <input value={form.location} onChange={(e) => updateForm("location", e.target.value)} placeholder="Area / location" className="rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm outline-none" />
 
                 <select value={form.status} onChange={(e) => updateForm("status", e.target.value as JobStatus)} className="rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm outline-none">
-                  <option value="scheduled">Scheduled</option>
+                  <option value="Queued">Queued</option>
                   <option value="in-progress">In Progress</option>
-                  <option value="done">Done</option>
+                  <option value="Ready">Ready</option>
                 </select>
 
                 <select value={form.paid ? "paid" : "unpaid"} onChange={(e) => updateForm("paid", e.target.value === "paid")} className="rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm outline-none">
@@ -652,6 +664,11 @@ export default function OnlyTheEssentialsBoard({ template }: BoardProps) {
     </main>
   );
 }
+
+
+
+
+
 
 
 
