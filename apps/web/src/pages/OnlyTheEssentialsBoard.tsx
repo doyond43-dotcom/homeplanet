@@ -524,6 +524,8 @@ export default function OnlyTheEssentialsBoard({ template }: BoardProps) {
                     <div>🧼 Supply note: check Windex / towels before the next house.</div>
                     <div>🧴 Route note: exterior or pool jobs may need extra chlorine or cleaner.</div>
                     <div>📊 Weekly note: {counts.done} completed jobs on this board so far.</div>
+                    <div>Laundry opportunity: towels / linens could be sent to Taylor Creek Laundry.
+                    {/* HOMEPLANET: LAUNDRY CONNECTION � future: trigger nearby laundry pickup driver notification based on job status/location */}</div>
                   </div>
                 </div>
 
@@ -652,6 +654,11 @@ export default function OnlyTheEssentialsBoard({ template }: BoardProps) {
     </main>
   );
 }
+
+
+
+
+
 
 
 
