@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { hpEvent } from "../lib/hpEvent";
 
 type CleaningRequest = {
   id: string;
@@ -75,6 +76,10 @@ export default function OnlyTheEssentialsMessagesBoard() {
 
   useEffect(() => {
     loadRequests();
+    hpEvent({
+      event: "messages_page_opened",
+      board: "only-the-essentials",
+    });
   }, []);
 
   const grouped = useMemo(() => {
@@ -161,6 +166,11 @@ export default function OnlyTheEssentialsMessagesBoard() {
                 onClick={() => {
                   setSelected(request);
                   setScheduledFor("");
+                  hpEvent({
+                    event: "request_opened",
+                    board: "only-the-essentials",
+                    entityId: request.id,
+                  });
                 }}
                 className="w-full rounded-2xl border border-white/8 bg-black/30 p-4 text-left transition hover:border-rose-200/40 hover:bg-white/[0.06]"
               >
@@ -393,6 +403,10 @@ export default function OnlyTheEssentialsMessagesBoard() {
     </main>
   );
 }
+
+
+
+
 
 
 

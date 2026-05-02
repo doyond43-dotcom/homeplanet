@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { getSupabase } from "../lib/supabase";
+import { hpEvent } from "../lib/hpEvent";
 
 type RequestType = "book" | "question" | "reschedule" | "notes";
 
@@ -15,6 +16,16 @@ export default function OnlyTheEssentialsRequest() {
   const navigate = useNavigate();
   const location = useLocation();
   const supabase = useMemo(() => getSupabase(), []);
+
+  useEffect(() => {
+    if (window.__hp_request_opened) return;
+    window.__hp_request_opened = true;
+
+    hpEvent({
+      event: "request_page_opened",
+      board: "only-the-essentials"
+    });
+  }, []);
 
   const requestType = useMemo<RequestType>(() => {
     const params = new URLSearchParams(location.search);
@@ -63,7 +74,11 @@ try {
 } catch {}
 
 setSubmitted(true);
-    navigate("/planet/demo/only-the-essentials/messages");
+
+    hpEvent({
+      event: "request_submitted",
+      board: "only-the-essentials"
+    });
   }
 
   if (submitted) {
@@ -140,5 +155,9 @@ setSubmitted(true);
     </main>
   );
 }
+
+
+
+
 
 

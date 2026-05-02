@@ -10,6 +10,7 @@ import OnlyTheEssentialsRequest from "../pages/OnlyTheEssentialsRequest";
 import OnlyTheEssentialsMessagesBoard from "../pages/OnlyTheEssentialsMessagesBoard";
 import LaundromatBoard from "../pages/LaundromatBoard";
 import LocalNetworkDemo from "../pages/LocalNetworkDemo";
+import HomePlanetEventsBoard from "../pages/HomePlanetEventsBoard";
 import StartPage from "../pages/StartPage";
 
 import CreatorCity from "../pages/CreatorCity";
@@ -118,6 +119,7 @@ export default function PlanetRoutes() {
       <Route path="demo/only-the-essentials/messages" element={<OnlyTheEssentialsMessagesBoard />} />
       <Route path="demo/laundry" element={<LaundromatBoard />} />
       <Route path="demo/local-network" element={<LocalNetworkDemo />} />
+      <Route path="demo/events" element={<HomePlanetEventsBoard />} />
 
       <Route path="kids" element={<HomePlanetKids />} />
       <Route path="kids/start" element={<HomePlanetKidsStart />} />
@@ -231,5 +233,6 @@ export default function PlanetRoutes() {
     </Routes>
   );
 }
+
 
 

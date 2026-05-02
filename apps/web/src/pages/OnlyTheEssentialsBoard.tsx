@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { hpEvent } from "../lib/hpEvent";
 
 type JobStatus = "scheduled" | "in-progress" | "done";
 
@@ -437,7 +438,10 @@ export default function OnlyTheEssentialsBoard({ template }: BoardProps) {
 
           <button
             type="button"
-            onClick={() => openAddForm("scheduled")}
+            onClick={() => {
+              openAddForm("scheduled");
+              hpEvent({ event: "job_form_opened", board: "only-the-essentials" });
+            }}
             className="mt-5 w-full rounded-2xl bg-white/90 px-4 py-3 text-sm font-bold text-black sm:w-auto"
           >
             + Add New Job
@@ -654,6 +658,7 @@ export default function OnlyTheEssentialsBoard({ template }: BoardProps) {
     </main>
   );
 }
+
 
 
 
