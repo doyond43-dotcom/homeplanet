@@ -393,9 +393,7 @@ export default function OnlyTheEssentialsBoard({ template }: BoardProps) {
               </p>
 
               <div className="mt-4 flex flex-wrap gap-2 text-sm">
-                <a href={telHref(businessPhone)} className="rounded-full border border-white/12 bg-black/25 px-3 py-1 text-white/78">
-                  Call/Text: {businessPhone}
-                </a>
+                
 
                 <a
                   href="/planet/only-the-essentials"
@@ -409,6 +407,13 @@ export default function OnlyTheEssentialsBoard({ template }: BoardProps) {
                   className="rounded-2xl border border-pink-300/40 bg-pink-500/20 px-5 py-3 text-sm font-bold text-pink-50 shadow-sm hover:bg-pink-500/30"
                 >
                   Customer Requests
+                </a>
+
+                <a
+                  href="/planet/demo/events?board=only-the-essentials"
+                  className="rounded-2xl border border-cyan-300/35 bg-cyan-500/12 px-5 py-3 text-sm font-bold text-cyan-50 shadow-sm hover:bg-cyan-500/18"
+                >
+                  Live Reporting
                 </a>
                 <span className="rounded-full border border-white/12 bg-black/25 px-3 py-1 text-white/78">
                   Serving {serviceArea}
@@ -658,6 +663,9 @@ export default function OnlyTheEssentialsBoard({ template }: BoardProps) {
     </main>
   );
 }
+
+
+
 
 
 

@@ -22,6 +22,7 @@ function formatTime(value: string) {
 export default function HomePlanetEventsBoard() {
   const [events, setEvents] = useState<HpEventRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const boardFilter = new URLSearchParams(window.location.search).get("board");
 
   async function loadEvents() {
     setLoading(true);
@@ -46,12 +47,16 @@ export default function HomePlanetEventsBoard() {
     loadEvents();
   }, []);
 
+  const visibleEvents = useMemo(() => {
+    return boardFilter ? events.filter((item) => item.board === boardFilter) : events;
+  }, [events, boardFilter]);
+
   const counts = useMemo(() => {
-    return events.reduce<Record<string, number>>((acc, item) => {
+    return visibleEvents.reduce<Record<string, number>>((acc, item) => {
       acc[item.event] = (acc[item.event] || 0) + 1;
       return acc;
     }, {});
-  }, [events]);
+  }, [visibleEvents]);
 
   const requestOpened = counts.request_page_opened || 0;
   const requestSubmitted = counts.request_submitted || 0;
@@ -75,6 +80,7 @@ const followUpRate = requestSubmitted > 0 ? Math.round((messagesOpened / request
               </h1>
               <p className="mt-3 max-w-3xl text-sm leading-6 text-white/65 sm:text-base">
                 This board shows actual HomePlanet moments: request page opens, submitted requests, opened messages, and other live system actions.
+                {boardFilter ? ` Filtered view: ${boardFilter}` : ""}
               </p>
             </div>
 
@@ -148,7 +154,7 @@ const followUpRate = requestSubmitted > 0 ? Math.round((messagesOpened / request
         <section className="mt-6 rounded-[30px] border border-white/12 bg-black/35 p-5">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-2xl font-black">Latest events</h2>
-            <span className="text-xs text-white/40">{events.length} loaded</span>
+            <span className="text-xs text-white/40">{visibleEvents.length} loaded</span>
           </div>
 
           {loading ? (
@@ -157,7 +163,7 @@ const followUpRate = requestSubmitted > 0 ? Math.round((messagesOpened / request
             </div>
           ) : (
             <div className="space-y-3">
-              {events.map((item) => (
+              {visibleEvents.map((item) => (
                 <div
                   key={item.id}
                   className="grid gap-3 rounded-2xl border border-white/10 bg-white/[0.035] p-4 text-sm md:grid-cols-[1.2fr_1fr_1fr_1fr]"
@@ -200,5 +206,6 @@ const followUpRate = requestSubmitted > 0 ? Math.round((messagesOpened / request
     </main>
   );
 }
+
 
 
