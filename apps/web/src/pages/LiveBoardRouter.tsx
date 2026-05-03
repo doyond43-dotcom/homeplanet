@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties, type FormEvent } from "react";
+﻿import { useEffect, useMemo, useState, type CSSProperties, type FormEvent } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import BeautySalonLiveBoard from "./BeautySalonLiveBoard";
@@ -47,6 +47,8 @@ type LiveJobStage = "New Intake" | "In Progress" | "Needs Attention" | "Complete
 
 type PaymentStatus = "none" | "invoice-ready" | "paid";
 
+type PaymentTab = "payment" | "customer";
+
 type LiveJob = {
   id: string;
   customer: string;
@@ -64,6 +66,9 @@ type LiveJob = {
 };
 
 const LIVE_JOB_STAGES: LiveJobStage[] = ["New Intake", "In Progress", "Needs Attention", "Complete"];
+
+const CASH_APP_HANDLE = "$YourRealCashtag";
+const ZELLE_CONTACT = "your@email.com";
 
 function normalize(value?: string | null) {
   return (value || "").toLowerCase().trim();
@@ -110,6 +115,14 @@ function looksLikeAuto(input: {
     haystack.includes("tire") ||
     haystack.includes("alignment")
   );
+}
+
+function titleFromSlug(slug: string) {
+  return slug
+    .split("-")
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
 }
 
 function readStarterPayload() {
@@ -187,6 +200,35 @@ function uid(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
+function QRCodeImg({ value, size = 132 }: { value: string; size?: number }) {
+  const src =
+    "https://api.qrserver.com/v1/create-qr-code/?size=" +
+    `${size}x${size}` +
+    "&data=" +
+    encodeURIComponent(value);
+
+  return (
+    <img
+      src={src}
+      width={size}
+      height={size}
+      style={{ borderRadius: 12, display: "block" }}
+      alt="Payment QR code"
+    />
+  );
+}
+
+async function copyText(value: string, fallbackLabel = "Copied.") {
+  if (!value) return;
+
+  try {
+    await navigator.clipboard.writeText(value);
+    alert(fallbackLabel);
+  } catch {
+    alert(value);
+  }
+}
+
 function CreatorSystemLiveBoard({
   boardSlug,
   payload,
@@ -194,7 +236,7 @@ function CreatorSystemLiveBoard({
   boardSlug: string;
   payload: CreatorSystemPayload;
 }) {
-  const businessName = payload.businessName || boardSlug;
+  const businessName = payload.businessName || titleFromSlug(boardSlug) || boardSlug;
   const createdAt = payload.createdAt ? new Date(payload.createdAt).toLocaleString() : "Just now";
 
   const [jobs, setJobs] = useState<LiveJob[]>(() => readLiveJobs(boardSlug));
@@ -212,6 +254,8 @@ function CreatorSystemLiveBoard({
   const [paymentJobId, setPaymentJobId] = useState<string | null>(null);
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentMemo, setPaymentMemo] = useState("");
+  const [paymentTab, setPaymentTab] = useState<PaymentTab>("payment");
+  const [customerPhone, setCustomerPhone] = useState("");
 
   useEffect(() => {
     setJobs(readLiveJobs(boardSlug));
@@ -222,10 +266,37 @@ function CreatorSystemLiveBoard({
   }, [boardSlug, jobs]);
 
   const selectedPaymentJob = jobs.find((job) => job.id === paymentJobId) ?? null;
+
   const invoiceLink =
     selectedPaymentJob?.invoiceId && typeof window !== "undefined"
       ? `${window.location.origin}/planet/invoice/${selectedPaymentJob.invoiceId}`
       : "";
+
+  const activeAmount = selectedPaymentJob?.invoiceAmount || paymentAmount || "";
+  const activeMemo = selectedPaymentJob?.invoiceMemo || paymentMemo || "";
+  const paymentQrValue =
+    invoiceLink ||
+    `HomePlanet Payment\nBusiness: ${businessName}\nCustomer: ${selectedPaymentJob?.customer || ""}\nAmount: ${activeAmount || "not set"}\nMemo: ${activeMemo || "not set"}`;
+
+  const cashAppLink = `https://cash.app/${CASH_APP_HANDLE.replace("$", "")}`;
+  const customerMessage = selectedPaymentJob
+    ? [
+        `Hi ${selectedPaymentJob.customer || "there"}, this is ${businessName}.`,
+        `Your job is: ${selectedPaymentJob.title}.`,
+        invoiceLink ? `Payment link: ${invoiceLink}` : "Payment link: create invoice first",
+        `Amount: ${activeAmount || "not set"}`,
+        `Memo: ${activeMemo || `${businessName} - ${selectedPaymentJob.title}`}`,
+        `You can pay by Cash App (${CASH_APP_HANDLE}) or Zelle (${ZELLE_CONTACT}).`,
+        "Reply here if you have any questions.",
+      ].join("\n")
+    : "";
+
+  const cleanCustomerPhone = customerPhone.replace(/[^0-9+]/g, "");
+  const smsHref =
+    cleanCustomerPhone && selectedPaymentJob
+      ? `sms:${cleanCustomerPhone}?&body=${encodeURIComponent(customerMessage)}`
+      : "";
+  const callHref = cleanCustomerPhone ? `tel:${cleanCustomerPhone}` : "";
 
   function addJob(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -325,6 +396,7 @@ function CreatorSystemLiveBoard({
     setPaymentJobId(job.id);
     setPaymentAmount(job.invoiceAmount || "");
     setPaymentMemo(job.invoiceMemo || `${businessName} - ${job.title}`);
+    setPaymentTab("payment");
     setShowAddJob(false);
     cancelEditJob();
   }
@@ -333,6 +405,8 @@ function CreatorSystemLiveBoard({
     setPaymentJobId(null);
     setPaymentAmount("");
     setPaymentMemo("");
+    setCustomerPhone("");
+    setPaymentTab("payment");
   }
 
   function createInvoice(event: FormEvent<HTMLFormElement>) {
@@ -379,17 +453,6 @@ function CreatorSystemLiveBoard({
           : job,
       ),
     );
-  }
-
-  async function copyInvoiceLink() {
-    if (!invoiceLink) return;
-
-    try {
-      await navigator.clipboard.writeText(invoiceLink);
-      alert("Invoice link copied.");
-    } catch {
-      alert(invoiceLink);
-    }
   }
 
   const wrap: CSSProperties = {
@@ -527,6 +590,20 @@ function CreatorSystemLiveBoard({
     resize: "vertical",
     fontWeight: 700,
   };
+
+  const paymentBox: CSSProperties = {
+    marginTop: 14,
+    borderRadius: 16,
+    border: "1px solid rgba(255,255,255,0.10)",
+    background: "rgba(0,0,0,0.24)",
+    padding: 12,
+  };
+
+  const tabButton = (active: boolean): CSSProperties => ({
+    ...(active ? primaryButton : button),
+    width: "100%",
+    justifyContent: "center",
+  });
 
   return (
     <div style={wrap}>
@@ -699,7 +776,7 @@ function CreatorSystemLiveBoard({
         <section
           style={{
             display: "grid",
-            gridTemplateColumns: selectedPaymentJob ? "minmax(0, 1.45fr) minmax(300px, 0.75fr)" : "1fr",
+            gridTemplateColumns: selectedPaymentJob ? "minmax(0, 1.45fr) minmax(320px, 0.78fr)" : "1fr",
             gap: 16,
             alignItems: "start",
           }}
@@ -854,72 +931,242 @@ function CreatorSystemLiveBoard({
                 </button>
               </div>
 
-              <form onSubmit={createInvoice} style={{ display: "grid", gap: 10, marginTop: 14 }}>
-                <div>
-                  <div style={{ fontSize: 11, fontWeight: 950, color: "rgba(255,255,255,0.52)", marginBottom: 6 }}>
-                    PAYMENT AMOUNT
-                  </div>
-                  <input
-                    style={input}
-                    value={paymentAmount}
-                    onChange={(event) => setPaymentAmount(event.target.value)}
-                    placeholder="125.00"
-                  />
-                </div>
-
-                <div>
-                  <div style={{ fontSize: 11, fontWeight: 950, color: "rgba(255,255,255,0.52)", marginBottom: 6 }}>
-                    PAYMENT MEMO
-                  </div>
-                  <input
-                    style={input}
-                    value={paymentMemo}
-                    onChange={(event) => setPaymentMemo(event.target.value)}
-                    placeholder={`${businessName} - ${selectedPaymentJob.title}`}
-                  />
-                </div>
-
-                <button type="submit" style={primaryButton}>
-                  Create Invoice
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 14 }}>
+                <button type="button" style={tabButton(paymentTab === "payment")} onClick={() => setPaymentTab("payment")}>
+                  Payment
                 </button>
-              </form>
-
-              <div
-                style={{
-                  marginTop: 14,
-                  borderRadius: 16,
-                  border: "1px solid rgba(255,255,255,0.10)",
-                  background: "rgba(0,0,0,0.24)",
-                  padding: 12,
-                }}
-              >
-                <div style={{ fontSize: 12, fontWeight: 950, color: "#bae6fd" }}>
-                  Invoice status
-                </div>
-                <div style={{ marginTop: 8, color: "rgba(255,255,255,0.78)", fontSize: 13, lineHeight: 1.45 }}>
-                  Status: <strong>{selectedPaymentJob.paymentStatus || "none"}</strong>
-                  <br />
-                  Amount: <strong>{selectedPaymentJob.invoiceAmount || "not set"}</strong>
-                  <br />
-                  Memo: <strong>{selectedPaymentJob.invoiceMemo || "not set"}</strong>
-                </div>
-
-                {invoiceLink ? (
-                  <div style={{ marginTop: 10, color: "rgba(255,255,255,0.50)", fontSize: 11, overflowWrap: "anywhere" }}>
-                    {invoiceLink}
-                  </div>
-                ) : null}
-
-                <div style={{ display: "grid", gap: 8, marginTop: 12 }}>
-                  <button type="button" style={button} onClick={copyInvoiceLink} disabled={!invoiceLink}>
-                    Copy Invoice Link
-                  </button>
-
-                  <button type="button" style={primaryButton} onClick={markSelectedJobPaid}>
-                    Mark Paid
-                  </button>
-                </div>
+                <button type="button" style={tabButton(paymentTab === "customer")} onClick={() => setPaymentTab("customer")}>
+                  Customer
+                </button>
               </div>
+
+              {paymentTab === "payment" ? (
+                <div>
+                  <form onSubmit={createInvoice} style={{ display: "grid", gap: 10, marginTop: 14 }}>
+                    <div>
+                      <div style={{ fontSize: 11, fontWeight: 950, color: "rgba(255,255,255,0.52)", marginBottom: 6 }}>
+                        PAYMENT AMOUNT
+                      </div>
+                      <input
+                        style={input}
+                        value={paymentAmount}
+                        onChange={(event) => setPaymentAmount(event.target.value)}
+                        placeholder="125.00"
+                      />
+                    </div>
+
+                    <div>
+                      <div style={{ fontSize: 11, fontWeight: 950, color: "rgba(255,255,255,0.52)", marginBottom: 6 }}>
+                        PAYMENT MEMO
+                      </div>
+                      <input
+                        style={input}
+                        value={paymentMemo}
+                        onChange={(event) => setPaymentMemo(event.target.value)}
+                        placeholder={`${businessName} - ${selectedPaymentJob.title}`}
+                      />
+                    </div>
+
+                    <button type="submit" style={primaryButton}>
+                      Create Invoice
+                    </button>
+                  </form>
+
+                  <div style={paymentBox}>
+                    <div style={{ fontSize: 12, fontWeight: 950, color: "#bae6fd" }}>
+                      Invoice status
+                    </div>
+                    <div style={{ marginTop: 8, color: "rgba(255,255,255,0.78)", fontSize: 13, lineHeight: 1.45 }}>
+                      Status: <strong>{selectedPaymentJob.paymentStatus || "none"}</strong>
+                      <br />
+                      Amount: <strong>{selectedPaymentJob.invoiceAmount || "not set"}</strong>
+                      <br />
+                      Memo: <strong>{selectedPaymentJob.invoiceMemo || "not set"}</strong>
+                    </div>
+
+                    {invoiceLink ? (
+                      <div style={{ marginTop: 10, color: "rgba(255,255,255,0.50)", fontSize: 11, overflowWrap: "anywhere" }}>
+                        {invoiceLink}
+                      </div>
+                    ) : null}
+
+                    <div style={{ display: "grid", gap: 8, marginTop: 12 }}>
+                      <button type="button" style={button} onClick={() => copyText(invoiceLink, "Invoice link copied.")} disabled={!invoiceLink}>
+                        Copy Invoice Link
+                      </button>
+
+                      <button type="button" style={button} onClick={() => copyText(customerMessage, "Customer message copied.")}>
+                        Copy Customer Message
+                      </button>
+
+                      <button type="button" style={primaryButton} onClick={markSelectedJobPaid}>
+                        Mark Paid
+                      </button>
+                    </div>
+                  </div>
+
+                  <div style={paymentBox}>
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center" }}>
+                      <div>
+                        <div style={{ fontSize: 12, fontWeight: 950 }}>Payment QR</div>
+                        <div style={{ marginTop: 4, color: "rgba(255,255,255,0.58)", fontSize: 11 }}>
+                          Scan in person or send the invoice link.
+                        </div>
+                      </div>
+                      <div style={{ background: "white", padding: 10, borderRadius: 14 }}>
+                        <QRCodeImg value={paymentQrValue} size={116} />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={paymentBox}>
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center" }}>
+                      <div>
+                        <div style={{ fontSize: 12, fontWeight: 950 }}>Cash App</div>
+                        <div style={{ marginTop: 4, color: "rgba(255,255,255,0.62)", fontSize: 12 }}>{CASH_APP_HANDLE}</div>
+                      </div>
+                      <span style={pill}>Tap ready</span>
+                    </div>
+
+                    <div style={{ marginTop: 10, color: "rgba(255,255,255,0.78)", fontSize: 12, lineHeight: 1.45 }}>
+                      Amount: <strong>{activeAmount || "not set"}</strong>
+                      <br />
+                      Memo: <strong>{activeMemo || "not set"}</strong>
+                    </div>
+
+                    <div style={{ display: "grid", gap: 8, marginTop: 12 }}>
+                      <button type="button" style={primaryButton} onClick={() => window.open(cashAppLink, "_blank", "noreferrer")}>
+                        Open Cash App
+                      </button>
+                      <button type="button" style={button} onClick={() => copyText(`${CASH_APP_HANDLE}\nAmount: ${activeAmount || "not set"}\nMemo: ${activeMemo || "not set"}`, "Cash App details copied.")}>
+                        Copy Cash App Details
+                      </button>
+                    </div>
+                  </div>
+
+                  <div style={paymentBox}>
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center" }}>
+                      <div>
+                        <div style={{ fontSize: 12, fontWeight: 950 }}>Zelle</div>
+                        <div style={{ marginTop: 4, color: "rgba(255,255,255,0.62)", fontSize: 12 }}>{ZELLE_CONTACT}</div>
+                      </div>
+                      <span style={pill}>Memo ready</span>
+                    </div>
+
+                    <div style={{ marginTop: 10, color: "rgba(255,255,255,0.78)", fontSize: 12, lineHeight: 1.45 }}>
+                      Send to: <strong>{ZELLE_CONTACT}</strong>
+                      <br />
+                      Amount: <strong>{activeAmount || "not set"}</strong>
+                      <br />
+                      Memo: <strong>{activeMemo || "not set"}</strong>
+                    </div>
+
+                    <div style={{ display: "grid", gap: 8, marginTop: 12 }}>
+                      <button type="button" style={button} onClick={() => copyText(activeMemo || "", "Memo copied.")}>
+                        Copy Memo
+                      </button>
+                      <button type="button" style={button} onClick={() => copyText(`Zelle: ${ZELLE_CONTACT}\nAmount: ${activeAmount || "not set"}\nMemo: ${activeMemo || "not set"}`, "Zelle details copied.")}>
+                        Copy Zelle Details
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: "grid", gap: 14, marginTop: 14 }}>
+                  <div style={paymentBox}>
+                    <div style={{ fontSize: 12, fontWeight: 950, color: "#bae6fd" }}>
+                      Customer contact
+                    </div>
+                    <div style={{ marginTop: 6, color: "rgba(255,255,255,0.62)", fontSize: 12, lineHeight: 1.45 }}>
+                      Add the customer's phone number here for quick call/text actions. This stays local for this session.
+                    </div>
+
+                    <input
+                      style={{ ...input, marginTop: 10 }}
+                      value={customerPhone}
+                      onChange={(event) => setCustomerPhone(event.target.value)}
+                      placeholder="Customer phone number"
+                    />
+
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 10 }}>
+                      <button
+                        type="button"
+                        style={button}
+                        onClick={() => {
+                          if (callHref) window.location.href = callHref;
+                        }}
+                        disabled={!callHref}
+                      >
+                        Call Customer
+                      </button>
+                      <button
+                        type="button"
+                        style={primaryButton}
+                        onClick={() => {
+                          if (smsHref) window.location.href = smsHref;
+                        }}
+                        disabled={!smsHref}
+                      >
+                        Text Customer
+                      </button>
+                    </div>
+                  </div>
+
+                  <div style={paymentBox}>
+                    <div style={{ fontSize: 12, fontWeight: 950, color: "#bae6fd" }}>
+                      Ready message
+                    </div>
+                    <div
+                      style={{
+                        marginTop: 10,
+                        borderRadius: 14,
+                        border: "1px solid rgba(255,255,255,0.10)",
+                        background: "rgba(255,255,255,0.045)",
+                        padding: 12,
+                        color: "rgba(255,255,255,0.76)",
+                        fontSize: 12,
+                        lineHeight: 1.55,
+                        whiteSpace: "pre-wrap",
+                      }}
+                    >
+                      {customerMessage}
+                    </div>
+
+                    <div style={{ display: "grid", gap: 8, marginTop: 12 }}>
+                      <button
+                        type="button"
+                        style={primaryButton}
+                        onClick={() => copyText(customerMessage, "Customer message copied.")}
+                      >
+                        Copy Customer Message
+                      </button>
+                      <button
+                        type="button"
+                        style={button}
+                        onClick={() => copyText(invoiceLink, "Invoice link copied.")}
+                        disabled={!invoiceLink}
+                      >
+                        Copy Invoice Link
+                      </button>
+                    </div>
+                  </div>
+
+                  <div style={paymentBox}>
+                    <div style={{ fontSize: 12, fontWeight: 950, color: "#bae6fd" }}>
+                      Customer-facing summary
+                    </div>
+                    <div style={{ marginTop: 8, color: "rgba(255,255,255,0.72)", fontSize: 12, lineHeight: 1.55 }}>
+                      Customer: <strong>{selectedPaymentJob.customer}</strong>
+                      <br />
+                      Job: <strong>{selectedPaymentJob.title}</strong>
+                      <br />
+                      Stage: <strong>{selectedPaymentJob.stage}</strong>
+                      <br />
+                      Payment: <strong>{selectedPaymentJob.paymentStatus || "none"}</strong>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div
                 style={{
@@ -933,7 +1180,7 @@ function CreatorSystemLiveBoard({
                   lineHeight: 1.55,
                 }}
               >
-                This is the HomePlanet payment desk for this exact job. No salon fallback. No screenshots. The selected job already carries the amount, memo, invoice status, and paid timestamp.
+                Use Payment for invoice/QR. Use Customer for call/text and ready-to-send messages.
               </div>
             </aside>
           ) : null}
@@ -1073,10 +1320,7 @@ export default function LiveBoardRouter() {
         boardSlug={resolvedBoardSlug}
         payload={{
           boardSlug: resolvedBoardSlug,
-          businessName: resolvedBoardSlug
-            .split("-")
-            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-            .join(" "),
+          businessName: titleFromSlug(resolvedBoardSlug),
           createdAt: new Date().toISOString(),
           systemFlags: {
             liveBoard: true,
@@ -1090,6 +1334,3 @@ export default function LiveBoardRouter() {
 
   return <BeautySalonLiveBoard />;
 }
-
-
-
