@@ -1,217 +1,215 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { getSupabase } from "../lib/supabase";
 
-type MomentClip = {
-  id?: string;
-  name?: string;
-  type?: string;
-  order?: number;
-  createdAt?: string;
-};
-
-type MomentPayload = {
+type CreatorMomentData = {
+  title?: string;
+  subtitle?: string;
   businessName?: string;
   businessType?: string;
   city?: string;
+  currentWorkflow?: string;
+  biggestFriction?: string;
+  customerQuestions?: string;
+  wantsBuilt?: string;
+  holyShiftMoment?: string;
   boardSlug?: string;
-  presenceId?: string;
-  creatorMoment?: {
-    title?: string;
-    subtitle?: string;
-    story?: string;
-    statusLine?: string;
-    clipCount?: number;
-    launchedAt?: string;
-    note?: string;
-  };
-  clips?: MomentClip[];
+  liveBoardRoute?: string;
+  createdAt?: string;
 };
 
+function readQuerySlug() {
+  return new URLSearchParams(window.location.search).get("boardSlug") || "";
+}
+
+function formatMomentTime(value?: string) {
+  if (!value) return "Just now";
+
+  try {
+    return new Date(value).toLocaleString([], {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  } catch {
+    return "Just now";
+  }
+}
+
 export default function CreatorMomentPage() {
-  const nav = useNavigate();
-  const { slug = "" } = useParams<{ slug: string }>();
-  const [payload, setPayload] = useState<MomentPayload | null>(null);
+  const navigate = useNavigate();
+  const params = useParams();
+  const slug = params.slug || readQuerySlug() || "starter-board";
+
+  const [loading, setLoading] = useState(true);
+  const [moment, setMoment] = useState<CreatorMomentData | null>(null);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(`creator-studio:${slug}:moment`);
-      setPayload(raw ? JSON.parse(raw) : null);
-    } catch {
-      setPayload(null);
+    let alive = true;
+
+    async function loadMoment() {
+      setLoading(true);
+
+      let localMoment: CreatorMomentData | null = null;
+
+      try {
+        const raw = localStorage.getItem(`creator-studio:${slug}:moment`);
+        if (raw) localMoment = JSON.parse(raw) as CreatorMomentData;
+      } catch {}
+
+      try {
+        const { data, error } = await getSupabase()
+          .from("creator_moments")
+          .select("slug,title,subtitle,data,created_at,updated_at")
+          .eq("slug", slug)
+          .maybeSingle();
+
+        if (!alive) return;
+
+        if (!error && data) {
+          const serverData = (data.data || {}) as CreatorMomentData;
+          setMoment({
+            ...serverData,
+            title: data.title || serverData.title,
+            subtitle: data.subtitle || serverData.subtitle,
+            boardSlug: data.slug || serverData.boardSlug,
+            createdAt: serverData.createdAt || data.created_at,
+          });
+          setLoading(false);
+          return;
+        }
+      } catch (error) {
+        console.error("Creator moment load error:", error);
+      }
+
+      if (!alive) return;
+
+      setMoment(localMoment);
+      setLoading(false);
     }
+
+    loadMoment();
+
+    return () => {
+      alive = false;
+    };
   }, [slug]);
 
-  const clips = useMemo(() => {
-    return Array.isArray(payload?.clips)
-      ? [...payload.clips].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-      : [];
-  }, [payload]);
-
-  const boardSlug = payload?.boardSlug || slug;
-  const title = payload?.creatorMoment?.title || "Creator Moment";
-  const subtitle = payload?.creatorMoment?.subtitle || "Proof-in-motion tied to real work.";
-  const story = payload?.creatorMoment?.story || "This moment was built from real work and launched through HomePlanet.";
-  const status = payload?.creatorMoment?.statusLine || "Moment ready.";
-  const presenceId = payload?.presenceId || "";
-
-  const shell: React.CSSProperties = {
-    minHeight: "100vh",
-    background: "#07111f",
-    color: "white",
-    padding: 18,
-  };
-
-  const wrap: React.CSSProperties = {
-    maxWidth: 1100,
-    margin: "0 auto",
-  };
-
-  const card: React.CSSProperties = {
-    borderRadius: 22,
-    border: "1px solid rgba(255,255,255,0.10)",
-    background: "rgba(255,255,255,0.045)",
-    boxShadow: "0 18px 55px rgba(0,0,0,0.35)",
-    padding: 18,
-  };
-
-  const pill: React.CSSProperties = {
-    borderRadius: 999,
-    border: "1px solid rgba(255,255,255,0.12)",
-    background: "rgba(255,255,255,0.06)",
-    padding: "8px 12px",
-    fontSize: 12,
-    fontWeight: 900,
-    color: "rgba(255,255,255,0.88)",
-  };
-
-  const btn: React.CSSProperties = {
-    height: 42,
-    padding: "0 14px",
-    borderRadius: 999,
-    border: "1px solid rgba(255,255,255,0.14)",
-    background: "rgba(255,255,255,0.06)",
-    color: "white",
-    cursor: "pointer",
-    fontWeight: 900,
-    fontSize: 12,
-  };
-
-  const primary: React.CSSProperties = {
-    ...btn,
-    border: "1px solid rgba(0,255,150,0.35)",
-    background: "rgba(0,255,150,0.10)",
-    color: "rgba(220,255,245,0.95)",
-  };
-
-  if (!payload) {
+  if (loading) {
     return (
-      <div style={shell}>
-        <div style={wrap}>
-          <div style={card}>
-            <h1 style={{ margin: 0, fontSize: 28 }}>Creator Moment</h1>
-            <p style={{ color: "rgba(255,255,255,0.75)" }}>
-              No saved moment found for this slug yet.
-            </p>
-            <button type="button" style={btn} onClick={() => nav("/planet/creator/studio")}>
-              Back to Creator Studio
-            </button>
-          </div>
-        </div>
-      </div>
+      <main className="min-h-screen bg-[#07111f] px-5 py-10 text-white">
+        <section className="mx-auto max-w-3xl rounded-[32px] border border-white/10 bg-white/5 p-6">
+          <h1 className="text-4xl font-black">Creator Moment</h1>
+          <p className="mt-3 text-white/65">Loading saved moment...</p>
+        </section>
+      </main>
     );
   }
 
+  if (!moment) {
+    return (
+      <main className="min-h-screen bg-[#07111f] px-5 py-10 text-white">
+        <section className="mx-auto max-w-3xl rounded-[32px] border border-white/10 bg-white/5 p-6">
+          <h1 className="text-4xl font-black">Creator Moment</h1>
+          <p className="mt-3 text-white/65">No saved moment found for this slug yet.</p>
+
+          <button
+            type="button"
+            onClick={() => navigate("/planet/creator/studio")}
+            className="mt-5 rounded-2xl border border-white/15 bg-white/10 px-5 py-3 text-sm font-bold text-white"
+          >
+            Back to Creator Studio
+          </button>
+        </section>
+      </main>
+    );
+  }
+
+  const title = moment.title || moment.businessName || "Creator Moment";
+  const subtitle = moment.subtitle || moment.businessType || "Creator City build";
+  const liveBoardRoute = moment.liveBoardRoute || `/planet/live/${moment.boardSlug || slug}`;
+
   return (
-    <div style={shell}>
-      <div style={wrap}>
-        <div style={card}>
-          <div style={{ fontSize: 12, fontWeight: 950, textTransform: "uppercase", color: "rgba(255,255,255,0.68)" }}>
-            Creator Moment
+    <main className="min-h-screen bg-[radial-gradient(circle_at_12%_10%,rgba(56,189,248,0.16),transparent_30%),radial-gradient(circle_at_86%_8%,rgba(34,197,94,0.10),transparent_28%),#07111f] px-5 py-8 text-white">
+      <section className="mx-auto max-w-4xl rounded-[34px] border border-cyan-300/15 bg-white/5 p-6 shadow-2xl">
+        <div className="inline-flex rounded-full border border-cyan-300/25 bg-cyan-400/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.22em] text-cyan-100">
+          Creator Moment Saved
+        </div>
+
+        <h1 className="mt-4 text-4xl font-black tracking-tight sm:text-6xl">{title}</h1>
+        <p className="mt-3 text-lg font-semibold text-cyan-100">{subtitle}</p>
+
+        <div className="mt-5 grid gap-3 sm:grid-cols-3">
+          <div className="rounded-2xl border border-white/10 bg-black/25 p-4">
+            <div className="text-xs uppercase tracking-[0.18em] text-white/40">City</div>
+            <div className="mt-1 font-bold">{moment.city || "Not listed"}</div>
           </div>
 
-          <h1 style={{ margin: "10px 0 8px", fontSize: "clamp(2rem, 5vw, 3rem)", lineHeight: 1.02 }}>
-            {title}
-          </h1>
+          <div className="rounded-2xl border border-white/10 bg-black/25 p-4">
+            <div className="text-xs uppercase tracking-[0.18em] text-white/40">Build Type</div>
+            <div className="mt-1 font-bold">{moment.wantsBuilt || "Business system"}</div>
+          </div>
 
-          <p style={{ margin: 0, maxWidth: 760, color: "rgba(255,255,255,0.78)", lineHeight: 1.55 }}>
-            {subtitle}
-          </p>
-
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 14 }}>
-            <div style={pill}>{payload.businessName || "Business"}</div>
-            <div style={pill}>Board: {boardSlug}</div>
-            {presenceId ? <div style={pill}>Presence: {presenceId}</div> : null}
-            <div style={pill}>{clips.length} clips</div>
+          <div className="rounded-2xl border border-white/10 bg-black/25 p-4">
+            <div className="text-xs uppercase tracking-[0.18em] text-white/40">Saved</div>
+            <div className="mt-1 font-bold">{formatMomentTime(moment.createdAt)}</div>
           </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.2fr) minmax(280px, .8fr)", gap: 18, marginTop: 18 }}>
-          <div style={card}>
-            <h2 style={{ margin: 0, fontSize: 20 }}>Clips</h2>
-
-            {clips.length ? (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 12, marginTop: 14 }}>
-                {clips.map((clip, index) => (
-                  <div key={clip.id || index} style={{ borderRadius: 16, border: "1px solid rgba(255,255,255,0.10)", padding: 14, background: "rgba(255,255,255,0.04)" }}>
-                    <div style={{ fontSize: 12, fontWeight: 950, color: "rgba(255,255,255,0.62)" }}>
-                      Clip #{clip.order ?? index + 1}
-                    </div>
-                    <div style={{ marginTop: 8, fontWeight: 900, wordBreak: "break-word" }}>
-                      {clip.name || "Saved clip"}
-                    </div>
-                    <div style={{ marginTop: 6, fontSize: 12, color: "rgba(255,255,255,0.68)" }}>
-                      {clip.type || "clip"}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div style={{ marginTop: 14, borderRadius: 16, border: "1px dashed rgba(255,255,255,0.16)", padding: 18, color: "rgba(255,255,255,0.70)" }}>
-                No clip list was saved with this moment yet.
-              </div>
-            )}
+        <div className="mt-5 rounded-3xl border border-white/10 bg-black/25 p-5">
+          <div className="text-xs font-bold uppercase tracking-[0.22em] text-white/40">
+            Workflow Snapshot
           </div>
 
-          <div style={card}>
-            <h2 style={{ margin: 0, fontSize: 20 }}>Status</h2>
-
-            <div style={{ marginTop: 14, borderRadius: 16, background: "rgba(255,255,255,0.05)", padding: 14 }}>
-              <div style={{ fontSize: 11, fontWeight: 950, textTransform: "uppercase", color: "rgba(255,255,255,0.58)" }}>
-                Current
-              </div>
-              <div style={{ marginTop: 6, fontWeight: 850, lineHeight: 1.45 }}>{status}</div>
+          <div className="mt-4 grid gap-3">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+              <div className="text-sm font-bold text-white">Current workflow</div>
+              <p className="mt-1 text-sm leading-6 text-white/65">
+                {moment.currentWorkflow || "No workflow entered."}
+              </p>
             </div>
 
-            <div style={{ marginTop: 12, borderRadius: 16, background: "rgba(255,255,255,0.05)", padding: 14 }}>
-              <div style={{ fontSize: 11, fontWeight: 950, textTransform: "uppercase", color: "rgba(255,255,255,0.58)" }}>
-                Next Step
-              </div>
-              <div style={{ marginTop: 6, fontWeight: 850, lineHeight: 1.45 }}>
-                Open the connected live board.
-              </div>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+              <div className="text-sm font-bold text-white">Biggest friction</div>
+              <p className="mt-1 text-sm leading-6 text-white/65">
+                {moment.biggestFriction || "No friction entered."}
+              </p>
             </div>
 
-            <div style={{ marginTop: 12, borderRadius: 16, background: "rgba(255,255,255,0.05)", padding: 14 }}>
-              <div style={{ fontSize: 11, fontWeight: 950, textTransform: "uppercase", color: "rgba(255,255,255,0.58)" }}>
-                Story
-              </div>
-              <div style={{ marginTop: 6, color: "rgba(255,255,255,0.78)", lineHeight: 1.55 }}>{story}</div>
-            </div>
-
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 16 }}>
-              <button type="button" style={primary} onClick={() => nav(`/planet/live/${boardSlug}`)}>
-                Open Live Board
-              </button>
-              <button type="button" style={btn} onClick={() => nav(`/planet/staff/${boardSlug}`)}>
-                Staff Board
-              </button>
-              <button type="button" style={btn} onClick={() => nav(`/planet/lobby/${boardSlug}`)}>
-                Lobby Board
-              </button>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+              <div className="text-sm font-bold text-white">Holy shift moment</div>
+              <p className="mt-1 text-sm leading-6 text-white/65">
+                {moment.holyShiftMoment || "No moment entered."}
+              </p>
             </div>
           </div>
         </div>
-      </div>
-    </div>
+
+        <div className="mt-6 flex flex-wrap gap-3">
+          <a
+            href={liveBoardRoute}
+            className="rounded-2xl bg-white px-5 py-3 text-sm font-black text-black"
+          >
+            Open Live Board
+          </a>
+
+          <a
+            href={`/planet/demo/events?board=creator-city`}
+            className="rounded-2xl border border-cyan-300/25 bg-cyan-400/10 px-5 py-3 text-sm font-black text-cyan-100"
+          >
+            Live Reporting
+          </a>
+
+          <button
+            type="button"
+            onClick={() => navigate("/planet/creator")}
+            className="rounded-2xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-bold text-white/80"
+          >
+            Back to Creator City
+          </button>
+        </div>
+      </section>
+    </main>
   );
 }

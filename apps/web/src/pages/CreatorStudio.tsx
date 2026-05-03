@@ -13,6 +13,26 @@ type StudioMode = {
   badge?: string;
 };
 
+type CreatorMomentPayload = {
+  businessName: string;
+  businessType: string;
+  city: string;
+  boardSlug: string;
+  presenceId: string;
+  creatorStudio: boolean;
+  creatorMoment: {
+    title: string;
+    subtitle: string;
+    story: string;
+    statusLine: string;
+    clipCount: number;
+    launchedAt: string;
+    note: string;
+    momentType: string;
+  };
+  clips: DropClip[];
+};
+
 function getBaseUrl(): string {
   const envBase =
     (import.meta as any)?.env?.VITE_PUBLIC_BASE_URL ??
@@ -34,6 +54,80 @@ function genSlug(len: number): string {
   let out = "";
   for (let i = 0; i < bytes.length; i++) out += alphabet[bytes[i] % alphabet.length];
   return out;
+}
+
+function getCreatorMomentWriteKey(slug: string): string {
+  const key = `creator-studio:${slug}:write-key`;
+
+  try {
+    const existing = localStorage.getItem(key);
+    if (existing) return existing;
+  } catch {}
+
+  const created =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+  try {
+    localStorage.setItem(key, created);
+  } catch {}
+
+  return created;
+}
+
+async function saveCreatorMomentToSupabase(slug: string, payload: CreatorMomentPayload) {
+  const cleanSlug = slug.trim();
+  if (!cleanSlug) return false;
+
+  const writeKey = getCreatorMomentWriteKey(cleanSlug);
+  const moment = payload.creatorMoment;
+
+  try {
+    const { error } = await supabase.rpc("save_creator_moment", {
+      p_slug: cleanSlug,
+      p_write_key: writeKey,
+      p_title: moment.title,
+      p_subtitle: moment.subtitle,
+      p_status: moment.statusLine,
+      p_next_step: "Open connected creator system",
+      p_clips: payload.clips,
+      p_payload: payload,
+    });
+
+    if (!error) return true;
+
+    console.warn("[creator_moments] rpc save failed, trying direct upsert:", error.message);
+  } catch (error: any) {
+    console.warn("[creator_moments] rpc save exception, trying direct upsert:", error?.message ?? error);
+  }
+
+  try {
+    const { error } = await supabase.from("creator_moments").upsert(
+      {
+        slug: cleanSlug,
+        write_key: writeKey,
+        title: moment.title,
+        subtitle: moment.subtitle,
+        status: moment.statusLine,
+        next_step: "Open connected creator system",
+        clips: payload.clips,
+        payload,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "slug" }
+    );
+
+    if (error) {
+      console.warn("[creator_moments] direct upsert failed:", error.message);
+      return false;
+    }
+
+    return true;
+  } catch (error: any) {
+    console.warn("[creator_moments] direct upsert exception:", error?.message ?? error);
+    return false;
+  }
 }
 
 function QRCodeImg({ value, size = 240 }: { value: string; size?: number }) {
@@ -707,9 +801,6 @@ function creatorSlugify(value: string): string {
     .replace(/-{2,}/g, "-");
 }
 
-
-
-
 export default function CreatorStudio() {
   const nav = useNavigate();
   const [hoverKey, setHoverKey] = useState<string | null>(null);
@@ -720,6 +811,7 @@ export default function CreatorStudio() {
   const [dropSlug, setDropSlug] = useState("test-shop");
   const [dropPresenceId, setDropPresenceId] = useState("");
   const [momentType, setMomentType] = useState("Customer Drop-Off");
+  const [creatorSaveState, setCreatorSaveState] = useState<"idle" | "saving" | "saved" | "local-only">("idle");
 
   function handleDropFiles(event: ChangeEvent<HTMLInputElement>) {
     const files = Array.from(event.target.files || []);
@@ -737,11 +829,11 @@ export default function CreatorStudio() {
     event.target.value = "";
   }
 
-  function buildConnectedCreatorSystem() {
+  async function buildConnectedCreatorSystem() {
     const cleanSlug = creatorSlugify(dropSlug || dropBusinessName || "creator-system");
     const presence = dropPresenceId.trim() || crypto.randomUUID();
 
-    const momentPayload = {
+    const momentPayload: CreatorMomentPayload = {
       businessName: dropBusinessName.trim() || cleanSlug,
       businessType: "Creator System",
       city: "",
@@ -782,6 +874,10 @@ export default function CreatorStudio() {
 
     setDropSlug(cleanSlug);
     setDropPresenceId(presence);
+    setCreatorSaveState("saving");
+
+    const savedToSupabase = await saveCreatorMomentToSupabase(cleanSlug, momentPayload);
+    setCreatorSaveState(savedToSupabase ? "saved" : "local-only");
 
     nav(`/planet/creator/building?boardSlug=${encodeURIComponent(cleanSlug)}&businessName=${encodeURIComponent(dropBusinessName.trim() || cleanSlug)}&businessType=${encodeURIComponent("Creator System")}&city=${encodeURIComponent("")}&primaryGoal=${encodeURIComponent("Create business system")}`, {
       state: {
@@ -922,7 +1018,7 @@ export default function CreatorStudio() {
               Set up your business once. Everything runs from here.
             </h2>
             <div style={{ opacity: 0.75, fontSize: 12, lineHeight: 1.45 }}>
-              This creates your live board, staff board, and lobby board. Daily clips and updates attach later — they do not create new systems.
+              This creates your live board, staff board, and lobby board. Daily clips and updates attach later - they do not create new systems.
             </div>
           </div>
 
@@ -979,7 +1075,6 @@ export default function CreatorStudio() {
           />
         </div>
 
-
         <div style={{ marginTop: 12 }}>
           <div style={{ fontSize: 11, fontWeight: 950, opacity: 0.78, marginBottom: 6 }}>
             Moment Type
@@ -1030,13 +1125,21 @@ export default function CreatorStudio() {
         />
 
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginTop: 12 }}>
-          <button type="button" style={hpPill} onClick={buildConnectedCreatorSystem}>
-            Create Business System
+          <button type="button" style={hpPill} onClick={buildConnectedCreatorSystem} disabled={creatorSaveState === "saving"}>
+            {creatorSaveState === "saving" ? "Saving..." : "Create Business System"}
           </button>
 
           <div style={{ fontSize: 12, opacity: 0.78, fontWeight: 800 }}>
             {dropClips.length} {dropClips.length === 1 ? "clip" : "clips"} loaded
           </div>
+
+          {creatorSaveState === "saved" ? (
+            <div style={{ fontSize: 12, color: "#86efac", fontWeight: 900 }}>Saved to Supabase</div>
+          ) : null}
+
+          {creatorSaveState === "local-only" ? (
+            <div style={{ fontSize: 12, color: "#fde68a", fontWeight: 900 }}>Saved locally; Supabase skipped</div>
+          ) : null}
 
           {dropClips.length > 0 ? (
             <button type="button" style={hpPill} onClick={() => setDropClips([])}>
@@ -1059,7 +1162,7 @@ export default function CreatorStudio() {
                 }}
               >
                 <div style={{ fontSize: 11, fontWeight: 950, opacity: 0.68 }}>
-                  Clip #{clip.order} • {clip.type}
+                  Clip #{clip.order} - {clip.type}
                 </div>
                 <div style={{ marginTop: 6, fontSize: 12, fontWeight: 800, overflowWrap: "anywhere" }}>
                   {clip.name}
