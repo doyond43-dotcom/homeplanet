@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState, type CSSProperties, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type CSSProperties, type FormEvent } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import BeautySalonLiveBoard from "./BeautySalonLiveBoard";
@@ -1067,7 +1067,29 @@ export default function LiveBoardRouter() {
     return <CreatorSystemLiveBoard boardSlug={resolvedBoardSlug} payload={creatorSystemPayload} />;
   }
 
+  if (resolvedBoardSlug) {
+    return (
+      <CreatorSystemLiveBoard
+        boardSlug={resolvedBoardSlug}
+        payload={{
+          boardSlug: resolvedBoardSlug,
+          businessName: resolvedBoardSlug
+            .split("-")
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(" "),
+          createdAt: new Date().toISOString(),
+          systemFlags: {
+            liveBoard: true,
+            lobbyBoard: true,
+            momentPage: true,
+          },
+        }}
+      />
+    );
+  }
+
   return <BeautySalonLiveBoard />;
 }
+
 
 
