@@ -64,6 +64,7 @@ import EscapeSessionLauncher from "../pages/EscapeSessionLauncher";
 import EscapeSessionPage from "../pages/EscapeSessionPage";
 import EscapeWatchModePage from "../pages/EscapeWatchModePage";
 import PlanetBamboo from "../pages/PlanetBamboo";
+import ArtProductionBoard from "../pages/ArtProductionBoard";
 
 import LifePlanet from "../pages/LifePlanet";
 import JeanettesLanding from "../pages/JeanettesLanding";
@@ -195,6 +196,7 @@ export default function PlanetRoutes() {
       <Route path="demo/skatezone" element={<SkateZoneDemo />} />
       <Route path="demo/skatezone-qr" element={<SkateZoneQrDemo />} />
       <Route path="demo/beauty-color-me-crazy" element={<BeautySalonLiveBoard />} />
+      <Route path="demo/art-production" element={<ArtProductionBoard />} />
       <Route path="demo/bamboo" element={<PlanetBamboo />} />
       <Route path="demo/no-screenshot-payments" element={<NoScreenshotPaymentsDemo />} />
       <Route path="payments/no-screenshot" element={<NoScreenshotPaymentsDemo />} />
