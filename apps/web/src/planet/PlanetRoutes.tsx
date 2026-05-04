@@ -8,6 +8,8 @@ import OnlyTheEssentialsBoard from "../pages/OnlyTheEssentialsBoard";
 import OnlyTheEssentialsLanding from "../pages/OnlyTheEssentialsLanding";
 import OnlyTheEssentialsRequest from "../pages/OnlyTheEssentialsRequest";
 import OnlyTheEssentialsMessagesBoard from "../pages/OnlyTheEssentialsMessagesBoard";
+import PoolServicePlanet from "../pages/PoolServicePlanet";
+import PoolServiceDemoBoard from "../pages/PoolServiceDemoBoard";
 import LaundromatBoard from "../pages/LaundromatBoard";
 import LocalNetworkDemo from "../pages/LocalNetworkDemo";
 import HomePlanetEventsBoard from "../pages/HomePlanetEventsBoard";
@@ -118,6 +120,11 @@ export default function PlanetRoutes() {
       <Route path="cleaning/only-the-essentials" element={<OnlyTheEssentialsLanding />} />
       <Route path="demo/only-the-essentials" element={<OnlyTheEssentialsBoard />} />
       <Route path="demo/only-the-essentials/messages" element={<OnlyTheEssentialsMessagesBoard />} />
+
+      {/* POOL SERVICE */}
+      <Route path="pool-service" element={<PoolServicePlanet />} />
+      <Route path="demo/pool-service" element={<PoolServiceDemoBoard />} />
+
       <Route path="demo/laundry" element={<LaundromatBoard />} />
       <Route path="demo/local-network" element={<LocalNetworkDemo />} />
       <Route path="demo/events" element={<HomePlanetEventsBoard />} />
@@ -235,6 +242,5 @@ export default function PlanetRoutes() {
     </Routes>
   );
 }
-
 
 
