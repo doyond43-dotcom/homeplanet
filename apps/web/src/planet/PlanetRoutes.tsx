@@ -10,6 +10,7 @@ import OnlyTheEssentialsRequest from "../pages/OnlyTheEssentialsRequest";
 import OnlyTheEssentialsMessagesBoard from "../pages/OnlyTheEssentialsMessagesBoard";
 import PoolServicePlanet from "../pages/PoolServicePlanet";
 import PoolServiceDemoBoard from "../pages/PoolServiceDemoBoard";
+import PlumbingServiceDemoBoard from "../pages/PlumbingServiceDemoBoard";
 import LaundromatBoard from "../pages/LaundromatBoard";
 import LocalNetworkDemo from "../pages/LocalNetworkDemo";
 import HomePlanetEventsBoard from "../pages/HomePlanetEventsBoard";
@@ -124,6 +125,9 @@ export default function PlanetRoutes() {
       {/* POOL SERVICE */}
       <Route path="pool-service" element={<PoolServicePlanet />} />
       <Route path="demo/pool-service" element={<PoolServiceDemoBoard />} />
+
+      {/* PLUMBING SERVICE */}
+      <Route path="demo/plumbing-service" element={<PlumbingServiceDemoBoard />} />
 
       <Route path="demo/laundry" element={<LaundromatBoard />} />
       <Route path="demo/local-network" element={<LocalNetworkDemo />} />
