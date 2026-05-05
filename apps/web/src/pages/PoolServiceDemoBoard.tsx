@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 
-type JobStage = "New Request" | "Scheduled" | "On Route" | "Servicing" | "Needs Attention" | "Completed";
+type BoardColumn = "Incoming" | "Scheduled" | "Servicing" | "Completed";
 type PaymentStatus = "Not Sent" | "Invoice Sent" | "Paid";
 
 type PoolJob = {
   id: number;
-  stage: JobStage;
+  column: BoardColumn;
   title: string;
   customer: string;
   phone: string;
@@ -17,6 +17,9 @@ type PoolJob = {
   notes: string;
   chlorine: string;
   ph: string;
+  onRoute: boolean;
+  needsAttention: boolean;
+  attentionNote: string;
   checklist: {
     skim: boolean;
     brush: boolean;
@@ -29,16 +32,9 @@ type PoolJob = {
   timeline: string[];
 };
 
-const STORAGE_KEY = "pool-service-operational-demo";
+const STORAGE_KEY = "pool-service-operational-demo-v2";
 
-const STAGES: JobStage[] = [
-  "New Request",
-  "Scheduled",
-  "On Route",
-  "Servicing",
-  "Needs Attention",
-  "Completed",
-];
+const COLUMNS: BoardColumn[] = ["Incoming", "Scheduled", "Servicing", "Completed"];
 
 const emptyChecklist = {
   skim: false,
@@ -61,7 +57,7 @@ function stamp() {
 const seedJobs: PoolJob[] = [
   {
     id: 1,
-    stage: "New Request",
+    column: "Incoming",
     title: "Green Pool Help",
     customer: "Maria S.",
     phone: "863-555-0198",
@@ -73,13 +69,16 @@ const seedJobs: PoolJob[] = [
     notes: "Customer says the pool turned green overnight. Needs quote, chemical check, and possible shock treatment.",
     chlorine: "Not checked",
     ph: "Not checked",
+    onRoute: false,
+    needsAttention: true,
+    attentionNote: "Green pool needs quote before visit.",
     checklist: emptyChecklist,
     paymentStatus: "Not Sent",
     timeline: ["Request captured — Today, 8:42 AM"],
   },
   {
     id: 2,
-    stage: "Scheduled",
+    column: "Scheduled",
     title: "Weekly Pool Cleaning",
     customer: "Kevin R.",
     phone: "863-555-0144",
@@ -91,13 +90,16 @@ const seedJobs: PoolJob[] = [
     notes: "Regular weekly visit. Brush, skim, vacuum, chemical check.",
     chlorine: "Not checked",
     ph: "Not checked",
+    onRoute: false,
+    needsAttention: false,
+    attentionNote: "",
     checklist: emptyChecklist,
     paymentStatus: "Invoice Sent",
     timeline: ["Request captured", "Scheduled for Today, 11:00 AM"],
   },
   {
     id: 3,
-    stage: "Servicing",
+    column: "Servicing",
     title: "Filter Cleaning",
     customer: "Danielle P.",
     phone: "863-555-0122",
@@ -109,6 +111,9 @@ const seedJobs: PoolJob[] = [
     notes: "Cartridge filter rinse and pressure check. Customer mentioned weak return jets.",
     chlorine: "2.5",
     ph: "7.4",
+    onRoute: false,
+    needsAttention: false,
+    attentionNote: "",
     checklist: {
       skim: true,
       brush: true,
@@ -162,7 +167,7 @@ export default function PoolServiceDemoBoard() {
   function addDemoJob() {
     const fresh: PoolJob = {
       id: Date.now(),
-      stage: "New Request",
+      column: "Incoming",
       title: "New Pool Service Request",
       customer: "Demo Customer",
       phone: "863-555-0100",
@@ -174,6 +179,9 @@ export default function PoolServiceDemoBoard() {
       notes: "New customer request. Open this card to schedule, assign, log service, and complete.",
       chlorine: "Not checked",
       ph: "Not checked",
+      onRoute: false,
+      needsAttention: false,
+      attentionNote: "",
       checklist: emptyChecklist,
       paymentStatus: "Not Sent",
       timeline: [`Request captured — ${stamp()}`],
@@ -189,21 +197,22 @@ export default function PoolServiceDemoBoard() {
   }
 
   const counts = useMemo(() => {
-    return STAGES.reduce<Record<JobStage, number>>(
-      (acc, stage) => {
-        acc[stage] = jobs.filter((job) => job.stage === stage).length;
+    return COLUMNS.reduce<Record<BoardColumn, number>>(
+      (acc, column) => {
+        acc[column] = jobs.filter((job) => job.column === column).length;
         return acc;
       },
       {
-        "New Request": 0,
+        Incoming: 0,
         Scheduled: 0,
-        "On Route": 0,
         Servicing: 0,
-        "Needs Attention": 0,
         Completed: 0,
       }
     );
   }, [jobs]);
+
+  const needsAttentionCount = jobs.filter((job) => job.needsAttention).length;
+  const onRouteCount = jobs.filter((job) => job.onRoute).length;
 
   function checklistCount(job: PoolJob) {
     return Object.values(job.checklist).filter(Boolean).length;
@@ -219,7 +228,7 @@ export default function PoolServiceDemoBoard() {
             </div>
             <h1 className="text-4xl font-black md:text-5xl">Pool Service Operations Board</h1>
             <p className="mt-2 max-w-3xl text-slate-300">
-              Requests, scheduling, tech status, chemical readings, checklist, payment, and proof timeline in one place.
+              Incoming, scheduling, service work, payment, attention flags, route status, and proof timeline in one place.
             </p>
           </div>
 
@@ -245,18 +254,26 @@ export default function PoolServiceDemoBoard() {
           </div>
         </div>
 
-        <div className="mb-6 grid gap-3 md:grid-cols-4">
+        <div className="mb-6 grid gap-3 md:grid-cols-5">
           <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
             <p className="text-sm font-bold text-slate-400">Open Jobs</p>
-            <p className="mt-1 text-3xl font-black">{jobs.filter((j) => j.stage !== "Completed").length}</p>
+            <p className="mt-1 text-3xl font-black">
+              {jobs.filter((j) => j.column !== "Completed").length}
+            </p>
           </div>
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
-            <p className="text-sm font-bold text-slate-400">Needs Attention</p>
-            <p className="mt-1 text-3xl font-black">{counts["Needs Attention"]}</p>
+          <div className="rounded-3xl border border-amber-300/30 bg-amber-300/10 p-4">
+            <p className="text-sm font-bold text-amber-100">Needs Attention</p>
+            <p className="mt-1 text-3xl font-black">{needsAttentionCount}</p>
+          </div>
+          <div className="rounded-3xl border border-cyan-300/30 bg-cyan-300/10 p-4">
+            <p className="text-sm font-bold text-cyan-100">On Route</p>
+            <p className="mt-1 text-3xl font-black">{onRouteCount}</p>
           </div>
           <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
             <p className="text-sm font-bold text-slate-400">Invoices Paid</p>
-            <p className="mt-1 text-3xl font-black">{jobs.filter((j) => j.paymentStatus === "Paid").length}</p>
+            <p className="mt-1 text-3xl font-black">
+              {jobs.filter((j) => j.paymentStatus === "Paid").length}
+            </p>
           </div>
           <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
             <p className="text-sm font-bold text-slate-400">Completed</p>
@@ -264,44 +281,60 @@ export default function PoolServiceDemoBoard() {
           </div>
         </div>
 
-        <div className="grid gap-4 xl:grid-cols-6">
-          {STAGES.map((stage) => (
-            <section key={stage} className="min-h-[520px] rounded-3xl border border-white/10 bg-white/5 p-4">
+        <div className="grid gap-4 xl:grid-cols-4">
+          {COLUMNS.map((column) => (
+            <section key={column} className="min-h-[560px] rounded-3xl border border-white/10 bg-white/5 p-4">
               <div className="mb-4 flex items-center justify-between">
-                <h2 className="font-black">{stage}</h2>
+                <h2 className="font-black">{column}</h2>
                 <span className="rounded-full bg-cyan-300/20 px-3 py-1 text-xs font-black text-cyan-100">
-                  {counts[stage]}
+                  {counts[column]}
                 </span>
               </div>
 
               <div className="space-y-3">
                 {jobs
-                  .filter((job) => job.stage === stage)
+                  .filter((job) => job.column === column)
                   .map((job) => (
                     <button
                       key={job.id}
                       onClick={() => setSelected(job)}
-                      className="w-full rounded-2xl bg-white p-4 text-left text-slate-950 shadow-xl transition hover:-translate-y-1 hover:shadow-2xl"
+                      className={[
+                        "w-full rounded-2xl bg-white p-4 text-left text-slate-950 shadow-xl transition hover:-translate-y-1 hover:shadow-2xl",
+                        job.needsAttention ? "ring-4 ring-amber-300" : "",
+                      ].join(" ")}
                     >
-                      <div className="flex items-center justify-between gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <span className="rounded-full bg-cyan-100 px-3 py-1 text-xs font-black text-cyan-900">
                           {job.serviceType}
                         </span>
-                        <span className="text-xs font-black text-slate-500">{job.paymentStatus}</span>
+                        {job.onRoute && (
+                          <span className="rounded-full bg-slate-950 px-3 py-1 text-xs font-black text-white">
+                            On Route
+                          </span>
+                        )}
+                        {job.needsAttention && (
+                          <span className="rounded-full bg-amber-200 px-3 py-1 text-xs font-black text-amber-950">
+                            Needs Attention
+                          </span>
+                        )}
                       </div>
 
-                      <h3 className="mt-3 text-lg font-black">{job.title}</h3>
+                      <h3 className="mt-3 text-xl font-black">{job.title}</h3>
                       <p className="mt-1 text-sm font-bold text-slate-700">{job.customer}</p>
                       <p className="mt-1 text-xs text-slate-500">{job.scheduledFor}</p>
 
-                      <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                      <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
                         <div className="rounded-xl bg-slate-100 p-2">
                           <p className="font-black">Tech</p>
                           <p>{job.tech}</p>
                         </div>
                         <div className="rounded-xl bg-slate-100 p-2">
-                          <p className="font-black">Checklist</p>
-                          <p>{checklistCount(job)}/6 done</p>
+                          <p className="font-black">List</p>
+                          <p>{checklistCount(job)}/6</p>
+                        </div>
+                        <div className="rounded-xl bg-slate-100 p-2">
+                          <p className="font-black">Pay</p>
+                          <p>{job.paymentStatus}</p>
                         </div>
                       </div>
 
@@ -336,21 +369,55 @@ export default function PoolServiceDemoBoard() {
               </button>
             </div>
 
+            <div className="mb-5 grid gap-3 md:grid-cols-2">
+              <button
+                onClick={() =>
+                  logAction(selected.onRoute ? "Route status cleared" : "Tech marked on route", {
+                    onRoute: !selected.onRoute,
+                  })
+                }
+                className={[
+                  "rounded-2xl px-4 py-3 font-black",
+                  selected.onRoute
+                    ? "bg-slate-950 text-white"
+                    : "bg-cyan-100 text-cyan-950",
+                ].join(" ")}
+              >
+                {selected.onRoute ? "On Route Active" : "Mark On Route"}
+              </button>
+
+              <button
+                onClick={() =>
+                  logAction(selected.needsAttention ? "Attention flag cleared" : "Attention flag added", {
+                    needsAttention: !selected.needsAttention,
+                  })
+                }
+                className={[
+                  "rounded-2xl px-4 py-3 font-black",
+                  selected.needsAttention
+                    ? "bg-amber-300 text-amber-950"
+                    : "bg-slate-100 text-slate-950",
+                ].join(" ")}
+              >
+                {selected.needsAttention ? "Needs Attention Active" : "Flag Needs Attention"}
+              </button>
+            </div>
+
             <div className="grid gap-3 md:grid-cols-2">
               <label className="text-sm font-black">
-                Stage
+                Board Column
                 <select
-                  value={selected.stage}
+                  value={selected.column}
                   onChange={(e) =>
-                    logAction(`Stage changed to ${e.target.value}`, {
-                      stage: e.target.value as JobStage,
+                    logAction(`Moved to ${e.target.value}`, {
+                      column: e.target.value as BoardColumn,
                     })
                   }
                   className="mt-1 w-full rounded-xl border bg-white p-3 font-bold"
                 >
-                  {STAGES.map((stage) => (
-                    <option key={stage} value={stage}>
-                      {stage}
+                  {COLUMNS.map((column) => (
+                    <option key={column} value={column}>
+                      {column}
                     </option>
                   ))}
                 </select>
@@ -428,6 +495,17 @@ export default function PoolServiceDemoBoard() {
               </label>
             </div>
 
+            {selected.needsAttention && (
+              <label className="mt-4 block text-sm font-black">
+                Attention Note
+                <input
+                  value={selected.attentionNote}
+                  onChange={(e) => updateJob({ ...selected, attentionNote: e.target.value })}
+                  className="mt-1 w-full rounded-xl border border-amber-300 bg-amber-50 p-3 font-normal"
+                />
+              </label>
+            )}
+
             <label className="mt-4 block text-sm font-black">
               Address / Area
               <input
@@ -477,16 +555,26 @@ export default function PoolServiceDemoBoard() {
                 Send ETA
               </button>
               <button
-                onClick={() => logAction("Visit logged", { stage: "Servicing" })}
+                onClick={() =>
+                  logAction("Service started", {
+                    column: "Servicing",
+                    onRoute: false,
+                  })
+                }
                 className="rounded-2xl bg-slate-950 px-4 py-3 font-black text-white"
               >
-                Log Visit
+                Start Service
               </button>
               <button
                 onClick={() =>
                   logAction("Job completed", {
-                    stage: "Completed",
-                    paymentStatus: selected.paymentStatus === "Not Sent" ? "Invoice Sent" : selected.paymentStatus,
+                    column: "Completed",
+                    onRoute: false,
+                    needsAttention: false,
+                    paymentStatus:
+                      selected.paymentStatus === "Not Sent"
+                        ? "Invoice Sent"
+                        : selected.paymentStatus,
                   })
                 }
                 className="rounded-2xl bg-cyan-300 px-4 py-3 font-black text-slate-950"
