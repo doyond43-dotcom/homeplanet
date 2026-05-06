@@ -14,6 +14,7 @@ import PlumbingServiceDemoBoard from "../pages/PlumbingServiceDemoBoard";
 import CaptainDChartersPage from "../pages/CaptainDChartersPage";
 import CaptainDTripMemoryPage from "../pages/CaptainDTripMemoryPage";
 import CaptainDPrivacyPage from "../pages/CaptainDPrivacyPage";
+import CaptainDBookingPage from "../pages/CaptainDBookingPage";
 import LaundromatBoard from "../pages/LaundromatBoard";
 import LocalNetworkDemo from "../pages/LocalNetworkDemo";
 import HomePlanetEventsBoard from "../pages/HomePlanetEventsBoard";
@@ -137,6 +138,7 @@ export default function PlanetRoutes() {
       <Route path="demo/captain-d-charters" element={<CaptainDChartersPage />} />
       <Route path="demo/captain-d-memory" element={<CaptainDTripMemoryPage />} />
       <Route path="demo/captain-d-privacy" element={<CaptainDPrivacyPage />} />
+      <Route path="demo/captain-d-booking" element={<CaptainDBookingPage />} />
 
       <Route path="demo/laundry" element={<LaundromatBoard />} />
       <Route path="demo/local-network" element={<LocalNetworkDemo />} />
@@ -256,6 +258,7 @@ export default function PlanetRoutes() {
     </Routes>
   );
 }
+
 
 
 

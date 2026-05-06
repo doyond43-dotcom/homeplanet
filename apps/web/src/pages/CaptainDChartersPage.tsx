@@ -54,10 +54,10 @@ export default function CaptainDChartersPage() {
 
           <div className="flex flex-wrap gap-4">
             <a
-              href="/planet/demo/captain-d-live"
+              href="/planet/demo/captain-d-booking"
               className="rounded-full bg-cyan-300 px-7 py-4 text-sm font-black uppercase tracking-[0.18em] text-[#071019] transition hover:scale-[1.02]"
             >
-              Open Live Trip
+              Book Your Charter
             </a>
 
             <a
@@ -210,5 +210,6 @@ export default function CaptainDChartersPage() {
     </main>
   );
 }
+
 
 

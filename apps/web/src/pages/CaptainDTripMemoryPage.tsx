@@ -117,7 +117,7 @@ export default function CaptainDTripMemoryPage() {
               </button>
 
               <a
-                href="/planet/demo/captain-d-charters"
+                href="/planet/demo/captain-d-booking"
                 className="rounded-full border border-white/20 bg-white/5 px-5 py-3 text-xs font-black uppercase tracking-[0.18em] text-white transition hover:bg-white/10"
               >
                 Book Again
@@ -221,3 +221,4 @@ export default function CaptainDTripMemoryPage() {
     </main>
   );
 }
+
