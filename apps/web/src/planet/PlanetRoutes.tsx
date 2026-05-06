@@ -15,6 +15,9 @@ import CaptainDChartersPage from "../pages/CaptainDChartersPage";
 import CaptainDTripMemoryPage from "../pages/CaptainDTripMemoryPage";
 import CaptainDPrivacyPage from "../pages/CaptainDPrivacyPage";
 import CaptainDBookingPage from "../pages/CaptainDBookingPage";
+import LazyLunkerExperiencePage from "../pages/LazyLunkerExperiencePage";
+import LazyLunkerBookingPage from "../pages/LazyLunkerBookingPage";
+import LazyLunkerFishingAddonPage from "../pages/LazyLunkerFishingAddonPage";
 import LaundromatBoard from "../pages/LaundromatBoard";
 import LocalNetworkDemo from "../pages/LocalNetworkDemo";
 import HomePlanetEventsBoard from "../pages/HomePlanetEventsBoard";
@@ -140,6 +143,11 @@ export default function PlanetRoutes() {
       <Route path="demo/captain-d-privacy" element={<CaptainDPrivacyPage />} />
       <Route path="demo/captain-d-booking" element={<CaptainDBookingPage />} />
 
+      {/* LAZY LUNKER EXPERIENCE */}
+      <Route path="demo/lazy-lunker" element={<LazyLunkerExperiencePage />} />
+      <Route path="demo/lazy-lunker-booking" element={<LazyLunkerBookingPage />} />
+      <Route path="demo/lazy-lunker-fishing" element={<LazyLunkerFishingAddonPage />} />
+
       <Route path="demo/laundry" element={<LaundromatBoard />} />
       <Route path="demo/local-network" element={<LocalNetworkDemo />} />
       <Route path="demo/events" element={<HomePlanetEventsBoard />} />
@@ -258,6 +266,9 @@ export default function PlanetRoutes() {
     </Routes>
   );
 }
+
+
+
 
 
 
