@@ -92,6 +92,7 @@ import GuardianActivationPage from "../pages/GuardianActivationPage";
 import GuardianOnboardingPage from "../pages/GuardianOnboardingPage";
 import GuardianPanicPage from "../pages/GuardianPanicPage";
 import GuardianPanicLiveBoard from "../pages/GuardianPanicLiveBoard";
+import GuardianWearablePanicDemo from "../pages/GuardianWearablePanicDemo";
 import PetCareTimelinePanel from "../components/guardian/PetCareTimelinePanel";
 import PetTagFulfillmentBoard from "../pages/PetTagFulfillmentBoard";
 
@@ -177,6 +178,7 @@ export default function PlanetRoutes() {
       <Route path="guardian/activate" element={<GuardianActivationPage />} />
       <Route path="guardian/onboarding" element={<GuardianOnboardingPage />} />
       <Route path="guardian/panic" element={<GuardianPanicPage />} />
+      <Route path="guardian/wearable-panic" element={<GuardianWearablePanicDemo />} />
       <Route path="guardian/panic/live" element={<GuardianPanicLiveBoard />} />
       <Route path="guardian/household" element={<GuardianHouseholdBoard />} />
       <Route path="guardian-household" element={<GuardianHouseholdBoard />} />
@@ -246,5 +248,6 @@ export default function PlanetRoutes() {
     </Routes>
   );
 }
+
 
 
