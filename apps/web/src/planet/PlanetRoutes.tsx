@@ -11,6 +11,8 @@ import OnlyTheEssentialsMessagesBoard from "../pages/OnlyTheEssentialsMessagesBo
 import PoolServicePlanet from "../pages/PoolServicePlanet";
 import PoolServiceDemoBoard from "../pages/PoolServiceDemoBoard";
 import PlumbingServiceDemoBoard from "../pages/PlumbingServiceDemoBoard";
+import CaptainDChartersPage from "../pages/CaptainDChartersPage";
+import CaptainDTripMemoryPage from "../pages/CaptainDTripMemoryPage";
 import LaundromatBoard from "../pages/LaundromatBoard";
 import LocalNetworkDemo from "../pages/LocalNetworkDemo";
 import HomePlanetEventsBoard from "../pages/HomePlanetEventsBoard";
@@ -130,6 +132,10 @@ export default function PlanetRoutes() {
       {/* PLUMBING SERVICE */}
       <Route path="demo/plumbing-service" element={<PlumbingServiceDemoBoard />} />
 
+      {/* CAPTAIN D CHARTERS */}
+      <Route path="demo/captain-d-charters" element={<CaptainDChartersPage />} />
+      <Route path="demo/captain-d-memory" element={<CaptainDTripMemoryPage />} />
+
       <Route path="demo/laundry" element={<LaundromatBoard />} />
       <Route path="demo/local-network" element={<LocalNetworkDemo />} />
       <Route path="demo/events" element={<HomePlanetEventsBoard />} />
@@ -248,6 +254,8 @@ export default function PlanetRoutes() {
     </Routes>
   );
 }
+
+
 
 
 
