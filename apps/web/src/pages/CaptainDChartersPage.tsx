@@ -66,6 +66,13 @@ export default function CaptainDChartersPage() {
             >
               View Trip Memories
             </a>
+
+            <a
+              href="/planet/demo/captain-d-privacy"
+              className="rounded-full border border-white/15 bg-white/[0.03] px-7 py-4 text-sm font-bold uppercase tracking-[0.18em] text-white/80 transition hover:bg-white/10"
+            >
+              Privacy Controls
+            </a>
           </div>
         </div>
       </section>
@@ -203,4 +210,5 @@ export default function CaptainDChartersPage() {
     </main>
   );
 }
+
 
