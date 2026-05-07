@@ -23,6 +23,7 @@ import LaundromatBoard from "../pages/LaundromatBoard";
 import LocalNetworkDemo from "../pages/LocalNetworkDemo";
 import HomePlanetEventsBoard from "../pages/HomePlanetEventsBoard";
 import StartPage from "../pages/StartPage";
+import BusinessSetupForm from "../pages/BusinessSetupForm";
 
 import CreatorCity from "../pages/CreatorCity";
 import CreatorLanding from "../pages/CreatorLanding";
@@ -123,6 +124,7 @@ export default function PlanetRoutes() {
       <Route index element={<Navigate to="/planet/start" replace />} />
 
       <Route path="start" element={<StartPage />} />
+      <Route path="business-setup" element={<BusinessSetupForm />} />
 
       {/* ONLY THE ESSENTIALS */}
       <Route path="only-the-essentials" element={<OnlyTheEssentialsLanding />} />
@@ -200,6 +202,7 @@ export default function PlanetRoutes() {
       <Route path="guardian/panic" element={<GuardianPanicPage />} />
       <Route path="guardian/wearable-panic" element={<GuardianWearablePanicDemo />} />
       <Route path="guardian/panic/live" element={<GuardianPanicLiveBoard />} />
+      <Route path="guardian/panic/:incidentId" element={<GuardianPanicLiveBoard />} />
       <Route path="guardian/household" element={<GuardianHouseholdBoard />} />
       <Route path="guardian-household" element={<GuardianHouseholdBoard />} />
       <Route path="guardian/public/:guardianId" element={<GuardianPublicProfilePage />} />
@@ -268,6 +271,8 @@ export default function PlanetRoutes() {
     </Routes>
   );
 }
+
+
 
 
 
