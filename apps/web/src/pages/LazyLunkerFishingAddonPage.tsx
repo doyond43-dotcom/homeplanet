@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function LazyLunkerFishingAddonPage() {
   const [submitted, setSubmitted] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <main className="min-h-screen bg-[#071019] px-6 py-10 text-white">
@@ -30,6 +32,7 @@ export default function LazyLunkerFishingAddonPage() {
             onSubmit={(event) => {
               event.preventDefault();
               setSubmitted(true);
+              navigate("/planet/demo/lazy-lunker-request-active");
             }}
             className="rounded-[34px] border border-white/10 bg-[#0c1824] p-7"
           >
@@ -132,3 +135,4 @@ export default function LazyLunkerFishingAddonPage() {
     </main>
   );
 }
+

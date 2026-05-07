@@ -18,6 +18,7 @@ import CaptainDBookingPage from "../pages/CaptainDBookingPage";
 import LazyLunkerExperiencePage from "../pages/LazyLunkerExperiencePage";
 import LazyLunkerBookingPage from "../pages/LazyLunkerBookingPage";
 import LazyLunkerFishingAddonPage from "../pages/LazyLunkerFishingAddonPage";
+import LazyLunkerRequestActivePage from "../pages/LazyLunkerRequestActivePage";
 import LaundromatBoard from "../pages/LaundromatBoard";
 import LocalNetworkDemo from "../pages/LocalNetworkDemo";
 import HomePlanetEventsBoard from "../pages/HomePlanetEventsBoard";
@@ -147,6 +148,7 @@ export default function PlanetRoutes() {
       <Route path="demo/lazy-lunker" element={<LazyLunkerExperiencePage />} />
       <Route path="demo/lazy-lunker-booking" element={<LazyLunkerBookingPage />} />
       <Route path="demo/lazy-lunker-fishing" element={<LazyLunkerFishingAddonPage />} />
+      <Route path="demo/lazy-lunker-request-active" element={<LazyLunkerRequestActivePage />} />
 
       <Route path="demo/laundry" element={<LaundromatBoard />} />
       <Route path="demo/local-network" element={<LocalNetworkDemo />} />
@@ -266,6 +268,7 @@ export default function PlanetRoutes() {
     </Routes>
   );
 }
+
 
 
 
