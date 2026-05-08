@@ -24,6 +24,10 @@ import LocalNetworkDemo from "../pages/LocalNetworkDemo";
 import HomePlanetEventsBoard from "../pages/HomePlanetEventsBoard";
 import StartPage from "../pages/StartPage";
 import BusinessSetupForm from "../pages/BusinessSetupForm";
+import PrintShopLandingPage from "../pages/PrintShopLandingPage";
+import PrintShopOrderPage from "../pages/PrintShopOrderPage";
+import PrintShopArtworkPage from "../pages/PrintShopArtworkPage";
+import PrintShopTrackPage from "../pages/PrintShopTrackPage";
 
 import CreatorCity from "../pages/CreatorCity";
 import CreatorLanding from "../pages/CreatorLanding";
@@ -125,6 +129,10 @@ export default function PlanetRoutes() {
 
       <Route path="start" element={<StartPage />} />
       <Route path="business-setup" element={<BusinessSetupForm />} />
+      <Route path="printshop" element={<PrintShopLandingPage />} />
+      <Route path="printshop/order" element={<PrintShopOrderPage />} />
+      <Route path="printshop/artwork" element={<PrintShopArtworkPage />} />
+      <Route path="printshop/track" element={<PrintShopTrackPage />} />
 
       {/* ONLY THE ESSENTIALS */}
       <Route path="only-the-essentials" element={<OnlyTheEssentialsLanding />} />
@@ -271,6 +279,8 @@ export default function PlanetRoutes() {
     </Routes>
   );
 }
+
+
 
 
 
