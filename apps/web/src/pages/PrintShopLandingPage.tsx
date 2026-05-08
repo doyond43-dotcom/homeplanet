@@ -43,6 +43,31 @@ export default function PrintShopLandingPage() {
         </div>
       </header>
 
+      {/* MOBILE QUICK LINKS */}
+      <div className="border-b border-white/10 bg-[#0d0d0d] px-4 py-3 md:hidden">
+        <div className="flex gap-3 overflow-x-auto">
+          <Link
+            to="/planet/printshop/order"
+            className="whitespace-nowrap rounded-full bg-cyan-400 px-4 py-2 text-sm font-semibold text-black"
+          >
+            Start Order
+          </Link>
+
+          <Link
+            to="/planet/printshop/artwork"
+            className="whitespace-nowrap rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white"
+          >
+            Upload Artwork
+          </Link>
+
+          <Link
+            to="/planet/printshop/track"
+            className="whitespace-nowrap rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white"
+          >
+            Track Order
+          </Link>
+        </div>
+      </div>
       <section className="mx-auto grid max-w-7xl gap-12 px-6 py-20 md:grid-cols-2 md:items-center">
         <div>
           <div className="mb-4 inline-flex rounded-full border border-cyan-400/30 bg-cyan-400/10 px-4 py-1 text-xs font-medium tracking-[0.2em] text-cyan-300">
@@ -166,3 +191,4 @@ export default function PrintShopLandingPage() {
     </div>
   );
 }
+
