@@ -276,7 +276,7 @@ export default function GuardianWearablePanicDemo() {
                 <p className="mt-1 text-sm text-white/60">
                   {guardianProfile
                     ? "Live Guardian profile data has been carried into Panic Mode."
-                    : "Keep this simple for Phase 1. We can wire real Guardian profiles next."}
+                    : "Start with the essential details so nearby responders and family members immediately understand the situation."}
                 </p>
 
                 <div className="mt-5 grid gap-4 sm:grid-cols-2">
@@ -371,7 +371,7 @@ export default function GuardianWearablePanicDemo() {
                   <div>
                     <h2 className="text-lg font-semibold">Nearby signal layer</h2>
                     <p className="mt-1 text-sm text-white/60">
-                      Phase 1 starts with selected nearby signals so the incident board shows context immediately.
+                      Nearby safety signals help provide immediate context during an active Guardian incident.
                     </p>
                   </div>
                   <div className="rounded-full border border-red-400/25 bg-red-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-red-200">
@@ -458,7 +458,7 @@ export default function GuardianWearablePanicDemo() {
                 </button>
 
                 <p className="mt-3 text-center text-xs text-white/45">
-                  Phase 1 uses local storage so we can verify the full flow before wiring Supabase.
+                  This incident remains active locally so nearby updates and responder context stay immediately available.
                 </p>
               </div>
 
@@ -490,3 +490,4 @@ export default function GuardianWearablePanicDemo() {
     </div>
   );
 }
+

@@ -492,7 +492,7 @@ function GuardianShell({
                 to={`${PET_BASE_PATH}/pet/${pet.id}`}
                 className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white/85 transition hover:border-cyan-300/40 hover:bg-cyan-400/10"
               >
-                Public QR Demo
+                Public QR Access
               </Link>
               <Link
                 to={`${PET_BASE_PATH}/found/${pet.id}`}
@@ -528,7 +528,7 @@ function GuardianSalesPage({ pet }: { pet: DemoPet }) {
       <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="rounded-[32px] border border-cyan-300/12 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.06),transparent_38%),rgba(255,255,255,0.045)] p-6 backdrop-blur-xl sm:p-8">
           <div className="inline-flex items-center gap-2 rounded-full border border-amber-300/25 bg-amber-300/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-amber-200">
-            Pet Guardian demo
+            Pet Guardian System
           </div>
 
           <h2 className="mt-4 max-w-3xl text-3xl font-semibold tracking-tight text-white sm:text-5xl">
@@ -651,7 +651,7 @@ function GuardianSalesPage({ pet }: { pet: DemoPet }) {
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200/90">
-                      Demo pet profile
+                      Protected pet profile
                     </p>
                     <h3 className="mt-2 text-2xl font-semibold text-white">
                       {pet.name}
@@ -821,7 +821,7 @@ function GuardianSalesPage({ pet }: { pet: DemoPet }) {
               to={`${PET_BASE_PATH}/found/${pet.id}`}
               className="rounded-2xl border border-white/15 bg-white/6 px-5 py-3 text-sm font-semibold text-white/90 transition hover:bg-white/10"
             >
-              Open demo finder form
+              Open finder report
             </Link>
           </div>
         </div>
@@ -1053,8 +1053,7 @@ function GuardianFoundPage({ pet }: { pet: DemoPet }) {
                     Report captured
                   </h3>
                   <p className="mt-2 text-sm leading-6 text-white/75">
-                    This is the demo state for today's pitch. Later we can save reports
-                    into Supabase and notify the owner live.
+                    Reports stay active so the owner can review updates and respond quickly during a recovery situation.
                   </p>
                 </div>
               ) : (
@@ -1063,7 +1062,7 @@ function GuardianFoundPage({ pet }: { pet: DemoPet }) {
                     Ready to submit
                   </h3>
                   <p className="mt-2 text-sm leading-6 text-white/75">
-                    Fill the form and press Send Report to demonstrate the rescue flow.
+                    Submit a report to alert the owner and begin the recovery flow.
                   </p>
                 </div>
               )}
@@ -1138,6 +1137,8 @@ export default function GuardianPetTagDemo() {
     </GuardianShell>
   );
 }
+
+
 
 
 

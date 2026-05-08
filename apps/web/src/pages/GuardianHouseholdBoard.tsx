@@ -63,12 +63,12 @@ const members: HouseholdMember[] = [
   {
     id: "bella",
     name: "Bella",
-    layer: "Pet Guardian Demo",
+    layer: "Pet Guardian System",
     location: "Neighborhood scan zone",
     detail: "Tag active. Last scan visible. Owner contact ready.",
     lastSeen: "7m ago",
     status: "safe",
-    actionLabel: "Open Bella demo",
+    actionLabel: "Open Bella profile",
   },
   {
     id: "grandpa-joe",
@@ -504,7 +504,7 @@ export default function GuardianHouseholdBoard() {
                 style={primaryBtn}
                 onClick={() => navigate("/planet/guardian-pet/pet/bella-demo")}
               >
-                Open Bella demo
+                Open Bella profile
               </button>
               <button
                 type="button"
@@ -870,7 +870,7 @@ export default function GuardianHouseholdBoard() {
             eyebrow="Pet demo"
             title="Bella Pet Tag Demo"
             body="Public-facing pet rescue flow with scan-to-contact, finder actions, and care timeline visibility."
-            cta="Open Bella demo"
+            cta="Open Bella profile"
             onClick={() => navigate("/planet/guardian-pet/pet/bella-demo")}
           />
           <EntryCard

@@ -133,7 +133,7 @@ export default function GuardianPanicPage() {
       incidentId,
       status: "active",
       profile: {
-        name: profileName.trim() || "Guardian Protected Profile",
+        name: profileName.trim() || "Guardian Emergency profile",
         type: profileType,
         label: guardianProfile?.label || "",
         status: guardianProfile?.status || "",
@@ -158,7 +158,7 @@ export default function GuardianPanicPage() {
           id: `evt-${Date.now()}-1`,
           type: "trigger",
           title: "Panic triggered",
-          detail: "Guardian Panic Mode manually activated.",
+          detail: "Guardian Panic Activation manually activated.",
           createdAt: startedAtIso,
         },
         {
@@ -238,14 +238,14 @@ export default function GuardianPanicPage() {
             <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
               <div className="space-y-3">
                 <div className="inline-flex items-center rounded-full border border-red-400/30 bg-red-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.28em] text-red-200">
-                  Guardian Panic Mode
+                  Guardian Panic Activation
                 </div>
                 <div>
                   <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                    Panic activation console
+                    Guardian emergency activation
                   </h1>
                   <p className="mt-2 max-w-2xl text-sm text-white/70 sm:text-base">
-                    Capture the origin moment, lock presence instantly, and route into a live incident board.
+                    Create an emergency protection event, organize nearby awareness, and immediately begin the Guardian response flow.
                   </p>
                 </div>
               </div>
@@ -256,13 +256,13 @@ export default function GuardianPanicPage() {
                   <div className="mt-2 text-sm font-medium text-red-200">Ready to activate</div>
                 </div>
                 <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.24em] text-white/45">Mode</div>
+                  <div className="text-[11px] uppercase tracking-[0.24em] text-white/45">Activation</div>
                   <div className="mt-2 text-sm font-medium text-white">
                     {guardianProfile ? "Guardian linked" : "Manual trigger"}
                   </div>
                 </div>
                 <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.24em] text-white/45">Started preview</div>
+                  <div className="text-[11px] uppercase tracking-[0.24em] text-white/45">Prepared</div>
                   <div className="mt-2 text-sm font-medium text-white">{startedPreview}</div>
                 </div>
               </div>
@@ -272,11 +272,11 @@ export default function GuardianPanicPage() {
           <div className="grid gap-6 p-5 sm:p-6 lg:grid-cols-[1.1fr_0.9fr]">
             <section className="space-y-5">
               <div className="rounded-[24px] border border-white/10 bg-white/[0.025] p-5">
-                <h2 className="text-lg font-semibold">Protected profile</h2>
+                <h2 className="text-lg font-semibold">Emergency profile</h2>
                 <p className="mt-1 text-sm text-white/60">
                   {guardianProfile
-                    ? "Live Guardian profile data has been carried into Panic Mode."
-                    : "Keep this simple for Phase 1. We can wire real Guardian profiles next."}
+                    ? "Live Guardian profile data has been carried into Panic Activation."
+                    : "Start with the essential details so nearby responders and family members immediately understand the situation."}
                 </p>
 
                 <div className="mt-5 grid gap-4 sm:grid-cols-2">
@@ -369,13 +369,13 @@ export default function GuardianPanicPage() {
               <div className="rounded-[24px] border border-white/10 bg-white/[0.025] p-5">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <h2 className="text-lg font-semibold">Nearby signal layer</h2>
+                    <h2 className="text-lg font-semibold">Nearby safety awareness</h2>
                     <p className="mt-1 text-sm text-white/60">
-                      Phase 1 starts with selected nearby signals so the incident board shows context immediately.
+                      Nearby safety signals help provide immediate context during an active Guardian incident.
                     </p>
                   </div>
                   <div className="rounded-full border border-red-400/25 bg-red-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-red-200">
-                    Your idea locked in
+                    LIVE AWARENESS
                   </div>
                 </div>
 
@@ -417,11 +417,11 @@ export default function GuardianPanicPage() {
             <aside className="space-y-5">
               <div className="rounded-[24px] border border-red-500/30 bg-[radial-gradient(circle_at_top,rgba(255,80,80,0.18),rgba(5,8,22,0.95)_60%)] p-5 shadow-[0_0_40px_rgba(255,60,60,0.14)]">
                 <div className="inline-flex items-center rounded-full border border-red-300/25 bg-red-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-red-100">
-                  Ready state preview
+                  Protection status
                 </div>
 
                 <div className="mt-4 space-y-3">
-                  <h2 className="text-2xl font-semibold tracking-tight">Panic can take over instantly</h2>
+                  <h2 className="text-2xl font-semibold tracking-tight">Emergency response activates immediately</h2>
                   <p className="text-sm leading-6 text-white/72">
                     On activation, Guardian locks the origin moment, builds the incident timeline, and routes into a live board.
                   </p>
@@ -437,11 +437,11 @@ export default function GuardianPanicPage() {
                     <span className="text-sm font-medium capitalize text-white">{profileType}</span>
                   </div>
                   <div className="flex items-center justify-between gap-4">
-                    <span className="text-xs uppercase tracking-[0.22em] text-white/45">Signals selected</span>
+                    <span className="text-xs uppercase tracking-[0.22em] text-white/45">Nearby awareness</span>
                     <span className="text-sm font-medium text-white">{chosenSignals.length}</span>
                   </div>
                   <div className="border-t border-white/10 pt-3">
-                    <div className="text-xs uppercase tracking-[0.22em] text-white/45">Location preview</div>
+                    <div className="text-xs uppercase tracking-[0.22em] text-white/45">Last known area</div>
                     <div className="mt-2 text-sm font-medium text-white">
                       {locationLabel || "Location updating..."}
                     </div>
@@ -454,25 +454,25 @@ export default function GuardianPanicPage() {
                   disabled={activating}
                   className="mt-5 w-full rounded-[22px] border border-red-300/25 bg-red-500/90 px-5 py-4 text-sm font-semibold uppercase tracking-[0.24em] text-white transition hover:scale-[1.01] hover:bg-red-400 disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                  {activating ? "Activating panic..." : "Activate panic mode"}
+                  {activating ? "Activating panic..." : "Activate panic Activation"}
                 </button>
 
                 <p className="mt-3 text-center text-xs text-white/45">
-                  Phase 1 uses local storage so we can verify the full flow before wiring Supabase.
+                  This incident remains active locally so nearby updates and responder context stay immediately available.
                 </p>
               </div>
 
               <div className="rounded-[24px] border border-white/10 bg-white/[0.025] p-5">
                 <h3 className="text-sm font-semibold uppercase tracking-[0.22em] text-white/70">
-                  What this page does
+                  Guardian response flow
                 </h3>
 
                 <div className="mt-4 space-y-3">
                   {[
-                    "Captures the panic origin moment",
-                    "Builds an instant incident payload",
-                    "Carries nearby signal context forward",
-                    "Routes to a live incident board",
+                    "Creates an emergency protection event",
+                    "Organizes emergency details instantly",
+                    "Tracks nearby awareness signals",
+                    "Routes family and responders into the active incident board",
                   ].map((item) => (
                     <div
                       key={item}
@@ -490,3 +490,4 @@ export default function GuardianPanicPage() {
     </div>
   );
 }
+

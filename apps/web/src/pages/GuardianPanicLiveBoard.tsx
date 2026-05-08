@@ -163,7 +163,7 @@ const FALLBACK_INCIDENT: PanicIncident = {
     minute: "2-digit",
   }),
   locationLabel: "Okeechobee, FL",
-  notes: "Guardian Panic Mode demo incident.",
+  notes: "Guardian emergency response incident.",
   nearbySignals: [
     { id: "fallback-1", label: "Car alarm", distance: "Approx 120 ft", type: "car" },
     { id: "fallback-2", label: "Loud sound spike", distance: "Approx nearby", type: "sound" },
@@ -605,7 +605,7 @@ export default function GuardianPanicLiveBoard() {
                     </p>
                   </div>
                   <div className="rounded-full border border-fuchsia-400/25 bg-fuchsia-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-fuchsia-100">
-                    Phase 1
+                    Active Response
                   </div>
                 </div>
 
