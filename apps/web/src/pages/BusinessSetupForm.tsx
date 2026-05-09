@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 
 const STORAGE_KEY = "hp:business-setup-form";
 
@@ -6,57 +7,46 @@ type FormState = {
   businessName: string;
   ownerName: string;
   phone: string;
-  contactMethod: string;
   email: string;
+  contactMethod: string;
+  businessType: string;
+  currentWebsite: string;
   facebook: string;
   instagram: string;
-  services: string;
-  serviceArea: string;
-  hours: string;
-  payments: string[];
+  goal: string;
   wants: string[];
-  difference: string;
   notes: string;
-  photosSent: string;
-  paymentStatus: string;
-  amountReceived: string;
-  date: string;
 };
 
 const initialForm: FormState = {
   businessName: "",
   ownerName: "",
   phone: "",
-  contactMethod: "",
   email: "",
+  contactMethod: "",
+  businessType: "",
+  currentWebsite: "",
   facebook: "",
   instagram: "",
-  services: "",
-  serviceArea: "",
-  hours: "",
-  payments: [],
+  goal: "",
   wants: [],
-  difference: "",
   notes: "",
-  photosSent: "",
-  paymentStatus: "",
-  amountReceived: "",
-  date: new Date().toLocaleDateString(),
 };
 
-const paymentOptions = ["Cash", "Cash App", "Zelle", "Venmo", "Card", "Other"];
 const wantOptions = [
-  "Booking Requests",
-  "Customer Messages",
-  "Live Updates",
-  "QR Codes",
-  "Before/After Photos",
-  "Payment Tracking",
-  "Print Receipts/Tickets",
+  "Live business page",
+  "Customer requests",
+  "Booking/contact flow",
+  "Order tracking",
+  "Artwork/media uploads",
+  "QR code setup",
+  "Payment tracking",
+  "Ongoing updates",
 ];
 
 export default function BusinessSetupForm() {
   const [form, setForm] = useState<FormState>(initialForm);
+  const [sent, setSent] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -68,132 +58,235 @@ export default function BusinessSetupForm() {
   }, [form]);
 
   const update = (key: keyof FormState, value: string) => {
+    setSent(false);
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const toggleList = (key: "payments" | "wants", value: string) => {
+  const toggleWant = (value: string) => {
+    setSent(false);
     setForm((prev) => {
-      const exists = prev[key].includes(value);
+      const exists = prev.wants.includes(value);
       return {
         ...prev,
-        [key]: exists ? prev[key].filter((v) => v !== value) : [...prev[key], value],
+        wants: exists
+          ? prev.wants.filter((item) => item !== value)
+          : [...prev.wants, value],
       };
     });
   };
 
-  const resetForm = () => {
-    if (confirm("Clear this form?")) {
+  const clearForm = () => {
+    if (confirm("Clear this request?")) {
       setForm(initialForm);
+      setSent(false);
       localStorage.removeItem(STORAGE_KEY);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-rose-50 px-4 py-6 text-zinc-950 print:bg-white">
-      <div className="mx-auto max-w-3xl rounded-3xl border border-rose-200 bg-white p-5 shadow-xl print:border-none print:shadow-none">
-        <div className="mb-5 flex flex-col gap-3 border-b border-rose-100 pb-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-xs font-black uppercase tracking-[0.22em] text-rose-500">
-              HomePlanet Setup
-            </p>
-            <h1 className="text-2xl font-black tracking-tight">
-              Live Page + Business Intake
-            </h1>
-            <p className="text-sm text-zinc-600">
-              Fill this out, screenshot it, print it, or text it over.
-            </p>
-          </div>
+  const requestSummary = useMemo(() => {
+    return [
+      `Business: ${form.businessName || "Not provided"}`,
+      `Owner: ${form.ownerName || "Not provided"}`,
+      `Phone: ${form.phone || "Not provided"}`,
+      `Email: ${form.email || "Not provided"}`,
+      `Best contact: ${form.contactMethod || "Not provided"}`,
+      `Business type: ${form.businessType || "Not provided"}`,
+      `Current website/link: ${form.currentWebsite || "Not provided"}`,
+      `Facebook: ${form.facebook || "Not provided"}`,
+      `Instagram: ${form.instagram || "Not provided"}`,
+      `Goal: ${form.goal || "Not provided"}`,
+      `Wants: ${form.wants.length ? form.wants.join(", ") : "Not selected"}`,
+      `Notes: ${form.notes || "Not provided"}`,
+    ].join("\n");
+  }, [form]);
 
-          <div className="flex gap-2 print:hidden">
+  const submitRequest = async () => {
+    setSent(true);
+
+    try {
+      await navigator.clipboard.writeText(requestSummary);
+    } catch {
+      // Clipboard may be blocked by the browser. The saved confirmation still shows.
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#070707] text-white">
+      <header className="border-b border-white/10 bg-black/70 backdrop-blur">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+          <Link to="/planet/start" className="text-sm font-bold tracking-[0.22em] text-white/80">
+            HOMEPPLANET
+          </Link>
+
+          <div className="flex gap-2">
             <button
-              onClick={() => window.print()}
-              className="rounded-full bg-zinc-950 px-4 py-2 text-sm font-bold text-white"
-            >
-              Print
-            </button>
-            <button
-              onClick={resetForm}
-              className="rounded-full border border-zinc-300 px-4 py-2 text-sm font-bold"
+              onClick={clearForm}
+              className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
             >
               Clear
             </button>
+
+            <button
+              onClick={() => window.print()}
+              className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-black transition hover:scale-[1.02]"
+            >
+              Print
+            </button>
           </div>
         </div>
+      </header>
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Input label="Business Name" value={form.businessName} onChange={(v) => update("businessName", v)} />
-          <Input label="Owner Name" value={form.ownerName} onChange={(v) => update("ownerName", v)} />
-          <Input label="Phone Number" value={form.phone} onChange={(v) => update("phone", v)} />
-          <Input label="Email" value={form.email} onChange={(v) => update("email", v)} />
-          <Input label="Facebook Page" value={form.facebook} onChange={(v) => update("facebook", v)} />
-          <Input label="Instagram" value={form.instagram} onChange={(v) => update("instagram", v)} />
-        </div>
+      <main className="mx-auto max-w-6xl px-6 py-10">
+        <Link
+          to="/planet/charlys"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-white/45 transition hover:text-white/80"
+        >
+          ? Back
+        </Link>
 
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <Select
-            label="Best Contact Method"
-            value={form.contactMethod}
-            onChange={(v) => update("contactMethod", v)}
-            options={["Call", "Text", "Facebook Messenger", "Email"]}
+        <div className="mt-6 grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+        <section>
+          <div className="inline-flex rounded-full border border-cyan-400/30 bg-cyan-400/10 px-4 py-1 text-xs font-semibold tracking-[0.22em] text-cyan-300">
+            LIVE BUSINESS REQUEST
+          </div>
+
+          <h1 className="mt-5 max-w-xl text-5xl font-black leading-[0.95] tracking-tight md:text-6xl">
+            Request a Live Business System.
+          </h1>
+
+          <p className="mt-6 max-w-lg text-base leading-relaxed text-white/60">
+            Tell us what you are building. We’ll review the details and follow
+            up with the next best step for your live page, customer flow,
+            tracking, QR setup, or operational board.
+          </p>
+
+          <div className="mt-8 rounded-[28px] border border-white/10 bg-[#111111] p-6">
+            <div className="text-sm font-semibold text-white">
+              Built for real business flow.
+            </div>
+
+            <p className="mt-3 text-sm leading-relaxed text-white/55">
+              No bloated website setup. No confusing software maze. Just a clean
+              starting point so we can understand what your business needs and
+              build the right live system around it.
+            </p>
+          </div>
+        </section>
+
+        <section className="rounded-[32px] border border-white/10 bg-[#111111] p-6 shadow-2xl md:p-8">
+          <div className="grid gap-4 md:grid-cols-2">
+            <Input label="Business Name" value={form.businessName} onChange={(v) => update("businessName", v)} />
+            <Input label="Owner Name" value={form.ownerName} onChange={(v) => update("ownerName", v)} />
+            <Input label="Phone Number" value={form.phone} onChange={(v) => update("phone", v)} />
+            <Input label="Email" value={form.email} onChange={(v) => update("email", v)} />
+            <Select
+              label="Best Contact Method"
+              value={form.contactMethod}
+              onChange={(v) => update("contactMethod", v)}
+              options={["Call", "Text", "Facebook Messenger", "Email"]}
+            />
+            <Input label="Business Type" value={form.businessType} onChange={(v) => update("businessType", v)} />
+            <Input label="Current Website / Link" value={form.currentWebsite} onChange={(v) => update("currentWebsite", v)} />
+            <Input label="Facebook Page" value={form.facebook} onChange={(v) => update("facebook", v)} />
+            <Input label="Instagram" value={form.instagram} onChange={(v) => update("instagram", v)} />
+          </div>
+
+          <Textarea
+            label="What do you want this system to help with?"
+            value={form.goal}
+            onChange={(v) => update("goal", v)}
+            placeholder="Example: booking requests, customer orders, tracking, photos, quotes, live updates..."
           />
-          <Input label="Business Hours" value={form.hours} onChange={(v) => update("hours", v)} />
+
+          <CheckGroup
+            label="What should be included?"
+            options={wantOptions}
+            selected={form.wants}
+            onToggle={toggleWant}
+          />
+
+          <Textarea
+            label="Special Notes / Requests"
+            value={form.notes}
+            onChange={(v) => update("notes", v)}
+            placeholder="Anything important about your workflow, customers, photos, payments, or launch timing..."
+          />
+
+          {sent && (
+            <div className="mt-5 rounded-2xl border border-cyan-400/25 bg-cyan-400/10 px-4 py-3 text-sm text-cyan-100">
+              Request saved locally and copied to clipboard. Next step: send it over or connect the notification pipe.
+            </div>
+          )}
+
+          <div className="mt-6 flex flex-wrap gap-3">
+            <button
+              onClick={submitRequest}
+              className="rounded-full bg-cyan-400 px-6 py-3 text-sm font-bold text-black transition hover:scale-[1.02]"
+            >
+              Send Request
+            </button>
+
+            <button
+              onClick={() => navigator.clipboard.writeText(requestSummary)}
+              className="rounded-full border border-white/15 bg-white/5 px-6 py-3 text-sm font-bold text-white transition hover:bg-white/10"
+            >
+              Copy Summary
+            </button>
+          </div>
+        </section>
         </div>
-
-        <Textarea label="Business Type / Services" value={form.services} onChange={(v) => update("services", v)} />
-        <Textarea label="Service Area / Cities" value={form.serviceArea} onChange={(v) => update("serviceArea", v)} />
-
-        <CheckGroup
-          label="Payment Methods Accepted"
-          options={paymentOptions}
-          selected={form.payments}
-          onToggle={(v) => toggleList("payments", v)}
-        />
-
-        <CheckGroup
-          label="What Do You Want Included?"
-          options={wantOptions}
-          selected={form.wants}
-          onToggle={(v) => toggleList("wants", v)}
-        />
-
-        <Textarea
-          label="What Makes Your Business Different?"
-          value={form.difference}
-          onChange={(v) => update("difference", v)}
-        />
-
-        <Textarea
-          label="Special Notes / Requests"
-          value={form.notes}
-          onChange={(v) => update("notes", v)}
-        />
-      </div>
+      </main>
     </div>
   );
 }
 
-function Input({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+function Input({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
   return (
     <label className="block">
-      <span className="text-xs font-black uppercase tracking-wide text-zinc-500">{label}</span>
+      <span className="text-xs font-black uppercase tracking-[0.16em] text-white/45">
+        {label}
+      </span>
+
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-rose-400"
+        className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white outline-none placeholder:text-white/30 focus:border-cyan-400/50"
       />
     </label>
   );
 }
 
-function Textarea({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+function Textarea({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+}) {
   return (
-    <label className="mt-3 block">
-      <span className="text-xs font-black uppercase tracking-wide text-zinc-500">{label}</span>
+    <label className="mt-5 block">
+      <span className="text-xs font-black uppercase tracking-[0.16em] text-white/45">
+        {label}
+      </span>
+
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        rows={3}
-        className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-rose-400"
+        placeholder={placeholder}
+        rows={4}
+        className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white outline-none placeholder:text-white/30 focus:border-cyan-400/50"
       />
     </label>
   );
@@ -212,15 +305,20 @@ function Select({
 }) {
   return (
     <label className="block">
-      <span className="text-xs font-black uppercase tracking-wide text-zinc-500">{label}</span>
+      <span className="text-xs font-black uppercase tracking-[0.16em] text-white/45">
+        {label}
+      </span>
+
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-rose-400"
+        className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white outline-none focus:border-cyan-400/50"
       >
         <option value="">Select one</option>
         {options.map((option) => (
-          <option key={option} value={option}>{option}</option>
+          <option key={option} value={option}>
+            {option}
+          </option>
         ))}
       </select>
     </label>
@@ -239,15 +337,22 @@ function CheckGroup({
   onToggle: (v: string) => void;
 }) {
   return (
-    <div className="mt-4">
-      <p className="text-xs font-black uppercase tracking-wide text-zinc-500">{label}</p>
-      <div className="mt-2 grid gap-2 sm:grid-cols-2">
+    <div className="mt-5">
+      <p className="text-xs font-black uppercase tracking-[0.16em] text-white/45">
+        {label}
+      </p>
+
+      <div className="mt-3 grid gap-2 md:grid-cols-2">
         {options.map((option) => (
-          <label key={option} className="flex items-center gap-2 rounded-xl border border-zinc-200 px-3 py-2 text-sm">
+          <label
+            key={option}
+            className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/35 px-4 py-3 text-sm text-white/80"
+          >
             <input
               type="checkbox"
               checked={selected.includes(option)}
               onChange={() => onToggle(option)}
+              className="h-4 w-4"
             />
             {option}
           </label>
@@ -256,3 +361,4 @@ function CheckGroup({
     </div>
   );
 }
+

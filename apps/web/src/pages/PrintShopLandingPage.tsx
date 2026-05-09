@@ -242,6 +242,30 @@ export default function PrintShopLandingPage() {
           </div>
         </div>
       </section>
+
+
+      <section className="mx-auto max-w-7xl px-6 pb-16">
+        <div className="flex flex-col items-center justify-center rounded-[28px] border border-white/10 bg-[#111111] px-6 py-8 text-center">
+          <div className="text-sm tracking-[0.2em] text-white/35">
+            BUILT ON HOMEPPLANET
+          </div>
+
+          <p className="mt-3 max-w-xl text-sm leading-relaxed text-white/55">
+            Built using the HomePlanet live business system designed for
+            operational flow, customer communication, live tracking,
+            and modern business coordination.
+          </p>
+
+          <Link
+            to="/planet/business-setup"
+            className="mt-6 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-5 py-3 text-sm font-semibold text-cyan-300 transition hover:bg-cyan-400/20"
+          >
+            Get This For Your Business ?
+          </Link>
+        </div>
+      </section>
+
     </div>
   );
 }
+
