@@ -10,12 +10,36 @@ const liveSteps = [
 ];
 
 const products = [
-  "T-Shirts",
-  "Hats",
-  "Banners",
-  "Decals",
-  "Embroidery",
-  "Promo Items",
+  {
+    title: "T-Shirts",
+    image: "/images/printshop-custom-shirts.jpg",
+    description: "Custom cotton tees, business shirts, event shirts, and fast local promo runs.",
+  },
+  {
+    title: "Hats",
+    image: "/images/printshop-custom-hats.jpg",
+    description: "Custom hats with bold color, sharp stitching, and brand-ready presentation.",
+  },
+  {
+    title: "Banners",
+    image: "/images/printshop-custom-banners.jpg",
+    description: "Big impact banners for events, openings, sales, real estate, and business promos.",
+  },
+  {
+    title: "Decals",
+    image: "/images/printshop-custom-decals.jpg",
+    description: "Full-color stickers and decals for branding, packaging, events, and giveaways.",
+  },
+  {
+    title: "Embroidery",
+    image: "/images/printshop-custom-embroidery.jpg",
+    description: "Premium embroidery for hats, shirts, jackets, bags, teams, and local businesses.",
+  },
+  {
+    title: "Promo Items",
+    image: "/images/printshop-promo-items.jpg",
+    description: "Koozies, lanyards, drinkware, bags, pens, keychains, and business promo gear.",
+  },
 ];
 
 export default function PrintShopLandingPage() {
@@ -34,7 +58,7 @@ export default function PrintShopLandingPage() {
             <Link to="/planet/printshop/track" className="transition hover:text-white">Track Order</Link>
           </nav>
 
-                    <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <Link
               to="/planet/printshop/track"
               className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10 md:hidden"
@@ -91,7 +115,7 @@ export default function PrintShopLandingPage() {
         <div className="relative">
           <div className="aspect-[4/5] overflow-hidden rounded-[32px] border border-white/10 bg-[#121212]">
             <img
-              src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=1200&auto=format&fit=crop"
+              src="/images/printshop-hero-charlys.jpg"
               alt="Print shop"
               className="h-full w-full object-cover"
             />
@@ -146,19 +170,24 @@ export default function PrintShopLandingPage() {
         <div className="grid gap-5 md:grid-cols-3">
           {products.map((product) => (
             <div
-              key={product}
+              key={product.title}
               className="overflow-hidden rounded-[28px] border border-white/10 bg-[#121212]"
             >
-              <div className="aspect-[16/10] bg-white/5" />
+              <div className="aspect-[16/10] overflow-hidden bg-white/5">
+                <img
+                  src={product.image}
+                  alt={product.title}
+                  className="h-full w-full object-cover transition duration-500 hover:scale-[1.03]"
+                />
+              </div>
 
               <div className="p-6">
                 <div className="text-xl font-semibold">
-                  {product}
+                  {product.title}
                 </div>
 
                 <p className="mt-3 text-sm leading-relaxed text-white/60">
-                  High-quality production with clean turnaround
-                  and live customer coordination.
+                  {product.description}
                 </p>
 
                 <Link
@@ -172,9 +201,47 @@ export default function PrintShopLandingPage() {
           ))}
         </div>
       </section>
+
+      <section className="mx-auto max-w-7xl px-6 pb-24">
+        <div className="rounded-[32px] border border-white/10 bg-[#121212] p-8 md:p-10">
+          <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+            <div className="max-w-2xl">
+              <div className="text-2xl font-semibold text-white">
+                Need help before ordering?
+              </div>
+
+              <p className="mt-3 text-sm leading-relaxed text-white/60">
+                Request a call or send a quick question. We’ll help guide the
+                next step, artwork setup, pricing questions, production flow,
+                or custom order planning.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <Link
+                to="/planet/charlys/order"
+                className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-black transition hover:scale-[1.02]"
+              >
+                Request a Call
+              </Link>
+
+              <Link
+                to="/planet/charlys/artwork"
+                className="rounded-full border border-white/15 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+              >
+                Ask a Question
+              </Link>
+
+              <Link
+                to="/planet/charlys/track"
+                className="rounded-full border border-white/15 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+              >
+                Track Order
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
-
-
-

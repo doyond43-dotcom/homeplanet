@@ -136,6 +136,12 @@ export default function PlanetRoutes() {
       <Route path="printshop/track" element={<PrintShopTrackPage />} />
       <Route path="printshop/owner" element={<PrintShopOwnerBoard />} />
 
+      <Route path="charlys" element={<PrintShopLandingPage />} />
+      <Route path="charlys/order" element={<PrintShopOrderPage />} />
+      <Route path="charlys/artwork" element={<PrintShopArtworkPage />} />
+      <Route path="charlys/track" element={<PrintShopTrackPage />} />
+      <Route path="charlys/owner" element={<PrintShopOwnerBoard />} />
+
       {/* ONLY THE ESSENTIALS */}
       <Route path="only-the-essentials" element={<OnlyTheEssentialsLanding />} />
       <Route path="only-the-essentials/request" element={<OnlyTheEssentialsRequest />} />
@@ -281,6 +287,7 @@ export default function PlanetRoutes() {
     </Routes>
   );
 }
+
 
 
 
