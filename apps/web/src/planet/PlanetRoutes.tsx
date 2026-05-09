@@ -28,6 +28,7 @@ import PrintShopLandingPage from "../pages/PrintShopLandingPage";
 import PrintShopOrderPage from "../pages/PrintShopOrderPage";
 import PrintShopArtworkPage from "../pages/PrintShopArtworkPage";
 import PrintShopTrackPage from "../pages/PrintShopTrackPage";
+import PrintShopOwnerBoard from "../pages/PrintShopOwnerBoard";
 
 import CreatorCity from "../pages/CreatorCity";
 import CreatorLanding from "../pages/CreatorLanding";
@@ -133,6 +134,7 @@ export default function PlanetRoutes() {
       <Route path="printshop/order" element={<PrintShopOrderPage />} />
       <Route path="printshop/artwork" element={<PrintShopArtworkPage />} />
       <Route path="printshop/track" element={<PrintShopTrackPage />} />
+      <Route path="printshop/owner" element={<PrintShopOwnerBoard />} />
 
       {/* ONLY THE ESSENTIALS */}
       <Route path="only-the-essentials" element={<OnlyTheEssentialsLanding />} />
@@ -279,6 +281,7 @@ export default function PlanetRoutes() {
     </Routes>
   );
 }
+
 
 
 
