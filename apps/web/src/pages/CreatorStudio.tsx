@@ -5,6 +5,7 @@ import CreatorServices from "./CreatorServices";
 import IntakeViewerPanel from "../components/IntakeViewerPanel";
 import { useProjectStore } from "../state/projectStore";
 import { supabase } from "../lib/supabase";
+import { getOperationalSystemTemplate } from "../lib/operationalSystemTemplates";
 
 type StudioMode = {
   key: string;
@@ -20,6 +21,7 @@ type CreatorMomentPayload = {
   boardSlug: string;
   presenceId: string;
   creatorStudio: boolean;
+  operationalSystem?: ReturnType<typeof getOperationalSystemTemplate>;
   creatorMoment: {
     title: string;
     subtitle: string;
@@ -805,10 +807,10 @@ export default function CreatorStudio() {
   const nav = useNavigate();
   const [hoverKey, setHoverKey] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [dropBusinessName, setDropBusinessName] = useState("Test Shop");
+  const [dropBusinessName, setDropBusinessName] = useState("Okeechobee Soft Wash");
   const [dropNote, setDropNote] = useState("");
   const [dropClips, setDropClips] = useState<DropClip[]>([]);
-  const [dropSlug, setDropSlug] = useState("test-shop");
+  const [dropSlug, setDropSlug] = useState("okeechobee-soft-wash");
   const [dropPresenceId, setDropPresenceId] = useState("");
   const [momentType, setMomentType] = useState("Customer Drop-Off");
   const [creatorSaveState, setCreatorSaveState] = useState<"idle" | "saving" | "saved" | "local-only">("idle");
@@ -833,6 +835,8 @@ export default function CreatorStudio() {
     const cleanSlug = creatorSlugify(dropSlug || dropBusinessName || "creator-system");
     const presence = dropPresenceId.trim() || crypto.randomUUID();
 
+    const operationalSystem = getOperationalSystemTemplate((dropBusinessName + " " + dropNote + " Creator System"));
+
     const momentPayload: CreatorMomentPayload = {
       businessName: dropBusinessName.trim() || cleanSlug,
       businessType: "Creator System",
@@ -840,6 +844,7 @@ export default function CreatorStudio() {
       boardSlug: cleanSlug,
       presenceId: presence,
       creatorStudio: true,
+      operationalSystem,
       creatorMoment: {
         title: dropNote.trim() || `${dropBusinessName || cleanSlug} Creator Moment`,
         subtitle: `${dropClips.length} ${dropClips.length === 1 ? "clip" : "clips"} dropped into HomePlanet`,
@@ -860,6 +865,7 @@ export default function CreatorStudio() {
       presenceId: presence,
       businessName: dropBusinessName.trim() || cleanSlug,
       createdAt: new Date().toISOString(),
+      operationalSystem,
       systemFlags: {
         publicPage: true,
         liveBoard: true,
@@ -881,7 +887,7 @@ export default function CreatorStudio() {
 
     nav(`/planet/creator/building?boardSlug=${encodeURIComponent(cleanSlug)}&businessName=${encodeURIComponent(dropBusinessName.trim() || cleanSlug)}&businessType=${encodeURIComponent("Creator System")}&city=${encodeURIComponent("")}&primaryGoal=${encodeURIComponent("Create business system")}`, {
       state: {
-        redirectTo: `/planet/system/${cleanSlug}`,
+        redirectTo: `/planet/creator/${cleanSlug}/moment`,
         boardSlug: cleanSlug,
         presenceId: presence,
       },
@@ -1121,7 +1127,7 @@ export default function CreatorStudio() {
           }}
           value={dropNote}
           onChange={(e) => setDropNote(e.target.value)}
-          placeholder="Describe your business or first job. Example: Full-service auto repair shop handling inspections, brake jobs, and diagnostics."
+          placeholder="Exterior soft washing, roof cleaning, driveway cleaning, storefront cleanup, and pressure washing services for homes and businesses in Okeechobee."
         />
 
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginTop: 12 }}>
@@ -1201,6 +1207,16 @@ export default function CreatorStudio() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
 
 
 

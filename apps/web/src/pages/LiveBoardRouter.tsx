@@ -1,7 +1,8 @@
-﻿import { useEffect, useMemo, useState, type CSSProperties, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type CSSProperties, type FormEvent } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import BeautySalonLiveBoard from "./BeautySalonLiveBoard";
+import OperationalLiveBoard from "./OperationalLiveBoard";
 import CampAquaflowStandalone from "./CampAquaflowStandalone";
 import AutoRepairLiveBoard from "./AutoRepairLiveBoard";
 import { getLiveBoardTemplate } from "../config/liveBoardTemplates";
@@ -43,7 +44,7 @@ type CreatorSystemPayload = {
   };
 };
 
-type LiveJobStage = "New Intake" | "In Progress" | "Needs Attention" | "Complete";
+type LiveJobStage = string;
 
 type PaymentStatus = "none" | "invoice-ready" | "paid";
 
@@ -65,7 +66,7 @@ type LiveJob = {
   paidAt?: string;
 };
 
-const LIVE_JOB_STAGES: LiveJobStage[] = ["New Intake", "In Progress", "Needs Attention", "Complete"];
+const FALLBACK_LIVE_JOB_STAGES: LiveJobStage[] = ["New Intake", "In Progress", "Needs Attention", "Complete"];
 
 const CASH_APP_HANDLE = "$YourRealCashtag";
 const ZELLE_CONTACT = "your@email.com";
@@ -174,7 +175,7 @@ function readLiveJobs(boardSlug: string): LiveJob[] {
         typeof item.customer === "string" &&
         typeof item.title === "string" &&
         typeof item.note === "string" &&
-        LIVE_JOB_STAGES.includes(item.stage)
+        typeof item.stage === "string"
       );
     });
   } catch {
@@ -238,6 +239,11 @@ function CreatorSystemLiveBoard({
 }) {
   const businessName = payload.businessName || titleFromSlug(boardSlug) || boardSlug;
   const createdAt = payload.createdAt ? new Date(payload.createdAt).toLocaleString() : "Just now";
+  const operationalSystem = (payload as any)?.operationalSystem;
+  const LIVE_JOB_STAGES: LiveJobStage[] =
+    Array.isArray(operationalSystem?.stages) && operationalSystem.stages.length
+      ? operationalSystem.stages.map((stage: any) => String(stage.label || stage.id || "Workflow Step"))
+      : FALLBACK_LIVE_JOB_STAGES;
 
   const [jobs, setJobs] = useState<LiveJob[]>(() => readLiveJobs(boardSlug));
   const [showAddJob, setShowAddJob] = useState(false);
@@ -664,7 +670,7 @@ function CreatorSystemLiveBoard({
                   NEW JOB
                 </div>
                 <div style={{ marginTop: 5, color: "rgba(255,255,255,0.62)", fontSize: 13, fontWeight: 700 }}>
-                  Adds directly into New Intake for this board.
+                  Adds directly into the first live workflow step for this board.
                 </div>
               </div>
             </div>
@@ -700,7 +706,7 @@ function CreatorSystemLiveBoard({
 
               <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                 <button type="submit" style={primaryButton}>
-                  Add to New Intake
+                  Add to Workflow
                 </button>
                 <button type="button" style={button} onClick={() => setShowAddJob(false)}>
                   Cancel
@@ -785,7 +791,7 @@ function CreatorSystemLiveBoard({
             <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 950, color: "#bae6fd", letterSpacing: 1.2 }}>
-                  WORKFLOW STARTER
+                  LIVE WORKFLOW SYSTEM
                 </div>
                 <div style={{ marginTop: 6, color: "rgba(255,255,255,0.62)", fontSize: 13, fontWeight: 700 }}>
                   {jobs.length} active {jobs.length === 1 ? "job" : "jobs"} on this board.
@@ -1310,6 +1316,10 @@ export default function LiveBoardRouter() {
     return <AutoRepairLiveBoard />;
   }
 
+  if (resolvedBoardSlug && creatorSystemPayload?.operationalSystem) {
+    return <OperationalLiveBoard boardSlug={resolvedBoardSlug} payload={creatorSystemPayload} />;
+  }
+
   if (resolvedBoardSlug && creatorSystemPayload) {
     return <CreatorSystemLiveBoard boardSlug={resolvedBoardSlug} payload={creatorSystemPayload} />;
   }
@@ -1334,3 +1344,10 @@ export default function LiveBoardRouter() {
 
   return <BeautySalonLiveBoard />;
 }
+
+
+
+
+
+
+

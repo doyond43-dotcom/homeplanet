@@ -1,19 +1,21 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-type LiveJobStage = "New Intake" | "In Progress" | "Needs Attention" | "Complete";
+type LiveJobStage = string;
 
 type LiveJob = {
   id: string;
   customer: string;
-  title: string;
-  note: string;
+  title?: string;
+  service?: string;
+  note?: string;
+  notes?: string;
   stage: LiveJobStage;
   createdAt: string;
   updatedAt: string;
 };
 
-const PUBLIC_STAGE_COPY: Record<LiveJobStage, string> = {
+const PUBLIC_STAGE_COPY: Record<string, string> = {
   "New Intake": "Received",
   "In Progress": "In progress",
   "Needs Attention": "Needs attention",
@@ -22,7 +24,7 @@ const PUBLIC_STAGE_COPY: Record<LiveJobStage, string> = {
 
 function readJobs(boardSlug: string): LiveJob[] {
   try {
-    const raw = localStorage.getItem(`hp-live-board:${boardSlug}:jobs`);
+    const raw = localStorage.getItem(`hp-operational-board:${boardSlug}:jobs`);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : [];
@@ -91,7 +93,7 @@ export default function LobbyBoardPage() {
                     {job.customer}
                   </div>
                   <div style={{ marginTop: 6, fontSize: 18, fontWeight: 950 }}>
-                    {job.title}
+                    {job.title || job.service || "Service request"}
                   </div>
                   <div style={statusPill}>{PUBLIC_STAGE_COPY[job.stage] || job.stage}</div>
                   <div style={jobTime}>Updated {new Date(job.updatedAt || job.createdAt).toLocaleString()}</div>
@@ -236,3 +238,4 @@ const buttonPrimary: CSSProperties = {
   background: "rgba(0,255,150,0.10)",
   color: "rgba(220,255,245,0.95)",
 };
+

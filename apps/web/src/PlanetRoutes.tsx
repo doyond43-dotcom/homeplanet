@@ -1,8 +1,9 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
-import { supabase } from "../lib/supabase";
-import { resolveStarterBoardConfig } from "../lib/starterBoardConfig";
-import AutoRepairInvoicePanel from "../components/AutoRepairInvoicePanel";
+import { supabase } from "../lib/supabase";
+import CrewTeamBoard from "./pages/CrewTeamBoard";
+import { resolveStarterBoardConfig } from "../lib/starterBoardConfig";
+import AutoRepairInvoicePanel from "../components/AutoRepairInvoicePanel";
 
 type OnboardingPayload = {
   businessName?: string;
@@ -320,7 +321,7 @@ function resolveLiveBoardConfig(args: {
       boardSubtitle:
         "Built for contractors and field-service teams with scheduling, travel, on-site work, and completion flow.",
       createButtonLabel: "+ Add Service Request",
-      flowLabel: "New Request â†’ Scheduled â†’ En Route â†’ On Site â†’ Completed",
+      flowLabel: "New Request → Scheduled → En Route → On Site → Completed",
       stages: ["New Request", "Scheduled", "En Route", "On Site", "Completed"],
       labels: {
         item: "Property / Job",
@@ -353,7 +354,7 @@ function resolveLiveBoardConfig(args: {
       boardSubtitle:
         "Built for detailing flow with check-in, active service work, final pass, and ready status.",
       createButtonLabel: "+ Add Detail Job",
-      flowLabel: "Check-In â†’ Prep â†’ Detailing â†’ Final Check â†’ Ready",
+      flowLabel: "Check-In → Prep → Detailing → Final Check → Ready",
       stages: ["Check-In", "Prep", "Detailing", "Final Check", "Ready"],
       labels: {
         item: "Vehicle / Service",
@@ -450,7 +451,7 @@ function buildInvoiceTimelineNote(args: {
 }) {
   const lines = [
     `Amount: $${args.amount || "0.00"}`,
-    `Memo: ${args.memo || "â€”"}`,
+    `Memo: ${args.memo || "—"}`,
   ];
 
   if (args.cashAppCashtag) {
@@ -461,7 +462,7 @@ function buildInvoiceTimelineNote(args: {
     lines.push(`Zelle: ${args.zelleValue}`);
   }
 
-  return lines.join(" Â· ");
+  return lines.join(" · ");
 }
 function proofStatus(job: RepairJob) {
   const count = job.proof?.length || 0;
@@ -615,7 +616,7 @@ function openTextMessage(phone: string, text: string) {
 }
 
 function formatProofDate(value?: string | null) {
-  if (!value) return "â€”";
+  if (!value) return "—";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleString();
@@ -854,24 +855,24 @@ function buildCampGuardianCheckoutMessage(job: RepairJob, businessName: string) 
 }
 
 function buildCampTimeline(job: RepairJob) {
-  const timeline = [`${formatProofDate(job.createdAt)} â†’ Presence created`];
+  const timeline = [`${formatProofDate(job.createdAt)} → Presence created`];
 
   if (job.appointmentDate || job.appointmentTime) {
     timeline.push(
-      `${formatAppointment(job.appointmentDate, job.appointmentTime)} â†’ Check-in scheduled`,
+      `${formatAppointment(job.appointmentDate, job.appointmentTime)} → Check-in scheduled`,
     );
   }
 
   if (job.stage) {
-    timeline.push(`${job.stage} â†’ Current zone`);
+    timeline.push(`${job.stage} → Current zone`);
   }
 
   if (job.concern) {
-    timeline.push(`${job.concern} â†’ Live activity note`);
+    timeline.push(`${job.concern} → Live activity note`);
   }
 
   if (job.eta) {
-    timeline.push(`${job.eta} â†’ Next movement target`);
+    timeline.push(`${job.eta} → Next movement target`);
   }
 
   return timeline;
@@ -898,23 +899,23 @@ function isMeaningfulCampValue(value?: string | null) {
 }
 
 function campChildName(job: RepairJob) {
-  return isMeaningfulCampValue(job.vehicle) ? job.vehicle.trim() : "â€”";
+  return isMeaningfulCampValue(job.vehicle) ? job.vehicle.trim() : "—";
 }
 
 function campGuardianName(job: RepairJob) {
-  return isMeaningfulCampValue(job.customer) ? job.customer.trim() : "â€”";
+  return isMeaningfulCampValue(job.customer) ? job.customer.trim() : "—";
 }
 
 function campActivityLabel(job: RepairJob) {
-  return isMeaningfulCampValue(job.concern) ? job.concern.trim() : "â€”";
+  return isMeaningfulCampValue(job.concern) ? job.concern.trim() : "—";
 }
 
 function campStaffLabel(job: RepairJob) {
-  return isMeaningfulCampValue(job.advisor) ? job.advisor.trim() : "â€”";
+  return isMeaningfulCampValue(job.advisor) ? job.advisor.trim() : "—";
 }
 
 function campNextMoveLabel(job: RepairJob) {
-  return isMeaningfulCampValue(job.eta) ? job.eta.trim() : "â€”";
+  return isMeaningfulCampValue(job.eta) ? job.eta.trim() : "—";
 }
 
 function campStatusTone(stage: string) {
@@ -1209,7 +1210,7 @@ const isActiveBoard =
     setPaymentMemoDraft(
       [selectedJob.roNumber, selectedJob.customer || selectedJob.vehicle]
         .filter(Boolean)
-        .join(" · "),
+        .join(" � "),
     );
   }, [selectedJobId, isRestaurant, isCamp, selectedJob]);
 
@@ -1994,7 +1995,7 @@ window.location.href = "/planet/start/building";
       </div>
 
       <div className="text-right text-[11px] uppercase tracking-[0.18em] text-white/40">
-        Presence-first Â· Timestamp anchored
+        Presence-first · Timestamp anchored
       </div>
     </div>
   </div>
@@ -2200,13 +2201,13 @@ window.location.href = "/planet/start/building";
                     <span>{config.flowLabel}</span>
                     {boardMeta?.presence_id ? (
                       <>
-                        <span className="text-slate-500">â€¢</span>
+                        <span className="text-slate-500">•</span>
                         <span className="truncate">Presence ID {boardMeta.presence_id}</span>
                       </>
                     ) : null}
                     {boardMeta?.trial_ends_at && isClaimed ? (
                       <>
-                        <span className="text-slate-500">â€¢</span>
+                        <span className="text-slate-500">•</span>
                         <span>Trial ends {formatProofDate(boardMeta.trial_ends_at)}</span>
                       </>
                     ) : null}
@@ -2251,7 +2252,7 @@ window.location.href = "/planet/start/building";
                           Truth layer
                         </div>
                         <div className="mt-1 text-sm text-emerald-50">
-                          Presence {boardMeta.presence_id} â€¢ {boardMeta.board_slug}
+                          Presence {boardMeta.presence_id} • {boardMeta.board_slug}
                         </div>
                       </div>
 
@@ -2274,7 +2275,7 @@ window.location.href = "/planet/start/building";
                       Trial status
                     </div>
                     <div className="mt-1 text-sm text-cyan-50">
-                      Trial running â€¢ Ends {formatProofDate(boardMeta.trial_ends_at)} â€¢ Billing setup next
+                      Trial running • Ends {formatProofDate(boardMeta.trial_ends_at)} • Billing setup next
                     </div>
                   </div>
                 ) : (
@@ -2697,7 +2698,7 @@ window.location.href = "/planet/start/building";
                       <input
                         value={
                           isCamp
-                            ? campGuardianName(selectedJob) === "â€”"
+                            ? campGuardianName(selectedJob) === "—"
                               ? ""
                               : selectedJob.customer
                             : selectedJob.customer
@@ -2714,7 +2715,7 @@ window.location.href = "/planet/start/building";
                       <input
                         value={
                           isCamp
-                            ? campChildName(selectedJob) === "â€”"
+                            ? campChildName(selectedJob) === "—"
                               ? ""
                               : selectedJob.vehicle
                             : selectedJob.vehicle
@@ -2731,7 +2732,7 @@ window.location.href = "/planet/start/building";
                       <input
                         value={
                           isCamp
-                            ? campActivityLabel(selectedJob) === "â€”"
+                            ? campActivityLabel(selectedJob) === "—"
                               ? ""
                               : selectedJob.concern
                             : selectedJob.concern
@@ -2753,7 +2754,7 @@ window.location.href = "/planet/start/building";
                             className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-left outline-none transition hover:border-cyan-400/30"
                           >
                             <span>{selectedJob.stage}</span>
-                            <span className="text-slate-400">â–¾</span>
+                            <span className="text-slate-400">▾</span>
                           </button>
 
                           {stageMenuOpen ? (
@@ -2777,7 +2778,7 @@ window.location.href = "/planet/start/building";
                                   >
                                     <span>{stage}</span>
                                     {active ? (
-                                      <span className="text-cyan-300">âœ“</span>
+                                      <span className="text-cyan-300">✓</span>
                                     ) : null}
                                   </button>
                                 );
@@ -2791,7 +2792,7 @@ window.location.href = "/planet/start/building";
                         <input
                           value={
                             isCamp
-                              ? campNextMoveLabel(selectedJob) === "â€”"
+                              ? campNextMoveLabel(selectedJob) === "—"
                                 ? ""
                                 : selectedJob.eta
                               : selectedJob.eta
@@ -2809,7 +2810,7 @@ window.location.href = "/planet/start/building";
                       <input
                         value={
                           isCamp
-                            ? campStaffLabel(selectedJob) === "â€”"
+                            ? campStaffLabel(selectedJob) === "—"
                               ? ""
                               : selectedJob.advisor
                             : selectedJob.advisor
@@ -3041,10 +3042,10 @@ window.location.href = "/planet/start/building";
                                   <div className="flex items-start justify-between gap-3">
                                     <div>
                                       <div className="text-sm font-semibold text-white">
-                                        {clip.label === "Safety concern" && "âš ï¸ Safety issue documented"}
-                                        {clip.label === "Hidden issue found" && "ðŸ” Hidden issue uncovered"}
-                                        {clip.label === "Work in progress" && "ðŸ›  Work in progress captured"}
-                                        {clip.label === "Completed work" && "âœ… Work completed and verified"}
+                                        {clip.label === "Safety concern" && "⚠️ Safety issue documented"}
+                                        {clip.label === "Hidden issue found" && "🔍 Hidden issue uncovered"}
+                                        {clip.label === "Work in progress" && "🛠 Work in progress captured"}
+                                        {clip.label === "Completed work" && "✅ Work completed and verified"}
                                         {clip.label !== "Safety concern" &&
                                           clip.label !== "Hidden issue found" &&
                                           clip.label !== "Work in progress" &&
@@ -3112,7 +3113,7 @@ window.location.href = "/planet/start/building";
                               value={paymentMemoDraft}
                               onChange={(e) => setPaymentMemoDraft(e.target.value)}
                               className="w-full rounded-2xl border border-white/10 bg-[#070d1a] px-4 py-3 outline-none transition focus:border-emerald-400/40"
-                              placeholder="RO-1042 · John"
+                              placeholder="RO-1042 � John"
                             />
                           </Field>
                         </div>
@@ -3448,10 +3449,10 @@ window.location.href = "/planet/start/building";
                     What activation does
                   </div>
                   <div className="mt-3 space-y-3 text-sm text-slate-300">
-                    <div>â€¢ Starts your 14-day free trial</div>
-                    <div>â€¢ Claims this live board as your working dashboard</div>
-                    <div>â€¢ Turns preview status into active status</div>
-                    <div>â€¢ Keeps the boardâ€™s Presence ID locked to this system</div>
+                    <div>• Starts your 14-day free trial</div>
+                    <div>• Claims this live board as your working dashboard</div>
+                    <div>• Turns preview status into active status</div>
+                    <div>• Keeps the board’s Presence ID locked to this system</div>
                   </div>
                 </div>
 
@@ -3543,7 +3544,7 @@ window.location.href = "/planet/start/building";
                 <div className="space-y-5">
                   <div className="rounded-[24px] border border-cyan-400/20 bg-cyan-400/10 p-4">
                     <div className="text-xs uppercase tracking-[0.22em] text-cyan-200/70">
-                      Todayâ€™s snapshot
+                      Today’s snapshot
                     </div>
 
                     <div className="mt-4 grid grid-cols-2 gap-3">
@@ -4029,6 +4030,10 @@ function NotificationLine({
     </div>
   );
 }
+
+
+
+
 
 
 

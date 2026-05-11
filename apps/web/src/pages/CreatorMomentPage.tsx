@@ -129,6 +129,20 @@ export default function CreatorMomentPage() {
   const title = moment.title || moment.businessName || "Creator Moment";
   const subtitle = moment.subtitle || moment.businessType || "Creator City build";
   const liveBoardRoute = moment.liveBoardRoute || `/planet/live/${moment.boardSlug || slug}`;
+  const operationalSystem = (moment as any).operationalSystem;
+  const operationalStages = Array.isArray(operationalSystem?.stages) ? operationalSystem.stages : [];
+  const operationalFeatures = [
+    operationalSystem?.customerFrontDoor ? "Customer front door" : null,
+    operationalSystem?.liveBoard ? "Live board" : null,
+    operationalSystem?.staffBoard ? "Staff board" : null,
+    operationalSystem?.requestFlow ? "Request flow" : null,
+    operationalSystem?.jobDrawer ? "Job drawer" : null,
+    operationalSystem?.messages ? "Messages" : null,
+    operationalSystem?.scheduling ? "Scheduling" : null,
+    operationalSystem?.photoProof ? "Photo proof" : null,
+    operationalSystem?.paymentQr ? "QR payment" : null,
+    operationalSystem?.proofTimeline ? "Proof timeline" : null,
+  ].filter(Boolean);
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_12%_10%,rgba(56,189,248,0.16),transparent_30%),radial-gradient(circle_at_86%_8%,rgba(34,197,94,0.10),transparent_28%),#07111f] px-5 py-8 text-white">
@@ -139,6 +153,57 @@ export default function CreatorMomentPage() {
 
         <h1 className="mt-4 text-4xl font-black tracking-tight sm:text-6xl">{title}</h1>
         <p className="mt-3 text-lg font-semibold text-cyan-100">{subtitle}</p>
+
+        
+        {operationalSystem ? (
+          <section className="mt-6 rounded-[28px] border border-emerald-300/20 bg-emerald-400/[0.07] p-5">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <div className="text-xs font-black uppercase tracking-[0.22em] text-emerald-100/80">
+                  Operational System Generated
+                </div>
+                <h2 className="mt-2 text-2xl font-black text-white">
+                  {operationalSystem.label || "HomePlanet Live System"}
+                </h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-white/65">
+                  This business now carries real workflow DNA: customer intake, live board, staff view, job details, proof, payment, and completion tracking.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => navigate(liveBoardRoute)}
+                className="rounded-2xl border border-emerald-200/25 bg-emerald-300/15 px-5 py-3 text-sm font-black text-emerald-50"
+              >
+                Open Live Board
+              </button>
+            </div>
+
+            {operationalFeatures.length ? (
+              <div className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+                {operationalFeatures.map((feature) => (
+                  <div key={String(feature)} className="rounded-2xl border border-white/10 bg-black/25 px-3 py-3 text-xs font-bold text-white/80">
+                    {feature}
+                  </div>
+                ))}
+              </div>
+            ) : null}
+
+            {operationalStages.length ? (
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                {operationalStages.map((stage: any, index: number) => (
+                  <div key={stage.id || stage.label || index} className="rounded-2xl border border-white/10 bg-black/25 p-4">
+                    <div className="text-[11px] font-black uppercase tracking-[0.18em] text-emerald-100/60">
+                      Step {index + 1}
+                    </div>
+                    <div className="mt-1 text-sm font-black text-white">{stage.label}</div>
+                    <p className="mt-1 text-sm leading-5 text-white/60">{stage.description}</p>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </section>
+        ) : null}
 
         <div className="mt-5 grid gap-3 sm:grid-cols-3">
           <div className="rounded-2xl border border-white/10 bg-black/25 p-4">
@@ -213,3 +278,5 @@ export default function CreatorMomentPage() {
     </main>
   );
 }
+
+

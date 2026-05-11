@@ -37,6 +37,9 @@ import CreatorProjects from "../pages/CreatorProjects";
 import CreatorStudio from "../pages/CreatorStudio";
 import CreatorStudioBoard from "../pages/CreatorStudioBoard";
 import CreatorMomentPage from "../pages/CreatorMomentPage";
+import OperationalCustomerRequestPage from "../pages/OperationalCustomerRequestPage";
+import OperationalStaffBoard from "../pages/OperationalStaffBoard";
+import OperationalTeamBoard from "../pages/OperationalTeamBoard";
 import StaffBoardPage from "../pages/StaffBoardPage";
 import LobbyBoardPage from "../pages/LobbyBoardPage";
 import CreatorBuild from "../pages/CreatorBuild";
@@ -122,13 +125,15 @@ import PricingPage from "../pages/PricingPage";
 import OnboardingFlow from "../pages/OnboardingFlow";
 import OnboardingBuildTransition from "../pages/OnboardingBuildTransition";
 import SystemHomePage from "../pages/SystemHomePage";
+import CrewTeamBoard from "../pages/CrewTeamBoard";
 
 export default function PlanetRoutes() {
   return (
     <Routes>
       <Route index element={<Navigate to="/planet/start" replace />} />
 
-      <Route path="start" element={<StartPage />} />
+              <Route path="crew-team" element={<CrewTeamBoard />} />
+<Route path="start" element={<StartPage />} />
       <Route path="business-setup" element={<BusinessSetupForm />} />
       <Route path="printshop" element={<PrintShopLandingPage />} />
       <Route path="printshop/order" element={<PrintShopOrderPage />} />
@@ -257,10 +262,12 @@ export default function PlanetRoutes() {
       <Route path="safari/moment/:momentId" element={<SafariMomentPage />} />
       <Route path="safari/:animalSlug" element={<SafariAnimalPage />} />
 
-      <Route path="staff/:slug" element={<StaffBoardPage />} />
+      <Route path="staff/:slug" element={<OperationalStaffBoard />} />
+      <Route path="team/:slug" element={<OperationalTeamBoard />} />
       <Route path="lobby/:slug" element={<LobbyBoardPage />} />
 
       <Route path="live/safari-demo" element={<SafariLiveBoard />} />
+      <Route path="request/:boardSlug" element={<OperationalCustomerRequestPage />} />
       <Route path="live/:boardSlug" element={<LiveBoardRouter />} />
 
       <Route path="livestock/intake" element={<ButcherLivestockIntakeFlow />} />
@@ -287,6 +294,13 @@ export default function PlanetRoutes() {
     </Routes>
   );
 }
+
+
+
+
+
+
+
 
 
 
