@@ -137,6 +137,24 @@ function getPaymentProfileStoreKey(boardSlug: string) {
 }
 
 function sanitizeCashAppCashtag(value: string) {
+  function saveBusinessSettings() {
+    try {
+      window.localStorage.setItem("hp_business_settings_demo_auto_repair", JSON.stringify(settingsDraft));
+      window.localStorage.setItem(
+        getPaymentProfileStoreKey(liveBoardSlug),
+        JSON.stringify({
+          cashAppCashtag: settingsDraft.cashAppCashtag,
+          zelleValue: settingsDraft.zelleValue,
+        }),
+      );
+    } catch {
+      // ignore
+    }
+
+    setSettingsSavedNote("Settings saved");
+    window.setTimeout(() => setSettingsSavedNote(""), 1500);
+  }
+
   return (value || "").trim().replace(/^\$/, "").replace(/[^\w]/g, "");
 }
 
@@ -228,6 +246,24 @@ function openExternalLink(href: string) {
   window.open(href, "_blank", "noopener,noreferrer");
 }
 function toTitleCaseFromSlug(value: string) {
+  function saveBusinessSettings() {
+    try {
+      window.localStorage.setItem("hp_business_settings_demo_auto_repair", JSON.stringify(settingsDraft));
+      window.localStorage.setItem(
+        getPaymentProfileStoreKey(liveBoardSlug),
+        JSON.stringify({
+          cashAppCashtag: settingsDraft.cashAppCashtag,
+          zelleValue: settingsDraft.zelleValue,
+        }),
+      );
+    } catch {
+      // ignore
+    }
+
+    setSettingsSavedNote("Settings saved");
+    window.setTimeout(() => setSettingsSavedNote(""), 1500);
+  }
+
   return (value || "")
     .split("-")
     .filter(Boolean)
@@ -237,6 +273,24 @@ function toTitleCaseFromSlug(value: string) {
 
 function isGenericLiveBoardName(value?: string | null) {
   const lower = (value || "").trim().toLowerCase();
+  function saveBusinessSettings() {
+    try {
+      window.localStorage.setItem("hp_business_settings_demo_auto_repair", JSON.stringify(settingsDraft));
+      window.localStorage.setItem(
+        getPaymentProfileStoreKey(liveBoardSlug),
+        JSON.stringify({
+          cashAppCashtag: settingsDraft.cashAppCashtag,
+          zelleValue: settingsDraft.zelleValue,
+        }),
+      );
+    } catch {
+      // ignore
+    }
+
+    setSettingsSavedNote("Settings saved");
+    window.setTimeout(() => setSettingsSavedNote(""), 1500);
+  }
+
   return (
     !lower ||
     lower === "auto repair live board" ||
@@ -485,7 +539,7 @@ function proofStatus(job: RepairJob) {
 
   return {
     label: "No proof yet",
-    tone: "border-white/10 bg-white/[0.04] text-slate-300",
+    tone: "border-white/[0.09] bg-white/[0.035] text-slate-300",
     dot: "bg-slate-500",
   };
 }
@@ -576,7 +630,7 @@ function stageTone(stage: string) {
     return "border-indigo-400/25 bg-indigo-400/10 text-indigo-200";
   }
 
-  return "border-white/10 bg-white/5 text-white";
+  return "border-white/[0.09] bg-white/5 text-white";
 }
 
 function formatAppointment(date: string, time: string) {
@@ -1000,6 +1054,15 @@ export default function AutoRepairLiveBoard() {
     "reveal",
   );
   const [boardMetaLoaded, setBoardMetaLoaded] = useState(false);
+  const [businessSettingsOpen, setBusinessSettingsOpen] = useState(false);
+  const [settingsSavedNote, setSettingsSavedNote] = useState("");
+  const [settingsDraft, setSettingsDraft] = useState({
+    businessPhone: "863-532-0683",
+    businessEmail: "service@taylorcreekauto.com",
+    cashAppCashtag: "homeplanetcity",
+    zelleValue: "payments@homeplanet.city",
+    invoiceFooter: "Thank you for trusting Taylor Creek Automotive.",
+  });
   const [proofCaptureRunningJobId, setProofCaptureRunningJobId] = useState<string | null>(null);
   const [proofNoteDraft, setProofNoteDraft] = useState("");
   const [paymentAmountDraft, setPaymentAmountDraft] = useState("");
@@ -1182,7 +1245,25 @@ const isActiveBoard =
       document.addEventListener("mousedown", handleClickOutside);
     }
 
-    return () => {
+    function saveBusinessSettings() {
+    try {
+      window.localStorage.setItem("hp_business_settings_demo_auto_repair", JSON.stringify(settingsDraft));
+      window.localStorage.setItem(
+        getPaymentProfileStoreKey(liveBoardSlug),
+        JSON.stringify({
+          cashAppCashtag: settingsDraft.cashAppCashtag,
+          zelleValue: settingsDraft.zelleValue,
+        }),
+      );
+    } catch {
+      // ignore
+    }
+
+    setSettingsSavedNote("Settings saved");
+    window.setTimeout(() => setSettingsSavedNote(""), 1500);
+  }
+
+  return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [stageMenuOpen]);
@@ -1199,7 +1280,25 @@ const isActiveBoard =
   }, [boardViewMode, liveBoardSlug]);
 
   useEffect(() => {
-    return () => {
+    function saveBusinessSettings() {
+    try {
+      window.localStorage.setItem("hp_business_settings_demo_auto_repair", JSON.stringify(settingsDraft));
+      window.localStorage.setItem(
+        getPaymentProfileStoreKey(liveBoardSlug),
+        JSON.stringify({
+          cashAppCashtag: settingsDraft.cashAppCashtag,
+          zelleValue: settingsDraft.zelleValue,
+        }),
+      );
+    } catch {
+      // ignore
+    }
+
+    setSettingsSavedNote("Settings saved");
+    window.setTimeout(() => setSettingsSavedNote(""), 1500);
+  }
+
+  return () => {
       if (saveTimerRef.current) {
         window.clearTimeout(saveTimerRef.current);
       }
@@ -1978,6 +2077,24 @@ window.location.href = "/planet/start/building";
     }
   }
 
+  function saveBusinessSettings() {
+    try {
+      window.localStorage.setItem("hp_business_settings_demo_auto_repair", JSON.stringify(settingsDraft));
+      window.localStorage.setItem(
+        getPaymentProfileStoreKey(liveBoardSlug),
+        JSON.stringify({
+          cashAppCashtag: settingsDraft.cashAppCashtag,
+          zelleValue: settingsDraft.zelleValue,
+        }),
+      );
+    } catch {
+      // ignore
+    }
+
+    setSettingsSavedNote("Settings saved");
+    window.setTimeout(() => setSettingsSavedNote(""), 1500);
+  }
+
   return (
     <div className="min-h-screen bg-[#050816] text-white">
       {!isRestaurant && !loading && !isClaimed && claimPanelDismissed ? (
@@ -1994,10 +2111,118 @@ window.location.href = "/planet/start/building";
               }
               setClaimPanelDismissed(false);
             }}
-            className="rounded-full border border-cyan-400/25 bg-[#081122] px-5 py-3 text-sm font-semibold text-cyan-100 shadow-[0_0_30px_rgba(0,0,0,0.35)] transition hover:bg-[#0b1730]"
+            className="rounded-full transition-all duration-200 transition-all duration-200 border border-cyan-400/25 bg-[#081122] px-5 py-3 text-sm font-semibold text-cyan-100 shadow-[0_0_30px_rgba(0,0,0,0.35)] transition-all duration-200 hover:bg-[#0b1730]"
           >
             Start 14-Day Trial
           </button>
+        </div>
+      ) : null}
+
+      {businessSettingsOpen ? (
+        <div className="fixed inset-0 z-[90] flex justify-end bg-black/60 backdrop-blur-sm">
+          <button
+            type="button"
+            aria-label="Close business settings"
+            className="absolute inset-0 cursor-default"
+            onClick={() => setBusinessSettingsOpen(false)}
+          />
+
+          <aside className="relative z-[91] h-full w-full max-w-[440px] overflow-y-auto border-l border-white/10 bg-[#05070d] p-5 text-white shadow-[0_0_80px_rgba(0,0,0,0.65)]">
+            <div className="mb-5 flex items-start justify-between gap-4">
+              <div>
+                <div className="text-xs font-black uppercase tracking-[0.22em] text-emerald-300">
+                  Business Settings
+                </div>
+                <h2 className="mt-2 text-3xl font-black">Operations Profile</h2>
+                <p className="mt-2 text-sm leading-5 text-white/55">
+                  Update contact, payment, and invoice values without leaving the live board.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setBusinessSettingsOpen(false)}
+                className="rounded-full border border-white/[0.09] bg-white/[0.04] px-3 py-2 text-xs font-black text-white/70 hover:bg-white/[0.08]"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="grid gap-4">
+              {[
+                ["businessPhone", "Business Phone"],
+                ["businessEmail", "Business Email"],
+                ["cashAppCashtag", "Cash App Handle"],
+                ["zelleValue", "Zelle Email / Phone"],
+              ].map(([key, label]) => (
+                <label key={key} className="grid gap-2">
+                  <span className="text-[11px] font-black uppercase tracking-[0.18em] text-white/40">
+                    {label}
+                  </span>
+                  <input
+                    value={settingsDraft[key as keyof typeof settingsDraft]}
+                    onChange={(event) =>
+                      setSettingsDraft((current) => ({
+                        ...current,
+                        [key]: event.target.value,
+                      }))
+                    }
+                    className="rounded-2xl border border-white/[0.09] bg-white/[0.045] px-4 py-3 text-sm font-semibold text-white outline-none focus:border-cyan-300/35"
+                  />
+                </label>
+              ))}
+
+              <label className="grid gap-2">
+                <span className="text-[11px] font-black uppercase tracking-[0.18em] text-white/40">
+                  Invoice Footer
+                </span>
+                <textarea
+                  value={settingsDraft.invoiceFooter}
+                  onChange={(event) =>
+                    setSettingsDraft((current) => ({
+                      ...current,
+                      invoiceFooter: event.target.value,
+                    }))
+                  }
+                  className="min-h-[92px] resize-none rounded-2xl border border-white/[0.09] bg-white/[0.045] px-4 py-3 text-sm font-semibold text-white outline-none focus:border-cyan-300/35"
+                />
+              </label>
+
+              <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-4">
+                <div className="text-xs font-black uppercase tracking-[0.18em] text-emerald-200/70">
+                  Payment Preview
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  <div className="rounded-2xl bg-black/35 p-3">
+                    <div className="text-sm font-black">Cash App</div>
+                    <div className="mt-1 text-xs text-white/55">
+                      {settingsDraft.cashAppCashtag || "Not set"}
+                    </div>
+                  </div>
+                  <div className="rounded-2xl bg-black/35 p-3">
+                    <div className="text-sm font-black">Zelle</div>
+                    <div className="mt-1 text-xs text-white/55">
+                      {settingsDraft.zelleValue || "Not set"}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={saveBusinessSettings}
+                className="rounded-2xl bg-emerald-400 px-5 py-4 text-sm font-black text-black hover:scale-[1.01]"
+              >
+                Save Settings
+              </button>
+
+              {settingsSavedNote ? (
+                <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm font-black text-emerald-100">
+                  {settingsSavedNote}
+                </div>
+              ) : null}
+            </div>
+          </aside>
         </div>
       ) : null}
 
@@ -2013,7 +2238,7 @@ window.location.href = "/planet/start/building";
         <button
           type="button"
           onClick={() => void copyMessage("Presence ID", presenceId)}
-          className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-medium text-white/70 transition hover:border-cyan-400/30 hover:bg-cyan-400/10 hover:text-cyan-100"
+          className="inline-flex items-center rounded-full border border-white/[0.09] bg-white/5 px-3 py-1 text-[11px] font-medium text-white/70 transition-all duration-200 hover:border-cyan-400/30 hover:bg-cyan-400/10 hover:text-cyan-100"
         >
           Copy ID
         </button>
@@ -2043,8 +2268,8 @@ window.location.href = "/planet/start/building";
   </div>
         {boardViewMode === "reveal" ? (
           <>
-            <div className="mb-6 overflow-hidden rounded-[30px] border border-cyan-400/20 bg-gradient-to-br from-cyan-500/10 via-slate-900 to-slate-950 shadow-[0_0_80px_rgba(34,211,238,0.12)]">
-              <div className="grid gap-6 px-6 py-8 md:grid-cols-[1.2fr_0.8fr] md:px-8">
+            <div className="mb-5 overflow-hidden rounded-[30px] border border-cyan-400/20 bg-gradient-to-br from-cyan-500/10 via-slate-900 to-slate-950 shadow-[0_0_80px_rgba(34,211,238,0.12)]">
+              <div className="grid gap-4 px-6 py-8 md:grid-cols-[1.2fr_0.8fr] md:px-8">
                 <div>
                   <div className="inline-flex items-center rounded-full border border-emerald-400/25 bg-emerald-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-emerald-300">
                     {isCamp ? "LIVE CHILD PRESENCE" : config.familyLabel}
@@ -2062,7 +2287,7 @@ window.location.href = "/planet/start/building";
                     <button
                       type="button"
                       onClick={() => void handleAddJob()}
-                      className="rounded-full bg-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:scale-[1.01]"
+                      className="rounded-full transition-all duration-200 transition-all duration-200 bg-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 transition-all duration-200 hover:scale-[1.01]"
                     >
                       {config.createButtonLabel}
                     </button>
@@ -2070,7 +2295,7 @@ window.location.href = "/planet/start/building";
                     <button
                       type="button"
                       onClick={() => void handleReload()}
-                      className="rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/5"
+                      className="rounded-full transition-all duration-200 transition-all duration-200 border border-white/[0.09] px-5 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/5"
                     >
                       Reload Live Data
                     </button>
@@ -2078,21 +2303,29 @@ window.location.href = "/planet/start/building";
                     <button
                       type="button"
                       onClick={() => setBoardViewMode("work")}
-                      className="rounded-full border border-white/10 bg-white/[0.03] px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.06]"
+                      className="rounded-full transition-all duration-200 transition-all duration-200 border border-white/[0.09] bg-white/[0.03] px-5 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/[0.06]"
                     >
                       Switch to Work Mode
                     </button>
 
+                    <button
+                      type="button"
+                      onClick={() => setBusinessSettingsOpen(true)}
+                      className="rounded-full transition-all duration-200 border border-emerald-400/20 bg-emerald-400/10 px-5 py-3 text-sm font-semibold text-emerald-100 hover:bg-emerald-400/15"
+                    >
+                      Business Settings
+                    </button>
+
                     {isRestaurant ? (
                       <>
-                        <div className="rounded-full border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm font-semibold text-amber-100">
+                        <div className="rounded-full transition-all duration-200 transition-all duration-200 border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm font-semibold text-amber-100">
                           Kitchen mode active
                         </div>
 
                         <button
                           type="button"
                           onClick={() => setManagerPanelOpen(true)}
-                          className="rounded-full border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.08]"
+                          className="rounded-full transition-all duration-200 transition-all duration-200 border border-white/[0.09] bg-white/[0.035] px-5 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/[0.08]"
                         >
                           Manager Panel
                         </button>
@@ -2101,7 +2334,7 @@ window.location.href = "/planet/start/building";
                   </div>
                 </div>
 
-                <div className="rounded-[26px] border border-white/10 bg-white/[0.04] p-5">
+                <div className="rounded-[26px] transition-all duration-200 transition-all duration-200 border border-white/[0.09] bg-white/[0.035] p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="text-xs uppercase tracking-[0.22em] text-slate-500">
@@ -2110,7 +2343,7 @@ window.location.href = "/planet/start/building";
                       <div className="mt-3 text-2xl font-semibold">Board Ready</div>
                     </div>
 
-                    <div className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs font-semibold text-cyan-100">
+                    <div className="rounded-full transition-all duration-200 transition-all duration-200 border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs font-semibold text-cyan-100">
                       {boardViewMode === "reveal" ? "Reveal" : "Work"}
                     </div>
                   </div>
@@ -2138,7 +2371,7 @@ window.location.href = "/planet/start/building";
             </div>
 
             {boardMeta ? (
-              <div className="mb-6 rounded-[28px] border border-emerald-400/20 bg-emerald-400/10 p-5">
+              <div className="mb-5 rounded-[28px] border border-emerald-400/20 bg-emerald-400/10 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div>
                     <div className="text-xs uppercase tracking-[0.24em] text-emerald-200/70">
@@ -2151,7 +2384,7 @@ window.location.href = "/planet/start/building";
                     </p>
                   </div>
 
-                  <div className="rounded-full border border-emerald-300/25 bg-emerald-300/10 px-4 py-2 text-sm font-semibold text-emerald-100">
+                  <div className="rounded-full transition-all duration-200 transition-all duration-200 border border-emerald-300/25 bg-emerald-300/10 px-4 py-2 text-sm font-semibold text-emerald-100">
                     {isClaimed ? "Claimed and active" : "Presence-first timestamped"}
                   </div>
                 </div>
@@ -2176,7 +2409,7 @@ window.location.href = "/planet/start/building";
             ) : null}
 
             {boardMeta && isClaimed && !isRestaurant ? (
-              <div className="mb-6 rounded-[28px] border border-cyan-400/20 bg-cyan-400/10 p-5">
+              <div className="mb-5 rounded-[28px] border border-cyan-400/20 bg-cyan-400/10 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div>
                     <div className="text-xs uppercase tracking-[0.24em] text-cyan-200/70">
@@ -2191,7 +2424,7 @@ window.location.href = "/planet/start/building";
                     </p>
                   </div>
 
-                  <div className="rounded-full border border-cyan-300/25 bg-cyan-300/10 px-4 py-2 text-sm font-semibold text-cyan-100">
+                  <div className="rounded-full transition-all duration-200 transition-all duration-200 border border-cyan-300/25 bg-cyan-300/10 px-4 py-2 text-sm font-semibold text-cyan-100">
                     Trial running
                   </div>
                 </div>
@@ -2211,7 +2444,7 @@ window.location.href = "/planet/start/building";
                   />
                 </div>
 
-                <div className="mt-4 rounded-[22px] border border-white/10 bg-white/[0.03] p-4 text-sm leading-6 text-slate-300">
+                <div className="mt-4 rounded-[22px] border border-white/[0.09] bg-white/[0.03] p-4 text-sm leading-6 text-slate-300">
                   Billing collection is not wired in this board yet, so this state keeps the next
                   step visible without pretending payment setup already exists.
                 </div>
@@ -2227,7 +2460,7 @@ window.location.href = "/planet/start/building";
                     <div className="inline-flex items-center rounded-full border border-emerald-400/25 bg-emerald-400/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-emerald-300">
                       {config.familyLabel}
                     </div>
-                    <div className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-semibold text-slate-200">
+                    <div className="inline-flex items-center rounded-full border border-white/[0.09] bg-white/[0.035] px-3 py-1 text-[11px] font-semibold text-slate-200">
                       {city}
                     </div>
                     {boardMeta ? (
@@ -2262,7 +2495,7 @@ window.location.href = "/planet/start/building";
                   <button
                     type="button"
                     onClick={() => void handleAddJob()}
-                    className="rounded-full bg-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:scale-[1.01]"
+                    className="rounded-full transition-all duration-200 transition-all duration-200 bg-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 transition-all duration-200 hover:scale-[1.01]"
                   >
                     {config.createButtonLabel}
                   </button>
@@ -2270,7 +2503,7 @@ window.location.href = "/planet/start/building";
                   <button
                     type="button"
                     onClick={() => void handleReload()}
-                    className="rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/5"
+                    className="rounded-full transition-all duration-200 transition-all duration-200 border border-white/[0.09] px-5 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/5"
                   >
                     Reload Live Data
                   </button>
@@ -2278,7 +2511,7 @@ window.location.href = "/planet/start/building";
                   <button
                     type="button"
                     onClick={() => setBoardViewMode("reveal")}
-                    className="rounded-full border border-white/10 bg-white/[0.03] px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.06]"
+                    className="rounded-full transition-all duration-200 transition-all duration-200 border border-white/[0.09] bg-white/[0.03] px-5 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/[0.06]"
                   >
                     Reveal View
                   </button>
@@ -2289,7 +2522,7 @@ window.location.href = "/planet/start/building";
             {(boardMeta || (isClaimed && !isRestaurant)) ? (
               <div className="mb-4 grid gap-3 md:grid-cols-[1.2fr_0.8fr]">
                 {boardMeta ? (
-                  <div className="rounded-[22px] border border-emerald-400/20 bg-emerald-400/10 px-4 py-4">
+                  <div className="rounded-[22px] transition-all duration-200 transition-all duration-200 border border-emerald-400/20 bg-emerald-400/10 px-4 py-4">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
                         <div className="text-[11px] uppercase tracking-[0.22em] text-emerald-200/70">
@@ -2303,7 +2536,7 @@ window.location.href = "/planet/start/building";
                       <button
                         type="button"
                         onClick={() => setBoardViewMode("reveal")}
-                        className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/[0.06]"
+                        className="rounded-full transition-all duration-200 transition-all duration-200 border border-white/[0.09] bg-white/[0.035] px-3 py-2 text-xs font-semibold text-white transition-all duration-200 hover:bg-white/[0.06]"
                       >
                         View full proof
                       </button>
@@ -2314,7 +2547,7 @@ window.location.href = "/planet/start/building";
                 )}
 
                 {boardMeta && isClaimed && !isRestaurant ? (
-                  <div className="rounded-[22px] border border-cyan-400/20 bg-cyan-400/10 px-4 py-4">
+                  <div className="rounded-[22px] transition-all duration-200 transition-all duration-200 border border-cyan-400/20 bg-cyan-400/10 px-4 py-4">
                     <div className="text-[11px] uppercase tracking-[0.22em] text-cyan-200/70">
                       Trial status
                     </div>
@@ -2330,7 +2563,7 @@ window.location.href = "/planet/start/building";
           </>
         )}
 
-        <div className="mb-6 grid gap-4 md:grid-cols-4">
+        <div className="mb-5 grid gap-4 md:grid-cols-4">
           <StatCard
             label={isRestaurant ? "Tickets" : isCamp ? "Children" : "Items"}
             value={totals.total}
@@ -2354,11 +2587,11 @@ window.location.href = "/planet/start/building";
         </div>
 
         <div
-          className={`grid gap-6 ${
+          className={`grid gap-4 ${
             isRestaurant ? "xl:grid-cols-1" : "xl:grid-cols-[1.15fr_0.85fr]"
           }`}
         >
-          <div className="rounded-[30px] border border-white/10 bg-[#081122] p-4 md:p-6">
+          <div className="rounded-[30px] border border-white/[0.09] bg-[#081122] p-4 md:p-4">
             <div className="mb-4 flex items-center justify-between gap-4">
               <div>
                 <h2 className="text-2xl font-semibold">
@@ -2377,7 +2610,7 @@ window.location.href = "/planet/start/building";
                 </p>
               </div>
 
-              <div className="rounded-full border border-cyan-400/25 bg-cyan-400/10 px-4 py-2 text-sm font-semibold text-cyan-100">
+              <div className="rounded-full transition-all duration-200 transition-all duration-200 border border-cyan-400/25 bg-cyan-400/10 px-4 py-2 text-sm font-semibold text-cyan-100">
                 {config.familyLabel}
               </div>
             </div>
@@ -2392,18 +2625,18 @@ window.location.href = "/planet/start/building";
               {grouped.map((column) => (
                 <div
                   key={column.stage}
-                  className="rounded-[24px] border border-white/10 bg-white/[0.03] p-4"
+                  className="rounded-[24px] border border-white/[0.09] bg-white/[0.03] p-4"
                 >
                   <div className="mb-3 flex items-center justify-between gap-3">
                     <h3 className="text-base font-semibold">{column.stage}</h3>
-                    <div className="rounded-full border border-white/10 px-3 py-1 text-xs text-slate-300">
+                    <div className="rounded-full transition-all duration-200 transition-all duration-200 border border-white/[0.09] px-3 py-1 text-xs text-slate-300">
                       {column.jobs.length}
                     </div>
                   </div>
 
                   <div className="space-y-3">
                     {column.jobs.length === 0 ? (
-                      <div className="rounded-2xl border border-dashed border-white/10 px-4 py-5 text-sm text-slate-500">
+                      <div className="rounded-2xl transition-all duration-200 transition-all duration-200 border border-dashed border-white/[0.09] px-4 py-5 text-sm text-slate-500">
                         {isRestaurant
                           ? "No tickets here yet."
                           : isCamp
@@ -2415,12 +2648,30 @@ window.location.href = "/planet/start/building";
                         const selected = selectedJobId === job.id;
 
                         if (isRestaurant) {
-                          return (
+                          function saveBusinessSettings() {
+    try {
+      window.localStorage.setItem("hp_business_settings_demo_auto_repair", JSON.stringify(settingsDraft));
+      window.localStorage.setItem(
+        getPaymentProfileStoreKey(liveBoardSlug),
+        JSON.stringify({
+          cashAppCashtag: settingsDraft.cashAppCashtag,
+          zelleValue: settingsDraft.zelleValue,
+        }),
+      );
+    } catch {
+      // ignore
+    }
+
+    setSettingsSavedNote("Settings saved");
+    window.setTimeout(() => setSettingsSavedNote(""), 1500);
+  }
+
+  return (
                             <button
                               key={job.id}
                               type="button"
                               onClick={() => openRestaurantTicketEditor(job)}
-                              className="w-full rounded-[18px] border border-white/10 bg-white/[0.03] p-3 text-left transition hover:bg-white/[0.05]"
+                              className="w-full rounded-[18px] border border-white/[0.09] bg-white/[0.03] p-3 text-left transition-all duration-200 hover:bg-white/[0.05]"
                             >
                               <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0">
@@ -2471,13 +2722,31 @@ window.location.href = "/planet/start/building";
                         }
 
                         if (isCamp) {
-                          return (
+                          function saveBusinessSettings() {
+    try {
+      window.localStorage.setItem("hp_business_settings_demo_auto_repair", JSON.stringify(settingsDraft));
+      window.localStorage.setItem(
+        getPaymentProfileStoreKey(liveBoardSlug),
+        JSON.stringify({
+          cashAppCashtag: settingsDraft.cashAppCashtag,
+          zelleValue: settingsDraft.zelleValue,
+        }),
+      );
+    } catch {
+      // ignore
+    }
+
+    setSettingsSavedNote("Settings saved");
+    window.setTimeout(() => setSettingsSavedNote(""), 1500);
+  }
+
+  return (
                             <div
                               key={job.id}
                               className={`rounded-[18px] border p-3 transition ${
                                 selected
                                   ? "border-cyan-400/40 bg-cyan-400/10 shadow-[0_0_26px_rgba(34,211,238,0.10)]"
-                                  : "border-white/10 bg-white/[0.03]"
+                                  : "border-white/[0.09] bg-white/[0.03]"
                               }`}
                             >
                               <button
@@ -2517,7 +2786,7 @@ window.location.href = "/planet/start/building";
                                 </div>
 
                                 <div className="mt-3 grid gap-2 md:grid-cols-2">
-                                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2">
+                                  <div className="rounded-2xl transition-all duration-200 transition-all duration-200 border border-white/[0.09] bg-white/[0.03] px-3 py-2">
                                     <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
                                       Guardian
                                     </div>
@@ -2526,7 +2795,7 @@ window.location.href = "/planet/start/building";
                                     </div>
                                   </div>
 
-                                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2">
+                                  <div className="rounded-2xl transition-all duration-200 transition-all duration-200 border border-white/[0.09] bg-white/[0.03] px-3 py-2">
                                     <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
                                       Activity
                                     </div>
@@ -2550,7 +2819,7 @@ window.location.href = "/planet/start/building";
                                 <button
                                   type="button"
                                   onClick={() => openParentView(job)}
-                                  className="w-full rounded-full border border-cyan-400/25 bg-cyan-400/10 px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/15"
+                                  className="w-full rounded-full border border-cyan-400/25 bg-cyan-400/10 px-4 py-2 text-sm font-semibold text-cyan-100 transition-all duration-200 hover:bg-cyan-400/15"
                                 >
                                   Open Parent View
                                 </button>
@@ -2558,7 +2827,7 @@ window.location.href = "/planet/start/building";
                                 <button
                                   type="button"
                                   onClick={() => void copyParentViewLink(job)}
-                                  className="w-full rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.06]"
+                                  className="w-full rounded-full border border-white/[0.09] bg-white/[0.03] px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/[0.06]"
                                 >
                                   Copy Parent Link
                                 </button>
@@ -2567,7 +2836,25 @@ window.location.href = "/planet/start/building";
                           );
                         }
 
-                        return (
+                        function saveBusinessSettings() {
+    try {
+      window.localStorage.setItem("hp_business_settings_demo_auto_repair", JSON.stringify(settingsDraft));
+      window.localStorage.setItem(
+        getPaymentProfileStoreKey(liveBoardSlug),
+        JSON.stringify({
+          cashAppCashtag: settingsDraft.cashAppCashtag,
+          zelleValue: settingsDraft.zelleValue,
+        }),
+      );
+    } catch {
+      // ignore
+    }
+
+    setSettingsSavedNote("Settings saved");
+    window.setTimeout(() => setSettingsSavedNote(""), 1500);
+  }
+
+  return (
                           <button
                             key={job.id}
                             type="button"
@@ -2578,7 +2865,7 @@ window.location.href = "/planet/start/building";
                             className={`w-full rounded-[18px] border p-3 text-left transition ${
                               selected
                                 ? "border-cyan-400/40 bg-cyan-400/10 shadow-[0_0_26px_rgba(34,211,238,0.10)]"
-                                : "border-white/10 bg-white/[0.03] hover:bg-white/[0.05]"
+                                : "border-white/[0.09] bg-white/[0.03] hover:bg-white/[0.05]"
                             }`}
                           >
                             <div className="flex items-start justify-between gap-3">
@@ -2644,7 +2931,7 @@ window.location.href = "/planet/start/building";
             </div>
 
             {isRestaurant ? (
-              <div className="mt-5 rounded-[24px] border border-white/10 bg-white/[0.03] p-4">
+              <div className="mt-5 rounded-[24px] border border-white/[0.09] bg-white/[0.03] p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <div className="text-xs uppercase tracking-[0.22em] text-slate-500">
@@ -2660,7 +2947,7 @@ window.location.href = "/planet/start/building";
                   <button
                     type="button"
                     onClick={() => setManagerPanelOpen(true)}
-                    className="rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-slate-300 transition hover:bg-white/[0.06]"
+                    className="rounded-full transition-all duration-200 transition-all duration-200 border border-white/[0.09] px-4 py-2 text-sm font-semibold text-slate-300 transition-all duration-200 hover:bg-white/[0.06]"
                   >
                     Open Manager Panel
                   </button>
@@ -2670,7 +2957,7 @@ window.location.href = "/planet/start/building";
           </div>
 
           {!isRestaurant ? (
-            <div className="rounded-[30px] border border-white/10 bg-[#081122] p-5">
+            <div className="rounded-[30px] border border-white/[0.09] bg-[#081122] p-4">
               {selectedJob ? (
                 <>
                   <div className="mb-5 flex items-start justify-between gap-4">
@@ -2696,7 +2983,7 @@ window.location.href = "/planet/start/building";
                         </div>
                       ) : null}
                       {isCamp ? (
-                        <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200">
+                        <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-white/[0.09] bg-white/[0.035] px-3 py-1.5 text-xs font-semibold text-slate-200">
                           <span
                             className={`h-2.5 w-2.5 rounded-full ${campStatusTone(selectedJob.stage).dot}`}
                           />
@@ -2711,7 +2998,7 @@ window.location.href = "/planet/start/building";
                         setSelectedJobId(null);
                         setStageMenuOpen(false);
                       }}
-                      className="rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/5"
+                      className="rounded-full transition-all duration-200 transition-all duration-200 border border-white/[0.09] px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/5"
                     >
                       Close
                     </button>
@@ -2723,7 +3010,7 @@ window.location.href = "/planet/start/building";
                         <button
                           type="button"
                           onClick={() => openParentView(selectedJob)}
-                          className="w-full rounded-full border border-cyan-400/25 bg-cyan-400/10 px-4 py-3 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/15"
+                          className="w-full rounded-full border border-cyan-400/25 bg-cyan-400/10 px-4 py-3 text-sm font-semibold text-cyan-100 transition-all duration-200 hover:bg-cyan-400/15"
                         >
                           Open Parent View
                         </button>
@@ -2731,7 +3018,7 @@ window.location.href = "/planet/start/building";
                         <button
                           type="button"
                           onClick={() => void copyParentViewLink(selectedJob)}
-                          className="w-full rounded-full border border-white/10 bg-white/[0.03] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.06]"
+                          className="w-full rounded-full border border-white/[0.09] bg-white/[0.03] px-4 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/[0.06]"
                         >
                           Copy Parent Link
                         </button>
@@ -2750,7 +3037,7 @@ window.location.href = "/planet/start/building";
                         onChange={(e) =>
                           updateLocalSelectedJob("customer", e.target.value)
                         }
-                        className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 outline-none transition focus:border-cyan-400/40"
+                        className="w-full rounded-2xl border border-white/[0.09] bg-white/[0.035] px-4 py-3 outline-none transition focus:border-cyan-400/40"
                         placeholder={isCamp ? "Guardian name" : "Customer name"}
                       />
                     </Field>
@@ -2767,7 +3054,7 @@ window.location.href = "/planet/start/building";
                         onChange={(e) =>
                           updateLocalSelectedJob("vehicle", e.target.value)
                         }
-                        className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 outline-none transition focus:border-cyan-400/40"
+                        className="w-full rounded-2xl border border-white/[0.09] bg-white/[0.035] px-4 py-3 outline-none transition focus:border-cyan-400/40"
                         placeholder={isCamp ? "Child name" : config.labels.item}
                       />
                     </Field>
@@ -2784,7 +3071,7 @@ window.location.href = "/planet/start/building";
                         onChange={(e) =>
                           updateLocalSelectedJob("concern", e.target.value)
                         }
-                        className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 outline-none transition focus:border-cyan-400/40"
+                        className="w-full rounded-2xl border border-white/[0.09] bg-white/[0.035] px-4 py-3 outline-none transition focus:border-cyan-400/40"
                         placeholder={isCamp ? "Water play" : config.labels.concern}
                       />
                     </Field>
@@ -2795,18 +3082,36 @@ window.location.href = "/planet/start/building";
                           <button
                             type="button"
                             onClick={() => setStageMenuOpen((open) => !open)}
-                            className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-left outline-none transition hover:border-cyan-400/30"
+                            className="flex w-full items-center justify-between rounded-2xl border border-white/[0.09] bg-white/[0.035] px-4 py-3 text-left outline-none transition-all duration-200 hover:border-cyan-400/30"
                           >
                             <span>{selectedJob.stage}</span>
                             <span className="text-slate-400">â–¾</span>
                           </button>
 
                           {stageMenuOpen ? (
-                            <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-20 rounded-2xl border border-white/10 bg-[#0b1730] p-2 shadow-[0_0_40px_rgba(0,0,0,0.35)]">
+                            <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-20 rounded-2xl border border-white/[0.09] bg-[#0b1730] p-2 shadow-[0_0_40px_rgba(0,0,0,0.35)]">
                               {stages.map((stage) => {
                                 const active = stage === selectedJob.stage;
 
-                                return (
+                                function saveBusinessSettings() {
+    try {
+      window.localStorage.setItem("hp_business_settings_demo_auto_repair", JSON.stringify(settingsDraft));
+      window.localStorage.setItem(
+        getPaymentProfileStoreKey(liveBoardSlug),
+        JSON.stringify({
+          cashAppCashtag: settingsDraft.cashAppCashtag,
+          zelleValue: settingsDraft.zelleValue,
+        }),
+      );
+    } catch {
+      // ignore
+    }
+
+    setSettingsSavedNote("Settings saved");
+    window.setTimeout(() => setSettingsSavedNote(""), 1500);
+  }
+
+  return (
                                   <button
                                     key={stage}
                                     type="button"
@@ -2844,7 +3149,7 @@ window.location.href = "/planet/start/building";
                           onChange={(e) =>
                             updateLocalSelectedJob("eta", e.target.value)
                           }
-                          className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 outline-none transition focus:border-cyan-400/40"
+                          className="w-full rounded-2xl border border-white/[0.09] bg-white/[0.035] px-4 py-3 outline-none transition focus:border-cyan-400/40"
                           placeholder={isCamp ? "5 min rotation" : config.labels.eta}
                         />
                       </Field>
@@ -2862,7 +3167,7 @@ window.location.href = "/planet/start/building";
                         onChange={(e) =>
                           updateLocalSelectedJob("advisor", e.target.value)
                         }
-                        className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 outline-none transition focus:border-cyan-400/40"
+                        className="w-full rounded-2xl border border-white/[0.09] bg-white/[0.035] px-4 py-3 outline-none transition focus:border-cyan-400/40"
                         placeholder={
                           isCamp ? "Check-In Supervisor" : config.labels.advisor
                         }
@@ -2876,7 +3181,7 @@ window.location.href = "/planet/start/building";
                           onChange={(e) =>
                             updateLocalSelectedJob("phone", e.target.value)
                           }
-                          className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 outline-none transition focus:border-cyan-400/40"
+                          className="w-full rounded-2xl border border-white/[0.09] bg-white/[0.035] px-4 py-3 outline-none transition focus:border-cyan-400/40"
                           placeholder="863-555-1212"
                         />
                       </Field>
@@ -2891,7 +3196,7 @@ window.location.href = "/planet/start/building";
                               e.target.value,
                             )
                           }
-                          className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 outline-none transition focus:border-cyan-400/40"
+                          className="w-full rounded-2xl border border-white/[0.09] bg-white/[0.035] px-4 py-3 outline-none transition focus:border-cyan-400/40"
                         />
                       </Field>
                     </div>
@@ -2906,7 +3211,7 @@ window.location.href = "/planet/start/building";
                             e.target.value,
                           )
                         }
-                        className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 outline-none transition focus:border-cyan-400/40"
+                        className="w-full rounded-2xl border border-white/[0.09] bg-white/[0.035] px-4 py-3 outline-none transition focus:border-cyan-400/40"
                       />
                     </Field>
 
@@ -2916,7 +3221,7 @@ window.location.href = "/planet/start/building";
                         onChange={(e) =>
                           updateLocalSelectedJob("notes", e.target.value)
                         }
-                        className="min-h-[140px] w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 outline-none transition focus:border-cyan-400/40"
+                        className="min-h-[140px] w-full rounded-2xl border border-white/[0.09] bg-white/[0.035] px-4 py-3 outline-none transition focus:border-cyan-400/40"
                         placeholder={config.labels.notes}
                       />
                     </Field>
@@ -2945,7 +3250,7 @@ window.location.href = "/planet/start/building";
                       </div>
                     ) : null}
 
-                    <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-4">
+                    <div className="rounded-[24px] border border-white/[0.09] bg-white/[0.03] p-4">
                       <div className="text-xs uppercase tracking-[0.22em] text-slate-500">
                         {isCamp ? "Attendance summary" : "Appointment summary"}
                       </div>
@@ -2989,7 +3294,7 @@ window.location.href = "/planet/start/building";
                             type="button"
                             onClick={startProofCapture}
                             disabled={proofCaptureRunningJobId === selectedJob.id}
-                            className="rounded-full border border-violet-300/30 bg-violet-300/15 px-4 py-3 text-sm font-semibold text-violet-50 transition hover:bg-violet-300/20 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="rounded-full transition-all duration-200 transition-all duration-200 border border-violet-300/30 bg-violet-300/15 px-4 py-3 text-sm font-semibold text-violet-50 transition-all duration-200 hover:bg-violet-300/20 disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             {proofCaptureRunningJobId === selectedJob.id
                               ? "Capture Running"
@@ -3000,7 +3305,7 @@ window.location.href = "/planet/start/building";
                             type="button"
                             onClick={stopProofCapture}
                             disabled={proofCaptureRunningJobId !== selectedJob.id}
-                            className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
+                            className="rounded-full transition-all duration-200 transition-all duration-200 border border-white/[0.09] bg-white/[0.035] px-4 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             Stop Capture
                           </button>
@@ -3013,7 +3318,7 @@ window.location.href = "/planet/start/building";
                           <textarea
                             value={proofNoteDraft}
                             onChange={(e) => setProofNoteDraft(e.target.value)}
-                            className="mt-2 min-h-[88px] w-full rounded-2xl border border-white/10 bg-[#070d1a] px-4 py-3 text-sm outline-none transition focus:border-violet-300/40"
+                            className="mt-2 min-h-[88px] w-full rounded-2xl border border-white/[0.09] bg-[#070d1a] px-4 py-3 text-sm outline-none transition focus:border-violet-300/40"
                             placeholder="What did you find, remove, expose, or complete?"
                           />
                         </div>
@@ -3024,7 +3329,7 @@ window.location.href = "/planet/start/building";
                             onClick={() =>
                               addProofClip("Hidden issue found", "Customer could not see this without teardown or access.")
                             }
-                            className="rounded-full border border-amber-400/25 bg-amber-400/10 px-3 py-2 text-xs font-semibold text-amber-100 transition hover:bg-amber-400/15"
+                            className="rounded-full transition-all duration-200 transition-all duration-200 border border-amber-400/25 bg-amber-400/10 px-3 py-2 text-xs font-semibold text-amber-100 transition-all duration-200 hover:bg-amber-400/15"
                           >
                             Hidden Issue
                           </button>
@@ -3034,7 +3339,7 @@ window.location.href = "/planet/start/building";
                             onClick={() =>
                               addProofClip("Safety concern", "Immediate attention recommended before continuing.")
                             }
-                            className="rounded-full border border-red-400/25 bg-red-400/10 px-3 py-2 text-xs font-semibold text-red-100 transition hover:bg-red-400/15"
+                            className="rounded-full transition-all duration-200 transition-all duration-200 border border-red-400/25 bg-red-400/10 px-3 py-2 text-xs font-semibold text-red-100 transition-all duration-200 hover:bg-red-400/15"
                           >
                             Safety
                           </button>
@@ -3044,7 +3349,7 @@ window.location.href = "/planet/start/building";
                             onClick={() =>
                               addProofClip("Work in progress", "Active labor, teardown, cleaning, or install in progress.")
                             }
-                            className="rounded-full border border-cyan-400/25 bg-cyan-400/10 px-3 py-2 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-400/15"
+                            className="rounded-full transition-all duration-200 transition-all duration-200 border border-cyan-400/25 bg-cyan-400/10 px-3 py-2 text-xs font-semibold text-cyan-100 transition-all duration-200 hover:bg-cyan-400/15"
                           >
                             In Progress
                           </button>
@@ -3054,13 +3359,13 @@ window.location.href = "/planet/start/building";
                             onClick={() =>
                               addProofClip("Completed work", "Finished result verified and ready to show.")
                             }
-                            className="rounded-full border border-emerald-400/25 bg-emerald-400/10 px-3 py-2 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-400/15"
+                            className="rounded-full transition-all duration-200 transition-all duration-200 border border-emerald-400/25 bg-emerald-400/10 px-3 py-2 text-xs font-semibold text-emerald-100 transition-all duration-200 hover:bg-emerald-400/15"
                           >
                             Completed
                           </button>
                         </div>
 
-                        <div className="mt-4 rounded-[22px] border border-white/10 bg-[#070d1a] p-3">
+                        <div className="mt-4 rounded-[22px] border border-white/[0.09] bg-[#070d1a] p-3">
                           <div className="flex items-center justify-between gap-3">
                             <div className="text-xs uppercase tracking-[0.22em] text-slate-500">
                               Proof timeline
@@ -3070,7 +3375,7 @@ window.location.href = "/planet/start/building";
                               type="button"
                               onClick={clearProofForSelected}
                               disabled={!selectedJob.proof?.length}
-                              className="rounded-full border border-white/10 px-3 py-1 text-[11px] font-semibold text-slate-300 transition hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-50"
+                              className="rounded-full transition-all duration-200 transition-all duration-200 border border-white/[0.09] px-3 py-1 text-[11px] font-semibold text-slate-300 transition-all duration-200 hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               Clear
                             </button>
@@ -3081,7 +3386,7 @@ window.location.href = "/planet/start/building";
                               selectedJob.proof.map((clip) => (
                                 <div
                                   key={clip.id}
-                                  className="rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-3"
+                                  className="rounded-2xl transition-all duration-200 transition-all duration-200 border border-white/[0.09] bg-white/[0.03] px-3 py-3"
                                 >
                                   <div className="flex items-start justify-between gap-3">
                                     <div>
@@ -3101,7 +3406,7 @@ window.location.href = "/planet/start/building";
                                       </div>
                                     </div>
 
-                                    <div className="rounded-full border border-violet-400/20 bg-violet-400/10 px-2.5 py-1 text-[10px] font-semibold text-violet-100">
+                                    <div className="rounded-full transition-all duration-200 transition-all duration-200 border border-violet-400/20 bg-violet-400/10 px-2.5 py-1 text-[10px] font-semibold text-violet-100">
                                       Proof
                                     </div>
                                   </div>
@@ -3112,7 +3417,7 @@ window.location.href = "/planet/start/building";
                                 </div>
                               ))
                             ) : (
-                              <div className="rounded-2xl border border-dashed border-white/10 px-4 py-5 text-sm text-slate-500">
+                              <div className="rounded-2xl transition-all duration-200 transition-all duration-200 border border-dashed border-white/[0.09] px-4 py-5 text-sm text-slate-500">
                                 No proof moments captured yet. Start with what the customer cannot see, then log the work that made the result possible.
                               </div>
                             )}
@@ -3134,7 +3439,7 @@ window.location.href = "/planet/start/building";
                           </div>
 
                           {copiedMessage ? (
-                            <div className="rounded-full border border-emerald-400/20 px-3 py-1 text-xs text-emerald-100">
+                            <div className="rounded-full transition-all duration-200 transition-all duration-200 border border-emerald-400/20 px-3 py-1 text-xs text-emerald-100">
                               {copiedMessage}
                             </div>
                           ) : null}
@@ -3147,7 +3452,7 @@ window.location.href = "/planet/start/building";
                               onChange={(e) =>
                                 setPaymentAmountDraft(sanitizeMoneyInput(e.target.value))
                               }
-                              className="w-full rounded-2xl border border-white/10 bg-[#070d1a] px-4 py-3 outline-none transition focus:border-emerald-400/40"
+                              className="w-full rounded-2xl border border-white/[0.09] bg-[#070d1a] px-4 py-3 outline-none transition focus:border-emerald-400/40"
                               placeholder="125.00"
                             />
                           </Field>
@@ -3156,14 +3461,14 @@ window.location.href = "/planet/start/building";
                             <input
                               value={paymentMemoDraft}
                               onChange={(e) => setPaymentMemoDraft(e.target.value)}
-                              className="w-full rounded-2xl border border-white/10 bg-[#070d1a] px-4 py-3 outline-none transition focus:border-emerald-400/40"
+                              className="w-full rounded-2xl border border-white/[0.09] bg-[#070d1a] px-4 py-3 outline-none transition focus:border-emerald-400/40"
                               placeholder="RO-1042 · John"
                             />
                           </Field>
                         </div>
 
                         <div className="mt-4 grid gap-4 md:grid-cols-2">
-                          <div className="rounded-[22px] border border-white/10 bg-[#070d1a] p-4">
+                          <div className="rounded-[22px] transition-all duration-200 transition-all duration-200 border border-white/[0.09] bg-[#070d1a] p-4">
                             <div className="flex items-center justify-between gap-3">
                               <div>
                                 <div className="text-sm font-semibold text-white">
@@ -3176,12 +3481,12 @@ window.location.href = "/planet/start/building";
                                 </div>
                               </div>
 
-                              <div className="rounded-full border border-emerald-400/25 bg-emerald-400/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-100">
+                              <div className="rounded-full transition-all duration-200 transition-all duration-200 border border-emerald-400/25 bg-emerald-400/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-100">
                                 Scan or tap
                               </div>
                             </div>
 
-                            <div className="mt-4 flex items-center justify-center rounded-[20px] border border-white/10 bg-white px-4 py-4">
+                            <div className="mt-4 flex items-center justify-center rounded-[20px] border border-white/[0.09] bg-white px-4 py-4">
                               {cashAppQrSrc ? (
                                 <img
                                   src={cashAppQrSrc}
@@ -3200,7 +3505,7 @@ window.location.href = "/planet/start/building";
                                 type="button"
                                 onClick={() => openExternalLink(cashAppUrl)}
                                 disabled={!cashAppUrl}
-                                className="rounded-full bg-emerald-300 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-50"
+                                className="rounded-full transition-all duration-200 transition-all duration-200 bg-emerald-300 px-4 py-3 text-sm font-semibold text-slate-950 transition-all duration-200 hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-50"
                               >
                                 Open Cash App
                               </button>
@@ -3209,14 +3514,14 @@ window.location.href = "/planet/start/building";
                                 type="button"
                                 onClick={() => void copyMessage("Cash App link", cashAppUrl)}
                                 disabled={!cashAppUrl}
-                                className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-50"
+                                className="rounded-full transition-all duration-200 transition-all duration-200 border border-white/[0.09] bg-white/[0.035] px-4 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-50"
                               >
                                 Copy Cash App Link
                               </button>
                             </div>
                           </div>
 
-                          <div className="rounded-[22px] border border-white/10 bg-[#070d1a] p-4">
+                          <div className="rounded-[22px] transition-all duration-200 transition-all duration-200 border border-white/[0.09] bg-[#070d1a] p-4">
                             <div className="flex items-center justify-between gap-3">
                               <div>
                                 <div className="text-sm font-semibold text-white">
@@ -3227,12 +3532,12 @@ window.location.href = "/planet/start/building";
                                 </div>
                               </div>
 
-                              <div className="rounded-full border border-cyan-400/25 bg-cyan-400/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-100">
+                              <div className="rounded-full transition-all duration-200 transition-all duration-200 border border-cyan-400/25 bg-cyan-400/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-100">
                                 Copy fast
                               </div>
                             </div>
 
-                            <div className="mt-4 flex items-center justify-center rounded-[20px] border border-white/10 bg-white px-4 py-4">
+                            <div className="mt-4 flex items-center justify-center rounded-[20px] border border-white/[0.09] bg-white px-4 py-4">
                               {zelleQrSrc ? (
                                 <img
                                   src={zelleQrSrc}
@@ -3255,7 +3560,7 @@ window.location.href = "/planet/start/building";
                                     : undefined
                                 }
                                 disabled={!paymentProfile.zelleValue}
-                                className="rounded-full bg-cyan-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-50"
+                                className="rounded-full transition-all duration-200 transition-all duration-200 bg-cyan-400 px-4 py-3 text-sm font-semibold text-slate-950 transition-all duration-200 hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-50"
                               >
                                 Copy Zelle
                               </button>
@@ -3269,7 +3574,7 @@ window.location.href = "/planet/start/building";
                                       : undefined
                                   }
                                   disabled={!paymentMemo}
-                                  className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-50"
+                                  className="rounded-full transition-all duration-200 transition-all duration-200 border border-white/[0.09] bg-white/[0.035] px-4 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                   Copy Memo
                                 </button>
@@ -3278,7 +3583,7 @@ window.location.href = "/planet/start/building";
                                   type="button"
                                   onClick={() => openExternalLink(zelleActionHref)}
                                   disabled={!zelleActionHref}
-                                  className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-50"
+                                  className="rounded-full transition-all duration-200 transition-all duration-200 border border-white/[0.09] bg-white/[0.035] px-4 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                   Open Zelle Contact
                                 </button>
@@ -3386,7 +3691,7 @@ window.location.href = "/planet/start/building";
                             </div>
                           </div>
 
-                          <div className="rounded-full border border-emerald-300/25 bg-emerald-300/10 px-3 py-1 text-xs font-semibold text-emerald-100">
+                          <div className="rounded-full transition-all duration-200 transition-all duration-200 border border-emerald-300/25 bg-emerald-300/10 px-3 py-1 text-xs font-semibold text-emerald-100">
                             {jobReceipts.length} receipt{jobReceipts.length === 1 ? "" : "s"}
                           </div>
                         </div>
@@ -3396,14 +3701,14 @@ window.location.href = "/planet/start/building";
                             jobReceipts.map((receipt) => (
                               <div
                                 key={receipt.id}
-                                className="rounded-2xl border border-white/10 bg-black/10 px-4 py-3"
+                                className="rounded-2xl transition-all duration-200 transition-all duration-200 border border-white/[0.09] bg-black/10 px-4 py-3"
                               >
                                 <div className="flex flex-wrap items-center justify-between gap-3">
                                   <div className="text-sm font-semibold text-white">
                                     {receipt.vendorName}
                                   </div>
 
-                                  <div className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-200">
+                                  <div className="rounded-full transition-all duration-200 transition-all duration-200 border border-white/[0.09] bg-white/[0.035] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-200">
                                     {receipt.paymentMethod !== "unknown" ? receipt.paymentMethod : "pending"}
                                   </div>
                                 </div>
@@ -3436,7 +3741,7 @@ Presence ID: ${presenceId}
 
                                       void navigator.clipboard.writeText(text);
                                     }}
-                                    className="rounded-full border border-white/10 px-3 py-1 text-xs text-white transition hover:bg-white/10"
+                                    className="rounded-full transition-all duration-200 transition-all duration-200 border border-white/[0.09] px-3 py-1 text-xs text-white transition-all duration-200 hover:bg-white/10"
                                   >
                                     Copy Proof
                                   </button>
@@ -3448,7 +3753,7 @@ Presence ID: ${presenceId}
                               </div>
                             ))
                           ) : (
-                            <div className="rounded-2xl border border-dashed border-white/10 px-4 py-5 text-sm text-slate-400">
+                            <div className="rounded-2xl transition-all duration-200 transition-all duration-200 border border-dashed border-white/[0.09] px-4 py-5 text-sm text-slate-400">
                               No receipts stored for this job yet.
                             </div>
                           )}
@@ -3472,7 +3777,7 @@ Presence ID: ${presenceId}
                         </div>
 
                         {copiedMessage ? (
-                          <div className="rounded-full border border-cyan-400/20 px-3 py-1 text-xs text-cyan-100">
+                          <div className="rounded-full transition-all duration-200 transition-all duration-200 border border-cyan-400/20 px-3 py-1 text-xs text-cyan-100">
                             {copiedMessage}
                           </div>
                         ) : null}
@@ -3567,14 +3872,14 @@ Presence ID: ${presenceId}
                     <button
                       type="button"
                       onClick={() => void handleDeleteSelected()}
-                      className="w-full rounded-full border border-red-400/25 bg-red-400/10 px-5 py-3 text-sm font-semibold text-red-200 transition hover:bg-red-400/15"
+                      className="w-full rounded-full border border-red-400/25 bg-red-400/10 px-5 py-3 text-sm font-semibold text-red-200 transition-all duration-200 hover:bg-red-400/15"
                     >
                       {isCamp ? "Delete Child Card" : "Delete Item"}
                     </button>
                   </div>
                 </>
               ) : (
-                <div className="flex h-full min-h-[520px] items-center justify-center rounded-[24px] border border-dashed border-white/10 bg-white/[0.02] p-8 text-center">
+                <div className="flex h-full min-h-[520px] items-center justify-center rounded-[24px] border border-dashed border-white/[0.09] bg-white/[0.02] p-8 text-center">
                   <div>
                     <div className="text-xs uppercase tracking-[0.24em] text-slate-500">
                       Working drawer
@@ -3599,9 +3904,9 @@ Presence ID: ${presenceId}
         <div className="pointer-events-none fixed inset-0 z-[70]">
           <div className="absolute inset-0 bg-[#020617]/58 backdrop-blur-[2px]" />
 
-          <div className="absolute inset-y-0 right-0 flex w-full justify-end p-3 md:p-5">
+          <div className="absolute inset-y-0 right-0 flex w-full justify-end p-3 md:p-4">
             <div className="pointer-events-auto flex h-full w-full max-w-[430px] flex-col overflow-hidden rounded-[30px] border border-cyan-400/20 bg-[#081122] shadow-[0_0_80px_rgba(0,0,0,0.55)]">
-              <div className="border-b border-white/10 px-6 py-5">
+              <div className="border-b border-white/[0.09] px-6 py-5">
                 <div className="inline-flex items-center rounded-full border border-emerald-400/25 bg-emerald-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-emerald-300">
                   Preview board
                 </div>
@@ -3630,7 +3935,7 @@ Presence ID: ${presenceId}
                   </div>
                 </div>
 
-                <div className="mt-4 rounded-[24px] border border-white/10 bg-white/[0.03] p-4">
+                <div className="mt-4 rounded-[24px] border border-white/[0.09] bg-white/[0.03] p-4">
                   <div className="text-xs uppercase tracking-[0.22em] text-slate-500">
                     What activation does
                   </div>
@@ -3653,12 +3958,12 @@ Presence ID: ${presenceId}
                 </div>
               </div>
 
-              <div className="border-t border-white/10 px-6 py-5">
+              <div className="border-t border-white/[0.09] px-6 py-5">
                 <button
                   type="button"
                   onClick={() => void handleClaimBoard()}
                   disabled={isClaiming}
-                  className="w-full rounded-full bg-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-70"
+                  className="w-full rounded-full bg-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 transition-all duration-200 hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   {isClaiming
                     ? "Starting your trial..."
@@ -3678,7 +3983,7 @@ Presence ID: ${presenceId}
                     }
                     setClaimPanelDismissed(true);
                   }}
-                  className="mt-3 w-full rounded-full border border-white/10 bg-white/[0.03] px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.06]"
+                  className="mt-3 w-full rounded-full border border-white/[0.09] bg-white/[0.03] px-5 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/[0.06]"
                 >
                   Keep Preview Open
                 </button>
@@ -3701,9 +4006,9 @@ Presence ID: ${presenceId}
             className="absolute inset-0 bg-black/55"
           />
 
-          <div className="absolute right-0 top-0 h-full w-full max-w-[460px] border-l border-white/10 bg-[#081122] shadow-[0_0_60px_rgba(0,0,0,0.45)]">
+          <div className="absolute right-0 top-0 h-full w-full max-w-[460px] border-l border-white/[0.09] bg-[#081122] shadow-[0_0_60px_rgba(0,0,0,0.45)]">
             <div className="flex h-full flex-col">
-              <div className="flex items-start justify-between gap-4 border-b border-white/10 px-6 py-5">
+              <div className="flex items-start justify-between gap-4 border-b border-white/[0.09] px-6 py-5">
                 <div>
                   <div className="text-xs uppercase tracking-[0.22em] text-slate-500">
                     Restaurant manager panel
@@ -3720,7 +4025,7 @@ Presence ID: ${presenceId}
                 <button
                   type="button"
                   onClick={() => setManagerPanelOpen(false)}
-                  className="rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/5"
+                  className="rounded-full transition-all duration-200 transition-all duration-200 border border-white/[0.09] px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/5"
                 >
                   Close
                 </button>
@@ -3753,7 +4058,7 @@ Presence ID: ${presenceId}
                     </div>
                   </div>
 
-                  <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-4">
+                  <div className="rounded-[24px] border border-white/[0.09] bg-white/[0.03] p-4">
                     <div className="text-xs uppercase tracking-[0.22em] text-slate-500">
                       Ticket identity mode
                     </div>
@@ -3769,7 +4074,7 @@ Presence ID: ${presenceId}
                         className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
                           restaurantIdentityMode === "table"
                             ? "bg-cyan-400 text-slate-950"
-                            : "border border-white/10 bg-white/[0.03] text-white hover:bg-white/[0.06]"
+                            : "border border-white/[0.09] bg-white/[0.03] text-white hover:bg-white/[0.06]"
                         }`}
                       >
                         Table numbers
@@ -3781,7 +4086,7 @@ Presence ID: ${presenceId}
                         className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
                           restaurantIdentityMode === "name"
                             ? "bg-cyan-400 text-slate-950"
-                            : "border border-white/10 bg-white/[0.03] text-white hover:bg-white/[0.06]"
+                            : "border border-white/[0.09] bg-white/[0.03] text-white hover:bg-white/[0.06]"
                         }`}
                       >
                         Customer names
@@ -3789,7 +4094,7 @@ Presence ID: ${presenceId}
                     </div>
                   </div>
 
-                  <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-4">
+                  <div className="rounded-[24px] border border-white/[0.09] bg-white/[0.03] p-4">
                     <div className="text-xs uppercase tracking-[0.22em] text-slate-500">
                       Live ticket status
                     </div>
@@ -3845,7 +4150,7 @@ Presence ID: ${presenceId}
                     </div>
                   </div>
 
-                  <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-4">
+                  <div className="rounded-[24px] border border-white/[0.09] bg-white/[0.03] p-4">
                     <div className="text-xs uppercase tracking-[0.22em] text-slate-500">
                       Manager notes
                     </div>
@@ -3870,8 +4175,8 @@ Presence ID: ${presenceId}
             className="absolute inset-0 bg-black/60"
           />
 
-          <div className="absolute left-1/2 top-1/2 w-[min(760px,calc(100%-32px))] -translate-x-1/2 -translate-y-1/2 rounded-[30px] border border-white/10 bg-[#081122] shadow-[0_0_60px_rgba(0,0,0,0.45)]">
-            <div className="border-b border-white/10 px-6 py-5">
+          <div className="absolute left-1/2 top-1/2 w-[min(760px,calc(100%-32px))] -translate-x-1/2 -translate-y-1/2 rounded-[30px] border border-white/[0.09] bg-[#081122] shadow-[0_0_60px_rgba(0,0,0,0.45)]">
+            <div className="border-b border-white/[0.09] px-6 py-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <div className="text-xs uppercase tracking-[0.22em] text-slate-500">
@@ -3893,7 +4198,7 @@ Presence ID: ${presenceId}
                 <button
                   type="button"
                   onClick={closeRestaurantTicketEditor}
-                  className="rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/5"
+                  className="rounded-full transition-all duration-200 transition-all duration-200 border border-white/[0.09] px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/5"
                 >
                   Close
                 </button>
@@ -3910,7 +4215,7 @@ Presence ID: ${presenceId}
                         current ? { ...current, vehicle: e.target.value } : current,
                       )
                     }
-                    className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 outline-none transition focus:border-cyan-400/40"
+                    className="w-full rounded-2xl border border-white/[0.09] bg-white/[0.035] px-4 py-3 outline-none transition focus:border-cyan-400/40"
                     placeholder="Table 12"
                   />
                 </Field>
@@ -3923,7 +4228,7 @@ Presence ID: ${presenceId}
                         current ? { ...current, customer: e.target.value } : current,
                       )
                     }
-                    className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 outline-none transition focus:border-cyan-400/40"
+                    className="w-full rounded-2xl border border-white/[0.09] bg-white/[0.035] px-4 py-3 outline-none transition focus:border-cyan-400/40"
                     placeholder="Robert"
                   />
                 </Field>
@@ -3938,7 +4243,7 @@ Presence ID: ${presenceId}
                         current ? { ...current, advisor: e.target.value } : current,
                       )
                     }
-                    className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 outline-none transition focus:border-cyan-400/40"
+                    className="w-full rounded-2xl border border-white/[0.09] bg-white/[0.035] px-4 py-3 outline-none transition focus:border-cyan-400/40"
                     placeholder="Mia"
                   />
                 </Field>
@@ -3951,7 +4256,7 @@ Presence ID: ${presenceId}
                         current ? { ...current, eta: e.target.value } : current,
                       )
                     }
-                    className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 outline-none transition focus:border-cyan-400/40"
+                    className="w-full rounded-2xl border border-white/[0.09] bg-white/[0.035] px-4 py-3 outline-none transition focus:border-cyan-400/40"
                     placeholder="8 min"
                   />
                 </Field>
@@ -3963,7 +4268,25 @@ Presence ID: ${presenceId}
                     {stages.map((stage) => {
                       const active = ticketEditorDraft.stage === stage;
 
-                      return (
+                      function saveBusinessSettings() {
+    try {
+      window.localStorage.setItem("hp_business_settings_demo_auto_repair", JSON.stringify(settingsDraft));
+      window.localStorage.setItem(
+        getPaymentProfileStoreKey(liveBoardSlug),
+        JSON.stringify({
+          cashAppCashtag: settingsDraft.cashAppCashtag,
+          zelleValue: settingsDraft.zelleValue,
+        }),
+      );
+    } catch {
+      // ignore
+    }
+
+    setSettingsSavedNote("Settings saved");
+    window.setTimeout(() => setSettingsSavedNote(""), 1500);
+  }
+
+  return (
                         <button
                           key={stage}
                           type="button"
@@ -3975,7 +4298,7 @@ Presence ID: ${presenceId}
                           className={`rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition ${
                             active
                               ? "border-cyan-400/35 bg-cyan-400/10 text-cyan-100"
-                              : "border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.05]"
+                              : "border-white/[0.09] bg-white/[0.03] text-slate-300 hover:bg-white/[0.05]"
                           }`}
                         >
                           {stage}
@@ -3995,7 +4318,7 @@ Presence ID: ${presenceId}
                         current ? { ...current, concern: e.target.value } : current,
                       )
                     }
-                    className="min-h-[120px] w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 outline-none transition focus:border-cyan-400/40"
+                    className="min-h-[120px] w-full rounded-2xl border border-white/[0.09] bg-white/[0.035] px-4 py-3 outline-none transition focus:border-cyan-400/40"
                     placeholder="2 eggs over medium, bacon, white toast, plain bagel"
                   />
                 </Field>
@@ -4010,14 +4333,14 @@ Presence ID: ${presenceId}
                         current ? { ...current, notes: e.target.value } : current,
                       )
                     }
-                    className="min-h-[110px] w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 outline-none transition focus:border-cyan-400/40"
+                    className="min-h-[110px] w-full rounded-2xl border border-white/[0.09] bg-white/[0.035] px-4 py-3 outline-none transition focus:border-cyan-400/40"
                     placeholder="No butter on toast, bacon extra crispy"
                   />
                 </Field>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 px-6 py-5">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.09] px-6 py-5">
               <div className="text-sm text-slate-400">
                 {ticketEditorDraft.id
                   ? "Update this ticket or delete it."
@@ -4030,7 +4353,7 @@ Presence ID: ${presenceId}
                     type="button"
                     onClick={() => void deleteRestaurantTicket()}
                     disabled={ticketEditorSaving}
-                    className="rounded-full border border-red-400/25 bg-red-400/10 px-5 py-3 text-sm font-semibold text-red-200 transition hover:bg-red-400/15 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="rounded-full transition-all duration-200 transition-all duration-200 border border-red-400/25 bg-red-400/10 px-5 py-3 text-sm font-semibold text-red-200 transition-all duration-200 hover:bg-red-400/15 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     Delete Ticket
                   </button>
@@ -4040,7 +4363,7 @@ Presence ID: ${presenceId}
                   type="button"
                   onClick={closeRestaurantTicketEditor}
                   disabled={ticketEditorSaving}
-                  className="rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-full transition-all duration-200 transition-all duration-200 border border-white/[0.09] px-5 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Cancel
                 </button>
@@ -4049,7 +4372,7 @@ Presence ID: ${presenceId}
                   type="button"
                   onClick={() => void saveRestaurantTicket()}
                   disabled={ticketEditorSaving}
-                  className="rounded-full bg-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-full transition-all duration-200 transition-all duration-200 bg-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 transition-all duration-200 hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {ticketEditorSaving
                     ? "Saving..."
@@ -4076,8 +4399,26 @@ function MessageActionCard({
 }: MessageActionCardProps) {
   const hasPhone = Boolean(phone.trim());
 
+  function saveBusinessSettings() {
+    try {
+      window.localStorage.setItem("hp_business_settings_demo_auto_repair", JSON.stringify(settingsDraft));
+      window.localStorage.setItem(
+        getPaymentProfileStoreKey(liveBoardSlug),
+        JSON.stringify({
+          cashAppCashtag: settingsDraft.cashAppCashtag,
+          zelleValue: settingsDraft.zelleValue,
+        }),
+      );
+    } catch {
+      // ignore
+    }
+
+    setSettingsSavedNote("Settings saved");
+    window.setTimeout(() => setSettingsSavedNote(""), 1500);
+  }
+
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-4">
+    <div className="rounded-2xl transition-all duration-200 transition-all duration-200 border border-white/[0.09] bg-white/[0.05] px-4 py-4">
       <div className="text-sm font-semibold text-white">{title}</div>
       <div className="mt-1 text-xs text-slate-400">{subtitle}</div>
 
@@ -4098,7 +4439,7 @@ function MessageActionCard({
         <button
           type="button"
           onClick={() => onCopy(title, message)}
-          className="rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.06]"
+          className="rounded-full transition-all duration-200 transition-all duration-200 border border-white/[0.09] px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/[0.06]"
         >
           Copy message
         </button>
@@ -4116,12 +4457,30 @@ function StatCard({
   value: number;
   accent?: boolean;
 }) {
+  function saveBusinessSettings() {
+    try {
+      window.localStorage.setItem("hp_business_settings_demo_auto_repair", JSON.stringify(settingsDraft));
+      window.localStorage.setItem(
+        getPaymentProfileStoreKey(liveBoardSlug),
+        JSON.stringify({
+          cashAppCashtag: settingsDraft.cashAppCashtag,
+          zelleValue: settingsDraft.zelleValue,
+        }),
+      );
+    } catch {
+      // ignore
+    }
+
+    setSettingsSavedNote("Settings saved");
+    window.setTimeout(() => setSettingsSavedNote(""), 1500);
+  }
+
   return (
     <div
       className={`rounded-[24px] border p-5 ${
         accent
           ? "border-cyan-400/25 bg-cyan-400/10"
-          : "border-white/10 bg-white/[0.04]"
+          : "border-white/[0.09] bg-white/[0.035]"
       }`}
     >
       <div
@@ -4143,8 +4502,26 @@ function ProofCard({
   label: string;
   value: string;
 }) {
+  function saveBusinessSettings() {
+    try {
+      window.localStorage.setItem("hp_business_settings_demo_auto_repair", JSON.stringify(settingsDraft));
+      window.localStorage.setItem(
+        getPaymentProfileStoreKey(liveBoardSlug),
+        JSON.stringify({
+          cashAppCashtag: settingsDraft.cashAppCashtag,
+          zelleValue: settingsDraft.zelleValue,
+        }),
+      );
+    } catch {
+      // ignore
+    }
+
+    setSettingsSavedNote("Settings saved");
+    window.setTimeout(() => setSettingsSavedNote(""), 1500);
+  }
+
   return (
-    <div className="rounded-[22px] border border-white/10 bg-white/[0.04] p-4">
+    <div className="rounded-[22px] transition-all duration-200 transition-all duration-200 border border-white/[0.09] bg-white/[0.035] p-4">
       <div className="text-xs uppercase tracking-[0.22em] text-slate-500">
         {label}
       </div>
@@ -4162,6 +4539,24 @@ function Field({
   label: string;
   children: React.ReactNode;
 }) {
+  function saveBusinessSettings() {
+    try {
+      window.localStorage.setItem("hp_business_settings_demo_auto_repair", JSON.stringify(settingsDraft));
+      window.localStorage.setItem(
+        getPaymentProfileStoreKey(liveBoardSlug),
+        JSON.stringify({
+          cashAppCashtag: settingsDraft.cashAppCashtag,
+          zelleValue: settingsDraft.zelleValue,
+        }),
+      );
+    } catch {
+      // ignore
+    }
+
+    setSettingsSavedNote("Settings saved");
+    window.setTimeout(() => setSettingsSavedNote(""), 1500);
+  }
+
   return (
     <label className="block">
       <div className="mb-3 text-sm font-medium text-slate-300">{label}</div>
@@ -4177,8 +4572,26 @@ function MiniStat({
   label: string;
   value: string;
 }) {
+  function saveBusinessSettings() {
+    try {
+      window.localStorage.setItem("hp_business_settings_demo_auto_repair", JSON.stringify(settingsDraft));
+      window.localStorage.setItem(
+        getPaymentProfileStoreKey(liveBoardSlug),
+        JSON.stringify({
+          cashAppCashtag: settingsDraft.cashAppCashtag,
+          zelleValue: settingsDraft.zelleValue,
+        }),
+      );
+    } catch {
+      // ignore
+    }
+
+    setSettingsSavedNote("Settings saved");
+    window.setTimeout(() => setSettingsSavedNote(""), 1500);
+  }
+
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3">
+    <div className="rounded-2xl transition-all duration-200 transition-all duration-200 border border-white/[0.09] bg-white/[0.035] p-3">
       <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
         {label}
       </div>
@@ -4194,8 +4607,26 @@ function PanelRow({
   label: string;
   value: string;
 }) {
+  function saveBusinessSettings() {
+    try {
+      window.localStorage.setItem("hp_business_settings_demo_auto_repair", JSON.stringify(settingsDraft));
+      window.localStorage.setItem(
+        getPaymentProfileStoreKey(liveBoardSlug),
+        JSON.stringify({
+          cashAppCashtag: settingsDraft.cashAppCashtag,
+          zelleValue: settingsDraft.zelleValue,
+        }),
+      );
+    } catch {
+      // ignore
+    }
+
+    setSettingsSavedNote("Settings saved");
+    window.setTimeout(() => setSettingsSavedNote(""), 1500);
+  }
+
   return (
-    <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3">
+    <div className="flex items-center justify-between rounded-2xl border border-white/[0.09] bg-white/[0.035] px-4 py-3">
       <span className="text-sm text-slate-300">{label}</span>
       <span className="text-sm font-semibold text-white">{value}</span>
     </div>
@@ -4209,13 +4640,34 @@ function NotificationLine({
   title: string;
   body: string;
 }) {
+  function saveBusinessSettings() {
+    try {
+      window.localStorage.setItem("hp_business_settings_demo_auto_repair", JSON.stringify(settingsDraft));
+      window.localStorage.setItem(
+        getPaymentProfileStoreKey(liveBoardSlug),
+        JSON.stringify({
+          cashAppCashtag: settingsDraft.cashAppCashtag,
+          zelleValue: settingsDraft.zelleValue,
+        }),
+      );
+    } catch {
+      // ignore
+    }
+
+    setSettingsSavedNote("Settings saved");
+    window.setTimeout(() => setSettingsSavedNote(""), 1500);
+  }
+
   return (
-    <div className="rounded-2xl border border-amber-300/15 bg-black/10 px-4 py-3">
+    <div className="rounded-2xl transition-all duration-200 transition-all duration-200 border border-amber-300/15 bg-black/10 px-4 py-3">
       <div className="text-sm font-semibold">{title}</div>
       <div className="mt-1 text-sm leading-6 text-amber-50/90">{body}</div>
     </div>
   );
 }
+
+
+
 
 
 
