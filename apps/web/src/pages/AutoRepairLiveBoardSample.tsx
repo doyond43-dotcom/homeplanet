@@ -1238,17 +1238,17 @@ const isActiveBoard =
 
   const paymentMemo = paymentMemoDraft.trim();
   const paymentAmount = sanitizeMoneyInput(paymentAmountDraft);
-  const cashAppUrl = buildCashAppUrl(paymentProfile.cashAppCashtag);
+  const displayCashAppCashtag = paymentProfile.cashAppCashtag || "homeplanetcity";
+  const displayZelleValue = paymentProfile.zelleValue || "payments@homeplanet.city";
+  const cashAppUrl = buildCashAppUrl(displayCashAppCashtag);
   const cashAppQrSrc = buildPaymentQrSrc(cashAppUrl);
-  const zelleActionHref = buildZelleActionHref(paymentProfile.zelleValue);
-  const zelleQrPayload = paymentProfile.zelleValue
-    ? buildZelleQrPayload({
-        businessName,
-        zelleValue: paymentProfile.zelleValue,
-        amount: paymentAmount,
-        memo: paymentMemo,
-      })
-    : "";
+  const zelleActionHref = buildZelleActionHref(displayZelleValue);
+  const zelleQrPayload = buildZelleQrPayload({
+    businessName,
+    zelleValue: displayZelleValue,
+    amount: paymentAmount,
+    memo: paymentMemo,
+  });
   const zelleQrSrc = buildPaymentQrSrc(zelleQrPayload);
 
   const jobReceipts = useMemo(() => {
@@ -4216,6 +4216,7 @@ function NotificationLine({
     </div>
   );
 }
+
 
 
 
