@@ -162,13 +162,13 @@ export default function PlanetRoutes() {
       <Route path="demo/plumbing-service" element={<PlumbingServiceDemoBoard />} />
 
       {/* CAPTAIN D CHARTERS */}
-      <Route path="demo/captain-d-charters" element={<CaptainDChartersPage />} />
-      <Route path="demo/captain-d-memory" element={<CaptainDTripMemoryPage />} />
-      <Route path="demo/captain-d-privacy" element={<CaptainDPrivacyPage />} />
-      <Route path="demo/captain-d-booking" element={<CaptainDBookingPage />} />
+      <Route path="demo/lake-experience-preview" element={<CaptainDChartersPage />} />
+      <Route path="demo/trip-memory-preview" element={<CaptainDTripMemoryPage />} />
+      <Route path="demo/privacy-controls-preview" element={<CaptainDPrivacyPage />} />
+      <Route path="demo/trip-booking-preview" element={<CaptainDBookingPage />} />
 
       {/* LAZY LUNKER EXPERIENCE */}
-      <Route path="demo/lazy-lunker" element={<LazyLunkerExperiencePage />} />
+      <Route path="demo/stay-experience-preview" element={<LazyLunkerExperiencePage />} />
       <Route path="demo/lazy-lunker-booking" element={<LazyLunkerBookingPage />} />
       <Route path="demo/lazy-lunker-fishing" element={<LazyLunkerFishingAddonPage />} />
       <Route path="demo/lazy-lunker-request-active" element={<LazyLunkerRequestActivePage />} />
@@ -294,6 +294,9 @@ export default function PlanetRoutes() {
     </Routes>
   );
 }
+
+
+
 
 
 

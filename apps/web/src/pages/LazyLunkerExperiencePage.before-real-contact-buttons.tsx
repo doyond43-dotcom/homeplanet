@@ -46,37 +46,14 @@ export default function LazyLunkerExperiencePage() {
 
           <div className="mt-10 flex flex-wrap gap-4">
             <a
-              href="/planet/demo/stay-experience-preview-booking"
+              href="/planet/demo/lazy-lunker-booking"
               className="rounded-full bg-cyan-300 px-7 py-4 text-sm font-black uppercase tracking-[0.18em] text-[#071019] transition hover:scale-[1.02]"
             >
               Plan Your Stay
             </a>
 
             <a
-              href="tel:5619510660"
-              className="rounded-full border border-emerald-300/25 bg-emerald-400/10 px-7 py-4 text-sm font-black uppercase tracking-[0.18em] text-emerald-100 transition hover:bg-emerald-400/20"
-            >
-              Call Now
-            </a>
-
-            <a
-              href="sms:5619510660"
-              className="rounded-full border border-white/15 bg-white/[0.04] px-7 py-4 text-sm font-black uppercase tracking-[0.18em] text-white transition hover:bg-white/10"
-            >
-              Text
-            </a>
-
-            <a
-              href="https://www.google.com/maps/search/?api=1&query=Lake%20Okeechobee%20Vacation%20Homes"
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-full border border-white/15 bg-white/[0.04] px-7 py-4 text-sm font-black uppercase tracking-[0.18em] text-white transition hover:bg-white/10"
-            >
-              Maps
-            </a>
-
-            <a
-              href="/planet/demo/stay-experience-preview-fishing"
+              href="/planet/demo/lazy-lunker-fishing"
               className="rounded-full border border-cyan-300/30 bg-cyan-400/10 px-7 py-4 text-sm font-black uppercase tracking-[0.18em] text-cyan-100 transition hover:bg-cyan-400/20"
             >
               Add Fishing To My Stay
@@ -152,22 +129,20 @@ export default function LazyLunkerExperiencePage() {
 
         <div className="grid gap-6 md:grid-cols-3">
           {packages.map((item) => (
-            <article key={item.title} className="flex h-full flex-col overflow-hidden rounded-[32px] border border-white/10 bg-[#0c1824]">
+            <article key={item.title} className="overflow-hidden rounded-[32px] border border-white/10 bg-[#0c1824]">
               <div
                 className="h-72 bg-cover bg-center"
                 style={{ backgroundImage: `url(${item.image})` }}
               />
               <div className="p-6">
                 <h3 className="text-2xl font-black">{item.title}</h3>
-                <p className="mt-3 min-h-[84px] text-sm leading-7 text-white/70">{item.description}</p>
-                <div className="mt-auto pt-5">
-                  <a
-                  href="/planet/demo/stay-experience-preview-booking"
-                  className="inline-flex w-fit rounded-full border border-cyan-300/20 bg-cyan-400/10 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-cyan-100"
+                <p className="mt-3 text-sm leading-7 text-white/70">{item.description}</p>
+                <a
+                  href="/planet/demo/lazy-lunker-booking"
+                  className="mt-5 inline-flex rounded-full border border-cyan-300/20 bg-cyan-400/10 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-cyan-100"
                 >
                   Start Request
                 </a>
-                </div>
               </div>
             </article>
           ))}
@@ -176,12 +151,6 @@ export default function LazyLunkerExperiencePage() {
     </main>
   );
 }
-
-
-
-
-
-
 
 
 

@@ -20,7 +20,7 @@ export default function LazyLunkerFishingAddonPage() {
           </div>
 
           <a
-            href="/planet/demo/lazy-lunker"
+            href="/planet/demo/stay-experience-preview"
             className="rounded-full border border-white/20 bg-white/5 px-5 py-3 text-sm font-black uppercase tracking-[0.18em] hover:bg-white/10"
           >
             Back To Experience
@@ -32,7 +32,7 @@ export default function LazyLunkerFishingAddonPage() {
             onSubmit={(event) => {
               event.preventDefault();
               setSubmitted(true);
-              navigate("/planet/demo/lazy-lunker-request-active");
+              navigate("/planet/demo/stay-experience-preview-request-active");
             }}
             className="rounded-[34px] border border-white/10 bg-[#0c1824] p-7"
           >
@@ -135,4 +135,7 @@ export default function LazyLunkerFishingAddonPage() {
     </main>
   );
 }
+
+
+
 

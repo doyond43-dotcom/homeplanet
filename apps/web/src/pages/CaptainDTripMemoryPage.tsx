@@ -9,7 +9,7 @@ export default function CaptainDTripMemoryPage() {
   const memoryUrl =
     typeof window !== "undefined"
       ? window.location.href
-      : "https://www.homeplanet.city/planet/demo/captain-d-memory";
+      : "https://www.homeplanet.city/planet/demo/trip-memory-preview";
 
   const timeline = [
     { time: "6:42 AM", title: "Trip started", detail: "Guests checked in and headed out on Lake Okeechobee." },
@@ -69,7 +69,7 @@ export default function CaptainDTripMemoryPage() {
           </div>
 
           <a
-            href="/planet/demo/captain-d-charters"
+            href="/planet/demo/lake-experience-preview"
             className="rounded-full border border-white/20 bg-white/5 px-5 py-3 text-sm font-black uppercase tracking-[0.18em] hover:bg-white/10"
           >
             Back To Charter Page
@@ -117,7 +117,7 @@ export default function CaptainDTripMemoryPage() {
               </button>
 
               <a
-                href="/planet/demo/captain-d-booking"
+                href="/planet/demo/trip-booking-preview"
                 className="rounded-full border border-white/20 bg-white/5 px-5 py-3 text-xs font-black uppercase tracking-[0.18em] text-white transition hover:bg-white/10"
               >
                 Book Again
@@ -221,4 +221,7 @@ export default function CaptainDTripMemoryPage() {
     </main>
   );
 }
+
+
+
 

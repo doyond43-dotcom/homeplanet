@@ -18,7 +18,7 @@ export default function CaptainDBookingPage() {
           </div>
 
           <a
-            href="/planet/demo/captain-d-charters"
+            href="/planet/demo/lake-experience-preview"
             className="rounded-full border border-white/20 bg-white/5 px-5 py-3 text-sm font-black uppercase tracking-[0.18em] hover:bg-white/10"
           >
             Back To Charter Page
@@ -106,3 +106,6 @@ export default function CaptainDBookingPage() {
     </main>
   );
 }
+
+
+

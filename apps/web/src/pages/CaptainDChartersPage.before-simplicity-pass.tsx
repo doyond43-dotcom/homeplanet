@@ -8,7 +8,7 @@ export default function CaptainDChartersPage() {
     {
       title: "Kids First Catch",
       detail: "The kind of moment families talk about long after the trip is over.",
-      image: "/images/captain-d-double-bass.jpg",
+      image: "/images/captain-d-kids-first-catch.jpg",
     },
     {
       title: "Tournament Guide Experience",
@@ -66,7 +66,7 @@ export default function CaptainDChartersPage() {
 
           <div className="max-w-3xl">
             <h1 className="text-5xl font-black tracking-tight md:text-7xl">
-              Okeechobee Water Adventures
+              Captain D Charters
             </h1>
 
             <p className="mt-6 text-lg leading-8 text-cyan-50/80 md:text-xl">
@@ -76,14 +76,14 @@ export default function CaptainDChartersPage() {
 
           <div className="flex flex-wrap gap-4">
             <a
-              href="/planet/demo/trip-booking-preview"
+              href="/planet/demo/captain-d-booking"
               className="rounded-full bg-cyan-300 px-7 py-4 text-sm font-black uppercase tracking-[0.18em] text-[#071019] transition hover:scale-[1.02]"
             >
               Book Your Charter
             </a>
 
             <a
-              href="/planet/demo/trip-memory-preview"
+              href="/planet/demo/captain-d-memory"
               className="rounded-full border border-white/20 bg-white/5 px-7 py-4 text-sm font-bold uppercase tracking-[0.18em] text-white transition hover:bg-white/10"
             >
               View Trip Memories
@@ -97,7 +97,7 @@ export default function CaptainDChartersPage() {
             </a>
 
             <a
-              href="/planet/demo/privacy-controls-preview"
+              href="/planet/demo/captain-d-privacy"
               className="rounded-full border border-white/15 bg-white/[0.03] px-7 py-4 text-sm font-bold uppercase tracking-[0.18em] text-white/80 transition hover:bg-white/10"
             >
               Privacy Controls
@@ -181,7 +181,7 @@ export default function CaptainDChartersPage() {
           {catches.map((item) => (
             <article
               key={item.title}
-              className="flex h-full flex-col overflow-hidden rounded-[32px] border border-white/10 bg-[#0c1824]"
+              className="overflow-hidden rounded-[32px] border border-white/10 bg-[#0c1824]"
             >
               <div
                 className="h-64 bg-cover bg-center"
@@ -190,23 +190,23 @@ export default function CaptainDChartersPage() {
                 }}
               />
 
-              <div className="flex flex-1 flex-col p-6">
+              <div className="p-6">
                 <h3 className="text-2xl font-black">{item.title}</h3>
 
                 <p className="mt-3 text-sm leading-7 text-white/70">
                   {item.detail}
                 </p>
 
-                <div className="mt-auto flex flex-wrap gap-2 pt-5">
+                <div className="mt-5 flex flex-wrap gap-2">
                   <a
-                    href="/planet/demo/trip-memory-preview"
+                    href="/planet/demo/captain-d-memory"
                     className="inline-flex rounded-full border border-cyan-300/20 bg-cyan-400/10 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-cyan-100"
                   >
                     Open Memory
                   </a>
 
                   <a
-                    href="/planet/demo/trip-booking-preview"
+                    href="/planet/demo/captain-d-booking"
                     className="inline-flex rounded-full border border-emerald-300/20 bg-emerald-400/10 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-emerald-100"
                   >
                     Book This
@@ -230,19 +230,19 @@ export default function CaptainDChartersPage() {
             </h2>
 
             <p className="mt-4 text-sm leading-7 text-white/70">
-              Guests can quickly upload trip photos from their phone and keep the experience connected in one simple memory page.
+              Guests can scan a QR code or open a trip link from their phone, upload favorite photos, and keep their charter, pontoon ride, or vacation stay connected to one private memory page.
             </p>
 
             <div className="mt-6 flex flex-wrap gap-3">
               <a
-                href="/planet/demo/trip-memory-preview"
+                href="/planet/demo/captain-d-memory"
                 className="rounded-full bg-emerald-300 px-6 py-3 text-sm font-black uppercase tracking-[0.18em] text-[#071019]"
               >
                 Open Memory Page
               </a>
 
               <a
-                href="/planet/demo/privacy-controls-preview"
+                href="/planet/demo/captain-d-privacy"
                 className="rounded-full border border-white/15 bg-white/[0.04] px-6 py-3 text-sm font-bold uppercase tracking-[0.18em] text-white"
               >
                 Public / Private Controls
@@ -277,7 +277,7 @@ export default function CaptainDChartersPage() {
           </h2>
 
           <p className="mt-3 max-w-2xl text-sm leading-7 text-white/65">
-            Real catches, real lake moments, and memorable experiences shared by guests.
+            Not fake reviews. Real experiences, shared memories, and guest-approved moments from the water, pontoon rides, and lake stays.
           </p>
         </div>
 
@@ -298,13 +298,45 @@ export default function CaptainDChartersPage() {
               </p>
 
               <a
-                href="/planet/demo/trip-memory-preview"
+                href="/planet/demo/captain-d-memory"
                 className="mt-5 inline-flex rounded-full border border-cyan-300/20 bg-cyan-400/10 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-cyan-100"
               >
                 View Moment
               </a>
             </article>
           ))}
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-6 pb-20">
+        <div className="grid gap-6 rounded-[34px] border border-cyan-400/20 bg-[#0c1824] p-6 md:grid-cols-[0.75fr_1.25fr] md:items-center">
+          <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6">
+            <div className="text-xs font-black uppercase tracking-[0.24em] text-cyan-100/50">
+              MEET THE CAPTAIN
+            </div>
+
+            <h2 className="mt-2 text-4xl font-black tracking-tight">
+              Local water. Real trips. Memories protected.
+            </h2>
+
+            <p className="mt-4 text-sm leading-7 text-white/70">
+              Captain D Charters is built around more than putting people on fish. Every trip can become a private memory page, a family share link, and a way to relive the day without exposing private fishing spots.
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-4">
+            {["Book", "Fish", "Upload", "Share"].map((step) => (
+              <div
+                key={step}
+                className="rounded-3xl border border-cyan-400/15 bg-cyan-400/5 p-5 text-center"
+              >
+                <div className="text-xs font-black uppercase tracking-[0.22em] text-cyan-100/45">
+                  Guest Flow
+                </div>
+                <div className="mt-3 text-2xl font-black">{step}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
       <section className="mx-auto max-w-7xl px-6 pb-24">
@@ -326,19 +358,19 @@ export default function CaptainDChartersPage() {
             </h2>
 
             <p className="mt-4 max-w-2xl text-sm leading-7 text-white/70">
-              Fishing trips, pontoon experiences, vacation stays, and lake memories can all work together in one clean customer experience.
+              Vacation homes, pontoon cruises, bait delivery, concierge help, fishing trips, live updates, guest uploads, memories, and reviews can all connect into one simple customer experience.
             </p>
 
             <div className="mt-6 flex flex-wrap gap-3">
               <a
-                href="/planet/demo/stay-experience-preview"
+                href="/planet/demo/lazy-lunker"
                 className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-5 py-3 text-xs font-black uppercase tracking-[0.18em] text-cyan-100"
               >
                 View Vacation Stay
               </a>
 
               <a
-                href="/planet/demo/trip-booking-preview"
+                href="/planet/demo/captain-d-booking"
                 className="rounded-full border border-emerald-300/20 bg-emerald-400/10 px-5 py-3 text-xs font-black uppercase tracking-[0.18em] text-emerald-100"
               >
                 Plan Fishing + Pontoon
@@ -351,9 +383,9 @@ export default function CaptainDChartersPage() {
         <div className="mx-auto grid max-w-7xl gap-8 px-6 py-10 md:grid-cols-[1.2fr_0.8fr_0.8fr]">
           <div>
             <div className="text-xs font-black uppercase tracking-[0.24em] text-cyan-100/50">
-              OKEECHOBEE WATER ADVENTURES
+              CAPTAIN D CHARTERS
             </div>
-            <h2 className="mt-2 text-3xl font-black">Lake Experience Demo</h2>
+            <h2 className="mt-2 text-3xl font-black">Lake Okeechobee Experiences</h2>
             <p className="mt-3 max-w-xl text-sm leading-7 text-white/60">
               Fishing charters, pontoon trips, guest memories, and connected lake experiences built to feel alive before, during, and after the trip.
             </p>
@@ -364,10 +396,10 @@ export default function CaptainDChartersPage() {
               Quick Links
             </div>
             <div className="mt-4 grid gap-3 text-sm font-bold text-white/70">
-              <a href="/planet/demo/trip-booking-preview" className="hover:text-cyan-100">Book Charter</a>
-              <a href="/planet/demo/trip-memory-preview" className="hover:text-cyan-100">Trip Memories</a>
+              <a href="/planet/demo/captain-d-booking" className="hover:text-cyan-100">Book Charter</a>
+              <a href="/planet/demo/captain-d-memory" className="hover:text-cyan-100">Trip Memories</a>
               <a href="#guest-upload" className="hover:text-cyan-100">Upload Memories</a>
-              <a href="/planet/demo/stay-experience-preview" className="hover:text-cyan-100">Vacation Stay</a>
+              <a href="/planet/demo/lazy-lunker" className="hover:text-cyan-100">Vacation Stay</a>
             </div>
           </div>
 
@@ -376,10 +408,10 @@ export default function CaptainDChartersPage() {
               Contact
             </div>
             <div className="mt-4 flex flex-wrap gap-3">
-              <a href="tel:8635550147" className="rounded-full bg-cyan-300 px-5 py-3 text-xs font-black uppercase tracking-[0.18em] text-[#071019]">
+              <a href="tel:8635320683" className="rounded-full bg-cyan-300 px-5 py-3 text-xs font-black uppercase tracking-[0.18em] text-[#071019]">
                 Call
               </a>
-              <a href="sms:8635550147" className="rounded-full border border-white/15 bg-white/[0.04] px-5 py-3 text-xs font-black uppercase tracking-[0.18em] text-white">
+              <a href="sms:8635320683" className="rounded-full border border-white/15 bg-white/[0.04] px-5 py-3 text-xs font-black uppercase tracking-[0.18em] text-white">
                 Text
               </a>
             </div>
@@ -393,12 +425,4 @@ export default function CaptainDChartersPage() {
     </main>
   );
 }
-
-
-
-
-
-
-
-
 
