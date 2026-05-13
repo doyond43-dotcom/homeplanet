@@ -15,9 +15,17 @@ import CaptainDChartersPage from "../pages/CaptainDChartersPage";
 import CaptainDTripMemoryPage from "../pages/CaptainDTripMemoryPage";
 import CaptainDPrivacyPage from "../pages/CaptainDPrivacyPage";
 import CaptainDBookingPage from "../pages/CaptainDBookingPage";
+import LakeExperienceShowcasePage from "../pages/LakeExperienceShowcasePage";
+import LakeExperienceBookingPage from "../pages/LakeExperienceBookingPage";
+import LakeExperienceMemoryPage from "../pages/LakeExperienceMemoryPage";
+import LakeExperiencePrivacyPage from "../pages/LakeExperiencePrivacyPage";
 import LazyLunkerExperiencePage from "../pages/LazyLunkerExperiencePage";
 import LazyLunkerBookingPage from "../pages/LazyLunkerBookingPage";
 import LazyLunkerFishingAddonPage from "../pages/LazyLunkerFishingAddonPage";
+import StayExperienceShowcasePage from "../pages/StayExperienceShowcasePage";
+import StayExperienceBookingPage from "../pages/StayExperienceBookingPage";
+import StayExperienceFishingAddonPage from "../pages/StayExperienceFishingAddonPage";
+import StayExperienceRequestActivePage from "../pages/StayExperienceRequestActivePage";
 import LazyLunkerRequestActivePage from "../pages/LazyLunkerRequestActivePage";
 import LaundromatBoard from "../pages/LaundromatBoard";
 import LocalNetworkDemo from "../pages/LocalNetworkDemo";
@@ -160,7 +168,17 @@ export default function PlanetRoutes() {
 
       {/* PLUMBING SERVICE */}
       <Route path="demo/plumbing-service" element={<PlumbingServiceDemoBoard />} />
+      {/* REUSABLE LAKE EXPERIENCE SHOWCASE */}
+      <Route path="demo/lake-showcase" element={<LakeExperienceShowcasePage />} />
+      <Route path="demo/lake-showcase-booking" element={<LakeExperienceBookingPage />} />
+      <Route path="demo/lake-showcase-memory" element={<LakeExperienceMemoryPage />} />
+      <Route path="demo/lake-showcase-privacy" element={<LakeExperiencePrivacyPage />} />
 
+      {/* REUSABLE STAY EXPERIENCE SHOWCASE */}
+      <Route path="demo/stay-showcase" element={<StayExperienceShowcasePage />} />
+      <Route path="demo/stay-showcase-booking" element={<StayExperienceBookingPage />} />
+      <Route path="demo/stay-showcase-fishing" element={<StayExperienceFishingAddonPage />} />
+      <Route path="demo/stay-showcase-request-active" element={<StayExperienceRequestActivePage />} />
       {/* CAPTAIN D CHARTERS */}
       <Route path="demo/lake-experience-preview" element={<CaptainDChartersPage />} />
       <Route path="demo/trip-memory-preview" element={<CaptainDTripMemoryPage />} />
@@ -294,6 +312,7 @@ export default function PlanetRoutes() {
     </Routes>
   );
 }
+
 
 
 
