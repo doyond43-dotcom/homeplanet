@@ -23,6 +23,7 @@ import LazyLunkerExperiencePage from "../pages/LazyLunkerExperiencePage";
 import LazyLunkerBookingPage from "../pages/LazyLunkerBookingPage";
 import LazyLunkerFishingAddonPage from "../pages/LazyLunkerFishingAddonPage";
 import StayExperienceShowcasePage from "../pages/StayExperienceShowcasePage";
+import OkieDokieSoftwashPage from "../pages/OkieDokieSoftwashPage";
 import StayExperienceBookingPage from "../pages/StayExperienceBookingPage";
 import StayExperienceFishingAddonPage from "../pages/StayExperienceFishingAddonPage";
 import StayExperienceRequestActivePage from "../pages/StayExperienceRequestActivePage";
@@ -179,6 +180,9 @@ export default function PlanetRoutes() {
       <Route path="demo/stay-showcase-booking" element={<StayExperienceBookingPage />} />
       <Route path="demo/stay-showcase-fishing" element={<StayExperienceFishingAddonPage />} />
       <Route path="demo/stay-showcase-request-active" element={<StayExperienceRequestActivePage />} />
+
+      {/* OKIE DOKIE SOFTWASH */}
+      <Route path="okie-dokie-softwash" element={<OkieDokieSoftwashPage />} />
       {/* CAPTAIN D CHARTERS */}
       <Route path="demo/lake-experience-preview" element={<CaptainDChartersPage />} />
       <Route path="demo/trip-memory-preview" element={<CaptainDTripMemoryPage />} />
@@ -312,6 +316,8 @@ export default function PlanetRoutes() {
     </Routes>
   );
 }
+
+
 
 
 
