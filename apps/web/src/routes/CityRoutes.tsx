@@ -1,19 +1,31 @@
 // apps/web/src/routes/CityRoutes.tsx
 import { Routes, Route, Link, Navigate, useLocation } from "react-router-dom";
 import CreatorCity from "../pages/CreatorCity";
+import SafetyCityLanding from "../pages/SafetyCityLanding";
+import FamilyCityLanding from "../pages/FamilyCityLanding";
+import CommerceCityLanding from "../pages/CommerceCityLanding";
 
 function CityIndex() {
   const cities = ["creator", "service", "education", "safety", "family", "commerce", "health", "legal"];
 
-  const isLive = (c: string) => c === "creator" || c === "service";
+  const liveCities = ["creator", "service", "safety", "family", "commerce"];
+  const isLive = (c: string) => liveCities.includes(c);
 
-  // ? City cards should route to REAL destinations.
-  // - creator -> /city/creator (launchpad)
-  // - service -> /service/taylor-creek (real app)
-  // - others -> /city/<name> (coming soon placeholder)
   const cityTo = (c: string) => {
     if (c === "service") return "/service/taylor-creek";
+    if (c === "safety") return "/city/safety";
+    if (c === "family") return "/city/family";
+    if (c === "commerce") return "/city/commerce";
     return `/city/${c}`;
+  };
+
+  const cityLabel = (c: string) => {
+    if (c === "service") return "Open service city";
+    if (c === "safety") return "Open safety city";
+    if (c === "family") return "Open family city";
+    if (c === "commerce") return "Open commerce showcase";
+    if (c === "creator") return "Open creator city";
+    return `Preview ${c} city (not wired yet)`;
   };
 
   const shell: React.CSSProperties = { padding: 24, maxWidth: 1100, margin: "0 auto", color: "#e5e7eb" };
@@ -67,7 +79,7 @@ function CityIndex() {
     <div style={shell}>
       <h1 style={h1}>HomePlanet Cities</h1>
       <div style={sub}>
-        Choose a City (these routes live under <code>/city/</code>).
+        Choose a City. Live cards open the connected system.
       </div>
 
       <div style={grid}>
@@ -81,7 +93,7 @@ function CityIndex() {
               </div>
 
               <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 8 }}>
-                {live ? `Open ${c} city` : `Preview ${c} city (not wired yet)`}
+                {cityLabel(c)}
               </div>
             </Link>
           );
@@ -89,7 +101,7 @@ function CityIndex() {
       </div>
 
       <div style={{ marginTop: 16, fontSize: 12, color: "#94a3b8" }}>
-        Tip: Creator + Service are live. The others are placeholders until we wire their City pages.
+        Tip: Creator, Service, Safety, Family, and Commerce are live. More City pages are being wired in.
       </div>
     </div>
   );
@@ -120,13 +132,6 @@ function CityPlaceholder() {
     gap: 8,
   };
 
-  const btnPrimary: React.CSSProperties = {
-    ...btn,
-    border: "1px solid rgba(34,197,94,0.40)",
-    background: "rgba(34,197,94,0.12)",
-    color: "rgba(187,247,208,1)",
-  };
-
   const panel: React.CSSProperties = {
     marginTop: 16,
     borderRadius: 16,
@@ -147,10 +152,10 @@ function CityPlaceholder() {
 
         <div style={row}>
           <Link to="/city" style={btn}>
-            ? Back to Cities
+            Back to Cities
           </Link>
-<Link to="/service/taylor-creek" style={btn}>
-            Go to Service (Taylor Creek)
+          <Link to="/service/taylor-creek" style={btn}>
+            Go to Service
           </Link>
         </div>
 
@@ -165,19 +170,16 @@ function CityPlaceholder() {
 export default function CityRoutes() {
   return (
     <Routes>
-      {/* /city */}
       <Route index element={<CityIndex />} />
 
-      {/* ? REAL CITY PAGES */}
       <Route path="creator" element={<CreatorCity />} />
-
-      {/* keep /city/service as a friendly redirect (in case anyone hits it) */}
       <Route path="service" element={<Navigate to="/service/taylor-creek" replace />} />
+      <Route path="safety" element={<SafetyCityLanding />} />
+      <Route path="family" element={<FamilyCityLanding />} />
+      <Route path="commerce" element={<CommerceCityLanding />} />
 
-      {/* /city/<anything-else> */}
       <Route path="*" element={<CityPlaceholder />} />
     </Routes>
   );
 }
-
 
