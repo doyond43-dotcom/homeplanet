@@ -54,6 +54,7 @@ import OperationalTeamBoard from "../pages/OperationalTeamBoard";
 import StaffBoardPage from "../pages/StaffBoardPage";
 import LobbyBoardPage from "../pages/LobbyBoardPage";
 import CreatorBuild from "../pages/CreatorBuild";
+import CreatorLaunchSequencePage from "../pages/CreatorLaunchSequencePage";
 import ReleaseViewer from "../pages/ReleaseViewer";
 import RcAirboatsLiveDemo from "../pages/RcAirboatsLiveDemo";
 import ExperiencePlanet from "../pages/ExperiencePlanet";
@@ -137,6 +138,7 @@ import OnboardingFlow from "../pages/OnboardingFlow";
 import OnboardingBuildTransition from "../pages/OnboardingBuildTransition";
 import SystemHomePage from "../pages/SystemHomePage";
 import CrewTeamBoard from "../pages/CrewTeamBoard";
+import HubOperationsBoardMVP from "../pages/HubOperationsBoardMVP";
 
 export default function PlanetRoutes() {
   return (
@@ -219,7 +221,7 @@ export default function PlanetRoutes() {
       <Route path="creator/rc-live" element={<RcAirboatsLiveDemo />} />
       <Route path="creator/hayley-live" element={<HayleyLiveBoard />} />
       <Route path="creator/big-dave-eats" element={<BigDaveEatsLive />} />
-      <Route path="creator/building" element={<CreatorBuild />} />
+      <Route path="creator/building" element={<CreatorLaunchSequencePage />} />
       <Route path="system/:slug" element={<SystemHomePage />} />
       <Route path="creator/*" element={<Navigate to="/planet/creator" replace />} />
 
@@ -315,10 +317,16 @@ export default function PlanetRoutes() {
       <Route path="predator-shield/test" element={<PredatorShieldIntervention />} />
       <Route path=":planetId" element={<PlanetOverview />} />
       <Route path=":planetId/:cityId" element={<CityPage />} />
+      <Route path="hub" element={<HubOperationsBoardMVP />} />
+
       <Route path="*" element={<Navigate to="/planet/start" replace />} />
-    </Routes>
+</Routes>
   );
 }
+
+
+
+
 
 
 
