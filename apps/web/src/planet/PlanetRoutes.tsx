@@ -219,7 +219,7 @@ export default function PlanetRoutes() {
       <Route path="creator/rc-live" element={<RcAirboatsLiveDemo />} />
       <Route path="creator/hayley-live" element={<HayleyLiveBoard />} />
       <Route path="creator/big-dave-eats" element={<BigDaveEatsLive />} />
-      <Route path="creator/building" element={<CreatorMomentPage />} />
+      <Route path="creator/building" element={<CreatorBuild />} />
       <Route path="system/:slug" element={<SystemHomePage />} />
       <Route path="creator/*" element={<Navigate to="/planet/creator" replace />} />
 
@@ -319,6 +319,7 @@ export default function PlanetRoutes() {
     </Routes>
   );
 }
+
 
 
 
