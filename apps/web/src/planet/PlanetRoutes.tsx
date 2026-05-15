@@ -6,6 +6,8 @@ import FoundLayer from "../pages/FoundLayer";
 import FoundItemPage from "../pages/FoundItemPage";
 import OnlyTheEssentialsBoard from "../pages/OnlyTheEssentialsBoard";
 import OnlyTheEssentialsLanding from "../pages/OnlyTheEssentialsLanding";
+import OnlyTheEssentialsCustomerLanding from "../pages/OnlyTheEssentialsCustomerLanding";
+import OnlyTheEssentialsPublicLanding from "../pages/OnlyTheEssentialsPublicLanding";
 import OnlyTheEssentialsRequest from "../pages/OnlyTheEssentialsRequest";
 import OnlyTheEssentialsMessagesBoard from "../pages/OnlyTheEssentialsMessagesBoard";
 import PoolServicePlanet from "../pages/PoolServicePlanet";
@@ -158,6 +160,7 @@ export default function PlanetRoutes() {
 
       {/* ONLY THE ESSENTIALS */}
       <Route path="only-the-essentials" element={<OnlyTheEssentialsLanding />} />
+      <Route path="only-the-essentials-cleaning" element={<OnlyTheEssentialsCustomerLanding />} />
       <Route path="only-the-essentials/request" element={<OnlyTheEssentialsRequest />} />
       <Route path="cleaning/only-the-essentials" element={<OnlyTheEssentialsLanding />} />
       <Route path="demo/only-the-essentials" element={<OnlyTheEssentialsBoard />} />
@@ -316,6 +319,10 @@ export default function PlanetRoutes() {
     </Routes>
   );
 }
+
+
+
+
 
 
 
