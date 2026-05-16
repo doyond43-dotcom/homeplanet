@@ -43,10 +43,32 @@ type WorkforcePerson = {
   status: WorkforceStatus;
 };
 
+type TimelineEvent = {
+  id: string;
+  time: string;
+  title: string;
+  detail: string;
+};
+
 const now = () =>
   new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 
 export default function HubOperationsBoardMVP() {
+  const [timeline, setTimeline] = useState<TimelineEvent[]>([
+    {
+      id: "TL-1",
+      time: "4:12 PM",
+      title: "Daycare Check-In",
+      detail: "Emma checked into Sun Room.",
+    },
+    {
+      id: "TL-2",
+      time: "4:18 PM",
+      title: "Shuttle Route Started",
+      detail: "SH-12 started Daycare Loop A.",
+    },
+  ]);
+
   const [alerts, setAlerts] = useState<Alert[]>([
     {
       title: "Shuttle Delay",
@@ -126,11 +148,57 @@ export default function HubOperationsBoardMVP() {
     },
   ]);
 
+  const addTimelineEvent = (title: string, detail: string) => {
+    setTimeline((current) => [
+      {
+        id: crypto.randomUUID(),
+        time: now(),
+        title,
+        detail,
+      },
+      ...current,
+    ].slice(0, 8));
+  };
+
   const addAlert = (title: string, detail: string, severity: AlertSeverity = "info") => {
+    addTimelineEvent(title, detail);
+
     setAlerts((current) => [
       { title, detail, severity, time: now() },
       ...current,
     ].slice(0, 5));
+  };
+
+  const createMaintenanceTask = () => {
+    const nextNumber = maintenance.length + 1;
+    const task = `Resident Service Request ${nextNumber}`;
+
+    setMaintenance((current) => [
+      {
+        task,
+        assigned: "Hub Queue",
+        status: "Reported",
+      },
+      ...current,
+    ]);
+
+    addAlert("Task Created", `${task} added to maintenance queue.`, "info");
+  };
+
+  const assignWorkforceRole = () => {
+    const nextNumber = workforce.length + 1;
+    const name = `Team Member ${nextNumber}`;
+
+    setWorkforce((current) => [
+      {
+        name,
+        role: "Floating Support",
+        status: "Assigned",
+      },
+      ...current,
+    ]);
+
+    addAlert("Role Assigned", `${name} assigned to Floating Support.`, "success");
   };
 
   const nextShuttleStatus = (status: ShuttleStatus): ShuttleStatus => {
@@ -245,6 +313,14 @@ export default function HubOperationsBoardMVP() {
         entry.child === "Luca"
           ? { ...entry, status: "Checked Out" }
           : entry
+      )
+    );
+
+    setWorkforce((current) =>
+      current.map((person) =>
+        person.role === "Shuttle Driver"
+          ? { ...person, status: "Completed" }
+          : person
       )
     );
 
@@ -367,6 +443,35 @@ export default function HubOperationsBoardMVP() {
 
         <section className="rounded-3xl border border-zinc-800 bg-zinc-950 p-5 space-y-4">
           <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold">Live Ecosystem Timeline</h2>
+            <div className="text-sm text-zinc-500">Truth Chain</div>
+          </div>
+
+          <div className="space-y-3">
+            {timeline.map((event) => (
+              <div
+                key={event.id}
+                className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="font-semibold">{event.title}</div>
+                    <div className="text-zinc-400 text-sm mt-1">
+                      {event.detail}
+                    </div>
+                  </div>
+
+                  <div className="text-xs text-zinc-500 whitespace-nowrap">
+                    {event.time}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="rounded-3xl border border-zinc-800 bg-zinc-950 p-5 space-y-4">
+          <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Live Alerts</h2>
             <div className="text-sm text-zinc-500">Operational Feed</div>
           </div>
@@ -459,7 +564,7 @@ export default function HubOperationsBoardMVP() {
           <section className="rounded-3xl border border-zinc-800 bg-zinc-950 p-5 space-y-4">
             <div className="flex items-center justify-between gap-3">
               <h2 className="text-xl font-semibold">Maintenance Operations</h2>
-              <ActionButton onClick={() => addAlert("Task Created", "New maintenance task added to Hub queue.", "info")} tone="green">
+              <ActionButton onClick={createMaintenanceTask} tone="green">
                 Create Task
               </ActionButton>
             </div>
@@ -487,7 +592,7 @@ export default function HubOperationsBoardMVP() {
           <section className="rounded-3xl border border-zinc-800 bg-zinc-950 p-5 space-y-4">
             <div className="flex items-center justify-between gap-3">
               <h2 className="text-xl font-semibold">Workforce Coordination</h2>
-              <ActionButton onClick={() => addAlert("Role Assignment", "Hub opened the workforce assignment drawer.", "info")}>
+              <ActionButton onClick={assignWorkforceRole}>
                 Assign Role
               </ActionButton>
             </div>
@@ -516,4 +621,3 @@ export default function HubOperationsBoardMVP() {
     </div>
   );
 }
-
