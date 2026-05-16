@@ -212,10 +212,22 @@ export default function OnlyTheEssentialsCustomerLanding() {
           </div>
         </div>
 
-        <footer className="py-10 text-center font-serif text-2xl italic text-pink-200">
-          Clean spaces. Happy places. ♡
-        </footer>
+        <footer className="py-12 text-center">
+  <p className="font-serif text-3xl italic text-pink-200">
+    Only The Essentials Cleaning ♡
+  </p>
+  <p className="mt-3 text-sm font-semibold text-zinc-300">
+    Okeechobee, Florida
+  </p>
+  <p className="mt-6 text-xs text-zinc-500">
+    © 2026 Only The Essentials Cleaning
+  </p>
+  <p className="mt-2 text-[11px] text-zinc-600">
+    Made with HomePlanet
+  </p>
+</footer>
       </section>
     </main>
   );
 }
+
