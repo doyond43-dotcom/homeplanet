@@ -139,6 +139,8 @@ import OnboardingBuildTransition from "../pages/OnboardingBuildTransition";
 import SystemHomePage from "../pages/SystemHomePage";
 import CrewTeamBoard from "../pages/CrewTeamBoard";
 import HubOperationsBoardMVP from "../pages/HubOperationsBoardMVP";
+import EcosystemCirculationMapMVP from "../pages/EcosystemCirculationMapMVP";
+import WingItBrandVisualMockup from "../pages/WingItBrandVisualMockup";
 
 export default function PlanetRoutes() {
   return (
@@ -317,12 +319,16 @@ export default function PlanetRoutes() {
       <Route path="predator-shield/test" element={<PredatorShieldIntervention />} />
       <Route path=":planetId" element={<PlanetOverview />} />
       <Route path=":planetId/:cityId" element={<CityPage />} />
-      <Route path="hub" element={<HubOperationsBoardMVP />} />
+      <Route path="hub" element={<HubOperationsBoardMVP />} />      <Route path="ecosystem-map" element={<EcosystemCirculationMapMVP />} />      <Route path="wingit" element={<WingItBrandVisualMockup />} />
+
+
 
       <Route path="*" element={<Navigate to="/planet/start" replace />} />
 </Routes>
   );
 }
+
+
 
 
 
