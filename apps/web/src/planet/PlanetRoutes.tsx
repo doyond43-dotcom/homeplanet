@@ -141,6 +141,10 @@ import CrewTeamBoard from "../pages/CrewTeamBoard";
 import HubOperationsBoardMVP from "../pages/HubOperationsBoardMVP";
 import EcosystemCirculationMapMVP from "../pages/EcosystemCirculationMapMVP";
 import WingItBrandVisualMockup from "../pages/WingItBrandVisualMockup";
+import BrahmaBullFrontDoor from "../pages/BrahmaBullFrontDoor";
+import BrahmaBullLiveBoard from "../pages/BrahmaBullLiveBoard";
+import BrahmaBullCrewBoard from "../pages/BrahmaBullCrewBoard";
+import BrahmaBullKitchenBoard from "../pages/BrahmaBullKitchenBoard";
 
 export default function PlanetRoutes() {
   return (
@@ -149,6 +153,11 @@ export default function PlanetRoutes() {
 
               <Route path="crew-team" element={<CrewTeamBoard />} />
 <Route path="start" element={<StartPage />} />
+      {/* BRAHMA BULL RESTAURANT SYSTEM */}
+      <Route path="brahma-bull" element={<BrahmaBullFrontDoor />} />
+      <Route path="demo/brahma-bull/live" element={<BrahmaBullLiveBoard />} />
+      <Route path="crew-team/brahma-bull" element={<BrahmaBullCrewBoard />} />
+      <Route path="kitchen/brahma-bull" element={<BrahmaBullKitchenBoard />} />
       <Route path="business-setup" element={<BusinessSetupForm />} />
       <Route path="printshop" element={<PrintShopLandingPage />} />
       <Route path="printshop/order" element={<PrintShopOrderPage />} />
@@ -327,6 +336,8 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
+
 
 
 
