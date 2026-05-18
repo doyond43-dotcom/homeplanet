@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+﻿import { Routes, Route, Navigate } from "react-router-dom";
 
 import PlanetOverview from "../pages/PlanetOverview";
 import CityPage from "../pages/CityPage";
@@ -145,6 +145,8 @@ import BrahmaBullFrontDoor from "../pages/BrahmaBullFrontDoor";
 import BrahmaBullLiveBoard from "../pages/BrahmaBullLiveBoard";
 import BrahmaBullCrewBoard from "../pages/BrahmaBullCrewBoard";
 import BrahmaBullKitchenBoard from "../pages/BrahmaBullKitchenBoard";
+import OkeechobeeTogetherPage from "../pages/OkeechobeeTogetherPage";
+import OkeechobeeCommunityAdminPage from "../pages/OkeechobeeCommunityAdminPage";
 
 export default function PlanetRoutes() {
   return (
@@ -153,6 +155,8 @@ export default function PlanetRoutes() {
 
               <Route path="crew-team" element={<CrewTeamBoard />} />
 <Route path="start" element={<StartPage />} />
+      <Route path="okeechobee" element={<OkeechobeeTogetherPage />} />
+      <Route path="okeechobee/admin" element={<OkeechobeeCommunityAdminPage />} />
       {/* BRAHMA BULL RESTAURANT SYSTEM */}
       <Route path="brahma-bull" element={<BrahmaBullFrontDoor />} />
       <Route path="demo/brahma-bull/live" element={<BrahmaBullLiveBoard />} />
@@ -336,6 +340,9 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
+
+
 
 
 
