@@ -20,6 +20,7 @@ type Job = {
   invoiceNote: string;
   beforePhotos: string[];
   afterPhotos: string[];
+  archived?: boolean;
   timeline: string[];
 };
 
@@ -133,6 +134,31 @@ export default function ZandsLightXandBoard() {
     );
   }
 
+  function archiveSelectedJob() {
+    const confirmed = window.confirm("Archive this job and keep its proof history?");
+    if (!confirmed) return;
+
+    setJobs((current) => {
+      const next = current.map((job) =>
+        job.id === selectedJob.id
+          ? {
+              ...job,
+              archived: true,
+              timeline: ["Job archived with proof history", ...job.timeline],
+            }
+          : job
+      );
+
+      const nextActive = next.find((job) => !job.archived);
+
+      if (nextActive) {
+        setSelectedJobId(nextActive.id);
+      }
+
+      return next;
+    });
+  }
+
   function addProofPhoto(type: "before" | "after", fileName: string) {
     if (type === "before") {
       updateJob(selectedJob.id, {
@@ -161,12 +187,17 @@ export default function ZandsLightXandBoard() {
   return (
     <main style={page}>
       <section style={{ maxWidth: 1720, margin: "0 auto" }}>
-        <Header />
+        <Header onQrPayment={() => {
+          setPaymentOpen(true);
+          window.setTimeout(() => {
+            document.getElementById("payment-panel")?.scrollIntoView({ behavior: "smooth", block: "center" });
+          }, 50);
+        }} />
 
         <section style={layout}>
           <div style={boardSurface}>
             {stageMeta.map((stage) => {
-              const stageJobs = jobs.filter((job) => job.stage === stage.title);
+              const stageJobs = jobs.filter((job) => job.stage === stage.title && !job.archived);
 
               return (
                 <div key={stage.title} style={stageColumn}>
@@ -219,7 +250,7 @@ export default function ZandsLightXandBoard() {
             </div>
 
             {paymentOpen ? (
-              <div style={detailsBox}>
+              <div id="payment-panel" style={detailsBox}>
                 <PanelTitle>PAYMENT QR</PanelTitle>
 
                 <input
@@ -410,6 +441,18 @@ export default function ZandsLightXandBoard() {
               ))}
             </div>
 
+            <button
+              onClick={archiveSelectedJob}
+              style={{
+                ...detailsButton,
+                marginTop: 22,
+                border: "1px solid rgba(248,113,113,0.30)",
+                background: "rgba(127,29,29,0.28)",
+              }}
+            >
+              Archive Job
+            </button>
+
             <button onClick={() => setDetailsOpen((open) => !open)} style={detailsButton}>
               {detailsOpen ? "Hide Job Details" : "View Full Job Details >"}
             </button>
@@ -427,7 +470,7 @@ export default function ZandsLightXandBoard() {
   );
 }
 
-function Header() {
+function Header({ onQrPayment }: { onQrPayment: () => void }) {
   return (
     <header style={{ display: "flex", justifyContent: "space-between", gap: 24, alignItems: "center", marginBottom: 34 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 22 }}>
@@ -449,7 +492,7 @@ function Header() {
         <TopButton primary onClick={() => window.open("/planet/request/zands-light-xand", "_blank")}>+ New Request</TopButton>
         <TopButton onClick={() => window.open("/planet/staff/zands-light-xand", "_blank")}>Staff Board</TopButton>
         <TopButton onClick={() => window.open("/planet/request/zands-light-xand", "_blank")}>Customer Front Door</TopButton>
-        <TopButton onClick={() => setPaymentOpen((open) => !open)}>QR Payment</TopButton>
+        <TopButton onClick={onQrPayment}>QR Payment</TopButton>
       </nav>
     </header>
   );
@@ -736,6 +779,9 @@ const orb: React.CSSProperties = {
   fontSize: 42,
   color: "#7dd3fc",
 };
+
+
+
 
 
 

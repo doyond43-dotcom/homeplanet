@@ -1,4 +1,4 @@
-import { FormEvent, useState } from "react";
+﻿import { FormEvent, useState } from "react";
 import { useParams } from "react-router-dom";
 
 type OperationalJob = {
@@ -90,6 +90,27 @@ export default function OperationalCustomerRequestPage() {
         padding: 18,
       }}
     >
+      <button
+        type="button"
+        onClick={() => window.location.assign("/planet/zands-light-xand")}
+        style={{
+          position: "fixed",
+          top: 16,
+          left: 16,
+          zIndex: 9999,
+          borderRadius: 999,
+          border: "1px solid rgba(56,189,248,0.35)",
+          background: "rgba(15,23,42,0.90)",
+          color: "white",
+          padding: "10px 16px",
+          fontWeight: 900,
+          cursor: "pointer",
+          boxShadow: "0 0 24px rgba(56,189,248,0.18)",
+        }}
+      >
+        ← Back to Liveboard
+      </button>
+
       <section
         style={{
           maxWidth: 760,
@@ -101,7 +122,25 @@ export default function OperationalCustomerRequestPage() {
           padding: 24,
         }}
       >
-        <div
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18, flexWrap: "wrap" }}>
+          <button
+            type="button"
+            onClick={() => window.location.assign("/planet/zands-light-xand")}
+            style={{
+              borderRadius: 999,
+              border: "1px solid rgba(56,189,248,0.28)",
+              background: "rgba(15,23,42,0.55)",
+              color: "rgba(255,255,255,0.88)",
+              padding: "10px 16px",
+              fontWeight: 900,
+              cursor: "pointer",
+              boxShadow: "0 0 18px rgba(56,189,248,0.10)",
+            }}
+          >
+            ← Back
+          </button>
+
+          <div
           style={{
             display: "inline-flex",
             borderRadius: 999,
@@ -114,6 +153,7 @@ export default function OperationalCustomerRequestPage() {
           }}
         >
           CUSTOMER FRONT DOOR
+        </div>
         </div>
 
         <h1 style={{ margin: "14px 0 8px", fontSize: 42, lineHeight: 1 }}>
@@ -220,3 +260,9 @@ export default function OperationalCustomerRequestPage() {
     </main>
   );
 }
+
+
+
+
+
+
