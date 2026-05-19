@@ -77,6 +77,7 @@ import ButcherLivestockIntakeFlow from "../pages/ButcherLivestockIntakeFlow";
 import ButcherLivestockTruthBoard from "../pages/ButcherLivestockTruthBoard";
 import GuardianMobilityLiveBoard from "../pages/GuardianMobilityLiveBoard";
 import LiveBoardRouter from "../pages/LiveBoardRouter";
+import ZandsLightXandBoard from "../pages/ZandsLightXandBoard";
 
 import SafariSalesPage from "../pages/SafariSalesPage";
 import SafariAnimalPage from "../pages/SafariAnimalPage";
@@ -330,6 +331,7 @@ export default function PlanetRoutes() {
 
       <Route path="predator-shield" element={<PredatorShieldIntervention />} />
       <Route path="predator-shield/test" element={<PredatorShieldIntervention />} />
+      <Route path="zands-light-xand" element={<ZandsLightXandBoard />} />
       <Route path=":planetId" element={<PlanetOverview />} />
       <Route path=":planetId/:cityId" element={<CityPage />} />
       <Route path="hub" element={<HubOperationsBoardMVP />} />      <Route path="ecosystem-map" element={<EcosystemCirculationMapMVP />} />      <Route path="wingit" element={<WingItBrandVisualMockup />} />
@@ -340,6 +342,8 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
+
 
 
 
