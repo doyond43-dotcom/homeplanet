@@ -29,6 +29,7 @@ type OperationalJob = {
   address: string;
   service: string;
   notes: string;
+  paymentUrl?: string;
   stage: string;
   paymentStatus: "not-ready" | "invoice-ready" | "paid";
   beforePhotos: string[];
@@ -96,20 +97,17 @@ function makeSampleJob(stage: string): OperationalJob {
     service: "House wash + driveway cleaning",
     notes:
       "Customer sent photos. Driveway has heavy mildew near garage. Wants quote and earliest available appointment.",
+    paymentUrl: "",
     stage,
     paymentStatus: "invoice-ready",
     beforePhotos: ["Front driveway before", "South wall mildew"],
     afterPhotos: [],
-    timeline: [
-      "Request received",
-      "Photos reviewed",
-      "Estimate ready",
-    ],
+    timeline: ["Request received", "Photos reviewed", "Estimate ready"],
   };
 }
 
 export default function OperationalLiveBoard({ boardSlug, payload }: Props) {
-  const businessName = payload?.businessName || titleFromSlug(boardSlug) || "HomePlanet Business";
+  const businessName = boardSlug === "xanders-job-board" ? "Xander Live Board" : payload?.businessName || titleFromSlug(boardSlug) || "HomePlanet Business";
   const liveBoardUrl = typeof window !== "undefined" ? `${window.location.origin}/planet/live/${boardSlug}` : `/planet/live/${boardSlug}`;
   const customerFrontDoorUrl = typeof window !== "undefined" ? `${window.location.origin}/planet/request/${boardSlug}` : `/planet/request/${boardSlug}`;
   const operationalSystem: OperationalSystem | undefined = payload?.operationalSystem;
@@ -118,6 +116,7 @@ export default function OperationalLiveBoard({ boardSlug, payload }: Props) {
   const beforeInputRef = useRef<HTMLInputElement | null>(null);
   const afterInputRef = useRef<HTMLInputElement | null>(null);
   const [showQrPanel, setShowQrPanel] = useState(false);
+  const [paymentDrafts, setPaymentDrafts] = useState<Record<string, string>>({});
   const [jobs, setJobs] = useState<OperationalJob[]>(() => readSavedJobs(boardSlug, stages[0]?.label || "New Request"));
   const [selectedJobId, setSelectedJobId] = useState<string | null>("job-1");
 
@@ -145,6 +144,40 @@ export default function OperationalLiveBoard({ boardSlug, payload }: Props) {
     );
   }
 
+  function startEditing() {
+    if (!selectedJob) return;
+    setDraftJob({ ...selectedJob });
+    setIsEditing(true);
+  }
+
+  function saveJobChanges() {
+    if (!draftJob) return;
+
+    setAndSaveJobs((current) =>
+      current.map((job) =>
+        job.id === draftJob.id
+          ? {
+              ...draftJob,
+              timeline: [...draftJob.timeline, "Job details updated"],
+            }
+          : job
+      )
+    );
+
+    setSelectedJobId(draftJob.id);
+    setIsEditing(false);
+    setDraftJob(null);
+  }
+
+  function cancelEditing() {
+    setDraftJob(null);
+    setIsEditing(false);
+  }
+
+  function updateDraft(field: keyof OperationalJob, value: string) {
+    setDraftJob((current) => (current ? { ...current, [field]: value } : current));
+  }
+
   function addNewRequest() {
     const firstStage = stages[0]?.label || "New Request";
     const created: OperationalJob = {
@@ -155,6 +188,7 @@ export default function OperationalLiveBoard({ boardSlug, payload }: Props) {
       address: "",
       service: "New service request",
       notes: "New request created from the live operational board.",
+      paymentUrl: "",
       stage: firstStage,
       paymentStatus: "not-ready",
       beforePhotos: [],
@@ -176,20 +210,34 @@ export default function OperationalLiveBoard({ boardSlug, payload }: Props) {
     updateJob(jobId, { paymentStatus: "paid" }, "Payment marked paid");
   }
 
+  function setPaymentStatus(jobId: string, paymentStatus: OperationalJob["paymentStatus"]) {
+    updateJob(jobId, { paymentStatus }, `Payment status changed to ${paymentStatus}`);
+  }
+
   function addBeforePhoto(jobId: string, fileName = "Before photo") {
-    updateJob(jobId, {}, `Before photo uploaded: ${fileName}`);
     setAndSaveJobs((current) =>
       current.map((job) =>
-        job.id === jobId ? { ...job, beforePhotos: [...job.beforePhotos, `Before photo ${job.beforePhotos.length + 1}`] } : job
+        job.id === jobId
+          ? {
+              ...job,
+              beforePhotos: [...job.beforePhotos, `Before photo ${job.beforePhotos.length + 1}`],
+              timeline: [...job.timeline, `Before photo uploaded: ${fileName}`],
+            }
+          : job
       )
     );
   }
 
   function addAfterPhoto(jobId: string, fileName = "After photo") {
-    updateJob(jobId, {}, `After photo uploaded: ${fileName}`);
     setAndSaveJobs((current) =>
       current.map((job) =>
-        job.id === jobId ? { ...job, afterPhotos: [...job.afterPhotos, `After photo ${job.afterPhotos.length + 1}`] } : job
+        job.id === jobId
+          ? {
+              ...job,
+              afterPhotos: [...job.afterPhotos, `After photo ${job.afterPhotos.length + 1}`],
+              timeline: [...job.timeline, `After photo uploaded: ${fileName}`],
+            }
+          : job
       )
     );
   }
@@ -235,6 +283,33 @@ export default function OperationalLiveBoard({ boardSlug, payload }: Props) {
     border: "1px solid rgba(16,185,129,0.35)",
     background: "rgba(16,185,129,0.16)",
     color: "#d1fae5",
+  };
+
+  const dangerButton: React.CSSProperties = {
+    ...button,
+    border: "1px solid rgba(248,113,113,0.28)",
+    background: "rgba(248,113,113,0.10)",
+    color: "#fecaca",
+  };
+
+  const field: React.CSSProperties = {
+    width: "100%",
+    borderRadius: 12,
+    border: "1px solid rgba(255,255,255,0.12)",
+    background: "rgba(255,255,255,0.075)",
+    color: "white",
+    padding: "10px 11px",
+    fontSize: 13,
+    fontWeight: 800,
+    boxSizing: "border-box",
+  };
+
+  const label: React.CSSProperties = {
+    fontSize: 10,
+    letterSpacing: 1.3,
+    color: "rgba(255,255,255,0.42)",
+    fontWeight: 950,
+    textTransform: "uppercase",
   };
 
   return (
@@ -292,7 +367,9 @@ export default function OperationalLiveBoard({ boardSlug, payload }: Props) {
                           <button
                             key={job.id}
                             type="button"
-                            onClick={() => setSelectedJobId(job.id)}
+                            onClick={() => {
+                              setSelectedJobId(job.id);
+                            }}
                             style={{
                               textAlign: "left",
                               borderRadius: 18,
@@ -306,9 +383,9 @@ export default function OperationalLiveBoard({ boardSlug, payload }: Props) {
                             <div style={{ fontWeight: 950 }}>{job.customer}</div>
                             <div style={{ marginTop: 4, fontSize: 12, color: "rgba(255,255,255,0.65)" }}>{job.service}</div>
                             <div style={{ marginTop: 8, display: "flex", gap: 6, flexWrap: "wrap" }}>
-                              <span style={{ ...pill, padding: "5px 8px", fontSize: 10 }}>Photos</span>
-                              <span style={{ ...pill, padding: "5px 8px", fontSize: 10 }}>Payment</span>
-                              <span style={{ ...pill, padding: "5px 8px", fontSize: 10 }}>Proof</span>
+                              <span style={{ ...pill, padding: "5px 8px", fontSize: 10 }}>{job.beforePhotos.length + job.afterPhotos.length} Photos</span>
+                              <span style={{ ...pill, padding: "5px 8px", fontSize: 10 }}>{job.paymentStatus}</span>
+                              <span style={{ ...pill, padding: "5px 8px", fontSize: 10 }}>{job.timeline.length} Updates</span>
                             </div>
                           </button>
                         ))
@@ -324,112 +401,172 @@ export default function OperationalLiveBoard({ boardSlug, payload }: Props) {
             </div>
           </section>
 
-          <aside style={{ ...card, padding: 16, position: "sticky", top: 16 }}>
+                    <aside style={{ ...card, padding: 14, position: "sticky", top: 16 }}>
             {selectedJob ? (
-              <>
-                <div style={{ ...pill, display: "inline-flex" }}>JOB DRAWER</div>
-                <h2 style={{ margin: "12px 0 4px", fontSize: 24 }}>{selectedJob.customer}</h2>
-                <div style={{ color: "rgba(255,255,255,0.62)", fontWeight: 800 }}>{selectedJob.service}</div>
-
-                <div style={{ display: "grid", gap: 10, marginTop: 14 }}>
-                  <div style={{ borderRadius: 16, background: "rgba(0,0,0,0.25)", padding: 12 }}>
-                    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.42)", fontWeight: 950 }}>CUSTOMER INFO</div>
-                    <div style={{ marginTop: 8, fontSize: 13, lineHeight: 1.7 }}>
-                      Phone: <strong>{selectedJob.phone}</strong>
-                      <br />
-                      Email: <strong>{selectedJob.email}</strong>
-                      <br />
-                      Address: <strong>{selectedJob.address}</strong>
-                    </div>
+              <div style={{ display: "grid", gap: 12 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center" }}>
+                  <div>
+                    <div style={{ ...pill, display: "inline-flex" }}>LIVE JOB CARD</div>
+                    <h2 style={{ margin: "10px 0 2px", fontSize: 24 }}>{selectedJob.customer || "Unnamed customer"}</h2>
+                    <div style={{ color: "rgba(255,255,255,0.62)", fontWeight: 800 }}>{selectedJob.service || "Service not added"}</div>
                   </div>
 
-                  <div style={{ borderRadius: 16, background: "rgba(0,0,0,0.25)", padding: 12 }}>
-                    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.42)", fontWeight: 950 }}>NOTES</div>
-                    <p style={{ margin: "8px 0 0", fontSize: 13, lineHeight: 1.6, color: "rgba(255,255,255,0.68)" }}>{selectedJob.notes}</p>
-                  </div>
-
-                  <div style={{ borderRadius: 16, background: "rgba(0,0,0,0.25)", padding: 12 }}>
-                    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.42)", fontWeight: 950 }}>PHOTO PROOF</div>
-                    <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                      <input
-                        ref={beforeInputRef}
-                        type="file"
-                        accept="image/*"
-                        style={{ display: "none" }}
-                        onChange={(event) => {
-                          const file = event.target.files?.[0];
-                          if (file) addBeforePhoto(selectedJob.id, file.name);
-                          event.currentTarget.value = "";
-                        }}
-                      />
-                      <input
-                        ref={afterInputRef}
-                        type="file"
-                        accept="image/*"
-                        style={{ display: "none" }}
-                        onChange={(event) => {
-                          const file = event.target.files?.[0];
-                          if (file) addAfterPhoto(selectedJob.id, file.name);
-                          event.currentTarget.value = "";
-                        }}
-                      />
-                      <button style={button} onClick={() => beforeInputRef.current?.click()}>Upload Before</button>
-                      <button style={button} onClick={() => afterInputRef.current?.click()}>Upload After</button>
-                    </div>
-                    <div style={{ marginTop: 10, fontSize: 12, color: "rgba(255,255,255,0.6)" }}>
-                      Before: {selectedJob.beforePhotos.length} · After: {selectedJob.afterPhotos.length}
-                    </div>
-                  </div>
-
-                  <div style={{ borderRadius: 16, background: "rgba(0,0,0,0.25)", padding: 12 }}>
-                    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.42)", fontWeight: 950 }}>PAYMENT</div>
-                    <div style={{ marginTop: 8, fontWeight: 900 }}>{selectedJob.paymentStatus}</div>
-                    <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                      <button style={primaryButton} onClick={() => setShowQrPanel((open) => !open)}>Show QR</button>
-                      <button style={button} onClick={() => markPaid(selectedJob.id)}>Mark Paid</button>
-                    </div>
-
-                    {showQrPanel ? (
-                      <div style={{ marginTop: 12, borderRadius: 16, border: "1px dashed rgba(16,185,129,0.35)", background: "rgba(16,185,129,0.08)", padding: 14, textAlign: "center" }}>
-                        <div style={{ margin: "0 auto", width: 150, height: 150, borderRadius: 18, background: "white", display: "grid", placeItems: "center", padding: 10 }}>
-                          <img src={qrSrc(customerFrontDoorUrl, 140)} alt="Customer request QR code" width={140} height={140} style={{ display: "block", borderRadius: 10 }} />
-                        </div>
-                        <div style={{ marginTop: 10, fontSize: 12, color: "rgba(255,255,255,0.68)", lineHeight: 1.5 }}>
-                          Scan to open this customer front door. Requests submitted here land on the live board.
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
-
-                  <div style={{ borderRadius: 16, background: "rgba(0,0,0,0.25)", padding: 12 }}>
-                    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.42)", fontWeight: 950 }}>MOVE JOB</div>
-                    <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
-                      {stages.map((stage) => (
-                          <button
-                            key={stage.label}
-                            style={selectedJob.stage === stage.label ? primaryButton : button}
-                            onClick={() => moveJob(selectedJob.id, stage.label)}
-                          >
-                            {stage.label}
-                          </button>
-                        ))}
-                    </div>
-                  </div>
-
-                  <div style={{ borderRadius: 16, background: "rgba(0,0,0,0.25)", padding: 12 }}>
-                    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.42)", fontWeight: 950 }}>PROOF TIMELINE</div>
-                    <div style={{ marginTop: 10, display: "grid", gap: 8 }}>
-                      {selectedJob.timeline.map((item, index) => (
-                        <div key={`${item}-${index}`} style={{ fontSize: 12, color: "rgba(255,255,255,0.65)" }}>
-                          • {item}
-                        </div>
-                      ))}
-                    </div>
+                  <div style={{ ...pill, background: "rgba(16,185,129,0.14)", borderColor: "rgba(16,185,129,0.35)" }}>
+                    {selectedJob.stage}
                   </div>
                 </div>
-              </>
+
+                <div style={{ borderRadius: 18, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.09)", padding: 12, display: "grid", gap: 9 }}>
+                  <div style={label}>Job Details</div>
+
+                  <input
+                    style={{ ...field, fontSize: 18, fontWeight: 900 }}
+                    value={selectedJob.customer}
+                    placeholder="Customer name"
+                    onChange={(event) => updateJobField(selectedJob.id, "customer", event.target.value)}
+                  />
+
+                  <input
+                    style={field}
+                    value={selectedJob.service}
+                    placeholder="Service / job title"
+                    onChange={(event) => updateJobField(selectedJob.id, "service", event.target.value)}
+                  />
+
+                  <input
+                    style={field}
+                    value={selectedJob.phone || ""}
+                    placeholder="Phone"
+                    onChange={(event) => updateJobField(selectedJob.id, "phone", event.target.value)}
+                  />
+
+                  <input
+                    style={field}
+                    value={selectedJob.email || ""}
+                    placeholder="Email"
+                    onChange={(event) => updateJobField(selectedJob.id, "email", event.target.value)}
+                  />
+
+                  <input
+                    style={field}
+                    value={selectedJob.address || ""}
+                    placeholder="Address"
+                    onChange={(event) => updateJobField(selectedJob.id, "address", event.target.value)}
+                  />
+
+                  <textarea
+                    style={{ ...field, minHeight: 82, resize: "vertical", lineHeight: 1.5 }}
+                    value={selectedJob.notes || ""}
+                    placeholder="Job notes"
+                    onChange={(event) => updateJobField(selectedJob.id, "notes", event.target.value)}
+                  />
+
+                  <input
+                    style={field}
+                    value={paymentDrafts[selectedJob.id] ?? selectedJob.paymentUrl ?? ""}
+                    placeholder="Payment link / Cash App / Zelle"
+                    onChange={(event) =>
+                      setPaymentDrafts((current) => ({
+                        ...current,
+                        [selectedJob.id]: event.target.value,
+                      }))
+                    }
+                    onBlur={() => savePaymentUrl(selectedJob.id)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        savePaymentUrl(selectedJob.id);
+                        event.currentTarget.blur();
+                      }
+                    }}
+                  />
+                </div>
+
+                <div style={{ borderRadius: 18, background: "rgba(16,185,129,0.10)", border: "1px solid rgba(16,185,129,0.20)", padding: 12 }}>
+                  <div style={label}>Field Actions</div>
+
+                  <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                    <button style={primaryButton} onClick={() => beforeInputRef.current?.click()}>Add Before</button>
+                    <button style={primaryButton} onClick={() => afterInputRef.current?.click()}>Add After</button>
+                    <button style={selectedJob.paymentStatus === "paid" ? primaryButton : button} onClick={() => markPaid(selectedJob.id)}>Mark Paid</button>
+                    <button style={button} onClick={() => setShowQrPanel((open) => !open)}>{showQrPanel ? "Hide QR" : "Show QR"}</button>
+                  </div>
+
+                  <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <button style={selectedJob.paymentStatus === "not-ready" ? primaryButton : button} onClick={() => setPaymentStatus(selectedJob.id, "not-ready")}>Not Ready</button>
+                    <button style={selectedJob.paymentStatus === "invoice-ready" ? primaryButton : button} onClick={() => setPaymentStatus(selectedJob.id, "invoice-ready")}>Invoice Ready</button>
+                    <button style={selectedJob.paymentStatus === "paid" ? primaryButton : button} onClick={() => setPaymentStatus(selectedJob.id, "paid")}>Paid</button>
+                  </div>
+
+                  <div style={{ marginTop: 10, fontSize: 12, color: "rgba(255,255,255,0.66)" }}>
+                    Proof: {selectedJob.beforePhotos.length} before / {selectedJob.afterPhotos.length} after · Payment: <strong>{selectedJob.paymentStatus}</strong>
+                  </div>
+
+                  <input
+                    ref={beforeInputRef}
+                    type="file"
+                    accept="image/*"
+                    style={{ display: "none" }}
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (file) addBeforePhoto(selectedJob.id, file.name);
+                      event.currentTarget.value = "";
+                    }}
+                  />
+
+                  <input
+                    ref={afterInputRef}
+                    type="file"
+                    accept="image/*"
+                    style={{ display: "none" }}
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (file) addAfterPhoto(selectedJob.id, file.name);
+                      event.currentTarget.value = "";
+                    }}
+                  />
+
+                  {showQrPanel ? (
+                    <div style={{ marginTop: 12, borderRadius: 16, background: "white", padding: 12, textAlign: "center" }}>
+                      <img
+                        alt="Payment QR"
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent((paymentDrafts[selectedJob.id] ?? selectedJob.paymentUrl) || window.location.href)}`}
+                        style={{ width: 180, height: 180 }}
+                      />
+                      <div style={{ marginTop: 8, color: "#111827", fontSize: 12, fontWeight: 900 }}>Scan to pay</div>
+                    </div>
+                  ) : null}
+                </div>
+
+                <div style={{ borderRadius: 18, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.09)", padding: 12 }}>
+                  <div style={label}>Job Stage</div>
+
+                  <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                    {stages.map((stage) => (
+                      <button
+                        key={stage.label}
+                        style={selectedJob.stage === stage.label ? primaryButton : button}
+                        onClick={() => moveJob(selectedJob.id, stage.label)}
+                      >
+                        {stage.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ borderRadius: 18, background: "rgba(0,0,0,0.24)", border: "1px solid rgba(255,255,255,0.08)", padding: 12 }}>
+                  <div style={label}>Latest Timeline</div>
+
+                  <div style={{ marginTop: 10, display: "grid", gap: 8 }}>
+                    {selectedJob.timeline.slice(-5).reverse().map((item, index) => (
+                      <div key={`${item}-${index}`} style={{ fontSize: 12, color: "rgba(255,255,255,0.68)", lineHeight: 1.45 }}>
+                        {item}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             ) : (
-              <div style={{ color: "rgba(255,255,255,0.55)" }}>Select a job to open the drawer.</div>
+              <div style={{ color: "rgba(255,255,255,0.55)" }}>Select a job to open the live job card.</div>
             )}
           </aside>
         </div>
@@ -437,6 +574,19 @@ export default function OperationalLiveBoard({ boardSlug, payload }: Props) {
     </main>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
