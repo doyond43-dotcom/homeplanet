@@ -146,7 +146,7 @@ export default function SebastianSoftwashPage() {
 
 
           <a
-            href="sms:+18635320683"
+            href="sms:+18635320683?&body=Hey%2C%20I%20saw%20Sebastian%27s%20summer%20softwash%20page%20and%20wanted%20to%20request%20a%20wash.%20I%20can%20send%20a%20photo%20now."
             className="flex items-center justify-between rounded-[1.5rem] bg-white px-5 py-5 text-base font-black text-black"
           >
             Request a Wash
@@ -161,6 +161,7 @@ export default function SebastianSoftwashPage() {
     </main>
   );
 }
+
 
 
 
