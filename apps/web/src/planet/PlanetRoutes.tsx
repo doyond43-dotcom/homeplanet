@@ -344,9 +344,14 @@ export default function PlanetRoutes() {
       <Route path="zands-light-xand" element={<ZandsLightXandBoard />} />
       <Route path="all-clean-cuts" element={<AllCleanCutsFrontDoor />} />
       <Route path="all-clean-cuts/fresh-cut/:cutSlug" element={<AllCleanCutsFreshCutPage />} />
+      <Route path="hub" element={<HubOperationsBoardMVP />} />
+      <Route path="ecosystem-map" element={<EcosystemCirculationMapMVP />} />
+      <Route path="wingit" element={<WingItBrandVisualMockup />} />
+      <Route path="circulation" element={<EcosystemCirculationBoard />} />
+      <Route path="greenbasket" element={<GreenBasketMarketBrandVisualDirection />} />
+
       <Route path=":planetId" element={<PlanetOverview />} />
       <Route path=":planetId/:cityId" element={<CityPage />} />
-      <Route path="hub" element={<HubOperationsBoardMVP />} />      <Route path="ecosystem-map" element={<EcosystemCirculationMapMVP />} />      <Route path="wingit" element={<WingItBrandVisualMockup />} />      <Route path="circulation" element={<EcosystemCirculationBoard />} />      <Route path="greenbasket" element={<GreenBasketMarketBrandVisualDirection />} />
 
 
 
@@ -356,6 +361,7 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
 
 
 
