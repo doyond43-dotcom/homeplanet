@@ -76,7 +76,8 @@ export default function SebastianSoftwashPage() {
               summer and earn some extra money helping people around Okeechobee
               with pressure washing and outdoor cleanup jobs.
             </p>
-          </section>
+
+      </section>
 
           <section className="grid grid-cols-2 gap-3">
             {[
@@ -96,7 +97,8 @@ export default function SebastianSoftwashPage() {
                 </p>
               </div>
             ))}
-          </section>
+
+      </section>
           <section className="space-y-3">
             <div className="flex items-center gap-2 px-1">
               <p className="text-sm font-black uppercase tracking-wide text-blue-200">
@@ -123,7 +125,8 @@ export default function SebastianSoftwashPage() {
                 </div>
               ))}
             </div>
-          </section>
+
+      </section>
 
 
           <section className="rounded-[1.6rem] border border-blue-400/20 bg-blue-500/10 p-5">
@@ -137,7 +140,8 @@ export default function SebastianSoftwashPage() {
               Trying to stay productive this summer, work hard, save money, and
               help people out at the same time while working hard and staying productive.
             </p>
-          </section>
+
+      </section>
           <div className="rounded-[1.5rem] border border-blue-400/20 bg-blue-500/10 p-4">
             <p className="text-sm font-black text-blue-100">
               No square footage headaches.
@@ -161,10 +165,27 @@ export default function SebastianSoftwashPage() {
             Powered by HomePlanet
           </p>
         </div>
+
+        <div className="mt-12 border-t border-white/10 pt-6 text-center">
+          <p className="text-xs uppercase tracking-[0.35em] text-slate-500">
+            Fueled by HomePlanet
+          </p>
+
+          <a
+            href="https://homeplanet.city"
+            className="mt-3 inline-flex items-center rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-slate-300 transition hover:border-blue-400/40 hover:text-white"
+          >
+            Launch your own live page.
+          </a>
+        </div>
+
       </section>
     </main>
   );
 }
+
+
+
 
 
 
