@@ -1,4 +1,4 @@
-﻿import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import SebastianSoftwashPage from "../pages/SebastianSoftwashPage";
 import SlapABugLanding from "../pages/SlapABugLanding";
 
@@ -152,10 +152,14 @@ import BrahmaBullCrewBoard from "../pages/BrahmaBullCrewBoard";
 import BrahmaBullKitchenBoard from "../pages/BrahmaBullKitchenBoard";
 import OkeechobeeTogetherPage from "../pages/OkeechobeeTogetherPage";
 import OkeechobeeCommunityAdminPage from "../pages/OkeechobeeCommunityAdminPage";
+import StarterLivePageCreatorPage from "../pages/StarterLivePageCreatorPage";
+import EcosystemCirculationBoard from "../pages/EcosystemCirculationBoard";
+import GreenBasketMarketBrandVisualDirection from "../pages/GreenBasketMarketBrandVisualDirection";
 
 export default function PlanetRoutes() {
   return (
     <Routes>
+        <Route path="/creator/starter" element={<StarterLivePageCreatorPage />} />
         <Route path="/sebastian-softwash" element={<SebastianSoftwashPage />} />
       <Route index element={<Navigate to="/planet/start" replace />} />
       <Route path="slap-a-bug" element={<SlapABugLanding />} />
@@ -342,7 +346,9 @@ export default function PlanetRoutes() {
       <Route path="all-clean-cuts/fresh-cut/:cutSlug" element={<AllCleanCutsFreshCutPage />} />
       <Route path=":planetId" element={<PlanetOverview />} />
       <Route path=":planetId/:cityId" element={<CityPage />} />
-      <Route path="hub" element={<HubOperationsBoardMVP />} />      <Route path="ecosystem-map" element={<EcosystemCirculationMapMVP />} />      <Route path="wingit" element={<WingItBrandVisualMockup />} />
+      <Route path="hub" element={<HubOperationsBoardMVP />} />      <Route path="ecosystem-map" element={<EcosystemCirculationMapMVP />} />      <Route path="wingit" element={<WingItBrandVisualMockup />} />      <Route path="circulation" element={<EcosystemCirculationBoard />} />      <Route path="greenbasket" element={<GreenBasketMarketBrandVisualDirection />} />
+
+
 
 
 
@@ -350,6 +356,8 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
+
 
 
 
