@@ -58,6 +58,10 @@ export default function SebastianSoftwashPage() {
               <Phone size={18} />
               Call
             </a>
+          <p className="mt-3 text-center text-xs leading-relaxed text-slate-400">
+            If the text button gives you trouble, text Sebastian directly at 863-532-0683.
+          </p>
+
           </div>
         </div>
 
@@ -161,6 +165,8 @@ export default function SebastianSoftwashPage() {
     </main>
   );
 }
+
+
 
 
 
