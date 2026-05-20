@@ -45,7 +45,7 @@ export default function SebastianSoftwashPage() {
           </div>
 
             <a
-              href="sms:8635320683"
+              href="sms:+18635320683"
               className="flex items-center justify-center gap-2 rounded-2xl bg-blue-500 px-4 py-4 text-sm font-black text-white shadow-lg shadow-blue-500/20"
             >
               <MessageCircle size={18} />
@@ -146,7 +146,7 @@ export default function SebastianSoftwashPage() {
 
 
           <a
-            href="sms:8635320683?body=Hey, I saw Sebastian's Summer Softwash page and wanted to ask about a wash job."
+            href="sms:+18635320683?&body=Hey%2C%20I%20saw%20Sebastian%27s%20summer%20softwash%20page%20and%20wanted%20to%20ask%20about%20a%20wash%20job."
             className="flex items-center justify-between rounded-[1.5rem] bg-white px-5 py-5 text-base font-black text-black"
           >
             Request a Wash
@@ -161,6 +161,7 @@ export default function SebastianSoftwashPage() {
     </main>
   );
 }
+
 
 
 
