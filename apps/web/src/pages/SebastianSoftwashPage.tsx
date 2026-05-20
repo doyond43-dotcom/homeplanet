@@ -34,6 +34,16 @@ export default function SebastianSoftwashPage() {
           </div>
 
           <div className="mt-5 grid grid-cols-2 gap-3">
+          <div className="rounded-[1.5rem] border border-blue-400/20 bg-blue-500/10 p-4">
+            <p className="text-sm font-black text-blue-100">
+              No square footage headaches.
+            </p>
+
+            <p className="mt-2 text-sm leading-relaxed text-slate-200">
+              Just upload or text a photo of what you need cleaned up and I’ll give you a fair price.
+            </p>
+          </div>
+
             <a
               href="sms:8635320683"
               className="flex items-center justify-center gap-2 rounded-2xl bg-blue-500 px-4 py-4 text-sm font-black text-white shadow-lg shadow-blue-500/20"
@@ -124,6 +134,16 @@ export default function SebastianSoftwashPage() {
               help people out at the same time while working hard and staying productive.
             </p>
           </section>
+          <div className="rounded-[1.5rem] border border-blue-400/20 bg-blue-500/10 p-4">
+            <p className="text-sm font-black text-blue-100">
+              No square footage headaches.
+            </p>
+
+            <p className="mt-2 text-sm leading-relaxed text-slate-200">
+              Just upload or text a photo of what you need cleaned up and I’ll give you a fair price.
+            </p>
+          </div>
+
 
           <a
             href="sms:8635320683?body=Hey, I saw Sebastian's Summer Softwash page and wanted to ask about a wash job."
@@ -141,6 +161,7 @@ export default function SebastianSoftwashPage() {
     </main>
   );
 }
+
 
 
 
