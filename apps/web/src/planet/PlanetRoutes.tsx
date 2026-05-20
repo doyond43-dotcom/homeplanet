@@ -1,4 +1,5 @@
-﻿import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
+import SebastianSoftwashPage from "../pages/SebastianSoftwashPage";
 
 import PlanetOverview from "../pages/PlanetOverview";
 import CityPage from "../pages/CityPage";
@@ -154,6 +155,7 @@ import OkeechobeeCommunityAdminPage from "../pages/OkeechobeeCommunityAdminPage"
 export default function PlanetRoutes() {
   return (
     <Routes>
+        <Route path="/sebastian-softwash" element={<SebastianSoftwashPage />} />
       <Route index element={<Navigate to="/planet/start" replace />} />
 
               <Route path="crew-team" element={<CrewTeamBoard />} />
@@ -346,6 +348,7 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
 
 
 
