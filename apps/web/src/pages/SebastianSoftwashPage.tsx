@@ -160,10 +160,6 @@ export default function SebastianSoftwashPage() {
             Request a Wash
             <ArrowRight size={20} />
           </a>
-
-          <p className="pb-5 pt-2 text-center text-xs text-slate-500">
-            Powered by HomePlanet
-          </p>
         </div>
 
         <div className="mt-12 border-t border-white/10 pt-6 text-center">
@@ -183,6 +179,8 @@ export default function SebastianSoftwashPage() {
     </main>
   );
 }
+
+
 
 
 
