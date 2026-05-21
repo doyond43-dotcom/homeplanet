@@ -155,10 +155,13 @@ import OkeechobeeCommunityAdminPage from "../pages/OkeechobeeCommunityAdminPage"
 import StarterLivePageCreatorPage from "../pages/StarterLivePageCreatorPage";
 import EcosystemCirculationBoard from "../pages/EcosystemCirculationBoard";
 import GreenBasketMarketBrandVisualDirection from "../pages/GreenBasketMarketBrandVisualDirection";
+import StarterGeneratedLivePage from "../pages/StarterGeneratedLivePage";
+import EcosystemInfrastructurePortal from "../pages/EcosystemInfrastructurePortal";
 
 export default function PlanetRoutes() {
   return (
     <Routes>
+        <Route path="/starter/:slug" element={<StarterGeneratedLivePage />} />
         <Route path="/creator/starter" element={<StarterLivePageCreatorPage />} />
         <Route path="/sebastian-softwash" element={<SebastianSoftwashPage />} />
       <Route index element={<Navigate to="/planet/start" replace />} />
@@ -348,7 +351,8 @@ export default function PlanetRoutes() {
       <Route path="ecosystem-map" element={<EcosystemCirculationMapMVP />} />
       <Route path="wingit" element={<WingItBrandVisualMockup />} />
       <Route path="circulation" element={<EcosystemCirculationBoard />} />
-      <Route path="greenbasket" element={<GreenBasketMarketBrandVisualDirection />} />
+      <Route path="greenbasket" element={<GreenBasketMarketBrandVisualDirection />} />      <Route path="ecosystem-infrastructure" element={<EcosystemInfrastructurePortal />} />
+
 
       <Route path=":planetId" element={<PlanetOverview />} />
       <Route path=":planetId/:cityId" element={<CityPage />} />
@@ -361,6 +365,7 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
 
 
 
