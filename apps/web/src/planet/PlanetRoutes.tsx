@@ -1,7 +1,8 @@
-﻿import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import SebastianSoftwashPage from "../pages/SebastianSoftwashPage";
 import SlapABugLanding from "../pages/SlapABugLanding";
 import LocalServiceStarterPage from "../pages/LocalServiceStarterPage";
+import BirdbathLandingPage from "../pages/BirdbathLandingPage";
 
 import PlanetOverview from "../pages/PlanetOverview";
 import CityPage from "../pages/CityPage";
@@ -168,6 +169,7 @@ export default function PlanetRoutes() {
       <Route index element={<Navigate to="/planet/start" replace />} />
       <Route path="slap-a-bug" element={<SlapABugLanding />} />
       <Route path="local-service-page" element={<LocalServiceStarterPage />} />
+      <Route path="birdbath" element={<BirdbathLandingPage />} />
 
               <Route path="crew-team" element={<CrewTeamBoard />} />
 <Route path="start" element={<StartPage />} />

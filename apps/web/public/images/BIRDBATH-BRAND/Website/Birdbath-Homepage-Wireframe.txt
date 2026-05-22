@@ -1,0 +1,72 @@
+BIRDBATH HOMEPAGE WIREFRAME V1
+
+SECTION 1 — HERO
+- Birdbath logo
+- Hero truck console image
+- Headline:
+  BIRDBATH
+- Subheadline:
+  When a shower isn't an option.
+- Secondary line:
+  Feel human again. Anywhere.
+- CTA button:
+  Join Early Access
+
+SECTION 2 — REAL LIFE USE CASES
+- Truck
+- Gym
+- Camp
+- Work
+- Travel
+- Fishing
+- Beach
+- Emergency kits
+
+SECTION 3 — PRODUCT LINEUP
+- Original
+- Feminine
+- Outdoors
+- Heavy Duty
+- Sensitive
+
+SECTION 4 — WHY BIRDBATH
+- XL 12x12 wipe
+- Individually wrapped
+- Full body clean
+- No rinse needed
+- Alcohol free
+- Easy to carry
+
+SECTION 5 — THIN PROFILE
+Headline:
+Thin. Square. Perfect for life on the go.
+
+Show:
+- purse
+- gym bag
+- truck console
+- backpack
+
+SECTION 6 — PRODUCT SHOT
+Clean flat product image on cream background.
+
+SECTION 7 — WAITLIST
+Fields:
+- Name
+- Email
+- Join Early Access button
+
+SECTION 8 — FOOTER
+- Birdbath logo
+- Tagline
+- Social links later
+- Contact later
+
+STYLE NOTES
+- Cream backgrounds
+- Navy typography
+- Clean spacing
+- Mobile first
+- Premium but approachable
+- Slightly rugged
+- No overdesign
