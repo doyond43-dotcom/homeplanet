@@ -18,7 +18,7 @@ export default function BirdbathLandingPage() {
           <p className="mt-4 max-w-xl text-lg text-[#44516a]">Extra-large full-body cleansing wipes made for trucks, gyms, travel, work, boats, beach days, and real life.</p>
           <div className="mt-8 flex flex-wrap gap-3">
             <a href="#waitlist" className="rounded-full bg-[#12233d] px-6 py-3 text-sm font-black uppercase tracking-wide text-white">Join Early Access</a>
-            <a href="#product" className="rounded-full border border-[#12233d]/20 bg-white/50 px-6 py-3 text-sm font-black uppercase tracking-wide">See Product</a>
+            <a href="/planet/birdbath/products" className="rounded-full border border-[#12233d]/20 bg-white/50 px-6 py-3 text-sm font-black uppercase tracking-wide">See Product</a>
           </div>
         </div>
 
