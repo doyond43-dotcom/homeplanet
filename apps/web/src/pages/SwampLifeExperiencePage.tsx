@@ -19,6 +19,47 @@ const quickCards = [
 ];
 
 export default function SwampLifeExperiencePage() {
+
+useEffect(() => {
+  loadMoments();
+}, []);
+
+async function loadMoments() {
+  const { data } = await supabase
+    .from("swamp_life_moments")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (data) {
+    setMoments(data);
+  }
+}
+
+async function uploadRidePhoto(file: File) {
+  const fileName = "$(Date.now())-$(.name)";
+
+  const { error: uploadError } = await supabase.storage
+    .from("swamp-life-moments")
+    .upload(fileName, file);
+
+  if (uploadError) {
+    console.error(uploadError);
+    return;
+  }
+
+  const { data: publicUrlData } = supabase.storage
+    .from("swamp-life-moments")
+    .getPublicUrl(fileName);
+
+  const imageUrl = publicUrlData.publicUrl;
+
+  await supabase.from("swamp_life_moments").insert({
+    image_url: imageUrl,
+    caption: "Swamp Life ride memory"
+  });
+
+  await loadMoments();
+}
   const [photos, setPhotos] = useState<RidePhoto[]>([]);
 
   useEffect(() => {
@@ -173,6 +214,7 @@ export default function SwampLifeExperiencePage() {
     </main>
   );
 }
+
 
 
 
