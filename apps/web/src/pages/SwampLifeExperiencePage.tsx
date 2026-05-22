@@ -6,9 +6,9 @@ type RidePhoto = { id: string; image: string; caption: string };
 const STORAGE_KEY = "hp:swamp-life:photos";
 
 const starterPhotos: RidePhoto[] = [
-  { id: "1", image: "/images/swamp-life-family-tour-selfie.jpg", caption: "Family ride through Lake Okeechobee" },
-  { id: "2", image: "/images/swamp-life-sunset-silhouette.jpg", caption: "Sunset ride across the marsh" },
-  { id: "3", image: "/images/swamp-life-lake-ride-view.jpg", caption: "Pure Florida swamp life" },
+  { id: "1", image: "/images/swamp-life-family-selfie-golden-hour.jpg", caption: "Family ride through Lake Okeechobee" },
+  { id: "2", image: "/images/swamp-life-sunset-tour-group.jpg", caption: "Sunset ride across the marsh" },
+  { id: "3", image: "/images/swamp-life-airboat-family-cruise.jpg", caption: "Pure Florida swamp life" },
 ];
 
 const quickCards = [
@@ -214,6 +214,8 @@ async function uploadRidePhoto(file: File) {
     </main>
   );
 }
+
+
 
 
 
