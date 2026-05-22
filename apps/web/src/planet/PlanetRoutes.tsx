@@ -3,6 +3,7 @@ import SebastianSoftwashPage from "../pages/SebastianSoftwashPage";
 import SlapABugLanding from "../pages/SlapABugLanding";
 import LocalServiceStarterPage from "../pages/LocalServiceStarterPage";
 import BirdbathLandingPage from "../pages/BirdbathLandingPage";
+import BirdbathProductsPage from "../pages/BirdbathProductsPage";
 
 import PlanetOverview from "../pages/PlanetOverview";
 import CityPage from "../pages/CityPage";
@@ -170,6 +171,7 @@ export default function PlanetRoutes() {
       <Route path="slap-a-bug" element={<SlapABugLanding />} />
       <Route path="local-service-page" element={<LocalServiceStarterPage />} />
       <Route path="birdbath" element={<BirdbathLandingPage />} />
+      <Route path="birdbath/products" element={<BirdbathProductsPage />} />
 
               <Route path="crew-team" element={<CrewTeamBoard />} />
 <Route path="start" element={<StartPage />} />
