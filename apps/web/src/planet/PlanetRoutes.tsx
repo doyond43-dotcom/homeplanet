@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from "react-router-dom";
+import SwampLifeExperiencePage from '../pages/SwampLifeExperiencePage';
 import SebastianSoftwashPage from "../pages/SebastianSoftwashPage";
 import SlapABugLanding from "../pages/SlapABugLanding";
 import LocalServiceStarterPage from "../pages/LocalServiceStarterPage";
@@ -164,7 +165,9 @@ import EcosystemInfrastructurePortal from "../pages/EcosystemInfrastructurePorta
 export default function PlanetRoutes() {
   return (
     <Routes>
-        <Route path="/starter/:slug" element={<StarterGeneratedLivePage />} />
+        <Route path="swamp-life" element={<SwampLifeExperiencePage />} />
+
+<Route path="/starter/:slug" element={<StarterGeneratedLivePage />} />
         <Route path="/creator/starter" element={<StarterLivePageCreatorPage />} />
         <Route path="/sebastian-softwash" element={<SebastianSoftwashPage />} />
       <Route index element={<Navigate to="/planet/start" replace />} />
@@ -371,6 +374,10 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
+
+
+
 
 
 
