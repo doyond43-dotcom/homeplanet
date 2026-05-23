@@ -109,6 +109,27 @@ export default function SwampLifeExperiencePage() {
     alert("Photo link copied.");
   }
 
+  async function deletePhoto(photo: RidePhoto) {
+    if (!photo.image_url) return;
+
+    const confirmed = window.confirm("Delete this ride photo from the wall?");
+    if (!confirmed) return;
+
+    const { error } = await supabase
+      .from("swamp_life_moments")
+      .delete()
+      .eq("id", photo.id);
+
+    if (error) {
+      console.error("Swamp Life delete error:", error);
+      alert(`Delete failed: ${error.message}`);
+      return;
+    }
+
+    setSelectedPhoto(null);
+    await loadMoments();
+  }
+
   return (
     <main className="min-h-screen bg-black text-white">
       <section className="relative h-[760px] overflow-hidden md:h-[720px]">
@@ -172,6 +193,27 @@ export default function SwampLifeExperiencePage() {
 
     await navigator.clipboard.writeText(url);
     alert("Photo link copied.");
+  }
+
+  async function deletePhoto(photo: RidePhoto) {
+    if (!photo.image_url) return;
+
+    const confirmed = window.confirm("Delete this ride photo from the wall?");
+    if (!confirmed) return;
+
+    const { error } = await supabase
+      .from("swamp_life_moments")
+      .delete()
+      .eq("id", photo.id);
+
+    if (error) {
+      console.error("Swamp Life delete error:", error);
+      alert(`Delete failed: ${error.message}`);
+      return;
+    }
+
+    setSelectedPhoto(null);
+    await loadMoments();
   }
 
   return (
@@ -271,7 +313,7 @@ export default function SwampLifeExperiencePage() {
                   Text
                 </a>
 
-                <button onClick={async () => { await navigator.clipboard.writeText(getPhotoUrl(selectedPhoto)); alert("Photo link copied."); }} className="rounded-2xl bg-blue-600 px-4 py-3 text-sm font-black text-white">Copy Link</button>
+                <button onClick={() => deletePhoto(selectedPhoto)} disabled={!selectedPhoto.image_url} className="rounded-2xl bg-red-600 px-4 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/35">Delete</button>
 
                 <button onClick={() => setSelectedPhoto(null)} className="rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-sm font-black text-white">
                   Close
@@ -288,6 +330,7 @@ export default function SwampLifeExperiencePage() {
     </main>
   );
 }
+
 
 
 
