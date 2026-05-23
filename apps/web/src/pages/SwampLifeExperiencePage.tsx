@@ -7,9 +7,36 @@ type RidePhoto = { id: string; image?: string; image_url?: string; caption: stri
 const STORAGE_KEY = "hp:swamp-life:photos";
 
 const starterPhotos: RidePhoto[] = [
-  { id: "1", image: "/images/swamp-life-family-selfie-golden-hour.jpg", caption: "Family ride through Lake Okeechobee" },
-  { id: "2", image: "/images/swamp-life-sunset-tour-group.jpg", caption: "Sunset ride across the marsh" },
-  { id: "3", image: "/images/swamp-life-airboat-family-cruise.jpg", caption: "Pure Florida swamp life" },
+  {
+    id: "1",
+    image: "/images/swamp-life-airboat-family-ride-action.jpg",
+    caption: "Real airboat ride across Lake Okeechobee",
+  },
+  {
+    id: "2",
+    image: "/images/swamp-life-family-captain-group-photo.jpg",
+    caption: "Family memories with Captain D",
+  },
+  {
+    id: "3",
+    image: "/images/swamp-life-hidden-florida-waterfall.jpg",
+    caption: "Hidden Florida adventure moments",
+  },
+  {
+    id: "4",
+    image: "/images/swamp-life-holy-smokes-airboat-moment.jpg",
+    caption: "Summer airboat memories",
+  },
+  {
+    id: "5",
+    image: "/images/swamp-life-kid-airboat-adventure.jpg",
+    caption: "Exploring the marsh like a local",
+  },
+  {
+    id: "6",
+    image: "/images/swamp-life-airboat-okeechobee-marsh.jpg",
+    caption: "Classic Florida swamp life",
+  },
 ];
 
 const quickCards = [
@@ -329,6 +356,7 @@ export default function SwampLifeExperiencePage() {
     </main>
   );
 }
+
 
 
 
