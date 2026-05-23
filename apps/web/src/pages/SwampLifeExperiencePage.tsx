@@ -1,7 +1,8 @@
+import { supabase } from "../lib/supabase";
 import { useEffect, useState } from "react";
 import { Camera, Fish, MapPin, MessageCircle, Phone, ShipWheel, Sunset, Waves } from "lucide-react";
 
-type RidePhoto = { id: string; image: string; caption: string };
+type RidePhoto = { id: string; image?: string; image_url?: string; caption: string };
 
 const STORAGE_KEY = "hp:swamp-life:photos";
 
@@ -19,75 +20,94 @@ const quickCards = [
 ];
 
 export default function SwampLifeExperiencePage() {
-
-useEffect(() => {
-  loadMoments();
-}, []);
-
-async function loadMoments() {
-  const { data } = await supabase
-    .from("swamp_life_moments")
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  if (data) {
-    setMoments(data);
-  }
-}
-
-async function uploadRidePhoto(file: File) {
-  const fileName = "$(Date.now())-$(.name)";
-
-  const { error: uploadError } = await supabase.storage
-    .from("swamp-life-moments")
-    .upload(fileName, file);
-
-  if (uploadError) {
-    console.error(uploadError);
-    return;
-  }
-
-  const { data: publicUrlData } = supabase.storage
-    .from("swamp-life-moments")
-    .getPublicUrl(fileName);
-
-  const imageUrl = publicUrlData.publicUrl;
-
-  await supabase.from("swamp_life_moments").insert({
-    image_url: imageUrl,
-    caption: "Swamp Life ride memory"
-  });
-
-  await loadMoments();
-}
-  const [photos, setPhotos] = useState<RidePhoto[]>([]);
+  const [photos, setPhotos] = useState<RidePhoto[]>(starterPhotos);
+  const [uploading, setUploading] = useState(false);
+  const [selectedPhoto, setSelectedPhoto] = useState<RidePhoto | null>(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) setPhotos(JSON.parse(saved));
-    else {
-      setPhotos(starterPhotos);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(starterPhotos));
-    }
+    loadMoments();
   }, []);
 
-  const uploadPhoto = (event: React.ChangeEvent<HTMLInputElement>) => {
+  async function loadMoments() {
+    const { data, error } = await supabase
+      .from("swamp_life_moments")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    setPhotos([...(data || []), ...starterPhotos]);
+  }
+
+  async function uploadRidePhoto(file: File) {
+    try {
+      setUploading(true);
+
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
+      const filePath = `ride-photos/${Date.now()}-${safeName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("swamp-life-moments")
+        .upload(filePath, file, {
+          cacheControl: "3600",
+          upsert: false,
+          contentType: file.type || "image/jpeg",
+        });
+
+      if (uploadError) {
+        console.error("Swamp Life upload error:", uploadError);
+        alert(`Upload failed: ${uploadError.message}`);
+        return;
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from("swamp-life-moments")
+        .getPublicUrl(filePath);
+
+      const imageUrl = publicUrlData.publicUrl;
+
+      const { error: insertError } = await supabase
+        .from("swamp_life_moments")
+        .insert({
+          image_url: imageUrl,
+          caption: "Swamp Life ride memory",
+        });
+
+      if (insertError) {
+        console.error("Swamp Life insert error:", insertError);
+        alert(`Photo uploaded, but wall save failed: ${insertError.message}`);
+        return;
+      }
+
+      await loadMoments();
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  const uploadPhoto = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      const newPhoto = {
-        id: Date.now().toString(),
-        image: reader.result as string,
-        caption: "New swamp life moment",
-      };
-      const updated = [newPhoto, ...photos];
-      setPhotos(updated);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    };
-    reader.readAsDataURL(file);
+    await uploadRidePhoto(file);
+    event.target.value = "";
   };
+  const getPhotoUrl = (photo: RidePhoto) => photo.image_url || photo.image || "";
+
+  async function sharePhoto(photo: RidePhoto) {
+    const url = getPhotoUrl(photo);
+    const title = photo.caption || "Swamp Life ride memory";
+
+    if (navigator.share) {
+      await navigator.share({ title, text: title, url });
+      return;
+    }
+
+    await navigator.clipboard.writeText(url);
+    alert("Photo link copied.");
+  }
 
   return (
     <main className="min-h-screen bg-black text-white">
@@ -139,7 +159,22 @@ async function uploadRidePhoto(file: File) {
         <div className="absolute bottom-[-48px] left-1/2 z-20 grid w-[min(92vw,900px)] -translate-x-1/2 grid-cols-2 gap-4 md:grid-cols-4">
           {quickCards.map((card) => {
             const Icon = card.icon;
-            return (
+            const getPhotoUrl = (photo: RidePhoto) => photo.image_url || photo.image || "";
+
+  async function sharePhoto(photo: RidePhoto) {
+    const url = getPhotoUrl(photo);
+    const title = photo.caption || "Swamp Life ride memory";
+
+    if (navigator.share) {
+      await navigator.share({ title, text: title, url });
+      return;
+    }
+
+    await navigator.clipboard.writeText(url);
+    alert("Photo link copied.");
+  }
+
+  return (
               <div key={card.title} className="rounded-3xl border border-white/15 bg-zinc-950/95 p-5 shadow-2xl">
                 <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-300">
                   <Icon size={22} />
@@ -167,7 +202,7 @@ async function uploadRidePhoto(file: File) {
           </div>
 
           <label className="mt-6 flex cursor-pointer items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-5 py-4 text-sm font-black text-black">
-            <Camera size={18} /> Upload Ride Photo
+            <Camera size={18} /> {uploading ? "Uploading..." : "Upload Ride Photo"}
             <input type="file" accept="image/*" className="hidden" onChange={uploadPhoto} />
           </label>
         </div>
@@ -179,12 +214,17 @@ async function uploadRidePhoto(file: File) {
 
         <div className="mt-5 grid gap-4 md:grid-cols-3">
           {photos.map((photo) => (
-            <div key={photo.id} className="overflow-hidden rounded-3xl border border-white/15 bg-zinc-950">
-              <img src={photo.image} alt={photo.caption} className="h-56 w-full object-cover brightness-100 contrast-100 saturate-100" />
+            <button
+              key={photo.id}
+              type="button"
+              onClick={() => setSelectedPhoto(photo)}
+              className="overflow-hidden rounded-3xl border border-white/15 bg-zinc-950 text-left transition hover:border-emerald-400/60"
+            >
+              <img src={getPhotoUrl(photo)} alt={photo.caption || "Swamp Life ride memory"} className="h-56 w-full object-cover brightness-100 contrast-100 saturate-100" />
               <div className="p-4">
                 <p className="text-sm font-bold text-white/85">{photo.caption}</p>
               </div>
-            </div>
+            </button>
           ))}
         </div>
       </section>
@@ -204,9 +244,43 @@ async function uploadRidePhoto(file: File) {
 
           <a href="sms:15615126356?body=Hey%20Swamp%20Life%2C%20I%27d%20like%20to%20book%20an%20airboat%20ride." className="mt-3 flex w-full items-center justify-center rounded-2xl bg-white px-5 py-4 text-sm font-black text-black">
             Send Booking Request
-          </a>        </div>      </section>      <footer className="border-t border-white/10 px-5 py-6 text-center text-xs text-white/40">
-        Powered by HomePlanet Experience Pages
-      </footer>
+          </a>        </div>      </section>      <footer className="border-t border-white/10 px-5 py-8 text-center">
+  <a
+    href="https://homeplanet.city"
+    target="_blank"
+    rel="noreferrer"
+    className="inline-flex items-center rounded-full border border-white/15 bg-white/5 px-5 py-3 text-sm font-bold text-white transition hover:bg-white hover:text-black"
+  >
+    Get Your Business Live
+  </a>
+</footer>
+
+      {selectedPhoto && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/75 px-4 pb-4 md:items-center md:pb-0">
+          <div className="w-full max-w-md overflow-hidden rounded-3xl border border-white/15 bg-zinc-950 shadow-2xl">
+            <img src={getPhotoUrl(selectedPhoto)} alt={selectedPhoto.caption || "Swamp Life ride memory"} className="h-72 w-full object-cover" />
+            <div className="p-5">
+              <p className="text-sm font-bold text-white/85">{selectedPhoto.caption || "Swamp Life ride memory"}</p>
+
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <button onClick={() => sharePhoto(selectedPhoto)} className="rounded-2xl bg-emerald-500 px-4 py-3 text-sm font-black text-black">
+                  Share
+                </button>
+
+                <a href={`sms:?body=${encodeURIComponent(getPhotoUrl(selectedPhoto))}`} className="flex items-center justify-center rounded-2xl bg-white px-4 py-3 text-sm font-black text-black">
+                  Text
+                </a>
+
+                <button onClick={async () => { await navigator.clipboard.writeText(getPhotoUrl(selectedPhoto)); alert("Photo link copied."); }} className="rounded-2xl bg-blue-600 px-4 py-3 text-sm font-black text-white">Copy Link</button>
+
+                <button onClick={() => setSelectedPhoto(null)} className="rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-sm font-black text-white">
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <a href="https://maps.google.com" className="fixed bottom-5 right-5 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500 text-black shadow-2xl">
         <MapPin />
@@ -214,6 +288,19 @@ async function uploadRidePhoto(file: File) {
     </main>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
