@@ -288,9 +288,8 @@ export default function SwampLifeExperiencePage() {
             Send Booking Request
           </a>        </div>      </section>      <footer className="border-t border-white/10 px-5 py-8 text-center">
   <a
-    href="https://homeplanet.city"
-    target="_blank"
-    rel="noreferrer"
+    href="/planet/get-live"
+    
     className="inline-flex items-center rounded-full border border-white/15 bg-white/5 px-5 py-3 text-sm font-bold text-white transition hover:bg-white hover:text-black"
   >
     Get Your Business Live
@@ -330,6 +329,7 @@ export default function SwampLifeExperiencePage() {
     </main>
   );
 }
+
 
 
 
