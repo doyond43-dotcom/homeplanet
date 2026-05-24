@@ -50,14 +50,38 @@
           {[
             ["3", "Jobs Today"],
             ["2", "New Requests"],
-            ["1", "Follow-Up"],
-            ["4", "Completed"],
+            ["$1,240", "Today's Revenue"],
+            ["2", "Pending Payments"],
           ].map(([number, label]) => (
             <div key={label} className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4">
               <p className="text-3xl font-black text-green-400">{number}</p>
               <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-zinc-400">{label}</p>
             </div>
           ))}
+        </div>
+
+        <div className="mt-4 rounded-3xl border border-green-400/20 bg-green-500/10 p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.25em] text-green-300">
+                Repeat Customers
+              </p>
+
+              <p className="mt-2 text-3xl font-black text-white">
+                18 Active
+              </p>
+            </div>
+
+            <div className="rounded-2xl bg-black/40 px-4 py-3 text-right">
+              <p className="text-xs uppercase tracking-wider text-zinc-500">
+                Monthly Service
+              </p>
+
+              <p className="mt-1 text-lg font-black text-green-300">
+                9 Renewals
+              </p>
+            </div>
+          </div>
         </div>
 
         <div className="mt-8 rounded-3xl border border-red-400/40 bg-red-500/15 p-5">
@@ -124,7 +148,29 @@
           </div>
         </div>
 
-        <div className="mt-8 rounded-3xl border border-green-400/30 bg-green-500/10 p-5">
+        
+        <div className="mt-8">
+          <p className="mb-3 text-xs font-bold uppercase tracking-[0.25em] text-zinc-400">
+            Today's Activity
+          </p>
+
+          <div className="space-y-3">
+            {[
+              "Payment received from Sarah M. • 8:42 AM",
+              "New rodent estimate requested • 9:15 AM",
+              "Technician arrived at Mike R. property • 10:08 AM",
+              "Monthly service renewed • 11:20 AM",
+            ].map((activity) => (
+              <div
+                key={activity}
+                className="rounded-2xl border border-zinc-800 bg-zinc-950/70 px-4 py-4 text-sm text-zinc-200"
+              >
+                {activity}
+              </div>
+            ))}
+          </div>
+        </div>
+<div className="mt-8 rounded-3xl border border-green-400/30 bg-green-500/10 p-5">
           <p className="text-xs font-bold uppercase tracking-[0.25em] text-green-300">
             How Customers Flow In
           </p>
@@ -136,6 +182,8 @@
     </main>
   )
 }
+
+
 
 
 
