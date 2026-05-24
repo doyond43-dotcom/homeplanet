@@ -58,12 +58,17 @@
             "Spider Treatments",
             "Lawn & Perimeter",
           ].map((service) => (
-            <div
+            <a
               key={service}
-              className="rounded-2xl border border-zinc-800 bg-zinc-950/70 px-4 py-4"
+              href={`sms:+18633683628?&body=Hey%20Slap-A-Bug%2C%20I%20need%20help%20with%20${encodeURIComponent(service)}.`}
+              className="rounded-2xl border border-zinc-800 bg-zinc-950/70 px-4 py-4 transition hover:border-green-400/40 hover:bg-green-500/10"
             >
               <p className="text-lg font-semibold">{service}</p>
-            </div>
+
+              <p className="mt-1 text-xs uppercase tracking-wider text-zinc-500">
+                Tap to Request
+              </p>
+            </a>
           ))}
         </div>
 
@@ -95,6 +100,7 @@
     </main>
   )
 }
+
 
 
 
