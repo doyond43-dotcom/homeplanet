@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+﻿import { Routes, Route, Navigate } from "react-router-dom";
 
 import GetBusinessLivePage from "../pages/GetBusinessLivePage";
 import SwampLifeExperiencePage from '../pages/SwampLifeExperiencePage';
@@ -6,6 +6,7 @@ import SwampLifeExperiencePage from '../pages/SwampLifeExperiencePage';
 import SebastianSoftwashPage from "../pages/SebastianSoftwashPage";
 
 import SlapABugLanding from "../pages/SlapABugLanding";
+import SlapABugLiveBoard from "../pages/SlapABugLiveBoard";
 
 import LocalServiceStarterPage from "../pages/LocalServiceStarterPage";
 
@@ -323,6 +324,7 @@ export default function PlanetRoutes() {
         <Route path="/sebastian-softwash" element={<SebastianSoftwashPage />} />
       <Route index element={<Navigate to="/planet/start" replace />} />
       <Route path="slap-a-bug" element={<SlapABugLanding />} />
+      <Route path="slap-a-bug/live" element={<SlapABugLiveBoard />} />
       <Route path="local-service-page" element={<LocalServiceStarterPage />} />
       <Route path="birdbath" element={<BirdbathLandingPage />} />
       <Route path="birdbath/products" element={<BirdbathProductsPage />} />
@@ -527,6 +529,7 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
 
 
 
