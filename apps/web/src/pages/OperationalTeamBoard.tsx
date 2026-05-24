@@ -146,6 +146,27 @@ export default function OperationalStaffBoard() {
 
   return (
     <main style={page}>
+      <button
+        type="button"
+        onClick={() => window.location.assign("/planet/zands-light-xand")}
+        style={{
+          position: "fixed",
+          top: 16,
+          left: 16,
+          zIndex: 9999,
+          borderRadius: 999,
+          border: "1px solid rgba(56,189,248,0.35)",
+          background: "rgba(15,23,42,0.90)",
+          color: "white",
+          padding: "10px 16px",
+          fontWeight: 900,
+          cursor: "pointer",
+          boxShadow: "0 0 24px rgba(56,189,248,0.18)",
+        }}
+      >
+        ? Back to Liveboard
+      </button>
+
       <section style={{ maxWidth: 1180, margin: "0 auto" }}>
         <div style={{ ...card, marginBottom: 14 }}>
           <div style={{ fontSize: 12, fontWeight: 950, color: "#bae6fd", letterSpacing: 1.2 }}>
@@ -278,13 +299,116 @@ export default function OperationalStaffBoard() {
                     }}
                   />
 
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                    <button style={button} onClick={() => beforeRef.current?.click()}>
-                      Upload Before
-                    </button>
-                    <button style={button} onClick={() => afterRef.current?.click()}>
-                      Upload After
-                    </button>
+                  <div
+                    style={{
+                      borderRadius: 24,
+                      border: "1px solid rgba(34,211,238,0.24)",
+                      background:
+                        "radial-gradient(circle at top left, rgba(16,185,129,0.22), transparent 34%), linear-gradient(135deg, rgba(255,255,255,0.10), rgba(6,78,59,0.18), rgba(8,47,73,0.14))",
+                      boxShadow: "0 0 45px rgba(34,211,238,0.10), inset 0 1px 0 rgba(255,255,255,0.14)",
+                      padding: 14,
+                      overflow: "hidden",
+                    }}
+                  >
+                    <div style={{ fontSize: 11, fontWeight: 950, letterSpacing: "0.16em", textTransform: "uppercase", color: "#86efac" }}>
+                      Photo Proof & Workflow
+                    </div>
+
+                    <div style={{ marginTop: 6, fontSize: 20, fontWeight: 950, letterSpacing: "-0.03em", color: "white" }}>
+                      Show the work. Build trust.
+                    </div>
+
+                    <div style={{ marginTop: 4, fontSize: 12, lineHeight: 1.45, color: "rgba(255,255,255,0.68)" }}>
+                      Add before photos, after photos, and proof customers can understand.
+                    </div>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 34px 1fr", gap: 10, alignItems: "center", marginTop: 14 }}>
+                      <button
+                        type="button"
+                        onClick={() => beforeRef.current?.click()}
+                        style={{
+                          minHeight: 132,
+                          borderRadius: 18,
+                          border: "1px dashed rgba(125,211,252,0.38)",
+                          background: "rgba(0,0,0,0.28)",
+                          color: "white",
+                          padding: 12,
+                          cursor: "pointer",
+                          boxShadow: selected.beforePhotos.length ? "0 0 28px rgba(16,185,129,0.16)" : "none",
+                        }}
+                      >
+                        <div style={{ fontSize: 11, fontWeight: 950, letterSpacing: "0.1em", color: "#a7f3d0" }}>BEFORE</div>
+                        <div style={{ marginTop: 16, fontSize: 28 }}>??</div>
+                        <div style={{ marginTop: 8, fontSize: 12, lineHeight: 1.35, color: "rgba(255,255,255,0.78)" }}>
+                          Drop before photos here or click to upload
+                        </div>
+                        <div style={{ marginTop: 8, fontSize: 11, color: "rgba(255,255,255,0.45)" }}>
+                          {selected.beforePhotos.length} uploaded
+                        </div>
+                      </button>
+
+                      <div
+                        style={{
+                          height: 34,
+                          width: 34,
+                          borderRadius: 999,
+                          display: "grid",
+                          placeItems: "center",
+                          background: "rgba(16,185,129,0.16)",
+                          border: "1px solid rgba(52,211,153,0.32)",
+                          color: "#6ee7b7",
+                          boxShadow: "0 0 24px rgba(16,185,129,0.18)",
+                          fontWeight: 950,
+                        }}
+                      >
+                        ?
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => afterRef.current?.click()}
+                        style={{
+                          minHeight: 132,
+                          borderRadius: 18,
+                          border: "1px dashed rgba(125,211,252,0.38)",
+                          background: "rgba(0,0,0,0.28)",
+                          color: "white",
+                          padding: 12,
+                          cursor: "pointer",
+                          boxShadow: selected.afterPhotos.length ? "0 0 28px rgba(16,185,129,0.16)" : "none",
+                        }}
+                      >
+                        <div style={{ fontSize: 11, fontWeight: 950, letterSpacing: "0.1em", color: "#a7f3d0" }}>AFTER</div>
+                        <div style={{ marginTop: 16, fontSize: 28 }}>??</div>
+                        <div style={{ marginTop: 8, fontSize: 12, lineHeight: 1.35, color: "rgba(255,255,255,0.78)" }}>
+                          Drop after photos here or click to upload
+                        </div>
+                        <div style={{ marginTop: 8, fontSize: 11, color: "rgba(255,255,255,0.45)" }}>
+                          {selected.afterPhotos.length} uploaded
+                        </div>
+                      </button>
+                    </div>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginTop: 12 }}>
+                      {[
+                        ["Live Updates", "Customers see every step"],
+                        ["Build Trust", "Before / after speaks loud"],
+                        ["Job Proof", "Photos locked to job"],
+                      ].map(([title, desc]) => (
+                        <div
+                          key={title}
+                          style={{
+                            borderRadius: 14,
+                            border: "1px solid rgba(255,255,255,0.10)",
+                            background: "rgba(0,0,0,0.22)",
+                            padding: 10,
+                          }}
+                        >
+                          <div style={{ fontSize: 12, fontWeight: 950, color: "#d1fae5" }}>{title}</div>
+                          <div style={{ marginTop: 3, fontSize: 11, lineHeight: 1.3, color: "rgba(255,255,255,0.58)" }}>{desc}</div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
                   <button
@@ -338,6 +462,8 @@ export default function OperationalStaffBoard() {
     </main>
   );
 }
+
+
 
 
 

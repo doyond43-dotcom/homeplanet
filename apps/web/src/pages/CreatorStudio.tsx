@@ -1024,7 +1024,7 @@ export default function CreatorStudio() {
               Set up your business once. Everything runs from here.
             </h2>
             <div style={{ opacity: 0.75, fontSize: 12, lineHeight: 1.45 }}>
-              This creates your live board, staff board, and lobby board. Daily clips and updates attach later - they do not create new systems.
+              Create your live board, staff board, lobby page, QR flow, and proof trail from one clean starting point.
             </div>
           </div>
 
@@ -1207,6 +1207,9 @@ export default function CreatorStudio() {
     </div>
   );
 }
+
+
+
 
 
 

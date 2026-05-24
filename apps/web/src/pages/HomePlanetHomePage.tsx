@@ -8,18 +8,18 @@ const examples = [
     href: "/planet/only-the-essentials",
   },
   {
-    title: "Swamp Life Tours",
-    text: "A premium tour experience page with booking, memories, and ride flow direction.",
+    title: "Airboat Tour Experience",
+    text: "A premium outdoor experience page with booking, memories, and customer flow direction.",
     href: "/planet/swamp-life",
   },
   {
-    title: "Brahma Bull Restaurant",
-    text: "Restaurant operations, table awareness, kitchen flow, crew updates, and live boards.",
+    title: "Restaurant Operations Demo",
+    text: "Live restaurant operations, table flow, kitchen coordination, and customer awareness.",
     href: "/planet/brahma-bull",
   },
   {
     title: "Creator Studio",
-    text: "Turn an idea, moment, or local business into a live page people can actually use.",
+    text: "Launch your own live business system with intake, payments, QR flows, updates, and connected pages.",
     href: "/planet/creator/studio",
   },
 ];
@@ -249,6 +249,8 @@ export default function HomePlanetHomePage() {
     </main>
   );
 }
+
+
 
 
 

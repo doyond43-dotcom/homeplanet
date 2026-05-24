@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+﻿import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 type LiveJobStage = string;
@@ -238,4 +238,5 @@ const buttonPrimary: CSSProperties = {
   background: "rgba(0,255,150,0.10)",
   color: "rgba(220,255,245,0.95)",
 };
+
 
