@@ -1,4 +1,4 @@
-﻿import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 import GetBusinessLivePage from "../pages/GetBusinessLivePage";
 import SwampLifeExperiencePage from '../pages/SwampLifeExperiencePage';
@@ -105,6 +105,7 @@ import CreatorSystems from "../pages/CreatorSystems";
 import CreatorProjects from "../pages/CreatorProjects";
 
 import CreatorStudio from "../pages/CreatorStudio";
+import HomePlanetHomePage from "../pages/HomePlanetHomePage";
 
 import CreatorStudioBoard from "../pages/CreatorStudioBoard";
 
@@ -525,10 +526,15 @@ export default function PlanetRoutes() {
 
 
 
+            <Route path="" element={<HomePlanetHomePage />} />
+      <Route path="home" element={<HomePlanetHomePage />} />
+
       <Route path="*" element={<Navigate to="/planet/start" replace />} />
 </Routes>
   );
 }
+
+
 
 
 
