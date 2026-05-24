@@ -1,4 +1,4 @@
-﻿import { useMemo, useRef, useState, type ReactNode } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
 
 type JobStage = "IN PROGRESS" | "PROOF ADDED" | "PAYMENT" | "COMPLETE";
 
@@ -203,7 +203,7 @@ export default function ZandsLightXandBoard() {
                 <div key={stage.title} style={stageColumn}>
                   <div style={stageHeader}>
                     <div style={{ fontSize: 14, fontWeight: 950, letterSpacing: 1 }}>
-                      <span style={{ color: stage.color, marginRight: 10 }}>●</span>
+                      <span style={{ color: stage.color, marginRight: 10 }}>?</span>
                       {stage.title}
                     </div>
                     <div style={stageCount}>{stageJobs.length}</div>
@@ -354,13 +354,21 @@ export default function ZandsLightXandBoard() {
             <div style={detailsBox}>
               <PanelTitle>PHOTO PROOF</PanelTitle>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                <button style={detailsButton} onClick={() => beforeInputRef.current?.click()}>
-                  Add Before
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 34px 1fr", gap: 10, alignItems: "stretch" }}>
+                <button style={proofButton} onClick={() => beforeInputRef.current?.click()}>
+                  <div style={{ fontSize: 11, fontWeight: 950, letterSpacing: "0.1em", color: "#a7f3d0" }}>BEFORE</div>
+                  <div style={{ marginTop: 12, fontSize: 23 }}>??</div>
+                  <div style={{ marginTop: 8, fontSize: 12, color: "rgba(255,255,255,0.78)" }}>Upload photo</div>
+                  <div style={{ marginTop: 8, fontSize: 11, color: "rgba(255,255,255,0.48)" }}>{selectedJob.beforePhotos.length} uploaded</div>
                 </button>
 
-                <button style={detailsButton} onClick={() => afterInputRef.current?.click()}>
-                  Add After
+                <div style={proofArrow}>?</div>
+
+                <button style={proofButton} onClick={() => afterInputRef.current?.click()}>
+                  <div style={{ fontSize: 11, fontWeight: 950, letterSpacing: "0.1em", color: "#a7f3d0" }}>AFTER</div>
+                  <div style={{ marginTop: 12, fontSize: 23 }}>??</div>
+                  <div style={{ marginTop: 8, fontSize: 12, color: "rgba(255,255,255,0.78)" }}>Upload photo</div>
+                  <div style={{ marginTop: 8, fontSize: 11, color: "rgba(255,255,255,0.48)" }}>{selectedJob.afterPhotos.length} uploaded</div>
                 </button>
               </div>
 
@@ -433,7 +441,7 @@ export default function ZandsLightXandBoard() {
               {selectedJob.timeline.slice(0, 4).map((item, index) => (
                 <div key={`${item}-${index}`} style={timelineRow}>
                   <div>
-                    <span style={{ color: selectedJob.color, marginRight: 12 }}>●</span>
+                    <span style={{ color: selectedJob.color, marginRight: 12 }}>?</span>
                     {item}
                   </div>
                   <div style={{ color: "rgba(186,230,253,0.62)" }}>12:{42 + index * 3} PM</div>
@@ -792,4 +800,31 @@ const orb: React.CSSProperties = {
 
 
 
+
+
+
+const proofButton: React.CSSProperties = {
+  minHeight: 116,
+  borderRadius: 18,
+  border: "1px dashed rgba(125,211,252,0.36)",
+  background: "rgba(0,0,0,0.24)",
+  color: "white",
+  padding: 12,
+  cursor: "pointer",
+  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)",
+};
+
+const proofArrow: React.CSSProperties = {
+  height: 34,
+  width: 34,
+  alignSelf: "center",
+  borderRadius: 999,
+  display: "grid",
+  placeItems: "center",
+  background: "rgba(16,185,129,0.16)",
+  border: "1px solid rgba(52,211,153,0.32)",
+  color: "#6ee7b7",
+  boxShadow: "0 0 24px rgba(16,185,129,0.18)",
+  fontWeight: 950,
+};
 

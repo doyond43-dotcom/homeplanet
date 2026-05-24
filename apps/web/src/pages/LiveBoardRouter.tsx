@@ -1316,12 +1316,19 @@ export default function LiveBoardRouter() {
     return <AutoRepairLiveBoard />;
   }
 
-  if (resolvedBoardSlug && creatorSystemPayload?.operationalSystem) {
-    return <OperationalLiveBoard boardSlug={resolvedBoardSlug} payload={creatorSystemPayload} />;
-  }
-
-  if (resolvedBoardSlug && creatorSystemPayload) {
-    return <CreatorSystemLiveBoard boardSlug={resolvedBoardSlug} payload={creatorSystemPayload} />;
+  if (resolvedBoardSlug) {
+    return (
+      <OperationalLiveBoard
+        boardSlug={resolvedBoardSlug}
+        payload={
+          creatorSystemPayload || {
+            boardSlug: resolvedBoardSlug,
+            businessName: titleFromSlug(resolvedBoardSlug),
+            createdAt: new Date().toISOString(),
+          }
+        }
+      />
+    );
   }
 
   if (resolvedBoardSlug) {
@@ -1344,6 +1351,7 @@ export default function LiveBoardRouter() {
 
   return <BeautySalonLiveBoard />;
 }
+
 
 
 
