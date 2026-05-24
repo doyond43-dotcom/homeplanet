@@ -56,6 +56,7 @@ export default function HomePlanetHomePage() {
         <div className="absolute bottom-[-20%] left-[20%] h-[45rem] w-[45rem] rounded-full bg-blue-500/10 blur-3xl" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.05),transparent_45%)]" />
       </div>
+
       <section className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col px-5 py-6">
         <header className="flex items-center justify-between rounded-3xl border border-white/[0.08] bg-white/[0.03] px-4 py-3">
           <Link to="/" className="flex items-center gap-2">
@@ -131,7 +132,7 @@ export default function HomePlanetHomePage() {
               <img
                 src="/images/homeplanet-connected-flow-bg.png"
                 alt="HomePlanet connected flow"
-                className="absolute inset-0 h-full w-full object-cover object-[65%_55%] opacity-55 scale-105"
+                className="absolute inset-0 h-full w-full scale-105 object-cover object-[65%_55%] opacity-55"
               />
 
               <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/55 to-black/80" />
@@ -141,7 +142,7 @@ export default function HomePlanetHomePage() {
                 <div className="mb-5 flex items-center justify-between">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-[0.25em] text-emerald-300">Live Planet</p>
-                    <h2 className="mt-1 text-2xl font-black">Today’s connected flow</h2>
+                    <h2 className="mt-1 text-2xl font-black">Today's connected flow</h2>
                   </div>
                   <div className="flex items-center gap-2 rounded-full bg-emerald-400 px-3 py-1 text-xs font-black text-neutral-950">
                     <div className="h-2 w-2 animate-pulse rounded-full bg-neutral-950" />
@@ -151,7 +152,10 @@ export default function HomePlanetHomePage() {
 
                 <div className="space-y-3">
                   {["Customer scans", "Request comes in", "Crew updates live", "Payment gets collected", "Proof stays attached"].map((item, index) => (
-                    <div key={item} className="group relative flex items-center gap-3 overflow-hidden rounded-2xl border border-white/[0.08] bg-black/35 p-4 backdrop-blur-sm transition duration-300 hover:border-emerald-300/30 hover:bg-black/45">
+                    <div
+                      key={item}
+                      className="group relative flex items-center gap-3 overflow-hidden rounded-2xl border border-white/[0.08] bg-black/35 p-4 backdrop-blur-sm transition duration-300 hover:border-emerald-300/30 hover:bg-black/45"
+                    >
                       <div className="absolute left-0 top-0 h-full w-[3px] bg-emerald-400/40 opacity-0 transition duration-300 group-hover:opacity-100" />
                       <div className="grid h-9 w-9 place-items-center rounded-xl bg-white text-sm font-black text-neutral-950">
                         {index + 1}
@@ -169,6 +173,7 @@ export default function HomePlanetHomePage() {
           </div>
         </div>
       </section>
+
       <section id="philosophy" className="relative z-10 mx-auto max-w-6xl px-5 py-16">
         <div className="max-w-2xl">
           <p className="text-xs font-black uppercase tracking-[0.25em] text-emerald-300">The philosophy</p>
@@ -249,6 +254,7 @@ export default function HomePlanetHomePage() {
     </main>
   );
 }
+
 
 
 
