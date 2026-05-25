@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 
+import EcosystemInfrastructureLayer from "../pages/EcosystemInfrastructureLayer";
 import GetBusinessLivePage from "../pages/GetBusinessLivePage";
 import SwampLifeExperiencePage from '../pages/SwampLifeExperiencePage';
 
@@ -522,6 +523,7 @@ export default function PlanetRoutes() {
       <Route path="greenbasket" element={<GreenBasketMarketBrandVisualDirection />} />
       <Route path="greenbasket-system" element={<GreenBasketSystemPage />} />
 <Route path="ecosystem" element={<EcosystemCoordinationBoard />} />
+      <Route path="ecosystem/infrastructure" element={<EcosystemInfrastructureLayer />} />
       <Route path="participation-living" element={<ParticipationLivingPage />} />
 <Route path="ecosystem-infrastructure" element={<EcosystemInfrastructurePortal />} />
 <Route path="get-live" element={<GetBusinessLivePage />} />
@@ -543,6 +545,9 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
+
+
 
 
 

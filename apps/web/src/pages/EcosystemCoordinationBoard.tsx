@@ -19,8 +19,8 @@ const ecosystemCards = [
   },
   {
     title: "GreenBasket",
-    description: "Fresh • Warehouse • Commons ecosystem circulation anchor.",
-    href: "/planet/greenbasket",
+    description: "Shared infrastructure layer across GreenBasket, warehouse, coffee, WingIt, delivery, and residents.",
+    href: "/planet/ecosystem/infrastructure",
     icon: ShoppingBasket,
   },
   {
@@ -187,6 +187,9 @@ export default function EcosystemCoordinationBoard() {
     </div>
   );
 }
+
+
+
 
 
 
