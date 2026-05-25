@@ -105,6 +105,7 @@ import CreatorSystems from "../pages/CreatorSystems";
 import CreatorProjects from "../pages/CreatorProjects";
 
 import CreatorStudio from "../pages/CreatorStudio";
+import ActivationPage from "../pages/ActivationPage";
 import HomePlanetHomePage from "../pages/HomePlanetHomePage";
 
 import CreatorStudioBoard from "../pages/CreatorStudioBoard";
@@ -309,10 +310,13 @@ import StarterLivePageCreatorPage from "../pages/StarterLivePageCreatorPage";
 import EcosystemCirculationBoard from "../pages/EcosystemCirculationBoard";
 
 import GreenBasketMarketBrandVisualDirection from "../pages/GreenBasketMarketBrandVisualDirection";
+import GreenBasketSystemPage from "../pages/GreenBasketSystemPage";
 
 import StarterGeneratedLivePage from "../pages/StarterGeneratedLivePage";
 
 import EcosystemInfrastructurePortal from "../pages/EcosystemInfrastructurePortal";
+import EcosystemCoordinationBoard from "../pages/EcosystemCoordinationBoard";
+import ParticipationLivingPage from "../pages/ParticipationLivingPage";
 
 
 export default function PlanetRoutes() {
@@ -406,6 +410,7 @@ export default function PlanetRoutes() {
       <Route path="creator/systems" element={<CreatorSystems />} />
       <Route path="creator/projects" element={<CreatorProjects />} />
       <Route path="creator/studio/*" element={<CreatorStudio />} />
+      <Route path="activate/:boardSlug" element={<ActivationPage />} />
       <Route path="creator/:slug/moment" element={<CreatorMomentPage />} />
       <Route path="creator/studio-board" element={<CreatorStudioBoard />} />
       <Route path="creator/build" element={<CreatorBuild />} />
@@ -514,7 +519,12 @@ export default function PlanetRoutes() {
       <Route path="ecosystem-map" element={<EcosystemCirculationMapMVP />} />
       <Route path="wingit" element={<WingItBrandVisualMockup />} />
       <Route path="circulation" element={<EcosystemCirculationBoard />} />
-      <Route path="greenbasket" element={<GreenBasketMarketBrandVisualDirection />} />      <Route path="ecosystem-infrastructure" element={<EcosystemInfrastructurePortal />} />      <Route path="get-live" element={<GetBusinessLivePage />} />
+      <Route path="greenbasket" element={<GreenBasketMarketBrandVisualDirection />} />
+      <Route path="greenbasket-system" element={<GreenBasketSystemPage />} />
+<Route path="ecosystem" element={<EcosystemCoordinationBoard />} />
+      <Route path="participation-living" element={<ParticipationLivingPage />} />
+<Route path="ecosystem-infrastructure" element={<EcosystemInfrastructurePortal />} />
+<Route path="get-live" element={<GetBusinessLivePage />} />
 
 
 
@@ -533,6 +543,11 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
+
+
+
+
 
 
 

@@ -191,7 +191,143 @@ export default function GreenBasketMarketBrandVisualDirection() {
             </div>
           ))}
         </div>
+
+        <section className="mt-12 grid gap-6 lg:grid-cols-3">
+
+  <div className="rounded-[2rem] border border-lime-400/10 bg-[#151816] p-8">
+    <div className="text-xs uppercase tracking-[0.3em] text-lime-300">
+      Fresh Essentials
+    </div>
+
+    <h2 className="mt-5 text-3xl font-black text-white">
+      Daily resident convenience.
+    </h2>
+
+    <p className="mt-5 text-base leading-8 text-zinc-400">
+      Groceries, bakery, pharmacy, grab-and-go, resident pickup, and daily ecosystem support.
+    </p>
+
+    <div className="mt-8 space-y-3">
+      <div className="rounded-2xl border border-white/5 bg-black/30 px-4 py-3 text-zinc-300">Resident pickup</div>
+      <div className="rounded-2xl border border-white/5 bg-black/30 px-4 py-3 text-zinc-300">Daily essentials</div>
+      <div className="rounded-2xl border border-white/5 bg-black/30 px-4 py-3 text-zinc-300">Coffee + grab-and-go</div>
+      <div className="rounded-2xl border border-white/5 bg-black/30 px-4 py-3 text-zinc-300">Fresh inventory rotation</div>
+    </div>
+  </div>
+
+  <div className="rounded-[2rem] border border-yellow-400/10 bg-[#151816] p-8">
+    <div className="text-xs uppercase tracking-[0.3em] text-yellow-300">
+      Warehouse + Logistics
+    </div>
+
+    <h2 className="mt-5 text-3xl font-black text-white">
+      Operational circulation.
+    </h2>
+
+    <p className="mt-5 text-base leading-8 text-zinc-400">
+      Inventory coordination, WingIt supply, delivery routes, ecosystem restock, and Hub logistics flow.
+    </p>
+
+    <div className="mt-8 space-y-3">
+      <div className="rounded-2xl border border-white/5 bg-black/30 px-4 py-3 text-zinc-300">Shuttle delivery</div>
+      <div className="rounded-2xl border border-white/5 bg-black/30 px-4 py-3 text-zinc-300">Warehouse restock</div>
+      <div className="rounded-2xl border border-white/5 bg-black/30 px-4 py-3 text-zinc-300">WingIt support</div>
+      <div className="rounded-2xl border border-white/5 bg-black/30 px-4 py-3 text-zinc-300">Distribution flow</div>
+    </div>
+  </div>
+
+  <div className="rounded-[2rem] border border-emerald-400/10 bg-[#151816] p-8">
+    <div className="text-xs uppercase tracking-[0.3em] text-emerald-300">
+      Commons + Participation
+    </div>
+
+    <h2 className="mt-5 text-3xl font-black text-white">
+      Gathering infrastructure.
+    </h2>
+
+    <p className="mt-5 text-base leading-8 text-zinc-400">
+      Coffee lounge, coworking, bookstore, meetings, social gathering, and resident participation.
+    </p>
+
+    <div className="mt-8 space-y-3">
+      <div className="rounded-2xl border border-white/5 bg-black/30 px-4 py-3 text-zinc-300">Coffee commons</div>
+      <div className="rounded-2xl border border-white/5 bg-black/30 px-4 py-3 text-zinc-300">Coworking</div>
+      <div className="rounded-2xl border border-white/5 bg-black/30 px-4 py-3 text-zinc-300">Community events</div>
+      <div className="rounded-2xl border border-white/5 bg-black/30 px-4 py-3 text-zinc-300">Participation layer</div>
+    </div>
+  </div>
+
+</section>
+
+<section className="mt-8 rounded-[2rem] border border-white/10 bg-[#101310] p-10">
+  <div className="text-xs uppercase tracking-[0.3em] text-zinc-500">
+    Community-Responsive Inventory
+  </div>
+
+  <h2 className="mt-5 text-4xl font-black text-white">
+    The community helps shape the store.
+  </h2>
+
+  <p className="mt-6 max-w-5xl text-lg leading-9 text-zinc-400">
+    GreenBasket adapts to the people living and working inside the ecosystem. Local culture, workforce demand, resident requests, regional products, delivery flow, and daily circulation all influence inventory and operational rhythm.
+  </p>
+</section>
+
+<section className="mt-6 grid gap-4 md:grid-cols-5">
+  {[
+    {
+      title: "Resident Pickup",
+      value: "18 completed",
+      tone: "border-lime-400/10 text-lime-300",
+    },
+    {
+      title: "WingIt Restock",
+      value: "Arrived 11:42 AM",
+      tone: "border-orange-400/10 text-orange-300",
+    },
+    {
+      title: "Coffee Commons",
+      value: "Lunch rush active",
+      tone: "border-cyan-400/10 text-cyan-300",
+    },
+    {
+      title: "Shuttle Route",
+      value: "Tower B active",
+      tone: "border-yellow-400/10 text-yellow-300",
+    },
+    {
+      title: "Fresh Produce",
+      value: "ETA 2:15 PM",
+      tone: "border-emerald-400/10 text-emerald-300",
+    },
+  ].map((item) => (
+    <div
+      key={item.title}
+      className={`rounded-2xl border bg-[#151816] p-5 ${item.tone}`}
+    >
+      <div className="text-[11px] uppercase tracking-[0.22em] text-zinc-500">
+        {item.title}
+      </div>
+
+      <div className="mt-3 text-lg font-bold text-white">
+        {item.value}
+      </div>
+    </div>
+  ))}
+</section>
+<section className="mt-6 rounded-[2rem] border border-lime-400/10 bg-lime-400/5 p-8">
+          <div className="text-xs uppercase tracking-[0.25em] text-lime-300">Why It Matters</div>
+          <h2 className="mt-4 text-3xl font-black text-white">GreenBasket is not isolated retail.</h2>
+          <p className="mt-5 max-w-4xl text-base leading-8 text-zinc-300">
+            It becomes daily-life infrastructure: food, coffee, warehouse, delivery, community gathering, cultural responsiveness, logistics, and resident circulation working together.
+          </p>
+        </section>
       </div>
     </div>
   );
 }
+
+
+
+
+

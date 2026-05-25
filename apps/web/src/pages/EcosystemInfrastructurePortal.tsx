@@ -77,10 +77,10 @@ export default function EcosystemInfrastructurePortal() {
             </a>
 
             <a
-              href="/planet/greenbasket"
+              href="/planet/greenbasket-system"
               className="rounded-2xl border border-zinc-700 bg-zinc-900 px-6 py-4 font-semibold hover:bg-zinc-800 transition"
             >
-              Explore GreenBasket
+              How GreenBasket Works
             </a>
           </div>
         </div>
