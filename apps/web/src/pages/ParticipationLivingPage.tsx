@@ -1,6 +1,13 @@
 export default function ParticipationLivingPage() {
   return (
     <div className="min-h-screen bg-black text-white">
+        <a
+          data-ecosystem-nav="true"
+          href="/planet/ecosystem"
+          className="mb-6 inline-flex rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-bold text-zinc-300 transition hover:border-emerald-400/40 hover:text-white"
+        >
+          ? Back to Ecosystem
+        </a>
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8 md:px-6">
 
         <section className="rounded-3xl border border-white/10 bg-zinc-950 p-8">

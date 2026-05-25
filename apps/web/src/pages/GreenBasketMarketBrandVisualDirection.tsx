@@ -1,6 +1,13 @@
 export default function GreenBasketMarketBrandVisualDirection() {
   return (
     <div className="min-h-screen bg-[#0f1110] text-white p-6 md:p-10">
+        <a
+          data-ecosystem-nav="true"
+          href="/planet/ecosystem"
+          className="mb-6 inline-flex rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-bold text-zinc-300 transition hover:border-emerald-400/40 hover:text-white"
+        >
+          ? Back to Ecosystem
+        </a>
       <div className="max-w-7xl mx-auto space-y-8">
         <div className="rounded-[36px] overflow-hidden border border-lime-500/20 bg-gradient-to-br from-[#141816] via-[#111513] to-[#0d100f]">
           <div className="grid lg:grid-cols-2 gap-0">
@@ -326,6 +333,7 @@ export default function GreenBasketMarketBrandVisualDirection() {
     </div>
   );
 }
+
 
 
 
