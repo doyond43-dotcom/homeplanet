@@ -1,6 +1,5 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 
-import EcosystemInfrastructureLayer from "../pages/EcosystemInfrastructureLayer";
 import GetBusinessLivePage from "../pages/GetBusinessLivePage";
 import SwampLifeExperiencePage from '../pages/SwampLifeExperiencePage';
 
@@ -106,7 +105,6 @@ import CreatorSystems from "../pages/CreatorSystems";
 import CreatorProjects from "../pages/CreatorProjects";
 
 import CreatorStudio from "../pages/CreatorStudio";
-import ActivationPage from "../pages/ActivationPage";
 import HomePlanetHomePage from "../pages/HomePlanetHomePage";
 
 import CreatorStudioBoard from "../pages/CreatorStudioBoard";
@@ -289,13 +287,10 @@ import SystemHomePage from "../pages/SystemHomePage";
 import CrewTeamBoard from "../pages/CrewTeamBoard";
 
 import HubOperationsBoardMVP from "../pages/HubOperationsBoardMVP";
-import HubOperationsIdentitySystemPage from "../pages/HubOperationsIdentitySystemPage";
 
 import EcosystemCirculationMapMVP from "../pages/EcosystemCirculationMapMVP";
 
 import WingItBrandVisualMockup from "../pages/WingItBrandVisualMockup";
-import WingItBrandPalettePage from "../pages/WingItBrandPalettePage";
-import WingItBrandIdentityPage from "../pages/WingItBrandIdentityPage";
 
 import BrahmaBullFrontDoor from "../pages/BrahmaBullFrontDoor";
 
@@ -314,18 +309,10 @@ import StarterLivePageCreatorPage from "../pages/StarterLivePageCreatorPage";
 import EcosystemCirculationBoard from "../pages/EcosystemCirculationBoard";
 
 import GreenBasketMarketBrandVisualDirection from "../pages/GreenBasketMarketBrandVisualDirection";
-import GreenBasketSystemPage from "../pages/GreenBasketSystemPage";
-import GreenBasketBrandKitPage from "../pages/GreenBasketBrandKitPage";
-import GreenBasketBrandPalettePage from "../pages/GreenBasketBrandPalettePage";
 
 import StarterGeneratedLivePage from "../pages/StarterGeneratedLivePage";
 
 import EcosystemInfrastructurePortal from "../pages/EcosystemInfrastructurePortal";
-import EcosystemCoordinationBoard from "../pages/EcosystemCoordinationBoard";
-import ParticipationLivingPage from "../pages/ParticipationLivingPage";
-import LiveCirculationHeartbeatPage from "../pages/LiveCirculationHeartbeatPage";
-import PredictiveParkingIntelligencePage from "../pages/PredictiveParkingIntelligencePage";
-import RestaurantAwarenessIntelligencePage from "../pages/RestaurantAwarenessIntelligencePage";
 
 
 export default function PlanetRoutes() {
@@ -419,7 +406,6 @@ export default function PlanetRoutes() {
       <Route path="creator/systems" element={<CreatorSystems />} />
       <Route path="creator/projects" element={<CreatorProjects />} />
       <Route path="creator/studio/*" element={<CreatorStudio />} />
-      <Route path="activate/:boardSlug" element={<ActivationPage />} />
       <Route path="creator/:slug/moment" element={<CreatorMomentPage />} />
       <Route path="creator/studio-board" element={<CreatorStudioBoard />} />
       <Route path="creator/build" element={<CreatorBuild />} />
@@ -525,24 +511,10 @@ export default function PlanetRoutes() {
       <Route path="all-clean-cuts" element={<AllCleanCutsFrontDoor />} />
       <Route path="all-clean-cuts/fresh-cut/:cutSlug" element={<AllCleanCutsFreshCutPage />} />
       <Route path="hub" element={<HubOperationsBoardMVP />} />
-      <Route path="hub-identity" element={<HubOperationsIdentitySystemPage />} />
       <Route path="ecosystem-map" element={<EcosystemCirculationMapMVP />} />
       <Route path="wingit" element={<WingItBrandVisualMockup />} />
-      <Route path="wingit-brand-palette" element={<WingItBrandIdentityPage />} />
-      <Route path="wingit-identity" element={<WingItBrandIdentityPage />} />
       <Route path="circulation" element={<EcosystemCirculationBoard />} />
-      <Route path="live-circulation-heartbeat" element={<LiveCirculationHeartbeatPage />} />
-      <Route path="predictive-parking-intelligence" element={<PredictiveParkingIntelligencePage />} />
-      <Route path="restaurant-awareness-intelligence" element={<RestaurantAwarenessIntelligencePage />} />
-      <Route path="greenbasket" element={<GreenBasketMarketBrandVisualDirection />} />
-      <Route path="greenbasket-system" element={<GreenBasketSystemPage />} />
-      <Route path="greenbasket-brand-kit" element={<GreenBasketBrandKitPage />} />
-      <Route path="greenbasket-brand-palette" element={<GreenBasketBrandPalettePage />} />
-<Route path="ecosystem" element={<EcosystemCoordinationBoard />} />
-      <Route path="ecosystem/infrastructure" element={<EcosystemInfrastructureLayer />} />
-      <Route path="participation-living" element={<ParticipationLivingPage />} />
-<Route path="ecosystem-infrastructure" element={<EcosystemInfrastructurePortal />} />
-<Route path="get-live" element={<GetBusinessLivePage />} />
+      <Route path="greenbasket" element={<GreenBasketMarketBrandVisualDirection />} />      <Route path="ecosystem-infrastructure" element={<EcosystemInfrastructurePortal />} />      <Route path="get-live" element={<GetBusinessLivePage />} />
 
 
 
@@ -561,26 +533,6 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

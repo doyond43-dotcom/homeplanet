@@ -1,357 +1,150 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 
-import EcosystemInfrastructureLayer from "../pages/EcosystemInfrastructureLayer";
-import GetBusinessLivePage from "../pages/GetBusinessLivePage";
-import SwampLifeExperiencePage from '../pages/SwampLifeExperiencePage';
-
-import SebastianSoftwashPage from "../pages/SebastianSoftwashPage";
-
-import SlapABugLanding from "../pages/SlapABugLanding";
-import SlapABugLiveBoard from "../pages/SlapABugLiveBoard";
-
-import LocalServiceStarterPage from "../pages/LocalServiceStarterPage";
-
-import BirdbathLandingPage from "../pages/BirdbathLandingPage";
-
-import BirdbathProductsPage from "../pages/BirdbathProductsPage";
-
-
 import PlanetOverview from "../pages/PlanetOverview";
-
 import CityPage from "../pages/CityPage";
-
 import FoundLayer from "../pages/FoundLayer";
-
 import FoundItemPage from "../pages/FoundItemPage";
-
 import OnlyTheEssentialsBoard from "../pages/OnlyTheEssentialsBoard";
-
 import OnlyTheEssentialsLanding from "../pages/OnlyTheEssentialsLanding";
-
 import OnlyTheEssentialsCustomerLanding from "../pages/OnlyTheEssentialsCustomerLanding";
-
 import OnlyTheEssentialsPublicLanding from "../pages/OnlyTheEssentialsPublicLanding";
-
 import OnlyTheEssentialsRequest from "../pages/OnlyTheEssentialsRequest";
-
 import OnlyTheEssentialsMessagesBoard from "../pages/OnlyTheEssentialsMessagesBoard";
-
 import PoolServicePlanet from "../pages/PoolServicePlanet";
-
 import PoolServiceDemoBoard from "../pages/PoolServiceDemoBoard";
-
 import PlumbingServiceDemoBoard from "../pages/PlumbingServiceDemoBoard";
-
 import CaptainDChartersPage from "../pages/CaptainDChartersPage";
-
 import CaptainDTripMemoryPage from "../pages/CaptainDTripMemoryPage";
-
 import CaptainDPrivacyPage from "../pages/CaptainDPrivacyPage";
-
 import CaptainDBookingPage from "../pages/CaptainDBookingPage";
-
 import LakeExperienceShowcasePage from "../pages/LakeExperienceShowcasePage";
-
 import LakeExperienceBookingPage from "../pages/LakeExperienceBookingPage";
-
 import LakeExperienceMemoryPage from "../pages/LakeExperienceMemoryPage";
-
 import LakeExperiencePrivacyPage from "../pages/LakeExperiencePrivacyPage";
-
 import LazyLunkerExperiencePage from "../pages/LazyLunkerExperiencePage";
-
 import LazyLunkerBookingPage from "../pages/LazyLunkerBookingPage";
-
 import LazyLunkerFishingAddonPage from "../pages/LazyLunkerFishingAddonPage";
-
 import StayExperienceShowcasePage from "../pages/StayExperienceShowcasePage";
-
 import OkieDokieSoftwashPage from "../pages/OkieDokieSoftwashPage";
-
 import StayExperienceBookingPage from "../pages/StayExperienceBookingPage";
-
 import StayExperienceFishingAddonPage from "../pages/StayExperienceFishingAddonPage";
-
 import StayExperienceRequestActivePage from "../pages/StayExperienceRequestActivePage";
-
 import LazyLunkerRequestActivePage from "../pages/LazyLunkerRequestActivePage";
-
 import LaundromatBoard from "../pages/LaundromatBoard";
-
 import LocalNetworkDemo from "../pages/LocalNetworkDemo";
-
 import HomePlanetEventsBoard from "../pages/HomePlanetEventsBoard";
-
 import StartPage from "../pages/StartPage";
-
 import BusinessSetupForm from "../pages/BusinessSetupForm";
-
 import PrintShopLandingPage from "../pages/PrintShopLandingPage";
-
 import PrintShopOrderPage from "../pages/PrintShopOrderPage";
-
 import PrintShopArtworkPage from "../pages/PrintShopArtworkPage";
-
 import PrintShopTrackPage from "../pages/PrintShopTrackPage";
-
 import PrintShopOwnerBoard from "../pages/PrintShopOwnerBoard";
 
-
 import CreatorCity from "../pages/CreatorCity";
-
 import CreatorLanding from "../pages/CreatorLanding";
-
 import CreatorSystems from "../pages/CreatorSystems";
-
 import CreatorProjects from "../pages/CreatorProjects";
-
 import CreatorStudio from "../pages/CreatorStudio";
-import ActivationPage from "../pages/ActivationPage";
-import HomePlanetHomePage from "../pages/HomePlanetHomePage";
-
 import CreatorStudioBoard from "../pages/CreatorStudioBoard";
-
 import CreatorMomentPage from "../pages/CreatorMomentPage";
-
 import OperationalCustomerRequestPage from "../pages/OperationalCustomerRequestPage";
-
 import OperationalStaffBoard from "../pages/OperationalStaffBoard";
-
 import OperationalTeamBoard from "../pages/OperationalTeamBoard";
-
 import StaffBoardPage from "../pages/StaffBoardPage";
-
 import LobbyBoardPage from "../pages/LobbyBoardPage";
-
 import CreatorBuild from "../pages/CreatorBuild";
-
-import CreatorLaunchSequencePage from "../pages/CreatorLaunchSequencePage";
-
 import ReleaseViewer from "../pages/ReleaseViewer";
-
 import RcAirboatsLiveDemo from "../pages/RcAirboatsLiveDemo";
-
 import ExperiencePlanet from "../pages/ExperiencePlanet";
-
 import HayleyLiveBoard from "../pages/HayleyLiveBoard";
-
 import MealBoardDemo from "../pages/MealBoardDemo";
-
 import MealBusinessDemo from "../pages/MealBusinessDemo";
-
 import BigDaveEatsLive from "../pages/BigDaveEatsLive";
-
 import SkateZoneDemo from "../pages/SkateZoneDemo";
-
 import SkateZoneQrDemo from "../pages/SkateZoneQrDemo";
-
 import PredatorShieldIntervention from "../pages/PredatorShieldIntervention";
-
 import HomePlanetKids from "../pages/HomePlanetKids";
-
 import HomePlanetKidsStart from "../pages/HomePlanetKidsStart";
-
 import HomePlanetKidsSpace from "../pages/HomePlanetKidsSpace";
-
 import HomePlanetKidsProject from "../pages/HomePlanetKidsProject";
 
-
 import AutoRepairProtected from "../pages/AutoRepairProtected";
-
 import AutoRepairLiveBoardSample from "../pages/AutoRepairLiveBoardSample";
-
 import BeautySalonLiveBoard from "../pages/BeautySalonLiveBoard";
-
 import ButcherLivestockIntakeFlow from "../pages/ButcherLivestockIntakeFlow";
-
 import ButcherLivestockTruthBoard from "../pages/ButcherLivestockTruthBoard";
-
 import GuardianMobilityLiveBoard from "../pages/GuardianMobilityLiveBoard";
-
 import LiveBoardRouter from "../pages/LiveBoardRouter";
 
-import ZandsLightXandBoard from "../pages/ZandsLightXandBoard";
-
-import AllCleanCutsFrontDoor from "../pages/AllCleanCutsFrontDoor";
-
-import AllCleanCutsFreshCutPage from "../pages/AllCleanCutsFreshCutPage";
-
-
 import SafariSalesPage from "../pages/SafariSalesPage";
-
 import SafariAnimalPage from "../pages/SafariAnimalPage";
-
 import SafariMomentPage from "../pages/SafariMomentPage";
-
 import SafariLiveBoard from "../pages/SafariLiveBoard";
 
-
 import ParentChildView from "../pages/ParentChildView";
-
 import GuardianPublicProfilePage from "../pages/GuardianPublicProfilePage";
 
-
 import AwnitDemoBoard from "../pages/AwnitDemoBoard";
-
 import CampAquaflowStandalone from "../pages/CampAquaflowStandalone";
-
 import InvoiceView from "../pages/InvoiceView";
-
 import CommunitySaleBoard from "../pages/community/CommunitySaleBoard";
-
 import TransportationDispatchBoardV2 from "../pages/TransportationDispatchBoardV2";
-
 import EscapeBoardDemo from "../pages/EscapeBoardDemo";
-
 import EscapeSessionLauncher from "../pages/EscapeSessionLauncher";
-
 import EscapeSessionPage from "../pages/EscapeSessionPage";
-
 import EscapeWatchModePage from "../pages/EscapeWatchModePage";
-
 import PlanetBamboo from "../pages/PlanetBamboo";
-
 import ArtProductionBoard from "../pages/ArtProductionBoard";
 
-
 import LifePlanet from "../pages/LifePlanet";
-
 import JeanettesLanding from "../pages/JeanettesLanding";
 
-
 import RestaurantRushSimpleDemo from "../pages/RestaurantRushSimpleDemo";
-
 import RestaurantRushManualDemo from "../pages/RestaurantRushManualDemo";
-
 import RestaurantRushLiveDemo from "../pages/RestaurantRushLiveDemo";
-
 import MomsKitchenDemo from "../pages/MomsKitchenDemo";
-
 import JoeysPizzaLiveBoard from "../pages/JoeysPizzaLiveBoard";
-
 
 import JoeGrantLegalDesk from "../pages/JoeGrantLegalDesk";
 
-
 import PlanetGuardian from "../pages/PlanetGuardian";
-
 import GuardianPresenceDesk from "../pages/GuardianPresenceDesk";
-
 import GuardianJoinDesk from "../pages/GuardianJoinDesk";
-
 import GuardianPetTagDemo from "../pages/GuardianPetTagDemo";
-
 import GuardianBellaPreview from "../pages/GuardianBellaPreview";
-
 import GuardianHouseholdBoard from "../pages/GuardianHouseholdBoard";
-
 import GuardianHomePage from "../pages/GuardianHomePage";
-
 import GuardianStartPage from "../pages/GuardianStartPage";
-
 import GuardianActivationPage from "../pages/GuardianActivationPage";
-
 import GuardianOnboardingPage from "../pages/GuardianOnboardingPage";
-
 import GuardianPanicPage from "../pages/GuardianPanicPage";
-
 import GuardianPanicLiveBoard from "../pages/GuardianPanicLiveBoard";
-
 import GuardianWearablePanicDemo from "../pages/GuardianWearablePanicDemo";
-
 import PetCareTimelinePanel from "../components/guardian/PetCareTimelinePanel";
-
 import PetTagFulfillmentBoard from "../pages/PetTagFulfillmentBoard";
-
 
 import EmilyLearningDesk from "../pages/EmilyLearningDesk";
 
-
 import RouteCutLawnPage from "../pages/RouteCutLawnPage";
-
 import RouteCutOperatorBoard from "../pages/RouteCutOperatorBoard";
-
 import RouteCutLiveView from "../pages/RouteCutLiveView";
 
-
 import HomePlanetPaymentNode from "../pages/HomePlanetPaymentNode";
-
 import NoScreenshotPaymentsDemo from "../pages/NoScreenshotPaymentsDemo";
-
 import PricingPage from "../pages/PricingPage";
-
 import OnboardingFlow from "../pages/OnboardingFlow";
-
 import OnboardingBuildTransition from "../pages/OnboardingBuildTransition";
-
 import SystemHomePage from "../pages/SystemHomePage";
-
 import CrewTeamBoard from "../pages/CrewTeamBoard";
-
-import HubOperationsBoardMVP from "../pages/HubOperationsBoardMVP";
-import HubOperationsIdentitySystemPage from "../pages/HubOperationsIdentitySystemPage";
-
-import EcosystemCirculationMapMVP from "../pages/EcosystemCirculationMapMVP";
-
-import WingItBrandVisualMockup from "../pages/WingItBrandVisualMockup";
-import WingItBrandPalettePage from "../pages/WingItBrandPalettePage";
-import WingItBrandIdentityPage from "../pages/WingItBrandIdentityPage";
-
-import BrahmaBullFrontDoor from "../pages/BrahmaBullFrontDoor";
-
-import BrahmaBullLiveBoard from "../pages/BrahmaBullLiveBoard";
-
-import BrahmaBullCrewBoard from "../pages/BrahmaBullCrewBoard";
-
-import BrahmaBullKitchenBoard from "../pages/BrahmaBullKitchenBoard";
-
-import OkeechobeeTogetherPage from "../pages/OkeechobeeTogetherPage";
-
-import OkeechobeeCommunityAdminPage from "../pages/OkeechobeeCommunityAdminPage";
-
-import StarterLivePageCreatorPage from "../pages/StarterLivePageCreatorPage";
-
-import EcosystemCirculationBoard from "../pages/EcosystemCirculationBoard";
-
-import GreenBasketMarketBrandVisualDirection from "../pages/GreenBasketMarketBrandVisualDirection";
-import GreenBasketSystemPage from "../pages/GreenBasketSystemPage";
-import GreenBasketBrandKitPage from "../pages/GreenBasketBrandKitPage";
-import GreenBasketBrandPalettePage from "../pages/GreenBasketBrandPalettePage";
-
-import StarterGeneratedLivePage from "../pages/StarterGeneratedLivePage";
-
-import EcosystemInfrastructurePortal from "../pages/EcosystemInfrastructurePortal";
-import EcosystemCoordinationBoard from "../pages/EcosystemCoordinationBoard";
-import ParticipationLivingPage from "../pages/ParticipationLivingPage";
-import LiveCirculationHeartbeatPage from "../pages/LiveCirculationHeartbeatPage";
-import PredictiveParkingIntelligencePage from "../pages/PredictiveParkingIntelligencePage";
-import RestaurantAwarenessIntelligencePage from "../pages/RestaurantAwarenessIntelligencePage";
-
 
 export default function PlanetRoutes() {
   return (
     <Routes>
-        <Route path="swamp-life" element={<SwampLifeExperiencePage />} />
-
-<Route path="/starter/:slug" element={<StarterGeneratedLivePage />} />
-        <Route path="/creator/starter" element={<StarterLivePageCreatorPage />} />
-        <Route path="/sebastian-softwash" element={<SebastianSoftwashPage />} />
       <Route index element={<Navigate to="/planet/start" replace />} />
-      <Route path="slap-a-bug" element={<SlapABugLanding />} />
-      <Route path="slap-a-bug/live" element={<SlapABugLiveBoard />} />
-      <Route path="local-service-page" element={<LocalServiceStarterPage />} />
-      <Route path="birdbath" element={<BirdbathLandingPage />} />
-      <Route path="birdbath/products" element={<BirdbathProductsPage />} />
 
               <Route path="crew-team" element={<CrewTeamBoard />} />
 <Route path="start" element={<StartPage />} />
-      <Route path="okeechobee" element={<OkeechobeeTogetherPage />} />
-      <Route path="okeechobee/admin" element={<OkeechobeeCommunityAdminPage />} />
-      {/* BRAHMA BULL RESTAURANT SYSTEM */}
-      <Route path="brahma-bull" element={<BrahmaBullFrontDoor />} />
-      <Route path="demo/brahma-bull/live" element={<BrahmaBullLiveBoard />} />
-      <Route path="crew-team/brahma-bull" element={<BrahmaBullCrewBoard />} />
-      <Route path="kitchen/brahma-bull" element={<BrahmaBullKitchenBoard />} />
       <Route path="business-setup" element={<BusinessSetupForm />} />
       <Route path="printshop" element={<PrintShopLandingPage />} />
       <Route path="printshop/order" element={<PrintShopOrderPage />} />
@@ -419,7 +212,6 @@ export default function PlanetRoutes() {
       <Route path="creator/systems" element={<CreatorSystems />} />
       <Route path="creator/projects" element={<CreatorProjects />} />
       <Route path="creator/studio/*" element={<CreatorStudio />} />
-      <Route path="activate/:boardSlug" element={<ActivationPage />} />
       <Route path="creator/:slug/moment" element={<CreatorMomentPage />} />
       <Route path="creator/studio-board" element={<CreatorStudioBoard />} />
       <Route path="creator/build" element={<CreatorBuild />} />
@@ -427,7 +219,7 @@ export default function PlanetRoutes() {
       <Route path="creator/rc-live" element={<RcAirboatsLiveDemo />} />
       <Route path="creator/hayley-live" element={<HayleyLiveBoard />} />
       <Route path="creator/big-dave-eats" element={<BigDaveEatsLive />} />
-      <Route path="creator/building" element={<CreatorLaunchSequencePage />} />
+      <Route path="creator/building" element={<CreatorBuild />} />
       <Route path="system/:slug" element={<SystemHomePage />} />
       <Route path="creator/*" element={<Navigate to="/planet/creator" replace />} />
 
@@ -521,108 +313,12 @@ export default function PlanetRoutes() {
 
       <Route path="predator-shield" element={<PredatorShieldIntervention />} />
       <Route path="predator-shield/test" element={<PredatorShieldIntervention />} />
-      <Route path="zands-light-xand" element={<ZandsLightXandBoard />} />
-      <Route path="all-clean-cuts" element={<AllCleanCutsFrontDoor />} />
-      <Route path="all-clean-cuts/fresh-cut/:cutSlug" element={<AllCleanCutsFreshCutPage />} />
-      <Route path="hub" element={<HubOperationsBoardMVP />} />
-      <Route path="hub-identity" element={<HubOperationsIdentitySystemPage />} />
-      <Route path="ecosystem-map" element={<EcosystemCirculationMapMVP />} />
-      <Route path="wingit" element={<WingItBrandVisualMockup />} />
-      <Route path="wingit-brand-palette" element={<WingItBrandIdentityPage />} />
-      <Route path="wingit-identity" element={<WingItBrandIdentityPage />} />
-      <Route path="circulation" element={<EcosystemCirculationBoard />} />
-      <Route path="live-circulation-heartbeat" element={<LiveCirculationHeartbeatPage />} />
-      <Route path="predictive-parking-intelligence" element={<PredictiveParkingIntelligencePage />} />
-      <Route path="restaurant-awareness-intelligence" element={<RestaurantAwarenessIntelligencePage />} />
-      <Route path="greenbasket" element={<GreenBasketMarketBrandVisualDirection />} />
-      <Route path="greenbasket-system" element={<GreenBasketSystemPage />} />
-      <Route path="greenbasket-brand-kit" element={<GreenBasketBrandKitPage />} />
-      <Route path="greenbasket-brand-palette" element={<GreenBasketBrandPalettePage />} />
-<Route path="ecosystem" element={<EcosystemCoordinationBoard />} />
-      <Route path="ecosystem/infrastructure" element={<EcosystemInfrastructureLayer />} />
-      <Route path="participation-living" element={<ParticipationLivingPage />} />
-<Route path="ecosystem-infrastructure" element={<EcosystemInfrastructurePortal />} />
-<Route path="get-live" element={<GetBusinessLivePage />} />
-
-
-
       <Route path=":planetId" element={<PlanetOverview />} />
       <Route path=":planetId/:cityId" element={<CityPage />} />
-
-
-
-
-
-
-            <Route path="" element={<HomePlanetHomePage />} />
-      <Route path="home" element={<HomePlanetHomePage />} />
-
       <Route path="*" element={<Navigate to="/planet/start" replace />} />
-</Routes>
+    </Routes>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
