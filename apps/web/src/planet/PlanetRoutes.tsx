@@ -323,6 +323,7 @@ import StarterGeneratedLivePage from "../pages/StarterGeneratedLivePage";
 import EcosystemInfrastructurePortal from "../pages/EcosystemInfrastructurePortal";
 import EcosystemCoordinationBoard from "../pages/EcosystemCoordinationBoard";
 import ParticipationLivingPage from "../pages/ParticipationLivingPage";
+import ParticipationLivingInfrastructurePage from "../pages/ParticipationLivingInfrastructurePage";
 import LiveCirculationHeartbeatPage from "../pages/LiveCirculationHeartbeatPage";
 import PredictiveParkingIntelligencePage from "../pages/PredictiveParkingIntelligencePage";
 import RestaurantAwarenessIntelligencePage from "../pages/RestaurantAwarenessIntelligencePage";
@@ -541,6 +542,7 @@ export default function PlanetRoutes() {
 <Route path="ecosystem" element={<EcosystemCoordinationBoard />} />
       <Route path="ecosystem/infrastructure" element={<EcosystemInfrastructureLayer />} />
       <Route path="participation-living" element={<ParticipationLivingPage />} />
+<Route path="participation-living-infrastructure" element={<ParticipationLivingInfrastructurePage />} />
 <Route path="ecosystem-infrastructure" element={<EcosystemInfrastructurePortal />} />
 <Route path="get-live" element={<GetBusinessLivePage />} />
 
@@ -561,6 +563,7 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
 
 
 
