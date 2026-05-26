@@ -1,4 +1,7 @@
+import { useNavigate } from "react-router-dom";
+
 export default function EcosystemCirculationBoard() {
+  const navigate = useNavigate();
   const flowCards = [
     {
       title: "Workforce Towers",
@@ -63,13 +66,12 @@ export default function EcosystemCirculationBoard() {
 
   return (
     <div className="min-h-screen bg-black text-white p-5 md:p-8">
-        <a
-          data-ecosystem-nav="true"
-          href="/planet/ecosystem"
-          className="mb-6 inline-flex rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-bold text-zinc-300 transition hover:border-emerald-400/40 hover:text-white"
+        <button
+          onClick={() => navigate(-1)}
+          className="mb-6 inline-flex items-center gap-2 text-sm text-zinc-400 transition hover:text-white"
         >
-          ? Back to Ecosystem
-        </a>
+          &larr; Back
+        </button>
       <div className="max-w-7xl mx-auto space-y-6">
         <section className="rounded-[32px] border border-zinc-800 bg-zinc-950 p-6 md:p-8 overflow-hidden relative">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,0.16),transparent_35%)]" />
@@ -259,4 +261,5 @@ function Node({
     </div>
   );
 }
+
 

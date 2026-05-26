@@ -1,13 +1,15 @@
+import { useNavigate } from "react-router-dom";
+
 export default function ParticipationLivingPage() {
+  const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-black text-white">
-        <a
-          data-ecosystem-nav="true"
-          href="/planet/ecosystem"
-          className="mb-6 inline-flex rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-bold text-zinc-300 transition hover:border-emerald-400/40 hover:text-white"
+        <button
+          onClick={() => navigate(-1)}
+          className="mb-6 inline-flex items-center gap-2 text-sm text-zinc-400 transition hover:text-white"
         >
-          ? Back to Ecosystem
-        </a>
+          &larr; Back
+        </button>
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8 md:px-6">
 
         <section className="rounded-3xl border border-white/10 bg-zinc-950 p-8">
@@ -134,3 +136,4 @@ export default function ParticipationLivingPage() {
     </div>
   );
 }
+

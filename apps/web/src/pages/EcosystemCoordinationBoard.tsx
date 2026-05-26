@@ -43,12 +43,8 @@ const documents = [
     href: "/planet/ecosystem-infrastructure",
   },
   {
-    title: "GreenBasket Brand Direction",
-    href: "/planet/greenbasket",
-  },
-  {
     title: "Participation Living Architecture",
-    href: "/planet/ecosystem",
+    href: "/planet/participation-living",
   },
   {
     title: "Transportation & Circulation Systems",
@@ -129,18 +125,48 @@ export default function EcosystemCoordinationBoard() {
               </h2>
             </div>
 
-            <div className="space-y-3">
-              <div className="rounded-2xl border border-white/10 bg-black/40 p-4">
-                GreenBasket Brand Direction
-              </div>
+            <div className="grid gap-3">
+              <Link
+                to="/planet/greenbasket-brand-palette"
+                className="group flex items-center justify-between gap-4 rounded-2xl border border-emerald-400/35 bg-emerald-950/25 p-4 transition hover:-translate-y-0.5 hover:border-emerald-300/70 hover:bg-emerald-900/35"
+              >
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-emerald-300">GreenBasket</p>
+                  <h3 className="mt-2 text-base font-semibold text-white">Brand Palette</h3>
+                  <p className="mt-1 text-xs leading-5 text-zinc-300">
+                    Fresh market palette, resident essentials, and local circulation.
+                  </p>
+                </div>
+                <ArrowRight className="h-4 w-4 shrink-0 text-emerald-300 transition group-hover:translate-x-1" />
+              </Link>
 
-              <div className="rounded-2xl border border-white/10 bg-black/40 p-4">
-                Ecosystem Visual Language
-              </div>
+              <Link
+                to="/planet/wingit-brand-palette"
+                className="group flex items-center justify-between gap-4 rounded-2xl border border-orange-400/35 bg-orange-950/25 p-4 transition hover:-translate-y-0.5 hover:border-orange-300/70 hover:bg-orange-900/35"
+              >
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-orange-300">WingIt</p>
+                  <h3 className="mt-2 text-base font-semibold text-white">Brand Palette</h3>
+                  <p className="mt-1 text-xs leading-5 text-zinc-300">
+                    Bold wings, pickup energy, game-day movement, and local flavor.
+                  </p>
+                </div>
+                <ArrowRight className="h-4 w-4 shrink-0 text-orange-300 transition group-hover:translate-x-1" />
+              </Link>
 
-              <div className="rounded-2xl border border-white/10 bg-black/40 p-4">
-                Participation Living Concepts
-              </div>
+              <Link
+                to="/planet/coffee-brand-palette"
+                className="group flex items-center justify-between gap-4 rounded-2xl border border-[#b88755]/35 bg-[#2a1a10]/60 p-4 transition hover:-translate-y-0.5 hover:border-[#d6ad7b]/70 hover:bg-[#3a2415]/70"
+              >
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#d6ad7b]">Coffee</p>
+                  <h3 className="mt-2 text-base font-semibold text-white">Brand Palette</h3>
+                  <p className="mt-1 text-xs leading-5 text-zinc-300">
+                    Morning rhythm, gathering energy, coworking flow, and calm activation.
+                  </p>
+                </div>
+                <ArrowRight className="h-4 w-4 shrink-0 text-[#d6ad7b] transition group-hover:translate-x-1" />
+              </Link>
             </div>
           </section>
 
@@ -152,15 +178,13 @@ export default function EcosystemCoordinationBoard() {
 
             <div className="space-y-3">
               {documents.map((doc) => (
-                <a
+                <Link
                   key={doc.title}
-                  href={doc.href}
-                  target="_blank"
-                  rel="noreferrer"
+                  to={doc.href}
                   className="block rounded-2xl border border-white/10 bg-black/40 p-4 text-sm text-zinc-300 transition hover:border-emerald-400/40 hover:bg-zinc-900"
                 >
                   {doc.title}
-                </a>
+                </Link>
               ))}
             </div>
           </section>
@@ -187,6 +211,10 @@ export default function EcosystemCoordinationBoard() {
     </div>
   );
 }
+
+
+
+
 
 
 

@@ -189,6 +189,7 @@ export default function OperationalLiveBoard({ boardSlug, payload }: Props) {
 
   const [showQrPanel, setShowQrPanel] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [showActivationRail, setShowActivationRail] = useState(true);
   const [paymentDrafts, setPaymentDrafts] = useState<Record<string, string>>({});
   const [hoveredJobId, setHoveredJobId] = useState<string | null>(null);
   const [jobs, setJobs] = useState<OperationalJob[]>(() => readSavedJobs(boardSlug, stages[0]?.label || "New Request"));
@@ -368,6 +369,94 @@ export default function OperationalLiveBoard({ boardSlug, payload }: Props) {
             <TopButton onClick={() => setShowQrPanel((open) => !open)}>QR Payment</TopButton>
           </nav>
         </header>
+
+        {showActivationRail ? (
+          <div
+            style={{
+              marginBottom: 22,
+              borderRadius: 24,
+              border: "1px solid rgba(16,185,129,0.24)",
+              background:
+                "linear-gradient(135deg, rgba(16,185,129,0.12), rgba(15,23,42,0.92))",
+              padding: "18px 22px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: 18,
+              flexWrap: "wrap",
+              boxShadow: "0 0 50px rgba(16,185,129,0.10)",
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  color: "#86efac",
+                  fontSize: 12,
+                  fontWeight: 950,
+                  letterSpacing: 1.4,
+                }}
+              >
+                LIVE SYSTEM READY
+              </div>
+
+              <div
+                style={{
+                  marginTop: 6,
+                  fontSize: 24,
+                  fontWeight: 950,
+                  letterSpacing: -1,
+                }}
+              >
+                Your business board is already operational.
+              </div>
+
+              <div
+                style={{
+                  marginTop: 4,
+                  color: "rgba(255,255,255,0.68)",
+                  fontSize: 14,
+                  lineHeight: 1.6,
+                }}
+              >
+                Explore the workflow, proof system, QR payments, and live operations before activating your free trial.
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+              <button
+                onClick={() => window.location.href = `/planet/activate/${boardSlug}`}
+                style={{
+                  border: 0,
+                  borderRadius: 18,
+                  background:
+                    "linear-gradient(135deg, #34d399 0%, #22c55e 100%)",
+                  color: "#052e1b",
+                  fontWeight: 950,
+                  padding: "16px 22px",
+                  cursor: "pointer",
+                  boxShadow: "0 0 40px rgba(52,211,153,0.24)",
+                }}
+              >
+                Activate Free Trial ?
+              </button>
+
+              <button
+                onClick={() => setShowActivationRail(false)}
+                style={{
+                  borderRadius: 18,
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  background: "rgba(15,23,42,0.66)",
+                  color: "rgba(255,255,255,0.72)",
+                  fontWeight: 900,
+                  padding: "16px 18px",
+                  cursor: "pointer",
+                }}
+              >
+                Hide
+              </button>
+            </div>
+          </div>
+        ) : null}
 
         <section style={layout}>
           <div style={boardSurface}>
@@ -1015,6 +1104,9 @@ const statsBar: CSSProperties = {
   gridTemplateColumns: "repeat(4, 1fr)",
   gap: 18,
 };
+
+
+
 
 
 

@@ -1,4 +1,7 @@
+import { useNavigate } from "react-router-dom";
+
 export default function EcosystemInfrastructureLayer() {
+  const navigate = useNavigate();
   const infrastructureNodes = [
     {
       title: "GreenBasket",
@@ -49,15 +52,12 @@ export default function EcosystemInfrastructureLayer() {
   return (
     <main className="min-h-screen bg-[#101010] px-5 pt-14 pb-6 text-white md:px-10 md:pt-16 md:pb-10">
       <div className="mx-auto max-w-6xl space-y-6">
-        <div className="pt-8">
-          <a
-            data-ecosystem-nav="true"
-            href="/planet/ecosystem"
-            className="inline-flex rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-bold text-zinc-300 transition hover:border-emerald-400/40 hover:text-white"
-          >
-            Back to Ecosystem
-          </a>
-        </div>
+        <button
+          onClick={() => navigate(-1)}
+          className="mb-6 inline-flex items-center gap-2 text-sm text-zinc-400 transition hover:text-white"
+        >
+          &larr; Back
+        </button>
         <section className="overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-br from-[#171717] via-[#141414] to-[#101010]">
           <div className="relative overflow-hidden p-8 md:p-12">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,0.10),transparent_40%)]" />
@@ -172,6 +172,10 @@ export default function EcosystemInfrastructureLayer() {
     </main>
   );
 }
+
+
+
+
 
 
 

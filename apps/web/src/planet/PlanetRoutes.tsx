@@ -293,6 +293,7 @@ import HubOperationsBoardMVP from "../pages/HubOperationsBoardMVP";
 import EcosystemCirculationMapMVP from "../pages/EcosystemCirculationMapMVP";
 
 import WingItBrandVisualMockup from "../pages/WingItBrandVisualMockup";
+import WingItBrandPalettePage from "../pages/WingItBrandPalettePage";
 
 import BrahmaBullFrontDoor from "../pages/BrahmaBullFrontDoor";
 
@@ -312,6 +313,8 @@ import EcosystemCirculationBoard from "../pages/EcosystemCirculationBoard";
 
 import GreenBasketMarketBrandVisualDirection from "../pages/GreenBasketMarketBrandVisualDirection";
 import GreenBasketSystemPage from "../pages/GreenBasketSystemPage";
+import GreenBasketBrandKitPage from "../pages/GreenBasketBrandKitPage";
+import GreenBasketBrandPalettePage from "../pages/GreenBasketBrandPalettePage";
 
 import StarterGeneratedLivePage from "../pages/StarterGeneratedLivePage";
 
@@ -519,9 +522,12 @@ export default function PlanetRoutes() {
       <Route path="hub" element={<HubOperationsBoardMVP />} />
       <Route path="ecosystem-map" element={<EcosystemCirculationMapMVP />} />
       <Route path="wingit" element={<WingItBrandVisualMockup />} />
+      <Route path="wingit-brand-palette" element={<WingItBrandPalettePage />} />
       <Route path="circulation" element={<EcosystemCirculationBoard />} />
       <Route path="greenbasket" element={<GreenBasketMarketBrandVisualDirection />} />
       <Route path="greenbasket-system" element={<GreenBasketSystemPage />} />
+      <Route path="greenbasket-brand-kit" element={<GreenBasketBrandKitPage />} />
+      <Route path="greenbasket-brand-palette" element={<GreenBasketBrandPalettePage />} />
 <Route path="ecosystem" element={<EcosystemCoordinationBoard />} />
       <Route path="ecosystem/infrastructure" element={<EcosystemInfrastructureLayer />} />
       <Route path="participation-living" element={<ParticipationLivingPage />} />
@@ -545,6 +551,11 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
+
+
+
+
 
 
 
