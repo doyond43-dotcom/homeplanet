@@ -1,6 +1,6 @@
 import { ArrowRight, CheckCircle2, Sparkles } from "lucide-react";
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useMemo, useState, type FormEvent } from "react";
+import { supabase } from "../lib/supabase";
 
 const workflowFamilies = [
   {
@@ -138,10 +138,13 @@ function slugify(value: string) {
 }
 
 export default function CreatorQuickBuildPage() {
-  const navigate = useNavigate();
-
   const [businessName, setBusinessName] = useState("");
   const [selectedType, setSelectedType] = useState(workflowFamilies[0]);
+  const [leadName, setLeadName] = useState("");
+  const [leadContact, setLeadContact] = useState("");
+  const [leadMessage, setLeadMessage] = useState("");
+  const [leadSaved, setLeadSaved] = useState(false);
+  const [leadError, setLeadError] = useState("");
 
   const boardSlug = useMemo(
     () => slugify(businessName || selectedType.label),
@@ -178,6 +181,40 @@ export default function CreatorQuickBuildPage() {
     );
 
     window.location.href = `/planet/creator/presence/${slug}`;
+  }
+
+  async function submitLead(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setLeadError("");
+
+    const name = leadName.trim();
+    const contact = leadContact.trim();
+    const message = leadMessage.trim();
+
+    if (!contact && !message) {
+      setLeadError("Add a phone/email or a quick note so HomePlanet can follow up.");
+      return;
+    }
+
+    const { error } = await supabase.from("homeplanet_leads").insert({
+      name,
+      contact,
+      message,
+      selected_operation: selectedType.label,
+      business_name: businessName.trim(),
+      board_slug: boardSlug,
+    });
+
+    if (error) {
+      console.error("[homeplanet-leads] insert failed:", error);
+      setLeadError("Message could not be saved yet. Try again in a moment.");
+      return;
+    }
+
+    setLeadSaved(true);
+    setLeadName("");
+    setLeadContact("");
+    setLeadMessage("");
   }
 
   return (
@@ -266,6 +303,59 @@ export default function CreatorQuickBuildPage() {
               Build My Live System
               <ArrowRight size={18} />
             </button>
+
+            <div className="mt-4 rounded-3xl border border-white/10 bg-white/[0.035] p-5">
+              <div className="text-center">
+                <p className="text-sm font-bold leading-6 text-white/60">
+                  Need help shaping your live system?
+                </p>
+                <p className="mt-1 text-xs font-bold text-white/35">
+                  Tell us what you are trying to run. We will help map it.
+                </p>
+              </div>
+
+              {leadSaved ? (
+                <div className="mt-4 rounded-2xl border border-emerald-300/20 bg-emerald-300/10 p-4 text-center text-sm font-black text-emerald-200">
+                  Message saved. HomePlanet will follow up.
+                </div>
+              ) : (
+                <form onSubmit={submitLead} className="mt-4 grid gap-3">
+                  <input
+                    value={leadName}
+                    onChange={(event) => setLeadName(event.target.value)}
+                    placeholder="What should we call you?"
+                    className="h-12 rounded-2xl border border-white/10 bg-black/40 px-4 text-sm font-bold text-white outline-none placeholder:text-white/30"
+                  />
+
+                  <input
+                    value={leadContact}
+                    onChange={(event) => setLeadContact(event.target.value)}
+                    placeholder="Phone or email"
+                    className="h-12 rounded-2xl border border-white/10 bg-black/40 px-4 text-sm font-bold text-white outline-none placeholder:text-white/30"
+                  />
+
+                  <textarea
+                    value={leadMessage}
+                    onChange={(event) => setLeadMessage(event.target.value)}
+                    placeholder="What are you trying to run?"
+                    className="min-h-24 rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm font-bold text-white outline-none placeholder:text-white/30"
+                  />
+
+                  {leadError ? (
+                    <div className="rounded-2xl border border-red-300/20 bg-red-500/10 p-3 text-center text-xs font-bold text-red-200">
+                      {leadError}
+                    </div>
+                  ) : null}
+
+                  <button
+                    type="submit"
+                    className="rounded-2xl border border-emerald-300/25 bg-emerald-300/10 px-5 py-3 text-sm font-black text-emerald-200 transition hover:bg-emerald-300/15"
+                  >
+                    Send Message
+                  </button>
+                </form>
+              )}
+            </div>
           </section>
 
           <aside className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6">
@@ -327,5 +417,3 @@ export default function CreatorQuickBuildPage() {
     </main>
   );
 }
-
-

@@ -11,6 +11,14 @@ const phases = [
   "SYSTEM LIVE",
 ];
 
+const systemMessages = [
+  "Synchronizing intake...",
+  "Preparing workflow...",
+  "Connecting payment layer...",
+  "Activating proof timeline...",
+  "Loading operational surface...",
+];
+
 function titleFromSlug(slug: string) {
   return slug
     .split("-")
@@ -25,6 +33,8 @@ export default function PresenceLaunchSequencePage() {
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [finished, setFinished] = useState(false);
+  const [messageIndex, setMessageIndex] = useState(0);
+  const [systemLiveFlash, setSystemLiveFlash] = useState(false);
 
   const systemName = useMemo(() => {
     try {
@@ -35,7 +45,6 @@ export default function PresenceLaunchSequencePage() {
       }
 
       const parsed = JSON.parse(raw);
-
       return parsed.businessName || titleFromSlug(boardSlug);
     } catch {
       return titleFromSlug(boardSlug);
@@ -49,8 +58,12 @@ export default function PresenceLaunchSequencePage() {
           window.clearInterval(interval);
 
           window.setTimeout(() => {
-            setFinished(true);
-          }, 850);
+            setSystemLiveFlash(true);
+
+            window.setTimeout(() => {
+              setFinished(true);
+            }, 650);
+          }, 650);
 
           return current;
         }
@@ -63,17 +76,35 @@ export default function PresenceLaunchSequencePage() {
   }, []);
 
   useEffect(() => {
+    const interval = window.setInterval(() => {
+      setMessageIndex((current) => {
+        if (current >= systemMessages.length - 1) {
+          return 0;
+        }
+
+        return current + 1;
+      });
+    }, 900);
+
+    return () => window.clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
     if (!finished) return;
 
     const timeout = window.setTimeout(() => {
       navigate(`/planet/live/${boardSlug}`);
-    }, 1700);
+    }, 1450);
 
     return () => window.clearTimeout(timeout);
   }, [finished, navigate, boardSlug]);
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-black px-6 py-10 text-white">
+    <main
+      className={`relative flex min-h-screen items-center justify-center overflow-hidden bg-black px-6 py-10 text-white transition-all duration-700 ${
+        systemLiveFlash ? "brightness-125" : ""
+      }`}
+    >
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute left-1/2 top-1/2 h-[42rem] w-[42rem] -translate-x-1/2 -translate-y-1/2 animate-pulse rounded-full bg-emerald-500/10 blur-3xl" />
 
@@ -107,9 +138,15 @@ export default function PresenceLaunchSequencePage() {
             {systemName}
           </h1>
 
-          <p className="mx-auto mt-5 max-w-xl text-lg leading-8 text-white/55">
-            HomePlanet is preparing your live operational system.
-          </p>
+          <div className="mx-auto mt-5 flex max-w-xl flex-col items-center">
+            <p className="text-lg leading-8 text-white/55">
+              HomePlanet is preparing your live operational system.
+            </p>
+
+            <div className="mt-4 h-6 text-sm font-black uppercase tracking-[0.22em] text-emerald-300/75">
+              {systemMessages[messageIndex]}
+            </div>
+          </div>
         </div>
 
         <div className="mt-14 flex w-full flex-col gap-4">
@@ -124,6 +161,10 @@ export default function PresenceLaunchSequencePage() {
                   active
                     ? "border-emerald-300/30 bg-emerald-300/[0.08] shadow-[0_0_35px_rgba(16,185,129,0.15)]"
                     : "border-white/10 bg-white/[0.03]"
+                } ${
+                  systemLiveFlash && phase === "SYSTEM LIVE"
+                    ? "scale-[1.015] border-emerald-200/70 bg-emerald-300/[0.14] shadow-[0_0_70px_rgba(16,185,129,0.32)]"
+                    : ""
                 }`}
               >
                 <div
@@ -134,6 +175,10 @@ export default function PresenceLaunchSequencePage() {
 
                 {current ? (
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_left,rgba(16,185,129,0.16),transparent_45%)]" />
+                ) : null}
+
+                {systemLiveFlash && phase === "SYSTEM LIVE" ? (
+                  <div className="absolute inset-0 animate-pulse bg-[radial-gradient(circle_at_center,rgba(110,231,183,0.18),transparent_55%)]" />
                 ) : null}
 
                 <div className="relative flex items-center justify-between gap-4">
