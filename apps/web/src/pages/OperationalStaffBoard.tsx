@@ -12,6 +12,9 @@ type Job = {
   status?: string;
   notes?: string;
   timeline?: string[];
+  paymentStatus?: string;
+  beforePhotos?: string[];
+  afterPhotos?: string[];
 };
 
 function titleFromSlug(slug: string) {
@@ -27,75 +30,134 @@ function jobsKey(boardSlug: string) {
 }
 
 function readJobs(boardSlug: string): Job[] {
+  if (typeof window === "undefined") return [];
+
   try {
-    const raw = localStorage.getItem(jobsKey(boardSlug));
-    return raw ? JSON.parse(raw) : [];
+    const raw = window.localStorage.getItem(jobsKey(boardSlug));
+
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length) return parsed;
+    }
+
+    const exampleRaw = window.localStorage.getItem(
+      `hp-example-workflow:${boardSlug}`
+    );
+
+    if (exampleRaw) {
+      const example = JSON.parse(exampleRaw);
+
+      return [
+        {
+          id: example.id || "example-job",
+          customer: example.customerName || "Example Workflow",
+          service: example.title || "Example workflow",
+          address: "",
+          phone: "",
+          stage: example.stageLabel || "New Request",
+          status: example.stageLabel || "New Request",
+          notes:
+            example.note ||
+            "This starter workflow shows how HomePlanet tracks live work.",
+          timeline: [
+            example.label || "Example Workflow",
+            "Starter workflow created",
+            "Ready to replace with real work",
+          ],
+          paymentStatus: "invoice-ready",
+          beforePhotos: ["Example intake"],
+          afterPhotos: [],
+        },
+      ];
+    }
+
+    return [];
   } catch {
     return [];
   }
 }
 
-export default function OperationalStaffBoard() {
-  const { boardSlug = "zands-light-xand" } = useParams();
-  const businessName = titleFromSlug(boardSlug);
-  const jobs = useMemo(() => readJobs(boardSlug), [boardSlug]);
+function readSystemName(boardSlug: string) {
+  if (typeof window === "undefined") return titleFromSlug(boardSlug);
 
-  const activeJob =
-    jobs[0] || {
-      customer: "Maria Jenkins",
-      service: "House wash + driveway cleaning",
-      address: "Okeechobee, FL",
-      phone: "863-555-0184",
-      stage: "In Progress",
-      notes: "Live staff monitor waiting for field updates.",
-      timeline: ["Customer request submitted", "Staff board opened"],
-    };
+  try {
+    const raw = window.localStorage.getItem(`hp-system:${boardSlug}`);
+    if (!raw) return titleFromSlug(boardSlug);
+
+    const parsed = JSON.parse(raw);
+    return parsed.businessName || titleFromSlug(boardSlug);
+  } catch {
+    return titleFromSlug(boardSlug);
+  }
+}
+
+export default function OperationalStaffBoard() {
+  const { boardSlug = "homeplanet-live" } = useParams();
+  const businessName = useMemo(() => readSystemName(boardSlug), [boardSlug]);
+  const jobs = useMemo(() => readJobs(boardSlug), [boardSlug]);
+  const activeJob = jobs[0] || null;
 
   return (
     <main style={page}>
-      <button
-        type="button"
-        onClick={() => window.location.assign("/planet/zands-light-xand")}
-        style={backButton}
-      >
-        ← Back to Liveboard
-      </button>
+      <section style={shell}>
+        <button
+          type="button"
+          onClick={() => window.location.assign(`/planet/live/${boardSlug}`)}
+          style={backButton}
+        >
+          ← Back to Liveboard
+        </button>
 
-      <section style={{ maxWidth: 1320, margin: "0 auto" }}>
         <header style={hero}>
-          <div>
-            <div style={pill}>OFFICE STAFF MONITOR</div>
-            <h1 style={title}>{businessName}</h1>
-            <p style={subtitle}>
-              Watch crew progress, customer requests, proof updates, payments, and job movement from one clean staff view.
-            </p>
-          </div>
+          <div style={pill}>OFFICE STAFF MONITOR</div>
+          <h1 style={title}>{businessName}</h1>
+          <p style={subtitle}>
+            Watch crew progress, customer requests, proof updates, payments,
+            and job movement from one clean staff view.
+          </p>
         </header>
 
         <section style={grid}>
           <div style={panel}>
             <div style={sectionTitle}>LIVE CREW UPDATES</div>
 
-            <div style={jobCard}>
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "flex-start" }}>
-                <div>
-                  <h2 style={{ margin: 0, fontSize: 24 }}>
-                    {activeJob.customer || activeJob.name || "New Customer"}
-                  </h2>
-                  <div style={muted}>{activeJob.service || "Service request"}</div>
+            {activeJob ? (
+              <div style={jobCard}>
+                <div style={jobHeader}>
+                  <div>
+                    <h2 style={jobTitle}>
+                      {activeJob.customer || activeJob.name || "New Customer"}
+                    </h2>
+                    <div style={muted}>
+                      {activeJob.service || "Service request"}
+                    </div>
+                  </div>
+
+                  <div style={statusPill}>
+                    {activeJob.stage || activeJob.status || "New Request"}
+                  </div>
                 </div>
 
-                <div style={statusPill}>{activeJob.stage || activeJob.status || "New Request"}</div>
-              </div>
+                <div style={infoGrid}>
+                  <Info label="Phone" value={activeJob.phone || "Not added"} />
+                  <Info
+                    label="Address"
+                    value={activeJob.address || "Not added"}
+                  />
+                  <Info
+                    label="Current Status"
+                    value={activeJob.stage || activeJob.status || "Not started"}
+                  />
+                </div>
 
-              <div style={infoGrid}>
-                <Info label="Phone" value={activeJob.phone || "Not added"} />
-                <Info label="Address" value={activeJob.address || "Not added"} />
-                <Info label="Current Status" value={activeJob.stage || activeJob.status || "Not started"} />
+                <p style={notes}>{activeJob.notes || "No notes added yet."}</p>
               </div>
-
-              <p style={notes}>{activeJob.notes || "No notes added yet."}</p>
-            </div>
+            ) : (
+              <div style={emptyState}>
+                No live jobs yet. New requests will appear here as the board
+                starts moving.
+              </div>
+            )}
           </div>
 
           <aside style={panel}>
@@ -103,15 +165,18 @@ export default function OperationalStaffBoard() {
 
             <div style={watchBox}>
               <div style={smallLabel}>LIVE FIELD STATUS</div>
-              <div style={{ marginTop: 8, fontSize: 28, fontWeight: 950 }}>
-                {activeJob.stage || activeJob.status || "Not started"}
+              <div style={statusText}>
+                {activeJob?.stage || activeJob?.status || "Waiting"}
               </div>
             </div>
 
             <div style={timelineBox}>
               <div style={smallLabel}>FIELD TIMELINE</div>
 
-              {(activeJob.timeline?.length ? activeJob.timeline : ["Customer request submitted"]).map((item, index) => (
+              {(activeJob?.timeline?.length
+                ? activeJob.timeline
+                : ["Waiting for first update"]
+              ).map((item, index) => (
                 <div key={`${item}-${index}`} style={timelineRow}>
                   <span style={{ color: "#22d3ee" }}>●</span>
                   <span>{item}</span>
@@ -129,7 +194,7 @@ function Info({ label, value }: { label: string; value: string }) {
   return (
     <div style={infoBox}>
       <div style={smallLabel}>{label}</div>
-      <div style={{ marginTop: 6, fontWeight: 900 }}>{value}</div>
+      <div style={infoValue}>{value}</div>
     </div>
   );
 }
@@ -139,15 +204,21 @@ const page: React.CSSProperties = {
   background:
     "radial-gradient(circle at 16% 10%, rgba(56,189,248,0.16), transparent 34%), radial-gradient(circle at 84% 14%, rgba(16,185,129,0.13), transparent 32%), #020817",
   color: "white",
-  padding: 24,
-  fontFamily: 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+  padding: "20px",
+  fontFamily:
+    'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+};
+
+const shell: React.CSSProperties = {
+  width: "100%",
+  maxWidth: 1180,
+  margin: "0 auto",
 };
 
 const backButton: React.CSSProperties = {
-  position: "fixed",
-  top: 18,
-  left: 18,
-  zIndex: 9999,
+  position: "relative",
+  zIndex: 2,
+  marginBottom: 14,
   borderRadius: 999,
   border: "1px solid rgba(56,189,248,0.35)",
   background: "rgba(15,23,42,0.88)",
@@ -159,12 +230,12 @@ const backButton: React.CSSProperties = {
 };
 
 const hero: React.CSSProperties = {
-  borderRadius: 30,
+  borderRadius: 28,
   border: "1px solid rgba(56,189,248,0.18)",
   background: "linear-gradient(145deg, rgba(8,47,73,0.35), rgba(2,6,23,0.72))",
-  padding: "34px 38px",
+  padding: "28px",
   boxShadow: "0 26px 90px rgba(0,0,0,0.35)",
-  marginBottom: 22,
+  marginBottom: 18,
 };
 
 const pill: React.CSSProperties = {
@@ -181,40 +252,43 @@ const pill: React.CSSProperties = {
 
 const title: React.CSSProperties = {
   margin: "18px 0 8px",
-  fontSize: 48,
-  lineHeight: 1,
-  fontWeight: 500,
-  letterSpacing: -1.5,
+  fontSize: "clamp(38px, 9vw, 66px)",
+  lineHeight: 0.96,
+  fontWeight: 900,
+  letterSpacing: -1.8,
 };
 
 const subtitle: React.CSSProperties = {
   margin: 0,
   color: "rgba(186,230,253,0.72)",
-  fontSize: 18,
-  fontWeight: 700,
+  fontSize: "clamp(17px, 4vw, 24px)",
+  lineHeight: 1.35,
+  fontWeight: 800,
 };
 
 const grid: React.CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "minmax(0, 1fr) 430px",
-  gap: 22,
+  gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 340px), 1fr))",
+  gap: 18,
   alignItems: "start",
 };
 
 const panel: React.CSSProperties = {
-  borderRadius: 28,
+  minWidth: 0,
+  borderRadius: 26,
   border: "1px solid rgba(56,189,248,0.18)",
   background: "linear-gradient(160deg, rgba(8,47,73,0.30), rgba(2,6,23,0.74))",
-  padding: 24,
-  boxShadow: "0 24px 80px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.04)",
+  padding: 20,
+  boxShadow:
+    "0 24px 80px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.04)",
 };
 
 const sectionTitle: React.CSSProperties = {
   color: "#bae6fd",
-  fontSize: 15,
+  fontSize: 13,
   fontWeight: 950,
   letterSpacing: 1.2,
-  marginBottom: 16,
+  marginBottom: 14,
 };
 
 const sectionTitleGreen: React.CSSProperties = {
@@ -223,16 +297,31 @@ const sectionTitleGreen: React.CSSProperties = {
 };
 
 const jobCard: React.CSSProperties = {
-  borderRadius: 24,
+  borderRadius: 22,
   border: "1px solid rgba(34,211,238,0.25)",
   background: "linear-gradient(145deg, rgba(34,211,238,0.14), rgba(2,6,23,0.60))",
-  padding: 22,
+  padding: 18,
+};
+
+const jobHeader: React.CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  gap: 14,
+  alignItems: "flex-start",
+  flexWrap: "wrap",
+};
+
+const jobTitle: React.CSSProperties = {
+  margin: 0,
+  fontSize: "clamp(24px, 7vw, 34px)",
+  lineHeight: 1.05,
 };
 
 const muted: React.CSSProperties = {
   marginTop: 8,
   color: "rgba(226,232,240,0.68)",
   fontSize: 16,
+  lineHeight: 1.45,
 };
 
 const statusPill: React.CSSProperties = {
@@ -247,11 +336,12 @@ const statusPill: React.CSSProperties = {
 const infoGrid: React.CSSProperties = {
   marginTop: 18,
   display: "grid",
-  gridTemplateColumns: "repeat(3, 1fr)",
+  gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))",
   gap: 12,
 };
 
 const infoBox: React.CSSProperties = {
+  minWidth: 0,
   borderRadius: 18,
   border: "1px solid rgba(148,163,184,0.12)",
   background: "rgba(15,23,42,0.52)",
@@ -265,6 +355,12 @@ const smallLabel: React.CSSProperties = {
   letterSpacing: 1.2,
 };
 
+const infoValue: React.CSSProperties = {
+  marginTop: 6,
+  fontWeight: 900,
+  overflowWrap: "anywhere",
+};
+
 const notes: React.CSSProperties = {
   margin: "18px 0 0",
   color: "rgba(226,232,240,0.78)",
@@ -276,6 +372,13 @@ const watchBox: React.CSSProperties = {
   border: "1px solid rgba(34,197,94,0.20)",
   background: "rgba(16,185,129,0.10)",
   padding: 18,
+};
+
+const statusText: React.CSSProperties = {
+  marginTop: 8,
+  fontSize: "clamp(26px, 7vw, 38px)",
+  lineHeight: 1,
+  fontWeight: 950,
 };
 
 const timelineBox: React.CSSProperties = {
@@ -293,4 +396,15 @@ const timelineRow: React.CSSProperties = {
   marginTop: 12,
   color: "rgba(226,232,240,0.78)",
   fontWeight: 700,
+  lineHeight: 1.4,
+};
+
+const emptyState: React.CSSProperties = {
+  borderRadius: 22,
+  border: "1px dashed rgba(148,163,184,0.20)",
+  background: "rgba(15,23,42,0.42)",
+  padding: 20,
+  color: "rgba(226,232,240,0.68)",
+  fontWeight: 800,
+  lineHeight: 1.5,
 };
