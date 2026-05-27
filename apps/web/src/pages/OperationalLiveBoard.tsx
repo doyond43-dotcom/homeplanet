@@ -394,7 +394,7 @@ export default function OperationalLiveBoard({ boardSlug, payload }: Props) {
 
   return (
     <main style={page}>
-      <section style={{ maxWidth: 1720, margin: "0 auto" }}>
+      <section style={isMobile ? mobilePageShell : pageShell}>
         <header style={header}>
           <div style={{ display: "flex", alignItems: "center", gap: 22 }}>
             <div style={orb}>HP</div>
@@ -929,6 +929,20 @@ const page: CSSProperties = {
   overflowX: "hidden",
   fontFamily: 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
 };
+const pageShell: CSSProperties = {
+  maxWidth: 1720,
+  margin: "0 auto",
+  width: "100%",
+  minWidth: 0,
+  boxSizing: "border-box",
+};
+
+const mobilePageShell: CSSProperties = {
+  ...pageShell,
+  maxWidth: "100%",
+  overflowX: "hidden",
+};
+
 
 const header: CSSProperties = {
   display: "flex",
@@ -1236,17 +1250,16 @@ const collapsedActivationButton: CSSProperties = {
 const mobileBoardSurface: CSSProperties = {
   ...boardSurface,
   minHeight: 0,
-  display: "grid",
-  gridAutoFlow: "column",
-  gridAutoColumns: "minmax(280px, 88vw)",
-  gridTemplateColumns: "none",
-  gap: 14,
-  overflowX: "auto",
+  width: "100%",
   maxWidth: "100%",
-  overflowY: "hidden",
-  padding: 16,
-  scrollSnapType: "x mandatory",
-  WebkitOverflowScrolling: "touch",
+  minWidth: 0,
+  boxSizing: "border-box",
+  display: "grid",
+  gridTemplateColumns: "minmax(0, 1fr)",
+  gap: 14,
+  overflowX: "hidden",
+  overflowY: "visible",
+  padding: 14,
 };
 
 const mobileActivePanel: CSSProperties = {
@@ -1278,6 +1291,9 @@ const mobileTopNav: CSSProperties = {
   gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
   gap: 10,
   width: "100%",
+  maxWidth: "100%",
+  minWidth: 0,
+  boxSizing: "border-box",
 };
 
 const mobileStatsBar: CSSProperties = {
@@ -1285,6 +1301,10 @@ const mobileStatsBar: CSSProperties = {
   gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
   gap: 12,
   width: "100%",
+  maxWidth: "100%",
+  minWidth: 0,
+  boxSizing: "border-box",
   overflow: "hidden",
 };
+
 
