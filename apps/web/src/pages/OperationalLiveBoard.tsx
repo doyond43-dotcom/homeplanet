@@ -107,9 +107,45 @@ function readSavedJobs(boardSlug: string, fallbackStage: string): OperationalJob
 
   try {
     const raw = window.localStorage.getItem(jobsKey(boardSlug));
+
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length) return parsed;
+
+      if (Array.isArray(parsed) && parsed.length) {
+        return parsed;
+      }
+    }
+
+    const exampleRaw = window.localStorage.getItem(
+      `hp-example-workflow:${boardSlug}`
+    );
+
+    if (exampleRaw) {
+      const example = JSON.parse(exampleRaw);
+
+      return [
+        {
+          id: example.id || "job-1",
+          customer: example.customerName || "Example Workflow",
+          phone: "",
+          email: "",
+          address: "",
+          service: example.title || "Example workflow",
+          notes:
+            example.note ||
+            "This starter workflow shows how HomePlanet tracks work from request to proof, payment, and completion.",
+          paymentUrl: "",
+          stage: example.stageLabel || fallbackStage,
+          paymentStatus: "invoice-ready",
+          beforePhotos: ["Example intake"],
+          afterPhotos: [],
+          timeline: [
+            example.label || "Example Workflow",
+            "Starter workflow created",
+            "Ready to replace with real work",
+          ],
+        },
+      ];
     }
   } catch {}
 
@@ -735,7 +771,20 @@ export default function OperationalLiveBoard({ boardSlug, payload }: Props) {
                   }}
                 >
                   Archive Job
-                </button>
+                </button>                {selectedJob?.id?.startsWith("example-") ? (
+                  <button
+                    onClick={archiveSelectedJob}
+                    style={{
+                      ...detailsButton,
+                      border: "1px solid rgba(251,191,36,0.28)",
+                      background: "rgba(120,53,15,0.22)",
+                      color: "#fde68a",
+                    }}
+                  >
+                    Remove Example
+                  </button>
+                ) : null}
+
 
                 <button onClick={() => setDetailsOpen((open) => !open)} style={detailsButton}>
                   {detailsOpen ? "Hide Job Details" : "View Full Job Details >"}
@@ -1204,6 +1253,11 @@ const mobileActivePanel: CSSProperties = {
   maxHeight: "none",
   padding: 18,
 };
+
+
+
+
+
 
 
 

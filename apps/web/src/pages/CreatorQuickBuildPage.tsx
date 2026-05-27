@@ -8,115 +8,98 @@ const workflowFamilies = [
     slug: "home-services",
     description:
       "Run jobs, crews, requests, proof, payments, and customer updates.",
-    examples:
-      "Cleaning, plumbing, electrical, lawn, painting, handyman",
-    stages: [
-      "New Request",
-      "Review",
-      "Scheduled",
-      "In Progress",
-      "Proof Added",
-      "Payment Due",
-      "Complete",
-    ],
+    examples: "Cleaning, plumbing, electrical, lawn, painting, handyman",
+    stages: ["New Request", "Review", "Scheduled", "In Progress", "Proof Added", "Payment Due", "Complete"],
+    exampleWorkflow: {
+      label: "Example Workflow",
+      customerName: "Maria Jenkins",
+      title: "House wash + driveway cleaning",
+      note: "A sample request showing how HomePlanet tracks a local service job from request to proof and payment.",
+    },
   },
   {
     label: "Appointments",
     slug: "appointments",
     description:
       "Handle bookings, check-ins, service flow, payments, and follow-ups.",
-    examples:
-      "Barber, salon, massage, grooming, mobile appointments",
-    stages: [
-      "New Booking",
-      "Confirmed",
-      "Checked In",
-      "Service Active",
-      "Payment Due",
-      "Complete",
-    ],
+    examples: "Barber, salon, massage, grooming, mobile appointments",
+    stages: ["New Booking", "Confirmed", "Checked In", "Service Active", "Payment Due", "Complete"],
+    exampleWorkflow: {
+      label: "Example Workflow",
+      customerName: "Marcus Reed",
+      title: "Fade + beard trim",
+      note: "A sample appointment showing booking, check-in, service activity, and completion.",
+    },
   },
   {
     label: "Food & Hospitality",
     slug: "food-hospitality",
     description:
       "Coordinate orders, tables, kitchen flow, pickups, and guest experience.",
-    examples:
-      "Restaurants, food trucks, catering, coffee, bars",
-    stages: [
-      "New Order",
-      "Confirmed",
-      "Preparing",
-      "Ready",
-      "Payment",
-      "Complete",
-    ],
+    examples: "Restaurants, food trucks, catering, coffee, bars",
+    stages: ["New Order", "Confirmed", "Preparing", "Ready", "Payment", "Complete"],
+    exampleWorkflow: {
+      label: "Example Workflow",
+      customerName: "Jessica Lane",
+      title: "Smash burger combo",
+      note: "A sample food flow showing order intake, prep, ready status, and payment.",
+    },
   },
   {
     label: "Tours & Experiences",
     slug: "tours-experiences",
     description:
       "Manage bookings, arrivals, memories, payments, and live guest flow.",
-    examples:
-      "Airboats, fishing, events, rentals, guides",
-    stages: [
-      "New Booking",
-      "Confirmed",
-      "Arriving",
-      "Experience Active",
-      "Memory Added",
-      "Payment",
-      "Complete",
-    ],
+    examples: "Airboats, fishing, events, rentals, guides",
+    stages: ["New Booking", "Confirmed", "Arriving", "Experience Active", "Memory Added", "Payment", "Complete"],
+    exampleWorkflow: {
+      label: "Example Workflow",
+      customerName: "Ryan Carter",
+      title: "Airboat sunset ride",
+      note: "A sample experience flow showing booking, arrival, active experience, memory, and payment.",
+    },
   },
   {
     label: "Retail & Selling",
     slug: "retail-selling",
     description:
       "Handle products, orders, pickups, payments, and customer updates.",
-    examples:
-      "Local shops, print shops, merch, custom orders, pickups",
-    stages: [
-      "New Order",
-      "Review",
-      "In Production",
-      "Ready",
-      "Pickup / Delivery",
-      "Paid",
-      "Complete",
-    ],
+    examples: "Local shops, print shops, merch, custom orders, pickups",
+    stages: ["New Order", "Review", "In Production", "Ready", "Pickup / Delivery", "Paid", "Complete"],
+    exampleWorkflow: {
+      label: "Example Workflow",
+      customerName: "Ashley Monroe",
+      title: "Hoodie pickup order",
+      note: "A sample retail flow showing order review, production, pickup, and payment.",
+    },
   },
   {
     label: "Community & Help",
     slug: "community-help",
     description:
       "Organize requests, communication, local coordination, and support flow.",
-    examples:
-      "Community needs, volunteers, local support, neighborhood help",
-    stages: [
-      "New Request",
-      "Review",
-      "Matched",
-      "In Progress",
-      "Updated",
-      "Complete",
-    ],
+    examples: "Community needs, volunteers, local support, neighborhood help",
+    stages: ["New Request", "Review", "Matched", "In Progress", "Updated", "Complete"],
+    exampleWorkflow: {
+      label: "Example Workflow",
+      customerName: "Local resident request",
+      title: "Yard cleanup assistance",
+      note: "A sample community request showing local coordination and follow-through.",
+    },
   },
   {
     label: "Custom Workflow",
     slug: "custom-workflow",
     description:
       "Tell HomePlanet what you're trying to run. The system can shape around it.",
-    examples:
-      "Anything that needs requests, updates, proof, payments, or coordination",
-    stages: [
-      "New Request",
-      "Review",
-      "Active",
-      "Needs Update",
-      "Payment / Proof",
-      "Complete",
-    ],
+    examples: "Anything that needs requests, updates, proof, payments, or coordination",
+    stages: ["New Request", "Review", "Active", "Needs Update", "Payment / Proof", "Complete"],
+    exampleWorkflow: {
+      label: "Example Workflow",
+      customerName: "Starter request",
+      title: "Custom workflow example",
+      note: "A sample workflow showing how HomePlanet can shape around what you are trying to run.",
+    },
   },
 ];
 
@@ -130,11 +113,7 @@ const systemSignals = [
 ];
 
 function slugify(value: string) {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
+  return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
 
 export default function CreatorQuickBuildPage() {
@@ -153,11 +132,31 @@ export default function CreatorQuickBuildPage() {
 
   function buildBoard() {
     const slug = boardSlug || `homeplanet-board-${Date.now()}`;
+    const createdAt = new Date().toISOString();
+
+    const stages = selectedType.stages.map((stage) => ({
+      id: slugify(stage),
+      label: stage,
+      description: `HomePlanet prepared this operational step for ${selectedType.label}.`,
+    }));
+
+    const exampleWorkflow = {
+      id: `example-${slug}`,
+      kind: "example-workflow",
+      label: selectedType.exampleWorkflow.label,
+      customerName: selectedType.exampleWorkflow.customerName,
+      title: selectedType.exampleWorkflow.title,
+      note: selectedType.exampleWorkflow.note,
+      stageId: stages[0]?.id || "new-request",
+      stageLabel: stages[0]?.label || "New Request",
+      removable: true,
+      createdAt,
+    };
 
     const payload = {
       boardSlug: slug,
       businessName: businessName || selectedType.label,
-      createdAt: new Date().toISOString(),
+      createdAt,
       operationalSystem: {
         label: selectedType.label,
         liveBoard: true,
@@ -167,18 +166,14 @@ export default function CreatorQuickBuildPage() {
         photoProof: true,
         paymentQr: true,
         proofTimeline: true,
-        stages: selectedType.stages.map((stage) => ({
-          id: slugify(stage),
-          label: stage,
-          description: `HomePlanet prepared this operational step for ${selectedType.label}.`,
-        })),
+        stages,
+        exampleWorkflow,
       },
+      exampleWorkflow,
     };
 
-    window.localStorage.setItem(
-      `hp-system:${slug}`,
-      JSON.stringify(payload)
-    );
+    window.localStorage.setItem(`hp-system:${slug}`, JSON.stringify(payload));
+    window.localStorage.setItem(`hp-example-workflow:${slug}`, JSON.stringify(exampleWorkflow));
 
     window.location.href = `/planet/creator/presence/${slug}`;
   }
@@ -231,8 +226,7 @@ export default function CreatorQuickBuildPage() {
           </h1>
 
           <p className="mt-5 max-w-2xl text-lg leading-8 text-white/65">
-            Pick the kind of operation you are running. HomePlanet prepares the
-            live system around it.
+            Pick the kind of operation you are running. HomePlanet prepares the live system around it.
           </p>
         </div>
 
@@ -270,25 +264,12 @@ export default function CreatorQuickBuildPage() {
                       }`}
                     >
                       <div className="flex items-center justify-between gap-3">
-                        <div className="text-lg font-black">
-                          {type.label}
-                        </div>
-
-                        {active ? (
-                          <CheckCircle2
-                            className="text-emerald-300"
-                            size={20}
-                          />
-                        ) : null}
+                        <div className="text-lg font-black">{type.label}</div>
+                        {active ? <CheckCircle2 className="text-emerald-300" size={20} /> : null}
                       </div>
 
-                      <p className="mt-2 text-sm leading-6 text-white/60">
-                        {type.description}
-                      </p>
-
-                      <p className="mt-3 text-xs font-bold leading-5 text-white/35">
-                        {type.examples}
-                      </p>
+                      <p className="mt-2 text-sm leading-6 text-white/60">{type.description}</p>
+                      <p className="mt-3 text-xs font-bold leading-5 text-white/35">{type.examples}</p>
                     </button>
                   );
                 })}
@@ -368,9 +349,7 @@ export default function CreatorQuickBuildPage() {
             </h2>
 
             <p className="mt-3 text-sm leading-6 text-white/58">
-              HomePlanet will prepare the operational surface, customer entry
-              point, proof layer, and payment-ready workflow without making your
-              customer download an app.
+              HomePlanet will prepare the operational surface, customer entry point, proof layer, and payment-ready workflow without making your customer download an app.
             </p>
 
             <div className="mt-4 break-all rounded-2xl border border-white/10 bg-black/30 p-4 text-sm font-bold text-white/45">
@@ -384,18 +363,9 @@ export default function CreatorQuickBuildPage() {
 
               <div className="mt-4 grid gap-3">
                 {systemSignals.map((item) => (
-                  <div
-                    key={item}
-                    className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/30 px-4 py-3"
-                  >
-                    <CheckCircle2
-                      size={18}
-                      className="text-emerald-300"
-                    />
-
-                    <span className="text-sm font-bold text-white/75">
-                      {item}
-                    </span>
+                  <div key={item} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/30 px-4 py-3">
+                    <CheckCircle2 size={18} className="text-emerald-300" />
+                    <span className="text-sm font-bold text-white/75">{item}</span>
                   </div>
                 ))}
               </div>
@@ -407,8 +377,7 @@ export default function CreatorQuickBuildPage() {
               </div>
 
               <p className="mt-3 text-sm leading-6 text-white/58">
-                You will see the live board first. Activate only when the system
-                feels right.
+                You will see the live board first. Activate only when the system feels right.
               </p>
             </div>
           </aside>
