@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
 type OperationalStage = {
   id?: string;
@@ -198,6 +198,19 @@ export default function OperationalLiveBoard({ boardSlug, payload }: Props) {
     return saved[0]?.id || "job-1";
   });
 
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    function checkMobile() {
+      setIsMobile(window.innerWidth < 900);
+    }
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   const selectedJob = useMemo(() => jobs.find((job) => job.id === selectedJobId) || jobs[0] || null, [jobs, selectedJobId]);
 
   const groupedJobs = useMemo(() => {
@@ -370,6 +383,15 @@ export default function OperationalLiveBoard({ boardSlug, payload }: Props) {
           </nav>
         </header>
 
+        {!showActivationRail && (
+          <button
+            onClick={() => setShowActivationRail(true)}
+            style={collapsedActivationButton}
+          >
+            Reveal Free Trial
+          </button>
+        )}
+
         {showActivationRail ? (
           <div
             style={{
@@ -458,8 +480,8 @@ export default function OperationalLiveBoard({ boardSlug, payload }: Props) {
           </div>
         ) : null}
 
-        <section style={layout}>
-          <div style={boardSurface}>
+        <section style={isMobile ? mobileLayout : layout}>
+          <div style={isMobile ? mobileBoardSurface : boardSurface}>
             {visualStages.map((stage, index) => {
               const stageJobs = groupedJobs[stage.key];
 
@@ -510,7 +532,7 @@ export default function OperationalLiveBoard({ boardSlug, payload }: Props) {
             })}
           </div>
 
-          <aside style={activePanel}>
+          <aside style={isMobile ? mobileActivePanel : activePanel}>
             {selectedJob ? (
               <>
                 <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
@@ -1131,6 +1153,57 @@ const statsBar: CSSProperties = {
 
 
 
+
+
+
+
+
+
+const mobileLayout: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "1fr",
+  gap: 18,
+  alignItems: "start",
+};
+
+const collapsedActivationButton: CSSProperties = {
+  position: "fixed",
+  right: 16,
+  bottom: 16,
+  zIndex: 50,
+  borderRadius: 999,
+  border: "1px solid rgba(74, 222, 128, 0.35)",
+  background: "linear-gradient(135deg, rgba(34,197,94,0.95), rgba(16,185,129,0.92))",
+  color: "#04130c",
+  fontWeight: 800,
+  fontSize: 13,
+  padding: "12px 18px",
+  boxShadow: "0 18px 45px rgba(16,185,129,0.35)",
+  cursor: "pointer",
+};
+
+const mobileBoardSurface: CSSProperties = {
+  ...boardSurface,
+  minHeight: 0,
+  display: "grid",
+  gridAutoFlow: "column",
+  gridAutoColumns: "82vw",
+  gridTemplateColumns: "none",
+  gap: 14,
+  overflowX: "auto",
+  overflowY: "hidden",
+  padding: 16,
+  scrollSnapType: "x mandatory",
+  WebkitOverflowScrolling: "touch",
+};
+
+const mobileActivePanel: CSSProperties = {
+  ...activePanel,
+  position: "relative",
+  top: 0,
+  maxHeight: "none",
+  padding: 18,
+};
 
 
 
