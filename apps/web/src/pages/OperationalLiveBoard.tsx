@@ -411,7 +411,7 @@ export default function OperationalLiveBoard({ boardSlug, payload }: Props) {
             </div>
           </div>
 
-          <nav style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+          <nav style={isMobile ? mobileTopNav : topNav}>
             <TopButton primary onClick={addNewRequest}>+ New Request</TopButton>
             <TopButton onClick={() => window.open(`/planet/staff/${boardSlug}`, "_blank")}>Staff Board</TopButton>
             <TopButton onClick={() => window.open(customerFrontDoorUrl, "_blank")}>Customer Front Door</TopButton>
@@ -798,7 +798,7 @@ export default function OperationalLiveBoard({ boardSlug, payload }: Props) {
           </aside>
         </section>
 
-        <footer style={statsBar}>
+        <footer style={isMobile ? mobileStatsBar : statsBar}>
           <Stat title="TODAY'S FLOW" value={`${jobs.length} Jobs`} />
           <Stat title="COMPLETED" value={`${groupedJobs.complete.length}`} />
           <Stat title="PAYMENTS" value={`${groupedJobs.payment.length} Pending`} />
@@ -925,7 +925,8 @@ const page: CSSProperties = {
   background:
     "radial-gradient(circle at 18% 14%, rgba(56,189,248,0.22), transparent 34%), radial-gradient(circle at 82% 18%, rgba(16,185,129,0.18), transparent 32%), radial-gradient(circle at 50% 100%, rgba(168,85,247,0.08), transparent 34%), #020817",
   color: "white",
-  padding: 24,
+  padding: "clamp(14px, 4vw, 24px)",
+  overflowX: "hidden",
   fontFamily: 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
 };
 
@@ -1010,7 +1011,8 @@ const activePanel: CSSProperties = {
   border: "1px solid rgba(56,189,248,0.24)",
   background: "linear-gradient(180deg, rgba(8,47,73,0.34), rgba(2,6,23,0.82))",
   boxShadow: "0 30px 100px rgba(0,0,0,0.38), inset 0 0 80px rgba(34,211,238,0.05)",
-  padding: 24,
+  padding: "clamp(14px, 4vw, 24px)",
+  overflowX: "hidden",
   position: "sticky",
   top: 24,
   maxHeight: "calc(100vh - 48px)",
@@ -1030,7 +1032,7 @@ const statusPill: CSSProperties = {
 const actionGrid: CSSProperties = {
   marginTop: 28,
   display: "grid",
-  gridTemplateColumns: "repeat(4, 1fr)",
+  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
   borderRadius: 18,
   overflow: "hidden",
   border: "1px solid rgba(148,163,184,0.14)",
@@ -1143,7 +1145,7 @@ const stageDot: CSSProperties = {
 const stageLabels: CSSProperties = {
   marginTop: 10,
   display: "grid",
-  gridTemplateColumns: "repeat(4, 1fr)",
+  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
   gap: 8,
 };
 
@@ -1172,7 +1174,7 @@ const statsBar: CSSProperties = {
   background: "rgba(15,23,42,0.46)",
   padding: 20,
   display: "grid",
-  gridTemplateColumns: "repeat(4, 1fr)",
+  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
   gap: 18,
 };
 
@@ -1236,10 +1238,11 @@ const mobileBoardSurface: CSSProperties = {
   minHeight: 0,
   display: "grid",
   gridAutoFlow: "column",
-  gridAutoColumns: "82vw",
+  gridAutoColumns: "minmax(280px, 88vw)",
   gridTemplateColumns: "none",
   gap: 14,
   overflowX: "auto",
+  maxWidth: "100%",
   overflowY: "hidden",
   padding: 16,
   scrollSnapType: "x mandatory",
@@ -1262,4 +1265,26 @@ const mobileActivePanel: CSSProperties = {
 
 
 
+
+
+const topNav: CSSProperties = {
+  display: "flex",
+  gap: 16,
+  flexWrap: "wrap",
+};
+
+const mobileTopNav: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+  gap: 10,
+  width: "100%",
+};
+
+const mobileStatsBar: CSSProperties = {
+  ...statsBar,
+  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+  gap: 12,
+  width: "100%",
+  overflow: "hidden",
+};
 
