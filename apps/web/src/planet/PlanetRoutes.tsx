@@ -106,6 +106,8 @@ import CreatorSystems from "../pages/CreatorSystems";
 import CreatorProjects from "../pages/CreatorProjects";
 
 import CreatorStudio from "../pages/CreatorStudio";
+import CreatorQuickBuildPage from "../pages/CreatorQuickBuildPage";
+import PresenceLaunchSequencePage from "../pages/PresenceLaunchSequencePage";
 import ActivationPage from "../pages/ActivationPage";
 import HomePlanetHomePage from "../pages/HomePlanetHomePage";
 
@@ -420,6 +422,8 @@ export default function PlanetRoutes() {
       <Route path="creator/systems" element={<CreatorSystems />} />
       <Route path="creator/projects" element={<CreatorProjects />} />
       <Route path="creator/studio/*" element={<CreatorStudio />} />
+      <Route path="creator/quick" element={<CreatorQuickBuildPage />} />
+<Route path="creator/presence/:boardSlug" element={<PresenceLaunchSequencePage />} />
       <Route path="activate/:boardSlug" element={<ActivationPage />} />
       <Route path="creator/:slug/moment" element={<CreatorMomentPage />} />
       <Route path="creator/studio-board" element={<CreatorStudioBoard />} />
@@ -563,6 +567,10 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
+
+
+
 
 
 
