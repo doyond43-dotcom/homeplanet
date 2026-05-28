@@ -584,8 +584,8 @@ export default function OperationalLiveBoard({ boardSlug, payload }: Props) {
                 </div>
 
                 <div style={actionGrid}>
-                  <ActionButton label="Call" top="CALL" onClick={() => selectedJob.phone && (window.location.href = `tel:${selectedJob.phone}`)} />
-                  <ActionButton label="Message" top="MSG" onClick={() => selectedJob.phone && (window.location.href = `sms:${selectedJob.phone}`)} />
+                  <ActionButton label="Call" top="CALL" onClick={() => { const cleanPhone = selectedJob.phone?.replace(/\D/g, ""); cleanPhone && (window.location.href = `tel:${cleanPhone}`); }} />
+                  <ActionButton label="Message" top="MSG" onClick={() => { const cleanPhone = selectedJob.phone?.replace(/\D/g, ""); cleanPhone && (window.location.href = `sms:${cleanPhone}`); }} />
                   <ActionButton label="Navigate" top="GO" onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedJob.address || businessName)}`, "_blank")} />
                   <ActionButton label="PAY" top="PAY" onClick={() => setShowQrPanel((open) => !open)} />
                 </div>
@@ -1306,5 +1306,6 @@ const mobileStatsBar: CSSProperties = {
   boxSizing: "border-box",
   overflow: "hidden",
 };
+
 
 

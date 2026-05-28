@@ -118,7 +118,15 @@ function slugify(value: string) {
 
 export default function CreatorQuickBuildPage() {
   const [businessName, setBusinessName] = useState("");
-  const [selectedType, setSelectedType] = useState(workflowFamilies[0]);
+  const [selectedType, setSelectedType] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const type = params.get("type");
+
+    return (
+      workflowFamilies.find((item) => item.slug === type) ||
+      workflowFamilies[0]
+    );
+  });
   const [leadName, setLeadName] = useState("");
   const [leadContact, setLeadContact] = useState("");
   const [leadMessage, setLeadMessage] = useState("");
@@ -386,3 +394,4 @@ export default function CreatorQuickBuildPage() {
     </main>
   );
 }
+
