@@ -787,7 +787,7 @@ export default function OperationalLiveBoard({ boardSlug, payload }: Props) {
 
 
                 <button onClick={() => setDetailsOpen((open) => !open)} style={detailsButton}>
-                  {detailsOpen ? "Hide Job Details" : "View Full Job Details >"}
+                  {detailsOpen ? "Hide Job Details" : "Edit Customer / Job Details >"}
                 </button>
               </>
             ) : (
@@ -1306,6 +1306,7 @@ const mobileStatsBar: CSSProperties = {
   boxSizing: "border-box",
   overflow: "hidden",
 };
+
 
 
 
