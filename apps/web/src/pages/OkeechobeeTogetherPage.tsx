@@ -143,6 +143,54 @@ ${message}`
           <p className="mt-4 text-sm text-neutral-500">Live community board coming next.</p>
         </form>
 
+
+        <section className="mt-8 rounded-3xl border border-white/10 bg-neutral-900 p-6">
+          <div>
+            <h2 className="text-2xl font-bold">Community Action Board</h2>
+            <p className="mt-2 text-neutral-400">
+              Real needs, real helpers, and real community action happening around Okeechobee.
+            </p>
+          </div>
+
+          <div className="mt-6 grid gap-4">
+            <div className="rounded-2xl border border-amber-400/20 bg-black p-5">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full bg-amber-400 px-3 py-1 text-xs font-bold text-black">Looking for Help</span>
+                <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-neutral-300">Food Support</span>
+              </div>
+              <h3 className="mt-4 text-xl font-black">Food Support Needed</h3>
+              <p className="mt-2 text-neutral-300">Local mom with 5 kids trying to make it to payday.</p>
+            </div>
+
+            <div className="rounded-2xl border border-amber-400/20 bg-black p-5">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full bg-amber-400 px-3 py-1 text-xs font-bold text-black">Looking for Assistance</span>
+                <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-neutral-300">AC Help</span>
+              </div>
+              <h3 className="mt-4 text-xl font-black">AC Help Needed</h3>
+              <p className="mt-2 text-neutral-300">Local mom with children. AC unit is not cooling properly.</p>
+            </div>
+
+            <div className="rounded-2xl border border-emerald-400/20 bg-black p-5">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full bg-emerald-400 px-3 py-1 text-xs font-bold text-black">Community Responding</span>
+                <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-neutral-300">Oak Park Cleanup</span>
+              </div>
+              <h3 className="mt-4 text-xl font-black">Oak Park Cleanup</h3>
+              <p className="mt-2 text-neutral-300">Yard cleanup, trimming, scrap hauling, and community help are being coordinated.</p>
+            </div>
+
+            <div className="rounded-2xl border border-emerald-400/20 bg-black p-5">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full bg-emerald-400 px-3 py-1 text-xs font-bold text-black">Available</span>
+                <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-neutral-300">Volunteers</span>
+              </div>
+              <h3 className="mt-4 text-xl font-black">Helpers Are Stepping Up</h3>
+              <p className="mt-2 text-neutral-300">Community members have offered mowers, chainsaws, trailers, labor, donations, and scrap removal.</p>
+            </div>
+          </div>
+        </section>
+
         <div className="mt-8 rounded-3xl border border-white/10 bg-neutral-900 p-6">
           <div className="flex items-start gap-4">
             <Home className="mt-1 h-6 w-6 text-emerald-300" />
@@ -165,6 +213,7 @@ ${message}`
     </main>
   );
 }
+
 
 
 
