@@ -1,7 +1,7 @@
 ﻿export default function HomePlanetEcosystemIdentityPage() {
   const anchors = [
     ["GreenBasket", "Daily Life Anchor", "Essentials, coffee, pickup, delivery, workforce support, and community circulation."],
-    ["WingIt", "Community Energy Anchor", "Live music, community events, outdoor gatherings, sports nights, local entertainment, and the energy that keeps the ecosystem alive after hours."],
+    ["WingIt", "Social Anchor", "Food, gathering, events, families, sports nights, and community energy."],
     ["Delaney's Gym", "Wellness Anchor", "Fitness, recovery, workforce wellness, classes, and participation."],
     ["Garrett's Laundromat", "Infrastructure Anchor", "Laundry, towels, restaurant linens, pickup, delivery, and operational support."],
     ["Commons Coffee", "Gathering Anchor", "Morning flow, remote work, late-night coffee, conversation, and connection."],
@@ -107,6 +107,5 @@
     </main>
   );
 }
-
 
 
