@@ -1,4 +1,4 @@
-﻿import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 import EcosystemInfrastructureLayer from "../pages/EcosystemInfrastructureLayer";
 import GetBusinessLivePage from "../pages/GetBusinessLivePage";
@@ -325,7 +325,6 @@ import StarterGeneratedLivePage from "../pages/StarterGeneratedLivePage";
 
 import EcosystemInfrastructurePortal from "../pages/EcosystemInfrastructurePortal";
 import EcosystemCoordinationBoard from "../pages/EcosystemCoordinationBoard";
-import HomePlanetEcosystemIdentityPage from "../pages/HomePlanetEcosystemIdentityPage";
 import ParticipationLivingPage from "../pages/ParticipationLivingPage";
 import ParticipationLivingInfrastructurePage from "../pages/ParticipationLivingInfrastructurePage";
 import LiveCirculationHeartbeatPage from "../pages/LiveCirculationHeartbeatPage";
@@ -341,7 +340,7 @@ export default function PlanetRoutes() {
 <Route path="/starter/:slug" element={<StarterGeneratedLivePage />} />
         <Route path="/creator/starter" element={<StarterLivePageCreatorPage />} />
         <Route path="/sebastian-softwash" element={<SebastianSoftwashPage />} />
-      <Route index element={<PlanetHomePage />} />
+      <Route index element={<Navigate to="/planet/start" replace />} />
       <Route path="slap-a-bug" element={<SlapABugLanding />} />
       <Route path="slap-a-bug/live" element={<SlapABugLiveBoard />} />
       <Route path="local-service-page" element={<LocalServiceStarterPage />} />
@@ -546,7 +545,6 @@ export default function PlanetRoutes() {
       <Route path="greenbasket-brand-kit" element={<GreenBasketBrandKitPage />} />
       <Route path="greenbasket-brand-palette" element={<GreenBasketBrandPalettePage />} />
 <Route path="ecosystem" element={<EcosystemCoordinationBoard />} />
-      <Route path="ecosystem-identity" element={<HomePlanetEcosystemIdentityPage />} />
       <Route path="ecosystem/infrastructure" element={<EcosystemInfrastructureLayer />} />
       <Route path="participation-living" element={<ParticipationLivingPage />} />
 <Route path="participation-living-infrastructure" element={<ParticipationLivingInfrastructurePage />} />
@@ -563,15 +561,13 @@ export default function PlanetRoutes() {
 
 
 
-
+            <Route path="" element={<PlanetHomePage />} />
       <Route path="home" element={<HomePlanetHomePage />} />
 
       <Route path="*" element={<Navigate to="/planet/start" replace />} />
 </Routes>
   );
 }
-
-
 
 
 
