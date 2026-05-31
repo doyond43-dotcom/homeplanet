@@ -10,6 +10,8 @@ import SlapABugLanding from "../pages/SlapABugLanding";
 import SlapABugLiveBoard from "../pages/SlapABugLiveBoard";
 
 import LocalServiceStarterPage from "../pages/LocalServiceStarterPage";
+import LivePagesHub from "../pages/LivePagesHub";
+import HomeServicesLivePage from "../pages/HomeServicesLivePage";
 
 import BirdbathLandingPage from "../pages/BirdbathLandingPage";
 
@@ -324,6 +326,7 @@ import GreenBasketBrandPalettePage from "../pages/GreenBasketBrandPalettePage";
 import StarterGeneratedLivePage from "../pages/StarterGeneratedLivePage";
 
 import EcosystemInfrastructurePortal from "../pages/EcosystemInfrastructurePortal";
+import EcosystemAtlasPage from "../pages/EcosystemAtlasPage";
 import EcosystemCoordinationBoard from "../pages/EcosystemCoordinationBoard";
 import HomePlanetEcosystemIdentityPage from "../pages/HomePlanetEcosystemIdentityPage";
 import ParticipationLivingPage from "../pages/ParticipationLivingPage";
@@ -345,6 +348,8 @@ export default function PlanetRoutes() {
       <Route path="slap-a-bug" element={<SlapABugLanding />} />
       <Route path="slap-a-bug/live" element={<SlapABugLiveBoard />} />
       <Route path="local-service-page" element={<LocalServiceStarterPage />} />
+      <Route path="live-pages" element={<LivePagesHub />} />
+      <Route path="live-pages/home-services" element={<HomeServicesLivePage />} />
       <Route path="birdbath" element={<BirdbathLandingPage />} />
       <Route path="birdbath/products" element={<BirdbathProductsPage />} />
 
@@ -550,6 +555,7 @@ export default function PlanetRoutes() {
       <Route path="ecosystem/infrastructure" element={<EcosystemInfrastructureLayer />} />
       <Route path="participation-living" element={<ParticipationLivingPage />} />
 <Route path="participation-living-infrastructure" element={<ParticipationLivingInfrastructurePage />} />
+<Route path="atlas" element={<EcosystemAtlasPage />} />
 <Route path="ecosystem-infrastructure" element={<EcosystemInfrastructurePortal />} />
 <Route path="get-live" element={<GetBusinessLivePage />} />
 
@@ -570,6 +576,10 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
+
+
+
 
 
 
