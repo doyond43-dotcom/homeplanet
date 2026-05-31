@@ -1,4 +1,4 @@
-﻿import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 import EcosystemInfrastructureLayer from "../pages/EcosystemInfrastructureLayer";
 import GetBusinessLivePage from "../pages/GetBusinessLivePage";
@@ -12,6 +12,13 @@ import SlapABugLiveBoard from "../pages/SlapABugLiveBoard";
 import LocalServiceStarterPage from "../pages/LocalServiceStarterPage";
 import LivePagesHub from "../pages/LivePagesHub";
 import HomeServicesLivePage from "../pages/HomeServicesLivePage";
+import RestaurantLivePage from "../pages/RestaurantLivePage";
+import TransportationLivePage from "../pages/TransportationLivePage";
+import CommunityLivePage from "../pages/CommunityLivePage";
+import AutoRepairLivePage from "../pages/AutoRepairLivePage";
+import PlanetGuardianLivePage from "../pages/PlanetGuardianLivePage";
+import RetailLivePage from "../pages/RetailLivePage";
+import ExperiencesLivePage from "../pages/ExperiencesLivePage";
 
 import BirdbathLandingPage from "../pages/BirdbathLandingPage";
 
@@ -350,6 +357,20 @@ export default function PlanetRoutes() {
       <Route path="local-service-page" element={<LocalServiceStarterPage />} />
       <Route path="live-pages" element={<LivePagesHub />} />
       <Route path="live-pages/home-services" element={<HomeServicesLivePage />} />
+      <Route path="live-pages/restaurants" element={<RestaurantLivePage />} />
+      <Route path="live-pages/transportation" element={<TransportationLivePage />} />
+      <Route path="live-pages/community" element={<CommunityLivePage />} />
+      <Route path="live-pages/auto-repair" element={<AutoRepairLivePage />} />
+      <Route path="live-pages/pet-guardian" element={<PlanetGuardianLivePage />} />
+      <Route path="live-pages/retail" element={<RetailLivePage />} />
+      <Route path="live-pages/experiences" element={<ExperiencesLivePage />} />
+      <Route path="live-pages/restaurants" element={<RestaurantLivePage />} />
+      <Route path="live-pages/transportation" element={<TransportationLivePage />} />
+      <Route path="live-pages/community" element={<CommunityLivePage />} />
+      <Route path="live-pages/auto-repair" element={<AutoRepairLivePage />} />
+      <Route path="live-pages/pet-guardian" element={<PlanetGuardianLivePage />} />
+      <Route path="live-pages/retail" element={<RetailLivePage />} />
+      <Route path="live-pages/experiences" element={<ExperiencesLivePage />} />
       <Route path="birdbath" element={<BirdbathLandingPage />} />
       <Route path="birdbath/products" element={<BirdbathProductsPage />} />
 
@@ -576,6 +597,14 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
+
+
+
+
+
+
+
 
 
 

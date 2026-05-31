@@ -1,15 +1,15 @@
-﻿export default function LivePagesHub() {
+export default function LivePagesHub() {
   const flow = ["Customer", "Intake", "Owner", "Staff", "Crew", "Payment", "Proof"]
 
   const systems = [
     { title: "Home Services", line: "The business keeps moving.", items: ["Requests", "Scheduling", "Dispatch", "Crew Work", "Payments", "Proof"], link: "/planet/live-pages/home-services" },
-    { title: "Food & Restaurants", line: "The kitchen keeps moving.", items: ["Tables", "Kitchen", "Staff", "Orders", "Payments", "Experience"], link: "/planet/brahma-bull" },
-    { title: "Transportation", line: "The route keeps moving.", items: ["Ride Requests", "Dispatch", "Drivers", "Routes", "Payments"], link: "/planet/transportation" },
-    { title: "Community Board", line: "The community keeps moving.", items: ["Needs", "Projects", "Volunteers", "Workforce", "Support"], link: "/planet/okeechobee" },
-    { title: "Auto Repair", line: "The repair keeps moving.", items: ["Approvals", "Updates", "Payments", "Proof", "Delivery"], link: "/planet/auto-repair" },
-    { title: "Pet & Guardian", line: "Protection keeps moving.", items: ["Profiles", "Alerts", "Sightings", "Safety", "History"], link: "/planet/guardian" },
-    { title: "Retail & Local Shops", line: "Orders keep moving.", items: ["Orders", "Pickup", "Inventory", "Customer Updates"], link: "/planet/printshop" },
-    { title: "Experiences & Events", line: "The experience keeps moving.", items: ["Tours", "Charters", "Guest Moments", "Memory Pages"], link: "/planet/demo/lake-experience-preview" },
+    { title: "Food & Restaurants", line: "The kitchen keeps moving.", items: ["Tables", "Kitchen", "Staff", "Orders", "Payments", "Experience"], link: "/planet/live-pages/restaurants" },
+    { title: "Transportation", line: "The route keeps moving.", items: ["Ride Requests", "Dispatch", "Drivers", "Routes", "Payments"], link: "/planet/live-pages/transportation" },
+    { title: "Community Board", line: "The community keeps moving.", items: ["Needs", "Projects", "Volunteers", "Workforce", "Support"], link: "/planet/live-pages/community" },
+    { title: "Auto Repair", line: "The repair keeps moving.", items: ["Approvals", "Updates", "Payments", "Proof", "Delivery"], link: "/planet/live-pages/auto-repair" },
+    { title: "Pet & Guardian", line: "Protection keeps moving.", items: ["Profiles", "Alerts", "Sightings", "Safety", "History"], link: "/planet/live-pages/pet-guardian" },
+    { title: "Retail & Local Shops", line: "Orders keep moving.", items: ["Orders", "Pickup", "Inventory", "Customer Updates"], link: "/planet/live-pages/retail" },
+    { title: "Experiences & Events", line: "The experience keeps moving.", items: ["Tours", "Charters", "Guest Moments", "Memory Pages"], link: "/planet/live-pages/experiences" },
   ]
 
   return (
@@ -48,7 +48,7 @@
                 </p>
 
                 {index < flow.length - 1 && (
-                  <span className="text-green-400 text-xl font-bold">→</span>
+                  <span className="text-green-400 text-xl font-bold">?</span>
                 )}
               </div>
             ))}
@@ -117,7 +117,7 @@
                 </div>
 
                 <p className="mt-5 text-sm font-bold text-green-300">
-                  View Live Example →
+                  View Live Example ?
                 </p>
               </a>
             ))}
@@ -150,6 +150,8 @@
     </main>
   )
 }
+
+
 
 
 
