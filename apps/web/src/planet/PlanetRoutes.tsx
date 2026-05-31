@@ -308,6 +308,12 @@ import EcosystemCirculationMapMVP from "../pages/EcosystemCirculationMapMVP";
 import WingItBrandVisualMockup from "../pages/WingItBrandVisualMockup";
 import WingItBrandPalettePage from "../pages/WingItBrandPalettePage";
 import WingItBrandIdentityPage from "../pages/WingItBrandIdentityPage";
+import WingItPage from "../pages/WingItPage";
+import WingItLunchRushVisualPage from "../pages/WingItLunchRushVisualPage";
+import WingItLiveMusicVisualPage from "../pages/WingItLiveMusicVisualPage";
+import WingItTriviaNightVisualPage from "../pages/WingItTriviaNightVisualPage";
+import WingItKaraokeNightVisualPage from "../pages/WingItKaraokeNightVisualPage";
+import WingItGameDayWatchPartyVisualPage from "../pages/WingItGameDayWatchPartyVisualPage";
 
 import BrahmaBullFrontDoor from "../pages/BrahmaBullFrontDoor";
 
@@ -334,6 +340,16 @@ import StarterGeneratedLivePage from "../pages/StarterGeneratedLivePage";
 
 import EcosystemInfrastructurePortal from "../pages/EcosystemInfrastructurePortal";
 import EcosystemAtlasPage from "../pages/EcosystemAtlasPage";
+import CommunityPulsePage from "../pages/CommunityPulsePage";
+import CommunityPulseVisualPage from "../pages/CommunityPulseVisualPage";
+import ReasonsToShowUpPage from "../pages/ReasonsToShowUpPage";
+import HumanCirculationPage from "../pages/HumanCirculationPage";
+import DelaneysGymPage from "../pages/DelaneysGymPage";
+import GarrettsLaundromatPage from "../pages/GarrettsLaundromatPage";
+import CommonsCoffeePage from "../pages/CommonsCoffeePage";
+import DelaneysGymVisualPage from "../pages/DelaneysGymVisualPage";
+import GarrettsLaundromatVisualPage from "../pages/GarrettsLaundromatVisualPage";
+import CommonsCoffeeVisualPage from "../pages/CommonsCoffeeVisualPage";
 import EcosystemCoordinationBoard from "../pages/EcosystemCoordinationBoard";
 import HomePlanetEcosystemIdentityPage from "../pages/HomePlanetEcosystemIdentityPage";
 import ParticipationLivingPage from "../pages/ParticipationLivingPage";
@@ -341,6 +357,9 @@ import ParticipationLivingInfrastructurePage from "../pages/ParticipationLivingI
 import LiveCirculationHeartbeatPage from "../pages/LiveCirculationHeartbeatPage";
 import PredictiveParkingIntelligencePage from "../pages/PredictiveParkingIntelligencePage";
 import RestaurantAwarenessIntelligencePage from "../pages/RestaurantAwarenessIntelligencePage";
+import PredictiveParkingPage from "../pages/PredictiveParkingPage";
+import BeforeAwarenessPage from "../pages/BeforeAwarenessPage";
+import AfterAwarenessPage from "../pages/AfterAwarenessPage";
 
 
 export default function PlanetRoutes() {
@@ -560,12 +579,21 @@ export default function PlanetRoutes() {
       <Route path="hub" element={<HubOperationsBoardMVP />} />
       <Route path="hub-identity" element={<HubOperationsIdentitySystemPage />} />
       <Route path="ecosystem-map" element={<EcosystemCirculationMapMVP />} />
-      <Route path="wingit" element={<WingItBrandVisualMockup />} />
+      <Route path="wingit" element={<WingItPage />} />
+      <Route path="wingit-lunch-rush" element={<WingItLunchRushVisualPage />} />
+      <Route path="wingit-live-music-night" element={<WingItLiveMusicVisualPage />} />
+      <Route path="wingit-trivia-night" element={<WingItTriviaNightVisualPage />} />
+      <Route path="wingit-karaoke-night" element={<WingItKaraokeNightVisualPage />} />
+      <Route path="wingit-game-day-watch-party" element={<WingItGameDayWatchPartyVisualPage />} />
+      <Route path="wingit-brand-direction" element={<WingItBrandVisualMockup />} />
       <Route path="wingit-brand-palette" element={<WingItBrandIdentityPage />} />
       <Route path="wingit-identity" element={<WingItBrandIdentityPage />} />
       <Route path="circulation" element={<EcosystemCirculationBoard />} />
       <Route path="live-circulation-heartbeat" element={<LiveCirculationHeartbeatPage />} />
       <Route path="predictive-parking-intelligence" element={<PredictiveParkingIntelligencePage />} />
+      <Route path="predictive-parking" element={<PredictiveParkingPage />} />
+      <Route path="before-awareness" element={<BeforeAwarenessPage />} />
+      <Route path="after-awareness" element={<AfterAwarenessPage />} />
       <Route path="restaurant-awareness-intelligence" element={<RestaurantAwarenessIntelligencePage />} />
       <Route path="greenbasket" element={<GreenBasketMarketBrandVisualDirection />} />
       <Route path="greenbasket-system" element={<GreenBasketSystemPage />} />
@@ -577,6 +605,16 @@ export default function PlanetRoutes() {
       <Route path="participation-living" element={<ParticipationLivingPage />} />
 <Route path="participation-living-infrastructure" element={<ParticipationLivingInfrastructurePage />} />
 <Route path="atlas" element={<EcosystemAtlasPage />} />
+<Route path="community-pulse" element={<CommunityPulsePage />} />
+<Route path="community-pulse-visual" element={<CommunityPulseVisualPage />} />
+<Route path="reasons-to-show-up" element={<ReasonsToShowUpPage />} />
+<Route path="human-circulation" element={<HumanCirculationPage />} />
+<Route path="delaneys-gym" element={<DelaneysGymPage />} />
+<Route path="garretts-laundromat" element={<GarrettsLaundromatPage />} />
+<Route path="commons-coffee" element={<CommonsCoffeePage />} />
+<Route path="delaneys-gym-visual" element={<DelaneysGymVisualPage />} />
+<Route path="garretts-laundromat-visual" element={<GarrettsLaundromatVisualPage />} />
+<Route path="commons-coffee-visual" element={<CommonsCoffeeVisualPage />} />
 <Route path="ecosystem-infrastructure" element={<EcosystemInfrastructurePortal />} />
 <Route path="get-live" element={<GetBusinessLivePage />} />
 
@@ -597,6 +635,16 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
+
+
+
+
+
+
+
+
+
 
 
 
