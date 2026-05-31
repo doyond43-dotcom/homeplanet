@@ -360,6 +360,7 @@ import RestaurantAwarenessIntelligencePage from "../pages/RestaurantAwarenessInt
 import PredictiveParkingPage from "../pages/PredictiveParkingPage";
 import BeforeAwarenessPage from "../pages/BeforeAwarenessPage";
 import AfterAwarenessPage from "../pages/AfterAwarenessPage";
+import AwarenessLayerPage from "../pages/AwarenessLayerPage";
 
 
 export default function PlanetRoutes() {
@@ -591,6 +592,7 @@ export default function PlanetRoutes() {
       <Route path="circulation" element={<EcosystemCirculationBoard />} />
       <Route path="live-circulation-heartbeat" element={<LiveCirculationHeartbeatPage />} />
       <Route path="predictive-parking-intelligence" element={<PredictiveParkingIntelligencePage />} />
+      <Route path="awareness-layer" element={<AwarenessLayerPage />} />
       <Route path="predictive-parking" element={<PredictiveParkingPage />} />
       <Route path="before-awareness" element={<BeforeAwarenessPage />} />
       <Route path="after-awareness" element={<AfterAwarenessPage />} />
@@ -635,6 +637,8 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
+
 
 
 

@@ -68,11 +68,10 @@ export default function EcosystemAtlasPage() {
           />
 
           <Section
-            title="Awareness Pieces"
+            title="Awareness Layer"
             items={[
-              { label: "Predictive Parking", path: "/planet/predictive-parking" },
-              { label: "Before Awareness", path: "/planet/before-awareness" },
-              { label: "After Awareness", path: "/planet/after-awareness" },
+              { label: "Awareness Layer", path: "/planet/awareness-layer" },
+              
             ]}
           />
 
@@ -81,3 +80,4 @@ export default function EcosystemAtlasPage() {
     </div>
   );
 }
+
