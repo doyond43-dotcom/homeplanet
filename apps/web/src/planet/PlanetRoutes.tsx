@@ -115,6 +115,7 @@ import CreatorSystems from "../pages/CreatorSystems";
 import CreatorProjects from "../pages/CreatorProjects";
 
 import CreatorStudio from "../pages/CreatorStudio";
+import LiveStudio from "../pages/LiveStudio";
 import CreatorQuickBuildPage from "../pages/CreatorQuickBuildPage";
 import PresenceLaunchSequencePage from "../pages/PresenceLaunchSequencePage";
 import ActivationPage from "../pages/ActivationPage";
@@ -122,6 +123,8 @@ import HomePlanetHomePage from "../pages/HomePlanetHomePage";
 import PlanetHomePage from "../pages/PlanetHomePage";
 
 import CreatorStudioBoard from "../pages/CreatorStudioBoard";
+import CreatorLive from "../pages/CreatorLive";
+import LiveViewer from "../pages/LiveViewer";
 
 import CreatorMomentPage from "../pages/CreatorMomentPage";
 
@@ -470,11 +473,15 @@ export default function PlanetRoutes() {
       <Route path="creator/systems" element={<CreatorSystems />} />
       <Route path="creator/projects" element={<CreatorProjects />} />
       <Route path="creator/studio/*" element={<CreatorStudio />} />
+      <Route path="live-studio" element={<LiveStudio />} />
       <Route path="creator/quick" element={<CreatorQuickBuildPage />} />
 <Route path="creator/presence/:boardSlug" element={<PresenceLaunchSequencePage />} />
       <Route path="activate/:boardSlug" element={<ActivationPage />} />
       <Route path="creator/:slug/moment" element={<CreatorMomentPage />} />
       <Route path="creator/studio-board" element={<CreatorStudioBoard />} />
+      <Route path="live-studio/host" element={<CreatorLive />} />
+      <Route path="live-studio/view" element={<LiveViewer />} />
+      <Route path="live-studio/view/:room" element={<LiveViewer />} />
       <Route path="creator/build" element={<CreatorBuild />} />
       <Route path="creator/release/:releaseId" element={<ReleaseViewer />} />
       <Route path="creator/rc-live" element={<RcAirboatsLiveDemo />} />
@@ -637,6 +644,11 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
+
+
+
+
 
 
 
