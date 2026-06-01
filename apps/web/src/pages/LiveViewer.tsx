@@ -95,6 +95,49 @@ function StartAudioButton() {
   );
 }
 
+function ViewerControls() {
+  const room = useRoomContext();
+
+  const [micOn, setMicOn] = useState(false);
+  const [camOn, setCamOn] = useState(false);
+
+  const toggleMic = async () => {
+    const next = !micOn;
+    setMicOn(next);
+
+    try {
+      await room.localParticipant.setMicrophoneEnabled(next);
+    } catch (e) {
+      console.error("Viewer mic toggle failed:", e);
+      setMicOn(false);
+    }
+  };
+
+  const toggleCam = async () => {
+    const next = !camOn;
+    setCamOn(next);
+
+    try {
+      await room.localParticipant.setCameraEnabled(next);
+    } catch (e) {
+      console.error("Viewer camera toggle failed:", e);
+      setCamOn(false);
+    }
+  };
+
+  return (
+    <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
+      <button onClick={toggleMic} style={micOn ? viewerActiveButton : actionButton}>
+        {micOn ? "Mic On" : "Mic Off"}
+      </button>
+
+      <button onClick={toggleCam} style={camOn ? viewerActiveButton : actionButton}>
+        {camOn ? "Camera On" : "Camera Off"}
+      </button>
+    </div>
+  );
+}
+
 function ViewerActions({
   roomName,
   actorName,
@@ -377,12 +420,13 @@ export default function LiveViewer() {
         token={token}
         serverUrl={serverUrl}
         connect={true}
-        audio={true}
+        audio={false}
         video={false}
         style={{ background: "black" }}
       >
         <RoomAudioRenderer />
         <StartAudioButton />
+        <ViewerControls />
         <ViewerStage />
         <ViewerActions roomName={roomName} actorName={actorName} />
       </LiveKitRoom>
