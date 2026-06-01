@@ -16,14 +16,22 @@ type TokenResponse = {
   url: string;
 };
 
-type ReactionType = "Clap" | "Hot" | "Marker" | "Comment";
+type PulseType = "Clap" | "Hot" | "Marker" | "Comment" | "System";
 
-type HostPulseItem = {
+type RoomTimelineEvent = {
   id: string;
-  type: ReactionType;
-  label: string;
+  hpType: "live-studio-event";
+  room: string;
+  actor: string;
+  role: "host" | "viewer" | "system";
+  type: PulseType;
   text: string;
-  time: string;
+  createdAt: number;
+};
+
+type FloatPulse = {
+  id: string;
+  label: string;
   left: number;
 };
 
@@ -56,15 +64,25 @@ function randId(prefix = "host") {
   return `${prefix}_${Math.random().toString(16).slice(2)}`;
 }
 
-function stamp() {
-  return new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+function pulseLabel(type: PulseType) {
+  if (type === "Clap") return "\uD83D\uDC4F";
+  if (type === "Hot") return "\uD83D\uDD25";
+  if (type === "Marker") return "\uD83D\uDCCD";
+  if (type === "Comment") return "\uD83D\uDCAC";
+  return "•";
 }
 
-function reactionLabel(type: ReactionType) {
-  if (type === "Clap") return "👏";
-  if (type === "Hot") return "🔥";
-  if (type === "Marker") return "📍";
-  return "💬";
+function pulseText(type: PulseType, actor: string, customText?: string) {
+  if (customText?.trim()) return customText.trim();
+  if (type === "Clap") return `${actor} clapped.`;
+  if (type === "Hot") return `${actor} marked this hot.`;
+  if (type === "Marker") return `${actor} dropped a marker.`;
+  if (type === "Comment") return `${actor} commented.`;
+  return `${actor} updated the room.`;
+}
+
+function timeFrom(ms: number) {
+  return new Date(ms).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
 function HostStage() {
@@ -82,45 +100,73 @@ function HostStage() {
   );
 }
 
-function HostReactionLayer({
-  onLocalReactionReady,
+function HostTimelineLayer({
+  roomName,
+  actorName,
+  onLocalEventReady,
 }: {
-  onLocalReactionReady: (fn: (type: ReactionType, text?: string) => void) => void;
+  roomName: string;
+  actorName: string;
+  onLocalEventReady: (fn: (type: PulseType, text?: string) => void) => void;
 }) {
   const room = useRoomContext();
-  const [items, setItems] = useState<HostPulseItem[]>([]);
+  const [timeline, setTimeline] = useState<RoomTimelineEvent[]>([]);
+  const [floatPulse, setFloatPulse] = useState<FloatPulse[]>([]);
 
-  const addReaction = useCallback((type: ReactionType, text?: string) => {
-    const label = reactionLabel(type);
-    const cleanText =
-      text ||
-      (type === "Clap"
-        ? "Viewer clapped."
-        : type === "Hot"
-        ? "Viewer marked this hot."
-        : type === "Marker"
-        ? "Viewer dropped a marker."
-        : "Viewer commented.");
+  const launchFloat = useCallback((label: string) => {
+    if (label === "•") return;
 
-    const item: HostPulseItem = {
-      id: `${Date.now()}-${Math.random()}`,
-      type,
-      label,
-      text: cleanText,
-      time: stamp(),
-      left: 18 + Math.floor(Math.random() * 64),
-    };
+    const id = `${Date.now()}-${Math.random()}`;
+    const left = 18 + Math.floor(Math.random() * 64);
 
-    setItems((current) => [item, ...current].slice(0, 8));
+    setFloatPulse((items) => [...items, { id, label, left }]);
 
     window.setTimeout(() => {
-      setItems((current) => current.filter((i) => i.id !== item.id));
-    }, 1700);
+      setFloatPulse((items) => items.filter((item) => item.id !== id));
+    }, 1500);
   }, []);
 
+  const addTimelineEvent = useCallback(
+    (event: RoomTimelineEvent) => {
+      setTimeline((items) => {
+        if (items.some((item) => item.id === event.id)) return items;
+        return [event, ...items].slice(0, 24);
+      });
+
+      launchFloat(pulseLabel(event.type));
+    },
+    [launchFloat]
+  );
+
+  const publishTimelineEvent = useCallback(
+    async (type: PulseType, customText?: string) => {
+      const actor = actorName.trim() || "Daniel";
+      const event: RoomTimelineEvent = {
+        id: `${Date.now()}-${Math.random()}`,
+        hpType: "live-studio-event",
+        room: roomName,
+        actor,
+        role: type === "System" ? "system" : "host",
+        type,
+        text: pulseText(type, actor, customText),
+        createdAt: Date.now(),
+      };
+
+      addTimelineEvent(event);
+
+      try {
+        const encoded = new TextEncoder().encode(JSON.stringify(event));
+        await room.localParticipant.publishData(encoded, { reliable: true });
+      } catch (e) {
+        console.error("Live Studio host event publish failed:", e);
+      }
+    },
+    [actorName, roomName, room, addTimelineEvent]
+  );
+
   useEffect(() => {
-    onLocalReactionReady(addReaction);
-  }, [addReaction, onLocalReactionReady]);
+    onLocalEventReady(publishTimelineEvent);
+  }, [publishTimelineEvent, onLocalEventReady]);
 
   useEffect(() => {
     const decoder = new TextDecoder();
@@ -128,18 +174,14 @@ function HostReactionLayer({
     const onData = (payload: Uint8Array) => {
       try {
         const raw = decoder.decode(payload);
-        const data = JSON.parse(raw) as {
-          hpType?: string;
-          type?: ReactionType;
-          text?: string;
-        };
+        const data = JSON.parse(raw) as RoomTimelineEvent;
 
-        if (data.hpType !== "live-studio-reaction") return;
-        if (!data.type) return;
+        if (data.hpType !== "live-studio-event") return;
+        if (!data.type || !data.actor || !data.createdAt) return;
 
-        addReaction(data.type, data.text);
+        addTimelineEvent(data);
       } catch (e) {
-        console.warn("Live Studio reaction parse failed:", e);
+        console.warn("Live Studio host event parse failed:", e);
       }
     };
 
@@ -147,12 +189,12 @@ function HostReactionLayer({
     return () => {
       room.off(RoomEvent.DataReceived, onData);
     };
-  }, [room, addReaction]);
+  }, [room, addTimelineEvent]);
 
   return (
     <>
       <div style={floatingLayer}>
-        {items.map((item) => (
+        {floatPulse.map((item) => (
           <div
             key={item.id}
             style={{
@@ -167,20 +209,22 @@ function HostReactionLayer({
 
       <div style={hostPulsePanel}>
         <div style={{ fontSize: 11, opacity: 0.6, fontWeight: 900 }}>
-          ROOM PULSE
+          ROOM TIMELINE
         </div>
 
-        {items.length === 0 ? (
+        {timeline.length === 0 ? (
           <div style={{ marginTop: 8, opacity: 0.55, fontSize: 12 }}>
-            Waiting for Clap, Hot, Marker, or Comment.
+            Waiting for room activity.
           </div>
         ) : (
           <div style={{ marginTop: 8, display: "grid", gap: 7 }}>
-            {items.slice(0, 5).map((item) => (
+            {timeline.slice(0, 8).map((item) => (
               <div key={item.id} style={hostPulseItem}>
-                <div style={{ opacity: 0.55, fontSize: 11 }}>{item.time}</div>
+                <div style={{ opacity: 0.55, fontSize: 11 }}>
+                  {timeFrom(item.createdAt)}
+                </div>
                 <div style={{ fontWeight: 900 }}>
-                  {item.label} {item.type}
+                  {pulseLabel(item.type)} {item.actor}
                 </div>
                 <div style={{ opacity: 0.85, fontSize: 12 }}>{item.text}</div>
               </div>
@@ -194,10 +238,10 @@ function HostReactionLayer({
 
 function HostControls({
   onEnd,
-  onHostReaction,
+  onHostEvent,
 }: {
   onEnd: () => void;
-  onHostReaction: (type: ReactionType, text?: string) => void;
+  onHostEvent: (type: PulseType, text?: string) => void;
 }) {
   const room = useRoomContext();
 
@@ -209,12 +253,14 @@ function HostControls({
     const next = !micOn;
     setMicOn(next);
     await room.localParticipant.setMicrophoneEnabled(next);
+    onHostEvent("System", `Daniel turned microphone ${next ? "on" : "off"}.`);
   };
 
   const toggleCam = async () => {
     const next = !camOn;
     setCamOn(next);
     await room.localParticipant.setCameraEnabled(next);
+    onHostEvent("System", `Daniel turned camera ${next ? "on" : "off"}.`);
   };
 
   const toggleScreenShare = async () => {
@@ -223,6 +269,7 @@ function HostControls({
 
     try {
       await room.localParticipant.setScreenShareEnabled(next);
+      onHostEvent("System", `Daniel ${next ? "started" : "stopped"} screen sharing.`);
     } catch (e) {
       console.error("Screen share failed:", e);
       setScreenOn(false);
@@ -243,15 +290,15 @@ function HostControls({
         {screenOn ? "Sharing" : "Share Screen"}
       </button>
 
-      <button onClick={() => onHostReaction("Clap", "Host clapped.")} style={barButton}>
+      <button onClick={() => onHostEvent("Clap")} style={barButton}>
         Clap
       </button>
 
-      <button onClick={() => onHostReaction("Hot", "Host marked this hot.")} style={barButton}>
+      <button onClick={() => onHostEvent("Hot")} style={barButton}>
         Hot
       </button>
 
-      <button onClick={() => onHostReaction("Marker", "Host dropped a marker.")} style={barButton}>
+      <button onClick={() => onHostEvent("Marker")} style={barButton}>
         Marker
       </button>
 
@@ -272,8 +319,8 @@ export default function CreatorLive() {
   const [token, setToken] = useState("");
   const [phase, setPhase] = useState<"idle" | "loading" | "live" | "error">("idle");
   const [error, setError] = useState("");
-  const [hostReactionFn, setHostReactionFn] =
-    useState<(type: ReactionType, text?: string) => void>(() => () => {});
+  const [hostEventFn, setHostEventFn] =
+    useState<(type: PulseType, text?: string) => void>(() => () => {});
 
   const onGoLive = useCallback(async () => {
     setPhase("loading");
@@ -349,14 +396,16 @@ export default function CreatorLive() {
 
         <RoomAudioRenderer />
         <HostStage />
-        <HostReactionLayer
-          onLocalReactionReady={(fn) => {
-            setHostReactionFn(() => fn);
+        <HostTimelineLayer
+          roomName={roomName}
+          actorName="Daniel"
+          onLocalEventReady={(fn) => {
+            setHostEventFn(() => fn);
           }}
         />
         <HostControls
           onEnd={() => navigate("/planet/live-studio")}
-          onHostReaction={hostReactionFn}
+          onHostEvent={hostEventFn}
         />
       </div>
     </LiveKitRoom>
@@ -458,8 +507,8 @@ const hostPulsePanel: React.CSSProperties = {
   position: "absolute",
   top: 18,
   right: 18,
-  width: 280,
-  maxHeight: "44vh",
+  width: 310,
+  maxHeight: "54vh",
   overflow: "hidden",
   zIndex: 25,
   border: "1px solid rgba(255,255,255,0.12)",
