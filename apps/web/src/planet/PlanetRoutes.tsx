@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+﻿import { Routes, Route, Navigate } from "react-router-dom";
 
 import EcosystemInfrastructureLayer from "../pages/EcosystemInfrastructureLayer";
 import GetBusinessLivePage from "../pages/GetBusinessLivePage";
@@ -364,6 +364,7 @@ import PredictiveParkingPage from "../pages/PredictiveParkingPage";
 import BeforeAwarenessPage from "../pages/BeforeAwarenessPage";
 import AfterAwarenessPage from "../pages/AfterAwarenessPage";
 import AwarenessLayerPage from "../pages/AwarenessLayerPage";
+import VictorPinedaLandingPage from "../pages/VictorPinedaLandingPage";
 
 
 export default function PlanetRoutes() {
@@ -629,6 +630,8 @@ export default function PlanetRoutes() {
 
 
 
+      <Route path="victor-pineda" element={<VictorPinedaLandingPage />} />
+
       <Route path=":planetId" element={<PlanetOverview />} />
       <Route path=":planetId/:cityId" element={<CityPage />} />
 
@@ -644,6 +647,7 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
 
 
 
