@@ -141,10 +141,10 @@ function TableGroupCard({
 
             <div className="mt-4 space-y-1">
               <p className="text-2xl font-black">{group.tickets.length} Items</p>
-              <p className="text-lg font-bold text-emerald-300">? {completedCount} Complete</p>
-              <p className="text-lg font-bold text-amber-300">? {remainingCount} Remaining</p>
+              <p className="text-lg font-bold text-emerald-300">{completedCount} Complete</p>
+              <p className="text-lg font-bold text-amber-300">{remainingCount} Remaining</p>
               {specialCount > 0 && (
-                <p className="text-lg font-bold text-red-400">? {specialCount} Special</p>
+                <p className="text-lg font-bold text-red-400">{specialCount} Special</p>
               )}
             </div>
           </div>
@@ -195,10 +195,6 @@ function TableGroupCard({
                   }`}
                 >
                   <div className="flex items-start gap-3">
-                    <span className="text-2xl font-black">
-                      {ticket.completed ? "?" : allergy ? "?" : "?"}
-                    </span>
-
                     <div className="flex-1">
                       <p className={`text-lg font-black ${ticket.completed ? "text-neutral-500 line-through" : "text-white"}`}>
                         Seat {index + 1} {cleanItemName(ticket.item)}
@@ -439,3 +435,5 @@ export default function BrahmaBullKitchenBoard() {
     </main>
   );
 }
+
+
