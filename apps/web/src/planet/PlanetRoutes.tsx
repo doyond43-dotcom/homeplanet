@@ -1,4 +1,4 @@
-﻿import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 import EcosystemInfrastructureLayer from "../pages/EcosystemInfrastructureLayer";
 import GetBusinessLivePage from "../pages/GetBusinessLivePage";
@@ -345,6 +345,14 @@ import EcosystemInfrastructurePortal from "../pages/EcosystemInfrastructurePorta
 import EcosystemAtlasPage from "../pages/EcosystemAtlasPage";
 import CommunityPulsePage from "../pages/CommunityPulsePage";
 import CommunityPulseVisualPage from "../pages/CommunityPulseVisualPage";
+import CommunityPulseRainyEveningVisualPage from "../pages/CommunityPulseRainyEveningVisualPage";
+import CommunityPulseOutdoorKioskVisualPage from "../pages/CommunityPulseOutdoorKioskVisualPage";
+import CommunityPulseCommonsCoffeeVisualPage from "../pages/CommunityPulseCommonsCoffeeVisualPage";
+import CommunityPulseParkingVisualPage from "../pages/CommunityPulseParkingVisualPage";
+import CommunityPulseMobileViewVisualPage from "../pages/CommunityPulseMobileViewVisualPage";
+import CommunityPulseImpactStoriesVisualPage from "../pages/CommunityPulseImpactStoriesVisualPage";
+import CommunityPulseGreenBasketVisualPage from "../pages/CommunityPulseGreenBasketVisualPage";
+import CommunityPulseAwarenessBoardVisualPage from "../pages/CommunityPulseAwarenessBoardVisualPage";
 import ReasonsToShowUpPage from "../pages/ReasonsToShowUpPage";
 import HumanCirculationPage from "../pages/HumanCirculationPage";
 import DelaneysGymPage from "../pages/DelaneysGymPage";
@@ -353,6 +361,10 @@ import CommonsCoffeePage from "../pages/CommonsCoffeePage";
 import DelaneysGymVisualPage from "../pages/DelaneysGymVisualPage";
 import GarrettsLaundromatVisualPage from "../pages/GarrettsLaundromatVisualPage";
 import CommonsCoffeeVisualPage from "../pages/CommonsCoffeeVisualPage";
+import CommonsCoffeeMorningVisualPage from "../pages/CommonsCoffeeMorningVisualPage";
+import CommonsCoffeeRainyDayVisualPage from "../pages/CommonsCoffeeRainyDayVisualPage";
+import CommonsCoffeeOutdoorEveningVisualPage from "../pages/CommonsCoffeeOutdoorEveningVisualPage";
+import CommonsCoffeeCommunityEventVisualPage from "../pages/CommonsCoffeeCommunityEventVisualPage";
 import EcosystemCoordinationBoard from "../pages/EcosystemCoordinationBoard";
 import HomePlanetEcosystemIdentityPage from "../pages/HomePlanetEcosystemIdentityPage";
 import ParticipationLivingPage from "../pages/ParticipationLivingPage";
@@ -617,6 +629,14 @@ export default function PlanetRoutes() {
 <Route path="atlas" element={<EcosystemAtlasPage />} />
 <Route path="community-pulse" element={<CommunityPulsePage />} />
 <Route path="community-pulse-visual" element={<CommunityPulseVisualPage />} />
+<Route path="community-pulse-rainy-evening" element={<CommunityPulseRainyEveningVisualPage />} />
+<Route path="community-pulse-outdoor-kiosk" element={<CommunityPulseOutdoorKioskVisualPage />} />
+<Route path="community-pulse-commons-coffee" element={<CommunityPulseCommonsCoffeeVisualPage />} />
+<Route path="community-pulse-parking" element={<CommunityPulseParkingVisualPage />} />
+<Route path="community-pulse-mobile" element={<CommunityPulseMobileViewVisualPage />} />
+<Route path="community-pulse-impact-stories" element={<CommunityPulseImpactStoriesVisualPage />} />
+<Route path="community-pulse-greenbasket" element={<CommunityPulseGreenBasketVisualPage />} />
+<Route path="community-pulse-awareness-board" element={<CommunityPulseAwarenessBoardVisualPage />} />
 <Route path="reasons-to-show-up" element={<ReasonsToShowUpPage />} />
 <Route path="human-circulation" element={<HumanCirculationPage />} />
 <Route path="delaneys-gym" element={<DelaneysGymPage />} />
@@ -625,6 +645,10 @@ export default function PlanetRoutes() {
 <Route path="delaneys-gym-visual" element={<DelaneysGymVisualPage />} />
 <Route path="garretts-laundromat-visual" element={<GarrettsLaundromatVisualPage />} />
 <Route path="commons-coffee-visual" element={<CommonsCoffeeVisualPage />} />
+<Route path="commons-coffee-morning" element={<CommonsCoffeeMorningVisualPage />} />
+<Route path="commons-coffee-rainy-day" element={<CommonsCoffeeRainyDayVisualPage />} />
+<Route path="commons-coffee-outdoor-evening" element={<CommonsCoffeeOutdoorEveningVisualPage />} />
+<Route path="commons-coffee-community-event" element={<CommonsCoffeeCommunityEventVisualPage />} />
 <Route path="ecosystem-infrastructure" element={<EcosystemInfrastructurePortal />} />
 <Route path="get-live" element={<GetBusinessLivePage />} />
 
@@ -647,6 +671,10 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
+
+
+
 
 
 

@@ -12,6 +12,29 @@ export default function CommonsCoffeePage() {
     "Reasons To Show Up",
   ];
 
+  const modes = [
+    {
+      label: "Morning Circulation",
+      route: "/planet/commons-coffee-morning",
+    },
+    {
+      label: "Rainy Day Gathering",
+      route: "/planet/commons-coffee-rainy-day",
+    },
+    {
+      label: "Indoor Evening",
+      route: "/planet/commons-coffee-visual",
+    },
+    {
+      label: "Outdoor Evening",
+      route: "/planet/commons-coffee-outdoor-evening",
+    },
+    {
+      label: "Community Event Night",
+      route: "/planet/commons-coffee-community-event",
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-black text-white">
       <div className="mx-auto flex min-h-screen max-w-6xl flex-col px-4 py-8 md:px-6">
@@ -46,15 +69,28 @@ export default function CommonsCoffeePage() {
               </div>
             ))}
           </div>
-          <button
-            onClick={() => navigate("/planet/commons-coffee-visual")}
-            className="mt-10 rounded-2xl border border-white/10 bg-white px-5 py-3 text-sm font-bold text-black transition hover:scale-[1.02]"
-          >
-            View Concept Image
-          </button>
-<div className="mt-10 rounded-3xl border border-amber-500/20 bg-amber-500/10 p-6">
+
+          <div className="mt-10">
+            <h2 className="mb-4 text-xl font-semibold text-white">
+              Operating Modes
+            </h2>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              {modes.map((mode) => (
+                <button
+                  key={mode.label}
+                  onClick={() => navigate(mode.route)}
+                  className="rounded-2xl border border-white/10 bg-white px-5 py-4 text-left text-sm font-bold text-black transition hover:scale-[1.02]"
+                >
+                  {mode.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-10 rounded-3xl border border-amber-500/20 bg-amber-500/10 p-6">
             <p className="text-xl leading-8 text-amber-100">
-              Commons Coffee is more than coffee. It's a daily reason to show up.
+              Commons Coffee is more than coffee. It is a daily reason to show up.
             </p>
           </div>
         </div>
@@ -62,4 +98,3 @@ export default function CommonsCoffeePage() {
     </div>
   );
 }
-
