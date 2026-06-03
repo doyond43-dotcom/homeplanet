@@ -11,18 +11,18 @@ const operations = [
 ];
 
 const liveFeed = [
-  ["NEW REQUEST", "Pressure washing quote submitted"],
-  ["CREW ACTIVE", "Technician arrived on-site"],
-  ["PHOTO PROOF", "3 photos uploaded"],
-  ["PAYMENT READY", "Invoice prepared"],
-  ["COMPLETE", "Job timestamped"],
+  ["REQUEST CREATED", "Customer requested service"],
+  ["WORK VERIFIED", "Crew checked in on-site"],
+  ["PROOF ATTACHED", "Photos connected to the work"],
+  ["PAYMENT CONNECTED", "Invoice linked to completed work"],
+  ["TIMELINE PRESERVED", "Truth chain complete"],
 ];
 
 const surfaces = [
-  ["Live Board", "Run the operation in real time."],
-  ["Staff Board", "Monitor activity without field confusion."],
-  ["Crew Board", "Field execution while work is happening."],
-  ["Customer Front Door", "Requests, updates, and customer entry."],
+  ["Owner", "Runs the operation and sees the complete timeline."],
+  ["Staff", "Monitors activity and coordinates workflow."],
+  ["Crew", "Performs field work and captures proof."],
+  ["Customer", "Requests service and follows progress."],
 ];
 
 export default function PlanetHomePage() {
@@ -43,8 +43,9 @@ export default function PlanetHomePage() {
             </h1>
 
             <p className="mt-6 max-w-2xl text-lg font-bold leading-8 text-white/60">
-              Requests. Crews. Proof. Payments. Customer flow. All connected in
-              one live operational surface.
+              Real work. Real proof. Real timelines.
+
+              Every request, update, photo, payment, and completion stays connected to the work that created it.
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -115,11 +116,37 @@ export default function PlanetHomePage() {
                   }
                   className="rounded-3xl border border-white/10 bg-black/30 p-5 text-left transition hover:border-emerald-300/35 hover:bg-emerald-300/[0.06]"
                 >
+                  {title === "Home Services" && (
+                    <img src="/images/home-services-operational-hero.png" alt="Home Services" className="mb-4 h-40 w-full rounded-2xl object-cover object-center" />
+                  )}
+                  {title === "Food Trucks" && (
+                    <img src="/images/food-truck-operational-hero.png" alt="Food Trucks" className="mb-4 h-40 w-full rounded-2xl object-cover object-center" />
+                  )}
+                  {title === "Appointments" && (
+                    <img src="/images/appointments-operational-hero.png" alt="Appointments" className="mb-4 h-40 w-full rounded-2xl object-cover object-center" />
+                  )}
+                  {title === "Tours" && (
+                    <img src="/images/tours-operational-hero.png" alt="Tours" className="mb-4 h-40 w-full rounded-2xl object-cover object-center" />
+                  )}
+                  {title === "Retail" && (
+                    <img src="/images/retail-operational-hero.png" alt="Retail" className="mb-4 h-40 w-full rounded-2xl object-cover object-center" />
+                  )}
+                  {title === "Community" && (
+                    <img src="/images/community-operational-hero.png" alt="Community" className="mb-4 h-40 w-full rounded-2xl object-cover object-center" />
+                  )}
+
                   <div className="text-xl font-black">{title}</div>
 
                   <div className="mt-3 text-sm font-bold leading-6 text-white/50">
                     {detail}
                   </div>
+
+                  {title === "Home Services" && (
+                    <div className="mt-3 text-xs font-bold leading-5 text-white/40">
+                      Perfect for pest control, pressure washing, cleaning,
+                      landscaping and field service businesses.
+                    </div>
+                  )}
                 </button>
               );
             })}
@@ -127,14 +154,14 @@ export default function PlanetHomePage() {
         </section>
 
         <section className="mt-6 grid gap-6 lg:grid-cols-[1fr_.8fr]">
-          <div className="rounded-[2rem] border border-emerald-300/10 bg-emerald-300/[0.04] p-6">
+          <div className="rounded-[2rem] border border-emerald-300/15 bg-emerald-500/[0.08] p-6">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-2 text-xs font-black uppercase tracking-[0.18em] text-emerald-200">
               <Flame size={14} />
               Live System Preview
             </div>
 
             <div className="grid gap-3">
-              {["New Request", "Crew Active", "Proof Added", "Payment Ready"].map(
+              {["Request Created", "Work Verified", "Proof Attached", "Payment Connected"].map(
                 (stage, index) => (
                   <div
                     key={stage}
@@ -142,8 +169,8 @@ export default function PlanetHomePage() {
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div>
-                        <div className="text-xs font-black uppercase tracking-[0.16em] text-white/35">
-                          Step {index + 1}
+                        <div className="text-xs font-black uppercase tracking-[0.16em] text-emerald-300">
+                          Truth Chain Step {index + 1}
                         </div>
                         <div className="mt-1 text-lg font-black">{stage}</div>
                       </div>
@@ -155,7 +182,7 @@ export default function PlanetHomePage() {
             </div>
           </div>
 
-          <div className="rounded-[2rem] border border-white/10 bg-white/[0.035] p-6">
+          <div className="rounded-[2rem] border border-cyan-500/15 bg-cyan-500/[0.05] p-6">
             <div className="text-xs font-black uppercase tracking-[0.2em] text-cyan-200">
               Connected Surfaces
             </div>
@@ -176,7 +203,7 @@ export default function PlanetHomePage() {
           </div>
         </section>
 
-        <section className="mt-6 rounded-[2rem] border border-white/10 bg-white/[0.035] p-6 text-center">
+        <section className="mt-6 rounded-[2rem] border border-cyan-500/15 bg-cyan-500/[0.05] p-6 text-center">
           <div className="text-xs font-black uppercase tracking-[0.22em] text-emerald-300">
             How it works
           </div>
@@ -188,7 +215,7 @@ export default function PlanetHomePage() {
                   key={item}
                   className="rounded-2xl border border-white/10 bg-black/30 p-5"
                 >
-                  <div className="text-sm font-black text-white/35">
+                  <div className="text-sm font-black text-emerald-300">
                     {String(index + 1).padStart(2, "0")}
                   </div>
                   <div className="mt-2 text-lg font-black">{item}</div>
@@ -201,3 +228,9 @@ export default function PlanetHomePage() {
     </main>
   );
 }
+
+
+
+
+
+
