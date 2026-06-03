@@ -34,7 +34,6 @@ const SEATS_KEY = "hp-brahma-bull-seat-orders";
 const drinkItems = ["Coke", "Pepsi", "Sprite", "Mountain Dew", "Sweet Tea", "Water", "Shirley Temple"];
 const foodItems = ["Brahma Burger", "Wings + Fries", "Chicken Tenders", "Fries", "House Salad"];
 
-const drinkFlags = ["LEMON", "LIME", "NO ICE", "EXTRA CHERRIES"];
 const foodFlags = ["NO MAYO", "NO TOMATO", "NO ONION", "EXTRA RANCH", "ALLERGY"];
 
 const initialTables: TableState[] = [
@@ -111,13 +110,25 @@ function flagButtonClass(active: boolean, danger = false) {
   return "bg-amber-300 text-black";
 }
 
+function drinkFlagsFor(drink?: string) {
+  if (drink === "Water") return ["LEMON", "LIME", "NO ICE"];
+  if (drink === "Sweet Tea") return ["LEMON", "NO ICE"];
+  if (drink === "Shirley Temple") return ["NO ICE", "EXTRA CHERRIES"];
+  return [];
+}
+
+function needsDrinkModifier(drink: string) {
+  return drink === "Water" || drink === "Sweet Tea" || drink === "Shirley Temple";
+}
+
 export default function BrahmaBullCrewBoard() {
   const [tables, setTables] = useState<TableState[]>(() => readTables());
   const [seatOrdersByTable, setSeatOrdersByTable] = useState<Record<string, SeatOrder[]>>(() => readSeatOrders());
   const [activeTable, setActiveTable] = useState<string | null>(null);
-  const [activeSeat, setActiveSeat] = useState<number | null>(null);
+  const [activeSeat, setActiveSeat] = useState<number>(1);
   const [mode, setMode] = useState<"drinks" | "food">("drinks");
   const [message, setMessage] = useState("");
+  const [pendingDrink, setPendingDrink] = useState<string | null>(null);
 
   useEffect(() => {
     function sync() {
@@ -147,9 +158,7 @@ export default function BrahmaBullCrewBoard() {
     ? seatOrdersByTable[activeTable] || blankSeats()
     : blankSeats();
 
-  const selectedSeat = activeSeat
-    ? seats.find((seat) => seat.seat === activeSeat)
-    : null;
+  const selectedSeat = seats.find((seat) => seat.seat === activeSeat) || seats[0];
 
   function saveTables(updated: TableState[]) {
     setTables(updated);
@@ -181,31 +190,46 @@ export default function BrahmaBullCrewBoard() {
     setMessage("");
   }
 
-  function setDrink(drink: string) {
-    if (!selectedSeat || !activeTable) return;
+  function moveToNextSeat(fromSeat = activeSeat) {
+    const nextSeat = seats.find((seat) => seat.seat === fromSeat + 1);
 
-    const allowedFlags = selectedSeat.drinkFlags.filter((flag) => {
-      if (drink === "Water") return ["LEMON", "LIME", "NO ICE"].includes(flag);
-      if (drink === "Sweet Tea") return ["LEMON", "NO ICE"].includes(flag);
-      if (drink === "Shirley Temple") return ["NO ICE", "EXTRA CHERRIES"].includes(flag);
-      return ["NO ICE"].includes(flag);
-    });
-
-    updateSeat({ ...selectedSeat, drink, drinkFlags: allowedFlags });
-    updateTableStatus(activeTable, "Active");
+    if (nextSeat) {
+      setActiveSeat(nextSeat.seat);
+    }
   }
 
-  function toggleDrinkFlag(flag: string) {
-    if (!selectedSeat) return;
-
-    const active = selectedSeat.drinkFlags.includes(flag);
+  function setDrinkForActiveSeat(drink: string, flags: string[] = [], advance = true) {
+    if (!activeTable || !selectedSeat) return;
 
     updateSeat({
       ...selectedSeat,
-      drinkFlags: active
-        ? selectedSeat.drinkFlags.filter((item) => item !== flag)
-        : [...selectedSeat.drinkFlags, flag],
+      drink,
+      drinkFlags: flags,
     });
+
+    updateTableStatus(activeTable, "Active");
+
+    if (advance) {
+      moveToNextSeat(selectedSeat.seat);
+    }
+  }
+
+  function handleDrinkTap(drink: string) {
+    if (needsDrinkModifier(drink)) {
+      setPendingDrink(drink);
+      setDrinkForActiveSeat(drink, [], false);
+      return;
+    }
+
+    setPendingDrink(null);
+    setDrinkForActiveSeat(drink, [], true);
+  }
+
+  function handleDrinkFlag(flag: string) {
+    if (!pendingDrink) return;
+
+    setDrinkForActiveSeat(pendingDrink, [flag], true);
+    setPendingDrink(null);
   }
 
   function setFood(food: string) {
@@ -227,14 +251,6 @@ export default function BrahmaBullCrewBoard() {
     });
   }
 
-  function drinkFlagsFor(drink?: string) {
-    if (drink === "Water") return ["LEMON", "LIME", "NO ICE"];
-    if (drink === "Sweet Tea") return ["LEMON", "NO ICE"];
-    if (drink === "Shirley Temple") return ["NO ICE", "EXTRA CHERRIES"];
-    if (drink) return ["NO ICE"];
-    return [];
-  }
-
   function sendDrinks() {
     if (!activeTable) return;
 
@@ -245,7 +261,8 @@ export default function BrahmaBullCrewBoard() {
     updateTableStatus(activeTable, "Active");
     setMessage(`Drinks sent for Table ${activeTable}.`);
     setMode("food");
-    setActiveSeat(null);
+    setActiveSeat(1);
+    setPendingDrink(null);
   }
 
   function sendFood() {
@@ -274,7 +291,7 @@ export default function BrahmaBullCrewBoard() {
     writeKitchenTickets([...tickets, ...readKitchenTickets()]);
     updateTableStatus(activeTable, "Waiting Food");
     setMessage(`Food sent to kitchen for Table ${activeTable}.`);
-    setActiveSeat(null);
+    setActiveSeat(1);
   }
 
   function clearTable(tableNumber: string) {
@@ -285,8 +302,9 @@ export default function BrahmaBullCrewBoard() {
     writeSeatOrders(updatedOrders);
     updateTableStatus(tableNumber, "Available");
     setActiveTable(null);
-    setActiveSeat(null);
+    setActiveSeat(1);
     setMode("drinks");
+    setPendingDrink(null);
     setMessage("");
   }
 
@@ -297,7 +315,8 @@ export default function BrahmaBullCrewBoard() {
           <button
             onClick={() => {
               setActiveTable(null);
-              setActiveSeat(null);
+              setActiveSeat(1);
+              setPendingDrink(null);
               setMessage("");
             }}
             className="rounded-full border border-white/10 bg-neutral-900 px-4 py-2 text-sm font-black text-white"
@@ -325,7 +344,8 @@ export default function BrahmaBullCrewBoard() {
             <button
               onClick={() => {
                 setMode("drinks");
-                setActiveSeat(null);
+                setActiveSeat(1);
+                setPendingDrink(null);
               }}
               className={`rounded-2xl px-4 py-4 text-sm font-black ${
                 mode === "drinks" ? "bg-sky-300 text-black" : "bg-neutral-900 text-white"
@@ -337,7 +357,8 @@ export default function BrahmaBullCrewBoard() {
             <button
               onClick={() => {
                 setMode("food");
-                setActiveSeat(null);
+                setActiveSeat(1);
+                setPendingDrink(null);
               }}
               className={`rounded-2xl px-4 py-4 text-sm font-black ${
                 mode === "food" ? "bg-emerald-400 text-black" : "bg-neutral-900 text-white"
@@ -358,137 +379,148 @@ export default function BrahmaBullCrewBoard() {
               </span>
             </div>
 
-            <div className="mt-4 space-y-3">
-              {seats.map((seat) => {
-                const isOpen = activeSeat === seat.seat;
+            {mode === "drinks" ? (
+              <div className="mt-5 space-y-4">
+                <div className="rounded-3xl border border-sky-300/30 bg-sky-300/10 p-5">
+                  <p className="text-xs font-black uppercase tracking-[0.25em] text-sky-100">
+                    Active Seat
+                  </p>
 
-                return (
-                  <div
-                    key={seat.seat}
-                    className={`rounded-2xl border p-4 ${
-                      isOpen ? "border-emerald-300/70 bg-emerald-400/10" : "border-white/10 bg-black/40"
-                    }`}
-                  >
+                  <div className="mt-3 flex items-end justify-between gap-3">
+                    <h3 className="text-6xl font-black leading-none">
+                      Seat {activeSeat}
+                    </h3>
+
                     <button
-                      onClick={() => setActiveSeat(isOpen ? null : seat.seat)}
-                      className="w-full text-left"
+                      onClick={() => {
+                        setActiveSeat(Math.max(1, activeSeat - 1));
+                        setPendingDrink(null);
+                      }}
+                      className="rounded-2xl bg-neutral-800 px-4 py-3 text-xs font-black text-white"
                     >
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-2xl font-black">Seat {seat.seat}</p>
-
-                          <p className="mt-1 text-sm font-bold text-sky-100">
-                            Drink: {seat.drink ? `${seat.drink}${seat.drinkFlags.length ? ` (${seat.drinkFlags.join(", ")})` : ""}` : "—"}
-                          </p>
-
-                          <p className="mt-1 text-sm font-bold text-emerald-100">
-                            Food: {seat.food ? `${seat.food}${seat.foodFlags.length ? ` (${seat.foodFlags.join(", ")})` : ""}` : "—"}
-                          </p>
-                        </div>
-
-                        <span className="rounded-full bg-neutral-800 px-3 py-2 text-xs font-black text-white">
-                          {isOpen ? "Close" : "Open"}
-                        </span>
-                      </div>
+                      Back Seat
                     </button>
-
-                    {isOpen && mode === "drinks" && (
-                      <div className="mt-4 rounded-2xl border border-sky-300/20 bg-sky-300/10 p-3">
-                        <p className="text-xs font-black uppercase tracking-[0.2em] text-sky-100">
-                          Pick Drink
-                        </p>
-
-                        <div className="mt-3 grid grid-cols-2 gap-2">
-                          {drinkItems.map((drink) => (
-                            <button
-                              key={drink}
-                              onClick={() => setDrink(drink)}
-                              className={`rounded-xl px-3 py-3 text-left text-xs font-black ${
-                                seat.drink === drink ? "bg-white text-black" : "bg-black/40 text-white"
-                              }`}
-                            >
-                              {drink}
-                            </button>
-                          ))}
-                        </div>
-
-                        {seat.drink && (
-                          <>
-                            <p className="mt-4 text-xs font-black uppercase tracking-[0.2em] text-sky-100">
-                              Drink Notes
-                            </p>
-
-                            <div className="mt-3 flex flex-wrap gap-2">
-                              {drinkFlagsFor(seat.drink).map((flag) => {
-                                const active = seat.drinkFlags.includes(flag);
-
-                                return (
-                                  <button
-                                    key={flag}
-                                    onClick={() => toggleDrinkFlag(flag)}
-                                    className={`rounded-full px-3 py-2 text-xs font-black ${flagButtonClass(active)}`}
-                                  >
-                                    {active ? "✓ " : "+ "}
-                                    {flag}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    )}
-
-                    {isOpen && mode === "food" && (
-                      <div className="mt-4 rounded-2xl border border-emerald-300/20 bg-emerald-400/10 p-3">
-                        <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-100">
-                          Pick Food
-                        </p>
-
-                        <div className="mt-3 grid gap-2">
-                          {foodItems.map((food) => (
-                            <button
-                              key={food}
-                              onClick={() => setFood(food)}
-                              className={`rounded-xl px-3 py-3 text-left text-xs font-black ${
-                                seat.food === food ? "bg-white text-black" : "bg-black/40 text-white"
-                              }`}
-                            >
-                              {food}
-                            </button>
-                          ))}
-                        </div>
-
-                        {seat.food && (
-                          <>
-                            <p className="mt-4 text-xs font-black uppercase tracking-[0.2em] text-emerald-100">
-                              Food Notes
-                            </p>
-
-                            <div className="mt-3 flex flex-wrap gap-2">
-                              {foodFlags.map((flag) => {
-                                const active = seat.foodFlags.includes(flag);
-
-                                return (
-                                  <button
-                                    key={flag}
-                                    onClick={() => toggleFoodFlag(flag)}
-                                    className={`rounded-full px-3 py-2 text-xs font-black ${flagButtonClass(active, flag === "ALLERGY")}`}
-                                  >
-                                    {active ? "✓ " : "+ "}
-                                    {flag}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    )}
                   </div>
-                );
-              })}
-            </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  {drinkItems.map((drink) => (
+                    <button
+                      key={drink}
+                      onClick={() => handleDrinkTap(drink)}
+                      className="rounded-2xl bg-sky-300 px-4 py-5 text-left text-sm font-black text-black"
+                    >
+                      {drink}
+                    </button>
+                  ))}
+                </div>
+
+                {pendingDrink && (
+                  <div className="rounded-3xl border border-sky-300/30 bg-black/40 p-4">
+                    <p className="text-xs font-black uppercase tracking-[0.25em] text-sky-100">
+                      {pendingDrink} Notes
+                    </p>
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {drinkFlagsFor(pendingDrink).map((flag) => (
+                        <button
+                          key={flag}
+                          onClick={() => handleDrinkFlag(flag)}
+                          className="rounded-full bg-amber-300 px-4 py-3 text-xs font-black text-black"
+                        >
+                          {flag}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="mt-4 space-y-3">
+                {seats.map((seat) => {
+                  const isOpen = activeSeat === seat.seat;
+
+                  return (
+                    <div
+                      key={seat.seat}
+                      className={`rounded-2xl border p-4 ${
+                        isOpen ? "border-emerald-300/70 bg-emerald-400/10" : "border-white/10 bg-black/40"
+                      }`}
+                    >
+                      <button
+                        onClick={() => setActiveSeat(isOpen ? 1 : seat.seat)}
+                        className="w-full text-left"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-2xl font-black">Seat {seat.seat}</p>
+
+                            <p className="mt-1 text-sm font-bold text-sky-100">
+                              Drink: {seat.drink ? `${seat.drink}${seat.drinkFlags.length ? ` (${seat.drinkFlags.join(", ")})` : ""}` : "—"}
+                            </p>
+
+                            <p className="mt-1 text-sm font-bold text-emerald-100">
+                              Food: {seat.food ? `${seat.food}${seat.foodFlags.length ? ` (${seat.foodFlags.join(", ")})` : ""}` : "—"}
+                            </p>
+                          </div>
+
+                          <span className="rounded-full bg-neutral-800 px-3 py-2 text-xs font-black text-white">
+                            {isOpen ? "Close" : "Open"}
+                          </span>
+                        </div>
+                      </button>
+
+                      {isOpen && (
+                        <div className="mt-4 rounded-2xl border border-emerald-300/20 bg-emerald-400/10 p-3">
+                          <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-100">
+                            Pick Food
+                          </p>
+
+                          <div className="mt-3 grid gap-2">
+                            {foodItems.map((food) => (
+                              <button
+                                key={food}
+                                onClick={() => setFood(food)}
+                                className={`rounded-xl px-3 py-3 text-left text-xs font-black ${
+                                  seat.food === food ? "bg-white text-black" : "bg-black/40 text-white"
+                                }`}
+                              >
+                                {food}
+                              </button>
+                            ))}
+                          </div>
+
+                          {seat.food && (
+                            <>
+                              <p className="mt-4 text-xs font-black uppercase tracking-[0.2em] text-emerald-100">
+                                Food Notes
+                              </p>
+
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                {foodFlags.map((flag) => {
+                                  const active = seat.foodFlags.includes(flag);
+
+                                  return (
+                                    <button
+                                      key={flag}
+                                      onClick={() => toggleFoodFlag(flag)}
+                                      className={`rounded-full px-3 py-2 text-xs font-black ${flagButtonClass(active, flag === "ALLERGY")}`}
+                                    >
+                                      {active ? "✓ " : "+ "}
+                                      {flag}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
 
             {mode === "drinks" ? (
               <button
@@ -552,7 +584,11 @@ export default function BrahmaBullCrewBoard() {
               {activeTables.map((table) => (
                 <button
                   key={table.table}
-                  onClick={() => setActiveTable(table.table)}
+                  onClick={() => {
+                    setActiveTable(table.table);
+                    setActiveSeat(1);
+                    setPendingDrink(null);
+                  }}
                   className={`w-full rounded-2xl border p-4 text-left ${statusClass(table.status)}`}
                 >
                   <p className="text-2xl font-black">Table {table.table}</p>
@@ -570,7 +606,11 @@ export default function BrahmaBullCrewBoard() {
             {tables.map((table) => (
               <button
                 key={table.table}
-                onClick={() => setActiveTable(table.table)}
+                onClick={() => {
+                  setActiveTable(table.table);
+                  setActiveSeat(1);
+                  setPendingDrink(null);
+                }}
                 className={`rounded-2xl border p-4 text-left ${statusClass(table.status)}`}
               >
                 <p className="text-2xl font-black">Table {table.table}</p>
@@ -583,3 +623,13 @@ export default function BrahmaBullCrewBoard() {
     </main>
   );
 }
+
+
+
+
+
+
+
+
+
+
