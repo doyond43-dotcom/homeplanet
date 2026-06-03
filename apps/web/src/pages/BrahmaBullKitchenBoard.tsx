@@ -24,6 +24,31 @@ type TableGroup = {
 };
 
 const STORAGE_KEY = "hp-brahma-bull-kitchen";
+const NOTIFICATION_KEY = "hp-brahma-bull-notifications";
+
+type BrahmaNotification = {
+  id: string;
+  table: string;
+  message: string;
+  createdAt: number;
+  dismissed?: boolean;
+};
+
+function readNotifications(): BrahmaNotification[] {
+  try {
+    return JSON.parse(localStorage.getItem(NOTIFICATION_KEY) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function writeNotification(notification: BrahmaNotification) {
+  localStorage.setItem(
+    NOTIFICATION_KEY,
+    JSON.stringify([notification, ...readNotifications()].slice(0, 20))
+  );
+  window.dispatchEvent(new Event("brahma-bull-notification-sync"));
+}
 const starterTickets: Ticket[] = [];
 
 function readTickets(): Ticket[] {
@@ -111,6 +136,15 @@ function groupTicketsByTable(tickets: Ticket[], stage: TicketStage): TableGroup[
 
 function cleanItemName(item: string) {
   return item.replace(/^Seat\s+\d+:\s*/i, "");
+}
+
+function readyMessageForTable(table: string, tickets: Ticket[]) {
+  const items = tickets
+    .filter((ticket) => ticket.table === table)
+    .map((ticket) => cleanItemName(ticket.item))
+    .join(" + ");
+
+  return `Table ${table} - ${items || "Food"} Ready`;
 }
 
 function TableGroupCard({
@@ -273,6 +307,18 @@ export default function BrahmaBullKitchenBoard() {
   }
 
   function moveTable(table: string, fromStage: TicketStage, toStage: TicketStage) {
+    if (toStage === "Ready") {
+      writeNotification({
+        id: crypto.randomUUID(),
+        table,
+        message: readyMessageForTable(
+          table,
+          tickets.filter((ticket) => ticket.table === table && ticket.stage === fromStage)
+        ),
+        createdAt: Date.now(),
+      });
+    }
+
     saveTickets(
       tickets.map((ticket) =>
         ticket.table === table && ticket.stage === fromStage
@@ -435,5 +481,9 @@ export default function BrahmaBullKitchenBoard() {
     </main>
   );
 }
+
+
+
+
 
 

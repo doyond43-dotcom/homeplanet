@@ -30,6 +30,28 @@ type KitchenTicket = {
 const KITCHEN_KEY = "hp-brahma-bull-kitchen";
 const TABLES_KEY = "hp-brahma-bull-tables";
 const SEATS_KEY = "hp-brahma-bull-seat-orders";
+const NOTIFICATION_KEY = "hp-brahma-bull-notifications";
+
+type BrahmaNotification = {
+  id: string;
+  table: string;
+  message: string;
+  createdAt: number;
+  dismissed?: boolean;
+};
+
+function readNotifications(): BrahmaNotification[] {
+  try {
+    return JSON.parse(localStorage.getItem(NOTIFICATION_KEY) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function writeNotifications(notifications: BrahmaNotification[]) {
+  localStorage.setItem(NOTIFICATION_KEY, JSON.stringify(notifications));
+  window.dispatchEvent(new Event("brahma-bull-notification-sync"));
+}
 
 const drinkItems = ["Coke", "Pepsi", "Sprite", "Mountain Dew", "Sweet Tea", "Water", "Shirley Temple"];
 const foodItems = ["Brahma Burger", "Wings + Fries", "Chicken Tenders", "Fries", "House Salad"];
@@ -128,6 +150,7 @@ export default function BrahmaBullCrewBoard() {
   const [mode, setMode] = useState<"drinks" | "food">("drinks");
   const [message, setMessage] = useState("");
   const [pendingDrink, setPendingDrink] = useState<string | null>(null);
+  const [notifications, setNotifications] = useState<BrahmaNotification[]>(() => readNotifications());
 
   useEffect(() => {
     function sync() {
@@ -145,6 +168,53 @@ export default function BrahmaBullCrewBoard() {
       window.removeEventListener("brahma-bull-seats-sync", sync);
     };
   }, []);
+
+  useEffect(() => {
+    function syncNotifications() {
+      setNotifications(readNotifications());
+    }
+
+    window.addEventListener("storage", syncNotifications);
+    window.addEventListener("brahma-bull-notification-sync", syncNotifications);
+
+    return () => {
+      window.removeEventListener("storage", syncNotifications);
+      window.removeEventListener("brahma-bull-notification-sync", syncNotifications);
+    };
+  }, []);
+
+  const activeNotification = notifications.find((notification) => !notification.dismissed);
+
+  function dismissNotification(notificationId: string) {
+    const updated = notifications.map((notification) =>
+      notification.id === notificationId ? { ...notification, dismissed: true } : notification
+    );
+
+    setNotifications(updated);
+    writeNotifications(updated);
+  }
+
+  const notificationToast = activeNotification ? (
+    <div className="fixed bottom-4 right-4 z-50 max-w-xs rounded-3xl border border-emerald-400/40 bg-neutral-900 p-4 shadow-2xl">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.25em] text-emerald-300">
+            Food Ready
+          </p>
+          <p className="mt-2 text-sm font-black text-white">
+            {activeNotification.message}
+          </p>
+        </div>
+
+        <button
+          onClick={() => dismissNotification(activeNotification.id)}
+          className="rounded-full bg-black/40 px-3 py-1 text-xs font-black text-white"
+        >
+          X
+        </button>
+      </div>
+    </div>
+  ) : null;
 
   const selectedTable = tables.find((table) => table.table === activeTable);
 
@@ -339,7 +409,7 @@ export default function BrahmaBullCrewBoard() {
     const hasNextSeat = Boolean(seats.find((seat) => seat.seat === selectedSeat.seat + 1));
 
     return (
-      <main className="min-h-screen bg-neutral-950 px-4 py-5 text-white">
+      <main className="relative min-h-screen bg-neutral-950 px-4 py-5 text-white">
         <section className="mx-auto max-w-md space-y-5">
           <button
             onClick={() => {
@@ -598,7 +668,7 @@ export default function BrahmaBullCrewBoard() {
   }
 
   return (
-    <main className="min-h-screen bg-neutral-950 px-4 py-5 text-white">
+    <main className="relative min-h-screen bg-neutral-950 px-4 py-5 text-white">
       <section className="mx-auto max-w-md space-y-5">
         <div className="rounded-3xl border border-white/10 bg-neutral-900 p-5">
           <p className="text-xs font-bold uppercase tracking-[0.3em] text-emerald-300">
@@ -654,9 +724,11 @@ export default function BrahmaBullCrewBoard() {
           </div>
         </div>
       </section>
+      {notificationToast}
     </main>
   );
 }
+
 
 
 
