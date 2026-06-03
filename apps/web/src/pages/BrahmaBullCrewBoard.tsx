@@ -33,7 +33,6 @@ const SEATS_KEY = "hp-brahma-bull-seat-orders";
 
 const drinkItems = ["Coke", "Pepsi", "Sprite", "Mountain Dew", "Sweet Tea", "Water", "Shirley Temple"];
 const foodItems = ["Brahma Burger", "Wings + Fries", "Chicken Tenders", "Fries", "House Salad"];
-
 const foodFlags = ["NO MAYO", "NO TOMATO", "NO ONION", "EXTRA RANCH", "ALLERGY"];
 
 const initialTables: TableState[] = [
@@ -226,15 +225,35 @@ export default function BrahmaBullCrewBoard() {
   }
 
   function handleDrinkFlag(flag: string) {
-    if (!pendingDrink) return;
+    if (!pendingDrink || !selectedSeat) return;
 
-    setDrinkForActiveSeat(pendingDrink, [flag], true);
-    setPendingDrink(null);
+    const active = selectedSeat.drinkFlags.includes(flag);
+
+    updateSeat({
+      ...selectedSeat,
+      drink: pendingDrink,
+      drinkFlags: active
+        ? selectedSeat.drinkFlags.filter((item) => item !== flag)
+        : [...selectedSeat.drinkFlags, flag],
+    });
   }
 
-  function setFood(food: string) {
+  function finishDrinkSeat() {
+    if (!selectedSeat?.drink) return;
+
+    setPendingDrink(null);
+    moveToNextSeat(selectedSeat.seat);
+  }
+
+  function setFoodForActiveSeat(food: string) {
     if (!selectedSeat || !activeTable) return;
-    updateSeat({ ...selectedSeat, food });
+
+    updateSeat({
+      ...selectedSeat,
+      food,
+      foodFlags: selectedSeat.food === food ? selectedSeat.foodFlags : [],
+    });
+
     updateTableStatus(activeTable, "Active");
   }
 
@@ -249,6 +268,11 @@ export default function BrahmaBullCrewBoard() {
         ? selectedSeat.foodFlags.filter((item) => item !== flag)
         : [...selectedSeat.foodFlags, flag],
     });
+  }
+
+  function finishFoodSeat() {
+    if (!selectedSeat?.food) return;
+    moveToNextSeat(selectedSeat.seat);
   }
 
   function sendDrinks() {
@@ -290,8 +314,11 @@ export default function BrahmaBullCrewBoard() {
 
     writeKitchenTickets([...tickets, ...readKitchenTickets()]);
     updateTableStatus(activeTable, "Waiting Food");
-    setMessage(`Food sent to kitchen for Table ${activeTable}.`);
+    setActiveTable(null);
+    setMode("drinks");
     setActiveSeat(1);
+    setPendingDrink(null);
+    setMessage("");
   }
 
   function clearTable(tableNumber: string) {
@@ -309,6 +336,8 @@ export default function BrahmaBullCrewBoard() {
   }
 
   if (selectedTable) {
+    const hasNextSeat = Boolean(seats.find((seat) => seat.seat === selectedSeat.seat + 1));
+
     return (
       <main className="min-h-screen bg-neutral-950 px-4 py-5 text-white">
         <section className="mx-auto max-w-md space-y-5">
@@ -321,7 +350,7 @@ export default function BrahmaBullCrewBoard() {
             }}
             className="rounded-full border border-white/10 bg-neutral-900 px-4 py-2 text-sm font-black text-white"
           >
-            ← Back To Tables
+            Back To Tables
           </button>
 
           <div className="rounded-3xl border border-white/10 bg-neutral-900 p-5">
@@ -422,103 +451,108 @@ export default function BrahmaBullCrewBoard() {
                     </p>
 
                     <div className="mt-3 flex flex-wrap gap-2">
-                      {drinkFlagsFor(pendingDrink).map((flag) => (
-                        <button
-                          key={flag}
-                          onClick={() => handleDrinkFlag(flag)}
-                          className="rounded-full bg-amber-300 px-4 py-3 text-xs font-black text-black"
-                        >
-                          {flag}
-                        </button>
-                      ))}
+                      {drinkFlagsFor(pendingDrink).map((flag) => {
+                        const active = selectedSeat.drinkFlags.includes(flag);
+
+                        return (
+                          <button
+                            key={flag}
+                            onClick={() => handleDrinkFlag(flag)}
+                            className={`rounded-full px-4 py-3 text-xs font-black ${
+                              active ? "bg-white text-black" : "bg-amber-300 text-black"
+                            }`}
+                          >
+                            {active ? "YES " : "+ "}
+                            {flag}
+                          </button>
+                        );
+                      })}
                     </div>
+
+                    <button
+                      onClick={finishDrinkSeat}
+                      className="mt-4 w-full rounded-2xl bg-sky-300 px-4 py-5 text-sm font-black text-black"
+                    >
+                      DONE NEXT SEAT
+                    </button>
                   </div>
                 )}
               </div>
             ) : (
-              <div className="mt-4 space-y-3">
-                {seats.map((seat) => {
-                  const isOpen = activeSeat === seat.seat;
+              <div className="mt-5 space-y-4">
+                <div className="rounded-3xl border border-emerald-300/30 bg-emerald-400/10 p-5">
+                  <p className="text-xs font-black uppercase tracking-[0.25em] text-emerald-100">
+                    Active Seat
+                  </p>
 
-                  return (
-                    <div
-                      key={seat.seat}
-                      className={`rounded-2xl border p-4 ${
-                        isOpen ? "border-emerald-300/70 bg-emerald-400/10" : "border-white/10 bg-black/40"
+                  <div className="mt-3 flex items-end justify-between gap-3">
+                    <h3 className="text-6xl font-black leading-none">
+                      Seat {activeSeat}
+                    </h3>
+
+                    <button
+                      onClick={() => setActiveSeat(Math.max(1, activeSeat - 1))}
+                      className="rounded-2xl bg-neutral-800 px-4 py-3 text-xs font-black text-white"
+                    >
+                      Back Seat
+                    </button>
+                  </div>
+
+                  {selectedSeat.food && (
+                    <p className="mt-4 text-sm font-black text-emerald-100">
+                      {selectedSeat.food}
+                      {selectedSeat.foodFlags.length ? ` (${selectedSeat.foodFlags.join(", ")})` : ""}
+                    </p>
+                  )}
+                </div>
+
+                <div className="grid gap-2">
+                  {foodItems.map((food) => (
+                    <button
+                      key={food}
+                      onClick={() => setFoodForActiveSeat(food)}
+                      className={`rounded-2xl px-4 py-5 text-left text-sm font-black ${
+                        selectedSeat.food === food ? "bg-white text-black" : "bg-emerald-400 text-black"
                       }`}
                     >
-                      <button
-                        onClick={() => setActiveSeat(isOpen ? 1 : seat.seat)}
-                        className="w-full text-left"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <p className="text-2xl font-black">Seat {seat.seat}</p>
+                      {food}
+                    </button>
+                  ))}
+                </div>
 
-                            <p className="mt-1 text-sm font-bold text-sky-100">
-                              Drink: {seat.drink ? `${seat.drink}${seat.drinkFlags.length ? ` (${seat.drinkFlags.join(", ")})` : ""}` : "—"}
-                            </p>
+                {selectedSeat.food && (
+                  <div className="rounded-3xl border border-emerald-300/30 bg-black/40 p-4">
+                    <p className="text-xs font-black uppercase tracking-[0.25em] text-emerald-100">
+                      Food Notes
+                    </p>
 
-                            <p className="mt-1 text-sm font-bold text-emerald-100">
-                              Food: {seat.food ? `${seat.food}${seat.foodFlags.length ? ` (${seat.foodFlags.join(", ")})` : ""}` : "—"}
-                            </p>
-                          </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {foodFlags.map((flag) => {
+                        const active = selectedSeat.foodFlags.includes(flag);
 
-                          <span className="rounded-full bg-neutral-800 px-3 py-2 text-xs font-black text-white">
-                            {isOpen ? "Close" : "Open"}
-                          </span>
-                        </div>
-                      </button>
-
-                      {isOpen && (
-                        <div className="mt-4 rounded-2xl border border-emerald-300/20 bg-emerald-400/10 p-3">
-                          <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-100">
-                            Pick Food
-                          </p>
-
-                          <div className="mt-3 grid gap-2">
-                            {foodItems.map((food) => (
-                              <button
-                                key={food}
-                                onClick={() => setFood(food)}
-                                className={`rounded-xl px-3 py-3 text-left text-xs font-black ${
-                                  seat.food === food ? "bg-white text-black" : "bg-black/40 text-white"
-                                }`}
-                              >
-                                {food}
-                              </button>
-                            ))}
-                          </div>
-
-                          {seat.food && (
-                            <>
-                              <p className="mt-4 text-xs font-black uppercase tracking-[0.2em] text-emerald-100">
-                                Food Notes
-                              </p>
-
-                              <div className="mt-3 flex flex-wrap gap-2">
-                                {foodFlags.map((flag) => {
-                                  const active = seat.foodFlags.includes(flag);
-
-                                  return (
-                                    <button
-                                      key={flag}
-                                      onClick={() => toggleFoodFlag(flag)}
-                                      className={`rounded-full px-3 py-2 text-xs font-black ${flagButtonClass(active, flag === "ALLERGY")}`}
-                                    >
-                                      {active ? "✓ " : "+ "}
-                                      {flag}
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      )}
+                        return (
+                          <button
+                            key={flag}
+                            onClick={() => toggleFoodFlag(flag)}
+                            className={`rounded-full px-4 py-3 text-xs font-black ${flagButtonClass(active, flag === "ALLERGY")}`}
+                          >
+                            {active ? "YES " : "+ "}
+                            {flag}
+                          </button>
+                        );
+                      })}
                     </div>
-                  );
-                })}
+
+                    {hasNextSeat && (
+                      <button
+                        onClick={finishFoodSeat}
+                        className="mt-4 w-full rounded-2xl bg-emerald-400 px-4 py-5 text-sm font-black text-black"
+                      >
+                        DONE NEXT SEAT
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
