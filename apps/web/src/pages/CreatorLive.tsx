@@ -245,22 +245,50 @@ function HostControls({
 }) {
   const room = useRoomContext();
 
-  const [micOn, setMicOn] = useState(true);
-  const [camOn, setCamOn] = useState(true);
+  const [micOn, setMicOn] = useState(false);
+  const [camOn, setCamOn] = useState(false);
   const [screenOn, setScreenOn] = useState(false);
+  const [mediaBusy, setMediaBusy] = useState(false);
+  const [mediaError, setMediaError] = useState("");
 
   const toggleMic = async () => {
+    if (mediaBusy) return;
+
     const next = !micOn;
-    setMicOn(next);
-    await room.localParticipant.setMicrophoneEnabled(next);
-    onHostEvent("System", `Daniel turned microphone ${next ? "on" : "off"}.`);
+    setMediaBusy(true);
+    setMediaError("");
+
+    try {
+      await room.localParticipant.setMicrophoneEnabled(next);
+      setMicOn(next);
+      onHostEvent("System", `Daniel turned microphone ${next ? "on" : "off"}.`);
+    } catch (e: any) {
+      console.error("Host mic toggle failed:", e);
+      setMicOn(false);
+      setMediaError(e?.message || "Microphone blocked or unavailable.");
+    } finally {
+      setMediaBusy(false);
+    }
   };
 
   const toggleCam = async () => {
+    if (mediaBusy) return;
+
     const next = !camOn;
-    setCamOn(next);
-    await room.localParticipant.setCameraEnabled(next);
-    onHostEvent("System", `Daniel turned camera ${next ? "on" : "off"}.`);
+    setMediaBusy(true);
+    setMediaError("");
+
+    try {
+      await room.localParticipant.setCameraEnabled(next);
+      setCamOn(next);
+      onHostEvent("System", `Daniel turned camera ${next ? "on" : "off"}.`);
+    } catch (e: any) {
+      console.error("Host camera toggle failed:", e);
+      setCamOn(false);
+      setMediaError(e?.message || "Camera blocked or unavailable.");
+    } finally {
+      setMediaBusy(false);
+    }
   };
 
   const toggleScreenShare = async () => {
@@ -278,11 +306,11 @@ function HostControls({
 
   return (
     <div style={hostBar}>
-      <button onClick={toggleMic} style={micOn ? activeButton : offButton}>
+      <button disabled={mediaBusy} onClick={toggleMic} style={micOn ? activeButton : offButton}>
         {micOn ? "Mic On" : "Mic Off"}
       </button>
 
-      <button onClick={toggleCam} style={camOn ? activeButton : offButton}>
+      <button disabled={mediaBusy} onClick={toggleCam} style={camOn ? activeButton : offButton}>
         {camOn ? "Camera On" : "Camera Off"}
       </button>
 
@@ -305,6 +333,12 @@ function HostControls({
       <button onClick={onEnd} style={{ ...barButton, background: "#7f1d1d" }}>
         End
       </button>
+
+      {mediaError && (
+        <div style={{ width: "100%", textAlign: "center", color: "#ffb4b4", fontSize: 12 }}>
+          {mediaError}
+        </div>
+      )}
     </div>
   );
 }
