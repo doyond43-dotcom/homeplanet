@@ -39,7 +39,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     at.addGrant({
       roomJoin: true,
       room,
-      canPublish: role === "host",
+      canPublish: true,
       canSubscribe: true,
       canPublishData: true,
     });
@@ -55,3 +55,4 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ error: String(e) });
   }
 }
+
