@@ -215,7 +215,7 @@ function moveToVisualStage(job: OperationalJob, key: VisualStageKey, stages: Ope
 }
 
 export default function OperationalLiveBoard({ boardSlug, payload }: Props) {
-  const businessName = boardSlug === "xanders-job-board" ? "Xander Live Board" : payload?.businessName || titleFromSlug(boardSlug) || "HomePlanet Business";
+  const businessName = boardSlug === "live-system-demo" ? "Live System Demo" : payload?.businessName || titleFromSlug(boardSlug) || "HomePlanet Business";
   const customerFrontDoorUrl = typeof window !== "undefined" ? `${window.location.origin}/planet/request/${boardSlug}` : `/planet/request/${boardSlug}`;
   const operationalSystem: OperationalSystem | undefined = payload?.operationalSystem;
   const stages = operationalSystem?.stages?.length ? operationalSystem.stages : fallbackStages;
@@ -413,8 +413,6 @@ export default function OperationalLiveBoard({ boardSlug, payload }: Props) {
 
           <nav style={isMobile ? mobileTopNav : topNav}>
             <TopButton primary onClick={addNewRequest}>+ New Request</TopButton>
-            <TopButton onClick={() => window.open(`/planet/staff/${boardSlug}`, "_blank")}>Staff Board</TopButton>
-            <TopButton onClick={() => window.open(customerFrontDoorUrl, "_blank")}>Customer Front Door</TopButton>
             <TopButton onClick={() => setShowQrPanel((open) => !open)}>QR Payment</TopButton>
           </nav>
         </header>
@@ -628,12 +626,12 @@ export default function OperationalLiveBoard({ boardSlug, payload }: Props) {
                 {detailsOpen ? (
                   <div style={detailsBox}>
                     <PanelTitle>JOB DETAILS</PanelTitle>
-                    <input style={field} value={selectedJob.customer} onChange={(event) => updateJobField(selectedJob.id, "customer", event.target.value)} />
-                    <input style={field} value={selectedJob.service} onChange={(event) => updateJobField(selectedJob.id, "service", event.target.value)} />
-                    <input style={field} value={selectedJob.phone} onChange={(event) => updateJobField(selectedJob.id, "phone", event.target.value)} />
-                    <input style={field} value={selectedJob.email} onChange={(event) => updateJobField(selectedJob.id, "email", event.target.value)} />
-                    <input style={field} value={selectedJob.address} onChange={(event) => updateJobField(selectedJob.id, "address", event.target.value)} />
-                    <textarea style={{ ...field, minHeight: 92, resize: "vertical" }} value={selectedJob.notes} onChange={(event) => updateJobField(selectedJob.id, "notes", event.target.value)} />
+                    <input style={field} value={selectedJob.customer} placeholder="Customer name" onChange={(event) => updateJobField(selectedJob.id, "customer", event.target.value)} />
+                    <input style={field} value={selectedJob.service} placeholder="Service / job type" onChange={(event) => updateJobField(selectedJob.id, "service", event.target.value)} />
+                    <input style={field} value={selectedJob.phone} placeholder="Customer phone number - connects to Call, Message, and invoice text" onChange={(event) => updateJobField(selectedJob.id, "phone", event.target.value)} />
+                    <input style={field} value={selectedJob.email} placeholder="Customer email - optional" onChange={(event) => updateJobField(selectedJob.id, "email", event.target.value)} />
+                    <input style={field} value={selectedJob.address} placeholder="Job address - connects to Navigate / Google Maps" onChange={(event) => updateJobField(selectedJob.id, "address", event.target.value)} />
+                    <textarea style={{ ...field, minHeight: 92, resize: "vertical" }} value={selectedJob.notes} placeholder="Job notes - what needs to be done, gate code, customer details, special instructions" onChange={(event) => updateJobField(selectedJob.id, "notes", event.target.value)} />
                   </div>
                 ) : null}
 
@@ -1306,6 +1304,10 @@ const mobileStatsBar: CSSProperties = {
   boxSizing: "border-box",
   overflow: "hidden",
 };
+
+
+
+
 
 
 

@@ -58,7 +58,7 @@ export default function PlanetHomePage() {
               </button>
 
               <button
-                onClick={() => navigate("/planet/live/xanders-job-board")}
+                onClick={() => navigate("/planet/live/live-system-demo")}
                 className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-6 py-5 text-sm font-black text-white/80"
               >
                 View Live Demo
@@ -228,6 +228,7 @@ export default function PlanetHomePage() {
     </main>
   );
 }
+
 
 
 

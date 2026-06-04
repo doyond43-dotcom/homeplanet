@@ -1,4 +1,4 @@
-﻿import { FormEvent, useState } from "react";
+import { FormEvent, useState } from "react";
 import { useParams } from "react-router-dom";
 
 type OperationalJob = {
@@ -92,7 +92,7 @@ export default function OperationalCustomerRequestPage() {
     >
       <button
         type="button"
-        onClick={() => window.location.assign("/planet/zands-light-xand")}
+        onClick={() => window.location.assign("/planet/live/live-system-demo")}
         style={{
           position: "fixed",
           top: 16,
@@ -108,7 +108,7 @@ export default function OperationalCustomerRequestPage() {
           boxShadow: "0 0 24px rgba(56,189,248,0.18)",
         }}
       >
-        ← Back to Liveboard
+        ? Back to Liveboard
       </button>
 
       <section
@@ -125,7 +125,7 @@ export default function OperationalCustomerRequestPage() {
                         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18, flexWrap: "wrap" }}>
           <button
             type="button"
-            onClick={() => window.location.assign("/planet/zands-light-xand")}
+            onClick={() => window.location.assign("/planet/live/live-system-demo")}
             style={{
               borderRadius: 999,
               border: "1px solid rgba(56,189,248,0.28)",
@@ -137,7 +137,7 @@ export default function OperationalCustomerRequestPage() {
               boxShadow: "0 0 18px rgba(56,189,248,0.10)",
             }}
           >
-            ← Back
+            ? Back
           </button>
 
           <div
@@ -260,6 +260,7 @@ export default function OperationalCustomerRequestPage() {
     </main>
   );
 }
+
 
 
 
