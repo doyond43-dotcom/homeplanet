@@ -101,9 +101,13 @@ function ViewerControls() {
   const [micOn, setMicOn] = useState(false);
   const [camOn, setCamOn] = useState(false);
   const [controlError, setControlError] = useState("");
+  const [controlBusy, setControlBusy] = useState(false);
 
   const toggleMic = async () => {
+    if (controlBusy) return;
+
     const next = !micOn;
+    setControlBusy(true);
     setControlError("");
 
     try {
@@ -113,11 +117,16 @@ function ViewerControls() {
       console.error("Viewer mic toggle failed:", e);
       setMicOn(false);
       setControlError(e?.message || "Microphone blocked. Try opening this link in Safari/Chrome instead of Messenger.");
+    } finally {
+      setControlBusy(false);
     }
   };
 
   const toggleCam = async () => {
+    if (controlBusy) return;
+
     const next = !camOn;
+    setControlBusy(true);
     setControlError("");
 
     try {
@@ -127,16 +136,18 @@ function ViewerControls() {
       console.error("Viewer camera toggle failed:", e);
       setCamOn(false);
       setControlError(e?.message || "Camera blocked. Try opening this link in Safari/Chrome instead of Messenger.");
+    } finally {
+      setControlBusy(false);
     }
   };
 
   return (
     <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
-      <button onClick={toggleMic} style={micOn ? viewerActiveButton : actionButton}>
+      <button disabled={controlBusy} onClick={toggleMic} style={micOn ? viewerActiveButton : actionButton}>
         {micOn ? "Mic On" : "Mic Off"}
       </button>
 
-      <button onClick={toggleCam} style={camOn ? viewerActiveButton : actionButton}>
+      <button disabled={controlBusy} onClick={toggleCam} style={camOn ? viewerActiveButton : actionButton}>
         {camOn ? "Camera On" : "Camera Off"}
       </button>
 
@@ -571,6 +582,7 @@ const timelineItem: React.CSSProperties = {
   padding: 10,
   background: "rgba(0,0,0,0.25)",
 };
+
 
 
 
