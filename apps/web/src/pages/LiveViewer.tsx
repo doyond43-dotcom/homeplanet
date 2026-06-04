@@ -432,7 +432,7 @@ export default function LiveViewer() {
         serverUrl={serverUrl}
         connect={true}
         audio={false}
-        video={true}
+        video={false}
         style={{ background: "black" }}
       >
         <RoomAudioRenderer />
@@ -571,5 +571,6 @@ const timelineItem: React.CSSProperties = {
   padding: 10,
   background: "rgba(0,0,0,0.25)",
 };
+
 
 
