@@ -100,28 +100,33 @@ function ViewerControls() {
 
   const [micOn, setMicOn] = useState(false);
   const [camOn, setCamOn] = useState(false);
+  const [controlError, setControlError] = useState("");
 
   const toggleMic = async () => {
     const next = !micOn;
-    setMicOn(next);
+    setControlError("");
 
     try {
       await room.localParticipant.setMicrophoneEnabled(next);
-    } catch (e) {
+      setMicOn(next);
+    } catch (e: any) {
       console.error("Viewer mic toggle failed:", e);
       setMicOn(false);
+      setControlError(e?.message || "Microphone blocked. Try opening this link in Safari/Chrome instead of Messenger.");
     }
   };
 
   const toggleCam = async () => {
     const next = !camOn;
-    setCamOn(next);
+    setControlError("");
 
     try {
       await room.localParticipant.setCameraEnabled(next);
-    } catch (e) {
+      setCamOn(next);
+    } catch (e: any) {
       console.error("Viewer camera toggle failed:", e);
       setCamOn(false);
+      setControlError(e?.message || "Camera blocked. Try opening this link in Safari/Chrome instead of Messenger.");
     }
   };
 
@@ -134,6 +139,12 @@ function ViewerControls() {
       <button onClick={toggleCam} style={camOn ? viewerActiveButton : actionButton}>
         {camOn ? "Camera On" : "Camera Off"}
       </button>
+
+      {controlError && (
+        <div style={{ width: "100%", fontSize: 12, color: "#ffb4b4", marginTop: 6 }}>
+          {controlError}
+        </div>
+      )}
     </div>
   );
 }
@@ -560,4 +571,5 @@ const timelineItem: React.CSSProperties = {
   padding: 10,
   background: "rgba(0,0,0,0.25)",
 };
+
 
