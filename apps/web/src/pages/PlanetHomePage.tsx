@@ -50,7 +50,7 @@ export default function PlanetHomePage() {
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <button
-                onClick={() => navigate("/planet/creator/quick")}
+                onClick={() => navigate("/planet/live/live-system-demo")}
                 className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-400 px-6 py-5 text-sm font-black text-neutral-950 shadow-xl shadow-emerald-500/20"
               >
                 Build Live System
@@ -94,7 +94,7 @@ export default function PlanetHomePage() {
 
         <section className="mt-6 rounded-[2rem] border border-white/10 bg-white/[0.035] p-5">
           <div className="mb-4 text-xs font-black uppercase tracking-[0.2em] text-emerald-200">
-            Choose your operational universe
+            See How Live Systems Work
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -112,12 +112,24 @@ export default function PlanetHomePage() {
                 <button
                   key={title}
                   onClick={() =>
-                    navigate(`/planet/creator/quick?type=${typeMap[title]}`)
+                    title === "Home Services"
+                      ? navigate("/planet/live-pages/home-services")
+                      : undefined
                   }
-                  className="rounded-3xl border border-white/10 bg-black/30 p-5 text-left transition hover:border-emerald-300/35 hover:bg-emerald-300/[0.06]"
+                  className={`rounded-3xl p-5 text-left transition ${
+                    title === "Home Services"
+                      ? "border border-emerald-400/50 bg-emerald-500/[0.08] shadow-[0_0_40px_rgba(74,222,128,0.18)] hover:border-emerald-300"
+                      : "border border-white/10 bg-black/30 hover:border-emerald-300/35 hover:bg-emerald-300/[0.06]"
+                  }`}
                 >
                   {title === "Home Services" && (
-                    <img src="/images/home-services-operational-hero.png" alt="Home Services" className="mb-4 h-40 w-full rounded-2xl object-cover object-center" />
+                    <>
+                      <div className="mb-3 inline-flex rounded-full border border-emerald-300/30 bg-emerald-400/15 px-3 py-1 text-[10px] font-black uppercase tracking-[0.25em] text-emerald-200">
+                        LIVE NOW
+                      </div>
+
+                      <img src="/images/home-services-operational-hero.png" alt="Home Services" className="mb-4 h-40 w-full rounded-2xl object-cover object-center" />
+                    </>
                   )}
                   {title === "Food Trucks" && (
                     <img src="/images/food-truck-operational-hero.png" alt="Food Trucks" className="mb-4 h-40 w-full rounded-2xl object-cover object-center" />
@@ -228,6 +240,10 @@ export default function PlanetHomePage() {
     </main>
   );
 }
+
+
+
+
 
 
 

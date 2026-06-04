@@ -13,7 +13,7 @@ export const supabase = createClient(url, anon, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: false,
+    detectSessionInUrl: true,
     storageKey: "hp-auth",
   },
 });
@@ -21,3 +21,5 @@ export const supabase = createClient(url, anon, {
 export function getSupabase() {
   return supabase;
 }
+
+

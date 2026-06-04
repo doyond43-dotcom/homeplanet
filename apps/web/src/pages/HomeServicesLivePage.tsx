@@ -1,8 +1,12 @@
-﻿export default function HomeServicesLivePage() {
+import { useNavigate } from "react-router-dom";
+
+export default function HomeServicesLivePage() {
+  const navigate = useNavigate();
+
 return ( <main className="min-h-screen bg-black px-6 py-10 text-white"> <section className="mx-auto max-w-7xl">
 
     <p className="text-xs font-bold uppercase tracking-[0.3em] text-green-400">
-      Home Services Live Page
+      Home Services Live System
     </p>
 
     <h1 className="mt-4 text-5xl font-black leading-[0.95] md:text-7xl">
@@ -245,6 +249,19 @@ return ( <main className="min-h-screen bg-black px-6 py-10 text-white"> <section
       <p className="mt-2 text-xl font-black leading-tight text-green-300 md:text-3xl">
         A Live Page removes the need to ask.
       </p>
+        </div>
+
+    <div className="mt-8 rounded-3xl border border-green-400/20 bg-green-500/5 p-8 text-center">
+      <p className="mx-auto max-w-2xl text-zinc-300">
+        Ready to connect customers, crews, proof, payments, and scheduling into one live operational system?
+      </p>
+
+      <button
+        onClick={() => navigate("/planet/creator/quick")}
+        className="mt-6 rounded-2xl bg-green-400 px-8 py-4 text-lg font-black text-black transition hover:bg-green-300"
+      >
+        Build My Live System
+      </button>
     </div>
 
   </section>
@@ -252,6 +269,15 @@ return ( <main className="min-h-screen bg-black px-6 py-10 text-white"> <section
 
 )
 }
+
+
+
+
+
+
+
+
+
 
 
 

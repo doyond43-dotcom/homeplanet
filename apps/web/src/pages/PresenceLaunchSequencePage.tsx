@@ -1,6 +1,7 @@
 import { ArrowRight, HeartPulse } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { supabase } from "../lib/supabase";
 
 const phases = [
   "PRESENCE DETECTED",
@@ -35,6 +36,9 @@ export default function PresenceLaunchSequencePage() {
   const [finished, setFinished] = useState(false);
   const [messageIndex, setMessageIndex] = useState(0);
   const [systemLiveFlash, setSystemLiveFlash] = useState(false);
+  const [claimEmail, setClaimEmail] = useState("");
+  const [accessLinkSent, setAccessLinkSent] = useState(false);
+  const [claimError, setClaimError] = useState("");
 
   const systemName = useMemo(() => {
     try {
@@ -89,15 +93,41 @@ export default function PresenceLaunchSequencePage() {
     return () => window.clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    if (!finished) return;
+  async function sendAccessLink() {
+    const email = claimEmail.trim();
 
-    const timeout = window.setTimeout(() => {
-      navigate(`/planet/live/${boardSlug}`);
-    }, 1450);
+    if (!email) return;
 
-    return () => window.clearTimeout(timeout);
-  }, [finished, navigate, boardSlug]);
+    setClaimError("");
+
+    const presenceId = `hp-${boardSlug}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    window.localStorage.setItem(
+      `hp-claim:${boardSlug}`,
+      JSON.stringify({
+        boardSlug,
+        systemName,
+        presenceId,
+        email,
+        claimedAt: new Date().toISOString(),
+      })
+    );
+
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/planet/live/${boardSlug}`,
+      },
+    });
+
+    if (error) {
+      console.error("[claim-access-link] failed:", error);
+      setClaimError("Access link could not be sent yet. Try again in a moment.");
+      return;
+    }
+
+    setAccessLinkSent(true);
+  }
 
   return (
     <main
@@ -213,17 +243,64 @@ export default function PresenceLaunchSequencePage() {
         </div>
 
         {finished ? (
-          <div className="mt-12 flex flex-col items-center text-center">
+          <div className="mt-12 w-full rounded-3xl border border-emerald-300/20 bg-emerald-300/[0.08] p-6 text-center shadow-[0_0_60px_rgba(16,185,129,0.16)]">
             <div className="text-xs font-black uppercase tracking-[0.35em] text-emerald-300">
               System Ready
             </div>
 
             <div className="mt-3 text-3xl font-black sm:text-4xl">
-              Entering Live Board
+              Claim & Protect Your System
             </div>
+
+            <p className="mx-auto mt-4 max-w-xl text-sm font-bold leading-6 text-white/50">
+              HomePlanet assigned this live system to your presence. Send yourself a secure access link so you can manage it later.
+            </p>
+
+            <div className="mx-auto mt-6 flex max-w-xl flex-col gap-3 sm:flex-row">
+              <input
+                value={claimEmail}
+                onChange={(event) => setClaimEmail(event.target.value)}
+                placeholder="Email address"
+                className="h-14 flex-1 rounded-2xl border border-white/10 bg-black/40 px-4 text-sm font-bold text-white outline-none placeholder:text-white/30"
+              />
+
+              <button
+                onClick={sendAccessLink}
+                className="h-14 rounded-2xl bg-emerald-300 px-6 text-sm font-black text-black transition hover:bg-emerald-200"
+              >
+                Send Access Link
+              </button>
+            </div>
+
+            {claimError ? (
+              <div className="mt-5 rounded-2xl border border-red-300/20 bg-red-500/10 p-4 text-sm font-bold text-red-200">
+                {claimError}
+              </div>
+            ) : null}
+
+            {claimError ? (
+              <div className="mt-5 rounded-2xl border border-red-300/20 bg-red-500/10 p-4 text-sm font-bold text-red-200">
+                {claimError}
+              </div>
+            ) : null}
+
+            {accessLinkSent ? (
+              <div className="mt-5 rounded-2xl border border-emerald-300/20 bg-black/30 p-4 text-sm font-bold text-emerald-200">
+                Access link sent. Check your email to claim this system.
+                <button
+                  onClick={() => navigate(`/planet/live/${boardSlug}`)}
+                  className="mt-4 block w-full rounded-2xl bg-white px-5 py-4 text-sm font-black text-black"
+                >
+                  Open Live System
+                </button>
+              </div>
+            ) : null}
           </div>
         ) : null}
       </section>
     </main>
   );
 }
+
+
+
