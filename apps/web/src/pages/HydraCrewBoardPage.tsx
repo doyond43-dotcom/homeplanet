@@ -1,7 +1,10 @@
+import { Link } from "react-router-dom";
+
 export default function HydraCrewBoardPage() {
   const jobs = [
     {
       asset: "Treatment Plant 12A",
+      slug: "treatment-plant-12a",
       status: "Assigned",
       technician: "Mike Rodriguez",
       priority: "High",
@@ -9,6 +12,7 @@ export default function HydraCrewBoardPage() {
     },
     {
       asset: "Reservoir North",
+      slug: "reservoir-north",
       status: "En Route",
       technician: "Sarah Johnson",
       priority: "Medium",
@@ -16,6 +20,7 @@ export default function HydraCrewBoardPage() {
     },
     {
       asset: "Wet Well 7",
+      slug: "wet-well-7",
       status: "Inspection In Progress",
       technician: "Chris Miller",
       priority: "Critical",
@@ -47,17 +52,26 @@ export default function HydraCrewBoardPage() {
                 </div>
 
                 <div className="flex flex-wrap gap-3">
-                  <button className="rounded-full bg-cyan-300 px-5 py-3 font-black text-slate-950">
+                  <Link
+                    to={`/planet/hydra/job/${job.slug}`}
+                    className="rounded-full bg-cyan-300 px-5 py-3 font-black text-slate-950"
+                  >
                     Start Job
-                  </button>
+                  </Link>
 
-                  <button className="rounded-full border border-white/15 px-5 py-3 font-black">
+                  <Link
+                    to={`/planet/hydra/report?asset=${encodeURIComponent(job.asset)}`}
+                    className="rounded-full border border-white/15 px-5 py-3 font-black"
+                  >
                     Asset History
-                  </button>
+                  </Link>
 
-                  <button className="rounded-full border border-white/15 px-5 py-3 font-black">
+                  <Link
+                    to={`/planet/hydra/job/${job.slug}`}
+                    className="rounded-full border border-white/15 px-5 py-3 font-black"
+                  >
                     Upload Photos
-                  </button>
+                  </Link>
                 </div>
               </div>
             </div>
