@@ -387,6 +387,8 @@ import HydraAssetSelectorPage from "../pages/HydraAssetSelectorPage";
 import HydraProjectIntakePage from "../pages/HydraProjectIntakePage";
 import HydraInspectionReportPage from "../pages/HydraInspectionReportPage";
 import HydraOwnerDashboardPage from "../pages/HydraOwnerDashboardPage";
+import HydraCrewBoardPage from "../pages/HydraCrewBoardPage";
+import HydraJobDetailPage from "../pages/HydraJobDetailPage";
 export default function PlanetRoutes() {
   return (
     <Routes>
@@ -666,6 +668,8 @@ export default function PlanetRoutes() {
       <Route path="hydra/intake" element={<HydraProjectIntakePage />} />
       <Route path="hydra/report" element={<HydraInspectionReportPage />} />
       <Route path="hydra/dashboard" element={<HydraOwnerDashboardPage />} />
+      <Route path="hydra/crew" element={<HydraCrewBoardPage />} />
+      <Route path="hydra/job/:id" element={<HydraJobDetailPage />} />
 
 
 
@@ -687,6 +691,10 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
+
+
+
 
 
 
