@@ -381,6 +381,12 @@ import AwarenessLayerPage from "../pages/AwarenessLayerPage";
 import VictorPinedaLandingPage from "../pages/VictorPinedaLandingPage";
 
 
+
+import HydraLandingPage from "../pages/HydraLandingPage";
+import HydraAssetSelectorPage from "../pages/HydraAssetSelectorPage";
+import HydraProjectIntakePage from "../pages/HydraProjectIntakePage";
+import HydraInspectionReportPage from "../pages/HydraInspectionReportPage";
+import HydraOwnerDashboardPage from "../pages/HydraOwnerDashboardPage";
 export default function PlanetRoutes() {
   return (
     <Routes>
@@ -654,6 +660,13 @@ export default function PlanetRoutes() {
 <Route path="commons-coffee-community-event" element={<CommonsCoffeeCommunityEventVisualPage />} />
 <Route path="ecosystem-infrastructure" element={<EcosystemInfrastructurePortal />} />
 <Route path="get-live" element={<GetBusinessLivePage />} />
+      {/* HYDRA OPERATIONS */}
+      <Route path="hydra" element={<HydraLandingPage />} />
+      <Route path="hydra/assets" element={<HydraAssetSelectorPage />} />
+      <Route path="hydra/intake" element={<HydraProjectIntakePage />} />
+      <Route path="hydra/report" element={<HydraInspectionReportPage />} />
+      <Route path="hydra/dashboard" element={<HydraOwnerDashboardPage />} />
+
 
 
 
@@ -674,6 +687,7 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
 
 
 
