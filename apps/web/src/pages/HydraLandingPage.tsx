@@ -45,11 +45,7 @@ const workflow = [
     "Inspection, findings, recommendations, crew status, ETA, equipment, and completion history.",
   ],
 ];
-
-function assetHref(asset: string) {
-  return `/planet/hydra/intake?asset=${encodeURIComponent(asset)}`;
-}
-
+
 export default function HydraLandingPage() {
   return (
     <main className="min-h-screen bg-[#061426] text-white">
@@ -151,6 +147,59 @@ export default function HydraLandingPage() {
           ))}
         </div>
 
+        <section className="mt-12">
+          <p className="text-sm font-black uppercase tracking-[0.3em] text-cyan-300">
+            Inside Hydra Operations
+          </p>
+
+          <h2 className="mt-3 text-4xl font-black">
+            From asset selection to field visibility.
+          </h2>
+
+          <p className="mt-4 max-w-3xl text-slate-300">
+            Hydra turns infrastructure work into a connected operating flow:
+            choose the asset, submit the project, and track what happens next.
+          </p>
+
+          <div className="mt-8 grid gap-6 lg:grid-cols-3">
+            {[
+              [
+                "Asset Selection",
+                "Choose the infrastructure asset before the work begins.",
+                "/images/hydra-shot-asset-selection.png",
+              ],
+              [
+                "Project Intake",
+                "Capture priority, issue type, notes, photos, and field context.",
+                "/images/hydra-shot-project-intake.png",
+              ],
+              [
+                "Operations Center",
+                "Track locations, crews, reports, activity, and asset history.",
+                "/images/hydra-shot-operations-center.png",
+              ],
+            ].map(([title, body, image]) => (
+              <a
+                key={title}
+                href={image}
+                target="_blank"
+                rel="noreferrer"
+                className="group overflow-hidden rounded-[2rem] border border-cyan-300/20 bg-white/5 shadow-2xl shadow-black/20 transition hover:border-cyan-300 hover:bg-white/10"
+              >
+                <img
+                  src={image}
+                  alt={`Hydra ${title}`}
+                  className="h-56 w-full object-cover"
+                />
+
+                <div className="p-6">
+                  <h3 className="text-2xl font-black text-cyan-100">{title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-400">{body}</p>
+                </div>
+              </a>
+            ))}
+          </div>
+        </section>
         <section className="mt-12 overflow-hidden rounded-[2rem] border border-cyan-300/20 bg-[#091a2d] shadow-2xl shadow-black/30">
           <img
             src="/images/hydra-assets-grid.jpg"
@@ -173,26 +222,7 @@ export default function HydraLandingPage() {
             </p>
           </div>
         </section>
-
-        <section className="mt-8">
-          <div className="grid gap-4 md:grid-cols-3">
-            {assets.map((asset) => (
-              <Link
-                key={asset}
-                to={assetHref(asset)}
-                className="rounded-3xl border border-cyan-300/20 bg-slate-900 p-6 transition hover:border-cyan-300 hover:bg-slate-800"
-              >
-                <div className="text-2xl font-black">{asset}</div>
-                <p className="mt-2 text-sm leading-6 text-slate-400">
-                  Request work, track findings, attach field activity, and build
-                  asset memory.
-                </p>
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        <section className="mt-12 grid gap-6 lg:grid-cols-3">
+<section className="mt-12 grid gap-6 lg:grid-cols-3">
           {workflow.map(([step, title, body]) => (
             <div
               key={step}
@@ -238,6 +268,11 @@ export default function HydraLandingPage() {
     </main>
   );
 }
+
+
+
+
+
 
 
 
