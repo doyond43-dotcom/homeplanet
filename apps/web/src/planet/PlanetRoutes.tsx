@@ -383,10 +383,12 @@ import VictorPinedaLandingPage from "../pages/VictorPinedaLandingPage";
 
 
 import HydraLandingPage from "../pages/HydraLandingPage";
+import HydraLandingPageV2 from "../pages/HydraLandingPageV2";
 import HydraAssetSelectorPage from "../pages/HydraAssetSelectorPage";
 import HydraProjectIntakePage from "../pages/HydraProjectIntakePage";
 import HydraInspectionReportPage from "../pages/HydraInspectionReportPage";
 import HydraOwnerDashboardPage from "../pages/HydraOwnerDashboardPage";
+import HydraOwnerDashboardV2Page from "../pages/HydraOwnerDashboardV2Page";
 import HydraCrewBoardPage from "../pages/HydraCrewBoardPage";
 import HydraJobDetailPage from "../pages/HydraJobDetailPage";
 export default function PlanetRoutes() {
@@ -664,10 +666,12 @@ export default function PlanetRoutes() {
 <Route path="get-live" element={<GetBusinessLivePage />} />
       {/* HYDRA OPERATIONS */}
       <Route path="hydra" element={<HydraLandingPage />} />
+      <Route path="hydra-v2" element={<HydraLandingPageV2 />} />
       <Route path="hydra/assets" element={<HydraAssetSelectorPage />} />
       <Route path="hydra/intake" element={<HydraProjectIntakePage />} />
       <Route path="hydra/report" element={<HydraInspectionReportPage />} />
       <Route path="hydra/dashboard" element={<HydraOwnerDashboardPage />} />
+      <Route path="hydra/dashboard-v2" element={<HydraOwnerDashboardV2Page />} />
       <Route path="hydra/crew" element={<HydraCrewBoardPage />} />
       <Route path="hydra/job/:id" element={<HydraJobDetailPage />} />
 
@@ -691,6 +695,8 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
+
 
 
 
