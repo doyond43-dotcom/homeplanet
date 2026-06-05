@@ -56,9 +56,9 @@ export default function HydraLandingPage() {
       <section className="mx-auto max-w-7xl px-6 py-10">
         <div className="relative overflow-hidden rounded-[2rem] border border-cyan-300/20 shadow-2xl">
           <img
-            src="/images/hydra-commercial-diver-hero.jpg.png"
+            src="/images/hydra-commercial-diver-hero.jpg"
             alt="Hydra Operations commercial diver"
-            className="absolute inset-0 h-full w-full object-cover opacity-100"
+            className="absolute inset-0 h-full w-full object-cover object-right opacity-100"
           />
 
           <div className="absolute inset-0 bg-gradient-to-r from-[#061426]/80 via-[#061426]/35 to-transparent" />
@@ -70,7 +70,7 @@ export default function HydraLandingPage() {
               </p>
 
               <h1 className="mt-6 text-5xl font-black leading-tight md:text-7xl">
-                Commercial Diving Meets Water Infrastructure Intelligence
+                Water Infrastructure Operations Intelligence
               </h1>
 
               <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-200">
@@ -103,9 +103,9 @@ export default function HydraLandingPage() {
               </div>
             </div>
 
-            <div className="flex items-center">
-              <div className="w-full rounded-[2rem] border border-cyan-300/20 bg-slate-950/85 p-5 shadow-2xl backdrop-blur">
-                <div className="rounded-3xl border border-white/10 bg-[#0d1d33]/95 p-5">
+            <div className="flex items-center justify-end lg:translate-x-10">
+              <div className="w-[88%] rounded-[2rem] border border-cyan-300/20 bg-slate-950/35 p-5 shadow-2xl backdrop-blur-sm">
+                <div className="rounded-3xl border border-white/10 bg-[#0d1d33]/45 p-5 backdrop-blur-sm">
                   <p className="text-xs font-black uppercase tracking-[0.25em] text-cyan-300">
                     Live Project Snapshot
                   </p>
@@ -127,7 +127,7 @@ export default function HydraLandingPage() {
                     ].map((item) => (
                       <div
                         key={item}
-                        className="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-4 font-bold text-cyan-100"
+                        className="rounded-2xl border border-cyan-300/20 bg-cyan-300/8 p-4 font-bold text-cyan-100 backdrop-blur-sm"
                       >
                         {item}
                       </div>
@@ -238,6 +238,12 @@ export default function HydraLandingPage() {
     </main>
   );
 }
+
+
+
+
+
+
 
 
 
