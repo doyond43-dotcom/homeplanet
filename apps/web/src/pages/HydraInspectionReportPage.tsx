@@ -1,4 +1,5 @@
 import { Link, useSearchParams } from "react-router-dom";
+import HydraNav from "../components/HydraNav";
 
 const findings = [
   ["Sediment accumulation detected", "Visible buildup along the reservoir floor. Cleaning is recommended before the next service cycle."],
@@ -20,14 +21,12 @@ export default function HydraInspectionReportPage() {
   return (
     <main className="min-h-screen bg-[#071427] px-6 py-10 text-white">
       <div className="mx-auto max-w-7xl">
-        <Link to={`/planet/hydra/intake?asset=${encodeURIComponent(selectedAsset)}`} className="text-sm text-cyan-300">Back to Project Intake</Link>
-
-        <div className="mt-6 rounded-[2rem] border border-cyan-400/20 bg-white/5 p-6">
+<div className="mt-6 rounded-[2rem] border border-cyan-400/20 bg-white/5 p-6">
           <p className="text-sm font-bold uppercase tracking-[0.3em] text-cyan-300">Inspection Report</p>
           <div className="mt-4 flex flex-wrap items-end justify-between gap-6">
             <div>
               <h1 className="text-5xl font-black">HYD-2026-001</h1>
-              <p className="mt-2 text-slate-300">{selectedAsset} 12A • City of Clearwater Water Department</p>
+              <p className="mt-2 text-slate-300">{selectedAsset} 12A - City of Clearwater Water Department</p>
             </div>
             <div className="rounded-3xl border border-cyan-300/30 bg-cyan-300/10 p-5 text-right">
               <div className="text-sm font-bold uppercase tracking-[0.2em] text-cyan-200">Asset Score</div>
@@ -103,3 +102,7 @@ export default function HydraInspectionReportPage() {
     </main>
   );
 }
+
+
+
+
