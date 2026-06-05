@@ -1,6 +1,4 @@
 import { Link, useSearchParams } from "react-router-dom";
-import HydraNav from "../components/HydraNav";
-
 const findings = [
   ["Sediment accumulation detected", "Visible buildup along the reservoir floor. Cleaning is recommended before the next service cycle."],
   ["Thermal stratification present", "Water layers are showing signs of separation, which can impact circulation and water quality."],
@@ -21,6 +19,13 @@ export default function HydraInspectionReportPage() {
   return (
     <main className="min-h-screen bg-[#071427] px-6 py-10 text-white">
       <div className="mx-auto max-w-7xl">
+        <button
+          type="button"
+          onClick={() => window.history.back()}
+          className="mb-6 rounded-full border border-white/15 bg-white/5 px-5 py-2 text-sm font-black text-cyan-200 hover:bg-white/10"
+        >
+          Back
+        </button>
 <div className="mt-6 rounded-[2rem] border border-cyan-400/20 bg-white/5 p-6">
           <p className="text-sm font-bold uppercase tracking-[0.3em] text-cyan-300">Inspection Report</p>
           <div className="mt-4 flex flex-wrap items-end justify-between gap-6">
@@ -102,6 +107,10 @@ export default function HydraInspectionReportPage() {
     </main>
   );
 }
+
+
+
+
 
 
 

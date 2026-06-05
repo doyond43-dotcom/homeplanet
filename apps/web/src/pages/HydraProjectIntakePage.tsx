@@ -1,8 +1,9 @@
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 const issues = ["Inspection", "Sediment Removal", "Leak Detection", "Structural Repair", "Mixer Installation", "Chemical Wash", "Emergency Response"];
 
 export default function HydraProjectIntakePage() {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const selectedAsset = searchParams.get("asset") || "Not selected";
   const selectedPriority = searchParams.get("priority") || "";
@@ -10,7 +11,7 @@ export default function HydraProjectIntakePage() {
   return (
     <main className="min-h-screen bg-[#071427] px-6 py-10 text-white">
       <div className="mx-auto max-w-5xl">
-        <Link to="/planet/hydra/assets" className="text-sm text-cyan-300">? Asset Selector</Link>
+        <button type="button" onClick={() => navigate(-1)} className="text-sm text-cyan-300">Back</button>
         <h1 className="mt-6 text-5xl font-black">Project Intake</h1>
         <p className="mt-3 text-slate-300">A faster way for municipalities, plants, and utility teams to submit real infrastructure needs.</p>
 
@@ -71,3 +72,5 @@ export default function HydraProjectIntakePage() {
     </main>
   );
 }
+
+

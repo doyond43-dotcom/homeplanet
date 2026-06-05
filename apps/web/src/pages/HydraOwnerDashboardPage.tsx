@@ -1,4 +1,4 @@
-import { Link, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 const activity = [
   "Reservoir inspection completed",
@@ -65,18 +65,20 @@ const futureModules = [
 ];
 
 export default function HydraOwnerDashboardPage() {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const selectedAsset = searchParams.get("asset") || "Reservoir";
 
   return (
     <main className="min-h-screen bg-[#071427] px-6 py-10 text-white">
       <div className="mx-auto max-w-7xl">
-        <Link
-          to={`/planet/hydra/report?asset=${encodeURIComponent(selectedAsset)}`}
-          className="text-sm text-cyan-300"
-        >
-          Back to Inspection Report
-        </Link>
+        <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="text-sm text-cyan-300"
+          >
+            Back
+          </button>
 
         <h1 className="mt-6 text-5xl font-black">
           Hydra Operations Center
@@ -370,3 +372,5 @@ export default function HydraOwnerDashboardPage() {
     </main>
   );
 }
+
+
