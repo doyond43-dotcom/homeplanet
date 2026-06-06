@@ -381,19 +381,6 @@ import AwarenessLayerPage from "../pages/AwarenessLayerPage";
 import VictorPinedaLandingPage from "../pages/VictorPinedaLandingPage";
 
 
-
-import HydraLandingPage from "../pages/HydraLandingPage";
-import HydraLandingPageV2 from "../pages/HydraLandingPageV2";
-import HydraAssetSelectorPage from "../pages/HydraAssetSelectorPage";
-import HydraJobsBoardPage from "../pages/HydraJobsBoardPage";
-import HydraScheduleBoardPage from "../pages/HydraScheduleBoardPage";
-import HydraProjectIntakePage from "../pages/HydraProjectIntakePage";
-import HydraInspectionReportPage from "../pages/HydraInspectionReportPage";
-import HydraOwnerDashboardPage from "../pages/HydraOwnerDashboardPage";
-import HydraOwnerDashboardV2Page from "../pages/HydraOwnerDashboardV2Page";
-import HydraOwnerDashboardV3Page from "../pages/HydraOwnerDashboardV3Page";
-import HydraCrewBoardPage from "../pages/HydraCrewBoardPage";
-import HydraJobDetailPage from "../pages/HydraJobDetailPage";
 export default function PlanetRoutes() {
   return (
     <Routes>
@@ -667,20 +654,6 @@ export default function PlanetRoutes() {
 <Route path="commons-coffee-community-event" element={<CommonsCoffeeCommunityEventVisualPage />} />
 <Route path="ecosystem-infrastructure" element={<EcosystemInfrastructurePortal />} />
 <Route path="get-live" element={<GetBusinessLivePage />} />
-      {/* HYDRA OPERATIONS */}
-      <Route path="hydra" element={<HydraLandingPage />} />
-      <Route path="hydra-v2" element={<HydraLandingPageV2 />} />
-      <Route path="hydra/schedule" element={<HydraScheduleBoardPage />} />
-      <Route path="hydra/jobs" element={<HydraJobsBoardPage />} />
-      <Route path="hydra/assets" element={<HydraAssetSelectorPage />} />
-      <Route path="hydra/intake" element={<HydraProjectIntakePage />} />
-      <Route path="hydra/report" element={<HydraInspectionReportPage />} />
-      <Route path="hydra/dashboard" element={<HydraOwnerDashboardV3Page />} />
-      <Route path="hydra/dashboard-v2" element={<HydraOwnerDashboardV2Page />} />
-      <Route path="hydra/dashboard-v3" element={<HydraOwnerDashboardV3Page />} />
-      <Route path="hydra/crew" element={<HydraCrewBoardPage />} />
-      <Route path="hydra/job/:id" element={<HydraJobDetailPage />} />
-
 
 
 
@@ -701,19 +674,6 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

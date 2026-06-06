@@ -495,7 +495,11 @@ export default function CreatorCity() {
         }),
       );
 
-      window.location.href = `/planet/live/${boardSlug}`;
+      window.location.href = `/planet/creator/building?boardSlug=${boardSlug}&businessName=${encodeURIComponent(
+        businessName,
+      )}&businessType=${encodeURIComponent(businessType)}&city=${encodeURIComponent(
+        city,
+      )}&primaryGoal=${encodeURIComponent(holyShiftMoment)}`;
     }, 900);
   };
 
@@ -1591,6 +1595,4 @@ export default function CreatorCity() {
     </div>
   );
 }
-
-
 

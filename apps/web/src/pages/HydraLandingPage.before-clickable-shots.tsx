@@ -46,6 +46,9 @@ const workflow = [
   ],
 ];
 
+function assetHref(asset: string) {
+  return `/planet/hydra/intake?asset=${encodeURIComponent(asset)}`;
+}
 
 export default function HydraLandingPage() {
   return (
@@ -69,6 +72,7 @@ export default function HydraLandingPage() {
               <h1 className="mt-6 text-5xl font-black leading-tight md:text-7xl">
                 Water Infrastructure Operations Intelligence
               </h1>
+
               <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-200">
                 A modern operations platform for inspections, repairs, asset
                 history, crew visibility, equipment readiness, emergency
@@ -77,10 +81,10 @@ export default function HydraLandingPage() {
 
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link
-                  to="/planet/hydra/schedule"
+                  to="/planet/hydra/assets"
                   className="rounded-full bg-cyan-300 px-6 py-3 font-black text-slate-950 shadow-lg shadow-cyan-500/20 transition hover:bg-white"
                 >
-                  Schedule Project
+                  Start Project
                 </Link>
 
                 <Link
@@ -88,13 +92,6 @@ export default function HydraLandingPage() {
                   className="rounded-full border border-red-400/60 bg-red-500/15 px-6 py-3 font-black text-red-100 transition hover:bg-red-500/25"
                 >
                   Emergency Request
-                </Link>
-
-                <Link
-                  to="/planet/hydra/jobs"
-                  className="rounded-full border border-cyan-300/30 bg-cyan-300/10 px-6 py-3 font-black text-cyan-200 transition hover:bg-cyan-300/20"
-                >
-                  Crew Board
                 </Link>
 
                 <Link
@@ -106,6 +103,39 @@ export default function HydraLandingPage() {
               </div>
             </div>
 
+            <div className="flex items-center justify-end lg:translate-x-10">
+              <div className="w-[88%] rounded-[2rem] border border-cyan-300/20 bg-slate-950/35 p-5 shadow-2xl backdrop-blur-sm">
+                <div className="rounded-3xl border border-white/10 bg-[#0d1d33]/45 p-5 backdrop-blur-sm">
+                  <p className="text-xs font-black uppercase tracking-[0.25em] text-cyan-300">
+                    Live Project Snapshot
+                  </p>
+
+                  <h2 className="mt-4 text-3xl font-black">
+                    Treatment Plant 12A
+                  </h2>
+
+                  <p className="mt-2 text-slate-400">
+                    Status: Awaiting Approval
+                  </p>
+
+                  <div className="mt-5 grid gap-3">
+                    {[
+                      "Inspection Complete",
+                      "Findings Delivered",
+                      "Crew En Route",
+                      "ETA 7:18 AM",
+                    ].map((item) => (
+                      <div
+                        key={item}
+                        className="rounded-2xl border border-cyan-300/20 bg-cyan-300/8 p-4 font-bold text-cyan-100 backdrop-blur-sm"
+                      >
+                        {item}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -153,12 +183,9 @@ export default function HydraLandingPage() {
                 "/images/hydra-shot-operations-center.png",
               ],
             ].map(([title, body, image]) => (
-              <a
+              <div
                 key={title}
-                href={image}
-                target="_blank"
-                rel="noreferrer"
-                className="group overflow-hidden rounded-[2rem] border border-cyan-300/20 bg-white/5 shadow-2xl shadow-black/20 transition hover:border-cyan-300 hover:bg-white/10"
+                className="overflow-hidden rounded-[2rem] border border-cyan-300/20 bg-white/5 shadow-2xl shadow-black/20"
               >
                 <img
                   src={image}
@@ -170,7 +197,7 @@ export default function HydraLandingPage() {
                   <h3 className="text-2xl font-black text-cyan-100">{title}</h3>
                   <p className="mt-2 text-sm leading-6 text-slate-400">{body}</p>
                 </div>
-              </a>
+              </div>
             ))}
           </div>
         </section>
@@ -196,7 +223,26 @@ export default function HydraLandingPage() {
             </p>
           </div>
         </section>
-<section className="mt-12 grid gap-6 lg:grid-cols-3">
+
+        <section className="mt-8">
+          <div className="grid gap-4 md:grid-cols-3">
+            {assets.map((asset) => (
+              <Link
+                key={asset}
+                to={assetHref(asset)}
+                className="rounded-3xl border border-cyan-300/20 bg-slate-900 p-6 transition hover:border-cyan-300 hover:bg-slate-800"
+              >
+                <div className="text-2xl font-black">{asset}</div>
+                <p className="mt-2 text-sm leading-6 text-slate-400">
+                  Request work, track findings, attach field activity, and build
+                  asset memory.
+                </p>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        <section className="mt-12 grid gap-6 lg:grid-cols-3">
           {workflow.map(([step, title, body]) => (
             <div
               key={step}
@@ -224,7 +270,7 @@ export default function HydraLandingPage() {
 
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
-              to="/planet/hydra/schedule"
+              to="/planet/hydra/assets"
               className="rounded-full bg-cyan-300 px-6 py-3 font-black text-slate-950 transition hover:bg-white"
             >
               Enter Demo
@@ -242,16 +288,6 @@ export default function HydraLandingPage() {
     </main>
   );
 }
-
-
-
-
-
-
-
-
-
-
 
 
 

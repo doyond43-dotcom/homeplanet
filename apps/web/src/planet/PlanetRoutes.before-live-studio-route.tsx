@@ -115,7 +115,6 @@ import CreatorSystems from "../pages/CreatorSystems";
 import CreatorProjects from "../pages/CreatorProjects";
 
 import CreatorStudio from "../pages/CreatorStudio";
-import LiveStudio from "../pages/LiveStudio";
 import CreatorQuickBuildPage from "../pages/CreatorQuickBuildPage";
 import PresenceLaunchSequencePage from "../pages/PresenceLaunchSequencePage";
 import ActivationPage from "../pages/ActivationPage";
@@ -123,8 +122,6 @@ import HomePlanetHomePage from "../pages/HomePlanetHomePage";
 import PlanetHomePage from "../pages/PlanetHomePage";
 
 import CreatorStudioBoard from "../pages/CreatorStudioBoard";
-import CreatorLive from "../pages/CreatorLive";
-import LiveViewer from "../pages/LiveViewer";
 
 import CreatorMomentPage from "../pages/CreatorMomentPage";
 
@@ -326,8 +323,6 @@ import BrahmaBullCrewBoard from "../pages/BrahmaBullCrewBoard";
 
 import BrahmaBullKitchenBoard from "../pages/BrahmaBullKitchenBoard";
 
-import BrahmaBullOwnerBoard from "../pages/BrahmaBullOwnerBoard";
-
 import OkeechobeeTogetherPage from "../pages/OkeechobeeTogetherPage";
 
 import OkeechobeeCommunityAdminPage from "../pages/OkeechobeeCommunityAdminPage";
@@ -347,14 +342,6 @@ import EcosystemInfrastructurePortal from "../pages/EcosystemInfrastructurePorta
 import EcosystemAtlasPage from "../pages/EcosystemAtlasPage";
 import CommunityPulsePage from "../pages/CommunityPulsePage";
 import CommunityPulseVisualPage from "../pages/CommunityPulseVisualPage";
-import CommunityPulseRainyEveningVisualPage from "../pages/CommunityPulseRainyEveningVisualPage";
-import CommunityPulseOutdoorKioskVisualPage from "../pages/CommunityPulseOutdoorKioskVisualPage";
-import CommunityPulseCommonsCoffeeVisualPage from "../pages/CommunityPulseCommonsCoffeeVisualPage";
-import CommunityPulseParkingVisualPage from "../pages/CommunityPulseParkingVisualPage";
-import CommunityPulseMobileViewVisualPage from "../pages/CommunityPulseMobileViewVisualPage";
-import CommunityPulseImpactStoriesVisualPage from "../pages/CommunityPulseImpactStoriesVisualPage";
-import CommunityPulseGreenBasketVisualPage from "../pages/CommunityPulseGreenBasketVisualPage";
-import CommunityPulseAwarenessBoardVisualPage from "../pages/CommunityPulseAwarenessBoardVisualPage";
 import ReasonsToShowUpPage from "../pages/ReasonsToShowUpPage";
 import HumanCirculationPage from "../pages/HumanCirculationPage";
 import DelaneysGymPage from "../pages/DelaneysGymPage";
@@ -363,10 +350,6 @@ import CommonsCoffeePage from "../pages/CommonsCoffeePage";
 import DelaneysGymVisualPage from "../pages/DelaneysGymVisualPage";
 import GarrettsLaundromatVisualPage from "../pages/GarrettsLaundromatVisualPage";
 import CommonsCoffeeVisualPage from "../pages/CommonsCoffeeVisualPage";
-import CommonsCoffeeMorningVisualPage from "../pages/CommonsCoffeeMorningVisualPage";
-import CommonsCoffeeRainyDayVisualPage from "../pages/CommonsCoffeeRainyDayVisualPage";
-import CommonsCoffeeOutdoorEveningVisualPage from "../pages/CommonsCoffeeOutdoorEveningVisualPage";
-import CommonsCoffeeCommunityEventVisualPage from "../pages/CommonsCoffeeCommunityEventVisualPage";
 import EcosystemCoordinationBoard from "../pages/EcosystemCoordinationBoard";
 import HomePlanetEcosystemIdentityPage from "../pages/HomePlanetEcosystemIdentityPage";
 import ParticipationLivingPage from "../pages/ParticipationLivingPage";
@@ -378,22 +361,8 @@ import PredictiveParkingPage from "../pages/PredictiveParkingPage";
 import BeforeAwarenessPage from "../pages/BeforeAwarenessPage";
 import AfterAwarenessPage from "../pages/AfterAwarenessPage";
 import AwarenessLayerPage from "../pages/AwarenessLayerPage";
-import VictorPinedaLandingPage from "../pages/VictorPinedaLandingPage";
 
 
-
-import HydraLandingPage from "../pages/HydraLandingPage";
-import HydraLandingPageV2 from "../pages/HydraLandingPageV2";
-import HydraAssetSelectorPage from "../pages/HydraAssetSelectorPage";
-import HydraJobsBoardPage from "../pages/HydraJobsBoardPage";
-import HydraScheduleBoardPage from "../pages/HydraScheduleBoardPage";
-import HydraProjectIntakePage from "../pages/HydraProjectIntakePage";
-import HydraInspectionReportPage from "../pages/HydraInspectionReportPage";
-import HydraOwnerDashboardPage from "../pages/HydraOwnerDashboardPage";
-import HydraOwnerDashboardV2Page from "../pages/HydraOwnerDashboardV2Page";
-import HydraOwnerDashboardV3Page from "../pages/HydraOwnerDashboardV3Page";
-import HydraCrewBoardPage from "../pages/HydraCrewBoardPage";
-import HydraJobDetailPage from "../pages/HydraJobDetailPage";
 export default function PlanetRoutes() {
   return (
     <Routes>
@@ -434,7 +403,6 @@ export default function PlanetRoutes() {
       <Route path="demo/brahma-bull/live" element={<BrahmaBullLiveBoard />} />
       <Route path="crew-team/brahma-bull" element={<BrahmaBullCrewBoard />} />
       <Route path="kitchen/brahma-bull" element={<BrahmaBullKitchenBoard />} />
-      <Route path="owner/brahma-bull" element={<BrahmaBullOwnerBoard />} />
       <Route path="business-setup" element={<BusinessSetupForm />} />
       <Route path="printshop" element={<PrintShopLandingPage />} />
       <Route path="printshop/order" element={<PrintShopOrderPage />} />
@@ -502,15 +470,11 @@ export default function PlanetRoutes() {
       <Route path="creator/systems" element={<CreatorSystems />} />
       <Route path="creator/projects" element={<CreatorProjects />} />
       <Route path="creator/studio/*" element={<CreatorStudio />} />
-      <Route path="live-studio" element={<LiveStudio />} />
       <Route path="creator/quick" element={<CreatorQuickBuildPage />} />
 <Route path="creator/presence/:boardSlug" element={<PresenceLaunchSequencePage />} />
       <Route path="activate/:boardSlug" element={<ActivationPage />} />
       <Route path="creator/:slug/moment" element={<CreatorMomentPage />} />
       <Route path="creator/studio-board" element={<CreatorStudioBoard />} />
-      <Route path="live-studio/host" element={<CreatorLive />} />
-      <Route path="live-studio/view" element={<LiveViewer />} />
-      <Route path="live-studio/view/:room" element={<LiveViewer />} />
       <Route path="creator/build" element={<CreatorBuild />} />
       <Route path="creator/release/:releaseId" element={<ReleaseViewer />} />
       <Route path="creator/rc-live" element={<RcAirboatsLiveDemo />} />
@@ -645,14 +609,6 @@ export default function PlanetRoutes() {
 <Route path="atlas" element={<EcosystemAtlasPage />} />
 <Route path="community-pulse" element={<CommunityPulsePage />} />
 <Route path="community-pulse-visual" element={<CommunityPulseVisualPage />} />
-<Route path="community-pulse-rainy-evening" element={<CommunityPulseRainyEveningVisualPage />} />
-<Route path="community-pulse-outdoor-kiosk" element={<CommunityPulseOutdoorKioskVisualPage />} />
-<Route path="community-pulse-commons-coffee" element={<CommunityPulseCommonsCoffeeVisualPage />} />
-<Route path="community-pulse-parking" element={<CommunityPulseParkingVisualPage />} />
-<Route path="community-pulse-mobile" element={<CommunityPulseMobileViewVisualPage />} />
-<Route path="community-pulse-impact-stories" element={<CommunityPulseImpactStoriesVisualPage />} />
-<Route path="community-pulse-greenbasket" element={<CommunityPulseGreenBasketVisualPage />} />
-<Route path="community-pulse-awareness-board" element={<CommunityPulseAwarenessBoardVisualPage />} />
 <Route path="reasons-to-show-up" element={<ReasonsToShowUpPage />} />
 <Route path="human-circulation" element={<HumanCirculationPage />} />
 <Route path="delaneys-gym" element={<DelaneysGymPage />} />
@@ -661,30 +617,10 @@ export default function PlanetRoutes() {
 <Route path="delaneys-gym-visual" element={<DelaneysGymVisualPage />} />
 <Route path="garretts-laundromat-visual" element={<GarrettsLaundromatVisualPage />} />
 <Route path="commons-coffee-visual" element={<CommonsCoffeeVisualPage />} />
-<Route path="commons-coffee-morning" element={<CommonsCoffeeMorningVisualPage />} />
-<Route path="commons-coffee-rainy-day" element={<CommonsCoffeeRainyDayVisualPage />} />
-<Route path="commons-coffee-outdoor-evening" element={<CommonsCoffeeOutdoorEveningVisualPage />} />
-<Route path="commons-coffee-community-event" element={<CommonsCoffeeCommunityEventVisualPage />} />
 <Route path="ecosystem-infrastructure" element={<EcosystemInfrastructurePortal />} />
 <Route path="get-live" element={<GetBusinessLivePage />} />
-      {/* HYDRA OPERATIONS */}
-      <Route path="hydra" element={<HydraLandingPage />} />
-      <Route path="hydra-v2" element={<HydraLandingPageV2 />} />
-      <Route path="hydra/schedule" element={<HydraScheduleBoardPage />} />
-      <Route path="hydra/jobs" element={<HydraJobsBoardPage />} />
-      <Route path="hydra/assets" element={<HydraAssetSelectorPage />} />
-      <Route path="hydra/intake" element={<HydraProjectIntakePage />} />
-      <Route path="hydra/report" element={<HydraInspectionReportPage />} />
-      <Route path="hydra/dashboard" element={<HydraOwnerDashboardV3Page />} />
-      <Route path="hydra/dashboard-v2" element={<HydraOwnerDashboardV2Page />} />
-      <Route path="hydra/dashboard-v3" element={<HydraOwnerDashboardV3Page />} />
-      <Route path="hydra/crew" element={<HydraCrewBoardPage />} />
-      <Route path="hydra/job/:id" element={<HydraJobDetailPage />} />
 
 
-
-
-      <Route path="victor-pineda" element={<VictorPinedaLandingPage />} />
 
       <Route path=":planetId" element={<PlanetOverview />} />
       <Route path=":planetId/:cityId" element={<CityPage />} />
@@ -701,31 +637,6 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
