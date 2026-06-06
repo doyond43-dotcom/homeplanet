@@ -98,6 +98,67 @@ function titleFromSlug(slug: string) {
     .join(" ");
 }
 
+const workflowTemplates: Record<string, OperationalStage[]> = {
+  window: [
+    { id: "new-request", label: "New Request", description: "Window cleaning request received." },
+    { id: "quote-review", label: "Quote Review", description: "Glass, screens, and service details being reviewed." },
+    { id: "scheduled", label: "Scheduled", description: "Window cleaning appointment confirmed." },
+    { id: "window-cleaning", label: "Window Cleaning", description: "Interior, exterior, screens, or tracks are being serviced." },
+    { id: "photo-proof", label: "Photo Proof", description: "Before and after proof attached." },
+    { id: "payment-due", label: "Payment Due", description: "Invoice, QR, or payment link ready." },
+    { id: "complete", label: "Complete", description: "Finished, paid, and timestamped." },
+  ],
+
+  pressure: [
+    { id: "new-request", label: "New Request", description: "Pressure washing request received." },
+    { id: "quote-review", label: "Quote Review", description: "Photos, surfaces, and service details being reviewed." },
+    { id: "scheduled", label: "Scheduled", description: "Pressure washing appointment confirmed." },
+    { id: "pressure-washing", label: "Pressure Washing", description: "Wash service is active." },
+    { id: "photo-proof", label: "Photo Proof", description: "Before and after proof attached." },
+    { id: "payment-due", label: "Payment Due", description: "Invoice, QR, or payment link ready." },
+    { id: "complete", label: "Complete", description: "Finished, paid, and timestamped." },
+  ],
+
+  pest: [
+    { id: "new-request", label: "New Request", description: "Pest control request received." },
+    { id: "inspection", label: "Inspection", description: "Technician is reviewing activity, entry points, and treatment needs." },
+    { id: "treatment", label: "Treatment", description: "Treatment is active or ready to be documented." },
+    { id: "follow-up", label: "Follow-Up", description: "Follow-up scheduling or monitoring is active." },
+    { id: "payment-due", label: "Payment Due", description: "Invoice, QR, or payment link ready." },
+    { id: "complete", label: "Complete", description: "Finished, paid, and timestamped." },
+  ],
+
+  pool: [
+    { id: "new-request", label: "New Request", description: "Pool service request received." },
+    { id: "scheduled-service", label: "Scheduled Service", description: "Pool service visit confirmed." },
+    { id: "chemical-reading", label: "Chemical Reading", description: "Chemical levels, service notes, and readings are being recorded." },
+    { id: "payment-due", label: "Payment Due", description: "Invoice, QR, or payment link ready." },
+    { id: "complete", label: "Complete", description: "Finished, paid, and timestamped." },
+  ],
+};
+
+function workflowTemplateForBusinessType(businessType = "") {
+  const type = businessType.toLowerCase();
+
+  if (type.includes("window")) return workflowTemplates.window;
+  if (type.includes("pressure") || type.includes("soft wash") || type.includes("power wash")) return workflowTemplates.pressure;
+  if (type.includes("pest")) return workflowTemplates.pest;
+  if (type.includes("pool")) return workflowTemplates.pool;
+
+  return fallbackStages;
+}
+
+function readSavedSystem(boardSlug: string) {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const raw = window.localStorage.getItem(`hp-system:${boardSlug}`);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 function jobsKey(boardSlug: string) {
   return `hp-operational-board:${boardSlug}:jobs`;
 }
@@ -147,6 +208,13 @@ function readSavedJobs(boardSlug: string, fallbackStage: string): OperationalJob
         },
       ];
     }
+
+    const systemRaw = window.localStorage.getItem(`hp-system:${boardSlug}`);
+
+    if (systemRaw) {
+      const system = JSON.parse(systemRaw);
+      return [makeSampleJob(fallbackStage, system.businessType)];
+    }
   } catch {}
 
   return [makeSampleJob(fallbackStage)];
@@ -160,7 +228,66 @@ function saveJobs(boardSlug: string, jobs: OperationalJob[]) {
   } catch {}
 }
 
-function makeSampleJob(stage: string): OperationalJob {
+function makeSampleJob(stage: string, businessType = ""): OperationalJob {
+  const type = businessType.toLowerCase();
+
+  if (type.includes("window")) {
+    return {
+      id: "job-1",
+      customer: "Sarah Thompson",
+      phone: "863-555-0184",
+      email: "customer@example.com",
+      address: "Okeechobee, FL",
+      service: "Exterior window cleaning",
+      notes:
+        "Customer requested exterior window cleaning, screen check, and photo proof after completion.",
+      paymentUrl: "",
+      stage,
+      paymentStatus: "invoice-ready",
+      beforePhotos: ["Front windows before", "Screen condition before"],
+      afterPhotos: [],
+      timeline: ["Request received", "Windows reviewed", "Estimate ready"],
+    };
+  }
+
+  if (type.includes("pest")) {
+    return {
+      id: "job-1",
+      customer: "John Miller",
+      phone: "863-555-0184",
+      email: "customer@example.com",
+      address: "Okeechobee, FL",
+      service: "Initial pest treatment",
+      notes:
+        "Customer requested initial pest inspection, treatment notes, and follow-up scheduling.",
+      paymentUrl: "",
+      stage,
+      paymentStatus: "invoice-ready",
+      beforePhotos: ["Entry point photo", "Treatment area photo"],
+      afterPhotos: [],
+      timeline: ["Request received", "Inspection reviewed", "Treatment ready"],
+    };
+  }
+
+  if (type.includes("pool")) {
+    return {
+      id: "job-1",
+      customer: "Lisa Carter",
+      phone: "863-555-0184",
+      email: "customer@example.com",
+      address: "Okeechobee, FL",
+      service: "Weekly pool maintenance",
+      notes:
+        "Customer requested recurring pool service, chemical readings, and service log updates.",
+      paymentUrl: "",
+      stage,
+      paymentStatus: "invoice-ready",
+      beforePhotos: ["Pool condition before", "Filter area before"],
+      afterPhotos: [],
+      timeline: ["Request received", "Service log created", "Maintenance ready"],
+    };
+  }
+
   return {
     id: "job-1",
     customer: "Maria Jenkins",
@@ -178,7 +305,6 @@ function makeSampleJob(stage: string): OperationalJob {
     timeline: ["Request received", "Photos reviewed", "Estimate ready"],
   };
 }
-
 function initialsFor(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (!parts.length) return "HP";
@@ -218,7 +344,9 @@ export default function OperationalLiveBoard({ boardSlug, payload }: Props) {
   const businessName = boardSlug === "live-system-demo" ? "Live System Demo" : payload?.businessName || titleFromSlug(boardSlug) || "HomePlanet Business";
   const customerFrontDoorUrl = typeof window !== "undefined" ? `${window.location.origin}/planet/request/${boardSlug}` : `/planet/request/${boardSlug}`;
   const operationalSystem: OperationalSystem | undefined = payload?.operationalSystem;
-  const stages = operationalSystem?.stages?.length ? operationalSystem.stages : fallbackStages;
+  const savedSystem = readSavedSystem(boardSlug);
+  const generatedStages = workflowTemplateForBusinessType(savedSystem?.businessType);
+  const stages = operationalSystem?.stages?.length ? operationalSystem.stages : generatedStages;
 
   const beforeInputRef = useRef<HTMLInputElement | null>(null);
   const afterInputRef = useRef<HTMLInputElement | null>(null);
@@ -1304,6 +1432,9 @@ const mobileStatsBar: CSSProperties = {
   boxSizing: "border-box",
   overflow: "hidden",
 };
+
+
+
 
 
 
