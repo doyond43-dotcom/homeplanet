@@ -95,9 +95,23 @@ export default function HydraInspectionReportPage() {
         <section className="mt-8 rounded-[2rem] border border-white/10 bg-white/5 p-6">
           <h2 className="text-2xl font-black">Inspection Photos</h2>
           <div className="mt-4 grid gap-4 md:grid-cols-3">
-            {["Before", "Inspection", "After"].map((p) => (
-              <div key={p} className="flex h-44 items-center justify-center rounded-3xl border border-white/10 bg-slate-950 text-slate-400">{p} Photo</div>
-            ))}
+            <img
+              src="/images/hydra-before-reservoir-inspection.jpg.png"
+              alt="Before inspection"
+              className="h-44 w-full rounded-3xl border border-white/10 object-cover"
+            />
+
+            <img
+              src="/images/hydra-inspection-reservoir-interior.jpg.png"
+              alt="Inspection photo"
+              className="h-44 w-full rounded-3xl border border-white/10 object-cover"
+            />
+
+            <img
+              src="/images/hydra-after-reservoir-cleaning.jpg.png"
+              alt="After cleaning"
+              className="h-44 w-full rounded-3xl border border-white/10 object-cover"
+            />
           </div>
           <Link to={`/planet/hydra/dashboard?asset=${encodeURIComponent(selectedAsset)}`} className="mt-6 inline-flex rounded-full bg-cyan-300 px-7 py-3 font-black text-slate-950">
             View Owner Dashboard
@@ -107,6 +121,7 @@ export default function HydraInspectionReportPage() {
     </main>
   );
 }
+
 
 
 
