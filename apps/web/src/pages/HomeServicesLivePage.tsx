@@ -257,10 +257,10 @@ return ( <main className="min-h-screen bg-black px-6 py-10 text-white"> <section
       </p>
 
       <button
-        onClick={() => navigate("/planet/creator/quick")}
+        onClick={() => navigate("/planet/home-services/activate")}
         className="mt-6 rounded-2xl bg-green-400 px-8 py-4 text-lg font-black text-black transition hover:bg-green-300"
       >
-        Build My Live System
+        Activate Home Services System
       </button>
     </div>
 
@@ -269,6 +269,7 @@ return ( <main className="min-h-screen bg-black px-6 py-10 text-white"> <section
 
 )
 }
+
 
 
 

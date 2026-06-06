@@ -12,6 +12,7 @@ import SlapABugLiveBoard from "../pages/SlapABugLiveBoard";
 import LocalServiceStarterPage from "../pages/LocalServiceStarterPage";
 import LivePagesHub from "../pages/LivePagesHub";
 import HomeServicesLivePage from "../pages/HomeServicesLivePage";
+import HomeServicesActivationPage from "../pages/HomeServicesActivationPage";
 import RestaurantLivePage from "../pages/RestaurantLivePage";
 import TransportationLivePage from "../pages/TransportationLivePage";
 import CommunityLivePage from "../pages/CommunityLivePage";
@@ -141,6 +142,7 @@ import LobbyBoardPage from "../pages/LobbyBoardPage";
 import CreatorBuild from "../pages/CreatorBuild";
 
 import CreatorLaunchSequencePage from "../pages/CreatorLaunchSequencePage";
+import HomeServicesBuildSequencePage from "../pages/HomeServicesBuildSequencePage";
 
 import ReleaseViewer from "../pages/ReleaseViewer";
 
@@ -408,6 +410,7 @@ export default function PlanetRoutes() {
       <Route path="local-service-page" element={<LocalServiceStarterPage />} />
       <Route path="live-pages" element={<LivePagesHub />} />
       <Route path="live-pages/home-services" element={<HomeServicesLivePage />} />
+      <Route path="home-services/activate" element={<HomeServicesActivationPage />} />
       <Route path="live-pages/restaurants" element={<RestaurantLivePage />} />
       <Route path="live-pages/transportation" element={<TransportationLivePage />} />
       <Route path="live-pages/community" element={<CommunityLivePage />} />
@@ -517,6 +520,7 @@ export default function PlanetRoutes() {
       <Route path="creator/hayley-live" element={<HayleyLiveBoard />} />
       <Route path="creator/big-dave-eats" element={<BigDaveEatsLive />} />
       <Route path="creator/building" element={<CreatorLaunchSequencePage />} />
+      <Route path="home-services/building" element={<HomeServicesBuildSequencePage />} />
       <Route path="system/:slug" element={<SystemHomePage />} />
       <Route path="creator/*" element={<Navigate to="/planet/creator" replace />} />
 
@@ -701,6 +705,9 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
+
+
 
 
 
