@@ -142,7 +142,6 @@ import LobbyBoardPage from "../pages/LobbyBoardPage";
 import CreatorBuild from "../pages/CreatorBuild";
 
 import CreatorLaunchSequencePage from "../pages/CreatorLaunchSequencePage";
-import HomeServicesBuildSequencePage from "../pages/HomeServicesBuildSequencePage";
 
 import ReleaseViewer from "../pages/ReleaseViewer";
 
@@ -520,7 +519,6 @@ export default function PlanetRoutes() {
       <Route path="creator/hayley-live" element={<HayleyLiveBoard />} />
       <Route path="creator/big-dave-eats" element={<BigDaveEatsLive />} />
       <Route path="creator/building" element={<CreatorLaunchSequencePage />} />
-      <Route path="home-services/building" element={<HomeServicesBuildSequencePage />} />
       <Route path="system/:slug" element={<SystemHomePage />} />
       <Route path="creator/*" element={<Navigate to="/planet/creator" replace />} />
 
@@ -705,6 +703,7 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
 
 
 
