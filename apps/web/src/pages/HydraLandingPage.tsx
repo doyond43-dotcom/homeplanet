@@ -126,11 +126,11 @@ export default function HydraLandingPage() {
             Inside Hydra Operations
           </p>
 
-          <h2 className="mt-3 text-4xl font-black">
+          <h2 className="mt-4 max-w-4xl text-5xl font-black leading-tight md:text-6xl">
             From asset selection to field visibility.
           </h2>
 
-          <p className="mt-4 max-w-3xl text-slate-300">
+          <p className="mt-5 max-w-4xl text-lg leading-8 text-slate-300">
             Hydra turns infrastructure work into a connected operating flow:
             choose the asset, submit the project, and track what happens next.
           </p>
@@ -186,11 +186,11 @@ export default function HydraLandingPage() {
               Infrastructure Assets
             </p>
 
-            <h2 className="mt-3 text-4xl font-black">
+            <h2 className="mt-4 max-w-4xl text-5xl font-black leading-tight md:text-6xl">
               Built around the asset, not just the form.
             </h2>
 
-            <p className="mt-4 max-w-3xl text-slate-300">
+            <p className="mt-5 max-w-4xl text-lg leading-8 text-slate-300">
               Hydra connects the real-world infrastructure asset to the request,
               the inspection, the crew, the report, and the operations center.
             </p>
@@ -202,11 +202,11 @@ export default function HydraLandingPage() {
               key={step}
               className="rounded-[2rem] border border-white/10 bg-white/5 p-6"
             >
-              <p className="text-xs font-black uppercase tracking-[0.25em] text-cyan-300">
+              <p className="text-sm font-black uppercase tracking-[0.25em] text-cyan-300">
                 Step {step}
               </p>
-              <h3 className="mt-3 text-2xl font-black">{title}</h3>
-              <p className="mt-2 leading-7 text-slate-400">{body}</p>
+              <h3 className="mt-3 text-3xl font-black">{title}</h3>
+              <p className="mt-3 text-base leading-7 text-slate-300">{body}</p>
             </div>
           ))}
         </section>
@@ -242,6 +242,9 @@ export default function HydraLandingPage() {
     </main>
   );
 }
+
+
+
 
 
 
