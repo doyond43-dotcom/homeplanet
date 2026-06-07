@@ -122,6 +122,10 @@ import PresenceLaunchSequencePage from "../pages/PresenceLaunchSequencePage";
 import ActivationPage from "../pages/ActivationPage";
 import HomePlanetHomePage from "../pages/HomePlanetHomePage";
 import PlanetHomePage from "../pages/PlanetHomePage";
+import BuildYourLiveSystemPage from "../pages/BuildYourLiveSystemPage";
+import LiveSystemRequestDemoPage from "../pages/LiveSystemRequestDemoPage";
+import LiveSystemDispatchDemoPage from "../pages/LiveSystemDispatchDemoPage";
+import LiveSystemOperationsDemoPage from "../pages/LiveSystemOperationsDemoPage";
 
 import CreatorStudioBoard from "../pages/CreatorStudioBoard";
 import CreatorLive from "../pages/CreatorLive";
@@ -404,6 +408,10 @@ export default function PlanetRoutes() {
         <Route path="/creator/starter" element={<StarterLivePageCreatorPage />} />
         <Route path="/sebastian-softwash" element={<SebastianSoftwashPage />} />
       <Route index element={<PlanetHomePage />} />
+      <Route path="build-your-live-system" element={<BuildYourLiveSystemPage />} />
+      <Route path="live-system/request" element={<LiveSystemRequestDemoPage />} />
+      <Route path="live-system/dispatch" element={<LiveSystemDispatchDemoPage />} />
+      <Route path="live-system/operations" element={<LiveSystemOperationsDemoPage />} />
       <Route path="slap-a-bug" element={<SlapABugLanding />} />
       <Route path="slap-a-bug/live" element={<SlapABugLiveBoard />} />
       <Route path="local-service-page" element={<LocalServiceStarterPage />} />
@@ -703,6 +711,9 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
+
+
 
 
 
