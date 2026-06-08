@@ -74,8 +74,8 @@ export default function HomePlanetHomePage() {
           </Link>
 
           <div className="hidden items-center gap-6 text-xs font-bold text-white/55 sm:flex">
-            <a href="#systems" className="hover:text-white">Systems</a>
-            <a href="#doctrine" className="hover:text-white">Doctrine</a>
+            <Link to="/planet/systems" className="hover:text-white">Systems</Link>
+            <Link to="/planet/doctrine" className="hover:text-white">Doctrine</Link>
             <Link to="/city" className="hover:text-white">Cities</Link>
           </div>
 
@@ -219,6 +219,7 @@ export default function HomePlanetHomePage() {
     </main>
   );
 }
+
 
 
 

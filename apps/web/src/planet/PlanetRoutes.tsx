@@ -121,6 +121,8 @@ import CreatorQuickBuildPage from "../pages/CreatorQuickBuildPage";
 import PresenceLaunchSequencePage from "../pages/PresenceLaunchSequencePage";
 import ActivationPage from "../pages/ActivationPage";
 import HomePlanetHomePage from "../pages/HomePlanetHomePage";
+import HomePlanetSystemsPage from "../pages/HomePlanetSystemsPage";
+import HomePlanetDoctrinePage from "../pages/HomePlanetDoctrinePage";
 import PlanetHomePage from "../pages/PlanetHomePage";
 import BuildYourLiveSystemPage from "../pages/BuildYourLiveSystemPage";
 import BusinessSystemsExperiencePage from "../pages/BusinessSystemsExperiencePage";
@@ -714,11 +716,14 @@ export default function PlanetRoutes() {
 
 
       <Route path="home" element={<HomePlanetHomePage />} />
+      <Route path="systems" element={<HomePlanetSystemsPage />} />
+      <Route path="doctrine" element={<HomePlanetDoctrinePage />} />
 
       <Route path="*" element={<Navigate to="/planet/start" replace />} />
 </Routes>
   );
 }
+
 
 
 
