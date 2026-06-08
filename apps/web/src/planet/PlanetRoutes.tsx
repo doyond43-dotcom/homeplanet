@@ -407,7 +407,7 @@ export default function PlanetRoutes() {
 <Route path="/starter/:slug" element={<StarterGeneratedLivePage />} />
         <Route path="/creator/starter" element={<StarterLivePageCreatorPage />} />
         <Route path="/sebastian-softwash" element={<SebastianSoftwashPage />} />
-      <Route index element={<PlanetHomePage />} />
+      <Route index element={<Navigate to="/planet/home" replace />} />
       <Route path="build-your-live-system" element={<BuildYourLiveSystemPage />} />
       <Route path="live-system/request" element={<LiveSystemRequestDemoPage />} />
       <Route path="live-system/dispatch" element={<LiveSystemDispatchDemoPage />} />
@@ -711,6 +711,7 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
 
 
 

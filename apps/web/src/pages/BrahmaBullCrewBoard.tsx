@@ -672,17 +672,17 @@ export default function BrahmaBullCrewBoard() {
       <section className="mx-auto max-w-md space-y-5">
         <div className="rounded-3xl border border-white/10 bg-neutral-900 p-5">
           <p className="text-xs font-bold uppercase tracking-[0.3em] text-emerald-300">
-            Crew Phone Board
+            Live Service Board
           </p>
-          <h1 className="mt-2 text-3xl font-black">Tables</h1>
+          <h1 className="mt-2 text-3xl font-black">Requests & Tables</h1>
           <p className="mt-2 text-sm text-neutral-400">
-            Tap a table. Take drinks first. Send food when they are ready.
+            Food ready. Refills. Checks. Customer requests. Tap any table to respond.
           </p>
         </div>
 
         {activeTables.length > 0 && (
           <div className="rounded-3xl border border-amber-300/30 bg-amber-300/10 p-4">
-            <h2 className="text-xl font-black">Active Tables</h2>
+            <h2 className="text-xl font-black">Needs Attention</h2>
 
             <div className="mt-4 space-y-3">
               {activeTables.map((table) => (
@@ -704,7 +704,7 @@ export default function BrahmaBullCrewBoard() {
         )}
 
         <div className="rounded-3xl border border-white/10 bg-neutral-900 p-4">
-          <h2 className="text-xl font-black">All Tables</h2>
+          <h2 className="text-xl font-black">Dining Room Status</h2>
 
           <div className="mt-4 grid grid-cols-2 gap-3">
             {tables.map((table) => (
@@ -728,6 +728,7 @@ export default function BrahmaBullCrewBoard() {
     </main>
   );
 }
+
 
 
 

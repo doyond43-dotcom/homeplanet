@@ -31,7 +31,7 @@ export default function BuildYourLiveSystemPage() {
   return (
     <main className="min-h-screen bg-[#050812] px-6 py-10 text-white">
       <div className="mx-auto max-w-7xl">
-        <Link to="/planet" className="text-sm font-black text-emerald-300">
+        <Link to="/planet/home" className="text-sm font-black text-emerald-300">
           Back to HomePlanet
         </Link>
 
@@ -114,5 +114,6 @@ export default function BuildYourLiveSystemPage() {
     </main>
   );
 }
+
 
 
