@@ -98,54 +98,130 @@ function titleFromSlug(slug: string) {
     .join(" ");
 }
 
-const workflowTemplates: Record<string, OperationalStage[]> = {
-  window: [
-    { id: "new-request", label: "New Request", description: "Window cleaning request received." },
-    { id: "quote-review", label: "Quote Review", description: "Glass, screens, and service details being reviewed." },
-    { id: "scheduled", label: "Scheduled", description: "Window cleaning appointment confirmed." },
-    { id: "window-cleaning", label: "Window Cleaning", description: "Interior, exterior, screens, or tracks are being serviced." },
+type WorkflowFamily =
+  | "exterior"
+  | "repair"
+  | "recurring"
+  | "cleaning"
+  | "mobile"
+  | "default";
+
+const workflowTemplates: Record<WorkflowFamily, OperationalStage[]> = {
+  exterior: [
+    { id: "new-request", label: "New Request", description: "Exterior service request received." },
+    { id: "quote-review", label: "Quote Review", description: "Photos, surfaces, measurements, or service details being reviewed." },
+    { id: "scheduled", label: "Scheduled", description: "Service appointment confirmed." },
+    { id: "service-active", label: "Service Active", description: "Exterior service is active." },
     { id: "photo-proof", label: "Photo Proof", description: "Before and after proof attached." },
     { id: "payment-due", label: "Payment Due", description: "Invoice, QR, or payment link ready." },
     { id: "complete", label: "Complete", description: "Finished, paid, and timestamped." },
   ],
 
-  pressure: [
-    { id: "new-request", label: "New Request", description: "Pressure washing request received." },
-    { id: "quote-review", label: "Quote Review", description: "Photos, surfaces, and service details being reviewed." },
-    { id: "scheduled", label: "Scheduled", description: "Pressure washing appointment confirmed." },
-    { id: "pressure-washing", label: "Pressure Washing", description: "Wash service is active." },
+  repair: [
+    { id: "new-request", label: "New Request", description: "Repair request received." },
+    { id: "diagnosis", label: "Diagnosis", description: "Issue, parts, access, and repair needs are being reviewed." },
+    { id: "estimate", label: "Estimate", description: "Repair estimate is being prepared or reviewed." },
+    { id: "approval", label: "Approval", description: "Customer approval is needed before work begins." },
+    { id: "repair-active", label: "Repair Active", description: "Repair work is active." },
+    { id: "payment-due", label: "Payment Due", description: "Invoice, QR, or payment link ready." },
+    { id: "complete", label: "Complete", description: "Finished, paid, and timestamped." },
+  ],
+
+  recurring: [
+    { id: "new-request", label: "New Request", description: "Recurring service request received." },
+    { id: "scheduled-service", label: "Scheduled Service", description: "Service visit confirmed." },
+    { id: "service-active", label: "Service Active", description: "Recurring service is active." },
+    { id: "service-notes", label: "Service Notes", description: "Notes, readings, treatment records, or service details are being recorded." },
+    { id: "payment-due", label: "Payment Due", description: "Invoice, QR, or payment link ready." },
+    { id: "complete", label: "Complete", description: "Finished, paid, and timestamped." },
+  ],
+
+  cleaning: [
+    { id: "new-request", label: "New Request", description: "Cleaning request received." },
+    { id: "walkthrough", label: "Walkthrough", description: "Rooms, scope, access, and cleaning details are being reviewed." },
+    { id: "scheduled", label: "Scheduled", description: "Cleaning appointment confirmed." },
+    { id: "cleaning-active", label: "Cleaning Active", description: "Cleaning service is active." },
     { id: "photo-proof", label: "Photo Proof", description: "Before and after proof attached." },
     { id: "payment-due", label: "Payment Due", description: "Invoice, QR, or payment link ready." },
     { id: "complete", label: "Complete", description: "Finished, paid, and timestamped." },
   ],
 
-  pest: [
-    { id: "new-request", label: "New Request", description: "Pest control request received." },
-    { id: "inspection", label: "Inspection", description: "Technician is reviewing activity, entry points, and treatment needs." },
-    { id: "treatment", label: "Treatment", description: "Treatment is active or ready to be documented." },
-    { id: "follow-up", label: "Follow-Up", description: "Follow-up scheduling or monitoring is active." },
+  mobile: [
+    { id: "new-request", label: "New Request", description: "Mobile service request received." },
+    { id: "review", label: "Review", description: "Vehicle, equipment, location, or service details are being reviewed." },
+    { id: "scheduled", label: "Scheduled", description: "Mobile service appointment confirmed." },
+    { id: "service-active", label: "Service Active", description: "Mobile service is active." },
     { id: "payment-due", label: "Payment Due", description: "Invoice, QR, or payment link ready." },
     { id: "complete", label: "Complete", description: "Finished, paid, and timestamped." },
   ],
 
-  pool: [
-    { id: "new-request", label: "New Request", description: "Pool service request received." },
-    { id: "scheduled-service", label: "Scheduled Service", description: "Pool service visit confirmed." },
-    { id: "chemical-reading", label: "Chemical Reading", description: "Chemical levels, service notes, and readings are being recorded." },
-    { id: "payment-due", label: "Payment Due", description: "Invoice, QR, or payment link ready." },
-    { id: "complete", label: "Complete", description: "Finished, paid, and timestamped." },
-  ],
+  default: fallbackStages,
 };
 
-function workflowTemplateForBusinessType(businessType = "") {
+function workflowFamilyForBusinessType(businessType = ""): WorkflowFamily {
   const type = businessType.toLowerCase();
 
-  if (type.includes("window")) return workflowTemplates.window;
-  if (type.includes("pressure") || type.includes("soft wash") || type.includes("power wash")) return workflowTemplates.pressure;
-  if (type.includes("pest")) return workflowTemplates.pest;
-  if (type.includes("pool")) return workflowTemplates.pool;
+  if (
+    type.includes("window") ||
+    type.includes("pressure") ||
+    type.includes("power wash") ||
+    type.includes("soft wash") ||
+    type.includes("roof") ||
+    type.includes("gutter") ||
+    type.includes("solar") ||
+    type.includes("christmas light")
+  ) {
+    return "exterior";
+  }
 
-  return fallbackStages;
+  if (
+    type.includes("repair") ||
+    type.includes("hvac") ||
+    type.includes("plumb") ||
+    type.includes("electric") ||
+    type.includes("appliance") ||
+    type.includes("garage door") ||
+    type.includes("handyman")
+  ) {
+    return "repair";
+  }
+
+  if (
+    type.includes("pool") ||
+    type.includes("pest") ||
+    type.includes("lawn") ||
+    type.includes("landscap") ||
+    type.includes("mosquito")
+  ) {
+    return "recurring";
+  }
+
+  if (
+    type.includes("cleaning") ||
+    type.includes("cleaner") ||
+    type.includes("maid") ||
+    type.includes("janitorial") ||
+    type.includes("move out") ||
+    type.includes("move-out")
+  ) {
+    return "cleaning";
+  }
+
+  if (
+    type.includes("mobile") ||
+    type.includes("detailing") ||
+    type.includes("mechanic") ||
+    type.includes("rv") ||
+    type.includes("windshield")
+  ) {
+    return "mobile";
+  }
+
+  return "default";
+}
+
+function workflowTemplateForBusinessType(businessType = "") {
+  return workflowTemplates[workflowFamilyForBusinessType(businessType)];
 }
 
 function readSavedSystem(boardSlug: string) {
@@ -229,62 +305,115 @@ function saveJobs(boardSlug: string, jobs: OperationalJob[]) {
 }
 
 function makeSampleJob(stage: string, businessType = ""): OperationalJob {
+  const family = workflowFamilyForBusinessType(businessType);
   const type = businessType.toLowerCase();
 
-  if (type.includes("window")) {
+  if (family === "exterior") {
+    const isWindow = type.includes("window");
+    const isSoftWash = type.includes("soft wash");
+    const isRoof = type.includes("roof");
+    const service = isWindow
+      ? "Exterior window cleaning"
+      : isRoof
+        ? "Roof cleaning service"
+        : isSoftWash
+          ? "Soft wash service"
+          : "House wash + driveway cleaning";
+
     return {
       id: "job-1",
-      customer: "Sarah Thompson",
+      customer: isWindow ? "Sarah Thompson" : "Maria Jenkins",
       phone: "863-555-0184",
       email: "customer@example.com",
       address: "Okeechobee, FL",
-      service: "Exterior window cleaning",
+      service,
       notes:
-        "Customer requested exterior window cleaning, screen check, and photo proof after completion.",
+        "Customer sent photos and wants quote, schedule confirmation, before/after proof, and payment link.",
       paymentUrl: "",
       stage,
       paymentStatus: "invoice-ready",
-      beforePhotos: ["Front windows before", "Screen condition before"],
+      beforePhotos: isWindow ? ["Front windows before", "Screen condition before"] : ["Front service area before", "Surface condition before"],
       afterPhotos: [],
-      timeline: ["Request received", "Windows reviewed", "Estimate ready"],
+      timeline: ["Request received", "Photos reviewed", "Estimate ready"],
     };
   }
 
-  if (type.includes("pest")) {
+  if (family === "repair") {
     return {
       id: "job-1",
-      customer: "John Miller",
+      customer: "Mike Rodriguez",
       phone: "863-555-0184",
       email: "customer@example.com",
       address: "Okeechobee, FL",
-      service: "Initial pest treatment",
+      service: type.includes("appliance") ? "Appliance repair diagnosis" : "Repair service request",
       notes:
-        "Customer requested initial pest inspection, treatment notes, and follow-up scheduling.",
+        "Customer requested diagnosis, estimate, approval, repair update, and payment link.",
       paymentUrl: "",
       stage,
       paymentStatus: "invoice-ready",
-      beforePhotos: ["Entry point photo", "Treatment area photo"],
+      beforePhotos: ["Issue photo", "Access area photo"],
       afterPhotos: [],
-      timeline: ["Request received", "Inspection reviewed", "Treatment ready"],
+      timeline: ["Request received", "Diagnosis started", "Estimate ready"],
     };
   }
 
-  if (type.includes("pool")) {
+  if (family === "recurring") {
+    const isPest = type.includes("pest");
+    const isPool = type.includes("pool");
+
     return {
       id: "job-1",
-      customer: "Lisa Carter",
+      customer: isPest ? "John Miller" : isPool ? "Lisa Carter" : "Robert Allen",
       phone: "863-555-0184",
       email: "customer@example.com",
       address: "Okeechobee, FL",
-      service: "Weekly pool maintenance",
+      service: isPest ? "Initial pest treatment" : isPool ? "Weekly pool maintenance" : "Recurring service visit",
       notes:
-        "Customer requested recurring pool service, chemical readings, and service log updates.",
+        "Customer requested service notes, recurring visit tracking, follow-up details, and payment support.",
       paymentUrl: "",
       stage,
       paymentStatus: "invoice-ready",
-      beforePhotos: ["Pool condition before", "Filter area before"],
+      beforePhotos: isPest ? ["Entry point photo", "Treatment area photo"] : isPool ? ["Pool condition before", "Filter area before"] : ["Service area before"],
       afterPhotos: [],
-      timeline: ["Request received", "Service log created", "Maintenance ready"],
+      timeline: isPest ? ["Request received", "Inspection reviewed", "Treatment ready"] : ["Request received", "Service log created", "Visit ready"],
+    };
+  }
+
+  if (family === "cleaning") {
+    return {
+      id: "job-1",
+      customer: "Emily Carter",
+      phone: "863-555-0184",
+      email: "customer@example.com",
+      address: "Okeechobee, FL",
+      service: "Home cleaning request",
+      notes:
+        "Customer requested walkthrough, scope confirmation, scheduled cleaning, proof notes, and payment link.",
+      paymentUrl: "",
+      stage,
+      paymentStatus: "invoice-ready",
+      beforePhotos: ["Room condition before", "Entry area before"],
+      afterPhotos: [],
+      timeline: ["Request received", "Scope reviewed", "Cleaning estimate ready"],
+    };
+  }
+
+  if (family === "mobile") {
+    return {
+      id: "job-1",
+      customer: "Carlos Bennett",
+      phone: "863-555-0184",
+      email: "customer@example.com",
+      address: "Okeechobee, FL",
+      service: type.includes("detailing") ? "Mobile detailing service" : "Mobile service request",
+      notes:
+        "Customer requested mobile service, location confirmation, service updates, and payment support.",
+      paymentUrl: "",
+      stage,
+      paymentStatus: "invoice-ready",
+      beforePhotos: ["Vehicle/service area before"],
+      afterPhotos: [],
+      timeline: ["Request received", "Location confirmed", "Service ready"],
     };
   }
 
@@ -294,15 +423,15 @@ function makeSampleJob(stage: string, businessType = ""): OperationalJob {
     phone: "863-555-0184",
     email: "customer@example.com",
     address: "Okeechobee, FL",
-    service: "House wash + driveway cleaning",
+    service: "Home service request",
     notes:
-      "Customer sent photos. Driveway has heavy mildew near garage. Wants quote and earliest available appointment.",
+      "Customer sent service details. HomePlanet is ready to track request, proof, payment, and completion.",
     paymentUrl: "",
     stage,
     paymentStatus: "invoice-ready",
-    beforePhotos: ["Front driveway before", "South wall mildew"],
+    beforePhotos: ["Service request intake"],
     afterPhotos: [],
-    timeline: ["Request received", "Photos reviewed", "Estimate ready"],
+    timeline: ["Request received", "Details reviewed", "Estimate ready"],
   };
 }
 function initialsFor(name: string) {
