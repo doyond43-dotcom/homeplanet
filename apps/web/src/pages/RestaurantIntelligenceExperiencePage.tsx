@@ -1,0 +1,73 @@
+import { ArrowRight, ChefHat, ClipboardList, Eye, Globe2, QrCode, Utensils, Users } from "lucide-react";
+import { Link } from "react-router-dom";
+
+const steps = [
+  { icon: QrCode, title: "Guest Need", text: "A guest needs a refill, ranch, napkins, help, or the check without waving someone down." },
+  { icon: Users, title: "Server Awareness", text: "The right staff member sees the request and knows exactly which table needs attention." },
+  { icon: ChefHat, title: "Kitchen Awareness", text: "Food flow, service requests, and table activity stay connected to the live restaurant rhythm." },
+  { icon: Eye, title: "Owner Visibility", text: "Owners can see service movement without standing in the middle of the dining room." },
+  { icon: ClipboardList, title: "Better Service", text: "The restaurant becomes more aware, more responsive, and less dependent on guessing." },
+];
+
+export default function RestaurantIntelligenceExperiencePage() {
+  return (
+    <main className="min-h-screen bg-[#050607] text-white">
+      <section className="mx-auto max-w-7xl px-5 py-6">
+        <header className="flex items-center justify-between rounded-3xl border border-white/10 bg-white/[0.035] px-4 py-3 backdrop-blur-xl">
+          <Link to="/planet/home" className="flex items-center gap-3">
+            <div className="grid h-10 w-10 place-items-center rounded-2xl bg-emerald-400 text-black"><Globe2 size={21} /></div>
+            <div><p className="text-sm font-black tracking-wide">HomePlanet</p><p className="text-[11px] text-white/50">Restaurant Intelligence</p></div>
+          </Link>
+          <Link to="/planet/restaurant-awareness-intelligence" className="rounded-full bg-white px-4 py-2 text-xs font-black text-black">Build</Link>
+        </header>
+
+        <div className="grid items-center gap-10 py-16 lg:grid-cols-[1fr_.9fr]">
+          <div>
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-2 text-xs font-black text-emerald-200">
+              <Utensils size={14} /> See how it works. Build your restaurant. Go live.
+            </div>
+            <h1 className="max-w-4xl text-5xl font-black leading-[0.94] tracking-tight sm:text-6xl lg:text-7xl">Turn tables into awareness.</h1>
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-white/68">HomePlanet connects guest requests, table activity, staff flow, kitchen awareness, and owner visibility into one live restaurant intelligence layer.</p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <Link to="/planet/restaurant-awareness-intelligence" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-400 px-6 py-4 text-sm font-black text-black shadow-xl shadow-emerald-500/20">Build My Restaurant <ArrowRight size={18} /></Link>
+              <a href="#how-it-works" className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/12 bg-white/[0.05] px-6 py-4 text-sm font-black text-white">See The Flow</a>
+            </div>
+          </div>
+
+          <div className="relative min-h-[500px] overflow-hidden rounded-[2.25rem] border border-white/10 bg-black shadow-[0_0_90px_rgba(16,185,129,0.16)]">
+            <img src="/images/food-truck-operational-hero.png" alt="Restaurant intelligence" className="absolute inset-0 h-full w-full object-cover opacity-90" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+            <div className="absolute bottom-0 p-6">
+              <p className="text-xs font-black uppercase tracking-[0.25em] text-emerald-300">Restaurant Intelligence</p>
+              <p className="mt-2 max-w-sm text-2xl font-black">Guest need to better service — connected.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="how-it-works" className="mx-auto max-w-7xl px-5 py-16">
+        <div className="mb-10 max-w-3xl">
+          <p className="text-xs font-black uppercase tracking-[0.25em] text-emerald-300">How it works</p>
+          <h2 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">The table comes before the dashboard.</h2>
+          <p className="mt-4 text-lg leading-8 text-white/62">Guests, servers, kitchen, and owners all move through the same live service story.</p>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+          {steps.map((step, index) => { const Icon = step.icon; return (
+            <div key={step.title} className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5">
+              <p className="text-xs font-black text-emerald-300">0{index + 1}</p><Icon className="mt-5 text-emerald-300" size={24} />
+              <h3 className="mt-5 text-lg font-black">{step.title}</h3><p className="mt-3 text-sm leading-6 text-white/58">{step.text}</p>
+            </div>
+          );})}
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-5 py-16">
+        <div className="rounded-[2.5rem] border border-emerald-300/20 bg-emerald-300/10 p-8 text-center sm:p-12">
+          <h2 className="text-4xl font-black tracking-tight sm:text-5xl">Ready to build your restaurant layer?</h2>
+          <p className="mx-auto mt-5 max-w-3xl text-lg leading-8 text-white/68">Start with the service flow. Then let HomePlanet show the board.</p>
+          <Link to="/planet/restaurant-awareness-intelligence" className="mt-8 inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-400 px-6 py-4 text-sm font-black text-black">Build My Restaurant <ArrowRight size={18} /></Link>
+        </div>
+      </section>
+    </main>
+  );
+}

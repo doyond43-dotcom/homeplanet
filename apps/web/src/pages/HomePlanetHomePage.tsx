@@ -21,39 +21,27 @@ import { Link } from "react-router-dom";
 const systems = [
   {
     image: "/images/home-services-operational-hero.png",
-    title: "Live Business Systems",
-    text: "Customer requests, scheduling, dispatch, payments, proof, and completion all connected in one operational flow.",
-    href: "/planet/build-your-live-system",
+    title: "Business Systems",
+    text: "Run your business from one phone. Customer requests, jobs, crews, proof, payments, and owner awareness connected in one live flow.",
+    href: "/planet/business-systems",
   },
   {
     image: "/images/food-truck-operational-hero.png",
     title: "Restaurant Intelligence",
-    text: "Tables, kitchen activity, customer requests, crew awareness, and live operational visibility.",
-    href: "/planet/restaurant-awareness-intelligence",
-  },
-  {
-    image: "/images/bella-demo.jpg",
-    title: "Guardian Pet Recovery",
-    text: "Pet recovery, family protection, emergency access, and connected awareness systems.",
-    href: "/planet/guardian/home",
+    text: "Turn tables into awareness. Guest requests, kitchen activity, staff flow, and owner visibility connected in real time.",
+    href: "/planet/restaurant-intelligence",
   },
   {
     image: "/images/HomePlanet-CommunityPulse-MobileView-v1.png",
-    title: "Community Layer",
-    text: "Local needs, local offers, volunteer opportunities, events, and real community circulation.",
-    href: "/planet/okeechobee",
+    title: "Community Network",
+    text: "Connect local needs with local help. Requests, offers, volunteers, events, and outcomes moving through the community.",
+    href: "/planet/community-network",
   },
   {
     image: "/images/appointments-operational-hero.png",
-    title: "Creator Systems",
-    text: "Launch pages, intake flows, customer journeys, and operational systems built from an idea.",
-    href: "/planet/creator",
-  },
-  {
-    image: "/images/operations-hub-command-center-cover.png",
-    title: "Operations Hub",
-    text: "The command center connecting businesses, communities, services, and awareness into one ecosystem.",
-    href: "/planet/ecosystem-identity",
+    title: "HomePlanet Pages",
+    text: "Launch a premium local presence with the pieces people actually need: identity, services, contact, trust, and activation.",
+    href: "/planet/homeplanet-pages",
   },
 ];
 const doctrine = [
@@ -104,11 +92,11 @@ export default function HomePlanetHomePage() {
             </div>
 
             <h1 className="max-w-4xl text-5xl font-black leading-[0.94] tracking-tight sm:text-6xl lg:text-7xl">
-              Live systems for businesses, communities, and real life.
+              Real-world systems for businesses, restaurants, and communities.
             </h1>
 
             <p className="mt-6 max-w-2xl text-lg leading-8 text-white/68">
-              HomePlanet replaces dead websites, scattered links, bloated software, and surveillance-based platforms with simple live systems people can actually use.
+              See how it works. Build your system. Go live.
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -162,11 +150,11 @@ export default function HomePlanetHomePage() {
 
       <section id="systems" className="relative z-10 mx-auto max-w-7xl px-5 py-16">
         <div className="mb-8 max-w-3xl">
-          <p className="text-xs font-black uppercase tracking-[0.25em] text-emerald-300">One platform. Different systems.</p>
-          <h2 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">Choose the system that matches the real-world job.</h2>
+          <p className="text-xs font-black uppercase tracking-[0.25em] text-emerald-300">Four pillars. One ecosystem.</p>
+          <h2 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">Choose the world you want to bring to life.</h2>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {systems.map((item) => {
             return (
               <Link key={item.title} to={item.href} className="group rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 transition hover:-translate-y-1 hover:border-emerald-300/30 hover:bg-white/[0.06]">
@@ -231,6 +219,10 @@ export default function HomePlanetHomePage() {
     </main>
   );
 }
+
+
+
+
 
 
 

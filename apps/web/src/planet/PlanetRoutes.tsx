@@ -123,6 +123,10 @@ import ActivationPage from "../pages/ActivationPage";
 import HomePlanetHomePage from "../pages/HomePlanetHomePage";
 import PlanetHomePage from "../pages/PlanetHomePage";
 import BuildYourLiveSystemPage from "../pages/BuildYourLiveSystemPage";
+import BusinessSystemsExperiencePage from "../pages/BusinessSystemsExperiencePage";
+import RestaurantIntelligenceExperiencePage from "../pages/RestaurantIntelligenceExperiencePage";
+import CommunityNetworkExperiencePage from "../pages/CommunityNetworkExperiencePage";
+import HomePlanetPagesExperiencePage from "../pages/HomePlanetPagesExperiencePage";
 import LiveSystemRequestDemoPage from "../pages/LiveSystemRequestDemoPage";
 import LiveSystemDispatchDemoPage from "../pages/LiveSystemDispatchDemoPage";
 import LiveSystemOperationsDemoPage from "../pages/LiveSystemOperationsDemoPage";
@@ -409,6 +413,10 @@ export default function PlanetRoutes() {
         <Route path="/sebastian-softwash" element={<SebastianSoftwashPage />} />
       <Route index element={<Navigate to="/planet/home" replace />} />
       <Route path="build-your-live-system" element={<BuildYourLiveSystemPage />} />
+      <Route path="business-systems" element={<BusinessSystemsExperiencePage />} />
+      <Route path="restaurant-intelligence" element={<RestaurantIntelligenceExperiencePage />} />
+      <Route path="community-network" element={<CommunityNetworkExperiencePage />} />
+      <Route path="homeplanet-pages" element={<HomePlanetPagesExperiencePage />} />
       <Route path="live-system/request" element={<LiveSystemRequestDemoPage />} />
       <Route path="live-system/dispatch" element={<LiveSystemDispatchDemoPage />} />
       <Route path="live-system/operations" element={<LiveSystemOperationsDemoPage />} />
@@ -711,6 +719,8 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
+
 
 
 
