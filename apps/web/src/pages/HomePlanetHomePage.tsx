@@ -29,7 +29,7 @@ const systems = [
     image: "/images/food-truck-operational-hero.png",
     title: "Restaurant Intelligence",
     text: "Tables, kitchen activity, customer requests, crew awareness, and live operational visibility.",
-    href: "/planet/brahma-bull",
+    href: "/planet/restaurant-awareness-intelligence",
   },
   {
     image: "/images/bella-demo.jpg",
@@ -231,6 +231,8 @@ export default function HomePlanetHomePage() {
     </main>
   );
 }
+
+
 
 
 
