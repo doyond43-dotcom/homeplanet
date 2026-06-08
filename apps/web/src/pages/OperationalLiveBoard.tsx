@@ -104,6 +104,7 @@ type WorkflowFamily =
   | "recurring"
   | "cleaning"
   | "mobile"
+  | "inspection"
   | "default";
 
 const workflowTemplates: Record<WorkflowFamily, OperationalStage[]> = {
@@ -155,13 +156,22 @@ const workflowTemplates: Record<WorkflowFamily, OperationalStage[]> = {
     { id: "complete", label: "Complete", description: "Finished, paid, and timestamped." },
   ],
 
+  inspection: [
+    { id: "new-request", label: "New Request", description: "Inspection request received." },
+    { id: "inspection", label: "Inspection", description: "Inspection is active or ready to be scheduled." },
+    { id: "report", label: "Report", description: "Inspection report, photos, or findings are being prepared." },
+    { id: "customer-review", label: "Customer Review", description: "Customer is reviewing findings or next steps." },
+    { id: "payment-due", label: "Payment Due", description: "Invoice, QR, or payment link ready." },
+    { id: "complete", label: "Complete", description: "Finished, paid, and timestamped." },
+  ],
+
   default: fallbackStages,
 };
 
 function workflowFamilyForBusinessType(businessType = ""): WorkflowFamily {
   const type = businessType.toLowerCase();
 
-  if (
+if (
     type.includes("window") ||
     type.includes("pressure") ||
     type.includes("power wash") ||
@@ -239,23 +249,36 @@ function jobsKey(boardSlug: string) {
   return `hp-operational-board:${boardSlug}:jobs`;
 }
 
-function readSavedJobs(boardSlug: string, fallbackStage: string): OperationalJob[] {
-  if (typeof window === "undefined") return [makeSampleJob(fallbackStage)];
+function readSavedJobs(boardSlug: string, fallbackStage: string, businessType = ""): OperationalJob[] {
+  if (typeof window === "undefined") {
+    return [makeSampleJob(fallbackStage, businessType, boardSlug)];
+  }
 
   try {
+    const systemRaw = window.localStorage.getItem(`hp-system:${boardSlug}`);
+    const savedBusinessType =
+      businessType ||
+      (systemRaw ? JSON.parse(systemRaw).businessType || "" : "");
+
     const raw = window.localStorage.getItem(jobsKey(boardSlug));
 
     if (raw) {
       const parsed = JSON.parse(raw);
 
       if (Array.isArray(parsed) && parsed.length) {
-        return parsed;
+        const looksLikeOldGenericSample =
+          parsed.length === 1 &&
+          parsed[0]?.customer === "Maria Jenkins" &&
+          parsed[0]?.service === "Home service request" &&
+          savedBusinessType;
+
+        if (!looksLikeOldGenericSample) {
+          return parsed;
+        }
       }
     }
 
-    const exampleRaw = window.localStorage.getItem(
-      `hp-example-workflow:${boardSlug}`
-    );
+    const exampleRaw = window.localStorage.getItem(`hp-example-workflow:${boardSlug}`);
 
     if (exampleRaw) {
       const example = JSON.parse(exampleRaw);
@@ -285,15 +308,10 @@ function readSavedJobs(boardSlug: string, fallbackStage: string): OperationalJob
       ];
     }
 
-    const systemRaw = window.localStorage.getItem(`hp-system:${boardSlug}`);
-
-    if (systemRaw) {
-      const system = JSON.parse(systemRaw);
-      return [makeSampleJob(fallbackStage, system.businessType)];
-    }
+    return [makeSampleJob(fallbackStage, savedBusinessType, boardSlug)];
   } catch {}
 
-  return [makeSampleJob(fallbackStage)];
+  return [makeSampleJob(fallbackStage, businessType, boardSlug)];
 }
 
 function saveJobs(boardSlug: string, jobs: OperationalJob[]) {
@@ -304,9 +322,33 @@ function saveJobs(boardSlug: string, jobs: OperationalJob[]) {
   } catch {}
 }
 
-function makeSampleJob(stage: string, businessType = ""): OperationalJob {
+function makeSampleJob(stage: string, businessType = "", boardSlug = ""): OperationalJob {
   const family = workflowFamilyForBusinessType(businessType);
   const type = businessType.toLowerCase();
+  const slug = boardSlug.toLowerCase();
+  const isInspectionBoard =
+    slug.includes("inspection") ||
+    slug.includes("inspect") ||
+    type.includes("inspection") ||
+    type.includes("inspector");
+
+  if (isInspectionBoard) {
+    return {
+      id: `sample-${stage}`,
+      stage: "Inspection",
+      customer: "David Thompson",
+      phone: "863-555-0184",
+      email: "customer@example.com",
+      address: "Okeechobee, FL",
+      service: "4-Point Home Inspection",
+      notes: "Sample inspection job for testing the live inspection board.",
+      paymentUrl: "",
+      paymentStatus: "invoice-ready",
+      beforePhotos: ["Front elevation", "Electrical panel", "Water heater"],
+      afterPhotos: [],
+      timeline: ["Inspection request received", "Appointment ready", "Report pending"],
+    };
+  }
 
   if (family === "exterior") {
     const isWindow = type.includes("window");
@@ -398,6 +440,25 @@ function makeSampleJob(stage: string, businessType = ""): OperationalJob {
     };
   }
 
+  if (family === "inspection") {
+    return {
+      id: "job-1",
+      customer: "David Harris",
+      phone: "863-555-0184",
+      email: "customer@example.com",
+      address: "Okeechobee, FL",
+      service: "Home inspection report",
+      notes:
+        "Customer requested inspection, findings report, photo proof, customer review, and payment support.",
+      paymentUrl: "",
+      stage,
+      paymentStatus: "invoice-ready",
+      beforePhotos: ["Inspection area photo", "Finding photo"],
+      afterPhotos: [],
+      timeline: ["Request received", "Inspection scheduled", "Report ready"],
+    };
+  }
+
   if (family === "mobile") {
     return {
       id: "job-1",
@@ -441,15 +502,19 @@ function initialsFor(name: string) {
 }
 
 function bucketForJob(job: OperationalJob): VisualStageKey {
-  const value = `${job.stage} ${job.paymentStatus}`.toLowerCase();
+  const stageValue = `${job.stage || ""}`.toLowerCase();
+  const paymentValue = `${job.paymentStatus || ""}`.toLowerCase();
 
-  if (value.includes("complete") || value.includes("paid")) return "complete";
-  if (value.includes("payment") || value.includes("invoice") || value.includes("approval") || value.includes("due")) return "payment";
-  if (value.includes("proof") || value.includes("photo") || job.beforePhotos.length || job.afterPhotos.length) return "proof";
+  if (stageValue.includes("complete")) return "complete";
+  if (stageValue.includes("payment") || stageValue.includes("invoice") || stageValue.includes("approval") || stageValue.includes("due")) return "payment";
+  if (stageValue.includes("proof") || stageValue.includes("photo") || stageValue.includes("report")) return "proof";
+  if (stageValue.includes("new") || stageValue.includes("request") || stageValue.includes("inspection") || stageValue.includes("active") || stageValue.includes("schedule")) return "active";
+
+  if (paymentValue.includes("paid")) return "complete";
+  if (paymentValue.includes("payment") || paymentValue.includes("invoice") || paymentValue.includes("approval") || paymentValue.includes("due")) return "payment";
 
   return "active";
 }
-
 function statusColor(job: OperationalJob) {
   return visualStages.find((stage) => stage.key === bucketForJob(job))?.color || "#38bdf8";
 }
@@ -485,9 +550,9 @@ export default function OperationalLiveBoard({ boardSlug, payload }: Props) {
   const [showActivationRail, setShowActivationRail] = useState(true);
   const [paymentDrafts, setPaymentDrafts] = useState<Record<string, string>>({});
   const [hoveredJobId, setHoveredJobId] = useState<string | null>(null);
-  const [jobs, setJobs] = useState<OperationalJob[]>(() => readSavedJobs(boardSlug, stages[0]?.label || "New Request"));
+  const [jobs, setJobs] = useState<OperationalJob[]>(() => readSavedJobs(boardSlug, stages[0]?.label || "New Request", savedSystem?.businessType || ""));
   const [selectedJobId, setSelectedJobId] = useState<string | null>(() => {
-    const saved = readSavedJobs(boardSlug, stages[0]?.label || "New Request");
+    const saved = readSavedJobs(boardSlug, stages[0]?.label || "New Request", savedSystem?.businessType || "");
     return saved[0]?.id || "job-1";
   });
 
@@ -1561,6 +1626,22 @@ const mobileStatsBar: CSSProperties = {
   boxSizing: "border-box",
   overflow: "hidden",
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
