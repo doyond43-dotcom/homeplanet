@@ -41,19 +41,19 @@ const systems = [
     image: "/images/HomePlanet-CommunityPulse-MobileView-v1.png",
     title: "Community Layer",
     text: "Local needs, local offers, volunteer opportunities, events, and real community circulation.",
-    href: "/city",
+    href: "/planet/okeechobee",
   },
   {
     image: "/images/appointments-operational-hero.png",
     title: "Creator Systems",
     text: "Launch pages, intake flows, customer journeys, and operational systems built from an idea.",
-    href: "/planet/creator/studio",
+    href: "/planet/creator",
   },
   {
     image: "/images/operations-hub-command-center-cover.png",
     title: "Operations Hub",
     text: "The command center connecting businesses, communities, services, and awareness into one ecosystem.",
-    href: "/planet/home",
+    href: "/planet/ecosystem-identity",
   },
 ];
 const doctrine = [
@@ -231,6 +231,7 @@ export default function HomePlanetHomePage() {
     </main>
   );
 }
+
 
 
 
