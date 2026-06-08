@@ -18,7 +18,7 @@ export default function RestaurantIntelligenceExperiencePage() {
             <div className="grid h-10 w-10 place-items-center rounded-2xl bg-emerald-400 text-black"><Globe2 size={21} /></div>
             <div><p className="text-sm font-black tracking-wide">HomePlanet</p><p className="text-[11px] text-white/50">Restaurant Intelligence</p></div>
           </Link>
-          <Link to="/planet/restaurant-awareness-intelligence" className="rounded-full bg-white px-4 py-2 text-xs font-black text-black">Build</Link>
+          <Link to="/planet/restaurant-intelligence" className="rounded-full bg-white px-4 py-2 text-xs font-black text-black">Build</Link>
         </header>
 
         <div className="grid items-center gap-10 py-16 lg:grid-cols-[1fr_.9fr]">
@@ -29,7 +29,7 @@ export default function RestaurantIntelligenceExperiencePage() {
             <h1 className="max-w-4xl text-5xl font-black leading-[0.94] tracking-tight sm:text-6xl lg:text-7xl">Turn tables into awareness.</h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-white/68">HomePlanet connects guest requests, table activity, staff flow, kitchen awareness, and owner visibility into one live restaurant intelligence layer.</p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link to="/planet/restaurant-awareness-intelligence" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-400 px-6 py-4 text-sm font-black text-black shadow-xl shadow-emerald-500/20">Build My Restaurant <ArrowRight size={18} /></Link>
+              <Link to="/planet/restaurant-intelligence" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-400 px-6 py-4 text-sm font-black text-black shadow-xl shadow-emerald-500/20">Build My Restaurant <ArrowRight size={18} /></Link>
               <a href="#how-it-works" className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/12 bg-white/[0.05] px-6 py-4 text-sm font-black text-white">See The Flow</a>
             </div>
           </div>
@@ -65,9 +65,10 @@ export default function RestaurantIntelligenceExperiencePage() {
         <div className="rounded-[2.5rem] border border-emerald-300/20 bg-emerald-300/10 p-8 text-center sm:p-12">
           <h2 className="text-4xl font-black tracking-tight sm:text-5xl">Ready to build your restaurant layer?</h2>
           <p className="mx-auto mt-5 max-w-3xl text-lg leading-8 text-white/68">Start with the service flow. Then let HomePlanet show the board.</p>
-          <Link to="/planet/restaurant-awareness-intelligence" className="mt-8 inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-400 px-6 py-4 text-sm font-black text-black">Build My Restaurant <ArrowRight size={18} /></Link>
+          <Link to="/planet/restaurant-intelligence" className="mt-8 inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-400 px-6 py-4 text-sm font-black text-black">Build My Restaurant <ArrowRight size={18} /></Link>
         </div>
       </section>
     </main>
   );
 }
+
