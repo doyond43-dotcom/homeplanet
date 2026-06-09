@@ -28,7 +28,7 @@ export default function BuildYourLiveSystemPage() {
     );
 
     localStorage.removeItem(`hp-operational-board:${slug}:jobs`);
-    navigate(`/planet/creator/presence/${slug}`);
+    navigate(`/planet/live/${slug}`);
   };
 
   return (
@@ -124,7 +124,5 @@ export default function BuildYourLiveSystemPage() {
     </main>
   );
 }
-
-
 
 

@@ -28,7 +28,7 @@ export default function RestaurantQuickBuildPage() {
     );
 
     localStorage.removeItem(`hp-operational-board:${slug}:jobs`);
-    navigate(`/planet/creator/presence/${slug}`);
+    navigate(`/planet/live/${slug}`);
   };
 
   return (
@@ -81,7 +81,5 @@ export default function RestaurantQuickBuildPage() {
     </main>
   );
 }
-
-
 
 
