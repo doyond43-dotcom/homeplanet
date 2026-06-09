@@ -1,0 +1,82 @@
+import { ArrowRight, ChefHat, ClipboardList, Globe2, Sparkles } from "lucide-react";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+
+
+export default function RestaurantQuickBuildPage() {
+  const navigate = useNavigate();
+  const [restaurantName, setRestaurantName] = useState("");
+  const [restaurantType, setRestaurantType] = useState("");
+
+  const slugify = (value: string) =>
+    value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "restaurant-system";
+
+  const handleBuild = () => {
+    const name = restaurantName.trim() || "Restaurant Intelligence";
+    const type = restaurantType.trim() || "Restaurant";
+    const slug = slugify(name);
+
+    localStorage.setItem(
+      `hp-system:${slug}`,
+      JSON.stringify({
+        businessName: name,
+        businessType: type,
+        pillar: "restaurant",
+      })
+    );
+
+    localStorage.removeItem(`hp-operational-board:${slug}:jobs`);
+    navigate(`/planet/live/${slug}`);
+  };
+
+  return (
+    <main className="min-h-screen bg-[#050607] text-white">
+      <section className="mx-auto max-w-5xl px-5 py-6">
+        <header className="flex items-center justify-between rounded-3xl border border-white/10 bg-white/[0.035] px-4 py-3 backdrop-blur-xl">
+          <Link to="/planet/restaurant-intelligence" className="flex items-center gap-3">
+            <div className="grid h-10 w-10 place-items-center rounded-2xl bg-emerald-400 text-black"><Globe2 size={21} /></div>
+            <div><p className="text-sm font-black tracking-wide">HomePlanet</p><p className="text-[11px] text-white/50">Restaurant Quick Build</p></div>
+          </Link>
+          <Link to="/planet/home" className="rounded-full bg-white px-4 py-2 text-xs font-black text-black">Home</Link>
+        </header>
+
+        <div className="py-16">
+          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-2 text-xs font-black text-emerald-200">
+            <Sparkles size={14} /> Restaurant Intelligence selected
+          </div>
+
+          <h1 className="max-w-4xl text-5xl font-black leading-[0.94] tracking-tight sm:text-6xl lg:text-7xl">Build your restaurant intelligence layer.</h1>
+          <p className="mt-6 max-w-3xl text-lg leading-8 text-white/68">Start with your restaurant name and service style. HomePlanet will recommend the awareness pieces that fit your flow.</p>
+
+          <div className="mt-10 grid gap-5 lg:grid-cols-[1fr_.85fr]">
+            <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6">
+              <div className="mb-5 flex items-center gap-3"><ChefHat className="text-emerald-300" size={24} /><h2 className="text-2xl font-black">Quick Build</h2></div>
+
+              <label className="block text-xs font-black uppercase tracking-[0.2em] text-white/45">Restaurant Name</label>
+              <input value={restaurantName} onChange={(e) => setRestaurantName(e.target.value)} className="mt-2 w-full rounded-2xl border border-white/10 bg-black/35 px-4 py-4 text-white outline-none focus:border-emerald-300/50" placeholder="Example: Brahma Bull" />
+
+              <label className="mt-5 block text-xs font-black uppercase tracking-[0.2em] text-white/45">Restaurant Type</label>
+              <input value={restaurantType} onChange={(e) => setRestaurantType(e.target.value)} className="mt-2 w-full rounded-2xl border border-white/10 bg-black/35 px-4 py-4 text-white outline-none focus:border-emerald-300/50" placeholder="Dine-in, food truck, bar & grill, coffee shop..." />
+
+              <button type="button" onClick={handleBuild} className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-400 px-6 py-4 text-sm font-black text-black shadow-xl shadow-emerald-500/20">
+                Build My Restaurant System <ArrowRight size={18} />
+              </button>
+
+              <p className="mt-4 text-sm leading-6 text-white/45">This locks the restaurant architecture first. The generated board connection comes next.</p>
+            </section>
+
+            <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6">
+              <div className="mb-5 flex items-center gap-3"><ClipboardList className="text-emerald-300" size={24} /><h2 className="text-2xl font-black">Recommended Modules</h2></div>
+              <div className="grid gap-3">
+                {recommendedModules.map((item) => (
+                  <div key={item} className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm font-bold text-white/70">{item}</div>
+                ))}
+              </div>
+            </section>
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}
+

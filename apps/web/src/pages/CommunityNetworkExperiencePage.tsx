@@ -18,7 +18,7 @@ export default function CommunityNetworkExperiencePage() {
             <div className="grid h-10 w-10 place-items-center rounded-2xl bg-emerald-400 text-black"><Globe2 size={21} /></div>
             <div><p className="text-sm font-black tracking-wide">HomePlanet</p><p className="text-[11px] text-white/50">Community Network</p></div>
           </Link>
-          <Link to="/planet/community-network" className="rounded-full bg-white px-4 py-2 text-xs font-black text-black">Join</Link>
+          <Link to="/planet/community-build" className="rounded-full bg-white px-4 py-2 text-xs font-black text-black">Join</Link>
         </header>
 
         <div className="grid items-center gap-10 py-16 lg:grid-cols-[1fr_.9fr]">
@@ -29,7 +29,7 @@ export default function CommunityNetworkExperiencePage() {
             <h1 className="max-w-4xl text-5xl font-black leading-[0.94] tracking-tight sm:text-6xl lg:text-7xl">Connect local needs with local help.</h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-white/68">HomePlanet turns local needs, offers, volunteers, events, and outcomes into a living community network built around action instead of noise.</p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link to="/planet/community-network" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-400 px-6 py-4 text-sm font-black text-black shadow-xl shadow-emerald-500/20">Join My Community <ArrowRight size={18} /></Link>
+              <Link to="/planet/community-build" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-400 px-6 py-4 text-sm font-black text-black shadow-xl shadow-emerald-500/20">Join My Community <ArrowRight size={18} /></Link>
               <a href="#how-it-works" className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/12 bg-white/[0.05] px-6 py-4 text-sm font-black text-white">See The Flow</a>
             </div>
           </div>
@@ -65,10 +65,11 @@ export default function CommunityNetworkExperiencePage() {
         <div className="rounded-[2.5rem] border border-emerald-300/20 bg-emerald-300/10 p-8 text-center sm:p-12">
           <h2 className="text-4xl font-black tracking-tight sm:text-5xl">Ready to connect your community?</h2>
           <p className="mx-auto mt-5 max-w-3xl text-lg leading-8 text-white/68">Start with the real needs. HomePlanet connects the people, responses, outcomes, and proof.</p>
-          <Link to="/planet/community-network" className="mt-8 inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-400 px-6 py-4 text-sm font-black text-black">Join My Community <ArrowRight size={18} /></Link>
+          <Link to="/planet/community-build" className="mt-8 inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-400 px-6 py-4 text-sm font-black text-black">Join My Community <ArrowRight size={18} /></Link>
         </div>
       </section>
     </main>
   );
 }
+
 

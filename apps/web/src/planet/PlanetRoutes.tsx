@@ -125,6 +125,9 @@ import HomePlanetSystemsPage from "../pages/HomePlanetSystemsPage";
 import HomePlanetDoctrinePage from "../pages/HomePlanetDoctrinePage";
 import PlanetHomePage from "../pages/PlanetHomePage";
 import BuildYourLiveSystemPage from "../pages/BuildYourLiveSystemPage";
+import RestaurantQuickBuildPage from "../pages/RestaurantQuickBuildPage";
+import CommunityQuickBuildPage from "../pages/CommunityQuickBuildPage";
+import PagesQuickBuildPage from "../pages/PagesQuickBuildPage";
 import BusinessSystemsExperiencePage from "../pages/BusinessSystemsExperiencePage";
 import RestaurantIntelligenceExperiencePage from "../pages/RestaurantIntelligenceExperiencePage";
 import CommunityNetworkExperiencePage from "../pages/CommunityNetworkExperiencePage";
@@ -415,6 +418,9 @@ export default function PlanetRoutes() {
         <Route path="/sebastian-softwash" element={<SebastianSoftwashPage />} />
       <Route index element={<Navigate to="/planet/home" replace />} />
       <Route path="build-your-live-system" element={<BuildYourLiveSystemPage />} />
+      <Route path="restaurant-build" element={<RestaurantQuickBuildPage />} />
+      <Route path="community-build" element={<CommunityQuickBuildPage />} />
+      <Route path="pages-build" element={<PagesQuickBuildPage />} />
       <Route path="business-systems" element={<BusinessSystemsExperiencePage />} />
       <Route path="restaurant-intelligence" element={<RestaurantIntelligenceExperiencePage />} />
       <Route path="community-network" element={<CommunityNetworkExperiencePage />} />
@@ -723,6 +729,7 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
 
 
 

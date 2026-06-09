@@ -1,5 +1,4 @@
 import { ArrowRight, Building2, ClipboardList, Globe2, Sparkles } from "lucide-react";
-import { modulesForActivation } from "../lib/activationFamilies";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -8,7 +7,6 @@ export default function BuildYourLiveSystemPage() {
   const navigate = useNavigate();
   const [businessName, setBusinessName] = useState("");
   const [businessType, setBusinessType] = useState("");
-  const recommendedModules = modulesForActivation("business", businessType);
 
   const slugify = (value: string) =>
     value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "business-system";
@@ -124,5 +122,4 @@ export default function BuildYourLiveSystemPage() {
     </main>
   );
 }
-
 
