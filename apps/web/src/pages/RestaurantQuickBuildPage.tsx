@@ -15,7 +15,7 @@ export default function RestaurantQuickBuildPage() {
 
   const handleBuild = () => {
     const name = restaurantName.trim() || "Restaurant Intelligence";
-    const type = restaurantType.trim() || "Restaurant";
+    const type = restaurantType.trim() ? `Restaurant - ${restaurantType.trim()}` : "Restaurant";
     const slug = slugify(name);
 
     localStorage.setItem(
@@ -81,6 +81,7 @@ export default function RestaurantQuickBuildPage() {
     </main>
   );
 }
+
 
 
 

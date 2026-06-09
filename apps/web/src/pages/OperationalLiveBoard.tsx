@@ -165,6 +165,15 @@ const workflowTemplates: Record<WorkflowFamily, OperationalStage[]> = {
     { id: "complete", label: "Complete", description: "Finished, paid, and timestamped." },
   ],
 
+  restaurant: [
+    { id: "new-order", label: "New Order", description: "Order, table, or guest request received." },
+    { id: "prep", label: "Prep", description: "Kitchen or crew is preparing the order." },
+    { id: "ready", label: "Ready", description: "Order is ready for pickup, runner, or table delivery." },
+    { id: "served", label: "Served", description: "Food or request has reached the customer." },
+    { id: "payment-due", label: "Payment Due", description: "Check, QR, or payment link ready." },
+    { id: "complete", label: "Complete", description: "Finished, paid, and timestamped." },
+  ],
+
   default: fallbackStages,
 };
 
@@ -182,6 +191,21 @@ if (
     type.includes("christmas light")
   ) {
     return "exterior";
+  }
+
+  if (
+    type.includes("restaurant") ||
+    type.includes("dine") ||
+    type.includes("food") ||
+    type.includes("kitchen") ||
+    type.includes("bar") ||
+    type.includes("grill") ||
+    type.includes("burger") ||
+    type.includes("cafe") ||
+    type.includes("coffee") ||
+    type.includes("truck")
+  ) {
+    return "restaurant";
   }
 
   if (
@@ -380,6 +404,32 @@ function makeSampleJob(stage: string, businessType = "", boardSlug = ""): Operat
     };
   }
 
+  if (family === "restaurant") {
+    const isFoodTruck = type.includes("truck");
+    const isBar = type.includes("bar") || type.includes("grill");
+    const service = isFoodTruck
+      ? "Food truck order flow"
+      : isBar
+        ? "Table service request"
+        : "Dine-in order request";
+
+    return {
+      id: "job-1",
+      customer: isFoodTruck ? "Event Guest" : "Table 7",
+      phone: "863-555-0184",
+      email: "customer@example.com",
+      address: "Okeechobee, FL",
+      service,
+      notes:
+        "Guest request entered the live restaurant flow. Kitchen, server, owner view, payment, and completion are tracked in one timeline.",
+      paymentUrl: "",
+      stage,
+      paymentStatus: "invoice-ready",
+      beforePhotos: ["Order ticket", "Table request"],
+      afterPhotos: [],
+      timeline: ["Guest request received", "Sent to kitchen", "Owner view updated"],
+    };
+  }
   if (family === "repair") {
     return {
       id: "job-1",
@@ -1626,6 +1676,9 @@ const mobileStatsBar: CSSProperties = {
   boxSizing: "border-box",
   overflow: "hidden",
 };
+
+
+
 
 
 
