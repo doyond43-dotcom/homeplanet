@@ -126,9 +126,9 @@ export default function HomePlanetHomePage() {
 
           <div className="relative min-h-[520px] overflow-hidden rounded-[2.25rem] border border-white/10 bg-black shadow-[0_0_90px_rgba(16,185,129,0.16)]">
             <img
-              src="/images/homeplanet-hydra-hero.png"
+              src="/images/homeplanet-your-workflow-live-v1.png"
               alt="HomePlanet live system interface"
-              className="absolute inset-0 h-full w-full object-cover object-[70%_50%] opacity-90"
+              className="absolute inset-0 h-full w-full object-contain opacity-90"
             />
             <div className="absolute inset-0 bg-gradient-to-r from-black/35 via-transparent to-transparent" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-black/10" />
@@ -219,6 +219,8 @@ export default function HomePlanetHomePage() {
     </main>
   );
 }
+
+
 
 
 
