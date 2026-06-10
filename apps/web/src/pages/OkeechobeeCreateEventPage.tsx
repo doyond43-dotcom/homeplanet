@@ -1,5 +1,6 @@
 ﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "../lib/supabase";
 
 type EventType = "Need" | "Offer" | "Opportunity" | "Event" | "Alert";
 
@@ -16,7 +17,7 @@ export default function OkeechobeeCreateEventPage() {
   const [location, setLocation] = useState("");
   const [contact, setContact] = useState("");
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
     const slug = `${slugify(title)}-${Date.now().toString().slice(-5)}`;
@@ -29,12 +30,16 @@ export default function OkeechobeeCreateEventPage() {
       location,
       contact,
       status: "Active",
-      createdAt: new Date().toISOString(),
       timeline: [{ label: "Event created", time: new Date().toISOString() }],
     };
 
-    const existing = JSON.parse(localStorage.getItem("okeechobee_events") || "[]");
-    localStorage.setItem("okeechobee_events", JSON.stringify([event, ...existing]));
+    const { error } = await supabase.from("okeechobee_events").insert(event);
+
+    if (error) {
+      console.error(error);
+      alert("Something went wrong creating this post.");
+      return;
+    }
 
     navigate(`/planet/okeechobee/event/${slug}`);
   }
@@ -152,3 +157,4 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: "pointer",
   },
 };
+

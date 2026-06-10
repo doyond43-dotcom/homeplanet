@@ -1,50 +1,87 @@
-﻿import { Link, useParams } from "react-router-dom";
+﻿import { useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import { supabase } from "../lib/supabase";
 
 export default function OkeechobeeEventPage() {
   const { slug } = useParams();
+  const [event, setEvent] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const events = JSON.parse(localStorage.getItem("okeechobee_events") || "[]");
-  const event = events.find((item: any) => item.slug === slug);
+  async function loadEvent() {
+    if (!slug) return;
 
-  function joinEvent() {
-    const updatedEvents = events.map((item: any) => {
-      if (item.slug !== slug) return item;
+    const { data, error } = await supabase
+      .from("okeechobee_events")
+      .select("*")
+      .eq("slug", slug)
+      .single();
 
-      return {
-        ...item,
-        timeline: [
-          ...item.timeline,
-          {
-            label: "Someone offered to help",
-            time: new Date().toISOString(),
-          },
-        ],
-      };
-    });
+    if (error) {
+      console.error(error);
+      setEvent(null);
+    } else {
+      setEvent(data);
+    }
 
-    localStorage.setItem("okeechobee_events", JSON.stringify(updatedEvents));
-    window.location.reload();
+    setLoading(false);
   }
 
-  function markResolved() {
-    const updatedEvents = events.map((item: any) => {
-      if (item.slug !== slug) return item;
+  useEffect(() => {
+    loadEvent();
+  }, [slug]);
 
-      return {
-        ...item,
-        status: "Resolved",
-        timeline: [
-          ...item.timeline,
-          {
-            label: "Need resolved",
-            time: new Date().toISOString(),
-          },
-        ],
-      };
-    });
+  async function joinEvent() {
+    if (!event) return;
 
-    localStorage.setItem("okeechobee_events", JSON.stringify(updatedEvents));
-    window.location.reload();
+    const updatedTimeline = [
+      ...(event.timeline || []),
+      { label: "Someone offered to help", time: new Date().toISOString() },
+    ];
+
+    const { error } = await supabase
+      .from("okeechobee_events")
+      .update({ timeline: updatedTimeline })
+      .eq("slug", event.slug);
+
+    if (error) {
+      console.error(error);
+      alert("Something went wrong updating this post.");
+      return;
+    }
+
+    setEvent({ ...event, timeline: updatedTimeline });
+  }
+
+  async function markResolved() {
+    if (!event) return;
+
+    const updatedTimeline = [
+      ...(event.timeline || []),
+      { label: "Need resolved", time: new Date().toISOString() },
+    ];
+
+    const { error } = await supabase
+      .from("okeechobee_events")
+      .update({ status: "Resolved", timeline: updatedTimeline })
+      .eq("slug", event.slug);
+
+    if (error) {
+      console.error(error);
+      alert("Something went wrong resolving this post.");
+      return;
+    }
+
+    setEvent({ ...event, status: "Resolved", timeline: updatedTimeline });
+  }
+
+  if (loading) {
+    return (
+      <main style={styles.page}>
+        <section style={styles.card}>
+          <p style={styles.subtitle}>Loading community post...</p>
+        </section>
+      </main>
+    );
   }
 
   if (!event) {
@@ -58,7 +95,10 @@ export default function OkeechobeeEventPage() {
     );
   }
 
-  const helperCount = event.timeline.filter((item: any) => item.label.includes("help") || item.label.includes("joined")).length;
+  const helperCount = (event.timeline || []).filter((item: any) =>
+    String(item.label || "").toLowerCase().includes("help") ||
+    String(item.label || "").toLowerCase().includes("joined")
+  ).length;
 
   const shareUrl = window.location.href;
 
@@ -91,9 +131,7 @@ export default function OkeechobeeEventPage() {
 
         <div style={styles.actions}>
           {event.status === "Resolved" ? (
-            <div style={styles.resolvedButton}>
-              ✓ Need Met
-            </div>
+            <div style={styles.resolvedButton}>✓ Need Met</div>
           ) : (
             <>
               <button onClick={joinEvent} style={styles.primaryButton}>
@@ -114,7 +152,7 @@ export default function OkeechobeeEventPage() {
         <section style={styles.timeline}>
           <h2 style={styles.sectionTitle}>Timeline</h2>
 
-          {event.timeline.map((item: any, index: number) => (
+          {(event.timeline || []).map((item: any, index: number) => (
             <div key={index} style={styles.timelineItem}>
               <strong>{item.label}</strong>
               <p style={styles.time}>{new Date(item.time).toLocaleString()}</p>
@@ -225,6 +263,3 @@ const styles: Record<string, React.CSSProperties> = {
     textDecoration: "none",
   },
 };
-
-
-

@@ -1,12 +1,26 @@
 ﻿import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { supabase } from "../lib/supabase";
 
 export default function OkeechobeeTogetherPage() {
   const [events, setEvents] = useState<any[]>([]);
 
   useEffect(() => {
-    const storedEvents = JSON.parse(localStorage.getItem("okeechobee_events") || "[]");
-    setEvents(storedEvents);
+    async function loadEvents() {
+      const { data, error } = await supabase
+        .from("okeechobee_events")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error(error);
+        return;
+      }
+
+      setEvents(data || []);
+    }
+
+    loadEvents();
   }, []);
 
   function helperCount(event: any) {
@@ -248,6 +262,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 16,
   },
 };
+
 
 
 
