@@ -16,12 +16,6 @@ export default function OkeechobeeTogetherPage() {
     ).length;
   }
 
-  const sortedEvents = [...events].sort((a: any, b: any) => {
-    if (a.status === "Resolved" && b.status !== "Resolved") return -1;
-    if (a.status !== "Resolved" && b.status === "Resolved") return 1;
-    return 0;
-  });
-
   return (
     <main style={styles.page}>
       <section style={styles.card}>
@@ -54,47 +48,29 @@ export default function OkeechobeeTogetherPage() {
           <h2 style={styles.sectionTitle}>Live Community Posts</h2>
 
           <div style={styles.list}>
-            {sortedEvents.length === 0 ? (
+            {events.length === 0 ? (
               <div style={styles.emptyCard}>
                 No live community posts yet. Create the first one.
               </div>
             ) : (
-              sortedEvents.map((event) => (
+              events.map((event) => (
                 <Link
                   key={event.slug}
                   to={`/planet/okeechobee/event/${event.slug}`}
                   style={styles.eventCard}
                 >
                   <div style={styles.metaRow}>
-                    {event.status === "Resolved" ? (
-                      <>
-                        <span style={styles.metaItem}>
-                          ✅ Need Met
-                        </span>
+                    <span style={styles.metaItem}>
+                      💚 Local Need
+                    </span>
 
-                        <span style={styles.metaItem}>
-                          👥 {helperCount(event)} Neighbors Helped
-                        </span>
+                    <span style={styles.metaItem}>
+                      👥 {helperCount(event)} Helpers Joined
+                    </span>
 
-                        <span style={styles.metaItem}>
-                          💚 Community Success
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <span style={styles.metaItem}>
-                          💚 Local Need
-                        </span>
-
-                        <span style={styles.metaItem}>
-                          👥 {helperCount(event)} Helpers Joined
-                        </span>
-
-                        <span style={styles.metaItem}>
-                          🌱 Community Responding
-                        </span>
-                      </>
-                    )}
+                    <span style={styles.metaItem}>
+                      🌱 Community Responding
+                    </span>
                   </div>
 
                   <h3 style={styles.eventTitle}>{event.title}</h3>
@@ -248,9 +224,6 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 16,
   },
 };
-
-
-
 
 
 

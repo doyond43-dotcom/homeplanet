@@ -17,8 +17,8 @@ export default function OkeechobeeTogetherPage() {
   }
 
   const sortedEvents = [...events].sort((a: any, b: any) => {
-    if (a.status === "Resolved" && b.status !== "Resolved") return -1;
-    if (a.status !== "Resolved" && b.status === "Resolved") return 1;
+    if (a.status === "Resolved" && b.status !== "Resolved") return 1;
+    if (a.status !== "Resolved" && b.status === "Resolved") return -1;
     return 0;
   });
 
@@ -66,35 +66,17 @@ export default function OkeechobeeTogetherPage() {
                   style={styles.eventCard}
                 >
                   <div style={styles.metaRow}>
-                    {event.status === "Resolved" ? (
-                      <>
-                        <span style={styles.metaItem}>
-                          ✅ Need Met
-                        </span>
+                    <span style={styles.metaItem}>
+                      💚 Local Need
+                    </span>
 
-                        <span style={styles.metaItem}>
-                          👥 {helperCount(event)} Neighbors Helped
-                        </span>
+                    <span style={styles.metaItem}>
+                      👥 {helperCount(event)} Helpers Joined
+                    </span>
 
-                        <span style={styles.metaItem}>
-                          💚 Community Success
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <span style={styles.metaItem}>
-                          💚 Local Need
-                        </span>
-
-                        <span style={styles.metaItem}>
-                          👥 {helperCount(event)} Helpers Joined
-                        </span>
-
-                        <span style={styles.metaItem}>
-                          🌱 Community Responding
-                        </span>
-                      </>
-                    )}
+                    <span style={styles.metaItem}>
+                      {event.status === "Resolved" ? "✅ Need Met" : "🌱 Community Responding"}
+                    </span>
                   </div>
 
                   <h3 style={styles.eventTitle}>{event.title}</h3>
@@ -248,8 +230,6 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 16,
   },
 };
-
-
 
 
 
