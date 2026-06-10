@@ -3,40 +3,41 @@
 export default function VictorPinedaLandingPage() {
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* HERO */}
-      <section className="relative overflow-hidden border-b border-white/10">
-        <div className="mx-auto max-w-6xl px-6 py-20">
-          <div>
-            <div>
-              <div className="mb-4 mx-auto inline-flex rounded-full border border-sky-500/30 bg-sky-500/10 px-4 py-2 text-xs font-semibold tracking-widest text-sky-300">
-                FLORIDA COOLING - SERVICE IN HOURS, NOT DAYS
-              </div>
+            {/* HERO */}
+      <section
+        className="relative overflow-hidden border-b border-white/10 bg-cover bg-[center_8%]"
+        style={{
+          backgroundImage: "linear-gradient(rgba(0,0,0,0.72), rgba(0,0,0,0.82)), url('/images/victor-pineda-hvac-hero-bg.jpg')",
+        }}
+      >
+        <div className="mx-auto max-w-6xl px-6 py-28 text-center md:py-36 md:text-left">
+          <div className="mx-auto mb-4 inline-flex md:mx-0 rounded-full border border-sky-500/30 bg-sky-500/10 px-4 py-2 text-xs font-semibold tracking-widest text-sky-300">
+            FLORIDA COOLING - SERVICE IN HOURS, NOT DAYS
+          </div>
 
-              <h1 className="mx-auto max-w-4xl text-center text-5xl font-black leading-tight md:text-7xl">
-                Okeechobee's Trusted
-                <span className="block text-sky-400">AC Service Specialist</span>
-              </h1>
+          <h1 className="mx-auto max-w-4xl text-center md:mx-0 md:max-w-3xl md:text-left text-5xl font-black leading-tight md:text-7xl">
+            Okeechobee's Trusted
+            <span className="block text-sky-400">AC Service Specialist</span>
+          </h1>
 
-              <p className="mx-auto mt-6 max-w-2xl text-center text-lg text-zinc-400">
-                Real service. Real diagnostics. Real community impact.
-              </p>
+          <p className="mx-auto mt-6 max-w-2xl text-center md:mx-0 md:max-w-xl md:text-left text-lg text-zinc-300">
+            Real service. Real diagnostics. Real community impact.
+          </p>
 
-              <div className="mt-8 flex flex-wrap justify-center gap-4">
-                <a
-                  href="tel:8635321632"
-                  className="rounded-xl bg-sky-500 px-6 py-4 font-semibold text-black"
-                >
-                  Call Victor
-                </a>
+          <div className="mt-8 flex flex-wrap justify-center gap-4 md:justify-start">
+            <a
+              href="tel:8635321632"
+              className="rounded-xl bg-sky-500 px-6 py-4 font-semibold text-black"
+            >
+              Call Victor
+            </a>
 
-                <a
-                  href="sms:8635326671"
-                  className="rounded-xl border border-white/20 px-6 py-4 font-semibold"
-                >
-                  Text Victor
-                </a>
-              </div>
-            </div>
+            <a
+              href="sms:8635326671"
+              className="rounded-xl border border-white/20 bg-black/40 px-6 py-4 font-semibold"
+            >
+              Text Victor
+            </a>
           </div>
         </div>
       </section>
@@ -207,6 +208,10 @@ export default function VictorPinedaLandingPage() {
     </div>
   );
 }
+
+
+
+
 
 
 
