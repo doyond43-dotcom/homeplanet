@@ -1,4 +1,4 @@
-﻿import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 import EcosystemInfrastructureLayer from "../pages/EcosystemInfrastructureLayer";
 import GetBusinessLivePage from "../pages/GetBusinessLivePage";
@@ -118,6 +118,7 @@ import CreatorProjects from "../pages/CreatorProjects";
 import CreatorStudio from "../pages/CreatorStudio";
 import LiveStudio from "../pages/LiveStudio";
 import CreatorQuickBuildPage from "../pages/CreatorQuickBuildPage";
+import HollerboyzLandingPage from "../pages/HollerboyzLandingPage";
 import PresenceLaunchSequencePage from "../pages/PresenceLaunchSequencePage";
 import ActivationPage from "../pages/ActivationPage";
 import HomePlanetHomePage from "../pages/HomePlanetHomePage";
@@ -714,6 +715,7 @@ export default function PlanetRoutes() {
 
 
 
+      <Route path="hollerboyz" element={<HollerboyzLandingPage />} />
       <Route path="victor-pineda" element={<VictorPinedaLandingPage />} />
 
       <Route path=":planetId" element={<PlanetOverview />} />
@@ -733,6 +735,8 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
+
 
 
 
