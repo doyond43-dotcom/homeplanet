@@ -122,6 +122,10 @@ import HollerboyzLandingPage from "../pages/HollerboyzLandingPage";
 import PresenceLaunchSequencePage from "../pages/PresenceLaunchSequencePage";
 import ActivationPage from "../pages/ActivationPage";
 import HomePlanetHomePage from "../pages/HomePlanetHomePage";
+import HomePlanetFrontDoor from "../pages/HomePlanetFrontDoor";
+import BusinessDemoDirectory from "../pages/BusinessDemoDirectory";
+import HomeServicesDemoPage from "../pages/HomeServicesDemoPage";
+
 import HomePlanetSystemsPage from "../pages/HomePlanetSystemsPage";
 import HomePlanetDoctrinePage from "../pages/HomePlanetDoctrinePage";
 import PlanetHomePage from "../pages/PlanetHomePage";
@@ -144,6 +148,9 @@ import LiveViewer from "../pages/LiveViewer";
 import CreatorMomentPage from "../pages/CreatorMomentPage";
 
 import OperationalCustomerRequestPage from "../pages/OperationalCustomerRequestPage";
+import OperationalLiveBoardV2 from "../pages/OperationalLiveBoardV2";
+import OperationalJobsDashboardV2 from "../pages/OperationalJobsDashboardV2";
+import OperationalJobWorkspaceV2 from "../pages/OperationalJobWorkspaceV2";
 
 import OperationalStaffBoard from "../pages/OperationalStaffBoard";
 
@@ -343,6 +350,11 @@ import BrahmaBullKitchenBoard from "../pages/BrahmaBullKitchenBoard";
 
 import BrahmaBullOwnerBoard from "../pages/BrahmaBullOwnerBoard";
 
+import RestaurantAwarenessFrontDoor from "../pages/RestaurantAwarenessFrontDoor";
+import RestaurantAwarenessLiveBoard from "../pages/RestaurantAwarenessLiveBoard";
+import RestaurantAwarenessCrewBoard from "../pages/RestaurantAwarenessCrewBoard";
+import RestaurantAwarenessKitchenBoard from "../pages/RestaurantAwarenessKitchenBoard";
+
 import OkeechobeeTogetherPage from "../pages/OkeechobeeTogetherPage";
 import OkeechobeeCreateEventPage from "../pages/OkeechobeeCreateEventPage";
 import OkeechobeeEventPage from "../pages/OkeechobeeEventPage";
@@ -423,6 +435,13 @@ export default function PlanetRoutes() {
         <Route path="/creator/starter" element={<StarterLivePageCreatorPage />} />
         <Route path="/sebastian-softwash" element={<SebastianSoftwashPage />} />
       <Route index element={<Navigate to="/planet/home" replace />} />
+
+      <Route path="live-systems" element={<HomePlanetFrontDoor />} />
+      <Route path="demo/business" element={<BusinessDemoDirectory />} />
+      <Route path="demo/business/home-services" element={<HomeServicesDemoPage />} />
+      <Route path="liveboard-v2/:boardSlug" element={<OperationalLiveBoardV2 />} />
+      <Route path="jobs-dashboard-v2" element={<OperationalJobsDashboardV2 />} />
+      <Route path="job-workspace-v2" element={<OperationalJobWorkspaceV2 />} />
       <Route path="build-your-live-system" element={<BuildYourLiveSystemPage />} />
       <Route path="restaurant-build" element={<RestaurantQuickBuildPage />} />
       <Route path="community-build" element={<CommunityQuickBuildPage />} />
@@ -469,6 +488,12 @@ export default function PlanetRoutes() {
       <Route path="crew-team/brahma-bull" element={<BrahmaBullCrewBoard />} />
       <Route path="kitchen/brahma-bull" element={<BrahmaBullKitchenBoard />} />
       <Route path="owner/brahma-bull" element={<BrahmaBullOwnerBoard />} />
+
+      {/* GENERIC RESTAURANT AWARENESS DEMO */}
+      <Route path="restaurant-awareness" element={<RestaurantAwarenessFrontDoor />} />
+      <Route path="restaurant-awareness/live" element={<RestaurantAwarenessLiveBoard />} />
+      <Route path="restaurant-awareness/crew" element={<RestaurantAwarenessCrewBoard />} />
+      <Route path="restaurant-awareness/kitchen" element={<RestaurantAwarenessKitchenBoard />} />
       <Route path="business-setup" element={<BusinessSetupForm />} />
       <Route path="printshop" element={<PrintShopLandingPage />} />
       <Route path="printshop/order" element={<PrintShopOrderPage />} />
@@ -741,6 +766,7 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
 
 
 
