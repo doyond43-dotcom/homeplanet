@@ -396,6 +396,9 @@ import BeforeAwarenessPage from "../pages/BeforeAwarenessPage";
 import AfterAwarenessPage from "../pages/AfterAwarenessPage";
 import AwarenessLayerPage from "../pages/AwarenessLayerPage";
 import VictorPinedaLandingPage from "../pages/VictorPinedaLandingPage";
+import SmithPropertyCareLandingPage from "../pages/SmithPropertyCareLandingPage";
+import SmithPropertyCareCommandCenter from "../pages/SmithPropertyCareCommandCenter";
+import SmithPropertyCareJobDetail from "../pages/SmithPropertyCareJobDetail";
 
 
 
@@ -717,6 +720,9 @@ export default function PlanetRoutes() {
 
       <Route path="hollerboyz" element={<HollerboyzLandingPage />} />
       <Route path="victor-pineda" element={<VictorPinedaLandingPage />} />
+      <Route path="smith-property-care" element={<SmithPropertyCareLandingPage />} />
+      <Route path="smith-property-care/command-center" element={<SmithPropertyCareCommandCenter />} />
+      <Route path="smith-property-care/job" element={<SmithPropertyCareJobDetail />} />
 
       <Route path=":planetId" element={<PlanetOverview />} />
       <Route path=":planetId/:cityId" element={<CityPage />} />
@@ -735,6 +741,7 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
 
 
 
