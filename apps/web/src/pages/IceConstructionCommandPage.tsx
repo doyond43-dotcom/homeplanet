@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 
 type Project = {
   id: number;
@@ -53,6 +53,7 @@ const starterProjects: Project[] = [
 ];
 
 export default function IceConstructionCommandPage() {
+  const [isMobile, setIsMobile] = useState(false);
   const [projects, setProjects] = useState<Project[]>(starterProjects);
   const [activeProjectId, setActiveProjectId] = useState(1);
   const [shareOpen, setShareOpen] = useState(false);
@@ -66,6 +67,19 @@ export default function IceConstructionCommandPage() {
   const [fieldText, setFieldText] = useState("");
 
   const activeProject = projects.find((p) => p.id === activeProjectId) || projects[0];
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 700);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  const pageStyle = isMobile ? { ...styles.page, ...styles.pageMobile } : styles.page;
+  const heroStyle = isMobile ? { ...styles.hero, ...styles.heroMobile } : styles.hero;
+  const titleStyle = isMobile ? { ...styles.title, ...styles.titleMobile } : styles.title;
+  const subtitleStyle = isMobile ? { ...styles.subtitle, ...styles.subtitleMobile } : styles.subtitle;
+  const footerTitleStyle = isMobile ? { ...styles.footerTitle, ...styles.footerTitleMobile } : styles.footerTitle;
 
   function now() {
     return new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
@@ -148,11 +162,11 @@ export default function IceConstructionCommandPage() {
   }
 
   return (
-    <main style={styles.page}>
-      <section style={styles.hero}>
+    <main style={pageStyle}>
+      <section style={heroStyle}>
         <p style={styles.kicker}>HOMEPLANET FIELD SYSTEM</p>
-        <h1 style={styles.title}>Ice Construction Command</h1>
-        <p style={styles.subtitle}>
+        <h1 style={titleStyle}>Ice Construction Command</h1>
+        <p style={subtitleStyle}>
           Know what's happening on every project - crews, materials, customers,
           budgets, photos, and updates in one live place.
         </p>
@@ -214,7 +228,7 @@ export default function IceConstructionCommandPage() {
       </section>
 
       <section style={styles.footer}>
-        <h2 style={styles.footerTitle}>Know something we don't?</h2>
+        <h2 style={footerTitleStyle}>Know something we don't?</h2>
         <p style={styles.footerText}>A better tool.</p>
         <p style={styles.footerText}>A better process.</p>
         <p style={styles.footerText}>A better idea.</p>
@@ -301,10 +315,14 @@ function Modal({ title, kicker, onClose, children }: any) {
 
 const styles: Record<string, React.CSSProperties> = {
   page: { minHeight: "100vh", background: "#0b0d0f", color: "#fff", padding: "28px", fontFamily: "Inter, system-ui, Arial, sans-serif" },
-  hero: { maxWidth: 1100, margin: "0 auto 28px", padding: "36px", borderRadius: 28, background: "linear-gradient(135deg, #111820, #0b0d0f)", border: "1px solid #24303a" },
+  pageMobile: { padding: "18px 14px" },
+  hero: { maxWidth: 1100, margin: "0 auto 28px", padding: "36px", borderRadius: 28, background: "linear-gradient(135deg, #111820, #0b0d0f)", border: "1px solid #24303a", overflow: "hidden" },
+  heroMobile: { padding: "26px 22px", borderRadius: 24 },
   kicker: { color: "#f97316", letterSpacing: 2, fontWeight: 900, fontSize: 13 },
-  title: { fontSize: 52, lineHeight: 1, margin: "10px 0" },
+  title: { fontSize: 52, lineHeight: 1, margin: "10px 0", overflowWrap: "break-word" },
+  titleMobile: { fontSize: 52, lineHeight: 1.02, letterSpacing: "-1px" },
   subtitle: { color: "#c8d0d8", fontSize: 18, maxWidth: 760 },
+  subtitleMobile: { fontSize: 22, lineHeight: 1.45 },
   stats: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14, marginTop: 28 },
   stat: { background: "#10161c", border: "1px solid #24303a", borderRadius: 18, padding: 18 },
   addButton: { marginTop: 24, padding: "14px 22px", borderRadius: 999, border: "1px solid #39ff14", background: "transparent", color: "#39ff14", fontWeight: 900, cursor: "pointer" },
@@ -325,6 +343,7 @@ const styles: Record<string, React.CSSProperties> = {
   timeline: { borderLeft: "3px solid #39ff14", paddingLeft: 18, color: "#dce5ea" },
   footer: { maxWidth: 1100, margin: "60px auto 0", padding: "48px 24px", textAlign: "center", borderTop: "1px solid #24303a" },
   footerTitle: { fontSize: 36, fontWeight: 900, marginBottom: 24 },
+  footerTitleMobile: { fontSize: 48, lineHeight: 1.12 },
   footerText: { fontSize: 22, color: "#dce5ea", margin: "8px 0" },
   footerListening: { marginTop: 24, fontSize: 18, color: "#39ff14", fontWeight: 800 },
   footerSubtext: { marginTop: 12, marginBottom: 24, color: "#aab5bd", fontSize: 16 },
@@ -335,3 +354,4 @@ const styles: Record<string, React.CSSProperties> = {
   input: { width: "100%", boxSizing: "border-box", marginTop: 14, padding: "14px 16px", borderRadius: 14, border: "1px solid #2f3b46", background: "#0b0d0f", color: "#fff", fontSize: 15 },
   textarea: { width: "100%", boxSizing: "border-box", minHeight: 120, marginTop: 14, padding: "14px 16px", borderRadius: 14, border: "1px solid #2f3b46", background: "#0b0d0f", color: "#fff", fontSize: 15 },
 };
+
