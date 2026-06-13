@@ -1,78 +1,101 @@
-import React from "react";
+import React, { useState } from "react";
+
+const steps = ["Lead", "Estimate", "Scheduled", "In Progress", "Payment Due", "Complete"];
+const nextActions = ["Start Estimate", "Schedule Job", "Start Work", "Finish Work", "Send Payment", "Complete Job"];
 
 export default function OperationalJobWorkspaceV2() {
+  const [step, setStep] = useState(2);
+
   return (
     <main style={page}>
-      <div style={container}>
-        <button style={backButton}>? Today's Jobs</button>
+      <div style={wrap}>
+        <button style={back} onClick={() => window.location.href = "/planet/jobs-dashboard-v2"}>? Today’s Jobs</button>
 
-        <section style={headerCard}>
+        <section style={hero}>
           <div>
+            <p style={kicker}>Home Services Job</p>
             <h1 style={title}>Maria Jenkins</h1>
-            <p style={service}>House Wash + Driveway</p>
-            <p style={address}>?? 123 Main Street</p>
+            <p style={sub}>House Wash + Driveway</p>
+            <p style={muted}>123 Main Street</p>
           </div>
-
-          <div style={quickActions}>
-            <button style={pill}>?? Call</button>
-            <button style={pill}>?? Text</button>
-            <button style={pill}>?? Navigate</button>
-          </div>
-        </section>
-
-        <section style={section}>
-          <h2 style={sectionTitle}>Status</h2>
-          <button style={statusButton}>IN MOTION</button>
-        </section>
-
-        <section style={section}>
-          <h2 style={sectionTitle}>Photos</h2>
-          <div style={twoGrid}>
-            <button style={box}>Before Photos<br /><strong>Add Photos ?</strong></button>
-            <button style={box}>After Photos<br /><strong>Add Photos ?</strong></button>
+          <div style={actions}>
+            <button style={pill}>Call</button>
+            <button style={pill}>Text</button>
+            <button style={pill}>Navigate</button>
           </div>
         </section>
 
-        <section style={section}>
-          <h2 style={sectionTitle}>Payment</h2>
-          <p style={balance}>Balance Due: $250</p>
-          <div style={quickActions}>
-            <button style={greenButton}>Send Payment Link</button>
+        <section style={card}>
+          <h2 style={sectionTitle}>Job Progress</h2>
+
+          <div style={currentStage}>
+            <div style={stageLabel}>Current Step</div>
+            <div style={stageName}>{steps[step]}</div>
+          </div>
+
+          {step < steps.length - 1 ? (
+            <button style={nextButton} onClick={() => setStep(step + 1)}>
+              {nextActions[step]} ?
+            </button>
+          ) : (
+            <button style={completeButton}>Job Complete</button>
+          )}
+        </section>
+
+        <section style={grid}>
+          <div style={card}>
+            <h2 style={sectionTitle}>Job Details</h2>
+            <p style={line}>Gate Code: 4821</p>
+            <p style={line}>Customer prefers afternoon</p>
+            <p style={line}>Watch for dog in backyard</p>
+            <p style={line}>Clean front walkway also</p>
+          </div>
+
+          <div style={card}>
+            <h2 style={sectionTitle}>Payment</h2>
+            <p style={price}>$250 Due</p>
+            <button style={green}>Send Payment Link</button>
             <button style={pill}>Mark Paid</button>
           </div>
         </section>
 
-        <section style={section}>
-          <h2 style={sectionTitle}>Notes</h2>
-          <div style={twoGrid}>
-            <div style={box}>Customer Notes<br /><span style={muted}>Gate code, preferred time, special requests.</span></div>
-            <div style={box}>Crew Notes<br /><span style={muted}>What to remember before leaving.</span></div>
+        <section style={card}>
+          <h2 style={sectionTitle}>Photos</h2>
+          <div style={grid}>
+            <button style={photoBox}>Before Photos<br /><strong>Add Photos ?</strong></button>
+            <button style={photoBox}>After Photos<br /><strong>Add Photos ?</strong></button>
           </div>
         </section>
 
-        <section style={section}>
-          <h2 style={sectionTitle}>Activity</h2>
-          <p style={muted}>Job Created ? Photos Added ? Payment Sent ? Job Completed</p>
+        <section style={card}>
+          <h2 style={sectionTitle}>Notes</h2>
+          <textarea style={textarea} placeholder="Customer notes, crew notes, reminders..." />
         </section>
       </div>
     </main>
   );
 }
 
-const page: React.CSSProperties = { minHeight: "100vh", background: "#07111a", color: "#fff", padding: 24 };
-const container: React.CSSProperties = { maxWidth: 900, margin: "0 auto" };
-const backButton: React.CSSProperties = { marginBottom: 18, border: 0, background: "transparent", color: "#4ade80", fontWeight: 800, cursor: "pointer" };
-const headerCard: React.CSSProperties = { background: "#111827", border: "1px solid rgba(255,255,255,.08)", borderRadius: 24, padding: 22, display: "flex", justifyContent: "space-between", gap: 18, flexWrap: "wrap" };
-const title: React.CSSProperties = { margin: 0, fontSize: 38 };
-const service: React.CSSProperties = { fontSize: 20, margin: "10px 0 6px" };
-const address: React.CSSProperties = { color: "#94a3b8", margin: 0 };
-const quickActions: React.CSSProperties = { display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" };
-const pill: React.CSSProperties = { borderRadius: 999, border: "1px solid rgba(255,255,255,.12)", background: "#1f2937", color: "#fff", padding: "11px 14px", cursor: "pointer", fontWeight: 700 };
-const section: React.CSSProperties = { marginTop: 18, background: "#111827", border: "1px solid rgba(255,255,255,.08)", borderRadius: 24, padding: 22 };
-const sectionTitle: React.CSSProperties = { margin: "0 0 14px", fontSize: 24 };
-const statusButton: React.CSSProperties = { width: "100%", border: 0, borderRadius: 16, background: "#4ade80", color: "#07111a", padding: 16, fontWeight: 900, fontSize: 18 };
-const twoGrid: React.CSSProperties = { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 };
-const box: React.CSSProperties = { textAlign: "left", borderRadius: 18, border: "1px solid rgba(255,255,255,.1)", background: "#1f2937", color: "#fff", padding: 18, minHeight: 92 };
-const balance: React.CSSProperties = { fontSize: 22, fontWeight: 800 };
-const greenButton: React.CSSProperties = { border: 0, borderRadius: 999, background: "#4ade80", color: "#07111a", padding: "12px 16px", fontWeight: 900, cursor: "pointer" };
+const page: React.CSSProperties = { minHeight: "100vh", background: "radial-gradient(circle at top left, rgba(34,197,94,.16), transparent 32%), #07111a", color: "#fff", padding: 24 };
+const wrap: React.CSSProperties = { maxWidth: 1100, margin: "0 auto" };
+const back: React.CSSProperties = { border: 0, background: "transparent", color: "#4ade80", fontWeight: 900, marginBottom: 18, cursor: "pointer" };
+const hero: React.CSSProperties = { background: "linear-gradient(135deg,#0f172a,#111827)", border: "1px solid rgba(255,255,255,.09)", borderRadius: 30, padding: 30, display: "flex", justifyContent: "space-between", gap: 20, flexWrap: "wrap" };
+const kicker: React.CSSProperties = { color: "#4ade80", textTransform: "uppercase", letterSpacing: ".14em", fontWeight: 900, margin: 0 };
+const title: React.CSSProperties = { fontSize: 54, margin: "10px 0 6px", lineHeight: 1 };
+const sub: React.CSSProperties = { fontSize: 24, margin: 0 };
 const muted: React.CSSProperties = { color: "#94a3b8" };
+const actions: React.CSSProperties = { display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" };
+const pill: React.CSSProperties = { borderRadius: 999, border: "1px solid rgba(255,255,255,.14)", background: "#1f2937", color: "#fff", padding: "12px 16px", fontWeight: 800, cursor: "pointer" };
+const card: React.CSSProperties = { marginTop: 18, background: "rgba(17,24,39,.95)", border: "1px solid rgba(255,255,255,.09)", borderRadius: 26, padding: 24 };
+const sectionTitle: React.CSSProperties = { margin: "0 0 16px", fontSize: 26 };
+const currentStage: React.CSSProperties = { borderRadius: 22, background: "#1f2937", padding: 22, marginBottom: 14 };
+const stageLabel: React.CSSProperties = { color: "#94a3b8", textTransform: "uppercase", letterSpacing: ".12em", fontWeight: 900, fontSize: 12 };
+const stageName: React.CSSProperties = { fontSize: 42, fontWeight: 900, marginTop: 8 };
+const nextButton: React.CSSProperties = { width: "100%", border: 0, borderRadius: 18, background: "#4ade80", color: "#07111a", padding: 18, fontWeight: 900, fontSize: 18, cursor: "pointer" };
+const completeButton: React.CSSProperties = { width: "100%", border: 0, borderRadius: 18, background: "#22c55e", color: "#07111a", padding: 18, fontWeight: 900, fontSize: 18 };
+const grid: React.CSSProperties = { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 18 };
+const line: React.CSSProperties = { color: "#dbeafe", margin: "10px 0" };
+const price: React.CSSProperties = { fontSize: 32, fontWeight: 900, margin: "0 0 16px" };
+const green: React.CSSProperties = { border: 0, borderRadius: 999, background: "#4ade80", color: "#07111a", padding: "12px 16px", fontWeight: 900, cursor: "pointer", marginRight: 10 };
+const photoBox: React.CSSProperties = { textAlign: "left", borderRadius: 20, border: "1px solid rgba(255,255,255,.12)", background: "#1f2937", color: "#fff", padding: 22, minHeight: 110 };
+const textarea: React.CSSProperties = { width: "100%", minHeight: 130, borderRadius: 18, border: "1px solid rgba(255,255,255,.12)", background: "#1f2937", color: "#fff", padding: 18, fontSize: 16 };

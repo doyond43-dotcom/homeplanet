@@ -5,19 +5,19 @@ const jobs = [
     customer: "Maria Jenkins",
     service: "House Wash + Driveway",
     address: "123 Main Street",
-    status: "IN MOTION",
+    status: "Scheduled",
   },
   {
     customer: "John Smith",
     service: "Fence Cleaning",
     address: "456 Oak Avenue",
-    status: "PAYMENT DUE",
+    status: "Payment Due",
   },
   {
     customer: "Sarah Johnson",
     service: "Roof Wash",
     address: "789 Lake Road",
-    status: "COMPLETE",
+    status: "Complete",
   },
 ];
 
@@ -60,7 +60,7 @@ export default function OperationalJobsDashboardV2() {
                 <button style={actionButton}>?? Navigate</button>
               </div>
 
-              <button style={openButton}>
+              <button style={openButton} onClick={() => window.location.href = "/planet/job-workspace-v2"}>
                 Open Job ?
               </button>
             </div>
