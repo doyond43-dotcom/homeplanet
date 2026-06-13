@@ -426,6 +426,7 @@ import HydraOwnerDashboardV2Page from "../pages/HydraOwnerDashboardV2Page";
 import HydraOwnerDashboardV3Page from "../pages/HydraOwnerDashboardV3Page";
 import HydraCrewBoardPage from "../pages/HydraCrewBoardPage";
 import HydraJobDetailPage from "../pages/HydraJobDetailPage";
+import IceConstructionCommandPage from "../pages/IceConstructionCommandPage";
 export default function PlanetRoutes() {
   return (
     <Routes>
@@ -749,6 +750,7 @@ export default function PlanetRoutes() {
       <Route path="smith-property-care/command-center" element={<SmithPropertyCareCommandCenter />} />
       <Route path="smith-property-care/job" element={<SmithPropertyCareJobDetail />} />
 
+      <Route path="ice-construction-command" element={<IceConstructionCommandPage />} />
       <Route path=":planetId" element={<PlanetOverview />} />
       <Route path=":planetId/:cityId" element={<CityPage />} />
 
@@ -766,6 +768,10 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
+
+
+
 
 
 
