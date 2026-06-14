@@ -228,15 +228,18 @@ export default function IceConstructionCommandPage() {
       </section>
 
       <section style={styles.footer}>
-        <h2 style={footerTitleStyle}>Know something we don't?</h2>
-        <p style={styles.footerText}>A better tool.</p>
-        <p style={styles.footerText}>A better process.</p>
-        <p style={styles.footerText}>A better idea.</p>
-        <p style={styles.footerListening}>We're listening.</p>
-        <p style={styles.footerSubtext}>The next great idea could come from anywhere.</p>
+        <h2 style={footerTitleStyle}>Project operations stay connected.</h2>
+        <p style={styles.footerSubtext}>
+          Return to the public ICE Construction experience.
+        </p>
 
-        <button style={styles.primary} onClick={() => setShareOpen(true)}>
-          Share It
+        <button
+          style={styles.primary}
+          onClick={() => {
+            window.location.href = "/planet/ice-construction";
+          }}
+        >
+          Back to ICE Construction Page
         </button>
       </section>
 
@@ -354,4 +357,5 @@ const styles: Record<string, React.CSSProperties> = {
   input: { width: "100%", boxSizing: "border-box", marginTop: 14, padding: "14px 16px", borderRadius: 14, border: "1px solid #2f3b46", background: "#0b0d0f", color: "#fff", fontSize: 15 },
   textarea: { width: "100%", boxSizing: "border-box", minHeight: 120, marginTop: 14, padding: "14px 16px", borderRadius: 14, border: "1px solid #2f3b46", background: "#0b0d0f", color: "#fff", fontSize: 15 },
 };
+
 
