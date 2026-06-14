@@ -1,7 +1,9 @@
-﻿import { useNavigate } from "react-router-dom";
+﻿import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function IceConstructionLandingPage() {
 const navigate = useNavigate();
+const [shareOpen, setShareOpen] = useState(false);
 
 return (
 <div
@@ -99,7 +101,7 @@ objectFit: "cover",
               flexWrap: "wrap",
             }}
           >
-            <button
+            <button onClick={() => navigate("/planet/ice-construction-command")}
               style={{
                 padding: "18px 30px",
                 borderRadius: 999,
@@ -220,6 +222,7 @@ objectFit: "cover",
 
 </div>
 <h2
+  id="ice-built-local"
   style={{
     fontSize: "clamp(42px,6vw,72px)",
     marginBottom: 12,
@@ -309,7 +312,7 @@ objectFit: "cover",
       The next great idea can come from anywhere.
     </p>
 
-    <button
+    <button onClick={() => navigate("/planet/ice-construction-command?share=1")}
       style={{
         marginTop: 32,
         padding: "18px 36px",
@@ -323,10 +326,24 @@ objectFit: "cover",
       Share An Idea
     </button>
   </section>
+  {shareOpen && (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.72)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, zIndex: 999 }}>
+      <div style={{ position: "relative", width: "100%", maxWidth: 560, background: "#111820", border: "1px solid #2f3b46", borderRadius: 28, padding: 28, boxShadow: "0 24px 80px rgba(0,0,0,0.55)" }}>
+        <button onClick={() => setShareOpen(false)} style={{ position: "absolute", top: 18, right: 18, width: 38, height: 38, borderRadius: 999, border: "1px solid #2f3b46", background: "#0b0d0f", color: "#fff", fontWeight: 900, cursor: "pointer" }}>X</button>
+        <p style={{ color: "#f97316", letterSpacing: 2, fontWeight: 900, fontSize: 13 }}>DROP IT HERE</p>
+        <h2 style={{ fontSize: 34, margin: "8px 0 10px", color: "#fff" }}>Know something we don't?</h2>
+        <p style={{ color: "#aab5bd" }}>Share a tool, shortcut, product, custom build, process, or idea that could make the work easier.</p>
+        <textarea style={{ width: "100%", boxSizing: "border-box", minHeight: 120, marginTop: 14, padding: "14px 16px", borderRadius: 14, border: "1px solid #2f3b46", background: "#0b0d0f", color: "#fff", fontSize: 15 }} placeholder="Type the idea here..." />
+        <button onClick={() => setShareOpen(false)} style={{ width: "100%", marginTop: 14, padding: "13px 16px", borderRadius: 999, border: "none", background: "#39ff14", color: "#071007", fontWeight: 900, cursor: "pointer" }}>Send Idea</button>
+      </div>
+    </div>
+  )}
 </div>
 
 );
 }
+
+
 
 
 

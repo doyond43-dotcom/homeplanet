@@ -1,4 +1,5 @@
 ﻿import React, { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { hpEvent } from "../lib/hpEvent";
 
 type Project = {
@@ -58,6 +59,18 @@ export default function IceConstructionCommandPage() {
   const [projects, setProjects] = useState<Project[]>(starterProjects);
   const [activeProjectId, setActiveProjectId] = useState(1);
   const [shareOpen, setShareOpen] = useState(false);
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get("share") === "1") {
+      setShareOpen(true);
+      hpEvent({
+        event: "ice_share_modal_opened",
+        board: "ice-construction-command",
+        meta: { source: "query_param", path: window.location.pathname, search: window.location.search },
+      });
+    }
+  }, [searchParams]);
   const [addOpen, setAddOpen] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
   const [issueOpen, setIssueOpen] = useState(false);
@@ -68,6 +81,14 @@ export default function IceConstructionCommandPage() {
   const [fieldText, setFieldText] = useState("");
 
   const activeProject = projects.find((p) => p.id === activeProjectId) || projects[0];
+
+  useEffect(() => {
+    hpEvent({
+      event: "ice_command_center_opened",
+      board: "ice-construction-command",
+      meta: { path: window.location.pathname, search: window.location.search },
+    });
+  }, []);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 700);
@@ -274,7 +295,19 @@ export default function IceConstructionCommandPage() {
           <input style={styles.input} placeholder="Your name or company" />
           <input style={styles.input} placeholder="Link, product, tool, or custom build" />
           <textarea style={styles.textarea} placeholder="Tell us what it is and why it matters..." />
-          <button style={styles.primary} onClick={() => setShareOpen(false)}>Send Idea</button>
+          <button
+              style={styles.primary}
+              onClick={() => {
+                hpEvent({
+                  event: "ice_share_idea_submitted",
+                  board: "ice-construction-command",
+                  meta: { path: window.location.pathname, source: "existing_share_modal" },
+                });
+                setShareOpen(false);
+              }}
+            >
+              Send Idea
+            </button>
         </Modal>
       )}
     </main>
@@ -359,6 +392,9 @@ const styles: Record<string, React.CSSProperties> = {
   input: { width: "100%", boxSizing: "border-box", marginTop: 14, padding: "14px 16px", borderRadius: 14, border: "1px solid #2f3b46", background: "#0b0d0f", color: "#fff", fontSize: 15 },
   textarea: { width: "100%", boxSizing: "border-box", minHeight: 120, marginTop: 14, padding: "14px 16px", borderRadius: 14, border: "1px solid #2f3b46", background: "#0b0d0f", color: "#fff", fontSize: 15 },
 };
+
+
+
 
 
 
