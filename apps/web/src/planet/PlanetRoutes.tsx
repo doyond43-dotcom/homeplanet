@@ -354,6 +354,7 @@ import RestaurantAwarenessFrontDoor from "../pages/RestaurantAwarenessFrontDoor"
 import RestaurantAwarenessLiveBoard from "../pages/RestaurantAwarenessLiveBoard";
 import RestaurantAwarenessCrewBoard from "../pages/RestaurantAwarenessCrewBoard";
 import RestaurantAwarenessKitchenBoard from "../pages/RestaurantAwarenessKitchenBoard";
+import RestaurantAwarenessDrinkBoard from "../pages/RestaurantAwarenessDrinkBoard";
 
 import OkeechobeeTogetherPage from "../pages/OkeechobeeTogetherPage";
 import OkeechobeeCreateEventPage from "../pages/OkeechobeeCreateEventPage";
@@ -496,6 +497,7 @@ export default function PlanetRoutes() {
       <Route path="restaurant-awareness/live" element={<RestaurantAwarenessLiveBoard />} />
       <Route path="restaurant-awareness/crew" element={<RestaurantAwarenessCrewBoard />} />
       <Route path="restaurant-awareness/kitchen" element={<RestaurantAwarenessKitchenBoard />} />
+      <Route path="restaurant-awareness/drinks" element={<RestaurantAwarenessDrinkBoard />} />
       <Route path="business-setup" element={<BusinessSetupForm />} />
       <Route path="printshop" element={<PrintShopLandingPage />} />
       <Route path="printshop/order" element={<PrintShopOrderPage />} />
@@ -770,3 +772,4 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+

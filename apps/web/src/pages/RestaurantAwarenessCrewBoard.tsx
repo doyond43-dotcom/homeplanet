@@ -28,6 +28,7 @@ type KitchenTicket = {
 };
 
 const KITCHEN_KEY = "hp-brahma-bull-kitchen";
+const DRINK_KEY = "hp-restaurant-awareness-drinks";
 const TABLES_KEY = "hp-brahma-bull-tables";
 const SEATS_KEY = "hp-brahma-bull-seat-orders";
 const NOTIFICATION_KEY = "hp-brahma-bull-notifications";
@@ -87,6 +88,19 @@ function readKitchenTickets(): KitchenTicket[] {
 function writeKitchenTickets(tickets: KitchenTicket[]) {
   localStorage.setItem(KITCHEN_KEY, JSON.stringify(tickets));
   window.dispatchEvent(new Event("brahma-bull-kitchen-sync"));
+}
+
+function readDrinkTickets(): KitchenTicket[] {
+  try {
+    return JSON.parse(localStorage.getItem(DRINK_KEY) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function writeDrinkTickets(tickets: KitchenTicket[]) {
+  localStorage.setItem(DRINK_KEY, JSON.stringify(tickets));
+  window.dispatchEvent(new Event("restaurant-awareness-drinks-sync"));
 }
 
 function readTables(): TableState[] {
@@ -352,6 +366,20 @@ export default function RestaurantAwarenessCrewBoard() {
 
     if (drinks.length === 0) return;
 
+    const drinkTickets: KitchenTicket[] = drinks.map((seat) => ({
+      id: crypto.randomUUID(),
+      table: activeTable,
+      item: `Seat ${seat.seat}: ${seat.drink}`,
+      notes: seat.drinkFlags.length ? seat.drinkFlags.join(", ").toLowerCase() : "Standard drink",
+      stage: "New",
+      time: "00:00",
+      flags: seat.drinkFlags,
+      urgency: "normal",
+      editedAt: Date.now(),
+      completed: false,
+    }));
+
+    writeDrinkTickets([...drinkTickets, ...readDrinkTickets()]);
     updateTableStatus(activeTable, "Active");
     setMessage(`Drinks sent for Table ${activeTable}.`);
     setMode("food");
@@ -728,6 +756,7 @@ export default function RestaurantAwarenessCrewBoard() {
     </main>
   );
 }
+
 
 
 
