@@ -1,4 +1,5 @@
 ﻿import React, { useEffect, useState } from "react";
+import { hpEvent } from "../lib/hpEvent";
 
 type Project = {
   id: number;
@@ -236,6 +237,7 @@ export default function IceConstructionCommandPage() {
         <button
           style={styles.primary}
           onClick={() => {
+            hpEvent({ event: "ice_click_back_to_landing", board: "ice-construction-command", meta: { path: window.location.pathname } });
             window.location.href = "/planet/ice-construction";
           }}
         >
@@ -357,5 +359,6 @@ const styles: Record<string, React.CSSProperties> = {
   input: { width: "100%", boxSizing: "border-box", marginTop: 14, padding: "14px 16px", borderRadius: 14, border: "1px solid #2f3b46", background: "#0b0d0f", color: "#fff", fontSize: 15 },
   textarea: { width: "100%", boxSizing: "border-box", minHeight: 120, marginTop: 14, padding: "14px 16px", borderRadius: 14, border: "1px solid #2f3b46", background: "#0b0d0f", color: "#fff", fontSize: 15 },
 };
+
 
 
