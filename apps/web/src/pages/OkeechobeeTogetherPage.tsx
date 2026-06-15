@@ -1,6 +1,8 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import ShareMetadata from "../components/ShareMetadata";
+import { SHARE_METADATA } from "../lib/shareMetadata";
 
 export default function OkeechobeeTogetherPage() {
   const [events, setEvents] = useState<any[]>([]);
@@ -37,6 +39,14 @@ export default function OkeechobeeTogetherPage() {
   });
 
   return (
+    <>
+      <ShareMetadata
+        title={SHARE_METADATA["/planet/okeechobee"].title}
+        description={SHARE_METADATA["/planet/okeechobee"].description}
+        image={`https://www.homeplanet.city${SHARE_METADATA["/planet/okeechobee"].image}`}
+        url="https://www.homeplanet.city/planet/okeechobee"
+      />
+
     <main style={styles.page}>
       <section style={styles.card}>
         <p style={styles.kicker}>Okeechobee Together</p>
@@ -83,29 +93,29 @@ export default function OkeechobeeTogetherPage() {
                     {event.status === "Resolved" ? (
                       <>
                         <span style={styles.metaItem}>
-                          ✅ Need Met
+                          ? Need Met
                         </span>
 
                         <span style={styles.metaItem}>
-                          👥 {helperCount(event)} Neighbors Helped
+                          ?? {helperCount(event)} Neighbors Helped
                         </span>
 
                         <span style={styles.metaItem}>
-                          💚 Community Success
+                          ?? Community Success
                         </span>
                       </>
                     ) : (
                       <>
                         <span style={styles.metaItem}>
-                          💚 Local Need
+                          ?? Local Need
                         </span>
 
                         <span style={styles.metaItem}>
-                          👥 {helperCount(event)} Helpers Joined
+                          ?? {helperCount(event)} Helpers Joined
                         </span>
 
                         <span style={styles.metaItem}>
-                          🌱 Community Responding
+                          ?? Community Responding
                         </span>
                       </>
                     )}
@@ -128,6 +138,7 @@ export default function OkeechobeeTogetherPage() {
         </div>
       </section>
     </main>
+    </>
   );
 }
 
@@ -262,6 +273,9 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 16,
   },
 };
+
+
+
 
 
 
