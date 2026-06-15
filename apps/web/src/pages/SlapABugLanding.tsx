@@ -1,5 +1,14 @@
-﻿export default function SlapABugLanding() {
+import ShareMetadata from "../components/ShareMetadata";
+import { SHARE_METADATA } from "../lib/shareMetadata";
+export default function SlapABugLanding() {
   return (
+    <>
+      <ShareMetadata
+        title={SHARE_METADATA["/planet/slap-a-bug"].title}
+        description={SHARE_METADATA["/planet/slap-a-bug"].description}
+        image={`https://www.homeplanet.city${SHARE_METADATA["/planet/slap-a-bug"].image}`}
+        url="https://www.homeplanet.city/planet/slap-a-bug"
+      />
     <main className="min-h-screen bg-gradient-to-b from-black via-green-950 to-black text-white">
       <section className="mx-auto flex max-w-md flex-col items-center px-6 py-16 text-center">
         <img
@@ -15,7 +24,7 @@
         <h1 className="text-5xl font-black leading-none">
           GOT BUGS?
           <br />
-          SLAP ’EM.
+          SLAP 'EM.
         </h1>
 
         <p className="mt-5 text-base leading-relaxed text-zinc-300">
@@ -78,7 +87,7 @@
           </p>
 
           <p className="mt-3 text-sm leading-relaxed text-zinc-200">
-            With all the recent talk about rodents and hantavirus, now’s a good
+            With all the recent talk about rodents and hantavirus, now�s a good
             time to protect garages, sheds, barns, feed rooms, and storage
             spaces before a small problem becomes a bigger one.
           </p>
@@ -98,8 +107,14 @@
         </div>
       </section>
     </main>
-  )
+    </>
+  );
 }
+
+
+
+
+
 
 
 

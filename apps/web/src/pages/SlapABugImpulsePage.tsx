@@ -9,13 +9,9 @@ export default function SlapABugImpulsePage() {
   const [selectedAction, setSelectedAction] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [phone, setPhone] = useState("");
-  const [notes, setNotes] = useState("");
-
-  const track = (event: string, value?: string) => {
+  const [notes, setNotes] = useState("");const track = (event: string, value?: string) => {
     console.log("[Slap-A-Bug Impulse]", event, value || "");
-  };
-
-  return (
+  };return (
     <main className="min-h-screen bg-[#06111f] px-5 py-6 text-white">
       <section className="mx-auto max-w-md">
         <div className="relative mb-6 overflow-hidden rounded-3xl border border-[#2f80ed]/30 bg-[#0b1f3a] p-5 shadow-2xl">
@@ -78,6 +74,17 @@ export default function SlapABugImpulsePage() {
         </div>
 
         {selectedIssue && (
+  <div className="mt-6 rounded-2xl border border-[#f04444]/40 bg-[#f04444]/10 p-4">
+    <p className="text-xs font-black uppercase tracking-[0.2em] text-[#f04444]">
+      Selected Problem
+    </p>
+    <p className="mt-1 text-xl font-black">
+      ? {selectedIssue}
+    </p>
+  </div>
+)}
+
+{selectedIssue && (
           <section className="mt-6 rounded-3xl border border-white/10 bg-white/[0.05] p-5">
             <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#8dbdff]">Next Step</p>
             <h2 className="mt-1 text-2xl font-black">How would you like Brad to help?</h2><p className="mt-2 text-sm text-white/70">Choose the option that best fits your situation.</p>
@@ -105,6 +112,17 @@ export default function SlapABugImpulsePage() {
         )}
 
         {selectedAction && (
+  <div className="mt-4 rounded-2xl border border-[#2f80ed]/40 bg-[#2f80ed]/10 p-4">
+    <p className="text-xs font-black uppercase tracking-[0.2em] text-[#8dbdff]">
+      Action Selected
+    </p>
+    <p className="mt-1 text-xl font-black">
+      ? {selectedAction}
+    </p>
+  </div>
+)}
+
+{selectedAction && (
           <section className="mt-6 rounded-3xl border border-[#2f80ed]/70 bg-[#0b1f3a] p-5 shadow-lg shadow-[#2f80ed]/20">
             <p className="text-sm font-bold text-[#8dbdff]">Available times</p>
 
@@ -190,6 +208,12 @@ export default function SlapABugImpulsePage() {
     </main>
   );
 }
+
+
+
+
+
+
 
 
 
