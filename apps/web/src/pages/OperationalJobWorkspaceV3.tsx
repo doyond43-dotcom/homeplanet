@@ -41,7 +41,62 @@ export default function OperationalJobWorkspaceV3() {
   const [timelineOpen, setTimelineOpen] = useState(false);
 
   const currentStep = steps.includes(job.status) ? job.status : "Scheduled";
-  const jobTotal = Number(String(job.amount).replace(/[^0-9.]/g, "")) || 0;
+  const savedEstimate = (() => {
+    const urlTotal = Number(params.get("total") || 0);
+    const urlLabor = Number(params.get("labor") || 0);
+
+    const urlModifiers = {
+      heavyInsectCasings: params.get("heavyInsectCasings") || "",
+      spiderWebDensity: params.get("spiderWebDensity") || "",
+      limitedAccess: params.get("limitedAccess") || "",
+    };
+
+    if (
+      urlTotal > 0 ||
+      urlLabor > 0 ||
+      urlModifiers.heavyInsectCasings ||
+      urlModifiers.spiderWebDensity ||
+      urlModifiers.limitedAccess
+    ) {
+      return {
+        estimatedTotal: urlTotal,
+        addedLabor: urlLabor,
+        modifiers: {
+          heavyInsectCasings: urlModifiers.heavyInsectCasings || "None",
+          spiderWebDensity: urlModifiers.spiderWebDensity || "None",
+          limitedAccess: urlModifiers.limitedAccess || "None",
+        },
+      };
+    }
+
+    try {
+      return JSON.parse(
+        window.localStorage.getItem("homeServicesEstimate") || "null"
+      ) as null | {
+        estimatedTotal?: number;
+        addedLabor?: number;
+        modifiers?: {
+          heavyInsectCasings?: string;
+          spiderWebDensity?: string;
+          limitedAccess?: string;
+        };
+      };
+    } catch {
+      return null;
+    }
+  })();
+const estimateModifiers = savedEstimate?.modifiers || {
+    heavyInsectCasings: "None",
+    spiderWebDensity: "None",
+    limitedAccess: "None",
+  };
+
+  const savedEstimateTotal = Number(savedEstimate?.estimatedTotal || 0);
+  const jobTotal =
+    savedEstimateTotal ||
+    Number(String(job.amount).replace(/[^0-9.]/g, "")) ||
+    0;
+  const addedLabor = Number(savedEstimate?.addedLabor || 0);
   const deposit = Number(depositAmount.replace(/[^0-9.]/g, "")) || 0;
   const balanceDue = Math.max(jobTotal - deposit, 0);
 
@@ -104,20 +159,47 @@ export default function OperationalJobWorkspaceV3() {
               <h3 style={workbenchTitle}>Estimate</h3>
 
               <div style={summaryBlock}>
-                <p style={label}>Base Service</p>
-                <p style={price}>$250</p>
+                <p style={label}>Estimated Total</p>
+                <p style={price}>${jobTotal}</p>
+                {addedLabor > 0 && (
+                  <p style={smallMeta}>Added labor: {addedLabor} min</p>
+                )}
               </div>
 
               <p style={label}>Modifiers</p>
 
               <div style={modifierGrid}>
-                <button style={modifierButton}>Heavy Insect Casings</button>
-                <button style={modifierButton}>Spider Web Density</button>
-                <button style={modifierButton}>Limited Access</button>
+                <button style={modifierButton}>
+                  Heavy Insect Casings: {estimateModifiers.heavyInsectCasings}
+                </button>
+                <button style={modifierButton}>
+                  Spider Web Density: {estimateModifiers.spiderWebDensity}
+                </button>
+                <button style={modifierButton}>
+                  Limited Access: {estimateModifiers.limitedAccess}
+                </button>
               </div>
 
               <div style={{ marginTop: 20 }}>
-                <button style={primaryButton}>Edit Estimate</button>
+                <button
+                  style={primaryButton}
+                  onClick={() => {
+                    const editParams = new URLSearchParams({
+                      customer: job.customer,
+                      heavyInsectCasings:
+                        estimateModifiers.heavyInsectCasings || "None",
+                      spiderWebDensity:
+                        estimateModifiers.spiderWebDensity || "None",
+                      limitedAccess: estimateModifiers.limitedAccess || "None",
+                    });
+
+                    window.location.href =
+                      "/planet/home-services/estimate?" +
+                      editParams.toString();
+                  }}
+                >
+                  Edit Estimate
+                </button>
               </div>
             </>
           )}
@@ -148,6 +230,9 @@ export default function OperationalJobWorkspaceV3() {
                 <div style={summaryBlock}>
                   <p style={label}>Job Total</p>
                   <p style={price}>${jobTotal}</p>
+                  {addedLabor > 0 && (
+                    <p style={smallMeta}>Added labor: {addedLabor} min</p>
+                  )}
                 </div>
 
                 <div style={summaryBlock}>
@@ -639,5 +724,19 @@ const timelinePending: React.CSSProperties = {
   fontWeight: 700,
   fontSize: 17,
 };
+
+
+
+
+
+const smallMeta: React.CSSProperties = {
+  color: "#94a3b8",
+  fontSize: 15,
+  fontWeight: 800,
+  margin: "8px 0 0",
+};
+
+
+
 
 
