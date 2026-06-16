@@ -153,7 +153,13 @@ import CreatorMomentPage from "../pages/CreatorMomentPage";
 import OperationalCustomerRequestPage from "../pages/OperationalCustomerRequestPage";
 import OperationalLiveBoardV2 from "../pages/OperationalLiveBoardV2";
 import OperationalJobsDashboardV2 from "../pages/OperationalJobsDashboardV2";
+import HomeServicesRequestPage from "../pages/HomeServicesRequestPage";
+import HomeServicesLandingPage from "../pages/HomeServicesLandingPage";
+import HomeServicesLeadBoard from "../pages/HomeServicesLeadBoard";
+import HomeServicesLeadWorkspace from "../pages/HomeServicesLeadWorkspace";
+import HomeServicesEstimateBuilder from "../pages/HomeServicesEstimateBuilder";
 import OperationalJobWorkspaceV2 from "../pages/OperationalJobWorkspaceV2";
+import OperationalJobWorkspaceV3 from "../pages/OperationalJobWorkspaceV3";
 
 import OperationalStaffBoard from "../pages/OperationalStaffBoard";
 
@@ -448,6 +454,7 @@ export default function PlanetRoutes() {
       <Route path="liveboard-v2/:boardSlug" element={<OperationalLiveBoardV2 />} />
       <Route path="jobs-dashboard-v2" element={<OperationalJobsDashboardV2 />} />
       <Route path="job-workspace-v2" element={<OperationalJobWorkspaceV2 />} />
+      <Route path="job-workspace-v3" element={<OperationalJobWorkspaceV3 />} />
       <Route path="build-your-live-system" element={<BuildYourLiveSystemPage />} />
       <Route path="restaurant-build" element={<RestaurantQuickBuildPage />} />
       <Route path="community-build" element={<CommunityQuickBuildPage />} />
@@ -468,6 +475,11 @@ export default function PlanetRoutes() {
       <Route path="live-pages" element={<LivePagesHub />} />
       <Route path="live-pages/home-services" element={<HomeServicesLivePage />} />
       <Route path="home-services/activate" element={<HomeServicesActivationPage />} />
+      <Route path="home-services" element={<HomeServicesLandingPage />} />
+      <Route path="home-services/request" element={<HomeServicesRequestPage />} />
+      <Route path="home-services/leads" element={<HomeServicesLeadBoard />} />
+      <Route path="home-services/lead" element={<HomeServicesLeadWorkspace />} />
+      <Route path="home-services/estimate" element={<HomeServicesEstimateBuilder />} />
       <Route path="live-pages/restaurants" element={<RestaurantLivePage />} />
       <Route path="live-pages/transportation" element={<TransportationLivePage />} />
       <Route path="live-pages/community" element={<CommunityLivePage />} />
@@ -778,6 +790,7 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
 
 
 
