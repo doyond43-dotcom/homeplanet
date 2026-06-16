@@ -6,6 +6,13 @@ export default function OkeechobeeEventPage() {
   const { slug } = useParams();
   const [event, setEvent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [showHelperForm, setShowHelperForm] = useState(false);
+  const [helperName, setHelperName] = useState("");
+  const [helperPhone, setHelperPhone] = useState("");
+  const [helperEmail, setHelperEmail] = useState("");
+  const [helperType, setHelperType] = useState("General Volunteer");
+  const [helperNotes, setHelperNotes] = useState("");
+  const [savingHelper, setSavingHelper] = useState(false);
 
   async function loadEvent() {
     if (!slug) return;
@@ -30,26 +37,65 @@ export default function OkeechobeeEventPage() {
     loadEvent();
   }, [slug]);
 
-  async function joinEvent() {
-    if (!event) return;
+  async function joinEvent(e: React.FormEvent) {
+    e.preventDefault();
+
+    if (!event || savingHelper) return;
+
+    if (!helperName.trim() || !helperPhone.trim()) {
+      alert("Please enter your name and phone number.");
+      return;
+    }
+
+    setSavingHelper(true);
+
+    const { error: helperError } = await supabase
+      .from("okeechobee_project_helpers")
+      .insert({
+        event_slug: event.slug,
+        name: helperName.trim(),
+        phone: helperPhone.trim(),
+        email: helperEmail.trim() || null,
+        help_type: helperType,
+        notes: helperNotes.trim() || null,
+      });
+
+    if (helperError) {
+      console.error(helperError);
+      alert("Something went wrong saving your helper information.");
+      setSavingHelper(false);
+      return;
+    }
 
     const updatedTimeline = [
       ...(event.timeline || []),
-      { label: "Someone offered to help", time: new Date().toISOString() },
+      {
+        label: `${helperName.trim()} joined the project`,
+        time: new Date().toISOString(),
+      },
     ];
 
-    const { error } = await supabase
+    const { error: timelineError } = await supabase
       .from("okeechobee_events")
       .update({ timeline: updatedTimeline })
       .eq("slug", event.slug);
 
-    if (error) {
-      console.error(error);
-      alert("Something went wrong updating this post.");
+    if (timelineError) {
+      console.error(timelineError);
+      alert("Your helper info was saved, but the timeline did not update.");
+      setSavingHelper(false);
       return;
     }
 
     setEvent({ ...event, timeline: updatedTimeline });
+    setHelperName("");
+    setHelperPhone("");
+    setHelperEmail("");
+    setHelperType("General Volunteer");
+    setHelperNotes("");
+    setShowHelperForm(false);
+    setSavingHelper(false);
+    alert("Thank you. Your information was saved.");
   }
 
   async function markResolved() {
@@ -134,7 +180,7 @@ export default function OkeechobeeEventPage() {
             <div style={styles.resolvedButton}>✓ Need Met</div>
           ) : (
             <>
-              <button onClick={joinEvent} style={styles.primaryButton}>
+              <button onClick={() => setShowHelperForm(true)} style={styles.primaryButton}>
                 I&apos;ll Help
               </button>
 
@@ -148,6 +194,90 @@ export default function OkeechobeeEventPage() {
             Share This Event
           </button>
         </div>
+
+        {showHelperForm && (
+          <div style={styles.modalOverlay}>
+            <form onSubmit={joinEvent} style={styles.modalCard}>
+              <h2 style={styles.modalTitle}>Join This Project</h2>
+              <p style={styles.modalText}>
+                Add your contact info so Okeechobee Together can coordinate help.
+              </p>
+
+              <label style={styles.label}>
+                Name *
+                <input
+                  style={styles.input}
+                  value={helperName}
+                  onChange={(e) => setHelperName(e.target.value)}
+                  placeholder="Your name"
+                  required
+                />
+              </label>
+
+              <label style={styles.label}>
+                Phone Number *
+                <input
+                  style={styles.input}
+                  value={helperPhone}
+                  onChange={(e) => setHelperPhone(e.target.value)}
+                  placeholder="Best phone number"
+                  required
+                />
+              </label>
+
+              <label style={styles.label}>
+                Email Optional
+                <input
+                  style={styles.input}
+                  value={helperEmail}
+                  onChange={(e) => setHelperEmail(e.target.value)}
+                  placeholder="Email if you want to include it"
+                />
+              </label>
+
+              <label style={styles.label}>
+                How can you help?
+                <select
+                  style={styles.input}
+                  value={helperType}
+                  onChange={(e) => setHelperType(e.target.value)}
+                >
+                  <option>Ramp Construction</option>
+                  <option>Materials</option>
+                  <option>Transportation</option>
+                  <option>Work Opportunity</option>
+                  <option>General Volunteer</option>
+                  <option>Other</option>
+                </select>
+              </label>
+
+              <label style={styles.label}>
+                Notes Optional
+                <textarea
+                  style={{ ...styles.input, minHeight: 90, resize: "vertical" }}
+                  value={helperNotes}
+                  onChange={(e) => setHelperNotes(e.target.value)}
+                  placeholder="Anything helpful to know?"
+                />
+              </label>
+
+              <div style={styles.modalActions}>
+                <button type="submit" style={styles.primaryButton} disabled={savingHelper}>
+                  {savingHelper ? "Saving..." : "Join Project"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowHelperForm(false)}
+                  style={styles.secondaryButton}
+                  disabled={savingHelper}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
 
         <section style={styles.timeline}>
           <h2 style={styles.sectionTitle}>Timeline</h2>
@@ -261,5 +391,59 @@ const styles: Record<string, React.CSSProperties> = {
     color: "#39FF14",
     fontWeight: 800,
     textDecoration: "none",
+  },
+  modalOverlay: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(0,0,0,0.78)",
+    zIndex: 50,
+    display: "grid",
+    placeItems: "center",
+    padding: 18,
+  },
+  modalCard: {
+    width: "100%",
+    maxWidth: 520,
+    maxHeight: "88vh",
+    overflowY: "auto",
+    background: "#101010",
+    border: "1px solid #333",
+    borderRadius: 24,
+    padding: 22,
+    boxShadow: "0 24px 80px rgba(0,0,0,0.55)",
+  },
+  modalTitle: {
+    margin: "0 0 8px",
+    fontSize: 26,
+    lineHeight: 1.1,
+  },
+  modalText: {
+    color: "#b8b8b8",
+    lineHeight: 1.5,
+    marginTop: 0,
+    marginBottom: 18,
+  },
+  label: {
+    display: "grid",
+    gap: 8,
+    color: "#f5f5f5",
+    fontWeight: 800,
+    marginTop: 14,
+  },
+  input: {
+    width: "100%",
+    boxSizing: "border-box",
+    borderRadius: 14,
+    border: "1px solid #333",
+    background: "#181818",
+    color: "white",
+    padding: "14px 14px",
+    fontSize: 16,
+    outline: "none",
+  },
+  modalActions: {
+    display: "grid",
+    gap: 12,
+    marginTop: 18,
   },
 };
