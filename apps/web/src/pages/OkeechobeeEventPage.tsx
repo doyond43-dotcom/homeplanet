@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
@@ -164,7 +164,7 @@ export default function OkeechobeeEventPage() {
   return (
     <main style={styles.page}>
       <section style={styles.card}>
-        <p style={styles.kicker}>{event.type} · Okeechobee Together</p>
+        <p style={styles.kicker}>{event.type} � Okeechobee Together</p>
         <h1 style={styles.title}>{event.title}</h1>
         <p style={styles.subtitle}>{event.description}</p>
 
@@ -177,16 +177,14 @@ export default function OkeechobeeEventPage() {
 
         <div style={styles.actions}>
           {event.status === "Resolved" ? (
-            <div style={styles.resolvedButton}>✓ Need Met</div>
+            <div style={styles.resolvedButton}>? Need Met</div>
           ) : (
             <>
               <button onClick={() => setShowHelperForm(true)} style={styles.primaryButton}>
                 I&apos;ll Help
               </button>
 
-              <button onClick={markResolved} style={styles.secondaryButton}>
-                Mark Resolved
-              </button>
+
             </>
           )}
 
