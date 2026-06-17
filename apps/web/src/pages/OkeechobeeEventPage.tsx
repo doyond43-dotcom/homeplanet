@@ -27,7 +27,18 @@ export default function OkeechobeeEventPage() {
       console.error(error);
       setEvent(null);
     } else {
-      setEvent(data);
+
+      const newViewCount = (data.views || 0) + 1;
+
+      await supabase
+        .from("okeechobee_events")
+        .update({ views: newViewCount })
+        .eq("slug", slug);
+
+      setEvent({
+        ...data,
+        views: newViewCount,
+      });
     }
 
     setLoading(false);
@@ -465,5 +476,6 @@ const styles: Record<string, React.CSSProperties> = {
     marginTop: 18,
   },
 };
+
 
 
