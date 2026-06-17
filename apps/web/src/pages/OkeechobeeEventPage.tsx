@@ -187,6 +187,11 @@ export default function OkeechobeeEventPage() {
     String(item.label || "").toLowerCase().includes("joined")
   ).length;
 
+  const responseRate =
+    (event.views || 0) > 0
+      ? ((helperCount / (event.views || 1)) * 100).toFixed(1)
+      : "0.0";
+
   const shareUrl = window.location.href;
 
   async function shareEvent() {
@@ -245,6 +250,20 @@ export default function OkeechobeeEventPage() {
     <p>Messenger: {event.referrers.messenger || 0}</p>
     <p>Direct: {event.referrers.direct || 0}</p>
     <p>Other: {event.referrers.other || 0}</p>
+
+    <p style={{ marginTop: 12 }}>
+      <strong>Community Response</strong>
+    </p>
+
+    <p>Response Rate: {responseRate}%</p>
+
+    <p>
+      Status: {Number(responseRate) >= 25
+        ? "Strong Community Response"
+        : Number(responseRate) >= 10
+        ? "Moderate Community Response"
+        : "Needs More Visibility"}
+    </p>
   </>
 )}
         </div>
@@ -519,6 +538,9 @@ const styles: Record<string, React.CSSProperties> = {
     marginTop: 18,
   },
 };
+
+
+
 
 
 
