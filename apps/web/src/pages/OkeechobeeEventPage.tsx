@@ -149,6 +149,24 @@ export default function OkeechobeeEventPage() {
   const shareUrl = window.location.href;
 
   async function shareEvent() {
+    if (!event) return;
+
+    const newShareCount = (event.shares || 0) + 1;
+
+    const { error } = await supabase
+      .from("okeechobee_events")
+      .update({
+        shares: newShareCount,
+      })
+      .eq("slug", event.slug);
+
+    if (!error) {
+      setEvent({
+        ...event,
+        shares: newShareCount,
+      });
+    }
+
     if (navigator.share) {
       await navigator.share({
         title: event.title,
@@ -173,6 +191,8 @@ export default function OkeechobeeEventPage() {
           <p><strong>Location:</strong> {event.location || "Not listed"}</p>
           <p><strong>Contact:</strong> {event.contact || "Not listed"}</p>
           <p><strong>Helpers:</strong> {helperCount}</p>
+<p><strong>Views:</strong> {event.views || 0}</p>
+<p><strong>Shares:</strong> {event.shares || 0}</p>
         </div>
 
         <div style={styles.actions}>
@@ -445,3 +465,5 @@ const styles: Record<string, React.CSSProperties> = {
     marginTop: 18,
   },
 };
+
+
