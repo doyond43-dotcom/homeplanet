@@ -30,14 +30,44 @@ export default function OkeechobeeEventPage() {
 
       const newViewCount = (data.views || 0) + 1;
 
-      await supabase
+      const referrer = document.referrer.toLowerCase();
+
+      let source = "direct";
+
+      if (referrer.includes("facebook.com")) {
+        source = "facebook";
+      } else if (referrer.includes("messenger.com")) {
+        source = "messenger";
+      } else if (referrer.length > 0) {
+        source = "other";
+      }
+
+      const currentReferrers = data.referrers || {};
+
+      const updatedReferrers = {
+        ...currentReferrers,
+        [source]: (currentReferrers[source] || 0) + 1,
+      };
+
+      const { error: analyticsError } = await supabase
         .from("okeechobee_events")
-        .update({ views: newViewCount })
+        .update({
+          views: newViewCount,
+          referrers: updatedReferrers,
+        })
         .eq("slug", slug);
+
+      console.log("Okeechobee analytics update", {
+        newViewCount,
+        source,
+        updatedReferrers,
+        analyticsError,
+      });
 
       setEvent({
         ...data,
         views: newViewCount,
+        referrers: updatedReferrers,
       });
     }
 
@@ -204,6 +234,19 @@ export default function OkeechobeeEventPage() {
           <p><strong>Helpers:</strong> {helperCount}</p>
 <p><strong>Views:</strong> {event.views || 0}</p>
 <p><strong>Shares:</strong> {event.shares || 0}</p>
+
+{event.referrers && (
+  <>
+    <p style={{ marginTop: 12 }}>
+      <strong>Traffic Sources</strong>
+    </p>
+
+    <p>Facebook: {event.referrers.facebook || 0}</p>
+    <p>Messenger: {event.referrers.messenger || 0}</p>
+    <p>Direct: {event.referrers.direct || 0}</p>
+    <p>Other: {event.referrers.other || 0}</p>
+  </>
+)}
         </div>
 
         <div style={styles.actions}>
@@ -476,6 +519,9 @@ const styles: Record<string, React.CSSProperties> = {
     marginTop: 18,
   },
 };
+
+
+
 
 
 
