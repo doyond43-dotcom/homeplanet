@@ -7,6 +7,7 @@ export default function OkeechobeeProjectWorkspace() {
 
   const [project, setProject] = useState<any>(null);
   const [helpers, setHelpers] = useState<any[]>([]);
+  const [materials, setMaterials] = useState<any[]>([]);
 
   useEffect(() => {
     loadProject();
@@ -37,6 +38,14 @@ export default function OkeechobeeProjectWorkspace() {
     console.log("PROJECT SLUG:", data.slug);
     console.log("HELPERS FOUND:", helperData);
     setHelpers(helperData || []);
+
+    const { data: materialData } = await supabase
+      .from("okeechobee_project_materials")
+      .select("*")
+      .eq("project_slug", data.slug)
+      .order("created_at", { ascending: true });
+
+    setMaterials(materialData || []);
   }
 
   return (
@@ -194,12 +203,12 @@ export default function OkeechobeeProjectWorkspace() {
           >
             <h2>Materials Needed</h2>
 
-            <p>? Small Hot Water Heater</p>
-            <p>? Toilet</p>
-            <p>? Toilet Paper</p>
-            <p>? Laundry Soap</p>
-            <p>? Hand Soap</p>
-            <p>? Household Essentials</p>
+            {materials.map((material: any) => (
+              <p key={material.id}>
+                ? {material.title}
+                {material.assigned_to ? ` - ${material.assigned_to}` : ""}
+              </p>
+            ))}
           </div>
 
           <div
@@ -222,6 +231,10 @@ export default function OkeechobeeProjectWorkspace() {
     </main>
   );
 }
+
+
+
+
 
 
 
