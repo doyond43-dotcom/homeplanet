@@ -6,6 +6,7 @@ export default function OkeechobeeProjectWorkspace() {
   const { slug } = useParams();
 
   const [project, setProject] = useState<any>(null);
+  const [helpers, setHelpers] = useState<any[]>([]);
 
   useEffect(() => {
     loadProject();
@@ -26,6 +27,16 @@ export default function OkeechobeeProjectWorkspace() {
     }
 
     setProject(data);
+
+    const { data: helperData } = await supabase
+      .from("okeechobee_project_helpers")
+      .select("*")
+      .eq("event_slug", data.slug)
+      .order("created_at", { ascending: true });
+
+    console.log("PROJECT SLUG:", data.slug);
+    console.log("HELPERS FOUND:", helperData);
+    setHelpers(helperData || []);
   }
 
   return (
@@ -144,7 +155,6 @@ export default function OkeechobeeProjectWorkspace() {
               Add Need
             </button>
           </div>
-
           <div
             style={{
               background: "#111",
@@ -153,11 +163,25 @@ export default function OkeechobeeProjectWorkspace() {
               padding: 20,
             }}
           >
-            <h2>Volunteer Assignments</h2>
+            <h2>Volunteer Assignments ({helpers.length})</h2>
 
-            <p>Roy Gaylor - Hot Water Heater Installation</p>
-            <p>Roy Gaylor - Toilet Installation</p>
-            <p>Daniel Doyon - Project Coordination</p>
+            {helpers.map((helper: any) => (
+              <div
+                key={helper.id}
+                style={{
+                  padding: "12px 0",
+                  borderBottom: "1px solid #222",
+                }}
+              >
+                <p><strong>{helper.name}</strong></p>
+                <p>{helper.help_type}</p>
+                <p>{helper.phone}</p>
+                {helper.email && <p>{helper.email}</p>}
+                {helper.notes && (
+                  <p style={{ color: "#999" }}>{helper.notes}</p>
+                )}
+              </div>
+            ))}
           </div>
 
           <div
@@ -198,6 +222,11 @@ export default function OkeechobeeProjectWorkspace() {
     </main>
   );
 }
+
+
+
+
+
 
 
 
