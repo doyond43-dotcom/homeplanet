@@ -1,85 +1,325 @@
-import { useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import type { CSSProperties } from "react";
 
 const needOptions = [
   "Live Page",
-  "Booking",
-  "Payments",
-  "Photo Gallery",
-  "Customer Requests",
-  "Live Updates",
-  "Not Sure Yet",
+  "Customer intake",
+  "Booking / request flow",
+  "Photo uploads",
+  "Customer updates",
+  "Live work board",
+  "Payment link",
+  "Google Business Profile",
+  "Use my domain",
+  "Not sure yet",
 ];
+
+type Lead = {
+  id: string;
+  createdAt: string;
+  businessName: string;
+  contactName: string;
+  phone: string;
+  businessType: string;
+  needs: string[];
+  notes: string;
+  status: string;
+};
 
 export default function GetBusinessLivePage() {
   const [businessName, setBusinessName] = useState("");
-  const [yourName, setYourName] = useState("");
+  const [contactName, setContactName] = useState("");
   const [phone, setPhone] = useState("");
   const [businessType, setBusinessType] = useState("");
-  const [selectedNeeds, setSelectedNeeds] = useState<string[]>([]);
+  const [notes, setNotes] = useState("");
+  const [needs, setNeeds] = useState<string[]>([]);
+  const [submitted, setSubmitted] = useState<Lead | null>(null);
+
+  const canSubmit = useMemo(() => {
+    return businessName.trim() && contactName.trim() && phone.trim() && businessType.trim();
+  }, [businessName, contactName, phone, businessType]);
 
   const toggleNeed = (need: string) => {
-    setSelectedNeeds((current) =>
+    setNeeds((current) =>
       current.includes(need) ? current.filter((item) => item !== need) : [...current, need]
     );
   };
 
-  const body = encodeURIComponent(
-    `Get Your Business Live Request
+  const handleSubmit = (event: FormEvent) => {
+    event.preventDefault();
 
-Business Name: ${businessName}
-Your Name: ${yourName}
-Phone: ${phone}
-Business Type: ${businessType}
+    if (!canSubmit) return;
 
-Needs:
-${selectedNeeds.length ? selectedNeeds.join(", ") : "Not selected yet"}`
-  );
+    const lead: Lead = {
+      id: `hp-live-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+      businessName: businessName.trim(),
+      contactName: contactName.trim(),
+      phone: phone.trim(),
+      businessType: businessType.trim(),
+      needs,
+      notes: notes.trim(),
+      status: "Message received",
+    };
+
+    try {
+      const existing = JSON.parse(localStorage.getItem("hp-live-page-leads") || "[]") as Lead[];
+      localStorage.setItem("hp-live-page-leads", JSON.stringify([lead, ...existing]));
+    } catch {
+      localStorage.setItem("hp-live-page-leads", JSON.stringify([lead]));
+    }
+
+    setSubmitted(lead);
+  };
+
+  const page: CSSProperties = {
+    minHeight: "100vh",
+    background:
+      "radial-gradient(circle at 50% 0%, rgba(52,211,153,0.12), transparent 30%), linear-gradient(180deg, #050505 0%, #090909 52%, #050505 100%)",
+    color: "#f8fafc",
+    padding: "24px 18px 72px",
+  };
+
+  const wrap: CSSProperties = {
+    width: "min(760px, 100%)",
+    margin: "0 auto",
+  };
+
+  const back: CSSProperties = {
+    display: "inline-flex",
+    color: "#a7f3d0",
+    textDecoration: "none",
+    fontWeight: 950,
+    marginBottom: 32,
+    fontSize: 14,
+  };
+
+  const eyebrow: CSSProperties = {
+    color: "#34d399",
+    fontSize: 13,
+    fontWeight: 950,
+    letterSpacing: "0.18em",
+    textTransform: "uppercase",
+    marginBottom: 12,
+  };
+
+  const h1: CSSProperties = {
+    margin: 0,
+    fontSize: "clamp(42px, 7vw, 70px)",
+    lineHeight: 0.95,
+    letterSpacing: "-0.075em",
+  };
+
+  const sub: CSSProperties = {
+    marginTop: 16,
+    color: "#cbd5e1",
+    lineHeight: 1.55,
+    fontSize: 17,
+    maxWidth: 680,
+  };
+
+  const card: CSSProperties = {
+    marginTop: 28,
+    borderRadius: 34,
+    border: "1px solid rgba(255,255,255,0.09)",
+    background: "linear-gradient(135deg, rgba(17,17,17,0.94), rgba(5,5,5,0.96))",
+    padding: "clamp(18px, 4vw, 28px)",
+    boxShadow: "0 28px 90px rgba(0,0,0,0.42)",
+  };
+
+  const input: CSSProperties = {
+    width: "100%",
+    boxSizing: "border-box",
+    borderRadius: 18,
+    border: "1px solid rgba(255,255,255,0.10)",
+    background: "rgba(0,0,0,0.48)",
+    color: "#f8fafc",
+    padding: "17px 18px",
+    fontSize: 16,
+    outline: "none",
+    marginTop: 12,
+  };
+
+  const label: CSSProperties = {
+    display: "block",
+    marginTop: 18,
+    color: "#94a3b8",
+    fontSize: 12,
+    fontWeight: 950,
+    letterSpacing: "0.14em",
+    textTransform: "uppercase",
+  };
+
+  const needGrid: CSSProperties = {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
+    gap: 10,
+    marginTop: 12,
+  };
+
+  const needButton = (active: boolean): CSSProperties => ({
+    borderRadius: 18,
+    border: active ? "1px solid rgba(52,211,153,0.48)" : "1px solid rgba(255,255,255,0.10)",
+    background: active ? "rgba(52,211,153,0.14)" : "rgba(255,255,255,0.045)",
+    color: active ? "#bbf7d0" : "#f8fafc",
+    padding: "14px 13px",
+    fontWeight: 950,
+    cursor: "pointer",
+  });
+
+  const submit: CSSProperties = {
+    width: "100%",
+    border: 0,
+    borderRadius: 20,
+    background: canSubmit ? "#34d399" : "rgba(255,255,255,0.16)",
+    color: canSubmit ? "#022c22" : "#94a3b8",
+    padding: "17px 18px",
+    fontWeight: 950,
+    fontSize: 16,
+    cursor: canSubmit ? "pointer" : "not-allowed",
+    marginTop: 22,
+    boxShadow: canSubmit ? "0 0 28px rgba(52,211,153,0.18)" : "none",
+  };
+
+  const queue: CSSProperties = {
+    marginTop: 18,
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
+    gap: 8,
+  };
+
+  const queueStep: CSSProperties = {
+    borderRadius: 18,
+    border: "1px solid rgba(255,255,255,0.08)",
+    background: "rgba(255,255,255,0.035)",
+    padding: 12,
+  };
+
+  if (submitted) {
+    return (
+      <main style={page}>
+        <div style={wrap}>
+          <Link to="/planet/live-pages" style={back}>
+            ? Back to Live Pages offer
+          </Link>
+
+          <section style={card}>
+            <div style={eyebrow}>PLACE HELD</div>
+            <h1 style={h1}>You are in the Live Page build queue.</h1>
+            <p style={sub}>
+              We received the request for <strong>{submitted.businessName}</strong>. We go first come,
+              first served. Your request is now ready for review on our side.
+            </p>
+
+            <div style={queue}>
+              {["Message received", "Info confirmed", "First version building", "Ready for review", "Approved and live"].map(
+                (step, index) => (
+                  <div key={step} style={queueStep}>
+                    <div style={{ color: "#34d399", fontSize: 12, fontWeight: 950 }}>
+                      0{index + 1}
+                    </div>
+                    <div style={{ marginTop: 8, fontWeight: 950 }}>{step}</div>
+                  </div>
+                )
+              )}
+            </div>
+
+            <p style={{ ...sub, marginBottom: 0 }}>
+              Next step: we confirm the main workflow, then build the first version. You only pay if you approve it and want to keep it live.
+            </p>
+
+            <Link
+              to="/planet/live-pages"
+              style={{
+                display: "inline-flex",
+                marginTop: 22,
+                borderRadius: 999,
+                background: "#34d399",
+                color: "#022c22",
+                padding: "14px 18px",
+                fontWeight: 950,
+                textDecoration: "none",
+              }}
+            >
+              Back to Offer Page
+            </Link>
+          </section>
+        </div>
+      </main>
+    );
+  }
 
   return (
-    <main className="min-h-screen bg-black px-5 py-8 text-white">
-      <section className="mx-auto max-w-xl">
-        <p className="text-xs font-bold uppercase tracking-[0.3em] text-emerald-300">HomePlanet</p>
-        <h1 className="mt-3 text-4xl font-black leading-tight">Get Your Business Live</h1>
-        <p className="mt-4 text-sm leading-relaxed text-white/70">
-          Simple live pages for local businesses. Booking, payments, photos, customer requests, and real-time updates.
+    <main style={page}>
+      <div style={wrap}>
+        <Link to="/planet/live-pages" style={back}>
+          ? Back to Live Pages offer
+        </Link>
+
+        <div style={eyebrow}>HOMEPLANET</div>
+        <h1 style={h1}>Hold your place for a $47/month Live Page System.</h1>
+        <p style={sub}>
+          Tell us what you do. We build the first version around your main customer workflow.
+          You only pay after it is built and approved.
         </p>
 
-        <div className="mt-8 rounded-3xl border border-white/15 bg-zinc-950 p-5">
-          <div className="grid gap-3">
-            <input value={businessName} onChange={(e) => setBusinessName(e.target.value)} placeholder="Business name" className="rounded-2xl border border-white/10 bg-black px-4 py-4 text-sm outline-none" />
-            <input value={yourName} onChange={(e) => setYourName(e.target.value)} placeholder="Your name" className="rounded-2xl border border-white/10 bg-black px-4 py-4 text-sm outline-none" />
-            <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone number" className="rounded-2xl border border-white/10 bg-black px-4 py-4 text-sm outline-none" />
-            <input value={businessType} onChange={(e) => setBusinessType(e.target.value)} placeholder="Business type" className="rounded-2xl border border-white/10 bg-black px-4 py-4 text-sm outline-none" />
+        <form style={card} onSubmit={handleSubmit}>
+          <input
+            style={input}
+            value={businessName}
+            onChange={(event) => setBusinessName(event.target.value)}
+            placeholder="Business name"
+          />
+
+          <input
+            style={input}
+            value={contactName}
+            onChange={(event) => setContactName(event.target.value)}
+            placeholder="Your name"
+          />
+
+          <input
+            style={input}
+            value={phone}
+            onChange={(event) => setPhone(event.target.value)}
+            placeholder="Phone number or best contact"
+          />
+
+          <input
+            style={input}
+            value={businessType}
+            onChange={(event) => setBusinessType(event.target.value)}
+            placeholder="Business type"
+          />
+
+          <label style={label}>What do you need?</label>
+          <div style={needGrid}>
+            {needOptions.map((need) => (
+              <button
+                key={need}
+                type="button"
+                onClick={() => toggleNeed(need)}
+                style={needButton(needs.includes(need))}
+              >
+                {need}
+              </button>
+            ))}
           </div>
 
-          <p className="mt-6 text-xs font-bold uppercase tracking-[0.2em] text-white/45">What do you need?</p>
+          <label style={label}>Anything we should know?</label>
+          <textarea
+            style={{ ...input, minHeight: 130, resize: "vertical", lineHeight: 1.45 }}
+            value={notes}
+            onChange={(event) => setNotes(event.target.value)}
+            placeholder="Example: I already have a domain, I use Google Business, customers mostly message me on Facebook, I need estimate requests, etc."
+          />
 
-          <div className="mt-3 grid grid-cols-2 gap-3">
-            {needOptions.map((need) => {
-              const active = selectedNeeds.includes(need);
-              return (
-                <button
-                  key={need}
-                  type="button"
-                  onClick={() => toggleNeed(need)}
-                  className={`rounded-2xl px-4 py-3 text-sm font-black transition ${
-                    active ? "bg-emerald-500 text-black" : "border border-white/10 bg-white/5 text-white"
-                  }`}
-                >
-                  {need}
-                </button>
-              );
-            })}
-          </div>
-
-          <a
-            href={`mailto:dannyscandys@gmail.com?subject=${encodeURIComponent("Get Your Business Live Request")}&body=${body}`}
-            className="mt-6 flex w-full items-center justify-center rounded-2xl bg-white px-5 py-4 text-sm font-black text-black"
-          >
-            Send Request
-          </a>
-        </div>
-      </section>
+          <button type="submit" style={submit} disabled={!canSubmit}>
+            Hold My Place in Line
+          </button>
+        </form>
+      </div>
     </main>
   );
 }

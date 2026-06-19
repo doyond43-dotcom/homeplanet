@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+﻿import { Routes, Route, Navigate } from "react-router-dom";
 
 import EcosystemInfrastructureLayer from "../pages/EcosystemInfrastructureLayer";
 import GetBusinessLivePage from "../pages/GetBusinessLivePage";
@@ -14,6 +14,9 @@ import SlapABugLeadBoard from "../pages/SlapABugLeadBoard";
 
 import LocalServiceStarterPage from "../pages/LocalServiceStarterPage";
 import LivePagesHub from "../pages/LivePagesHub";
+import LivePagesIncludedPage from "../pages/LivePagesIncludedPage";
+import HomePlanetMessagePage from "../pages/HomePlanetMessagePage";
+import LivePagesLeadBoard from "../pages/LivePagesLeadBoard";
 import HomeServicesLivePage from "../pages/HomeServicesLivePage";
 import HomeServicesActivationPage from "../pages/HomeServicesActivationPage";
 import RestaurantLivePage from "../pages/RestaurantLivePage";
@@ -475,6 +478,9 @@ export default function PlanetRoutes() {
       <Route path="slap-a-bug/board" element={<SlapABugLeadBoard />} />
       <Route path="local-service-page" element={<LocalServiceStarterPage />} />
       <Route path="live-pages" element={<LivePagesHub />} />
+          <Route path="live-pages/included" element={<LivePagesIncludedPage />} />
+      <Route path="message-us" element={<HomePlanetMessagePage />} />
+      <Route path="live-pages/board" element={<LivePagesLeadBoard />} />
       <Route path="live-pages/home-services" element={<HomeServicesLivePage />} />
       <Route path="home-services/activate" element={<HomeServicesActivationPage />} />
       <Route path="home-services" element={<HomeServicesLandingPage />} />
@@ -794,6 +800,11 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
+
+
+
+
 
 
 
