@@ -374,6 +374,7 @@ import OkeechobeeEventPage from "../pages/OkeechobeeEventPage";
 
 import OkeechobeeCommunityAdminPage from "../pages/OkeechobeeCommunityAdminPage";
 import OkeechobeeProjectWorkspace from "../pages/OkeechobeeProjectWorkspace";
+import HomePlanetBuildDirectory from "../pages/HomePlanetBuildDirectory";
 import OkeechobeeCommandCenter from "../pages/OkeechobeeCommandCenter";
 
 import StarterLivePageCreatorPage from "../pages/StarterLivePageCreatorPage";
@@ -446,6 +447,7 @@ import IceConstructionLandingPage from "../pages/IceConstructionLandingPage";
 export default function PlanetRoutes() {
   return (
     <Routes>
+        <Route path="builds" element={<HomePlanetBuildDirectory />} />
         <Route path="swamp-life" element={<SwampLifeExperiencePage />} />
 
 <Route path="/starter/:slug" element={<StarterGeneratedLivePage />} />
@@ -507,7 +509,7 @@ export default function PlanetRoutes() {
 
               <Route path="crew-team" element={<CrewTeamBoard />} />
 <Route path="start" element={<StartPage />} />
-      <Route path="okeechobee/create" element={<OkeechobeeCreateEventPage />} />
+      <Route path="okeechobee/create" element={<Navigate to="/planet/okeechobee" replace />} />
       <Route path="okeechobee/event/:slug" element={<OkeechobeeEventPage />} />
       <Route path="okeechobee" element={<OkeechobeeTogetherPage />} />
       <Route path="okeechobee/admin" element={<OkeechobeeCommunityAdminPage />} />
@@ -526,7 +528,8 @@ export default function PlanetRoutes() {
       <Route path="restaurant-awareness/crew" element={<RestaurantAwarenessCrewBoard />} />
       <Route path="restaurant-awareness/kitchen" element={<RestaurantAwarenessKitchenBoard />} />
       <Route path="restaurant-awareness/drinks" element={<RestaurantAwarenessDrinkBoard />} />
-      <Route path="business-setup" element={<BusinessSetupForm />} />
+            <Route path="restaurant-awareness/owner" element={<BrahmaBullOwnerBoard />} />
+<Route path="business-setup" element={<BusinessSetupForm />} />
       <Route path="printshop" element={<PrintShopLandingPage />} />
       <Route path="printshop/order" element={<PrintShopOrderPage />} />
       <Route path="printshop/artwork" element={<PrintShopArtworkPage />} />
@@ -800,6 +803,10 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
+
+
+
 
 
 

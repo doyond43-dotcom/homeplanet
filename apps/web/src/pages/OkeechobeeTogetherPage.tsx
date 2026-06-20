@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import ShareMetadata from "../components/ShareMetadata";
@@ -202,6 +202,17 @@ const styles: Record<string, React.CSSProperties> = {
     textAlign: "center",
     textDecoration: "none",
   },
+  publicNotice: {
+    background: "rgba(57, 255, 20, 0.08)",
+    border: "1px solid rgba(57, 255, 20, 0.22)",
+    borderRadius: 999,
+    color: "#d8ffd2",
+    fontWeight: 800,
+    lineHeight: 1.4,
+    margin: "28px 0",
+    padding: "18px 22px",
+    textAlign: "center",
+  },
   board: {
     marginTop: 30,
   },
@@ -273,6 +284,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 16,
   },
 };
+
 
 
 
