@@ -519,7 +519,7 @@ const planetCore: CSSProperties = {
             </p>
 
             <div style={btnRow}>
-              <Link to="/planet/get-live" style={primary}>
+<Link to="/planet/get-live" style={primary}>
                 Hold My Place in Line
               </Link>
               <Link to="/planet/live-pages/included" style={secondary}>
@@ -529,14 +529,177 @@ const planetCore: CSSProperties = {
           </div>
         </section>
 
-        <section style={section}>
-          <div style={eyebrow}>THE DIFFERENCE</div>
-          <h2 style={h2}>Websites get looked at. Live Pages get used.</h2>
-          <p style={{ ...sub, marginBottom: 0 }}>
-            A website usually stops at information. A Live Page starts the workflow and gives your
-            business a simple place to catch the next step.
-          </p>
-        </section>
+        <section
+  style={{
+    marginTop: 26,
+    borderRadius: 36,
+    padding: "clamp(24px, 4vw, 38px)",
+    border: "1px solid rgba(52,211,153,0.20)",
+    background:
+      "radial-gradient(circle at 12% 18%, rgba(52,211,153,0.18), transparent 30%), radial-gradient(circle at 85% 22%, rgba(16,185,129,0.12), transparent 26%), linear-gradient(135deg, rgba(5,8,8,0.98), rgba(2,3,3,0.98))",
+    boxShadow:
+      "0 30px 90px rgba(0,0,0,0.44), inset 0 0 0 1px rgba(52,211,153,0.04)",
+    overflow: "hidden",
+  }}
+>
+  <div
+    style={{
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+      gap: 20,
+      alignItems: "stretch",
+    }}
+  >
+    <div>
+      <div style={eyebrow}>THE OFFER</div>
+
+      <h2
+        style={{
+          ...h2,
+          margin: "0 0 14px",
+          fontSize: "clamp(52px, 8vw, 88px)",
+          lineHeight: 0.92,
+          letterSpacing: "-0.06em",
+          maxWidth: 760,
+        }}
+      >
+        <span style={{ color: "#6ee7b7" }}>$47/month</span> Live Page System.
+      </h2>
+
+      <p
+        style={{
+          margin: "0 0 12px",
+          color: "#ecfdf5",
+          fontSize: 24,
+          fontWeight: 950,
+          lineHeight: 1.2,
+        }}
+      >
+        Nothing due upfront.
+      </p>
+
+      <p
+        style={{
+          margin: "0 0 22px",
+          color: "#cbd5e1",
+          fontSize: 18,
+          lineHeight: 1.65,
+          maxWidth: 720,
+        }}
+      >
+        We build the first version around your real workflow first. You review it. You approve it.
+        Only then does it go live for{" "}
+        <span style={{ color: "#6ee7b7", fontWeight: 900 }}>$47/month</span>.
+      </p>
+
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 12,
+          marginBottom: 14,
+        }}
+      >
+        <Link
+          to="/planet/get-live"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            minHeight: 54,
+            padding: "0 22px",
+            borderRadius: 999,
+            background: "#34d399",
+            color: "#03110c",
+            textDecoration: "none",
+            fontWeight: 1000,
+            fontSize: 16,
+            boxShadow: "0 0 34px rgba(52,211,153,0.28)",
+          }}
+        >
+          Hold My Place in Line
+        </Link>
+
+        <Link
+          to="/planet/live-pages/included"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            minHeight: 54,
+            padding: "0 22px",
+            borderRadius: 999,
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid rgba(255,255,255,0.10)",
+            color: "#f8fafc",
+            textDecoration: "none",
+            fontWeight: 900,
+            fontSize: 16,
+          }}
+        >
+          See What Is Included
+        </Link>
+      </div>
+
+      <div
+        style={{
+          color: "#94a3b8",
+          fontSize: 14,
+          fontWeight: 700,
+          lineHeight: 1.5,
+        }}
+      >
+        First-come, first-served. Please hold your place in line — we will get to you.
+      </div>
+    </div>
+
+    <div
+      style={{
+        display: "grid",
+        gap: 14,
+        alignContent: "start",
+      }}
+    >
+      {[
+        {
+          n: "01",
+          title: "Built first",
+          text: "No payment to start. We build the first version before you pay anything.",
+        },
+        {
+          n: "02",
+          title: "Approved by you",
+          text: "You review it first. If you do not want it live, you do not pay.",
+        },
+        {
+          n: "03",
+          title: "Then $47/month",
+          text: "Hosting, maintenance, and small updates included after approval.",
+        },
+      ].map((item) => (
+        <div
+          key={item.title}
+          style={{
+            borderRadius: 24,
+            padding: "18px 18px 16px",
+            border: "1px solid rgba(52,211,153,0.14)",
+            background: "linear-gradient(180deg, rgba(10,14,18,0.94), rgba(4,7,8,0.94))",
+          }}
+        >
+          <div style={{ color: "#34d399", fontSize: 12, fontWeight: 950, letterSpacing: "0.18em", marginBottom: 10 }}>
+            {item.n}
+          </div>
+          <div style={{ color: "#f8fafc", fontSize: 22, fontWeight: 900, marginBottom: 6 }}>
+            {item.title}
+          </div>
+          <div style={{ color: "#cbd5e1", fontSize: 15, lineHeight: 1.6 }}>
+            {item.text}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
 
         <section style={visualSection}>
           <div style={eyebrow}>THE SYSTEM VIEW</div>
@@ -830,6 +993,12 @@ const planetCore: CSSProperties = {
     </main>
   );
 }
+
+
+
+
+
+
 
 
 

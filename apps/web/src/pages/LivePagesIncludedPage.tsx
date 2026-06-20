@@ -279,30 +279,7 @@ export default function LivePagesIncludedPage() {
                   explain, or start the right workflow.
                 </p>
               </div>
-              <Link to="/planet/get-live" style={{ ...primary, marginTop: 14 }}>Hold my place</Link>
-            </div>
-
-            <div style={visualCard}>
-              <div style={eyebrow}>WORK BOARD UNDERNEATH</div>
-              <div style={{ display: "grid", gap: 9 }}>
-                <div style={boardLine}>
-                  <span>New request</span>
-                  <span style={{ color: "#34d399" }}>Received</span>
-                </div>
-                <div style={boardLine}>
-                  <span>Photos uploaded</span>
-                  <span style={{ color: "#34d399" }}>3 files</span>
-                </div>
-                <div style={boardLine}>
-                  <span>Review link</span>
-                  <span style={{ color: "#34d399" }}>Ready</span>
-                </div>
-                <div style={boardLine}>
-                  <span>Activation</span>
-                  <span style={{ color: "#34d399" }}>$47/month</span>
-                </div>
-              </div>
-            </div>
+</div>
           </div>
         </section>
 
@@ -374,12 +351,23 @@ export default function LivePagesIncludedPage() {
               We build in order. Message us to hold your place in line.
             </p>
           </div>
-          <Link to="/planet/get-live" style={{ ...primary, marginTop: 14 }}>Hold my place</Link>
+                    <div style={{ marginBottom: 18 }}>
+            <div style={{ color: "#facc15", fontSize: 22, fontWeight: 1000, marginBottom: 8 }}>
+              Hold your place for $47/month.
+            </div>
+            <p style={{ color: "#cbd5e1", lineHeight: 1.55, margin: 0 }}>
+              No upfront payment. We build the first version first. You only pay after it is built and approved.
+            </p>
+          </div>
+<Link to="/planet/get-live" style={{ ...primary, marginTop: 14 }}>Hold my place</Link>
         </section>
       </div>
     </main>
   );
 }
+
+
+
 
 
 
