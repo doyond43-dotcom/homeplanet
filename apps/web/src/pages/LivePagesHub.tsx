@@ -739,16 +739,32 @@ const planetCore: CSSProperties = {
                 The work has somewhere to land.
               </h3>
               <div style={columns}>
-                {["Message received", "Ready for review", "Approved / Activate"].map((title, index) => (
-                  <div key={title} style={columnCard}>
+                {[
+                  {
+                    title: "Message received",
+                    label: "Customer request",
+                    text: "Contact info, service details, notes, and photos land in one clean place.",
+                  },
+                  {
+                    title: "Ready for review",
+                    label: "Business view",
+                    text: "Review the request, check what is needed, and decide the next step.",
+                  },
+                  {
+                    title: "Approved / Activate",
+                    label: "Next action",
+                    text: "Send the right link, confirm the job, collect payment, or move it into your work board.",
+                  },
+                ].map((item, index) => (
+                  <div key={item.title} style={columnCard}>
                     <div style={{ color: "#34d399", fontSize: 12, fontWeight: 900 }}>
                       0{index + 1}
                     </div>
-                    <strong style={{ display: "block", marginTop: 8 }}>{title}</strong>
+                    <strong style={{ display: "block", marginTop: 8 }}>{item.title}</strong>
                     <div style={screenCard}>
-                      <div style={{ fontWeight: 900 }}>Local business</div>
+                      <div style={{ fontWeight: 900 }}>{item.label}</div>
                       <p style={{ ...sub, marginTop: 5, fontSize: 12 }}>
-                        Customer request, notes, links, and next step.
+                        {item.text}
                       </p>
                     </div>
                   </div>
@@ -993,6 +1009,7 @@ const planetCore: CSSProperties = {
     </main>
   );
 }
+
 
 
 
