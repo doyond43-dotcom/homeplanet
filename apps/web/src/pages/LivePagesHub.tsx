@@ -522,8 +522,8 @@ const planetCore: CSSProperties = {
 <Link to="/planet/get-live" style={primary}>
                 Hold My Place in Line
               </Link>
-              <Link to="/planet/live-pages/included" style={secondary}>
-                See What Is Included
+              <Link to="/planet/home-services" style={secondary}>
+                Explore Live Demo
               </Link>
             </div>
           </div>
@@ -621,7 +621,7 @@ const planetCore: CSSProperties = {
         </Link>
 
         <Link
-          to="/planet/live-pages/included"
+          to="/planet/home-services"
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -637,7 +637,7 @@ const planetCore: CSSProperties = {
             fontSize: 16,
           }}
         >
-          See What Is Included
+          Explore Live Demo
         </Link>
       </div>
 
@@ -960,7 +960,7 @@ const planetCore: CSSProperties = {
                 You only pay after the first version is built and approved.
               </div>
             </div>
-            <Link to="/planet/live-pages/included" style={secondary}>
+            <Link to="/planet/home-services" style={secondary}>
               View full breakdown
             </Link>
           </div>
@@ -1009,6 +1009,8 @@ const planetCore: CSSProperties = {
     </main>
   );
 }
+
+
 
 
 

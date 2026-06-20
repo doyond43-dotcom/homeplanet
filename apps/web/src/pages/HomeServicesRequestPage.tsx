@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 
 export default function HomeServicesRequestPage() {
   const [selectedService, setSelectedService] = useState("");
@@ -107,7 +107,7 @@ export default function HomeServicesRequestPage() {
           </label>
 
           <p style={photoText}>
-            Photos help us provide a faster and more accurate estimate.
+            Photos are optional. In this demo, selected photos are only used to preview the flow and are not uploaded or stored.
           </p>
         </section>
 
@@ -242,6 +242,7 @@ const submitButton: React.CSSProperties = {
   width: "100%",
   boxSizing: "border-box",
 };
+
 
 
 
