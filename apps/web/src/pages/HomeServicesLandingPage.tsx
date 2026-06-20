@@ -1,6 +1,15 @@
-import React from "react";
+﻿import React, { useEffect } from "react";
 
+import { hpEvent } from "../lib/hpEvent";
 export default function HomeServicesLandingPage() {
+  useEffect(() => {
+    hpEvent({
+      event: "home_services_demo_view",
+      board: "homeplanet-live-pages",
+      entityId: "home-services-demo",
+      meta: { path: window.location.pathname },
+    });
+  }, []);
   return (
     <main style={page}>
       <div style={container}>
@@ -42,10 +51,17 @@ export default function HomeServicesLandingPage() {
 
         <button
           style={button}
-          onClick={() =>
-            (window.location.href =
-              "/planet/home-services/request")
-          }
+          onClick={() => {
+            hpEvent({
+              event: "home_services_estimate_click",
+              board: "homeplanet-live-pages",
+              entityId: "get-free-estimate",
+              meta: { path: window.location.pathname },
+            });
+            window.setTimeout(() => {
+              window.location.href = "/planet/home-services/request";
+            }, 120);
+          }}
         >
           Get Free Estimate
         </button>
@@ -116,3 +132,4 @@ const button: React.CSSProperties = {
   fontSize: 20,
   cursor: "pointer",
 };
+

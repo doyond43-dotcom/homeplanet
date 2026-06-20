@@ -1,6 +1,15 @@
-﻿import React, { useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 
+import { hpEvent } from "../lib/hpEvent";
 export default function HomeServicesRequestPage() {
+  useEffect(() => {
+    hpEvent({
+      event: "home_services_request_view",
+      board: "homeplanet-live-pages",
+      entityId: "home-services-request",
+      meta: { path: window.location.pathname },
+    });
+  }, []);
   const [selectedService, setSelectedService] = useState("");
   const [photoCount, setPhotoCount] = useState(0);
 
@@ -96,9 +105,16 @@ export default function HomeServicesRequestPage() {
               type="file"
               multiple
               style={{ display: "none" }}
-              onChange={(e) =>
-                setPhotoCount(e.target.files?.length || 0)
-              }
+              onChange={(e) => {
+                const count = e.target.files?.length || 0;
+                setPhotoCount(count);
+                hpEvent({
+                  event: "home_services_photo_selected",
+                  board: "homeplanet-live-pages",
+                  entityId: "property-photos",
+                  meta: { count, path: window.location.pathname },
+                });
+              }}
             />
 
             {photoCount > 0
@@ -115,6 +131,21 @@ export default function HomeServicesRequestPage() {
           <button
             style={submitButton}
             onClick={() => {
+              hpEvent({
+                event: "home_services_request_submit",
+                board: "homeplanet-live-pages",
+                entityId: "request-estimate",
+                meta: {
+                  selectedService,
+                  photoCount,
+                  hasName: Boolean(customerName),
+                  hasPhone: Boolean(phoneNumber),
+                  hasAddress: Boolean(propertyAddress),
+                  hasDescription: Boolean(jobDescription),
+                  path: window.location.pathname,
+                },
+              });
+
               localStorage.setItem(
                 "homeServicesLead",
                 JSON.stringify({
@@ -242,6 +273,7 @@ const submitButton: React.CSSProperties = {
   width: "100%",
   boxSizing: "border-box",
 };
+
 
 
 

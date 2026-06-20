@@ -1,6 +1,8 @@
 ﻿import { Link } from "react-router-dom";
+import { useEffect } from "react";
 import type { CSSProperties } from "react";
 
+import { hpEvent } from "../lib/hpEvent";
 const included = [
   "Done-for-you Live Page",
   "Customer intake",
@@ -60,6 +62,14 @@ const faqs = [
 ];
 
 export default function LivePagesHub() {
+  useEffect(() => {
+    hpEvent({
+      event: "live_pages_view",
+      board: "homeplanet-live-pages",
+      entityId: "live-pages-offer",
+      meta: { path: window.location.pathname },
+    });
+  }, []);
   const page: CSSProperties = {
     minHeight: "100vh",
     background:
@@ -519,10 +529,10 @@ const planetCore: CSSProperties = {
             </p>
 
             <div style={btnRow}>
-<Link to="/planet/get-live" style={primary}>
+<Link to="/planet/get-live" onClick={(e) => { e.preventDefault(); hpEvent({ event: "live_pages_hold_place_click", board: "homeplanet-live-pages", entityId: "hold-place", meta: { path: window.location.pathname } }); window.setTimeout(() => { window.location.href = "/planet/get-live"; }, 120); }} style={primary}>
                 Hold My Place in Line
               </Link>
-              <Link to="/planet/home-services" style={secondary}>
+              <Link to="/planet/home-services" onClick={(e) => { e.preventDefault(); hpEvent({ event: "live_pages_demo_click", board: "homeplanet-live-pages", entityId: "explore-demo", meta: { path: window.location.pathname } }); window.setTimeout(() => { window.location.href = "/planet/home-services"; }, 120); }} style={secondary}>
                 Explore Live Demo
               </Link>
             </div>
@@ -601,7 +611,7 @@ const planetCore: CSSProperties = {
         }}
       >
         <Link
-          to="/planet/get-live"
+          to="/planet/get-live" onClick={(e) => { e.preventDefault(); hpEvent({ event: "live_pages_hold_place_click", board: "homeplanet-live-pages", entityId: "hold-place", meta: { path: window.location.pathname } }); window.setTimeout(() => { window.location.href = "/planet/get-live"; }, 120); }}
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -621,7 +631,7 @@ const planetCore: CSSProperties = {
         </Link>
 
         <Link
-          to="/planet/home-services"
+          to="/planet/home-services" onClick={(e) => { e.preventDefault(); hpEvent({ event: "live_pages_demo_click", board: "homeplanet-live-pages", entityId: "explore-demo", meta: { path: window.location.pathname } }); window.setTimeout(() => { window.location.href = "/planet/home-services"; }, 120); }}
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -960,7 +970,7 @@ const planetCore: CSSProperties = {
                 You only pay after the first version is built and approved.
               </div>
             </div>
-            <Link to="/planet/home-services" style={secondary}>
+            <Link to="/planet/home-services" onClick={(e) => { e.preventDefault(); hpEvent({ event: "live_pages_demo_click", board: "homeplanet-live-pages", entityId: "explore-demo", meta: { path: window.location.pathname } }); window.setTimeout(() => { window.location.href = "/planet/home-services"; }, 120); }} style={secondary}>
               View full breakdown
             </Link>
           </div>
@@ -1001,7 +1011,7 @@ const planetCore: CSSProperties = {
               Message us to hold your place in line. First come, first served.
             </p>
           </div>
-          <Link to="/planet/get-live" style={primary}>
+          <Link to="/planet/get-live" onClick={(e) => { e.preventDefault(); hpEvent({ event: "live_pages_hold_place_click", board: "homeplanet-live-pages", entityId: "hold-place", meta: { path: window.location.pathname } }); window.setTimeout(() => { window.location.href = "/planet/get-live"; }, 120); }} style={primary}>
             Hold My Place
           </Link>
         </section>
@@ -1009,6 +1019,7 @@ const planetCore: CSSProperties = {
     </main>
   );
 }
+
 
 
 
