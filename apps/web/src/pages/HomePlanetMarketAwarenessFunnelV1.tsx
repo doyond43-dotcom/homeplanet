@@ -214,6 +214,12 @@ export default function HomePlanetMarketAwarenessFunnelV1() {
     setStats(next);
     setSelectedChallenge(challenge);
     setSubmitted(false);
+    setForm({
+      improvement: "",
+      name: "",
+      phone: "",
+      businessName: "",
+    });
 
     window.scrollTo({
       top: 0,
@@ -691,3 +697,4 @@ const styles: Record<string, React.CSSProperties> = {
     lineHeight: 1.35,
   },
 };
+
