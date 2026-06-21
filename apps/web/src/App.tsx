@@ -31,7 +31,7 @@ import BeamReceive from "./routes/BeamReceive";
 import BeamOpen from "./routes/BeamOpen";
 
 import WildingLiveBoardDispatch from "./pages/WildingLiveBoardDispatch";
-import HomePlanetMarketAwarenessFunnelV1 from "./pages/HomePlanetMarketAwarenessFunnelV1";
+import HomePlanetMarketAwarenessFunnelV1, { HomePlanetMarketAwarenessDashboardV1 } from "./pages/HomePlanetMarketAwarenessFunnelV1";
 
 function LiveShell() {
   return <Outlet />;
@@ -75,8 +75,8 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-          <Route path="/planet/build-your-live-system" element={<HomePlanetMarketAwarenessFunnelV1 />} />
-        <Route path="/service/*" element={<ServiceRoutes />} />
+          <Route path="/planet/build-your-live-system/dashboard" element={<HomePlanetMarketAwarenessDashboardV1 />} />
+          <Route path="/planet/build-your-live-system" element={<HomePlanetMarketAwarenessFunnelV1 />} />        <Route path="/service/*" element={<ServiceRoutes />} />
         <Route path="/city/*" element={<CityRoutes />} />
 
         <Route path="/legal-demo" element={<LegalDemoBoard />} />
@@ -129,6 +129,7 @@ export default function App() {
     </BrowserRouter>
   );
 }
+
 
 
 

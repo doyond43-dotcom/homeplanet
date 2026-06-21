@@ -81,6 +81,103 @@ function saveStats(next: AwarenessStats) {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
 }
 
+function AwarenessDashboard({ stats }: { stats: AwarenessStats }) {
+  const mostSelectedChallenge = useMemo(() => {
+    const rows = Object.entries(stats.challengeClicks) as [ChallengeKey, number][];
+    const winner = rows.reduce(
+      (best, current) => (current[1] > best[1] ? current : best),
+      rows[0]
+    );
+
+    return winner && winner[1] > 0 ? winner[0] : "None yet";
+  }, [stats.challengeClicks]);
+
+  const totalChallengeClicks = useMemo(() => {
+    return Object.values(stats.challengeClicks).reduce((sum, count) => sum + count, 0);
+  }, [stats.challengeClicks]);
+
+  const conversionRate = useMemo(() => {
+    if (!stats.totalVisits) return "0%";
+    return `${Math.round((stats.intakeSubmissions / stats.totalVisits) * 100)}%`;
+  }, [stats.totalVisits, stats.intakeSubmissions]);
+
+  return (
+    <section style={styles.dashboardCard}>
+      <div style={styles.dashboardHeader}>
+        <div>
+          <div style={styles.kicker}>Awareness Dashboard</div>
+          <h1 style={styles.dashboardTitle}>HomePlanet Market Awareness</h1>
+        </div>
+      </div>
+
+      <div style={styles.metricsGrid}>
+        <div style={styles.metricBox}>
+          <span style={styles.metricLabel}>Total Visits</span>
+          <strong style={styles.metricValue}>{stats.totalVisits}</strong>
+        </div>
+        <div style={styles.metricBox}>
+          <span style={styles.metricLabel}>Challenge Clicks</span>
+          <strong style={styles.metricValue}>{totalChallengeClicks}</strong>
+        </div>
+        <div style={styles.metricBox}>
+          <span style={styles.metricLabel}>Intake Submissions</span>
+          <strong style={styles.metricValue}>{stats.intakeSubmissions}</strong>
+        </div>
+        <div style={styles.metricBox}>
+          <span style={styles.metricLabel}>Conversion Rate</span>
+          <strong style={styles.metricValue}>{conversionRate}</strong>
+        </div>
+      </div>
+
+      <div style={styles.mostSelected}>
+        Most Selected Challenge: <strong>{mostSelectedChallenge}</strong>
+      </div>
+
+      <div style={styles.table}>
+        <div style={styles.tableHead}>
+          <span>Challenge</span>
+          <span>Clicks</span>
+        </div>
+
+        {challenges.map((challenge) => (
+          <div key={challenge.title} style={styles.tableRow}>
+            <span>{challenge.title}</span>
+            <strong>{stats.challengeClicks[challenge.title] || 0}</strong>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+export function HomePlanetMarketAwarenessDashboardV1() {
+  const [stats, setStats] = useState<AwarenessStats>(defaultStats);
+
+  useEffect(() => {
+    setStats(readStats());
+  }, []);
+
+  return (
+    <main style={styles.page}>
+      <section style={styles.glowOne} />
+      <section style={styles.glowTwo} />
+
+      <div style={styles.shell}>
+        <section style={styles.operatorHero}>
+          <div style={styles.kicker}>HomePlanet Operator View</div>
+          <h1 style={styles.operatorTitle}>Awareness Tracking</h1>
+          <p style={styles.operatorSubtitle}>
+            This is the internal view for watching what business owners click, what they care about,
+            and which direction HomePlanet should build next.
+          </p>
+        </section>
+
+        <AwarenessDashboard stats={stats} />
+      </div>
+    </main>
+  );
+}
+
 export default function HomePlanetMarketAwarenessFunnelV1() {
   const [stats, setStats] = useState<AwarenessStats>(defaultStats);
   const [selectedChallenge, setSelectedChallenge] = useState<ChallengeKey | "">("");
@@ -101,25 +198,6 @@ export default function HomePlanetMarketAwarenessFunnelV1() {
     saveStats(next);
     setStats(next);
   }, []);
-
-  const mostSelectedChallenge = useMemo(() => {
-    const rows = Object.entries(stats.challengeClicks) as [ChallengeKey, number][];
-    const winner = rows.reduce(
-      (best, current) => (current[1] > best[1] ? current : best),
-      rows[0]
-    );
-
-    return winner && winner[1] > 0 ? winner[0] : "None yet";
-  }, [stats.challengeClicks]);
-
-  const totalChallengeClicks = useMemo(() => {
-    return Object.values(stats.challengeClicks).reduce((sum, count) => sum + count, 0);
-  }, [stats.challengeClicks]);
-
-  const conversionRate = useMemo(() => {
-    if (!stats.totalVisits) return "0%";
-    return `${Math.round((stats.intakeSubmissions / stats.totalVisits) * 100)}%`;
-  }, [stats.totalVisits, stats.intakeSubmissions]);
 
   function handleChallengeClick(challenge: ChallengeKey) {
     const current = readStats();
@@ -192,52 +270,6 @@ export default function HomePlanetMarketAwarenessFunnelV1() {
                 </button>
               ))}
             </section>
-
-            <section style={styles.dashboardCard}>
-              <div style={styles.dashboardHeader}>
-                <div>
-                  <div style={styles.kicker}>Awareness Dashboard</div>
-                  <h2 style={styles.dashboardTitle}>HomePlanet Market Awareness</h2>
-                </div>
-              </div>
-
-              <div style={styles.metricsGrid}>
-                <div style={styles.metricBox}>
-                  <span style={styles.metricLabel}>Total Visits</span>
-                  <strong style={styles.metricValue}>{stats.totalVisits}</strong>
-                </div>
-                <div style={styles.metricBox}>
-                  <span style={styles.metricLabel}>Challenge Clicks</span>
-                  <strong style={styles.metricValue}>{totalChallengeClicks}</strong>
-                </div>
-                <div style={styles.metricBox}>
-                  <span style={styles.metricLabel}>Intake Submissions</span>
-                  <strong style={styles.metricValue}>{stats.intakeSubmissions}</strong>
-                </div>
-                <div style={styles.metricBox}>
-                  <span style={styles.metricLabel}>Conversion Rate</span>
-                  <strong style={styles.metricValue}>{conversionRate}</strong>
-                </div>
-              </div>
-
-              <div style={styles.mostSelected}>
-                Most Selected Challenge: <strong>{mostSelectedChallenge}</strong>
-              </div>
-
-              <div style={styles.table}>
-                <div style={styles.tableHead}>
-                  <span>Challenge</span>
-                  <span>Clicks</span>
-                </div>
-
-                {challenges.map((challenge) => (
-                  <div key={challenge.title} style={styles.tableRow}>
-                    <span>{challenge.title}</span>
-                    <strong>{stats.challengeClicks[challenge.title] || 0}</strong>
-                  </div>
-                ))}
-              </div>
-            </section>
           </>
         ) : (
           <section style={styles.intakeCard}>
@@ -262,7 +294,7 @@ export default function HomePlanetMarketAwarenessFunnelV1() {
               <div style={styles.successBox}>
                 <h2 style={styles.successTitle}>Submitted.</h2>
                 <p style={styles.successText}>
-                  HomePlanet now has another proof point in the awareness model.
+                  We got it. HomePlanet will use this to point the next step in the right direction.
                 </p>
               </div>
             ) : (
@@ -442,6 +474,24 @@ const styles: Record<string, React.CSSProperties> = {
     color: "rgba(244,255,247,0.72)",
     fontSize: "17px",
     lineHeight: 1.35,
+    fontWeight: 750,
+  },
+  operatorHero: {
+    padding: "26px 0 18px",
+  },
+  operatorTitle: {
+    margin: 0,
+    fontSize: "clamp(46px, 11vw, 92px)",
+    lineHeight: 0.9,
+    letterSpacing: "-0.08em",
+    fontWeight: 1000,
+  },
+  operatorSubtitle: {
+    maxWidth: "780px",
+    margin: "18px 0 0",
+    color: "rgba(244,255,247,0.74)",
+    fontSize: "clamp(17px, 3.6vw, 24px)",
+    lineHeight: 1.3,
     fontWeight: 750,
   },
   dashboardCard: {
