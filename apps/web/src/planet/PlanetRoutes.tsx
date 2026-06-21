@@ -375,6 +375,7 @@ import OkeechobeeEventPage from "../pages/OkeechobeeEventPage";
 import OkeechobeeCommunityAdminPage from "../pages/OkeechobeeCommunityAdminPage";
 import OkeechobeeProjectWorkspace from "../pages/OkeechobeeProjectWorkspace";
 import HomePlanetBuildDirectory from "../pages/HomePlanetBuildDirectory";
+import HomePlanetFlowRegistry from "../pages/HomePlanetFlowRegistry";
 import OkeechobeeCommandCenter from "../pages/OkeechobeeCommandCenter";
 
 import StarterLivePageCreatorPage from "../pages/StarterLivePageCreatorPage";
@@ -448,6 +449,7 @@ export default function PlanetRoutes() {
   return (
     <Routes>
         <Route path="builds" element={<HomePlanetBuildDirectory />} />
+        <Route path="flows" element={<HomePlanetFlowRegistry />} />
         <Route path="swamp-life" element={<SwampLifeExperiencePage />} />
 
 <Route path="/starter/:slug" element={<StarterGeneratedLivePage />} />
@@ -803,24 +805,4 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

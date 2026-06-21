@@ -191,6 +191,12 @@ export default function HomePlanetBuildDirectory() {
             No hunting. No duplicate confusion. Tap a card and open the build.
           </p>
         </header>
+        <a
+          href="/planet/flows"
+          className="rounded-[24px] border border-emerald-400/20 bg-emerald-400/[0.08] p-5 text-center text-sm font-black uppercase tracking-[0.2em] text-emerald-200 shadow-xl shadow-emerald-950/20 transition hover:bg-emerald-400/[0.14]"
+        >
+          View Flow Registry →
+        </a>
 
         <div className="flex flex-col gap-8">
           {sections.map((section) => (
