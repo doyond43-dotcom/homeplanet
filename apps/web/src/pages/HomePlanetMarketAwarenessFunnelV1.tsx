@@ -467,7 +467,7 @@ export default function HomePlanetMarketAwarenessFunnelV1() {
     const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=homeplanetlive@gmail.com&su=${subject}&body=${body}`;
     const opened = window.open(gmailUrl, "_blank", "noopener,noreferrer");
     if (!opened) {
-      alert("Your request was saved. Please allow popups for this page, then submit again to open the Gmail draft.");
+      alert("Your request was saved. Gmail may need popups allowed. Open the Gmail draft, review it, and click Send.");
     }
   }
 
@@ -530,7 +530,7 @@ export default function HomePlanetMarketAwarenessFunnelV1() {
               <div style={styles.successBox}>
                 <h2 style={styles.successTitle}>Submitted.</h2>
                 <p style={styles.successText}>
-                  Saved. A Gmail draft should open in another tab. Send it from Gmail, then come back here.
+                  Saved. Gmail should open in another tab. Review the draft and click Send.
                 </p>
               </div>
             ) : (
@@ -927,6 +927,7 @@ const styles: Record<string, React.CSSProperties> = {
     lineHeight: 1.35,
   },
 };
+
 
 
 
