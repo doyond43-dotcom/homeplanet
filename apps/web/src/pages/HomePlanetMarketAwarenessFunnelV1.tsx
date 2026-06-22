@@ -425,49 +425,62 @@ export default function HomePlanetMarketAwarenessFunnelV1() {
       behavior: "smooth",
     });
   }
-
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const payload = {
       challenge: selectedChallenge,
-      improvement: form.improvement.trim(),
-      name: form.name.trim(),
-      phone: form.phone.trim(),
-      businessName: form.businessName.trim(),
+      improvement: formData.improvement,
+      name: formData.name,
+      phone: formData.phone,
+      businessName: formData.businessName,
       createdAt: new Date().toISOString(),
       source: "HomePlanet Build Your Live System Funnel",
     };
 
-    const key = "hp-build-your-live-system-submissions";
-    const existing = JSON.parse(window.localStorage.getItem(key) || "[]");
-    window.localStorage.setItem(key, JSON.stringify([payload, ...existing]));
+    const emailBody =
+      `Name: ${payload.name || "Not provided"}\n` +
+      `Business / Project: ${payload.businessName || "Not provided"}\n` +
+      `Best contact: ${payload.phone || "Not provided"}\n` +
+      `Challenge selected: ${payload.challenge || "Not provided"}\n` +
+      `Trying to improve: ${payload.improvement || "Not provided"}\n` +
+      `Source: ${payload.source}\n` +
+      `Time: ${payload.createdAt}`;
 
-    const current = readStats();
-    const next: AwarenessStats = {
-      ...current,
-      intakeSubmissions: current.intakeSubmissions + 1,
-    };
+    try {
+      const response = await fetch("https://formsubmit.co/ajax/homeplanetlive@gmail.com", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          _subject: "HomePlanet live system request",
+          _template: "table",
+          _captcha: "false",
+          name: payload.name || "Not provided",
+          business: payload.businessName || "Not provided",
+          phone: payload.phone || "Not provided",
+          challenge: payload.challenge || "Not provided",
+          message: emailBody,
+        }),
+      });
 
-    saveStats(next);
-    setStats(next);
-    setSubmitted(true);
+      if (!response.ok) {
+        throw new Error("Email service did not accept the request.");
+      }
 
-    const subject = encodeURIComponent("HomePlanet live system request");
-    const body = encodeURIComponent(
-      `Name: ${payload.name}\n` +
-        `Business / Project: ${payload.businessName || "Not provided"}\n` +
-        `Best contact: ${payload.phone}\n` +
-        `Challenge selected: ${payload.challenge}\n\n` +
-        `Trying to improve:\n${payload.improvement}\n\n` +
-        `Source: ${payload.source}\n` +
-        `Time: ${payload.createdAt}`
-    );
-
-    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=homeplanetlive@gmail.com&su=${subject}&body=${body}`;
-    const opened = window.open(gmailUrl, "_blank", "noopener,noreferrer");
-    if (!opened) {
-      alert("Your request was saved. Gmail may need popups allowed. Open the Gmail draft, review it, and click Send.");
+      const current = readStats();
+      const nextStats = {
+        ...current,
+        submissions: current.submissions + 1,
+      };
+      writeStats(nextStats);
+      setStats(nextStats);
+      setSubmitted(true);
+    } catch (error) {
+      console.error("HomePlanet lead email failed:", error);
+      alert("The form did not send. Please text HomePlanet directly so we do not miss you.");
     }
   }
 
@@ -530,7 +543,7 @@ export default function HomePlanetMarketAwarenessFunnelV1() {
               <div style={styles.successBox}>
                 <h2 style={styles.successTitle}>Submitted.</h2>
                 <p style={styles.successText}>
-                  Saved. Gmail should open in another tab. Review the draft and click Send.
+                  Submitted. Your request was sent to HomePlanet. We will review it and follow up.
                 </p>
               </div>
             ) : (
@@ -927,6 +940,7 @@ const styles: Record<string, React.CSSProperties> = {
     lineHeight: 1.35,
   },
 };
+
 
 
 
