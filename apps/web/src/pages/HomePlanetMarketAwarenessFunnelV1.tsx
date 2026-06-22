@@ -485,6 +485,7 @@ export default function HomePlanetMarketAwarenessFunnelV1() {
   }
 
   const showingIntake = Boolean(selectedChallenge);
+  const requestSent = new URLSearchParams(window.location.search).get("sent") === "1";
 
   return (
     <main style={styles.page}>
@@ -492,7 +493,21 @@ export default function HomePlanetMarketAwarenessFunnelV1() {
       <section style={styles.glowTwo} />
 
       <div style={styles.shell}>
-        {!showingIntake ? (
+        {requestSent ? (
+          <section style={styles.intakeCard}>
+            <div style={styles.kicker}>Request Received</div>
+            <h1 style={styles.intakeTitle}>We got your direction.</h1>
+            <p style={styles.intakeSubtitle}>
+              HomePlanet will review what you sent and follow up from here. We use your contact details only for this request.
+            </p>
+            <div style={styles.successBox}>
+              <h2 style={styles.successTitle}>You are in the right place.</h2>
+              <p style={styles.successText}>
+                Your message was sent to HomePlanet. We will look at what you are trying to improve and reach back out with the next step.
+              </p>
+            </div>
+          </section>
+        ) : !showingIntake ? (
           <>
             <section style={styles.hero}>
               <div style={styles.kicker}>HomePlanet Awareness Funnel V1</div>
@@ -944,6 +959,8 @@ const styles: Record<string, React.CSSProperties> = {
     lineHeight: 1.35,
   },
 };
+
+
 
 
 
