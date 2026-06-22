@@ -230,6 +230,20 @@ export default function HomePlanetMarketAwarenessFunnelV1() {
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
+    const payload = {
+      challenge: selectedChallenge,
+      improvement: form.improvement.trim(),
+      name: form.name.trim(),
+      phone: form.phone.trim(),
+      businessName: form.businessName.trim(),
+      createdAt: new Date().toISOString(),
+      source: "HomePlanet Build Your Live System Funnel",
+    };
+
+    const key = "hp-build-your-live-system-submissions";
+    const existing = JSON.parse(window.localStorage.getItem(key) || "[]");
+    window.localStorage.setItem(key, JSON.stringify([payload, ...existing]));
+
     const current = readStats();
     const next: AwarenessStats = {
       ...current,
@@ -239,6 +253,23 @@ export default function HomePlanetMarketAwarenessFunnelV1() {
     saveStats(next);
     setStats(next);
     setSubmitted(true);
+
+    const subject = encodeURIComponent("HomePlanet live system request");
+    const body = encodeURIComponent(
+      `Name: ${payload.name}\n` +
+        `Business / Project: ${payload.businessName || "Not provided"}\n` +
+        `Best contact: ${payload.phone}\n` +
+        `Challenge selected: ${payload.challenge}\n\n` +
+        `Trying to improve:\n${payload.improvement}\n\n` +
+        `Source: ${payload.source}\n` +
+        `Time: ${payload.createdAt}`
+    );
+
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=homeplanetlive@gmail.com&su=${subject}&body=${body}`;
+    const opened = window.open(gmailUrl, "_blank", "noopener,noreferrer");
+    if (!opened) {
+      alert("Your request was saved. Please allow popups for this page, then submit again to open the Gmail draft.");
+    }
   }
 
   const showingIntake = Boolean(selectedChallenge);
@@ -300,7 +331,7 @@ export default function HomePlanetMarketAwarenessFunnelV1() {
               <div style={styles.successBox}>
                 <h2 style={styles.successTitle}>Submitted.</h2>
                 <p style={styles.successText}>
-                  We got it. HomePlanet will use this to point the next step in the right direction.
+                  Saved. A Gmail draft should open in another tab. Send it from Gmail, then come back here.
                 </p>
               </div>
             ) : (
@@ -697,4 +728,6 @@ const styles: Record<string, React.CSSProperties> = {
     lineHeight: 1.35,
   },
 };
+
+
 
