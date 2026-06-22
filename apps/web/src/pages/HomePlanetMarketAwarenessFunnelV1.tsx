@@ -82,71 +82,287 @@ function saveStats(next: AwarenessStats) {
 }
 
 function AwarenessDashboard({ stats }: { stats: AwarenessStats }) {
-  const mostSelectedChallenge = useMemo(() => {
-    const rows = Object.entries(stats.challengeClicks) as [ChallengeKey, number][];
-    const winner = rows.reduce(
-      (best, current) => (current[1] > best[1] ? current : best),
-      rows[0]
-    );
+  const leadSubmissions = (() => {
+    try {
+      return JSON.parse(window.localStorage.getItem("hp-build-your-live-system-submissions") || "[]") as Array<{
+        challenge?: string;
+        improvement?: string;
+        name?: string;
+        phone?: string;
+        businessName?: string;
+        createdAt?: string;
+        source?: string;
+      }>;
+    } catch {
+      return [];
+    }
+  })();
 
-    return winner && winner[1] > 0 ? winner[0] : "None yet";
-  }, [stats.challengeClicks]);
+  const totalClicks = Object.values(stats.challengeClicks || {}).reduce((sum, count) => sum + count, 0);
+  const conversionRate = stats.totalVisits ? Math.round((stats.intakeSubmissions / stats.totalVisits) * 100) : 0;
 
-  const totalChallengeClicks = useMemo(() => {
-    return Object.values(stats.challengeClicks).reduce((sum, count) => sum + count, 0);
-  }, [stats.challengeClicks]);
+  const rows = [
+    ["Get More Customers", stats.challengeClicks.getCustomers || 0],
+    ["Organize My Business", stats.challengeClicks.organizeBusiness || 0],
+    ["My Website Isn't Working", stats.challengeClicks.websiteNotWorking || 0],
+    ["Track Leads & Customers", stats.challengeClicks.trackLeads || 0],
+    ["Scheduling & Appointments", stats.challengeClicks.scheduling || 0],
+    ["Show Me Real Examples", stats.challengeClicks.examples || 0],
+  ];
 
-  const conversionRate = useMemo(() => {
-    if (!stats.totalVisits) return "0%";
-    return `${Math.round((stats.intakeSubmissions / stats.totalVisits) * 100)}%`;
-  }, [stats.totalVisits, stats.intakeSubmissions]);
+  const mostSelected = [...rows].sort((a, b) => Number(b[1]) - Number(a[1]))[0]?.[0] || "None yet";
+
+  function getDiagnosis(challenge?: string) {
+    if (challenge === "My Website Isn't Working") {
+      return {
+        actualNeed: "This is probably not just a website problem. They need a clearer front door, a stronger intake path, proof organized, and a follow-up board underneath.",
+        currentLeak: "People may click, ask a question, send photos, or show interest — but the next step depends on memory, scattered messages, and manual follow-up.",
+        recommendedSystem: "Live Page + Problem Buttons + Intake + Proof/Photos + Lead Board + Follow-Up Timeline",
+        demoReason: "BrightSide shows the after-the-click problem: attention is easy to get, but follow-up is where businesses lose the customer.",
+      };
+    }
+
+    if (challenge === "Get More Customers") {
+      return {
+        actualNeed: "They may not only need more attention. They need a better path for turning attention into a real lead with a next step.",
+        currentLeak: "Posts, ads, referrals, and comments may create interest, but without a clean intake and response path, the opportunity can disappear fast.",
+        recommendedSystem: "Live Page + Clear Offer + Intake + Lead Board + Follow-Up Path + Proof/Photos",
+        demoReason: "BrightSide shows how the first click becomes a trackable customer path instead of another scattered message.",
+      };
+    }
+
+    if (challenge === "Organize My Business") {
+      return {
+        actualNeed: "They likely need the work underneath the business made visible: tasks, requests, customer details, photos, status, and next actions.",
+        currentLeak: "The business may be running through memory, texts, screenshots, paper notes, and repeated explanations.",
+        recommendedSystem: "Live Page + Customer Intake + Work Board + Job Timeline + Notes + Photos",
+        demoReason: "BrightSide shows the difference between reacting to messages and running a clear workflow.",
+      };
+    }
+
+    if (challenge === "Track Leads & Customers") {
+      return {
+        actualNeed: "They need every customer request to become a card with a status, source, message, next step, and follow-up trail.",
+        currentLeak: "Leads are probably coming from multiple places with no single truth chain showing who asked, what they need, and what happened next.",
+        recommendedSystem: "Lead Board + Source Tracking + Customer Notes + Follow-Up Timeline + Next-Step Buttons",
+        demoReason: "BrightSide shows how customer attention turns into a lead card instead of getting lost after the click.",
+      };
+    }
+
+    if (challenge === "Scheduling & Appointments") {
+      return {
+        actualNeed: "They likely need request-to-schedule flow, not just a calendar. The customer needs to know what happens before and after the appointment.",
+        currentLeak: "Appointments may be buried in texts, missed calls, screenshots, or memory with no clean customer/job timeline.",
+        recommendedSystem: "Booking Request + Intake Questions + Schedule Notes + Job Card + Customer Updates",
+        demoReason: "BrightSide shows how one request becomes a guided workflow with next steps.",
+      };
+    }
+
+    return {
+      actualNeed: "They are asking to see how HomePlanet works. The best move is to show how a message becomes a system, not just a page.",
+      currentLeak: "They may already know websites and social media are not enough. The missing piece is the workflow after someone shows interest.",
+      recommendedSystem: "Live Page Example + Intake + Lead Board + Proof/Photos + Build Direction",
+      demoReason: "BrightSide is the cleanest visual proof of what happens after the click.",
+    };
+  }
+
+  function copyReply(lead: {
+    challenge?: string;
+    improvement?: string;
+    name?: string;
+    phone?: string;
+    businessName?: string;
+  }) {
+    const firstName = (lead.name || "there").split(" ")[0];
+
+    const reply =
+      `Hey ${firstName}, thanks for reaching out. I saw you selected "${lead.challenge || "a business need"}."\n\n` +
+      `That usually means the goal is not just getting more people to see you — it is making sure when someone does reach out, there is a clear path for what happens next.\n\n` +
+      `What HomePlanet looks at is simple:\n` +
+      `Where do people find you?\n` +
+      `What do they click?\n` +
+      `What do they send you?\n` +
+      `Where does the conversation usually go?\n` +
+      `And where does the next step get lost?\n\n` +
+      `For your direction, I would probably start with:\n` +
+      `${getDiagnosis(lead.challenge).recommendedSystem}\n\n` +
+      `The next step is easy. Send me your business name, your top 3 services, a few photos/examples of your work, and how customers usually contact you now — Facebook, text, calls, website, or all of it.\n\n` +
+      `From there, I can help shape the first Live System around how your business actually works.`;
+
+    navigator.clipboard?.writeText(reply);
+    alert("Reply copied.");
+  }
+
+  const cardStyle: CSSProperties = {
+    border: "1px solid rgba(52,211,153,0.22)",
+    background: "linear-gradient(135deg, rgba(11,24,18,0.92), rgba(5,8,7,0.94))",
+    borderRadius: 22,
+    padding: 22,
+    boxShadow: "0 28px 90px rgba(0,0,0,0.36)",
+  };
+
+  const smallCard: CSSProperties = {
+    border: "1px solid rgba(255,255,255,0.10)",
+    background: "rgba(255,255,255,0.045)",
+    borderRadius: 16,
+    padding: 16,
+  };
+
+  const labelStyle: CSSProperties = {
+    color: "#7dff9d",
+    fontSize: 12,
+    fontWeight: 950,
+    textTransform: "uppercase",
+    letterSpacing: "0.12em",
+  };
+
+  const valueStyle: CSSProperties = {
+    color: "#f8fafc",
+    fontSize: 16,
+    fontWeight: 850,
+    marginTop: 6,
+  };
+
+  const buttonStyle: CSSProperties = {
+    border: "1px solid rgba(52,211,153,0.36)",
+    background: "rgba(52,211,153,0.14)",
+    color: "#dcffe8",
+    borderRadius: 999,
+    padding: "10px 14px",
+    fontWeight: 900,
+    cursor: "pointer",
+  };
 
   return (
-    <section style={styles.dashboardCard}>
-      <div style={styles.dashboardHeader}>
-        <div>
+    <main style={styles.page}>
+      <section style={styles.glowOne} />
+      <section style={styles.glowTwo} />
+
+      <div style={styles.shell}>
+        <section style={styles.hero}>
+          <div style={styles.kicker}>HomePlanet Operator View</div>
+          <h1 style={styles.title}>After The Click Board</h1>
+          <p style={styles.subtitle}>
+            This is the operator view for turning a form submission into a clear reply, a build direction, and the next move.
+          </p>
+        </section>
+
+        <section style={cardStyle}>
           <div style={styles.kicker}>Awareness Dashboard</div>
-          <h1 style={styles.dashboardTitle}>HomePlanet Market Awareness</h1>
-        </div>
-      </div>
+          <h2 style={{ color: "#f8fafc", fontSize: 28, margin: "10px 0 16px" }}>Funnel Activity</h2>
 
-      <div style={styles.metricsGrid}>
-        <div style={styles.metricBox}>
-          <span style={styles.metricLabel}>Total Visits</span>
-          <strong style={styles.metricValue}>{stats.totalVisits}</strong>
-        </div>
-        <div style={styles.metricBox}>
-          <span style={styles.metricLabel}>Challenge Clicks</span>
-          <strong style={styles.metricValue}>{totalChallengeClicks}</strong>
-        </div>
-        <div style={styles.metricBox}>
-          <span style={styles.metricLabel}>Intake Submissions</span>
-          <strong style={styles.metricValue}>{stats.intakeSubmissions}</strong>
-        </div>
-        <div style={styles.metricBox}>
-          <span style={styles.metricLabel}>Conversion Rate</span>
-          <strong style={styles.metricValue}>{conversionRate}</strong>
-        </div>
-      </div>
-
-      <div style={styles.mostSelected}>
-        Most Selected Challenge: <strong>{mostSelectedChallenge}</strong>
-      </div>
-
-      <div style={styles.table}>
-        <div style={styles.tableHead}>
-          <span>Challenge</span>
-          <span>Clicks</span>
-        </div>
-
-        {challenges.map((challenge) => (
-          <div key={challenge.title} style={styles.tableRow}>
-            <span>{challenge.title}</span>
-            <strong>{stats.challengeClicks[challenge.title] || 0}</strong>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 12 }}>
+            <div style={smallCard}><div style={labelStyle}>Total Visits</div><div style={valueStyle}>{stats.totalVisits}</div></div>
+            <div style={smallCard}><div style={labelStyle}>Challenge Clicks</div><div style={valueStyle}>{totalClicks}</div></div>
+            <div style={smallCard}><div style={labelStyle}>Intake Submissions</div><div style={valueStyle}>{stats.intakeSubmissions}</div></div>
+            <div style={smallCard}><div style={labelStyle}>Conversion Rate</div><div style={valueStyle}>{conversionRate}%</div></div>
           </div>
-        ))}
+
+          <div style={{ ...smallCard, marginTop: 14, background: "rgba(52,211,153,0.10)" }}>
+            <strong>Most Selected Challenge:</strong> {mostSelected}
+          </div>
+
+          <div style={{ marginTop: 18, border: "1px solid rgba(255,255,255,0.08)", borderRadius: 18, overflow: "hidden" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 100px", padding: "14px 16px", background: "rgba(52,211,153,0.10)", color: "#7dff9d", fontWeight: 950, textTransform: "uppercase", letterSpacing: "0.10em" }}>
+              <span>Challenge</span>
+              <span>Clicks</span>
+            </div>
+            {rows.map(([label, count]) => (
+              <div key={label} style={{ display: "grid", gridTemplateColumns: "1fr 100px", padding: "14px 16px", borderTop: "1px solid rgba(255,255,255,0.07)", color: "#e5f7ec", fontWeight: 850 }}>
+                <span>{label}</span>
+                <span>{count}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section style={{ ...cardStyle, marginTop: 22 }}>
+          <div style={styles.kicker}>HomePlanet Diagnosis Board</div>
+          <h2 style={{ color: "#f8fafc", fontSize: 34, margin: "10px 0 8px" }}>Every request becomes a build direction.</h2>
+          <p style={{ color: "#bdd0c6", fontWeight: 750, lineHeight: 1.55, maxWidth: 780 }}>
+            They already saw the demo. Now their request becomes a real build direction with one clear next move.
+          </p>
+
+          {leadSubmissions.length === 0 ? (
+            <div style={{ ...smallCard, marginTop: 18 }}>
+              <div style={labelStyle}>No leads yet</div>
+              <div style={{ color: "#cbd5d1", marginTop: 8, fontWeight: 750 }}>
+                Submit the public funnel once and the lead card will appear here on this browser.
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: "grid", gap: 16, marginTop: 20 }}>
+              {leadSubmissions.map((lead, index) => (
+                <article key={`${lead.createdAt}-${index}`} style={{ ...smallCard, background: "rgba(5,10,7,0.72)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: 14, flexWrap: "wrap" }}>
+                    <div>
+                      <div style={labelStyle}>New Funnel Request</div>
+                      <h3 style={{ color: "#f8fafc", fontSize: 28, margin: "8px 0 4px" }}>
+                        {lead.name || "Unknown Lead"}
+                      </h3>
+                      <div style={{ color: "#bdd0c6", fontWeight: 800 }}>
+                        {lead.businessName || "No business name"} · {lead.phone || "No contact"}
+                      </div>
+                    </div>
+                    <div style={{ border: "1px solid rgba(251,191,36,0.45)", color: "#fde68a", borderRadius: 999, padding: "8px 12px", height: "fit-content", fontWeight: 950 }}>
+                      Needs Reply
+                    </div>
+                  </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 12, marginTop: 16 }}>
+                    <div style={{ ...smallCard, borderLeft: "4px solid #38bdf8" }}><div style={{ ...labelStyle, color: "#7dd3fc" }}>Challenge</div><div style={valueStyle}>{lead.challenge || "Not selected"}</div></div>
+                    <div style={{ ...smallCard, borderLeft: "4px solid #64748b" }}><div style={{ ...labelStyle, color: "#cbd5e1" }}>Source</div><div style={valueStyle}>{lead.source || "Build Funnel"}</div></div>
+                  </div>
+                  <div style={{ ...smallCard, marginTop: 12, borderLeft: "6px solid #38bdf8", background: "linear-gradient(135deg, rgba(56,189,248,0.12), rgba(5,10,7,0.78))" }}>
+                    <div style={{ ...labelStyle, color: "#7dd3fc" }}>What they wrote</div>
+                    <p style={{ color: "#e5f7ec", fontWeight: 750, lineHeight: 1.55, marginBottom: 0 }}>
+                      {lead.improvement || "No message added."}
+                    </p>
+                  </div>
+
+                  <div style={{ ...smallCard, marginTop: 12, borderLeft: "6px solid #a78bfa", borderColor: "rgba(167,139,250,0.34)", background: "linear-gradient(135deg, rgba(167,139,250,0.14), rgba(5,10,7,0.78))" }}>
+                    <div style={{ ...labelStyle, color: "#c4b5fd" }}>HomePlanet Understood</div>
+                    <h4 style={{ color: "#f8fafc", fontSize: 24, margin: "8px 0 10px" }}>
+                      This is the real problem behind the request.
+                    </h4>
+                    <p style={{ color: "#dfffea", fontWeight: 800, lineHeight: 1.55, margin: 0 }}>
+                      {getDiagnosis(lead.challenge).actualNeed}
+                    </p>
+                  </div>
+
+                  <div style={{ ...smallCard, marginTop: 12, borderLeft: "6px solid #34d399", background: "linear-gradient(135deg, rgba(52,211,153,0.12), rgba(5,10,7,0.78))" }}>
+                    <div style={{ ...labelStyle, color: "#86efac" }}>Recommended Build Direction</div>
+                    <p style={{ color: "#f8fafc", fontWeight: 900, lineHeight: 1.6, marginBottom: 0 }}>
+                      {getDiagnosis(lead.challenge).recommendedSystem}
+                    </p>
+                  </div>
+
+                  <div style={{ ...smallCard, marginTop: 12, borderLeft: "6px solid #fbbf24", borderColor: "rgba(251,191,36,0.34)", background: "linear-gradient(135deg, rgba(251,191,36,0.13), rgba(5,10,7,0.78))" }}>
+                    <div style={{ ...labelStyle, color: "#fde68a" }}>Next Move</div>
+                    <p style={{ color: "#f8fafc", fontWeight: 850, lineHeight: 1.65, marginBottom: 0 }}>
+                      Reply with the build direction, then ask for their business name, top services, photos/examples of work, and how customers usually contact them now.
+                    </p>
+                  </div>
+
+                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 16 }}>
+                    <button style={buttonStyle} onClick={() => copyReply(lead)}>
+                      Copy Next Message
+                    </button>
+                    <a style={{ ...buttonStyle, textDecoration: "none" }} href="/planet/build-your-live-system">
+                      Public Funnel
+                    </a>
+                  </div>
+
+                  <div style={{ color: "#8fa59a", fontSize: 12, fontWeight: 800, marginTop: 14 }}>
+                    Received: {lead.createdAt || "No timestamp"}
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
       </div>
-    </section>
+    </main>
   );
 }
 
@@ -157,25 +373,7 @@ export function HomePlanetMarketAwarenessDashboardV1() {
     setStats(readStats());
   }, []);
 
-  return (
-    <main style={styles.page}>
-      <section style={styles.glowOne} />
-      <section style={styles.glowTwo} />
-
-      <div style={styles.shell}>
-        <section style={styles.operatorHero}>
-          <div style={styles.kicker}>HomePlanet Operator View</div>
-          <h1 style={styles.operatorTitle}>Awareness Tracking</h1>
-          <p style={styles.operatorSubtitle}>
-            This is the internal view for watching what business owners click, what they care about,
-            and which direction HomePlanet should build next.
-          </p>
-        </section>
-
-        <AwarenessDashboard stats={stats} />
-      </div>
-    </main>
-  );
+  return <AwarenessDashboard stats={stats} />;
 }
 
 export default function HomePlanetMarketAwarenessFunnelV1() {
@@ -728,6 +926,14 @@ const styles: Record<string, React.CSSProperties> = {
     lineHeight: 1.35,
   },
 };
+
+
+
+
+
+
+
+
 
 
 
