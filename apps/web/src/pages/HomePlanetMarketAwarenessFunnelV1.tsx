@@ -547,10 +547,14 @@ export default function HomePlanetMarketAwarenessFunnelV1() {
                 </p>
               </div>
             ) : (
-              <form style={styles.form} onSubmit={handleSubmit}>
+              <form style={styles.form} action="https://formsubmit.co/homeplanetlive@gmail.com" method="POST">
+                <input type="hidden" name="_subject" value="HomePlanet live system request" />
+                <input type="hidden" name="_template" value="table" />
+                <input type="hidden" name="_captcha" value="false" />
+                <input type="hidden" name="_next" value="https://www.homeplanet.city/planet/build-your-live-system?sent=1" />
                 <label style={styles.label}>
                   Challenge Selected
-                  <input style={styles.input} value={selectedChallenge} readOnly />
+                  <input style={styles.input} name="challenge" value={selectedChallenge} readOnly />
                 </label>
 
                 <label style={styles.label}>
@@ -940,6 +944,9 @@ const styles: Record<string, React.CSSProperties> = {
     lineHeight: 1.35,
   },
 };
+
+
+
 
 
 
