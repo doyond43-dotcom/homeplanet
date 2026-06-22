@@ -1,4 +1,5 @@
 ﻿import React, { useEffect, useMemo, useState } from "react";
+import { supabase } from "../lib/supabase";
 
 type ChallengeKey =
   | "Get More Customers"
@@ -82,21 +83,75 @@ function saveStats(next: AwarenessStats) {
 }
 
 function AwarenessDashboard({ stats }: { stats: AwarenessStats }) {
-  const leadSubmissions = (() => {
-    try {
-      return JSON.parse(window.localStorage.getItem("hp-build-your-live-system-submissions") || "[]") as Array<{
-        challenge?: string;
-        improvement?: string;
-        name?: string;
-        phone?: string;
-        businessName?: string;
-        createdAt?: string;
-        source?: string;
-      }>;
-    } catch {
-      return [];
+  const [leadSubmissions, setLeadSubmissions] = useState<Array<{
+    challenge?: string;
+    improvement?: string;
+    name?: string;
+    phone?: string;
+    email?: string;
+    businessName?: string;
+    createdAt?: string;
+    source?: string;
+  }>>([]);
+
+  useEffect(() => {
+    function readLocalLeads() {
+      try {
+        return JSON.parse(
+          window.localStorage.getItem("hp-build-your-live-system-submissions") || "[]"
+        ) as Array<{
+          challenge?: string;
+          improvement?: string;
+          name?: string;
+          phone?: string;
+          email?: string;
+          businessName?: string;
+          createdAt?: string;
+          source?: string;
+        }>;
+      } catch {
+        return [];
+      }
     }
-  })();
+
+    async function loadLeads() {
+      const localLeads = readLocalLeads();
+
+      // Show locally captured leads immediately on this browser.
+      setLeadSubmissions(localLeads);
+
+      const { data, error } = await supabase
+        .from("homeplanet_leads")
+        .select("name, contact, message, selected_operation, business_name, board_slug, created_at")
+        .order("created_at", { ascending: false })
+        .limit(25);
+
+      if (error) {
+        console.error("HomePlanet dashboard lead load failed", error);
+        return;
+      }
+
+      const supabaseLeads = (data || []).map((lead: any) => {
+        const contact = String(lead.contact || "");
+        const parts = contact.split(" / ");
+
+        return {
+          challenge: lead.selected_operation || "",
+          improvement: lead.message || "",
+          name: lead.name || "",
+          phone: parts[0] || contact,
+          email: parts[1] || "",
+          businessName: lead.business_name || "",
+          createdAt: lead.created_at || "",
+          source: "Supabase Lead",
+        };
+      });
+
+      setLeadSubmissions([...supabaseLeads, ...localLeads]);
+    }
+
+    loadLeads();
+  }, []);
 
   const totalClicks = Object.values(stats.challengeClicks || {}).reduce((sum, count) => sum + count, 0);
   const conversionRate = stats.totalVisits ? Math.round((stats.intakeSubmissions / stats.totalVisits) * 100) : 0;
@@ -428,64 +483,63 @@ export default function HomePlanetMarketAwarenessFunnelV1() {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const payload = {
-      challenge: selectedChallenge,
-      improvement: formData.improvement,
-      name: formData.name,
-      phone: formData.phone,
-      businessName: formData.businessName,
-      createdAt: new Date().toISOString(),
-      source: "HomePlanet Build Your Live System Funnel",
+    const contact = [form.phone, form.email].filter(Boolean).join(" / ");
+
+    const insertPayload = {
+      name: form.name,
+      contact,
+      message: form.improvement,
+      selected_operation: selectedChallenge,
+      business_name: form.businessName,
+      board_slug: "build-your-live-system",
     };
 
-    const emailBody =
-      `Name: ${payload.name || "Not provided"}\n` +
-      `Business / Project: ${payload.businessName || "Not provided"}\n` +
-      `Best contact: ${payload.phone || "Not provided"}\n` +
-      `Challenge selected: ${payload.challenge || "Not provided"}\n` +
-      `Trying to improve: ${payload.improvement || "Not provided"}\n` +
-      `Source: ${payload.source}\n` +
-      `Time: ${payload.createdAt}`;
+    console.log("Submitting HomePlanet lead", insertPayload);
 
-    try {
-      const response = await fetch("https://formsubmit.co/ajax/homeplanetlive@gmail.com", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          _subject: "HomePlanet live system request",
-          _template: "table",
-          _captcha: "false",
-          name: payload.name || "Not provided",
-          business: payload.businessName || "Not provided",
-          phone: payload.phone || "Not provided",
-          challenge: payload.challenge || "Not provided",
-          message: emailBody,
-        }),
-      });
+    const { error } = await supabase
+      .from("homeplanet_leads")
+      .insert(insertPayload);
 
-      if (!response.ok) {
-        throw new Error("Email service did not accept the request.");
-      }
+    if (error) {
+      const err: any = error;
+      const details =
+        err?.message ||
+        err?.details ||
+        err?.hint ||
+        err?.code ||
+        JSON.stringify(err);
 
-      const current = readStats();
-      const nextStats = {
-        ...current,
-        submissions: current.submissions + 1,
-      };
-      writeStats(nextStats);
-      setStats(nextStats);
-      setSubmitted(true);
-    } catch (error) {
-      console.error("HomePlanet lead email failed:", error);
-      alert("The form did not send. Please text HomePlanet directly so we do not miss you.");
+      alert("FORM INSERT FAILED: " + details);
+      console.error("HomePlanet Supabase insert failed", error);
+      return;
     }
+
+    const localLead = {
+      challenge: selectedChallenge,
+      improvement: form.improvement,
+      name: form.name,
+      phone: form.phone,
+      email: form.email,
+      businessName: form.businessName,
+      createdAt: new Date().toISOString(),
+      source: "Supabase + Local Dashboard",
+    };
+
+    const existingLocalLeads = JSON.parse(
+      window.localStorage.getItem("hp-build-your-live-system-submissions") || "[]"
+    );
+
+    window.localStorage.setItem(
+      "hp-build-your-live-system-submissions",
+      JSON.stringify([localLead, ...existingLocalLeads])
+    );
+
+    setRequestSent(true);
   }
 
+  const [requestSent, setRequestSent] = useState(false);
   const showingIntake = Boolean(selectedChallenge);
-  const requestSent = new URLSearchParams(window.location.search).get("sent") === "1";
+  const requestReceivedFromUrl = new URLSearchParams(window.location.search).get("sent") === "1";
 
   return (
     <main style={styles.page}>
@@ -493,7 +547,7 @@ export default function HomePlanetMarketAwarenessFunnelV1() {
       <section style={styles.glowTwo} />
 
       <div style={styles.shell}>
-        {requestSent ? (
+        {(requestSent || requestReceivedFromUrl) ? (
           <section style={styles.intakeCard}>
             <div style={styles.kicker}>Request Received</div>
             <h1 style={styles.intakeTitle}>We got your direction.</h1>
@@ -562,11 +616,7 @@ export default function HomePlanetMarketAwarenessFunnelV1() {
                 </p>
               </div>
             ) : (
-              <form style={styles.form} action="https://formsubmit.co/homeplanetlive@gmail.com" method="POST">
-                <input type="hidden" name="_subject" value="HomePlanet live system request" />
-                <input type="hidden" name="_template" value="table" />
-                <input type="hidden" name="_captcha" value="false" />
-                <input type="hidden" name="_next" value="https://www.homeplanet.city/planet/build-your-live-system?sent=1" />
+              <form style={styles.form} onSubmit={handleSubmit}>
                 <label style={styles.label}>
                   Challenge Selected
                   <input style={styles.input} name="challenge" value={selectedChallenge} readOnly />
@@ -612,6 +662,22 @@ export default function HomePlanetMarketAwarenessFunnelV1() {
                       setForm((current) => ({
                         ...current,
                         phone: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+
+                <label style={styles.label}>
+                  Email
+                  <input
+                    style={styles.input}
+                    type="email"
+                    value={form.email}
+                    required
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        email: event.target.value,
                       }))
                     }
                   />
@@ -959,6 +1025,28 @@ const styles: Record<string, React.CSSProperties> = {
     lineHeight: 1.35,
   },
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
