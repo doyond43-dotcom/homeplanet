@@ -178,7 +178,8 @@ function AwarenessDashboard({ stats }: { stats: AwarenessStats }) {
     const reply =
       `Hey ${firstName}, thanks for reaching out. I saw you selected "${lead.challenge || "a business need"}."\n\n` +
       `That usually means the goal is not just getting more people to see you — it is making sure when someone does reach out, there is a clear path for what happens next.\n\n` +
-      `What HomePlanet looks at is simple:\n` +
+      `HomePlanet is built around a simple rule: we do not sell your information.\n\n` +
+      `Before we build anything, we look at:\n` +
       `Where do people find you?\n` +
       `What do they click?\n` +
       `What do they send you?\n` +
@@ -926,6 +927,7 @@ const styles: Record<string, React.CSSProperties> = {
     lineHeight: 1.35,
   },
 };
+
 
 
 
