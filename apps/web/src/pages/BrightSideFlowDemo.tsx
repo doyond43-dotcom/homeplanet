@@ -1,689 +1,499 @@
 ﻿import React from "react";
 
-const sourceDetails = [
-  ["Source", "Facebook post"],
-  ["Customer", "Sarah Miller"],
-  ["Need", "Interior painting estimate"],
-  ["Location", "Port St. Lucie"],
-  ["Intent", "Wants quote this week"],
-];
+const flowSteps = ["Click", "Message", "Details", "Captured", "Next Move"];
 
-const customerMessages = [
-  "Hi, can you give me a price for painting a living room and hallway?",
-  "I can send photos. We also have a little trim damage in one area.",
-  "We’re hoping to get it done sometime this week if possible.",
-];
-
-const photoCards = [
-  "Living room wall",
-  "Hallway angle",
-  "Trim damage",
-  "Paint color screenshot",
-  "Extra wall photo",
-];
-
-const commonBreaks = [
-  "Photos end up buried in messages",
-  "Nobody remembers the trim damage",
-  "No clear status",
-  "Missed follow-up",
-  "Estimate gets delayed",
-  "Customer starts looking elsewhere",
-];
-
-const capturedDetails = [
-  ["Customer", "Sarah Miller"],
-  ["Source", "Facebook post"],
-  ["Service", "Interior painting"],
-  ["Spaces", "Living room + hallway"],
-  ["Issue", "Trim damage"],
-  ["Photos", "5 attached"],
-  ["Timing", "Wants quote this week"],
-  ["Status", "New lead"],
-  ["Follow-Up", "Needed today"],
-  ["Next Step", "Call or message back / schedule estimate"],
-];
-
-const nextSteps = [
-  "Respond today",
-  "Acknowledge the photos",
-  "Confirm the scope",
-  "Ask 1–2 missing questions",
-  "Offer estimate visit or quote path",
-  "Move lead to Estimate Needed",
-];
-
-const workflowStages = [
-  ["New Lead", "Customer reached out and sent details."],
-  ["Follow-Up Needed", "Owner needs to respond before the lead cools off."],
-  ["Estimate Needed", "Scope is clear enough to start the quote path."],
-  ["Scheduled", "Estimate visit or call gets placed on the calendar."],
-  ["Quote Sent", "Customer gets a professional next step."],
-  ["Waiting Approval", "The job is tracked instead of forgotten."],
+const sections = [
+  {
+    number: "01",
+    eyebrow: "Step one",
+    title: "Catch the request.",
+    text:
+      "This is the moment attention turns into something real. The business needs to capture the source, customer, message, photos, and timing before anything gets scattered.",
+    image: "/images/homeplanet-lead-reached-out.png",
+    alt: "HomePlanet lead reached out visual",
+    bullets: [
+      "The customer already raised their hand.",
+      "Now the details need one clean place to land.",
+    ],
+  },
+  {
+    number: "02",
+    eyebrow: "Step two",
+    title: "Stop the leak.",
+    text:
+      "Most businesses do not lose the lead at the click. They lose it when photos, notes, timing, and follow-up get buried across texts, DMs, screenshots, and memory.",
+    image: "/images/homeplanet-lead-slipping.png",
+    alt: "HomePlanet lead slipping visual",
+    bullets: [
+      "This is the danger zone after attention comes in.",
+      "The lead needs a next step before it goes cold.",
+    ],
+  },
+  {
+    number: "03",
+    eyebrow: "Step three",
+    title: "Give it a path.",
+    text:
+      "HomePlanet turns the same request into an organized lead with context, status, owner guidance, and a clear next move.",
+    image: "/images/homeplanet-lead-organized.png",
+    alt: "HomePlanet organized lead visual",
+    bullets: [
+      "The owner knows what happened.",
+      "The lead now has somewhere to go next.",
+    ],
+  },
 ];
 
 export default function BrightSideFlowDemo() {
   return (
-    <main style={styles.page}>
-      <section style={styles.glowOne} />
-      <section style={styles.glowTwo} />
+    <main className="bsPage">
+      <style>{`
+        .bsPage {
+          min-height: 100vh;
+          overflow-x: hidden;
+          background:
+            radial-gradient(circle at 10% -10%, rgba(93,255,147,.20), transparent 34%),
+            radial-gradient(circle at 92% 28%, rgba(34,197,94,.12), transparent 32%),
+            #030604;
+          color: #f4fff7;
+          font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
 
-      <div style={styles.shell}>
-        <section style={styles.hero}>
-          <div style={styles.kicker}>BrightSide Home Services</div>
-          <h1 style={styles.title}>
-            A CUSTOMER REACHED OUT.
+        .bsShell {
+          width: min(1080px, calc(100% - 28px));
+          margin: 0 auto;
+          padding: 30px 0 58px;
+        }
+
+        .bsHero {
+          padding: 18px 0 18px;
+        }
+
+        .bsKicker {
+          color: #5dff93;
+          font-size: 12px;
+          font-weight: 950;
+          letter-spacing: .16em;
+          text-transform: uppercase;
+          margin-bottom: 14px;
+        }
+
+        .bsTitle {
+          margin: 0;
+          font-size: clamp(48px, 12vw, 104px);
+          line-height: .88;
+          letter-spacing: -.08em;
+          font-weight: 1000;
+        }
+
+        .bsTitle span {
+          color: #5dff93;
+        }
+
+        .bsSubtitle {
+          max-width: 760px;
+          margin: 18px 0 0;
+          color: rgba(244,255,247,.78);
+          font-size: clamp(18px, 3.4vw, 26px);
+          line-height: 1.28;
+          font-weight: 780;
+        }
+
+        .bsStepBar {
+          display: grid;
+          grid-template-columns: repeat(5, 1fr);
+          gap: 8px;
+          margin-top: 22px;
+        }
+
+        .bsStep {
+          border: 1px solid rgba(93,255,147,.20);
+          background: rgba(93,255,147,.07);
+          border-radius: 999px;
+          padding: 10px 9px;
+          color: rgba(244,255,247,.88);
+          font-size: 12px;
+          font-weight: 950;
+          text-align: center;
+          white-space: nowrap;
+        }
+
+        .bsIntro {
+          margin-top: 22px;
+          border: 1px solid rgba(93,255,147,.20);
+          border-radius: 28px;
+          padding: 22px;
+          background: linear-gradient(145deg, rgba(13,22,17,.92), rgba(4,8,6,.98));
+          box-shadow: 0 24px 70px rgba(0,0,0,.42);
+        }
+
+        .bsIntro h2 {
+          margin: 0;
+          font-size: clamp(28px, 6vw, 46px);
+          line-height: 1;
+          letter-spacing: -.055em;
+          font-weight: 1000;
+        }
+
+        .bsIntro p {
+          margin: 12px 0 0;
+          color: rgba(244,255,247,.72);
+          font-size: 17px;
+          line-height: 1.45;
+          font-weight: 760;
+        }
+
+        .bsSection {
+          display: grid;
+          grid-template-columns: minmax(0, .9fr) minmax(320px, 460px);
+          gap: 24px;
+          align-items: center;
+          margin-top: 22px;
+          border: 1px solid rgba(93,255,147,.20);
+          border-radius: 32px;
+          padding: 24px;
+          background: linear-gradient(145deg, rgba(11,18,14,.96), rgba(4,8,6,.99));
+          box-shadow: 0 30px 88px rgba(0,0,0,.46);
+        }
+
+        .bsSection:nth-of-type(odd) {
+          grid-template-columns: minmax(320px, 460px) minmax(0, .9fr);
+        }
+
+        .bsSection:nth-of-type(odd) .bsCopy {
+          order: 2;
+        }
+
+        .bsSection:nth-of-type(odd) .bsVisual {
+          order: 1;
+        }
+
+        .bsEyebrow {
+          color: #5dff93;
+          font-size: 12px;
+          font-weight: 950;
+          letter-spacing: .15em;
+          text-transform: uppercase;
+          margin-bottom: 12px;
+        }
+
+        .bsSectionNumber {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 44px;
+          height: 44px;
+          border-radius: 999px;
+          background: rgba(93,255,147,.12);
+          border: 1px solid rgba(93,255,147,.28);
+          color: #5dff93;
+          font-size: 14px;
+          font-weight: 1000;
+          margin-bottom: 14px;
+        }
+
+        .bsSectionTitle {
+          margin: 0;
+          font-size: clamp(34px, 6vw, 62px);
+          line-height: .94;
+          letter-spacing: -.07em;
+          font-weight: 1000;
+        }
+
+        .bsSectionText {
+          margin: 15px 0 0;
+          color: rgba(244,255,247,.75);
+          font-size: 18px;
+          line-height: 1.45;
+          font-weight: 760;
+        }
+
+        .bsBullets {
+          display: grid;
+          gap: 10px;
+          margin-top: 18px;
+        }
+
+        .bsBullet {
+          border: 1px solid rgba(255,255,255,.08);
+          border-left: 5px solid #5dff93;
+          background: rgba(255,255,255,.045);
+          border-radius: 16px;
+          padding: 13px 14px;
+          color: rgba(244,255,247,.86);
+          font-size: 14px;
+          line-height: 1.35;
+          font-weight: 850;
+        }
+
+        .bsVisual {
+          justify-self: center;
+          width: min(100%, 430px);
+          border: 1px solid rgba(93,255,147,.20);
+          border-radius: 26px;
+          overflow: hidden;
+          background: rgba(0,0,0,.34);
+          box-shadow: 0 22px 60px rgba(0,0,0,.44);
+        }
+
+        .bsVisual img {
+          display: block;
+          width: 100%;
+          height: auto;
+        }
+
+        .bsDifference {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 14px;
+          margin-top: 22px;
+        }
+
+        .bsCompare {
+          border: 1px solid rgba(93,255,147,.18);
+          border-radius: 24px;
+          padding: 18px;
+          background: rgba(255,255,255,.045);
+        }
+
+        .bsCompare h3 {
+          margin: 0;
+          font-size: 23px;
+          letter-spacing: -.035em;
+        }
+
+        .bsCompare p {
+          margin: 10px 0 0;
+          color: rgba(244,255,247,.72);
+          font-size: 15px;
+          line-height: 1.42;
+          font-weight: 760;
+        }
+
+        .bsCta {
+          margin-top: 24px;
+          border: 1px solid rgba(93,255,147,.22);
+          border-radius: 34px;
+          padding: 28px;
+          text-align: center;
+          background:
+            radial-gradient(circle at 50% 0%, rgba(93,255,147,.16), transparent 48%),
+            linear-gradient(145deg, rgba(12,20,15,.98), rgba(4,8,6,.99));
+          box-shadow: 0 30px 90px rgba(0,0,0,.52);
+        }
+
+        .bsCta h2 {
+          margin: 0;
+          font-size: clamp(34px, 8vw, 68px);
+          line-height: .92;
+          letter-spacing: -.075em;
+          font-weight: 1000;
+        }
+
+        .bsCta p {
+          max-width: 720px;
+          margin: 16px auto 0;
+          color: rgba(244,255,247,.76);
+          font-size: 18px;
+          line-height: 1.45;
+          font-weight: 760;
+        }
+
+        .bsButton {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          margin-top: 22px;
+          border-radius: 999px;
+          padding: 16px 24px;
+          background: #5dff93;
+          color: #041006;
+          text-decoration: none;
+          font-size: 17px;
+          font-weight: 1000;
+          box-shadow: 0 18px 46px rgba(93,255,147,.20);
+        }
+
+        @media (max-width: 760px) {
+          .bsShell {
+            width: min(100% - 24px, 560px);
+            padding-top: 22px;
+          }
+
+          .bsTitle {
+            font-size: clamp(44px, 14vw, 66px);
+          }
+
+          .bsSubtitle {
+            font-size: 18px;
+          }
+
+          .bsStepBar {
+            grid-template-columns: 1fr;
+            gap: 7px;
+          }
+
+          .bsStep {
+            text-align: left;
+            padding: 11px 14px;
+          }
+
+          .bsIntro {
+            padding: 18px;
+            border-radius: 24px;
+          }
+
+          .bsSection,
+          .bsSection:nth-of-type(odd) {
+            grid-template-columns: 1fr;
+            padding: 16px;
+            border-radius: 26px;
+            gap: 16px;
+          }
+
+          .bsSection .bsVisual,
+          .bsSection:nth-of-type(odd) .bsVisual {
+            order: 1;
+          }
+
+          .bsSection .bsCopy,
+          .bsSection:nth-of-type(odd) .bsCopy {
+            order: 2;
+          }
+
+          .bsSectionNumber {
+            width: 34px;
+            height: 34px;
+            font-size: 12px;
+            margin-bottom: 10px;
+          }
+
+          .bsEyebrow {
+            font-size: 10px;
+            margin-bottom: 8px;
+          }
+
+          .bsSectionTitle {
+            font-size: clamp(30px, 10vw, 44px);
+            line-height: .95;
+          }
+
+          .bsSectionText {
+            font-size: 15px;
+            line-height: 1.42;
+          }
+
+          .bsBullets {
+            gap: 8px;
+            margin-top: 14px;
+          }
+
+          .bsBullet {
+            font-size: 13px;
+            padding: 11px 12px;
+            border-radius: 14px;
+          }
+
+          .bsVisual {
+            width: min(100%, 320px);
+          }
+
+          .bsDifference {
+            grid-template-columns: 1fr;
+          }
+
+          .bsCta {
+            padding: 22px 16px;
+            border-radius: 28px;
+          }
+
+          .bsButton {
+            width: 100%;
+            box-sizing: border-box;
+          }
+        }
+      `}</style>
+
+      <div className="bsShell">
+        <section className="bsHero">
+          <div className="bsKicker">BrightSide Flow Demo</div>
+          <h1 className="bsTitle">
+            They clicked.
             <br />
-            NOW WHAT?
+            <span>Now what?</span>
           </h1>
-          <p style={styles.subtitle}>
-            This is what a real customer flow can look like after someone clicks a post, sends a
-            message, shares photos, and expects a response.
+          <p className="bsSubtitle">
+            A customer message is not just a message. It is the start of a workflow — or the place where the lead gets lost.
           </p>
-        </section>
 
-        <section style={styles.sourceCard}>
-          <div>
-            <div style={styles.sectionKicker}>Where this lead came from</div>
-            <h2 style={styles.sectionTitle}>Sarah clicked from a Facebook post.</h2>
-            <p style={styles.sectionText}>
-              The attention already happened. The question is whether the business catches the
-              details and knows what to do next.
-            </p>
-          </div>
-
-          <div style={styles.sourceGrid}>
-            {sourceDetails.map(([label, value]) => (
-              <div key={label} style={styles.sourceItem}>
-                <span>{label}</span>
-                <strong>{value}</strong>
+          <div className="bsStepBar">
+            {flowSteps.map((step, index) => (
+              <div key={step} className="bsStep">
+                {index + 1}. {step}
               </div>
             ))}
           </div>
         </section>
 
-        <section style={styles.twoColumn}>
-          <div style={styles.panel}>
-            <div style={styles.sectionKicker}>What the customer sent</div>
-            <h2 style={styles.panelTitle}>The message came in fast.</h2>
-
-            <div style={styles.messageStack}>
-              {customerMessages.map((message) => (
-                <div key={message} style={styles.messageBubble}>
-                  {message}
-                </div>
-              ))}
-            </div>
-
-            <div style={styles.photoStrip}>
-              {photoCards.map((photo, index) => (
-                <div key={photo} style={styles.photoCard}>
-                  <span style={styles.photoIcon}>IMG {index + 1}</span>
-                  <strong>{photo}</strong>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div style={styles.panelDim}>
-            <div style={styles.sectionKicker}>What usually goes wrong</div>
-            <h2 style={styles.panelTitle}>This is where the lead starts slipping.</h2>
-
-            <div style={styles.breakStack}>
-              {commonBreaks.map((item) => (
-                <div key={item} style={styles.breakItem}>
-                  <span style={styles.warningDot}>!</span>
-                  <span>{item}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+        <section className="bsIntro">
+          <h2>This demo shows what should happen after attention comes in.</h2>
+          <p>
+            Social media, ads, referrals, and websites can create the first click. HomePlanet shows what should happen after that click becomes a real customer request.
+          </p>
         </section>
 
-        <section style={styles.systemCard}>
-          <div style={styles.sectionKicker}>What HomePlanet captured</div>
-          <h2 style={styles.systemTitle}>The same lead, organized.</h2>
-          <p style={styles.sectionText}>
-            Instead of living in comments, DMs, texts, screenshots, and memory, the customer becomes
-            a clear lead with a next step.
-          </p>
+        {sections.map((section) => (
+          <section key={section.title} className="bsSection">
+            <div className="bsCopy">
+              <div className="bsSectionNumber">{section.number}</div>
+              <div className="bsEyebrow">{section.eyebrow}</div>
+              <h2 className="bsSectionTitle">{section.title}</h2>
+              <p className="bsSectionText">{section.text}</p>
 
-          <div style={styles.leadCard}>
-            <div style={styles.leadHeader}>
-              <div>
-                <span style={styles.leadMini}>Lead Card</span>
-                <h3 style={styles.leadName}>Sarah Miller</h3>
-              </div>
-              <span style={styles.statusPill}>New Lead</span>
-            </div>
-
-            <div style={styles.detailGrid}>
-              {capturedDetails.map(([label, value]) => (
-                <div key={label} style={styles.detailRow}>
-                  <span>{label}</span>
-                  <strong>{value}</strong>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section style={styles.intelligenceCard}>
-          <div style={styles.sectionKicker}>Intelligence layer</div>
-          <h2 style={styles.systemTitle}>What to do next.</h2>
-          <p style={styles.sectionText}>
-            This is the part that helps the business owner stop staring at scattered messages and
-            start moving the customer forward.
-          </p>
-
-          <div style={styles.intelligenceGrid}>
-            <div style={styles.nextStepCard}>
-              <h3 style={styles.cardTitle}>Owner guidance</h3>
-              <div style={styles.nextSteps}>
-                {nextSteps.map((step, index) => (
-                  <div key={step} style={styles.nextStepItem}>
-                    <span style={styles.stepNumber}>{index + 1}</span>
-                    <span>{step}</span>
+              <div className="bsBullets">
+                {section.bullets.map((bullet) => (
+                  <div key={bullet} className="bsBullet">
+                    {bullet}
                   </div>
                 ))}
               </div>
             </div>
 
-            <div style={styles.replyCard}>
-              <h3 style={styles.cardTitle}>Suggested reply</h3>
-              <p style={styles.replyText}>
-                Hi Sarah, thanks for sending the photos. I can help with the living room and hallway.
-                I also see the trim damage you mentioned. Are you planning to keep the same color or
-                change it? I can take a closer look and get you a quote. Would today or tomorrow work
-                better?
-              </p>
+            <div className="bsVisual">
+              <img src={section.image} alt={section.alt} />
             </div>
+          </section>
+        ))}
+
+        <section className="bsDifference">
+          <div className="bsCompare">
+            <h3>Without HomePlanet</h3>
+            <p>
+              The lead lives in comments, DMs, texts, screenshots, memory, and scattered follow-up.
+            </p>
+          </div>
+
+          <div className="bsCompare">
+            <h3>With HomePlanet</h3>
+            <p>
+              The same lead becomes a clear card with source, details, status, next step, and reply direction.
+            </p>
           </div>
         </section>
 
-        <section style={styles.workflowCard}>
-          <div style={styles.sectionKicker}>Workflow progression</div>
-          <h2 style={styles.systemTitle}>The lead now has a path.</h2>
-
-          <div style={styles.stageGrid}>
-            {workflowStages.map(([stage, note], index) => (
-              <div key={stage} style={styles.stageCard}>
-                <span style={styles.stageNumber}>{index + 1}</span>
-                <strong>{stage}</strong>
-                <p>{note}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section style={styles.bottomCta}>
-          <h2 style={styles.ctaTitle}>This is what HomePlanet is built to do.</h2>
-          <p style={styles.ctaText}>
-            Not just bring in attention — but help organize what happens after the customer reaches
-            out.
+        <section className="bsCta">
+          <h2>This is what HomePlanet is built to do.</h2>
+          <p>
+            Not just bring in attention — but help organize what happens after the customer reaches out.
           </p>
 
-          <div style={styles.ctaButtons}>
-            <a style={styles.primaryButton} href="/planet/build-your-live-system">
-              Build Your Live System
-            </a>
-          </div>
+          <a className="bsButton" href="/planet/build-your-live-system">
+            Build Your Live System
+          </a>
         </section>
       </div>
     </main>
   );
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  page: {
-    minHeight: "100vh",
-    position: "relative",
-    overflow: "hidden",
-    background: "#030604",
-    color: "#f4fff7",
-    fontFamily:
-      'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-  },
-  glowOne: {
-    position: "absolute",
-    top: "-180px",
-    left: "-160px",
-    width: "460px",
-    height: "460px",
-    borderRadius: "999px",
-    background:
-      "radial-gradient(circle, rgba(69,255,126,0.24) 0%, rgba(69,255,126,0.08) 38%, rgba(69,255,126,0) 72%)",
-    pointerEvents: "none",
-  },
-  glowTwo: {
-    position: "absolute",
-    right: "-180px",
-    bottom: "160px",
-    width: "520px",
-    height: "520px",
-    borderRadius: "999px",
-    background:
-      "radial-gradient(circle, rgba(44,255,118,0.18) 0%, rgba(44,255,118,0.06) 40%, rgba(44,255,118,0) 74%)",
-    pointerEvents: "none",
-  },
-  shell: {
-    position: "relative",
-    zIndex: 1,
-    width: "min(1120px, calc(100% - 28px))",
-    margin: "0 auto",
-    padding: "34px 0 58px",
-  },
-  hero: {
-    padding: "26px 0 18px",
-  },
-  kicker: {
-    display: "inline-flex",
-    color: "#5dff93",
-    fontSize: "12px",
-    fontWeight: 900,
-    letterSpacing: "0.16em",
-    textTransform: "uppercase",
-    marginBottom: "14px",
-  },
-  title: {
-    margin: 0,
-    fontSize: "clamp(44px, 12vw, 104px)",
-    lineHeight: 0.88,
-    letterSpacing: "-0.08em",
-    fontWeight: 1000,
-  },
-  subtitle: {
-    maxWidth: "860px",
-    margin: "22px 0 0",
-    color: "rgba(244,255,247,0.8)",
-    fontSize: "clamp(18px, 4vw, 28px)",
-    lineHeight: 1.24,
-    fontWeight: 800,
-  },
-  sourceCard: {
-    display: "grid",
-    gridTemplateColumns: "minmax(0, 1.1fr) minmax(280px, 0.9fr)",
-    gap: "16px",
-    marginTop: "14px",
-    border: "1px solid rgba(93,255,147,0.2)",
-    background:
-      "linear-gradient(145deg, rgba(15,24,18,0.94), rgba(7,12,9,0.98))",
-    borderRadius: "30px",
-    padding: "22px",
-    boxShadow: "0 24px 70px rgba(0,0,0,0.46)",
-  },
-  sectionKicker: {
-    color: "#5dff93",
-    fontSize: "12px",
-    fontWeight: 950,
-    letterSpacing: "0.14em",
-    textTransform: "uppercase",
-    marginBottom: "10px",
-  },
-  sectionTitle: {
-    margin: 0,
-    color: "#ffffff",
-    fontSize: "clamp(30px, 7vw, 56px)",
-    lineHeight: 0.95,
-    letterSpacing: "-0.065em",
-    fontWeight: 1000,
-  },
-  sectionText: {
-    maxWidth: "820px",
-    margin: "14px 0 0",
-    color: "rgba(244,255,247,0.74)",
-    fontSize: "17px",
-    lineHeight: 1.35,
-    fontWeight: 800,
-  },
-  sourceGrid: {
-    display: "grid",
-    gap: "10px",
-  },
-  sourceItem: {
-    display: "grid",
-    gridTemplateColumns: "92px 1fr",
-    gap: "10px",
-    alignItems: "center",
-    border: "1px solid rgba(255,255,255,0.08)",
-    background: "rgba(255,255,255,0.04)",
-    borderRadius: "16px",
-    padding: "12px",
-    color: "rgba(244,255,247,0.62)",
-    fontSize: "14px",
-    fontWeight: 850,
-  },
-  twoColumn: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-    gap: "16px",
-    marginTop: "16px",
-  },
-  panel: {
-    border: "1px solid rgba(93,255,147,0.18)",
-    background:
-      "linear-gradient(145deg, rgba(13,22,16,0.96), rgba(5,9,7,0.99))",
-    borderRadius: "28px",
-    padding: "20px",
-    boxShadow: "0 24px 70px rgba(0,0,0,0.46)",
-  },
-  panelDim: {
-    border: "1px solid rgba(255,255,255,0.1)",
-    background:
-      "linear-gradient(145deg, rgba(18,18,18,0.96), rgba(7,8,7,0.98))",
-    borderRadius: "28px",
-    padding: "20px",
-    boxShadow: "0 24px 70px rgba(0,0,0,0.46)",
-  },
-  panelTitle: {
-    margin: 0,
-    color: "#ffffff",
-    fontSize: "32px",
-    lineHeight: 0.98,
-    letterSpacing: "-0.055em",
-    fontWeight: 1000,
-  },
-  messageStack: {
-    display: "grid",
-    gap: "10px",
-    marginTop: "16px",
-  },
-  messageBubble: {
-    maxWidth: "92%",
-    border: "1px solid rgba(93,255,147,0.16)",
-    background: "rgba(93,255,147,0.08)",
-    borderRadius: "18px",
-    padding: "13px",
-    color: "rgba(244,255,247,0.9)",
-    fontSize: "15px",
-    lineHeight: 1.35,
-    fontWeight: 850,
-  },
-  photoStrip: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
-    gap: "10px",
-    marginTop: "16px",
-  },
-  photoCard: {
-    minHeight: "86px",
-    border: "1px solid rgba(255,255,255,0.1)",
-    background:
-      "radial-gradient(circle at 20% 10%, rgba(93,255,147,0.16), rgba(255,255,255,0.04) 52%, rgba(0,0,0,0.18) 100%)",
-    borderRadius: "18px",
-    padding: "12px",
-    display: "grid",
-    alignContent: "space-between",
-    color: "rgba(244,255,247,0.86)",
-    fontSize: "13px",
-    fontWeight: 900,
-  },
-  photoIcon: {
-    color: "#5dff93",
-    fontSize: "11px",
-    fontWeight: 1000,
-    letterSpacing: "0.1em",
-  },
-  breakStack: {
-    display: "grid",
-    gap: "10px",
-    marginTop: "16px",
-  },
-  breakItem: {
-    display: "grid",
-    gridTemplateColumns: "32px 1fr",
-    gap: "10px",
-    alignItems: "center",
-    border: "1px solid rgba(255,255,255,0.08)",
-    background: "rgba(255,255,255,0.04)",
-    borderRadius: "16px",
-    padding: "12px",
-    color: "rgba(244,255,247,0.82)",
-    fontSize: "15px",
-    fontWeight: 850,
-  },
-  warningDot: {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "28px",
-    height: "28px",
-    borderRadius: "999px",
-    background: "rgba(255,255,255,0.08)",
-    color: "rgba(244,255,247,0.74)",
-    fontSize: "14px",
-    fontWeight: 1000,
-  },
-  systemCard: {
-    marginTop: "16px",
-    border: "1px solid rgba(93,255,147,0.22)",
-    background:
-      "linear-gradient(145deg, rgba(12,24,16,0.98), rgba(5,9,7,0.99))",
-    borderRadius: "30px",
-    padding: "22px",
-    boxShadow: "0 26px 80px rgba(0,0,0,0.48)",
-  },
-  systemTitle: {
-    margin: 0,
-    color: "#ffffff",
-    fontSize: "clamp(32px, 8vw, 64px)",
-    lineHeight: 0.92,
-    letterSpacing: "-0.07em",
-    fontWeight: 1000,
-  },
-  leadCard: {
-    marginTop: "18px",
-    border: "1px solid rgba(93,255,147,0.18)",
-    background: "rgba(0,0,0,0.24)",
-    borderRadius: "24px",
-    padding: "16px",
-  },
-  leadHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    gap: "12px",
-    marginBottom: "14px",
-  },
-  leadMini: {
-    display: "block",
-    color: "#5dff93",
-    fontSize: "12px",
-    fontWeight: 950,
-    letterSpacing: "0.12em",
-    textTransform: "uppercase",
-    marginBottom: "6px",
-  },
-  leadName: {
-    margin: 0,
-    color: "#ffffff",
-    fontSize: "34px",
-    letterSpacing: "-0.055em",
-    lineHeight: 1,
-  },
-  statusPill: {
-    border: "1px solid rgba(93,255,147,0.25)",
-    background: "rgba(93,255,147,0.08)",
-    color: "#5dff93",
-    borderRadius: "999px",
-    padding: "9px 11px",
-    fontSize: "12px",
-    fontWeight: 950,
-    whiteSpace: "nowrap",
-  },
-  detailGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))",
-    gap: "10px",
-  },
-  detailRow: {
-    display: "grid",
-    gridTemplateColumns: "92px 1fr",
-    gap: "10px",
-    border: "1px solid rgba(255,255,255,0.08)",
-    background: "rgba(255,255,255,0.04)",
-    borderRadius: "14px",
-    padding: "11px",
-    color: "rgba(244,255,247,0.6)",
-    fontSize: "14px",
-    fontWeight: 850,
-  },
-  intelligenceCard: {
-    marginTop: "16px",
-    border: "1px solid rgba(93,255,147,0.22)",
-    background:
-      "radial-gradient(circle at 20% 0%, rgba(93,255,147,0.13), rgba(93,255,147,0.04) 38%, rgba(255,255,255,0.03) 100%)",
-    borderRadius: "30px",
-    padding: "22px",
-    boxShadow: "0 26px 80px rgba(0,0,0,0.48)",
-  },
-  intelligenceGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-    gap: "16px",
-    marginTop: "18px",
-  },
-  nextStepCard: {
-    border: "1px solid rgba(93,255,147,0.16)",
-    background: "rgba(0,0,0,0.22)",
-    borderRadius: "24px",
-    padding: "16px",
-  },
-  replyCard: {
-    border: "1px solid rgba(93,255,147,0.22)",
-    background: "rgba(93,255,147,0.07)",
-    borderRadius: "24px",
-    padding: "16px",
-  },
-  cardTitle: {
-    margin: "0 0 12px",
-    color: "#ffffff",
-    fontSize: "22px",
-    letterSpacing: "-0.04em",
-    fontWeight: 1000,
-  },
-  nextSteps: {
-    display: "grid",
-    gap: "10px",
-  },
-  nextStepItem: {
-    display: "grid",
-    gridTemplateColumns: "34px 1fr",
-    gap: "10px",
-    alignItems: "center",
-    border: "1px solid rgba(255,255,255,0.08)",
-    background: "rgba(255,255,255,0.04)",
-    borderRadius: "15px",
-    padding: "11px",
-    color: "rgba(244,255,247,0.86)",
-    fontSize: "15px",
-    fontWeight: 850,
-  },
-  stepNumber: {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "30px",
-    height: "30px",
-    borderRadius: "999px",
-    background: "rgba(93,255,147,0.12)",
-    color: "#5dff93",
-    fontSize: "13px",
-    fontWeight: 1000,
-  },
-  replyText: {
-    margin: 0,
-    color: "rgba(244,255,247,0.9)",
-    fontSize: "17px",
-    lineHeight: 1.45,
-    fontWeight: 850,
-  },
-  workflowCard: {
-    marginTop: "16px",
-    border: "1px solid rgba(93,255,147,0.2)",
-    background:
-      "linear-gradient(145deg, rgba(12,18,14,0.96), rgba(5,8,6,0.98))",
-    borderRadius: "30px",
-    padding: "22px",
-    boxShadow: "0 24px 70px rgba(0,0,0,0.46)",
-  },
-  stageGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-    gap: "10px",
-    marginTop: "18px",
-  },
-  stageCard: {
-    border: "1px solid rgba(93,255,147,0.14)",
-    background: "rgba(0,0,0,0.2)",
-    borderRadius: "18px",
-    padding: "14px",
-  },
-  stageNumber: {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "30px",
-    height: "30px",
-    borderRadius: "999px",
-    background: "rgba(93,255,147,0.12)",
-    color: "#5dff93",
-    fontSize: "13px",
-    fontWeight: 1000,
-    marginBottom: "10px",
-  },
-  bottomCta: {
-    marginTop: "16px",
-    border: "1px solid rgba(93,255,147,0.22)",
-    background:
-      "linear-gradient(145deg, rgba(15,24,18,0.94), rgba(7,12,9,0.98))",
-    borderRadius: "30px",
-    padding: "24px",
-    boxShadow: "0 26px 80px rgba(0,0,0,0.48)",
-  },
-  ctaTitle: {
-    margin: 0,
-    color: "#ffffff",
-    fontSize: "clamp(34px, 8vw, 68px)",
-    lineHeight: 0.92,
-    letterSpacing: "-0.075em",
-    fontWeight: 1000,
-  },
-  ctaText: {
-    maxWidth: "820px",
-    margin: "16px 0 0",
-    color: "rgba(244,255,247,0.78)",
-    fontSize: "18px",
-    lineHeight: 1.35,
-    fontWeight: 800,
-  },
-  ctaButtons: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: "10px",
-    marginTop: "20px",
-  },
-  primaryButton: {
-    display: "inline-flex",
-    borderRadius: "18px",
-    padding: "15px 18px",
-    background: "#5dff93",
-    color: "#041006",
-    fontSize: "16px",
-    fontWeight: 1000,
-    textDecoration: "none",
-    boxShadow: "0 18px 40px rgba(93,255,147,0.2)",
-  },
-  secondaryButton: {
-    display: "inline-flex",
-    borderRadius: "18px",
-    padding: "15px 18px",
-    border: "1px solid rgba(93,255,147,0.24)",
-    background: "rgba(93,255,147,0.07)",
-    color: "#5dff93",
-    fontSize: "16px",
-    fontWeight: 1000,
-    textDecoration: "none",
-  },
-};
 
