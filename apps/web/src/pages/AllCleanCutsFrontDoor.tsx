@@ -1,4 +1,4 @@
-ï»¿import { useState } from "react";
+import { useState } from "react";
 
 type Barber = {
   name: string;
@@ -15,10 +15,10 @@ type FreshCut = {
 };
 
 const barbers: Barber[] = [
-  { name: "Miguel", status: "Booked till 4:30 â€¢ 1 waiting", specialty: "Fades + designs" },
-  { name: "Carlos", status: "Next opening 1:15 â€¢ Walk-ins open â€¢ 2 in queue", specialty: "Clean cuts + lineups" },
-  { name: "Angel", status: "Walk-ins open â€¢ 2 in queue", specialty: "Kids cuts + quick cuts" },
-  { name: "Junior", status: "Finishing current cut â€¢ Chair active", specialty: "Beards + detail work" },
+  { name: "Miguel", status: "Booked till 4:30 • 1 waiting", specialty: "Fades + designs" },
+  { name: "Carlos", status: "Next opening 1:15 • Walk-ins open • 2 in queue", specialty: "Clean cuts + lineups" },
+  { name: "Angel", status: "Walk-ins open • 2 in queue", specialty: "Kids cuts + quick cuts" },
+  { name: "Junior", status: "Finishing current cut • Chair active", specialty: "Beards + detail work" },
 ];
 
 const freshCuts: FreshCut[] = [
@@ -433,7 +433,6 @@ const freshCardButton: React.CSSProperties = {
   color: "white",
   cursor: "pointer",
   transition: "all 180ms ease",
-  boxShadow: "0 0 0 rgba(59,130,246,0)",
   boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 0 0 rgba(59,130,246,0)",
   transition: "transform 160ms ease, box-shadow 160ms ease, border 160ms ease",
 };
@@ -456,7 +455,6 @@ const primaryButton: React.CSSProperties = {
   fontWeight: 950,
   cursor: "pointer",
   transition: "all 180ms ease",
-  boxShadow: "0 0 0 rgba(59,130,246,0)",
   boxShadow: "0 0 26px rgba(239,68,68,0.16)",
 };
 
@@ -510,6 +508,7 @@ const field: React.CSSProperties = {
   fontWeight: 800,
   outline: "none",
 };
+
 
 
 
