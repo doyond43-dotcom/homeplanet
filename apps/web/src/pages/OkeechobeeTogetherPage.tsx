@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import ShareMetadata from "../components/ShareMetadata";
@@ -32,6 +32,12 @@ export default function OkeechobeeTogetherPage() {
     ).length;
   }
 
+  function previewText(text: string) {
+    const clean = String(text || "").replace(/\s+/g, " ").trim();
+    if (clean.length <= 155) return clean;
+    return clean.slice(0, 155).trim() + "...";
+  }
+
   const sortedEvents = [...events].sort((a: any, b: any) => {
     if (a.status === "Resolved" && b.status !== "Resolved") return -1;
     if (a.status !== "Resolved" && b.status === "Resolved") return 1;
@@ -40,6 +46,24 @@ export default function OkeechobeeTogetherPage() {
 
   return (
     <>
+      <style>{`
+        .okeechobee-event-card {
+          transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease, background 180ms ease;
+          cursor: pointer;
+        }
+
+        .okeechobee-event-card:hover {
+          transform: translateY(-2px);
+          border-color: rgba(57, 255, 20, 0.55) !important;
+          background: linear-gradient(135deg, #1f1f1f 0%, #171f17 100%) !important;
+          box-shadow: 0 18px 45px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(57, 255, 20, 0.12);
+        }
+
+        .okeechobee-event-card:hover h3 {
+          color: #39FF14;
+        }
+      `}</style>
+
       <ShareMetadata
         title={SHARE_METADATA["/planet/okeechobee"].title}
         description={SHARE_METADATA["/planet/okeechobee"].description}
@@ -70,11 +94,17 @@ export default function OkeechobeeTogetherPage() {
           This board connects people who need help with people willing to help.
         </p>
 
-        <Link to="/planet/okeechobee/create" style={styles.primaryButton}>
-          Create a Community Post
-        </Link>
+        <div style={styles.actionRow}>
+          <Link to="/planet/okeechobee/create" style={styles.primaryButton}>
+            I Need Help
+          </Link>
 
-        <section style={styles.board}>
+          <a href="#projects" style={styles.secondaryButton}>
+            I Want To Help
+          </a>
+        </div>
+
+        <section id="projects" style={styles.board}>
           <h2 style={styles.sectionTitle}>Live Community Posts</h2>
 
           <div style={styles.list}>
@@ -87,42 +117,52 @@ export default function OkeechobeeTogetherPage() {
                 <Link
                   key={event.slug}
                   to={`/planet/okeechobee/event/${event.slug}`}
+                  className="okeechobee-event-card"
                   style={styles.eventCard}
                 >
                   <div style={styles.metaRow}>
                     {event.status === "Resolved" ? (
                       <>
                         <span style={styles.metaItem}>
-                          ? Need Met
+                          Need Met
                         </span>
 
                         <span style={styles.metaItem}>
-                          ?? {helperCount(event)} Neighbors Helped
+                          {helperCount(event)} Neighbors Helped
                         </span>
 
                         <span style={styles.metaItem}>
-                          ?? Community Success
+                          Community Success
                         </span>
                       </>
                     ) : (
                       <>
                         <span style={styles.metaItem}>
-                          ?? Local Need
+                          Local Need
                         </span>
 
                         <span style={styles.metaItem}>
-                          ?? {helperCount(event)} Helpers Joined
+                          {helperCount(event)} Helpers Joined
                         </span>
 
                         <span style={styles.metaItem}>
-                          ?? Community Responding
+                          Community Responding
                         </span>
                       </>
                     )}
                   </div>
 
                   <h3 style={styles.eventTitle}>{event.title}</h3>
-                  <p style={styles.eventText}>{event.description}</p>
+                  <p style={styles.eventText}>{previewText(event.description)}</p>
+
+                  <div style={styles.cardActionRow}>
+                    <span>
+                      {event.status === "Resolved" ? "Outcome recorded" : "Community need open"}
+                    </span>
+                    <strong>
+                      {event.status === "Resolved" ? "View Outcome >" : "View Need >"}
+                    </strong>
+                  </div>
                 </Link>
               ))
             )}
@@ -135,6 +175,18 @@ export default function OkeechobeeTogetherPage() {
             Okeechobee deserves better local connection systems than scattered Facebook comments.
             This board is becoming the place where real needs, offers, and outcomes can live.
           </p>
+
+          <div style={styles.footerCtaBox}>
+            <h3 style={styles.footerCtaTitle}>
+              Need something like this for your community, group, or local business?
+            </h3>
+            <p style={styles.footerCtaText}>
+              Every intake, board, and business system built on HomePlanet helps organize real action, one person, one request, and one community at a time.
+            </p>
+            <Link to="/planet/build-your-live-system" style={styles.footerCtaButton}>
+              Build Something Like This
+            </Link>
+          </div>
         </div>
       </section>
     </main>
@@ -190,12 +242,33 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 18,
     fontWeight: 500,
   },
+  actionRow: {
+    display: "grid",
+    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+    gap: 12,
+    width: "92%",
+    marginTop: 24,
+    marginRight: "auto",
+    marginBottom: 24,
+    marginLeft: "auto",
+  },
   primaryButton: {
     display: "block",
-    marginTop: 24,
     borderRadius: 999,
     background: "#39FF14",
     color: "#050505",
+    padding: "15px 18px",
+    fontWeight: 900,
+    fontSize: 16,
+    textAlign: "center",
+    textDecoration: "none",
+  },
+  secondaryButton: {
+    display: "block",
+    borderRadius: 999,
+    background: "rgba(255,255,255,0.06)",
+    color: "#ffffff",
+    border: "1px solid rgba(57,255,20,0.65)",
     padding: "15px 18px",
     fontWeight: 900,
     fontSize: 16,
@@ -266,6 +339,18 @@ const styles: Record<string, React.CSSProperties> = {
     lineHeight: 1.6,
     fontSize: 16,
   },
+  cardActionRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 12,
+    marginTop: 14,
+    paddingTop: 12,
+    borderTop: "1px solid #262626",
+    color: "#a8a8a8",
+    fontSize: 13,
+    fontWeight: 800,
+  },
   footerBox: {
     marginTop: 28,
     border: "1px solid #242424",
@@ -283,7 +368,45 @@ const styles: Record<string, React.CSSProperties> = {
     margin: "10px 0 0",
     fontSize: 16,
   },
+  footerCtaBox: {
+    marginTop: 18,
+    borderTop: "1px solid #2a2a2a",
+    paddingTop: 16,
+  },
+  footerCtaTitle: {
+    margin: 0,
+    fontSize: 17,
+    lineHeight: 1.35,
+  },
+  footerCtaText: {
+    color: "#cfcfcf",
+    lineHeight: 1.55,
+    margin: "8px 0 14px",
+    fontSize: 15,
+  },
+  footerCtaButton: {
+    display: "inline-block",
+    borderRadius: 999,
+    background: "#39FF14",
+    color: "#050505",
+    padding: "12px 16px",
+    fontWeight: 900,
+    fontSize: 14,
+    textDecoration: "none",
+  },
 };
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
