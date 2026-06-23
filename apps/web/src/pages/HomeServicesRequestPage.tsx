@@ -10,7 +10,7 @@ export default function HomeServicesRequestPage() {
       meta: { path: window.location.pathname },
     });
   }, []);
-  const [selectedService, setSelectedService] = useState("");
+  const [selectedService, setSelectedService] = useState(() => new URLSearchParams(window.location.search).get("service") || "");
   const [photoCount, setPhotoCount] = useState(0);
 
   const [customerName, setCustomerName] = useState("");
@@ -21,7 +21,7 @@ export default function HomeServicesRequestPage() {
   return (
     <main style={page}>
       <div style={container}>
-        <h1 style={title}>Need Help Around The Property?</h1>
+        <h1 style={title}>Tell Ridgeline What You Need</h1>
 
         <p style={subtitle}>
           Request an estimate for exterior cleaning, roof washing,
@@ -29,15 +29,15 @@ export default function HomeServicesRequestPage() {
         </p>
 
         <section style={section}>
-          <h2 style={heading}>Select Service</h2>
+          <h2 style={heading}>What Are We Looking At?</h2>
 
           <div style={grid}>
             {[
               "House Wash",
-              "Roof Cleaning",
               "Driveway Cleaning",
-              "Window Cleaning",
-              "Soft Wash",
+              "Roof Softwash",
+              "Pool Cage",
+              "Gutters",
               "Other",
             ].map((service) => (
               <button
@@ -45,12 +45,12 @@ export default function HomeServicesRequestPage() {
                 style={{
                   ...card,
                   background:
-                    selectedService === service
-                      ? "#4ade80"
-                      : "#111827",
+                        selectedService === service
+                          ? "linear-gradient(135deg, #ff8a1f, #f97316)"
+                          : "linear-gradient(145deg, rgba(0,0,0,.72), rgba(18,18,20,.88))",
                   color:
                     selectedService === service
-                      ? "#07111a"
+                      ? "#0d0d0f"
                       : "#ffffff",
                 }}
                 onClick={() => setSelectedService(service)}
@@ -62,7 +62,7 @@ export default function HomeServicesRequestPage() {
         </section>
 
         <section style={section}>
-          <h2 style={heading}>Property Information</h2>
+          <h2 style={heading}>Customer + Property</h2>
 
           <input
             style={input}
@@ -87,7 +87,7 @@ export default function HomeServicesRequestPage() {
         </section>
 
         <section style={section}>
-          <h2 style={heading}>Tell Us About The Job</h2>
+          <h2 style={heading}>What Should The Crew Know?</h2>
 
           <textarea
             style={textarea}
@@ -98,7 +98,7 @@ export default function HomeServicesRequestPage() {
         </section>
 
         <section style={section}>
-          <h2 style={heading}>Property Photos (Optional)</h2>
+          <h2 style={heading}>Photos Help Us Price It Faster</h2>
 
           <label style={photoBox}>
             <input
@@ -171,39 +171,65 @@ export default function HomeServicesRequestPage() {
 
 const page: React.CSSProperties = {
   minHeight: "100vh",
-  background: "#07111a",
   color: "#fff",
-  padding: 24,
+  backgroundColor: "#050505",
+  backgroundImage:
+    "radial-gradient(circle at 18% 0%, rgba(249,115,22,.30), transparent 34%), linear-gradient(180deg, rgba(0,0,0,.48), #050505 64%), url('/images/a_dramatic_cinematic_ultra_realistic_sunset_scen_1.png')",
+  backgroundSize: "cover",
+  backgroundPosition: "center top",
+  backgroundAttachment: "fixed",
+  padding: "22px 16px",
+  fontFamily:
+    'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
 };
 
 const container: React.CSSProperties = {
-  maxWidth: 900,
+  width: "min(920px, 100%)",
   margin: "0 auto",
+  display: "grid",
+  gap: 18,
 };
 
 const title: React.CSSProperties = {
-  fontSize: 48,
-  fontWeight: 900,
-  marginBottom: 12,
+  margin: "12px 0 0",
+  fontSize: "clamp(42px, 8vw, 76px)",
+  lineHeight: ".9",
+  fontWeight: 950,
+  letterSpacing: "-.06em",
+  textTransform: "uppercase",
+  textShadow: "0 18px 50px rgba(0,0,0,.55)",
 };
 
 const subtitle: React.CSSProperties = {
-  color: "#94a3b8",
-  fontSize: 18,
-  marginBottom: 30,
+  margin: "12px 0 10px",
+  maxWidth: 720,
+  color: "rgba(255,255,255,.72)",
+  fontSize: 17,
+  lineHeight: 1.55,
+  fontWeight: 750,
 };
 
 const section: React.CSSProperties = {
-  marginBottom: 24,
+  border: "1px solid rgba(255,255,255,.14)",
+  background:
+    "linear-gradient(145deg, rgba(18,18,20,.88), rgba(5,5,5,.84))",
+  borderRadius: 30,
+  padding: 18,
+  boxShadow: "0 24px 70px rgba(0,0,0,.48)",
+  backdropFilter: "blur(18px)",
 };
 
 const heading: React.CSSProperties = {
-  marginBottom: 12,
+  margin: "0 0 14px",
+  color: "#fff",
+  fontSize: 22,
+  fontWeight: 950,
+  letterSpacing: "-.03em",
 };
 
 const grid: React.CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+  gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
   gap: 12,
 };
 
@@ -211,7 +237,7 @@ const card: React.CSSProperties = {
   padding: 20,
   borderRadius: 18,
   border: "1px solid rgba(255,255,255,.1)",
-  background: "#111827",
+  background: "#171717",
   color: "#fff",
   fontWeight: 700,
   cursor: "pointer",
@@ -222,57 +248,74 @@ const card: React.CSSProperties = {
 
 const input: React.CSSProperties = {
   width: "100%",
-  padding: 14,
-  marginBottom: 12,
-  borderRadius: 12,
-  border: "1px solid rgba(255,255,255,.1)",
-  background: "#111827",
+  minHeight: 54,
+  borderRadius: 16,
+  border: "1px solid rgba(255,255,255,.14)",
+  background: "rgba(0,0,0,.64)",
   color: "#fff",
+  padding: "0 16px",
+  fontSize: 16,
+  fontWeight: 800,
+  outline: "none",
+  boxSizing: "border-box",
+  boxShadow: "inset 0 1px 0 rgba(255,255,255,.08)",
 };
 
 const textarea: React.CSSProperties = {
   width: "100%",
-  minHeight: 140,
-  padding: 14,
-  borderRadius: 12,
-  border: "1px solid rgba(255,255,255,.1)",
-  background: "#111827",
+  minHeight: 135,
+  borderRadius: 18,
+  border: "1px solid rgba(255,255,255,.14)",
+  background: "rgba(0,0,0,.64)",
   color: "#fff",
+  padding: 16,
+  fontSize: 16,
+  fontWeight: 750,
+  lineHeight: 1.45,
+  outline: "none",
+  resize: "vertical",
+  boxSizing: "border-box",
+  boxShadow: "inset 0 1px 0 rgba(255,255,255,.08)",
 };
 
 const photoBox: React.CSSProperties = {
-  borderRadius: 18,
-  border: "1px dashed rgba(255,255,255,.2)",
-  background: "#111827",
-  color: "#94a3b8",
-  padding: 40,
-  textAlign: "center",
+  minHeight: 118,
+  borderRadius: 22,
+  border: "1px dashed rgba(249,115,22,.55)",
+  background:
+    "linear-gradient(145deg, rgba(249,115,22,.12), rgba(0,0,0,.72))",
+  display: "grid",
+  placeItems: "center",
+  padding: 18,
   cursor: "pointer",
-  display: "block",
-  width: "100%",
   boxSizing: "border-box",
 };
 
 const photoText: React.CSSProperties = {
-  color: "#94a3b8",
-  marginTop: 10,
+  margin: "10px 0 0",
+  color: "rgba(255,255,255,.62)",
   fontSize: 14,
+  fontWeight: 800,
 };
 
 const submitButton: React.CSSProperties = {
   width: "100%",
-  padding: 18,
-  borderRadius: 18,
-  border: 0,
-  background: "#4ade80",
-  color: "#07111a",
-  fontWeight: 900,
-  fontSize: 18,
+  minHeight: 64,
+  borderRadius: 22,
+  border: "1px solid rgba(255,255,255,.18)",
+  background: "linear-gradient(135deg, #ff8a1f, #f97316)",
+  color: "#050505",
+  fontSize: 15,
+  fontWeight: 950,
+  letterSpacing: ".12em",
+  textTransform: "uppercase",
   cursor: "pointer",
-  display: "block",
-  width: "100%",
   boxSizing: "border-box",
+  boxShadow: "0 22px 55px rgba(249,115,22,.32)",
 };
+
+
+
 
 
 

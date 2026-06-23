@@ -17,6 +17,8 @@ function levelFromUrl(value: string | null): Level {
 
 export default function HomeServicesEstimateBuilder() {
   const params = new URLSearchParams(window.location.search);
+  const estimateCustomer = params.get("customer") || "Maria Jenkins";
+  const estimateService = params.get("service") || "House Wash";
 
   const [heavyInsectCasings, setHeavyInsectCasings] = useState<Level>(() =>
     levelFromUrl(params.get("heavyInsectCasings"))
@@ -46,11 +48,11 @@ export default function HomeServicesEstimateBuilder() {
     <main style={page}>
       <div style={container}>
         <p style={kicker}>ESTIMATE BUILDER</p>
-        <h1 style={title}>Daniel Doyon</h1>
-        <p style={muted}>House Wash • 4004 se 29th court</p>
+        <h1 style={title}>{estimateCustomer}</h1>
+        <p style={muted}>House Wash • 123 Main Street</p>
 
         <section style={card}>
-          <p>Base Service</p>
+          <p>{estimateService}</p>
           <div style={baseRow}>
             <span>House Wash</span>
             <strong>$250</strong>
@@ -97,9 +99,9 @@ export default function HomeServicesEstimateBuilder() {
             window.localStorage.setItem(
               "homeServicesEstimate",
               JSON.stringify({
-                customer: "Daniel Doyon",
+                customer: estimateCustomer,
                 service: "House Wash",
-                address: "4004 se 29th court",
+                address: "123 Main Street",
                 basePrice,
                 estimatedTotal: totals.price,
                 addedLabor: totals.labor,
@@ -112,7 +114,7 @@ export default function HomeServicesEstimateBuilder() {
             );
 
             const params = new URLSearchParams({
-              customer: "Daniel Doyon",
+              customer: estimateCustomer,
               total: String(totals.price),
               labor: String(totals.labor),
               heavyInsectCasings,
@@ -153,10 +155,10 @@ function ModifierRow({
               key={level}
               style={{
                 ...levelButton,
-                background: active ? "#4ade80" : "#1f2937",
-                color: active ? "#07111a" : "#fff",
+                background: active ? "#f97316" : "#262626",
+                color: active ? "#0d0d0f" : "#fff",
                 borderColor: active
-                  ? "rgba(74,222,128,.9)"
+                  ? "rgba(249,115,22,.9)"
                   : "rgba(255,255,255,.1)",
               }}
               onClick={() => onChange(level)}
@@ -172,7 +174,7 @@ function ModifierRow({
 
 const page: React.CSSProperties = {
   minHeight: "100vh",
-  background: "#07111a",
+  background: "#0d0d0f",
   color: "#fff",
   padding: "28px",
 };
@@ -183,7 +185,7 @@ const container: React.CSSProperties = {
 };
 
 const kicker: React.CSSProperties = {
-  color: "#4ade80",
+  color: "#f97316",
   fontWeight: 900,
   letterSpacing: ".14em",
 };
@@ -198,7 +200,7 @@ const muted: React.CSSProperties = {
 };
 
 const card: React.CSSProperties = {
-  background: "#111827",
+  background: "#171717",
   border: "1px solid rgba(255,255,255,.1)",
   borderRadius: 24,
   padding: 28,
@@ -232,7 +234,7 @@ const levelButton: React.CSSProperties = {
 };
 
 const summaryCard: React.CSSProperties = {
-  background: "#111827",
+  background: "#171717",
   border: "1px solid rgba(255,255,255,.1)",
   borderRadius: 24,
   padding: 28,
@@ -250,14 +252,18 @@ const primaryButton: React.CSSProperties = {
   width: "100%",
   borderRadius: 18,
   border: 0,
-  background: "#4ade80",
-  color: "#07111a",
+  background: "#f97316",
+  color: "#0d0d0f",
   padding: 20,
   marginTop: 22,
   fontWeight: 900,
   fontSize: 18,
   cursor: "pointer",
 };
+
+
+
+
 
 
 

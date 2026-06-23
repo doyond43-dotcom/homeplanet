@@ -2,6 +2,7 @@
 
 import TaylorCreekRealDemoBoard from "./pages/TaylorCreekRealDemoBoard";
 import TaylorCreekRealDemoStaffBoard from "./pages/TaylorCreekRealDemoStaffBoard";
+import HomeServicesLiveSystemStaffBoard from "./pages/HomeServicesLiveSystemStaffBoard";
 
 import PublicPage from "./routes/PublicPage";
 import TenantPublicPage from "./routes/TenantPublicPage";
@@ -103,6 +104,7 @@ export default function App() {
         {/* SAFE TAYLOR CREEK DEMO ROUTES */}
         <Route path="/live/taylor-creek-demo/board" element={<TaylorCreekRealDemoBoard />} />
         <Route path="/live/taylor-creek-demo/staff" element={<TaylorCreekRealDemoStaffBoard />} />
+        <Route path="/planet/demo/home-services-staff" element={<HomeServicesLiveSystemStaffBoard />} />
 
         {/* FORCE REAL TAYLOR CREEK PUBLIC LINKS TO SAFE DEMO */}
         <Route path="/live/taylor-creek" element={<Navigate to="/live/taylor-creek-demo/board" replace />} />
@@ -133,6 +135,7 @@ export default function App() {
     </BrowserRouter>
   );
 }
+
 
 
 

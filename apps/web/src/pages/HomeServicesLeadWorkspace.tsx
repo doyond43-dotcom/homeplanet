@@ -1,19 +1,32 @@
 ﻿import React, { useState } from "react";
 
 export default function HomeServicesLeadWorkspace() {
-  const [photosOpen, setPhotosOpen] = useState(false);
+    const [photosOpen, setPhotosOpen] = useState(false);
+
+  const savedLead = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("homeServicesLead") || "{}") as {
+        customerName?: string;
+        service?: string;
+        propertyAddress?: string;
+        jobDescription?: string;
+      };
+    } catch {
+      return {};
+    }
+  })();
 
   return (
     <main style={page}>
       <div style={container}>
         <p style={kicker}>NEW REQUEST</p>
-        <h1 style={title}>Daniel Doyon</h1>
-        <p style={service}>Soft Wash</p>
-        <p style={muted}>4004 se 29th court</p>
+        <h1 style={title}>{savedLead.customerName || "Maria Jenkins"}</h1>
+        <p style={service}>{savedLead.service || "House Wash"}</p>
+        <p style={muted}>{savedLead.propertyAddress || "123 Main Street"}</p>
 
         <section style={card}>
           <p>Customer Request</p>
-          <p>Need a price on exterior house cleaning, thanks.</p>
+          <p>{savedLead.jobDescription || "House wash and driveway cleaning estimate request."}</p>
         </section>
 
         <section style={card}>
@@ -54,7 +67,7 @@ export default function HomeServicesLeadWorkspace() {
 
 const page: React.CSSProperties = {
   minHeight: "100vh",
-  background: "#07111a",
+  background: "#0d0d0f",
   color: "#fff",
   padding: "28px",
 };
@@ -65,7 +78,7 @@ const container: React.CSSProperties = {
 };
 
 const kicker: React.CSSProperties = {
-  color: "#4ade80",
+  color: "#f97316",
   fontWeight: 900,
   letterSpacing: ".14em",
 };
@@ -85,7 +98,7 @@ const muted: React.CSSProperties = {
 };
 
 const card: React.CSSProperties = {
-  background: "#111827",
+  background: "#171717",
   border: "1px solid rgba(255,255,255,.1)",
   borderRadius: 24,
   padding: 28,
@@ -114,11 +127,11 @@ const photoThumb: React.CSSProperties = {
   width: 130,
   height: 80,
   borderRadius: 14,
-  background: "linear-gradient(135deg, rgba(74,222,128,.28), rgba(15,23,42,1))",
+  background: "linear-gradient(135deg, rgba(249,115,22,.28), rgba(13,13,15,1))",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  color: "#4ade80",
+  color: "#f97316",
   fontWeight: 900,
 };
 
@@ -132,7 +145,7 @@ const actions: React.CSSProperties = {
 const secondaryButton: React.CSSProperties = {
   borderRadius: 16,
   border: "1px solid rgba(255,255,255,.12)",
-  background: "#111827",
+  background: "#171717",
   color: "#fff",
   padding: 18,
   fontWeight: 900,
@@ -142,9 +155,11 @@ const secondaryButton: React.CSSProperties = {
 const primaryButton: React.CSSProperties = {
   borderRadius: 16,
   border: 0,
-  background: "#4ade80",
-  color: "#07111a",
+  background: "#f97316",
+  color: "#0d0d0f",
   padding: 18,
   fontWeight: 900,
   cursor: "pointer",
 };
+
+

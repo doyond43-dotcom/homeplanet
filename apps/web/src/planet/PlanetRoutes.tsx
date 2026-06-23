@@ -158,6 +158,7 @@ import OperationalLiveBoardV2 from "../pages/OperationalLiveBoardV2";
 import OperationalJobsDashboardV2 from "../pages/OperationalJobsDashboardV2";
 import HomeServicesRequestPage from "../pages/HomeServicesRequestPage";
 import HomeServicesLandingPage from "../pages/HomeServicesLandingPage";
+import HomeServicesLiveDemoFlow from "../pages/HomeServicesLiveDemoFlow";
 import HomeServicesLeadBoard from "../pages/HomeServicesLeadBoard";
 import HomeServicesLeadWorkspace from "../pages/HomeServicesLeadWorkspace";
 import HomeServicesEstimateBuilder from "../pages/HomeServicesEstimateBuilder";
@@ -460,6 +461,7 @@ export default function PlanetRoutes() {
       <Route path="live-systems" element={<HomePlanetFrontDoor />} />
       <Route path="demo/business" element={<BusinessDemoDirectory />} />
       <Route path="demo/business/home-services" element={<HomeServicesDemoPage />} />
+          <Route path="demo/home-services-live" element={<HomeServicesLiveDemoFlow />} />
       <Route path="liveboard-v2/:boardSlug" element={<OperationalLiveBoardV2 />} />
       <Route path="jobs-dashboard-v2" element={<OperationalJobsDashboardV2 />} />
       <Route path="job-workspace-v2" element={<OperationalJobWorkspaceV2 />} />
@@ -805,4 +807,6 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
+
 

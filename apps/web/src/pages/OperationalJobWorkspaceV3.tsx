@@ -11,9 +11,9 @@ type Job = {
 };
 
 const jobs: Record<string, Job> = {
-  "Daniel Doyon": {
-    customer: "Daniel Doyon",
-    service: "Home Services Live System",
+  "Maria Jenkins": {
+    customer: "Maria Jenkins",
+    service: "House Wash + Driveway",
     address: "Okeechobee, Florida",
     amount: "$250 Due",
     status: "Scheduled",
@@ -33,10 +33,16 @@ const tools: { id: ToolTab; label: string }[] = [
 
 export default function OperationalJobWorkspaceV3() {
   const params = new URLSearchParams(window.location.search);
-  const customerName = params.get("customer") || "Daniel Doyon";
-  const job = jobs[customerName] || jobs["Daniel Doyon"];
+  const customerName = params.get("customer") || "Maria Jenkins";
+  const job = jobs[customerName] || jobs["Maria Jenkins"];
 
   const [toolTab, setToolTab] = useState<ToolTab>("estimate");
+  const [paidDemo, setPaidDemo] = useState(false);
+  const [liveAction, setLiveAction] = useState<null | {
+    title: string;
+    body: string;
+    kind?: "call" | "text" | "route" | "qr" | "payment";
+  }>(null);
   const [depositAmount, setDepositAmount] = useState("");
   const [timelineOpen, setTimelineOpen] = useState(false);
 
@@ -125,11 +131,115 @@ const estimateModifiers = savedEstimate?.modifiers || {
         <section style={card}>
           <h2 style={sectionTitle}>Actions</h2>
           <div style={actionGrid}>
-            <button style={actionCard}>CALL</button>
-            <button style={actionCard}>TEXT</button>
-            <button style={actionCard}>NAVIGATE</button>
+            <button
+              style={actionCard}
+              onClick={() => {
+                window.location.href = "tel:8635320683";
+                setLiveAction({
+                  kind: "call",
+                  title: "Call opened",
+                  body: "Calling Maria Jenkins at 863-532-0683. This contact action stays attached to the live job.",
+                });
+              }}
+            >
+              CALL
+            </button>
+
+            <button
+              style={actionCard}
+              onClick={() => {
+                setToolTab("messages");
+                window.location.href = "sms:8635320683";
+                setLiveAction({
+                  kind: "text",
+                  title: "Text opened",
+                  body: "Texting Maria Jenkins at 863-532-0683. Message templates stay ready inside this job board.",
+                });
+              }}
+            >
+              TEXT
+            </button>
+
+            <button
+              style={actionCard}
+              onClick={() => {
+                window.open(
+                  "https://www.google.com/maps/search/?api=1&query=Okeechobee%20County%20Courthouse%20Okeechobee%20FL",
+                  "_blank",
+                  "noopener,noreferrer"
+                );
+                setLiveAction({
+                  kind: "route",
+                  title: "Google Maps opened",
+                  body: "Route opened to Okeechobee County Courthouse. Demo ETA: 14 minutes.",
+                });
+              }}
+            >
+              NAVIGATE
+            </button>
           </div>
         </section>
+
+        {liveAction && (
+          <section
+            style={{
+              ...card,
+              border: "1px solid rgba(249,115,22,.42)",
+              background:
+                "linear-gradient(135deg, rgba(249,115,22,.14), rgba(17,17,17,.98))",
+            }}
+          >
+            <div style={sectionHeader}>
+              <div>
+                <p style={label}>Live Action</p>
+                <h2 style={sectionTitle}>{liveAction.title}</h2>
+              </div>
+              <button style={secondaryButton} onClick={() => setLiveAction(null)}>
+                Close
+              </button>
+            </div>
+
+            <p style={muted}>{liveAction.body}</p>
+
+            {liveAction.kind === "route" && (
+              <div style={{ ...summaryBlock, marginTop: 16 }}>
+                <p style={label}>Route Preview</p>
+                <p style={price}>14 min</p>
+                <p style={smallMeta}>123 Main Street • Okeechobee, FL</p>
+              </div>
+            )}
+
+            {liveAction.kind === "qr" && (
+              <div style={{ marginTop: 18, display: "grid", placeItems: "center", gap: 12 }}>
+                <div
+                  style={{
+                    background: "#fff",
+                    padding: 14,
+                    borderRadius: 22,
+                    boxShadow: "0 22px 60px rgba(0,0,0,.55)",
+                  }}
+                >
+                  <img
+                    src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=https%3A%2F%2Fhomeplanet.local%2Fpay%2Fridgeline-maria-jenkins-350"
+                    alt="Ridgeline demo payment QR code"
+                    style={{ display: "block", width: 220, height: 220 }}
+                  />
+                </div>
+                <strong>Maria Jenkins • ${paidDemo ? 0 : balanceDue} due</strong>
+              </div>
+            )}
+
+            {liveAction.kind === "payment" && (
+              <div style={{ ...summaryBlock, marginTop: 16 }}>
+                <p style={label}>Balance Due</p>
+                <p style={price}>${paidDemo ? 0 : balanceDue}</p>
+                <p style={smallMeta}>
+                  {paidDemo ? "Payment marked paid." : "Payment action is ready."}
+                </p>
+              </div>
+            )}
+          </section>
+        )}
 
         <section style={card}>
           <h2 style={sectionTitle}>Tools</h2>
@@ -237,7 +347,7 @@ const estimateModifiers = savedEstimate?.modifiers || {
 
                 <div style={summaryBlock}>
                   <p style={label}>Balance Due</p>
-                  <p style={price}>${balanceDue}</p>
+                  <p style={price}>${paidDemo ? 0 : balanceDue}</p>
                 </div>
               </div>
 
@@ -251,9 +361,45 @@ const estimateModifiers = savedEstimate?.modifiers || {
               />
 
               <div style={workbenchActions}>
-                <button style={primaryButton}>Send Payment Link</button>
-                <button style={secondaryButton}>Show QR Code</button>
-                <button style={secondaryButton}>Mark Paid</button>
+                <button
+                  style={primaryButton}
+                  onClick={() =>
+                    setLiveAction({
+                      kind: "payment",
+                      title: "Payment link sent",
+                      body: "Maria Jenkins received the payment link. The action stays attached to this job.",
+                    })
+                  }
+                >
+                  Send Payment Link
+                </button>
+
+                <button
+                  style={secondaryButton}
+                  onClick={() =>
+                    setLiveAction({
+                      kind: "qr",
+                      title: "Payment QR generated",
+                      body: "A real-looking payment QR is ready for Maria Jenkins. The demo payment link stays inside this job.",
+                    })
+                  }
+                >
+                  Show QR Code
+                </button>
+
+                <button
+                  style={secondaryButton}
+                  onClick={() => {
+                    setPaidDemo(true);
+                    setLiveAction({
+                      kind: "payment",
+                      title: "Payment marked paid",
+                      body: "Balance updated to $0 and attached to Maria Jenkins' job timeline.",
+                    });
+                  }}
+                >
+                  Mark Paid
+                </button>
               </div>
             </>
           )}
@@ -263,10 +409,57 @@ const estimateModifiers = savedEstimate?.modifiers || {
               <h3 style={workbenchTitle}>Messages</h3>
 
               <div style={messageGrid}>
-                <button style={messageButton}>On My Way</button>
-                <button style={messageButton}>Running Late</button>
-                <button style={messageButton}>Invoice Sent</button>
-                <button style={messageButton}>How Did We Do?</button>
+                <button
+                  style={messageButton}
+                  onClick={() =>
+                    setLiveAction({
+                      kind: "text",
+                      title: "Message sent: On My Way",
+                      body: "Maria Jenkins receives an on-my-way update. It is tied to the live job.",
+                    })
+                  }
+                >
+                  On My Way
+                </button>
+
+                <button
+                  style={messageButton}
+                  onClick={() =>
+                    setLiveAction({
+                      kind: "text",
+                      title: "Message sent: Running Late",
+                      body: "Running-late update sent and logged to the job.",
+                    })
+                  }
+                >
+                  Running Late
+                </button>
+
+                <button
+                  style={messageButton}
+                  onClick={() =>
+                    setLiveAction({
+                      kind: "text",
+                      title: "Message sent: Invoice Sent",
+                      body: "Invoice message sent and attached to the payment step.",
+                    })
+                  }
+                >
+                  Invoice Sent
+                </button>
+
+                <button
+                  style={messageButton}
+                  onClick={() =>
+                    setLiveAction({
+                      kind: "text",
+                      title: "Message sent: How Did We Do?",
+                      body: "Review follow-up is ready after completion.",
+                    })
+                  }
+                >
+                  How Did We Do?
+                </button>
               </div>
             </>
           )}
@@ -349,10 +542,16 @@ const estimateModifiers = savedEstimate?.modifiers || {
 
 const page: React.CSSProperties = {
   minHeight: "100vh",
-  background:
-    "radial-gradient(circle at top left, rgba(34,197,94,.16), transparent 32%), #07111a",
   color: "#fff",
+  backgroundColor: "#050505",
+  backgroundImage:
+    "radial-gradient(circle at 18% 0%, rgba(249,115,22,.28), transparent 34%), linear-gradient(180deg, rgba(0,0,0,.46), #050505 64%), url('/images/a_dramatic_cinematic_ultra_realistic_sunset_scen_1.png')",
+  backgroundSize: "cover",
+  backgroundPosition: "center top",
+  backgroundAttachment: "fixed",
   padding: 18,
+  fontFamily:
+    'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
 };
 
 const wrap: React.CSSProperties = {
@@ -363,7 +562,7 @@ const wrap: React.CSSProperties = {
 const back: React.CSSProperties = {
   border: 0,
   background: "transparent",
-  color: "#4ade80",
+  color: "#f97316",
   fontWeight: 900,
   marginBottom: 18,
   cursor: "pointer",
@@ -384,7 +583,7 @@ const hero: React.CSSProperties = {
 };
 
 const kicker: React.CSSProperties = {
-  color: "#4ade80",
+  color: "#f97316",
   textTransform: "uppercase",
   letterSpacing: ".14em",
   fontWeight: 900,
@@ -401,7 +600,7 @@ const title: React.CSSProperties = {
 const sub: React.CSSProperties = {
   fontSize: "clamp(22px, 5vw, 30px)",
   margin: 0,
-  color: "#4ade80",
+  color: "#f97316",
   fontWeight: 900,
 };
 
@@ -413,17 +612,23 @@ const muted: React.CSSProperties = {
 };
 
 const card: React.CSSProperties = {
-  marginTop: 18,
-  background: "rgba(17,24,39,.96)",
-  border: "1px solid rgba(255,255,255,.09)",
-  borderRadius: 26,
-  padding: 22,
-  boxShadow: "0 18px 55px rgba(0,0,0,.22)",
+  border: "1px solid rgba(255,255,255,.14)",
+  background:
+    "linear-gradient(145deg, rgba(18,18,20,.88), rgba(5,5,5,.84))",
+  borderRadius: 28,
+  padding: 18,
+  boxShadow: "0 24px 70px rgba(0,0,0,.48)",
+  backdropFilter: "blur(18px)",
 };
 
 const workbenchCard: React.CSSProperties = {
-  ...card,
-  border: "1px solid rgba(74,222,128,.26)",
+  border: "1px solid rgba(249,115,22,.30)",
+  background:
+    "linear-gradient(145deg, rgba(12,12,14,.96), rgba(0,0,0,.92))",
+  borderRadius: 32,
+  padding: 18,
+  boxShadow: "0 34px 90px rgba(0,0,0,.60), 0 0 45px rgba(249,115,22,.10)",
+  backdropFilter: "blur(20px)",
 };
 
 const sectionHeader: React.CSSProperties = {
@@ -443,16 +648,18 @@ const actionGrid: React.CSSProperties = {
 };
 
 const actionCard: React.CSSProperties = {
-  minHeight: 100,
-  borderRadius: 24,
-  border: "1px solid rgba(255,255,255,.12)",
-  background: "#07111a",
+  border: "1px solid rgba(249,115,22,.62)",
+  background:
+    "linear-gradient(145deg, rgba(249,115,22,.22), rgba(0,0,0,.90))",
   color: "#fff",
+  borderRadius: 22,
   padding: "18px 14px",
-  fontSize: 22,
-  fontWeight: 900,
-  letterSpacing: ".05em",
+  fontSize: 15,
+  fontWeight: 950,
+  letterSpacing: ".12em",
+  textTransform: "uppercase",
   cursor: "pointer",
+  boxShadow: "0 18px 42px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.12)",
 };
 
 const toolGrid: React.CSSProperties = {
@@ -462,30 +669,32 @@ const toolGrid: React.CSSProperties = {
 };
 
 const toolButton: React.CSSProperties = {
-  minHeight: 72,
-  borderRadius: 20,
-  border: "1px solid rgba(255,255,255,.12)",
-  background: "#1f2937",
-  color: "#fff",
-  padding: "16px 14px",
-  fontSize: 19,
+  border: "1px solid rgba(255,255,255,.13)",
+  background: "rgba(0,0,0,.62)",
+  color: "rgba(255,255,255,.74)",
+  borderRadius: 18,
+  padding: "13px 12px",
+  fontSize: 12,
   fontWeight: 900,
+  letterSpacing: ".08em",
+  textTransform: "uppercase",
   cursor: "pointer",
-  textAlign: "left",
 };
 
 const activeToolButton: React.CSSProperties = {
   ...toolButton,
-  border: "1px solid rgba(74,222,128,.65)",
-  background: "#4ade80",
-  color: "#07111a",
+  border: "1px solid rgba(249,115,22,.76)",
+  background:
+    "linear-gradient(135deg, rgba(249,115,22,.34), rgba(0,0,0,.92))",
+  color: "#fff",
+  boxShadow: "0 0 30px rgba(249,115,22,.18)",
 };
 
 const workbenchLabel: React.CSSProperties = {
   display: "inline-block",
-  color: "#4ade80",
-  background: "rgba(74,222,128,.09)",
-  border: "1px solid rgba(74,222,128,.22)",
+  color: "#f97316",
+  background: "rgba(249,115,22,.10)",
+  border: "1px solid rgba(249,115,22,.28)",
   borderRadius: 999,
   fontWeight: 900,
   fontSize: 14,
@@ -502,7 +711,7 @@ const workbenchTitle: React.CSSProperties = {
 
 const summaryBlock: React.CSSProperties = {
   borderRadius: 22,
-  background: "#07111a",
+  background: "#0d0d0f",
   border: "1px solid rgba(255,255,255,.08)",
   padding: 20,
   marginBottom: 16,
@@ -546,7 +755,7 @@ const infoGrid: React.CSSProperties = {
 const infoCard: React.CSSProperties = {
   borderRadius: 20,
   border: "1px solid rgba(255,255,255,.1)",
-  background: "#07111a",
+  background: "#0d0d0f",
   padding: 18,
 };
 
@@ -559,7 +768,7 @@ const modifierGrid: React.CSSProperties = {
 const modifierButton: React.CSSProperties = {
   borderRadius: 18,
   border: "1px solid rgba(255,255,255,.12)",
-  background: "#1f2937",
+  background: "#1b1b1d",
   color: "#fff",
   padding: "16px 14px",
   fontWeight: 900,
@@ -568,32 +777,39 @@ const modifierButton: React.CSSProperties = {
 };
 
 const primaryButton: React.CSSProperties = {
-  border: 0,
-  borderRadius: 20,
-  background: "#4ade80",
-  color: "#07111a",
-  padding: "18px 20px",
-  fontSize: 18,
-  fontWeight: 900,
+  border: "1px solid rgba(255,255,255,.20)",
+  background: "linear-gradient(135deg, #ff8a1f, #f97316)",
+  color: "#050505",
+  borderRadius: 18,
+  padding: "15px 18px",
+  fontSize: 13,
+  fontWeight: 950,
+  letterSpacing: ".08em",
+  textTransform: "uppercase",
   cursor: "pointer",
+  boxShadow: "0 18px 42px rgba(249,115,22,.30)",
 };
 
 const secondaryButton: React.CSSProperties = {
-  borderRadius: 20,
-  border: "1px solid rgba(255,255,255,.14)",
-  background: "#1f2937",
-  color: "#fff",
-  padding: "18px 20px",
-  fontSize: 18,
-  fontWeight: 900,
+  border: "1px solid rgba(249,115,22,.50)",
+  background:
+    "linear-gradient(145deg, rgba(249,115,22,.12), rgba(0,0,0,.90))",
+  color: "#fff7ed",
+  borderRadius: 18,
+  padding: "15px 18px",
+  fontSize: 13,
+  fontWeight: 950,
+  letterSpacing: ".08em",
+  textTransform: "uppercase",
   cursor: "pointer",
+  boxShadow: "inset 0 1px 0 rgba(255,255,255,.10)",
 };
 
 const photoBox: React.CSSProperties = {
   textAlign: "left",
   borderRadius: 24,
   border: "1px solid rgba(255,255,255,.12)",
-  background: "#07111a",
+  background: "#0d0d0f",
   color: "#fff",
   padding: 24,
   minHeight: 130,
@@ -602,7 +818,7 @@ const photoBox: React.CSSProperties = {
 
 const photoLabel: React.CSSProperties = {
   display: "block",
-  color: "#dbeafe",
+  color: "#fff7ed",
   fontSize: 18,
   fontWeight: 900,
   marginBottom: 12,
@@ -610,7 +826,7 @@ const photoLabel: React.CSSProperties = {
 
 const photoAction: React.CSSProperties = {
   display: "block",
-  color: "#4ade80",
+  color: "#f97316",
   fontSize: 26,
 };
 
@@ -625,7 +841,7 @@ const input: React.CSSProperties = {
   maxWidth: 280,
   borderRadius: 16,
   border: "1px solid rgba(255,255,255,.12)",
-  background: "#07111a",
+  background: "#0d0d0f",
   color: "#fff",
   padding: "16px 18px",
   fontSize: 22,
@@ -650,7 +866,7 @@ const messageButton: React.CSSProperties = {
   minHeight: 74,
   borderRadius: 20,
   border: "1px solid rgba(255,255,255,.12)",
-  background: "#1f2937",
+  background: "#1b1b1d",
   color: "#fff",
   padding: 18,
   fontSize: 18,
@@ -664,7 +880,7 @@ const textarea: React.CSSProperties = {
   minHeight: 150,
   borderRadius: 20,
   border: "1px solid rgba(255,255,255,.12)",
-  background: "#07111a",
+  background: "#0d0d0f",
   color: "#fff",
   padding: 18,
   fontSize: 18,
@@ -676,8 +892,8 @@ const statusBadge: React.CSSProperties = {
   marginTop: 16,
   padding: "9px 15px",
   borderRadius: 999,
-  background: "#07111a",
-  color: "#4ade80",
+  background: "#0d0d0f",
+  color: "#f97316",
   fontWeight: 900,
 };
 
@@ -698,9 +914,9 @@ const timelineSummary: React.CSSProperties = {
 
 const timelineToggle: React.CSSProperties = {
   borderRadius: 999,
-  border: "1px solid rgba(74,222,128,.28)",
-  background: "rgba(74,222,128,.08)",
-  color: "#4ade80",
+  border: "1px solid rgba(249,115,22,.32)",
+  background: "rgba(249,115,22,.10)",
+  color: "#f97316",
   padding: "10px 14px",
   fontWeight: 900,
   fontSize: 12,
@@ -712,7 +928,7 @@ const timelineToggle: React.CSSProperties = {
 const timelineItem: React.CSSProperties = {
   padding: "12px 0",
   borderBottom: "1px solid rgba(255,255,255,.08)",
-  color: "#4ade80",
+  color: "#f97316",
   fontWeight: 800,
   fontSize: 17,
 };
@@ -735,6 +951,10 @@ const smallMeta: React.CSSProperties = {
   fontWeight: 800,
   margin: "8px 0 0",
 };
+
+
+
+
 
 
 

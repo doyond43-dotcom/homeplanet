@@ -1,90 +1,997 @@
-﻿import React from "react";
+﻿import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+
+type ActionType = "customer" | "followup" | "clicks" | "estimate" | "bundle";
+
+type BoardJob = {
+  name: string;
+  service: string;
+  address: string;
+  status: string;
+  value: string;
+  signal: string;
+  nextMove: string;
+  cta: string;
+  actionType: ActionType;
+  route?: string;
+};
 
 export default function HomeServicesLeadBoard() {
   const navigate = useNavigate();
+  const [activeAction, setActiveAction] = useState<BoardJob | null>(null);
+  const [drawerResult, setDrawerResult] = useState<null | {
+    title: string;
+    body: string;
+    meta?: string;
+  }>(null);
+
+  const savedLead = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem("homeServicesLead") || "{}") as {
+        customerName?: string;
+        service?: string;
+        propertyAddress?: string;
+        jobDescription?: string;
+      };
+    } catch {
+      return {};
+    }
+  }, []);
+
+  const activeJobs: BoardJob[] = [
+    {
+      name: savedLead.customerName || "Maria Jenkins",
+      service: savedLead.service || "House Wash + Driveway",
+      address: savedLead.propertyAddress || "123 Main Street • Okeechobee, FL",
+      status: "New Request",
+      value: "$350 est.",
+      signal: savedLead.jobDescription || "Repeat customer • 3 jobs this year • $950 value",
+      nextMove: "Build estimate, then send payment link after the job is complete.",
+      cta: "Open Customer",
+      actionType: "customer",
+      route: "/planet/home-services/lead",
+    },
+    {
+      name: "Robert Hale",
+      service: "Roof Softwash",
+      address: "Okeechobee, FL",
+      status: "Estimate Open",
+      value: "$725 est.",
+      signal: "Clicked roof softwash twice • estimate not approved yet",
+      nextMove: "Follow up before Friday before the lead goes cold.",
+      cta: "Follow Up",
+      actionType: "followup",
+    },
+    {
+      name: "Amanda Cruz",
+      service: "Driveway Cleaning",
+      address: "Taylor Creek area",
+      status: "Hot Click",
+      value: "$250 est.",
+      signal: "Clicked driveway cleaning • did not submit the form",
+      nextMove: "Show driveway before/after proof higher on the live page.",
+      cta: "Review Clicks",
+      actionType: "clicks",
+    },
+    {
+      name: "James Walker",
+      service: "Pool Cage + House Wash",
+      address: "North Okeechobee",
+      status: "Needs Estimate",
+      value: "$480 est.",
+      signal: "Uploaded photos • asked for weekend availability",
+      nextMove: "Price the job and offer Saturday morning.",
+      cta: "Build Estimate",
+      actionType: "estimate",
+    },
+    {
+      name: "Lisa Grant",
+      service: "Gutters",
+      address: "Okeechobee, FL",
+      status: "Repeat Customer",
+      value: "$180 est.",
+      signal: "Previous driveway cleaning customer • second request this year",
+      nextMove: "Offer bundle pricing with house wash.",
+      cta: "Bundle Offer",
+      actionType: "bundle",
+    },
+  ];
+
+  const clicks = [
+    ["Driveway Cleaning", "42 clicks", "84%"],
+    ["House Wash", "31 clicks", "62%"],
+    ["Roof Softwash", "18 clicks", "36%"],
+    ["Pool Cage", "11 clicks", "22%"],
+    ["Gutters", "8 clicks", "16%"],
+  ];
+
+  const actionCopy = getActionCopy(activeAction);
+
+  function handleDrawerWorkflow(button: string) {
+    if (!activeAction) return;
+
+    const label = button.toLowerCase();
+
+    if (label.includes("call")) {
+      window.location.href = "tel:8635320683";
+      setDrawerResult({
+        title: "Call opened",
+        body: `Calling ${activeAction.name}. This follow-up action stays attached to the customer signal.`,
+        meta: "Live action: call",
+      });
+      return;
+    }
+
+    if (label.includes("text")) {
+      window.location.href = "sms:8635320683";
+      setDrawerResult({
+        title: "Text opened",
+        body: `Text follow-up ready for ${activeAction.name}. Suggested message stays visible in the drawer.`,
+        meta: "Live action: text",
+      });
+      return;
+    }
+
+    if (label.includes("resend estimate")) {
+      setDrawerResult({
+        title: "Estimate ready to resend",
+        body: "Roof Softwash estimate • $725 • includes softwash process, safety note, and scheduling window.",
+        meta: "Robert Hale • Estimate Open",
+      });
+      return;
+    }
+
+    if (label.includes("create quick quote") || label.includes("build estimate")) {
+      const params = new URLSearchParams({
+        customer: activeAction.name,
+        service: activeAction.service,
+        source: activeAction.status,
+      });
+      navigate("/planet/home-services/estimate?" + params.toString());
+      return;
+    }
+
+    if (label.includes("review photos")) {
+      setDrawerResult({
+        title: "Photo review ready",
+        body: "Customer uploaded photos. The system flags pool cage access, house wash area, and weekend availability before pricing.",
+        meta: "James Walker • Photos attached",
+      });
+      return;
+    }
+
+    if (label.includes("offer saturday")) {
+      setDrawerResult({
+        title: "Saturday option prepared",
+        body: "Suggested crew window: Saturday 8:30–10:00 AM. Ready to attach to the estimate or send by text.",
+        meta: "Scheduling suggestion",
+      });
+      return;
+    }
+
+    if (label.includes("send bundle")) {
+      setDrawerResult({
+        title: "Bundle offer prepared",
+        body: "Gutter cleaning + house wash recommendation is ready. This uses Lisa's repeat-customer history instead of treating it like a cold lead.",
+        meta: "Lisa Grant • Repeat customer",
+      });
+      return;
+    }
+
+    if (label.includes("add house wash")) {
+      setDrawerResult({
+        title: "House wash added as suggested upsell",
+        body: "The bundle now includes gutter cleaning plus house wash. Ready to send as a repeat-customer offer.",
+        meta: "Bundle suggestion",
+      });
+      return;
+    }
+
+    if (label.includes("mark hot click")) {
+      setDrawerResult({
+        title: "Hot click saved",
+        body: "Amanda Cruz is marked as a hot click. Driveway proof should be shown higher on the live page.",
+        meta: "Click intelligence saved",
+      });
+      return;
+    }
+
+    if (label.includes("show proof")) {
+      navigate("/planet/demo/home-services-live#business-intelligence");
+      return;
+    }
+
+    setDrawerResult({
+      title: button + " ready",
+      body: `Action prepared for ${activeAction.name}.`,
+      meta: activeAction.status,
+    });
+  }
 
   return (
     <main style={page}>
       <div style={container}>
-        <p style={kicker}>HOME SERVICES LEADS</p>
-        <h1 style={title}>New Requests</h1>
+        <section style={hero}>
+          <div>
+            <p style={kicker}>RIDGELINE LIVE BUSINESS BOARD</p>
+            <h1 style={title}>Today&apos;s Work Is Already Talking.</h1>
+            <p style={subtitle}>
+              Requests, customer history, click signals, open estimates, payments,
+              and next moves stay in one live operating board.
+            </p>
+          </div>
 
-        <div style={leadCard}>
-          <h2 style={name}>Daniel Doyon</h2>
-          <p style={service}>Soft Wash</p>
-          <p style={muted}>4004 se 29th court</p>
-          <p style={request}>Need a price on exterior house cleaning, thanks.</p>
-
-          <button
-            style={button}
-            onClick={() => navigate("/planet/home-services/lead")}
-          >
-            Open Lead
+          <button style={primaryButton} onClick={() => navigate("/planet/demo/home-services-live")}>
+            Back To Live Page
           </button>
-        </div>
+        </section>
+
+        <section style={snapshotGrid}>
+          {[
+            ["New Requests", "4", "2 came from driveway clicks"],
+            ["Open Estimates", "7", "Follow up before Friday"],
+            ["Jobs Scheduled", "5", "Maria is ready for crew"],
+            ["Payments Due", "$1,240", "2 payment links pending"],
+          ].map(([label, value, note]) => (
+            <div key={label} style={statCard}>
+              <p style={statLabel}>{label}</p>
+              <p style={statValue}>{value}</p>
+              <p style={muted}>{note}</p>
+            </div>
+          ))}
+        </section>
+
+        <section style={boardGrid}>
+          <div style={mainPanel}>
+            <div style={sectionHeader}>
+              <div>
+                <p style={panelKicker}>Active Jobs + Customer Signals</p>
+                <h2 style={sectionTitle}>Live Work Board</h2>
+              </div>
+              <span style={pill}>5 active</span>
+            </div>
+
+            <div style={jobsGrid}>
+              {activeJobs.map((job) => (
+                <article key={job.name} style={jobCard}>
+                  <div style={jobTop}>
+                    <div>
+                      <h3 style={jobName}>{job.name}</h3>
+                      <p style={jobService}>{job.service}</p>
+                      <p style={muted}>{job.address}</p>
+                    </div>
+                    <span style={statusPill}>{job.status}</span>
+                  </div>
+
+                  <div style={jobMetaGrid}>
+                    <div style={miniBox}>
+                      <p style={statLabel}>Value</p>
+                      <p style={miniValue}>{job.value}</p>
+                    </div>
+                    <div style={miniBox}>
+                      <p style={statLabel}>Signal</p>
+                      <p style={miniText}>{job.signal}</p>
+                    </div>
+                  </div>
+
+                  <div style={nextMoveBox}>
+                    <p style={panelKicker}>Next Move</p>
+                    <p style={nextMoveText}>{job.nextMove}</p>
+                  </div>
+
+                  <button
+                    style={jobButton}
+                    onClick={() => {
+                      if (job.route) {
+                        navigate(job.route);
+                        return;
+                      }
+                      setDrawerResult(null);
+                      setActiveAction(job);
+                    }}
+                  >
+                    {job.cta}
+                  </button>
+                </article>
+              ))}
+            </div>
+          </div>
+
+          <aside style={sidePanel}>
+            <section style={glassCard}>
+              <p style={panelKicker}>What Customers Clicked</p>
+
+              <div style={clickList}>
+                {clicks.map(([label, count, width]) => (
+                  <div key={label}>
+                    <div style={clickRow}>
+                      <strong>{label}</strong>
+                      <span style={orangeText}>{count}</span>
+                    </div>
+                    <div style={barTrack}>
+                      <div style={{ ...barFill, width }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section style={suggestionsCard}>
+              <p style={panelKicker}>Live Suggestions</p>
+
+              <div style={suggestionList}>
+                {[
+                  ["Driveway Cleaning is hot this week.", "Feature driveway proof higher on the live page."],
+                  ["7 estimates are still open.", "Follow up before the weekend before the leads go cold."],
+                  ["Repeat customers are visible.", "Maria Jenkins should see a bundle offer next time."],
+                  ["Roof softwash clicks need trust.", "Add before/after photos and safety language."],
+                ].map(([headline, text]) => (
+                  <div key={headline} style={suggestionItem}>
+                    <p style={suggestionTitle}>{headline}</p>
+                    <p style={muted}>{text}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </aside>
+        </section>
       </div>
+
+      {activeAction && actionCopy && (
+        <>
+          <div style={drawerBackdrop} onClick={() => setActiveAction(null)} />
+
+          <aside style={drawer}>
+            <div style={drawerHeader}>
+              <div>
+                <p style={panelKicker}>{actionCopy.kicker}</p>
+                <h2 style={drawerTitle}>{activeAction.name}</h2>
+                <p style={jobService}>{activeAction.service}</p>
+                <p style={muted}>{activeAction.address}</p>
+              </div>
+
+              <button style={drawerClose} onClick={() => setActiveAction(null)}>
+                Close
+              </button>
+            </div>
+
+            <div style={drawerActionRow}>
+              <button
+                style={drawerActionButton}
+                onClick={() => (window.location.href = "tel:8635320683")}
+              >
+                Call
+              </button>
+              <button
+                style={drawerActionButton}
+                onClick={() => (window.location.href = "sms:8635320683")}
+              >
+                Text
+              </button>
+              <button
+                style={drawerActionButton}
+                onClick={() =>
+                  window.open(
+                    "https://www.google.com/maps/search/?api=1&query=Okeechobee%20FL",
+                    "_blank",
+                    "noopener,noreferrer"
+                  )
+                }
+              >
+                Navigate
+              </button>
+            </div>
+
+            <div style={drawerSection}>
+              <p style={statLabel}>{actionCopy.leftTitle}</p>
+              <p style={actionText}>{actionCopy.leftText}</p>
+            </div>
+
+            <div style={drawerSection}>
+              <p style={statLabel}>{actionCopy.middleTitle}</p>
+              <p style={actionText}>{actionCopy.middleText}</p>
+            </div>
+
+            <div style={drawerSection}>
+              <p style={statLabel}>Suggested Message</p>
+              <p style={messagePreview}>{actionCopy.message}</p>
+            </div>
+
+            <div style={drawerSection}>
+              <p style={statLabel}>Quick Actions</p>
+              <div style={quickActions}>
+                {actionCopy.buttons.map((button) => (
+                  <button
+                    key={button}
+                    style={smallActionButton}
+                    onClick={() => handleDrawerWorkflow(button)}
+                  >
+                    {button}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {drawerResult && (
+              <div style={drawerResultCard}>
+                <p style={panelKicker}>{drawerResult.meta || "Action Ready"}</p>
+                <h3 style={drawerResultTitle}>{drawerResult.title}</h3>
+                <p style={messagePreview}>{drawerResult.body}</p>
+              </div>
+            )}
+          </aside>
+        </>
+      )}
     </main>
   );
 }
 
+function getActionCopy(job: BoardJob | null) {
+  if (!job) return null;
+
+  if (job.actionType === "followup") {
+    return {
+      kicker: "Estimate Follow-Up",
+      leftTitle: "What happened",
+      leftText: "Robert clicked roof softwash twice, received an estimate, but has not approved it yet.",
+      middleTitle: "System suggestion",
+      middleText: "Follow up before Friday while the request is still warm. Mention safety, softwash process, and scheduling availability.",
+      buttons: ["Call Robert", "Text Follow-Up", "Resend Estimate"],
+      message:
+        "Hey Robert, just following up on the roof softwash estimate. We can still get you on the schedule this week if you want me to resend the details.",
+    };
+  }
+
+  if (job.actionType === "clicks") {
+    return {
+      kicker: "Click Intelligence",
+      leftTitle: "What happened",
+      leftText: "Amanda clicked driveway cleaning but never submitted the form. The system caught interest before it became a full lead.",
+      middleTitle: "System suggestion",
+      middleText: "Move driveway before/after proof higher on the live page and make the quick quote path easier.",
+      buttons: ["Show Proof", "Create Quick Quote", "Mark Hot Click"],
+      message:
+        "Driveway cleaning is getting attention. Show stronger proof and a faster quote path before these clicks disappear.",
+    };
+  }
+
+  if (job.actionType === "estimate") {
+    return {
+      kicker: "Estimate Builder",
+      leftTitle: "What customer sent",
+      leftText: "James uploaded photos and asked for weekend availability for pool cage and house wash work.",
+      middleTitle: "System suggestion",
+      middleText: "Build a bundled estimate and offer Saturday morning while the request is fresh.",
+      buttons: ["Build Estimate", "Review Photos", "Offer Saturday"],
+      message:
+        "Hey James, I saw the pool cage and house wash request. I can price this as a bundle and check Saturday morning availability for you.",
+    };
+  }
+
+  if (job.actionType === "bundle") {
+    return {
+      kicker: "Repeat Customer Offer",
+      leftTitle: "Customer history",
+      leftText: "Lisa already used Ridgeline for driveway cleaning and is now asking about gutters.",
+      middleTitle: "System suggestion",
+      middleText: "Offer a gutter + house wash bundle instead of treating this like a one-off job.",
+      buttons: ["Send Bundle", "Call Lisa", "Add House Wash"],
+      message:
+        "Hey Lisa, since we already handled your driveway, we can bundle the gutters with a house wash and save you a trip charge.",
+    };
+  }
+
+  return {
+    kicker: "Customer File",
+    leftTitle: "Current request",
+    leftText: job.signal,
+    middleTitle: "System suggestion",
+    middleText: job.nextMove,
+    buttons: ["Open Customer", "Build Estimate", "Schedule Job"],
+    message:
+      "This customer is ready for the next step. Open the customer file and keep the request, estimate, job, and payment connected.",
+  };
+}
+
 const page: React.CSSProperties = {
   minHeight: "100vh",
-  background: "#07111a",
   color: "#fff",
-  padding: "28px",
+  backgroundColor: "#050505",
+  backgroundImage:
+    "radial-gradient(circle at 18% 0%, rgba(249,115,22,.30), transparent 34%), linear-gradient(180deg, rgba(0,0,0,.48), #050505 64%), url('/images/a_dramatic_cinematic_ultra_realistic_sunset_scen_1.png')",
+  backgroundSize: "cover",
+  backgroundPosition: "center top",
+  backgroundAttachment: "fixed",
+  padding: "22px 16px",
+  fontFamily:
+    'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
 };
 
 const container: React.CSSProperties = {
-  maxWidth: 980,
+  width: "min(1180px, 100%)",
   margin: "0 auto",
+  display: "grid",
+  gap: 18,
+};
+
+const hero: React.CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "flex-end",
+  gap: 18,
+  flexWrap: "wrap",
+  border: "1px solid rgba(255,255,255,.14)",
+  background: "linear-gradient(145deg, rgba(18,18,20,.86), rgba(5,5,5,.78))",
+  borderRadius: 32,
+  padding: 22,
+  boxShadow: "0 28px 80px rgba(0,0,0,.50)",
+  backdropFilter: "blur(18px)",
 };
 
 const kicker: React.CSSProperties = {
-  color: "#4ade80",
-  fontWeight: 900,
-  letterSpacing: ".14em",
+  margin: 0,
+  color: "#f97316",
+  fontSize: 12,
+  fontWeight: 950,
+  letterSpacing: ".28em",
+  textTransform: "uppercase",
 };
 
 const title: React.CSSProperties = {
-  fontSize: "clamp(44px, 8vw, 72px)",
-  margin: "10px 0 28px",
+  margin: "10px 0 0",
+  fontSize: "clamp(42px, 7vw, 76px)",
+  lineHeight: ".9",
+  fontWeight: 950,
+  letterSpacing: "-.06em",
+  textTransform: "uppercase",
 };
 
-const leadCard: React.CSSProperties = {
-  background: "#111827",
-  border: "1px solid rgba(255,255,255,.1)",
-  borderRadius: 24,
-  padding: 28,
+const subtitle: React.CSSProperties = {
+  margin: "12px 0 0",
+  maxWidth: 720,
+  color: "rgba(255,255,255,.68)",
+  fontSize: 17,
+  lineHeight: 1.5,
+  fontWeight: 750,
 };
 
-const name: React.CSSProperties = {
-  fontSize: 36,
+const snapshotGrid: React.CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
+  gap: 12,
+};
+
+const statCard: React.CSSProperties = {
+  border: "1px solid rgba(255,255,255,.12)",
+  background: "linear-gradient(145deg, rgba(18,18,20,.88), rgba(5,5,5,.84))",
+  borderRadius: 26,
+  padding: 16,
+  boxShadow: "0 18px 55px rgba(0,0,0,.40)",
+  backdropFilter: "blur(16px)",
+};
+
+const statLabel: React.CSSProperties = {
   margin: 0,
+  color: "rgba(255,255,255,.46)",
+  fontSize: 11,
+  fontWeight: 950,
+  letterSpacing: ".16em",
+  textTransform: "uppercase",
 };
 
-const service: React.CSSProperties = {
-  fontSize: 22,
-  margin: "10px 0",
+const statValue: React.CSSProperties = {
+  margin: "7px 0",
+  fontSize: 34,
+  fontWeight: 950,
+};
+
+const actionPanel: React.CSSProperties = {
+  border: "1px solid rgba(249,115,22,.34)",
+  background: "linear-gradient(145deg, rgba(249,115,22,.14), rgba(0,0,0,.90))",
+  borderRadius: 32,
+  padding: 18,
+  boxShadow: "0 34px 90px rgba(0,0,0,.58), 0 0 45px rgba(249,115,22,.10)",
+  backdropFilter: "blur(20px)",
+};
+
+const actionGrid: React.CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+  gap: 12,
+  marginTop: 14,
+};
+
+const actionCard: React.CSSProperties = {
+  border: "1px solid rgba(255,255,255,.12)",
+  background: "rgba(0,0,0,.62)",
+  borderRadius: 22,
+  padding: 14,
+};
+
+const actionText: React.CSSProperties = {
+  margin: "8px 0 0",
+  color: "rgba(255,255,255,.78)",
+  fontSize: 14,
+  fontWeight: 850,
+  lineHeight: 1.45,
+};
+
+const quickActions: React.CSSProperties = {
+  display: "grid",
+  gap: 8,
+  marginTop: 10,
+};
+
+const smallActionButton: React.CSSProperties = {
+  minHeight: 42,
+  borderRadius: 14,
+  border: "1px solid rgba(249,115,22,.44)",
+  background: "rgba(249,115,22,.12)",
+  color: "#fff",
+  fontSize: 11,
+  fontWeight: 950,
+  letterSpacing: ".08em",
+  textTransform: "uppercase",
+  cursor: "pointer",
+};
+
+const followUpMessage: React.CSSProperties = {
+  marginTop: 14,
+  border: "1px solid rgba(255,255,255,.12)",
+  background: "rgba(0,0,0,.66)",
+  borderRadius: 22,
+  padding: 14,
+};
+
+const messagePreview: React.CSSProperties = {
+  margin: "8px 0 0",
+  color: "#fff",
+  fontSize: 15,
+  fontWeight: 850,
+  lineHeight: 1.45,
+};
+
+const drawerBackdrop: React.CSSProperties = {
+  position: "fixed",
+  inset: 0,
+  background: "rgba(0,0,0,.58)",
+  backdropFilter: "blur(8px)",
+  zIndex: 40,
+};
+
+const drawer: React.CSSProperties = {
+  position: "fixed",
+  top: 14,
+  right: 14,
+  bottom: 14,
+  width: "min(440px, calc(100vw - 28px))",
+  overflowY: "auto",
+  zIndex: 41,
+  border: "1px solid rgba(249,115,22,.42)",
+  background:
+    "linear-gradient(145deg, rgba(18,18,20,.98), rgba(0,0,0,.96))",
+  borderRadius: 30,
+  padding: 18,
+  boxShadow: "0 40px 110px rgba(0,0,0,.75), 0 0 55px rgba(249,115,22,.16)",
+};
+
+const drawerHeader: React.CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "flex-start",
+  gap: 12,
+  borderBottom: "1px solid rgba(255,255,255,.10)",
+  paddingBottom: 14,
+};
+
+const drawerTitle: React.CSSProperties = {
+  margin: "6px 0 0",
+  fontSize: 34,
+  lineHeight: 1,
+  fontWeight: 950,
+  letterSpacing: "-.05em",
+};
+
+const drawerClose: React.CSSProperties = {
+  border: "1px solid rgba(255,255,255,.16)",
+  background: "rgba(255,255,255,.08)",
+  color: "#fff",
+  borderRadius: 14,
+  padding: "10px 12px",
+  fontSize: 11,
+  fontWeight: 950,
+  letterSpacing: ".08em",
+  textTransform: "uppercase",
+  cursor: "pointer",
+};
+
+const drawerActionRow: React.CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(3, 1fr)",
+  gap: 8,
+  marginTop: 14,
+};
+
+const drawerActionButton: React.CSSProperties = {
+  minHeight: 44,
+  borderRadius: 16,
+  border: "1px solid rgba(249,115,22,.50)",
+  background: "linear-gradient(135deg, rgba(249,115,22,.24), rgba(0,0,0,.90))",
+  color: "#fff",
+  fontSize: 11,
+  fontWeight: 950,
+  letterSpacing: ".08em",
+  textTransform: "uppercase",
+  cursor: "pointer",
+};
+
+const drawerSection: React.CSSProperties = {
+  marginTop: 14,
+  border: "1px solid rgba(255,255,255,.12)",
+  background: "rgba(0,0,0,.58)",
+  borderRadius: 22,
+  padding: 14,
+};
+
+const drawerResultCard: React.CSSProperties = {
+  marginTop: 14,
+  border: "1px solid rgba(249,115,22,.42)",
+  background: "linear-gradient(145deg, rgba(249,115,22,.18), rgba(0,0,0,.78))",
+  borderRadius: 22,
+  padding: 14,
+  boxShadow: "0 18px 44px rgba(249,115,22,.10)",
+};
+
+const drawerResultTitle: React.CSSProperties = {
+  margin: "8px 0 8px",
+  fontSize: 20,
+  lineHeight: 1.05,
+  fontWeight: 950,
+  letterSpacing: "-.03em",
+};
+
+const boardGrid: React.CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "minmax(0, 1.35fr) minmax(320px, .65fr)",
+  gap: 18,
+};
+
+const mainPanel: React.CSSProperties = {
+  border: "1px solid rgba(249,115,22,.26)",
+  background: "linear-gradient(145deg, rgba(12,12,14,.94), rgba(0,0,0,.90))",
+  borderRadius: 32,
+  padding: 18,
+  boxShadow: "0 34px 90px rgba(0,0,0,.58), 0 0 45px rgba(249,115,22,.08)",
+  backdropFilter: "blur(20px)",
+};
+
+const sidePanel: React.CSSProperties = {
+  display: "grid",
+  gap: 18,
+};
+
+const sectionHeader: React.CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  gap: 12,
+  marginBottom: 16,
+};
+
+const panelKicker: React.CSSProperties = {
+  margin: 0,
+  color: "#fb923c",
+  fontSize: 11,
+  fontWeight: 950,
+  letterSpacing: ".20em",
+  textTransform: "uppercase",
+};
+
+const sectionTitle: React.CSSProperties = {
+  margin: "6px 0 0",
+  fontSize: 30,
+  fontWeight: 950,
+  letterSpacing: "-.04em",
+};
+
+const pill: React.CSSProperties = {
+  border: "1px solid rgba(249,115,22,.40)",
+  background: "rgba(249,115,22,.12)",
+  borderRadius: 999,
+  padding: "8px 12px",
+  color: "#fed7aa",
+  fontSize: 12,
+  fontWeight: 950,
+  textTransform: "uppercase",
+};
+
+const jobsGrid: React.CSSProperties = {
+  display: "grid",
+  gap: 14,
+};
+
+const jobCard: React.CSSProperties = {
+  border: "1px solid rgba(255,255,255,.12)",
+  background: "linear-gradient(145deg, rgba(20,20,22,.92), rgba(0,0,0,.72))",
+  borderRadius: 28,
+  padding: 16,
+  boxShadow: "0 18px 55px rgba(0,0,0,.42)",
+};
+
+const jobTop: React.CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "flex-start",
+  gap: 12,
+};
+
+const jobName: React.CSSProperties = {
+  margin: 0,
+  fontSize: 25,
+  fontWeight: 950,
+  letterSpacing: "-.04em",
+};
+
+const jobService: React.CSSProperties = {
+  margin: "4px 0",
+  color: "#fb923c",
+  fontSize: 15,
+  fontWeight: 950,
 };
 
 const muted: React.CSSProperties = {
-  color: "#94a3b8",
-  marginBottom: 22,
+  margin: 0,
+  color: "rgba(255,255,255,.56)",
+  fontSize: 13,
+  lineHeight: 1.4,
+  fontWeight: 750,
 };
 
-const request: React.CSSProperties = {
-  color: "#e5e7eb",
-  marginBottom: 24,
+const statusPill: React.CSSProperties = {
+  borderRadius: 999,
+  background: "#f97316",
+  color: "#050505",
+  padding: "7px 10px",
+  fontSize: 11,
+  fontWeight: 950,
+  textTransform: "uppercase",
+  whiteSpace: "nowrap",
 };
 
-const button: React.CSSProperties = {
-  width: "100%",
-  border: 0,
-  borderRadius: 16,
-  padding: 16,
-  background: "#4ade80",
-  color: "#07111a",
+const jobMetaGrid: React.CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "120px 1fr",
+  gap: 10,
+  marginTop: 14,
+};
+
+const miniBox: React.CSSProperties = {
+  border: "1px solid rgba(255,255,255,.10)",
+  background: "rgba(0,0,0,.55)",
+  borderRadius: 20,
+  padding: 12,
+};
+
+const miniValue: React.CSSProperties = {
+  margin: "5px 0 0",
+  fontSize: 22,
+  fontWeight: 950,
+};
+
+const miniText: React.CSSProperties = {
+  margin: "5px 0 0",
+  color: "rgba(255,255,255,.68)",
+  fontSize: 13,
+  lineHeight: 1.35,
+  fontWeight: 800,
+};
+
+const nextMoveBox: React.CSSProperties = {
+  marginTop: 12,
+  border: "1px solid rgba(249,115,22,.28)",
+  background: "rgba(249,115,22,.09)",
+  borderRadius: 20,
+  padding: 12,
+};
+
+const nextMoveText: React.CSSProperties = {
+  margin: "6px 0 0",
+  fontSize: 14,
   fontWeight: 900,
+  lineHeight: 1.35,
+};
+
+const jobButton: React.CSSProperties = {
+  width: "100%",
+  marginTop: 12,
+  minHeight: 48,
+  borderRadius: 18,
+  border: "1px solid rgba(249,115,22,.50)",
+  background: "linear-gradient(135deg, #ff8a1f, #f97316)",
+  color: "#050505",
+  fontSize: 12,
+  fontWeight: 950,
+  letterSpacing: ".10em",
+  textTransform: "uppercase",
   cursor: "pointer",
+};
+
+const primaryButton: React.CSSProperties = {
+  minHeight: 48,
+  borderRadius: 18,
+  border: "1px solid rgba(249,115,22,.50)",
+  background: "rgba(0,0,0,.60)",
+  color: "#fff",
+  padding: "0 18px",
+  fontSize: 12,
+  fontWeight: 950,
+  letterSpacing: ".10em",
+  textTransform: "uppercase",
+  cursor: "pointer",
+};
+
+const glassCard: React.CSSProperties = {
+  border: "1px solid rgba(255,255,255,.12)",
+  background: "linear-gradient(145deg, rgba(18,18,20,.90), rgba(5,5,5,.86))",
+  borderRadius: 30,
+  padding: 18,
+  boxShadow: "0 28px 80px rgba(0,0,0,.50)",
+  backdropFilter: "blur(18px)",
+};
+
+const suggestionsCard: React.CSSProperties = {
+  ...glassCard,
+  border: "1px solid rgba(249,115,22,.35)",
+  background: "linear-gradient(145deg, rgba(249,115,22,.16), rgba(5,5,5,.90))",
+};
+
+const clickList: React.CSSProperties = {
+  display: "grid",
+  gap: 15,
+  marginTop: 18,
+};
+
+const clickRow: React.CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  gap: 10,
+  fontSize: 13,
+};
+
+const orangeText: React.CSSProperties = {
+  color: "#fb923c",
+  fontWeight: 950,
+};
+
+const barTrack: React.CSSProperties = {
+  marginTop: 8,
+  height: 10,
+  borderRadius: 999,
+  background: "rgba(255,255,255,.10)",
+  overflow: "hidden",
+};
+
+const barFill: React.CSSProperties = {
+  height: "100%",
+  borderRadius: 999,
+  background: "#f97316",
+  boxShadow: "0 0 22px rgba(249,115,22,.35)",
+};
+
+const suggestionList: React.CSSProperties = {
+  display: "grid",
+  gap: 12,
+  marginTop: 16,
+};
+
+const suggestionItem: React.CSSProperties = {
+  borderRadius: 20,
+  background: "rgba(0,0,0,.66)",
+  padding: 14,
+};
+
+const suggestionTitle: React.CSSProperties = {
+  margin: "0 0 6px",
+  fontSize: 16,
+  fontWeight: 950,
 };
