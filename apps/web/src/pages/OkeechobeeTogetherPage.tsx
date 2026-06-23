@@ -175,18 +175,20 @@ export default function OkeechobeeTogetherPage() {
             Okeechobee deserves better local connection systems than scattered Facebook comments.
             This board is becoming the place where real needs, offers, and outcomes can live.
           </p>
+        </div>
 
-          <div style={styles.footerCtaBox}>
-            <h3 style={styles.footerCtaTitle}>
-              Need something like this for your community, group, or local business?
-            </h3>
-            <p style={styles.footerCtaText}>
-              Every intake, board, and business system built on HomePlanet helps organize real action, one person, one request, and one community at a time.
-            </p>
-            <Link to="/planet/build-your-live-system" style={styles.footerCtaButton}>
-              Build Something Like This
-            </Link>
-          </div>
+        <div style={styles.footerCtaBox}>
+          <div style={styles.footerCtaGlow} />
+          <div style={styles.footerCtaKicker}>Built on HomePlanet</div>
+          <h3 style={styles.footerCtaTitle}>
+            Build something like this for your community, group, or local business.
+          </h3>
+          <p style={styles.footerCtaText}>
+            Turn scattered messages, needs, offers, updates, and outcomes into one organized place where people can actually take action.
+          </p>
+          <Link to="/planet/build-your-live-system" style={styles.footerCtaButton}>
+            Build Something Like This
+          </Link>
         </div>
       </section>
     </main>
@@ -352,47 +354,86 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 800,
   },
   footerBox: {
-    marginTop: 28,
-    border: "1px solid #242424",
-    borderRadius: 18,
-    background: "#181818",
-    padding: 18,
+    marginTop: 30,
+    padding: "28px 24px",
+    borderRadius: 28,
+    background: "linear-gradient(135deg, rgba(16,16,16,0.98), rgba(8,24,14,0.94))",
+    border: "1px solid rgba(57,255,20,0.18)",
+    boxShadow: "0 18px 60px rgba(0,0,0,0.45)",
   },
   footerTitle: {
     margin: 0,
-    fontSize: 20,
+    fontSize: 34,
+    lineHeight: 1.05,
+    letterSpacing: "-0.04em",
   },
   footerText: {
-    color: "#dedede",
-    lineHeight: 1.6,
-    margin: "10px 0 0",
-    fontSize: 16,
+    margin: "12px 0 0",
+    color: "#d7e5dc",
+    fontSize: 17,
+    fontWeight: 750,
+    lineHeight: 1.65,
   },
   footerCtaBox: {
-    marginTop: 18,
-    borderTop: "1px solid #2a2a2a",
-    paddingTop: 16,
+    position: "relative",
+    overflow: "hidden",
+    marginTop: 14,
+    padding: "18px 18px",
+    borderRadius: 22,
+    background:
+      "radial-gradient(circle at 18% 0%, rgba(57,255,20,0.10), transparent 34%), linear-gradient(135deg, rgba(8,16,11,0.92), rgba(5,8,6,0.96))",
+    border: "1px solid rgba(57,255,20,0.18)",
+    boxShadow: "0 14px 42px rgba(0,0,0,0.38)",
+    textAlign: "left",
+  },
+  footerCtaGlow: {
+    position: "absolute",
+    inset: -80,
+    background: "radial-gradient(circle, rgba(57,255,20,0.06), transparent 58%)",
+    pointerEvents: "none",
+  },
+  footerCtaKicker: {
+    position: "relative",
+    color: "#7dff9d",
+    fontSize: 10,
+    fontWeight: 900,
+    letterSpacing: "0.14em",
+    textTransform: "uppercase",
+    opacity: 0.82,
   },
   footerCtaTitle: {
-    margin: 0,
-    fontSize: 17,
-    lineHeight: 1.35,
+    position: "relative",
+    margin: "8px 0 6px",
+    maxWidth: 620,
+    color: "#f8fafc",
+    fontSize: 21,
+    lineHeight: 1.18,
+    letterSpacing: "-0.03em",
   },
   footerCtaText: {
-    color: "#cfcfcf",
+    position: "relative",
+    maxWidth: 640,
+    margin: "0 0 14px",
+    color: "#b9c9bf",
+    fontSize: 14,
+    fontWeight: 650,
     lineHeight: 1.55,
-    margin: "8px 0 14px",
-    fontSize: 15,
   },
   footerCtaButton: {
-    display: "inline-block",
+    position: "relative",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 38,
+    padding: "0 15px",
     borderRadius: 999,
-    background: "#39FF14",
-    color: "#050505",
-    padding: "12px 16px",
+    background: "rgba(57,255,20,0.12)",
+    border: "1px solid rgba(57,255,20,0.28)",
+    color: "#b7ffb0",
+    fontSize: 13,
     fontWeight: 900,
-    fontSize: 14,
     textDecoration: "none",
+    boxShadow: "none",
   },
 };
 

@@ -1,4 +1,4 @@
-Ôªøimport React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 type ChallengeKey =
@@ -167,11 +167,42 @@ function AwarenessDashboard({ stats }: { stats: AwarenessStats }) {
 
   const mostSelected = [...rows].sort((a, b) => Number(b[1]) - Number(a[1]))[0]?.[0] || "None yet";
 
+  const [showTestLeads, setShowTestLeads] = useState(false);
+
+  function isTestLead(lead: any) {
+    const haystack = [
+      lead.name,
+      lead.businessName,
+      lead.phone,
+      lead.email,
+      lead.improvement,
+      lead.challenge,
+      lead.source,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    return (
+      haystack.includes("test") ||
+      haystack.includes("self") ||
+      haystack.includes("dd ") ||
+      haystack.includes("daniel doyon") ||
+      haystack.includes("danny") ||
+      haystack.includes("6635320683") ||
+      haystack.includes("8635320683")
+    );
+  }
+
+  const visibleLeadSubmissions = showTestLeads
+    ? leadSubmissions
+    : leadSubmissions.filter((lead) => !isTestLead(lead));
+
   function getDiagnosis(challenge?: string) {
     if (challenge === "My Website Isn't Working") {
       return {
         actualNeed: "This is probably not just a website problem. They need a clearer front door, a stronger intake path, proof organized, and a follow-up board underneath.",
-        currentLeak: "People may click, ask a question, send photos, or show interest ‚Äî but the next step depends on memory, scattered messages, and manual follow-up.",
+        currentLeak: "People may click, ask a question, send photos, or show interest ó but the next step depends on memory, scattered messages, and manual follow-up.",
         recommendedSystem: "Live Page + Problem Buttons + Intake + Proof/Photos + Lead Board + Follow-Up Timeline",
         demoReason: "BrightSide shows the after-the-click problem: attention is easy to get, but follow-up is where businesses lose the customer.",
       };
@@ -232,7 +263,7 @@ function AwarenessDashboard({ stats }: { stats: AwarenessStats }) {
 
     const reply =
       `Hey ${firstName}, thanks for reaching out. I saw you selected "${lead.challenge || "a business need"}."\n\n` +
-      `That usually means the goal is not just getting more people to see you ‚Äî it is making sure when someone does reach out, there is a clear path for what happens next.\n\n` +
+      `That usually means the goal is not just getting more people to see you ó it is making sure when someone does reach out, there is a clear path for what happens next.\n\n` +
       `HomePlanet is built around a simple rule: we do not sell your information.\n\n` +
       `Before we build anything, we look at:\n` +
       `Where do people find you?\n` +
@@ -242,7 +273,7 @@ function AwarenessDashboard({ stats }: { stats: AwarenessStats }) {
       `And where does the next step get lost?\n\n` +
       `For your direction, I would probably start with:\n` +
       `${getDiagnosis(lead.challenge).recommendedSystem}\n\n` +
-      `The next step is easy. Send me your business name, your top 3 services, a few photos/examples of your work, and how customers usually contact you now ‚Äî Facebook, text, calls, website, or all of it.\n\n` +
+      `The next step is easy. Send me your business name, your top 3 services, a few photos/examples of your work, and how customers usually contact you now ó Facebook, text, calls, website, or all of it.\n\n` +
       `From there, I can help shape the first Live System around how your business actually works.`;
 
     navigator.clipboard?.writeText(reply);
@@ -339,7 +370,32 @@ function AwarenessDashboard({ stats }: { stats: AwarenessStats }) {
             They already saw the demo. Now their request becomes a real build direction with one clear next move.
           </p>
 
-          {leadSubmissions.length === 0 ? (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginTop: 16 }}>
+            <div style={{ color: "#8fa59a", fontSize: 13, fontWeight: 850 }}>
+              Showing {visibleLeadSubmissions.length} clean lead{visibleLeadSubmissions.length === 1 ? "" : "s"}
+              {!showTestLeads && leadSubmissions.length !== visibleLeadSubmissions.length
+                ? ` - ${leadSubmissions.length - visibleLeadSubmissions.length} test hidden`
+                : ""}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowTestLeads((value) => !value)}
+              style={{
+                border: "1px solid rgba(148,163,184,0.35)",
+                background: showTestLeads ? "rgba(251,191,36,0.14)" : "rgba(15,23,42,0.72)",
+                color: showTestLeads ? "#fde68a" : "#cbd5e1",
+                borderRadius: 999,
+                padding: "10px 14px",
+                fontWeight: 950,
+                cursor: "pointer",
+              }}
+            >
+              {showTestLeads ? "Hide Test Leads" : "Show Test Leads"}
+            </button>
+          </div>
+
+          {visibleLeadSubmissions.length === 0 ? (
             <div style={{ ...smallCard, marginTop: 18 }}>
               <div style={labelStyle}>No leads yet</div>
               <div style={{ color: "#cbd5d1", marginTop: 8, fontWeight: 750 }}>
@@ -348,7 +404,7 @@ function AwarenessDashboard({ stats }: { stats: AwarenessStats }) {
             </div>
           ) : (
             <div style={{ display: "grid", gap: 16, marginTop: 20 }}>
-              {leadSubmissions.map((lead, index) => (
+              {visibleLeadSubmissions.map((lead, index) => (
                 <article key={`${lead.createdAt}-${index}`} style={{ ...smallCard, background: "rgba(5,10,7,0.72)" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", gap: 14, flexWrap: "wrap" }}>
                     <div>
@@ -357,7 +413,7 @@ function AwarenessDashboard({ stats }: { stats: AwarenessStats }) {
                         {lead.name || "Unknown Lead"}
                       </h3>
                       <div style={{ color: "#bdd0c6", fontWeight: 800 }}>
-                        {lead.businessName || "No business name"} ¬∑ {lead.phone || "No contact"}
+                        {lead.businessName || "No business name"} ∑ {lead.phone || "No contact"}
                       </div>
                     </div>
                     <div style={{ border: "1px solid rgba(251,191,36,0.45)", color: "#fde68a", borderRadius: 999, padding: "8px 12px", height: "fit-content", fontWeight: 950 }}>
@@ -599,7 +655,7 @@ export default function HomePlanetMarketAwarenessFunnelV1() {
                 setSubmitted(false);
               }}
             >
-              ‚Üê Back
+              ? Back
             </button>
 
             <div style={styles.kicker}>Intake Page</div>
@@ -1025,6 +1081,7 @@ const styles: Record<string, React.CSSProperties> = {
     lineHeight: 1.35,
   },
 };
+
 
 
 
