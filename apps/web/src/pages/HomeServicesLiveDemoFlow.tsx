@@ -1,3 +1,4 @@
+import { hpEvent } from "../lib/hpEvent";
 ﻿import { Link } from "react-router-dom";
 
 const problems = [
@@ -170,7 +171,9 @@ export default function HomeServicesLiveDemoFlow() {
 
 
       {/* BUSINESS INTELLIGENCE */}
-      <section id="business-intelligence" className="border-y border-orange-500/20 bg-[#050505] px-4 py-16">
+      
+
+<section id="business-intelligence" className="border-y border-orange-500/20 bg-[#050505] px-4 py-16">
         <div className="mx-auto max-w-6xl">
           <div className="mb-9 flex flex-col gap-3 text-center">
             <p className="text-sm font-black uppercase tracking-[0.32em] text-orange-500">
@@ -306,6 +309,91 @@ export default function HomeServicesLiveDemoFlow() {
                 </a>
               </div>
             </div>
+<section
+        style={{
+          gridColumn: "1 / -1",
+          width: "min(100%, 980px)",
+          justifySelf: "center",
+          maxWidth: 980,
+          margin: "72px auto 0",
+          padding: "34px 28px",
+          borderRadius: 28,
+          border: "1px solid rgba(255,122,24,0.34)",
+          background: "linear-gradient(135deg, rgba(255,122,24,0.16), rgba(110,54,16,0.18), rgba(0,0,0,0.90))",
+          boxShadow: "0 30px 100px rgba(0,0,0,0.58), 0 0 70px rgba(255,122,24,0.16)",
+          textAlign: "center",
+        }}
+      >
+        <div
+          style={{
+            color: "#39ff88",
+            fontSize: 16,
+            fontWeight: 900,
+            letterSpacing: "0.18em",
+            textTransform: "uppercase",
+            marginBottom: 12,
+          }}
+        >
+          Built By HomePlanet
+        </div>
+
+        <h2
+          style={{
+            margin: 0,
+            color: "#fff",
+            fontSize: "clamp(28px, 4vw, 46px)",
+            lineHeight: 0.98,
+            letterSpacing: "-0.05em",
+          }}
+        >
+          Need something like this for your business?
+        </h2>
+
+        <p
+          style={{
+            maxWidth: 720,
+            margin: "16px auto 26px",
+            color: "rgba(255,255,255,0.78)",
+            fontSize: 17,
+            lineHeight: 1.55,
+          }}
+        >
+          HomePlanet builds live pages with the work board underneath, so customers can request help and your business can track the job from first click to final payment.
+        </p>
+
+        <Link
+          to="/planet/build-your-live-system"
+          onClick={() =>
+            hpEvent({
+              event: "ridgeline_footer_homeplanet_cta_click",
+              board: "homeplanet-live-pages",
+              entityId: "show-me-what-mine-could-look-like",
+              meta: {
+                company: "RIDGELINE Pro Wash",
+                source: "Ridgeline demo footer",
+                path: window.location.pathname,
+              },
+            })
+          }
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            minHeight: 62,
+            padding: "0 36px",
+            borderRadius: 999,
+            background: "linear-gradient(135deg, #ffb347, #ff7a18)",
+            color: "#160d03",
+            fontWeight: 950,
+            fontSize: 16,
+            textDecoration: "none",
+            boxShadow: "0 18px 48px rgba(255,122,24,0.34)",
+          }}
+        >
+          Show Me What Mine Could Look Like
+        </Link>
+      </section>
+
           </div>
         </div>
       </section>
@@ -326,9 +414,15 @@ export default function HomeServicesLiveDemoFlow() {
           Powered by HomePlanet Live Systems
         </p>
       </footer>
-    </main>
+    
+      
+
+</main>
   );
 }
+
+
+
 
 
 
