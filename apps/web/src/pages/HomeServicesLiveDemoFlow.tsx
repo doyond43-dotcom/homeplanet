@@ -1,40 +1,139 @@
+﻿import { useEffect, useState } from "react";
+import {
+  CalendarCheck,
+  Camera,
+  MessageCircle,
+  Phone,
+  ShieldCheck,
+  Sparkles,
+} from "lucide-react";
+import { supabase } from "../lib/supabase";
 import { hpEvent } from "../lib/hpEvent";
-﻿import { Link } from "react-router-dom";
+
+const phone = "8638013179";
 
 const problems = [
   { label: "HOUSE WASH", service: "House Wash" },
-  { label: "DRIVEWAY", service: "Driveway Cleaning" },
+  { label: "DRIVEWAY CLEANING", service: "Driveway Cleaning" },
   { label: "ROOF SOFTWASH", service: "Roof Softwash" },
   { label: "POOL CAGE", service: "Pool Cage" },
-  { label: "GUTTERS", service: "Gutters" },
-  { label: "OTHER", service: "Other" },
-];
-
-const flowCards = [
-  {
-    title: "1. Customer clicks",
-    text: "They land on a real branded page and tap what they need.",
-    to: "/planet/home-services/request",
-    label: "Open Customer Request",
-  },
-  {
-    title: "2. Request hits the board",
-    text: "The business sees the new lead instead of digging through texts.",
-    to: "/planet/home-services/leads",
-    label: "Open Workboard",
-  },
-  {
-    title: "3. Crew works the job",
-    text: "Estimate, photos, payment, notes, and job status stay connected.",
-    to: "/planet/job-workspace-v3",
-    label: "Open Staff Board",
-  },
+  { label: "FENCE / PATIO", service: "Fence / Patio" },
+  { label: "NOT SURE YET", service: "Not Sure Yet" },
 ];
 
 export default function HomeServicesLiveDemoFlow() {
+  const [selectedService, setSelectedService] = useState("House Wash");
+  const [quoteSubmitted, setQuoteSubmitted] = useState(false);
+  const [quoteSubmitting, setQuoteSubmitting] = useState(false);
+  const [quoteError, setQuoteError] = useState("");
+
+  function openEstimate(service: string) {
+    setSelectedService(service);
+
+    setTimeout(() => {
+      document.getElementById("ridgeline-estimate")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 50);
+  }
+
+  async function handleQuoteSubmit() {
+    const section = document.getElementById("ridgeline-estimate");
+    if (!section) return;
+
+    const selects = Array.from(section.querySelectorAll("select")) as HTMLSelectElement[];
+    const inputs = Array.from(section.querySelectorAll("input")) as HTMLInputElement[];
+    const textarea = section.querySelector("textarea") as HTMLTextAreaElement | null;
+
+    const serviceType = selects[0]?.value || selectedService;
+    const condition = selects[1]?.value || "";
+    const accessDetails = selects[2]?.value || "";
+    const preferredTime = selects[3]?.value || "";
+    const preferredTech = selects[4]?.value || "";
+
+    const textInputs = inputs.filter((input) => input.type !== "file" && input.type !== "checkbox");
+    const fileInput = inputs.find((input) => input.type === "file");
+    const agreementInput = inputs.find((input) => input.type === "checkbox");
+
+    const name = textInputs[0]?.value?.trim() || "";
+    const phoneNumber = textInputs[1]?.value?.trim() || "";
+    const streetAddress = textInputs[2]?.value?.trim() || "";
+    const notes = textarea?.value?.trim() || "";
+    const photoCount = fileInput?.files?.length || 0;
+    const agreementChecked = Boolean(agreementInput?.checked);
+
+    if (!name || !phoneNumber || !streetAddress) {
+      setQuoteError("Please add your name, phone number, and street address before sending your estimate request.");
+      return;
+    }
+
+    if (!agreementChecked) {
+      setQuoteError("Please confirm the pricing note before sending your estimate request.");
+      return;
+    }
+
+    const quoteDetails = [
+      `Service Type: ${serviceType}`,
+      `Condition: ${condition}`,
+      `Access Details: ${accessDetails}`,
+      `Preferred Time: ${preferredTime}`,
+      `Preferred Tech / Crew: ${preferredTech}`,
+      `Street Address: ${streetAddress}`,
+      `Photos Attached: ${photoCount > 0 ? "Yes" : "No"}`,
+      notes ? `Customer Notes: ${notes}` : "Customer Notes: None",
+      "Source: Ridgeline Build-Off customer front door",
+    ].join("\n");
+
+    setQuoteSubmitting(true);
+    setQuoteError("");
+
+    try {
+      const { error } = await supabase.from("cleaning_requests").insert({
+        business_slug: "ridgeline",
+        request_type: "quote",
+        customer_name: name,
+        customer_phone: phoneNumber,
+        customer_address: streetAddress,
+        preferred_time: preferredTime,
+        notes: quoteDetails,
+        status: "new",
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      hpEvent({
+        event: "ridgeline_quote_request_submitted",
+        board: "ridgeline",
+        entityId: phoneNumber || name || "unknown-customer",
+        meta: {
+          source: "HomeServicesLiveDemoFlow",
+          serviceType,
+          condition,
+          accessDetails,
+          preferredTime,
+          preferredTech,
+          name,
+          phone: phoneNumber,
+          streetAddress,
+          photoCount,
+        },
+      });
+
+      setQuoteSubmitted(true);
+    } catch (error) {
+      console.error("Ridgeline estimate request failed:", error);
+      const message = error instanceof Error ? error.message : JSON.stringify(error);
+      setQuoteError(`Submit error: ${message}`);
+    } finally {
+      setQuoteSubmitting(false);
+    }
+  }
+
   return (
     <main className="min-h-screen bg-black text-white">
-      {/* LIVE LANDING PAGE */}
       <section
         className="relative min-h-[455px] overflow-hidden bg-cover bg-center"
         style={{
@@ -64,365 +163,402 @@ export default function HomeServicesLiveDemoFlow() {
           </p>
 
           <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <Link
-              to="/planet/home-services/request?service=House%20Wash"
+            <button
+              type="button"
+              onClick={() => openEstimate("House Wash")}
               className="rounded-xl bg-orange-500 px-7 py-3 text-xs font-black uppercase text-black shadow-[0_0_30px_rgba(249,115,22,.38)] hover:bg-orange-400"
             >
               Get Estimate
-            </Link>
+            </button>
 
             <a
-              href="#after-click"
+              href={`sms:${phone}`}
               className="rounded-xl border border-white/45 bg-black/40 px-7 py-3 text-xs font-black uppercase text-white hover:bg-white/10"
             >
-              After The Click
+              Text Ridgeline
             </a>
-            <a
-              href="#business-intelligence"
-              className="rounded-xl border border-orange-500/70 bg-orange-500/15 px-7 py-3 text-xs font-black uppercase text-orange-100 hover:bg-orange-500 hover:text-black"
-            >
-              Business Intelligence
-            </a>
-
           </div>
         </div>
       </section>
 
-      {/* PROBLEM BUTTONS */}
       <section className="bg-black px-4 py-12">
         <div className="mx-auto max-w-5xl text-center">
           <h2 className="text-4xl font-black uppercase tracking-tight sm:text-5xl">
             What&apos;s Going On?
           </h2>
 
+          <p className="mx-auto mt-4 max-w-2xl text-sm font-semibold leading-6 text-white/60">
+            Pick the closest problem. The estimate request will open underneath with that service already selected.
+          </p>
+
           <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {problems.map((problem) => (
-              <Link
+              <button
+                type="button"
                 key={problem.label}
-                to={`/planet/home-services/request?service=${encodeURIComponent(problem.service)}`}
-                className="rounded-2xl border border-white/10 bg-[#1b1b1d] px-6 py-7 text-base font-black uppercase text-white shadow-[0_18px_40px_rgba(0,0,0,.35)] transition hover:border-orange-500/70 hover:bg-orange-500 hover:text-black"
+                onClick={() => openEstimate(problem.service)}
+                className={`rounded-2xl border px-6 py-7 text-base font-black uppercase shadow-[0_18px_40px_rgba(0,0,0,.35)] transition ${
+                  selectedService === problem.service
+                    ? "border-orange-500 bg-orange-500 text-black"
+                    : "border-white/10 bg-[#1b1b1d] text-white hover:border-orange-500/70 hover:bg-orange-500 hover:text-black"
+                }`}
               >
                 {problem.label}
-              </Link>
+              </button>
             ))}
           </div>
         </div>
       </section>
 
-      {/* BRAND STATEMENT */}
-      <section className="border-y border-white/10 bg-[#0b0b0d] px-4 py-14 text-center">
-        <div className="mx-auto max-w-3xl">
-          <h2 className="text-4xl font-black uppercase tracking-tight sm:text-5xl">
-            A Live Page Is Just The Start
-          </h2>
-          <p className="mt-6 text-lg font-semibold leading-relaxed text-white/70">
-            This is what HomePlanet builds: the public page, the request flow, the business board,
-            and the crew workspace all connected in one clean system.
-          </p>
-        </div>
-      </section>
+      <section id="ridgeline-estimate" className="bg-[#050505] px-4 py-14">
+        <div className="mx-auto max-w-5xl rounded-[2rem] border border-orange-500/25 bg-[linear-gradient(145deg,rgba(18,18,20,.92),rgba(5,5,5,.96))] p-6 shadow-[0_28px_80px_rgba(0,0,0,.55)] sm:p-8">
+          <div className="grid gap-8 lg:grid-cols-[0.82fr_1.18fr] lg:items-start">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.32em] text-orange-400">
+                Estimate Request
+              </p>
 
-      {/* AFTER THE CLICK */}
-      <section id="after-click" className="bg-black px-4 py-12">
-        <div className="mx-auto max-w-6xl">
-          <div className="text-center">
-            <p className="text-sm font-black uppercase tracking-[0.32em] text-orange-500">
-              HomePlanet System Demo
-            </p>
-            <h2 className="mt-3 text-4xl font-black uppercase tracking-tight sm:text-5xl">
-              What Happens After The Click?
-            </h2>
-            <p className="mx-auto mt-5 max-w-3xl text-lg font-semibold text-white/65">
-              Most websites stop at the form. This demo shows the work system underneath:
-              request, lead, estimate, job, crew, photos, payment, and proof.
-            </p>
-          </div>
+              <h2 className="mt-4 text-4xl font-black uppercase leading-tight sm:text-5xl">
+                Send Ridgeline the details.
+              </h2>
 
-          <div className="mt-12 grid gap-5 lg:grid-cols-3">
-            {flowCards.map((card) => (
-              <div
-                key={card.title}
-                className="rounded-3xl border border-white/10 bg-[#141416] p-6 shadow-[0_20px_60px_rgba(0,0,0,.45)]"
+              <p className="mt-5 text-base font-semibold leading-7 text-white/65">
+                Address, service type, photos, condition, access notes, and preferred tech all land in one organized request.
+              </p>
+
+              <div className="mt-6 rounded-2xl border border-white/10 bg-black/35 p-4">
+                <p className="text-xs font-black uppercase tracking-[0.22em] text-orange-300">
+                  Selected Service
+                </p>
+                <p className="mt-2 text-2xl font-black text-white">{selectedService}</p>
+              </div>
+            </div>
+
+            <div className="grid gap-3">
+              <select
+                value={selectedService}
+                onChange={(e) => setSelectedService(e.target.value)}
+                className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-sm text-white outline-none [color-scheme:dark]"
               >
-                <h3 className="text-2xl font-black uppercase">{card.title}</h3>
-                <p className="mt-4 min-h-[72px] text-base font-semibold leading-relaxed text-white/65">
-                  {card.text}
-                </p>
-                <Link
-                  to={card.to}
-                  className="mt-6 block rounded-2xl bg-orange-500 px-5 py-4 text-center text-sm font-black uppercase text-black hover:bg-orange-400"
-                >
-                  {card.label}
-                </Link>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-12 rounded-[2rem] border border-orange-500/40 bg-orange-500/12 p-6 text-center">
-            <h3 className="text-2xl font-black uppercase text-white">
-              The demo path
-            </h3>
-            <p className="mt-3 text-base font-bold text-white/70">
-              Live Landing Page → Customer Request → New Requests Board → Estimate Builder → Staff Job Workspace
-            </p>
-          </div>
-        </div>
-      </section>
-
-
-      {/* BUSINESS INTELLIGENCE */}
-      
-
-<section id="business-intelligence" className="border-y border-orange-500/20 bg-[#050505] px-4 py-16">
-        <div className="mx-auto max-w-6xl">
-          <div className="mb-9 flex flex-col gap-3 text-center">
-            <p className="text-sm font-black uppercase tracking-[0.32em] text-orange-500">
-              Business Intelligence
-            </p>
-            <h2 className="text-4xl font-black uppercase tracking-tight sm:text-5xl">
-              Every click starts telling the business what to do next.
-            </h2>
-            <p className="mx-auto max-w-3xl text-lg font-semibold leading-relaxed text-white/65">
-              The live page is not just taking requests. It shows what customers want,
-              who is coming back, what is open, and where the next move is.
-            </p>
-          </div>
-
-          <div className="grid gap-5 lg:grid-cols-[1.1fr_.9fr]">
-            <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(145deg,rgba(18,18,20,.90),rgba(5,5,5,.86))] p-5 shadow-[0_28px_80px_rgba(0,0,0,.50)] backdrop-blur-xl">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
-                    Customer Intelligence
-                  </p>
-                  <h3 className="mt-2 text-3xl font-black uppercase">Active Customer Signals</h3>
-                </div>
-                <div className="rounded-2xl border border-orange-500/35 bg-orange-500/10 px-4 py-3 text-center">
-                  <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-300">
-                    Today
-                  </p>
-                  <p className="text-2xl font-black">4 New</p>
-                </div>
-              </div>
-
-              <div className="mt-5 grid gap-3">
-                {[
-                  {
-                    name: "Maria Jenkins",
-                    signal: "Repeat customer • 3 jobs this year • $950 value",
-                    move: "Next move: send payment link after driveway is complete",
-                    tag: "Scheduled",
-                  },
-                  {
-                    name: "Robert Hale",
-                    signal: "Roof softwash clicked twice • estimate still open",
-                    move: "Next move: follow up before Friday",
-                    tag: "Follow Up",
-                  },
-                  {
-                    name: "Amanda Cruz",
-                    signal: "Driveway cleaning clicked • did not submit form",
-                    move: "Next move: show driveway before/after proof higher",
-                    tag: "Hot Click",
-                  },
-                ].map((customer) => (
-                  <div
-                    key={customer.name}
-                    className="rounded-3xl border border-white/10 bg-black/70 p-4"
-                  >
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <div>
-                        <h4 className="text-xl font-black">{customer.name}</h4>
-                        <p className="mt-1 text-sm font-bold text-white/55">{customer.signal}</p>
-                        <p className="mt-2 text-sm font-black text-orange-300">{customer.move}</p>
-                      </div>
-                      <span className="w-fit rounded-full bg-orange-500 px-3 py-1 text-xs font-black uppercase text-black">
-                        {customer.tag}
-                      </span>
-                    </div>
-                  </div>
+                {problems.map((problem) => (
+                  <option key={problem.service} className="bg-[#111111] text-white">
+                    {problem.service}
+                  </option>
                 ))}
+              </select>
+
+              <select className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-sm text-white outline-none [color-scheme:dark]">
+                <option className="bg-[#111111] text-white">Condition</option>
+                <option className="bg-[#111111] text-white">Light Buildup</option>
+                <option className="bg-[#111111] text-white">Moderate Algae / Grime</option>
+                <option className="bg-[#111111] text-white">Heavy Algae / Spider Webs</option>
+                <option className="bg-[#111111] text-white">Rust / Oxidation / Waterfront Grime</option>
+                <option className="bg-[#111111] text-white">Needs Site Review</option>
+              </select>
+
+              <select className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-sm text-white outline-none [color-scheme:dark]">
+                <option className="bg-[#111111] text-white">Access Details</option>
+                <option className="bg-[#111111] text-white">Open Access</option>
+                <option className="bg-[#111111] text-white">Gate Code Needed</option>
+                <option className="bg-[#111111] text-white">Customer Must Be Home</option>
+                <option className="bg-[#111111] text-white">Limited Access</option>
+              </select>
+
+              <select className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-sm text-white outline-none [color-scheme:dark]">
+                <option className="bg-[#111111] text-white">Preferred Time</option>
+                <option className="bg-[#111111] text-white">Mornings</option>
+                <option className="bg-[#111111] text-white">Afternoons</option>
+                <option className="bg-[#111111] text-white">Evenings</option>
+                <option className="bg-[#111111] text-white">Flexible</option>
+              </select>
+
+              <select className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-sm text-white outline-none [color-scheme:dark]">
+                <option className="bg-[#111111] text-white">Preferred Tech / Crew</option>
+                <option className="bg-[#111111] text-white">No preference</option>
+                <option className="bg-[#111111] text-white">Roy</option>
+                <option className="bg-[#111111] text-white">Brock</option>
+                <option className="bg-[#111111] text-white">Whoever is available first</option>
+                <option className="bg-[#111111] text-white">Not sure</option>
+              </select>
+
+              <div className="grid gap-3 sm:grid-cols-3">
+                <input className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-sm text-white outline-none [color-scheme:dark]" placeholder="Your Name" />
+                <input className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-sm text-white outline-none [color-scheme:dark]" placeholder="Phone Number" />
+                <input className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-sm text-white outline-none [color-scheme:dark]" placeholder="Street Address" autoComplete="street-address" />
               </div>
+
+              <div className="rounded-2xl border border-dashed border-orange-400/35 bg-black/30 p-4">
+                <div className="flex items-start gap-3">
+                  <Camera size={18} className="mt-1 text-orange-300" />
+                  <div className="flex-1">
+                    <span className="block text-xs font-black uppercase tracking-[0.2em] text-orange-300">
+                      Upload Photos
+                    </span>
+                    <p className="mt-2 text-xs leading-5 text-white/50">
+                      Optional — show algae, rust, oxidation, spider webs, roof stains, driveway buildup, or access areas.
+                    </p>
+                    <input type="file" multiple className="mt-4 block w-full text-xs text-zinc-400" />
+                  </div>
+                </div>
+              </div>
+
+              <textarea
+                className="min-h-[110px] w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-sm text-white outline-none [color-scheme:dark]"
+                placeholder="Anything else Ridgeline should know?"
+              />
+
+              <label className="flex gap-3 rounded-2xl border border-white/10 bg-black/30 p-4 text-xs leading-5 text-white/60">
+                <input type="checkbox" className="mt-1" />
+                I understand final pricing depends on surface type, size, access, condition, stains, algae, oxidation, rust, and requested services.
+              </label>
+
+              {quoteError && (
+                <p className="rounded-2xl border border-orange-300/25 bg-black/30 px-4 py-3 text-sm font-semibold text-orange-100">
+                  {quoteError}
+                </p>
+              )}
+
+              <button
+                type="button"
+                onClick={handleQuoteSubmit}
+                disabled={quoteSubmitting}
+                className="rounded-2xl bg-orange-500 py-4 text-sm font-black uppercase tracking-[0.22em] text-black shadow-[0_0_30px_rgba(249,115,22,.22)] disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {quoteSubmitting ? "Sending..." : "Send Estimate Request"}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="mx-auto mt-5 flex max-w-5xl flex-col items-center justify-between gap-4 rounded-2xl border border-orange-300/20 bg-black/60 px-5 py-4 shadow-[0_0_35px_rgba(249,115,22,0.08)] sm:flex-row">
+          <div className="flex items-center gap-3 text-center sm:text-left">
+            <div className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-full border border-orange-300/25 bg-orange-500/10 text-orange-200 sm:flex">
+              ↳
             </div>
 
-            <div className="grid gap-5">
-              <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(145deg,rgba(18,18,20,.90),rgba(5,5,5,.86))] p-5 shadow-[0_28px_80px_rgba(0,0,0,.50)] backdrop-blur-xl">
-                <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
-                  What Customers Clicked
-                </p>
+            <p className="text-sm font-bold leading-6 text-zinc-200">
+              After a request is sent, Ridgeline gets the organized job view.
+            </p>
+          </div>
 
-                <div className="mt-5 grid gap-4">
-                  {[
-                    ["Driveway Cleaning", "42 clicks", "84%"],
-                    ["House Wash", "31 clicks", "62%"],
-                    ["Roof Softwash", "18 clicks", "36%"],
-                    ["Pool Cage", "11 clicks", "22%"],
-                    ["Gutters", "8 clicks", "16%"],
-                  ].map(([label, clicks, width]) => (
-                    <div key={label}>
-                      <div className="mb-2 flex justify-between text-sm font-black">
-                        <span>{label}</span>
-                        <span className="text-orange-300">{clicks}</span>
-                      </div>
-                      <div className="h-3 overflow-hidden rounded-full bg-white/10">
-                        <div
-                          className="h-full rounded-full bg-orange-500 shadow-[0_0_22px_rgba(249,115,22,.35)]"
-                          style={{ width }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+          <a
+            href="/planet/ridgeline/intelligence?sample=1"
+            className="inline-flex shrink-0 items-center justify-center rounded-xl border border-orange-300/35 bg-orange-500/10 px-5 py-3 text-[10px] font-black uppercase tracking-[0.22em] text-orange-100 hover:bg-orange-500/20"
+          >
+            See What Ridgeline Sees
+          </a>
+        </div>
+      </section>
+      <section className="border-y border-white/10 bg-zinc-950/70 px-4 py-20">
+        <div className="mx-auto max-w-6xl">
+          <div className="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.35em] text-orange-400">
+                Okeechobee Pressure Washing
+              </p>
 
-              <div className="rounded-[2rem] border border-orange-500/35 bg-[linear-gradient(145deg,rgba(249,115,22,.16),rgba(5,5,5,.90))] p-5 shadow-[0_28px_80px_rgba(0,0,0,.50)] backdrop-blur-xl">
-                <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-300">
-                  Live Suggestions
-                </p>
+              <h2 className="mt-4 text-4xl font-black uppercase tracking-tight sm:text-6xl">
+                Exterior cleaning for Okeechobee homes and properties.
+              </h2>
 
-                <div className="mt-4 grid gap-3">
-                  <div className="rounded-2xl bg-black/70 p-4">
-                    <p className="text-lg font-black">Driveway Cleaning is hot this week.</p>
-                    <p className="mt-1 text-sm font-bold text-white/55">
-                      Feature driveway proof higher on the live page.
-                    </p>
-                  </div>
-                  <div className="rounded-2xl bg-black/70 p-4">
-                    <p className="text-lg font-black">7 estimates are still open.</p>
-                    <p className="mt-1 text-sm font-bold text-white/55">
-                      Follow up before the weekend before the leads go cold.
-                    </p>
-                  </div>
-                  <div className="rounded-2xl bg-black/70 p-4">
-                    <p className="text-lg font-black">Repeat customers are visible.</p>
-                    <p className="mt-1 text-sm font-bold text-white/55">
-                      Maria Jenkins should see a bundle offer next time.
-                    </p>
-                  </div>
-                </div>
+              <p className="mt-6 text-lg leading-8 text-zinc-300">
+                Ridgeline Pro Wash helps homeowners and property owners keep exterior surfaces clean,
+                safer to walk on, and easier to maintain.
+              </p>
 
-                <a
-                  href="/planet/home-services/leads"
-                  className="mt-5 block rounded-2xl bg-orange-500 px-5 py-4 text-center text-sm font-black uppercase tracking-[0.12em] text-black hover:bg-orange-400"
+              <p className="mt-4 text-sm leading-7 text-zinc-400">
+                House washing, driveway cleaning, roof softwashing, pool cages, fences, patios,
+                gutters, and property cleanup can all start with one clear request.
+              </p>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              {[
+                "House Washing",
+                "Driveways & Walkways",
+                "Roof Softwashing",
+                "Pool Cages",
+                "Fences & Patios",
+                "Gutters & Property Cleanup",
+              ].map((service) => (
+                <div
+                  key={service}
+                  className="rounded-2xl border border-white/10 bg-black/60 p-5 text-sm font-black uppercase tracking-[0.14em] text-zinc-100"
                 >
-                  Open Live Business Board
-                </a>
-              </div>
+                  {service}
+                </div>
+              ))}
             </div>
-<section
-        style={{
-          gridColumn: "1 / -1",
-          width: "min(100%, 980px)",
-          justifySelf: "center",
-          maxWidth: 980,
-          margin: "72px auto 0",
-          padding: "34px 28px",
-          borderRadius: 28,
-          border: "1px solid rgba(255,122,24,0.34)",
-          background: "linear-gradient(135deg, rgba(255,122,24,0.16), rgba(110,54,16,0.18), rgba(0,0,0,0.90))",
-          boxShadow: "0 30px 100px rgba(0,0,0,0.58), 0 0 70px rgba(255,122,24,0.16)",
-          textAlign: "center",
-        }}
-      >
-        <div
-          style={{
-            color: "#39ff88",
-            fontSize: 16,
-            fontWeight: 900,
-            letterSpacing: "0.18em",
-            textTransform: "uppercase",
-            marginBottom: 12,
-          }}
-        >
-          Built By HomePlanet
-        </div>
+          </div>
 
-        <h2
-          style={{
-            margin: 0,
-            color: "#fff",
-            fontSize: "clamp(28px, 4vw, 46px)",
-            lineHeight: 0.98,
-            letterSpacing: "-0.05em",
-          }}
-        >
-          Need something like this for your business?
-        </h2>
+          <div className="mt-14 grid gap-5 md:grid-cols-3">
+            <div className="rounded-[1.5rem] border border-white/10 bg-black/50 p-6">
+              <p className="text-xs font-black uppercase tracking-[0.3em] text-orange-400">
+                Photos
+              </p>
+              <h3 className="mt-3 text-2xl font-black">Show the condition.</h3>
+              <p className="mt-3 text-sm leading-6 text-zinc-400">
+                Photos help Ridgeline see algae, grime, roof streaks, rust, oxidation, spider webs,
+                buildup, and surface condition before quoting.
+              </p>
+            </div>
 
-        <p
-          style={{
-            maxWidth: 720,
-            margin: "16px auto 26px",
-            color: "rgba(255,255,255,0.78)",
-            fontSize: 17,
-            lineHeight: 1.55,
-          }}
-        >
-          HomePlanet builds live pages with the work board underneath, so customers can request help and your business can track the job from first click to final payment.
-        </p>
+            <div className="rounded-[1.5rem] border border-white/10 bg-black/50 p-6">
+              <p className="text-xs font-black uppercase tracking-[0.3em] text-orange-400">
+                Access
+              </p>
+              <h3 className="mt-3 text-2xl font-black">Avoid wasted trips.</h3>
+              <p className="mt-3 text-sm leading-6 text-zinc-400">
+                Gate codes, locked areas, pets, side yard access, parking notes, and water access
+                help the crew know what to expect.
+              </p>
+            </div>
 
-        <Link
-          to="/planet/build-your-live-system"
-          onClick={() =>
-            hpEvent({
-              event: "ridgeline_footer_homeplanet_cta_click",
-              board: "homeplanet-live-pages",
-              entityId: "show-me-what-mine-could-look-like",
-              meta: {
-                company: "RIDGELINE Pro Wash",
-                source: "Ridgeline demo footer",
-                path: window.location.pathname,
-              },
-            })
-          }
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            minHeight: 62,
-            padding: "0 36px",
-            borderRadius: 999,
-            background: "linear-gradient(135deg, #ffb347, #ff7a18)",
-            color: "#160d03",
-            fontWeight: 950,
-            fontSize: 16,
-            textDecoration: "none",
-            boxShadow: "0 18px 48px rgba(255,122,24,0.34)",
-          }}
-        >
-          Show Me What Mine Could Look Like
-        </Link>
-      </section>
+            <div className="rounded-[1.5rem] border border-white/10 bg-black/50 p-6">
+              <p className="text-xs font-black uppercase tracking-[0.3em] text-orange-400">
+                Timing
+              </p>
+              <h3 className="mt-3 text-2xl font-black">Make scheduling easier.</h3>
+              <p className="mt-3 text-sm leading-6 text-zinc-400">
+                Preferred time and crew requests help Ridgeline review the job and send the next
+                clear reply.
+              </p>
+            </div>
+          </div>
 
+          <div className="mt-14 rounded-[2rem] border border-orange-400/20 bg-orange-500/10 p-6 text-center">
+            <h2 className="text-3xl font-black uppercase sm:text-5xl">
+              Ready to clean it up?
+            </h2>
+            <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-zinc-300">
+              Send the service, address, photos, condition, access notes, preferred time, and crew
+              request so Ridgeline can review the job clearly.
+            </p>
+
+            <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
+              <a
+                href="#ridgeline-estimate"
+                className="rounded-xl bg-orange-500 px-7 py-4 text-xs font-black uppercase tracking-[0.22em] text-black"
+              >
+                Get Estimate
+              </a>
+              <a
+                href={`sms:${phone}`}
+                className="rounded-xl border border-white/15 bg-black px-7 py-4 text-xs font-black uppercase tracking-[0.22em] text-white"
+              >
+                Text Ridgeline
+              </a>
+            </div>
           </div>
         </div>
       </section>
+      <footer className="border-t border-white/10 bg-black px-4 pb-20 pt-12 text-center">
+        <div className="mx-auto max-w-4xl">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-orange-400/30 bg-orange-500/10 text-orange-300">
+            <ShieldCheck size={22} />
+          </div>
 
-      {/* FOOTER */}
-      <footer className="border-t border-white/10 bg-black px-4 py-12 text-center">
-        <div className="mx-auto flex h-24 w-24 rotate-[-2deg] items-center justify-center rounded-full border-[3px] border-orange-500 bg-[#0b0b0d] shadow-[0_0_34px_rgba(249,115,22,.32)]">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full border border-white/20 bg-black">
-            <span className="skew-x-[-10deg] text-4xl font-black italic leading-none tracking-[-0.12em] text-white drop-shadow">
-              RL
-            </span>
+          <h2 className="mt-7 text-3xl font-black uppercase tracking-tight text-white sm:text-4xl">
+            Ridgeline Pro Wash
+          </h2>
+
+          <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-zinc-400">
+            Pressure washing and exterior cleaning in Okeechobee, Florida.
+          </p>
+
+          <p className="mx-auto mt-5 max-w-3xl text-sm leading-7 text-zinc-500">
+            House washing, driveways, roof softwashing, pool cages, patios, gutters, fences,
+            and exterior property cleanup.
+          </p>
+
+          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+            <a
+              href="#ridgeline-estimate"
+              className="rounded-xl bg-orange-500 px-8 py-4 text-xs font-black uppercase tracking-[0.2em] text-black shadow-lg shadow-orange-950/30"
+            >
+              Get Estimate
+            </a>
+
+            <a
+              href={`sms:${phone}`}
+              className="rounded-xl border border-white/15 bg-white/[0.04] px-8 py-4 text-xs font-black uppercase tracking-[0.2em] text-white"
+            >
+              Text Ridgeline
+            </a>
+          </div>
+
+          <div className="mt-12 border-t border-white/10 pt-8">
+            <p className="text-[10px] font-black uppercase tracking-[0.35em] text-zinc-700">
+              Powered by HomePlanet
+            </p>
+
+            <a
+              href="/planet/build-your-live-system"
+              className="mt-4 inline-flex rounded-xl border border-white/10 bg-white/[0.03] px-6 py-3 text-[10px] font-black uppercase tracking-[0.25em] text-zinc-400 hover:border-orange-400/30 hover:text-orange-200"
+            >
+              Get something like this
+            </a>
           </div>
         </div>
-        <h2 className="mt-5 text-xl font-black uppercase">
-          Ridgeline Pro Wash
-        </h2>
-        <p className="mt-2 text-sm font-semibold text-white/45">
-          Powered by HomePlanet Live Systems
-        </p>
       </footer>
-    
-      
 
-</main>
+      {quoteSubmitted && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 px-5 backdrop-blur-sm">
+          <div className="w-full max-w-lg rounded-[2rem] border border-orange-400/25 bg-[#120b04] p-7 text-center shadow-2xl shadow-orange-950/50 sm:p-9">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-orange-400/30 bg-orange-500/15 text-orange-200">
+              <Sparkles size={26} />
+            </div>
+
+            <p className="mt-5 text-xs font-black uppercase tracking-[0.32em] text-orange-300">
+              Request Saved
+            </p>
+
+            <h2 className="mt-4 text-4xl font-black uppercase leading-tight text-white">
+              Your request is organized.
+            </h2>
+
+            <p className="mt-4 text-base leading-7 text-white/70">
+              Your request is now organized for Ridgeline. Service, address, photos, condition, access notes, preferred time, preferred crew, and customer notes are ready to review.
+            </p>
+
+            <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:justify-center">
+              <a
+                href={`sms:${phone}`}
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-orange-500 px-6 py-3 text-xs font-black uppercase tracking-[0.22em] text-black"
+              >
+                <MessageCircle size={15} />
+                Text Ridgeline
+              </a>
+
+              <a
+                href={`tel:${phone}`}
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-orange-300/30 bg-white/5 px-6 py-3 text-xs font-black uppercase tracking-[0.22em] text-white"
+              >
+                <Phone size={15} />
+                Talk To Ridgeline
+              </a>
+
+              <a
+                href="/planet/ridgeline/intelligence"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-orange-300/40 bg-orange-500/10 px-6 py-3 text-xs font-black uppercase tracking-[0.22em] text-orange-100"
+              >
+                See What Ridgeline Sees
+              </a>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setQuoteSubmitted(false)}
+              className="mt-6 text-xs font-black uppercase tracking-[0.24em] text-orange-200 underline-offset-4 hover:underline"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+    </main>
   );
 }
-
-
-
 
 
 
