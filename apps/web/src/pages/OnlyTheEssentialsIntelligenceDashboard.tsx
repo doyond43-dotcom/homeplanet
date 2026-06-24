@@ -1,5 +1,5 @@
 ﻿import { useEffect, useMemo, useState } from "react";
-import { CalendarCheck, MessageCircle, Phone, Trash2, X } from "lucide-react";
+import { CalendarCheck, MapPin, MessageCircle, Phone, Share2, Trash2, X } from "lucide-react";
 import { supabase } from "../lib/supabase";
 
 type Signal = {
@@ -63,6 +63,71 @@ const initialSignals: Signal[] = [
   },
 ];
 
+
+function smsBody(phone: string, body: string) {
+  const digits = phone.replace(/\D/g, "");
+  const normalized =
+    digits.length === 10 ? `+1${digits}` : digits.length === 11 && digits.startsWith("1") ? `+${digits}` : digits;
+
+  return normalized ? `sms:${normalized}?body=${encodeURIComponent(body)}` : "#";
+}
+
+function buildFirstReplyText(signal: Signal) {
+  return `Hi ${signal.name}, this is Kaitlin with Only The Essentials Cleaning. I received your cleaning request and I’m reviewing the details now.
+
+I’ll reply here with the next step.`;
+}
+
+function buildEstimateText(signal: Signal) {
+  return `Hi ${signal.name}, this is Kaitlin with Only The Essentials Cleaning.
+
+I reviewed your cleaning request:
+
+Service: ${signal.service}
+Home: ${signal.home}
+Condition: ${signal.condition}
+Pets: ${signal.pets}
+Preferred time: ${signal.preferred}
+
+I can help with this. I’ll confirm the final price based on the home details, condition, and any photos/notes you sent.`;
+}
+
+function buildScheduleText(signal: Signal) {
+  return `Hi ${signal.name}, this is Kaitlin with Only The Essentials Cleaning.
+
+Your cleaning request is ready to schedule.
+
+Preferred time: ${signal.preferred}
+
+What day works best for you?`;
+}
+
+function buildPaymentText(signal: Signal) {
+  return `Hi ${signal.name}, this is Kaitlin with Only The Essentials Cleaning.
+
+Your cleaning is ready for payment. I can send the payment link here once everything is confirmed.`;
+}
+
+function buildReviewText(signal: Signal) {
+  return `Hi ${signal.name}, thank you for choosing Only The Essentials Cleaning.
+
+If you were happy with the cleaning, I’d really appreciate a quick review. It helps a local business more than you know.`;
+}
+
+function buildSocialPost(signal: Signal) {
+  return `Another cleaning request organized through Only The Essentials Cleaning.
+
+Service: ${signal.service}
+Home: ${signal.home}
+Condition: ${signal.condition}
+
+Simple request. Clear details. Clean follow-up.`;
+}
+
+function copyText(label: string, text: string) {
+  navigator.clipboard?.writeText(text);
+  alert(label);
+}
 export default function OnlyTheEssentialsIntelligenceDashboard() {
   const [signals, setSignals] = useState<Signal[]>([]);
   const [selected, setSelected] = useState<Signal | null>(null);
@@ -300,19 +365,24 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
                 <Phone className="mx-auto mb-1" size={16} />
                 Call
               </a>
-              <a href={selected.phone ? `sms:${selected.phone}` : undefined} className="rounded-xl border border-pink-300/30 bg-pink-400/10 py-3 text-center text-xs font-black">
+              <a href={smsBody(selected.phone, buildFirstReplyText(selected))} className="rounded-xl border border-pink-300/30 bg-pink-400/10 py-3 text-center text-xs font-black">
                 <MessageCircle className="mx-auto mb-1" size={16} />
                 Text
               </a>
-              <button className="rounded-xl border border-pink-300/30 bg-pink-400/10 py-3 text-center text-xs font-black">
-                <CalendarCheck className="mx-auto mb-1" size={16} />
-                Schedule
-              </button>
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selected.location)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-xl border border-pink-300/30 bg-pink-400/10 py-3 text-center text-xs font-black"
+              >
+                <MapPin className="mx-auto mb-1" size={16} />
+                Navigate
+              </a>
             </div>
 
             <div className="mt-5 space-y-4 overflow-auto pb-6">
               <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
-                <p className="text-xs font-black uppercase tracking-[0.25em] text-zinc-500">
+                <p className="text-[11px] font-black uppercase tracking-[0.35em] text-pink-200">
                   CUSTOMER
                 </p>
                 <div className="mt-3 text-sm text-zinc-200">
@@ -323,7 +393,7 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
-                <p className="text-xs font-black uppercase tracking-[0.25em] text-zinc-500">
+                <p className="text-[11px] font-black uppercase tracking-[0.35em] text-pink-200">
                   REQUEST
                 </p>
                 <div className="mt-3 space-y-1 text-sm text-zinc-200">
@@ -336,7 +406,7 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
-                <p className="text-xs font-black uppercase tracking-[0.25em] text-zinc-500">
+                <p className="text-[11px] font-black uppercase tracking-[0.35em] text-pink-200">
                   INTELLIGENCE
                 </p>
                 <p className="mt-3 text-sm text-zinc-200">
@@ -345,7 +415,7 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
-  <p className="text-xs font-black uppercase tracking-[0.25em] text-zinc-500">
+  <p className="text-[11px] font-black uppercase tracking-[0.35em] text-pink-200">
     ESTIMATE
   </p>
 
@@ -363,18 +433,19 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
 
   <div className="mt-4 grid gap-2">
     <button
-      onClick={() => alert("Create Estimate")}
+      type="button"
+      onClick={() => copyText("Estimate draft copied", buildEstimateText(selected))}
       className="rounded-xl border border-white/10 py-3 text-sm font-black"
     >
-      Create Estimate
+      Copy Estimate Draft
     </button>
 
-    <button
-      onClick={() => alert("Send Estimate")}
-      className="rounded-xl bg-pink-400 py-3 text-sm font-black text-black"
+    <a
+      href={smsBody(selected.phone, buildEstimateText(selected))}
+      className="rounded-xl bg-pink-400 py-3 text-center text-sm font-black text-black"
     >
-      Send Estimate
-    </button>
+      Send Estimate Text
+    </a>
   </div>
 
   <div className="mt-4 rounded-xl bg-yellow-500/10 p-3 text-sm font-bold text-yellow-200">
@@ -383,7 +454,7 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
 </div>
 
               <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
-  <p className="text-xs font-black uppercase tracking-[0.25em] text-zinc-500">
+  <p className="text-[11px] font-black uppercase tracking-[0.35em] text-pink-200">
     SCHEDULE
   </p>
 
@@ -395,24 +466,17 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
 
     <div className="flex justify-between">
       <span className="text-zinc-400">Preferred</span>
-      <span className="font-bold">Mornings</span>
+      <span className="font-bold">{selected.preferred}</span>
     </div>
   </div>
 
   <div className="mt-4 grid gap-2">
-    <button
-      onClick={() => alert("Choose Date")}
-      className="rounded-xl border border-white/10 py-3 text-sm font-black"
+    <a
+      href={smsBody(selected.phone, buildScheduleText(selected))}
+      className="rounded-xl bg-pink-400 py-3 text-center text-sm font-black text-black"
     >
-      Choose Date
-    </button>
-
-    <button
-      onClick={() => alert("Confirm Schedule")}
-      className="rounded-xl bg-pink-400 py-3 text-sm font-black text-black"
-    >
-      Confirm Schedule
-    </button>
+      Confirm Schedule Text
+    </a>
   </div>
 
   <div className="mt-4 rounded-xl bg-yellow-500/10 p-3 text-sm font-bold text-yellow-200">
@@ -420,34 +484,58 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
   </div>
 </div>
 
-              <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4"><p className="text-xs font-black uppercase tracking-[0.25em] text-zinc-500">WORK</p></div>
+              <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
+                <p className="text-[11px] font-black uppercase tracking-[0.35em] text-pink-200">
+                  WORK / PHOTOS
+                </p>
+
+                <div className="mt-3 space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-zinc-400">Work Status</span>
+                    <span className="font-bold text-yellow-300">Not Started</span>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span className="text-zinc-400">Before Photos</span>
+                    <span className="font-bold">Not Added</span>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span className="text-zinc-400">After Photos</span>
+                    <span className="font-bold">Not Added</span>
+                  </div>
+                </div>
+
+                <div className="mt-4 rounded-xl bg-pink-400/10 p-3 text-sm font-bold text-pink-100">
+                  Next Move: Take before and after photos when the cleaning starts and finishes so the job proof stays with the request.
+                </div>
+              </div>
 
               <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
-  <p className="text-xs font-black uppercase tracking-[0.25em] text-zinc-500">
+  <p className="text-[11px] font-black uppercase tracking-[0.35em] text-pink-200">
     PAYMENT
   </p>
 
   <div className="mt-3 grid gap-2">
-    <button
-      onClick={() => alert("Send Payment Request")}
-      className="rounded-xl border border-green-400/30 bg-green-500/10 py-3 text-sm font-black"
+    <a
+      href={smsBody(selected.phone, buildPaymentText(selected))}
+      className="rounded-xl border border-green-400/30 bg-green-500/10 py-3 text-center text-sm font-black"
     >
-      Send Payment Request
-    </button>
+      Send Payment Link Text
+    </a>
 
     <button
-      onClick={() => alert("Mark Paid")}
+      type="button"
+      onClick={() => copyText("Payment note copied", buildPaymentText(selected))}
       className="rounded-xl border border-white/10 py-3 text-sm font-black"
     >
-      Mark Paid
+      Copy Payment Note
     </button>
   </div>
 </div>
 
-              <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4"><p className="text-xs font-black uppercase tracking-[0.25em] text-zinc-500">MEDIA</p></div>
-
               <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
-  <p className="text-xs font-black uppercase tracking-[0.25em] text-zinc-500">
+  <p className="text-[11px] font-black uppercase tracking-[0.35em] text-pink-200">
     REVIEWS
   </p>
 
@@ -459,18 +547,20 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
   </div>
 
   <div className="mt-4 grid gap-2">
-    <button
-      onClick={() => alert("Send Review Request")}
-      className="rounded-xl bg-pink-400 py-3 text-sm font-black text-black"
+    <a
+      href={smsBody(selected.phone, buildReviewText(selected))}
+      className="rounded-xl bg-pink-400 py-3 text-center text-sm font-black text-black"
     >
-      Send Review Request
-    </button>
+      Send Review Text
+    </a>
 
     <button
-      onClick={() => alert("Customer Review Link")}
+      type="button"
+      onClick={() => copyText("Post copied", buildSocialPost(selected))}
       className="rounded-xl border border-white/10 py-3 text-sm font-black"
     >
-      Customer Review Link
+      <Share2 className="mr-1 inline" size={14} />
+      Copy Post
     </button>
   </div>
 
@@ -480,7 +570,7 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
 </div>
 
               <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
-                <p className="text-xs font-black uppercase tracking-[0.25em] text-zinc-500">
+                <p className="text-[11px] font-black uppercase tracking-[0.35em] text-pink-200">
                   TIMELINE
                 </p>
 
@@ -498,6 +588,11 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
     </main>
   );
 }
+
+
+
+
+
 
 
 
