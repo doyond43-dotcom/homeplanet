@@ -1,9 +1,11 @@
-﻿import { useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { CalendarCheck, MessageCircle, Phone, Trash2, X } from "lucide-react";
+import { supabase } from "../lib/supabase";
 
 type Signal = {
   id: string;
   name: string;
+  phone: string;
   service: string;
   location: string;
   home: string;
@@ -62,12 +64,79 @@ const initialSignals: Signal[] = [
 ];
 
 export default function OnlyTheEssentialsIntelligenceDashboard() {
-  const [signals, setSignals] = useState(initialSignals);
+  const [signals, setSignals] = useState<Signal[]>([]);
   const [selected, setSelected] = useState<Signal | null>(null);
 
+  useEffect(() => {
+    async function loadRequests() {
+      const { data, error } = await supabase
+        .from("cleaning_requests")
+        .select("*")
+        .eq("business_slug", "only-the-essentials")
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      if (error) {
+        console.error("Could not load cleaning requests:", error);
+        return;
+      }
+
+      const liveSignals = (data || []).map((row: any) => {
+        const notes = row.notes || "";
+        const read = (label: string, fallback: string) => {
+          const match = notes.match(new RegExp(label + ":\\s*([^\\n]+)", "i"));
+          if (match?.[1]?.trim()) return match[1].trim();
+
+          const lines = notes.split(/\r?\n/).map((line: string) => line.trim()).filter(Boolean);
+          const index = lines.findIndex((line: string) => line.toLowerCase() === label.toLowerCase());
+          if (index >= 0 && lines[index + 1]) return lines[index + 1];
+
+          return fallback;
+        };
+
+        const service = read("Service Type", row.request_type === "quote" ? "Cleaning Quote" : "Cleaning Request");
+        const bedrooms = read("Bedrooms", "Bedrooms not listed");
+        const bathrooms = read("Bathrooms", "Bathrooms not listed");
+        const condition = read("Condition", "Condition not listed");
+        const pets = read("Pets", "Pets not listed");
+        const preferred = read("Preferred Time", row.preferred_time || "Preferred time not listed");
+
+        const heavy = condition.toLowerCase().includes("heavy") || condition.toLowerCase().includes("extra");
+        const hasPets = pets !== "No Pets" && pets !== "Pets not listed";
+
+        return {
+          id: row.id,
+          name: row.customer_name || "New Cleaning Request",
+          phone: row.customer_phone || "",
+          service,
+          location: row.customer_address === "Quote request from landing page" ? "Okeechobee, FL" : row.customer_address || "Okeechobee, FL",
+          home: `${bedrooms} / ${bathrooms}`,
+          condition,
+          pets,
+          preferred,
+          value: "Needs quote",
+          nextMove: heavy ? "Ask for photos before final quote." : hasPets ? "Confirm pet notes before scheduling." : "Review request and follow up with customer.",
+          suggestion: heavy ? "This looks like a heavier job. Confirm photos, pets, access, and expected time before scheduling." : hasPets ? "Pet home request. Confirm animals, access, and any extra cleaning needs before quoting." : "New customer request. Review the details and follow up while the lead is fresh.",
+          message: `Hey ${row.customer_name || "there"}, thanks for reaching out. I received your cleaning request and will review the details before confirming the quote.`,
+        };
+      });
+
+      setSignals(liveSignals);
+    }
+
+    loadRequests();
+  }, []);
+
   const metrics = useMemo(() => {
-    const heavy = signals.filter((s) => s.condition.toLowerCase().includes("heavy")).length;
-    const pets = signals.filter((s) => s.pets !== "No Pets").length;
+    const heavy = signals.filter((s) => {
+      const condition = s.condition.toLowerCase();
+      return condition.includes("heavy") || condition.includes("extra attention") || condition.includes("needs extra");
+    }).length;
+
+    const pets = signals.filter((s) => {
+      const pets = s.pets.toLowerCase();
+      return pets !== "no pets" && pets !== "pets not listed" && pets !== "condition not listed";
+    }).length;
 
     return [
       { label: "Active Signals", value: signals.length },
@@ -77,7 +146,31 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
     ];
   }, [signals]);
 
-  function deleteSignal(id: string) {
+  async function deleteSignal(id: string) {
+    const signal = signals.find((item) => item.id === id);
+    const label = signal?.name || "this request";
+
+    const confirmed = window.confirm(`Delete ${label}? This removes the request from the database.`);
+    if (!confirmed) return;
+
+    const { data, error } = await supabase
+      .from("cleaning_requests")
+      .delete()
+      .eq("id", id)
+      .select("id, customer_name");
+
+    if (error) {
+      console.error("Could not delete cleaning request:", error);
+      window.alert("Could not delete this request. Supabase returned an error. Check console.");
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      console.warn("Delete returned no rows. RLS may be blocking delete or the id did not match.", { id, data });
+      window.alert("The card was removed from the screen, but Supabase did not delete the database row. RLS/policy is probably blocking it.");
+      return;
+    }
+
     setSignals((current) => current.filter((signal) => signal.id !== id));
     if (selected?.id === id) setSelected(null);
   }
@@ -203,11 +296,11 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
             <p className="mt-1 text-sm text-zinc-400">{selected.location}</p>
 
             <div className="mt-6 grid grid-cols-3 gap-2">
-              <a href="tel:8635320683" className="rounded-xl border border-pink-300/30 bg-pink-400/10 py-3 text-center text-xs font-black">
+              <a href={selected.phone ? `tel:${selected.phone}` : undefined} className="rounded-xl border border-pink-300/30 bg-pink-400/10 py-3 text-center text-xs font-black">
                 <Phone className="mx-auto mb-1" size={16} />
                 Call
               </a>
-              <a href="sms:8635320683" className="rounded-xl border border-pink-300/30 bg-pink-400/10 py-3 text-center text-xs font-black">
+              <a href={selected.phone ? `sms:${selected.phone}` : undefined} className="rounded-xl border border-pink-300/30 bg-pink-400/10 py-3 text-center text-xs font-black">
                 <MessageCircle className="mx-auto mb-1" size={16} />
                 Text
               </a>
@@ -224,6 +317,7 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
                 </p>
                 <div className="mt-3 text-sm text-zinc-200">
                   <div>{selected.name}</div>
+                  <div>{selected.phone || "No phone number provided"}</div>
                   <div>{selected.location}</div>
                 </div>
               </div>
@@ -394,7 +488,7 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
                   onClick={() => deleteSignal(selected.id)}
                   className="mt-4 w-full rounded-xl border border-red-400/30 bg-red-500/10 py-3 text-sm font-black text-red-200"
                 >
-                  Delete Test Card
+                  Delete Request
                 </button>
               </div>
             </div>
@@ -404,6 +498,14 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
     </main>
   );
 }
+
+
+
+
+
+
+
+
 
 
 

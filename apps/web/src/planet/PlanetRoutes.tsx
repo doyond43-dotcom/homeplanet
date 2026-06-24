@@ -1,4 +1,4 @@
-﻿
+
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import EcosystemInfrastructureLayer from "../pages/EcosystemInfrastructureLayer";
@@ -46,6 +46,7 @@ import OnlyTheEssentialsBoard from "../pages/OnlyTheEssentialsBoard";
 import OnlyTheEssentialsLanding from "../pages/OnlyTheEssentialsLanding";
 
 import OnlyTheEssentialsCustomerLanding from "../pages/OnlyTheEssentialsCustomerLanding";
+import OnlyTheEssentialsLandingV2 from "../pages/OnlyTheEssentialsLandingV2";
 
 import OnlyTheEssentialsPublicLanding from "../pages/OnlyTheEssentialsPublicLanding";
 
@@ -554,9 +555,11 @@ export default function PlanetRoutes() {
       {/* ONLY THE ESSENTIALS */}
       <Route path="only-the-essentials" element={<OnlyTheEssentialsLanding />} />
       <Route path="only-the-essentials-cleaning" element={<OnlyTheEssentialsCustomerLanding />} />
+      <Route path="only-the-essentials/v2" element={<OnlyTheEssentialsLandingV2 />} />
       <Route path="only-the-essentials/request" element={<OnlyTheEssentialsRequest />} />
       <Route path="only-the-essentials/request-v2" element={<OnlyTheEssentialsRequestV2 />} />
-      <Route path="only-the-essentials/intelligence" element={<OnlyTheEssentialsIntelligenceDashboard />} />
+      <Route path="only-the-essentials/intelligence" element={<OnlyTheEssentialsIntelligenceDashboard />} />      <Route path="only-the-essentials/board" element={<OnlyTheEssentialsBoard />} />
+      <Route path="only-the-essentials/messages" element={<OnlyTheEssentialsMessagesBoard />} />
       <Route path="ridgeline" element={<RidgelineIntelligenceDashboard />} />
       <Route path="ridgeline/intelligence" element={<RidgelineIntelligenceDashboard />} />
       <Route path="ridgeline/request" element={<RidgelineRequestV2 />} />
@@ -817,6 +820,8 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
+
 
 
 
