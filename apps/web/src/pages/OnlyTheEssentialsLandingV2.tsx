@@ -110,17 +110,17 @@ export default function OnlyTheEssentialsCustomerLanding() {
     {
       icon: Home,
       title: "Standard Cleaning",
-      text: "Keep your home fresh, clean, and comfortable.",
+      text: "Residential cleaning and house cleaning in Okeechobee for fresh, comfortable homes.",
     },
     {
       icon: Sparkles,
       title: "Deep Cleaning",
-      text: "A deeper clean for areas that need extra attention.",
+      text: "Deep cleaning for Okeechobee homes that need extra attention.",
     },
     {
       icon: ShieldCheck,
       title: "Move-In / Move-Out",
-      text: "Fresh starts for homes, rentals, and transitions.",
+      text: "Move-in / move-out cleaning for homes, rentals, and transitions in Okeechobee.",
     },
     {
       icon: CalendarCheck,
@@ -130,7 +130,7 @@ export default function OnlyTheEssentialsCustomerLanding() {
     {
       icon: Home,
       title: "Vacation Reset",
-      text: "Reset help for guest stays, rentals, and busy weeks.",
+      text: "Rental and Airbnb refresh cleaning for guest stays, rentals, and busy weeks.",
     },
     {
       icon: Heart,
@@ -251,6 +251,9 @@ export default function OnlyTheEssentialsCustomerLanding() {
           <h2 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">
             Cleaning made simple. {"\u2661"}
           </h2>
+          <p className="mx-auto mt-4 max-w-3xl text-sm leading-6 text-zinc-300 sm:text-base">
+            Only The Essentials Cleaning helps Okeechobee homes with residential cleaning, deep cleaning, move-in / move-out cleaning, recurring cleaning, and rental refreshes.
+          </p>
         </div>
 
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
@@ -374,7 +377,7 @@ export default function OnlyTheEssentialsCustomerLanding() {
           <div>
             <p className="text-base leading-7 text-zinc-200">
               Call, text, or send a request. Kaitlin is here to help with simple
-              scheduling and friendly communication.
+              scheduling, friendly communication, and reliable house cleaning in Okeechobee.
             </p>
 
             <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
@@ -408,7 +411,7 @@ export default function OnlyTheEssentialsCustomerLanding() {
     Only The Essentials Cleaning
   </p>
   <p className="mt-3 text-sm font-semibold text-zinc-300">
-    Okeechobee, Florida
+    House cleaning in Okeechobee, Florida
   </p>
   <p className="mt-6 text-xs text-zinc-500">
     &copy; 2026 Only The Essentials Cleaning
@@ -469,6 +472,10 @@ export default function OnlyTheEssentialsCustomerLanding() {
     </main>
   );
 }
+
+
+
+
 
 
 
