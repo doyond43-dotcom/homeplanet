@@ -132,6 +132,7 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
   const [signals, setSignals] = useState<Signal[]>([]);
   const [selected, setSelected] = useState<Signal | null>(null);
   const [showContactDetails, setShowContactDetails] = useState(false);
+  const [showHeaderDetails, setShowHeaderDetails] = useState(false);
 
   useEffect(() => {
     async function loadRequests() {
@@ -283,6 +284,7 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
                     <button onClick={() => {
                       setSelected(signal);
                       setShowContactDetails(false);
+                      setShowHeaderDetails(false);
                     }} className="flex-1 text-left">
                       <h2 className="text-2xl font-black">{signal.name}</h2>
                       <p className="mt-1 font-black text-pink-300">{signal.service}</p>
@@ -301,6 +303,7 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
                   <button onClick={() => {
                     setSelected(signal);
                     setShowContactDetails(false);
+                    setShowHeaderDetails(false);
                   }} className="mt-4 w-full text-left">
                     <div className="grid gap-2 text-sm text-zinc-300 sm:grid-cols-2">
                       <div>{signal.home}</div>
@@ -356,6 +359,7 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
               onClick={() => {
                 setSelected(null);
                 setShowContactDetails(false);
+                setShowHeaderDetails(false);
               }}
               className="ml-auto rounded-xl border border-white/10 bg-white/10 p-3"
             >
@@ -363,19 +367,29 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
             </button>
 
             <div className="mt-4 rounded-2xl border border-pink-300/20 bg-pink-400/10 p-4">
-              <p className="text-[10px] font-black uppercase tracking-[0.28em] text-pink-300">
-                Customer Signal
-              </p>
-
-              <div className="mt-3 flex items-start justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => setShowHeaderDetails((current) => !current)}
+                className="flex w-full items-center justify-between gap-3 text-left"
+              >
                 <div className="min-w-0">
-                  <h2 className="truncate text-2xl font-black">{selected.name}</h2>
-                  <p className="mt-1 text-lg font-black text-pink-300">{selected.service}</p>
-                  <p className="mt-1 truncate text-sm text-zinc-400">{selected.location}</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.28em] text-pink-300">
+                    Customer Signal
+                  </p>
+                  <h2 className="mt-2 truncate text-2xl font-black">{selected.name}</h2>
+                  <p className="mt-1 truncate text-sm font-black text-pink-300">{selected.service}</p>
                 </div>
 
+                <span className="shrink-0 rounded-full border border-pink-300/25 bg-black/30 px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-pink-100">
+                  {showHeaderDetails ? "Hide" : "Show"}
+                </span>
+              </button>
 
-              </div>
+              {showHeaderDetails ? (
+                <div className="mt-4 border-t border-white/10 pt-3 text-sm font-bold text-zinc-300">
+                  {selected.location}
+                </div>
+              ) : null}
             </div>
 
             <div className="mt-4 grid grid-cols-3 gap-2">
@@ -620,6 +634,7 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
     </main>
   );
 }
+
 
 
 
