@@ -1,4 +1,4 @@
-﻿
+
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import EcosystemInfrastructureLayer from "../pages/EcosystemInfrastructureLayer";
@@ -522,7 +522,7 @@ export default function PlanetRoutes() {
 
               <Route path="crew-team" element={<CrewTeamBoard />} />
 <Route path="start" element={<StartPage />} />
-      <Route path="okeechobee/create" element={<Navigate to="/planet/okeechobee" replace />} />
+      <Route path="okeechobee/create" element={<OkeechobeeCreateEventPage />} />
       <Route path="okeechobee/event/:slug" element={<OkeechobeeEventPage />} />
       <Route path="okeechobee" element={<OkeechobeeTogetherPage />} />
       <Route path="okeechobee/admin" element={<OkeechobeeCommunityAdminPage />} />
@@ -823,6 +823,7 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
 
 
 
