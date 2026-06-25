@@ -185,6 +185,7 @@ const sampleSignal: Signal = {
 export default function RidgelineIntelligenceDashboard() {
   const [signals, setSignals] = useState<Signal[]>([]);
   const [selected, setSelected] = useState<Signal | null>(null);
+  const [showContactDetails, setShowContactDetails] = useState(false);
   const [showEstimatePreview, setShowEstimatePreview] = useState(false);
   const [copiedNotice, setCopiedNotice] = useState("");
   const [loading, setLoading] = useState(true);
@@ -337,6 +338,7 @@ export default function RidgelineIntelligenceDashboard() {
                     <div className="flex items-start justify-between gap-3">
                       <button onClick={() => {
                           setSelected(signal);
+                          setShowContactDetails(false);
                           setShowEstimatePreview(false);
                         }} className="flex-1 text-left">
                         <h2 className="text-2xl font-black">{signal.name}</h2>
@@ -355,6 +357,7 @@ export default function RidgelineIntelligenceDashboard() {
 
                     <button onClick={() => {
                         setSelected(signal);
+                        setShowContactDetails(false);
                         setShowEstimatePreview(false);
                       }} className="mt-4 w-full text-left">
                       <div className="grid gap-2 text-sm text-zinc-300 sm:grid-cols-2">
@@ -414,6 +417,7 @@ export default function RidgelineIntelligenceDashboard() {
               <button
                 onClick={() => {
                   setSelected(null);
+                  setShowContactDetails(false);
                   setShowEstimatePreview(false);
                 }}
                 className="ml-auto flex rounded-xl border border-white/10 bg-white/10 p-3 hover:bg-white/15"
@@ -471,38 +475,52 @@ export default function RidgelineIntelligenceDashboard() {
 
             <div className="relative z-10 mt-6 space-y-3">
               <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
-                <p className="text-xs font-black uppercase tracking-[0.25em] text-amber-200">
-                  Customer
-                </p>
-                <div className="mt-3 space-y-1 text-sm text-zinc-200">
-                  <div>{selected.name}</div>
-                  <div>{selected.phone || "No phone provided"}</div>
-                  <div>{selected.address}</div>
-                </div>
-              </div>
+                <button
+                  type="button"
+                  onClick={() => setShowContactDetails((current) => !current)}
+                  className="flex w-full items-center justify-between gap-3 text-left"
+                >
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.25em] text-amber-200">
+                      Contact / Details
+                    </p>
+                    <p className="mt-2 text-sm font-bold text-zinc-300">
+                      {selected.phone || "No phone"} • {selected.preferred}
+                    </p>
+                  </div>
+                  <span className="rounded-full border border-amber-300/25 bg-amber-500/10 px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-amber-100">
+                    {showContactDetails ? "Hide" : "Show"}
+                  </span>
+                </button>
 
-              <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
-                <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-200">
-                  Request
-                </p>
-                <div className="mt-3 space-y-1 text-sm text-zinc-200">
-                  <div>Service: {selected.service}</div>
-                  <div>Condition: {selected.condition}</div>
-                  <div>Access: {selected.access}</div>
-                  <div>Preferred Time: {selected.preferred}</div>
-                  <div>Preferred Crew: {selected.preferredTech}</div>
-                  <div>Photos Attached: {selected.photos}</div>
-                </div>
-              </div>
+                {showContactDetails ? (
+                  <div className="mt-4 space-y-4 border-t border-white/10 pt-4">
+                    <div className="space-y-1 text-sm text-zinc-200">
+                      <div>{selected.name}</div>
+                      <div>{selected.phone || "No phone provided"}</div>
+                      <div>{selected.address}</div>
+                    </div>
 
-              {selected.notes && selected.notes !== "None" && (
-                <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
-                  <p className="text-xs font-black uppercase tracking-[0.25em] text-yellow-200">
-                    Customer Notes
-                  </p>
-                  <p className="mt-3 text-sm leading-6 text-zinc-200">{selected.notes}</p>
-                </div>
-              )}
+                    <div className="space-y-1 text-sm text-zinc-200">
+                      <div>Service: {selected.service}</div>
+                      <div>Condition: {selected.condition}</div>
+                      <div>Access: {selected.access}</div>
+                      <div>Preferred Time: {selected.preferred}</div>
+                      <div>Preferred Crew: {selected.preferredTech}</div>
+                      <div>Photos Attached: {selected.photos}</div>
+                    </div>
+
+                    {selected.notes && selected.notes !== "None" && (
+                      <div className="rounded-xl border border-yellow-300/20 bg-yellow-500/10 p-3">
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-yellow-200">
+                          Customer Notes
+                        </p>
+                        <p className="mt-2 text-sm leading-6 text-zinc-200">{selected.notes}</p>
+                      </div>
+                    )}
+                  </div>
+                ) : null}
+              </div>
 
               <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
                 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-300">
@@ -684,6 +702,7 @@ export default function RidgelineIntelligenceDashboard() {
     </main>
   );
 }
+
 
 
 

@@ -131,6 +131,7 @@ function copyText(label: string, text: string) {
 export default function OnlyTheEssentialsIntelligenceDashboard() {
   const [signals, setSignals] = useState<Signal[]>([]);
   const [selected, setSelected] = useState<Signal | null>(null);
+  const [showContactDetails, setShowContactDetails] = useState(false);
 
   useEffect(() => {
     async function loadRequests() {
@@ -279,7 +280,10 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
                   className="rounded-2xl border border-white/10 bg-black p-4"
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <button onClick={() => setSelected(signal)} className="flex-1 text-left">
+                    <button onClick={() => {
+                      setSelected(signal);
+                      setShowContactDetails(false);
+                    }} className="flex-1 text-left">
                       <h2 className="text-2xl font-black">{signal.name}</h2>
                       <p className="mt-1 font-black text-pink-300">{signal.service}</p>
                       <p className="mt-1 text-sm text-zinc-400">{signal.location}</p>
@@ -294,7 +298,10 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
                     </button>
                   </div>
 
-                  <button onClick={() => setSelected(signal)} className="mt-4 w-full text-left">
+                  <button onClick={() => {
+                    setSelected(signal);
+                    setShowContactDetails(false);
+                  }} className="mt-4 w-full text-left">
                     <div className="grid gap-2 text-sm text-zinc-300 sm:grid-cols-2">
                       <div>{signal.home}</div>
                       <div>{signal.condition}</div>
@@ -346,7 +353,10 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm">
           <aside className="ml-auto flex h-full w-full max-w-md flex-col border-l border-pink-300/20 bg-black p-5 shadow-2xl shadow-pink-950/40">
             <button
-              onClick={() => setSelected(null)}
+              onClick={() => {
+                setSelected(null);
+                setShowContactDetails(false);
+              }}
               className="ml-auto rounded-xl border border-white/10 bg-white/10 p-3"
             >
               <X size={18} />
@@ -382,27 +392,41 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
 
             <div className="mt-5 space-y-4 overflow-auto pb-6">
               <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
-                <p className="text-[11px] font-black uppercase tracking-[0.35em] text-pink-200">
-                  CUSTOMER
-                </p>
-                <div className="mt-3 text-sm text-zinc-200">
-                  <div>{selected.name}</div>
-                  <div>{selected.phone || "No phone number provided"}</div>
-                  <div>{selected.location}</div>
-                </div>
-              </div>
+                <button
+                  type="button"
+                  onClick={() => setShowContactDetails((current) => !current)}
+                  className="flex w-full items-center justify-between gap-3 text-left"
+                >
+                  <div>
+                    <p className="text-[11px] font-black uppercase tracking-[0.35em] text-pink-200">
+                      CONTACT / DETAILS
+                    </p>
+                    <p className="mt-2 text-sm font-bold text-zinc-300">
+                      {selected.phone || "No phone"} • {selected.home} • {selected.preferred}
+                    </p>
+                  </div>
+                  <span className="rounded-full border border-pink-300/25 bg-pink-400/10 px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-pink-100">
+                    {showContactDetails ? "Hide" : "Show"}
+                  </span>
+                </button>
 
-              <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
-                <p className="text-[11px] font-black uppercase tracking-[0.35em] text-pink-200">
-                  REQUEST
-                </p>
-                <div className="mt-3 space-y-1 text-sm text-zinc-200">
-                  <div>Service: {selected.service}</div>
-                  <div>Home: {selected.home}</div>
-                  <div>Condition: {selected.condition}</div>
-                  <div>Pets: {selected.pets}</div>
-                  <div>Preferred: {selected.preferred}</div>
-                </div>
+                {showContactDetails ? (
+                  <div className="mt-4 space-y-4 border-t border-white/10 pt-4">
+                    <div className="space-y-1 text-sm text-zinc-200">
+                      <div>{selected.name}</div>
+                      <div>{selected.phone || "No phone number provided"}</div>
+                      <div>{selected.location}</div>
+                    </div>
+
+                    <div className="space-y-1 text-sm text-zinc-200">
+                      <div>Service: {selected.service}</div>
+                      <div>Home: {selected.home}</div>
+                      <div>Condition: {selected.condition}</div>
+                      <div>Pets: {selected.pets}</div>
+                      <div>Preferred: {selected.preferred}</div>
+                    </div>
+                  </div>
+                ) : null}
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
@@ -588,6 +612,7 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
     </main>
   );
 }
+
 
 
 
