@@ -11,6 +11,7 @@ import SlapABugLanding from "../pages/SlapABugLanding";
 import SlapABugLiveBoard from "../pages/SlapABugLiveBoard";
 import SlapABugImpulsePage from "../pages/SlapABugImpulsePage";
 import SlapABugImpulseConversation from "../pages/SlapABugImpulseConversation";
+import OnlyTheEssentialsImpulseConversation from "../pages/OnlyTheEssentialsImpulseConversation";
 import SlapABugLeadBoard from "../pages/SlapABugLeadBoard";
 
 import LocalServiceStarterPage from "../pages/LocalServiceStarterPage";
@@ -488,6 +489,7 @@ export default function PlanetRoutes() {
       <Route path="slap-a-bug/live" element={<SlapABugLiveBoard />} />
       <Route path="slap-a-bug/impulse" element={<SlapABugImpulsePage />} />
 <Route path="slap-a-bug/impulse-v2" element={<SlapABugImpulseConversation />} />
+      <Route path="only-the-essentials/impulse" element={<OnlyTheEssentialsImpulseConversation />} />
       <Route path="slap-a-bug/board" element={<SlapABugLeadBoard />} />
       <Route path="local-service-page" element={<LocalServiceStarterPage />} />
       <Route path="live-pages" element={<LivePagesHub />} />
@@ -821,6 +823,7 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
 
 
 

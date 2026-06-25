@@ -272,9 +272,7 @@ export default function OnlyTheEssentialsCustomerLanding() {
               </article>
             );
           })}
-        </div>
-
-                <section id="only-essentials-quote" className="mt-14 rounded-[2rem] border border-pink-300/20 bg-pink-950/20 p-6 shadow-2xl shadow-pink-950/25 sm:p-8">
+        </div>        <section id="only-essentials-quote" className="mt-14 rounded-[2rem] border border-pink-300/20 bg-pink-950/20 p-6 shadow-2xl shadow-pink-950/25 sm:p-8">
           <p className="text-xs font-black uppercase tracking-[0.32em] text-pink-300">
             Get My Cleaning Quote
           </p>
@@ -472,6 +470,8 @@ export default function OnlyTheEssentialsCustomerLanding() {
     </main>
   );
 }
+
+
 
 
 

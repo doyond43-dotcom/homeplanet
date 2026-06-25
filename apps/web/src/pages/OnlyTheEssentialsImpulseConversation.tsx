@@ -1,0 +1,207 @@
+﻿import { useState } from "react";
+
+const issues = ["Standard Cleaning", "Deep Cleaning", "Move-In / Move-Out", "Weekly / Biweekly", "Vacation Reset", "Not Sure"];
+const actions = ["Request Cleaning Quote", "Ask About Availability", "Get Recommendation"];
+const times = ["Mornings", "Afternoons", "Evenings", "Flexible"];
+
+export default function OnlyTheEssentialsImpulseConversation() {
+  const [selectedIssue, setSelectedIssue] = useState("");
+  const [selectedAction, setSelectedAction] = useState("");
+  const [selectedTime, setSelectedTime] = useState("");
+  const [phone, setPhone] = useState("");
+  const [notes, setNotes] = useState("");
+
+  const kaitlinPhone = "+18638013179";
+
+  const message = `Hi Kaitlin, I watched your welcome video and I need help with cleaning.
+
+Cleaning Type: ${selectedIssue}
+Next Step: ${selectedAction}
+Preferred Time: ${selectedTime}
+My Phone: ${phone || "Not provided"}
+
+Notes:
+${notes || "No extra notes yet."}`;
+
+  const smsHref = `sms:${kaitlinPhone}?body=${encodeURIComponent(message)}`;
+
+  return (
+    <main className="min-h-screen bg-[#08050a] px-5 py-6 text-zinc-50">
+      <section className="mx-auto max-w-md">
+
+        <div className="mb-6 rounded-3xl border border-[#ec6bb7]/30 bg-[#1a0712] p-5">
+          <p className="text-xs font-black uppercase tracking-[0.3em] text-[#ec6bb7]">
+            Only The Essentials Cleaning
+          </p>
+
+          <h1 className="mt-3 text-3xl font-black">
+            Tell Kaitlin What You Need Cleaned
+          </h1>
+
+          <p className="mt-2 text-sm text-zinc-50/75">
+            Simple cleaning help, one step at a time.
+          </p>
+        </div>
+
+        <div className="mb-6 rounded-[2rem] border border-[#ec6bb7]/35 bg-[#1a0712] p-3 shadow-2xl shadow-pink-950/25">
+          <div className="overflow-hidden rounded-[1.5rem] border border-pink-200/10 bg-black">
+            <video
+              controls
+              playsInline
+              preload="metadata"
+              className="mx-auto max-h-[640px] w-full bg-black object-contain"
+            >
+              <source
+                src="/videos/kaitlin-welcome.mp4"
+                type="video/mp4"
+              />
+              Your browser does not support the video tag.
+            </video>
+          </div>
+
+          <div className="px-3 pb-3 pt-4">
+            <div className="text-xs font-black uppercase tracking-[0.28em] text-[#ec6bb7]">
+              Meet Kaitlin
+            </div>
+
+            <div className="mt-1 text-xl font-black">
+              Welcome Video
+            </div>
+
+            <div className="mt-1 text-sm leading-6 text-zinc-50/70">
+              Watch this first, then tap the cleaning option that best matches what you need.
+            </div>
+          </div>
+        </div>
+
+        {selectedIssue && (
+          <div className="mb-3 rounded-2xl border border-[#ec6bb7]/40 bg-[#ec6bb7]/10 p-3">
+            Selected: {selectedIssue}
+          </div>
+        )}
+
+        {selectedAction && (
+          <div className="mb-3 rounded-2xl border border-[#ec6bb7]/40 bg-[#ec6bb7]/10 p-3">
+            Selected: {selectedAction}
+          </div>
+        )}
+
+        {selectedTime && (
+          <div className="mb-3 rounded-2xl border border-pink-300/40 bg-pink-400/10 p-3">
+            Selected: {selectedTime}
+          </div>
+        )}
+
+        {!selectedIssue && (
+          <div className="space-y-3">
+            {issues.map((issue) => (
+              <button
+                key={issue}
+                onClick={() => setSelectedIssue(issue)}
+                className="w-full rounded-2xl border border-pink-200/10 bg-white/[0.05] p-4 text-left text-lg font-black"
+              >
+                {issue}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {selectedIssue && !selectedAction && (
+          <>
+            <button
+              onClick={() => setSelectedIssue("")}
+              className="mb-4 text-sm text-pink-300"
+            >
+              Change Problem
+            </button>
+
+            <div className="space-y-3">
+              {actions.map((action) => (
+                <button
+                  key={action}
+                  onClick={() => setSelectedAction(action)}
+                  className="w-full rounded-2xl border border-pink-200/10 bg-white/[0.05] p-4 text-left font-black"
+                >
+                  {action}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        {selectedAction && !selectedTime && (
+          <>
+            <button
+              onClick={() => setSelectedAction("")}
+              className="mb-4 text-sm text-pink-300"
+            >
+              Change Action
+            </button>
+
+            <div className="space-y-3">
+              {times.map((time) => (
+                <button
+                  key={time}
+                  onClick={() => setSelectedTime(time)}
+                  className="w-full rounded-2xl border border-pink-200/10 bg-white/[0.05] p-4 text-left font-black"
+                >
+                  {time}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        {selectedTime && (
+          <>
+            <button
+              onClick={() => setSelectedTime("")}
+              className="mb-4 text-sm text-pink-300"
+            >
+              Change Time
+            </button>
+
+            <div className="rounded-3xl border border-pink-200/10 bg-white/[0.05] p-5">
+              <h2 className="text-xl font-black">
+                Contact Information
+              </h2>
+
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="Phone Number"
+                className="mt-4 w-full rounded-2xl border border-pink-200/10 bg-[#08050a] p-4"
+              />
+
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Anything Kaitlin should know?"
+                rows={4}
+                className="mt-4 w-full rounded-2xl border border-pink-200/10 bg-[#08050a] p-4"
+              />
+
+              <a
+                href={smsHref}
+                className="mt-4 block w-full rounded-2xl bg-[#ec6bb7] p-4 text-center font-black text-black"
+              >
+                Send To Kaitlin
+              </a>
+            </div>
+          </>
+        )}
+
+      </section>
+    </main>
+  );
+}
+
+
+
+
+
+
+
+
+
