@@ -93,27 +93,25 @@ export default function OkeechobeeEventPage() {
 
     setSavingHelper(true);
 
-    if (helperType === "Project Coordinator") {
-      const { error: coordinatorError } = await supabase
-        .from("okeechobee_project_coordinators")
-        .insert({
-          event_slug: event.slug,
-          name: helperName.trim(),
-          phone: helperPhone.trim(),
-          email: helperEmail.trim() || null,
-          background: coordinatorBackground.trim() || null,
-          why_help: coordinatorWhyHelp.trim() || null,
-          availability: coordinatorAvailability.trim() || null,
-          status: "Pending Review",
-        });
+    const coordinatorDetails =
+      helperType === "Project Coordinator"
+        ? [
+            coordinatorBackground.trim()
+              ? `Background: ${coordinatorBackground.trim()}`
+              : "",
+            coordinatorWhyHelp.trim()
+              ? `Why: ${coordinatorWhyHelp.trim()}`
+              : "",
+            coordinatorAvailability.trim()
+              ? `Availability: ${coordinatorAvailability.trim()}`
+              : "",
+          ]
+            .filter(Boolean)
+            .join("\n")
+        : "";
 
-      if (coordinatorError) {
-        console.error(coordinatorError);
-        alert("Unable to save coordinator application.");
-        setSavingHelper(false);
-        return;
-      }
-    }
+    const combinedNotes =
+      [helperNotes.trim(), coordinatorDetails].filter(Boolean).join("\n\n") || null;
 
     const { error: helperError } = await supabase
       .from("okeechobee_project_helpers")
@@ -123,7 +121,7 @@ export default function OkeechobeeEventPage() {
         phone: helperPhone.trim(),
         email: helperEmail.trim() || null,
         help_type: helperType,
-        notes: helperNotes.trim() || null,
+        notes: combinedNotes,
       });
 
     if (helperError) {
@@ -136,7 +134,7 @@ export default function OkeechobeeEventPage() {
     const updatedTimeline = [
       ...(event.timeline || []),
       {
-        label: `${helperName.trim()} joined the project`,
+        label: `${helperName.trim()} joined as ${helperType}`,
         time: new Date().toISOString(),
       },
     ];
@@ -578,6 +576,7 @@ const styles: Record<string, React.CSSProperties> = {
     marginTop: 18,
   },
 };
+
 
 
 
