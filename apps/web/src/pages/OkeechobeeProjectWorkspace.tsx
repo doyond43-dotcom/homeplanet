@@ -15,6 +15,14 @@ export default function OkeechobeeProjectWorkspace() {
   const [showNeedForm, setShowNeedForm] = useState(false);
   const [needText, setNeedText] = useState("");
   const [savingNeed, setSavingNeed] = useState(false);
+  const [showMaterialForm, setShowMaterialForm] = useState(false);
+  const [materialText, setMaterialText] = useState("");
+  const [materialAssignedTo, setMaterialAssignedTo] = useState("");
+  const [savingMaterial, setSavingMaterial] = useState(false);
+  const [editingMaterialId, setEditingMaterialId] = useState<number | null>(null);
+  const [editMaterialText, setEditMaterialText] = useState("");
+  const [editMaterialAssignedTo, setEditMaterialAssignedTo] = useState("");
+  const [savingMaterialEdit, setSavingMaterialEdit] = useState(false);
 
   useEffect(() => {
     loadProject();
@@ -133,6 +141,62 @@ export default function OkeechobeeProjectWorkspace() {
     setSavingTask(false);
   }
 
+  async function addMaterial() {
+    if (!project || !materialText.trim()) return;
+
+    setSavingMaterial(true);
+
+    const { error } = await supabase
+      .from("okeechobee_project_materials")
+      .insert([
+        {
+          project_slug: project.slug,
+          title: materialText.trim(),
+          assigned_to: materialAssignedTo.trim() || null,
+        },
+      ]);
+
+    if (error) {
+      console.error(error);
+      alert("Unable to save material.");
+      setSavingMaterial(false);
+      return;
+    }
+
+    await loadProject();
+
+    setMaterialText("");
+    setMaterialAssignedTo("");
+    setShowMaterialForm(false);
+    setSavingMaterial(false);
+  }
+  async function updateMaterial() {
+    if (!editingMaterialId || !editMaterialText.trim()) return;
+
+    setSavingMaterialEdit(true);
+
+    const { error } = await supabase
+      .from("okeechobee_project_materials")
+      .update({
+        title: editMaterialText.trim(),
+        assigned_to: editMaterialAssignedTo.trim() || null,
+      })
+      .eq("id", editingMaterialId);
+
+    if (error) {
+      console.error(error);
+      alert("Unable to update material.");
+      setSavingMaterialEdit(false);
+      return;
+    }
+
+    await loadProject();
+
+    setEditingMaterialId(null);
+    setEditMaterialText("");
+    setEditMaterialAssignedTo("");
+    setSavingMaterialEdit(false);
+  }
   return (
     <main
       style={{
@@ -399,12 +463,169 @@ export default function OkeechobeeProjectWorkspace() {
           >
             <h2>Materials Needed</h2>
 
-            {materials.map((material: any) => (
-              <p key={material.id}>
-                ? {material.title}
-                {material.assigned_to ? ` - ${material.assigned_to}` : ""}
-              </p>
-            ))}
+            <button
+              onClick={() => setShowMaterialForm(true)}
+              style={{
+                marginBottom: 12,
+              }}
+            >
+              + Add Material
+            </button>
+
+            {showMaterialForm && (
+              <div
+                style={{
+                  marginBottom: 16,
+                  display: "grid",
+                  gap: 10,
+                }}
+              >
+                <input
+                  value={materialText}
+                  onChange={(e) => setMaterialText(e.target.value)}
+                  placeholder="Enter a material..."
+                  style={{
+                    padding: 12,
+                    borderRadius: 10,
+                    border: "1px solid #333",
+                    background: "#181818",
+                    color: "white",
+                    fontSize: 15,
+                    outline: "none",
+                  }}
+                />
+
+                <input
+                  value={materialAssignedTo}
+                  onChange={(e) => setMaterialAssignedTo(e.target.value)}
+                  placeholder="Who is bringing it?"
+                  style={{
+                    padding: 12,
+                    borderRadius: 10,
+                    border: "1px solid #333",
+                    background: "#181818",
+                    color: "white",
+                    fontSize: 15,
+                    outline: "none",
+                  }}
+                />
+
+                <button
+                  onClick={addMaterial}
+                  disabled={savingMaterial}
+                  style={{
+                    padding: "10px 14px",
+                    borderRadius: 999,
+                    border: 0,
+                    background: "#39FF14",
+                    color: "#050505",
+                    fontWeight: 900,
+                    cursor: "pointer",
+                  }}
+                >
+                  {savingMaterial ? "Saving..." : "Save"}
+                </button>
+
+                <button
+                  onClick={() => setShowMaterialForm(false)}
+                  style={{
+                    padding: "10px 14px",
+                    borderRadius: 999,
+                    border: "1px solid #333",
+                    background: "#181818",
+                    color: "white",
+                    fontWeight: 800,
+                    cursor: "pointer",
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+
+            {materials.length === 0 ? (
+              <p>No materials yet.</p>
+            ) : (
+              materials.map((material: any) => (
+                <div
+                  key={material.id}
+                  style={{
+                    padding: "10px 0",
+                    borderBottom: "1px solid #222",
+                  }}
+                >
+                  {editingMaterialId === material.id ? (
+                    <div style={{ display: "grid", gap: 10 }}>
+                      <input
+                        value={editMaterialText}
+                        onChange={(e) => setEditMaterialText(e.target.value)}
+                        placeholder="Material"
+                        style={{
+                          padding: 12,
+                          borderRadius: 10,
+                          border: "1px solid #333",
+                          background: "#181818",
+                          color: "white",
+                        }}
+                      />
+
+                      <input
+                        value={editMaterialAssignedTo}
+                        onChange={(e) => setEditMaterialAssignedTo(e.target.value)}
+                        placeholder="Who is bringing it?"
+                        style={{
+                          padding: 12,
+                          borderRadius: 10,
+                          border: "1px solid #333",
+                          background: "#181818",
+                          color: "white",
+                        }}
+                      />
+
+                      <button onClick={updateMaterial} disabled={savingMaterialEdit}>
+                        {savingMaterialEdit ? "Saving..." : "Save Changes"}
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setEditingMaterialId(null);
+                          setEditMaterialText("");
+                          setEditMaterialAssignedTo("");
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <p style={{ margin: 0 }}>
+                        - {material.title}
+                        {material.assigned_to ? ` - ${material.assigned_to}` : ""}
+                      </p>
+
+                      <button
+                        onClick={() => {
+                          setEditingMaterialId(material.id);
+                          setEditMaterialText(material.title || "");
+                          setEditMaterialAssignedTo(material.assigned_to || "");
+                        }}
+                        style={{
+                          marginTop: 8,
+                          padding: "6px 10px",
+                          borderRadius: 999,
+                          border: "1px solid #333",
+                          background: "#181818",
+                          color: "white",
+                          cursor: "pointer",
+                        }}
+                      >
+                        Edit
+                      </button>
+                    </>
+                  )}
+                </div>
+              ))
+            )}
           </div>
 
           <div
@@ -427,6 +648,11 @@ export default function OkeechobeeProjectWorkspace() {
     </main>
   );
 }
+
+
+
+
+
 
 
 

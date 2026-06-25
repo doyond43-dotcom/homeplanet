@@ -12,6 +12,7 @@ export default function OkeechobeeTogetherPage() {
       const { data, error } = await supabase
         .from("okeechobee_events")
         .select("*")
+        .in("status", ["Active", "Resolved"])
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -436,6 +437,7 @@ const styles: Record<string, React.CSSProperties> = {
     boxShadow: "none",
   },
 };
+
 
 
 
