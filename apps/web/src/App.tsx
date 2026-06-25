@@ -1,4 +1,4 @@
-﻿import { BrowserRouter, Routes, Route, Navigate, Outlet, useSearchParams } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useSearchParams } from "react-router-dom";
 
 import TaylorCreekRealDemoBoard from "./pages/TaylorCreekRealDemoBoard";
 import TaylorCreekRealDemoStaffBoard from "./pages/TaylorCreekRealDemoStaffBoard";
@@ -135,6 +135,7 @@ export default function App() {
     </BrowserRouter>
   );
 }
+
 
 
 
