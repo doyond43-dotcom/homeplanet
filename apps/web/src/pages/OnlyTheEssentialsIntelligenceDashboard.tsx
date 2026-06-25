@@ -362,15 +362,23 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
               <X size={18} />
             </button>
 
-            <p className="mt-4 text-xs font-black uppercase tracking-[0.32em] text-pink-300">
-              Customer Signal
-            </p>
+            <div className="mt-4 rounded-2xl border border-pink-300/20 bg-pink-400/10 p-4">
+              <p className="text-[10px] font-black uppercase tracking-[0.28em] text-pink-300">
+                Customer Signal
+              </p>
 
-            <h2 className="mt-3 text-4xl font-black">{selected.name}</h2>
-            <p className="mt-1 text-xl font-black text-pink-300">{selected.service}</p>
-            <p className="mt-1 text-sm text-zinc-400">{selected.location}</p>
+              <div className="mt-3 flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h2 className="truncate text-2xl font-black">{selected.name}</h2>
+                  <p className="mt-1 text-lg font-black text-pink-300">{selected.service}</p>
+                  <p className="mt-1 truncate text-sm text-zinc-400">{selected.location}</p>
+                </div>
 
-            <div className="mt-6 grid grid-cols-3 gap-2">
+
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-3 gap-2">
               <a href={selected.phone ? `tel:${selected.phone}` : undefined} className="rounded-xl border border-pink-300/30 bg-pink-400/10 py-3 text-center text-xs font-black">
                 <Phone className="mx-auto mb-1" size={16} />
                 Call
@@ -612,6 +620,8 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
     </main>
   );
 }
+
+
 
 
 
