@@ -1,0 +1,318 @@
+﻿import React from "react";
+
+type FlowStatus = "ACTIVE" | "TESTING" | "REBUILD" | "ARCHIVE";
+
+type FlowEntry = {
+  name: string;
+  buildRoute: string;
+  status: FlowStatus;
+  problem: string;
+  users: string;
+  mainFlow: string[];
+  uniqueMechanism: string;
+  truthChain: string;
+  protectableNotes: string[];
+};
+
+const flows: FlowEntry[] = [
+  {
+    name: "Restaurant Table Awareness System",
+    buildRoute: "/planet/restaurant-awareness/crew",
+    status: "ACTIVE",
+    problem:
+      "Restaurants lose awareness between table, server, kitchen, drinks, owner, and payment status.",
+    users: "Servers, kitchen staff, drink station, owner, and customer-facing table flow.",
+    mainFlow: [
+      "Table becomes an active node.",
+      "Server adds food, drinks, modifiers, and table state.",
+      "Kitchen sees food work separately.",
+      "Drink board sees drink work separately.",
+      "Live board shows operational awareness across the floor.",
+      "Status changes create a visible service chain.",
+    ],
+    uniqueMechanism:
+      "A table is treated like a live operational object instead of a static order ticket.",
+    truthChain:
+      "Table action → server order → kitchen/drink work → ready status → live awareness → customer outcome.",
+    protectableNotes: [
+      "Separated food, drink, crew, and live board layers tied to one table state.",
+      "Table-first awareness model instead of menu-first ordering.",
+      "Operational restaurant state shown as live workflow, not just POS data.",
+    ],
+  },
+  {
+    name: "Home Services Live Job Chain",
+    buildRoute: "/planet/home-services",
+    status: "TESTING",
+    problem:
+      "Small service businesses lose jobs inside calls, messages, photos, estimates, payments, and scattered notes.",
+    users: "Customer, business owner, crew, estimator, and payment follow-up.",
+    mainFlow: [
+      "Customer starts through a simple request flow.",
+      "Lead becomes reviewable before work starts.",
+      "Estimate captures service details and modifiers.",
+      "Job workspace carries customer, tools, photos, notes, messages, and payment.",
+      "Before/after proof and payment close the loop.",
+    ],
+    uniqueMechanism:
+      "The page is not just a website. It becomes the operational path from customer request to proof and payment.",
+    truthChain:
+      "Request → lead review → estimate → scheduled work → photos/proof → payment → completed job history.",
+    protectableNotes: [
+      "Service live page that turns intake into structured operations.",
+      "Estimate modifiers capture hidden labor, friction, and real-world conditions.",
+      "Proof chain connects photos, payment, and job status into one operational record.",
+    ],
+  },
+  {
+    name: "Live Pages Build Queue System",
+    buildRoute: "/planet/live-pages",
+    status: "ACTIVE",
+    problem:
+      "Businesses ask for websites but actually need intake, organization, proof, customer clarity, and operational awareness.",
+    users: "HomePlanet, local business owners, leads, and internal build operators.",
+    mainFlow: [
+      "Business enters through Live Pages offer/intake.",
+      "Lead lands in a reviewable system.",
+      "Build queue tracks who is waiting, what they need, and what stage they are in.",
+      "Event board tracks clicks, shares, messages, and funnel movement.",
+      "Finished build graduates into the build directory.",
+    ],
+    uniqueMechanism:
+      "HomePlanet sells the live operational layer, not a generic website package.",
+    truthChain:
+      "Message/intake → lead review → build queue → live page → event tracking → finished build directory.",
+    protectableNotes: [
+      "First-come, first-served local live page queue tied to operational build status.",
+      "Business intake connected directly to a build board and event tracking.",
+      "Finished systems graduate into a verified internal build registry.",
+    ],
+  },
+  {
+    name: "Okeechobee Together Public Awareness / Private Control",
+    buildRoute: "/planet/okeechobee",
+    status: "ACTIVE",
+    problem:
+      "Community help gets scattered across comments, screenshots, posts, messages, and unverified public submissions.",
+    users: "Community viewers, internal organizers, helpers, coordinators, and local project leads.",
+    mainFlow: [
+      "Public sees approved community needs and stories.",
+      "Creation stays internal or admin-controlled.",
+      "Projects can have helpers, materials, tasks, and updates.",
+      "The public awareness layer stays separate from the operational control layer.",
+      "Finished outcomes can become visible community proof.",
+    ],
+    uniqueMechanism:
+      "Public awareness is separated from public creation so community energy does not become uncontrolled chaos.",
+    truthChain:
+      "Need/story → internal review → public awareness → helper coordination → project work → outcome proof.",
+    protectableNotes: [
+      "Read-only public community board with private creation and coordination controls.",
+      "Community project workflow tied to helpers, materials, tasks, and public story.",
+      "Local trust system that avoids open public posting while still creating visibility.",
+    ],
+  },
+  {
+    name: "Hollerboyz Problem-First Local Service Flow",
+    buildRoute: "/planet/hollerboyz",
+    status: "TESTING",
+    problem:
+      "Local service sites often overload people with generic sections instead of helping them say what is actually wrong.",
+    users: "Customer, shop owner, mechanic, diesel/auto service operator.",
+    mainFlow: [
+      "Strong brand-first hero.",
+      "Customer chooses the problem they are dealing with.",
+      "The page directs them toward a simple intake/action path.",
+      "The business gets clearer context before the conversation starts.",
+    ],
+    uniqueMechanism:
+      "The page starts with the real-world customer problem instead of a generic website pitch.",
+    truthChain:
+      "Customer problem → selected service direction → intake context → shop action → operational follow-up.",
+    protectableNotes: [
+      "Problem-button-first local service entry flow.",
+      "Brand-first page structure with minimal sections and high readability.",
+      "Customer issue classification before manual conversation begins.",
+    ],
+  },
+  {
+    name: "Experience Planet Guest Memory Flow",
+    buildRoute: "/planet/builds",
+    status: "REBUILD",
+    problem:
+      "Tours, escape rooms, zoos, petting zoos, airboat rides, and local attractions lose the customer memory after the visit ends.",
+    users: "Guest, attraction operator, guide, family, and share/view audience.",
+    mainFlow: [
+      "Guest starts or checks into an experience.",
+      "Moments, photos, milestones, or trip details are captured.",
+      "The visit becomes a shareable memory page.",
+      "The business can connect booking, visit, proof, and follow-up.",
+    ],
+    uniqueMechanism:
+      "The experience becomes a living memory object instead of a one-time visit.",
+    truthChain:
+      "Booking/check-in → live experience → captured moments → memory page → share/follow-up → return interest.",
+    protectableNotes: [
+      "Experience memory page tied to operational visit flow.",
+      "Guest-facing story layer connected to business follow-up.",
+      "Reusable system for attractions, tours, escape rooms, zoos, petting zoos, and events.",
+    ],
+  },
+  {
+    name: "Guardian Pet / Family Care Flow",
+    buildRoute: "/planet/builds",
+    status: "REBUILD",
+    problem:
+      "Pet care, lost-and-found, family care, sitters, veterinarians, and rescue situations often lack one trusted shared record.",
+    users: "Pet owner, sitter, rescuer, family member, veterinarian, community helper.",
+    mainFlow: [
+      "Pet or care subject gets a profile.",
+      "Mode changes based on family care, sitter, rescue, vet, or lost-and-found.",
+      "Public/private information can be separated.",
+      "Care events become part of the record.",
+    ],
+    uniqueMechanism:
+      "One identity/profile can shift between care modes without losing the truth chain.",
+    truthChain:
+      "Profile → care mode → event/update → helper/vet/family action → history/proof.",
+    protectableNotes: [
+      "Multi-mode guardian profile for pet and family care workflows.",
+      "Public/private care data separation.",
+      "Care identity that can move between sitter, rescue, vet, lost-and-found, and family modes.",
+    ],
+  },
+];
+
+const statusClass: Record<FlowStatus, string> = {
+  ACTIVE: "border-emerald-400/40 bg-emerald-400/10 text-emerald-200",
+  TESTING: "border-yellow-300/40 bg-yellow-300/10 text-yellow-100",
+  REBUILD: "border-blue-300/40 bg-blue-300/10 text-blue-100",
+  ARCHIVE: "border-zinc-500/50 bg-zinc-500/10 text-zinc-300",
+};
+
+export default function HomePlanetFlowRegistry() {
+  return (
+    <main className="min-h-screen bg-[#020604] text-white">
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
+        <header className="rounded-[28px] border border-emerald-400/20 bg-white/[0.04] p-5 shadow-2xl shadow-emerald-950/30 sm:p-7">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.28em] text-emerald-300">
+                HomePlanet Internal
+              </p>
+              <h1 className="mt-3 text-3xl font-black tracking-tight sm:text-5xl">
+                Flow Registry
+              </h1>
+              <p className="mt-3 max-w-3xl text-base leading-7 text-zinc-300 sm:text-lg">
+                The build directory shows what exists. This registry explains why the flow matters,
+                what makes it HomePlanet, and what may be worth protecting or documenting further.
+              </p>
+            </div>
+
+            <a
+              href="/planet/builds"
+              className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-5 py-3 text-center text-sm font-black uppercase tracking-[0.18em] text-emerald-200 transition hover:bg-emerald-400/20"
+            >
+              Build Directory
+            </a>
+          </div>
+        </header>
+
+        <section className="rounded-[24px] border border-white/10 bg-black/30 p-5 text-sm leading-6 text-zinc-300">
+          <strong className="text-white">Internal note:</strong> This is not legal patent language
+          and does not claim anything has been filed or granted. Use this as invention memory,
+          flow documentation, and prep material for later legal review.
+        </section>
+
+        <div className="grid grid-cols-1 gap-5">
+          {flows.map((flow) => (
+            <article
+              key={flow.name}
+              className="rounded-[26px] border border-white/10 bg-white/[0.045] p-5 shadow-xl shadow-black/30 sm:p-6"
+            >
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h2 className="text-2xl font-black leading-tight text-white sm:text-3xl">
+                    {flow.name}
+                  </h2>
+                  <a
+                    href={flow.buildRoute}
+                    className="mt-3 inline-block break-all text-sm font-bold text-emerald-300 hover:text-emerald-200"
+                  >
+                    {flow.buildRoute}
+                  </a>
+                </div>
+
+                <span
+                  className={`w-fit shrink-0 rounded-full border px-3 py-1 text-[11px] font-black tracking-[0.18em] ${statusClass[flow.status]}`}
+                >
+                  {flow.status}
+                </span>
+              </div>
+
+              <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="rounded-2xl border border-white/10 bg-black/25 p-4">
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-300">
+                    Problem
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-zinc-300">{flow.problem}</p>
+                </div>
+
+                <div className="rounded-2xl border border-white/10 bg-black/25 p-4">
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-300">
+                    Users
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-zinc-300">{flow.users}</p>
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-2xl border border-white/10 bg-black/25 p-4">
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-300">
+                  Main Flow
+                </p>
+                <ol className="mt-3 space-y-2 pl-5 text-sm leading-6 text-zinc-300">
+                  {flow.mainFlow.map((item) => (
+                    <li key={item} className="list-decimal">
+                      {item}
+                    </li>
+                  ))}
+                </ol>
+              </div>
+
+              <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="rounded-2xl border border-white/10 bg-black/25 p-4">
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-300">
+                    Unique Mechanism
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-zinc-300">
+                    {flow.uniqueMechanism}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-white/10 bg-black/25 p-4">
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-300">
+                    Truth Chain
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-zinc-300">{flow.truthChain}</p>
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-2xl border border-emerald-400/20 bg-emerald-400/[0.06] p-4">
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-300">
+                  Protectable / Review Notes
+                </p>
+                <ul className="mt-3 space-y-2 pl-5 text-sm leading-6 text-zinc-200">
+                  {flow.protectableNotes.map((item) => (
+                    <li key={item} className="list-disc">
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </main>
+  );
+}

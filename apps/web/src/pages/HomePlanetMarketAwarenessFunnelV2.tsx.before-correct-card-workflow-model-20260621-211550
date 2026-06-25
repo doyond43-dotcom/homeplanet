@@ -1,0 +1,772 @@
+﻿import React, { useMemo, useState } from "react";
+
+type ChallengeKey =
+  | "Get More Customers"
+  | "Slow Follow-Up"
+  | "Organize My Business"
+  | "My Website Isn't Working"
+  | "Track Leads & Customers"
+  | "Scheduling & Appointments";
+
+type Challenge = {
+  title: ChallengeKey;
+  body: string;
+};
+
+const challenges: Challenge[] = [
+  {
+    title: "Get More Customers",
+    body: "More calls. More messages. More opportunities — without losing track after they come in.",
+  },
+  {
+    title: "Slow Follow-Up",
+    body: "Respond while people still care, before they forget or move on.",
+  },
+  {
+    title: "Organize My Business",
+    body: "Keep customers, jobs, photos, notes, and follow-up from getting scattered.",
+  },
+  {
+    title: "My Website Isn't Working",
+    body: "I have a website, but it does not turn attention into organized action.",
+  },
+  {
+    title: "Track Leads & Customers",
+    body: "See where leads came from, what they need, and what needs to happen next.",
+  },
+  {
+    title: "Scheduling & Appointments",
+    body: "Make booking, reminders, and follow-up easier to keep straight.",
+  },
+];
+
+const defaultForm = {
+  businessType: "",
+  losingTrack: "",
+  name: "",
+  phone: "",
+  businessName: "",
+};
+
+function getWorkflowPreview(challenge: ChallengeKey | "") {
+  if (challenge === "Slow Follow-Up") {
+    return {
+      title: "Slow Follow-Up Flow",
+      summary:
+        "The goal is to protect the attention window before the customer forgets, gets busy, or calls someone else.",
+      steps: [
+        "Customer reaches out from a post, ad, website, or message",
+        "Lead details are captured before they get buried",
+        "The reason they reached out is saved clearly",
+        "Follow-up becomes the next visible action",
+        "Status stays open until the customer is answered",
+      ],
+      board: [
+        ["Source", "Facebook / Post / Ad"],
+        ["Status", "New lead"],
+        ["Follow-Up", "Needed now"],
+        ["Risk", "Customer may move on"],
+      ],
+    };
+  }
+
+  if (challenge === "Organize My Business") {
+    return {
+      title: "Organized Lead Flow",
+      summary:
+        "The goal is to stop customer details, notes, photos, and next steps from living in five different places.",
+      steps: [
+        "Customer information lands in one place",
+        "Job notes stay connected to the customer",
+        "Photos and details can be attached to the lead",
+        "Estimate or next step becomes visible",
+        "Follow-up does not depend on memory",
+      ],
+      board: [
+        ["Customer", "Captured"],
+        ["Notes", "Connected"],
+        ["Photos", "Ready to attach"],
+        ["Next Step", "Estimate / follow-up"],
+      ],
+    };
+  }
+
+  if (challenge === "My Website Isn't Working") {
+    return {
+      title: "Website-To-Lead Flow",
+      summary:
+        "The goal is to make the website do more than sit there. The click should become a clear customer path.",
+      steps: [
+        "Visitor lands with a real need",
+        "They choose what they are trying to fix",
+        "Their details become an organized lead",
+        "The business sees the next step",
+        "The website becomes part of the workflow",
+      ],
+      board: [
+        ["Visitor", "Not just browsing"],
+        ["Need", "Selected"],
+        ["Lead", "Organized"],
+        ["Next Step", "Ready"],
+      ],
+    };
+  }
+
+  if (challenge === "Track Leads & Customers") {
+    return {
+      title: "Lead Tracking Flow",
+      summary:
+        "The goal is to stop guessing which attention turned into real opportunities and what happened next.",
+      steps: [
+        "Lead source is captured",
+        "Customer details are organized",
+        "Conversation status is visible",
+        "Follow-up is tracked",
+        "Owner can see what is actually working",
+      ],
+      board: [
+        ["Lead Source", "Visible"],
+        ["Customer", "Saved"],
+        ["Status", "Trackable"],
+        ["Outcome", "Not guessed"],
+      ],
+    };
+  }
+
+  if (challenge === "Scheduling & Appointments") {
+    return {
+      title: "Scheduling Flow",
+      summary:
+        "The goal is to keep booking and follow-up from getting lost inside messages, texts, and mental notes.",
+      steps: [
+        "Customer request is captured",
+        "Preferred timing is noted",
+        "Appointment or booking step is created",
+        "Follow-up reminder stays visible",
+        "Schedule does not live only in texts",
+      ],
+      board: [
+        ["Request", "Captured"],
+        ["Timing", "Noted"],
+        ["Booking", "Next step"],
+        ["Reminder", "Visible"],
+      ],
+    };
+  }
+
+  return {
+    title: "Opportunity Flow",
+    summary:
+      "The goal is to turn attention into a clear path instead of letting the opportunity disappear.",
+    steps: [
+      "New opportunity comes in",
+      "Customer details are captured",
+      "Problem or request is organized",
+      "Follow-up step is created",
+      "Next action is ready",
+    ],
+    board: [
+      ["Opportunity", "Captured"],
+      ["Details", "Saved"],
+      ["Follow-Up", "Created"],
+      ["Next Step", "Ready"],
+    ],
+  };
+}
+
+export default function HomePlanetMarketAwarenessFunnelV2() {
+  const [selectedChallenge, setSelectedChallenge] = useState<ChallengeKey | "">("");
+  const [submitted, setSubmitted] = useState(false);
+  const [form, setForm] = useState(defaultForm);
+
+  const selectedCopy = useMemo(() => {
+    return challenges.find((challenge) => challenge.title === selectedChallenge);
+  }, [selectedChallenge]);
+
+  const workflowPreview = useMemo(() => {
+    return getWorkflowPreview(selectedChallenge);
+  }, [selectedChallenge]);
+
+  function handleChallengeClick(challenge: ChallengeKey) {
+    setSelectedChallenge(challenge);
+    setSubmitted(false);
+    setForm(defaultForm);
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }
+
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSubmitted(true);
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }
+
+  const showingIntake = Boolean(selectedChallenge);
+
+  return (
+    <main style={styles.page}>
+      <section style={styles.glowOne} />
+      <section style={styles.glowTwo} />
+
+      <div style={styles.shell}>
+        {!showingIntake ? (
+          <>
+            <section style={styles.hero}>
+              <div style={styles.kicker}>HomePlanet Workflow Preview V2</div>
+              <h1 style={styles.title}>
+                ATTENTION CAME IN.
+                <br />
+                NOW WHAT?
+              </h1>
+              <p style={styles.subtitle}>
+                When attention turns into calls, messages, leads, and follow-up, where does your
+                business start losing track?
+              </p>
+            </section>
+
+            <section style={styles.challengeGrid} aria-label="Business workflow challenge cards">
+              {challenges.map((challenge) => (
+                <button
+                  key={challenge.title}
+                  type="button"
+                  style={styles.challengeCard}
+                  onClick={() => handleChallengeClick(challenge.title)}
+                >
+                  <span style={styles.challengeTitle}>{challenge.title}</span>
+                  <span style={styles.challengeBody}>{challenge.body}</span>
+                </button>
+              ))}
+            </section>
+
+            <section style={styles.explainCard}>
+              <div style={styles.explainEyebrow}>How this works</div>
+              <p style={styles.explainText}>
+                Pick the place where things start getting messy. Then answer a few details and see a
+                simple preview of what that workflow could look like for your business.
+              </p>
+            </section>
+          </>
+        ) : (
+          <section style={styles.intakeCard}>
+            <button
+              type="button"
+              style={styles.backButton}
+              onClick={() => {
+                setSelectedChallenge("");
+                setSubmitted(false);
+                setForm(defaultForm);
+              }}
+            >
+              ← Back
+            </button>
+
+            {!submitted ? (
+              <>
+                <div style={styles.kicker}>Your Business Flow</div>
+                <h1 style={styles.intakeTitle}>Where does it start losing track?</h1>
+                <p style={styles.intakeSubtitle}>
+                  You selected: <strong>{selectedChallenge}</strong>
+                  {selectedCopy ? <span> — {selectedCopy.body}</span> : null}
+                </p>
+
+                <form style={styles.form} onSubmit={handleSubmit}>
+                  <label style={styles.label}>
+                    Challenge Selected
+                    <input style={styles.input} value={selectedChallenge} readOnly />
+                  </label>
+
+                  <label style={styles.label}>
+                    What kind of business do you run?
+                    <input
+                      style={styles.input}
+                      value={form.businessType}
+                      placeholder="Painting, cleaning, pest control, food truck, salon..."
+                      required
+                      onChange={(event) =>
+                        setForm((current) => ({
+                          ...current,
+                          businessType: event.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+
+                  <label style={styles.label}>
+                    What happens after someone reaches out?
+                    <textarea
+                      style={styles.textarea}
+                      value={form.losingTrack}
+                      placeholder="Tell us where calls, messages, notes, follow-up, scheduling, or customer details start getting messy."
+                      required
+                      onChange={(event) =>
+                        setForm((current) => ({
+                          ...current,
+                          losingTrack: event.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+
+                  <label style={styles.label}>
+                    Name
+                    <input
+                      style={styles.input}
+                      value={form.name}
+                      required
+                      onChange={(event) =>
+                        setForm((current) => ({
+                          ...current,
+                          name: event.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+
+                  <label style={styles.label}>
+                    Phone
+                    <input
+                      style={styles.input}
+                      value={form.phone}
+                      required
+                      onChange={(event) =>
+                        setForm((current) => ({
+                          ...current,
+                          phone: event.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+
+                  <label style={styles.label}>
+                    Business Name <span style={styles.optional}>(optional)</span>
+                    <input
+                      style={styles.input}
+                      value={form.businessName}
+                      onChange={(event) =>
+                        setForm((current) => ({
+                          ...current,
+                          businessName: event.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+
+                  <button type="submit" style={styles.submitButton}>
+                    Show Workflow Preview
+                  </button>
+                </form>
+              </>
+            ) : (
+              <section style={styles.previewWrap}>
+                <div style={styles.kicker}>Workflow Preview</div>
+                <h1 style={styles.previewTitle}>{workflowPreview.title}</h1>
+                <p style={styles.previewSummary}>{workflowPreview.summary}</p>
+
+                <div style={styles.contextCard}>
+                  <div style={styles.contextRow}>
+                    <span>Business Type</span>
+                    <strong>{form.businessType}</strong>
+                  </div>
+                  <div style={styles.contextRow}>
+                    <span>Selected Pain</span>
+                    <strong>{selectedChallenge}</strong>
+                  </div>
+                  <div style={styles.contextNote}>
+                    <span>Where it gets messy</span>
+                    <p>{form.losingTrack}</p>
+                  </div>
+                </div>
+
+                <div style={styles.previewGrid}>
+                  <section style={styles.workflowCard}>
+                    <h2 style={styles.sectionTitle}>What the flow should catch</h2>
+                    <div style={styles.previewStack}>
+                      {workflowPreview.steps.map((step, index) => (
+                        <div key={step} style={styles.previewStep}>
+                          <span style={styles.previewNumber}>{index + 1}</span>
+                          <span>{step}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+
+                  <section style={styles.workflowCard}>
+                    <h2 style={styles.sectionTitle}>Simple operator view</h2>
+                    <div style={styles.miniBoard}>
+                      {workflowPreview.board.map(([label, value]) => (
+                        <div key={label} style={styles.boardRow}>
+                          <span>{label}</span>
+                          <strong>{value}</strong>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div style={styles.nextActionBox}>
+                      <strong>Point of the system:</strong> the customer should not disappear into
+                      texts, DMs, screenshots, missed calls, or memory. The next step should be
+                      obvious.
+                    </div>
+                  </section>
+                </div>
+
+                <button
+                  type="button"
+                  style={styles.submitButton}
+                  onClick={() => {
+                    setSelectedChallenge("");
+                    setSubmitted(false);
+                    setForm(defaultForm);
+                  }}
+                >
+                  Start Another Flow
+                </button>
+              </section>
+            )}
+          </section>
+        )}
+      </div>
+    </main>
+  );
+}
+
+const styles: Record<string, React.CSSProperties> = {
+  page: {
+    minHeight: "100vh",
+    position: "relative",
+    overflow: "hidden",
+    background: "#030604",
+    color: "#f4fff7",
+    fontFamily:
+      'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+  },
+  glowOne: {
+    position: "absolute",
+    top: "-180px",
+    left: "-140px",
+    width: "420px",
+    height: "420px",
+    borderRadius: "999px",
+    background:
+      "radial-gradient(circle, rgba(69,255,126,0.22) 0%, rgba(69,255,126,0.08) 38%, rgba(69,255,126,0) 72%)",
+    pointerEvents: "none",
+  },
+  glowTwo: {
+    position: "absolute",
+    right: "-180px",
+    bottom: "80px",
+    width: "460px",
+    height: "460px",
+    borderRadius: "999px",
+    background:
+      "radial-gradient(circle, rgba(44,255,118,0.18) 0%, rgba(44,255,118,0.06) 40%, rgba(44,255,118,0) 74%)",
+    pointerEvents: "none",
+  },
+  shell: {
+    position: "relative",
+    zIndex: 1,
+    width: "min(1080px, calc(100% - 28px))",
+    margin: "0 auto",
+    padding: "34px 0 54px",
+  },
+  hero: {
+    padding: "26px 0 18px",
+  },
+  kicker: {
+    display: "inline-flex",
+    color: "#5dff93",
+    fontSize: "12px",
+    fontWeight: 900,
+    letterSpacing: "0.16em",
+    textTransform: "uppercase",
+    marginBottom: "14px",
+  },
+  title: {
+    margin: 0,
+    fontSize: "clamp(46px, 13vw, 104px)",
+    lineHeight: 0.88,
+    letterSpacing: "-0.08em",
+    fontWeight: 1000,
+  },
+  subtitle: {
+    maxWidth: "820px",
+    margin: "22px 0 0",
+    color: "rgba(244,255,247,0.8)",
+    fontSize: "clamp(18px, 4vw, 28px)",
+    lineHeight: 1.24,
+    fontWeight: 800,
+  },
+  challengeGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(245px, 1fr))",
+    gap: "14px",
+    marginTop: "30px",
+  },
+  challengeCard: {
+    border: "1px solid rgba(93,255,147,0.22)",
+    background:
+      "linear-gradient(145deg, rgba(15,24,18,0.96), rgba(7,12,9,0.98))",
+    borderRadius: "24px",
+    minHeight: "180px",
+    padding: "22px",
+    color: "#f4fff7",
+    textAlign: "left",
+    boxShadow:
+      "0 24px 60px rgba(0,0,0,0.42), inset 0 1px 0 rgba(255,255,255,0.06)",
+    cursor: "pointer",
+  },
+  challengeTitle: {
+    display: "block",
+    color: "#ffffff",
+    fontSize: "24px",
+    lineHeight: 1,
+    fontWeight: 950,
+    letterSpacing: "-0.04em",
+    marginBottom: "16px",
+  },
+  challengeBody: {
+    display: "block",
+    color: "rgba(244,255,247,0.72)",
+    fontSize: "17px",
+    lineHeight: 1.35,
+    fontWeight: 750,
+  },
+  explainCard: {
+    marginTop: "18px",
+    border: "1px solid rgba(93,255,147,0.18)",
+    background: "rgba(93,255,147,0.06)",
+    borderRadius: "24px",
+    padding: "18px",
+  },
+  explainEyebrow: {
+    color: "#5dff93",
+    fontSize: "12px",
+    fontWeight: 950,
+    letterSpacing: "0.14em",
+    textTransform: "uppercase",
+    marginBottom: "8px",
+  },
+  explainText: {
+    margin: 0,
+    color: "rgba(244,255,247,0.76)",
+    fontSize: "17px",
+    lineHeight: 1.35,
+    fontWeight: 800,
+  },
+  intakeCard: {
+    width: "min(860px, 100%)",
+    margin: "20px auto 0",
+    border: "1px solid rgba(93,255,147,0.22)",
+    borderRadius: "30px",
+    padding: "22px",
+    background:
+      "linear-gradient(145deg, rgba(14,22,17,0.97), rgba(5,8,6,0.99))",
+    boxShadow: "0 30px 90px rgba(0,0,0,0.52)",
+  },
+  backButton: {
+    border: "1px solid rgba(93,255,147,0.22)",
+    background: "rgba(93,255,147,0.08)",
+    color: "#5dff93",
+    borderRadius: "999px",
+    padding: "10px 14px",
+    fontSize: "14px",
+    fontWeight: 950,
+    marginBottom: "24px",
+    cursor: "pointer",
+  },
+  intakeTitle: {
+    margin: 0,
+    fontSize: "clamp(38px, 10vw, 74px)",
+    lineHeight: 0.92,
+    letterSpacing: "-0.075em",
+    fontWeight: 1000,
+  },
+  intakeSubtitle: {
+    color: "rgba(244,255,247,0.76)",
+    fontSize: "18px",
+    lineHeight: 1.35,
+    fontWeight: 800,
+    margin: "18px 0 0",
+  },
+  form: {
+    display: "grid",
+    gap: "14px",
+    marginTop: "24px",
+  },
+  label: {
+    display: "grid",
+    gap: "8px",
+    color: "#f4fff7",
+    fontSize: "14px",
+    fontWeight: 950,
+    letterSpacing: "-0.01em",
+  },
+  optional: {
+    color: "rgba(244,255,247,0.48)",
+  },
+  input: {
+    width: "100%",
+    boxSizing: "border-box",
+    border: "1px solid rgba(93,255,147,0.18)",
+    background: "rgba(0,0,0,0.3)",
+    color: "#ffffff",
+    borderRadius: "16px",
+    padding: "15px 14px",
+    fontSize: "17px",
+    fontWeight: 750,
+    outline: "none",
+  },
+  textarea: {
+    width: "100%",
+    boxSizing: "border-box",
+    minHeight: "140px",
+    resize: "vertical",
+    border: "1px solid rgba(93,255,147,0.18)",
+    background: "rgba(0,0,0,0.3)",
+    color: "#ffffff",
+    borderRadius: "16px",
+    padding: "15px 14px",
+    fontSize: "17px",
+    fontWeight: 750,
+    outline: "none",
+    fontFamily: "inherit",
+  },
+  submitButton: {
+    width: "100%",
+    border: "0",
+    borderRadius: "18px",
+    padding: "18px 18px",
+    background: "#5dff93",
+    color: "#041006",
+    fontSize: "18px",
+    fontWeight: 1000,
+    cursor: "pointer",
+    boxShadow: "0 18px 40px rgba(93,255,147,0.2)",
+    marginTop: "16px",
+  },
+  previewWrap: {
+    display: "block",
+  },
+  previewTitle: {
+    margin: 0,
+    fontSize: "clamp(38px, 10vw, 76px)",
+    lineHeight: 0.9,
+    letterSpacing: "-0.075em",
+    fontWeight: 1000,
+  },
+  previewSummary: {
+    maxWidth: "780px",
+    margin: "16px 0 0",
+    color: "rgba(244,255,247,0.78)",
+    fontSize: "18px",
+    lineHeight: 1.35,
+    fontWeight: 800,
+  },
+  contextCard: {
+    marginTop: "20px",
+    border: "1px solid rgba(255,255,255,0.08)",
+    background: "rgba(255,255,255,0.04)",
+    borderRadius: "22px",
+    padding: "16px",
+    display: "grid",
+    gap: "10px",
+  },
+  contextRow: {
+    display: "grid",
+    gridTemplateColumns: "130px 1fr",
+    gap: "10px",
+    color: "rgba(244,255,247,0.68)",
+    fontSize: "14px",
+    fontWeight: 850,
+  },
+  contextNote: {
+    display: "grid",
+    gap: "6px",
+    color: "rgba(244,255,247,0.68)",
+    fontSize: "14px",
+    fontWeight: 850,
+  },
+  previewGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+    gap: "14px",
+    marginTop: "16px",
+  },
+  workflowCard: {
+    border: "1px solid rgba(93,255,147,0.16)",
+    background: "rgba(0,0,0,0.18)",
+    borderRadius: "22px",
+    padding: "16px",
+  },
+  sectionTitle: {
+    margin: "0 0 12px",
+    color: "#ffffff",
+    fontSize: "20px",
+    letterSpacing: "-0.035em",
+    lineHeight: 1,
+  },
+  previewStack: {
+    display: "grid",
+    gap: "10px",
+  },
+  previewStep: {
+    display: "grid",
+    gridTemplateColumns: "34px 1fr",
+    alignItems: "center",
+    gap: "10px",
+    border: "1px solid rgba(93,255,147,0.16)",
+    background: "rgba(0,0,0,0.22)",
+    borderRadius: "16px",
+    padding: "12px",
+    color: "rgba(244,255,247,0.86)",
+    fontSize: "15px",
+    fontWeight: 850,
+    lineHeight: 1.25,
+  },
+  previewNumber: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "30px",
+    height: "30px",
+    borderRadius: "999px",
+    background: "rgba(93,255,147,0.12)",
+    color: "#5dff93",
+    fontSize: "13px",
+    fontWeight: 1000,
+  },
+  miniBoard: {
+    display: "grid",
+    gap: "10px",
+  },
+  boardRow: {
+    display: "grid",
+    gridTemplateColumns: "110px 1fr",
+    gap: "10px",
+    alignItems: "center",
+    border: "1px solid rgba(255,255,255,0.08)",
+    background: "rgba(255,255,255,0.04)",
+    borderRadius: "14px",
+    padding: "12px",
+    color: "rgba(244,255,247,0.65)",
+    fontSize: "14px",
+    fontWeight: 850,
+  },
+  nextActionBox: {
+    marginTop: "16px",
+    border: "1px solid rgba(93,255,147,0.22)",
+    background: "rgba(93,255,147,0.07)",
+    borderRadius: "18px",
+    padding: "14px",
+    color: "rgba(244,255,247,0.82)",
+    fontSize: "15px",
+    fontWeight: 800,
+    lineHeight: 1.35,
+  },
+};

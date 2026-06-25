@@ -1,0 +1,316 @@
+import {
+  CalendarCheck,
+  Heart,
+  Home,
+  MessageCircle,
+  Phone,
+  ShieldCheck,
+  Sparkles,
+} from "lucide-react";
+
+export default function OnlyTheEssentialsCustomerLanding() {
+  const phone = "8638013179";
+
+  const services = [
+    {
+      icon: Home,
+      title: "Standard Cleaning",
+      text: "Keep your home fresh, clean, and comfortable.",
+    },
+    {
+      icon: Sparkles,
+      title: "Deep Cleaning",
+      text: "A deeper clean for areas that need extra attention.",
+    },
+    {
+      icon: ShieldCheck,
+      title: "Move-In / Move-Out",
+      text: "Fresh starts for homes, rentals, and transitions.",
+    },
+    {
+      icon: CalendarCheck,
+      title: "Weekly / Biweekly",
+      text: "Simple recurring cleaning that fits your schedule.",
+    },
+    {
+      icon: Home,
+      title: "Vacation Reset",
+      text: "Reset help for guest stays, rentals, and busy weeks.",
+    },
+    {
+      icon: Heart,
+      title: "Simple Home Help",
+      text: "Extra help to make life feel a little easier.",
+    },
+  ];
+
+  return (
+    <main className="min-h-screen overflow-hidden bg-[#07080d] text-white">
+      <section className="relative border-b border-pink-300/10">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_15%,rgba(236,72,153,0.22),transparent_34%),radial-gradient(circle_at_85%_20%,rgba(236,72,153,0.18),transparent_32%),linear-gradient(135deg,#080914_0%,#120813_55%,#05060a_100%)]" />
+        <div className="relative mx-auto max-w-7xl px-5 py-8 sm:px-8 lg:px-12">
+          <header className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-full border border-pink-300/30 bg-pink-300/10 text-pink-200">
+                <Heart size={22} />
+              </div>
+              <div>
+                <p className="text-lg font-black leading-none">Only The Essentials</p>
+                <p className="mt-1 text-xs font-black uppercase tracking-[0.35em] text-pink-200">
+                  Cleaning
+                </p>
+              </div>
+            </div>
+
+            <div className="hidden items-center gap-3 sm:flex">
+              <a
+                href={`tel:${phone}`}
+                className="inline-flex items-center gap-2 rounded-full bg-pink-400 px-6 py-3 text-xs font-black uppercase tracking-[0.22em] text-black shadow-lg shadow-pink-500/25"
+              >
+                <Phone size={15} />
+                Call Kaitlin
+              </a>
+              <a
+                href={`sms:${phone}`}
+                className="inline-flex items-center gap-2 rounded-full border border-pink-300/30 bg-white/5 px-6 py-3 text-xs font-black uppercase tracking-[0.22em] text-white"
+              >
+                <MessageCircle size={15} />
+                Text Kaitlin
+              </a>
+            </div>
+          </header>
+
+          <div className="grid items-center gap-10 py-16 lg:grid-cols-[1fr_0.9fr] lg:py-24">
+            <div>
+              <p className="font-serif text-2xl italic text-pink-200">
+                Local. Reliable. Friendly.
+              </p>
+
+              <h1 className="mt-6 max-w-3xl text-6xl font-black leading-[0.9] tracking-tight sm:text-7xl lg:text-8xl">
+                Only The <span className="text-pink-400">Essentials</span>
+                <span className="block font-serif italic text-white">Cleaning &hearts;</span>
+              </h1>
+
+              <p className="mt-8 max-w-2xl text-lg leading-8 text-zinc-200">
+                Simple, high-quality cleaning for your home. Less stress, more time
+                for what matters.
+              </p>
+
+              <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                <a
+                  href={`tel:${phone}`}
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-pink-400 px-7 py-4 text-xs font-black uppercase tracking-[0.24em] text-black shadow-lg shadow-pink-500/25"
+                >
+                  <Phone size={16} />
+                  Call Kaitlin
+                </a>
+                <a
+                  href={`sms:${phone}`}
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-pink-300/30 bg-white/5 px-7 py-4 text-xs font-black uppercase tracking-[0.24em] text-white"
+                >
+                  <MessageCircle size={16} />
+                  Text Kaitlin
+                </a>
+                <a
+                  href="/planet/only-the-essentials/request?type=book"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-white/20 bg-white/10 px-7 py-4 text-xs font-black uppercase tracking-[0.24em] text-white"
+                >
+                  <CalendarCheck size={16} />
+                  Request Cleaning
+                </a>
+              </div>
+
+              <div className="mt-9 flex flex-wrap gap-6 text-xs font-bold text-zinc-300">
+                <span className="inline-flex items-center gap-2">
+                  <ShieldCheck size={15} className="text-pink-300" />
+                  Trusted local service
+                </span>
+                <span className="inline-flex items-center gap-2">
+                  <Heart size={15} className="text-pink-300" />
+                  Friendly communication
+                </span>
+              </div>
+            </div>
+
+
+            <div className="mx-auto w-full max-w-md">
+              <div className="rounded-[2.25rem] border border-pink-300/20 bg-white/5 p-5 shadow-2xl shadow-pink-950/40">
+                <div className="overflow-hidden rounded-[1.75rem] border border-white/10 bg-black">
+                  <img
+                    src="/images/kaitlin-cleaning-profile.jpg"
+                    alt="Only The Essentials Cleaning"
+                    className="h-[520px] w-full object-cover"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-5 py-16 sm:px-8 lg:px-12">
+        <div className="text-center">
+          <p className="text-xs font-black uppercase tracking-[0.4em] text-pink-300">
+            Services
+          </p>
+          <h2 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">
+            Cleaning made simple. &hearts;
+          </h2>
+        </div>
+
+        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+          {services.map((service) => {
+            const Icon = service.icon;
+            return (
+              <article
+                key={service.title}
+                className="rounded-[1.75rem] border border-white/10 bg-white/[0.045] p-6 text-center shadow-xl shadow-black/20"
+              >
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-pink-300/25 bg-pink-400/15 text-pink-200">
+                  <Icon size={22} />
+                </div>
+                <h3 className="mt-5 text-xl font-black leading-tight">{service.title}</h3>
+                <p className="mt-4 text-sm leading-6 text-zinc-300">{service.text}</p>
+              </article>
+            );
+          })}
+        </div>
+
+                <section className="mt-14 rounded-[2rem] border border-pink-300/20 bg-pink-950/20 p-6 shadow-2xl shadow-pink-950/25 sm:p-8">
+          <p className="text-xs font-black uppercase tracking-[0.32em] text-pink-300">
+            Get My Cleaning Quote
+          </p>
+
+          <h2 className="mt-4 font-serif text-4xl italic leading-tight text-pink-100 sm:text-5xl">
+            Tell us about your home and what you need help with. &hearts;
+          </h2>
+
+          <p className="mt-4 text-base leading-7 text-zinc-200">
+            The more details you share, the better we can tailor your quote.
+          </p>
+
+          <div className="mt-6 grid gap-3 lg:grid-cols-3">
+            <select className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-sm text-white outline-none">
+              <option>Deep Cleaning</option>
+              <option>Standard Cleaning</option>
+              <option>Move-In / Move-Out</option>
+              <option>Weekly / Biweekly</option>
+              <option>Vacation Rental Reset</option>
+            </select>
+
+            <select className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-sm text-white outline-none">
+              <option>Bedrooms</option>
+              <option>1 Bedroom</option>
+              <option>2 Bedrooms</option>
+              <option>3 Bedrooms</option>
+              <option>4+ Bedrooms</option>
+            </select>
+
+            <select className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-sm text-white outline-none">
+              <option>Bathrooms</option>
+              <option>1 Bathroom</option>
+              <option>2 Bathrooms</option>
+              <option>3 Bathrooms</option>
+              <option>4+ Bathrooms</option>
+            </select>
+
+            <select className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-sm text-white outline-none">
+              <option>Pets</option>
+              <option>No Pets</option>
+              <option>Cats</option>
+              <option>Dogs</option>
+              <option>Multiple Animals</option>
+            </select>
+
+            <select className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-sm text-white outline-none">
+              <option>Condition</option>
+              <option>Light Cleaning</option>
+              <option>Average</option>
+              <option>Needs Extra Attention</option>
+              <option>Heavy Deep Clean</option>
+            </select>
+
+            <select className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-sm text-white outline-none">
+              <option>Preferred Time</option>
+              <option>Mornings</option>
+              <option>Afternoons</option>
+              <option>Evenings</option>
+              <option>Flexible</option>
+            </select>
+
+            <input className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-sm text-white outline-none lg:col-span-1" placeholder="Your Name" />
+
+            <input className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-sm text-white outline-none lg:col-span-2" placeholder="Phone Number" />
+
+            <div className="rounded-2xl border border-dashed border-pink-300/30 bg-black/30 p-4 text-sm text-zinc-300 lg:col-span-3">
+              Upload Photos
+              <input type="file" multiple className="mt-3 block w-full text-xs text-zinc-400" />
+            </div>
+
+            <label className="flex gap-3 rounded-2xl border border-white/10 bg-black/30 p-4 text-xs leading-5 text-zinc-300 lg:col-span-3">
+              <input type="checkbox" className="mt-1" />
+              I understand final pricing depends on home size, condition, pets, and requested services.
+            </label>
+
+            <button className="rounded-2xl bg-pink-400 py-4 text-sm font-black uppercase tracking-[0.22em] text-black lg:col-span-3">
+              Request My Quote
+            </button>
+          </div>
+        </section>
+<div className="mt-14 grid gap-8 rounded-[2rem] border border-pink-300/20 bg-pink-950/25 p-8 sm:p-10 lg:grid-cols-[0.9fr_1fr] lg:items-center">
+          <h2 className="font-serif text-5xl italic leading-tight text-pink-200">
+            Let&apos;s make life a little easier. &hearts;
+          </h2>
+
+          <div>
+            <p className="text-base leading-7 text-zinc-200">
+              Call, text, or send a request. Kaitlin is here to help with simple
+              scheduling and friendly communication.
+            </p>
+
+            <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <a
+                href={`tel:${phone}`}
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-pink-400 px-7 py-4 text-xs font-black uppercase tracking-[0.24em] text-black"
+              >
+                <Phone size={16} />
+                Call Kaitlin
+              </a>
+              <a
+                href={`sms:${phone}`}
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-pink-300/30 bg-white/5 px-7 py-4 text-xs font-black uppercase tracking-[0.24em] text-white"
+              >
+                <MessageCircle size={16} />
+                Text Kaitlin
+              </a>
+              <a
+                href="/planet/only-the-essentials/request?type=book"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-white/15 bg-black/20 px-7 py-4 text-xs font-black uppercase tracking-[0.24em] text-white"
+              >
+                <CalendarCheck size={16} />
+                Request Cleaning
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <footer className="py-12 text-center">
+  <p className="font-serif text-3xl italic text-pink-200">
+    Only The Essentials Cleaning &hearts;
+  </p>
+  <p className="mt-3 text-sm font-semibold text-zinc-300">
+    Okeechobee, Florida
+  </p>
+  <p className="mt-6 text-xs text-zinc-500">
+    &copy; 2026 Only The Essentials Cleaning
+  </p>
+  <p className="mt-2 text-[11px] text-zinc-600">
+    Made with HomePlanet
+  </p>
+</footer>
+      </section>
+    </main>
+  );
+}
+
+

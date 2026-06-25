@@ -1,0 +1,152 @@
+import { useState } from "react";
+
+const issues = [
+  "?? Ants",
+  "?? Roaches",
+  "?? Mosquitoes",
+  "?? Rodents",
+  "?? Termites",
+  "? Something Else",
+];
+
+const actions = [
+  "?? Request Inspection",
+  "?? Schedule Service",
+  "?? Get Recommendation",
+];
+
+const times = [
+  "Monday 9:00 AM",
+  "Monday 1:00 PM",
+  "Tuesday 10:00 AM",
+  "Wednesday 2:00 PM",
+];
+
+export default function SlapABugImpulsePage() {
+  const [selectedIssue, setSelectedIssue] = useState("");
+  const [selectedAction, setSelectedAction] = useState("");
+  const [selectedTime, setSelectedTime] = useState("");
+
+  const track = (event: string, value?: string) => {
+    console.log("[Slap-A-Bug Impulse]", event, value || "");
+  };
+
+  return (
+    <main className="min-h-screen bg-[#08110b] text-white px-5 py-6">
+      <section className="mx-auto max-w-md">
+        <div className="mb-6 rounded-3xl border border-lime-400/20 bg-white/5 p-5 shadow-2xl">
+          <p className="text-xs uppercase tracking-[0.3em] text-lime-300">
+            Slap-A-Bug Pest Control
+          </p>
+
+          <div className="mt-4 flex items-start gap-4">
+            <div className="flex-1">
+              <h1 className="text-3xl font-black leading-tight">
+                What pest are you dealing with?
+              </h1>
+              <p className="mt-3 text-sm text-white/70">
+                Meet Brad, pick the problem, and choose the next step.
+              </p>
+            </div>
+
+            <button
+              onClick={() => track("video_placeholder_clicked")}
+              className="h-28 w-24 shrink-0 overflow-hidden rounded-2xl border border-lime-300/30 bg-black text-left shadow-lg"
+            >
+              <div className="flex h-full flex-col justify-end bg-gradient-to-br from-lime-900 via-black to-black p-3">
+                <span className="text-2xl">??</span>
+                <span className="mt-1 text-xs font-bold">Brad video</span>
+                <span className="text-[10px] text-white/50">Truck clip</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {issues.map((issue) => (
+            <button
+              key={issue}
+              onClick={() => {
+                setSelectedIssue(issue);
+                setSelectedAction("");
+                setSelectedTime("");
+                track("issue_selected", issue);
+              }}
+              className={`w-full rounded-2xl border p-4 text-left text-lg font-bold transition ${
+                selectedIssue === issue
+                  ? "border-lime-300 bg-lime-300 text-black"
+                  : "border-white/10 bg-white/8 hover:bg-white/12"
+              }`}
+            >
+              {issue}
+            </button>
+          ))}
+        </div>
+
+        {selectedIssue && (
+          <section className="mt-6 rounded-3xl border border-white/10 bg-white/5 p-5">
+            <p className="text-sm text-white/60">You selected</p>
+            <h2 className="mt-1 text-xl font-black">{selectedIssue}</h2>
+
+            <div className="mt-5 space-y-3">
+              {actions.map((action) => (
+                <button
+                  key={action}
+                  onClick={() => {
+                    setSelectedAction(action);
+                    setSelectedTime("");
+                    track("action_selected", action);
+                  }}
+                  className={`w-full rounded-2xl border p-4 text-left font-bold transition ${
+                    selectedAction === action
+                      ? "border-lime-300 bg-lime-300 text-black"
+                      : "border-white/10 bg-black/30 hover:bg-white/10"
+                  }`}
+                >
+                  {action}
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {selectedAction && (
+          <section className="mt-6 rounded-3xl border border-lime-400/20 bg-lime-400/10 p-5">
+            <p className="text-sm text-lime-200">Available times</p>
+
+            <div className="mt-4 space-y-3">
+              {times.map((time) => (
+                <button
+                  key={time}
+                  onClick={() => {
+                    setSelectedTime(time);
+                    track("appointment_requested", time);
+                  }}
+                  className={`w-full rounded-2xl border p-4 text-left font-bold transition ${
+                    selectedTime === time
+                      ? "border-white bg-white text-black"
+                      : "border-white/10 bg-black/30 hover:bg-white/10"
+                  }`}
+                >
+                  ?? {time}
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {selectedTime && (
+          <section className="mt-6 rounded-3xl border border-lime-300 bg-lime-300 p-5 text-black">
+            <p className="text-sm font-bold uppercase tracking-[0.2em]">
+              Appointment Requested
+            </p>
+            <h2 className="mt-2 text-2xl font-black">{selectedTime}</h2>
+            <p className="mt-3 text-sm">
+              Brad gets notified. Customer is already moving forward.
+            </p>
+          </section>
+        )}
+      </section>
+    </main>
+  );
+}

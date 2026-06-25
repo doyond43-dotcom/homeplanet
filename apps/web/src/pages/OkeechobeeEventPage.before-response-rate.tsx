@@ -12,9 +12,6 @@ export default function OkeechobeeEventPage() {
   const [helperEmail, setHelperEmail] = useState("");
   const [helperType, setHelperType] = useState("General Volunteer");
   const [helperNotes, setHelperNotes] = useState("");
-  const [coordinatorBackground, setCoordinatorBackground] = useState("");
-  const [coordinatorWhyHelp, setCoordinatorWhyHelp] = useState("");
-  const [coordinatorAvailability, setCoordinatorAvailability] = useState("");
   const [savingHelper, setSavingHelper] = useState(false);
 
   async function loadEvent() {
@@ -92,28 +89,6 @@ export default function OkeechobeeEventPage() {
     }
 
     setSavingHelper(true);
-
-    if (helperType === "Project Coordinator") {
-      const { error: coordinatorError } = await supabase
-        .from("okeechobee_project_coordinators")
-        .insert({
-          event_slug: event.slug,
-          name: helperName.trim(),
-          phone: helperPhone.trim(),
-          email: helperEmail.trim() || null,
-          background: coordinatorBackground.trim() || null,
-          why_help: coordinatorWhyHelp.trim() || null,
-          availability: coordinatorAvailability.trim() || null,
-          status: "Pending Review",
-        });
-
-      if (coordinatorError) {
-        console.error(coordinatorError);
-        alert("Unable to save coordinator application.");
-        setSavingHelper(false);
-        return;
-      }
-    }
 
     const { error: helperError } = await supabase
       .from("okeechobee_project_helpers")
@@ -212,11 +187,6 @@ export default function OkeechobeeEventPage() {
     String(item.label || "").toLowerCase().includes("joined")
   ).length;
 
-  const responseRate =
-    (event.views || 0) > 0
-      ? ((helperCount / (event.views || 1)) * 100).toFixed(1)
-      : "0.0";
-
   const shareUrl = window.location.href;
 
   async function shareEvent() {
@@ -253,29 +223,31 @@ export default function OkeechobeeEventPage() {
   return (
     <main style={styles.page}>
       <section style={styles.card}>
-        <p style={styles.kicker}>{event.type} - Okeechobee Together</p>
+        <p style={styles.kicker}>{event.type} · Okeechobee Together</p>
         <h1 style={styles.title}>{event.title}</h1>
-        <div style={styles.subtitle}>
-  <p>Community project focused on improving safety and accessibility.</p>
-
-  <p><strong>Looking For:</strong></p>
-
-  <p>
-    Fence materials - Lumber or pallets - Hardware & screws - Wire fencing - Mulch - Volunteers
-  </p>
-
-  <p>
-    A few hours. A few materials. A big difference.
-  </p>
-</div>
+        <p style={styles.subtitle}>{event.description}</p>
 
         <div style={styles.infoBox}>
           <p><strong>Status:</strong> {event.status}</p>
           <p><strong>Location:</strong> {event.location || "Not listed"}</p>
           <p><strong>Contact:</strong> {event.contact || "Not listed"}</p>
           <p><strong>Helpers:</strong> {helperCount}</p>
-        </div>
+<p><strong>Views:</strong> {event.views || 0}</p>
+<p><strong>Shares:</strong> {event.shares || 0}</p>
 
+{event.referrers && (
+  <>
+    <p style={{ marginTop: 12 }}>
+      <strong>Traffic Sources</strong>
+    </p>
+
+    <p>Facebook: {event.referrers.facebook || 0}</p>
+    <p>Messenger: {event.referrers.messenger || 0}</p>
+    <p>Direct: {event.referrers.direct || 0}</p>
+    <p>Other: {event.referrers.other || 0}</p>
+  </>
+)}
+        </div>
 
         <div style={styles.actions}>
           {event.status === "Resolved" ? (
@@ -347,44 +319,9 @@ export default function OkeechobeeEventPage() {
                   <option>Transportation</option>
                   <option>Work Opportunity</option>
                   <option>General Volunteer</option>
-                  <option>Project Coordinator</option>
                   <option>Other</option>
                 </select>
               </label>
-
-              {helperType === "Project Coordinator" && (
-                <>
-                  <label style={styles.label}>
-                    Background / Experience
-                    <textarea
-                      style={{ ...styles.input, minHeight: 90, resize: "vertical" }}
-                      value={coordinatorBackground}
-                      onChange={(e) => setCoordinatorBackground(e.target.value)}
-                      placeholder="Tell us about your experience"
-                    />
-                  </label>
-
-                  <label style={styles.label}>
-                    Why would you like to coordinate this project?
-                    <textarea
-                      style={{ ...styles.input, minHeight: 90, resize: "vertical" }}
-                      value={coordinatorWhyHelp}
-                      onChange={(e) => setCoordinatorWhyHelp(e.target.value)}
-                      placeholder="Why are you interested?"
-                    />
-                  </label>
-
-                  <label style={styles.label}>
-                    Availability
-                    <input
-                      style={styles.input}
-                      value={coordinatorAvailability}
-                      onChange={(e) => setCoordinatorAvailability(e.target.value)}
-                      placeholder="Weekends, evenings, anytime, etc."
-                    />
-                  </label>
-                </>
-              )}
 
               <label style={styles.label}>
                 Notes Optional
@@ -424,6 +361,10 @@ export default function OkeechobeeEventPage() {
             </div>
           ))}
         </section>
+
+        <Link style={styles.link} to="/planet/okeechobee/create">
+          Create another community post
+        </Link>
       </section>
     </main>
   );
@@ -578,18 +519,6 @@ const styles: Record<string, React.CSSProperties> = {
     marginTop: 18,
   },
 };
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

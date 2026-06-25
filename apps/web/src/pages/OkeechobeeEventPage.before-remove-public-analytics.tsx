@@ -274,8 +274,36 @@ export default function OkeechobeeEventPage() {
           <p><strong>Location:</strong> {event.location || "Not listed"}</p>
           <p><strong>Contact:</strong> {event.contact || "Not listed"}</p>
           <p><strong>Helpers:</strong> {helperCount}</p>
-        </div>
+<p><strong>Views:</strong> {event.views || 0}</p>
+<p><strong>Shares:</strong> {event.shares || 0}</p>
 
+{event.referrers && (
+  <>
+    <p style={{ marginTop: 12 }}>
+      <strong>Traffic Sources</strong>
+    </p>
+
+    <p>Facebook: {event.referrers.facebook || 0}</p>
+    <p>Messenger: {event.referrers.messenger || 0}</p>
+    <p>Direct: {event.referrers.direct || 0}</p>
+    <p>Other: {event.referrers.other || 0}</p>
+
+    <p style={{ marginTop: 12 }}>
+      <strong>Community Response</strong>
+    </p>
+
+    <p>Response Rate: {responseRate}%</p>
+
+    <p>
+      Status: {Number(responseRate) >= 25
+        ? "Strong Community Response"
+        : Number(responseRate) >= 10
+        ? "Moderate Community Response"
+        : "Needs More Visibility"}
+    </p>
+  </>
+)}
+        </div>
 
         <div style={styles.actions}>
           {event.status === "Resolved" ? (

@@ -253,29 +253,45 @@ export default function OkeechobeeEventPage() {
   return (
     <main style={styles.page}>
       <section style={styles.card}>
-        <p style={styles.kicker}>{event.type} - Okeechobee Together</p>
+        <p style={styles.kicker}>{event.type} · Okeechobee Together</p>
         <h1 style={styles.title}>{event.title}</h1>
-        <div style={styles.subtitle}>
-  <p>Community project focused on improving safety and accessibility.</p>
-
-  <p><strong>Looking For:</strong></p>
-
-  <p>
-    Fence materials - Lumber or pallets - Hardware & screws - Wire fencing - Mulch - Volunteers
-  </p>
-
-  <p>
-    A few hours. A few materials. A big difference.
-  </p>
-</div>
+        <p style={styles.subtitle}>{event.description}</p>
 
         <div style={styles.infoBox}>
           <p><strong>Status:</strong> {event.status}</p>
           <p><strong>Location:</strong> {event.location || "Not listed"}</p>
           <p><strong>Contact:</strong> {event.contact || "Not listed"}</p>
           <p><strong>Helpers:</strong> {helperCount}</p>
-        </div>
+<p><strong>Views:</strong> {event.views || 0}</p>
+<p><strong>Shares:</strong> {event.shares || 0}</p>
 
+{event.referrers && (
+  <>
+    <p style={{ marginTop: 12 }}>
+      <strong>Traffic Sources</strong>
+    </p>
+
+    <p>Facebook: {event.referrers.facebook || 0}</p>
+    <p>Messenger: {event.referrers.messenger || 0}</p>
+    <p>Direct: {event.referrers.direct || 0}</p>
+    <p>Other: {event.referrers.other || 0}</p>
+
+    <p style={{ marginTop: 12 }}>
+      <strong>Community Response</strong>
+    </p>
+
+    <p>Response Rate: {responseRate}%</p>
+
+    <p>
+      Status: {Number(responseRate) >= 25
+        ? "Strong Community Response"
+        : Number(responseRate) >= 10
+        ? "Moderate Community Response"
+        : "Needs More Visibility"}
+    </p>
+  </>
+)}
+        </div>
 
         <div style={styles.actions}>
           {event.status === "Resolved" ? (
@@ -424,6 +440,10 @@ export default function OkeechobeeEventPage() {
             </div>
           ))}
         </section>
+
+        <Link style={styles.link} to="/planet/okeechobee/create">
+          Create another community post
+        </Link>
       </section>
     </main>
   );
@@ -578,11 +598,6 @@ const styles: Record<string, React.CSSProperties> = {
     marginTop: 18,
   },
 };
-
-
-
-
-
 
 
 

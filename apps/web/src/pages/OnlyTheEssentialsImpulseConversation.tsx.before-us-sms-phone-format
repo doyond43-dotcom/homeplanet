@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 
 const issues = ["Standard Cleaning", "Deep Cleaning", "Move-In / Move-Out", "Weekly / Biweekly", "Vacation Reset", "Not Sure"];
 const actions = ["Request Cleaning Quote", "Ask About Availability", "Get Recommendation"];
@@ -11,7 +11,7 @@ export default function OnlyTheEssentialsImpulseConversation() {
   const [phone, setPhone] = useState("");
   const [notes, setNotes] = useState("");
 
-  const kaitlinPhone = "+18638013179";
+  const kaitlinPhone = "8638013179";
 
   const message = `Hi Kaitlin, I watched your welcome video and I need help with cleaning.
 
@@ -98,7 +98,7 @@ ${notes || "No extra notes yet."}`;
               <button
                 key={issue}
                 onClick={() => setSelectedIssue(issue)}
-                className="w-full rounded-2xl border border-pink-200/10 bg-white/[0.05] p-4 text-left text-lg font-black transition-colors duration-200 hover:border-[#ec6bb7]"
+                className="w-full rounded-2xl border border-pink-200/10 bg-white/[0.05] p-4 text-left text-lg font-black"
               >
                 {issue}
               </button>
@@ -120,7 +120,7 @@ ${notes || "No extra notes yet."}`;
                 <button
                   key={action}
                   onClick={() => setSelectedAction(action)}
-                  className="w-full rounded-2xl border border-pink-200/10 bg-white/[0.05] p-4 text-left font-black transition-colors duration-200 hover:border-[#ec6bb7]"
+                  className="w-full rounded-2xl border border-pink-200/10 bg-white/[0.05] p-4 text-left font-black"
                 >
                   {action}
                 </button>
@@ -143,7 +143,7 @@ ${notes || "No extra notes yet."}`;
                 <button
                   key={time}
                   onClick={() => setSelectedTime(time)}
-                  className="w-full rounded-2xl border border-pink-200/10 bg-white/[0.05] p-4 text-left font-black transition-colors duration-200 hover:border-[#ec6bb7]"
+                  className="w-full rounded-2xl border border-pink-200/10 bg-white/[0.05] p-4 text-left font-black"
                 >
                   {time}
                 </button>
@@ -196,7 +196,6 @@ ${notes || "No extra notes yet."}`;
     </main>
   );
 }
-
 
 
 

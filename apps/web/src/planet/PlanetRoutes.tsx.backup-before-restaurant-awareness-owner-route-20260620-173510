@@ -1,0 +1,819 @@
+﻿import { Routes, Route, Navigate } from "react-router-dom";
+
+import EcosystemInfrastructureLayer from "../pages/EcosystemInfrastructureLayer";
+import GetBusinessLivePage from "../pages/GetBusinessLivePage";
+import SwampLifeExperiencePage from '../pages/SwampLifeExperiencePage';
+
+import SebastianSoftwashPage from "../pages/SebastianSoftwashPage";
+
+import SlapABugLanding from "../pages/SlapABugLanding";
+import SlapABugLiveBoard from "../pages/SlapABugLiveBoard";
+import SlapABugImpulsePage from "../pages/SlapABugImpulsePage";
+import SlapABugImpulseConversation from "../pages/SlapABugImpulseConversation";
+import SlapABugLeadBoard from "../pages/SlapABugLeadBoard";
+
+import LocalServiceStarterPage from "../pages/LocalServiceStarterPage";
+import LivePagesHub from "../pages/LivePagesHub";
+import LivePagesIncludedPage from "../pages/LivePagesIncludedPage";
+import HomePlanetMessagePage from "../pages/HomePlanetMessagePage";
+import LivePagesLeadBoard from "../pages/LivePagesLeadBoard";
+import HomeServicesLivePage from "../pages/HomeServicesLivePage";
+import HomeServicesActivationPage from "../pages/HomeServicesActivationPage";
+import RestaurantLivePage from "../pages/RestaurantLivePage";
+import TransportationLivePage from "../pages/TransportationLivePage";
+import CommunityLivePage from "../pages/CommunityLivePage";
+import AutoRepairLivePage from "../pages/AutoRepairLivePage";
+import PlanetGuardianLivePage from "../pages/PlanetGuardianLivePage";
+import RetailLivePage from "../pages/RetailLivePage";
+import ExperiencesLivePage from "../pages/ExperiencesLivePage";
+
+import BirdbathLandingPage from "../pages/BirdbathLandingPage";
+
+import BirdbathProductsPage from "../pages/BirdbathProductsPage";
+
+
+import PlanetOverview from "../pages/PlanetOverview";
+
+import CityPage from "../pages/CityPage";
+
+import FoundLayer from "../pages/FoundLayer";
+
+import FoundItemPage from "../pages/FoundItemPage";
+
+import OnlyTheEssentialsBoard from "../pages/OnlyTheEssentialsBoard";
+
+import OnlyTheEssentialsLanding from "../pages/OnlyTheEssentialsLanding";
+
+import OnlyTheEssentialsCustomerLanding from "../pages/OnlyTheEssentialsCustomerLanding";
+
+import OnlyTheEssentialsPublicLanding from "../pages/OnlyTheEssentialsPublicLanding";
+
+import OnlyTheEssentialsRequest from "../pages/OnlyTheEssentialsRequest";
+
+import OnlyTheEssentialsMessagesBoard from "../pages/OnlyTheEssentialsMessagesBoard";
+
+import PoolServicePlanet from "../pages/PoolServicePlanet";
+
+import PoolServiceDemoBoard from "../pages/PoolServiceDemoBoard";
+
+import PlumbingServiceDemoBoard from "../pages/PlumbingServiceDemoBoard";
+
+import CaptainDChartersPage from "../pages/CaptainDChartersPage";
+
+import CaptainDTripMemoryPage from "../pages/CaptainDTripMemoryPage";
+
+import CaptainDPrivacyPage from "../pages/CaptainDPrivacyPage";
+
+import CaptainDBookingPage from "../pages/CaptainDBookingPage";
+
+import LakeExperienceShowcasePage from "../pages/LakeExperienceShowcasePage";
+
+import LakeExperienceBookingPage from "../pages/LakeExperienceBookingPage";
+
+import LakeExperienceMemoryPage from "../pages/LakeExperienceMemoryPage";
+
+import LakeExperiencePrivacyPage from "../pages/LakeExperiencePrivacyPage";
+
+import LazyLunkerExperiencePage from "../pages/LazyLunkerExperiencePage";
+
+import LazyLunkerBookingPage from "../pages/LazyLunkerBookingPage";
+
+import LazyLunkerFishingAddonPage from "../pages/LazyLunkerFishingAddonPage";
+
+import StayExperienceShowcasePage from "../pages/StayExperienceShowcasePage";
+
+import OkieDokieSoftwashPage from "../pages/OkieDokieSoftwashPage";
+
+import StayExperienceBookingPage from "../pages/StayExperienceBookingPage";
+
+import StayExperienceFishingAddonPage from "../pages/StayExperienceFishingAddonPage";
+
+import StayExperienceRequestActivePage from "../pages/StayExperienceRequestActivePage";
+
+import LazyLunkerRequestActivePage from "../pages/LazyLunkerRequestActivePage";
+
+import LaundromatBoard from "../pages/LaundromatBoard";
+
+import LocalNetworkDemo from "../pages/LocalNetworkDemo";
+
+import HomePlanetEventsBoard from "../pages/HomePlanetEventsBoard";
+
+import StartPage from "../pages/StartPage";
+
+import BusinessSetupForm from "../pages/BusinessSetupForm";
+
+import PrintShopLandingPage from "../pages/PrintShopLandingPage";
+
+import PrintShopOrderPage from "../pages/PrintShopOrderPage";
+
+import PrintShopArtworkPage from "../pages/PrintShopArtworkPage";
+
+import PrintShopTrackPage from "../pages/PrintShopTrackPage";
+
+import PrintShopOwnerBoard from "../pages/PrintShopOwnerBoard";
+
+
+import CreatorCity from "../pages/CreatorCity";
+
+import CreatorLanding from "../pages/CreatorLanding";
+
+import CreatorSystems from "../pages/CreatorSystems";
+
+import CreatorProjects from "../pages/CreatorProjects";
+
+import CreatorStudio from "../pages/CreatorStudio";
+import LiveStudio from "../pages/LiveStudio";
+import CreatorQuickBuildPage from "../pages/CreatorQuickBuildPage";
+import HollerboyzLandingPage from "../pages/HollerboyzLandingPage";
+import PresenceLaunchSequencePage from "../pages/PresenceLaunchSequencePage";
+import ActivationPage from "../pages/ActivationPage";
+import HomePlanetHomePage from "../pages/HomePlanetHomePage";
+import HomePlanetFrontDoor from "../pages/HomePlanetFrontDoor";
+import BusinessDemoDirectory from "../pages/BusinessDemoDirectory";
+import HomeServicesDemoPage from "../pages/HomeServicesDemoPage";
+
+import HomePlanetSystemsPage from "../pages/HomePlanetSystemsPage";
+import HomePlanetDoctrinePage from "../pages/HomePlanetDoctrinePage";
+import PlanetHomePage from "../pages/PlanetHomePage";
+import BuildYourLiveSystemPage from "../pages/BuildYourLiveSystemPage";
+import RestaurantQuickBuildPage from "../pages/RestaurantQuickBuildPage";
+import CommunityQuickBuildPage from "../pages/CommunityQuickBuildPage";
+import PagesQuickBuildPage from "../pages/PagesQuickBuildPage";
+import BusinessSystemsExperiencePage from "../pages/BusinessSystemsExperiencePage";
+import RestaurantIntelligenceExperiencePage from "../pages/RestaurantIntelligenceExperiencePage";
+import CommunityNetworkExperiencePage from "../pages/CommunityNetworkExperiencePage";
+import HomePlanetPagesExperiencePage from "../pages/HomePlanetPagesExperiencePage";
+import LiveSystemRequestDemoPage from "../pages/LiveSystemRequestDemoPage";
+import LiveSystemDispatchDemoPage from "../pages/LiveSystemDispatchDemoPage";
+import LiveSystemOperationsDemoPage from "../pages/LiveSystemOperationsDemoPage";
+
+import CreatorStudioBoard from "../pages/CreatorStudioBoard";
+import CreatorLive from "../pages/CreatorLive";
+import LiveViewer from "../pages/LiveViewer";
+
+import CreatorMomentPage from "../pages/CreatorMomentPage";
+
+import OperationalCustomerRequestPage from "../pages/OperationalCustomerRequestPage";
+import OperationalLiveBoardV2 from "../pages/OperationalLiveBoardV2";
+import OperationalJobsDashboardV2 from "../pages/OperationalJobsDashboardV2";
+import HomeServicesRequestPage from "../pages/HomeServicesRequestPage";
+import HomeServicesLandingPage from "../pages/HomeServicesLandingPage";
+import HomeServicesLeadBoard from "../pages/HomeServicesLeadBoard";
+import HomeServicesLeadWorkspace from "../pages/HomeServicesLeadWorkspace";
+import HomeServicesEstimateBuilder from "../pages/HomeServicesEstimateBuilder";
+import OperationalJobWorkspaceV2 from "../pages/OperationalJobWorkspaceV2";
+import OperationalJobWorkspaceV3 from "../pages/OperationalJobWorkspaceV3";
+
+import OperationalStaffBoard from "../pages/OperationalStaffBoard";
+
+import OperationalTeamBoard from "../pages/OperationalTeamBoard";
+
+import StaffBoardPage from "../pages/StaffBoardPage";
+
+import LobbyBoardPage from "../pages/LobbyBoardPage";
+
+import CreatorBuild from "../pages/CreatorBuild";
+
+import CreatorLaunchSequencePage from "../pages/CreatorLaunchSequencePage";
+
+import ReleaseViewer from "../pages/ReleaseViewer";
+
+import RcAirboatsLiveDemo from "../pages/RcAirboatsLiveDemo";
+
+import ExperiencePlanet from "../pages/ExperiencePlanet";
+
+import HayleyLiveBoard from "../pages/HayleyLiveBoard";
+
+import MealBoardDemo from "../pages/MealBoardDemo";
+
+import MealBusinessDemo from "../pages/MealBusinessDemo";
+
+import BigDaveEatsLive from "../pages/BigDaveEatsLive";
+
+import SkateZoneDemo from "../pages/SkateZoneDemo";
+
+import SkateZoneQrDemo from "../pages/SkateZoneQrDemo";
+
+import PredatorShieldIntervention from "../pages/PredatorShieldIntervention";
+
+import HomePlanetKids from "../pages/HomePlanetKids";
+
+import HomePlanetKidsStart from "../pages/HomePlanetKidsStart";
+
+import HomePlanetKidsSpace from "../pages/HomePlanetKidsSpace";
+
+import HomePlanetKidsProject from "../pages/HomePlanetKidsProject";
+
+
+import AutoRepairProtected from "../pages/AutoRepairProtected";
+
+import AutoRepairLiveBoardSample from "../pages/AutoRepairLiveBoardSample";
+
+import BeautySalonLiveBoard from "../pages/BeautySalonLiveBoard";
+
+import ButcherLivestockIntakeFlow from "../pages/ButcherLivestockIntakeFlow";
+
+import ButcherLivestockTruthBoard from "../pages/ButcherLivestockTruthBoard";
+
+import GuardianMobilityLiveBoard from "../pages/GuardianMobilityLiveBoard";
+
+import LiveBoardRouter from "../pages/LiveBoardRouter";
+
+import ZandsLightXandBoard from "../pages/ZandsLightXandBoard";
+
+import AllCleanCutsFrontDoor from "../pages/AllCleanCutsFrontDoor";
+
+import AllCleanCutsFreshCutPage from "../pages/AllCleanCutsFreshCutPage";
+
+
+import SafariSalesPage from "../pages/SafariSalesPage";
+
+import SafariAnimalPage from "../pages/SafariAnimalPage";
+
+import SafariMomentPage from "../pages/SafariMomentPage";
+
+import SafariLiveBoard from "../pages/SafariLiveBoard";
+
+
+import ParentChildView from "../pages/ParentChildView";
+
+import GuardianPublicProfilePage from "../pages/GuardianPublicProfilePage";
+
+
+import AwnitDemoBoard from "../pages/AwnitDemoBoard";
+
+import CampAquaflowStandalone from "../pages/CampAquaflowStandalone";
+
+import InvoiceView from "../pages/InvoiceView";
+
+import CommunitySaleBoard from "../pages/community/CommunitySaleBoard";
+
+import TransportationDispatchBoardV2 from "../pages/TransportationDispatchBoardV2";
+
+import EscapeBoardDemo from "../pages/EscapeBoardDemo";
+
+import EscapeSessionLauncher from "../pages/EscapeSessionLauncher";
+
+import EscapeSessionPage from "../pages/EscapeSessionPage";
+
+import EscapeWatchModePage from "../pages/EscapeWatchModePage";
+
+import PlanetBamboo from "../pages/PlanetBamboo";
+
+import ArtProductionBoard from "../pages/ArtProductionBoard";
+
+
+import LifePlanet from "../pages/LifePlanet";
+
+import JeanettesLanding from "../pages/JeanettesLanding";
+
+
+import RestaurantRushSimpleDemo from "../pages/RestaurantRushSimpleDemo";
+
+import RestaurantRushManualDemo from "../pages/RestaurantRushManualDemo";
+
+import RestaurantRushLiveDemo from "../pages/RestaurantRushLiveDemo";
+
+import MomsKitchenDemo from "../pages/MomsKitchenDemo";
+
+import JoeysPizzaLiveBoard from "../pages/JoeysPizzaLiveBoard";
+
+
+import JoeGrantLegalDesk from "../pages/JoeGrantLegalDesk";
+
+
+import PlanetGuardian from "../pages/PlanetGuardian";
+
+import GuardianPresenceDesk from "../pages/GuardianPresenceDesk";
+
+import GuardianJoinDesk from "../pages/GuardianJoinDesk";
+
+import GuardianPetTagDemo from "../pages/GuardianPetTagDemo";
+
+import GuardianBellaPreview from "../pages/GuardianBellaPreview";
+
+import GuardianHouseholdBoard from "../pages/GuardianHouseholdBoard";
+
+import GuardianHomePage from "../pages/GuardianHomePage";
+
+import GuardianStartPage from "../pages/GuardianStartPage";
+
+import GuardianActivationPage from "../pages/GuardianActivationPage";
+
+import GuardianOnboardingPage from "../pages/GuardianOnboardingPage";
+
+import GuardianPanicPage from "../pages/GuardianPanicPage";
+
+import GuardianPanicLiveBoard from "../pages/GuardianPanicLiveBoard";
+
+import GuardianWearablePanicDemo from "../pages/GuardianWearablePanicDemo";
+
+import PetCareTimelinePanel from "../components/guardian/PetCareTimelinePanel";
+
+import PetTagFulfillmentBoard from "../pages/PetTagFulfillmentBoard";
+
+
+import EmilyLearningDesk from "../pages/EmilyLearningDesk";
+
+
+import RouteCutLawnPage from "../pages/RouteCutLawnPage";
+
+import RouteCutOperatorBoard from "../pages/RouteCutOperatorBoard";
+
+import RouteCutLiveView from "../pages/RouteCutLiveView";
+
+
+import HomePlanetPaymentNode from "../pages/HomePlanetPaymentNode";
+
+import NoScreenshotPaymentsDemo from "../pages/NoScreenshotPaymentsDemo";
+
+import PricingPage from "../pages/PricingPage";
+
+import OnboardingFlow from "../pages/OnboardingFlow";
+
+import OnboardingBuildTransition from "../pages/OnboardingBuildTransition";
+
+import SystemHomePage from "../pages/SystemHomePage";
+
+import CrewTeamBoard from "../pages/CrewTeamBoard";
+
+import HubOperationsBoardMVP from "../pages/HubOperationsBoardMVP";
+import HubOperationsIdentitySystemPage from "../pages/HubOperationsIdentitySystemPage";
+
+import EcosystemCirculationMapMVP from "../pages/EcosystemCirculationMapMVP";
+
+import WingItBrandVisualMockup from "../pages/WingItBrandVisualMockup";
+import WingItBrandPalettePage from "../pages/WingItBrandPalettePage";
+import WingItBrandIdentityPage from "../pages/WingItBrandIdentityPage";
+import WingItPage from "../pages/WingItPage";
+import WingItLunchRushVisualPage from "../pages/WingItLunchRushVisualPage";
+import WingItLiveMusicVisualPage from "../pages/WingItLiveMusicVisualPage";
+import WingItTriviaNightVisualPage from "../pages/WingItTriviaNightVisualPage";
+import WingItKaraokeNightVisualPage from "../pages/WingItKaraokeNightVisualPage";
+import WingItGameDayWatchPartyVisualPage from "../pages/WingItGameDayWatchPartyVisualPage";
+
+import BrahmaBullFrontDoor from "../pages/BrahmaBullFrontDoor";
+
+import BrahmaBullLiveBoard from "../pages/BrahmaBullLiveBoard";
+
+import BrahmaBullCrewBoard from "../pages/BrahmaBullCrewBoard";
+
+import BrahmaBullKitchenBoard from "../pages/BrahmaBullKitchenBoard";
+
+import BrahmaBullOwnerBoard from "../pages/BrahmaBullOwnerBoard";
+
+import RestaurantAwarenessFrontDoor from "../pages/RestaurantAwarenessFrontDoor";
+import RestaurantAwarenessLiveBoard from "../pages/RestaurantAwarenessLiveBoard";
+import RestaurantAwarenessCrewBoard from "../pages/RestaurantAwarenessCrewBoard";
+import RestaurantAwarenessKitchenBoard from "../pages/RestaurantAwarenessKitchenBoard";
+import RestaurantAwarenessDrinkBoard from "../pages/RestaurantAwarenessDrinkBoard";
+
+import OkeechobeeTogetherPage from "../pages/OkeechobeeTogetherPage";
+import OkeechobeeCreateEventPage from "../pages/OkeechobeeCreateEventPage";
+import OkeechobeeEventPage from "../pages/OkeechobeeEventPage";
+
+import OkeechobeeCommunityAdminPage from "../pages/OkeechobeeCommunityAdminPage";
+import OkeechobeeProjectWorkspace from "../pages/OkeechobeeProjectWorkspace";
+import OkeechobeeCommandCenter from "../pages/OkeechobeeCommandCenter";
+
+import StarterLivePageCreatorPage from "../pages/StarterLivePageCreatorPage";
+
+import EcosystemCirculationBoard from "../pages/EcosystemCirculationBoard";
+
+import GreenBasketMarketBrandVisualDirection from "../pages/GreenBasketMarketBrandVisualDirection";
+import GreenBasketSystemPage from "../pages/GreenBasketSystemPage";
+import GreenBasketBrandKitPage from "../pages/GreenBasketBrandKitPage";
+import GreenBasketBrandPalettePage from "../pages/GreenBasketBrandPalettePage";
+
+import StarterGeneratedLivePage from "../pages/StarterGeneratedLivePage";
+
+import EcosystemInfrastructurePortal from "../pages/EcosystemInfrastructurePortal";
+import EcosystemAtlasPage from "../pages/EcosystemAtlasPage";
+import CommunityPulsePage from "../pages/CommunityPulsePage";
+import CommunityPulseVisualPage from "../pages/CommunityPulseVisualPage";
+import CommunityPulseRainyEveningVisualPage from "../pages/CommunityPulseRainyEveningVisualPage";
+import CommunityPulseOutdoorKioskVisualPage from "../pages/CommunityPulseOutdoorKioskVisualPage";
+import CommunityPulseCommonsCoffeeVisualPage from "../pages/CommunityPulseCommonsCoffeeVisualPage";
+import CommunityPulseParkingVisualPage from "../pages/CommunityPulseParkingVisualPage";
+import CommunityPulseMobileViewVisualPage from "../pages/CommunityPulseMobileViewVisualPage";
+import CommunityPulseImpactStoriesVisualPage from "../pages/CommunityPulseImpactStoriesVisualPage";
+import CommunityPulseGreenBasketVisualPage from "../pages/CommunityPulseGreenBasketVisualPage";
+import CommunityPulseAwarenessBoardVisualPage from "../pages/CommunityPulseAwarenessBoardVisualPage";
+import ReasonsToShowUpPage from "../pages/ReasonsToShowUpPage";
+import HumanCirculationPage from "../pages/HumanCirculationPage";
+import DelaneysGymPage from "../pages/DelaneysGymPage";
+import GarrettsLaundromatPage from "../pages/GarrettsLaundromatPage";
+import CommonsCoffeePage from "../pages/CommonsCoffeePage";
+import DelaneysGymVisualPage from "../pages/DelaneysGymVisualPage";
+import GarrettsLaundromatVisualPage from "../pages/GarrettsLaundromatVisualPage";
+import CommonsCoffeeVisualPage from "../pages/CommonsCoffeeVisualPage";
+import CommonsCoffeeMorningVisualPage from "../pages/CommonsCoffeeMorningVisualPage";
+import CommonsCoffeeRainyDayVisualPage from "../pages/CommonsCoffeeRainyDayVisualPage";
+import CommonsCoffeeOutdoorEveningVisualPage from "../pages/CommonsCoffeeOutdoorEveningVisualPage";
+import CommonsCoffeeCommunityEventVisualPage from "../pages/CommonsCoffeeCommunityEventVisualPage";
+import EcosystemCoordinationBoard from "../pages/EcosystemCoordinationBoard";
+import HomePlanetEcosystemIdentityPage from "../pages/HomePlanetEcosystemIdentityPage";
+import ParticipationLivingPage from "../pages/ParticipationLivingPage";
+import ParticipationLivingInfrastructurePage from "../pages/ParticipationLivingInfrastructurePage";
+import LiveCirculationHeartbeatPage from "../pages/LiveCirculationHeartbeatPage";
+import PredictiveParkingIntelligencePage from "../pages/PredictiveParkingIntelligencePage";
+import RestaurantAwarenessIntelligencePage from "../pages/RestaurantAwarenessIntelligencePage";
+import PredictiveParkingPage from "../pages/PredictiveParkingPage";
+import BeforeAwarenessPage from "../pages/BeforeAwarenessPage";
+import AfterAwarenessPage from "../pages/AfterAwarenessPage";
+import AwarenessLayerPage from "../pages/AwarenessLayerPage";
+import VictorPinedaLandingPage from "../pages/VictorPinedaLandingPage";
+import SmithPropertyCareLandingPage from "../pages/SmithPropertyCareLandingPage";
+import SmithPropertyCareCommandCenter from "../pages/SmithPropertyCareCommandCenter";
+import SmithPropertyCareJobDetail from "../pages/SmithPropertyCareJobDetail";
+
+
+
+import HydraLandingPage from "../pages/HydraLandingPage";
+import HydraLandingPageV2 from "../pages/HydraLandingPageV2";
+import HydraAssetSelectorPage from "../pages/HydraAssetSelectorPage";
+import HydraJobsBoardPage from "../pages/HydraJobsBoardPage";
+import HydraScheduleBoardPage from "../pages/HydraScheduleBoardPage";
+import HydraProjectIntakePage from "../pages/HydraProjectIntakePage";
+import HydraInspectionReportPage from "../pages/HydraInspectionReportPage";
+import HydraOwnerDashboardPage from "../pages/HydraOwnerDashboardPage";
+import HydraOwnerDashboardV2Page from "../pages/HydraOwnerDashboardV2Page";
+import HydraOwnerDashboardV3Page from "../pages/HydraOwnerDashboardV3Page";
+import HydraCrewBoardPage from "../pages/HydraCrewBoardPage";
+import HydraJobDetailPage from "../pages/HydraJobDetailPage";
+import IceConstructionCommandPage from "../pages/IceConstructionCommandPage";
+import IceConstructionLandingPage from "../pages/IceConstructionLandingPage";
+export default function PlanetRoutes() {
+  return (
+    <Routes>
+        <Route path="swamp-life" element={<SwampLifeExperiencePage />} />
+
+<Route path="/starter/:slug" element={<StarterGeneratedLivePage />} />
+        <Route path="/creator/starter" element={<StarterLivePageCreatorPage />} />
+        <Route path="/sebastian-softwash" element={<SebastianSoftwashPage />} />
+      <Route index element={<Navigate to="/planet/home" replace />} />
+
+      <Route path="live-systems" element={<HomePlanetFrontDoor />} />
+      <Route path="demo/business" element={<BusinessDemoDirectory />} />
+      <Route path="demo/business/home-services" element={<HomeServicesDemoPage />} />
+      <Route path="liveboard-v2/:boardSlug" element={<OperationalLiveBoardV2 />} />
+      <Route path="jobs-dashboard-v2" element={<OperationalJobsDashboardV2 />} />
+      <Route path="job-workspace-v2" element={<OperationalJobWorkspaceV2 />} />
+      <Route path="job-workspace-v3" element={<OperationalJobWorkspaceV3 />} />
+      <Route path="build-your-live-system" element={<BuildYourLiveSystemPage />} />
+      <Route path="restaurant-build" element={<RestaurantQuickBuildPage />} />
+      <Route path="community-build" element={<CommunityQuickBuildPage />} />
+      <Route path="pages-build" element={<PagesQuickBuildPage />} />
+      <Route path="business-systems" element={<BusinessSystemsExperiencePage />} />
+      <Route path="restaurant-intelligence" element={<RestaurantIntelligenceExperiencePage />} />
+      <Route path="community-network" element={<CommunityNetworkExperiencePage />} />
+      <Route path="homeplanet-pages" element={<HomePlanetPagesExperiencePage />} />
+      <Route path="live-system/request" element={<LiveSystemRequestDemoPage />} />
+      <Route path="live-system/dispatch" element={<LiveSystemDispatchDemoPage />} />
+      <Route path="live-system/operations" element={<LiveSystemOperationsDemoPage />} />
+      <Route path="slap-a-bug" element={<SlapABugLanding />} />
+      <Route path="slap-a-bug/live" element={<SlapABugLiveBoard />} />
+      <Route path="slap-a-bug/impulse" element={<SlapABugImpulsePage />} />
+<Route path="slap-a-bug/impulse-v2" element={<SlapABugImpulseConversation />} />
+      <Route path="slap-a-bug/board" element={<SlapABugLeadBoard />} />
+      <Route path="local-service-page" element={<LocalServiceStarterPage />} />
+      <Route path="live-pages" element={<LivePagesHub />} />
+          <Route path="live-pages/included" element={<LivePagesIncludedPage />} />
+      <Route path="message-us" element={<HomePlanetMessagePage />} />
+      <Route path="live-pages/board" element={<LivePagesLeadBoard />} />
+      <Route path="live-pages/home-services" element={<HomeServicesLivePage />} />
+      <Route path="home-services/activate" element={<HomeServicesActivationPage />} />
+      <Route path="home-services" element={<HomeServicesLandingPage />} />
+      <Route path="home-services/request" element={<HomeServicesRequestPage />} />
+      <Route path="home-services/leads" element={<HomeServicesLeadBoard />} />
+      <Route path="home-services/lead" element={<HomeServicesLeadWorkspace />} />
+      <Route path="home-services/estimate" element={<HomeServicesEstimateBuilder />} />
+      <Route path="live-pages/restaurants" element={<RestaurantLivePage />} />
+      <Route path="live-pages/transportation" element={<TransportationLivePage />} />
+      <Route path="live-pages/community" element={<CommunityLivePage />} />
+      <Route path="live-pages/auto-repair" element={<AutoRepairLivePage />} />
+      <Route path="live-pages/pet-guardian" element={<PlanetGuardianLivePage />} />
+      <Route path="live-pages/retail" element={<RetailLivePage />} />
+      <Route path="live-pages/experiences" element={<ExperiencesLivePage />} />
+      <Route path="live-pages/restaurants" element={<RestaurantLivePage />} />
+      <Route path="live-pages/transportation" element={<TransportationLivePage />} />
+      <Route path="live-pages/community" element={<CommunityLivePage />} />
+      <Route path="live-pages/auto-repair" element={<AutoRepairLivePage />} />
+      <Route path="live-pages/pet-guardian" element={<PlanetGuardianLivePage />} />
+      <Route path="live-pages/retail" element={<RetailLivePage />} />
+      <Route path="live-pages/experiences" element={<ExperiencesLivePage />} />
+      <Route path="birdbath" element={<BirdbathLandingPage />} />
+      <Route path="birdbath/products" element={<BirdbathProductsPage />} />
+
+              <Route path="crew-team" element={<CrewTeamBoard />} />
+<Route path="start" element={<StartPage />} />
+      <Route path="okeechobee/create" element={<OkeechobeeCreateEventPage />} />
+      <Route path="okeechobee/event/:slug" element={<OkeechobeeEventPage />} />
+      <Route path="okeechobee" element={<OkeechobeeTogetherPage />} />
+      <Route path="okeechobee/admin" element={<OkeechobeeCommunityAdminPage />} />
+<Route path="okeechobee/project/:slug" element={<OkeechobeeProjectWorkspace />} />
+      <Route path="okeechobee/command" element={<OkeechobeeCommandCenter />} />
+      {/* BRAHMA BULL RESTAURANT SYSTEM */}
+      <Route path="brahma-bull" element={<BrahmaBullFrontDoor />} />
+      <Route path="demo/brahma-bull/live" element={<BrahmaBullLiveBoard />} />
+      <Route path="crew-team/brahma-bull" element={<BrahmaBullCrewBoard />} />
+      <Route path="kitchen/brahma-bull" element={<BrahmaBullKitchenBoard />} />
+      <Route path="owner/brahma-bull" element={<BrahmaBullOwnerBoard />} />
+
+      {/* GENERIC RESTAURANT AWARENESS DEMO */}
+      <Route path="restaurant-awareness" element={<RestaurantAwarenessFrontDoor />} />
+      <Route path="restaurant-awareness/live" element={<RestaurantAwarenessLiveBoard />} />
+      <Route path="restaurant-awareness/crew" element={<RestaurantAwarenessCrewBoard />} />
+      <Route path="restaurant-awareness/kitchen" element={<RestaurantAwarenessKitchenBoard />} />
+      <Route path="restaurant-awareness/drinks" element={<RestaurantAwarenessDrinkBoard />} />
+      <Route path="business-setup" element={<BusinessSetupForm />} />
+      <Route path="printshop" element={<PrintShopLandingPage />} />
+      <Route path="printshop/order" element={<PrintShopOrderPage />} />
+      <Route path="printshop/artwork" element={<PrintShopArtworkPage />} />
+      <Route path="printshop/track" element={<PrintShopTrackPage />} />
+      <Route path="printshop/owner" element={<PrintShopOwnerBoard />} />
+
+      <Route path="charlys" element={<PrintShopLandingPage />} />
+      <Route path="charlys/order" element={<PrintShopOrderPage />} />
+      <Route path="charlys/artwork" element={<PrintShopArtworkPage />} />
+      <Route path="charlys/track" element={<PrintShopTrackPage />} />
+      <Route path="charlys/owner" element={<PrintShopOwnerBoard />} />
+
+      {/* ONLY THE ESSENTIALS */}
+      <Route path="only-the-essentials" element={<OnlyTheEssentialsLanding />} />
+      <Route path="only-the-essentials-cleaning" element={<OnlyTheEssentialsCustomerLanding />} />
+      <Route path="only-the-essentials/request" element={<OnlyTheEssentialsRequest />} />
+      <Route path="cleaning/only-the-essentials" element={<OnlyTheEssentialsLanding />} />
+      <Route path="demo/only-the-essentials" element={<OnlyTheEssentialsBoard />} />
+      <Route path="demo/only-the-essentials/messages" element={<OnlyTheEssentialsMessagesBoard />} />
+
+      {/* POOL SERVICE */}
+      <Route path="pool-service" element={<PoolServicePlanet />} />
+      <Route path="demo/pool-service" element={<PoolServiceDemoBoard />} />
+
+      {/* PLUMBING SERVICE */}
+      <Route path="demo/plumbing-service" element={<PlumbingServiceDemoBoard />} />
+      {/* REUSABLE LAKE EXPERIENCE SHOWCASE */}
+      <Route path="demo/lake-showcase" element={<LakeExperienceShowcasePage />} />
+      <Route path="demo/lake-showcase-booking" element={<LakeExperienceBookingPage />} />
+      <Route path="demo/lake-showcase-memory" element={<LakeExperienceMemoryPage />} />
+      <Route path="demo/lake-showcase-privacy" element={<LakeExperiencePrivacyPage />} />
+
+      {/* REUSABLE STAY EXPERIENCE SHOWCASE */}
+      <Route path="demo/stay-showcase" element={<StayExperienceShowcasePage />} />
+      <Route path="demo/stay-showcase-booking" element={<StayExperienceBookingPage />} />
+      <Route path="demo/stay-showcase-fishing" element={<StayExperienceFishingAddonPage />} />
+      <Route path="demo/stay-showcase-request-active" element={<StayExperienceRequestActivePage />} />
+
+      {/* OKIE DOKIE SOFTWASH */}
+      <Route path="okie-dokie-softwash" element={<OkieDokieSoftwashPage />} />
+      {/* CAPTAIN D CHARTERS */}
+      <Route path="demo/lake-experience-preview" element={<CaptainDChartersPage />} />
+      <Route path="demo/trip-memory-preview" element={<CaptainDTripMemoryPage />} />
+      <Route path="demo/privacy-controls-preview" element={<CaptainDPrivacyPage />} />
+      <Route path="demo/trip-booking-preview" element={<CaptainDBookingPage />} />
+
+      {/* LAZY LUNKER EXPERIENCE */}
+      <Route path="demo/stay-experience-preview" element={<LazyLunkerExperiencePage />} />
+      <Route path="demo/lazy-lunker-booking" element={<LazyLunkerBookingPage />} />
+      <Route path="demo/lazy-lunker-fishing" element={<LazyLunkerFishingAddonPage />} />
+      <Route path="demo/lazy-lunker-request-active" element={<LazyLunkerRequestActivePage />} />
+
+      <Route path="demo/laundry" element={<LaundromatBoard />} />
+      <Route path="demo/local-network" element={<LocalNetworkDemo />} />
+      <Route path="demo/events" element={<HomePlanetEventsBoard />} />
+
+      <Route path="kids" element={<HomePlanetKids />} />
+      <Route path="kids/start" element={<HomePlanetKidsStart />} />
+      <Route path="kids/space/:slug" element={<HomePlanetKidsSpace />} />
+      <Route path="kids/project/:projectId" element={<HomePlanetKidsProject />} />
+
+      <Route path="creator" element={<CreatorCity />} />
+      <Route path="creator/start" element={<CreatorLanding />} />
+      <Route path="creator/systems" element={<CreatorSystems />} />
+      <Route path="creator/projects" element={<CreatorProjects />} />
+      <Route path="creator/studio/*" element={<CreatorStudio />} />
+      <Route path="live-studio" element={<LiveStudio />} />
+      <Route path="creator/quick" element={<CreatorQuickBuildPage />} />
+<Route path="creator/presence/:boardSlug" element={<PresenceLaunchSequencePage />} />
+      <Route path="activate/:boardSlug" element={<ActivationPage />} />
+      <Route path="creator/:slug/moment" element={<CreatorMomentPage />} />
+      <Route path="creator/studio-board" element={<CreatorStudioBoard />} />
+      <Route path="live-studio/host" element={<CreatorLive />} />
+      <Route path="live-studio/view" element={<LiveViewer />} />
+      <Route path="live-studio/view/:room" element={<LiveViewer />} />
+      <Route path="creator/build" element={<CreatorBuild />} />
+      <Route path="creator/release/:releaseId" element={<ReleaseViewer />} />
+      <Route path="creator/rc-live" element={<RcAirboatsLiveDemo />} />
+      <Route path="creator/hayley-live" element={<HayleyLiveBoard />} />
+      <Route path="creator/big-dave-eats" element={<BigDaveEatsLive />} />
+      <Route path="creator/building" element={<CreatorLaunchSequencePage />} />
+      <Route path="system/:slug" element={<SystemHomePage />} />
+      <Route path="creator/*" element={<Navigate to="/planet/creator" replace />} />
+
+      <Route path="experience" element={<ExperiencePlanet />} />
+      <Route path="experience/demo" element={<ExperiencePlanet />} />
+      <Route path="experience/escape-board" element={<EscapeBoardDemo />} />
+      <Route path="experience/start" element={<EscapeSessionLauncher />} />
+      <Route path="experience/session/:sessionId" element={<EscapeSessionPage />} />
+      <Route path="experience/watch" element={<EscapeWatchModePage />} />
+
+      <Route path="found-layer" element={<FoundLayer />} />
+      <Route path="found/:type" element={<FoundItemPage />} />
+      <Route path="found/:type/report" element={<FoundItemPage />} />
+
+      <Route path="guardian" element={<PlanetGuardian />} />
+      <Route path="guardian-pet" element={<GuardianPetTagDemo />} />
+      <Route path="guardian-pet/pet/:petId" element={<GuardianPetTagDemo />} />
+      <Route path="guardian-pet/found/:petId" element={<GuardianPetTagDemo />} />
+      <Route path="guardian-pet/bella" element={<GuardianBellaPreview />} />
+      <Route path="guardian-join" element={<GuardianJoinDesk />} />
+      <Route path="guardian/presence" element={<GuardianPresenceDesk />} />
+      <Route path="guardian/home" element={<GuardianHomePage />} />
+      <Route path="guardian/start" element={<GuardianStartPage />} />
+      <Route path="guardian/activate" element={<GuardianActivationPage />} />
+      <Route path="guardian/onboarding" element={<GuardianOnboardingPage />} />
+      <Route path="guardian/panic" element={<GuardianPanicPage />} />
+      <Route path="guardian/wearable-panic" element={<GuardianWearablePanicDemo />} />
+      <Route path="guardian/panic/live" element={<GuardianPanicLiveBoard />} />
+      <Route path="guardian/panic/:incidentId" element={<GuardianPanicLiveBoard />} />
+      <Route path="guardian/household" element={<GuardianHouseholdBoard />} />
+      <Route path="guardian-household" element={<GuardianHouseholdBoard />} />
+      <Route path="guardian/public/:guardianId" element={<GuardianPublicProfilePage />} />
+      <Route path="guardian/mobility" element={<GuardianMobilityLiveBoard />} />
+      <Route path="guardian/pet-care" element={<PetCareTimelinePanel />} />
+      <Route path="guardian-pet/fulfillment" element={<PetTagFulfillmentBoard />} />
+
+      <Route path="demo/home-services" element={<AwnitDemoBoard />} />
+      <Route path="demo/cleaning-board" element={<OnlyTheEssentialsBoard />} />
+      <Route path="demo/auto-service" element={<AutoRepairLiveBoardSample />} />
+      <Route path="demo/auto-service-sample" element={<AutoRepairLiveBoardSample />} />
+      <Route path="demo/camp-aquaflow" element={<CampAquaflowStandalone />} />
+      <Route path="demo/kitchen-flow" element={<RestaurantRushSimpleDemo />} />
+      <Route path="demo/kitchen-manual" element={<RestaurantRushManualDemo />} />
+      <Route path="demo/escape-board" element={<EscapeBoardDemo />} />
+      <Route path="demo/kitchen-live" element={<RestaurantRushLiveDemo />} />
+      <Route path="demo/restaurant" element={<RestaurantRushLiveDemo />} />
+      <Route path="demo/joeys-pizza" element={<JoeysPizzaLiveBoard />} />
+      <Route path="demo/bella" element={<GuardianBellaPreview />} />
+      <Route path="demo/example-kitchen" element={<MomsKitchenDemo />} />
+      <Route path="demo/legal-workspace" element={<JoeGrantLegalDesk />} />
+      <Route path="demo/lawn-route" element={<RouteCutLawnPage />} />
+      <Route path="demo/community-sale" element={<CommunitySaleBoard />} />
+      <Route path="demo/transportation" element={<TransportationDispatchBoardV2 />} />
+      <Route path="demo/meal-board" element={<MealBoardDemo />} />
+      <Route path="demo/meal-business" element={<MealBusinessDemo />} />
+      <Route path="demo/skatezone" element={<SkateZoneDemo />} />
+      <Route path="demo/skatezone-qr" element={<SkateZoneQrDemo />} />
+      <Route path="demo/beauty-color-me-crazy" element={<BeautySalonLiveBoard />} />
+      <Route path="demo/art-production" element={<ArtProductionBoard />} />
+      <Route path="demo/bamboo" element={<PlanetBamboo />} />
+      <Route path="demo/no-screenshot-payments" element={<NoScreenshotPaymentsDemo />} />
+      <Route path="payments/no-screenshot" element={<NoScreenshotPaymentsDemo />} />
+
+      <Route path="safari" element={<SafariSalesPage />} />
+      <Route path="safari/moment/:momentId" element={<SafariMomentPage />} />
+      <Route path="safari/:animalSlug" element={<SafariAnimalPage />} />
+
+      <Route path="staff/:slug" element={<OperationalStaffBoard />} />
+      <Route path="team/:slug" element={<OperationalTeamBoard />} />
+      <Route path="lobby/:slug" element={<LobbyBoardPage />} />
+
+      <Route path="live/safari-demo" element={<SafariLiveBoard />} />
+      <Route path="request/:boardSlug" element={<OperationalCustomerRequestPage />} />
+      <Route path="live/:boardSlug" element={<LiveBoardRouter />} />
+
+      <Route path="livestock/intake" element={<ButcherLivestockIntakeFlow />} />
+      <Route path="livestock/truth/:animalSlug" element={<ButcherLivestockTruthBoard />} />
+
+      <Route path="payments/node" element={<HomePlanetPaymentNode />} />
+      <Route path="pricing" element={<PricingPage />} />
+      <Route path="onboarding" element={<OnboardingFlow />} />
+      <Route path="onboarding/build" element={<OnboardingBuildTransition />} />
+
+      <Route path="life" element={<LifePlanet />} />
+      <Route path="jeanettes" element={<JeanettesLanding />} />
+      <Route path="kids/parent/:childId" element={<ParentChildView />} />
+      <Route path="emily-learning" element={<EmilyLearningDesk />} />
+      <Route path="routecut/operator" element={<RouteCutOperatorBoard />} />
+      <Route path="routecut/live" element={<RouteCutLiveView />} />
+      <Route path="invoice/:invoiceId" element={<InvoiceView />} />
+
+      <Route path="predator-shield" element={<PredatorShieldIntervention />} />
+      <Route path="predator-shield/test" element={<PredatorShieldIntervention />} />
+      <Route path="zands-light-xand" element={<ZandsLightXandBoard />} />
+      <Route path="all-clean-cuts" element={<AllCleanCutsFrontDoor />} />
+      <Route path="all-clean-cuts/fresh-cut/:cutSlug" element={<AllCleanCutsFreshCutPage />} />
+      <Route path="hub" element={<HubOperationsBoardMVP />} />
+      <Route path="hub-identity" element={<HubOperationsIdentitySystemPage />} />
+      <Route path="ecosystem-map" element={<EcosystemCirculationMapMVP />} />
+      <Route path="wingit" element={<WingItPage />} />
+      <Route path="wingit-lunch-rush" element={<WingItLunchRushVisualPage />} />
+      <Route path="wingit-live-music-night" element={<WingItLiveMusicVisualPage />} />
+      <Route path="wingit-trivia-night" element={<WingItTriviaNightVisualPage />} />
+      <Route path="wingit-karaoke-night" element={<WingItKaraokeNightVisualPage />} />
+      <Route path="wingit-game-day-watch-party" element={<WingItGameDayWatchPartyVisualPage />} />
+      <Route path="wingit-brand-direction" element={<WingItBrandVisualMockup />} />
+      <Route path="wingit-brand-palette" element={<WingItBrandIdentityPage />} />
+      <Route path="wingit-identity" element={<WingItBrandIdentityPage />} />
+      <Route path="circulation" element={<EcosystemCirculationBoard />} />
+      <Route path="live-circulation-heartbeat" element={<LiveCirculationHeartbeatPage />} />
+      <Route path="predictive-parking-intelligence" element={<PredictiveParkingIntelligencePage />} />
+      <Route path="awareness-layer" element={<AwarenessLayerPage />} />
+      <Route path="predictive-parking" element={<PredictiveParkingPage />} />
+      <Route path="before-awareness" element={<BeforeAwarenessPage />} />
+      <Route path="after-awareness" element={<AfterAwarenessPage />} />
+      <Route path="restaurant-awareness-intelligence" element={<RestaurantAwarenessIntelligencePage />} />
+      <Route path="greenbasket" element={<GreenBasketMarketBrandVisualDirection />} />
+      <Route path="greenbasket-system" element={<GreenBasketSystemPage />} />
+      <Route path="greenbasket-brand-kit" element={<GreenBasketBrandKitPage />} />
+      <Route path="greenbasket-brand-palette" element={<GreenBasketBrandPalettePage />} />
+<Route path="ecosystem" element={<EcosystemCoordinationBoard />} />
+      <Route path="ecosystem-identity" element={<HomePlanetEcosystemIdentityPage />} />
+      <Route path="ecosystem/infrastructure" element={<EcosystemInfrastructureLayer />} />
+      <Route path="participation-living" element={<ParticipationLivingPage />} />
+<Route path="participation-living-infrastructure" element={<ParticipationLivingInfrastructurePage />} />
+<Route path="atlas" element={<EcosystemAtlasPage />} />
+<Route path="community-pulse" element={<CommunityPulsePage />} />
+<Route path="community-pulse-visual" element={<CommunityPulseVisualPage />} />
+<Route path="community-pulse-rainy-evening" element={<CommunityPulseRainyEveningVisualPage />} />
+<Route path="community-pulse-outdoor-kiosk" element={<CommunityPulseOutdoorKioskVisualPage />} />
+<Route path="community-pulse-commons-coffee" element={<CommunityPulseCommonsCoffeeVisualPage />} />
+<Route path="community-pulse-parking" element={<CommunityPulseParkingVisualPage />} />
+<Route path="community-pulse-mobile" element={<CommunityPulseMobileViewVisualPage />} />
+<Route path="community-pulse-impact-stories" element={<CommunityPulseImpactStoriesVisualPage />} />
+<Route path="community-pulse-greenbasket" element={<CommunityPulseGreenBasketVisualPage />} />
+<Route path="community-pulse-awareness-board" element={<CommunityPulseAwarenessBoardVisualPage />} />
+<Route path="reasons-to-show-up" element={<ReasonsToShowUpPage />} />
+<Route path="human-circulation" element={<HumanCirculationPage />} />
+<Route path="delaneys-gym" element={<DelaneysGymPage />} />
+<Route path="garretts-laundromat" element={<GarrettsLaundromatPage />} />
+<Route path="commons-coffee" element={<CommonsCoffeePage />} />
+<Route path="delaneys-gym-visual" element={<DelaneysGymVisualPage />} />
+<Route path="garretts-laundromat-visual" element={<GarrettsLaundromatVisualPage />} />
+<Route path="commons-coffee-visual" element={<CommonsCoffeeVisualPage />} />
+<Route path="commons-coffee-morning" element={<CommonsCoffeeMorningVisualPage />} />
+<Route path="commons-coffee-rainy-day" element={<CommonsCoffeeRainyDayVisualPage />} />
+<Route path="commons-coffee-outdoor-evening" element={<CommonsCoffeeOutdoorEveningVisualPage />} />
+<Route path="commons-coffee-community-event" element={<CommonsCoffeeCommunityEventVisualPage />} />
+<Route path="ecosystem-infrastructure" element={<EcosystemInfrastructurePortal />} />
+<Route path="get-live" element={<GetBusinessLivePage />} />
+      {/* HYDRA OPERATIONS */}
+      <Route path="hydra" element={<HydraLandingPage />} />
+      <Route path="hydra-v2" element={<HydraLandingPageV2 />} />
+      <Route path="hydra/schedule" element={<HydraScheduleBoardPage />} />
+      <Route path="hydra/jobs" element={<HydraJobsBoardPage />} />
+      <Route path="hydra/assets" element={<HydraAssetSelectorPage />} />
+      <Route path="hydra/intake" element={<HydraProjectIntakePage />} />
+      <Route path="hydra/report" element={<HydraInspectionReportPage />} />
+      <Route path="hydra/dashboard" element={<HydraOwnerDashboardV3Page />} />
+      <Route path="hydra/dashboard-v2" element={<HydraOwnerDashboardV2Page />} />
+      <Route path="hydra/dashboard-v3" element={<HydraOwnerDashboardV3Page />} />
+      <Route path="hydra/crew" element={<HydraCrewBoardPage />} />
+      <Route path="hydra/job/:id" element={<HydraJobDetailPage />} />
+
+
+
+
+      <Route path="hollerboyz" element={<HollerboyzLandingPage />} />
+      <Route path="victor-pineda" element={<VictorPinedaLandingPage />} />
+      <Route path="smith-property-care" element={<SmithPropertyCareLandingPage />} />
+      <Route path="smith-property-care/command-center" element={<SmithPropertyCareCommandCenter />} />
+      <Route path="smith-property-care/job" element={<SmithPropertyCareJobDetail />} />
+
+      <Route path="ice-construction" element={<IceConstructionLandingPage />} />
+      <Route path="ice-construction-command" element={<IceConstructionCommandPage />} />
+      <Route path=":planetId" element={<PlanetOverview />} />
+      <Route path=":planetId/:cityId" element={<CityPage />} />
+
+
+
+
+
+
+
+      <Route path="home" element={<HomePlanetHomePage />} />
+      <Route path="systems" element={<HomePlanetSystemsPage />} />
+      <Route path="doctrine" element={<HomePlanetDoctrinePage />} />
+
+      <Route path="*" element={<Navigate to="/planet/start" replace />} />
+</Routes>
+  );
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,46 @@
+              <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
+                <p className="text-xs font-black uppercase tracking-[0.25em] text-zinc-500">
+                  What Happened
+                </p>
+                <p className="mt-3 text-sm leading-6 text-zinc-200">
+                  {selected.name} requested {selected.service}. Home profile: {selected.home}. Condition: {selected.condition}. Pets: {selected.pets}. Preferred time: {selected.preferred}.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
+                <p className="text-xs font-black uppercase tracking-[0.25em] text-zinc-500">
+                  System Suggestion
+                </p>
+                <p className="mt-3 text-sm leading-6 text-zinc-200">
+                  {selected.suggestion}
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
+                <p className="text-xs font-black uppercase tracking-[0.25em] text-zinc-500">
+                  Suggested Message
+                </p>
+                <p className="mt-3 text-sm leading-6 text-white">
+                  {selected.message}
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
+                <p className="text-xs font-black uppercase tracking-[0.25em] text-zinc-500">
+                  Quick Actions
+                </p>
+                <div className="mt-3 grid gap-2">
+                  <button className="rounded-xl bg-pink-400 py-3 text-sm font-black text-black">
+                    Mark Follow-Up
+                  </button>
+                  <button className="rounded-xl border border-white/10 py-3 text-sm font-black">
+                    Move To Board
+                  </button>
+                  <button
+                    onClick={() => deleteSignal(selected.id)}
+                    className="rounded-xl border border-red-400/30 bg-red-500/10 py-3 text-sm font-black text-red-200"
+                  >
+                    Delete Test Card
+                  </button>
+                </div>
+              </div>

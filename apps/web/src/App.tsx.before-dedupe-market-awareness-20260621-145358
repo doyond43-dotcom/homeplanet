@@ -1,0 +1,161 @@
+﻿import { BrowserRouter, Routes, Route, Navigate, Outlet, useSearchParams } from "react-router-dom";
+import HomePlanetMarketAwarenessFunnelV1 from './pages/HomePlanetMarketAwarenessFunnelV1';
+
+import TaylorCreekRealDemoBoard from "./pages/TaylorCreekRealDemoBoard";
+import HomePlanetMarketAwarenessFunnelV1 from './pages/HomePlanetMarketAwarenessFunnelV1';
+import TaylorCreekRealDemoStaffBoard from "./pages/TaylorCreekRealDemoStaffBoard";
+import HomePlanetMarketAwarenessFunnelV1 from './pages/HomePlanetMarketAwarenessFunnelV1';
+
+import PublicPage from "./routes/PublicPage";
+import HomePlanetMarketAwarenessFunnelV1 from './pages/HomePlanetMarketAwarenessFunnelV1';
+import TenantPublicPage from "./routes/TenantPublicPage";
+import HomePlanetMarketAwarenessFunnelV1 from './pages/HomePlanetMarketAwarenessFunnelV1';
+import LiveShopTV from "./routes/LiveShopTV";
+import HomePlanetMarketAwarenessFunnelV1 from './pages/HomePlanetMarketAwarenessFunnelV1';
+import LiveIntakeBoard from "./routes/LiveIntakeBoard";
+import HomePlanetMarketAwarenessFunnelV1 from './pages/HomePlanetMarketAwarenessFunnelV1';
+import PrintWorkOrder from "./routes/PrintWorkOrder";
+import HomePlanetMarketAwarenessFunnelV1 from './pages/HomePlanetMarketAwarenessFunnelV1';
+
+import ServiceRoutes from "./service/ServiceRoutes";
+import HomePlanetMarketAwarenessFunnelV1 from './pages/HomePlanetMarketAwarenessFunnelV1';
+import CityRoutes from "./routes/CityRoutes";
+import HomePlanetMarketAwarenessFunnelV1 from './pages/HomePlanetMarketAwarenessFunnelV1';
+import TaylorCreekSite from "./routes/TaylorCreekSite";
+import HomePlanetMarketAwarenessFunnelV1 from './pages/HomePlanetMarketAwarenessFunnelV1';
+
+import PressPage from "./routes/PressPage";
+import HomePlanetMarketAwarenessFunnelV1 from './pages/HomePlanetMarketAwarenessFunnelV1';
+import PressKitTaylorCreek from "./routes/PressKitTaylorCreek";
+import HomePlanetMarketAwarenessFunnelV1 from './pages/HomePlanetMarketAwarenessFunnelV1';
+
+import PlanetRoutes from "./planet/PlanetRoutes";
+import HomePlanetMarketAwarenessFunnelV1 from './pages/HomePlanetMarketAwarenessFunnelV1';
+import CreatorRoutes from "./routes/CreatorRoutes";
+import HomePlanetMarketAwarenessFunnelV1 from './pages/HomePlanetMarketAwarenessFunnelV1';
+import WorkspaceRoutes from "./app/WorkspaceRoutes";
+import HomePlanetMarketAwarenessFunnelV1 from './pages/HomePlanetMarketAwarenessFunnelV1';
+
+import LiveAwnitIntake from "./pages/LiveAwnitIntake";
+import HomePlanetMarketAwarenessFunnelV1 from './pages/HomePlanetMarketAwarenessFunnelV1';
+import LegalDemoBoard from "./pages/LegalDemoBoard";
+import HomePlanetMarketAwarenessFunnelV1 from './pages/HomePlanetMarketAwarenessFunnelV1';
+import DanFieldNotebookDesk from "./pages/DanFieldNotebookDesk";
+import HomePlanetMarketAwarenessFunnelV1 from './pages/HomePlanetMarketAwarenessFunnelV1';
+import LeeStudentNotebookDesk from "./pages/LeeStudentNotebookDesk";
+import HomePlanetMarketAwarenessFunnelV1 from './pages/HomePlanetMarketAwarenessFunnelV1';
+import NotFound from "./pages/NotFound";
+import HomePlanetMarketAwarenessFunnelV1 from './pages/HomePlanetMarketAwarenessFunnelV1';
+
+import BeamScreen from "./routes/BeamScreen";
+import HomePlanetMarketAwarenessFunnelV1 from './pages/HomePlanetMarketAwarenessFunnelV1';
+import BeamReceive from "./routes/BeamReceive";
+import HomePlanetMarketAwarenessFunnelV1 from './pages/HomePlanetMarketAwarenessFunnelV1';
+import BeamOpen from "./routes/BeamOpen";
+import HomePlanetMarketAwarenessFunnelV1 from './pages/HomePlanetMarketAwarenessFunnelV1';
+
+import WildingLiveBoardDispatch from "./pages/WildingLiveBoardDispatch";
+import HomePlanetMarketAwarenessFunnelV1 from './pages/HomePlanetMarketAwarenessFunnelV1';
+
+function LiveShell() {
+  return <Outlet />;
+}
+
+function MeasurementCardPlaceholder() {
+  const [searchParams] = useSearchParams();
+
+  const beam = searchParams.get("beam") || "";
+  const sessionId = searchParams.get("session_id") || "";
+  const code = searchParams.get("code") || "";
+
+  return (
+    <div className="min-h-screen bg-slate-950 p-4 text-slate-100">
+      <div className="mx-auto max-w-3xl rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
+        <div className="text-xs uppercase tracking-[0.2em] text-cyan-300/80">Beam Card</div>
+        <div className="mt-1 text-2xl font-extrabold">Door Measurement Card</div>
+
+        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+          <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-3">
+            <div className="text-xs text-slate-400">Beam</div>
+            <div className="mt-1 font-mono text-sm">{beam || "-"}</div>
+          </div>
+
+          <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-3">
+            <div className="text-xs text-slate-400">Session</div>
+            <div className="mt-1 font-mono text-sm">{sessionId || "-"}</div>
+          </div>
+
+          <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-3">
+            <div className="text-xs text-slate-400">Code</div>
+            <div className="mt-1 font-mono text-sm">{code || "-"}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+          <Route path="/planet/build-your-live-system" element={<HomePlanetMarketAwarenessFunnelV1 />} />
+        <Route path="/service/*" element={<ServiceRoutes />} />
+        <Route path="/city/*" element={<CityRoutes />} />
+
+        <Route path="/legal-demo" element={<LegalDemoBoard />} />
+
+        <Route path="/dan-field-notebook-desk" element={<DanFieldNotebookDesk />} />
+        <Route path="/lee-student-notebook-desk" element={<LeeStudentNotebookDesk />} />
+
+        <Route path="/planet/*" element={<PlanetRoutes />} />
+        <Route path="/creator/*" element={<CreatorRoutes />} />
+        <Route path="/app/*" element={<WorkspaceRoutes />} />
+
+        <Route path="/press" element={<PressPage />} />
+        <Route path="/press/taylor-creek" element={<PressKitTaylorCreek />} />
+
+        <Route path="/taylor-creek" element={<TaylorCreekSite />} />
+        <Route path="/c/:slug" element={<PublicPage />} />
+
+        <Route path="/live/awnit" element={<LiveAwnitIntake />} />
+
+        {/* SAFE TAYLOR CREEK DEMO ROUTES */}
+        <Route path="/live/taylor-creek-demo/board" element={<TaylorCreekRealDemoBoard />} />
+        <Route path="/live/taylor-creek-demo/staff" element={<TaylorCreekRealDemoStaffBoard />} />
+
+        {/* FORCE REAL TAYLOR CREEK PUBLIC LINKS TO SAFE DEMO */}
+        <Route path="/live/taylor-creek" element={<Navigate to="/live/taylor-creek-demo/board" replace />} />
+        <Route path="/live/taylor-creek/board" element={<Navigate to="/live/taylor-creek-demo/board" replace />} />
+        <Route path="/live/taylor-creek/staff" element={<Navigate to="/live/taylor-creek-demo/staff" replace />} />
+
+        <Route path="/live/:slug" element={<LiveShell />}>
+          <Route index element={<LiveShopTV />} />
+          <Route path="staff" element={<LiveIntakeBoard />} />
+          <Route path="board" element={<LiveShopTV />} />
+          <Route path="work-order/:id" element={<PrintWorkOrder />} />
+        </Route>
+
+        <Route path="/beam/staff" element={<BeamScreen />} />
+        <Route path="/beam/open/:claimId" element={<BeamOpen />} />
+        <Route path="/beam/:sessionId" element={<BeamReceive />} />
+
+        <Route path="/cards/measurement" element={<MeasurementCardPlaceholder />} />
+
+        <Route path="/wilding-dispatch" element={<WildingLiveBoardDispatch />} />
+
+        <Route path="/:slug/*" element={<TenantPublicPage />} />
+
+        <Route path="/" element={<Navigate to="/city" replace />} />
+
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+
+
+
+
+

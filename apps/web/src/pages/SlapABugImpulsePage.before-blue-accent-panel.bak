@@ -1,0 +1,149 @@
+import { useState } from "react";
+
+const issues = ["Ants", "Roaches", "Mosquitoes", "Rodents", "Termites", "Not Sure"];
+const actions = ["Request Inspection", "Schedule Service", "Get Recommendation"];
+const times = ["Monday 9:00 AM", "Monday 1:00 PM", "Tuesday 10:00 AM", "Wednesday 2:00 PM"];
+
+export default function SlapABugImpulsePage() {
+  const [selectedIssue, setSelectedIssue] = useState("");
+  const [selectedAction, setSelectedAction] = useState("");
+  const [selectedTime, setSelectedTime] = useState("");
+
+  const track = (event: string, value?: string) => {
+    console.log("[Slap-A-Bug Impulse]", event, value || "");
+  };
+
+  return (
+    <main className="min-h-screen bg-[#06111f] px-5 py-6 text-white">
+      <section className="mx-auto max-w-md">
+        <div className="relative mb-6 overflow-hidden rounded-3xl border border-[#2f80ed]/30 bg-[#0b1f3a] p-5 shadow-2xl">
+          <div
+            className="absolute inset-0 bg-cover bg-right opacity-60"
+            style={{ backgroundImage: "url('/images/slap-a-bug-truck-hero.jpg')" }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#06111f] via-[#06111f]/90 to-[#06111f]/60" />
+
+          <div className="relative z-10">
+            <p className="text-xs font-black uppercase tracking-[0.3em] text-[#f04444]">
+              Slap-A-Bug Pest Control
+            </p>
+
+            <div className="mt-4 flex items-start gap-4">
+              <div className="flex-1">
+                <h1 className="text-3xl font-black leading-tight">
+                  Tell Brad what's going on.
+                </h1>
+                <p className="mt-3 text-sm text-white/75">
+                  Pick the problem. Brad helps you take the next step.
+                </p>
+              </div>
+
+              <button
+                onClick={() => track("video_placeholder_clicked")}
+                className="h-28 w-40 shrink-0 overflow-hidden rounded-2xl border border-[#f04444]/60 bg-black text-left shadow-lg shadow-black/50"
+              >
+                <div className="flex h-full flex-col justify-end bg-gradient-to-br from-[#123b70] via-black to-[#5a0909] p-3">
+                  <span className="text-xs font-black uppercase tracking-[0.18em] text-[#f04444]">
+                    Meet Brad
+                  </span>
+                  <span className="mt-1 text-sm font-black">Welcome Video</span>
+                  <span className="text-[10px] text-white/60">In the truck</span>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {issues.map((issue) => (
+            <button
+              key={issue}
+              onClick={() => {
+                setSelectedIssue(issue);
+                setSelectedAction("");
+                setSelectedTime("");
+                track("issue_selected", issue);
+              }}
+              className={`w-full rounded-2xl border p-4 text-left text-lg font-black transition ${
+                selectedIssue === issue
+                  ? "border-[#f04444] bg-[#f04444] text-white shadow-lg shadow-[#f04444]/25"
+                  : "border-white/10 bg-white/[0.04] hover:border-[#f04444]/60 hover:bg-white/[0.08]"
+              }`}
+            >
+              {issue}
+            </button>
+          ))}
+        </div>
+
+        {selectedIssue && (
+          <section className="mt-6 rounded-3xl border border-white/10 bg-white/[0.05] p-5">
+            <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#8dbdff]">Next Step</p>
+            <h2 className="mt-1 text-2xl font-black">How would you like Brad to help?</h2><p className="mt-2 text-sm text-white/70">Choose the option that best fits your situation.</p>
+
+            <div className="mt-5 space-y-3">
+              {actions.map((action) => (
+                <button
+                  key={action}
+                  onClick={() => {
+                    setSelectedAction(action);
+                    setSelectedTime("");
+                    track("action_selected", action);
+                  }}
+                  className={`w-full rounded-2xl border p-4 text-left font-black transition ${
+                    selectedAction === action
+                      ? "border-[#f04444] bg-[#f04444] text-white"
+                      : "border-white/10 bg-[#06111f] hover:border-[#f04444]/60 hover:bg-white/[0.08]"
+                  }`}
+                >
+                  {action}
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {selectedAction && (
+          <section className="mt-6 rounded-3xl border border-[#2f80ed]/40 bg-[#0b1f3a] p-5">
+            <p className="text-sm font-bold text-[#8dbdff]">Available times</p>
+
+            <div className="mt-4 space-y-3">
+              {times.map((time) => (
+                <button
+                  key={time}
+                  onClick={() => {
+                    setSelectedTime(time);
+                    track("appointment_requested", time);
+                  }}
+                  className={`w-full rounded-2xl border p-4 text-left font-black transition ${
+                    selectedTime === time
+                      ? "border-white bg-white text-[#06111f]"
+                      : "border-white/10 bg-[#06111f] hover:border-[#2f80ed]/70 hover:bg-white/[0.08]"
+                  }`}
+                >
+                  {time}
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {selectedTime && (
+          <section className="mt-6 rounded-3xl border border-[#f04444] bg-[#f04444] p-5 text-white shadow-lg shadow-[#f04444]/25">
+            <p className="text-sm font-black uppercase tracking-[0.2em]">
+              Appointment Requested
+            </p>
+            <h2 className="mt-2 text-2xl font-black">{selectedTime}</h2>
+            <p className="mt-3 text-sm text-white/85">
+              Brad gets notified. Customer is already moving forward.
+            </p>
+          </section>
+        )}
+      </section>
+    </main>
+  );
+}
+
+
+
+
+

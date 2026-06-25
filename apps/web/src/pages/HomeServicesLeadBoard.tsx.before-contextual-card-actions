@@ -1,0 +1,557 @@
+﻿import { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+
+type BoardJob = {
+  name: string;
+  service: string;
+  address: string;
+  status: string;
+  value: string;
+  signal: string;
+  nextMove: string;
+  cta: string;
+  route?: string;
+};
+
+export default function HomeServicesLeadBoard() {
+  const navigate = useNavigate();
+
+  const savedLead = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem("homeServicesLead") || "{}") as {
+        customerName?: string;
+        service?: string;
+        propertyAddress?: string;
+        jobDescription?: string;
+      };
+    } catch {
+      return {};
+    }
+  }, []);
+
+  const activeJobs: BoardJob[] = [
+    {
+      name: savedLead.customerName || "Maria Jenkins",
+      service: savedLead.service || "House Wash + Driveway",
+      address: savedLead.propertyAddress || "123 Main Street • Okeechobee, FL",
+      status: "New Request",
+      value: "$350 est.",
+      signal: savedLead.jobDescription || "Repeat customer • 3 jobs this year • $950 value",
+      nextMove: "Build estimate, then send payment link after the job is complete.",
+      cta: "Open Customer",
+      route: "/planet/home-services/lead",
+    },
+    {
+      name: "Robert Hale",
+      service: "Roof Softwash",
+      address: "Okeechobee, FL",
+      status: "Estimate Open",
+      value: "$725 est.",
+      signal: "Clicked roof softwash twice • estimate not approved yet",
+      nextMove: "Follow up before Friday before the lead goes cold.",
+      cta: "Follow Up",
+    },
+    {
+      name: "Amanda Cruz",
+      service: "Driveway Cleaning",
+      address: "Taylor Creek area",
+      status: "Hot Click",
+      value: "$250 est.",
+      signal: "Clicked driveway cleaning • did not submit the form",
+      nextMove: "Show driveway before/after proof higher on the live page.",
+      cta: "Review Clicks",
+    },
+    {
+      name: "James Walker",
+      service: "Pool Cage + House Wash",
+      address: "North Okeechobee",
+      status: "Needs Estimate",
+      value: "$480 est.",
+      signal: "Uploaded photos • asked for weekend availability",
+      nextMove: "Price the job and offer Saturday morning.",
+      cta: "Build Estimate",
+    },
+    {
+      name: "Lisa Grant",
+      service: "Gutters",
+      address: "Okeechobee, FL",
+      status: "Repeat Customer",
+      value: "$180 est.",
+      signal: "Previous driveway cleaning customer • second request this year",
+      nextMove: "Offer bundle pricing with house wash.",
+      cta: "Bundle Offer",
+    },
+  ];
+
+  const clicks = [
+    ["Driveway Cleaning", "42 clicks", "84%"],
+    ["House Wash", "31 clicks", "62%"],
+    ["Roof Softwash", "18 clicks", "36%"],
+    ["Pool Cage", "11 clicks", "22%"],
+    ["Gutters", "8 clicks", "16%"],
+  ];
+
+  return (
+    <main style={page}>
+      <div style={container}>
+        <section style={hero}>
+          <div>
+            <p style={kicker}>RIDGELINE LIVE BUSINESS BOARD</p>
+            <h1 style={title}>Today&apos;s Work Is Already Talking.</h1>
+            <p style={subtitle}>
+              Requests, customer history, click signals, open estimates, payments,
+              and next moves stay in one live operating board.
+            </p>
+          </div>
+
+          <button style={primaryButton} onClick={() => navigate("/planet/demo/home-services-live")}>
+            Back To Live Page
+          </button>
+        </section>
+
+        <section style={snapshotGrid}>
+          {[
+            ["New Requests", "4", "2 came from driveway clicks"],
+            ["Open Estimates", "7", "Follow up before Friday"],
+            ["Jobs Scheduled", "5", "Maria is ready for crew"],
+            ["Payments Due", "$1,240", "2 payment links pending"],
+          ].map(([label, value, note]) => (
+            <div key={label} style={statCard}>
+              <p style={statLabel}>{label}</p>
+              <p style={statValue}>{value}</p>
+              <p style={muted}>{note}</p>
+            </div>
+          ))}
+        </section>
+
+        <section style={boardGrid}>
+          <div style={mainPanel}>
+            <div style={sectionHeader}>
+              <div>
+                <p style={panelKicker}>Active Jobs + Customer Signals</p>
+                <h2 style={sectionTitle}>Live Work Board</h2>
+              </div>
+              <span style={pill}>5 active</span>
+            </div>
+
+            <div style={jobsGrid}>
+              {activeJobs.map((job) => (
+                <article key={job.name} style={jobCard}>
+                  <div style={jobTop}>
+                    <div>
+                      <h3 style={jobName}>{job.name}</h3>
+                      <p style={jobService}>{job.service}</p>
+                      <p style={muted}>{job.address}</p>
+                    </div>
+                    <span style={statusPill}>{job.status}</span>
+                  </div>
+
+                  <div style={jobMetaGrid}>
+                    <div style={miniBox}>
+                      <p style={statLabel}>Value</p>
+                      <p style={miniValue}>{job.value}</p>
+                    </div>
+                    <div style={miniBox}>
+                      <p style={statLabel}>Signal</p>
+                      <p style={miniText}>{job.signal}</p>
+                    </div>
+                  </div>
+
+                  <div style={nextMoveBox}>
+                    <p style={panelKicker}>Next Move</p>
+                    <p style={nextMoveText}>{job.nextMove}</p>
+                  </div>
+
+                  <button
+                    style={jobButton}
+                    onClick={() => {
+                      if (job.route) navigate(job.route);
+                    }}
+                  >
+                    {job.cta}
+                  </button>
+                </article>
+              ))}
+            </div>
+          </div>
+
+          <aside style={sidePanel}>
+            <section style={glassCard}>
+              <p style={panelKicker}>What Customers Clicked</p>
+
+              <div style={clickList}>
+                {clicks.map(([label, count, width]) => (
+                  <div key={label}>
+                    <div style={clickRow}>
+                      <strong>{label}</strong>
+                      <span style={orangeText}>{count}</span>
+                    </div>
+                    <div style={barTrack}>
+                      <div style={{ ...barFill, width }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section style={suggestionsCard}>
+              <p style={panelKicker}>Live Suggestions</p>
+
+              <div style={suggestionList}>
+                {[
+                  ["Driveway Cleaning is hot this week.", "Feature driveway proof higher on the live page."],
+                  ["7 estimates are still open.", "Follow up before the weekend before the leads go cold."],
+                  ["Repeat customers are visible.", "Maria Jenkins should see a bundle offer next time."],
+                  ["Roof softwash clicks need trust.", "Add before/after photos and safety language."],
+                ].map(([headline, text]) => (
+                  <div key={headline} style={suggestionItem}>
+                    <p style={suggestionTitle}>{headline}</p>
+                    <p style={muted}>{text}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </aside>
+        </section>
+      </div>
+    </main>
+  );
+}
+
+const page: React.CSSProperties = {
+  minHeight: "100vh",
+  color: "#fff",
+  backgroundColor: "#050505",
+  backgroundImage:
+    "radial-gradient(circle at 18% 0%, rgba(249,115,22,.30), transparent 34%), linear-gradient(180deg, rgba(0,0,0,.48), #050505 64%), url('/images/a_dramatic_cinematic_ultra_realistic_sunset_scen_1.png')",
+  backgroundSize: "cover",
+  backgroundPosition: "center top",
+  backgroundAttachment: "fixed",
+  padding: "22px 16px",
+  fontFamily:
+    'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+};
+
+const container: React.CSSProperties = {
+  width: "min(1180px, 100%)",
+  margin: "0 auto",
+  display: "grid",
+  gap: 18,
+};
+
+const hero: React.CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "flex-end",
+  gap: 18,
+  flexWrap: "wrap",
+  border: "1px solid rgba(255,255,255,.14)",
+  background: "linear-gradient(145deg, rgba(18,18,20,.86), rgba(5,5,5,.78))",
+  borderRadius: 32,
+  padding: 22,
+  boxShadow: "0 28px 80px rgba(0,0,0,.50)",
+  backdropFilter: "blur(18px)",
+};
+
+const kicker: React.CSSProperties = {
+  margin: 0,
+  color: "#f97316",
+  fontSize: 12,
+  fontWeight: 950,
+  letterSpacing: ".28em",
+  textTransform: "uppercase",
+};
+
+const title: React.CSSProperties = {
+  margin: "10px 0 0",
+  fontSize: "clamp(42px, 7vw, 76px)",
+  lineHeight: ".9",
+  fontWeight: 950,
+  letterSpacing: "-.06em",
+  textTransform: "uppercase",
+};
+
+const subtitle: React.CSSProperties = {
+  margin: "12px 0 0",
+  maxWidth: 720,
+  color: "rgba(255,255,255,.68)",
+  fontSize: 17,
+  lineHeight: 1.5,
+  fontWeight: 750,
+};
+
+const snapshotGrid: React.CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
+  gap: 12,
+};
+
+const statCard: React.CSSProperties = {
+  border: "1px solid rgba(255,255,255,.12)",
+  background: "linear-gradient(145deg, rgba(18,18,20,.88), rgba(5,5,5,.84))",
+  borderRadius: 26,
+  padding: 16,
+  boxShadow: "0 18px 55px rgba(0,0,0,.40)",
+  backdropFilter: "blur(16px)",
+};
+
+const statLabel: React.CSSProperties = {
+  margin: 0,
+  color: "rgba(255,255,255,.46)",
+  fontSize: 11,
+  fontWeight: 950,
+  letterSpacing: ".16em",
+  textTransform: "uppercase",
+};
+
+const statValue: React.CSSProperties = {
+  margin: "7px 0",
+  fontSize: 34,
+  fontWeight: 950,
+};
+
+const boardGrid: React.CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "minmax(0, 1.35fr) minmax(320px, .65fr)",
+  gap: 18,
+};
+
+const mainPanel: React.CSSProperties = {
+  border: "1px solid rgba(249,115,22,.26)",
+  background: "linear-gradient(145deg, rgba(12,12,14,.94), rgba(0,0,0,.90))",
+  borderRadius: 32,
+  padding: 18,
+  boxShadow: "0 34px 90px rgba(0,0,0,.58), 0 0 45px rgba(249,115,22,.08)",
+  backdropFilter: "blur(20px)",
+};
+
+const sidePanel: React.CSSProperties = {
+  display: "grid",
+  gap: 18,
+};
+
+const sectionHeader: React.CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  gap: 12,
+  marginBottom: 16,
+};
+
+const panelKicker: React.CSSProperties = {
+  margin: 0,
+  color: "#fb923c",
+  fontSize: 11,
+  fontWeight: 950,
+  letterSpacing: ".20em",
+  textTransform: "uppercase",
+};
+
+const sectionTitle: React.CSSProperties = {
+  margin: "6px 0 0",
+  fontSize: 30,
+  fontWeight: 950,
+  letterSpacing: "-.04em",
+};
+
+const pill: React.CSSProperties = {
+  border: "1px solid rgba(249,115,22,.40)",
+  background: "rgba(249,115,22,.12)",
+  borderRadius: 999,
+  padding: "8px 12px",
+  color: "#fed7aa",
+  fontSize: 12,
+  fontWeight: 950,
+  textTransform: "uppercase",
+};
+
+const jobsGrid: React.CSSProperties = {
+  display: "grid",
+  gap: 14,
+};
+
+const jobCard: React.CSSProperties = {
+  border: "1px solid rgba(255,255,255,.12)",
+  background: "linear-gradient(145deg, rgba(20,20,22,.92), rgba(0,0,0,.72))",
+  borderRadius: 28,
+  padding: 16,
+  boxShadow: "0 18px 55px rgba(0,0,0,.42)",
+};
+
+const jobTop: React.CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "flex-start",
+  gap: 12,
+};
+
+const jobName: React.CSSProperties = {
+  margin: 0,
+  fontSize: 25,
+  fontWeight: 950,
+  letterSpacing: "-.04em",
+};
+
+const jobService: React.CSSProperties = {
+  margin: "4px 0",
+  color: "#fb923c",
+  fontSize: 15,
+  fontWeight: 950,
+};
+
+const muted: React.CSSProperties = {
+  margin: 0,
+  color: "rgba(255,255,255,.56)",
+  fontSize: 13,
+  lineHeight: 1.4,
+  fontWeight: 750,
+};
+
+const statusPill: React.CSSProperties = {
+  borderRadius: 999,
+  background: "#f97316",
+  color: "#050505",
+  padding: "7px 10px",
+  fontSize: 11,
+  fontWeight: 950,
+  textTransform: "uppercase",
+  whiteSpace: "nowrap",
+};
+
+const jobMetaGrid: React.CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "120px 1fr",
+  gap: 10,
+  marginTop: 14,
+};
+
+const miniBox: React.CSSProperties = {
+  border: "1px solid rgba(255,255,255,.10)",
+  background: "rgba(0,0,0,.55)",
+  borderRadius: 20,
+  padding: 12,
+};
+
+const miniValue: React.CSSProperties = {
+  margin: "5px 0 0",
+  fontSize: 22,
+  fontWeight: 950,
+};
+
+const miniText: React.CSSProperties = {
+  margin: "5px 0 0",
+  color: "rgba(255,255,255,.68)",
+  fontSize: 13,
+  lineHeight: 1.35,
+  fontWeight: 800,
+};
+
+const nextMoveBox: React.CSSProperties = {
+  marginTop: 12,
+  border: "1px solid rgba(249,115,22,.28)",
+  background: "rgba(249,115,22,.09)",
+  borderRadius: 20,
+  padding: 12,
+};
+
+const nextMoveText: React.CSSProperties = {
+  margin: "6px 0 0",
+  fontSize: 14,
+  fontWeight: 900,
+  lineHeight: 1.35,
+};
+
+const jobButton: React.CSSProperties = {
+  width: "100%",
+  marginTop: 12,
+  minHeight: 48,
+  borderRadius: 18,
+  border: "1px solid rgba(249,115,22,.50)",
+  background: "linear-gradient(135deg, #ff8a1f, #f97316)",
+  color: "#050505",
+  fontSize: 12,
+  fontWeight: 950,
+  letterSpacing: ".10em",
+  textTransform: "uppercase",
+  cursor: "pointer",
+};
+
+const primaryButton: React.CSSProperties = {
+  minHeight: 48,
+  borderRadius: 18,
+  border: "1px solid rgba(249,115,22,.50)",
+  background: "rgba(0,0,0,.60)",
+  color: "#fff",
+  padding: "0 18px",
+  fontSize: 12,
+  fontWeight: 950,
+  letterSpacing: ".10em",
+  textTransform: "uppercase",
+  cursor: "pointer",
+};
+
+const glassCard: React.CSSProperties = {
+  border: "1px solid rgba(255,255,255,.12)",
+  background: "linear-gradient(145deg, rgba(18,18,20,.90), rgba(5,5,5,.86))",
+  borderRadius: 30,
+  padding: 18,
+  boxShadow: "0 28px 80px rgba(0,0,0,.50)",
+  backdropFilter: "blur(18px)",
+};
+
+const suggestionsCard: React.CSSProperties = {
+  ...glassCard,
+  border: "1px solid rgba(249,115,22,.35)",
+  background: "linear-gradient(145deg, rgba(249,115,22,.16), rgba(5,5,5,.90))",
+};
+
+const clickList: React.CSSProperties = {
+  display: "grid",
+  gap: 15,
+  marginTop: 18,
+};
+
+const clickRow: React.CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  gap: 10,
+  fontSize: 13,
+};
+
+const orangeText: React.CSSProperties = {
+  color: "#fb923c",
+  fontWeight: 950,
+};
+
+const barTrack: React.CSSProperties = {
+  marginTop: 8,
+  height: 10,
+  borderRadius: 999,
+  background: "rgba(255,255,255,.10)",
+  overflow: "hidden",
+};
+
+const barFill: React.CSSProperties = {
+  height: "100%",
+  borderRadius: 999,
+  background: "#f97316",
+  boxShadow: "0 0 22px rgba(249,115,22,.35)",
+};
+
+const suggestionList: React.CSSProperties = {
+  display: "grid",
+  gap: 12,
+  marginTop: 16,
+};
+
+const suggestionItem: React.CSSProperties = {
+  borderRadius: 20,
+  background: "rgba(0,0,0,.66)",
+  padding: 14,
+};
+
+const suggestionTitle: React.CSSProperties = {
+  margin: "0 0 6px",
+  fontSize: 16,
+  fontWeight: 950,
+};

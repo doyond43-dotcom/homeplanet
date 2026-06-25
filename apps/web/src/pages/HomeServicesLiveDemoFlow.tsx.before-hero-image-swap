@@ -1,0 +1,182 @@
+﻿import { Link } from "react-router-dom";
+
+const problems = [
+  "HOUSE WASH",
+  "DRIVEWAY",
+  "ROOF SOFTWASH",
+  "POOL CAGE",
+  "GUTTERS",
+  "OTHER",
+];
+
+const flowCards = [
+  {
+    title: "1. Customer clicks",
+    text: "They land on a real branded page and tap what they need.",
+    to: "/planet/home-services/request",
+    label: "Open Customer Request",
+  },
+  {
+    title: "2. Request hits the board",
+    text: "The business sees the new lead instead of digging through texts.",
+    to: "/planet/home-services/leads",
+    label: "Open Workboard",
+  },
+  {
+    title: "3. Crew works the job",
+    text: "Estimate, photos, payment, notes, and job status stay connected.",
+    to: "/planet/job-workspace-v3",
+    label: "Open Staff Board",
+  },
+];
+
+export default function HomeServicesLiveDemoFlow() {
+  return (
+    <main className="min-h-screen bg-black text-white">
+      {/* LIVE LANDING PAGE */}
+      <section
+        className="relative min-h-[620px] overflow-hidden bg-cover bg-center"
+        style={{
+          backgroundImage:
+            "linear-gradient(90deg, rgba(0,0,0,.78), rgba(0,0,0,.25), rgba(0,0,0,.72)), url('/images/hollerboyz-cover-photo-v2.png')",
+        }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/20 to-black" />
+
+        <div className="relative mx-auto flex min-h-[620px] max-w-6xl flex-col items-center justify-center px-4 py-12 text-center">
+          <h1 className="text-5xl font-black tracking-[0.02em] text-white sm:text-7xl lg:text-8xl">
+            RIDGELINE
+          </h1>
+
+          <p className="mt-2 text-xl font-black uppercase tracking-wide text-orange-500 sm:text-2xl">
+            Pro Wash
+          </p>
+
+          <div className="mt-4 h-[3px] w-80 max-w-full bg-white/80" />
+
+          <h2 className="mt-8 text-3xl font-black uppercase leading-tight tracking-tight sm:text-5xl">
+            Keeping Okeechobee Clean
+          </h2>
+
+          <p className="mt-5 max-w-2xl text-sm font-semibold text-white/70 sm:text-base">
+            House washing • Driveways • Roof softwash • Pool cages • Gutters • Property cleanup
+          </p>
+
+          <div className="mt-8 flex flex-wrap justify-center gap-4">
+            <Link
+              to="/planet/home-services/request"
+              className="rounded-xl bg-orange-500 px-8 py-4 text-sm font-black uppercase text-black shadow-[0_0_30px_rgba(249,115,22,.45)] hover:bg-orange-400"
+            >
+              Get Estimate
+            </Link>
+
+            <a
+              href="#after-click"
+              className="rounded-xl border border-white/45 bg-black/45 px-8 py-4 text-sm font-black uppercase text-white hover:bg-white/10"
+            >
+              After The Click
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* PROBLEM BUTTONS */}
+      <section className="bg-black px-4 py-16">
+        <div className="mx-auto max-w-5xl text-center">
+          <h2 className="text-4xl font-black uppercase tracking-tight sm:text-5xl">
+            What&apos;s Going On?
+          </h2>
+
+          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {problems.map((problem) => (
+              <Link
+                key={problem}
+                to="/planet/home-services/request"
+                className="rounded-2xl border border-white/10 bg-[#1b1b1d] px-6 py-7 text-base font-black uppercase text-white shadow-[0_18px_40px_rgba(0,0,0,.35)] transition hover:border-orange-500/70 hover:bg-orange-500 hover:text-black"
+              >
+                {problem}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* BRAND STATEMENT */}
+      <section className="border-y border-white/10 bg-[#0b0b0d] px-4 py-20 text-center">
+        <div className="mx-auto max-w-3xl">
+          <h2 className="text-4xl font-black uppercase tracking-tight sm:text-5xl">
+            A Live Page Is Just The Start
+          </h2>
+          <p className="mt-6 text-lg font-semibold leading-relaxed text-white/70">
+            This is what HomePlanet builds: the public page, the request flow, the business board,
+            and the crew workspace all connected in one clean system.
+          </p>
+        </div>
+      </section>
+
+      {/* AFTER THE CLICK */}
+      <section id="after-click" className="bg-black px-4 py-16">
+        <div className="mx-auto max-w-6xl">
+          <div className="text-center">
+            <p className="text-sm font-black uppercase tracking-[0.32em] text-orange-500">
+              HomePlanet System Demo
+            </p>
+            <h2 className="mt-3 text-4xl font-black uppercase tracking-tight sm:text-5xl">
+              What Happens After The Click?
+            </h2>
+            <p className="mx-auto mt-5 max-w-3xl text-lg font-semibold text-white/65">
+              Most websites stop at the form. This demo shows the work system underneath:
+              request, lead, estimate, job, crew, photos, payment, and proof.
+            </p>
+          </div>
+
+          <div className="mt-12 grid gap-5 lg:grid-cols-3">
+            {flowCards.map((card) => (
+              <div
+                key={card.title}
+                className="rounded-3xl border border-white/10 bg-[#141416] p-6 shadow-[0_20px_60px_rgba(0,0,0,.45)]"
+              >
+                <h3 className="text-2xl font-black uppercase">{card.title}</h3>
+                <p className="mt-4 min-h-[72px] text-base font-semibold leading-relaxed text-white/65">
+                  {card.text}
+                </p>
+                <Link
+                  to={card.to}
+                  className="mt-6 block rounded-2xl bg-orange-500 px-5 py-4 text-center text-sm font-black uppercase text-black hover:bg-orange-400"
+                >
+                  {card.label}
+                </Link>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-12 rounded-[2rem] border border-orange-500/30 bg-orange-500/10 p-6 text-center">
+            <h3 className="text-2xl font-black uppercase text-white">
+              The demo path
+            </h3>
+            <p className="mt-3 text-base font-bold text-white/70">
+              Live Landing Page → Customer Request → New Requests Board → Estimate Builder → Staff Job Workspace
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="border-t border-white/10 bg-black px-4 py-12 text-center">
+        <img
+          src="/images/hollerboyz-hb-profile-v1.png"
+          alt="Ridgeline Pro Wash demo logo"
+          className="mx-auto h-20 w-20 rounded-full object-contain"
+        />
+        <h2 className="mt-5 text-xl font-black uppercase">
+          Ridgeline Pro Wash
+        </h2>
+        <p className="mt-2 text-sm font-semibold text-white/45">
+          Powered by HomePlanet Live Systems
+        </p>
+      </footer>
+    </main>
+  );
+}
+
+

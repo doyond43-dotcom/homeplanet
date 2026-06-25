@@ -1,0 +1,160 @@
+﻿import { Link } from "react-router-dom";
+import type { CSSProperties } from "react";
+
+const needs = [
+  "Live Page",
+  "Customer intake",
+  "Booking / request flow",
+  "Photo uploads",
+  "Customer updates",
+  "Live work board",
+  "Payment link",
+  "Google Business Profile",
+  "Use my domain",
+  "Not sure yet",
+];
+
+export default function HomePlanetMessagePage() {
+  const page: CSSProperties = {
+    minHeight: "100vh",
+    background:
+      "radial-gradient(circle at 15% 0%, rgba(52,211,153,0.15), transparent 30%), radial-gradient(circle at 85% 20%, rgba(20,184,166,0.10), transparent 28%), linear-gradient(180deg, #050505 0%, #08110d 54%, #050505 100%)",
+    color: "#f8fafc",
+    padding: "24px 18px 72px",
+  };
+
+  const wrap: CSSProperties = {
+    width: "min(920px, 100%)",
+    margin: "0 auto",
+  };
+
+  const back: CSSProperties = {
+    color: "#a7f3d0",
+    textDecoration: "none",
+    fontWeight: 950,
+    display: "inline-block",
+    marginBottom: 44,
+  };
+
+  const eyebrow: CSSProperties = {
+    color: "#34d399",
+    fontSize: 13,
+    fontWeight: 950,
+    letterSpacing: "0.18em",
+    textTransform: "uppercase",
+    marginBottom: 14,
+  };
+
+  const h1: CSSProperties = {
+    margin: 0,
+    fontSize: "clamp(44px, 8vw, 82px)",
+    lineHeight: 0.92,
+    letterSpacing: "-0.075em",
+    maxWidth: 820,
+  };
+
+  const sub: CSSProperties = {
+    marginTop: 20,
+    color: "#cbd5e1",
+    lineHeight: 1.6,
+    fontSize: 18,
+    maxWidth: 740,
+  };
+
+  const card: CSSProperties = {
+    marginTop: 34,
+    borderRadius: 32,
+    border: "1px solid rgba(255,255,255,0.09)",
+    background: "linear-gradient(135deg, rgba(18,18,18,0.96), rgba(5,5,5,0.94))",
+    boxShadow: "0 30px 90px rgba(0,0,0,0.42)",
+    padding: "clamp(20px, 4vw, 34px)",
+  };
+
+  const input: CSSProperties = {
+    width: "100%",
+    boxSizing: "border-box",
+    borderRadius: 18,
+    border: "1px solid rgba(255,255,255,0.10)",
+    background: "rgba(0,0,0,0.48)",
+    color: "#f8fafc",
+    padding: "17px 18px",
+    fontSize: 16,
+    outline: "none",
+    marginBottom: 12,
+  };
+
+  const grid: CSSProperties = {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
+    gap: 10,
+    margin: "14px 0 22px",
+  };
+
+  const chip: CSSProperties = {
+    borderRadius: 18,
+    border: "1px solid rgba(52,211,153,0.18)",
+    background: "rgba(255,255,255,0.04)",
+    color: "#f8fafc",
+    padding: "14px 12px",
+    fontWeight: 950,
+    textAlign: "center",
+    fontSize: 14,
+  };
+
+  const button: CSSProperties = {
+    width: "100%",
+    border: 0,
+    borderRadius: 999,
+    background: "#34d399",
+    color: "#04110c",
+    padding: "16px 18px",
+    fontWeight: 1000,
+    fontSize: 16,
+    boxShadow: "0 0 35px rgba(52,211,153,0.28)",
+    cursor: "pointer",
+  };
+
+  return (
+    <main style={page}>
+      <div style={wrap}>
+        <Link to="/planet/live-pages/included" style={back}>
+          Back to what is included
+        </Link>
+
+        <div style={eyebrow}>HOMEPLANET</div>
+        <h1 style={h1}>You got this far. That usually means you are trying to build something better.</h1>
+        <p style={sub}>
+          Send us a quick message. Tell us what you are working on, what you need help with, or where your
+          current customer flow is getting messy. We will look at it and point you in the right direction.
+        </p>
+
+        <section style={card}>
+          <input style={input} placeholder="Your name" />
+          <input style={input} placeholder="Business name or project name" />
+          <input style={input} placeholder="Best contact: phone, email, or Facebook name" />
+
+          <div style={{ ...eyebrow, color: "#94a3b8", marginTop: 14 }}>WHAT DO YOU NEED HELP WITH?</div>
+          <div style={grid}>
+            {needs.map((need) => (
+              <div key={need} style={chip}>
+                {need}
+              </div>
+            ))}
+          </div>
+
+          <textarea
+            style={{ ...input, minHeight: 150, resize: "vertical", lineHeight: 1.5 }}
+            placeholder="Example: I have a service business and most people message me on Facebook. I need a cleaner way to collect requests, photos, updates, and payments."
+          />
+
+          <button
+            style={button}
+            onClick={() => alert("Message captured on this page. Next step: connect this to your real HomePlanet inbox before launch.")}
+          >
+            Send Message
+          </button>
+        </section>
+      </div>
+    </main>
+  );
+}

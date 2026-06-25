@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 
 const issues = ["Standard Cleaning", "Deep Cleaning", "Move-In / Move-Out", "Weekly / Biweekly", "Vacation Reset", "Not Sure"];
 const actions = ["Request Cleaning Quote", "Ask About Availability", "Get Recommendation"];
@@ -11,25 +11,11 @@ export default function OnlyTheEssentialsImpulseConversation() {
   const [phone, setPhone] = useState("");
   const [notes, setNotes] = useState("");
 
-  const kaitlinPhone = "+18638013179";
-
-  const message = `Hi Kaitlin, I watched your welcome video and I need help with cleaning.
-
-Cleaning Type: ${selectedIssue}
-Next Step: ${selectedAction}
-Preferred Time: ${selectedTime}
-My Phone: ${phone || "Not provided"}
-
-Notes:
-${notes || "No extra notes yet."}`;
-
-  const smsHref = `sms:${kaitlinPhone}?body=${encodeURIComponent(message)}`;
-
   return (
     <main className="min-h-screen bg-[#08050a] px-5 py-6 text-zinc-50">
       <section className="mx-auto max-w-md">
 
-        <div className="mb-6 rounded-3xl border border-[#ec6bb7]/30 bg-[#1a0712] p-5">
+        <div className="mb-6 rounded-3xl border border-[#ec6bb7]/30 bg-[#0b1f3a] p-5">
           <p className="text-xs font-black uppercase tracking-[0.3em] text-[#ec6bb7]">
             Only The Essentials Cleaning
           </p>
@@ -43,24 +29,22 @@ ${notes || "No extra notes yet."}`;
           </p>
         </div>
 
-        <div className="mb-6 rounded-[2rem] border border-[#ec6bb7]/35 bg-[#1a0712] p-3 shadow-2xl shadow-pink-950/25">
-          <div className="overflow-hidden rounded-[1.5rem] border border-pink-200/10 bg-black">
-            <video
-              controls
-              playsInline
-              preload="metadata"
-              className="mx-auto max-h-[640px] w-full bg-black object-contain"
-            >
-              <source
-                src="/videos/kaitlin-welcome.mp4"
-                type="video/mp4"
-              />
-              Your browser does not support the video tag.
-            </video>
-          </div>
+        <div className="mb-5 overflow-hidden rounded-3xl border border-[#ec6bb7]/40 bg-[#0b1f3a] shadow-lg">
+          <video
+            controls
+            playsInline
+            preload="metadata"
+            className="w-full bg-black"
+          >
+            <source
+              src="/videos/kaitlin-welcome.mp4"
+              type="video/mp4"
+            />
+            Your browser does not support the video tag.
+          </video>
 
-          <div className="px-3 pb-3 pt-4">
-            <div className="text-xs font-black uppercase tracking-[0.28em] text-[#ec6bb7]">
+          <div className="p-4">
+            <div className="text-xs font-black uppercase tracking-[0.2em] text-[#ec6bb7]">
               Meet Kaitlin
             </div>
 
@@ -68,7 +52,7 @@ ${notes || "No extra notes yet."}`;
               Welcome Video
             </div>
 
-            <div className="mt-1 text-sm leading-6 text-zinc-50/70">
+            <div className="mt-1 text-sm text-zinc-50/70">
               Watch this first, then tap the cleaning option that best matches what you need.
             </div>
           </div>
@@ -76,19 +60,19 @@ ${notes || "No extra notes yet."}`;
 
         {selectedIssue && (
           <div className="mb-3 rounded-2xl border border-[#ec6bb7]/40 bg-[#ec6bb7]/10 p-3">
-            Selected: {selectedIssue}
+            ? {selectedIssue}
           </div>
         )}
 
         {selectedAction && (
           <div className="mb-3 rounded-2xl border border-[#ec6bb7]/40 bg-[#ec6bb7]/10 p-3">
-            Selected: {selectedAction}
+            ? {selectedAction}
           </div>
         )}
 
         {selectedTime && (
-          <div className="mb-3 rounded-2xl border border-pink-300/40 bg-pink-400/10 p-3">
-            Selected: {selectedTime}
+          <div className="mb-3 rounded-2xl border border-green-500/40 bg-green-500/10 p-3">
+            ? {selectedTime}
           </div>
         )}
 
@@ -98,7 +82,7 @@ ${notes || "No extra notes yet."}`;
               <button
                 key={issue}
                 onClick={() => setSelectedIssue(issue)}
-                className="w-full rounded-2xl border border-pink-200/10 bg-white/[0.05] p-4 text-left text-lg font-black transition-colors duration-200 hover:border-[#ec6bb7]"
+                className="w-full rounded-2xl border border-pink-200/10 bg-white/[0.05] p-4 text-left text-lg font-black"
               >
                 {issue}
               </button>
@@ -110,9 +94,9 @@ ${notes || "No extra notes yet."}`;
           <>
             <button
               onClick={() => setSelectedIssue("")}
-              className="mb-4 text-sm text-pink-300"
+              className="mb-4 text-sm text-[#8dbdff]"
             >
-              Change Problem
+              ? Change Problem
             </button>
 
             <div className="space-y-3">
@@ -120,7 +104,7 @@ ${notes || "No extra notes yet."}`;
                 <button
                   key={action}
                   onClick={() => setSelectedAction(action)}
-                  className="w-full rounded-2xl border border-pink-200/10 bg-white/[0.05] p-4 text-left font-black transition-colors duration-200 hover:border-[#ec6bb7]"
+                  className="w-full rounded-2xl border border-pink-200/10 bg-white/[0.05] p-4 text-left font-black"
                 >
                   {action}
                 </button>
@@ -133,9 +117,9 @@ ${notes || "No extra notes yet."}`;
           <>
             <button
               onClick={() => setSelectedAction("")}
-              className="mb-4 text-sm text-pink-300"
+              className="mb-4 text-sm text-[#8dbdff]"
             >
-              Change Action
+              ? Change Action
             </button>
 
             <div className="space-y-3">
@@ -143,7 +127,7 @@ ${notes || "No extra notes yet."}`;
                 <button
                   key={time}
                   onClick={() => setSelectedTime(time)}
-                  className="w-full rounded-2xl border border-pink-200/10 bg-white/[0.05] p-4 text-left font-black transition-colors duration-200 hover:border-[#ec6bb7]"
+                  className="w-full rounded-2xl border border-pink-200/10 bg-white/[0.05] p-4 text-left font-black"
                 >
                   {time}
                 </button>
@@ -156,9 +140,9 @@ ${notes || "No extra notes yet."}`;
           <>
             <button
               onClick={() => setSelectedTime("")}
-              className="mb-4 text-sm text-pink-300"
+              className="mb-4 text-sm text-[#8dbdff]"
             >
-              Change Time
+              ? Change Time
             </button>
 
             <div className="rounded-3xl border border-pink-200/10 bg-white/[0.05] p-5">
@@ -182,12 +166,11 @@ ${notes || "No extra notes yet."}`;
                 className="mt-4 w-full rounded-2xl border border-pink-200/10 bg-[#08050a] p-4"
               />
 
-              <a
-                href={smsHref}
-                className="mt-4 block w-full rounded-2xl bg-[#ec6bb7] p-4 text-center font-black text-black"
+              <button
+                className="mt-4 w-full rounded-2xl bg-[#ec6bb7] p-4 font-black"
               >
                 Send To Kaitlin
-              </a>
+              </button>
             </div>
           </>
         )}
@@ -196,10 +179,6 @@ ${notes || "No extra notes yet."}`;
     </main>
   );
 }
-
-
-
-
 
 
 

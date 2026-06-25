@@ -1,0 +1,291 @@
+﻿import React, { useEffect, useState } from "react";
+
+import { hpEvent } from "../lib/hpEvent";
+export default function HomeServicesRequestPage() {
+  useEffect(() => {
+    hpEvent({
+      event: "home_services_request_view",
+      board: "homeplanet-live-pages",
+      entityId: "home-services-request",
+      meta: { path: window.location.pathname },
+    });
+  }, []);
+  const [selectedService, setSelectedService] = useState(() => new URLSearchParams(window.location.search).get("service") || "");
+  const [photoCount, setPhotoCount] = useState(0);
+
+  const [customerName, setCustomerName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [propertyAddress, setPropertyAddress] = useState("");
+  const [jobDescription, setJobDescription] = useState("");
+
+  return (
+    <main style={page}>
+      <div style={container}>
+        <h1 style={title}>Need Help Around The Property?</h1>
+
+        <p style={subtitle}>
+          Request an estimate for exterior cleaning, roof washing,
+          driveway cleaning, window cleaning, and more.
+        </p>
+
+        <section style={section}>
+          <h2 style={heading}>Select Service</h2>
+
+          <div style={grid}>
+            {[
+              "House Wash",
+              "Driveway Cleaning",
+              "Roof Softwash",
+              "Pool Cage",
+              "Gutters",
+              "Other",
+            ].map((service) => (
+              <button
+                key={service}
+                style={{
+                  ...card,
+                  background:
+                    selectedService === service
+                      ? "#f97316"
+                      : "#171717",
+                  color:
+                    selectedService === service
+                      ? "#0d0d0f"
+                      : "#ffffff",
+                }}
+                onClick={() => setSelectedService(service)}
+              >
+                {service}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section style={section}>
+          <h2 style={heading}>Property Information</h2>
+
+          <input
+            style={input}
+            placeholder="Name"
+            value={customerName}
+            onChange={(e) => setCustomerName(e.target.value)}
+          />
+
+          <input
+            style={input}
+            placeholder="Phone Number"
+            value={phoneNumber}
+            onChange={(e) => setPhoneNumber(e.target.value)}
+          />
+
+          <input
+            style={input}
+            placeholder="Property Address"
+            value={propertyAddress}
+            onChange={(e) => setPropertyAddress(e.target.value)}
+          />
+        </section>
+
+        <section style={section}>
+          <h2 style={heading}>Tell Us About The Job</h2>
+
+          <textarea
+            style={textarea}
+            placeholder="Describe what needs attention..."
+            value={jobDescription}
+            onChange={(e) => setJobDescription(e.target.value)}
+          />
+        </section>
+
+        <section style={section}>
+          <h2 style={heading}>Property Photos (Optional)</h2>
+
+          <label style={photoBox}>
+            <input
+              type="file"
+              multiple
+              style={{ display: "none" }}
+              onChange={(e) => {
+                const count = e.target.files?.length || 0;
+                setPhotoCount(count);
+                hpEvent({
+                  event: "home_services_photo_selected",
+                  board: "homeplanet-live-pages",
+                  entityId: "property-photos",
+                  meta: { count, path: window.location.pathname },
+                });
+              }}
+            />
+
+            {photoCount > 0
+              ? `${photoCount} Photo(s) Selected`
+              : "Add Property Photos"}
+          </label>
+
+          <p style={photoText}>
+            Photos are optional. In this demo, selected photos are only used to preview the flow and are not uploaded or stored.
+          </p>
+        </section>
+
+        <section style={section}>
+          <button
+            style={submitButton}
+            onClick={() => {
+              hpEvent({
+                event: "home_services_request_submit",
+                board: "homeplanet-live-pages",
+                entityId: "request-estimate",
+                meta: {
+                  selectedService,
+                  photoCount,
+                  hasName: Boolean(customerName),
+                  hasPhone: Boolean(phoneNumber),
+                  hasAddress: Boolean(propertyAddress),
+                  hasDescription: Boolean(jobDescription),
+                  path: window.location.pathname,
+                },
+              });
+
+              localStorage.setItem(
+                "homeServicesLead",
+                JSON.stringify({
+                  customerName,
+                  service: selectedService,
+                  address: propertyAddress,
+                  description: jobDescription,
+                  photoCount,
+                })
+              );
+
+              window.location.href =
+                "/planet/home-services/lead";
+            }}
+          >
+            Request Estimate
+          </button>
+        </section>
+      </div>
+    </main>
+  );
+}
+
+const page: React.CSSProperties = {
+  minHeight: "100vh",
+  background: "#0d0d0f",
+  color: "#fff",
+  padding: 24,
+};
+
+const container: React.CSSProperties = {
+  maxWidth: 900,
+  margin: "0 auto",
+};
+
+const title: React.CSSProperties = {
+  fontSize: 48,
+  fontWeight: 900,
+  marginBottom: 12,
+};
+
+const subtitle: React.CSSProperties = {
+  color: "#94a3b8",
+  fontSize: 18,
+  marginBottom: 30,
+};
+
+const section: React.CSSProperties = {
+  marginBottom: 24,
+};
+
+const heading: React.CSSProperties = {
+  marginBottom: 12,
+};
+
+const grid: React.CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+  gap: 12,
+};
+
+const card: React.CSSProperties = {
+  padding: 20,
+  borderRadius: 18,
+  border: "1px solid rgba(255,255,255,.1)",
+  background: "#171717",
+  color: "#fff",
+  fontWeight: 700,
+  cursor: "pointer",
+  display: "block",
+  width: "100%",
+  boxSizing: "border-box",
+};
+
+const input: React.CSSProperties = {
+  width: "100%",
+  padding: 14,
+  marginBottom: 12,
+  borderRadius: 12,
+  border: "1px solid rgba(255,255,255,.1)",
+  background: "#171717",
+  color: "#fff",
+};
+
+const textarea: React.CSSProperties = {
+  width: "100%",
+  minHeight: 140,
+  padding: 14,
+  borderRadius: 12,
+  border: "1px solid rgba(255,255,255,.1)",
+  background: "#171717",
+  color: "#fff",
+};
+
+const photoBox: React.CSSProperties = {
+  borderRadius: 18,
+  border: "1px dashed rgba(255,255,255,.2)",
+  background: "#171717",
+  color: "#94a3b8",
+  padding: 40,
+  textAlign: "center",
+  cursor: "pointer",
+  display: "block",
+  width: "100%",
+  boxSizing: "border-box",
+};
+
+const photoText: React.CSSProperties = {
+  color: "#94a3b8",
+  marginTop: 10,
+  fontSize: 14,
+};
+
+const submitButton: React.CSSProperties = {
+  width: "100%",
+  padding: 18,
+  borderRadius: 18,
+  border: 0,
+  background: "#f97316",
+  color: "#0d0d0f",
+  fontWeight: 900,
+  fontSize: 18,
+  cursor: "pointer",
+  display: "block",
+  width: "100%",
+  boxSizing: "border-box",
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
