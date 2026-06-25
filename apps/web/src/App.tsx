@@ -74,6 +74,44 @@ function MeasurementCardPlaceholder() {
   );
 }
 
+function isOkeechobeeTogetherDomain() {
+  return window.location.hostname.toLowerCase().includes("okeechobeetogether.");
+}
+
+function OkeechobeeDomainHomeRedirect() {
+  if (isOkeechobeeTogetherDomain()) {
+    return <Navigate to="/planet/okeechobee" replace />;
+  }
+
+  return <Navigate to="/city" replace />;
+}
+
+function OkeechobeeDomainCityRedirect() {
+  if (isOkeechobeeTogetherDomain()) {
+    return <Navigate to="/planet/okeechobee" replace />;
+  }
+
+  return <CityRoutes />;
+}
+
+function OkeechobeeDomainEventRedirect() {
+  if (!isOkeechobeeTogetherDomain()) {
+    return <NotFound />;
+  }
+
+  const parts = window.location.pathname.split("/").filter(Boolean);
+  const slug = parts[1] || "";
+
+  return <Navigate to={`/planet/okeechobee/event/${slug}`} replace />;
+}
+
+function OkeechobeeDomainCreateRedirect() {
+  if (!isOkeechobeeTogetherDomain()) {
+    return <NotFound />;
+  }
+
+  return <Navigate to="/planet/okeechobee/create" replace />;
+}
 export default function App() {
   return (
     <BrowserRouter>
@@ -82,7 +120,7 @@ export default function App() {
           <Route path="/planet/demo/after-the-click" element={<HomePlanetAfterTheClickDemo />} />
           <Route path="/planet/build-your-live-system/dashboard" element={<HomePlanetMarketAwarenessDashboardV1 />} />
           <Route path="/planet/build-your-live-system" element={<HomePlanetMarketAwarenessFunnelV1 />} />        <Route path="/service/*" element={<ServiceRoutes />} />
-        <Route path="/city/*" element={<CityRoutes />} />
+        <Route path="/city/*" element={<OkeechobeeDomainCityRedirect />} />
 
         <Route path="/legal-demo" element={<LegalDemoBoard />} />
 
@@ -126,15 +164,21 @@ export default function App() {
 
         <Route path="/wilding-dispatch" element={<WildingLiveBoardDispatch />} />
 
+        <Route path="/event/:slug" element={<OkeechobeeDomainEventRedirect />} />
+        <Route path="/create" element={<OkeechobeeDomainCreateRedirect />} />
+
         <Route path="/:slug/*" element={<TenantPublicPage />} />
 
-        <Route path="/" element={<Navigate to="/city" replace />} />
+        <Route path="/" element={<OkeechobeeDomainHomeRedirect />} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   );
 }
+
+
+
 
 
 
