@@ -18,6 +18,16 @@ type Signal = {
   message: string;
 };
 
+type CleaningPhoto = {
+  id: string;
+  request_id: string;
+  business_slug: string;
+  photo_type: "before" | "after";
+  file_path: string;
+  public_url: string;
+  created_at: string;
+};
+
 const initialSignals: Signal[] = [
   {
     id: "dan-test",
@@ -78,7 +88,7 @@ function buildFirstReplyText(signal: Signal) {
 I’ll reply here with the next step.`;
 }
 
-function buildEstimateText(signal: Signal) {
+function buildEstimateText(signal: Signal, estimateRange = signal.value) {
   return `Hi ${signal.name}, this is Kaitlin with Only The Essentials Cleaning.
 
 I reviewed your cleaning request:
@@ -88,6 +98,7 @@ Home: ${signal.home}
 Condition: ${signal.condition}
 Pets: ${signal.pets}
 Preferred time: ${signal.preferred}
+Estimate: ${estimateRange}
 
 I can help with this. I’ll confirm the final price based on the home details, condition, and any photos/notes you sent.`;
 }
@@ -131,8 +142,13 @@ function copyText(label: string, text: string) {
 export default function OnlyTheEssentialsIntelligenceDashboard() {
   const [signals, setSignals] = useState<Signal[]>([]);
   const [selected, setSelected] = useState<Signal | null>(null);
+  const [estimateRange, setEstimateRange] = useState("$160-$240");
+  const [beforePhotoCount, setBeforePhotoCount] = useState(0);
+  const [afterPhotoCount, setAfterPhotoCount] = useState(0);
   const [showContactDetails, setShowContactDetails] = useState(false);
   const [showHeaderDetails, setShowHeaderDetails] = useState(false);
+  const [photos, setPhotos] = useState<CleaningPhoto[]>([]);
+  const [uploadingPhotoType, setUploadingPhotoType] = useState<"before" | "after" | null>(null);
 
   useEffect(() => {
     async function loadRequests() {
@@ -242,6 +258,121 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
     if (selected?.id === id) setSelected(null);
   }
 
+  useEffect(() => {
+    if (!selected?.id) {
+      setPhotos([]);
+      return;
+    }
+
+    let alive = true;
+
+    async function loadPhotos() {
+      const { data, error } = await supabase
+        .from("cleaning_request_photos")
+        .select("*")
+        .eq("request_id", selected.id)
+        .eq("business_slug", "only-the-essentials")
+        .order("created_at", { ascending: false });
+
+      if (!alive) return;
+
+      if (error) {
+        console.error("Could not load cleaning request photos:", error);
+        setPhotos([]);
+        return;
+      }
+
+      setPhotos((data || []) as CleaningPhoto[]);
+    }
+
+    loadPhotos();
+
+    return () => {
+      alive = false;
+    };
+  }, [selected?.id]);
+
+  async function handlePhotoUpload(photoType: "before" | "after", files: FileList | null) {
+    if (!selected || !files || files.length === 0) return;
+
+    setUploadingPhotoType(photoType);
+
+    try {
+      const savedPhotos: CleaningPhoto[] = [];
+
+      for (const file of Array.from(files)) {
+        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
+        const filePath = selected.id + "/" + photoType + "/" + Date.now() + "-" + safeName;
+
+        const upload = await supabase.storage
+          .from("cleaning-request-photos")
+          .upload(filePath, file, {
+            cacheControl: "3600",
+            upsert: false,
+          });
+
+        if (upload.error) throw upload.error;
+
+        const publicUrl = supabase.storage
+          .from("cleaning-request-photos")
+          .getPublicUrl(filePath).data.publicUrl;
+
+        const inserted = await supabase
+          .from("cleaning_request_photos")
+          .insert({
+            request_id: selected.id,
+            business_slug: "only-the-essentials",
+            photo_type: photoType,
+            file_path: filePath,
+            public_url: publicUrl,
+          })
+          .select("*")
+          .single();
+
+        if (inserted.error) throw inserted.error;
+        savedPhotos.push(inserted.data as CleaningPhoto);
+      }
+
+      setPhotos((current) => [...savedPhotos, ...current]);
+    } catch (error) {
+      console.error("Photo upload failed:", error);
+      window.alert("Photo upload failed. Check console.");
+    } finally {
+      setUploadingPhotoType(null);
+    }
+  }
+
+  async function removePhoto(photo: CleaningPhoto) {
+    const confirmed = window.confirm("Remove this photo from the request?");
+    if (!confirmed) return;
+
+    const storageDelete = await supabase.storage
+      .from("cleaning-request-photos")
+      .remove([photo.file_path]);
+
+    if (storageDelete.error) {
+      console.error("Could not remove photo file:", storageDelete.error);
+      window.alert("Could not remove photo file. Check console.");
+      return;
+    }
+
+    const rowDelete = await supabase
+      .from("cleaning_request_photos")
+      .delete()
+      .eq("id", photo.id);
+
+    if (rowDelete.error) {
+      console.error("Could not remove photo row:", rowDelete.error);
+      window.alert("Photo file removed, but database row failed. Check console.");
+      return;
+    }
+
+    setPhotos((current) => current.filter((item) => item.id !== photo.id));
+  }
+
+  const beforePhotos = photos.filter((photo) => photo.photo_type === "before");
+  const afterPhotos = photos.filter((photo) => photo.photo_type === "after");
+
   return (
     <main className="min-h-screen bg-black text-white">
       <section className="mx-auto max-w-6xl px-4 py-6">
@@ -283,6 +414,7 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
                   <div className="flex items-start justify-between gap-3">
                     <button onClick={() => {
                       setSelected(signal);
+                      setEstimateRange(signal.value && signal.value !== "Needs quote" ? signal.value.replace(" est.", "") : "$160-$240");
                       setShowContactDetails(false);
                       setShowHeaderDetails(false);
                     }} className="flex-1 text-left">
@@ -302,6 +434,7 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
 
                   <button onClick={() => {
                     setSelected(signal);
+                    setEstimateRange(signal.value && signal.value !== "Needs quote" ? signal.value.replace(" est.", "") : "$160-$240");
                     setShowContactDetails(false);
                     setShowHeaderDetails(false);
                   }} className="mt-4 w-full text-left">
@@ -489,21 +622,30 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
 
     <div className="flex justify-between">
       <span className="text-zinc-400">Range</span>
-      <span className="font-bold">$160-$240</span>
+      <input
+        value={estimateRange}
+        onChange={(event) => setEstimateRange(event.target.value)}
+        className="w-32 rounded-lg border border-pink-300/25 bg-black px-3 py-2 text-right font-bold text-white outline-none"
+      />
     </div>
   </div>
-
-  <div className="mt-4 grid gap-2">
+  <a
+    href={smsBody(selected.phone, `Hi ${selected.name}, this is Kaitlin with Only The Essentials Cleaning. Can you send a few photos of the main areas you want cleaned? This helps me give you a fair estimate and understand the condition before scheduling.`)}
+    className="mt-4 block rounded-xl bg-pink-400 py-3 text-center text-sm font-black text-black"
+  >
+    Request Photos Text
+  </a>
+<div className="mt-4 grid gap-2">
     <button
       type="button"
-      onClick={() => copyText("Estimate draft copied", buildEstimateText(selected))}
+      onClick={() => copyText("Estimate draft copied", buildEstimateText(selected, estimateRange))}
       className="rounded-xl border border-white/10 py-3 text-sm font-black"
     >
       Copy Estimate Draft
     </button>
 
     <a
-      href={smsBody(selected.phone, buildEstimateText(selected))}
+      href={smsBody(selected.phone, buildEstimateText(selected, estimateRange))}
       className="rounded-xl bg-pink-400 py-3 text-center text-sm font-black text-black"
     >
       Send Estimate Text
@@ -511,7 +653,7 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
   </div>
 
   <div className="mt-4 rounded-xl bg-yellow-500/10 p-3 text-sm font-bold text-yellow-200">
-    Next Move: Send estimate to customer.
+    Next Move: Ask for photos/details first if needed, then send estimate.
   </div>
 </div>
 
@@ -531,8 +673,7 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
       <span className="font-bold">{selected.preferred}</span>
     </div>
   </div>
-
-  <div className="mt-4 grid gap-2">
+<div className="mt-4 grid gap-2">
     <a
       href={smsBody(selected.phone, buildScheduleText(selected))}
       className="rounded-xl bg-pink-400 py-3 text-center text-sm font-black text-black"
@@ -559,42 +700,117 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
 
                   <div className="flex justify-between">
                     <span className="text-zinc-400">Before Photos</span>
-                    <span className="font-bold">Not Added</span>
+                    <span className="font-bold">{beforePhotoCount ? `${beforePhotoCount} Added` : "Not Added"}</span>
                   </div>
 
                   <div className="flex justify-between">
                     <span className="text-zinc-400">After Photos</span>
-                    <span className="font-bold">Not Added</span>
+                    <span className="font-bold">{afterPhotoCount ? `${afterPhotoCount} Added` : "Not Added"}</span>
                   </div>
                 </div>
-
-                <div className="mt-4 rounded-xl bg-pink-400/10 p-3 text-sm font-bold text-pink-100">
-                  Next Move: Take before and after photos when the cleaning starts and finishes so the job proof stays with the request.
+<div className="mt-4 rounded-xl bg-pink-400/10 p-3 text-sm font-bold text-pink-100">
+                  Next Move: Take before and after photos if needed so the job proof stays with the request.
                 </div>
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
-  <p className="text-[11px] font-black uppercase tracking-[0.35em] text-pink-200">
-    PAYMENT
-  </p>
+                <p className="text-[11px] font-black uppercase tracking-[0.35em] text-pink-200">
+                  WORK / PHOTOS
+                </p>
 
-  <div className="mt-3 grid gap-2">
-    <a
-      href={smsBody(selected.phone, buildPaymentText(selected))}
-      className="rounded-xl border border-green-400/30 bg-green-500/10 py-3 text-center text-sm font-black"
-    >
-      Send Payment Link Text
-    </a>
+                <div className="mt-3 space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-zinc-400">Work Status</span>
+                    <span className="font-bold text-yellow-300">Not Started</span>
+                  </div>
 
-    <button
-      type="button"
-      onClick={() => copyText("Payment note copied", buildPaymentText(selected))}
-      className="rounded-xl border border-white/10 py-3 text-sm font-black"
-    >
-      Copy Payment Note
-    </button>
-  </div>
-</div>
+                  <div className="flex justify-between">
+                    <span className="text-zinc-400">Before Photos</span>
+                    <span className="font-bold">{beforePhotos.length ? `${beforePhotos.length} Saved` : "Not Added"}</span>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span className="text-zinc-400">After Photos</span>
+                    <span className="font-bold">{afterPhotos.length ? `${afterPhotos.length} Saved` : "Not Added"}</span>
+                  </div>
+                </div>
+
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <label className="rounded-xl border border-pink-300/25 bg-pink-400/10 py-3 text-center text-sm font-black text-pink-100">
+                    {uploadingPhotoType === "before" ? "Uploading..." : "Upload Before"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={(event) => {
+                        void handlePhotoUpload("before", event.target.files);
+                        event.currentTarget.value = "";
+                      }}
+                    />
+                  </label>
+
+                  <label className="rounded-xl border border-pink-300/25 bg-pink-400/10 py-3 text-center text-sm font-black text-pink-100">
+                    {uploadingPhotoType === "after" ? "Uploading..." : "Upload After"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={(event) => {
+                        void handlePhotoUpload("after", event.target.files);
+                        event.currentTarget.value = "";
+                      }}
+                    />
+                  </label>
+                </div>
+
+                <div className="mt-4 space-y-4">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-zinc-500">Before Photos</p>
+                    {beforePhotos.length ? (
+                      <div className="mt-2 grid grid-cols-2 gap-2">
+                        {beforePhotos.map((photo) => (
+                          <div key={photo.id} className="overflow-hidden rounded-xl border border-white/10 bg-black">
+                            <img src={photo.public_url} alt="Before cleaning" className="h-28 w-full object-cover" />
+                            <div className="grid grid-cols-3 gap-1 p-2 text-[10px] font-black">
+                              <a href={photo.public_url} target="_blank" rel="noreferrer" className="rounded-lg bg-white/10 py-2 text-center">View</a>
+                              <button type="button" onClick={() => copyText("Photo link copied", photo.public_url)} className="rounded-lg bg-white/10 py-2">Copy</button>
+                              <button type="button" onClick={() => void removePhoto(photo)} className="rounded-lg bg-red-500/20 py-2 text-red-200">Remove</button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="mt-2 rounded-xl border border-white/10 bg-black/40 p-3 text-sm font-bold text-zinc-400">No before photos saved yet.</div>
+                    )}
+                  </div>
+
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-zinc-500">After Photos</p>
+                    {afterPhotos.length ? (
+                      <div className="mt-2 grid grid-cols-2 gap-2">
+                        {afterPhotos.map((photo) => (
+                          <div key={photo.id} className="overflow-hidden rounded-xl border border-white/10 bg-black">
+                            <img src={photo.public_url} alt="After cleaning" className="h-28 w-full object-cover" />
+                            <div className="grid grid-cols-3 gap-1 p-2 text-[10px] font-black">
+                              <a href={photo.public_url} target="_blank" rel="noreferrer" className="rounded-lg bg-white/10 py-2 text-center">View</a>
+                              <button type="button" onClick={() => copyText("Photo link copied", photo.public_url)} className="rounded-lg bg-white/10 py-2">Copy</button>
+                              <button type="button" onClick={() => void removePhoto(photo)} className="rounded-lg bg-red-500/20 py-2 text-red-200">Remove</button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="mt-2 rounded-xl border border-white/10 bg-black/40 p-3 text-sm font-bold text-zinc-400">No after photos saved yet.</div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-4 rounded-xl bg-pink-400/10 p-3 text-sm font-bold text-pink-100">
+                  Next Move: Take before and after photos if needed so the job proof stays with the request.
+                </div>
+              </div>
 
               <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
   <p className="text-[11px] font-black uppercase tracking-[0.35em] text-pink-200">
@@ -607,8 +823,7 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
       <span className="font-bold text-yellow-300">Not Requested</span>
     </div>
   </div>
-
-  <div className="mt-4 grid gap-2">
+<div className="mt-4 grid gap-2">
     <a
       href={smsBody(selected.phone, buildReviewText(selected))}
       className="rounded-xl bg-pink-400 py-3 text-center text-sm font-black text-black"
@@ -650,6 +865,15 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
     </main>
   );
 }
+
+
+
+
+
+
+
+
+
 
 
 
