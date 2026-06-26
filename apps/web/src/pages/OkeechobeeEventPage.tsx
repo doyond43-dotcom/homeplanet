@@ -254,18 +254,23 @@ export default function OkeechobeeEventPage() {
         <p style={styles.kicker}>{event.type} - Okeechobee Together</p>
         <h1 style={styles.title}>{event.title}</h1>
         <div style={styles.subtitle}>
-  <p>Community project focused on improving safety and accessibility.</p>
+          <p>{event.description}</p>
 
-  <p><strong>Looking For:</strong></p>
+          {event.project_needs && Array.isArray(event.project_needs) && event.project_needs.length > 0 ? (
+            <>
+              <p><strong>Looking For:</strong></p>
 
-  <p>
-    Fence materials - Lumber or pallets - Hardware & screws - Wire fencing - Mulch - Volunteers
-  </p>
+              <p>
+                {event.project_needs
+                  .map((need: any) => need.text || need)
+                  .filter(Boolean)
+                  .join(" - ")}
+              </p>
+            </>
+          ) : null}
 
-  <p>
-    A few hours. A few materials. A big difference.
-  </p>
-</div>
+          <p>A little time. A little care. A big difference.</p>
+        </div>
 
         <div style={styles.infoBox}>
           <p><strong>Status:</strong> {event.status}</p>
@@ -576,6 +581,7 @@ const styles: Record<string, React.CSSProperties> = {
     marginTop: 18,
   },
 };
+
 
 
 
