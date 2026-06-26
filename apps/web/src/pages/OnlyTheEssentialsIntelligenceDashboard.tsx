@@ -366,30 +366,48 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
               <X size={18} />
             </button>
 
-            <div className="mt-4 rounded-2xl border border-pink-300/20 bg-pink-400/10 p-4">
-              <button
-                type="button"
-                onClick={() => setShowHeaderDetails((current) => !current)}
-                className="flex w-full items-center justify-between gap-3 text-left"
-              >
-                <div className="min-w-0">
-                  <p className="text-[10px] font-black uppercase tracking-[0.28em] text-pink-300">
-                    Customer Signal
-                  </p>
-                  <h2 className="mt-2 truncate text-2xl font-black">{selected.name}</h2>
-                  <p className="mt-1 truncate text-sm font-black text-pink-300">{selected.service}</p>
-                </div>
-
-                <span className="shrink-0 rounded-full border border-pink-300/25 bg-black/30 px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-pink-100">
-                  {showHeaderDetails ? "Hide" : "Show"}
-                </span>
-              </button>
-
+            <div className="mt-4">
               {showHeaderDetails ? (
-                <div className="mt-4 border-t border-white/10 pt-3 text-sm font-bold text-zinc-300">
-                  {selected.location}
+                <div className="rounded-2xl border border-pink-300/20 bg-pink-400/10 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-black uppercase tracking-[0.28em] text-pink-300">
+                        Customer Signal
+                      </p>
+                      <h2 className="mt-3 text-4xl font-black">{selected.name}</h2>
+                      <p className="mt-1 text-xl font-black text-pink-300">{selected.service}</p>
+                      <p className="mt-1 text-sm text-zinc-400">{selected.location}</p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowHeaderDetails(false)}
+                      className="shrink-0 rounded-full border border-pink-300/25 bg-black/30 px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-pink-100"
+                    >
+                      Hide
+                    </button>
+                  </div>
                 </div>
-              ) : null}
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowHeaderDetails(true)}
+                  className="flex w-full items-center justify-between gap-3 rounded-2xl border border-pink-300/20 bg-pink-400/10 p-4 text-left"
+                >
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-black uppercase tracking-[0.28em] text-pink-300">
+                      Customer Signal
+                    </p>
+                    <p className="mt-2 truncate text-lg font-black">
+                      {selected.name} • <span className="text-pink-300">{selected.service}</span>
+                    </p>
+                  </div>
+
+                  <span className="shrink-0 rounded-full border border-pink-300/25 bg-black/30 px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-pink-100">
+                    Show
+                  </span>
+                </button>
+              )}
             </div>
 
             <div className="mt-4 grid grid-cols-3 gap-2">
@@ -634,6 +652,7 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
     </main>
   );
 }
+
 
 
 
