@@ -1,3 +1,4 @@
+import HomePlanetTransportationPage from "./pages/HomePlanetTransportationPage";
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useSearchParams } from "react-router-dom";
 
 import TaylorCreekRealDemoBoard from "./pages/TaylorCreekRealDemoBoard";
@@ -116,7 +117,8 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-          <Route path="/planet/demo/brightside-flow" element={<BrightSideFlowDemo />} />
+                    <Route path="/planet/transportation" element={<HomePlanetTransportationPage />} />
+<Route path="/planet/demo/brightside-flow" element={<BrightSideFlowDemo />} />
           <Route path="/planet/demo/after-the-click" element={<HomePlanetAfterTheClickDemo />} />
           <Route path="/planet/build-your-live-system/dashboard" element={<HomePlanetMarketAwarenessDashboardV1 />} />
           <Route path="/planet/build-your-live-system" element={<HomePlanetMarketAwarenessFunnelV1 />} />        <Route path="/service/*" element={<ServiceRoutes />} />
@@ -176,6 +178,10 @@ export default function App() {
     </BrowserRouter>
   );
 }
+
+
+
+
 
 
 
