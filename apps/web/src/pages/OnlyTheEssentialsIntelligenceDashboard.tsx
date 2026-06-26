@@ -368,25 +368,21 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
 
             <div className="mt-4">
               {showHeaderDetails ? (
-                <div className="rounded-2xl border border-pink-300/20 bg-pink-400/10 p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-[10px] font-black uppercase tracking-[0.28em] text-pink-300">
-                        Customer Signal
-                      </p>
-                      <h2 className="mt-3 text-4xl font-black">{selected.name}</h2>
-                      <p className="mt-1 text-xl font-black text-pink-300">{selected.service}</p>
-                      <p className="mt-1 text-sm text-zinc-400">{selected.location}</p>
-                    </div>
+                <div className="relative rounded-2xl border border-pink-300/20 bg-pink-400/10 p-4 pr-24">
+                  <button
+                    type="button"
+                    onClick={() => setShowHeaderDetails(false)}
+                    className="absolute right-4 top-4 rounded-full border border-pink-300/25 bg-black/30 px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-pink-100"
+                  >
+                    Hide
+                  </button>
 
-                    <button
-                      type="button"
-                      onClick={() => setShowHeaderDetails(false)}
-                      className="shrink-0 rounded-full border border-pink-300/25 bg-black/30 px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-pink-100"
-                    >
-                      Hide
-                    </button>
-                  </div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.28em] text-pink-300">
+                    Customer Signal
+                  </p>
+                  <h2 className="mt-3 text-4xl font-black">{selected.name}</h2>
+                  <p className="mt-1 text-xl font-black text-pink-300">{selected.service}</p>
+                  <p className="mt-1 text-sm text-zinc-400">{selected.location}</p>
                 </div>
               ) : (
                 <button
@@ -654,6 +650,7 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
     </main>
   );
 }
+
 
 
 
