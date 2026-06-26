@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 
 type TripType = "One Way" | "Round Trip";
 type RideStatus = "Waiting" | "Confirmed" | "En Route" | "Picked Up" | "Arrived" | "Collect Payment" | "Paid" | "Completed";
@@ -43,6 +43,7 @@ const starterRides: Ride[] = [
 export default function HomePlanetTransportationPage() {
   const [rides, setRides] = useState<Ride[]>(starterRides);
   const [openForm, setOpenForm] = useState(false);
+  const workspaceRef = useRef<HTMLElement | null>(null);
   const [selectedRide, setSelectedRide] = useState<Ride | null>(starterRides[0]);
 
   const [form, setForm] = useState({
@@ -94,6 +95,17 @@ export default function HomePlanetTransportationPage() {
       time: "",
       tripType: "One Way",
       notes: "",
+    });
+  }
+
+  function openRide(ride: Ride) {
+    setSelectedRide(ride);
+
+    requestAnimationFrame(() => {
+      workspaceRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
     });
   }
 
@@ -156,7 +168,7 @@ export default function HomePlanetTransportationPage() {
               {rides.map((ride) => (
                 <button
                   key={ride.id}
-                  onClick={() => setSelectedRide(ride)}
+                  onClick={() => openRide(ride)}
                   className={`w-full rounded-3xl border p-4 text-left ${
                     selectedRide?.id === ride.id
                       ? "border-emerald-400/50 bg-emerald-400/10"
@@ -231,7 +243,7 @@ export default function HomePlanetTransportationPage() {
             )}
 
             {selectedRide && (
-              <article className="rounded-[2rem] border border-emerald-400/20 bg-black/35 p-5">
+              <article ref={workspaceRef} className="rounded-[2rem] border border-emerald-400/20 bg-black/35 p-5">
                 <p className="text-xs font-black uppercase tracking-[0.25em] text-emerald-300">
                   Ride Workspace
                 </p>
@@ -307,4 +319,6 @@ export default function HomePlanetTransportationPage() {
     </main>
   );
 }
+
+
 
