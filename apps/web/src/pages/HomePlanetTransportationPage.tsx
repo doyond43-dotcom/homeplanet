@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useMemo, useState } from "react";
 
 type TripType = "One Way" | "Round Trip";
 type RideStatus = "Waiting" | "Confirmed" | "En Route" | "Picked Up" | "Arrived" | "Collect Payment" | "Paid" | "Completed";
@@ -43,8 +43,8 @@ const starterRides: Ride[] = [
 export default function HomePlanetTransportationPage() {
   const [rides, setRides] = useState<Ride[]>(starterRides);
   const [openForm, setOpenForm] = useState(false);
-  const workspaceRef = useRef<HTMLElement | null>(null);
   const [selectedRide, setSelectedRide] = useState<Ride | null>(starterRides[0]);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const [form, setForm] = useState({
     name: "",
@@ -69,6 +69,11 @@ export default function HomePlanetTransportationPage() {
     setForm((current) => ({ ...current, [field]: value }));
   }
 
+  function openRide(ride: Ride) {
+    setSelectedRide(ride);
+    setDrawerOpen(true);
+  }
+
   function submitRide(e: React.FormEvent) {
     e.preventDefault();
 
@@ -86,6 +91,7 @@ export default function HomePlanetTransportationPage() {
 
     setRides((current) => [nextRide, ...current]);
     setSelectedRide(nextRide);
+    setDrawerOpen(true);
     setOpenForm(false);
     setForm({
       name: "",
@@ -98,17 +104,6 @@ export default function HomePlanetTransportationPage() {
     });
   }
 
-  function openRide(ride: Ride) {
-    setSelectedRide(ride);
-
-    requestAnimationFrame(() => {
-      workspaceRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    });
-  }
-
   function updateStatus(id: number, status: RideStatus) {
     setRides((current) =>
       current.map((ride) => (ride.id === id ? { ...ride, status } : ride))
@@ -118,6 +113,104 @@ export default function HomePlanetTransportationPage() {
       current && current.id === id ? { ...current, status } : current
     );
   }
+
+  function statusClass(status: RideStatus) {
+    if (status === "Completed" || status === "Paid") return "border-emerald-300/30 bg-emerald-300/10 text-emerald-100";
+    if (status === "En Route" || status === "Picked Up") return "border-blue-300/30 bg-blue-300/10 text-blue-100";
+    if (status === "Collect Payment") return "border-lime-300/30 bg-lime-300/10 text-lime-100";
+    return "border-yellow-300/30 bg-yellow-300/10 text-yellow-100";
+  }
+
+  const RideWorkspace = ({ mobile = false }: { mobile?: boolean }) => {
+    if (!selectedRide) return null;
+
+    return (
+      <article className={`${mobile ? "" : "hidden lg:block"} rounded-[2rem] border border-emerald-400/20 bg-black/35 p-5`}>
+        <p className="text-xs font-black uppercase tracking-[0.25em] text-emerald-300">
+          Ride Workspace
+        </p>
+
+        <div className="mt-4 flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-3xl font-black">{selectedRide.name}</h2>
+            <p className="mt-1 text-zinc-400">{selectedRide.time}</p>
+          </div>
+          <span className={`rounded-full border px-3 py-1 text-xs font-black ${statusClass(selectedRide.status)}`}>
+            {selectedRide.status}
+          </span>
+        </div>
+
+        <div className="mt-5 grid gap-3">
+          <div className="rounded-2xl bg-white/[0.05] p-4">
+            <p className="text-sm text-zinc-400">Pickup</p>
+            <p className="text-lg font-bold">{selectedRide.pickup}</p>
+          </div>
+
+          <div className="rounded-2xl bg-white/[0.05] p-4">
+            <p className="text-sm text-zinc-400">Destination</p>
+            <p className="text-lg font-bold">{selectedRide.destination}</p>
+          </div>
+
+          <div className="rounded-2xl bg-white/[0.05] p-4">
+            <p className="text-sm text-zinc-400">Trip</p>
+            <p className="text-lg font-bold">{selectedRide.tripType}</p>
+          </div>
+
+          {selectedRide.notes && (
+            <div className="rounded-2xl bg-white/[0.05] p-4">
+              <p className="text-sm text-zinc-400">Notes</p>
+              <p className="text-lg font-bold">{selectedRide.notes}</p>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-5 grid grid-cols-3 gap-2">
+          <a href={`tel:${selectedRide.phone}`} className="rounded-2xl bg-white/10 px-3 py-4 text-center text-xs font-black">
+            Call
+          </a>
+          <a href={`sms:${selectedRide.phone}`} className="rounded-2xl bg-white/10 px-3 py-4 text-center text-xs font-black">
+            Text
+          </a>
+          <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedRide.pickup)}`} className="rounded-2xl bg-emerald-400 px-3 py-4 text-center text-xs font-black text-black">
+            Navigate
+          </a>
+        </div>
+
+        <div className="mt-5 grid gap-2">
+          <button onClick={() => updateStatus(selectedRide.id, "En Route")} className="rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm font-black">
+            Driver En Route
+          </button>
+          <button onClick={() => updateStatus(selectedRide.id, "Picked Up")} className="rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm font-black">
+            Passenger Picked Up
+          </button>
+          <button onClick={() => updateStatus(selectedRide.id, "Arrived")} className="rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm font-black">
+            Arrived
+          </button>
+
+          <div className="mt-2 rounded-3xl border border-emerald-400/20 bg-emerald-400/10 p-3">
+            <p className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-emerald-200">
+              Payment
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <button onClick={() => updateStatus(selectedRide.id, "Collect Payment")} className="rounded-2xl bg-black/30 px-4 py-3 text-sm font-black">
+                Cash
+              </button>
+              <button onClick={() => updateStatus(selectedRide.id, "Collect Payment")} className="rounded-2xl bg-black/30 px-4 py-3 text-sm font-black">
+                Cash App
+              </button>
+            </div>
+            <button onClick={() => updateStatus(selectedRide.id, "Paid")} className="mt-2 w-full rounded-2xl bg-emerald-400 px-4 py-3 text-sm font-black text-black">
+              Payment Received
+            </button>
+          </div>
+
+          <button onClick={() => updateStatus(selectedRide.id, "Completed")} className="rounded-2xl bg-white px-4 py-3 text-sm font-black text-black">
+            Complete Ride
+          </button>
+        </div>
+      </article>
+    );
+  };
 
   return (
     <main className="min-h-screen bg-[#050805] text-white">
@@ -180,7 +273,7 @@ export default function HomePlanetTransportationPage() {
                       <p className="text-2xl font-black">{ride.time}</p>
                       <p className="mt-1 text-lg font-bold">{ride.name}</p>
                     </div>
-                    <span className="rounded-full border border-yellow-300/30 bg-yellow-300/10 px-3 py-1 text-xs font-black text-yellow-100">
+                    <span className={`rounded-full border px-3 py-1 text-xs font-black ${statusClass(ride.status)}`}>
                       {ride.status}
                     </span>
                   </div>
@@ -191,17 +284,18 @@ export default function HomePlanetTransportationPage() {
                   <p className="mt-2 text-sm text-zinc-400">Destination</p>
                   <p className="font-bold">{ride.destination}</p>
 
-                  <div className="mt-4 grid grid-cols-3 gap-2">
+                  <p className="mt-4 text-xs font-black uppercase tracking-[0.2em] text-emerald-300 lg:hidden">
+                    Tap to work this ride
+                  </p>
+
+                  <div className="mt-4 hidden grid-cols-3 gap-2 lg:grid">
                     <a href={`tel:${ride.phone}`} className="rounded-2xl bg-white/10 px-3 py-3 text-center text-xs font-black">
                       Call
                     </a>
                     <a href={`sms:${ride.phone}`} className="rounded-2xl bg-white/10 px-3 py-3 text-center text-xs font-black">
                       Text
                     </a>
-                    <a
-                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ride.pickup)}`}
-                      className="rounded-2xl bg-emerald-400 px-3 py-3 text-center text-xs font-black text-black"
-                    >
+                    <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ride.pickup)}`} className="rounded-2xl bg-emerald-400 px-3 py-3 text-center text-xs font-black text-black">
                       Navigate
                     </a>
                   </div>
@@ -212,10 +306,7 @@ export default function HomePlanetTransportationPage() {
 
           <section className="grid gap-4">
             {openForm && (
-              <form
-                onSubmit={submitRide}
-                className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5"
-              >
+              <form onSubmit={submitRide} className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5">
                 <p className="text-xs font-black uppercase tracking-[0.25em] text-emerald-300">
                   New Ride
                 </p>
@@ -242,83 +333,35 @@ export default function HomePlanetTransportationPage() {
               </form>
             )}
 
-            {selectedRide && (
-              <article ref={workspaceRef} className="rounded-[2rem] border border-emerald-400/20 bg-black/35 p-5">
-                <p className="text-xs font-black uppercase tracking-[0.25em] text-emerald-300">
-                  Ride Workspace
-                </p>
-
-                <div className="mt-4 flex items-start justify-between gap-3">
-                  <div>
-                    <h2 className="text-3xl font-black">{selectedRide.name}</h2>
-                    <p className="mt-1 text-zinc-400">{selectedRide.time}</p>
-                  </div>
-                  <span className="rounded-full border border-yellow-300/30 bg-yellow-300/10 px-3 py-1 text-xs font-black text-yellow-100">
-                    {selectedRide.status}
-                  </span>
-                </div>
-
-                <div className="mt-5 grid gap-3">
-                  <div className="rounded-2xl bg-white/[0.05] p-4">
-                    <p className="text-sm text-zinc-400">Pickup</p>
-                    <p className="text-lg font-bold">{selectedRide.pickup}</p>
-                  </div>
-                  <div className="rounded-2xl bg-white/[0.05] p-4">
-                    <p className="text-sm text-zinc-400">Destination</p>
-                    <p className="text-lg font-bold">{selectedRide.destination}</p>
-                  </div>
-                  <div className="rounded-2xl bg-white/[0.05] p-4">
-                    <p className="text-sm text-zinc-400">Trip</p>
-                    <p className="text-lg font-bold">{selectedRide.tripType}</p>
-                  </div>
-                  {selectedRide.notes && (
-                    <div className="rounded-2xl bg-white/[0.05] p-4">
-                      <p className="text-sm text-zinc-400">Notes</p>
-                      <p className="text-lg font-bold">{selectedRide.notes}</p>
-                    </div>
-                  )}
-                </div>
-
-                <div className="mt-5 grid grid-cols-3 gap-2">
-                  <a href={`tel:${selectedRide.phone}`} className="rounded-2xl bg-white/10 px-3 py-4 text-center text-xs font-black">
-                    Call
-                  </a>
-                  <a href={`sms:${selectedRide.phone}`} className="rounded-2xl bg-white/10 px-3 py-4 text-center text-xs font-black">
-                    Text
-                  </a>
-                  <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedRide.pickup)}`} className="rounded-2xl bg-emerald-400 px-3 py-4 text-center text-xs font-black text-black">
-                    Navigate
-                  </a>
-                </div>
-
-                <div className="mt-5 grid gap-2">
-                  <button onClick={() => updateStatus(selectedRide.id, "En Route")} className="rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm font-black">
-                    Driver En Route
-                  </button>
-                  <button onClick={() => updateStatus(selectedRide.id, "Picked Up")} className="rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm font-black">
-                    Passenger Picked Up
-                  </button>
-                  <button onClick={() => updateStatus(selectedRide.id, "Arrived")} className="rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm font-black">
-                    Arrived
-                  </button>
-                  <button onClick={() => updateStatus(selectedRide.id, "Collect Payment")} className="rounded-2xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-3 text-sm font-black text-emerald-100">
-                    Collect Payment
-                  </button>
-                  <button onClick={() => updateStatus(selectedRide.id, "Paid")} className="rounded-2xl bg-emerald-400 px-4 py-3 text-sm font-black text-black">
-                    Tap To Pay / Payment Received
-                  </button>
-                  <button onClick={() => updateStatus(selectedRide.id, "Completed")} className="rounded-2xl bg-white px-4 py-3 text-sm font-black text-black">
-                    Complete Ride
-                  </button>
-                </div>
-              </article>
-            )}
+            <RideWorkspace />
           </section>
         </div>
       </section>
+
+      {drawerOpen && selectedRide && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <button
+            aria-label="Close ride drawer"
+            onClick={() => setDrawerOpen(false)}
+            className="absolute inset-0 bg-black/70"
+          />
+
+          <div className="absolute inset-x-0 bottom-0 max-h-[88vh] overflow-y-auto rounded-t-[2rem] border border-emerald-400/20 bg-[#050805] p-4 shadow-2xl shadow-black">
+            <div className="mx-auto mb-3 h-1.5 w-14 rounded-full bg-white/25" />
+
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <p className="text-xs font-black uppercase tracking-[0.25em] text-emerald-300">
+                Active Ride
+              </p>
+              <button onClick={() => setDrawerOpen(false)} className="rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs font-black">
+                Close
+              </button>
+            </div>
+
+            <RideWorkspace mobile />
+          </div>
+        </div>
+      )}
     </main>
   );
 }
-
-
-
