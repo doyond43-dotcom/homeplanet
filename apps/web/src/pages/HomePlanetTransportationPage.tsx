@@ -45,6 +45,7 @@ export default function HomePlanetTransportationPage() {
   const [openForm, setOpenForm] = useState(false);
   const [selectedRide, setSelectedRide] = useState<Ride | null>(starterRides[0]);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"Cash" | "Cash App">("Cash App");
 
   const [form, setForm] = useState({
     name: "",
@@ -187,26 +188,116 @@ export default function HomePlanetTransportationPage() {
             Arrived
           </button>
 
-          <div className="mt-2 rounded-3xl border border-emerald-400/20 bg-emerald-400/10 p-3">
-            <p className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-emerald-200">
-              Payment
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              <button onClick={() => updateStatus(selectedRide.id, "Collect Payment")} className="rounded-2xl bg-black/30 px-4 py-3 text-sm font-black">
-                Cash
-              </button>
-              <button onClick={() => updateStatus(selectedRide.id, "Collect Payment")} className="rounded-2xl bg-black/30 px-4 py-3 text-sm font-black">
-                Cash App
-              </button>
-            </div>
-            <button onClick={() => updateStatus(selectedRide.id, "Paid")} className="mt-2 w-full rounded-2xl bg-emerald-400 px-4 py-3 text-sm font-black text-black">
-              Payment Received
-            </button>
-          </div>
+          <div className="mt-4 rounded-[2rem] border border-emerald-400/20 bg-emerald-400/10 p-4">
+  <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-200">
+    Payment
+  </p>
 
-          <button onClick={() => updateStatus(selectedRide.id, "Completed")} className="rounded-2xl bg-white px-4 py-3 text-sm font-black text-black">
-            Complete Ride
-          </button>
+  <p className="mt-3 text-sm text-zinc-300">
+    How did they pay?
+  </p>
+
+  <div className="mt-4 grid grid-cols-2 gap-3">
+    <button
+      onClick={() => {
+        setPaymentMethod("Cash");
+        updateStatus(selectedRide.id, "Collect Payment");
+      }}
+      className={`rounded-3xl border p-5 text-left ${
+        paymentMethod === "Cash"
+          ? "border-emerald-400/50 bg-emerald-400/10"
+          : "border-white/10 bg-black/40"
+      }`}
+    >
+      <div className="text-xl font-black text-white">CASH</div>
+      <div className="mt-1 text-sm text-zinc-400">Cash received by driver</div>
+    </button>
+
+    <button
+      onClick={() => {
+        setPaymentMethod("Cash App");
+        updateStatus(selectedRide.id, "Collect Payment");
+      }}
+      className={`rounded-3xl border p-5 text-left ${
+        paymentMethod === "Cash App"
+          ? "border-emerald-400/50 bg-emerald-400/10"
+          : "border-white/10 bg-black/40"
+      }`}
+    >
+      <div className="text-xl font-black text-emerald-100">CASH APP</div>
+      <div className="mt-1 text-sm text-emerald-100/70">Show scan-to-pay card</div>
+    </button>
+  </div>
+
+  {paymentMethod === "Cash" ? (
+  <div className="mt-4 rounded-3xl border border-white/10 bg-black/50 p-4 text-center">
+    <p className="text-xs font-black uppercase tracking-[0.2em] text-zinc-400">
+      Cash Payment
+    </p>
+    <p className="mt-2 text-2xl font-black text-emerald-300">
+      Cash received by driver
+    </p>
+    <p className="mt-3 text-sm text-zinc-300">
+      Confirm once cash is in hand.
+    </p>
+  </div>
+) : (
+  <div className="mt-4 rounded-3xl border border-white/10 bg-black/50 p-4 text-center">
+    <p className="text-xs font-black uppercase tracking-[0.2em] text-zinc-400">
+      Cash App Payment
+    </p>
+    <p className="mt-2 text-2xl font-black text-emerald-300">
+      $YourCashApp
+    </p>
+
+    <div className="mx-auto mt-4 grid h-40 w-40 grid-cols-5 grid-rows-5 gap-1 rounded-2xl bg-white p-3">
+      <div className="bg-black" />
+      <div className="bg-white" />
+      <div className="bg-black" />
+      <div className="bg-black" />
+      <div className="bg-white" />
+      <div className="bg-black" />
+      <div className="bg-black" />
+      <div className="bg-white" />
+      <div className="bg-black" />
+      <div className="bg-black" />
+      <div className="bg-white" />
+      <div className="bg-black" />
+      <div className="bg-black" />
+      <div className="bg-white" />
+      <div className="bg-black" />
+      <div className="bg-black" />
+      <div className="bg-white" />
+      <div className="bg-black" />
+      <div className="bg-black" />
+      <div className="bg-white" />
+      <div className="bg-white" />
+      <div className="bg-black" />
+      <div className="bg-white" />
+      <div className="bg-black" />
+      <div className="bg-black" />
+    </div>
+
+    <p className="mt-3 text-sm text-zinc-300">
+      Customer scans this to pay.
+    </p>
+  </div>
+)}
+
+  <button
+    onClick={() => updateStatus(selectedRide.id, "Paid")}
+    className="mt-4 w-full rounded-2xl bg-emerald-400 px-4 py-4 text-sm font-black text-black"
+  >
+    Payment Received
+  </button>
+</div>
+
+<button
+  onClick={() => updateStatus(selectedRide.id, "Completed")}
+  className="mt-3 rounded-2xl bg-white px-4 py-4 text-sm font-black text-black"
+>
+  Complete Ride
+</button>
         </div>
       </article>
     );
@@ -365,3 +456,6 @@ export default function HomePlanetTransportationPage() {
     </main>
   );
 }
+
+
+
