@@ -8,6 +8,7 @@ export default function OkeechobeeProjectWorkspace() {
   const [project, setProject] = useState<any>(null);
   const [helpers, setHelpers] = useState<any[]>([]);
   const [materials, setMaterials] = useState<any[]>([]);
+  const [availability, setAvailability] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [taskText, setTaskText] = useState("");
@@ -15,6 +16,12 @@ export default function OkeechobeeProjectWorkspace() {
   const [showNeedForm, setShowNeedForm] = useState(false);
   const [needText, setNeedText] = useState("");
   const [savingNeed, setSavingNeed] = useState(false);
+  const [showAvailabilityForm, setShowAvailabilityForm] = useState(false);
+  const [availabilityName, setAvailabilityName] = useState("");
+  const [availabilityDay, setAvailabilityDay] = useState("Saturday");
+  const [availabilityTime, setAvailabilityTime] = useState("Afternoon");
+  const [availabilityNotes, setAvailabilityNotes] = useState("");
+  const [savingAvailability, setSavingAvailability] = useState(false);
   const [showMaterialForm, setShowMaterialForm] = useState(false);
   const [materialText, setMaterialText] = useState("");
   const [materialAssignedTo, setMaterialAssignedTo] = useState("");
@@ -72,6 +79,19 @@ export default function OkeechobeeProjectWorkspace() {
 
     console.log("TASKS FOUND:", taskData);
     setTasks(taskData || []);
+
+    const { data: availabilityData, error: availabilityError } = await supabase
+      .from("okeechobee_project_availability")
+      .select("*")
+      .eq("project_slug", data.slug)
+      .order("created_at", { ascending: true });
+
+    if (availabilityError) {
+      console.error("AVAILABILITY ERROR:", availabilityError);
+    }
+
+    console.log("AVAILABILITY FOUND:", availabilityData);
+    setAvailability(availabilityData || []);
   }
 
   async function addNeed() {
@@ -196,6 +216,39 @@ export default function OkeechobeeProjectWorkspace() {
     setEditMaterialText("");
     setEditMaterialAssignedTo("");
     setSavingMaterialEdit(false);
+  }
+  async function saveAvailability() {
+    if (!project || !availabilityName.trim()) return;
+
+    setSavingAvailability(true);
+
+    const { error } = await supabase
+      .from("okeechobee_project_availability")
+      .insert([
+        {
+          project_slug: project.slug,
+          volunteer_name: availabilityName.trim(),
+          best_day: availabilityDay,
+          best_time: availabilityTime,
+          notes: availabilityNotes.trim() || null,
+        },
+      ]);
+
+    if (error) {
+      console.error(error);
+      alert("Unable to save availability.");
+      setSavingAvailability(false);
+      return;
+    }
+
+    await loadProject();
+
+    setAvailabilityName("");
+    setAvailabilityDay("Saturday");
+    setAvailabilityTime("Afternoon");
+    setAvailabilityNotes("");
+    setShowAvailabilityForm(false);
+    setSavingAvailability(false);
   }
   return (
     <main
@@ -397,7 +450,132 @@ export default function OkeechobeeProjectWorkspace() {
               marginBottom: 16,
             }}
           >
-            <h2>Tasks ({tasks.length})</h2>
+          <div
+          style={{
+            background: "#111",
+            border: "1px solid #222",
+            borderRadius: 18,
+            padding: 20,
+            marginBottom: 24,
+          }}
+        >
+          <h2>Availability Check</h2>
+
+          <p style={{ color: "#aaa", marginTop: 0 }}>
+            Volunteers can share what day and time works best so everyone can meet in the middle.
+          </p>
+
+          <button
+            onClick={() => setShowAvailabilityForm(true)}
+            style={{
+              marginBottom: 12,
+              padding: "10px 14px",
+              borderRadius: 999,
+              border: 0,
+              background: "#39FF14",
+              color: "#050505",
+              fontWeight: 900,
+              cursor: "pointer",
+            }}
+          >
+            Add Availability
+          </button>
+
+          {showAvailabilityForm && (
+            <div style={{ display: "grid", gap: 10, marginBottom: 16 }}>
+              <input
+                value={availabilityName}
+                onChange={(e) => setAvailabilityName(e.target.value)}
+                placeholder="Volunteer name"
+                style={{
+                  padding: 12,
+                  borderRadius: 10,
+                  border: "1px solid #333",
+                  background: "#181818",
+                  color: "white",
+                }}
+              />
+
+              <select
+                value={availabilityDay}
+                onChange={(e) => setAvailabilityDay(e.target.value)}
+                style={{
+                  padding: 12,
+                  borderRadius: 10,
+                  border: "1px solid #333",
+                  background: "#181818",
+                  color: "white",
+                }}
+              >
+                <option>Friday</option>
+                <option>Saturday</option>
+                <option>Sunday</option>
+                <option>Flexible</option>
+              </select>
+
+              <select
+                value={availabilityTime}
+                onChange={(e) => setAvailabilityTime(e.target.value)}
+                style={{
+                  padding: 12,
+                  borderRadius: 10,
+                  border: "1px solid #333",
+                  background: "#181818",
+                  color: "white",
+                }}
+              >
+                <option>Morning</option>
+                <option>Afternoon</option>
+                <option>Evening</option>
+                <option>Flexible</option>
+              </select>
+
+              <input
+                value={availabilityNotes}
+                onChange={(e) => setAvailabilityNotes(e.target.value)}
+                placeholder="Optional note"
+                style={{
+                  padding: 12,
+                  borderRadius: 10,
+                  border: "1px solid #333",
+                  background: "#181818",
+                  color: "white",
+                }}
+              />
+
+              <button onClick={saveAvailability} disabled={savingAvailability}>
+                {savingAvailability ? "Saving..." : "Save Availability"}
+              </button>
+
+              <button onClick={() => setShowAvailabilityForm(false)}>
+                Cancel
+              </button>
+            </div>
+          )}
+
+          {availability.length === 0 ? (
+            <p>No availability added yet.</p>
+          ) : (
+            availability.map((item: any) => (
+              <div
+                key={item.id}
+                style={{
+                  padding: "10px 0",
+                  borderBottom: "1px solid #222",
+                }}
+              >
+                <p style={{ margin: 0, fontWeight: 800 }}>
+                  {item.volunteer_name} - {item.best_day}, {item.best_time}
+                </p>
+
+                {item.notes ? (
+                  <p style={{ margin: "6px 0 0", color: "#aaa" }}>{item.notes}</p>
+                ) : null}
+              </div>
+            ))
+          )}
+        </div>
+          <h2>Tasks ({tasks.length})</h2>
 
             <button
               onClick={() => setShowTaskForm(true)}
@@ -648,6 +826,11 @@ export default function OkeechobeeProjectWorkspace() {
     </main>
   );
 }
+
+
+
+
+
 
 
 
