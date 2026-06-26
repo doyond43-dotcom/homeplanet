@@ -410,25 +410,27 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
               )}
             </div>
 
-            <div className="mt-4 grid grid-cols-3 gap-2">
-              <a href={selected.phone ? `tel:${selected.phone}` : undefined} className="rounded-xl border border-pink-300/30 bg-pink-400/10 py-3 text-center text-xs font-black">
-                <Phone className="mx-auto mb-1" size={16} />
-                Call
-              </a>
-              <a href={smsBody(selected.phone, buildFirstReplyText(selected))} className="rounded-xl border border-pink-300/30 bg-pink-400/10 py-3 text-center text-xs font-black">
-                <MessageCircle className="mx-auto mb-1" size={16} />
-                Text
-              </a>
-              <a
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selected.location)}`}
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-xl border border-pink-300/30 bg-pink-400/10 py-3 text-center text-xs font-black"
-              >
-                <MapPin className="mx-auto mb-1" size={16} />
-                Navigate
-              </a>
-            </div>
+            {showHeaderDetails ? (
+              <div className="mt-4 grid grid-cols-3 gap-2">
+                <a href={selected.phone ? `tel:${selected.phone}` : undefined} className="rounded-xl border border-pink-300/30 bg-pink-400/10 py-3 text-center text-xs font-black">
+                  <Phone className="mx-auto mb-1" size={16} />
+                  Call
+                </a>
+                <a href={smsBody(selected.phone, buildFirstReplyText(selected))} className="rounded-xl border border-pink-300/30 bg-pink-400/10 py-3 text-center text-xs font-black">
+                  <MessageCircle className="mx-auto mb-1" size={16} />
+                  Text
+                </a>
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selected.location)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-xl border border-pink-300/30 bg-pink-400/10 py-3 text-center text-xs font-black"
+                >
+                  <MapPin className="mx-auto mb-1" size={16} />
+                  Navigate
+                </a>
+              </div>
+            ) : null}
 
             <div className="mt-5 space-y-4 overflow-auto pb-6">
               <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
@@ -652,6 +654,7 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
     </main>
   );
 }
+
 
 
 
