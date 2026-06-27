@@ -114,6 +114,93 @@ Photos attached: ${signal.photos}
 Next step: we’ll review the photos/details and send a clean estimate for approval.`;
 }
 
+function buildAgreementText(signal: Signal) {
+  return `Hi ${signal.name}, this is Ridgeline Pro Wash.
+
+We reviewed your ${signal.service} request for ${signal.address}.
+
+Before we lock the job in, please confirm you approve the scope and final job price once we send it.
+
+Service: ${signal.service}
+Condition: ${signal.condition}
+Access: ${signal.access}
+Preferred time: ${signal.preferred}
+Photos attached: ${signal.photos}
+
+Once approved, we can schedule the job.`;
+}
+
+function buildWorkPhotoText(signal: Signal) {
+  return `Hi ${signal.name}, this is Ridgeline Pro Wash. We are keeping before and after photos attached to your ${signal.service} job so the work is documented clearly from start to finish.`;
+}
+
+function buildProofText(signal: Signal) {
+  return `Hi ${signal.name}, thank you for choosing Ridgeline Pro Wash. Your ${signal.service} job is complete. We can send the finished photos/proof here, and if you are happy with the work, a quick review would help a local business a lot.`;
+}
+
+function buildRidgelineEstimateText(signal: Signal, approvedJobPrice: string) {
+  return `Hi ${signal.name}, this is Ridgeline Pro Wash.
+
+I reviewed your pressure cleaning request.
+
+Service: ${signal.service}
+Property: ${signal.address}
+Condition: ${signal.condition}
+Access: ${signal.access}
+Preferred time: ${signal.preferred}
+Photos attached: ${signal.photos}
+
+Estimated flat job price: $${approvedJobPrice}
+
+If this looks good, reply YES and we can lock in the job approval before scheduling.`;
+}
+
+function buildRidgelineApprovalText(signal: Signal, approvedJobPrice: string) {
+  return `Hi ${signal.name}, this is Ridgeline Pro Wash.
+
+Before we schedule the job, please reply YES to confirm the pressure cleaning approval:
+
+Service: ${signal.service}
+Property: ${signal.address}
+Approved job price: $${approvedJobPrice}
+Access: ${signal.access}
+Preferred time: ${signal.preferred}
+
+By replying YES, you confirm the scope, approved flat job price, and that payment is due when the job is complete.
+
+Thank you.`;
+}
+
+function buildRidgelinePaymentText(signal: Signal, approvedJobPrice: string, paymentMethod: string, paymentLink: string) {
+  const payLine = paymentLink.trim()
+    ? `Payment link: ${paymentLink.trim()}`
+    : "We can send the payment link here once everything is confirmed.";
+
+  return `Hi ${signal.name}, this is Ridgeline Pro Wash.
+
+Your pressure cleaning job is complete and ready for payment.
+
+Service: ${signal.service}
+Approved job price: $${approvedJobPrice}
+Amount due: $${approvedJobPrice}
+Payment method: ${paymentMethod}
+
+${payLine}
+
+Thank you.`;
+}
+
+function buildRidgelineProofText(signal: Signal, beforePhotos: RidgelinePhoto[], afterPhotos: RidgelinePhoto[]) {
+  const beforeLinks = beforePhotos.map((photo, index) => `Before ${index + 1}: ${photo.public_url}`).join("\n");
+  const afterLinks = afterPhotos.map((photo, index) => `After ${index + 1}: ${photo.public_url}`).join("\n");
+
+  return `Hi ${signal.name}, this is Ridgeline Pro Wash.
+
+Your ${signal.service} job is complete.
+
+${beforeLinks ? `Before photos:\n${beforeLinks}\n\n` : ""}${afterLinks ? `After photos:\n${afterLinks}\n\n` : ""}Thank you again for choosing Ridgeline Pro Wash.`;
+}
+
 function buildScheduleText(signal: Signal) {
   return `Hi ${signal.name}, this is Ridgeline Pro Wash. We have your ${signal.service} request for ${signal.address}. Does ${signal.preferred} still work as your preferred time window?`;
 }
@@ -182,11 +269,25 @@ const sampleSignal: Signal = {
   rawNotes: "",
 };
 
+type RidgelinePhoto = {
+  id: string;
+  photo_type: "before" | "after";
+  public_url: string;
+  name: string;
+};
+
 export default function RidgelineIntelligenceDashboard() {
   const [signals, setSignals] = useState<Signal[]>([]);
   const [selected, setSelected] = useState<Signal | null>(null);
   const [showContactDetails, setShowContactDetails] = useState(false);
   const [showEstimatePreview, setShowEstimatePreview] = useState(false);
+  const [showHeaderDetails, setShowHeaderDetails] = useState(false);
+  const [approvedJobPrice, setApprovedJobPrice] = useState("325");
+  const [paymentMethod, setPaymentMethod] = useState("Card / Cash App");
+  const [paymentLink, setPaymentLink] = useState("https://www.homeplanet.city/pay/ridgeline");
+  const [beforePhotos, setBeforePhotos] = useState<RidgelinePhoto[]>([]);
+  const [afterPhotos, setAfterPhotos] = useState<RidgelinePhoto[]>([]);
+  const [uploadingPhotoType, setUploadingPhotoType] = useState<"before" | "after" | null>(null);
   const [copiedNotice, setCopiedNotice] = useState("");
   const [loading, setLoading] = useState(true);
   const [boardError, setBoardError] = useState("");
@@ -261,6 +362,42 @@ export default function RidgelineIntelligenceDashboard() {
 
     setSignals((current) => current.filter((signal) => signal.id !== id));
     if (selected?.id === id) setSelected(null);
+  }
+
+  function handleRidgelinePhotoUpload(type: "before" | "after", fileList: FileList | null) {
+    const files = Array.from(fileList || []);
+    if (!files.length) return;
+
+    setUploadingPhotoType(type);
+
+    const mapped = files.map((file) => ({
+      id: `${type}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      photo_type: type,
+      public_url: URL.createObjectURL(file),
+      name: file.name,
+    }));
+
+    if (type === "before") {
+      setBeforePhotos((current) => [...current, ...mapped]);
+    } else {
+      setAfterPhotos((current) => [...current, ...mapped]);
+    }
+
+    window.setTimeout(() => setUploadingPhotoType(null), 350);
+  }
+
+  function removeRidgelinePhoto(photo: RidgelinePhoto) {
+    if (photo.photo_type === "before") {
+      setBeforePhotos((current) => current.filter((item) => item.id !== photo.id));
+    } else {
+      setAfterPhotos((current) => current.filter((item) => item.id !== photo.id));
+    }
+
+    try {
+      URL.revokeObjectURL(photo.public_url);
+    } catch {
+      // local preview cleanup only
+    }
   }
 
   return (
@@ -340,6 +477,12 @@ export default function RidgelineIntelligenceDashboard() {
                           setSelected(signal);
                           setShowContactDetails(false);
                           setShowEstimatePreview(false);
+                          setShowHeaderDetails(false);
+                          setApprovedJobPrice("325");
+                          setPaymentMethod("Card / Cash App");
+                          setPaymentLink("https://www.homeplanet.city/pay/ridgeline");
+                          setBeforePhotos([]);
+                          setAfterPhotos([]);
                         }} className="flex-1 text-left">
                         <h2 className="text-2xl font-black">{signal.name}</h2>
                         <p className="mt-1 font-black text-amber-300">{signal.service}</p>
@@ -359,6 +502,12 @@ export default function RidgelineIntelligenceDashboard() {
                         setSelected(signal);
                         setShowContactDetails(false);
                         setShowEstimatePreview(false);
+                        setShowHeaderDetails(false);
+                        setApprovedJobPrice("325");
+                        setPaymentMethod("Card / Cash App");
+                        setPaymentLink("https://www.homeplanet.city/pay/ridgeline");
+                        setBeforePhotos([]);
+                        setAfterPhotos([]);
                       }} className="mt-4 w-full text-left">
                       <div className="grid gap-2 text-sm text-zinc-300 sm:grid-cols-2">
                         <div>{signal.condition}</div>
@@ -407,73 +556,65 @@ export default function RidgelineIntelligenceDashboard() {
           </aside>
         </section>
       </section>
-
       {selected ? (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm">
-          <aside className="relative ml-auto flex h-full w-full max-w-md flex-col overflow-y-auto border-l border-amber-300/20 bg-black p-5 shadow-2xl shadow-amber-950/30">
-            <div className="pointer-events-none absolute inset-x-0 top-0 h-80 bg-[radial-gradient(circle_at_top,rgba(249,115,22,0.28),rgba(120,53,15,0.12)_36%,transparent_72%)]" />
-            <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-300/60 to-transparent" />
-            <div className="relative z-10">
+          <aside className="ml-auto flex h-full w-full max-w-md flex-col border-l border-amber-300/20 bg-black p-5 shadow-2xl shadow-orange-950/40">
+            <div className="relative rounded-2xl border border-amber-300/20 bg-orange-500/10 p-4 pr-16 shadow-[0_0_34px_rgba(249,115,22,0.08)]">
               <button
                 onClick={() => {
                   setSelected(null);
                   setShowContactDetails(false);
-                  setShowEstimatePreview(false);
+                  setShowHeaderDetails(false);
                 }}
-                className="ml-auto flex rounded-xl border border-white/10 bg-white/10 p-3 hover:bg-white/15"
+                className="absolute right-4 top-4 rounded-xl border border-white/10 bg-white/10 p-3 hover:bg-white/15"
+                aria-label="Close drawer"
               >
                 <X size={18} />
               </button>
 
-              <div className="mt-4 inline-flex rounded-full border border-orange-300/35 bg-orange-500/15 px-4 py-2 text-[10px] font-black uppercase tracking-[0.24em] text-orange-100 shadow-[0_0_28px_rgba(249,115,22,0.12)]">
-                New Request • Ready To Review
-              </div>
-
-              {copiedNotice ? (
-                <div className="mt-3 rounded-xl border border-emerald-300/25 bg-emerald-500/10 px-4 py-3 text-sm font-black text-emerald-100">
-                  OK — {copiedNotice}
-                </div>
-              ) : null}
-
-              <p className="mt-5 text-xs font-black uppercase tracking-[0.3em] text-amber-200">
-                Customer Request
+              <p className="text-[10px] font-black uppercase tracking-[0.28em] text-amber-300">
+                Active Workspace
               </p>
 
-            <h2 className="mt-3 text-4xl font-black">{selected.name}</h2>
-            <p className="mt-1 text-xl font-black text-amber-300">{selected.service}</p>
-            <p className="mt-1 text-sm text-zinc-400">{selected.address}</p>
-
-            <div className="mt-6 grid grid-cols-3 gap-2">
-              <a
-                href={selected.phone ? `tel:${selected.phone}` : "#"}
-                className="rounded-xl border border-amber-300/30 bg-amber-500/10 py-3 text-center text-xs font-black"
+              <button
+                type="button"
+                onClick={() => setShowHeaderDetails((current) => !current)}
+                className="mt-3 w-full text-left"
               >
-                <Phone className="mx-auto mb-1" size={16} />
-                Call
-              </a>
+                <h2 className="truncate whitespace-nowrap text-4xl font-black leading-tight">
+                  {selected.name}
+                </h2>
+                <p className="mt-1 truncate text-xl font-black text-amber-300">{selected.service}</p>
+                <p className="mt-1 truncate text-sm font-bold text-zinc-400">{selected.address}</p>
+                <div className="mt-3 inline-flex rounded-full border border-amber-300/25 bg-amber-500/10 px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-amber-100">
+                  {showHeaderDetails ? "Hide Workspace Details" : "Show Workspace Details"}
+                </div>
+              </button>
 
-              <a
-                href={smsBody(selected.phone, buildFirstReplyText(selected))}
-                className="rounded-xl border border-amber-300/30 bg-amber-500/10 py-3 text-center text-xs font-black"
-              >
-                <MessageCircle className="mx-auto mb-1" size={16} />
-                Text
-              </a>
-
-              <a
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selected.address)}`}
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-xl border border-amber-300/30 bg-amber-500/10 py-3 text-center text-xs font-black"
-              >
-                <MapPin className="mx-auto mb-1" size={16} />
-                Navigate
-              </a>
+              {showHeaderDetails ? (
+                <div className="mt-4 grid grid-cols-3 gap-2 border-t border-white/10 pt-4">
+                  <a href={selected.phone ? `tel:${selected.phone}` : "#"} className="rounded-xl border border-amber-300/30 bg-amber-500/10 py-3 text-center text-xs font-black">
+                    <Phone className="mx-auto mb-1" size={16} />
+                    Call
+                  </a>
+                  <a href={smsBody(selected.phone, buildFirstReplyText(selected))} className="rounded-xl border border-amber-300/30 bg-amber-500/10 py-3 text-center text-xs font-black">
+                    <MessageCircle className="mx-auto mb-1" size={16} />
+                    Text
+                  </a>
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selected.address)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-xl border border-amber-300/30 bg-amber-500/10 py-3 text-center text-xs font-black"
+                  >
+                    <MapPin className="mx-auto mb-1" size={16} />
+                    Navigate
+                  </a>
+                </div>
+              ) : null}
             </div>
 
-            </div>
-
-            <div className="relative z-10 mt-6 space-y-3">
+            <div className="mt-5 space-y-4 overflow-auto pb-6">
               <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
                 <button
                   type="button"
@@ -481,11 +622,11 @@ export default function RidgelineIntelligenceDashboard() {
                   className="flex w-full items-center justify-between gap-3 text-left"
                 >
                   <div>
-                    <p className="text-xs font-black uppercase tracking-[0.25em] text-amber-200">
-                      Contact / Details
+                    <p className="text-[11px] font-black uppercase tracking-[0.35em] text-amber-200">
+                      CONTACT / DETAILS
                     </p>
                     <p className="mt-2 text-sm font-bold text-zinc-300">
-                      {selected.phone || "No phone"} • {selected.preferred}
+                      {selected.phone || "No phone"} • {selected.condition} • {selected.preferred}
                     </p>
                   </div>
                   <span className="rounded-full border border-amber-300/25 bg-amber-500/10 px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-amber-100">
@@ -497,7 +638,7 @@ export default function RidgelineIntelligenceDashboard() {
                   <div className="mt-4 space-y-4 border-t border-white/10 pt-4">
                     <div className="space-y-1 text-sm text-zinc-200">
                       <div>{selected.name}</div>
-                      <div>{selected.phone || "No phone provided"}</div>
+                      <div>{selected.phone || "No phone number provided"}</div>
                       <div>{selected.address}</div>
                     </div>
 
@@ -510,171 +651,444 @@ export default function RidgelineIntelligenceDashboard() {
                       <div>Photos Attached: {selected.photos}</div>
                     </div>
 
-                    {selected.notes && selected.notes !== "None" && (
+                    {selected.notes && selected.notes !== "None" ? (
                       <div className="rounded-xl border border-yellow-300/20 bg-yellow-500/10 p-3">
                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-yellow-200">
                           Customer Notes
                         </p>
                         <p className="mt-2 text-sm leading-6 text-zinc-200">{selected.notes}</p>
                       </div>
-                    )}
+                    ) : null}
+
+                    <div className="grid grid-cols-3 gap-2">
+                      <a href={selected.phone ? `tel:${selected.phone}` : "#"} className="rounded-xl border border-amber-300/30 bg-amber-500/10 py-3 text-center text-xs font-black">
+                        <Phone className="mx-auto mb-1" size={16} />
+                        Call
+                      </a>
+                      <a href={smsBody(selected.phone, buildFirstReplyText(selected))} className="rounded-xl border border-amber-300/30 bg-amber-500/10 py-3 text-center text-xs font-black">
+                        <MessageCircle className="mx-auto mb-1" size={16} />
+                        Text
+                      </a>
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selected.address)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="rounded-xl border border-amber-300/30 bg-amber-500/10 py-3 text-center text-xs font-black"
+                      >
+                        <MapPin className="mx-auto mb-1" size={16} />
+                        Navigate
+                      </a>
+                    </div>
                   </div>
                 ) : null}
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
-                <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-300">
-                  Next Move
+                <p className="text-[11px] font-black uppercase tracking-[0.35em] text-orange-200">
+                  INTELLIGENCE
                 </p>
                 <p className="mt-3 text-sm leading-6 text-zinc-200">
                   {selected.suggestion}
                 </p>
+                <div className="mt-4 rounded-xl border border-orange-300/20 bg-orange-500/10 p-3 text-sm font-bold leading-6 text-orange-100">
+                  Pressure cleaning check: surface type, algae/grime level, oxidation risk, rust stains, water access, gate access, and whether photos are enough for a flat job price.
+                </div>
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
-                <p className="text-xs font-black uppercase tracking-[0.25em] text-amber-200">
-                  Estimate
+                <p className="text-[11px] font-black uppercase tracking-[0.35em] text-amber-200">
+                  ESTIMATE
                 </p>
 
-                <div className="mt-3 grid grid-cols-2 gap-3 text-sm text-zinc-200">
-                  <div className="rounded-xl border border-white/10 bg-black/40 p-3">
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-200">
-                      Status
-                    </p>
-                    <p className="mt-1 font-black text-white">
-                      {showEstimatePreview ? "Draft Ready" : "Not Sent"}
-                    </p>
+                <div className="mt-3 space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-zinc-400">Status</span>
+                    <span className="font-bold text-yellow-300">Not Sent</span>
                   </div>
 
-                  <div className="rounded-xl border border-white/10 bg-black/40 p-3">
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-200">
-                      Estimate Range
-                    </p>
-                    <p className="mt-1 font-black text-white">Review First</p>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-zinc-400">Approved Job Price</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-zinc-400">$</span>
+                      <input
+                        value={approvedJobPrice}
+                        onChange={(event) => setApprovedJobPrice(event.target.value)}
+                        className="w-24 rounded-lg border border-amber-300/25 bg-black px-3 py-2 text-right font-black text-white outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex items-center justify-between">
+                    <span className="text-zinc-400">Price Type</span>
+                    <span className="font-black text-amber-100">Flat job price</span>
+                  </div>
+                </div>
+
+                <a
+                  href={smsBody(selected.phone, `Hi ${selected.name}, this is Ridgeline Pro Wash. Can you send a few clear photos of the areas you want cleaned? This helps us confirm the surface condition, access, and final flat job price before scheduling.`)}
+                  className="mt-4 block rounded-xl bg-orange-500 py-3 text-center text-sm font-black text-black"
+                >
+                  Request Photos Text
+                </a>
+
+                <div className="mt-4 grid gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleCopy("estimate draft copied", buildRidgelineEstimateText(selected, approvedJobPrice))}
+                    className="rounded-xl border border-white/10 py-3 text-sm font-black"
+                  >
+                    Copy Estimate Draft
+                  </button>
+
+                  <a
+                    href={smsBody(selected.phone, buildRidgelineEstimateText(selected, approvedJobPrice))}
+                    className="rounded-xl bg-orange-500 py-3 text-center text-sm font-black text-black"
+                  >
+                    Send Estimate Text
+                  </a>
+                </div>
+
+                <div className="mt-4 rounded-xl bg-yellow-500/10 p-3 text-sm font-bold text-yellow-200">
+                  Next Move: Confirm photos/details, set the flat job price, then send estimate for approval.
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
+                <p className="text-[11px] font-black uppercase tracking-[0.35em] text-sky-200">
+                  AGREEMENT / JOB APPROVAL
+                </p>
+
+                <p className="mt-2 text-sm text-zinc-300">
+                  Send the customer a simple confirmation before scheduling. Their YES reply becomes the approval record for the scope and flat job price.
+                </p>
+
+                <div className="mt-4 rounded-xl border border-sky-300/20 bg-sky-400/10 p-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-zinc-400">Approved Price</span>
+                    <span className="font-bold text-white">${approvedJobPrice}</span>
+                  </div>
+
+                  <div className="mt-2 flex justify-between">
+                    <span className="text-zinc-400">Price Type</span>
+                    <span className="font-bold text-white">Flat job price</span>
+                  </div>
+
+                  <div className="mt-2 flex justify-between">
+                    <span className="text-zinc-400">Approval Needed</span>
+                    <span className="font-bold text-sky-100">Customer YES</span>
                   </div>
                 </div>
 
                 <div className="mt-4 grid grid-cols-2 gap-2">
                   <button
                     type="button"
-                    onClick={() => setShowEstimatePreview((current) => !current)}
-                    className="rounded-xl border border-amber-300/25 bg-amber-500/10 py-3 text-xs font-black uppercase text-amber-100"
+                    onClick={() => handleCopy("approval text copied", buildRidgelineApprovalText(selected, approvedJobPrice))}
+                    className="rounded-xl border border-white/10 py-3 text-sm font-black"
                   >
-                    Create Estimate
+                    Copy Approval Text
                   </button>
 
                   <a
-                    href={smsBody(selected.phone, buildEstimateText(selected))}
-                    className="rounded-xl bg-orange-500 py-3 text-center text-xs font-black uppercase text-black"
+                    href={smsBody(selected.phone, buildRidgelineApprovalText(selected, approvedJobPrice))}
+                    className="rounded-xl bg-sky-300 py-3 text-center text-sm font-black text-black"
                   >
-                    Send Estimate Text
+                    Send Approval Text
                   </a>
                 </div>
 
-                {showEstimatePreview ? (
-                  <div className="mt-4 rounded-2xl border border-amber-300/25 bg-black/45 p-4 text-left">
-                    <p className="text-[10px] font-black uppercase tracking-[0.25em] text-amber-200">
-                      Draft Estimate Preview
-                    </p>
-
-                    <div className="mt-3 space-y-2 text-sm text-zinc-200">
-                      <div>
-                        <span className="font-black text-white">Service:</span> {selected.service}
-                      </div>
-                      <div>
-                        <span className="font-black text-white">Property:</span> {selected.address}
-                      </div>
-                      <div>
-                        <span className="font-black text-white">Condition:</span> {selected.condition}
-                      </div>
-                      <div>
-                        <span className="font-black text-white">Access:</span> {selected.access}
-                      </div>
-                      <div>
-                        <span className="font-black text-white">Preferred Time:</span> {selected.preferred}
-                      </div>
-                      <div>
-                        <span className="font-black text-white">Preferred Crew:</span> {selected.preferredTech}
-                      </div>
-                      <div>
-                        <span className="font-black text-white">Photos Attached:</span> {selected.photos}
-                      </div>
-                    </div>
-
-                    <div className="mt-4 rounded-xl bg-amber-500/10 px-3 py-3 text-sm font-bold leading-6 text-amber-100">
-                      Suggested range: Review photos before final price.
-                      <br />
-                      Next step: send estimate text for approval.
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => handleCopy("estimate draft copied", buildEstimateText(selected))}
-                      className="mt-3 w-full rounded-xl border border-amber-300/30 bg-amber-500/10 py-3 text-xs font-black uppercase text-amber-100"
-                    >
-                      Copy Estimate Draft
-                    </button>
-
-                    {copiedNotice === "estimate draft copied" ? (
-                      <div className="mt-3 rounded-xl border border-emerald-300/25 bg-emerald-500/10 px-3 py-2 text-center text-xs font-black uppercase tracking-[0.18em] text-emerald-100">
-                        OK — Estimate Draft Copied
-                      </div>
-                    ) : null}
-                  </div>
-                ) : null}
-
-                <p className="mt-3 rounded-xl bg-amber-500/10 px-3 py-2 text-xs font-black text-amber-100">
-                  Next move: Review request details, photos, access, and preferred crew before sending price.
-                </p>
+                <div className="mt-4 rounded-xl bg-yellow-500/10 p-3 text-sm font-bold text-yellow-100">
+                  Next Move: Wait for YES before confirming schedule.
+                </div>
               </div>
+
               <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
-                <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-200">
-                  Schedule
-                </p>
-                <p className="mt-3 text-sm text-zinc-200">
-                  Preferred: {selected.preferred}
-                </p>
-                <a
-                  href={smsBody(selected.phone, buildScheduleText(selected))}
-                  className="mt-4 block w-full rounded-xl bg-orange-500 py-3 text-center text-sm font-black text-black shadow-[0_0_30px_rgba(249,115,22,0.15)]"
-                >
-                  <CalendarCheck className="mr-2 inline" size={16} />
-                  Confirm Schedule Text
-                </a>
-              </div>
-
-              <div className="rounded-2xl border border-lime-300/20 bg-lime-500/10 p-4 shadow-[0_0_35px_rgba(132,204,22,0.06)]">
-                <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.25em] text-lime-200">
-                  <CreditCard size={15} />
-                  Payment
+                <p className="text-[11px] font-black uppercase tracking-[0.35em] text-orange-200">
+                  SCHEDULE
                 </p>
 
-                <div className="mt-3 rounded-xl border border-white/10 bg-black/35 p-3 text-sm text-zinc-200">
-                  Payment link / QR can be sent after the estimate is approved.
+                <div className="mt-3 space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-zinc-400">Status</span>
+                    <span className="font-bold text-yellow-300">Not Scheduled</span>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span className="text-zinc-400">Preferred</span>
+                    <span className="font-bold">{selected.preferred}</span>
+                  </div>
                 </div>
 
-                <a
-                  href={smsBody(selected.phone, buildPaymentText(selected))}
-                  className="mt-4 block rounded-xl bg-lime-300 py-3 text-center text-xs font-black uppercase text-black"
-                >
-                  Send Payment Link Text
-                </a>
+                <div className="mt-4 grid gap-2">
+                  <a
+                    href={smsBody(selected.phone, buildScheduleText(selected))}
+                    className="rounded-xl bg-orange-500 py-3 text-center text-sm font-black text-black"
+                  >
+                    Confirm Schedule Text
+                  </a>
+                </div>
+
+                <div className="mt-4 rounded-xl bg-yellow-500/10 p-3 text-sm font-bold text-yellow-200">
+                  Next Move: Book the job only after approval is confirmed.
+                </div>
               </div>
 
-              <div className="rounded-2xl border border-yellow-300/20 bg-yellow-500/10 p-4 shadow-[0_0_35px_rgba(234,179,8,0.07)]">
-                <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.25em] text-yellow-200">
-                  <Star size={15} />
-                  Review / Share
+              <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
+                <p className="text-[11px] font-black uppercase tracking-[0.35em] text-cyan-200">
+                  WORK / PHOTOS
                 </p>
 
-                <p className="mt-3 text-sm leading-6 text-zinc-200">
-                  When the job is done, turn the work into proof: review request, customer update, or social post.
-                </p>
+                <div className="mt-3 space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-zinc-400">Work Status</span>
+                    <span className="font-bold text-yellow-300">Not Started</span>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span className="text-zinc-400">Before Photos</span>
+                    <span className="font-bold">{beforePhotos.length ? `${beforePhotos.length} Saved` : "Not Added"}</span>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span className="text-zinc-400">After Photos</span>
+                    <span className="font-bold">{afterPhotos.length ? `${afterPhotos.length} Saved` : "Not Added"}</span>
+                  </div>
+                </div>
 
                 <div className="mt-4 grid grid-cols-2 gap-2">
+                  <label className="rounded-xl border border-cyan-300/25 bg-cyan-400/10 py-3 text-center text-sm font-black text-cyan-100">
+                    {uploadingPhotoType === "before" ? "Uploading..." : "Take Before"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      className="hidden"
+                      onChange={(event) => {
+                        handleRidgelinePhotoUpload("before", event.target.files);
+                        event.currentTarget.value = "";
+                      }}
+                    />
+                  </label>
+
+                  <label className="rounded-xl border border-cyan-300/25 bg-cyan-400/10 py-3 text-center text-sm font-black text-cyan-100">
+                    Upload Before
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={(event) => {
+                        handleRidgelinePhotoUpload("before", event.target.files);
+                        event.currentTarget.value = "";
+                      }}
+                    />
+                  </label>
+
+                  <label className="rounded-xl border border-cyan-300/25 bg-cyan-400/10 py-3 text-center text-sm font-black text-cyan-100">
+                    {uploadingPhotoType === "after" ? "Uploading..." : "Take After"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      className="hidden"
+                      onChange={(event) => {
+                        handleRidgelinePhotoUpload("after", event.target.files);
+                        event.currentTarget.value = "";
+                      }}
+                    />
+                  </label>
+
+                  <label className="rounded-xl border border-cyan-300/25 bg-cyan-400/10 py-3 text-center text-sm font-black text-cyan-100">
+                    Upload After
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={(event) => {
+                        handleRidgelinePhotoUpload("after", event.target.files);
+                        event.currentTarget.value = "";
+                      }}
+                    />
+                  </label>
+                </div>
+
+                <div className="mt-4 space-y-4">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-zinc-500">Before Photos</p>
+                    {beforePhotos.length ? (
+                      <div className="mt-2 grid grid-cols-2 gap-2">
+                        {beforePhotos.map((photo) => (
+                          <div key={photo.id} className="overflow-hidden rounded-xl border border-white/10 bg-black">
+                            <img src={photo.public_url} alt="Before pressure cleaning" className="h-28 w-full object-cover" />
+                            <div className="grid grid-cols-3 gap-1 p-2 text-[10px] font-black">
+                              <a href={photo.public_url} target="_blank" rel="noreferrer" className="rounded-lg bg-white/10 py-2 text-center">View</a>
+                              <button type="button" onClick={() => handleCopy("photo link copied", photo.public_url)} className="rounded-lg bg-white/10 py-2">Copy</button>
+                              <button type="button" onClick={() => removeRidgelinePhoto(photo)} className="rounded-lg bg-red-500/20 py-2 text-red-200">Remove</button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="mt-2 rounded-xl border border-white/10 bg-black/40 p-3 text-sm font-bold text-zinc-400">No before photos saved yet.</div>
+                    )}
+                  </div>
+
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-zinc-500">After Photos</p>
+                    {afterPhotos.length ? (
+                      <div className="mt-2 grid grid-cols-2 gap-2">
+                        {afterPhotos.map((photo) => (
+                          <div key={photo.id} className="overflow-hidden rounded-xl border border-white/10 bg-black">
+                            <img src={photo.public_url} alt="After pressure cleaning" className="h-28 w-full object-cover" />
+                            <div className="grid grid-cols-3 gap-1 p-2 text-[10px] font-black">
+                              <a href={photo.public_url} target="_blank" rel="noreferrer" className="rounded-lg bg-white/10 py-2 text-center">View</a>
+                              <button type="button" onClick={() => handleCopy("photo link copied", photo.public_url)} className="rounded-lg bg-white/10 py-2">Copy</button>
+                              <button type="button" onClick={() => removeRidgelinePhoto(photo)} className="rounded-lg bg-red-500/20 py-2 text-red-200">Remove</button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="mt-2 rounded-xl border border-white/10 bg-black/40 p-3 text-sm font-bold text-zinc-400">No after photos saved yet.</div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-4 rounded-xl bg-cyan-400/10 p-3 text-sm font-bold text-cyan-100">
+                  Next Move: Capture before and after photos so the job proof stays with the request.
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
+                <p className="text-[11px] font-black uppercase tracking-[0.35em] text-green-200">
+                  PAYMENT WORKSPACE
+                </p>
+
+                <div className="mt-3 space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-zinc-400">Status</span>
+                    <span className="font-bold text-yellow-300">Not Sent</span>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span className="text-zinc-400">Amount Due</span>
+                    <span className="font-bold">${approvedJobPrice}</span>
+                  </div>
+                </div>
+
+                <div className="mt-4 rounded-xl border border-green-300/20 bg-green-500/10 p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-sm font-bold text-zinc-300">Approved Job Price</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-zinc-400">$</span>
+                      <input
+                        value={approvedJobPrice}
+                        onChange={(event) => setApprovedJobPrice(event.target.value)}
+                        className="w-24 rounded-lg border border-green-300/25 bg-black px-3 py-2 text-right font-black text-white outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex items-center justify-between">
+                    <span className="text-sm font-bold text-zinc-300">Final Amount Due</span>
+                    <span className="text-2xl font-black text-green-200">${approvedJobPrice}</span>
+                  </div>
+                </div>
+
+                <div className="mt-4 rounded-xl border border-white/10 bg-black/30 p-3">
+                  <label className="text-xs font-black uppercase tracking-[0.22em] text-zinc-500">
+                    Payment Method
+                  </label>
+                  <input
+                    value={paymentMethod}
+                    onChange={(event) => setPaymentMethod(event.target.value)}
+                    placeholder="Card, Cash App, cash, etc."
+                    className="mt-2 w-full rounded-lg border border-green-300/25 bg-black px-3 py-2 text-sm font-bold text-white outline-none"
+                  />
+
+                  <label className="mt-4 block text-xs font-black uppercase tracking-[0.22em] text-zinc-500">
+                    Payment Link
+                  </label>
+                  <input
+                    value={paymentLink}
+                    onChange={(event) => setPaymentLink(event.target.value)}
+                    placeholder="Payment link"
+                    className="mt-2 w-full rounded-lg border border-green-300/25 bg-black px-3 py-2 text-sm font-bold text-white outline-none"
+                  />
+
+                  {paymentLink.trim() ? (
+                    <div className="mt-4 flex items-center gap-4 rounded-xl bg-white p-3 text-black">
+                      <img
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(paymentLink.trim())}`}
+                        alt="Payment QR code"
+                        className="h-28 w-28 rounded-lg"
+                      />
+                      <div>
+                        <p className="text-sm font-black">Payment QR Code</p>
+                        <p className="mt-1 text-xs font-bold text-zinc-600">Updates from the payment link field.</p>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="mt-4 grid gap-2">
+                  <a
+                    href={smsBody(selected.phone, buildRidgelinePaymentText(selected, approvedJobPrice, paymentMethod, paymentLink))}
+                    className="rounded-xl border border-green-400/40 bg-green-500/10 py-3 text-center text-sm font-black text-green-100"
+                  >
+                    Send Payment Link Text
+                  </a>
+
+                  <button
+                    type="button"
+                    onClick={() => handleCopy("payment note copied", buildRidgelinePaymentText(selected, approvedJobPrice, paymentMethod, paymentLink))}
+                    className="rounded-xl border border-white/10 py-3 text-sm font-black"
+                  >
+                    Copy Payment Note
+                  </button>
+                </div>
+
+                <div className="mt-4 rounded-xl bg-yellow-500/10 p-3 text-sm font-bold text-yellow-200">
+                  Next Move: Send payment link after the job is complete.
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
+                <p className="text-[11px] font-black uppercase tracking-[0.35em] text-yellow-200">
+                  PROOF / REVIEW
+                </p>
+
+                <div className="mt-3 space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-zinc-400">Proof Photos</span>
+                    <span className="font-bold">{beforePhotos.length + afterPhotos.length ? `${beforePhotos.length + afterPhotos.length} Saved` : "Not Added"}</span>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span className="text-zinc-400">Review</span>
+                    <span className="font-bold text-yellow-300">Not Requested</span>
+                  </div>
+                </div>
+
+                <div className="mt-4 grid gap-2">
+                  <a
+                    href={smsBody(selected.phone, buildRidgelineProofText(selected, beforePhotos, afterPhotos))}
+                    className="rounded-xl bg-yellow-400 py-3 text-center text-sm font-black text-black"
+                  >
+                    Send Completion / Proof Text
+                  </a>
+
+                  <button
+                    type="button"
+                    onClick={() => handleCopy("proof message copied", buildRidgelineProofText(selected, beforePhotos, afterPhotos))}
+                    className="rounded-xl border border-white/10 py-3 text-sm font-black"
+                  >
+                    Copy Proof Message
+                  </button>
+
                   <a
                     href={smsBody(selected.phone, buildReviewText(selected))}
-                    className="rounded-xl bg-yellow-400 py-3 text-center text-xs font-black uppercase text-black"
+                    className="rounded-xl bg-yellow-400 py-3 text-center text-sm font-black text-black"
                   >
                     Send Review Text
                   </a>
@@ -682,19 +1096,44 @@ export default function RidgelineIntelligenceDashboard() {
                   <button
                     type="button"
                     onClick={() => handleCopy("post copied", buildSocialPost(selected))}
-                    className="rounded-xl border border-yellow-300/25 bg-yellow-500/10 py-3 text-xs font-black uppercase text-yellow-100"
+                    className="rounded-xl border border-white/10 py-3 text-sm font-black"
                   >
                     <Share2 className="mr-1 inline" size={14} />
-                    Copy Post
+                    Copy Proof Post
                   </button>
                 </div>
+
+                <div className="mt-4 rounded-xl bg-yellow-500/10 p-3 text-sm font-bold text-yellow-200">
+                  Next Move: Turn finished work into proof, review, and shareable media.
+                </div>
               </div>
-              <button
-                onClick={() => deleteSignal(selected.id)}
-                className="w-full rounded-xl border border-red-400/20 bg-red-950/30 py-3 text-sm font-black text-red-200"
-              >
-                Delete Request
-              </button>
+
+              <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
+                <p className="text-[11px] font-black uppercase tracking-[0.35em] text-zinc-300">
+                  TIMELINE
+                </p>
+
+                <div className="mt-4 space-y-3 text-sm text-zinc-300">
+                  <div>1. Request received</div>
+                  <div>2. Details reviewed</div>
+                  <div>3. Photos requested or reviewed</div>
+                  <div>4. Flat job price sent</div>
+                  <div>5. Customer approval received</div>
+                  <div>6. Schedule confirmed</div>
+                  <div>7. Before photos captured</div>
+                  <div>8. Work completed</div>
+                  <div>9. After photos captured</div>
+                  <div>10. Payment sent / collected</div>
+                  <div>11. Proof and review requested</div>
+                </div>
+
+                <button
+                  onClick={() => deleteSignal(selected.id)}
+                  className="mt-4 w-full rounded-xl border border-red-400/30 bg-red-500/10 py-3 text-sm font-black text-red-200"
+                >
+                  Delete Request
+                </button>
+              </div>
             </div>
           </aside>
         </div>
@@ -702,6 +1141,10 @@ export default function RidgelineIntelligenceDashboard() {
     </main>
   );
 }
+
+
+
+
 
 
 
