@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import ShareMetadata from "../components/ShareMetadata";
@@ -39,11 +39,13 @@ export default function OkeechobeeTogetherPage() {
     return clean.slice(0, 155).trim() + "...";
   }
 
-  const sortedEvents = [...events].sort((a: any, b: any) => {
-    if (a.status === "Resolved" && b.status !== "Resolved") return -1;
-    if (a.status !== "Resolved" && b.status === "Resolved") return 1;
-    return 0;
+  const publicEvents = events.filter((event: any) => {
+    const title = String(event.title || "").toLowerCase();
+    return !title.includes("test project") && !title.includes("coordinator test");
   });
+
+  const activeEvents = publicEvents.filter((event: any) => event.status !== "Resolved");
+  const completedEvents = publicEvents.filter((event: any) => event.status === "Resolved");
 
   return (
     <>
@@ -68,35 +70,27 @@ export default function OkeechobeeTogetherPage() {
       <ShareMetadata
         title={SHARE_METADATA["/planet/okeechobee"].title}
         description={SHARE_METADATA["/planet/okeechobee"].description}
-        image={`https://www.homeplanet.city${SHARE_METADATA["/planet/okeechobee"].image}`}
-        url="https://www.homeplanet.city/planet/okeechobee"
+        image={`https://okeechobeetogether.org${SHARE_METADATA["/planet/okeechobee"].image}`}
+        url="https://okeechobeetogether.org"
       />
 
     <main style={styles.page}>
       <section style={styles.card}>
         <p style={styles.kicker}>Okeechobee Together</p>
-        <h1 style={styles.title}>Community Action Board</h1>
+        <h1 style={styles.title}>Real People. Real Needs. Real Local Support.</h1>
 
         <p style={styles.emotionalLine}>
-          Real people. Real needs. Real local support.
+          A simple place for Okeechobee neighbors to ask for help, offer help, and follow local community projects.
         </p>
 
         <p style={styles.subtitle}>
-          One flat tire.<br />
-          One missed paycheck.<br />
-          One broken AC unit.
-        </p>
-
-        <p style={styles.missionText}>
-          That is all it takes for a family to fall behind.
-        </p>
-
-        <p style={styles.missionText}>
-          This board connects people who need help with people willing to help.
+          No drama.<br />
+          No politics.<br />
+          Just community action.
         </p>
 
         <div style={styles.actionRow}>
-          <Link to="/planet/okeechobee/create" style={styles.primaryButton}>
+          <Link to="/planet/okeechobee/create-v2" style={styles.primaryButton}>
             I Need Help
           </Link>
 
@@ -105,71 +99,165 @@ export default function OkeechobeeTogetherPage() {
           </a>
         </div>
 
+        <div
+          style={{
+            marginTop: 28,
+            display: "grid",
+            gap: 14,
+          }}
+        >
+          <div
+            style={{
+              padding: 18,
+              borderRadius: 18,
+              border: "1px solid #222",
+              background: "#101010",
+            }}
+          >
+            <h2 style={{ margin: "0 0 8px", fontSize: 22 }}>
+              How it works
+            </h2>
+
+            <p style={{ margin: 0, color: "#bdbdbd", lineHeight: 1.6 }}>
+              Someone shares a local need. Helpers, materials, and updates get organized in one place. The community can see what is happening and how to get involved.
+            </p>
+          </div>
+
+          <div
+            style={{
+              padding: 18,
+              borderRadius: 18,
+              border: "1px solid rgba(57,255,20,0.25)",
+              background: "linear-gradient(135deg, #101810 0%, #0b0b0b 100%)",
+            }}
+          >
+            <h2 style={{ margin: "0 0 8px", fontSize: 22 }}>
+              Want to help or know someone who needs support?
+            </h2>
+
+            <p style={{ margin: "0 0 14px", color: "#bdbdbd", lineHeight: 1.6 }}>
+              Reach out if you want to volunteer, donate materials, share a local need, or stay connected with future projects.
+            </p>
+
+            <Link to="/planet/okeechobee/create-v2" style={styles.primaryButton}>
+              Reach Out To Us
+            </Link>
+          </div>
+        </div>
+
         <section id="projects" style={styles.board}>
-          <h2 style={styles.sectionTitle}>Live Community Posts</h2>
+          {completedEvents.length > 0 ? (
+            <div style={{ marginBottom: 26 }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 12,
+                  marginBottom: 12,
+                }}
+              >
+                <div>
 
-          <div style={styles.list}>
-            {sortedEvents.length === 0 ? (
-              <div style={styles.emptyCard}>
-                No live community posts yet. Create the first one.
+                  <h2
+                    style={{
+                      ...styles.sectionTitle,
+                      margin: 0,
+                      paddingLeft: 12,
+                      borderLeft: "4px solid #FFC457",
+                    }}
+                  >
+                    Completed Projects
+                  </h2>
+                </div>
+
+
               </div>
-            ) : (
-              sortedEvents.map((event) => (
-                <Link
-                  key={event.slug}
-                  to={`/planet/okeechobee/event/${event.slug}`}
-                  className="okeechobee-event-card"
-                  style={styles.eventCard}
+
+              <div style={styles.list}>
+                {completedEvents.map((event) => (
+                  <Link
+                    key={event.slug}
+                    to={`/planet/okeechobee/event/${event.slug}`}
+                    className="okeechobee-event-card"
+                    style={styles.eventCard}
+                  >
+                    <div style={styles.metaRow}>
+                      <span style={styles.metaItem}>Need Met</span>
+                      <span style={styles.metaItem}>{helperCount(event)} Neighbors Helped</span>
+                      <span style={styles.metaItem}>Community Success</span>
+                    </div>
+
+                    <h3 style={styles.eventTitle}>{event.title}</h3>
+                    <p style={styles.eventText}>{previewText(event.description)}</p>
+
+                    <div style={styles.cardActionRow}>
+                      <span>Outcome recorded</span>
+                      <strong>View Outcome &gt;</strong>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          <div id="active-needs">
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 12,
+                marginBottom: 12,
+              }}
+            >
+              <div>
+
+                <h2
+                  style={{
+                    ...styles.sectionTitle,
+                    margin: 0,
+                    paddingLeft: 12,
+                    borderLeft: "4px solid #7CFF6B",
+                  }}
                 >
-                  <div style={styles.metaRow}>
-                    {event.status === "Resolved" ? (
-                      <>
-                        <span style={styles.metaItem}>
-                          Need Met
-                        </span>
+                  Active Projects
+                </h2>
+              </div>
+            </div>
 
-                        <span style={styles.metaItem}>
-                          {helperCount(event)} Neighbors Helped
-                        </span>
+            <div style={styles.list}>
+              {activeEvents.length === 0 ? (
+                <div style={styles.emptyCard}>
+                  No active community needs right now.
+                </div>
+              ) : (
+                activeEvents.map((event) => (
+                  <Link
+                    key={event.slug}
+                    to={`/planet/okeechobee/event/${event.slug}`}
+                    className="okeechobee-event-card"
+                    style={styles.eventCard}
+                  >
+                    <div style={styles.metaRow}>
+                      <span style={styles.metaItem}>Local Need</span>
+                      <span style={styles.metaItem}>{helperCount(event)} Helpers Joined</span>
+                      <span style={styles.metaItem}>Community Responding</span>
+                    </div>
 
-                        <span style={styles.metaItem}>
-                          Community Success
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <span style={styles.metaItem}>
-                          Local Need
-                        </span>
+                    <h3 style={styles.eventTitle}>{event.title}</h3>
+                    <p style={styles.eventText}>{previewText(event.description)}</p>
 
-                        <span style={styles.metaItem}>
-                          {helperCount(event)} Helpers Joined
-                        </span>
-
-                        <span style={styles.metaItem}>
-                          Community Responding
-                        </span>
-                      </>
-                    )}
-                  </div>
-
-                  <h3 style={styles.eventTitle}>{event.title}</h3>
-                  <p style={styles.eventText}>{previewText(event.description)}</p>
-
-                  <div style={styles.cardActionRow}>
-                    <span>
-                      {event.status === "Resolved" ? "Outcome recorded" : "Community need open"}
-                    </span>
-                    <strong>
-                      {event.status === "Resolved" ? "View Outcome >" : "View Need >"}
-                    </strong>
-                  </div>
-                </Link>
-              ))
-            )}
+                    <div style={styles.cardActionRow}>
+                      <span>Community need open</span>
+                      <strong>View Need &gt;</strong>
+                    </div>
+                  </Link>
+                ))
+              )}
+            </div>
           </div>
         </section>
-
         <div style={styles.footerBox}>
           <h2 style={styles.footerTitle}>This is only the beginning.</h2>
           <p style={styles.footerText}>
@@ -178,18 +266,69 @@ export default function OkeechobeeTogetherPage() {
           </p>
         </div>
 
-        <div style={styles.footerCtaBox}>
-          <div style={styles.footerCtaGlow} />
-          <div style={styles.footerCtaKicker}>Built on HomePlanet</div>
-          <h3 style={styles.footerCtaTitle}>
-            Build something like this for your community, group, or local business.
-          </h3>
-          <p style={styles.footerCtaText}>
-            Turn scattered messages, needs, offers, updates, and outcomes into one organized place where people can actually take action.
-          </p>
-          <Link to="/planet/build-your-live-system" style={styles.footerCtaButton}>
-            Build Something Like This
-          </Link>
+        <div
+          style={{
+            marginTop: 18,
+            padding: "16px 18px",
+            borderRadius: 18,
+            border: "1px solid rgba(57,255,20,0.22)",
+            background: "linear-gradient(135deg, rgba(57,255,20,0.06) 0%, rgba(10,10,10,0.96) 75%)",
+          }}
+        >
+          <div
+            style={{
+              color: "#7CFF6B",
+              fontSize: 11,
+              fontWeight: 900,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              marginBottom: 8,
+            }}
+          >
+            Built on HomePlanet
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 14,
+              flexWrap: "wrap",
+            }}
+          >
+            <p
+              style={{
+                margin: 0,
+                color: "#d7d7d7",
+                fontSize: 15,
+                lineHeight: 1.45,
+                maxWidth: 520,
+              }}
+            >
+              Want a simple page like this for your group, project, or local business?
+            </p>
+
+            <Link
+              to="/planet/build-your-live-system"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                minHeight: 38,
+                padding: "0 16px",
+                borderRadius: 999,
+                background: "#1eff00",
+                color: "#050505",
+                fontSize: 13,
+                fontWeight: 900,
+                textDecoration: "none",
+                whiteSpace: "nowrap",
+              }}
+            >
+              Learn More
+            </Link>
+          </div>
         </div>
       </section>
     </main>
@@ -437,6 +576,13 @@ const styles: Record<string, React.CSSProperties> = {
     boxShadow: "none",
   },
 };
+
+
+
+
+
+
+
 
 
 
