@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 type TripType = "One Way" | "Round Trip";
 type RideStatus = "Waiting" | "Confirmed" | "En Route" | "Picked Up" | "Arrived" | "Collect Payment" | "Paid" | "Completed";
@@ -55,6 +55,7 @@ export default function HomePlanetTransportationPage() {
   const [openForm, setOpenForm] = useState(false);
   const [selectedRide, setSelectedRide] = useState<Ride | null>(starterRides[0]);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [paymentMode, setPaymentMode] = useState<"link" | "qr" | "tap" | "cash">("qr");
   const [completedActionLabel, setCompletedActionLabel] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<"Cash" | "Cash App">("Cash App");
@@ -279,7 +280,7 @@ function updateStatus(id: number, status: RideStatus) {
               key={step.status}
               className="rounded-2xl border border-emerald-400/20 bg-emerald-950/40 px-5 py-4 text-sm font-black text-emerald-100"
             >
-              ✓ {step.label}
+              ? {step.label}
             </div>
           ))}
         </div>
@@ -297,25 +298,21 @@ function updateStatus(id: number, status: RideStatus) {
     Choose how to collect payment.
   </p>
 
-  <div className="mt-4 grid gap-3">
-    <button onClick={() => { setPaymentMode("link"); updateStatus(selectedRide.id, "Collect Payment"); }} className={`rounded-3xl border p-5 text-left ${paymentMode === "link" ? "border-emerald-400/60 bg-emerald-400/15" : "border-white/10 bg-black/40"}`}>
-      <div className="text-lg font-black text-white">SEND PAYMENT LINK</div>
-      <div className="mt-1 text-sm text-zinc-400">Text rider a payment link.</div>
+  <div className="mt-4 grid grid-cols-4 gap-2">
+    <button onClick={() => { setPaymentMode("link"); updateStatus(selectedRide.id, "Collect Payment"); }} className={`rounded-2xl border px-2 py-3 text-center text-[11px] font-black uppercase ${paymentMode === "link" ? "border-emerald-400/60 bg-emerald-400 text-black" : "border-white/10 bg-black/40 text-zinc-300"}`}>
+      Text
     </button>
 
-    <button onClick={() => { setPaymentMode("qr"); updateStatus(selectedRide.id, "Collect Payment"); }} className={`rounded-3xl border p-5 text-left ${paymentMode === "qr" ? "border-emerald-400/60 bg-emerald-400/15" : "border-white/10 bg-black/40"}`}>
-      <div className="text-lg font-black text-white">SHOW QR CODE</div>
-      <div className="mt-1 text-sm text-emerald-100/70">Customer scans your phone.</div>
+    <button onClick={() => { setPaymentMode("qr"); updateStatus(selectedRide.id, "Collect Payment"); }} className={`rounded-2xl border px-2 py-3 text-center text-[11px] font-black uppercase ${paymentMode === "qr" ? "border-emerald-400/60 bg-emerald-400 text-black" : "border-white/10 bg-black/40 text-zinc-300"}`}>
+      QR
     </button>
 
-    <button onClick={() => { setPaymentMode("tap"); updateStatus(selectedRide.id, "Collect Payment"); }} className={`rounded-3xl border p-5 text-left ${paymentMode === "tap" ? "border-emerald-400/60 bg-emerald-400/15" : "border-white/10 bg-black/40"}`}>
-      <div className="text-lg font-black text-white">TAP TO PAY</div>
-      <div className="mt-1 text-sm text-zinc-400">Accept card payment on device.</div>
+    <button onClick={() => { setPaymentMode("tap"); updateStatus(selectedRide.id, "Collect Payment"); }} className={`rounded-2xl border px-2 py-3 text-center text-[11px] font-black uppercase ${paymentMode === "tap" ? "border-emerald-400/60 bg-emerald-400 text-black" : "border-white/10 bg-black/40 text-zinc-300"}`}>
+      Tap
     </button>
 
-    <button onClick={() => { setPaymentMode("cash"); updateStatus(selectedRide.id, "Collect Payment"); }} className={`rounded-3xl border p-5 text-left ${paymentMode === "cash" ? "border-emerald-400/60 bg-emerald-400/15" : "border-white/10 bg-black/40"}`}>
-      <div className="text-lg font-black text-white">CASH</div>
-      <div className="mt-1 text-sm text-zinc-400">Confirm cash received.</div>
+    <button onClick={() => { setPaymentMode("cash"); updateStatus(selectedRide.id, "Collect Payment"); }} className={`rounded-2xl border px-2 py-3 text-center text-[11px] font-black uppercase ${paymentMode === "cash" ? "border-emerald-400/60 bg-emerald-400 text-black" : "border-white/10 bg-black/40 text-zinc-300"}`}>
+      Cash
     </button>
   </div>
 
@@ -491,6 +488,39 @@ function updateStatus(id: number, status: RideStatus) {
         </div>
       </section>
 
+      {settingsOpen && (
+        <div className="fixed inset-0 z-[60]">
+          <button
+            aria-label="Close settings"
+            onClick={() => setSettingsOpen(false)}
+            className="absolute inset-0 bg-black/70"
+          />
+
+          <div className="absolute inset-x-0 bottom-0 max-h-[90vh] overflow-y-auto rounded-t-[2rem] border border-emerald-400/20 bg-[#050805] p-5 shadow-2xl shadow-black">
+            <div className="mx-auto mb-4 h-1.5 w-14 rounded-full bg-white/25" />
+
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.25em] text-emerald-300">
+                  Driver Settings
+                </p>
+                <h2 className="mt-2 text-2xl font-black">Business Setup</h2>
+              </div>
+
+              <button onClick={() => setSettingsOpen(false)} className="rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs font-black">
+                Close
+              </button>
+            </div>
+
+            <div className="mt-5 rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-4">
+              <p className="text-sm text-zinc-300">
+                Settings shell is ready.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {drawerOpen && selectedRide && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <button
@@ -518,6 +548,7 @@ function updateStatus(id: number, status: RideStatus) {
     </main>
   );
 }
+
 
 
 
