@@ -1,28 +1,5 @@
-﻿{
+{
   "rewrites": [
-    {
-      "source": "/",
-      "has": [
-        {
-          "type": "host",
-          "value": "okeechobeetogether.org"
-        }
-      ],
-      "destination": "/okeechobee-preview.html"
-    },
-    {
-      "source": "/",
-      "has": [
-        {
-          "type": "host",
-          "value": "www.okeechobeetogether.org"
-        }
-      ],
-      "destination": "/okeechobee-preview.html"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
