@@ -39,6 +39,41 @@ export default function OkeechobeeTogetherPage() {
     return clean.slice(0, 155).trim() + "...";
   }
 
+  function projectAgeLabel(event: any) {
+    const rawDate =
+      event.created_at || event.createdAt || event.updated_at || event.updatedAt;
+
+    if (!rawDate) return "Recently posted";
+
+    const created = new Date(rawDate);
+    if (Number.isNaN(created.getTime())) return "Recently posted";
+
+    const diffMs = new Date().getTime() - created.getTime();
+    const daysOpen = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+
+    if (daysOpen <= 1) return "Posted today";
+    if (daysOpen <= 3) return "New this week";
+    if (daysOpen <= 6) return "This week";
+    if (daysOpen <= 13) return "1 week open";
+    if (daysOpen <= 20) return "2 weeks open";
+    return "3+ weeks open";
+  }
+
+  function isNewProject(event: any) {
+    const rawDate =
+      event.created_at || event.createdAt || event.updated_at || event.updatedAt;
+
+    if (!rawDate) return false;
+
+    const created = new Date(rawDate);
+    if (Number.isNaN(created.getTime())) return false;
+
+    const diffMs = new Date().getTime() - created.getTime();
+    const daysOpen = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+
+    return daysOpen <= 3;
+  }
+
   const publicEvents = events.filter((event: any) => {
     const title = String(event.title || "").toLowerCase();
     return !title.includes("test project") && !title.includes("coordinator test");
@@ -139,7 +174,7 @@ export default function OkeechobeeTogetherPage() {
               Reach out if you want to volunteer, donate materials, share a local need, or stay connected with future projects.
             </p>
 
-            <Link to="/planet/okeechobee/create-v2" style={styles.primaryButton}>
+            <Link to="/planet/okeechobee/reach-out" style={styles.primaryButton}>
               Reach Out To Us
             </Link>
           </div>
@@ -184,6 +219,7 @@ export default function OkeechobeeTogetherPage() {
                   >
                     <div style={styles.metaRow}>
                       <span style={styles.metaItem}>Need Met</span>
+                      <span style={styles.completedBadge}>COMPLETED</span>
                       <span style={styles.metaItem}>{helperCount(event)} Neighbors Helped</span>
                       <span style={styles.metaItem}>Community Success</span>
                     </div>
@@ -191,7 +227,7 @@ export default function OkeechobeeTogetherPage() {
                     <h3 style={styles.eventTitle}>{event.title}</h3>
                     <p style={styles.eventText}>{previewText(event.description)}</p>
 
-                    <div style={styles.cardActionRow}>
+                    <div style={styles.completedActionRow}>
                       <span>Outcome recorded</span>
                       <strong>View Outcome &gt;</strong>
                     </div>
@@ -241,6 +277,12 @@ export default function OkeechobeeTogetherPage() {
                   >
                     <div style={styles.metaRow}>
                       <span style={styles.metaItem}>Local Need</span>
+                      {isNewProject(event) ? (
+                        <span style={styles.newBadge}>NEW</span>
+                      ) : null}
+                      <span style={styles.urgencyItem}>
+                        {projectAgeLabel(event)}
+                      </span>
                       <span style={styles.metaItem}>{helperCount(event)} Helpers Joined</span>
                       <span style={styles.metaItem}>Community Responding</span>
                     </div>
@@ -470,6 +512,53 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
     gap: 6,
   },
+
+  completedBadge: {
+    display: "inline-flex",
+    alignItems: "center",
+    borderRadius: 999,
+    padding: "4px 12px",
+    border: "1px solid rgba(255,193,7,0.55)",
+    background: "rgba(255,193,7,0.12)",
+    color: "#ffd24a",
+    fontSize: 12,
+    fontWeight: 1000,
+    letterSpacing: 1.4,
+    boxShadow: "0 0 18px rgba(255,193,7,0.28)",
+  },
+
+  completedActionRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: 12,
+    marginTop: 16,
+    paddingTop: 14,
+    borderTop: "1px solid rgba(255,255,255,0.08)",
+    color: "#ffc107",
+    fontSize: 14,
+    fontWeight: 900,
+  },
+
+  newBadge: {
+    display: "inline-flex",
+    alignItems: "center",
+    borderRadius: 999,
+    padding: "3px 8px",
+    background: "#39ff14",
+    color: "#031000",
+    fontSize: 11,
+    fontWeight: 1000,
+    letterSpacing: 0.8,
+    boxShadow: "0 0 14px rgba(57,255,20,0.35)",
+  },
+
+  urgencyItem: {
+    display: "inline-flex",
+    alignItems: "center",
+    color: "#39ff14",
+    fontSize: 13,
+    fontWeight: 900,
+  },
   eventTitle: {
     margin: "14px 0 6px",
     fontSize: 21,
@@ -576,6 +665,11 @@ const styles: Record<string, React.CSSProperties> = {
     boxShadow: "none",
   },
 };
+
+
+
+
+
 
 
 

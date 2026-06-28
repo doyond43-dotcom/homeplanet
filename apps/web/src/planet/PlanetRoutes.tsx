@@ -379,6 +379,7 @@ import RestaurantAwarenessDrinkBoard from "../pages/RestaurantAwarenessDrinkBoar
 import OkeechobeeTogetherPage from "../pages/OkeechobeeTogetherPage";
 import OkeechobeeCreateEventPage from "../pages/OkeechobeeCreateEventPage";
 import OkeechobeeCreateEventPageV2 from "../pages/OkeechobeeCreateEventPageV2";
+import OkeechobeeReachOutPage from "../pages/OkeechobeeReachOutPage";
 import OkeechobeeEventPage from "../pages/OkeechobeeEventPage";
 
 import OkeechobeeCommunityAdminPage from "../pages/OkeechobeeCommunityAdminPage";
@@ -524,6 +525,7 @@ export default function PlanetRoutes() {
               <Route path="crew-team" element={<CrewTeamBoard />} />
 <Route path="start" element={<StartPage />} />
       <Route path="okeechobee/create-v2" element={<OkeechobeeCreateEventPageV2 />} />
+      <Route path="okeechobee/reach-out" element={<OkeechobeeReachOutPage />} />
       <Route path="okeechobee/create" element={<OkeechobeeCreateEventPage />} />
       <Route path="okeechobee/event/:slug" element={<OkeechobeeEventPage />} />
       <Route path="okeechobee" element={<OkeechobeeTogetherPage />} />
