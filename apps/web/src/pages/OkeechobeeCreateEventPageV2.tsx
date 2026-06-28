@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
 type HelpCategory =
@@ -137,7 +137,58 @@ export default function OkeechobeeCreateEventPageV2() {
 
   return (
     <main style={styles.page}>
-      <section style={styles.card}>
+      <style>
+        {`
+          .okeechobee-create-card {
+            transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+          }
+
+          .okeechobee-create-section {
+            transition: border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+          }
+
+          .okeechobee-create-section:hover {
+            border-color: rgba(57, 255, 20, 0.22);
+            box-shadow: 0 0 22px rgba(57, 255, 20, 0.055);
+            background: linear-gradient(135deg, #171717 0%, #131913 100%);
+          }
+
+          .okeechobee-create-choice {
+            transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+          }
+
+          .okeechobee-create-choice:hover {
+            transform: translateY(-1px);
+            border-color: rgba(57, 255, 20, 0.45);
+            box-shadow: 0 0 18px rgba(57, 255, 20, 0.10);
+            background: rgba(57, 255, 20, 0.07);
+          }
+
+          .okeechobee-create-input {
+            transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+          }
+
+          .okeechobee-create-input:focus {
+            border-color: rgba(57, 255, 20, 0.7) !important;
+            box-shadow: 0 0 0 3px rgba(57, 255, 20, 0.12);
+            background: #111;
+          }
+
+          .okeechobee-create-submit {
+            transition: transform 160ms ease, box-shadow 160ms ease, filter 160ms ease;
+          }
+
+          .okeechobee-create-submit:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 0 26px rgba(57, 255, 20, 0.32);
+            filter: brightness(1.04);
+          }
+        `}
+      </style>
+      <section className="okeechobee-create-card" style={styles.card}>
+        <Link to="/planet/okeechobee" style={styles.backLink}>
+          ← Back to Okeechobee Together
+        </Link>
         <p style={styles.kicker}>Okeechobee Together</p>
         <h1 style={styles.title}>What kind of help is needed?</h1>
         <p style={styles.subtitle}>
@@ -145,11 +196,12 @@ export default function OkeechobeeCreateEventPageV2() {
         </p>
 
         <form onSubmit={handleSubmit} style={styles.form}>
-          <section style={styles.section}>
+          <section className="okeechobee-create-section" style={styles.section}>
             <p style={styles.sectionTitle}>1. Choose the type of need</p>
             <div style={styles.grid}>
               {categories.map((item) => (
                 <button
+                  className="okeechobee-create-choice"
                   key={item}
                   type="button"
                   onClick={() => setCategory(item)}
@@ -165,12 +217,12 @@ export default function OkeechobeeCreateEventPageV2() {
           </section>
 
           {isYard && (
-            <section style={styles.section}>
+            <section className="okeechobee-create-section" style={styles.section}>
               <p style={styles.sectionTitle}>2. Yard / outdoor details</p>
 
               <label style={styles.label}>
                 Yard condition
-                <select style={styles.input} value={yardCondition} onChange={(e) => setYardCondition(e.target.value)}>
+                <select className="okeechobee-create-input" style={styles.input} value={yardCondition} onChange={(e) => setYardCondition(e.target.value)}>
                   {yardConditions.map((item) => (
                     <option key={item}>{item}</option>
                   ))}
@@ -186,6 +238,7 @@ export default function OkeechobeeCreateEventPageV2() {
 
                     return (
                       <button
+                        className="okeechobee-create-choice"
                         key={item}
                         type="button"
                         onClick={() => {
@@ -209,12 +262,12 @@ export default function OkeechobeeCreateEventPageV2() {
             </section>
           )}
 
-          <section style={styles.section}>
+          <section className="okeechobee-create-section" style={styles.section}>
             <p style={styles.sectionTitle}>{isYard ? "3" : "2"}. Timing and situation</p>
 
             <label style={styles.label}>
               How urgent is it?
-              <select style={styles.input} value={urgency} onChange={(e) => setUrgency(e.target.value)}>
+              <select className="okeechobee-create-input" style={styles.input} value={urgency} onChange={(e) => setUrgency(e.target.value)}>
                 {urgencyOptions.map((item) => (
                   <option key={item}>{item}</option>
                 ))}
@@ -223,7 +276,7 @@ export default function OkeechobeeCreateEventPageV2() {
 
             <label style={styles.label}>
               Who is this for?
-              <select style={styles.input} value={whoFor} onChange={(e) => setWhoFor(e.target.value)}>
+              <select className="okeechobee-create-input" style={styles.input} value={whoFor} onChange={(e) => setWhoFor(e.target.value)}>
                 {whoOptions.map((item) => (
                   <option key={item}>{item}</option>
                 ))}
@@ -231,12 +284,13 @@ export default function OkeechobeeCreateEventPageV2() {
             </label>
           </section>
 
-          <section style={styles.section}>
+          <section className="okeechobee-create-section" style={styles.section}>
             <p style={styles.sectionTitle}>{isYard ? "4" : "3"}. Request details</p>
 
             <label style={styles.label}>
               Short title
               <input
+                className="okeechobee-create-input"
                 style={styles.input}
                 required
                 value={title}
@@ -248,6 +302,7 @@ export default function OkeechobeeCreateEventPageV2() {
             <label style={styles.label}>
               What is going on?
               <textarea
+                className="okeechobee-create-input"
                 style={{ ...styles.input, minHeight: 130, resize: "vertical" }}
                 required
                 value={story}
@@ -259,6 +314,7 @@ export default function OkeechobeeCreateEventPageV2() {
             <label style={styles.label}>
               General location
               <input
+                className="okeechobee-create-input"
                 style={styles.input}
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
@@ -269,6 +325,7 @@ export default function OkeechobeeCreateEventPageV2() {
             <label style={styles.label}>
               Contact / private instructions
               <input
+                className="okeechobee-create-input"
                 style={styles.input}
                 value={contact}
                 onChange={(e) => setContact(e.target.value)}
@@ -281,7 +338,7 @@ export default function OkeechobeeCreateEventPageV2() {
             Requests submitted here should be reviewed before they appear on the public board.
           </div>
 
-          <button style={styles.button} type="submit" disabled={isSubmitting}>
+          <button className="okeechobee-create-submit" style={styles.button} type="submit" disabled={isSubmitting}>
             {isSubmitting ? "Submitting..." : "Submit For Review"}
           </button>
         </form>
@@ -306,6 +363,15 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 24,
     padding: 24,
   },
+  backLink: {
+    display: "inline-flex",
+    color: "#39FF14",
+    textDecoration: "none",
+    fontWeight: 900,
+    fontSize: 14,
+    marginBottom: 22,
+  },
+
   kicker: {
     color: "#39FF14",
     fontWeight: 900,
