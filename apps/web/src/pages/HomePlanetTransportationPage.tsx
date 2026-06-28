@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+﻿import React, { useEffect, useMemo, useState } from "react";
 
 type TripType = "One Way" | "Round Trip";
 type RideStatus = "Waiting" | "Confirmed" | "En Route" | "Picked Up" | "Arrived" | "Collect Payment" | "Paid" | "Completed";
@@ -41,11 +41,22 @@ const starterRides: Ride[] = [
 ];
 
 export default function HomePlanetTransportationPage() {
-  const [rides, setRides] = useState<Ride[]>(starterRides);
+  const [rides, setRides] = useState<Ride[]>(() => {
+    const saved = localStorage.getItem("hp_transportation_requests");
+    if (!saved) return starterRides;
+
+    try {
+      const requests = JSON.parse(saved) as Ride[];
+      return [...requests, ...starterRides];
+    } catch {
+      return starterRides;
+    }
+  });
   const [openForm, setOpenForm] = useState(false);
   const [selectedRide, setSelectedRide] = useState<Ride | null>(starterRides[0]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [paymentMode, setPaymentMode] = useState<"link" | "qr" | "tap" | "cash">("qr");
+  const [completedActionLabel, setCompletedActionLabel] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<"Cash" | "Cash App">("Cash App");
 
   const [form, setForm] = useState({
@@ -57,6 +68,36 @@ export default function HomePlanetTransportationPage() {
     tripType: "One Way" as TripType,
     notes: "",
   });
+
+  useEffect(() => {
+    const saved = localStorage.getItem("hp_transportation_requests");
+    if (!saved) return;
+
+    try {
+      const requests = JSON.parse(saved) as Ride[];
+      setRides([...requests, ...starterRides]);
+      if (requests[0]) {
+        setSelectedRide(requests[0]);
+      }
+    } catch {
+      // keep starter rides
+    }
+  }, []);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("hp_transportation_requests");
+    if (!saved) return;
+
+    try {
+      const requests = JSON.parse(saved) as Ride[];
+      setRides([...requests, ...starterRides]);
+      if (requests[0]) {
+        setSelectedRide(requests[0]);
+      }
+    } catch {
+      // keep starter rides
+    }
+  }, []);
 
   const stats = useMemo(
     () => ({
@@ -106,7 +147,27 @@ export default function HomePlanetTransportationPage() {
     });
   }
 
-  function updateStatus(id: number, status: RideStatus) {
+  
+function getNextRideAction(status: RideStatus): { label: string; next: RideStatus } | null {
+  switch (status) {
+    case "Waiting":
+      return { label: "Driver En Route", next: "En Route" };
+
+    case "En Route":
+      return { label: "Passenger Picked Up", next: "Picked Up" };
+
+    case "Picked Up":
+      return { label: "Arrived", next: "Arrived" };
+
+    case "Paid":
+      return { label: "Complete Ride", next: "Completed" };
+
+    default:
+      return null;
+  }
+}
+
+function updateStatus(id: number, status: RideStatus) {
     setRides((current) =>
       current.map((ride) => (ride.id === id ? { ...ride, status } : ride))
     );
@@ -179,17 +240,55 @@ export default function HomePlanetTransportationPage() {
         </div>
 
         <div className="mt-5 grid gap-2">
-          <button onClick={() => updateStatus(selectedRide.id, "En Route")} className="rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm font-black">
-            Driver En Route
-          </button>
-          <button onClick={() => updateStatus(selectedRide.id, "Picked Up")} className="rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm font-black">
-            Passenger Picked Up
-          </button>
-          <button onClick={() => updateStatus(selectedRide.id, "Arrived")} className="rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm font-black">
-            Arrived
-          </button>
+          
+{(() => {
+  const steps = [
+    { status: "Waiting", label: "I'm on my way", next: "En Route" },
+    { status: "En Route", label: "Rider is with me", next: "Picked Up" },
+    { status: "Picked Up", label: "We're at the destination", next: "Arrived" },
+  ] as const;
 
-          <div className="mt-4 rounded-[2rem] border border-emerald-400/20 bg-emerald-400/10 p-4">
+  const completedCount =
+    selectedRide.status === "Waiting" ? 0 :
+    selectedRide.status === "En Route" ? 1 :
+    selectedRide.status === "Picked Up" ? 2 :
+    3;
+
+  const current = steps.find((s) => s.status === selectedRide.status);
+  const completedSteps = steps.slice(0, completedCount);
+
+  return (
+    <div className="rounded-[2rem] border border-white/10 bg-black/40 p-4">
+      <p className="text-xs font-black uppercase tracking-[0.2em] text-zinc-400">
+        Ride Journey
+      </p>
+
+      {current ? (
+        <button
+          onClick={() => updateStatus(selectedRide.id, current.next)}
+          className="mt-4 w-full rounded-3xl bg-emerald-400 px-6 py-6 text-left text-xl font-black text-black shadow-lg shadow-emerald-500/20 transition-all duration-200 active:scale-[0.98]"
+        >
+          {current.label}
+        </button>
+      ) : null}
+
+      {completedSteps.length > 0 ? (
+        <div className="mt-3 grid gap-2">
+          {completedSteps.map((step) => (
+            <div
+              key={step.status}
+              className="rounded-2xl border border-emerald-400/20 bg-emerald-950/40 px-5 py-4 text-sm font-black text-emerald-100"
+            >
+              ✓ {step.label}
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+})()}
+
+<div style={{ display: selectedRide.status === "Arrived" || selectedRide.status === "Collect Payment" || selectedRide.status === "Paid" ? undefined : "none" }} className="mt-4 rounded-[2rem] border border-emerald-400/20 bg-emerald-400/10 p-4">
   <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-200">
     Payment Workspace
   </p>
@@ -258,7 +357,7 @@ export default function HomePlanetTransportationPage() {
   </button>
 </div>
 
-<button onClick={() => updateStatus(selectedRide.id, "Completed")} className="mt-3 rounded-2xl bg-white px-4 py-4 text-sm font-black text-black">
+<button style={{ display: selectedRide.status === "Paid" ? undefined : "none" }} onClick={() => updateStatus(selectedRide.id, "Completed")} className="mt-3 rounded-2xl bg-white px-4 py-4 text-sm font-black text-black">
   Complete Ride
 </button>
         </div>
@@ -419,6 +518,10 @@ export default function HomePlanetTransportationPage() {
     </main>
   );
 }
+
+
+
+
 
 
 
