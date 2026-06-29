@@ -22,6 +22,10 @@ type RequestSummary = {
   id: string;
   created_at: string;
   session_id: string | null;
+  name: string;
+  phone: string;
+  zone: string;
+  notes: string;
   who: string;
   help: string;
   condition: string;
@@ -81,6 +85,10 @@ function buildRequestSummaries(events: LawnEvent[]): RequestSummary[] {
         id: event.id,
         created_at: event.created_at,
         session_id: event.session_id,
+        name: payload.name || "No name",
+        phone: payload.phone || "",
+        zone: payload.contact_zone || payload.zone || "No area listed",
+        notes: payload.notes || "",
         who: payload.who_needs_help || "Not selected",
         help: payload.help_type || "Not selected",
         condition: payload.yard_condition || "Not selected",
@@ -478,13 +486,45 @@ function InsightPanel({
 }
 
 function RequestSummaryCard({ request }: { request: RequestSummary }) {
+    const rawPhone = request.phone || "";
+  const digitsOnly = rawPhone.replace(/\D/g, "");
+  const normalizedPhone =
+    digitsOnly.length === 10
+      ? `+1${digitsOnly}`
+      : digitsOnly.length === 11 && digitsOnly.startsWith("1")
+        ? `+${digitsOnly}`
+        : rawPhone.trim();
+
+  const displayPhone =
+    digitsOnly.length === 10
+      ? `(${digitsOnly.slice(0, 3)}) ${digitsOnly.slice(3, 6)}-${digitsOnly.slice(6)}`
+      : digitsOnly.length === 11 && digitsOnly.startsWith("1")
+        ? `(${digitsOnly.slice(1, 4)}) ${digitsOnly.slice(4, 7)}-${digitsOnly.slice(7)}`
+        : rawPhone || "No phone listed";
+  const quickReply = `Hi ${request.name || "there"}, this is Daniel with Okeechobee Together. We received your lawn help request.
+
+I saw you are in ${request.zone || "Okeechobee"} and need ${request.help}. We are organizing the first lawn help route now.
+
+What days or times usually work best, and is there anything else we should know before we come by?`;
+
+  const smsHref = normalizedPhone
+    ? `sms:${normalizedPhone}?body=${encodeURIComponent(quickReply)}`
+    : "#";
+
+  const callHref = normalizedPhone ? `tel:${normalizedPhone}` : "#";
+
   return (
     <div className="rounded-3xl border border-white/10 bg-black/30 p-5">
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
           <div className="text-xl font-black">
+            {request.name}
+          </div>
+
+          <div className="mt-1 text-sm font-bold text-white/60">
             {request.who}
           </div>
+
           <div className="mt-1 text-xs font-bold text-white/40">
             Submitted {timeAgo(request.created_at)}
           </div>
@@ -495,7 +535,23 @@ function RequestSummaryCard({ request }: { request: RequestSummary }) {
         </div>
       </div>
 
-      <div className="mt-5 grid gap-3 md:grid-cols-3">
+      <div className="mt-5 grid gap-3 md:grid-cols-2">
+        <DetailBox label="Phone" value={displayPhone} />
+        <DetailBox label="Area" value={request.zone || "No area listed"} />
+      </div>
+
+      {request.notes && (
+        <div className="mt-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+          <div className="text-xs font-black uppercase tracking-widest text-white/40">
+            Notes
+          </div>
+          <div className="mt-2 whitespace-pre-wrap text-sm font-semibold leading-relaxed text-white/75">
+            {request.notes}
+          </div>
+        </div>
+      )}
+
+      <div className="mt-5 grid gap-3 md:grid-cols-4">
         <DetailBox label="Help needed" value={request.help} />
         <DetailBox label="Yard condition" value={request.condition} />
         <DetailBox label="Contribution" value={request.contribution} />
@@ -507,6 +563,40 @@ function RequestSummaryCard({ request }: { request: RequestSummary }) {
               : "No photos"
           }
         />
+      </div>
+
+      <div className="mt-5 grid gap-3 md:grid-cols-3">
+        <a
+          href={smsHref}
+          className={[
+            "rounded-2xl px-4 py-3 text-center text-sm font-black",
+            normalizedPhone
+              ? "bg-green-400 text-black"
+              : "pointer-events-none bg-white/10 text-white/35",
+          ].join(" ")}
+        >
+          Text
+        </a>
+
+        <a
+          href={callHref}
+          className={[
+            "rounded-2xl border px-4 py-3 text-center text-sm font-black",
+            normalizedPhone
+              ? "border-white/15 bg-white/[0.04] text-white"
+              : "pointer-events-none border-white/10 bg-white/[0.02] text-white/35",
+          ].join(" ")}
+        >
+          Call
+        </a>
+
+        <button
+          type="button"
+          onClick={() => navigator.clipboard?.writeText(quickReply)}
+          className="rounded-2xl border border-green-400/20 bg-green-400/10 px-4 py-3 text-sm font-black text-green-300"
+        >
+          Copy Reply
+        </button>
       </div>
     </div>
   );
@@ -557,5 +647,8 @@ function EventRow({ event }: { event: LawnEvent }) {
     </div>
   );
 }
+
+
+
 
 
