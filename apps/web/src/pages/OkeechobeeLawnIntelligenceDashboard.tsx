@@ -1,6 +1,8 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 
+const LAUNCH_CUTOFF_ISO = "2026-06-29T13:10:00-04:00";
+
 type LawnEvent = {
   id: string;
   page: string;
@@ -101,6 +103,7 @@ export default function OkeechobeeLawnIntelligenceDashboard() {
     const { data, error } = await supabase
       .from("okeechobee_lawn_events")
       .select("*")
+      .gte("created_at", LAUNCH_CUTOFF_ISO)
       .order("created_at", { ascending: false })
       .limit(250);
 
@@ -128,10 +131,16 @@ export default function OkeechobeeLawnIntelligenceDashboard() {
           table: "okeechobee_lawn_events",
         },
         (payload) => {
-          setEvents((current) => [
-            payload.new as LawnEvent,
-            ...current,
-          ].slice(0, 250));
+          const event = payload.new as LawnEvent;
+
+          if (
+            new Date(event.created_at).getTime() <
+            new Date(LAUNCH_CUTOFF_ISO).getTime()
+          ) {
+            return;
+          }
+
+          setEvents((current) => [event, ...current].slice(0, 250));
           setLastRefresh(new Date().toLocaleTimeString());
         }
       )
@@ -290,6 +299,9 @@ export default function OkeechobeeLawnIntelligenceDashboard() {
 
             <div className="rounded-2xl border border-green-400/20 bg-green-400/[0.06] px-4 py-3 text-sm font-black text-green-300">
               {loading ? "Loading..." : `Last refresh: ${lastRefresh || "now"}`}
+              <div className="mt-1 text-[10px] font-black uppercase tracking-widest text-green-200/70">
+                Launch Mode
+              </div>
             </div>
           </div>
         </section>
@@ -545,4 +557,5 @@ function EventRow({ event }: { event: LawnEvent }) {
     </div>
   );
 }
+
 
