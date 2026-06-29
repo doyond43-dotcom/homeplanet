@@ -1,42 +1,75 @@
-import HomePlanetTransportationPage from "./pages/HomePlanetTransportationPage";
+﻿import HomePlanetTransportationPage from "./pages/HomePlanetTransportationPage";
+
 import HomePlanetTransportationRequestPage from "./pages/HomePlanetTransportationRequestPage";
+
+import OkeechobeeLawnProgramPage from './pages/OkeechobeeLawnProgramPage';
+import OkeechobeeLawnIntelligenceDashboard from './pages/OkeechobeeLawnIntelligenceDashboard';
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useSearchParams } from "react-router-dom";
 
+
 import TaylorCreekRealDemoBoard from "./pages/TaylorCreekRealDemoBoard";
+
 import TaylorCreekRealDemoStaffBoard from "./pages/TaylorCreekRealDemoStaffBoard";
+
 import HomeServicesLiveSystemStaffBoard from "./pages/HomeServicesLiveSystemStaffBoard";
 
+
 import PublicPage from "./routes/PublicPage";
+
 import TenantPublicPage from "./routes/TenantPublicPage";
+
 import LiveShopTV from "./routes/LiveShopTV";
+
 import LiveIntakeBoard from "./routes/LiveIntakeBoard";
+
 import PrintWorkOrder from "./routes/PrintWorkOrder";
 
+
 import ServiceRoutes from "./service/ServiceRoutes";
+
 import CityRoutes from "./routes/CityRoutes";
+
 import TaylorCreekSite from "./routes/TaylorCreekSite";
 
+
 import PressPage from "./routes/PressPage";
+
 import PressKitTaylorCreek from "./routes/PressKitTaylorCreek";
 
+
 import PlanetRoutes from "./planet/PlanetRoutes";
+
 import CreatorRoutes from "./routes/CreatorRoutes";
+
 import WorkspaceRoutes from "./app/WorkspaceRoutes";
 
+
 import LiveAwnitIntake from "./pages/LiveAwnitIntake";
+
 import LegalDemoBoard from "./pages/LegalDemoBoard";
+
 import DanFieldNotebookDesk from "./pages/DanFieldNotebookDesk";
+
 import LeeStudentNotebookDesk from "./pages/LeeStudentNotebookDesk";
+
 import NotFound from "./pages/NotFound";
 
+
 import BeamScreen from "./routes/BeamScreen";
+
 import BeamReceive from "./routes/BeamReceive";
+
 import BeamOpen from "./routes/BeamOpen";
 
+
 import WildingLiveBoardDispatch from "./pages/WildingLiveBoardDispatch";
+
 import HomePlanetMarketAwarenessFunnelV1, { HomePlanetMarketAwarenessDashboardV1 } from "./pages/HomePlanetMarketAwarenessFunnelV1";
+
 import HomePlanetAfterTheClickDemo from "./pages/HomePlanetAfterTheClickDemo";
+
 import BrightSideFlowDemo from "./pages/BrightSideFlowDemo";
+
 
 function LiveShell() {
   return <Outlet />;
@@ -174,12 +207,23 @@ export default function App() {
         <Route path="/:slug/*" element={<TenantPublicPage />} />
 
         <Route path="/" element={<OkeechobeeDomainHomeRedirect />} />
-
-        <Route path="*" element={<NotFound />} />
+          <Route
+            path="/planet/okeechobee/lawn-program"
+            element={<OkeechobeeLawnProgramPage />}
+          />
+          <Route
+            path="/planet/okeechobee/lawn-program/intelligence"
+            element={<OkeechobeeLawnIntelligenceDashboard />}
+          />
+          <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   );
 }
+
+
+
+
 
 
 
