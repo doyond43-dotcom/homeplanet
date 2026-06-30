@@ -330,7 +330,6 @@ export default function OkeechobeeLawnIntelligenceDashboard() {
           <InsightPanel title="Top Zones" items={topZones} empty="No zones yet." />
           <InsightPanel title="Top Click Sources" items={topSources} empty="No clicks yet." />
         </section>
-
         <section className="mt-8 rounded-3xl border border-green-400/20 bg-green-400/[0.05] p-6 md:p-8">
           <div className="flex items-center justify-between gap-4">
             <div>
@@ -647,6 +646,12 @@ function EventRow({ event }: { event: LawnEvent }) {
     </div>
   );
 }
+
+
+
+
+
+
 
 
 

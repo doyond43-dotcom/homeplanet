@@ -604,6 +604,13 @@ export default function OkeechobeeLawnProgramPage() {
                   optionClass={optionClass}
                   selectOption={selectOption}
                 />
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                  <ContactFields
+                    values={fieldValues}
+                    onChange={updateField}
+                  />
+                </div>
+
 
                 <button
                   onClick={() => submitPanel("nearby_alert")}
@@ -638,6 +645,13 @@ export default function OkeechobeeLawnProgramPage() {
                   optionClass={optionClass}
                   selectOption={selectOption}
                 />
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                  <ContactFields
+                    values={fieldValues}
+                    onChange={updateField}
+                  />
+                </div>
+
 
                 <button
                   onClick={() => submitPanel("worker")}
@@ -663,6 +677,13 @@ export default function OkeechobeeLawnProgramPage() {
                   optionClass={optionClass}
                   selectOption={selectOption}
                 />
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                  <ContactFields
+                    values={fieldValues}
+                    onChange={updateField}
+                  />
+                </div>
+
 
                 <button
                   onClick={() => submitPanel("sponsor")}
@@ -689,6 +710,13 @@ export default function OkeechobeeLawnProgramPage() {
                   optionClass={optionClass}
                   selectOption={selectOption}
                 />
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                  <ContactFields
+                    values={fieldValues}
+                    onChange={updateField}
+                  />
+                </div>
+
 
                 <button
                   onClick={() => submitPanel("helper")}
@@ -839,6 +867,19 @@ function ContactFields({
             className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm font-bold text-white outline-none placeholder:text-white/30 focus:border-green-400/50"
             autoComplete="tel"
             inputMode="tel"
+          />        </label>
+
+        <label className="grid gap-2">
+          <span className="text-xs font-black uppercase tracking-widest text-white/45">
+            Email Optional
+          </span>
+          <input
+            value={values.email || ""}
+            onChange={(event) => onChange("email", event.target.value)}
+            placeholder="Only if you prefer email"
+            className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm font-bold text-white outline-none placeholder:text-white/30 focus:border-green-400/50"
+            autoComplete="email"
+            inputMode="email"
           />
         </label>
 
@@ -987,6 +1028,9 @@ function GoodToKnowItem({ text }: { text: string }) {
     </div>
   );
 }
+
+
+
 
 
 
