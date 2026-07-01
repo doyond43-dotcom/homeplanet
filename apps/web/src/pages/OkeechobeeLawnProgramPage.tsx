@@ -737,10 +737,10 @@ export default function OkeechobeeLawnProgramPage() {
 
           <div className="text-left">
             <div className="text-[11px] font-black uppercase tracking-[0.28em] text-white/55">
-              Built on HomePlanet
+              Organized with HomePlanet
             </div>
             <div className="mt-1 text-xs font-semibold text-white/40">
-              Stronger together.
+              Live pages + workspaces for local businesses · homeplanet.city
             </div>
           </div>
         </div>
@@ -1028,6 +1028,7 @@ function GoodToKnowItem({ text }: { text: string }) {
     </div>
   );
 }
+
 
 
 
