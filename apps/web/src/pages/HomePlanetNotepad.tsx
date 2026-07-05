@@ -658,35 +658,35 @@ export default function HomePlanetNotepad() {
 
           <div className="grid gap-3 lg:grid-cols-[1fr_0.75fr_1fr_0.55fr]">
             <input
-              className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3.5 text-white outline-none placeholder:text-white/35 focus:border-emerald-300/50"
+              className="rounded-2xl border border-white/20 bg-black/45 px-4 py-3.5 text-white outline-none placeholder:text-white/45 focus:border-emerald-300/50"
               placeholder="Customer name"
               value={form.name}
               onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
             />
 
             <input
-              className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3.5 text-white outline-none placeholder:text-white/35 focus:border-emerald-300/50"
+              className="rounded-2xl border border-white/20 bg-black/45 px-4 py-3.5 text-white outline-none placeholder:text-white/45 focus:border-emerald-300/50"
               placeholder="Phone number"
               value={form.phone}
               onChange={(event) => setForm((prev) => ({ ...prev, phone: event.target.value }))}
             />
 
             <input
-              className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3.5 text-white outline-none placeholder:text-white/35 focus:border-emerald-300/50"
+              className="rounded-2xl border border-white/20 bg-black/45 px-4 py-3.5 text-white outline-none placeholder:text-white/45 focus:border-emerald-300/50"
               placeholder="Address for navigation"
               value={form.address}
               onChange={(event) => setForm((prev) => ({ ...prev, address: event.target.value }))}
             />
 
             <input
-              className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3.5 text-white outline-none placeholder:text-white/35 focus:border-emerald-300/50"
+              className="rounded-2xl border border-white/20 bg-black/45 px-4 py-3.5 text-white outline-none placeholder:text-white/45 focus:border-emerald-300/50"
               placeholder="Amount"
               value={form.amount}
               onChange={(event) => setForm((prev) => ({ ...prev, amount: event.target.value }))}
             />
 
             <input
-              className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3.5 text-white outline-none placeholder:text-white/35 focus:border-emerald-300/50 lg:col-span-4"
+              className="rounded-2xl border border-white/20 bg-black/45 px-4 py-3.5 text-white outline-none placeholder:text-white/45 focus:border-emerald-300/50 lg:col-span-4"
               placeholder="Quick note — driveway wash, lawn cleanup, deep clean, quote, follow-up..."
               value={form.note}
               onChange={(event) => setForm((prev) => ({ ...prev, note: event.target.value }))}
@@ -706,7 +706,7 @@ export default function HomePlanetNotepad() {
             {customers.map((customer) => (
               <article
                 key={customer.id}
-                className="rounded-[1.75rem] border border-white/10 bg-black/45 p-4 shadow-xl shadow-black/20"
+                className="rounded-[1.75rem] border border-white/20 bg-black/45 p-4 shadow-xl shadow-black/20"
               >
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <button
@@ -757,7 +757,7 @@ export default function HomePlanetNotepad() {
             ))}
           </div>
 
-          <aside className="order-first overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/[0.045] p-4 lg:order-none lg:sticky lg:top-4 lg:h-fit">
+          <aside className="order-first overflow-hidden rounded-[1.75rem] border border-white/20 bg-white/[0.045] p-4 lg:order-none lg:sticky lg:top-4 lg:h-fit">
             {openCustomer ? (
               <div>
                 <div className="mb-4 flex items-start justify-between gap-3">
@@ -770,7 +770,7 @@ export default function HomePlanetNotepad() {
                   </div>
                   <button
                       onClick={closeDrawer}
-                      className="rounded-xl border border-white/15 bg-black px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-white shadow-lg shadow-black/40 hover:border-emerald-300/30 hover:text-emerald-100"
+                      className="rounded-xl border border-white/30 bg-black px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-white shadow-lg shadow-black/40 hover:border-emerald-300/40 hover:text-emerald-100 hover:shadow-[0_0_14px_rgba(74,222,128,0.18)]"
                       type="button"
                     >
                       Close
@@ -782,7 +782,7 @@ export default function HomePlanetNotepad() {
                     <label className="grid gap-2">
                       <span className="text-xs font-black uppercase tracking-[0.18em] text-white/40">Charge</span>
                       <input
-                        className="min-w-0 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+                        className="min-w-0 w-full rounded-2xl border border-white/20 bg-black/45 px-4 py-3 text-white outline-none"
                         value={openCustomer.amount}
                         onChange={(event) => updateCustomer(openCustomer.id, { amount: event.target.value })}
                       />
@@ -791,7 +791,7 @@ export default function HomePlanetNotepad() {
                     <label className="grid gap-2">
                       <span className="text-xs font-black uppercase tracking-[0.18em] text-white/40">Payment Link</span>
                       <input
-                        className="min-w-0 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+                        className="min-w-0 w-full rounded-2xl border border-white/20 bg-black/45 px-4 py-3 text-white outline-none"
                         value={openCustomer.paymentLink}
                         onChange={(event) => updateCustomer(openCustomer.id, { paymentLink: event.target.value })}
                         placeholder="Add payment link"
@@ -810,7 +810,7 @@ export default function HomePlanetNotepad() {
                     ) : (
                       <div className="mt-2 grid gap-2">
                         <input
-                          className="min-w-0 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+                          className="min-w-0 w-full rounded-2xl border border-white/20 bg-black/45 px-4 py-3 text-white outline-none"
                           value={openCustomer.address || ""}
                           onChange={(event) => updateCustomer(openCustomer.id, { address: event.target.value })}
                           placeholder="Add address for navigation"
@@ -899,14 +899,14 @@ export default function HomePlanetNotepad() {
 
                             <label className="text-xs font-black uppercase tracking-[0.18em] text-white/40">Invoice Service</label>
                             <input
-                              className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+                              className="mt-2 w-full rounded-2xl border border-white/20 bg-black/45 px-4 py-3 text-white outline-none"
                               value={openCustomer.invoice.service}
                               onChange={(event) => updateInvoice(openCustomer, { service: event.target.value })}
                             />
 
                             <label className="mt-3 block text-xs font-black uppercase tracking-[0.18em] text-white/40">Invoice Amount</label>
                             <input
-                              className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+                              className="mt-2 w-full rounded-2xl border border-white/20 bg-black/45 px-4 py-3 text-white outline-none"
                               value={openCustomer.invoice.amount}
                               onChange={(event) => updateInvoice(openCustomer, { amount: event.target.value })}
                             />
@@ -1024,7 +1024,7 @@ export default function HomePlanetNotepad() {
                     {openSection === "notes" && (
                       <div className="rounded-2xl border border-white/10 bg-black/25 p-3">
                         <textarea
-                          className="min-h-[90px] w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-white outline-none placeholder:text-white/35"
+                          className="min-h-[90px] w-full rounded-2xl border border-white/20 bg-black/45 px-4 py-4 text-white outline-none placeholder:text-white/45"
                           placeholder="Write a note..."
                           value={newNotes[openCustomer.id] || ""}
                           onChange={(event) =>
@@ -1093,6 +1093,7 @@ export default function HomePlanetNotepad() {
     </div>
   );
 }
+
 
 
 
