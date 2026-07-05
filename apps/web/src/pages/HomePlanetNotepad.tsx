@@ -41,7 +41,7 @@ type Customer = {
   updatedAt: string;
 };
 
-const STORAGE_KEY = "homeplanet-notepad-customers";
+const STORAGE_KEY = "homeplanet-notepad-customers-one-demo-v1";
 
 function nowIso() {
   return new Date().toISOString();
@@ -65,63 +65,16 @@ const seedCustomers: Customer[] = [
     id: "seed-bobby",
     name: "Bobby Welch",
     phone: "8635550182",
+    address: "Okeechobee, FL",
     note: "Lawn cleanup. Wants cheaper help and follow-up.",
     amount: "125",
-    paymentLink: "",
-    status: "followup",
-    proofPhotos: {},
-    notes: [
-      {
-        id: "note-bobby-1",
-        text: "Lawn cleanup lead from Facebook. Needs follow-up.",
-        createdAt: nowIso(),
-      },
-    ],
-    createdAt: nowIso(),
-    updatedAt: nowIso(),
-  },
-  {
-    id: "seed-ridgeline",
-    name: "Ridgeline customer",
-    phone: "8635550144",
-    note: "Driveway wash estimate.",
-    amount: "175",
     paymentLink: "",
     status: "draft",
     proofPhotos: {},
     notes: [
       {
-        id: "note-ridge-1",
-        text: "Driveway wash. Needs estimate/payment link.",
-        createdAt: nowIso(),
-      },
-    ],
-    createdAt: nowIso(),
-    updatedAt: nowIso(),
-  },
-  {
-    id: "seed-kaitlin",
-    name: "Kaitlin cleaning client",
-    phone: "8635550111",
-    note: "Deep clean. Payment link already sent.",
-    amount: "240",
-    paymentLink: "https://cash.app/$homeplanet",
-    status: "sent",
-    invoice: {
-      id: "invoice-kaitlin",
-      number: "HP-DEMO-240",
-      service: "Deep clean. Payment link already sent.",
-      amount: "240",
-      paymentLink: "https://cash.app/$homeplanet",
-      status: "sent",
-      createdAt: nowIso(),
-      updatedAt: nowIso(),
-    },
-    proofPhotos: {},
-    notes: [
-      {
-        id: "note-kaitlin-1",
-        text: "Deep clean invoice created and payment link sent.",
+        id: "note-bobby-1",
+        text: "Lawn cleanup lead from Facebook. Needs follow-up.",
         createdAt: nowIso(),
       },
     ],
@@ -1093,6 +1046,7 @@ export default function HomePlanetNotepad() {
     </div>
   );
 }
+
 
 
 
