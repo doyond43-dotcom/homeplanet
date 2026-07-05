@@ -868,7 +868,7 @@ export default function HomePlanetNotepad() {
                   <div className="grid gap-2">
                     <button
                       onClick={() => toggleSection("invoice")}
-                      className={`flex items-center justify-between rounded-2xl border px-4 py-2.5 text-left ${
+                      className={`${!openCustomer.invoice ? "hidden" : "flex"} items-center justify-between rounded-2xl border px-4 py-2.5 text-left ${
                         openSection === "invoice"
                           ? "border-purple-300/20 bg-purple-400/10"
                           : "border-white/10 bg-black/25"
@@ -1093,6 +1093,7 @@ export default function HomePlanetNotepad() {
     </div>
   );
 }
+
 
 
 
