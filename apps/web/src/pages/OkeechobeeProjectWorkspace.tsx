@@ -16,6 +16,7 @@ export default function OkeechobeeProjectWorkspace() {
   const [showNeedForm, setShowNeedForm] = useState(false);
   const [needText, setNeedText] = useState("");
   const [savingNeed, setSavingNeed] = useState(false);
+  const [isResolvingProject, setIsResolvingProject] = useState(false);
   const [showAvailabilityForm, setShowAvailabilityForm] = useState(false);
   const [availabilityName, setAvailabilityName] = useState("");
   const [availabilityDay, setAvailabilityDay] = useState("Saturday");
@@ -250,6 +251,47 @@ export default function OkeechobeeProjectWorkspace() {
     setShowAvailabilityForm(false);
     setSavingAvailability(false);
   }
+  async function resolveProject() {
+    if (!project?.slug) return;
+
+    const confirmed = window.confirm("Mark this project as resolved and move it to Completed Projects?");
+    if (!confirmed) return;
+
+    setIsResolvingProject(true);
+
+    const nextTimeline = [
+      ...(Array.isArray(project.timeline) ? project.timeline : []),
+      {
+        label: "Project resolved",
+        time: new Date().toISOString(),
+      },
+    ];
+
+    const { error } = await supabase
+      .from("okeechobee_events")
+      .update({
+        status: "Resolved",
+        timeline: nextTimeline,
+      })
+      .eq("slug", project.slug);
+
+    setIsResolvingProject(false);
+
+    if (error) {
+      console.error(error);
+      alert("Unable to resolve project.");
+      return;
+    }
+
+    setProject({
+      ...project,
+      status: "Resolved",
+      timeline: nextTimeline,
+    });
+
+    alert("Project marked as resolved.");
+  }
+
   return (
     <main
       style={{
@@ -303,6 +345,45 @@ export default function OkeechobeeProjectWorkspace() {
           >
             Project: {project?.title || slug}
           </p>
+
+          {/* HEADER_RESOLVE_CONTROL_LOCKED */}
+          {project?.status === "Resolved" ? (
+            <div
+              style={{
+                display: "inline-flex",
+                width: "fit-content",
+                marginTop: 14,
+                padding: "11px 16px",
+                borderRadius: 999,
+                border: "1px solid rgba(250, 204, 21, 0.5)",
+                background: "rgba(250, 204, 21, 0.12)",
+                color: "#fde68a",
+                fontWeight: 900,
+              }}
+            >
+              Project Resolved
+            </div>
+          ) : (
+            <button
+              onClick={resolveProject}
+              disabled={isResolvingProject}
+              style={{
+                display: "inline-flex",
+                width: "fit-content",
+                marginTop: 14,
+                padding: "11px 16px",
+                borderRadius: 999,
+                border: "1px solid rgba(57, 255, 20, 0.75)",
+                background: "rgba(57, 255, 20, 0.18)",
+                color: "#39FF14",
+                fontWeight: 900,
+                cursor: isResolvingProject ? "not-allowed" : "pointer",
+                boxShadow: "0 0 26px rgba(57, 255, 20, 0.2)",
+              }}
+            >
+              {isResolvingProject ? "Resolving..." : "Mark Project Resolved"}
+            </button>
+          )}
         </div>
 
         <div
