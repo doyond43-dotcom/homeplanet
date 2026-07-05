@@ -69,6 +69,7 @@ import HomePlanetMarketAwarenessFunnelV1, { HomePlanetMarketAwarenessDashboardV1
 import HomePlanetAfterTheClickDemo from "./pages/HomePlanetAfterTheClickDemo";
 
 import BrightSideFlowDemo from "./pages/BrightSideFlowDemo";
+import HomePlanetNotepad from './pages/HomePlanetNotepad';
 
 
 function LiveShell() {
@@ -216,10 +217,12 @@ export default function App() {
             element={<OkeechobeeLawnIntelligenceDashboard />}
           />
           <Route path="*" element={<NotFound />} />
-      </Routes>
+          <Route path="/planet/notepad" element={<HomePlanetNotepad />} />
+        </Routes>
     </BrowserRouter>
   );
 }
+
 
 
 
