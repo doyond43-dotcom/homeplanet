@@ -659,7 +659,7 @@ export default function HomePlanetNotepad() {
             {customers.map((customer) => (
               <article
                 key={customer.id}
-                className="rounded-[1.75rem] border border-white/20 bg-black/45 p-4 shadow-xl shadow-black/20"
+                className={`${openId === customer.id ? "hidden lg:block" : "block"} rounded-[1.75rem] border border-white/20 bg-black/45 p-4 shadow-xl shadow-black/20`}
               >
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <button
@@ -1046,6 +1046,7 @@ export default function HomePlanetNotepad() {
     </div>
   );
 }
+
 
 
 
