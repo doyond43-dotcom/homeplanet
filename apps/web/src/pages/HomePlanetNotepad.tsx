@@ -264,6 +264,13 @@ export default function HomePlanetNotepad() {
 
     setOpenId(customer.id);
     setOpenSection(section);
+
+    window.setTimeout(() => {
+      document.getElementById("open-charges")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 50);
   }
 
   function closeDrawer() {
@@ -750,7 +757,7 @@ export default function HomePlanetNotepad() {
             ))}
           </div>
 
-          <aside className="overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/[0.045] p-4 lg:sticky lg:top-4 lg:h-fit">
+          <aside className="order-first overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/[0.045] p-4 lg:order-none lg:sticky lg:top-4 lg:h-fit">
             {openCustomer ? (
               <div>
                 <div className="mb-4 flex items-start justify-between gap-3">
@@ -1072,7 +1079,7 @@ export default function HomePlanetNotepad() {
                 </div>
               </div>
             ) : (
-              <div className="rounded-2xl border border-dashed border-white/15 p-5 text-white/60">
+              <div className="hidden rounded-2xl border border-dashed border-white/15 p-5 text-white/60 lg:block">
                 Open a customer to view notes, charge, invoice, proof photos, payment link, and status.
               </div>
             )}
@@ -1086,6 +1093,7 @@ export default function HomePlanetNotepad() {
     </div>
   );
 }
+
 
 
 
