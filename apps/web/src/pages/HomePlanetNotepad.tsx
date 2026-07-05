@@ -865,7 +865,8 @@ export default function HomePlanetNotepad() {
                     </div>
                   </div>
 
-                  <div className="grid gap-2">
+                  <div className="grid gap-2">                  {openCustomer.invoice && (
+                    <>
                     <button
                       onClick={() => toggleSection("invoice")}
                       className={`flex items-center justify-between rounded-2xl border px-4 py-2.5 text-left ${
@@ -927,6 +928,8 @@ export default function HomePlanetNotepad() {
                             No invoice created yet. Tap <span className="font-black text-purple-100">Create Invoice</span> to turn this customer note and charge into an invoice.
                           </div>
                         )}
+                    </>
+                  )}
                       </div>
                     )}
 
@@ -1093,6 +1096,7 @@ export default function HomePlanetNotepad() {
     </div>
   );
 }
+
 
 
 
