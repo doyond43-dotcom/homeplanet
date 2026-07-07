@@ -230,7 +230,7 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
         .select("*")
         .eq("business_slug", "only-the-essentials")
         .order("created_at", { ascending: false })
-        .limit(1);
+        .limit(25);
 
       if (error) {
         console.error("Could not load cleaning requests:", error);
@@ -1108,6 +1108,7 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
     </main>
   );
 }
+
 
 
 

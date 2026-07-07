@@ -16,6 +16,7 @@ export default function OnlyTheEssentialsCustomerLanding() {
   const [quoteSubmitted, setQuoteSubmitted] = useState(false);
   const [quoteSubmitting, setQuoteSubmitting] = useState(false);
   const [quoteError, setQuoteError] = useState("");
+  const [kaitlinNotifyText, setKaitlinNotifyText] = useState("");
 
   async function handleQuoteSubmit() {
     const section = document.getElementById("only-essentials-quote");
@@ -106,6 +107,36 @@ export default function OnlyTheEssentialsCustomerLanding() {
     }
   }
 
+  function resetQuoteForm() {
+    const section = document.getElementById("only-essentials-quote");
+
+    if (section) {
+      const selects = Array.from(section.querySelectorAll("select")) as HTMLSelectElement[];
+      const inputs = Array.from(section.querySelectorAll("input")) as HTMLInputElement[];
+      const textareas = Array.from(section.querySelectorAll("textarea")) as HTMLTextAreaElement[];
+
+      selects.forEach((select) => {
+        select.selectedIndex = 0;
+      });
+
+      inputs.forEach((input) => {
+        if (input.type === "checkbox") {
+          input.checked = false;
+        } else {
+          input.value = "";
+        }
+      });
+
+      textareas.forEach((textarea) => {
+        textarea.value = "";
+      });
+    }
+
+    setQuoteSubmitted(false);
+    setQuoteError("");
+    setKaitlinNotifyText("");
+  }
+
   const services = [
     {
       icon: Home,
@@ -166,7 +197,7 @@ export default function OnlyTheEssentialsCustomerLanding() {
                 Call Kaitlin
               </a>
               <a
-                href={`sms:${phone}`}
+                href={`sms:${phone}?&body=${encodeURIComponent(kaitlinNotifyText || "New Only The Essentials quote request submitted. Please check the HomePlanet dashboard.")}`}
                 className="inline-flex items-center gap-2 rounded-full border border-pink-300/30 bg-white/5 px-6 py-3 text-xs font-black uppercase tracking-[0.22em] text-white"
               >
                 <MessageCircle size={15} />
@@ -200,7 +231,7 @@ export default function OnlyTheEssentialsCustomerLanding() {
                   Call Kaitlin
                 </a>
                 <a
-                  href={`sms:${phone}`}
+                  href={`sms:${phone}?&body=${encodeURIComponent(kaitlinNotifyText || "New Only The Essentials quote request submitted. Please check the HomePlanet dashboard.")}`}
                   className="inline-flex items-center justify-center gap-2 rounded-full border border-pink-300/30 bg-white/5 px-7 py-4 text-xs font-black uppercase tracking-[0.24em] text-white"
                 >
                   <MessageCircle size={16} />
@@ -387,7 +418,7 @@ export default function OnlyTheEssentialsCustomerLanding() {
                 Call Kaitlin
               </a>
               <a
-                href={`sms:${phone}`}
+                href={`sms:${phone}?&body=${encodeURIComponent(kaitlinNotifyText || "New Only The Essentials quote request submitted. Please check the HomePlanet dashboard.")}`}
                 className="inline-flex items-center justify-center gap-2 rounded-full border border-pink-300/30 bg-white/5 px-7 py-4 text-xs font-black uppercase tracking-[0.24em] text-white"
               >
                 <MessageCircle size={16} />
@@ -449,7 +480,7 @@ export default function OnlyTheEssentialsCustomerLanding() {
               </a>
 
               <a
-                href={`sms:${phone}`}
+                href={`sms:${phone}?&body=${encodeURIComponent(kaitlinNotifyText || "New Only The Essentials quote request submitted. Please check the HomePlanet dashboard.")}`}
                 className="inline-flex items-center justify-center gap-2 rounded-full border border-pink-300/30 bg-white/5 px-6 py-3 text-xs font-black uppercase tracking-[0.22em] text-white"
               >
                 <MessageCircle size={15} />
@@ -459,7 +490,7 @@ export default function OnlyTheEssentialsCustomerLanding() {
 
             <button
               type="button"
-              onClick={() => setQuoteSubmitted(false)}
+              onClick={() => resetQuoteForm()}
               className="mt-6 text-xs font-black uppercase tracking-[0.24em] text-pink-200 underline-offset-4 hover:underline"
             >
               Close
@@ -470,6 +501,9 @@ export default function OnlyTheEssentialsCustomerLanding() {
     </main>
   );
 }
+
+
+
 
 
 
