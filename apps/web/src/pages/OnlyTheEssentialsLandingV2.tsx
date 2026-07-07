@@ -13,6 +13,10 @@ import { hpEvent } from "../lib/hpEvent";
 
 export default function OnlyTheEssentialsCustomerLanding() {
   const phone = "8638013179";
+
+  function kaitlinSmsHref(message: string) {
+    return `sms:${phone}?&body=${encodeURIComponent(message)}`;
+  }
   const [quoteSubmitted, setQuoteSubmitted] = useState(false);
   const [quoteSubmitting, setQuoteSubmitting] = useState(false);
   const [quoteError, setQuoteError] = useState("");
@@ -96,6 +100,33 @@ export default function OnlyTheEssentialsCustomerLanding() {
         streetAddress,
         photoCount,
       });
+
+      try {
+        const notifyResponse = await fetch("/api/notify-kaitlin-cleaning-request", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name,
+            phone: phoneNumber,
+            address: streetAddress,
+            preferredTime,
+            serviceType,
+            bedrooms,
+            bathrooms,
+            pets,
+            condition,
+            notes,
+          }),
+        });
+
+        const notifyResult = await notifyResponse.json().catch(() => null);
+
+        if (!notifyResponse.ok || notifyResult?.ok === false) {
+          console.warn("Kaitlin SMS notification did not send:", notifyResult);
+        }
+      } catch (notifyError) {
+        console.warn("Kaitlin SMS notification request failed:", notifyError);
+      }
 
       setQuoteSubmitted(true);
     } catch (error) {
@@ -197,7 +228,7 @@ export default function OnlyTheEssentialsCustomerLanding() {
                 Call Kaitlin
               </a>
               <a
-                href={`sms:${phone}?&body=${encodeURIComponent(kaitlinNotifyText || "New Only The Essentials quote request submitted. Please check the HomePlanet dashboard.")}`}
+                href={kaitlinSmsHref(kaitlinNotifyText || "New Only The Essentials quote request submitted. Please check the HomePlanet dashboard.")}
                 className="inline-flex items-center gap-2 rounded-full border border-pink-300/30 bg-white/5 px-6 py-3 text-xs font-black uppercase tracking-[0.22em] text-white"
               >
                 <MessageCircle size={15} />
@@ -231,7 +262,7 @@ export default function OnlyTheEssentialsCustomerLanding() {
                   Call Kaitlin
                 </a>
                 <a
-                  href={`sms:${phone}?&body=${encodeURIComponent(kaitlinNotifyText || "New Only The Essentials quote request submitted. Please check the HomePlanet dashboard.")}`}
+                  href={kaitlinSmsHref(kaitlinNotifyText || "New Only The Essentials quote request submitted. Please check the HomePlanet dashboard.")}
                   className="inline-flex items-center justify-center gap-2 rounded-full border border-pink-300/30 bg-white/5 px-7 py-4 text-xs font-black uppercase tracking-[0.24em] text-white"
                 >
                   <MessageCircle size={16} />
@@ -418,7 +449,7 @@ export default function OnlyTheEssentialsCustomerLanding() {
                 Call Kaitlin
               </a>
               <a
-                href={`sms:${phone}?&body=${encodeURIComponent(kaitlinNotifyText || "New Only The Essentials quote request submitted. Please check the HomePlanet dashboard.")}`}
+                href={kaitlinSmsHref(kaitlinNotifyText || "New Only The Essentials quote request submitted. Please check the HomePlanet dashboard.")}
                 className="inline-flex items-center justify-center gap-2 rounded-full border border-pink-300/30 bg-white/5 px-7 py-4 text-xs font-black uppercase tracking-[0.24em] text-white"
               >
                 <MessageCircle size={16} />
@@ -480,7 +511,7 @@ export default function OnlyTheEssentialsCustomerLanding() {
               </a>
 
               <a
-                href={`sms:${phone}?&body=${encodeURIComponent(kaitlinNotifyText || "New Only The Essentials quote request submitted. Please check the HomePlanet dashboard.")}`}
+                href={kaitlinSmsHref(kaitlinNotifyText || "New Only The Essentials quote request submitted. Please check the HomePlanet dashboard.")}
                 className="inline-flex items-center justify-center gap-2 rounded-full border border-pink-300/30 bg-white/5 px-6 py-3 text-xs font-black uppercase tracking-[0.22em] text-white"
               >
                 <MessageCircle size={15} />
@@ -501,6 +532,9 @@ export default function OnlyTheEssentialsCustomerLanding() {
     </main>
   );
 }
+
+
+
 
 
 
