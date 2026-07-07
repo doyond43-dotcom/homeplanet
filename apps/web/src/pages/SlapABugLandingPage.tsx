@@ -162,7 +162,7 @@ export default function SlapABugLandingPage() {
           </div>
 
           <div className="mt-6 flex flex-wrap justify-center gap-2">
-            {["Local & Family Owned", "Free Estimates", "Homes & Businesses", "Community Backed"].map((chip) => (
+            {["Local & Family Owned", "Free Estimates", "Homes & Businesses", "Community Connected"].map((chip) => (
               <span
                 key={chip}
                 className="rounded-full border border-white/14 bg-black/35 px-4 py-2 text-[11px] font-black uppercase tracking-[0.14em] text-white/70"
@@ -186,7 +186,7 @@ export default function SlapABugLandingPage() {
                   Real Local Service
                 </p>
                 <h2 className="mt-2 max-w-2xl text-3xl font-black leading-tight sm:text-5xl">
-                  The truck people already notice.
+                  The truck Okeechobee already knows.
                 </h2>
               </div>
             </div>
@@ -387,3 +387,4 @@ export default function SlapABugLandingPage() {
     </main>
   );
 }
+
