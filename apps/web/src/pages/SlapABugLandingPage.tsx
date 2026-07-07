@@ -67,7 +67,8 @@ export default function SlapABugLandingPage() {
     ["Rodents", "Sheds, barns, garages, feed rooms, RVs, and storage spaces."],
     ["Spiders", "Porches, garages, corners, lanais, and exterior webs."],
     ["Fleas / Ticks", "Yards, pet areas, rentals, and repeat activity."],
-    ["Wasps / Hornets", "Nests, rooflines, sheds, barns, and entry areas."]
+    ["Wasps / Hornets", "Nests, rooflines, sheds, barns, and entry areas."],
+    ["Mosquito Fogging", "Yards, shaded areas, fence lines, trees, bushes, and outdoor gathering spaces."]
   ];
 
   const [form, setForm] = useState<PestForm>({
@@ -110,52 +111,52 @@ export default function SlapABugLandingPage() {
   return (
     <main className="min-h-screen bg-[#020706] text-white">
       {/* HERO */}
-      <section className="relative overflow-hidden px-5 pb-12 pt-10 text-center sm:px-8 lg:pb-16 lg:pt-14">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(34,105,190,0.30),transparent_34%),radial-gradient(circle_at_center,rgba(40,199,101,0.18),transparent_36%),radial-gradient(circle_at_bottom,rgba(233,41,41,0.13),transparent_34%)]" />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#06131e]/70 via-[#031009]/90 to-[#020706]" />
+      <section className="relative overflow-hidden px-4 pb-10 pt-8 text-center sm:px-8 sm:pb-12 sm:pt-10 lg:pb-16 lg:pt-14">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(40,199,101,0.08),transparent_38%),radial-gradient(circle_at_bottom,rgba(233,41,41,0.08),transparent_34%)]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#020706]/95 via-[#020706]/95 to-[#020706]" />
 
         <div className="relative mx-auto max-w-6xl">
-          <div className="mx-auto w-fit rounded-[1.7rem] border border-white/10 bg-black/45 px-10 py-7 shadow-[0_0_55px_rgba(40,199,101,0.22)]">
-            <div className="text-5xl font-black leading-none text-[#66dc3b]">
+          <div className="mx-auto w-fit rounded-[1.45rem] border border-white/10 bg-black/45 px-7 py-5 shadow-[0_0_55px_rgba(40,199,101,0.22)] sm:rounded-[1.7rem] sm:px-10 sm:py-7">
+            <div className="text-3xl font-black leading-none text-[#66dc3b] sm:text-5xl">
               SLAP-A-BUG
             </div>
-            <div className="mx-auto mt-3 w-fit rounded-lg bg-[#e92929] px-6 py-2 text-xs font-black uppercase tracking-[0.2em] text-white">
+            <div className="mx-auto mt-3 w-fit rounded-lg bg-[#e92929] px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-white sm:px-6 sm:py-2 sm:text-xs sm:tracking-[0.2em]">
               Pest Control
             </div>
           </div>
 
-          <p className="mt-8 text-xs font-black uppercase tracking-[0.42em] text-red-400">
+          <p className="mt-7 text-[10px] font-black uppercase tracking-[0.34em] text-red-400 sm:mt-8 sm:text-xs sm:tracking-[0.42em]">
             Okeechobee Pest Control
           </p>
 
-          <h1 className="mx-auto mt-5 max-w-4xl text-6xl font-black leading-[0.9] tracking-tight sm:text-7xl lg:text-8xl">
+          <h1 className="mx-auto mt-5 max-w-4xl text-5xl font-black leading-[0.92] tracking-tight sm:text-7xl lg:text-8xl">
             Got Bugs?
             <br />
             <span className="text-[#66dc3b]">Slap ’Em.</span>
           </h1>
 
-          <p className="mx-auto mt-6 max-w-2xl text-base leading-8 text-white/72 sm:text-lg">
+          <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-white/72 sm:mt-6 sm:text-lg sm:leading-8">
             Local pest control for homes, sheds, barns, RVs, mobile homes, and businesses around Okeechobee.
           </p>
 
-          <div className="mx-auto mt-8 grid max-w-3xl gap-3 sm:grid-cols-3">
+          <div className="mx-auto mt-7 grid max-w-3xl gap-3 sm:mt-8 sm:grid-cols-3">
             <a
               href="tel:8633683628"
-              className="rounded-2xl bg-[#e92929] px-7 py-5 text-center text-base font-black text-white shadow-[0_0_35px_rgba(233,41,41,0.34)]"
+              className="rounded-2xl bg-[#e92929] px-7 py-4 text-center text-base font-black text-white shadow-[0_0_35px_rgba(233,41,41,0.34)] sm:py-5"
             >
               Call Now
             </a>
 
             <a
               href="sms:8633683628"
-              className="rounded-2xl border border-white/14 bg-white/[0.05] px-7 py-5 text-center text-base font-black text-white"
+              className="rounded-2xl border border-[#1d79d6]/60 bg-[#1d79d6]/22 px-7 py-4 text-center text-base font-black text-white shadow-[0_0_32px_rgba(31,111,190,0.22)] sm:py-5"
             >
               Text Brad
             </a>
 
             <a
               href="#request"
-              className="rounded-2xl bg-[#28c765] px-7 py-5 text-center text-base font-black text-black shadow-[0_0_35px_rgba(40,199,101,0.26)]"
+              className="rounded-2xl bg-[#28c765] px-7 py-4 text-center text-base font-black text-black shadow-[0_0_35px_rgba(40,199,101,0.26)] sm:py-5"
             >
               Request Estimate
             </a>
@@ -165,15 +166,15 @@ export default function SlapABugLandingPage() {
             {["Local & Family Owned", "Free Estimates", "Homes & Businesses", "Community Connected"].map((chip) => (
               <span
                 key={chip}
-                className="rounded-full border border-white/14 bg-black/35 px-4 py-2 text-[11px] font-black uppercase tracking-[0.14em] text-white/70"
+                className="rounded-full border border-white/14 bg-black/35 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.12em] text-white/70 sm:px-4 sm:py-2 sm:text-[11px] sm:tracking-[0.14em]"
               >
                 {chip}
               </span>
             ))}
           </div>
 
-          <div className="mx-auto mt-10 max-w-5xl overflow-hidden rounded-[2rem] border border-white/10 bg-black/40 shadow-[0_0_90px_rgba(31,111,190,0.16)]">
-            <div className="relative aspect-[16/7] min-h-[300px]">
+          <div className="mx-auto mt-10 max-w-5xl overflow-hidden rounded-[2rem] border border-white/10 bg-black/40 shadow-[0_0_95px_rgba(31,111,190,0.24)]">
+            <div className="relative aspect-[4/3] min-h-[245px] sm:aspect-[16/7] sm:min-h-[300px]">
               <img
                 src="/images/slap-a-bug-truck-hero.png"
                 alt="Slap-A-Bug Pest Control truck in Okeechobee"
@@ -181,11 +182,11 @@ export default function SlapABugLandingPage() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/5 to-transparent" />
 
-              <div className="absolute bottom-5 left-5 right-5 text-left sm:bottom-7 sm:left-7">
+              <div className="absolute bottom-4 left-4 right-4 text-left sm:bottom-7 sm:left-7">
                 <p className="text-xs font-black uppercase tracking-[0.28em] text-red-300">
                   Real Local Service
                 </p>
-                <h2 className="mt-2 max-w-2xl text-3xl font-black leading-tight sm:text-5xl">
+                <h2 className="mt-2 max-w-2xl text-2xl font-black leading-tight sm:text-5xl">
                   The truck Okeechobee already knows.
                 </h2>
               </div>
@@ -195,12 +196,12 @@ export default function SlapABugLandingPage() {
       </section>
 
       {/* PEST GRID */}
-      <section className="mx-auto max-w-6xl px-5 py-12 sm:px-8">
+      <section className="mx-auto max-w-6xl px-4 py-10 sm:px-8 sm:py-12">
         <div className="mx-auto max-w-3xl text-center">
           <p className="text-xs font-black uppercase tracking-[0.32em] text-red-400">
             Start Here
           </p>
-          <h2 className="mt-3 text-4xl font-black">
+          <h2 className="mt-3 text-3xl font-black sm:text-4xl">
             What are you dealing with?
           </h2>
           <p className="mt-4 text-sm leading-7 text-white/60">
@@ -208,12 +209,12 @@ export default function SlapABugLandingPage() {
           </p>
         </div>
 
-        <div className="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {pestOptions.map(([title, text]) => (
+        <div className="mt-8 grid gap-3 sm:mt-9 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
+          {pestOptions.filter(([title]) => title !== "Mosquito Fogging").map(([title, text]) => (
             <button
               key={title}
               onClick={() => pickPest(title)}
-              className="group rounded-3xl border border-white/10 bg-white/[0.045] p-6 text-left transition hover:-translate-y-1 hover:border-[#28c765]/55 hover:bg-[#07190f]"
+              className="group rounded-3xl border border-white/10 bg-white/[0.045] p-5 text-left transition hover:-translate-y-1 hover:border-[#1d79d6]/65 hover:bg-[#061423] hover:shadow-[0_0_34px_rgba(31,111,190,0.18)] sm:p-6"
             >
               <h3 className="text-2xl font-black">{title}</h3>
               <p className="mt-3 text-sm leading-6 text-white/62">{text}</p>
@@ -226,7 +227,7 @@ export default function SlapABugLandingPage() {
 
         <button
           onClick={() => pickPest("Not Sure")}
-          className="mt-4 w-full rounded-3xl border border-[#1d79d6]/30 bg-[#1d79d6]/10 p-6 text-left transition hover:border-[#1d79d6]/60"
+          className="mt-4 w-full rounded-3xl border border-[#1d79d6]/40 bg-[#1d79d6]/12 p-6 text-left transition hover:border-[#1d79d6]/75 hover:bg-[#061423] hover:shadow-[0_0_34px_rgba(31,111,190,0.18)]"
         >
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -243,15 +244,15 @@ export default function SlapABugLandingPage() {
       </section>
 
       {/* REQUEST FORM */}
-      <section id="request" className="mx-auto max-w-6xl px-5 pb-16 sm:px-8">
-        <div className="rounded-[2rem] border border-[#1d79d6]/32 bg-[linear-gradient(135deg,rgba(31,111,190,0.18),rgba(0,0,0,0.72))] p-6 shadow-[0_0_70px_rgba(31,111,190,0.10)] sm:p-8">
+      <section id="request" className="mx-auto max-w-6xl px-4 pb-14 sm:px-8 sm:pb-16">
+        <div className="rounded-[1.6rem] border border-[#1d79d6]/45 bg-[linear-gradient(135deg,rgba(31,111,190,0.18),rgba(0,0,0,0.72))] p-5 shadow-[0_0_70px_rgba(31,111,190,0.10)] sm:rounded-[2rem] sm:p-8">
           <div className="grid gap-8 lg:grid-cols-[0.78fr_1.22fr] lg:items-start">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.28em] text-[#8fc8ff]">
                 Tell Brad First
               </p>
 
-              <h2 className="mt-4 text-4xl font-black leading-tight sm:text-5xl">
+              <h2 className="mt-4 text-3xl font-black leading-tight sm:text-5xl">
                 Send the details before the visit.
               </h2>
 
@@ -293,42 +294,42 @@ export default function SlapABugLandingPage() {
                     <select
                       value={form.service}
                       onChange={(e) => updateField("service", e.target.value)}
-                      className="rounded-2xl border border-white/10 bg-black/55 px-4 py-4 text-white outline-none"
+                      className="rounded-2xl border border-[#1d79d6]/25 bg-black/65 px-4 py-4 text-white outline-none transition focus:border-[#1d79d6]/70 focus:shadow-[0_0_24px_rgba(31,111,190,0.16)]"
                     >
                       {pestOptions.map(([pest]) => (
-                        <option key={pest}>{pest}</option>
+                        <option key={pest} className="bg-[#050b12] text-white">{pest}</option>
                       ))}
-                      <option>Not Sure</option>
+                      <option className="bg-[#050b12] text-white">Not Sure</option>
                     </select>
 
                     <select
                       value={form.location}
                       onChange={(e) => updateField("location", e.target.value)}
-                      className="rounded-2xl border border-white/10 bg-black/55 px-4 py-4 text-white outline-none"
+                      className="rounded-2xl border border-[#1d79d6]/25 bg-black/65 px-4 py-4 text-white outline-none transition focus:border-[#1d79d6]/70 focus:shadow-[0_0_24px_rgba(31,111,190,0.16)]"
                     >
-                      <option value="">Where are you seeing it?</option>
-                      <option>Inside</option>
-                      <option>Outside</option>
-                      <option>Both inside and outside</option>
-                      <option>Kitchen</option>
-                      <option>Bathroom</option>
-                      <option>Garage</option>
-                      <option>Shed / Barn</option>
-                      <option>Yard</option>
-                      <option>Business</option>
+                      <option value="" className="bg-[#050b12] text-white">Where are you seeing it?</option>
+                      <option className="bg-[#050b12] text-white">Inside</option>
+                      <option className="bg-[#050b12] text-white">Outside</option>
+                      <option className="bg-[#050b12] text-white">Both inside and outside</option>
+                      <option className="bg-[#050b12] text-white">Kitchen</option>
+                      <option className="bg-[#050b12] text-white">Bathroom</option>
+                      <option className="bg-[#050b12] text-white">Garage</option>
+                      <option className="bg-[#050b12] text-white">Shed / Barn</option>
+                      <option className="bg-[#050b12] text-white">Yard</option>
+                      <option className="bg-[#050b12] text-white">Business</option>
                     </select>
 
                     <select
                       value={form.severity}
                       onChange={(e) => updateField("severity", e.target.value)}
-                      className="rounded-2xl border border-white/10 bg-black/55 px-4 py-4 text-white outline-none"
+                      className="rounded-2xl border border-[#1d79d6]/25 bg-black/65 px-4 py-4 text-white outline-none transition focus:border-[#1d79d6]/70 focus:shadow-[0_0_24px_rgba(31,111,190,0.16)]"
                     >
-                      <option value="">How bad is it?</option>
-                      <option>Light activity</option>
-                      <option>Moderate activity</option>
-                      <option>Heavy activity</option>
-                      <option>Infestation / urgent</option>
-                      <option>Not sure</option>
+                      <option value="" className="bg-[#050b12] text-white">How bad is it?</option>
+                      <option className="bg-[#050b12] text-white">Light activity</option>
+                      <option className="bg-[#050b12] text-white">Moderate activity</option>
+                      <option className="bg-[#050b12] text-white">Heavy activity</option>
+                      <option className="bg-[#050b12] text-white">Infestation / urgent</option>
+                      <option className="bg-[#050b12] text-white">Not sure</option>
                     </select>
                   </div>
 
@@ -336,7 +337,7 @@ export default function SlapABugLandingPage() {
                     <input
                       value={form.name}
                       onChange={(e) => updateField("name", e.target.value)}
-                      className="rounded-2xl border border-white/10 bg-black/55 px-4 py-4 text-white outline-none"
+                      className="rounded-2xl border border-[#1d79d6]/25 bg-black/65 px-4 py-4 text-white outline-none transition focus:border-[#1d79d6]/70 focus:shadow-[0_0_24px_rgba(31,111,190,0.16)]"
                       placeholder="Your name"
                       required
                     />
@@ -344,7 +345,7 @@ export default function SlapABugLandingPage() {
                     <input
                       value={form.phone}
                       onChange={(e) => updateField("phone", e.target.value)}
-                      className="rounded-2xl border border-white/10 bg-black/55 px-4 py-4 text-white outline-none"
+                      className="rounded-2xl border border-[#1d79d6]/25 bg-black/65 px-4 py-4 text-white outline-none transition focus:border-[#1d79d6]/70 focus:shadow-[0_0_24px_rgba(31,111,190,0.16)]"
                       placeholder="Phone number"
                       required
                     />
@@ -387,4 +388,10 @@ export default function SlapABugLandingPage() {
     </main>
   );
 }
+
+
+
+
+
+
 

@@ -1,20 +1,19 @@
-﻿import React, { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+﻿import React, { useEffect, useMemo, useState } from "react";
 
 type PestRequest = {
-  service?: string;
-  location?: string;
-  severity?: string;
-  name?: string;
-  phone?: string;
-  notes?: string;
+  service: string;
+  location: string;
+  severity: string;
+  name: string;
+  phone: string;
+  notes: string;
   status?: string;
   createdAt?: string;
 };
 
 const storageKey = "hp-slap-a-bug-requests";
 
-const demoRequests: PestRequest[] = [
+const sampleRequests: PestRequest[] = [
   {
     name: "Daniel Doyon",
     phone: "863-555-0137",
@@ -26,481 +25,467 @@ const demoRequests: PestRequest[] = [
     createdAt: new Date().toISOString()
   },
   {
-    name: "Amanda Love",
-    phone: "863-555-0184",
+    name: "Maria Lopez",
+    phone: "863-555-0144",
     service: "Roaches",
     location: "Kitchen",
-    severity: "Infestation / urgent",
-    notes: "Needs quick follow-up. Seeing activity mostly at night.",
-    status: "Needs Review",
+    severity: "Heavy activity",
+    notes: "Seeing activity at night around the sink and cabinets.",
+    status: "Needs Follow-Up",
     createdAt: new Date().toISOString()
   },
   {
-    name: "Corner Store",
-    phone: "863-555-0112",
-    service: "Rodents",
-    location: "Storage / feed room",
-    severity: "Moderate activity",
-    notes: "Commercial property. Possible recurring service opportunity.",
-    status: "Scheduled",
+    name: "Tommy Carter",
+    phone: "863-555-0188",
+    service: "Ants",
+    location: "Porch / entry points",
+    severity: "Light activity",
+    notes: "Trail near front porch and door frame.",
+    status: "Review",
     createdAt: new Date().toISOString()
   }
 ];
 
-function getRequests() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(storageKey) || "[]");
-    return saved.length ? saved : demoRequests;
-  } catch {
-    return demoRequests;
-  }
+function cleanPhone(phone: string) {
+  return phone.replace(/[^\d]/g, "");
 }
 
-function statusTone(status?: string) {
-  if (status === "New Request") return "text-[#67e68c]";
-  if (status === "Needs Review") return "text-red-200";
-  if (status === "Scheduled") return "text-blue-200";
-  if (status === "Complete") return "text-white/70";
-  return "text-white/70";
-}
-
-function nextMove(request: PestRequest) {
-  const service = (request.service || "").toLowerCase();
-  const severity = (request.severity || "").toLowerCase();
-  const notes = (request.notes || "").toLowerCase();
-
-  if (severity.includes("urgent") || severity.includes("infestation") || notes.includes("urgent")) {
-    return "Call or text fast before this lead cools off.";
+function statusColor(status: string) {
+  if (status.toLowerCase().includes("urgent") || status.toLowerCase().includes("heavy")) {
+    return "border-[#e92929]/45 bg-[#e92929]/10 text-red-200";
   }
 
-  if (service.includes("mosquito")) {
-    return "Confirm yard areas, trees, bushes, and fogging window.";
+  if (status.toLowerCase().includes("scheduled") || status.toLowerCase().includes("complete")) {
+    return "border-[#28c765]/45 bg-[#28c765]/10 text-green-200";
   }
 
-  if (service.includes("rodent")) {
-    return "Ask about sheds, feed rooms, garages, and entry signs.";
-  }
-
-  if (service.includes("roach")) {
-    return "Ask where activity is heaviest and schedule quickly.";
-  }
-
-  return "Review request and follow up with customer.";
-}
-
-function signalLabel(request: PestRequest) {
-  const service = request.service || "Pest Issue";
-  const severity = request.severity || "Needs Review";
-  return `${service} · ${severity}`;
-}
-
-function firstName(name?: string) {
-  return (name || "there").split(" ")[0];
+  return "border-[#1d79d6]/45 bg-[#1d79d6]/10 text-blue-200";
 }
 
 function buildMessage(type: string, request: PestRequest) {
-  const name = firstName(request.name);
-  const service = request.service || "pest issue";
+  const firstName = request.name?.split(" ")[0] || "there";
+  const service = request.service || "the pest issue";
   const location = request.location || "the area you mentioned";
 
-  if (type === "review") {
-    return `Hey ${name}, this is Brad with Slap-A-Bug Pest Control. I got your request about ${service} around ${location}. I’m reviewing it now and wanted to follow up with you.`;
-  }
-
   if (type === "photos") {
-    return `Hey ${name}, this is Brad with Slap-A-Bug Pest Control. I got your request about ${service}. If you can, send over a couple photos of where you’re seeing the activity so I can get a better look before we schedule.`;
+    return `Hey ${firstName}, this is Brad with Slap-A-Bug Pest Control. I got your request about ${service}. If you can, send me a quick photo or two of where you're seeing the activity around ${location}. That helps me know what I'm walking into before I come out.`;
   }
 
   if (type === "schedule") {
-    return `Hey ${name}, this is Brad with Slap-A-Bug Pest Control. I can help with the ${service} issue. What day/time works best for me to come take care of it?`;
+    return `Hey ${firstName}, this is Brad with Slap-A-Bug Pest Control. I reviewed your request about ${service} around ${location}. What day and time works best for me to come take a look?`;
   }
 
   if (type === "mosquito") {
-    return `Hey ${name}, this is Brad with Slap-A-Bug Pest Control. For mosquito fogging, I’ll want to treat around the trees, bushes, shaded areas, and spots where they hide. What day/time works best for you?`;
+    return `Hey ${firstName}, this is Brad with Slap-A-Bug Pest Control. For mosquito activity, I usually look at shaded areas, trees, bushes, fence lines, standing water areas, and places they hide during the day. I can help you get a plan together for that.`;
   }
 
-  if (type === "complete") {
-    return `Hey ${name}, this is Brad with Slap-A-Bug Pest Control. I wanted to check back after the service and make sure everything is looking good. If you were happy with the work, I’d really appreciate a quick review.`;
+  if (type === "payment") {
+    return `Hey ${firstName}, this is Brad with Slap-A-Bug Pest Control. The service is ready for payment. I can send the payment option over now or collect on-site, whichever works best.`;
   }
 
-  return `Hey ${name}, this is Brad with Slap-A-Bug Pest Control. I got your request and wanted to follow up with you.`;
+  if (type === "review") {
+    return `Hey ${firstName}, this is Brad with Slap-A-Bug Pest Control. Just checking back after the service. If everything looks good, a quick review on Google or Facebook would really help. I appreciate it.`;
+  }
+
+  return `Hey ${firstName}, this is Brad with Slap-A-Bug Pest Control. I got your request about ${service} around ${location}. I'm reviewing it now and wanted to follow up with you.`;
 }
 
 export default function SlapABugBoardPage() {
-  const [refreshKey, setRefreshKey] = useState(0);
-  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [requests, setRequests] = useState<PestRequest[]>(sampleRequests);
+  const [activeIndex, setActiveIndex] = useState(0);
   const [messageDraft, setMessageDraft] = useState("");
+  const [appointment, setAppointment] = useState("");
+  const [paymentStatus, setPaymentStatus] = useState("Not sent");
+  const [proofStatus, setProofStatus] = useState("Not added");
+  const [internalNotes, setInternalNotes] = useState("");
 
-  const requests = useMemo<PestRequest[]>(() => getRequests(), [refreshKey]);
-  const active = activeIndex === null ? null : requests[activeIndex];
+  useEffect(() => {
+    const saved = JSON.parse(localStorage.getItem(storageKey) || "[]") as PestRequest[];
 
-  const activeSignals = requests.length;
-  const urgentJobs = requests.filter((r) =>
-    `${r.severity || ""} ${r.notes || ""}`.toLowerCase().includes("urgent") ||
-    `${r.severity || ""}`.toLowerCase().includes("infestation")
-  ).length;
-  const mosquitoJobs = requests.filter((r) => `${r.service || ""}`.toLowerCase().includes("mosquito")).length;
-  const recurringFits = requests.filter((r) => {
-    const value = `${r.service || ""} ${r.location || ""} ${r.notes || ""}`.toLowerCase();
-    return value.includes("mosquito") || value.includes("roach") || value.includes("commercial") || value.includes("store");
-  }).length;
-
-  function openWorkspace(index: number) {
-    setActiveIndex(index);
-    setMessageDraft(buildMessage("review", requests[index]));
-  }
-
-  function updateStatus(nextStatus: string) {
-    if (activeIndex === null) return;
-
-    const saved = JSON.parse(localStorage.getItem(storageKey) || "[]");
-
-    if (saved.length) {
-      saved[activeIndex] = {
-        ...saved[activeIndex],
-        status: nextStatus
-      };
-
-      localStorage.setItem(storageKey, JSON.stringify(saved));
-      setRefreshKey((key) => key + 1);
-      return;
+    if (saved.length > 0) {
+      setRequests([...saved, ...sampleRequests]);
     }
+  }, []);
 
-    demoRequests[activeIndex] = {
-      ...demoRequests[activeIndex],
-      status: nextStatus
+  const active = requests[activeIndex] || requests[0];
+
+  useEffect(() => {
+    if (active) {
+      setMessageDraft(buildMessage("followup", active));
+      setInternalNotes(active.notes || "");
+    }
+  }, [activeIndex]);
+
+  const stats = useMemo(() => {
+    const urgent = requests.filter((request) =>
+      `${request.severity} ${request.status}`.toLowerCase().includes("urgent") ||
+      `${request.severity}`.toLowerCase().includes("heavy")
+    ).length;
+
+    const mosquito = requests.filter((request) =>
+      `${request.service} ${request.notes}`.toLowerCase().includes("mosquito")
+    ).length;
+
+    return {
+      active: requests.length,
+      urgent,
+      mosquito,
+      recurring: Math.max(1, requests.filter((request) => request.service !== "Not Sure").length - 1)
     };
+  }, [requests]);
 
-    setRefreshKey((key) => key + 1);
+  function updateStatus(status: string) {
+    setRequests((current) =>
+      current.map((request, index) =>
+        index === activeIndex ? { ...request, status } : request
+      )
+    );
   }
 
-  function chooseAction(status: string, messageType: string) {
-    if (!active) return;
-    updateStatus(status);
-    setMessageDraft(buildMessage(messageType, active));
+  function chooseMessage(type: string, status?: string) {
+    if (status) updateStatus(status);
+    setMessageDraft(buildMessage(type, active));
   }
 
   async function copyMessage() {
-    if (!messageDraft) return;
     await navigator.clipboard.writeText(messageDraft);
   }
 
-  function deleteRequest(index: number) {
-    const saved = JSON.parse(localStorage.getItem(storageKey) || "[]");
-
-    if (saved.length) {
-      saved.splice(index, 1);
-      localStorage.setItem(storageKey, JSON.stringify(saved));
-      setRefreshKey((key) => key + 1);
-      setActiveIndex(null);
-    }
+  function saveNotes() {
+    setRequests((current) =>
+      current.map((request, index) =>
+        index === activeIndex ? { ...request, notes: internalNotes } : request
+      )
+    );
   }
 
   return (
-    <main className="min-h-screen bg-[#030706] px-5 py-8 text-white sm:px-8">
-      <div className="mx-auto max-w-7xl">
-        <Link to="/planet/slap-a-bug" className="text-sm font-black text-[#66dc3b]">
-          ← Public Page
-        </Link>
-
-        <section className="mt-5 rounded-[2rem] border border-[#e92929]/20 bg-[linear-gradient(135deg,rgba(60,4,10,0.72),rgba(0,0,0,0.78))] p-6 shadow-[0_0_80px_rgba(233,41,41,0.08)] sm:p-8">
-          <p className="text-xs font-black uppercase tracking-[0.38em] text-red-300">
-            Customer Intelligence
-          </p>
-
-          <div className="mt-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+    <main className="min-h-screen bg-[#020706] px-4 py-6 text-white sm:px-6 lg:px-8">
+      <section className="mx-auto max-w-7xl">
+        <div className="rounded-[2rem] border border-[#1d79d6]/30 bg-[radial-gradient(circle_at_top_left,rgba(31,111,190,0.16),transparent_36%),linear-gradient(135deg,rgba(0,0,0,0.88),rgba(2,7,6,0.96))] p-5 shadow-[0_0_80px_rgba(31,111,190,0.12)] sm:p-7">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <h1 className="text-5xl font-black tracking-tight sm:text-7xl">
+              <p className="text-xs font-black uppercase tracking-[0.36em] text-red-300">
                 Slap-A-Bug
+              </p>
+              <h1 className="mt-3 text-4xl font-black sm:text-6xl">
+                Pest Control Board
               </h1>
-              <p className="mt-4 max-w-3xl text-base leading-7 text-white/72">
-                Signals, follow-ups, pest severity, service opportunities, and next moves for Brad’s pest control requests.
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-white/64">
+                Requests come in from the public page, then Brad handles follow-up, scheduling,
+                payment, proof, and review from one active workspace.
               </p>
             </div>
 
-            <div className="rounded-2xl border border-[#28c765]/25 bg-[#28c765]/10 px-4 py-3 text-sm font-black text-[#66dc3b]">
-              {requests.length} Active Requests
-            </div>
+            <a
+              href="/planet/slap-a-bug"
+              className="w-fit rounded-2xl border border-[#1d79d6]/45 bg-[#1d79d6]/12 px-5 py-3 text-sm font-black text-blue-100 transition hover:border-[#58a9ff]/75 hover:bg-[#061423]"
+            >
+              View Public Page
+            </a>
           </div>
 
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              [activeSignals, "Active Signals"],
-              [urgentJobs, "Urgent / Infestation"],
-              [mosquitoJobs, "Mosquito Jobs"],
-              [recurringFits, "Recurring Fits"]
-            ].map(([value, label]) => (
-              <div key={label} className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
-                <p className="text-4xl font-black text-[#66dc3b]">{value}</p>
-                <p className="mt-2 text-xs font-black uppercase tracking-[0.24em] text-white/50">
+              ["Active Requests", stats.active],
+              ["Urgent / Heavy", stats.urgent],
+              ["Mosquito Jobs", stats.mosquito],
+              ["Recurring Fits", stats.recurring]
+            ].map(([label, value]) => (
+              <div
+                key={label}
+                className="rounded-3xl border border-[#1d79d6]/25 bg-black/45 p-5"
+              >
+                <p className="text-xs font-black uppercase tracking-[0.22em] text-blue-200/70">
                   {label}
                 </p>
+                <p className="mt-2 text-4xl font-black text-white">{value}</p>
               </div>
             ))}
           </div>
-        </section>
+        </div>
 
-        <section className="mt-6 grid gap-6 lg:grid-cols-[1.35fr_0.9fr]">
-          <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5 sm:p-6">
-            <p className="text-xs font-black uppercase tracking-[0.38em] text-red-300">
-              Active Customer Signals
+        <div className="mt-6 grid gap-6 lg:grid-cols-[0.92fr_1.45fr]">
+          {/* REQUEST CARDS */}
+          <section className="rounded-[2rem] border border-white/10 bg-black/38 p-4 sm:p-5">
+            <p className="text-xs font-black uppercase tracking-[0.34em] text-red-300">
+              Active Signals
             </p>
 
-            <div className="mt-5 grid gap-4">
+            <div className="mt-4 grid gap-3">
               {requests.map((request, index) => (
-                <article
-                  key={`${request.name}-${request.createdAt}-${index}`}
-                  className="rounded-3xl border border-white/10 bg-black/55 p-5"
+                <button
+                  key={`${request.name}-${index}`}
+                  onClick={() => setActiveIndex(index)}
+                  className={`rounded-3xl border p-4 text-left transition hover:-translate-y-0.5 hover:border-[#1d79d6]/65 hover:bg-[#061423] hover:shadow-[0_0_34px_rgba(31,111,190,0.18)] ${
+                    activeIndex === index
+                      ? "border-[#1d79d6]/70 bg-[#061423] shadow-[0_0_34px_rgba(31,111,190,0.18)]"
+                      : "border-white/10 bg-white/[0.035]"
+                  }`}
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <button
-                      onClick={() => openWorkspace(index)}
-                      className="flex-1 text-left"
-                    >
-                      <h2 className="text-2xl font-black">{request.name || "New Customer"}</h2>
-                      <p className={`mt-2 text-sm font-black ${statusTone(request.status)}`}>
-                        {signalLabel(request)}
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h2 className="text-xl font-black">{request.name || "New Customer"}</h2>
+                      <p className="mt-1 text-sm text-white/62">
+                        {request.service || "Not Sure"} · {request.location || "Location needed"}
                       </p>
-                    </button>
+                    </div>
 
-                    <button
-                      onClick={() => deleteRequest(index)}
-                      className="rounded-2xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm font-black text-red-200"
-                    >
-                      🗑
-                    </button>
+                    <span className={`rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.12em] ${statusColor(request.status || "New Request")}`}>
+                      {request.status || "New"}
+                    </span>
                   </div>
 
-                  <button
-                    onClick={() => openWorkspace(index)}
-                    className="mt-5 grid w-full gap-3 text-left text-sm text-white/72 sm:grid-cols-2"
-                  >
-                    <p>{request.location || "Location not added"}</p>
-                    <p>{request.phone || "No phone added"}</p>
-                    <p>{request.status || "New Request"}</p>
-                    <p>{request.createdAt ? new Date(request.createdAt).toLocaleDateString() : "New"}</p>
-                  </button>
+                  <p className="mt-4 line-clamp-2 text-sm leading-6 text-white/58">
+                    {request.notes || "No notes yet."}
+                  </p>
 
-                  <button
-                    onClick={() => openWorkspace(index)}
-                    className="mt-5 w-full rounded-2xl bg-[#240811] px-4 py-4 text-left text-sm font-black text-white"
-                  >
-                    Next move: {nextMove(request)}
-                  </button>
-
-                  <button
-                    onClick={() => openWorkspace(index)}
-                    className="mt-4 text-xs font-black uppercase tracking-[0.22em] text-[#8fc8ff]"
-                  >
-                    Open Active Workspace →
-                  </button>
-                </article>
+                  <p className="mt-4 text-xs font-black uppercase tracking-[0.18em] text-[#66dc3b]">
+                    Open Workspace
+                  </p>
+                </button>
               ))}
             </div>
-          </div>
+          </section>
 
-          <aside className="rounded-[2rem] border border-[#e92929]/24 bg-[linear-gradient(135deg,rgba(55,0,10,0.7),rgba(0,0,0,0.82))] p-5 sm:p-6">
-            <p className="text-xs font-black uppercase tracking-[0.38em] text-red-300">
-              Live Suggestions
-            </p>
-
-            <div className="mt-5 grid gap-4">
-              {[
-                ["Mosquito jobs need area notes.", "Ask about trees, bushes, standing water, shade lines, and yard activity before confirming fogging."],
-                ["Urgent pest language should jump first.", "If the customer says infestation, urgent, everywhere, or heavy activity, follow up fast."],
-                ["Rodent calls need hidden-space questions.", "Ask about sheds, barns, feed rooms, garages, storage spaces, and entry points."],
-                ["Completed jobs should become proof.", "After service, mark complete, capture proof, and ask for a review."]
-              ].map(([title, body]) => (
-                <div key={title} className="rounded-3xl bg-black/70 p-5">
-                  <h3 className="text-lg font-black">{title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-white/62">{body}</p>
-                </div>
-              ))}
-            </div>
-          </aside>
-        </section>
-      </div>
-
-      {active && (
-        <div className="fixed inset-0 z-50">
-          <button
-            aria-label="Close drawer overlay"
-            onClick={() => setActiveIndex(null)}
-            className="absolute inset-0 bg-black/72 backdrop-blur-sm"
-          />
-
-          <aside className="absolute right-0 top-0 flex h-full w-full max-w-3xl flex-col border-l border-white/10 bg-[#050b08] shadow-[-30px_0_80px_rgba(0,0,0,0.55)]">
-            <div className="border-b border-white/10 bg-black/40 px-5 py-4 sm:px-7">
-              <div className="flex items-start justify-between gap-4">
+          {/* ACTIVE WORKSPACE */}
+          <section className="overflow-hidden rounded-[2rem] border border-[#1d79d6]/45 bg-[#071019] shadow-[0_0_70px_rgba(31,111,190,0.14)]">
+            <div className="border-b border-[#1d79d6]/25 bg-[radial-gradient(circle_at_top_left,rgba(233,41,41,0.16),transparent_32%),rgba(0,0,0,0.35)] p-5 sm:p-7">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <p className="text-xs font-black uppercase tracking-[0.3em] text-[#8fc8ff]">
+                  <p className="text-xs font-black uppercase tracking-[0.34em] text-blue-200">
                     Active Workspace
                   </p>
-                  <h2 className="mt-2 text-3xl font-black sm:text-4xl">
+                  <h2 className="mt-3 text-4xl font-black sm:text-5xl">
                     {active.name || "New Customer"}
                   </h2>
-                  <p className="mt-2 text-sm text-white/58">
-                    {active.service || "Not Sure"} · {active.location || "Location not added"}
+                  <p className="mt-2 text-base text-white/76">
+                    {active.service || "Not Sure"} · {active.location || "Location needed"} · {active.severity || "Severity needed"}
                   </p>
                 </div>
 
-                <button
-                  onClick={() => setActiveIndex(null)}
-                  className="rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-sm font-black text-white/70"
-                >
-                  Close
-                </button>
+                <span className={`w-fit rounded-full border px-4 py-2 text-xs font-black uppercase tracking-[0.16em] ${statusColor(active.status || "New Request")}`}>
+                  {active.status || "New Request"}
+                </span>
               </div>
 
-              <div className="mt-4 grid gap-2 sm:grid-cols-3">
+              <div className="mt-6 grid gap-3 sm:grid-cols-3">
                 <a
-                  href={`tel:${active.phone || ""}`}
-                  className="rounded-2xl bg-[#e92929] px-5 py-3 text-center font-black text-white"
+                  href={`tel:${cleanPhone(active.phone || "")}`}
+                  className="rounded-2xl bg-[#e92929] px-5 py-4 text-center text-base font-black text-white shadow-[0_0_35px_rgba(233,41,41,0.28)] transition hover:-translate-y-0.5 hover:bg-[#ff3030]"
                 >
                   Call
                 </a>
 
                 <a
-                  href={`sms:${active.phone || ""}?&body=${encodeURIComponent(messageDraft)}`}
-                  className="rounded-2xl border border-white/15 bg-white/[0.04] px-5 py-3 text-center font-black text-white"
+                  href={`sms:${cleanPhone(active.phone || "")}?&body=${encodeURIComponent(messageDraft)}`}
+                  className="rounded-2xl border border-[#1d79d6]/60 bg-[#1d79d6]/22 px-5 py-4 text-center text-base font-black text-white shadow-[0_0_32px_rgba(31,111,190,0.18)] transition hover:-translate-y-0.5 hover:border-[#58a9ff]/80 hover:bg-[#1d79d6]/34"
                 >
                   Text Draft
                 </a>
 
                 <button
-                  onClick={() => chooseAction("Scheduled", "schedule")}
-                  className="rounded-2xl bg-[#28c765] px-5 py-3 text-center font-black text-black"
+                  onClick={() => chooseMessage("schedule", "Scheduling")}
+                  className="rounded-2xl bg-[#28c765] px-5 py-4 text-center text-base font-black text-black transition hover:-translate-y-0.5 hover:bg-[#39df78]"
                 >
                   Schedule
                 </button>
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-5 py-4 sm:px-7">
-              <section className="rounded-3xl border border-[#28c765]/25 bg-[#28c765]/10 p-4">
-                <p className="text-xs font-black uppercase tracking-[0.24em] text-[#66dc3b]">
-                  Next Move
+            <div className="grid gap-4 p-5 sm:p-7">
+              {/* NEXT ACTION */}
+              <div className="rounded-3xl border border-[#1d79d6]/30 bg-[#061423]/75 p-5">
+                <p className="text-xs font-black uppercase tracking-[0.28em] text-blue-200">
+                  Next Action
                 </p>
-                <h3 className="mt-2 text-xl font-black sm:text-2xl">
-                  {nextMove(active)}
+                <h3 className="mt-3 text-2xl font-black">
+                  Follow up and move this request forward.
                 </h3>
-              </section>
+                <p className="mt-2 text-sm leading-6 text-white/62">
+                  Use the buttons below to form the message, update the status, and keep the job moving.
+                </p>
 
-              <section className="mt-4 rounded-3xl border border-white/10 bg-black/30 p-5">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <p className="text-xs font-black uppercase tracking-[0.24em] text-white/42">
-                      Message Actions
-                    </p>
-                    <h3 className="mt-2 text-2xl font-black">
-                      {active.status || "New Request"}
-                    </h3>
-                  </div>
-
-                  <p className="max-w-sm text-sm leading-6 text-white/54">
-                    Tap an action and HomePlanet forms the customer message.
-                  </p>
-                </div>
-
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                   <button
-                    onClick={() => chooseAction("Needs Review", "review")}
-                    className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4 text-left font-black text-white hover:border-[#8fc8ff]/45"
+                    onClick={() => chooseMessage("followup", "Follow-Up")}
+                    className="rounded-2xl border border-[#1d79d6]/35 bg-black/35 px-4 py-3 text-sm font-black transition hover:border-[#1d79d6]/75 hover:bg-[#061423]"
                   >
                     Follow Up
-                    <span className="mt-1 block text-xs font-normal leading-5 text-white/55">
-                      First response to the customer.
-                    </span>
                   </button>
 
                   <button
-                    onClick={() => chooseAction("Needs Review", "photos")}
-                    className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4 text-left font-black text-white hover:border-[#8fc8ff]/45"
+                    onClick={() => chooseMessage("photos", "Need Photos")}
+                    className="rounded-2xl border border-[#1d79d6]/35 bg-black/35 px-4 py-3 text-sm font-black transition hover:border-[#1d79d6]/75 hover:bg-[#061423]"
                   >
-                    Ask For Photos
-                    <span className="mt-1 block text-xs font-normal leading-5 text-white/55">
-                      Ask for photos before quoting.
-                    </span>
+                    Ask Photos
                   </button>
 
                   <button
-                    onClick={() => chooseAction("Scheduled", active.service?.toLowerCase().includes("mosquito") ? "mosquito" : "schedule")}
-                    className="rounded-2xl bg-[#28c765] px-4 py-4 text-left font-black text-black"
+                    onClick={() => chooseMessage("payment", "Payment Due")}
+                    className="rounded-2xl border border-[#28c765]/35 bg-[#28c765]/10 px-4 py-3 text-sm font-black text-green-100 transition hover:border-[#28c765]/75"
                   >
-                    Schedule Service
-                    <span className="mt-1 block text-xs font-normal leading-5 text-black/70">
-                      Forms the scheduling message.
-                    </span>
+                    Payment
                   </button>
 
                   <button
-                    onClick={() => chooseAction("Complete", "complete")}
-                    className="rounded-2xl border border-[#e92929]/35 bg-[#e92929]/10 px-4 py-4 text-left font-black text-white hover:border-[#e92929]/60"
+                    onClick={() => chooseMessage("review", "Completed")}
+                    className="rounded-2xl border border-white/10 bg-black/35 px-4 py-3 text-sm font-black transition hover:border-[#1d79d6]/75 hover:bg-[#061423]"
                   >
-                    Complete / Review
-                    <span className="mt-1 block text-xs font-normal leading-5 text-white/55">
-                      Follow-up and review message.
-                    </span>
+                    Review
                   </button>
                 </div>
+              </div>
 
-                <div className="mt-4 rounded-2xl border border-white/10 bg-black/35 p-4">
-                  <p className="text-xs font-black uppercase tracking-[0.22em] text-white/42">
-                    Message To Customer
-                  </p>
+              {/* MESSAGE */}
+              <div className="rounded-3xl border border-[#1d79d6]/25 bg-black/45 p-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.28em] text-blue-200">
+                      Message To Customer
+                    </p>
+                    <h3 className="mt-2 text-2xl font-black">Ready-to-send text</h3>
+                  </div>
 
-                  <textarea
-                    value={messageDraft}
-                    onChange={(e) => setMessageDraft(e.target.value)}
-                    className="mt-3 min-h-28 w-full rounded-2xl border border-white/10 bg-black/55 px-4 py-4 text-sm leading-6 text-white outline-none"
-                  />
-
-                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  <div className="flex gap-2">
                     <button
                       onClick={copyMessage}
-                      className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-black text-white"
+                      className="rounded-xl border border-[#1d79d6]/45 bg-[#1d79d6]/12 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-blue-100"
                     >
-                      Copy Message
+                      Copy
                     </button>
 
                     <a
-                      href={`sms:${active.phone || ""}?&body=${encodeURIComponent(messageDraft)}`}
-                      className="rounded-2xl bg-[#28c765] px-4 py-3 text-center text-sm font-black text-black"
+                      href={`sms:${cleanPhone(active.phone || "")}?&body=${encodeURIComponent(messageDraft)}`}
+                      className="rounded-xl bg-[#1d79d6] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-white"
                     >
                       Open Text
                     </a>
                   </div>
                 </div>
-              </section>
 
-              <div className="mt-4 grid gap-4 md:grid-cols-2">
-                {[
-                  ["Customer Info", `${active.name || "No name"} · ${active.phone || "No phone"}`],
-                  ["Pest Details", `${active.service || "Not Sure"} · ${active.location || "Location not added"} · ${active.severity || "Severity not added"}`],
-                  ["Photos", "Photo upload / before photos placeholder for bugs, entry points, nests, rodent signs, trees, bushes, and mosquito zones."],
-                  ["Service Plan", "Fogging, perimeter treatment, interior issue, nest removal, rodent check, or recurring service option."],
-                  ["Schedule", "Set service date, arrival window, or follow-up reminder."],
-                  ["Payment", "Send payment link, mark cash, collect on-site, or close as paid."],
-                  ["Proof / Follow-Up", "After service: add proof, mark completed, and ask for review."],
-                  ["Timeline", "New Request → Review → Message → Schedule → Service → Payment → Proof → Follow-Up"]
-                ].map(([title, body]) => (
-                  <section key={title} className="rounded-3xl border border-white/10 bg-black/25 p-5">
-                    <h3 className="text-lg font-black">{title}</h3>
-                    <p className="mt-3 text-sm leading-6 text-white/62">{body}</p>
-                  </section>
-                ))}
+                <textarea
+                  value={messageDraft}
+                  onChange={(event) => setMessageDraft(event.target.value)}
+                  className="mt-4 min-h-36 w-full rounded-2xl border border-[#1d79d6]/25 bg-[#020706] p-4 text-sm leading-6 text-white outline-none transition focus:border-[#1d79d6]/75"
+                />
               </div>
 
-              <section className="mt-4 rounded-3xl border border-white/10 bg-black/25 p-5">
-                <h3 className="text-lg font-black">Notes</h3>
-                <p className="mt-3 text-sm leading-6 text-white/62">
-                  {active.notes || "No notes yet."}
+              {/* SCHEDULE + PAYMENT */}
+              <div className="grid gap-4 lg:grid-cols-2">
+                <div className="rounded-3xl border border-[#1d79d6]/25 bg-[#061423]/55 p-5">
+                  <p className="text-xs font-black uppercase tracking-[0.28em] text-blue-200">
+                    Schedule
+                  </p>
+                  <h3 className="mt-2 text-2xl font-black">Set the visit</h3>
+
+                  <input
+                    value={appointment}
+                    onChange={(event) => setAppointment(event.target.value)}
+                    placeholder="Example: Thursday 10 AM"
+                    className="mt-4 w-full rounded-2xl border border-[#1d79d6]/25 bg-black/45 px-4 py-4 text-white outline-none focus:border-[#1d79d6]/75"
+                  />
+
+                  <button
+                    onClick={() => updateStatus("Scheduled")}
+                    className="mt-3 w-full rounded-2xl bg-[#28c765] px-4 py-3 font-black text-black"
+                  >
+                    Mark Scheduled
+                  </button>
+                </div>
+
+                <div className="rounded-3xl border border-[#1d79d6]/25 bg-[#061423]/55 p-5">
+                  <p className="text-xs font-black uppercase tracking-[0.28em] text-blue-200">
+                    Payment
+                  </p>
+                  <h3 className="mt-2 text-2xl font-black">{paymentStatus}</h3>
+
+                  <div className="mt-4 grid gap-2">
+                    <button
+                      onClick={() => {
+                        setPaymentStatus("Payment link ready");
+                        chooseMessage("payment", "Payment Due");
+                      }}
+                      className="rounded-2xl border border-[#1d79d6]/40 bg-[#1d79d6]/12 px-4 py-3 font-black text-blue-100"
+                    >
+                      Send Payment Message
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setPaymentStatus("Paid");
+                        updateStatus("Paid");
+                      }}
+                      className="rounded-2xl bg-[#28c765] px-4 py-3 font-black text-black"
+                    >
+                      Mark Paid
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* PROOF + NOTES */}
+              <div className="grid gap-4 lg:grid-cols-2">
+                <div className="rounded-3xl border border-[#1d79d6]/25 bg-black/45 p-5">
+                  <p className="text-xs font-black uppercase tracking-[0.28em] text-blue-200">
+                    Proof / Review
+                  </p>
+                  <h3 className="mt-2 text-2xl font-black">{proofStatus}</h3>
+
+                  <div className="mt-4 grid gap-2">
+                    <button
+                      onClick={() => {
+                        setProofStatus("Proof added");
+                        updateStatus("Proof Added");
+                      }}
+                      className="rounded-2xl border border-[#1d79d6]/40 bg-[#1d79d6]/12 px-4 py-3 font-black text-blue-100"
+                    >
+                      Mark Proof Added
+                    </button>
+
+                    <button
+                      onClick={() => chooseMessage("review", "Review Requested")}
+                      className="rounded-2xl border border-[#28c765]/40 bg-[#28c765]/10 px-4 py-3 font-black text-green-100"
+                    >
+                      Ask For Review
+                    </button>
+                  </div>
+                </div>
+
+                <div className="rounded-3xl border border-[#1d79d6]/25 bg-black/45 p-5">
+                  <p className="text-xs font-black uppercase tracking-[0.28em] text-blue-200">
+                    Internal Notes
+                  </p>
+                  <h3 className="mt-2 text-2xl font-black">Brad’s notes</h3>
+
+                  <textarea
+                    value={internalNotes}
+                    onChange={(event) => setInternalNotes(event.target.value)}
+                    className="mt-4 min-h-32 w-full rounded-2xl border border-[#1d79d6]/25 bg-[#020706] p-4 text-sm leading-6 text-white outline-none transition focus:border-[#1d79d6]/75"
+                    placeholder="Add real job notes here..."
+                  />
+
+                  <button
+                    onClick={saveNotes}
+                    className="mt-3 w-full rounded-2xl border border-[#1d79d6]/45 bg-[#1d79d6]/12 px-4 py-3 font-black text-blue-100"
+                  >
+                    Save Notes
+                  </button>
+                </div>
+              </div>
+
+              <div className="rounded-3xl border border-white/10 bg-black/35 p-5">
+                <p className="text-xs font-black uppercase tracking-[0.28em] text-white/40">
+                  Timeline
                 </p>
-              </section>
+                <p className="mt-3 text-sm leading-7 text-white/66">
+                  New Request → Review → Message → Schedule → Service → Payment → Proof → Follow-Up
+                </p>
+              </div>
             </div>
-          </aside>
+          </section>
         </div>
-      )}
+      </section>
     </main>
   );
 }
