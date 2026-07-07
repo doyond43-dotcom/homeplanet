@@ -117,12 +117,10 @@ export default function SlapABugLandingPage() {
           background-image:
             linear-gradient(45deg, transparent 50%, #8fc8ff 50%),
             linear-gradient(135deg, #8fc8ff 50%, transparent 50%);
-          background-position:
-            calc(100% - 25px) 50%,
-            calc(100% - 17px) 50%;
-          background-size: 9px 9px, 9px 9px;
+          background-position: calc(100% - 26px) 50%, calc(100% - 16px) 50%;
+          background-size: 10px 10px, 10px 10px;
           background-repeat: no-repeat;
-          padding-right: 3.75rem;
+          padding-right: 3.75rem; cursor: pointer;
         }
 
         .sab-select option {
@@ -315,7 +313,7 @@ export default function SlapABugLandingPage() {
                     <select
                       value={form.service}
                       onChange={(e) => updateField("service", e.target.value)}
-                      className="sab-select rounded-2xl border border-[#1d79d6]/25 bg-black/65 px-4 py-4 text-white outline-none transition focus:border-[#1d79d6]/70 focus:shadow-[0_0_24px_rgba(31,111,190,0.16)]"
+                      className="sab-select rounded-2xl border border-[#1d79d6]/30 bg-black/65 px-4 py-4 text-white outline-none transition hover:border-[#58a9ff]/65 hover:bg-[#061423] focus:border-[#58a9ff]/80 focus:shadow-[0_0_24px_rgba(31,111,190,0.20)]"
                     >
                       {pestOptions.map(([pest]) => (
                         <option key={pest} className="bg-[#050b12] text-white">{pest}</option>
@@ -326,7 +324,7 @@ export default function SlapABugLandingPage() {
                     <select
                       value={form.location}
                       onChange={(e) => updateField("location", e.target.value)}
-                      className="sab-select rounded-2xl border border-[#1d79d6]/25 bg-black/65 px-4 py-4 text-white outline-none transition focus:border-[#1d79d6]/70 focus:shadow-[0_0_24px_rgba(31,111,190,0.16)]"
+                      className="sab-select rounded-2xl border border-[#1d79d6]/30 bg-black/65 px-4 py-4 text-white outline-none transition hover:border-[#58a9ff]/65 hover:bg-[#061423] focus:border-[#58a9ff]/80 focus:shadow-[0_0_24px_rgba(31,111,190,0.20)]"
                     >
                       <option value="" className="bg-[#050b12] text-white">Where are you seeing it?</option>
                       <option className="bg-[#050b12] text-white">Inside</option>
@@ -343,7 +341,7 @@ export default function SlapABugLandingPage() {
                     <select
                       value={form.severity}
                       onChange={(e) => updateField("severity", e.target.value)}
-                      className="sab-select rounded-2xl border border-[#1d79d6]/25 bg-black/65 px-4 py-4 text-white outline-none transition focus:border-[#1d79d6]/70 focus:shadow-[0_0_24px_rgba(31,111,190,0.16)]"
+                      className="sab-select rounded-2xl border border-[#1d79d6]/30 bg-black/65 px-4 py-4 text-white outline-none transition hover:border-[#58a9ff]/65 hover:bg-[#061423] focus:border-[#58a9ff]/80 focus:shadow-[0_0_24px_rgba(31,111,190,0.20)]"
                     >
                       <option value="" className="bg-[#050b12] text-white">How bad is it?</option>
                       <option className="bg-[#050b12] text-white">Light activity</option>
@@ -358,7 +356,7 @@ export default function SlapABugLandingPage() {
                     <input
                       value={form.name}
                       onChange={(e) => updateField("name", e.target.value)}
-                      className="sab-select rounded-2xl border border-[#1d79d6]/25 bg-black/65 px-4 py-4 text-white outline-none transition focus:border-[#1d79d6]/70 focus:shadow-[0_0_24px_rgba(31,111,190,0.16)]"
+                      className="rounded-2xl border border-[#1d79d6]/25 bg-black/65 px-4 py-4 text-white outline-none transition focus:border-[#1d79d6]/70 focus:shadow-[0_0_24px_rgba(31,111,190,0.16)]"
                       placeholder="Your name"
                       required
                     />
@@ -366,7 +364,7 @@ export default function SlapABugLandingPage() {
                     <input
                       value={form.phone}
                       onChange={(e) => updateField("phone", e.target.value)}
-                      className="sab-select rounded-2xl border border-[#1d79d6]/25 bg-black/65 px-4 py-4 text-white outline-none transition focus:border-[#1d79d6]/70 focus:shadow-[0_0_24px_rgba(31,111,190,0.16)]"
+                      className="rounded-2xl border border-[#1d79d6]/25 bg-black/65 px-4 py-4 text-white outline-none transition focus:border-[#1d79d6]/70 focus:shadow-[0_0_24px_rgba(31,111,190,0.16)]"
                       placeholder="Phone number"
                       required
                     />
@@ -409,6 +407,7 @@ export default function SlapABugLandingPage() {
     </main>
   );
 }
+
 
 
 
