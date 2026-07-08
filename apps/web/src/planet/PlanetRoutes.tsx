@@ -436,6 +436,7 @@ import AfterAwarenessPage from "../pages/AfterAwarenessPage";
 import AwarenessLayerPage from "../pages/AwarenessLayerPage";
 import FloridaCoolingLandingPage from "../pages/FloridaCoolingLandingPage";
 import FloridaCoolingLivePage from "../pages/FloridaCoolingLivePage";
+import FloridaCoolingBoardPage from "../pages/FloridaCoolingBoardPage";
 import VictorPinedaLandingPage from "../pages/VictorPinedaLandingPage";
 import SmithPropertyCareLandingPage from "../pages/SmithPropertyCareLandingPage";
 import SmithPropertyCareCommandCenter from "../pages/SmithPropertyCareCommandCenter";
@@ -788,6 +789,7 @@ export default function PlanetRoutes() {
 <Route path="ecosystem-infrastructure" element={<EcosystemInfrastructurePortal />} />
 <Route path="get-live" element={<GetBusinessLivePage />} />
 <Route path="florida-cooling" element={<FloridaCoolingLivePage />} />
+      <Route path="florida-cooling/board" element={<FloridaCoolingBoardPage />} />
       {/* HYDRA OPERATIONS */}
       <Route path="hydra" element={<HydraLandingPage />} />
       <Route path="hydra-v2" element={<HydraLandingPageV2 />} />
@@ -830,6 +832,7 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
 
 
 
