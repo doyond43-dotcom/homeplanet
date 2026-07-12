@@ -38,6 +38,7 @@ import PressKitTaylorCreek from "./routes/PressKitTaylorCreek";
 
 
 import PlanetRoutes from "./planet/PlanetRoutes";
+import OnlyTheEssentialsLandingV2 from "./pages/OnlyTheEssentialsLandingV2";
 
 import CreatorRoutes from "./routes/CreatorRoutes";
 
@@ -208,6 +209,8 @@ export default function App() {
         <Route path="/event/:slug" element={<OkeechobeeDomainEventRedirect />} />
         <Route path="/create" element={<OkeechobeeDomainCreateRedirect />} />
 
+        <Route path="/onlytheessentials" element={<OnlyTheEssentialsLandingV2 />} />
+
         <Route path="/:slug/*" element={<TenantPublicPage />} />
 
         <Route path="/" element={<OkeechobeeDomainHomeRedirect />} />
@@ -225,6 +228,7 @@ export default function App() {
     </BrowserRouter>
   );
 }
+
 
 
 
