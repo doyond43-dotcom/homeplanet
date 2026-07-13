@@ -1,67 +1,9 @@
-import { Routes, Route, Link, Navigate, useLocation } from "react-router-dom";
+﻿import { Routes, Route, Link, Navigate, useLocation } from "react-router-dom";
 import type { CSSProperties } from "react";
 import CreatorCity from "../pages/CreatorCity";
 import SafetyCityLanding from "../pages/SafetyCityLanding";
 import FamilyCityLanding from "../pages/FamilyCityLanding";
 import CommerceCityLanding from "../pages/CommerceCityLanding";
-
-type Planet = {
-  title: string;
-  to: string;
-  status: "LIVE" | "NEXT" | "FOUNDATION";
-  description: string;
-};
-
-const planets: Planet[] = [
-  {
-    title: "Guardian Planet",
-    to: "/city/family",
-    status: "LIVE",
-    description: "People, pets, family care, Predator Shield, and trusted awareness.",
-  },
-  {
-    title: "Service Planet",
-    to: "/service/taylor-creek",
-    status: "LIVE",
-    description: "Requests, estimates, dispatch, proof, payment, and customer clarity.",
-  },
-  {
-    title: "Commerce Planet",
-    to: "/city/commerce",
-    status: "LIVE",
-    description: "Orders, appointments, product flow, payments, and customer updates.",
-  },
-  {
-    title: "Creator Planet",
-    to: "/city/creator",
-    status: "LIVE",
-    description: "Ideas become pages, boards, QR flows, previews, and live systems.",
-  },
-  {
-    title: "Experience Planet",
-    to: "/planet/live-pages/experiences",
-    status: "NEXT",
-    description: "Escape rooms, fishing trips, events, QR moments, and guest memories.",
-  },
-  {
-    title: "Education Planet",
-    to: "/city/education",
-    status: "FOUNDATION",
-    description: "Real projects, student progress, parent awareness, and proof of learning.",
-  },
-  {
-    title: "Health Planet",
-    to: "/city/health",
-    status: "FOUNDATION",
-    description: "Care coordination, reminders, family updates, and trusted timelines.",
-  },
-  {
-    title: "Legal Planet",
-    to: "/city/legal",
-    status: "FOUNDATION",
-    description: "Client intake, case status, documents, proof, and communication flow.",
-  },
-];
 
 const doctrines = [
   {
@@ -97,13 +39,13 @@ const philosophy = [
   },
 ];
 
-function CityIndex() {
+function HomePlanetFrontDoorIndex() {
   const shell: CSSProperties = {
     minHeight: "100vh",
+    color: "#f5fff8",
     background:
-      "radial-gradient(circle at 50% 14%, rgba(16,185,129,0.10), transparent 30%), radial-gradient(circle at 8% 82%, rgba(16,185,129,0.06), transparent 26%), linear-gradient(180deg, #050505 0%, #080808 52%, #050505 100%)",
-    color: "#f8fafc",
-    padding: "24px 18px 64px",
+      "radial-gradient(circle at 50% 8%, rgba(67,255,132,0.13), transparent 30rem), radial-gradient(circle at 8% 78%, rgba(40,118,255,0.06), transparent 28rem), #020504",
+    padding: "24px 18px 72px",
   };
 
   const wrap: CSSProperties = {
@@ -112,171 +54,426 @@ function CityIndex() {
   };
 
   const nav: CSSProperties = {
-    height: 54,
-    border: "1px solid rgba(255,255,255,0.08)",
-    borderRadius: 999,
-    background: "rgba(10,10,10,0.86)",
+    minHeight: 78,
+    borderBottom: "1px solid rgba(255,255,255,0.07)",
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: "0 14px",
-    marginBottom: 54,
-    boxShadow: "0 18px 70px rgba(0,0,0,0.34)",
+    gap: 18,
+    padding: "0 4px",
+    marginBottom: 0,
   };
 
   const brand: CSSProperties = {
     display: "flex",
     alignItems: "center",
-    gap: 10,
-    color: "#fff",
+    gap: 11,
+    color: "#f5fff8",
     textDecoration: "none",
+    fontSize: 15,
     fontWeight: 950,
+    letterSpacing: "-0.025em",
   };
 
   const logo: CSSProperties = {
-    width: 32,
-    height: 32,
+    width: 36,
+    height: 36,
     borderRadius: 999,
     objectFit: "cover",
+    boxShadow:
+      "0 0 0 5px rgba(84,255,141,0.045), 0 0 22px rgba(84,255,141,0.16)",
   };
 
-  const navLinks: CSSProperties = {
-    display: "flex",
-    alignItems: "center",
-    gap: 18,
-    fontSize: 12,
-    color: "#94a3b8",
-    fontWeight: 800,
-  };
-
-  const buildBtn: CSSProperties = {
-    background: "#f8fafc",
-    color: "#020617",
-    borderRadius: 999,
-    padding: "8px 13px",
+  const atlasLink: CSSProperties = {
+    color: "rgba(231,246,236,0.56)",
     textDecoration: "none",
-    fontSize: 12,
-    fontWeight: 950,
+    fontSize: 13,
+    fontWeight: 850,
   };
 
   const hero: CSSProperties = {
-    display: "grid",
-    gridTemplateColumns: "minmax(0, 0.92fr) minmax(340px, 1.08fr)",
-    gap: 36,
-    alignItems: "center",
-    marginBottom: 54,
+    padding: "clamp(92px, 12vw, 150px) 0 74px",
+    marginBottom: 0,
   };
 
   const eyebrow: CSSProperties = {
     display: "inline-flex",
     alignItems: "center",
-    border: "1px solid rgba(52,211,153,0.28)",
-    background: "rgba(6,78,59,0.16)",
-    color: "#a7f3d0",
-    borderRadius: 999,
-    padding: "7px 11px",
-    fontSize: 12,
+    gap: 10,
+    color: "#69ff99",
+    fontSize: 10,
     fontWeight: 950,
-    marginBottom: 18,
+    letterSpacing: "0.17em",
+    textTransform: "uppercase",
+    marginBottom: 24,
   };
 
   const h1: CSSProperties = {
+    maxWidth: 980,
     margin: 0,
-    fontSize: "clamp(48px, 7vw, 86px)",
-    lineHeight: 0.91,
+    fontSize: "clamp(64px, 9vw, 122px)",
+    lineHeight: 0.88,
     letterSpacing: "-0.078em",
-    color: "#f8fafc",
+    color: "#f8fff9",
+    fontWeight: 950,
+    textShadow: "0 0 46px rgba(65,255,126,0.055)",
+  };
+
+  const intro: CSSProperties = {
+    maxWidth: 650,
+    margin: "28px auto 0",
+    color: "rgba(229,245,234,0.6)",
+    fontSize: "clamp(17px, 2vw, 21px)",
+    lineHeight: 1.55,
+  };
+
+  const directionGrid: CSSProperties = {
+    display: "grid",
+    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+    gap: 16,
+  };
+
+  const directions = [
+    {
+      number: "01",
+      title: "Run a Business",
+      description:
+        "Build the public page customers see and run the real work underneath.",
+      detail: "Requests · Estimates · Scheduling · Payment · Proof",
+      to: "/city/creator",
+    },
+    {
+      number: "02",
+      title: "Care for People & Pets",
+      description:
+        "Keep care, trust, updates, protection, and the people involved connected.",
+      detail: "Family · Pet Care · Elder Care · Trusted Awareness",
+      to: "/city/family",
+    },
+    {
+      number: "03",
+      title: "Bring People Together",
+      description:
+        "Turn local needs, offers, events, and community action into organized movement.",
+      detail: "Community · Events · Local Help · Opportunities",
+      to: "/planet/okeechobee",
+    },
+  ];
+
+  return (
+    <main style={shell}>
+      <div style={wrap}>
+<section style={hero}>
+          <div style={eyebrow}>Start where you are</div>
+
+          <h1 style={h1}>What are you trying to do?</h1>
+
+          <p style={intro}>
+            Choose the direction that fits. HomePlanet connects the public
+            entrance to the real work, care, or coordination happening
+            underneath.
+          </p>
+        </section>
+
+        <section style={directionGrid} className="hp-front-door-grid">
+          {directions.map((direction) => (
+            <Link
+              key={direction.title}
+              to={direction.to}
+              className="hp-front-door-card"
+              style={{
+                minHeight: 330,
+                padding: 28,
+                border: "1px solid rgba(255,255,255,0.09)",
+                borderRadius: 26,
+                color: "#f5fff8",
+                textDecoration: "none",
+                background:
+                  "radial-gradient(circle at 50% 0%, rgba(71,255,136,0.075), transparent 70%), linear-gradient(145deg, rgba(255,255,255,0.038), rgba(255,255,255,0.012))",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                boxShadow:
+                  "0 24px 70px rgba(0,0,0,0.28), inset 0 1px rgba(255,255,255,0.035)",
+              }}
+            >
+              <div>
+                <div
+                  style={{
+                    color: "#69ff99",
+                    fontSize: 10,
+                    fontWeight: 950,
+                    letterSpacing: "0.14em",
+                  }}
+                >
+                  {direction.number}
+                </div>
+
+                <h2
+                  style={{
+                    margin: "22px 0 0",
+                    fontSize: "clamp(31px, 4vw, 45px)",
+                    lineHeight: 0.98,
+                    letterSpacing: "-0.055em",
+                  }}
+                >
+                  {direction.title}
+                </h2>
+
+                <p
+                  style={{
+                    margin: "18px 0 0",
+                    color: "rgba(230,244,234,0.55)",
+                    fontSize: 16,
+                    lineHeight: 1.55,
+                  }}
+                >
+                  {direction.description}
+                </p>
+              </div>
+
+              <div>
+                <div
+                  style={{
+                    color: "rgba(228,244,234,0.4)",
+                    fontSize: 12,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {direction.detail}
+                </div>
+
+                <div
+                  style={{
+                    marginTop: 18,
+                    color: "#70ff9d",
+                    fontSize: 14,
+                    fontWeight: 950,
+                  }}
+                >
+                  Enter this direction →
+                </div>
+              </div>
+            </Link>
+          ))}
+        </section>
+      </div>
+
+      <style>{`
+        .hp-front-door-card {
+          transition:
+            transform 180ms ease,
+            border-color 180ms ease,
+            background 180ms ease;
+        }
+
+        .hp-front-door-card:hover {
+          transform: translateY(-5px);
+          border-color: rgba(91, 255, 147, 0.28) !important;
+          background:
+            radial-gradient(
+              circle at 50% 0%,
+              rgba(71, 255, 136, 0.11),
+              transparent 70%
+            ),
+            linear-gradient(
+              145deg,
+              rgba(255, 255, 255, 0.05),
+              rgba(255, 255, 255, 0.016)
+            ) !important;
+        }
+
+        @media (max-width: 850px) {
+          .hp-front-door-grid {
+            grid-template-columns: 1fr !important;
+          }
+
+          .hp-front-door-card {
+            min-height: 270px !important;
+          }
+        }
+      `}</style>
+    </main>
+  );
+}
+function AtlasIndex() {
+  const shell: CSSProperties = {
+    minHeight: "100vh",
+    overflow: "hidden",
+    background:
+      "radial-gradient(circle at 50% 4%, rgba(66,255,130,0.14), transparent 32rem), radial-gradient(circle at 8% 58%, rgba(43,124,255,0.055), transparent 30rem), radial-gradient(circle at 92% 84%, rgba(66,255,130,0.05), transparent 28rem), #020504",
+    color: "#f5fff8",
+    padding: "0 18px 78px",
+  };
+
+  const wrap: CSSProperties = {
+    width: "min(1420px, calc(100% - 48px))",
+    margin: "0 auto",
+  };
+
+  const nav: CSSProperties = {
+    minHeight: 78,
+    borderBottom: "1px solid rgba(255,255,255,0.07)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 18,
+    padding: "0 4px",
+    marginBottom: 0,
+  };
+
+  const brand: CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    gap: 11,
+    color: "#f5fff8",
+    textDecoration: "none",
+    fontSize: 15,
+    fontWeight: 950,
+    letterSpacing: "-0.025em",
+  };
+
+  const logo: CSSProperties = {
+    width: 36,
+    height: 36,
+    borderRadius: 999,
+    objectFit: "cover",
+    boxShadow:
+      "0 0 0 5px rgba(84,255,141,0.045), 0 0 22px rgba(84,255,141,0.16)",
+  };
+
+  const navLinks: CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    gap: 22,
+    fontSize: 11,
+    color: "rgba(231,246,236,0.48)",
+    fontWeight: 900,
+    letterSpacing: "0.025em",
+  };
+
+  const buildBtn: CSSProperties = {
+    minHeight: 41,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "#54ff8d",
+    color: "#031008",
+    borderRadius: 12,
+    padding: "0 17px",
+    textDecoration: "none",
+    fontSize: 12,
+    fontWeight: 950,
+    boxShadow: "0 12px 30px rgba(48,255,115,0.13)",
+  };
+
+  const hero: CSSProperties = {
+    padding: "clamp(92px, 12vw, 150px) 0 74px",
+    marginBottom: 0,
+  };
+
+  const eyebrow: CSSProperties = {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 10,
+    color: "#69ff99",
+    fontSize: 10,
+    fontWeight: 950,
+    letterSpacing: "0.17em",
+    textTransform: "uppercase",
+    marginBottom: 24,
+  };
+
+  const h1: CSSProperties = {
+    maxWidth: 980,
+    margin: 0,
+    fontSize: "clamp(64px, 9vw, 122px)",
+    lineHeight: 0.88,
+    letterSpacing: "-0.078em",
+    color: "#f8fff9",
+    fontWeight: 950,
+    textShadow: "0 0 46px rgba(65,255,126,0.055)",
   };
 
   const sub: CSSProperties = {
-    marginTop: 18,
-    color: "#cbd5e1",
-    lineHeight: 1.56,
-    fontSize: 17,
-    maxWidth: 630,
+    marginTop: 25,
+    color: "rgba(230,244,234,0.60)",
+    lineHeight: 1.62,
+    fontSize: "clamp(17px, 2vw, 21px)",
+    maxWidth: 760,
   };
 
   const actions: CSSProperties = {
     display: "flex",
     gap: 12,
     flexWrap: "wrap",
-    marginTop: 24,
+    marginTop: 31,
   };
 
   const primary: CSSProperties = {
-    borderRadius: 999,
-    padding: "13px 17px",
-    background: "#34d399",
-    color: "#022c22",
+    minHeight: 50,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 14,
+    padding: "0 20px",
+    background: "#54ff8d",
+    color: "#031008",
     fontWeight: 950,
     textDecoration: "none",
-    boxShadow: "0 0 28px rgba(52,211,153,0.18)",
+    boxShadow:
+      "0 0 0 1px rgba(102,255,155,0.12), 0 16px 36px rgba(48,255,115,0.16)",
   };
 
   const secondary: CSSProperties = {
-    borderRadius: 999,
-    padding: "13px 17px",
-    background: "rgba(255,255,255,0.04)",
-    color: "#f8fafc",
-    border: "1px solid rgba(255,255,255,0.14)",
+    minHeight: 50,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 14,
+    padding: "0 20px",
+    background: "rgba(255,255,255,0.03)",
+    color: "#f2fff6",
+    border: "1px solid rgba(255,255,255,0.13)",
     fontWeight: 950,
     textDecoration: "none",
   };
 
-  const hub: CSSProperties = {
-    position: "relative",
-    minHeight: 500,
-    borderRadius: 34,
+  const doctrineFoundation: CSSProperties = {
+    marginBottom: 24,
+    borderRadius: 32,
     border: "1px solid rgba(255,255,255,0.08)",
     background:
-      "radial-gradient(circle at 50% 50%, rgba(52,211,153,0.14), transparent 30%), linear-gradient(145deg, rgba(15,23,42,0.64), rgba(5,5,5,0.96))",
-    overflow: "hidden",
-    boxShadow: "0 30px 100px rgba(0,0,0,0.52)",
-    padding: 22,
+      "radial-gradient(circle at 50% 0%, rgba(72,255,136,0.075), transparent 55%), linear-gradient(145deg, rgba(255,255,255,0.028), rgba(255,255,255,0.012))",
+    padding: "clamp(24px, 4vw, 38px)",
+    boxShadow:
+      "0 26px 80px rgba(0,0,0,0.34), inset 0 1px rgba(255,255,255,0.035)",
   };
 
-  const core: CSSProperties = {
-    position: "absolute",
-    inset: "50% auto auto 50%",
-    transform: "translate(-50%, -50%)",
-    width: 245,
-    height: 245,
-    borderRadius: 999,
-    border: "1px solid rgba(52,211,153,0.36)",
-    background:
-      "radial-gradient(circle, rgba(52,211,153,0.16), rgba(2,6,23,0.9) 62%)",
+  const doctrineFoundationHeader: CSSProperties = {
     display: "grid",
-    placeItems: "center",
-    textAlign: "center",
-    padding: 24,
-    boxShadow: "0 0 80px rgba(52,211,153,0.16)",
+    gridTemplateColumns: "minmax(0, 1fr) minmax(260px, 430px)",
+    alignItems: "end",
+    gap: 28,
+    marginBottom: 28,
   };
 
-  const doctrineCard = (i: number): CSSProperties => {
-    const positions: CSSProperties[] = [
-      { top: 26, left: 26 },
-      { top: 26, right: 26 },
-      { bottom: 26, left: 26 },
-      { bottom: 26, right: 26 },
-    ];
-
-    return {
-      position: "absolute",
-      width: 205,
-      border: "1px solid rgba(255,255,255,0.09)",
-      borderRadius: 22,
-      background: "rgba(5,5,5,0.64)",
-      padding: 14,
-      color: "#e5e7eb",
-      ...positions[i],
-    };
+  const doctrineGrid: CSSProperties = {
+    display: "grid",
+    gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+    gap: 12,
   };
 
-  const orbitLine: CSSProperties = {
-    position: "absolute",
-    inset: "74px",
-    borderRadius: 999,
-    border: "1px solid rgba(255,255,255,0.055)",
+  const doctrineFoundationCard: CSSProperties = {
+    minHeight: 190,
+    borderRadius: 22,
+    border: "1px solid rgba(255,255,255,0.075)",
+    background:
+      "linear-gradient(145deg, rgba(255,255,255,0.032), rgba(255,255,255,0.012))",
+    padding: 20,
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between",
   };
 
   const philosophyPanel: CSSProperties = {
@@ -312,213 +509,3618 @@ function CityIndex() {
     minHeight: 160,
   };
 
-  const atlasMap: CSSProperties = {
-    marginTop: 18,
-    borderRadius: 30,
-    border: "1px solid rgba(255,255,255,0.08)",
-    background: "rgba(12,12,12,0.82)",
-    padding: 22,
-  };
-
-  const planetGrid: CSSProperties = {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-    gap: 10,
-    marginTop: 16,
-  };
-
-  const statusBadge = (status: Planet["status"]): CSSProperties => ({
-    borderRadius: 999,
-    padding: "5px 7px",
-    fontSize: 9,
-    fontWeight: 950,
-    letterSpacing: "0.08em",
-    border:
-      status === "LIVE"
-        ? "1px solid rgba(52,211,153,0.34)"
-        : "1px solid rgba(148,163,184,0.18)",
-    color: status === "LIVE" ? "#bbf7d0" : "#cbd5e1",
-    background: status === "LIVE" ? "rgba(52,211,153,0.10)" : "rgba(15,23,42,0.6)",
-  });
-
-  const planetCard: CSSProperties = {
-    borderRadius: 18,
-    border: "1px solid rgba(255,255,255,0.07)",
-    background: "rgba(5,5,5,0.52)",
-    padding: 13,
-    color: "#e5e7eb",
-    textDecoration: "none",
-    display: "block",
-  };
-
-  const footerPanel: CSSProperties = {
-    marginTop: 18,
-    borderRadius: 28,
-    border: "1px solid rgba(255,255,255,0.08)",
-    background: "linear-gradient(135deg, rgba(17,17,17,0.92), rgba(5,5,5,0.94))",
-    padding: 24,
-    display: "grid",
-    gridTemplateColumns: "1fr auto",
-    gap: 18,
-    alignItems: "center",
-  };
-
   return (
     <main style={shell}>
       <div style={wrap}>
-        <nav style={nav}>
-          <Link to="/" style={brand}>
-            <img src="/images/HomePlanet-Official-Logo-V1.png" alt="HomePlanet" style={logo} />
-            <span>HomePlanet</span>
-          </Link>
-
-          <div style={navLinks} className="hp-atlas-nav-links">
-            <span>Doctrine</span>
-            <span>Atlas</span>
-            <span>Live Systems</span>
+<section
+          style={{
+            ...hero,
+            position: "relative",
+            display: "block",
+                fontSize: "0.86em",
+            maxWidth: "none",
+            minHeight: 690,
+            overflow: "hidden",
+            padding: "112px 54px 102px",
+            borderRadius: 34,
+            border: "1px solid rgba(255,255,255,0.08)",
+            backgroundImage:
+              "linear-gradient(90deg, rgba(2,5,4,0.82) 0%, rgba(2,5,4,0.62) 34%, rgba(2,5,4,0.24) 58%, rgba(2,5,4,0.00) 100%), linear-gradient(180deg, rgba(2,5,4,0.00), rgba(2,5,4,0.12)), url('/images/homeplanet-hero-connected-neighborhood.png')",
+            backgroundSize: "cover",
+            backgroundPosition: "center right",
+            backgroundRepeat: "no-repeat",
+            boxShadow:
+              "0 34px 110px rgba(0,0,0,0.42), inset 0 1px rgba(255,255,255,0.035)",
+          }}
+          className="hp-atlas-hero hp-atlas-hero-image"
+        >
+          <div style={eyebrow}>
+            <span
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: 999,
+                background: "#54ff8d",
+                boxShadow: "0 0 18px rgba(84,255,141,0.8)",
+              }}
+            />
+            The Atlas starts at the core
           </div>
 
-          <Link to="/planet/build-your-live-system" style={buildBtn}>
-            Build
-          </Link>
-        </nav>
+          <h1
+            style={{
+              ...h1,
+              maxWidth: 980,
+              fontSize: "clamp(72px, 10vw, 138px)",
+            }}
+          >
+            HomePlanet
+            <br />
 
-        <section style={hero} className="hp-atlas-hero">
-          <div>
-            <div style={eyebrow}>The Atlas starts at the core.</div>
-            <h1 style={h1}>HomePlanet Atlas</h1>
-            <p style={sub}>
-              A privacy-first living system built around self, family, business, care,
-              protection, and real-world coordination.
-            </p>
-            <p style={sub}>
-              This is not a pile of links. It is the hub. The doctrine stays in the center.
-              Every planet connects back to trust, protection, useful awareness, and the beginning of self.
-            </p>
+            <span
+              style={{
+                color: "#59ff91",
+                textShadow: "0 0 42px rgba(65,255,126,0.16)",
+              }}
+            >
+              Systems
+            </span>
+          </h1>
 
-            <div style={actions}>
-              <a href="#philosophy" style={primary}>Read the Philosophy</a>
-              <Link to="/city/family" style={secondary}>Open Guardian Planet</Link>
-            </div>
+          <div
+            style={{
+              maxWidth: 920,
+              marginTop: 30,
+              fontSize: "clamp(31px, 4.6vw, 59px)",
+              lineHeight: 1,
+              letterSpacing: "-0.06em",
+              fontWeight: 900,
+              color: "#effff4",
+            }}
+          >
+            Real needs. Real action. One connected truth chain.
           </div>
 
-          <div style={hub}>
-            <div style={orbitLine} />
-            <div style={core}>
-              <div>
-                <div style={{ color: "#34d399", fontSize: 12, fontWeight: 950, letterSpacing: "0.14em" }}>
-                  CORE HUB
-                </div>
-                <div style={{ marginTop: 10, fontSize: 29, fontWeight: 950, lineHeight: 1 }}>
-                  Doctrine First
-                </div>
-                <div style={{ marginTop: 10, color: "#94a3b8", fontSize: 13, lineHeight: 1.45 }}>
-                  Trust, protection, privacy, proof, care, and presence.
-                </div>
-              </div>
-            </div>
-
-            {doctrines.map((d, i) => (
-              <div key={d.title} style={doctrineCard(i)}>
-                <div style={{ color: "#34d399", fontWeight: 950, fontSize: 11, letterSpacing: "0.12em" }}>
-                  0{i + 1}
-                </div>
-                <div style={{ marginTop: 8, fontWeight: 950, lineHeight: 1.15 }}>{d.title}</div>
-                <div style={{ marginTop: 7, color: "#94a3b8", fontSize: 12, lineHeight: 1.35 }}>
-                  {d.text}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section id="philosophy" style={philosophyPanel}>
-          <div style={{ color: "#34d399", fontSize: 12, fontWeight: 950, letterSpacing: "0.16em" }}>
-            HOMEPLANET PHILOSOPHY
-          </div>
-
-          <h2 style={{ ...h2, marginTop: 12 }}>
-            Technology should protect the real world, not consume it.
-          </h2>
-
-          <p style={{ color: "#94a3b8", lineHeight: 1.55, maxWidth: 760, fontSize: 17, marginTop: 18 }}>
-            HomePlanet is built for people who are tired of digital chaos. No endless feeds.
-            No data harvesting. No fake engagement traps. Just simple live systems that help families,
-            businesses, creators, guests, and communities know what matters and what happens next.
+          <p
+            style={{
+              ...sub,
+              maxWidth: 790,
+              marginTop: 27,
+              fontSize: "clamp(18px, 2vw, 22px)",
+            }}
+          >
+            HomePlanet connects people, work, money, communication, proof,
+            and outcomes without losing where anything started.
           </p>
 
-          <div style={philosophyGrid}>
-            {philosophy.map((p, i) => (
-              <article key={p.title} style={philosophyCard}>
-                <div style={{ color: "#34d399", fontSize: 12, fontWeight: 950, letterSpacing: "0.14em" }}>
-                  0{i + 1}
+          <div style={actions}>
+            <a href="#how-it-works" style={primary}>
+              See How HomePlanet Works
+            </a>
+
+            <a href="#directions" style={secondary}>
+              Choose Your Direction
+            </a>
+          </div>
+        </section>
+
+        <section id="how-it-works" className="hp-real-world-section">
+          <div className="hp-real-world-intro">
+            <div className="hp-real-world-label">
+              What HomePlanet actually makes possible
+            </div>
+
+            <h2>
+              Real needs become organized action, visible money, and proven
+              outcomes.
+            </h2>
+
+            <p>
+              HomePlanet keeps the original need connected to every decision,
+              conversation, payment, receipt, person, and result that follows.
+            </p>
+          </div>
+
+          <div className="hp-story-stack">
+            <article className="hp-story hp-story-community">
+              <img
+                className="hp-story-photo hp-community-photo"
+                src="/images/okeechobee-together-community-volunteers.png"
+                alt="Local volunteers working together at a community cleanup"
+              />
+              <div className="hp-story-copy">
+                <div className="hp-story-number">01</div>
+
+                <div className="hp-story-label">
+                  Free community coordination
                 </div>
-                <h3 style={{ margin: "12px 0 0", fontSize: 26, lineHeight: 1.05, letterSpacing: "-0.045em" }}>
-                  {p.title}
+
+                <h3>
+                  Okeechobee Together brings local people together.
                 </h3>
-                <p style={{ color: "#94a3b8", lineHeight: 1.48, marginBottom: 0 }}>
-                  {p.text}
+
+                <p>
+                  Residents, volunteers, nonprofits, community groups, and
+                  local partners can organize free events, cleanup projects,
+                  local help, and community action without losing the
+                  conversation or what needs to happen next.
                 </p>
-              </article>
-            ))}
-          </div>
-        </section>
 
-        <section style={atlasMap}>
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 18, flexWrap: "wrap", alignItems: "end" }}>
-            <div>
-              <div style={{ color: "#34d399", fontSize: 12, fontWeight: 950, letterSpacing: "0.16em" }}>
-                ATLAS MAP
+                <div className="hp-story-point">
+                  Okeechobee Together is the organizer. It helps local people
+                  find each other, volunteer, coordinate roles, share updates,
+                  and prove what the community accomplished.
+                </div>
               </div>
-              <h2 style={{ margin: "8px 0 0", fontSize: 34, letterSpacing: "-0.055em" }}>
-                Choose a planet when you need the tool.
-              </h2>
-            </div>
 
-            <p style={{ color: "#94a3b8", lineHeight: 1.45, maxWidth: 430, margin: 0 }}>
-              The map stays secondary. The philosophy leads. The planets sit underneath the hood until someone is ready to enter one.
-            </p>
-          </div>
+              <div className="hp-truth-board">
+                <div className="hp-board-head">
+                  <div>
+                    <span>Okeechobee Together</span>
+                    <strong>Community action workspace</strong>
+                  </div>
 
-          <div style={planetGrid}>
-            {planets.map((p) => (
-              <Link to={p.to} key={p.title} style={planetCard}>
-                <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-                  <div style={{ fontWeight: 950, color: "#f8fafc" }}>{p.title}</div>
-                  <span style={statusBadge(p.status)}>{p.status}</span>
+                  <div className="hp-live-badge">Free</div>
                 </div>
-                <div style={{ color: "#94a3b8", fontSize: 12, lineHeight: 1.35, marginTop: 7 }}>
-                  {p.description}
+
+                <div className="hp-need-card">
+                  <span>Community signal</span>
+                  <strong>
+                    “We need volunteers for Saturday’s community cleanup.”
+                  </strong>
                 </div>
-              </Link>
-            ))}
+
+                <div className="hp-truth-chain">
+                  {[
+                    "Need posted",
+                    "Volunteers join",
+                    "Roles organized",
+                    "Event underway",
+                    "Updates shared",
+                    "Outcome posted",
+                  ].map((step, index) => (
+                    <div className="hp-truth-step" key={step}>
+                      <span>{String(index + 1).padStart(2, "0")}</span>
+                      <strong>{step}</strong>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="hp-proof-row">
+                  <div>
+                    <span>People</span>
+                    <strong>Volunteer signups</strong>
+                  </div>
+
+                  <div>
+                    <span>During</span>
+                    <strong>Live updates</strong>
+                  </div>
+
+                  <div>
+                    <span>Outcome</span>
+                    <strong>Community proof</strong>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article className="hp-story hp-story-lawn">
+              <img
+                className="hp-story-photo"
+                src="/images/homeplanet-lawn-program-local-worker.png"
+                alt="A local lawn worker mowing a resident's yard"
+              />
+              <div className="hp-story-copy">
+                <div className="hp-story-number">02</div>
+
+                <div className="hp-story-label">
+                  Community-powered paid work
+                </div>
+
+                <h3>
+                  The Lawn Program turns support into paid local opportunity.
+                </h3>
+
+                <p>
+                  A resident needs help with their yard. The Lawn Program
+                  reviews the request, assigns a local worker or available
+                  lawn business, applies Piggy Bank support when needed, and
+                  keeps every payment, receipt, photo, and result connected.
+                </p>
+
+                <div className="hp-story-point">
+                  Okeechobee Together organizes free community action. The
+                  Lawn Program separately organizes paid lawn work and creates
+                  opportunities for local people and slower local businesses.
+                </div>
+              </div>
+
+              <div className="hp-truth-board">
+                <div className="hp-board-head">
+                  <div>
+                    <span>Okeechobee Together Lawn Program</span>
+                    <strong>Paid-work truth chain</strong>
+                  </div>
+
+                  <div className="hp-live-badge">Active</div>
+                </div>
+
+                <div className="hp-need-card">
+                  <span>Original request</span>
+                  <strong>
+                    “My yard is overgrown and I need help covering the cost.”
+                  </strong>
+                </div>
+
+                <div className="hp-truth-chain">
+                  {[
+                    "Request reviewed",
+                    "Worker assigned",
+                    "Piggy Bank approved",
+                    "Materials purchased",
+                    "Work completed",
+                    "Resident confirmed",
+                  ].map((step, index) => (
+                    <div className="hp-truth-step" key={step}>
+                      <span>{String(index + 1).padStart(2, "0")}</span>
+                      <strong>{step}</strong>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="hp-money-ledger">
+                  <div className="hp-ledger-title">
+                    Every dollar keeps its purpose
+                  </div>
+
+                  <div className="hp-ledger-row">
+                    <div>
+                      <span>Materials</span>
+                      <strong>Home Depot receipt attached</strong>
+                    </div>
+
+                    <b>$42.18</b>
+                  </div>
+
+                  <div className="hp-ledger-row">
+                    <div>
+                      <span>Local worker</span>
+                      <strong>Piggy Bank contribution</strong>
+                    </div>
+
+                    <b>$20.00</b>
+                  </div>
+                </div>
+
+                <div className="hp-proof-row">
+                  <div>
+                    <span>Before</span>
+                    <strong>Photos attached</strong>
+                  </div>
+
+                  <div>
+                    <span>After</span>
+                    <strong>Work proven</strong>
+                  </div>
+
+                  <div>
+                    <span>Outcome</span>
+                    <strong>Resident confirmed</strong>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article className="hp-story hp-story-sale">
+              <img
+                className="hp-story-photo hp-yard-sale-photo"
+                src="/images/homeplanet-live-yard-sale.png"
+                alt="A live neighborhood yard sale with an item being shown by video"
+              />
+              <div className="hp-story-copy">
+                <div className="hp-story-number">03</div>
+
+                <div className="hp-story-label">
+                  Live commerce in the real world
+                </div>
+
+                <h3>
+                  A yard sale becomes live before anybody reaches the yard.
+                </h3>
+
+                <p>
+                  Someone sees an item from home, asks the seller a question,
+                  opens a live video, places the item on hold, pays a deposit,
+                  and confirms pickup without losing the conversation.
+                </p>
+
+                <div className="hp-story-point">
+                  The item page, buyer, seller, payment, hold status, video,
+                  pickup, and final sale remain one connected experience.
+                </div>
+              </div>
+
+              <div className="hp-sale-board">
+                <div className="hp-sale-image">
+                  <img
+                    className="hp-sale-real-image"
+                    src="/images/homeplanet-yard-sale-table.png"
+                    alt="Solid wood side table available at a neighborhood yard sale"
+                  />
+
+                  <div className="hp-sale-price">$35</div>
+
+                  <div className="hp-sale-image-label">
+                    Solid wood side table
+                  </div>
+                </div>
+
+                <div className="hp-sale-content">
+                  <div className="hp-board-head">
+                    <div>
+                      <span>Live yard sale item</span>
+                      <strong>Available now</strong>
+                    </div>
+
+                    <div className="hp-live-badge">Live</div>
+                  </div>
+
+                  <div className="hp-sale-actions">
+                    <div>
+                      <span>Message seller</span>
+                      <strong>Ask about condition</strong>
+                    </div>
+
+                    <div>
+                      <span>Live video</span>
+                      <strong>See the item now</strong>
+                    </div>
+
+                    <div>
+                      <span>Place on hold</span>
+                      <strong>Reserve before arriving</strong>
+                    </div>
+
+                    <div>
+                      <span>Pickup</span>
+                      <strong>Confirm a time</strong>
+                    </div>
+                  </div>
+
+                  <div className="hp-sale-status">
+                    <span>Item journey</span>
+
+                    <div>
+                      Available
+                      <i />
+                      Question
+                      <i />
+                      Live video
+                      <i />
+                      On hold
+                      <i />
+                      Paid
+                      <i />
+                      Picked up
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article className="hp-story hp-story-business">
+              <img
+                className="hp-story-photo"
+                src="/images/homeplanet-business-control-chaos.png"
+                alt="A small-business owner managing scattered calls, paperwork, and scheduling"
+              />
+              <div className="hp-story-copy">
+                <div className="hp-story-number">04</div>
+
+                <div className="hp-story-label">
+                  Bring a business under control
+                </div>
+
+                <h3>
+                  Start with the chaos. Build the operating system underneath.
+                </h3>
+
+                <p>
+                  A business owner does not arrive asking for software. They
+                  arrive with scattered calls, messages, customers, photos,
+                  estimates, schedules, payments, and unfinished follow-up.
+                </p>
+
+                <div className="hp-story-point">
+                  HomePlanet starts with what is happening today, then gives
+                  every request, decision, next action, payment, proof, and
+                  customer history a place.
+                </div>
+              </div>
+
+              <div className="hp-business-board">
+                <div className="hp-business-signal">
+                  <span>Real starting point</span>
+
+                  <strong>
+                    “I need help getting my business under control.”
+                  </strong>
+                </div>
+
+                <div className="hp-business-arrow">
+                  <span />
+                  HomePlanet organizes what happens next
+                  <span />
+                </div>
+
+                <div className="hp-workspace-preview">
+                  <div className="hp-board-head">
+                    <div>
+                      <span>Active workspace</span>
+                      <strong>Everything now has a place.</strong>
+                    </div>
+
+                    <div className="hp-live-badge">Live</div>
+                  </div>
+
+                  <div className="hp-next-action">
+                    <span>Next action</span>
+                    <strong>Review the newest customer request</strong>
+                  </div>
+
+                  <div className="hp-workspace-tools">
+                    {[
+                      "Requests",
+                      "Estimates",
+                      "Schedule",
+                      "Messages",
+                      "Photos",
+                      "Payment",
+                      "Proof",
+                      "History",
+                    ].map((tool) => (
+                      <div key={tool}>{tool}</div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </article>
           </div>
         </section>
 
-        <section style={footerPanel} className="hp-atlas-footer-panel">
-          <div>
-            <div style={{ color: "#34d399", fontSize: 12, fontWeight: 950, letterSpacing: "0.16em" }}>
-              THE POINT
-            </div>
-            <div style={{ marginTop: 8, fontSize: 30, fontWeight: 950, letterSpacing: "-0.05em" }}>
-              One core. Many systems. No chaos.
-            </div>
-            <p style={{ color: "#94a3b8", lineHeight: 1.5, marginBottom: 0 }}>
-              HomePlanet should feel like an operating room, not a junk drawer. The Atlas gives every system
-              a place without forcing everything onto one screen.
-            </p>
-          </div>
+        <section className="hp-homeplanet-point">
+          <div className="hp-homeplanet-point-inner">
+            <div className="hp-point-copy">
+              <div className="hp-real-world-label">
+                The HomePlanet difference
+              </div>
 
-          <Link to="/planet/build-your-live-system" style={primary}>
-            Build Your Live System
-          </Link>
+              <h2>
+                The need, the money, the work, and the proof never lose each
+                other.
+              </h2>
+
+              <p>
+                One connected truth chain can serve a business, community
+                program, yard sale, family, project, or something entirely new.
+              </p>
+            </div>
+
+            <Link to="/city/creator" className="hp-point-action">
+              Build With HomePlanet
+            </Link>
+          </div>
         </section>
       </div>
 
       <style>{`
+        .hp-homeplanet-hero-visual {
+          position: relative;
+          min-height: 590px;
+          overflow: hidden;
+          padding: 25px;
+          border: 1px solid rgba(91, 255, 147, 0.15);
+          border-radius: 35px;
+          background:
+            radial-gradient(
+              circle at 50% 16%,
+              rgba(66, 255, 130, 0.13),
+              transparent 34%
+            ),
+            linear-gradient(
+              145deg,
+              rgba(255, 255, 255, 0.035),
+              rgba(255, 255, 255, 0.01)
+            );
+          box-shadow:
+            0 34px 110px rgba(0, 0, 0, 0.46),
+            inset 0 1px rgba(255, 255, 255, 0.04);
+        }
+
+        .hp-hero-orb {
+          position: absolute;
+          border-radius: 999px;
+          pointer-events: none;
+          filter: blur(70px);
+        }
+
+        .hp-hero-orb-one {
+          top: -90px;
+          right: -70px;
+          width: 290px;
+          height: 290px;
+          background: rgba(66, 255, 130, 0.11);
+        }
+
+        .hp-hero-orb-two {
+          bottom: -120px;
+          left: -90px;
+          width: 330px;
+          height: 330px;
+          background: rgba(48, 112, 255, 0.08);
+        }
+
+        .hp-hero-visual-label {
+          position: relative;
+          z-index: 1;
+          color: #62ff97;
+          font-size: 10px;
+          font-weight: 950;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+        }
+
+        .hp-hero-need,
+        .hp-hero-workspace {
+          position: relative;
+          z-index: 1;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 24px;
+          background: rgba(3, 8, 5, 0.7);
+          box-shadow:
+            0 20px 55px rgba(0, 0, 0, 0.3),
+            inset 0 1px rgba(255, 255, 255, 0.035);
+        }
+
+        .hp-hero-need {
+          margin-top: 18px;
+          padding: 24px;
+        }
+
+        .hp-hero-need-kicker,
+        .hp-hero-workspace-kicker {
+          color: rgba(226, 242, 231, 0.42);
+          font-size: 10px;
+          font-weight: 950;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+        }
+
+        .hp-hero-need-title {
+          max-width: 520px;
+          margin-top: 16px;
+          font-size: clamp(28px, 3.4vw, 43px);
+          line-height: 0.98;
+          letter-spacing: -0.055em;
+          font-weight: 900;
+        }
+
+        .hp-hero-need-copy {
+          max-width: 470px;
+          margin-top: 16px;
+          color: rgba(228, 243, 233, 0.52);
+          font-size: 14px;
+          line-height: 1.5;
+        }
+
+        .hp-hero-connector {
+          position: relative;
+          z-index: 1;
+          display: grid;
+          grid-template-columns: 1fr auto 1fr;
+          gap: 13px;
+          align-items: center;
+          padding: 17px 10px;
+          color: rgba(99, 255, 152, 0.58);
+          font-size: 10px;
+          letter-spacing: 0.08em;
+          text-align: center;
+          text-transform: uppercase;
+        }
+
+        .hp-hero-connector span {
+          height: 1px;
+          background: rgba(91, 255, 147, 0.2);
+        }
+
+        .hp-hero-workspace {
+          padding: 22px;
+          border-color: rgba(91, 255, 147, 0.15);
+          background:
+            radial-gradient(
+              circle at 0% 0%,
+              rgba(65, 255, 126, 0.1),
+              transparent 35%
+            ),
+            rgba(3, 8, 5, 0.78);
+        }
+
+        .hp-hero-workspace-top {
+          display: flex;
+          justify-content: space-between;
+          gap: 16px;
+          align-items: flex-start;
+        }
+
+        .hp-hero-workspace-title {
+          margin-top: 8px;
+          font-size: 25px;
+          line-height: 1;
+          letter-spacing: -0.045em;
+          font-weight: 900;
+        }
+
+        .hp-hero-live-pill {
+          padding: 7px 10px;
+          border: 1px solid rgba(91, 255, 147, 0.22);
+          border-radius: 999px;
+          background: rgba(77, 255, 139, 0.1);
+          color: #75ffa2;
+          font-size: 9px;
+          font-weight: 950;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+
+        .hp-hero-next {
+          margin-top: 18px;
+          padding: 16px;
+          border-radius: 17px;
+          background: #54ff8d;
+          color: #031008;
+        }
+
+        .hp-hero-next span,
+        .hp-hero-next strong {
+          display: block;
+        }
+
+        .hp-hero-next span {
+          font-size: 9px;
+          font-weight: 950;
+          letter-spacing: 0.13em;
+          text-transform: uppercase;
+        }
+
+        .hp-hero-next strong {
+          margin-top: 7px;
+          font-size: 18px;
+          letter-spacing: -0.03em;
+        }
+
+        .hp-hero-tools {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 8px;
+          margin-top: 11px;
+        }
+
+        .hp-hero-tools div {
+          min-height: 55px;
+          display: flex;
+          align-items: center;
+          padding: 11px;
+          border: 1px solid rgba(255, 255, 255, 0.07);
+          border-radius: 13px;
+          background: rgba(255, 255, 255, 0.025);
+          color: rgba(239, 252, 243, 0.72);
+          font-size: 12px;
+          font-weight: 800;
+        }
+
+        .hp-atlas-hero-image {
+          margin-top: 30px !important;
+        }
+
+        .hp-atlas-hero-image > div {
+          position: relative;
+          z-index: 2;
+          max-width: 760px;
+        }
+
+        @media (max-width: 820px) {
+          .hp-atlas-hero-image {
+            min-height: 720px !important;
+            padding: 76px 28px 70px !important;
+            background-image:
+              linear-gradient(
+                180deg,
+                rgba(2,5,4,0.96) 0%,
+                rgba(2,5,4,0.83) 56%,
+                rgba(2,5,4,0.24) 100%
+              ),
+              url('/images/homeplanet-hero-connected-neighborhood.png') !important;
+            background-position: 63% center !important;
+          }
+
+          .hp-atlas-hero-image {
+          margin-top: 30px !important;
+        }
+
+        .hp-atlas-hero-image > div {
+            max-width: 100% !important;
+          }
+        }
+
+        @media (max-width: 560px) {
+          .hp-atlas-hero-image {
+            min-height: 760px !important;
+            padding: 62px 22px 58px !important;
+            border-radius: 27px !important;
+            background-position: 68% center !important;
+          }
+        }
+
+        .hp-real-world-section {
+          padding: 54px 0 118px;
+        }
+
+        .hp-real-world-intro {
+          max-width: 1040px;
+          margin-bottom: 56px;
+        }
+
+        .hp-real-world-label,
+        .hp-story-label {
+          color: #62ff97;
+          font-size: 11px;
+          font-weight: 950;
+          letter-spacing: 0.17em;
+          text-transform: uppercase;
+        }
+
+        .hp-real-world-intro h2,
+        .hp-homeplanet-point h2 {
+          margin: 15px 0 0;
+          font-size: clamp(44px, 6.5vw, 82px);
+          line-height: 0.93;
+          letter-spacing: -0.07em;
+        }
+
+        .hp-real-world-intro p,
+        .hp-homeplanet-point p {
+          max-width: 720px;
+          margin: 24px 0 0;
+          color: rgba(228, 243, 233, 0.56);
+          font-size: 18px;
+          line-height: 1.6;
+        }
+
+        .hp-story-photo {
+          grid-column: 1 / -1;
+          width: 100%;
+          height: clamp(240px, 28vw, 380px);
+          display: block;
+          object-fit: cover;
+          border-radius: 25px;
+          border: 1px solid rgba(255, 255, 255, 0.09);
+          box-shadow:
+            0 24px 65px rgba(0, 0, 0, 0.28),
+            inset 0 1px rgba(255, 255, 255, 0.04);
+        }
+
+        .hp-community-photo {
+          object-position: center 48%;
+        }
+
+        .hp-yard-sale-photo {
+          object-position: center 52%;
+        }
+
+        .hp-story-stack {
+          display: grid;
+          gap: 34px;
+        }
+
+        .hp-story {
+          position: relative;
+          display: grid;
+          grid-template-columns: minmax(420px, 0.88fr) minmax(560px, 1.12fr);
+          gap: 72px;
+          align-items: center;
+          overflow: hidden;
+          padding: clamp(28px, 5vw, 54px);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 36px;
+          background:
+            radial-gradient(
+              circle at 82% 20%,
+              rgba(68, 255, 132, 0.08),
+              transparent 34%
+            ),
+            linear-gradient(
+              145deg,
+              rgba(255, 255, 255, 0.036),
+              rgba(255, 255, 255, 0.01)
+            );
+          box-shadow:
+            0 30px 95px rgba(0, 0, 0, 0.34),
+            inset 0 1px rgba(255, 255, 255, 0.035);
+        }
+
+        .hp-story-sale {
+          background:
+            radial-gradient(
+              circle at 82% 20%,
+              rgba(67, 124, 255, 0.1),
+              transparent 36%
+            ),
+            linear-gradient(
+              145deg,
+              rgba(255, 255, 255, 0.036),
+              rgba(255, 255, 255, 0.01)
+            );
+        }
+
+        .hp-story-number {
+          color: rgba(98, 255, 151, 0.36);
+          font-size: 13px;
+          font-weight: 950;
+          letter-spacing: 0.18em;
+        }
+
+        .hp-story-label {
+          margin-top: 25px;
+        }
+
+        .hp-story-copy h3 {
+          margin: 17px 0 0;
+          font-size: clamp(38px, 5vw, 64px);
+          line-height: 0.96;
+          letter-spacing: -0.065em;
+        }
+
+        .hp-story-copy p {
+          margin: 23px 0 0;
+          color: rgba(228, 243, 233, 0.56);
+          font-size: 16px;
+          line-height: 1.62;
+        }
+
+        .hp-story-point {
+          margin-top: 25px;
+          padding-left: 17px;
+          border-left: 2px solid rgba(89, 255, 145, 0.42);
+          color: rgba(236, 250, 240, 0.74);
+          font-size: 14px;
+          line-height: 1.58;
+        }
+
+        .hp-truth-board,
+        .hp-business-board,
+        .hp-sale-board {
+          padding: 22px;
+          border: 1px solid rgba(255, 255, 255, 0.085);
+          border-radius: 28px;
+          background: rgba(3, 8, 5, 0.72);
+          box-shadow:
+            0 24px 70px rgba(0, 0, 0, 0.3),
+            inset 0 1px rgba(255, 255, 255, 0.035);
+        }
+
+        .hp-board-head {
+          display: flex;
+          justify-content: space-between;
+          gap: 18px;
+          align-items: flex-start;
+        }
+
+        .hp-board-head span,
+        .hp-board-head strong {
+          display: block;
+        }
+
+        .hp-board-head span {
+          color: rgba(226, 242, 231, 0.42);
+          font-size: 10px;
+          font-weight: 900;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+
+        .hp-board-head strong {
+          margin-top: 7px;
+          font-size: 24px;
+          letter-spacing: -0.04em;
+        }
+
+        .hp-live-badge {
+          padding: 7px 10px;
+          border: 1px solid rgba(91, 255, 147, 0.22);
+          border-radius: 999px;
+          background: rgba(77, 255, 139, 0.1);
+          color: #75ffa2;
+          font-size: 9px;
+          font-weight: 950;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+
+        .hp-need-card,
+        .hp-business-signal {
+          margin-top: 18px;
+          padding: 19px;
+          border: 1px solid rgba(92, 255, 148, 0.13);
+          border-radius: 19px;
+          background: rgba(69, 255, 133, 0.055);
+        }
+
+        .hp-need-card span,
+        .hp-need-card strong,
+        .hp-business-signal span,
+        .hp-business-signal strong {
+          display: block;
+        }
+
+        .hp-need-card span,
+        .hp-business-signal span {
+          color: #62ff97;
+          font-size: 10px;
+          font-weight: 950;
+          letter-spacing: 0.13em;
+          text-transform: uppercase;
+        }
+
+        .hp-need-card strong,
+        .hp-business-signal strong {
+          margin-top: 10px;
+          font-size: 21px;
+          line-height: 1.2;
+          letter-spacing: -0.035em;
+        }
+
+        .hp-truth-chain {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 8px;
+          margin-top: 12px;
+        }
+
+        .hp-truth-step {
+          min-height: 77px;
+          padding: 13px;
+          border: 1px solid rgba(255, 255, 255, 0.07);
+          border-radius: 14px;
+          background: rgba(255, 255, 255, 0.025);
+        }
+
+        .hp-truth-step span,
+        .hp-truth-step strong {
+          display: block;
+        }
+
+        .hp-truth-step span {
+          color: #62ff97;
+          font-size: 9px;
+          font-weight: 950;
+        }
+
+        .hp-truth-step strong {
+          margin-top: 8px;
+          font-size: 12px;
+          line-height: 1.35;
+        }
+
+        .hp-money-ledger {
+          margin-top: 12px;
+          overflow: hidden;
+          border: 1px solid rgba(255, 255, 255, 0.075);
+          border-radius: 17px;
+        }
+
+        .hp-ledger-title {
+          padding: 12px 15px;
+          color: rgba(226, 242, 231, 0.43);
+          background: rgba(255, 255, 255, 0.025);
+          font-size: 10px;
+          font-weight: 900;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+
+        .hp-ledger-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 18px;
+          padding: 14px 15px;
+          border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .hp-ledger-row span,
+        .hp-ledger-row strong {
+          display: block;
+        }
+
+        .hp-ledger-row span {
+          color: rgba(226, 242, 231, 0.42);
+          font-size: 10px;
+        }
+
+        .hp-ledger-row strong {
+          margin-top: 5px;
+          font-size: 13px;
+        }
+
+        .hp-ledger-row b {
+          color: #71ffa0;
+          font-size: 17px;
+        }
+
+        .hp-proof-row {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 8px;
+          margin-top: 12px;
+        }
+
+        .hp-proof-row div {
+          padding: 13px;
+          border: 1px solid rgba(255, 255, 255, 0.07);
+          border-radius: 14px;
+          background: rgba(255, 255, 255, 0.025);
+        }
+
+        .hp-proof-row span,
+        .hp-proof-row strong {
+          display: block;
+        }
+
+        .hp-proof-row span {
+          color: rgba(226, 242, 231, 0.42);
+          font-size: 9px;
+          text-transform: uppercase;
+        }
+
+        .hp-proof-row strong {
+          margin-top: 7px;
+          font-size: 12px;
+        }
+
+        .hp-sale-board {
+          display: grid;
+          grid-template-columns: 0.72fr 1.28fr;
+          gap: 18px;
+        }
+
+        .hp-sale-real-image {
+          object-position: center !important;
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          object-position: center 54%;
+        }
+
+        .hp-sale-image::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background:
+            linear-gradient(
+              180deg,
+              rgba(2, 5, 4, 0.04),
+              rgba(2, 5, 4, 0.18)
+            );
+          pointer-events: none;
+        }
+
+        .hp-sale-image {
+          position: relative;
+          min-height: 380px;
+          overflow: hidden;
+          border-radius: 22px;
+          background:
+            radial-gradient(
+              circle at 50% 35%,
+              rgba(85, 155, 255, 0.23),
+              transparent 40%
+            ),
+            linear-gradient(145deg, #13213a, #07101d);
+        }
+
+        .hp-sale-image-glow {
+          position: absolute;
+          inset: auto 5% 2%;
+          height: 40%;
+          background: rgba(69, 255, 133, 0.12);
+          filter: blur(45px);
+        }
+
+        .hp-sale-price {
+          position: absolute;
+          top: 16px;
+          right: 16px;
+          z-index: 2;
+          padding: 8px 11px;
+          border-radius: 999px;
+          background: #54ff8d;
+          color: #031008;
+          font-size: 14px;
+          font-weight: 950;
+        }
+
+        .hp-sale-object {
+          position: absolute;
+          left: 50%;
+          top: 47%;
+          width: 68%;
+          transform: translate(-50%, -50%);
+        }
+
+        .hp-sale-object-top {
+          height: 38px;
+          border-radius: 12px 12px 5px 5px;
+          background: linear-gradient(180deg, #b87a47, #74431f);
+          box-shadow: 0 16px 28px rgba(0, 0, 0, 0.28);
+        }
+
+        .hp-sale-object-body {
+          width: 78%;
+          height: 165px;
+          margin: 0 auto;
+          border-left: 18px solid #71401f;
+          border-right: 18px solid #71401f;
+          background:
+            linear-gradient(
+              90deg,
+              transparent 40%,
+              rgba(255, 255, 255, 0.08) 41%,
+              rgba(255, 255, 255, 0.08) 59%,
+              transparent 60%
+            );
+        }
+
+        .hp-sale-image-label {
+          position: absolute;
+          left: 16px;
+          right: 16px;
+          bottom: 16px;
+          padding: 13px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 14px;
+          background: rgba(2, 6, 12, 0.68);
+          backdrop-filter: blur(12px);
+          font-size: 14px;
+          font-weight: 850;
+        }
+
+        .hp-sale-content {
+          padding: 4px 0;
+        }
+
+        .hp-sale-actions {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 8px;
+          margin-top: 18px;
+        }
+
+        .hp-sale-actions div {
+          min-height: 82px;
+          padding: 13px;
+          border: 1px solid rgba(255, 255, 255, 0.07);
+          border-radius: 14px;
+          background: rgba(255, 255, 255, 0.025);
+        }
+
+        .hp-sale-actions span,
+        .hp-sale-actions strong {
+          display: block;
+        }
+
+        .hp-sale-actions span {
+          color: rgba(226, 242, 231, 0.42);
+          font-size: 10px;
+        }
+
+        .hp-sale-actions strong {
+          margin-top: 8px;
+          font-size: 13px;
+          line-height: 1.35;
+        }
+
+        .hp-sale-status {
+          margin-top: 12px;
+          padding: 15px;
+          border: 1px solid rgba(91, 255, 147, 0.12);
+          border-radius: 16px;
+          background: rgba(70, 255, 134, 0.045);
+        }
+
+        .hp-sale-status > span {
+          color: #62ff97;
+          font-size: 9px;
+          font-weight: 950;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+        }
+
+        .hp-sale-status > div {
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 7px;
+          margin-top: 12px;
+          color: rgba(238, 251, 242, 0.68);
+          font-size: 11px;
+          font-weight: 800;
+        }
+
+        .hp-sale-status i {
+          width: 13px;
+          height: 1px;
+          background: rgba(92, 255, 148, 0.35);
+        }
+
+        .hp-business-signal {
+          margin-top: 0;
+        }
+
+        .hp-business-arrow {
+          display: grid;
+          grid-template-columns: 1fr auto 1fr;
+          gap: 12px;
+          align-items: center;
+          padding: 17px 8px;
+          color: rgba(99, 255, 152, 0.58);
+          font-size: 9px;
+          font-weight: 900;
+          letter-spacing: 0.08em;
+          text-align: center;
+          text-transform: uppercase;
+        }
+
+        .hp-business-arrow span {
+          height: 1px;
+          background: rgba(91, 255, 147, 0.2);
+        }
+
+        .hp-workspace-preview {
+          padding: 20px;
+          border: 1px solid rgba(91, 255, 147, 0.14);
+          border-radius: 21px;
+          background:
+            radial-gradient(
+              circle at 0% 0%,
+              rgba(65, 255, 126, 0.09),
+              transparent 35%
+            ),
+            rgba(255, 255, 255, 0.02);
+        }
+
+        .hp-next-action {
+          margin-top: 16px;
+          padding: 16px;
+          border-radius: 16px;
+          background: #54ff8d;
+          color: #031008;
+        }
+
+        .hp-next-action span,
+        .hp-next-action strong {
+          display: block;
+        }
+
+        .hp-next-action span {
+          font-size: 9px;
+          font-weight: 950;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+        }
+
+        .hp-next-action strong {
+          margin-top: 7px;
+          font-size: 18px;
+        }
+
+        .hp-workspace-tools {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 8px;
+          margin-top: 10px;
+        }
+
+        .hp-workspace-tools div {
+          min-height: 60px;
+          display: flex;
+          align-items: center;
+          padding: 11px;
+          border: 1px solid rgba(255, 255, 255, 0.07);
+          border-radius: 13px;
+          background: rgba(255, 255, 255, 0.025);
+          color: rgba(239, 252, 243, 0.7);
+          font-size: 11px;
+          font-weight: 800;
+        }
+        .hp-homeplanet-point {
+          padding: 0 0 88px;
+        }
+
+        .hp-homeplanet-point-inner {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto;
+          gap: 34px;
+          align-items: center;
+          padding: 30px 34px;
+          border: 1px solid rgba(91, 255, 147, 0.13);
+          border-radius: 26px;
+          background:
+            radial-gradient(
+              circle at 0% 50%,
+              rgba(70, 255, 134, 0.075),
+              transparent 36%
+            ),
+            linear-gradient(
+              105deg,
+              rgba(255, 255, 255, 0.033),
+              rgba(255, 255, 255, 0.01)
+            );
+          box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+        }
+
+        .hp-point-copy h2 {
+          max-width: 820px;
+          margin: 10px 0 0;
+          font-size: clamp(30px, 4vw, 48px);
+          line-height: 0.98;
+          letter-spacing: -0.055em;
+        }
+
+        .hp-point-copy p {
+          max-width: 720px;
+          margin: 14px 0 0;
+          color: rgba(228, 243, 233, 0.5);
+          font-size: 14px;
+          line-height: 1.55;
+        }
+
+        .hp-point-action {
+          min-height: 50px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0 21px;
+          border-radius: 14px;
+          background: #54ff8d;
+          color: #031008;
+          font-weight: 950;
+          text-decoration: none;
+          white-space: nowrap;
+          box-shadow: 0 14px 34px rgba(48, 255, 115, 0.14);
+        }
+
+        @media (max-width: 760px) {
+          .hp-homeplanet-point-inner {
+            grid-template-columns: 1fr !important;
+            padding: 26px !important;
+          }
+
+          .hp-point-action {
+            width: 100%;
+          }
+        }
+@media (max-width: 760px) {
+          .hp-homeplanet-point-inner {
+            grid-template-columns: 1fr !important;
+            padding: 26px !important;
+          }
+
+          .hp-point-action {
+            width: 100%;
+          }
+        }
+@media (max-width: 980px) {
+          .hp-story {
+            grid-template-columns: 1fr !important;
+          }
+
+          .hp-sale-board {
+            grid-template-columns: 1fr !important;
+          }
+
+          .hp-sale-real-image {
+          object-position: center !important;
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          object-position: center 54%;
+        }
+
+        .hp-sale-image::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background:
+            linear-gradient(
+              180deg,
+              rgba(2, 5, 4, 0.04),
+              rgba(2, 5, 4, 0.18)
+            );
+          pointer-events: none;
+        }
+
+        .hp-sale-image {
+            min-height: 320px;
+          }
+        }
+
+        @media (max-width: 680px) {
+          .hp-story-photo {
+            height: 220px !important;
+            border-radius: 20px !important;
+          }
+          .hp-story {
+            padding: 24px !important;
+            border-radius: 27px !important;
+          }
+
+          .hp-truth-chain,
+          .hp-proof-row {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          }
+
+          .hp-workspace-tools {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          }
+
+          .hp-business-arrow {
+            grid-template-columns: 1fr !important;
+          }
+
+          .hp-business-arrow span {
+            display: none;
+          }
+        }
+
+        .hp-direction-lane {
         @media (max-width: 900px) {
           .hp-atlas-hero {
             grid-template-columns: 1fr !important;
+          }
+
+          .hp-homeplanet-hero-visual {
+            min-height: 0 !important;
+          }
+        }
+
+        @media (max-width: 620px) {
+          .hp-homeplanet-hero-visual {
+            padding: 18px !important;
+            border-radius: 27px !important;
+          }
+
+          .hp-hero-tools {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          }
+
+          .hp-hero-connector {
+            grid-template-columns: 1fr !important;
+          }
+
+          .hp-hero-connector span {
+            display: none;
+          }
+        }
+
+          transition:
+            transform 180ms ease,
+            border-color 180ms ease,
+            background 180ms ease;
+        }
+.hp-live-system-row {
+          transition:
+            transform 180ms ease,
+            border-color 180ms ease,
+            background 180ms ease;
+        }
+
+        .hp-live-system-row:hover {
+          transform: translateY(-4px);
+          border-color: rgba(92,255,148,0.28) !important;
+        }
+
+        @media (max-width: 900px) {
+          .hp-atlas-hero {
+            grid-template-columns: 1fr !important;
+          }
+
+          .hp-atlas-preview {
+            min-height: 0 !important;
+            margin-top: 8px;
+          }
+
+          .hp-atlas-preview-grid {
+            grid-template-columns: 1fr !important;
+          }
+          .hp-live-system-row {
+            grid-template-columns: 1fr 1fr !important;
+          }
+
+          .hp-live-system-row > div:last-child {
+            grid-column: 2;
+          }
+        }
+
+        @media (max-width: 680px) {
+          .hp-story-photo {
+            height: 220px !important;
+            border-radius: 20px !important;
+          }
+          .hp-live-system-row {
+            grid-template-columns: 1fr !important;
+            gap: 18px !important;
+            padding: 24px !important;
+          }
+
+          .hp-live-system-row > div:last-child {
+            grid-column: auto;
+          }
+        }
+
+        @media (max-width: 860px) {
+          .hp-homeplanet-hero-visual {
+          position: relative;
+          min-height: 590px;
+          overflow: hidden;
+          padding: 25px;
+          border: 1px solid rgba(91, 255, 147, 0.15);
+          border-radius: 35px;
+          background:
+            radial-gradient(
+              circle at 50% 16%,
+              rgba(66, 255, 130, 0.13),
+              transparent 34%
+            ),
+            linear-gradient(
+              145deg,
+              rgba(255, 255, 255, 0.035),
+              rgba(255, 255, 255, 0.01)
+            );
+          box-shadow:
+            0 34px 110px rgba(0, 0, 0, 0.46),
+            inset 0 1px rgba(255, 255, 255, 0.04);
+        }
+
+        .hp-hero-orb {
+          position: absolute;
+          border-radius: 999px;
+          pointer-events: none;
+          filter: blur(70px);
+        }
+
+        .hp-hero-orb-one {
+          top: -90px;
+          right: -70px;
+          width: 290px;
+          height: 290px;
+          background: rgba(66, 255, 130, 0.11);
+        }
+
+        .hp-hero-orb-two {
+          bottom: -120px;
+          left: -90px;
+          width: 330px;
+          height: 330px;
+          background: rgba(48, 112, 255, 0.08);
+        }
+
+        .hp-hero-visual-label {
+          position: relative;
+          z-index: 1;
+          color: #62ff97;
+          font-size: 10px;
+          font-weight: 950;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+        }
+
+        .hp-hero-need,
+        .hp-hero-workspace {
+          position: relative;
+          z-index: 1;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 24px;
+          background: rgba(3, 8, 5, 0.7);
+          box-shadow:
+            0 20px 55px rgba(0, 0, 0, 0.3),
+            inset 0 1px rgba(255, 255, 255, 0.035);
+        }
+
+        .hp-hero-need {
+          margin-top: 18px;
+          padding: 24px;
+        }
+
+        .hp-hero-need-kicker,
+        .hp-hero-workspace-kicker {
+          color: rgba(226, 242, 231, 0.42);
+          font-size: 10px;
+          font-weight: 950;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+        }
+
+        .hp-hero-need-title {
+          max-width: 520px;
+          margin-top: 16px;
+          font-size: clamp(28px, 3.4vw, 43px);
+          line-height: 0.98;
+          letter-spacing: -0.055em;
+          font-weight: 900;
+        }
+
+        .hp-hero-need-copy {
+          max-width: 470px;
+          margin-top: 16px;
+          color: rgba(228, 243, 233, 0.52);
+          font-size: 14px;
+          line-height: 1.5;
+        }
+
+        .hp-hero-connector {
+          position: relative;
+          z-index: 1;
+          display: grid;
+          grid-template-columns: 1fr auto 1fr;
+          gap: 13px;
+          align-items: center;
+          padding: 17px 10px;
+          color: rgba(99, 255, 152, 0.58);
+          font-size: 10px;
+          letter-spacing: 0.08em;
+          text-align: center;
+          text-transform: uppercase;
+        }
+
+        .hp-hero-connector span {
+          height: 1px;
+          background: rgba(91, 255, 147, 0.2);
+        }
+
+        .hp-hero-workspace {
+          padding: 22px;
+          border-color: rgba(91, 255, 147, 0.15);
+          background:
+            radial-gradient(
+              circle at 0% 0%,
+              rgba(65, 255, 126, 0.1),
+              transparent 35%
+            ),
+            rgba(3, 8, 5, 0.78);
+        }
+
+        .hp-hero-workspace-top {
+          display: flex;
+          justify-content: space-between;
+          gap: 16px;
+          align-items: flex-start;
+        }
+
+        .hp-hero-workspace-title {
+          margin-top: 8px;
+          font-size: 25px;
+          line-height: 1;
+          letter-spacing: -0.045em;
+          font-weight: 900;
+        }
+
+        .hp-hero-live-pill {
+          padding: 7px 10px;
+          border: 1px solid rgba(91, 255, 147, 0.22);
+          border-radius: 999px;
+          background: rgba(77, 255, 139, 0.1);
+          color: #75ffa2;
+          font-size: 9px;
+          font-weight: 950;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+
+        .hp-hero-next {
+          margin-top: 18px;
+          padding: 16px;
+          border-radius: 17px;
+          background: #54ff8d;
+          color: #031008;
+        }
+
+        .hp-hero-next span,
+        .hp-hero-next strong {
+          display: block;
+        }
+
+        .hp-hero-next span {
+          font-size: 9px;
+          font-weight: 950;
+          letter-spacing: 0.13em;
+          text-transform: uppercase;
+        }
+
+        .hp-hero-next strong {
+          margin-top: 7px;
+          font-size: 18px;
+          letter-spacing: -0.03em;
+        }
+
+        .hp-hero-tools {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 8px;
+          margin-top: 11px;
+        }
+
+        .hp-hero-tools div {
+          min-height: 55px;
+          display: flex;
+          align-items: center;
+          padding: 11px;
+          border: 1px solid rgba(255, 255, 255, 0.07);
+          border-radius: 13px;
+          background: rgba(255, 255, 255, 0.025);
+          color: rgba(239, 252, 243, 0.72);
+          font-size: 12px;
+          font-weight: 800;
+        }
+
+        .hp-atlas-hero-image {
+          margin-top: 30px !important;
+        }
+
+        .hp-atlas-hero-image > div {
+          position: relative;
+          z-index: 2;
+          max-width: 760px;
+        }
+
+        @media (max-width: 820px) {
+          .hp-atlas-hero-image {
+            min-height: 720px !important;
+            padding: 76px 28px 70px !important;
+            background-image:
+              linear-gradient(
+                180deg,
+                rgba(2,5,4,0.96) 0%,
+                rgba(2,5,4,0.83) 56%,
+                rgba(2,5,4,0.24) 100%
+              ),
+              url('/images/homeplanet-hero-connected-neighborhood.png') !important;
+            background-position: 63% center !important;
+          }
+
+          .hp-atlas-hero-image {
+          margin-top: 30px !important;
+        }
+
+        .hp-atlas-hero-image > div {
+            max-width: 100% !important;
+          }
+        }
+
+        @media (max-width: 560px) {
+          .hp-atlas-hero-image {
+            min-height: 760px !important;
+            padding: 62px 22px 58px !important;
+            border-radius: 27px !important;
+            background-position: 68% center !important;
+          }
+        }
+
+        .hp-real-world-section {
+          padding: 54px 0 118px;
+        }
+
+        .hp-real-world-intro {
+          max-width: 1040px;
+          margin-bottom: 56px;
+        }
+
+        .hp-real-world-label,
+        .hp-story-label {
+          color: #62ff97;
+          font-size: 11px;
+          font-weight: 950;
+          letter-spacing: 0.17em;
+          text-transform: uppercase;
+        }
+
+        .hp-real-world-intro h2,
+        .hp-homeplanet-point h2 {
+          margin: 15px 0 0;
+          font-size: clamp(44px, 6.5vw, 82px);
+          line-height: 0.93;
+          letter-spacing: -0.07em;
+        }
+
+        .hp-real-world-intro p,
+        .hp-homeplanet-point p {
+          max-width: 720px;
+          margin: 24px 0 0;
+          color: rgba(228, 243, 233, 0.56);
+          font-size: 18px;
+          line-height: 1.6;
+        }
+
+        .hp-story-photo {
+          grid-column: 1 / -1;
+          width: 100%;
+          height: clamp(240px, 28vw, 380px);
+          display: block;
+          object-fit: cover;
+          border-radius: 25px;
+          border: 1px solid rgba(255, 255, 255, 0.09);
+          box-shadow:
+            0 24px 65px rgba(0, 0, 0, 0.28),
+            inset 0 1px rgba(255, 255, 255, 0.04);
+        }
+
+        .hp-community-photo {
+          object-position: center 48%;
+        }
+
+        .hp-yard-sale-photo {
+          object-position: center 52%;
+        }
+
+        .hp-story-stack {
+          display: grid;
+          gap: 34px;
+        }
+
+        .hp-story {
+          position: relative;
+          display: grid;
+          grid-template-columns: minmax(420px, 0.88fr) minmax(560px, 1.12fr);
+          gap: 72px;
+          align-items: center;
+          overflow: hidden;
+          padding: clamp(28px, 5vw, 54px);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 36px;
+          background:
+            radial-gradient(
+              circle at 82% 20%,
+              rgba(68, 255, 132, 0.08),
+              transparent 34%
+            ),
+            linear-gradient(
+              145deg,
+              rgba(255, 255, 255, 0.036),
+              rgba(255, 255, 255, 0.01)
+            );
+          box-shadow:
+            0 30px 95px rgba(0, 0, 0, 0.34),
+            inset 0 1px rgba(255, 255, 255, 0.035);
+        }
+
+        .hp-story-sale {
+          background:
+            radial-gradient(
+              circle at 82% 20%,
+              rgba(67, 124, 255, 0.1),
+              transparent 36%
+            ),
+            linear-gradient(
+              145deg,
+              rgba(255, 255, 255, 0.036),
+              rgba(255, 255, 255, 0.01)
+            );
+        }
+
+        .hp-story-number {
+          color: rgba(98, 255, 151, 0.36);
+          font-size: 13px;
+          font-weight: 950;
+          letter-spacing: 0.18em;
+        }
+
+        .hp-story-label {
+          margin-top: 25px;
+        }
+
+        .hp-story-copy h3 {
+          margin: 17px 0 0;
+          font-size: clamp(38px, 5vw, 64px);
+          line-height: 0.96;
+          letter-spacing: -0.065em;
+        }
+
+        .hp-story-copy p {
+          margin: 23px 0 0;
+          color: rgba(228, 243, 233, 0.56);
+          font-size: 16px;
+          line-height: 1.62;
+        }
+
+        .hp-story-point {
+          margin-top: 25px;
+          padding-left: 17px;
+          border-left: 2px solid rgba(89, 255, 145, 0.42);
+          color: rgba(236, 250, 240, 0.74);
+          font-size: 14px;
+          line-height: 1.58;
+        }
+
+        .hp-truth-board,
+        .hp-business-board,
+        .hp-sale-board {
+          padding: 22px;
+          border: 1px solid rgba(255, 255, 255, 0.085);
+          border-radius: 28px;
+          background: rgba(3, 8, 5, 0.72);
+          box-shadow:
+            0 24px 70px rgba(0, 0, 0, 0.3),
+            inset 0 1px rgba(255, 255, 255, 0.035);
+        }
+
+        .hp-board-head {
+          display: flex;
+          justify-content: space-between;
+          gap: 18px;
+          align-items: flex-start;
+        }
+
+        .hp-board-head span,
+        .hp-board-head strong {
+          display: block;
+        }
+
+        .hp-board-head span {
+          color: rgba(226, 242, 231, 0.42);
+          font-size: 10px;
+          font-weight: 900;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+
+        .hp-board-head strong {
+          margin-top: 7px;
+          font-size: 24px;
+          letter-spacing: -0.04em;
+        }
+
+        .hp-live-badge {
+          padding: 7px 10px;
+          border: 1px solid rgba(91, 255, 147, 0.22);
+          border-radius: 999px;
+          background: rgba(77, 255, 139, 0.1);
+          color: #75ffa2;
+          font-size: 9px;
+          font-weight: 950;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+
+        .hp-need-card,
+        .hp-business-signal {
+          margin-top: 18px;
+          padding: 19px;
+          border: 1px solid rgba(92, 255, 148, 0.13);
+          border-radius: 19px;
+          background: rgba(69, 255, 133, 0.055);
+        }
+
+        .hp-need-card span,
+        .hp-need-card strong,
+        .hp-business-signal span,
+        .hp-business-signal strong {
+          display: block;
+        }
+
+        .hp-need-card span,
+        .hp-business-signal span {
+          color: #62ff97;
+          font-size: 10px;
+          font-weight: 950;
+          letter-spacing: 0.13em;
+          text-transform: uppercase;
+        }
+
+        .hp-need-card strong,
+        .hp-business-signal strong {
+          margin-top: 10px;
+          font-size: 21px;
+          line-height: 1.2;
+          letter-spacing: -0.035em;
+        }
+
+        .hp-truth-chain {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 8px;
+          margin-top: 12px;
+        }
+
+        .hp-truth-step {
+          min-height: 77px;
+          padding: 13px;
+          border: 1px solid rgba(255, 255, 255, 0.07);
+          border-radius: 14px;
+          background: rgba(255, 255, 255, 0.025);
+        }
+
+        .hp-truth-step span,
+        .hp-truth-step strong {
+          display: block;
+        }
+
+        .hp-truth-step span {
+          color: #62ff97;
+          font-size: 9px;
+          font-weight: 950;
+        }
+
+        .hp-truth-step strong {
+          margin-top: 8px;
+          font-size: 12px;
+          line-height: 1.35;
+        }
+
+        .hp-money-ledger {
+          margin-top: 12px;
+          overflow: hidden;
+          border: 1px solid rgba(255, 255, 255, 0.075);
+          border-radius: 17px;
+        }
+
+        .hp-ledger-title {
+          padding: 12px 15px;
+          color: rgba(226, 242, 231, 0.43);
+          background: rgba(255, 255, 255, 0.025);
+          font-size: 10px;
+          font-weight: 900;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+
+        .hp-ledger-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 18px;
+          padding: 14px 15px;
+          border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .hp-ledger-row span,
+        .hp-ledger-row strong {
+          display: block;
+        }
+
+        .hp-ledger-row span {
+          color: rgba(226, 242, 231, 0.42);
+          font-size: 10px;
+        }
+
+        .hp-ledger-row strong {
+          margin-top: 5px;
+          font-size: 13px;
+        }
+
+        .hp-ledger-row b {
+          color: #71ffa0;
+          font-size: 17px;
+        }
+
+        .hp-proof-row {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 8px;
+          margin-top: 12px;
+        }
+
+        .hp-proof-row div {
+          padding: 13px;
+          border: 1px solid rgba(255, 255, 255, 0.07);
+          border-radius: 14px;
+          background: rgba(255, 255, 255, 0.025);
+        }
+
+        .hp-proof-row span,
+        .hp-proof-row strong {
+          display: block;
+        }
+
+        .hp-proof-row span {
+          color: rgba(226, 242, 231, 0.42);
+          font-size: 9px;
+          text-transform: uppercase;
+        }
+
+        .hp-proof-row strong {
+          margin-top: 7px;
+          font-size: 12px;
+        }
+
+        .hp-sale-board {
+          display: grid;
+          grid-template-columns: 0.72fr 1.28fr;
+          gap: 18px;
+        }
+
+        .hp-sale-real-image {
+          object-position: center !important;
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          object-position: center 54%;
+        }
+
+        .hp-sale-image::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background:
+            linear-gradient(
+              180deg,
+              rgba(2, 5, 4, 0.04),
+              rgba(2, 5, 4, 0.18)
+            );
+          pointer-events: none;
+        }
+
+        .hp-sale-image {
+          position: relative;
+          min-height: 380px;
+          overflow: hidden;
+          border-radius: 22px;
+          background:
+            radial-gradient(
+              circle at 50% 35%,
+              rgba(85, 155, 255, 0.23),
+              transparent 40%
+            ),
+            linear-gradient(145deg, #13213a, #07101d);
+        }
+
+        .hp-sale-image-glow {
+          position: absolute;
+          inset: auto 5% 2%;
+          height: 40%;
+          background: rgba(69, 255, 133, 0.12);
+          filter: blur(45px);
+        }
+
+        .hp-sale-price {
+          position: absolute;
+          top: 16px;
+          right: 16px;
+          z-index: 2;
+          padding: 8px 11px;
+          border-radius: 999px;
+          background: #54ff8d;
+          color: #031008;
+          font-size: 14px;
+          font-weight: 950;
+        }
+
+        .hp-sale-object {
+          position: absolute;
+          left: 50%;
+          top: 47%;
+          width: 68%;
+          transform: translate(-50%, -50%);
+        }
+
+        .hp-sale-object-top {
+          height: 38px;
+          border-radius: 12px 12px 5px 5px;
+          background: linear-gradient(180deg, #b87a47, #74431f);
+          box-shadow: 0 16px 28px rgba(0, 0, 0, 0.28);
+        }
+
+        .hp-sale-object-body {
+          width: 78%;
+          height: 165px;
+          margin: 0 auto;
+          border-left: 18px solid #71401f;
+          border-right: 18px solid #71401f;
+          background:
+            linear-gradient(
+              90deg,
+              transparent 40%,
+              rgba(255, 255, 255, 0.08) 41%,
+              rgba(255, 255, 255, 0.08) 59%,
+              transparent 60%
+            );
+        }
+
+        .hp-sale-image-label {
+          position: absolute;
+          left: 16px;
+          right: 16px;
+          bottom: 16px;
+          padding: 13px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 14px;
+          background: rgba(2, 6, 12, 0.68);
+          backdrop-filter: blur(12px);
+          font-size: 14px;
+          font-weight: 850;
+        }
+
+        .hp-sale-content {
+          padding: 4px 0;
+        }
+
+        .hp-sale-actions {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 8px;
+          margin-top: 18px;
+        }
+
+        .hp-sale-actions div {
+          min-height: 82px;
+          padding: 13px;
+          border: 1px solid rgba(255, 255, 255, 0.07);
+          border-radius: 14px;
+          background: rgba(255, 255, 255, 0.025);
+        }
+
+        .hp-sale-actions span,
+        .hp-sale-actions strong {
+          display: block;
+        }
+
+        .hp-sale-actions span {
+          color: rgba(226, 242, 231, 0.42);
+          font-size: 10px;
+        }
+
+        .hp-sale-actions strong {
+          margin-top: 8px;
+          font-size: 13px;
+          line-height: 1.35;
+        }
+
+        .hp-sale-status {
+          margin-top: 12px;
+          padding: 15px;
+          border: 1px solid rgba(91, 255, 147, 0.12);
+          border-radius: 16px;
+          background: rgba(70, 255, 134, 0.045);
+        }
+
+        .hp-sale-status > span {
+          color: #62ff97;
+          font-size: 9px;
+          font-weight: 950;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+        }
+
+        .hp-sale-status > div {
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 7px;
+          margin-top: 12px;
+          color: rgba(238, 251, 242, 0.68);
+          font-size: 11px;
+          font-weight: 800;
+        }
+
+        .hp-sale-status i {
+          width: 13px;
+          height: 1px;
+          background: rgba(92, 255, 148, 0.35);
+        }
+
+        .hp-business-signal {
+          margin-top: 0;
+        }
+
+        .hp-business-arrow {
+          display: grid;
+          grid-template-columns: 1fr auto 1fr;
+          gap: 12px;
+          align-items: center;
+          padding: 17px 8px;
+          color: rgba(99, 255, 152, 0.58);
+          font-size: 9px;
+          font-weight: 900;
+          letter-spacing: 0.08em;
+          text-align: center;
+          text-transform: uppercase;
+        }
+
+        .hp-business-arrow span {
+          height: 1px;
+          background: rgba(91, 255, 147, 0.2);
+        }
+
+        .hp-workspace-preview {
+          padding: 20px;
+          border: 1px solid rgba(91, 255, 147, 0.14);
+          border-radius: 21px;
+          background:
+            radial-gradient(
+              circle at 0% 0%,
+              rgba(65, 255, 126, 0.09),
+              transparent 35%
+            ),
+            rgba(255, 255, 255, 0.02);
+        }
+
+        .hp-next-action {
+          margin-top: 16px;
+          padding: 16px;
+          border-radius: 16px;
+          background: #54ff8d;
+          color: #031008;
+        }
+
+        .hp-next-action span,
+        .hp-next-action strong {
+          display: block;
+        }
+
+        .hp-next-action span {
+          font-size: 9px;
+          font-weight: 950;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+        }
+
+        .hp-next-action strong {
+          margin-top: 7px;
+          font-size: 18px;
+        }
+
+        .hp-workspace-tools {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 8px;
+          margin-top: 10px;
+        }
+
+        .hp-workspace-tools div {
+          min-height: 60px;
+          display: flex;
+          align-items: center;
+          padding: 11px;
+          border: 1px solid rgba(255, 255, 255, 0.07);
+          border-radius: 13px;
+          background: rgba(255, 255, 255, 0.025);
+          color: rgba(239, 252, 243, 0.7);
+          font-size: 11px;
+          font-weight: 800;
+        }
+        .hp-homeplanet-point {
+          padding: 0 0 88px;
+        }
+
+        .hp-homeplanet-point-inner {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto;
+          gap: 34px;
+          align-items: center;
+          padding: 30px 34px;
+          border: 1px solid rgba(91, 255, 147, 0.13);
+          border-radius: 26px;
+          background:
+            radial-gradient(
+              circle at 0% 50%,
+              rgba(70, 255, 134, 0.075),
+              transparent 36%
+            ),
+            linear-gradient(
+              105deg,
+              rgba(255, 255, 255, 0.033),
+              rgba(255, 255, 255, 0.01)
+            );
+          box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+        }
+
+        .hp-point-copy h2 {
+          max-width: 820px;
+          margin: 10px 0 0;
+          font-size: clamp(30px, 4vw, 48px);
+          line-height: 0.98;
+          letter-spacing: -0.055em;
+        }
+
+        .hp-point-copy p {
+          max-width: 720px;
+          margin: 14px 0 0;
+          color: rgba(228, 243, 233, 0.5);
+          font-size: 14px;
+          line-height: 1.55;
+        }
+
+        .hp-point-action {
+          min-height: 50px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0 21px;
+          border-radius: 14px;
+          background: #54ff8d;
+          color: #031008;
+          font-weight: 950;
+          text-decoration: none;
+          white-space: nowrap;
+          box-shadow: 0 14px 34px rgba(48, 255, 115, 0.14);
+        }
+
+        @media (max-width: 760px) {
+          .hp-homeplanet-point-inner {
+            grid-template-columns: 1fr !important;
+            padding: 26px !important;
+          }
+
+          .hp-point-action {
+            width: 100%;
+          }
+        }
+@media (max-width: 760px) {
+          .hp-homeplanet-point-inner {
+            grid-template-columns: 1fr !important;
+            padding: 26px !important;
+          }
+
+          .hp-point-action {
+            width: 100%;
+          }
+        }
+@media (max-width: 980px) {
+          .hp-story {
+            grid-template-columns: 1fr !important;
+          }
+
+          .hp-sale-board {
+            grid-template-columns: 1fr !important;
+          }
+
+          .hp-sale-real-image {
+          object-position: center !important;
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          object-position: center 54%;
+        }
+
+        .hp-sale-image::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background:
+            linear-gradient(
+              180deg,
+              rgba(2, 5, 4, 0.04),
+              rgba(2, 5, 4, 0.18)
+            );
+          pointer-events: none;
+        }
+
+        .hp-sale-image {
+            min-height: 320px;
+          }
+        }
+
+        @media (max-width: 680px) {
+          .hp-story-photo {
+            height: 220px !important;
+            border-radius: 20px !important;
+          }
+          .hp-story {
+            padding: 24px !important;
+            border-radius: 27px !important;
+          }
+
+          .hp-truth-chain,
+          .hp-proof-row {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          }
+
+          .hp-workspace-tools {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          }
+
+          .hp-business-arrow {
+            grid-template-columns: 1fr !important;
+          }
+
+          .hp-business-arrow span {
+            display: none;
+          }
+        }
+
+        .hp-direction-lane {
+        @media (max-width: 900px) {
+          .hp-atlas-hero {
+            grid-template-columns: 1fr !important;
+          }
+
+          .hp-homeplanet-hero-visual {
+            min-height: 0 !important;
+          }
+        }
+
+        @media (max-width: 620px) {
+          .hp-homeplanet-hero-visual {
+            padding: 18px !important;
+            border-radius: 27px !important;
+          }
+
+          .hp-hero-tools {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          }
+
+          .hp-hero-connector {
+            grid-template-columns: 1fr !important;
+          }
+
+          .hp-hero-connector span {
+            display: none;
+          }
+        }
+
+            grid-template-columns: 52px minmax(0, 1fr) !important;
+          }
+
+          .hp-direction-lane > div:last-child {
+            grid-column: 2;
+          }
+        }
+
+        @media (max-width: 620px) {
+          .hp-homeplanet-hero-visual {
+          position: relative;
+          min-height: 590px;
+          overflow: hidden;
+          padding: 25px;
+          border: 1px solid rgba(91, 255, 147, 0.15);
+          border-radius: 35px;
+          background:
+            radial-gradient(
+              circle at 50% 16%,
+              rgba(66, 255, 130, 0.13),
+              transparent 34%
+            ),
+            linear-gradient(
+              145deg,
+              rgba(255, 255, 255, 0.035),
+              rgba(255, 255, 255, 0.01)
+            );
+          box-shadow:
+            0 34px 110px rgba(0, 0, 0, 0.46),
+            inset 0 1px rgba(255, 255, 255, 0.04);
+        }
+
+        .hp-hero-orb {
+          position: absolute;
+          border-radius: 999px;
+          pointer-events: none;
+          filter: blur(70px);
+        }
+
+        .hp-hero-orb-one {
+          top: -90px;
+          right: -70px;
+          width: 290px;
+          height: 290px;
+          background: rgba(66, 255, 130, 0.11);
+        }
+
+        .hp-hero-orb-two {
+          bottom: -120px;
+          left: -90px;
+          width: 330px;
+          height: 330px;
+          background: rgba(48, 112, 255, 0.08);
+        }
+
+        .hp-hero-visual-label {
+          position: relative;
+          z-index: 1;
+          color: #62ff97;
+          font-size: 10px;
+          font-weight: 950;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+        }
+
+        .hp-hero-need,
+        .hp-hero-workspace {
+          position: relative;
+          z-index: 1;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 24px;
+          background: rgba(3, 8, 5, 0.7);
+          box-shadow:
+            0 20px 55px rgba(0, 0, 0, 0.3),
+            inset 0 1px rgba(255, 255, 255, 0.035);
+        }
+
+        .hp-hero-need {
+          margin-top: 18px;
+          padding: 24px;
+        }
+
+        .hp-hero-need-kicker,
+        .hp-hero-workspace-kicker {
+          color: rgba(226, 242, 231, 0.42);
+          font-size: 10px;
+          font-weight: 950;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+        }
+
+        .hp-hero-need-title {
+          max-width: 520px;
+          margin-top: 16px;
+          font-size: clamp(28px, 3.4vw, 43px);
+          line-height: 0.98;
+          letter-spacing: -0.055em;
+          font-weight: 900;
+        }
+
+        .hp-hero-need-copy {
+          max-width: 470px;
+          margin-top: 16px;
+          color: rgba(228, 243, 233, 0.52);
+          font-size: 14px;
+          line-height: 1.5;
+        }
+
+        .hp-hero-connector {
+          position: relative;
+          z-index: 1;
+          display: grid;
+          grid-template-columns: 1fr auto 1fr;
+          gap: 13px;
+          align-items: center;
+          padding: 17px 10px;
+          color: rgba(99, 255, 152, 0.58);
+          font-size: 10px;
+          letter-spacing: 0.08em;
+          text-align: center;
+          text-transform: uppercase;
+        }
+
+        .hp-hero-connector span {
+          height: 1px;
+          background: rgba(91, 255, 147, 0.2);
+        }
+
+        .hp-hero-workspace {
+          padding: 22px;
+          border-color: rgba(91, 255, 147, 0.15);
+          background:
+            radial-gradient(
+              circle at 0% 0%,
+              rgba(65, 255, 126, 0.1),
+              transparent 35%
+            ),
+            rgba(3, 8, 5, 0.78);
+        }
+
+        .hp-hero-workspace-top {
+          display: flex;
+          justify-content: space-between;
+          gap: 16px;
+          align-items: flex-start;
+        }
+
+        .hp-hero-workspace-title {
+          margin-top: 8px;
+          font-size: 25px;
+          line-height: 1;
+          letter-spacing: -0.045em;
+          font-weight: 900;
+        }
+
+        .hp-hero-live-pill {
+          padding: 7px 10px;
+          border: 1px solid rgba(91, 255, 147, 0.22);
+          border-radius: 999px;
+          background: rgba(77, 255, 139, 0.1);
+          color: #75ffa2;
+          font-size: 9px;
+          font-weight: 950;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+
+        .hp-hero-next {
+          margin-top: 18px;
+          padding: 16px;
+          border-radius: 17px;
+          background: #54ff8d;
+          color: #031008;
+        }
+
+        .hp-hero-next span,
+        .hp-hero-next strong {
+          display: block;
+        }
+
+        .hp-hero-next span {
+          font-size: 9px;
+          font-weight: 950;
+          letter-spacing: 0.13em;
+          text-transform: uppercase;
+        }
+
+        .hp-hero-next strong {
+          margin-top: 7px;
+          font-size: 18px;
+          letter-spacing: -0.03em;
+        }
+
+        .hp-hero-tools {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 8px;
+          margin-top: 11px;
+        }
+
+        .hp-hero-tools div {
+          min-height: 55px;
+          display: flex;
+          align-items: center;
+          padding: 11px;
+          border: 1px solid rgba(255, 255, 255, 0.07);
+          border-radius: 13px;
+          background: rgba(255, 255, 255, 0.025);
+          color: rgba(239, 252, 243, 0.72);
+          font-size: 12px;
+          font-weight: 800;
+        }
+
+        .hp-atlas-hero-image {
+          margin-top: 30px !important;
+        }
+
+        .hp-atlas-hero-image > div {
+          position: relative;
+          z-index: 2;
+          max-width: 760px;
+        }
+
+        @media (max-width: 820px) {
+          .hp-atlas-hero-image {
+            min-height: 720px !important;
+            padding: 76px 28px 70px !important;
+            background-image:
+              linear-gradient(
+                180deg,
+                rgba(2,5,4,0.96) 0%,
+                rgba(2,5,4,0.83) 56%,
+                rgba(2,5,4,0.24) 100%
+              ),
+              url('/images/homeplanet-hero-connected-neighborhood.png') !important;
+            background-position: 63% center !important;
+          }
+
+          .hp-atlas-hero-image {
+          margin-top: 30px !important;
+        }
+
+        .hp-atlas-hero-image > div {
+            max-width: 100% !important;
+          }
+        }
+
+        @media (max-width: 560px) {
+          .hp-atlas-hero-image {
+            min-height: 760px !important;
+            padding: 62px 22px 58px !important;
+            border-radius: 27px !important;
+            background-position: 68% center !important;
+          }
+        }
+
+        .hp-real-world-section {
+          padding: 54px 0 118px;
+        }
+
+        .hp-real-world-intro {
+          max-width: 1040px;
+          margin-bottom: 56px;
+        }
+
+        .hp-real-world-label,
+        .hp-story-label {
+          color: #62ff97;
+          font-size: 11px;
+          font-weight: 950;
+          letter-spacing: 0.17em;
+          text-transform: uppercase;
+        }
+
+        .hp-real-world-intro h2,
+        .hp-homeplanet-point h2 {
+          margin: 15px 0 0;
+          font-size: clamp(44px, 6.5vw, 82px);
+          line-height: 0.93;
+          letter-spacing: -0.07em;
+        }
+
+        .hp-real-world-intro p,
+        .hp-homeplanet-point p {
+          max-width: 720px;
+          margin: 24px 0 0;
+          color: rgba(228, 243, 233, 0.56);
+          font-size: 18px;
+          line-height: 1.6;
+        }
+
+        .hp-story-photo {
+          grid-column: 1 / -1;
+          width: 100%;
+          height: clamp(240px, 28vw, 380px);
+          display: block;
+          object-fit: cover;
+          border-radius: 25px;
+          border: 1px solid rgba(255, 255, 255, 0.09);
+          box-shadow:
+            0 24px 65px rgba(0, 0, 0, 0.28),
+            inset 0 1px rgba(255, 255, 255, 0.04);
+        }
+
+        .hp-community-photo {
+          object-position: center 48%;
+        }
+
+        .hp-yard-sale-photo {
+          object-position: center 52%;
+        }
+
+        .hp-story-stack {
+          display: grid;
+          gap: 34px;
+        }
+
+        .hp-story {
+          position: relative;
+          display: grid;
+          grid-template-columns: minmax(420px, 0.88fr) minmax(560px, 1.12fr);
+          gap: 72px;
+          align-items: center;
+          overflow: hidden;
+          padding: clamp(28px, 5vw, 54px);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 36px;
+          background:
+            radial-gradient(
+              circle at 82% 20%,
+              rgba(68, 255, 132, 0.08),
+              transparent 34%
+            ),
+            linear-gradient(
+              145deg,
+              rgba(255, 255, 255, 0.036),
+              rgba(255, 255, 255, 0.01)
+            );
+          box-shadow:
+            0 30px 95px rgba(0, 0, 0, 0.34),
+            inset 0 1px rgba(255, 255, 255, 0.035);
+        }
+
+        .hp-story-sale {
+          background:
+            radial-gradient(
+              circle at 82% 20%,
+              rgba(67, 124, 255, 0.1),
+              transparent 36%
+            ),
+            linear-gradient(
+              145deg,
+              rgba(255, 255, 255, 0.036),
+              rgba(255, 255, 255, 0.01)
+            );
+        }
+
+        .hp-story-number {
+          color: rgba(98, 255, 151, 0.36);
+          font-size: 13px;
+          font-weight: 950;
+          letter-spacing: 0.18em;
+        }
+
+        .hp-story-label {
+          margin-top: 25px;
+        }
+
+        .hp-story-copy h3 {
+          margin: 17px 0 0;
+          font-size: clamp(38px, 5vw, 64px);
+          line-height: 0.96;
+          letter-spacing: -0.065em;
+        }
+
+        .hp-story-copy p {
+          margin: 23px 0 0;
+          color: rgba(228, 243, 233, 0.56);
+          font-size: 16px;
+          line-height: 1.62;
+        }
+
+        .hp-story-point {
+          margin-top: 25px;
+          padding-left: 17px;
+          border-left: 2px solid rgba(89, 255, 145, 0.42);
+          color: rgba(236, 250, 240, 0.74);
+          font-size: 14px;
+          line-height: 1.58;
+        }
+
+        .hp-truth-board,
+        .hp-business-board,
+        .hp-sale-board {
+          padding: 22px;
+          border: 1px solid rgba(255, 255, 255, 0.085);
+          border-radius: 28px;
+          background: rgba(3, 8, 5, 0.72);
+          box-shadow:
+            0 24px 70px rgba(0, 0, 0, 0.3),
+            inset 0 1px rgba(255, 255, 255, 0.035);
+        }
+
+        .hp-board-head {
+          display: flex;
+          justify-content: space-between;
+          gap: 18px;
+          align-items: flex-start;
+        }
+
+        .hp-board-head span,
+        .hp-board-head strong {
+          display: block;
+        }
+
+        .hp-board-head span {
+          color: rgba(226, 242, 231, 0.42);
+          font-size: 10px;
+          font-weight: 900;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+
+        .hp-board-head strong {
+          margin-top: 7px;
+          font-size: 24px;
+          letter-spacing: -0.04em;
+        }
+
+        .hp-live-badge {
+          padding: 7px 10px;
+          border: 1px solid rgba(91, 255, 147, 0.22);
+          border-radius: 999px;
+          background: rgba(77, 255, 139, 0.1);
+          color: #75ffa2;
+          font-size: 9px;
+          font-weight: 950;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+
+        .hp-need-card,
+        .hp-business-signal {
+          margin-top: 18px;
+          padding: 19px;
+          border: 1px solid rgba(92, 255, 148, 0.13);
+          border-radius: 19px;
+          background: rgba(69, 255, 133, 0.055);
+        }
+
+        .hp-need-card span,
+        .hp-need-card strong,
+        .hp-business-signal span,
+        .hp-business-signal strong {
+          display: block;
+        }
+
+        .hp-need-card span,
+        .hp-business-signal span {
+          color: #62ff97;
+          font-size: 10px;
+          font-weight: 950;
+          letter-spacing: 0.13em;
+          text-transform: uppercase;
+        }
+
+        .hp-need-card strong,
+        .hp-business-signal strong {
+          margin-top: 10px;
+          font-size: 21px;
+          line-height: 1.2;
+          letter-spacing: -0.035em;
+        }
+
+        .hp-truth-chain {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 8px;
+          margin-top: 12px;
+        }
+
+        .hp-truth-step {
+          min-height: 77px;
+          padding: 13px;
+          border: 1px solid rgba(255, 255, 255, 0.07);
+          border-radius: 14px;
+          background: rgba(255, 255, 255, 0.025);
+        }
+
+        .hp-truth-step span,
+        .hp-truth-step strong {
+          display: block;
+        }
+
+        .hp-truth-step span {
+          color: #62ff97;
+          font-size: 9px;
+          font-weight: 950;
+        }
+
+        .hp-truth-step strong {
+          margin-top: 8px;
+          font-size: 12px;
+          line-height: 1.35;
+        }
+
+        .hp-money-ledger {
+          margin-top: 12px;
+          overflow: hidden;
+          border: 1px solid rgba(255, 255, 255, 0.075);
+          border-radius: 17px;
+        }
+
+        .hp-ledger-title {
+          padding: 12px 15px;
+          color: rgba(226, 242, 231, 0.43);
+          background: rgba(255, 255, 255, 0.025);
+          font-size: 10px;
+          font-weight: 900;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+
+        .hp-ledger-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 18px;
+          padding: 14px 15px;
+          border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .hp-ledger-row span,
+        .hp-ledger-row strong {
+          display: block;
+        }
+
+        .hp-ledger-row span {
+          color: rgba(226, 242, 231, 0.42);
+          font-size: 10px;
+        }
+
+        .hp-ledger-row strong {
+          margin-top: 5px;
+          font-size: 13px;
+        }
+
+        .hp-ledger-row b {
+          color: #71ffa0;
+          font-size: 17px;
+        }
+
+        .hp-proof-row {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 8px;
+          margin-top: 12px;
+        }
+
+        .hp-proof-row div {
+          padding: 13px;
+          border: 1px solid rgba(255, 255, 255, 0.07);
+          border-radius: 14px;
+          background: rgba(255, 255, 255, 0.025);
+        }
+
+        .hp-proof-row span,
+        .hp-proof-row strong {
+          display: block;
+        }
+
+        .hp-proof-row span {
+          color: rgba(226, 242, 231, 0.42);
+          font-size: 9px;
+          text-transform: uppercase;
+        }
+
+        .hp-proof-row strong {
+          margin-top: 7px;
+          font-size: 12px;
+        }
+
+        .hp-sale-board {
+          display: grid;
+          grid-template-columns: 0.72fr 1.28fr;
+          gap: 18px;
+        }
+
+        .hp-sale-real-image {
+          object-position: center !important;
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          object-position: center 54%;
+        }
+
+        .hp-sale-image::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background:
+            linear-gradient(
+              180deg,
+              rgba(2, 5, 4, 0.04),
+              rgba(2, 5, 4, 0.18)
+            );
+          pointer-events: none;
+        }
+
+        .hp-sale-image {
+          position: relative;
+          min-height: 380px;
+          overflow: hidden;
+          border-radius: 22px;
+          background:
+            radial-gradient(
+              circle at 50% 35%,
+              rgba(85, 155, 255, 0.23),
+              transparent 40%
+            ),
+            linear-gradient(145deg, #13213a, #07101d);
+        }
+
+        .hp-sale-image-glow {
+          position: absolute;
+          inset: auto 5% 2%;
+          height: 40%;
+          background: rgba(69, 255, 133, 0.12);
+          filter: blur(45px);
+        }
+
+        .hp-sale-price {
+          position: absolute;
+          top: 16px;
+          right: 16px;
+          z-index: 2;
+          padding: 8px 11px;
+          border-radius: 999px;
+          background: #54ff8d;
+          color: #031008;
+          font-size: 14px;
+          font-weight: 950;
+        }
+
+        .hp-sale-object {
+          position: absolute;
+          left: 50%;
+          top: 47%;
+          width: 68%;
+          transform: translate(-50%, -50%);
+        }
+
+        .hp-sale-object-top {
+          height: 38px;
+          border-radius: 12px 12px 5px 5px;
+          background: linear-gradient(180deg, #b87a47, #74431f);
+          box-shadow: 0 16px 28px rgba(0, 0, 0, 0.28);
+        }
+
+        .hp-sale-object-body {
+          width: 78%;
+          height: 165px;
+          margin: 0 auto;
+          border-left: 18px solid #71401f;
+          border-right: 18px solid #71401f;
+          background:
+            linear-gradient(
+              90deg,
+              transparent 40%,
+              rgba(255, 255, 255, 0.08) 41%,
+              rgba(255, 255, 255, 0.08) 59%,
+              transparent 60%
+            );
+        }
+
+        .hp-sale-image-label {
+          position: absolute;
+          left: 16px;
+          right: 16px;
+          bottom: 16px;
+          padding: 13px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 14px;
+          background: rgba(2, 6, 12, 0.68);
+          backdrop-filter: blur(12px);
+          font-size: 14px;
+          font-weight: 850;
+        }
+
+        .hp-sale-content {
+          padding: 4px 0;
+        }
+
+        .hp-sale-actions {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 8px;
+          margin-top: 18px;
+        }
+
+        .hp-sale-actions div {
+          min-height: 82px;
+          padding: 13px;
+          border: 1px solid rgba(255, 255, 255, 0.07);
+          border-radius: 14px;
+          background: rgba(255, 255, 255, 0.025);
+        }
+
+        .hp-sale-actions span,
+        .hp-sale-actions strong {
+          display: block;
+        }
+
+        .hp-sale-actions span {
+          color: rgba(226, 242, 231, 0.42);
+          font-size: 10px;
+        }
+
+        .hp-sale-actions strong {
+          margin-top: 8px;
+          font-size: 13px;
+          line-height: 1.35;
+        }
+
+        .hp-sale-status {
+          margin-top: 12px;
+          padding: 15px;
+          border: 1px solid rgba(91, 255, 147, 0.12);
+          border-radius: 16px;
+          background: rgba(70, 255, 134, 0.045);
+        }
+
+        .hp-sale-status > span {
+          color: #62ff97;
+          font-size: 9px;
+          font-weight: 950;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+        }
+
+        .hp-sale-status > div {
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 7px;
+          margin-top: 12px;
+          color: rgba(238, 251, 242, 0.68);
+          font-size: 11px;
+          font-weight: 800;
+        }
+
+        .hp-sale-status i {
+          width: 13px;
+          height: 1px;
+          background: rgba(92, 255, 148, 0.35);
+        }
+
+        .hp-business-signal {
+          margin-top: 0;
+        }
+
+        .hp-business-arrow {
+          display: grid;
+          grid-template-columns: 1fr auto 1fr;
+          gap: 12px;
+          align-items: center;
+          padding: 17px 8px;
+          color: rgba(99, 255, 152, 0.58);
+          font-size: 9px;
+          font-weight: 900;
+          letter-spacing: 0.08em;
+          text-align: center;
+          text-transform: uppercase;
+        }
+
+        .hp-business-arrow span {
+          height: 1px;
+          background: rgba(91, 255, 147, 0.2);
+        }
+
+        .hp-workspace-preview {
+          padding: 20px;
+          border: 1px solid rgba(91, 255, 147, 0.14);
+          border-radius: 21px;
+          background:
+            radial-gradient(
+              circle at 0% 0%,
+              rgba(65, 255, 126, 0.09),
+              transparent 35%
+            ),
+            rgba(255, 255, 255, 0.02);
+        }
+
+        .hp-next-action {
+          margin-top: 16px;
+          padding: 16px;
+          border-radius: 16px;
+          background: #54ff8d;
+          color: #031008;
+        }
+
+        .hp-next-action span,
+        .hp-next-action strong {
+          display: block;
+        }
+
+        .hp-next-action span {
+          font-size: 9px;
+          font-weight: 950;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+        }
+
+        .hp-next-action strong {
+          margin-top: 7px;
+          font-size: 18px;
+        }
+
+        .hp-workspace-tools {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 8px;
+          margin-top: 10px;
+        }
+
+        .hp-workspace-tools div {
+          min-height: 60px;
+          display: flex;
+          align-items: center;
+          padding: 11px;
+          border: 1px solid rgba(255, 255, 255, 0.07);
+          border-radius: 13px;
+          background: rgba(255, 255, 255, 0.025);
+          color: rgba(239, 252, 243, 0.7);
+          font-size: 11px;
+          font-weight: 800;
+        }
+        .hp-homeplanet-point {
+          padding: 0 0 88px;
+        }
+
+        .hp-homeplanet-point-inner {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto;
+          gap: 34px;
+          align-items: center;
+          padding: 30px 34px;
+          border: 1px solid rgba(91, 255, 147, 0.13);
+          border-radius: 26px;
+          background:
+            radial-gradient(
+              circle at 0% 50%,
+              rgba(70, 255, 134, 0.075),
+              transparent 36%
+            ),
+            linear-gradient(
+              105deg,
+              rgba(255, 255, 255, 0.033),
+              rgba(255, 255, 255, 0.01)
+            );
+          box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+        }
+
+        .hp-point-copy h2 {
+          max-width: 820px;
+          margin: 10px 0 0;
+          font-size: clamp(30px, 4vw, 48px);
+          line-height: 0.98;
+          letter-spacing: -0.055em;
+        }
+
+        .hp-point-copy p {
+          max-width: 720px;
+          margin: 14px 0 0;
+          color: rgba(228, 243, 233, 0.5);
+          font-size: 14px;
+          line-height: 1.55;
+        }
+
+        .hp-point-action {
+          min-height: 50px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0 21px;
+          border-radius: 14px;
+          background: #54ff8d;
+          color: #031008;
+          font-weight: 950;
+          text-decoration: none;
+          white-space: nowrap;
+          box-shadow: 0 14px 34px rgba(48, 255, 115, 0.14);
+        }
+
+        @media (max-width: 760px) {
+          .hp-homeplanet-point-inner {
+            grid-template-columns: 1fr !important;
+            padding: 26px !important;
+          }
+
+          .hp-point-action {
+            width: 100%;
+          }
+        }
+@media (max-width: 760px) {
+          .hp-homeplanet-point-inner {
+            grid-template-columns: 1fr !important;
+            padding: 26px !important;
+          }
+
+          .hp-point-action {
+            width: 100%;
+          }
+        }
+@media (max-width: 980px) {
+          .hp-story {
+            grid-template-columns: 1fr !important;
+          }
+
+          .hp-sale-board {
+            grid-template-columns: 1fr !important;
+          }
+
+          .hp-sale-real-image {
+          object-position: center !important;
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          object-position: center 54%;
+        }
+
+        .hp-sale-image::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background:
+            linear-gradient(
+              180deg,
+              rgba(2, 5, 4, 0.04),
+              rgba(2, 5, 4, 0.18)
+            );
+          pointer-events: none;
+        }
+
+        .hp-sale-image {
+            min-height: 320px;
+          }
+        }
+
+        @media (max-width: 680px) {
+          .hp-story-photo {
+            height: 220px !important;
+            border-radius: 20px !important;
+          }
+          .hp-story {
+            padding: 24px !important;
+            border-radius: 27px !important;
+          }
+
+          .hp-truth-chain,
+          .hp-proof-row {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          }
+
+          .hp-workspace-tools {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          }
+
+          .hp-business-arrow {
+            grid-template-columns: 1fr !important;
+          }
+
+          .hp-business-arrow span {
+            display: none;
+          }
+        }
+
+        .hp-direction-lane {
+        @media (max-width: 900px) {
+          .hp-atlas-hero {
+            grid-template-columns: 1fr !important;
+          }
+
+          .hp-homeplanet-hero-visual {
+            min-height: 0 !important;
+          }
+        }
+
+        @media (max-width: 620px) {
+          .hp-homeplanet-hero-visual {
+            padding: 18px !important;
+            border-radius: 27px !important;
+          }
+
+          .hp-hero-tools {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          }
+
+          .hp-hero-connector {
+            grid-template-columns: 1fr !important;
+          }
+
+          .hp-hero-connector span {
+            display: none;
+          }
+        }
+
+            grid-template-columns: 1fr !important;
+            gap: 18px !important;
+            padding: 24px !important;
+          }
+
+          .hp-direction-lane > div:last-child {
+            grid-column: auto;
+          }
+        }
+
+        @media (max-width: 980px) {
+          .hp-doctrine-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          }
+
+          .hp-doctrine-foundation-header {
+            grid-template-columns: 1fr !important;
+          }
+        }
+
+        @media (max-width: 900px) {
+          .hp-atlas-hero {
+            grid-template-columns: 1fr !important;
+          }
+
+          .hp-atlas-preview {
+            min-height: 0 !important;
+            margin-top: 8px;
+          }
+
+          .hp-atlas-preview-grid {
+            grid-template-columns: 1fr !important;
+          }
+          .hp-atlas-hero {
+            padding: 82px 0 64px !important;
           }
 
           .hp-atlas-nav-links {
@@ -530,9 +4132,192 @@ function CityIndex() {
           }
         }
 
-        @media (max-width: 640px) {
-          .hp-atlas-hero > div:nth-child(2) {
-            min-height: 560px !important;
+        @media (max-width: 620px) {
+          .hp-doctrine-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
+      <style>{`
+        /* Final HomePlanet polish */
+
+        .hp-direction-lane > div:last-child,
+        .hp-card-detail {
+          font-size: 13px !important;
+          line-height: 1.6 !important;
+          color: rgba(230, 244, 234, 0.58) !important;
+        }
+
+        .hp-direction-lane p {
+          font-size: 15px !important;
+          line-height: 1.58 !important;
+        }
+
+        .hp-story-copy p {
+          font-size: 16px !important;
+          line-height: 1.62 !important;
+        }
+
+        .hp-story-point {
+          font-size: 15px !important;
+          line-height: 1.6 !important;
+        }
+
+        .hp-board-head span,
+        .hp-need-card span,
+        .hp-business-signal span,
+        .hp-sale-actions span,
+        .hp-ledger-row span,
+        .hp-proof-row span {
+          font-size: 11px !important;
+        }
+
+        .hp-truth-step strong,
+        .hp-proof-row strong,
+        .hp-sale-actions strong {
+          font-size: 13px !important;
+        }
+
+        .hp-atlas-hero-image h1 {
+          font-size: clamp(64px, 8vw, 116px) !important;
+          line-height: 0.9 !important;
+        }
+
+        .hp-atlas-hero-image > div > div:nth-of-type(2) {
+          max-width: 820px !important;
+          font-size: clamp(27px, 4vw, 48px) !important;
+          line-height: 1.02 !important;
+        }
+
+        #directions {
+          padding-top: 16px !important;
+          padding-bottom: 88px !important;
+        }
+
+        #directions > div:first-child {
+          margin-bottom: 34px !important;
+        }
+
+        #directions > div:first-child h2 {
+          max-width: 840px !important;
+          font-size: clamp(37px, 5vw, 62px) !important;
+          line-height: 0.97 !important;
+        }
+
+        .hp-direction-lanes {
+          gap: 11px !important;
+        }
+
+        .hp-direction-lane {
+          min-height: 158px !important;
+          padding: 24px 28px !important;
+          border-color: rgba(255, 255, 255, 0.105) !important;
+          background:
+            radial-gradient(
+              circle at 7% 50%,
+              rgba(73, 255, 137, 0.09),
+              transparent 29%
+            ),
+            linear-gradient(
+              100deg,
+              rgba(255, 255, 255, 0.048),
+              rgba(255, 255, 255, 0.018)
+            ) !important;
+        }
+
+        .hp-direction-lane h3 {
+          font-size: clamp(27px, 3vw, 39px) !important;
+        }
+
+        .hp-direction-lane p {
+          color: rgba(228, 243, 233, 0.62) !important;
+          font-size: 14px !important;
+        }
+
+        .hp-direction-lane > div:last-child {
+          color: rgba(230, 244, 234, 0.55) !important;
+          font-size: 12px !important;
+        }
+
+        .hp-real-world-section {
+          padding-top: 38px !important;
+          padding-bottom: 96px !important;
+        }
+
+        .hp-real-world-intro {
+          margin-bottom: 44px !important;
+        }
+
+        .hp-real-world-intro h2 {
+          font-size: clamp(39px, 5.4vw, 68px) !important;
+          line-height: 0.96 !important;
+        }
+
+        .hp-story-stack {
+          gap: 25px !important;
+        }
+
+        .hp-story {
+          gap: 54px !important;
+          padding: clamp(26px, 4vw, 44px) !important;
+          border-color: rgba(255, 255, 255, 0.105) !important;
+          background:
+            radial-gradient(
+              circle at 82% 20%,
+              rgba(68, 255, 132, 0.095),
+              transparent 35%
+            ),
+            linear-gradient(
+              145deg,
+              rgba(255, 255, 255, 0.046),
+              rgba(255, 255, 255, 0.016)
+            ) !important;
+        }
+
+        .hp-story-copy h3 {
+          font-size: clamp(34px, 4.2vw, 54px) !important;
+          line-height: 0.98 !important;
+        }
+
+        .hp-story-copy p {
+          color: rgba(228, 243, 233, 0.62) !important;
+          font-size: 15px !important;
+        }
+
+        .hp-story-point {
+          color: rgba(236, 250, 240, 0.76) !important;
+        }
+
+        .hp-truth-board,
+        .hp-business-board,
+        .hp-sale-board {
+          background: rgba(7, 13, 9, 0.84) !important;
+          border-color: rgba(255, 255, 255, 0.105) !important;
+        }
+
+        .hp-story-photo {
+          height: clamp(230px, 24vw, 340px) !important;
+        }
+
+        .hp-homeplanet-point {
+          padding-bottom: 76px !important;
+        }
+
+        @media (max-width: 680px) {
+          .hp-atlas-hero-image h1 {
+            font-size: clamp(49px, 14vw, 72px) !important;
+          }
+
+          .hp-atlas-hero-image > div > div:nth-of-type(2) {
+            font-size: clamp(26px, 8vw, 39px) !important;
+          }
+
+          .hp-direction-lane {
+            min-height: 0 !important;
+          }
+
+          .hp-story {
+            gap: 28px !important;
           }
         }
       `}</style>
@@ -547,22 +4332,12 @@ function CityPlaceholder() {
 
   const shell: CSSProperties = { padding: 24, maxWidth: 1100, margin: "0 auto", color: "#e5e7eb" };
   const h2: CSSProperties = { fontSize: 26, fontWeight: 900, margin: 0 };
-  const sub: CSSProperties = { color: "#94a3b8", marginTop: 10, lineHeight: 1.4 };
-
-  const row: CSSProperties = { display: "flex", gap: 10, flexWrap: "wrap", marginTop: 18 };
-
-  const btn: CSSProperties = {
-    borderRadius: 12,
-    padding: "10px 14px",
-    fontWeight: 900,
-    cursor: "pointer",
-    border: "1px solid rgba(148,163,184,0.22)",
-    background: "rgba(15,23,42,0.55)",
-    color: "#e5e7eb",
-    textDecoration: "none",
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 8,
+  const sub: CSSProperties = {
+    marginTop: 25,
+    color: "rgba(230,244,234,0.60)",
+    lineHeight: 1.62,
+    fontSize: "clamp(17px, 2vw, 21px)",
+    maxWidth: 760,
   };
 
   const panel: CSSProperties = {
@@ -603,7 +4378,8 @@ function CityPlaceholder() {
 export default function CityRoutes() {
   return (
     <Routes>
-      <Route index element={<CityIndex />} />
+      <Route index element={<AtlasIndex />} />
+      <Route path="atlas" element={<Navigate to="/city" replace />} />
 
       <Route path="creator" element={<CreatorCity />} />
       <Route path="service" element={<Navigate to="/service/taylor-creek" replace />} />
@@ -615,3 +4391,33 @@ export default function CityRoutes() {
     </Routes>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

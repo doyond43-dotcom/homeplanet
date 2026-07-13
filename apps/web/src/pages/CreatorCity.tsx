@@ -1,1596 +1,2856 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+﻿import React, { useState } from "react";
+import { supabase } from "../lib/supabase";
 
-const LIVE_PRODUCT_DEMO_ROUTE = "/planet/creator/rc-live";
-const LIVE_CAMP_GUARDIAN_ROUTE = "/planet/demo/camp-aquaflow";
-const PAYMENT_NODE_ROUTE = "/planet/payments/node";
-const PAYMENT_DESK_DEMO_ROUTE = "/planet/payments/no-screenshot";
-const MEAL_BUSINESS_ROUTE = "/planet/lifestyle/meal-start";
-const CREATOR_SYSTEMS_ROUTE = "/planet/creator/systems";
-const CREATOR_STUDIO_ROUTE = "/planet/creator/studio";
+const liveSystems = [
+  {
+    name: "Only The Essentials",
+    type: "Cleaning system",
+    customer: "Request a cleaning",
+    work: "Estimate waiting",
+    href: "/onlytheessentials",
+    tone: "green",
+  },
+  {
+    name: "Florida Cooling",
+    type: "HVAC service system",
+    customer: "Report an AC problem",
+    work: "Technician en route",
+    href: "/planet/florida-cooling",
+    tone: "blue",
+  },
+  {
+    name: "Slap-A-Bug",
+    type: "Pest control system",
+    customer: "Send pest photos",
+    work: "Estimate ready",
+    href: "/planet/slap-a-bug",
+    tone: "electric",
+  },
+];
 
-type SystemExample = {
-  id: string;
-  title: string;
-  subtitle: string;
-  to: string;
-  tag: string;
-};
-
-type BuildIntent =
-  | "landing-page"
-  | "live-board"
-  | "workflow-tool"
-  | "intake-flow"
-  | "payment-flow"
-  | "full-system";
-
-type StarterBoardConfig = {
-  key: string;
-  familyLabel: string;
-  boardSubtitle: string;
-  labels: {
-    item: string;
-    concern: string;
-  };
-  stages: string[];
-};
-
-type TrajectoryStep = {
-  id: string;
-  title: string;
-  status: "complete" | "active" | "armed" | "idle";
-  text: string;
-};
-
-type FeedItem = {
-  label: string;
-  value: string;
-  active: boolean;
-};
-
-type BuildSequenceItem = {
-  title: string;
-  text: string;
-  complete: boolean;
-};
-
-function slugify(value: string) {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/["'’]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 48);
-}
-
-function fakeResolveStarterBoardConfig(args: {
-  businessType: string;
-  businessName: string;
-  primaryGoal: string;
-}): StarterBoardConfig {
-  const bt = args.businessType.toLowerCase();
-
-  if (bt.includes("restaurant") || bt.includes("food") || bt.includes("kitchen")) {
-    return {
-      key: "restaurant-rush",
-      familyLabel: "Restaurant Rush",
-      boardSubtitle: "Live ticket flow, manager controls, and kitchen visibility.",
-      labels: { item: "Ticket", concern: "Order" },
-      stages: ["New Ticket", "On Grill", "Plating", "Ready", "Completed"],
-    };
-  }
-
-  if (
-    bt.includes("meal") ||
-    bt.includes("prep") ||
-    bt.includes("delivery") ||
-    bt.includes("weekly food") ||
-    bt.includes("ready prep")
-  ) {
-    return {
-      key: "meal-business-system",
-      familyLabel: "Meal Business System",
-      boardSubtitle:
-        "Customer preferences, food guardrails, weekly planning, and live board adjustments.",
-      labels: { item: "Week", concern: "Meal Preference" },
-      stages: [
-        "Preference Intake",
-        "Build Week",
-        "Optimize",
-        "Customer Ready",
-        "Live Adjustments",
-      ],
-    };
-  }
-
-  if (bt.includes("lawn") || bt.includes("landscape") || bt.includes("route")) {
-    return {
-      key: "routecut-live",
-      familyLabel: "RouteCut Live",
-      boardSubtitle: "Routing, next-stop flow, and customer-facing live status.",
-      labels: { item: "Stop", concern: "Route" },
-      stages: ["Queued", "Assigned", "En Route", "On Site", "Completed"],
-    };
-  }
-
-  if (bt.includes("camp") || bt.includes("guardian") || bt.includes("child")) {
-    return {
-      key: "guardian-live",
-      familyLabel: "Guardian Live",
-      boardSubtitle: "Presence, protection, visibility, and guardian-safe status.",
-      labels: { item: "Profile", concern: "Status" },
-      stages: ["Checked In", "With Staff", "Activity Zone", "Hydration", "Checked Out"],
-    };
-  }
-
-  if (
-    bt.includes("contractor") ||
-    bt.includes("contractors") ||
-    bt.includes("home service") ||
-    bt.includes("home services") ||
-    bt.includes("handyman") ||
-    bt.includes("construction") ||
-    bt.includes("remodel") ||
-    bt.includes("renovation") ||
-    bt.includes("repair")
-  ) {
-    return {
-      key: "home-services-live",
-      familyLabel: "Home Services Live",
-      boardSubtitle: "Scheduling, field movement, on-site work, and completion proof.",
-      labels: { item: "Job", concern: "Service Request" },
-      stages: ["New Request", "Scheduled", "En Route", "On Site", "Completed"],
-    };
-  }
-
-  if (bt.includes("detail") || bt.includes("detailing") || bt.includes("car wash")) {
-    return {
-      key: "auto-detail-live",
-      familyLabel: "Auto Detail Live",
-      boardSubtitle: "Check-in, active detail work, final quality pass, and ready status.",
-      labels: { item: "Vehicle", concern: "Detail Request" },
-      stages: ["Check-In", "Prep", "Detailing", "Final Check", "Ready"],
-    };
-  }
-
-  return {
-    key: "starter-live-board",
-    familyLabel: "Starter Live Board",
-    boardSubtitle: "Operational workflow, live stages, and customer visibility.",
-    labels: { item: "Job", concern: "Concern" },
-    stages: ["New Intake", "Diagnosing", "In Progress", "Ready", "Completed"],
-  };
-}
+const ecosystemSteps = [
+  {
+    label: "Need + Conversation",
+    title: "I need a plumber.",
+    detail:
+      "A community need starts a real conversation without becoming a hundred-comment shouting match.",
+  },
+  {
+    label: "Request + Workspace",
+    title: "Photos attached. Estimate waiting.",
+    detail:
+      "The conversation becomes organized work with the customer, details, and next action already connected.",
+  },
+  {
+    label: "Outcome + Proof",
+    title: "Payment received. Work complete.",
+    detail:
+      "The result, proof, review, and complete history stay attached from beginning to end.",
+  },
+];
 
 export default function CreatorCity() {
-  const [warmMode, setWarmMode] = useState(false);
-  const intakeFormRef = useRef<HTMLDivElement | null>(null);
+  const [isBuildDrawerOpen, setIsBuildDrawerOpen] = useState(false);
+  const [selectedDirection, setSelectedDirection] = useState("business");
+  const [buildSubmitted, setBuildSubmitted] = useState(false);
+  const [isBuildSubmitting, setIsBuildSubmitting] = useState(false);
+  const [buildSubmitError, setBuildSubmitError] = useState("");
 
-  const [businessName, setBusinessName] = useState("");
-  const [businessType, setBusinessType] = useState("");
-  const [city, setCity] = useState("");
-  const [contact, setContact] = useState("");
-  const [currentWorkflow, setCurrentWorkflow] = useState("");
-  const [biggestFriction, setBiggestFriction] = useState("");
-  const [customerQuestions, setCustomerQuestions] = useState("");
-  const [wantsBuilt, setWantsBuilt] = useState<BuildIntent>("full-system");
-  const [holyShiftMoment, setHolyShiftMoment] = useState("");
-  const [workflowFiles, setWorkflowFiles] = useState<File[]>([]);
-  const [submitting, setSubmitting] = useState(false);
-  const [reserveReady, setReserveReady] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-  const [isTablet, setIsTablet] = useState(false);
+  const go = (href: string) => {
+    if (href.startsWith("#")) {
+      document
+        .querySelector(href)
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
 
-  useEffect(() => {
-    const check = () => {
-      const width = window.innerWidth;
-      setIsMobile(width <= 920);
-      setIsTablet(width > 920 && width <= 1180);
+    window.location.href = href;
+  };
+
+  const openBuildDrawer = () => {
+    setBuildSubmitted(false);
+    setBuildSubmitError("");
+    setIsBuildDrawerOpen(true);
+  };
+
+  const closeBuildDrawer = () => {
+    setIsBuildDrawerOpen(false);
+    setBuildSubmitted(false);
+    setBuildSubmitError("");
+  };
+
+  const submitBuildRequest = async (
+    event: React.FormEvent<HTMLFormElement>,
+  ) => {
+    event.preventDefault();
+
+    if (isBuildSubmitting) {
+      return;
+    }
+
+    setIsBuildSubmitting(true);
+    setBuildSubmitError("");
+
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+
+    const payload = {
+      build_type: String(formData.get("buildType") || "").trim(),
+      business_name: String(formData.get("businessName") || "").trim(),
+      happening_today: String(formData.get("happeningToday") || "").trim(),
+      biggest_frustration: String(
+        formData.get("biggestFrustration") || "",
+      ).trim(),
+      name: String(formData.get("name") || "").trim(),
+      phone: String(formData.get("phone") || "").trim(),
+      submitted_at: new Date().toISOString(),
+      source: "Creator City build drawer",
     };
 
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, []);
-
-  const isCompact = isMobile || isTablet;
-
-  const openRoute = (to: string) => {
-    window.location.href = to;
-  };
-
-  const systems = useMemo<SystemExample[]>(
-    () => [
-      {
-        id: "payments",
-        title: "No Screenshot Payments",
-        subtitle: "Customer pays. System confirms. Work keeps moving.",
-        to: PAYMENT_DESK_DEMO_ROUTE,
-        tag: "PAYMENT DESK",
-      },
-      {
-        id: "live-product",
-        title: "Live Product Selling Board",
-        subtitle: "Live selling with proof and reserve pressure.",
-        to: LIVE_PRODUCT_DEMO_ROUTE,
-        tag: "SELL LIVE",
-      },
-      {
-        id: "northstar",
-        title: "Northstar Service Demo",
-        subtitle: "Service workflow turned into a live board.",
-        to: "/planet/demo/home-services",
-        tag: "SERVICE LIVE",
-      },
-      {
-        id: "child-safety",
-        title: "Child Safety System",
-        subtitle: "Unsafe conversation detection, intervention, and Guardian alert layer.",
-        to: "/planet/predator-shield",
-        tag: "DETECTION LIVE",
-      },
-      {
-        id: "routecut",
-        title: "RouteCut Live Lawn Flow",
-        subtitle: "Routing, next-stop flow, and live status.",
-        to: "/planet/demo/lawn-route",
-        tag: "ROUTE LIVE",
-      },
-      {
-        id: "restaurant",
-        title: "Restaurant Live Board",
-        subtitle: "Kitchen flow, ticket stages, and manager visibility.",
-        to: "/planet/demo/restaurant",
-        tag: "LIVE SYSTEM",
-      },
-      {
-        id: "color-me-crazy",
-        title: "Beauty Live Board",
-        subtitle: "Booking, chair flow, and payment in one clean beauty system.",
-        to: "/planet/beauty/color-me-crazy/home?board=color-me-crazy-demo",
-        tag: "BEAUTY LIVE",
-      },
-      {
-        id: "meal-business",
-        title: "Meal Business System",
-        subtitle: "Weekly planning, customer preferences, and live food decision control.",
-        to: MEAL_BUSINESS_ROUTE,
-        tag: "MEAL SYSTEM",
-      },
-      {
-        id: "community-sale",
-        title: "Community Sale Board",
-        subtitle: "Sell, track, price, and manage pickup in one board.",
-        to: "/planet/demo/community-sale",
-        tag: "COMMUNITY LIVE",
-      },
-      {
-        id: "transportation",
-        title: "Transportation Dispatch Demo",
-        subtitle: "Driver assignment, dispatch flow, and trip visibility.",
-        to: "/planet/demo/transportation",
-        tag: "ACTIVE FLOW",
-      },
-      {
-        id: "legal",
-        title: "Legal Workspace Demo",
-        subtitle: "Timeline, evidence, and proof-style organization.",
-        to: "/planet/legal/alex-carter",
-        tag: "WORKSPACE",
-      },
-    ],
-    [],
-  );
-
-  const selectedFilesLabel =
-    workflowFiles.length === 0
-      ? "No workflow photos selected"
-      : `${workflowFiles.length} workflow photo${workflowFiles.length === 1 ? "" : "s"} selected`;
-
-  const intentLabelMap: Record<BuildIntent, string> = {
-    "landing-page": "Landing Page",
-    "live-board": "Live Board",
-    "workflow-tool": "Workflow Tool",
-    "intake-flow": "Intake Flow",
-    "payment-flow": "Payment Flow",
-    "full-system": "Full Business System",
-  };
-
-  const resolvedBusinessLabel =
-    businessType.trim() || intentLabelMap[wantsBuilt] || "Full Business System";
-
-  const configPreview = useMemo(
-    () =>
-      fakeResolveStarterBoardConfig({
-        businessType: resolvedBusinessLabel,
-        businessName,
-        primaryGoal: holyShiftMoment,
-      }),
-    [resolvedBusinessLabel, businessName, holyShiftMoment],
-  );
-
-  const isMealBusinessMode = /meal|prep|delivery|weekly food/i.test(resolvedBusinessLabel);
-  const previewStages = configPreview.stages.slice(0, 4);
-  const liveBoardRoute = `/planet/live/${slugify(businessName) || "starter-board"}`;
-  const reservePaymentRoute = `${PAYMENT_NODE_ROUTE}?redirectTo=${encodeURIComponent(liveBoardRoute)}`;
-
-  const trajectorySteps: TrajectoryStep[] = [
-    { id: "intake", title: "Intake", status: "complete", text: "Ready" },
-    {
-      id: "config",
-      title: "Config",
-      status: businessName || businessType || city || contact ? "active" : "idle",
-      text: "Profile and board type",
-    },
-    {
-      id: "build",
-      title: "Build",
-      status: currentWorkflow || biggestFriction ? "armed" : "idle",
-      text: "Workflow and friction",
-    },
-    {
-      id: "launch",
-      title: "Launch",
-      status: reserveReady
-        ? "active"
-        : holyShiftMoment || workflowFiles.length > 0
-          ? "armed"
-          : "idle",
-      text: reserveReady ? "Reserve step ready" : "Board path ready",
-    },
-  ];
-
-  const missionFeed: FeedItem[] = [
-    { label: "Presence lock", value: businessName ? "READY" : "WAITING", active: !!businessName },
-    { label: "Board family", value: configPreview.familyLabel || "STARTER", active: true },
-    { label: "Primary route", value: "/planet/creator/building", active: true },
-    { label: "Reserve route", value: PAYMENT_NODE_ROUTE, active: reserveReady },
-    {
-      label: "Live redirect",
-      value: businessName
-        ? `/planet/live/${slugify(businessName) || "starter-board"}-*`
-        : "/planet/live/<boardSlug>",
-      active: !!businessName,
-    },
-    {
-      label: "Truth intake",
-      value:
-        currentWorkflow || biggestFriction || customerQuestions ? "CAPTURING" : "PENDING",
-      active: !!(currentWorkflow || biggestFriction || customerQuestions),
-    },
-  ];
-
-  const buildSequence: BuildSequenceItem[] = [
-    {
-      title: "Presence ID",
-      text: businessName
-        ? `HP-${slugify(businessName).replace(/-/g, "").toUpperCase().slice(0, 8) || "BOARD"}-DEMO`
-        : "Waiting for business name",
-      complete: !!businessName,
-    },
-    {
-      title: "Board family",
-      text: configPreview.familyLabel,
-      complete: !!resolvedBusinessLabel,
-    },
-    {
-      title: "Live stages",
-      text: previewStages.length > 0 ? previewStages.join(" → ") : "Awaiting business type",
-      complete: previewStages.length > 0,
-    },
-    {
-      title: "Trust step",
-      text: reserveReady
-        ? "Reserve step is ready. Payment holds the build slot before live assembly."
-        : "Reserve step appears right after intake.",
-      complete: reserveReady,
-    },
-    {
-      title: "Workflow",
-      text: currentWorkflow || holyShiftMoment || "Waiting for workflow input",
-      complete: !!(currentWorkflow || holyShiftMoment),
-    },
-  ];
-
-  const reserveHighlights = [
-    {
-      label: "What happens now",
-      value: "Your intake is locked in and your build slot is ready to reserve.",
-    },
-    {
-      label: "Why reserve",
-      value: "This keeps the flow clean: intake first, then trust, then reserve, then live build.",
-    },
-    {
-      label: "Payment route",
-      value: PAYMENT_NODE_ROUTE,
-    },
-  ];
-
-  const intentCards = [
-    { id: "landing-page" as BuildIntent, title: "Landing Page", text: "Clear front door" },
-    { id: "live-board" as BuildIntent, title: "Live Board", text: "Jobs and status live" },
-    {
-      id: "workflow-tool" as BuildIntent,
-      title: "Workflow Tool",
-      text: "Built around your process",
-    },
-    { id: "intake-flow" as BuildIntent, title: "Intake Flow", text: "Calls, texts, walk-ins" },
-    { id: "payment-flow" as BuildIntent, title: "Payment Flow", text: "Job to payment" },
-    {
-      id: "full-system" as BuildIntent,
-      title: "Full Business System",
-      text: "Everything in one place",
-    },
-  ];
-
-  const scrollToCreatorSystems = () => openRoute(CREATOR_SYSTEMS_ROUTE);
-
-  const scrollToIntakeForm = () => {
-    intakeFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
-
-  const previewMealBusinessMode = () => {
-    setBusinessName("Ready Prep Weekly");
-    setBusinessType("Meal Business System");
-    setCity("Your City");
-    setContact("");
-    setCurrentWorkflow(
-      "Customer preferences, avoid-food guardrails, weekly board generation, and live adjustments.",
-    );
-    setBiggestFriction(
-      "Too many repeated questions, food preferences, and weekly decision overload.",
-    );
-    setCustomerQuestions("What can I eat, what should be avoided, and what does my week look like?");
-    setHolyShiftMoment(
-      "Customers stop filling out dead forms. Their preferences become a live weekly system instantly.",
-    );
-    setWantsBuilt("full-system");
-    setReserveReady(false);
-    intakeFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitting(true);
-    setReserveReady(false);
-
-    setTimeout(() => {
-      setSubmitting(false);
-
-      const boardSlug = slugify(businessName || "starter-board");
-
-      const initialJob = {
-        id: `job-${Date.now()}`,
-        customer: businessName || "New Customer",
-        service: businessType || "Custom Order",
-        stage: "Deposit Needed",
-        createdAt: new Date().toISOString(),
-        payment: {
-          status: "deposit-requested",
-          depositRequired: true,
-          depositAmount: 25,
-          totalAmount: 100,
-          paidAmount: 0,
-          remainingAmount: 100,
-          method: null,
-          paidAt: null,
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        "send-creator-city-build-email",
+        {
+          body: payload,
         },
-      };
-
-      localStorage.setItem(
-        "hp_starter_payload",
-        JSON.stringify({
-          boardSlug,
-          businessName,
-          businessType,
-          city,
-          contact,
-          currentWorkflow,
-          biggestFriction,
-          customerQuestions,
-          holyShiftMoment,
-          initialJob,
-        }),
       );
 
-      window.location.href = `/planet/live/${boardSlug}`;
-    }, 900);
-  };
+      if (error) {
+        let detail = error.message;
 
-  const resetIntake = () => {
-    setReserveReady(false);
-    intakeFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
+        const context = (error as { context?: Response }).context;
 
-  const page: React.CSSProperties = {
-    minHeight: "100vh",
-    background: warmMode
-      ? "radial-gradient(900px 600px at 10% 10%, rgba(255,180,80,0.18), transparent 55%)," +
-        "radial-gradient(800px 500px at 85% 5%, rgba(255,120,60,0.12), transparent 50%)," +
-        "radial-gradient(1000px 700px at 50% 100%, rgba(255,200,120,0.10), transparent 60%)," +
-        "linear-gradient(180deg, #0b0b0d 0%, #121018 55%, #0b0b0d 100%)"
-      : "radial-gradient(900px 600px at 10% 10%, rgba(56,189,248,0.18), transparent 55%)," +
-        "radial-gradient(800px 500px at 85% 5%, rgba(59,130,246,0.14), transparent 50%)," +
-        "radial-gradient(1000px 700px at 50% 100%, rgba(34,197,94,0.10), transparent 60%)," +
-        "linear-gradient(180deg, #020617 0%, #020617 60%, #01040d 100%)",
-    color: "#fff",
-    padding: isCompact ? 14 : 22,
-    transition: "background 0.6s ease",
-    fontFamily:
-      'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-  };
+        if (context) {
+          try {
+            const responseBody = await context.clone().json();
 
-  const shell: React.CSSProperties = {
-    maxWidth: 1180,
-    margin: "0 auto",
-  };
+            detail =
+              responseBody?.error ||
+              responseBody?.message ||
+              detail;
+          } catch {
+            try {
+              const responseText = await context.clone().text();
 
-  const frame: React.CSSProperties = {
-    borderRadius: isCompact ? 22 : 28,
-    border: "1px solid rgba(255,255,255,0.10)",
-    background: "rgba(7,11,19,0.90)",
-    boxShadow: "0 24px 90px rgba(0,0,0,0.45)",
-    overflow: "hidden",
-  };
-
-  const topBar: React.CSSProperties = {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 10,
-    padding: isCompact ? "12px" : "12px 16px",
-    borderBottom: "1px solid rgba(255,255,255,0.10)",
-    flexWrap: "wrap",
-  };
-
-  const windowDot = (color: string): React.CSSProperties => ({
-    width: 9,
-    height: 9,
-    borderRadius: 999,
-    background: color,
-    boxShadow: `0 0 10px ${color}`,
-  });
-
-  const pill = (tone: "blue" | "green" | "gold" = "blue"): React.CSSProperties => {
-    const background =
-      tone === "green" ? "#70f2a3" : tone === "gold" ? "#f8d36b" : "#67e8f9";
-
-    return {
-      display: "inline-flex",
-      alignItems: "center",
-      width: "fit-content",
-      borderRadius: 999,
-      padding: "5px 8px",
-      background,
-      color: "#001018",
-      fontSize: 11,
-      fontWeight: 900,
-      letterSpacing: 0.4,
-      lineHeight: 1,
-      textRendering: "geometricPrecision",
-      whiteSpace: "nowrap",
-    };
-  };
-
-  const ghostPill: React.CSSProperties = {
-    display: "inline-flex",
-    alignItems: "center",
-    width: "fit-content",
-    borderRadius: 999,
-    padding: "6px 10px",
-    border: "1px solid rgba(255,255,255,0.14)",
-    background: "rgba(255,255,255,0.04)",
-    color: "rgba(255,255,255,0.84)",
-    fontSize: 11,
-    fontWeight: 900,
-    letterSpacing: 0.4,
-    lineHeight: 1,
-    whiteSpace: "nowrap",
-  };
-
-  const cockpitGrid: React.CSSProperties = {
-    display: "grid",
-    gridTemplateColumns: isCompact ? "1fr" : "220px minmax(0, 1fr) 250px",
-    gap: 14,
-    padding: isCompact ? 12 : 16,
-    alignItems: "start",
-  };
-
-  const panel: React.CSSProperties = {
-    borderRadius: 18,
-    border: warmMode
-      ? "1px solid rgba(255,180,80,0.18)"
-      : "1px solid rgba(255,255,255,0.10)",
-    background: warmMode
-      ? "linear-gradient(135deg, rgba(255,200,140,0.055), rgba(255,255,255,0.020))"
-      : "linear-gradient(135deg, rgba(255,255,255,0.065), rgba(255,255,255,0.025))",
-    boxShadow: warmMode
-      ? "0 25px 60px rgba(0,0,0,0.45), 0 0 35px rgba(255,160,80,0.08), inset 0 1px 0 rgba(255,255,255,0.04)"
-      : "0 18px 50px rgba(0,0,0,0.28)",
-    overflow: "hidden",
-    transition: "all 0.35s ease",
-  };
-
-  const panelHeader: React.CSSProperties = {
-    padding: 14,
-    borderBottom: "1px solid rgba(255,255,255,0.09)",
-  };
-
-  const panelBody: React.CSSProperties = {
-    padding: 14,
-  };
-
-  const kicker: React.CSSProperties = {
-    color: "#67e8f9",
-    fontSize: 11,
-    fontWeight: 900,
-    letterSpacing: 1.1,
-    textTransform: "uppercase",
-  };
-
-  const panelTitle: React.CSSProperties = {
-    marginTop: 6,
-    fontSize: 18,
-    fontWeight: 900,
-    letterSpacing: -0.35,
-    color: "#fff",
-    lineHeight: 1.08,
-  };
-
-  const muted: React.CSSProperties = {
-    marginTop: 6,
-    color: "rgba(255,255,255,0.64)",
-    fontSize: 13,
-    lineHeight: 1.45,
-  };
-
-  const card: React.CSSProperties = {
-    borderRadius: 16,
-    border: "1px solid rgba(255,255,255,0.10)",
-    background: "rgba(255,255,255,0.035)",
-    padding: 14,
-  };
-
-  const buttonBase: React.CSSProperties = {
-    border: "1px solid rgba(255,255,255,0.12)",
-    background: "rgba(255,255,255,0.045)",
-    color: "#fff",
-    borderRadius: 999,
-    padding: isCompact ? "13px 15px" : "11px 14px",
-    fontSize: isCompact ? 15 : 13,
-    fontWeight: 900,
-    cursor: "pointer",
-  };
-
-  const primaryButton: React.CSSProperties = {
-    ...buttonBase,
-    border: "1px solid rgba(112,242,163,0.45)",
-    background: "#70f2a3",
-    color: "#001018",
-    boxShadow: warmMode
-      ? "0 0 22px rgba(74,222,128,0.25)"
-      : "0 0 10px rgba(34,197,94,0.08)",
-    transition: "box-shadow 0.35s ease",
-  };
-
-  const sideButton: React.CSSProperties = {
-    width: "100%",
-    textAlign: "left",
-    borderRadius: 14,
-    padding: "12px 13px",
-    border: "1px solid rgba(255,255,255,0.10)",
-    background: "rgba(255,255,255,0.035)",
-    color: "#fff",
-    fontSize: 12,
-    fontWeight: 900,
-    cursor: "pointer",
-  };
-
-  const title: React.CSSProperties = {
-    margin: 0,
-    fontSize: isMobile ? 36 : 48,
-    lineHeight: 0.95,
-    letterSpacing: -1.6,
-    fontWeight: 950,
-    color: "#fff",
-  };
-
-  const routeText: React.CSSProperties = {
-    marginTop: 10,
-    color: "rgba(255,255,255,0.24)",
-    fontSize: 10,
-    wordBreak: "break-word",
-  };
-
-  const fieldLabel: React.CSSProperties = {
-    color: "rgba(186,230,253,0.94)",
-    fontSize: 12,
-    fontWeight: 900,
-    letterSpacing: 0.2,
-  };
-
-  const inputBase: React.CSSProperties = {
-    width: "100%",
-    borderRadius: 14,
-    border: "1px solid rgba(255,255,255,0.13)",
-    background: "rgba(255,255,255,0.045)",
-    color: "#fff",
-    padding: isCompact ? "13px 13px" : "12px 13px",
-    fontSize: isCompact ? 16 : 14,
-    outline: "none",
-    boxSizing: "border-box",
-  };
-
-  const textareaBase: React.CSSProperties = {
-    ...inputBase,
-    minHeight: 104,
-    resize: "vertical",
-  };
-
-  const liveDot: React.CSSProperties = {
-    width: 6,
-    height: 6,
-    borderRadius: 999,
-    background: "#67e8f9",
-    boxShadow: "0 0 12px rgba(103,232,249,0.8)",
-    flex: "0 0 auto",
-  };
-
-  const cityLight = (tone: "live" | "ready" | "armed" | "idle" | "alert" = "live"): React.CSSProperties => {
-    const colors = {
-      live: { bg: "#67e8f9", glow: "rgba(103,232,249,0.80)" },
-      ready: { bg: "#70f2a3", glow: "rgba(112,242,163,0.72)" },
-      armed: { bg: "#f8d36b", glow: "rgba(248,211,107,0.68)" },
-      idle: { bg: "rgba(255,255,255,0.35)", glow: "rgba(255,255,255,0.16)" },
-      alert: { bg: "#fb7185", glow: "rgba(251,113,133,0.72)" },
-    }[tone];
-
-    return {
-      width: 6,
-      height: 6,
-      borderRadius: 999,
-      background: colors.bg,
-      boxShadow: `0 0 12px ${colors.glow}`,
-      flex: "0 0 auto",
-    };
-  };
-
-  const stepTone = (status: TrajectoryStep["status"]): React.CSSProperties => ({
-    ...card,
-    border:
-      status === "active"
-        ? "1px solid rgba(103,232,249,0.36)"
-        : status === "armed"
-          ? "1px solid rgba(248,211,107,0.34)"
-          : status === "complete"
-            ? "1px solid rgba(112,242,163,0.34)"
-            : "1px solid rgba(255,255,255,0.10)",
-  });
-
-  const intentCard = (active: boolean): React.CSSProperties => ({
-    ...card,
-    cursor: "pointer",
-    border: active ? "1px solid rgba(112,242,163,0.40)" : "1px solid rgba(255,255,255,0.10)",
-    background: active ? "rgba(112,242,163,0.12)" : "rgba(255,255,255,0.035)",
-  });
-
-  return (
-    <div style={page}>
-      <style>
-        {`
-          @keyframes hpLivePulse {
-            0% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(103,232,249,.55); }
-            70% { transform: scale(1.18); opacity: .82; box-shadow: 0 0 0 7px rgba(103,232,249,0); }
-            100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(103,232,249,0); }
+              if (responseText) {
+                detail = responseText;
+              }
+            } catch {
+              // Keep the original Supabase error message.
+            }
           }
-        `}
-      </style>
+        }
 
-      <div style={shell}>
-        <div style={frame}>
-          <div style={topBar}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-              <span style={windowDot("#fb7185")} />
-              <span style={windowDot("#f8d36b")} />
-              <span style={windowDot("#70f2a3")} />
-              <span style={pill("green")}>CREATOR CITY</span>
-            </div>
+        throw new Error(detail);
+      }
 
-            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+      if (!data?.ok) {
+        throw new Error(
+          data?.error || "The build request could not be sent.",
+        );
+      }
+
+      form.reset();
+      setBuildSubmitted(true);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "The build request could not be sent.";
+
+      setBuildSubmitError(
+        `Something went wrong. Please try again. ${message}`,
+      );
+    } finally {
+      setIsBuildSubmitting(false);
+    }
+  };
+  return (
+    <main className="creator-city">
+      <style>{`
+        * {
+          box-sizing: border-box;
+        }
+
+        html {
+          scroll-behavior: smooth;
+        }
+
+        body {
+          margin: 0;
+          background: #020504;
+        }
+
+        button {
+          font: inherit;
+        }
+
+        .creator-city {
+          min-height: 100vh;
+          overflow: hidden;
+          color: #f4fff7;
+          background:
+            radial-gradient(
+              circle at 50% 7%,
+              rgba(62, 255, 128, 0.13),
+              transparent 29rem
+            ),
+            radial-gradient(
+              circle at 8% 46%,
+              rgba(43, 124, 255, 0.06),
+              transparent 32rem
+            ),
+            radial-gradient(
+              circle at 94% 75%,
+              rgba(65, 255, 132, 0.06),
+              transparent 30rem
+            ),
+            #020504;
+          font-family:
+            Inter,
+            ui-sans-serif,
+            system-ui,
+            -apple-system,
+            BlinkMacSystemFont,
+            "Segoe UI",
+            sans-serif;
+        }
+
+        .cc-shell {
+          width: min(1180px, calc(100% - 40px));
+          margin: 0 auto;
+        }
+
+        .cc-topbar {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          min-height: 78px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        .cc-brand {
+          display: flex;
+          align-items: center;
+          gap: 11px;
+          color: #f5fff8;
+          font-size: 15px;
+          font-weight: 950;
+          letter-spacing: -0.02em;
+        }
+
+        .cc-brand-dot {
+          width: 12px;
+          height: 12px;
+          border-radius: 999px;
+          background: #54ff8d;
+          box-shadow:
+            0 0 0 6px rgba(84, 255, 141, 0.08),
+            0 0 24px rgba(84, 255, 141, 0.72);
+        }
+
+        .cc-brand span {
+          color: rgba(231, 246, 236, 0.45);
+          font-size: 16px;
+          font-weight: 750;
+        }
+
+        .cc-button {
+          min-height: 48px;
+          padding: 0 21px;
+          border: 0;
+          border-radius: 14px;
+          cursor: pointer;
+          color: #031008;
+          background: #54ff8d;
+          font-size: 13px;
+          font-weight: 950;
+          transition:
+            transform 180ms ease,
+            box-shadow 180ms ease,
+            border-color 180ms ease,
+            background 180ms ease;
+        }
+
+        .cc-button:hover {
+          transform: translateY(-2px);
+          box-shadow:
+            0 0 0 1px rgba(102, 255, 155, 0.25),
+            0 15px 34px rgba(48, 255, 115, 0.2);
+        }
+
+        .cc-button-secondary {
+          color: #f0fff4;
+          border: 1px solid rgba(255, 255, 255, 0.14);
+          background: rgba(255, 255, 255, 0.035);
+        }
+
+        .cc-button-secondary:hover {
+          border-color: rgba(92, 255, 149, 0.4);
+          background: rgba(92, 255, 149, 0.07);
+          box-shadow: none;
+        }
+
+        .cc-topbar .cc-button {
+          min-height: 41px;
+          padding: 0 17px;
+          border-radius: 12px;
+        }
+
+        .cc-hero {
+          padding: 92px 0 72px;
+          text-align: center;
+        }
+
+        .cc-kicker {
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          margin-bottom: 25px;
+          color: #6cff9d;
+          font-size: 11px;
+          font-weight: 950;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+        }
+
+        .cc-kicker::before,
+        .cc-kicker::after {
+          content: "";
+          width: 24px;
+          height: 1px;
+          background: rgba(93, 255, 151, 0.62);
+          box-shadow: 0 0 12px rgba(93, 255, 151, 0.7);
+        }
+
+        .cc-hero h1 {
+          max-width: 980px;
+          margin: 0 auto;
+          font-size: clamp(54px, 8vw, 108px);
+          line-height: 0.92;
+          letter-spacing: -0.07em;
+          font-weight: 950;
+        }
+
+        .cc-hero h1 span {
+          color: #59ff91;
+          text-shadow: 0 0 38px rgba(65, 255, 126, 0.17);
+        }
+
+        .cc-hero-copy {
+          max-width: 690px;
+          margin: 30px auto 0;
+          color: rgba(229, 245, 234, 0.64);
+          font-size: clamp(18px, 2vw, 23px);
+          line-height: 1.55;
+        }
+
+        .cc-hero-copy strong {
+          color: #ffffff;
+        }
+
+        .cc-actions {
+          display: flex;
+          justify-content: center;
+          gap: 12px;
+          margin-top: 34px;
+        }
+
+        .cc-hero-note {
+          margin-top: 22px;
+          color: rgba(226, 241, 231, 0.36);
+          font-size: 16px;
+        }
+
+        .cc-direction-section {
+          padding: 0 0 94px;
+        }
+
+        .cc-direction-grid {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 12px;
+        }
+
+        .cc-direction-choice {
+          min-height: 154px;
+          padding: 23px 21px;
+          border: 1px solid rgba(255, 255, 255, 0.09);
+          border-radius: 20px;
+          cursor: pointer;
+          color: #f5fff7;
+          background:
+            radial-gradient(
+              circle at 50% 0%,
+              rgba(72, 255, 136, 0.055),
+              transparent 72%
+            ),
+            rgba(255, 255, 255, 0.018);
+          text-align: left;
+          transition:
+            border-color 160ms ease,
+            background 160ms ease,
+            box-shadow 160ms ease;
+        }
+
+        .cc-direction-choice:hover {
+          border-color: rgba(91, 255, 147, 0.25);
+        }
+
+        .cc-direction-choice.is-selected {
+          border-color: rgba(91, 255, 147, 0.5);
+          background:
+            radial-gradient(
+              circle at 50% 0%,
+              rgba(72, 255, 136, 0.13),
+              transparent 74%
+            ),
+            rgba(77, 255, 139, 0.035);
+          box-shadow:
+            0 18px 48px rgba(0, 0, 0, 0.3),
+            inset 0 0 0 1px rgba(91, 255, 147, 0.06);
+        }
+
+        .cc-direction-choice span,
+        .cc-direction-choice small {
+          display: block;
+        }
+
+        .cc-direction-choice span {
+          font-size: 21px;
+          font-weight: 900;
+          letter-spacing: -0.035em;
+        }
+
+        .cc-direction-choice small {
+          margin-top: 12px;
+          color: rgba(226, 242, 231, 0.52);
+          font-size: 13px;
+          line-height: 1.55;
+        }
+
+        .cc-selected-direction-content {
+          max-width: 1120px;
+          margin: 0 auto;
+          padding: 76px 24px 122px;
+          text-align: center;
+        }
+
+        .cc-selected-direction-content h2 {
+          max-width: 960px;
+          margin: 0 auto;
+          font-size: clamp(46px, 7vw, 82px);
+          line-height: 0.94;
+          letter-spacing: -0.067em;
+        }
+
+        .cc-selected-direction-copy {
+          max-width: 780px;
+          margin: 27px auto 0;
+          color: rgba(229, 245, 234, 0.62);
+          font-size: clamp(17px, 2vw, 21px);
+          line-height: 1.6;
+        }
+
+        .cc-selected-system-grid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 14px;
+          margin-top: 46px;
+          text-align: left;
+        }
+
+        .cc-selected-system-grid-two {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .cc-selected-system-card {
+          min-height: 240px;
+          padding: 25px;
+          border: 1px solid rgba(255, 255, 255, 0.085);
+          border-radius: 22px;
+          background:
+            radial-gradient(
+              circle at 50% 0%,
+              rgba(72, 255, 136, 0.07),
+              transparent 72%
+            ),
+            rgba(255, 255, 255, 0.018);
+        }
+
+        .cc-selected-system-card span {
+          color: #67ff99;
+          font-size: 10px;
+          font-weight: 950;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+        }
+
+        .cc-selected-system-card h3 {
+          margin: 18px 0 0;
+          font-size: 28px;
+          line-height: 1.02;
+          letter-spacing: -0.045em;
+        }
+
+        .cc-selected-system-card p {
+          margin: 17px 0 0;
+          color: rgba(226, 242, 231, 0.52);
+          font-size: 14px;
+          line-height: 1.62;
+        }
+
+        .cc-selected-direction-path {
+          max-width: 760px;
+          margin: 34px auto;
+          padding: 18px 22px;
+          border: 1px solid rgba(91, 255, 147, 0.16);
+          border-radius: 17px;
+          color: #6cff9d;
+          background: rgba(74, 255, 137, 0.045);
+          font-size: 14px;
+          font-weight: 850;
+          line-height: 1.5;
+        }
+        .cc-customer-path-section {
+          position: relative;
+          padding: 28px 0 112px;
+          text-align: center;
+        }
+
+        .cc-customer-path-section::before {
+          content: "";
+          position: absolute;
+          top: 0;
+          left: 50%;
+          width: min(720px, 88%);
+          height: 100%;
+          transform: translateX(-50%);
+          background: radial-gradient(
+            circle at 50% 46%,
+            rgba(65, 255, 126, 0.11),
+            transparent 68%
+          );
+          pointer-events: none;
+        }
+
+        .cc-customer-path-heading {
+          position: relative;
+          max-width: 890px;
+          margin: 0 auto;
+          font-size: clamp(46px, 7vw, 88px);
+          line-height: 0.96;
+          letter-spacing: -0.065em;
+          font-weight: 950;
+        }
+
+        .cc-customer-path-heading span {
+          color: #59ff91;
+          text-shadow: 0 0 38px rgba(65, 255, 126, 0.18);
+        }
+
+        .cc-customer-path {
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          width: min(420px, 100%);
+          margin: 54px auto 0;
+        }
+
+        .cc-customer-path-item {
+          position: relative;
+          z-index: 2;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 210px;
+          min-height: 52px;
+          padding: 0 24px;
+          border: 1px solid rgba(91, 255, 147, 0.18);
+          border-radius: 999px;
+          color: #f5fff8;
+          background:
+            linear-gradient(
+              145deg,
+              rgba(255, 255, 255, 0.05),
+              rgba(255, 255, 255, 0.018)
+            ),
+            rgba(5, 12, 8, 0.94);
+          font-size: 16px;
+          font-weight: 900;
+          letter-spacing: -0.01em;
+          box-shadow:
+            0 0 0 1px rgba(84, 255, 141, 0.025),
+            0 12px 34px rgba(0, 0, 0, 0.28),
+            0 0 28px rgba(65, 255, 126, 0.055);
+        }
+
+        .cc-customer-path-item:first-child,
+        .cc-customer-path-item:last-child {
+          border-color: rgba(91, 255, 147, 0.34);
+          color: #72ff9f;
+          box-shadow:
+            0 0 0 1px rgba(84, 255, 141, 0.05),
+            0 12px 34px rgba(0, 0, 0, 0.28),
+            0 0 34px rgba(65, 255, 126, 0.12);
+        }
+
+        .cc-customer-path-arrow {
+          position: relative;
+          z-index: 1;
+          width: 2px;
+          height: 26px;
+          border-radius: 999px;
+          background: linear-gradient(
+            to bottom,
+            rgba(91, 255, 147, 0.08),
+            rgba(91, 255, 147, 0.42),
+            rgba(91, 255, 147, 0.08)
+          );
+          box-shadow: 0 0 12px rgba(65, 255, 126, 0.14);
+        }
+
+        .cc-customer-path-arrow::after {
+          content: none;
+        }
+
+        .cc-work-section {
+          padding: 12px 0 92px;
+        }
+
+        .cc-section-heading {
+          max-width: 760px;
+          margin: 0 auto 42px;
+          text-align: center;
+        }
+
+        .cc-section-heading h2 {
+          margin: 0;
+          font-size: clamp(39px, 5.6vw, 72px);
+          line-height: 0.98;
+          letter-spacing: -0.055em;
+        }
+
+        .cc-section-heading p {
+          max-width: 720px;
+          margin: 18px auto 0;
+          color: rgba(230, 244, 234, 0.57);
+          font-size: 17px;
+          line-height: 1.6;
+        }
+
+        .cc-work-picture {
+          position: relative;
+          display: grid;
+          grid-template-columns: 1fr 58px 1fr 58px 1.08fr;
+          gap: 0;
+          align-items: stretch;
+          padding: 28px;
+          border: 1px solid rgba(94, 255, 150, 0.17);
+          border-radius: 30px;
+          background:
+            linear-gradient(
+              145deg,
+              rgba(255, 255, 255, 0.035),
+              rgba(255, 255, 255, 0.012)
+            ),
+            rgba(5, 10, 8, 0.88);
+          box-shadow:
+            0 26px 90px rgba(0, 0, 0, 0.4),
+            inset 0 1px rgba(255, 255, 255, 0.045);
+        }
+
+        .cc-work-picture::before {
+          content: "";
+          position: absolute;
+          inset: -65px 12%;
+          z-index: -1;
+          border-radius: 999px;
+          background: radial-gradient(
+            circle,
+            rgba(50, 255, 119, 0.105),
+            transparent 68%
+          );
+          pointer-events: none;
+        }
+
+        .cc-work-stage {
+          min-width: 0;
+          padding: 23px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 21px;
+          background: rgba(255, 255, 255, 0.024);
+        }
+
+        .cc-stage-label {
+          color: #66ff99;
+          font-size: 10px;
+          font-weight: 950;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+        }
+
+        .cc-work-stage h3 {
+          margin: 11px 0 7px;
+          font-size: 24px;
+          letter-spacing: -0.03em;
+        }
+
+        .cc-work-stage > p {
+          min-height: 44px;
+          margin: 0 0 19px;
+          color: rgba(229, 244, 234, 0.53);
+          font-size: 13px;
+          line-height: 1.5;
+        }
+
+        .cc-stage-arrow {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .cc-stage-arrow span {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 36px;
+          height: 36px;
+          border: 1px solid rgba(83, 255, 140, 0.18);
+          border-radius: 999px;
+          color: #71ff9f;
+          background: rgba(83, 255, 140, 0.055);
+          font-size: 24px;
+          box-shadow: 0 0 22px rgba(65, 255, 126, 0.08);
+        }
+
+        .cc-customer-card,
+        .cc-job-card,
+        .cc-workspace-card {
+          min-height: 252px;
+          border-radius: 17px;
+        }
+
+        .cc-customer-card {
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          padding: 19px;
+          border: 1px solid rgba(81, 255, 139, 0.17);
+          background:
+            radial-gradient(
+              circle at 50% 0%,
+              rgba(70, 255, 133, 0.105),
+              transparent 68%
+            ),
+            #07100b;
+        }
+
+        .cc-mini-brand {
+          color: #7aff9f;
+          font-size: 9px;
+          font-weight: 950;
+          letter-spacing: 0.11em;
+          text-transform: uppercase;
+        }
+
+        .cc-customer-card strong {
+          display: block;
+          margin-top: 16px;
+          font-size: 19px;
+          line-height: 1.25;
+        }
+
+        .cc-customer-card p {
+          margin: 8px 0 18px;
+          color: rgba(228, 243, 233, 0.52);
+          font-size: 16px;
+          line-height: 1.5;
+        }
+
+        .cc-mini-button {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 42px;
+          border-radius: 11px;
+          color: #041108;
+          background: #54ff8d;
+          font-size: 16px;
+          font-weight: 950;
+        }
+
+        .cc-job-card {
+          padding: 19px;
+          border: 1px solid rgba(79, 193, 255, 0.2);
+          background:
+            radial-gradient(
+              circle at 88% 0%,
+              rgba(48, 174, 255, 0.12),
+              transparent 58%
+            ),
+            #071012;
+        }
+
+        .cc-job-head {
+          display: flex;
+          justify-content: space-between;
+          gap: 12px;
+        }
+
+        .cc-job-head strong {
+          font-size: 17px;
+        }
+
+        .cc-job-head p {
+          margin: 5px 0 0;
+          color: rgba(228, 242, 238, 0.53);
+          font-size: 16px;
+        }
+
+        .cc-status {
+          height: fit-content;
+          padding: 5px 8px;
+          border-radius: 999px;
+          color: #9ce3ff;
+          background: rgba(71, 184, 255, 0.11);
+          font-size: 9px;
+          font-weight: 950;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+        }
+
+        .cc-job-lines {
+          display: grid;
+          gap: 8px;
+          margin: 22px 0;
+        }
+
+        .cc-job-line {
+          display: flex;
+          justify-content: space-between;
+          gap: 10px;
+          color: rgba(227, 241, 235, 0.46);
+          font-size: 11px;
+        }
+
+        .cc-job-line b {
+          color: #f3fff7;
+          font-weight: 800;
+        }
+
+        .cc-open-workspace {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 41px;
+          border: 1px solid rgba(84, 255, 142, 0.24);
+          border-radius: 11px;
+          color: #effff4;
+          background: rgba(84, 255, 142, 0.075);
+          font-size: 16px;
+          font-weight: 950;
+        }
+
+        .cc-workspace-card {
+          overflow: hidden;
+          border: 1px solid rgba(84, 255, 142, 0.22);
+          background:
+            radial-gradient(
+              circle at 50% 0%,
+              rgba(57, 255, 123, 0.11),
+              transparent 55%
+            ),
+            #07100b;
+        }
+
+        .cc-workspace-head {
+          padding: 18px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        .cc-workspace-head small {
+          color: #75ff9f;
+          font-size: 9px;
+          font-weight: 950;
+          letter-spacing: 0.11em;
+          text-transform: uppercase;
+        }
+
+        .cc-workspace-head strong {
+          display: block;
+          margin-top: 7px;
+          font-size: 17px;
+        }
+
+        .cc-next-action {
+          margin-top: 15px;
+          padding: 13px;
+          border: 1px solid rgba(83, 255, 141, 0.22);
+          border-radius: 12px;
+          background: rgba(83, 255, 141, 0.075);
+          box-shadow: 0 0 27px rgba(53, 255, 119, 0.06);
+        }
+
+        .cc-next-action span {
+          display: block;
+          color: rgba(228, 244, 234, 0.45);
+          font-size: 9px;
+          font-weight: 900;
+          letter-spacing: 0.11em;
+          text-transform: uppercase;
+        }
+
+        .cc-next-action b {
+          display: block;
+          margin-top: 4px;
+          color: #75ff9f;
+          font-size: 15px;
+        }
+
+        .cc-tools {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 7px;
+          padding: 14px;
+        }
+
+        .cc-tool {
+          padding: 10px 5px;
+          border: 1px solid rgba(255, 255, 255, 0.065);
+          border-radius: 9px;
+          color: rgba(239, 250, 242, 0.7);
+          background: rgba(255, 255, 255, 0.022);
+          font-size: 9px;
+          font-weight: 850;
+          text-align: center;
+        }
+
+        .cc-work-caption {
+          max-width: 760px;
+          margin: 30px auto 0;
+          text-align: center;
+          color: rgba(230, 244, 234, 0.63);
+          font-size: clamp(18px, 2vw, 22px);
+          line-height: 1.55;
+        }
+
+        .cc-work-caption strong {
+          color: #ffffff;
+        }
+
+        .cc-ecosystem {
+          position: relative;
+          padding: 92px 0;
+          border-top: 1px solid rgba(255, 255, 255, 0.065);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.065);
+          background:
+            radial-gradient(
+              circle at 50% 50%,
+              rgba(45, 255, 116, 0.055),
+              transparent 38rem
+            );
+        }
+
+        .cc-ecosystem-heading {
+          max-width: 830px;
+          margin-bottom: 48px;
+        }
+
+        .cc-ecosystem-heading h2 {
+          margin: 0;
+          font-size: clamp(43px, 6vw, 78px);
+          line-height: 0.98;
+          letter-spacing: -0.06em;
+        }
+
+        .cc-ecosystem-heading h2 span {
+          color: #59ff91;
+        }
+
+        .cc-ecosystem-heading p {
+          max-width: 680px;
+          margin: 20px 0 0;
+          color: rgba(230, 244, 234, 0.58);
+          font-size: 18px;
+          line-height: 1.6;
+        }
+
+        .cc-ecosystem-flow {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          overflow: hidden;
+          border: 1px solid rgba(99, 255, 151, 0.16);
+          border-radius: 26px;
+          background: rgba(5, 11, 8, 0.88);
+          box-shadow: 0 25px 90px rgba(0, 0, 0, 0.34);
+        }
+
+        .cc-ecosystem-step {
+          position: relative;
+          min-width: 0;
+          min-height: 260px;
+          padding: 30px 28px;
+          border-right: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        .cc-ecosystem-step:last-child {
+          border-right: 0;
+        }
+
+        .cc-ecosystem-step:nth-child(1) {
+          background:
+            radial-gradient(
+              circle at 20% 0%,
+              rgba(70, 158, 255, 0.11),
+              transparent 62%
+            );
+        }
+
+        .cc-ecosystem-step:nth-child(2) {
+          background:
+            radial-gradient(
+              circle at 50% 0%,
+              rgba(62, 255, 132, 0.11),
+              transparent 62%
+            );
+        }
+
+        .cc-ecosystem-step:nth-child(3) {
+          background:
+            radial-gradient(
+              circle at 80% 0%,
+              rgba(99, 255, 177, 0.09),
+              transparent 62%
+            );
+        }
+
+        .cc-ecosystem-step:not(:last-child)::after {
+          content: "›";
+          position: absolute;
+          top: 50%;
+          right: -10px;
+          z-index: 3;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 20px;
+          height: 30px;
+          margin-top: -15px;
+          color: #63ff98;
+          background: #07100b;
+          font-size: 25px;
+          text-shadow: 0 0 14px rgba(72, 255, 129, 0.5);
+        }
+
+        .cc-ecosystem-number {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 30px;
+          height: 30px;
+          border: 1px solid rgba(91, 255, 147, 0.2);
+          border-radius: 999px;
+          color: #6fff9b;
+          background: rgba(91, 255, 147, 0.06);
+          font-size: 10px;
+          font-weight: 950;
+        }
+
+        .cc-ecosystem-label {
+          margin-top: 28px;
+          color: rgba(104, 255, 158, 0.75);
+          font-size: 9px;
+          font-weight: 950;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+        }
+
+        .cc-ecosystem-step strong {
+          display: block;
+          margin-top: 8px;
+          font-size: 21px;
+          line-height: 1.3;
+        }
+
+        .cc-ecosystem-step p {
+          margin: 9px 0 0;
+          color: rgba(229, 243, 233, 0.46);
+          font-size: 16px;
+          line-height: 1.5;
+        }
+
+        .cc-ecosystem-truth {
+          max-width: 840px;
+          margin: 36px auto 0;
+          text-align: center;
+        }
+
+        .cc-ecosystem-truth strong {
+          display: block;
+          font-size: clamp(27px, 4vw, 44px);
+          letter-spacing: -0.04em;
+        }
+
+        .cc-ecosystem-truth p {
+          margin: 13px 0 0;
+          color: rgba(230, 245, 235, 0.58);
+          font-size: 17px;
+          line-height: 1.55;
+        }
+
+        .cc-proof {
+          padding: 92px 0;
+        }
+
+        .cc-proof-heading {
+          display: flex;
+          align-items: end;
+          justify-content: space-between;
+          gap: 32px;
+          margin-bottom: 35px;
+        }
+
+        .cc-proof-heading h2 {
+          max-width: 720px;
+          margin: 0;
+          font-size: clamp(40px, 5.4vw, 70px);
+          line-height: 0.98;
+          letter-spacing: -0.055em;
+        }
+
+        .cc-proof-heading p {
+          max-width: 410px;
+          margin: 0;
+          color: rgba(230, 244, 234, 0.55);
+          font-size: 15px;
+          line-height: 1.6;
+        }
+
+        .cc-system-list {
+          display: grid;
+          gap: 14px;
+        }
+
+        .cc-system {
+          position: relative;
+          display: grid;
+          grid-template-columns: 1.15fr 1fr 1fr auto;
+          align-items: center;
+          gap: 27px;
+          overflow: hidden;
+          min-height: 142px;
+          padding: 30px 31px;
+          border: 1px solid rgba(255, 255, 255, 0.085);
+          border-radius: 21px;
+          background:
+            radial-gradient(
+              circle at 12% 50%,
+              rgba(66, 255, 130, 0.055),
+              transparent 27rem
+            ),
+            linear-gradient(
+              90deg,
+              rgba(255, 255, 255, 0.034),
+              rgba(255, 255, 255, 0.012)
+            );
+          box-shadow:
+            0 18px 45px rgba(0, 0, 0, 0.18),
+            inset 0 1px rgba(255, 255, 255, 0.035);
+          transition:
+            transform 180ms ease,
+            border-color 180ms ease,
+            background 180ms ease;
+        }
+
+        .cc-system:hover {
+          transform: translateY(-3px);
+          border-color: rgba(101, 255, 155, 0.2);
+          background:
+            radial-gradient(
+              circle at 14% 50%,
+              rgba(66, 255, 130, 0.085),
+              transparent 28rem
+            ),
+            linear-gradient(
+              90deg,
+              rgba(255, 255, 255, 0.045),
+              rgba(255, 255, 255, 0.016)
+            );
+        }
+
+        .cc-system::before {
+          content: "";
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          left: 0;
+          width: 3px;
+          background: #58ff8f;
+          box-shadow: 0 0 20px rgba(88, 255, 143, 0.62);
+        }
+
+        .cc-system.blue::before {
+          background: #52caff;
+          box-shadow: 0 0 20px rgba(82, 202, 255, 0.62);
+        }
+
+        .cc-system.electric::before {
+          background: #678bff;
+          box-shadow: 0 0 20px rgba(103, 139, 255, 0.62);
+        }
+
+        .cc-system-name strong {
+          display: block;
+          font-size: 24px;
+          letter-spacing: -0.025em;
+        }
+
+        .cc-system-name span,
+        .cc-system-side span {
+          display: block;
+          margin-top: 5px;
+          color: rgba(230, 243, 234, 0.46);
+          font-size: 16px;
+        }
+
+        .cc-system-side small {
+          display: block;
+          color: rgba(105, 255, 157, 0.72);
+          font-size: 9px;
+          font-weight: 950;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+        }
+
+        .cc-system-side strong {
+          display: block;
+          margin-top: 6px;
+          font-size: 16px;
+        }
+
+        .cc-open-system {
+          min-height: 42px;
+          padding: 0 16px;
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          border-radius: 12px;
+          cursor: pointer;
+          color: #effff4;
+          background: rgba(255, 255, 255, 0.03);
+          font-size: 16px;
+          font-weight: 900;
+          transition:
+            transform 180ms ease,
+            border-color 180ms ease,
+            background 180ms ease;
+        }
+
+        .cc-open-system:hover {
+          transform: translateY(-2px);
+          border-color: rgba(88, 255, 146, 0.38);
+          background: rgba(88, 255, 146, 0.07);
+        }
+
+        .cc-final {
+          padding: 100px 0;
+          text-align: center;
+          border-top: 1px solid rgba(255, 255, 255, 0.065);
+          background:
+            radial-gradient(
+              circle at 50% 100%,
+              rgba(52, 255, 119, 0.125),
+              transparent 35rem
+            );
+        }
+
+        .cc-final h2 {
+          max-width: 950px;
+          margin: 0 auto;
+          font-size: clamp(45px, 6.7vw, 86px);
+          line-height: 0.97;
+          letter-spacing: -0.065em;
+        }
+
+        .cc-final h2 span {
+          color: #5cff92;
+        }
+
+        .cc-final p {
+          max-width: 720px;
+          margin: 23px auto 0;
+          color: rgba(230, 244, 234, 0.58);
+          font-size: 18px;
+          line-height: 1.6;
+        }
+
+        .cc-footer {
+          padding: 29px 0 38px;
+          color: rgba(225, 239, 229, 0.34);
+          font-size: 16px;
+          text-align: center;
+        }
+
+        .cc-drawer-backdrop {
+          position: fixed;
+          inset: 0;
+          z-index: 100;
+          display: flex;
+          justify-content: flex-end;
+          background: rgba(0, 0, 0, 0.72);
+          backdrop-filter: blur(9px);
+          animation: cc-fade-in 180ms ease;
+        }
+
+        .cc-build-drawer {
+          width: min(540px, 100%);
+          height: 100%;
+          overflow-y: auto;
+          padding: 28px;
+          border-left: 1px solid rgba(86, 255, 145, 0.18);
+          background:
+            radial-gradient(
+              circle at 50% 0%,
+              rgba(63, 255, 127, 0.12),
+              transparent 25rem
+            ),
+            #050a07;
+          box-shadow: -30px 0 90px rgba(0, 0, 0, 0.52);
+          animation: cc-drawer-in 220ms ease;
+        }
+
+        .cc-drawer-head {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 24px;
+          padding-bottom: 24px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .cc-drawer-kicker {
+          color: #68ff9a;
+          font-size: 10px;
+          font-weight: 950;
+          letter-spacing: 0.15em;
+          text-transform: uppercase;
+        }
+
+        .cc-drawer-head h2 {
+          margin: 10px 0 0;
+          font-size: clamp(35px, 5vw, 50px);
+          line-height: 0.98;
+          letter-spacing: -0.055em;
+        }
+
+        .cc-drawer-close {
+          flex: 0 0 auto;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 42px;
+          height: 42px;
+          border: 1px solid rgba(255, 255, 255, 0.11);
+          border-radius: 12px;
+          cursor: pointer;
+          color: #effff4;
+          background: rgba(255, 255, 255, 0.035);
+          font-size: 23px;
+          line-height: 1;
+        }
+
+        .cc-drawer-close:hover {
+          border-color: rgba(91, 255, 147, 0.35);
+          background: rgba(91, 255, 147, 0.07);
+        }
+
+        .cc-build-form {
+          display: grid;
+          gap: 20px;
+          padding-top: 25px;
+        }
+
+        .cc-form-group {
+          display: grid;
+          gap: 9px;
+        }
+
+        .cc-form-group > label,
+        .cc-form-label {
+          color: rgba(242, 255, 246, 0.82);
+          font-size: 12px;
+          font-weight: 900;
+        }
+
+        .cc-build-types {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 9px;
+        }
+
+        .cc-build-type {
+          position: relative;
+        }
+
+        .cc-build-type input {
+          position: absolute;
+          opacity: 0;
+          pointer-events: none;
+        }
+
+        .cc-build-type span {
+          display: flex;
+          align-items: center;
+          min-height: 48px;
+          padding: 0 15px;
+          border: 1px solid rgba(255, 255, 255, 0.09);
+          border-radius: 13px;
+          cursor: pointer;
+          color: rgba(238, 250, 242, 0.66);
+          background: rgba(255, 255, 255, 0.025);
+          font-size: 13px;
+          font-weight: 850;
+          transition:
+            border-color 160ms ease,
+            color 160ms ease,
+            background 160ms ease,
+            box-shadow 160ms ease;
+        }
+
+        .cc-build-type input:checked + span {
+          border-color: rgba(84, 255, 141, 0.42);
+          color: #72ff9f;
+          background: rgba(84, 255, 141, 0.075);
+          box-shadow: 0 0 25px rgba(65, 255, 126, 0.07);
+        }
+
+        .cc-build-input,
+        .cc-build-textarea {
+          width: 100%;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 13px;
+          outline: none;
+          color: #f3fff7;
+          background: rgba(255, 255, 255, 0.035);
+          font: inherit;
+          transition:
+            border-color 160ms ease,
+            background 160ms ease,
+            box-shadow 160ms ease;
+        }
+
+        .cc-build-input {
+          min-height: 51px;
+          padding: 0 15px;
+        }
+
+        .cc-build-textarea {
+          min-height: 104px;
+          resize: vertical;
+          padding: 14px 15px;
+          line-height: 1.5;
+        }
+
+        .cc-build-input::placeholder,
+        .cc-build-textarea::placeholder {
+          color: rgba(229, 243, 233, 0.28);
+        }
+
+        .cc-build-input:focus,
+        .cc-build-textarea:focus {
+          border-color: rgba(84, 255, 141, 0.42);
+          background: rgba(84, 255, 141, 0.045);
+          box-shadow: 0 0 0 4px rgba(84, 255, 141, 0.055);
+        }
+
+        .cc-form-two-column {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 12px;
+        }
+
+        .cc-build-submit {
+          width: 100%;
+          min-height: 56px;
+          margin-top: 4px;
+          border: 0;
+          border-radius: 14px;
+          cursor: pointer;
+          color: #031008;
+          background: #54ff8d;
+          font-size: 14px;
+          font-weight: 950;
+          box-shadow: 0 16px 38px rgba(48, 255, 115, 0.15);
+        }
+
+        .cc-build-submit:disabled {
+          cursor: wait;
+          opacity: 0.68;
+          transform: none;
+          box-shadow: none;
+        }
+
+        .cc-build-error {
+          padding: 13px 14px;
+          border: 1px solid rgba(255, 104, 104, 0.28);
+          border-radius: 12px;
+          color: #ffb0b0;
+          background: rgba(255, 78, 78, 0.07);
+          font-size: 13px;
+          line-height: 1.5;
+        }
+
+        .cc-build-submit:hover {
+          transform: translateY(-2px);
+          box-shadow:
+            0 0 0 1px rgba(102, 255, 155, 0.25),
+            0 18px 42px rgba(48, 255, 115, 0.22);
+        }
+
+        .cc-build-success {
+          margin-top: 26px;
+          padding: 26px;
+          border: 1px solid rgba(84, 255, 141, 0.22);
+          border-radius: 20px;
+          background:
+            radial-gradient(
+              circle at 50% 0%,
+              rgba(65, 255, 126, 0.12),
+              transparent 18rem
+            ),
+            rgba(84, 255, 141, 0.045);
+          text-align: center;
+        }
+
+        .cc-build-success-mark {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 52px;
+          height: 52px;
+          margin: 0 auto;
+          border: 1px solid rgba(84, 255, 141, 0.35);
+          border-radius: 999px;
+          color: #69ff99;
+          background: rgba(84, 255, 141, 0.08);
+          font-size: 24px;
+          font-weight: 950;
+          box-shadow: 0 0 30px rgba(65, 255, 126, 0.12);
+        }
+
+        .cc-build-success h3 {
+          margin: 18px 0 0;
+          font-size: 28px;
+          letter-spacing: -0.04em;
+        }
+
+        .cc-build-success p {
+          margin: 10px 0 0;
+          color: rgba(230, 244, 234, 0.56);
+          font-size: 15px;
+          line-height: 1.55;
+        }
+
+        @keyframes cc-fade-in {
+          from {
+            opacity: 0;
+          }
+
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes cc-drawer-in {
+          from {
+            transform: translateX(35px);
+            opacity: 0;
+          }
+
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+
+        .cc-drawer-backdrop {
+          position: fixed;
+          inset: 0;
+          z-index: 100;
+          display: flex;
+          justify-content: flex-end;
+          background: rgba(0, 0, 0, 0.72);
+          backdrop-filter: blur(9px);
+          animation: cc-fade-in 180ms ease;
+        }
+
+        .cc-build-drawer {
+          width: min(540px, 100%);
+          height: 100%;
+          overflow-y: auto;
+          padding: 28px;
+          border-left: 1px solid rgba(86, 255, 145, 0.18);
+          background:
+            radial-gradient(
+              circle at 50% 0%,
+              rgba(63, 255, 127, 0.12),
+              transparent 25rem
+            ),
+            #050a07;
+          box-shadow: -30px 0 90px rgba(0, 0, 0, 0.52);
+          animation: cc-drawer-in 220ms ease;
+        }
+
+        .cc-drawer-head {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 24px;
+          padding-bottom: 24px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .cc-drawer-kicker {
+          color: #68ff9a;
+          font-size: 10px;
+          font-weight: 950;
+          letter-spacing: 0.15em;
+          text-transform: uppercase;
+        }
+
+        .cc-drawer-head h2 {
+          margin: 10px 0 0;
+          font-size: clamp(35px, 5vw, 50px);
+          line-height: 0.98;
+          letter-spacing: -0.055em;
+        }
+
+        .cc-drawer-close {
+          flex: 0 0 auto;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 42px;
+          height: 42px;
+          border: 1px solid rgba(255, 255, 255, 0.11);
+          border-radius: 12px;
+          cursor: pointer;
+          color: #effff4;
+          background: rgba(255, 255, 255, 0.035);
+          font-size: 23px;
+          line-height: 1;
+        }
+
+        .cc-drawer-close:hover {
+          border-color: rgba(91, 255, 147, 0.35);
+          background: rgba(91, 255, 147, 0.07);
+        }
+
+        .cc-build-form {
+          display: grid;
+          gap: 20px;
+          padding-top: 25px;
+        }
+
+        .cc-form-group {
+          display: grid;
+          gap: 9px;
+        }
+
+        .cc-form-group > label,
+        .cc-form-label {
+          color: rgba(242, 255, 246, 0.82);
+          font-size: 12px;
+          font-weight: 900;
+        }
+
+        .cc-build-types {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 9px;
+        }
+
+        .cc-build-type {
+          position: relative;
+        }
+
+        .cc-build-type input {
+          position: absolute;
+          opacity: 0;
+          pointer-events: none;
+        }
+
+        .cc-build-type span {
+          display: flex;
+          align-items: center;
+          min-height: 48px;
+          padding: 0 15px;
+          border: 1px solid rgba(255, 255, 255, 0.09);
+          border-radius: 13px;
+          cursor: pointer;
+          color: rgba(238, 250, 242, 0.66);
+          background: rgba(255, 255, 255, 0.025);
+          font-size: 13px;
+          font-weight: 850;
+          transition:
+            border-color 160ms ease,
+            color 160ms ease,
+            background 160ms ease,
+            box-shadow 160ms ease;
+        }
+
+        .cc-build-type input:checked + span {
+          border-color: rgba(84, 255, 141, 0.42);
+          color: #72ff9f;
+          background: rgba(84, 255, 141, 0.075);
+          box-shadow: 0 0 25px rgba(65, 255, 126, 0.07);
+        }
+
+        .cc-build-input,
+        .cc-build-textarea {
+          width: 100%;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 13px;
+          outline: none;
+          color: #f3fff7;
+          background: rgba(255, 255, 255, 0.035);
+          font: inherit;
+          transition:
+            border-color 160ms ease,
+            background 160ms ease,
+            box-shadow 160ms ease;
+        }
+
+        .cc-build-input {
+          min-height: 51px;
+          padding: 0 15px;
+        }
+
+        .cc-build-textarea {
+          min-height: 104px;
+          resize: vertical;
+          padding: 14px 15px;
+          line-height: 1.5;
+        }
+
+        .cc-build-input::placeholder,
+        .cc-build-textarea::placeholder {
+          color: rgba(229, 243, 233, 0.28);
+        }
+
+        .cc-build-input:focus,
+        .cc-build-textarea:focus {
+          border-color: rgba(84, 255, 141, 0.42);
+          background: rgba(84, 255, 141, 0.045);
+          box-shadow: 0 0 0 4px rgba(84, 255, 141, 0.055);
+        }
+
+        .cc-form-two-column {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 12px;
+        }
+
+        .cc-build-submit {
+          width: 100%;
+          min-height: 56px;
+          margin-top: 4px;
+          border: 0;
+          border-radius: 14px;
+          cursor: pointer;
+          color: #031008;
+          background: #54ff8d;
+          font-size: 14px;
+          font-weight: 950;
+          box-shadow: 0 16px 38px rgba(48, 255, 115, 0.15);
+        }
+
+        .cc-build-submit:disabled {
+          cursor: wait;
+          opacity: 0.68;
+          transform: none;
+          box-shadow: none;
+        }
+
+        .cc-build-error {
+          padding: 13px 14px;
+          border: 1px solid rgba(255, 104, 104, 0.28);
+          border-radius: 12px;
+          color: #ffb0b0;
+          background: rgba(255, 78, 78, 0.07);
+          font-size: 13px;
+          line-height: 1.5;
+        }
+
+        .cc-build-submit:hover {
+          transform: translateY(-2px);
+          box-shadow:
+            0 0 0 1px rgba(102, 255, 155, 0.25),
+            0 18px 42px rgba(48, 255, 115, 0.22);
+        }
+
+        .cc-build-success {
+          margin-top: 26px;
+          padding: 26px;
+          border: 1px solid rgba(84, 255, 141, 0.22);
+          border-radius: 20px;
+          background:
+            radial-gradient(
+              circle at 50% 0%,
+              rgba(65, 255, 126, 0.12),
+              transparent 18rem
+            ),
+            rgba(84, 255, 141, 0.045);
+          text-align: center;
+        }
+
+        .cc-build-success-mark {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 52px;
+          height: 52px;
+          margin: 0 auto;
+          border: 1px solid rgba(84, 255, 141, 0.35);
+          border-radius: 999px;
+          color: #69ff99;
+          background: rgba(84, 255, 141, 0.08);
+          font-size: 24px;
+          font-weight: 950;
+          box-shadow: 0 0 30px rgba(65, 255, 126, 0.12);
+        }
+
+        .cc-build-success h3 {
+          margin: 18px 0 0;
+          font-size: 28px;
+          letter-spacing: -0.04em;
+        }
+
+        .cc-build-success p {
+          margin: 10px 0 0;
+          color: rgba(230, 244, 234, 0.56);
+          font-size: 15px;
+          line-height: 1.55;
+        }
+
+        @keyframes cc-fade-in {
+          from {
+            opacity: 0;
+          }
+
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes cc-drawer-in {
+          from {
+            transform: translateX(35px);
+            opacity: 0;
+          }
+
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+
+        @media (max-width: 1000px) {
+          .cc-work-picture {
+            grid-template-columns: 1fr;
+            gap: 14px;
+          }
+
+          .cc-stage-arrow {
+            min-height: 38px;
+          }
+
+          .cc-stage-arrow span {
+            transform: rotate(90deg);
+          }
+
+          .cc-work-stage > p {
+            min-height: 0;
+          }
+
+          .cc-ecosystem-flow {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+          }
+
+          .cc-ecosystem-step {
+            min-height: 0;
+            border-right: 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+          }
+
+          .cc-ecosystem-step:last-child {
+            border-bottom: 0;
+          }
+
+          .cc-ecosystem-step:not(:last-child)::after {
+            display: none;
+          }
+
+          .cc-system {
+            grid-template-columns: 1fr 1fr;
+          }
+
+          .cc-open-system {
+            width: fit-content;
+          }
+        }
+
+        @media (max-width: 700px) {
+          .cc-shell {
+            width: min(100% - 24px, 1180px);
+          }
+
+          .cc-topbar {
+            min-height: 260px;
+          }
+
+          .cc-brand span {
+            display: none;
+          }
+
+          .cc-topbar .cc-button {
+            min-height: 38px;
+            padding: 30px 28px;
+            font-size: 11px;
+          }
+
+          .cc-hero {
+            padding: 92px 0 72px;
+          }
+
+          .cc-hero h1 {
+            font-size: clamp(49px, 15vw, 74px);
+          }
+
+          .cc-hero-copy {
+            font-size: 17px;
+          }
+
+          .cc-direction-grid,
+          .cc-selected-system-grid,
+          .cc-selected-system-grid-two {
+            grid-template-columns: 1fr;
+          }
+
+          .cc-direction-section {
+            padding-bottom: 72px;
+          }
+
+          .cc-direction-choice {
+            min-height: 0;
+          }
+
+          .cc-actions {
+            flex-direction: column;
+          }
+
+          .cc-actions .cc-button {
+            width: 100%;
+          }
+
+          .cc-work-section,
+          .cc-ecosystem,
+          .cc-proof {
+            padding: 92px 0;
+          }
+
+          .cc-work-picture {
+            padding: 14px;
+            border-radius: 23px;
+          }
+
+          .cc-work-stage {
+            padding: 19px;
+          }
+
+          .cc-customer-card,
+          .cc-job-card,
+          .cc-workspace-card {
+            min-height: 0;
+          }
+
+          .cc-ecosystem-flow {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+          }
+
+          .cc-ecosystem-step {
+            min-height: 0;
+            border-right: 0;
+          }
+
+          .cc-proof-heading {
+            display: block;
+          }
+
+          .cc-proof-heading p {
+            margin-top: 17px;
+          }
+
+          .cc-system {
+            grid-template-columns: 1fr;
+            gap: 18px;
+            padding: 30px 28px;
+          }
+
+          .cc-final {
+            padding: 100px 0;
+          }
+
+          .cc-final h2 {
+            font-size: clamp(43px, 13vw, 66px);
+          }
+
+          .cc-build-drawer {
+            padding: 22px 18px 32px;
+          }
+
+          .cc-build-types,
+          .cc-form-two-column {
+            grid-template-columns: 1fr;
+          }
+
+          .cc-build-drawer {
+            padding: 22px 18px 32px;
+          }
+
+          .cc-build-types,
+          .cc-form-two-column {
+            grid-template-columns: 1fr;
+          }
+        }
+      `}</style>
+
+      <div className="cc-shell">
+        <header className="cc-topbar">
+          <div className="cc-brand">
+            <i className="cc-brand-dot" />
+            Creator City
+            <span>by HomePlanet</span>
+          </div>
+
+          <button className="cc-button" onClick={openBuildDrawer}>
+            Build My System
+          </button>
+        </header>
+
+        <section className="cc-hero">
+          <div className="cc-kicker">Creator City · Built on HomePlanet</div>
+
+          <h1>
+            What are you trying to <span>organize?</span>
+          </h1>
+
+          <p className="cc-hero-copy">
+            Start with what is happening in the real world.
+            <br />
+            <strong>HomePlanet builds the system around how you already work.</strong>
+          </p>
+
+          <div className="cc-actions">
+            <button className="cc-button" onClick={openBuildDrawer}>
+              Build My System
+            </button>
+
+            <button
+              className="cc-button cc-button-secondary"
+              onClick={() => go("#how-it-works")}
+            >
+              See How It Works
+            </button>
+          </div>
+
+          <div className="cc-hero-note">
+            Business, community, organization, or something completely custom.
+          </div>
+        </section>
+
+        <section className="cc-direction-section" aria-label="Choose what to organize">
+          <div className="cc-direction-grid">
+            {[
+              {
+                id: "business",
+                title: "My Business",
+                detail: "Customers, requests, schedules, payment, proof, and follow-up.",
+              },
+              {
+                id: "community",
+                title: "My Community",
+                detail: "Needs, offers, events, volunteers, and local action.",
+              },
+              {
+                id: "organization",
+                title: "My Organization",
+                detail: "People, projects, communication, updates, and outcomes.",
+              },
+              {
+                id: "custom",
+                title: "Something Completely Custom",
+                detail: "A system shaped around the way your real work already happens.",
+              },
+            ].map((direction) => (
               <button
                 type="button"
-                onClick={() => setWarmMode((v) => !v)}
-                style={{
-                  ...ghostPill,
-                  cursor: "pointer",
-                  background: warmMode
-                    ? "linear-gradient(180deg, rgba(255,180,80,0.25), rgba(255,120,60,0.12))"
-                    : "linear-gradient(180deg, rgba(56,189,248,0.18), rgba(59,130,246,0.10))",
-                  border: warmMode
-                    ? "1px solid rgba(255,180,80,0.45)"
-                    : "1px solid rgba(56,189,248,0.40)",
-                  color: warmMode ? "#fde68a" : "#bae6fd",
-                  boxShadow: warmMode
-                    ? "0 0 14px rgba(255,160,80,0.45)"
-                    : "0 0 14px rgba(56,189,248,0.45)",
-                }}
+                key={direction.id}
+                className={`cc-direction-choice ${
+                  selectedDirection === direction.id ? "is-selected" : ""
+                }`}
+                onClick={() => setSelectedDirection(direction.id)}
               >
-                {warmMode ? "WARM MODE ON" : "COOL MODE ON"}
+                <span>{direction.title}</span>
+                <small>{direction.detail}</small>
               </button>
-              {!isMobile ? <span style={pill("blue")}>LIVE BOARD GENERATOR</span> : null}
-              {!isMobile ? <span style={ghostPill}>PRIMARY ROUTE /planet/creator/building</span> : null}
-              {!isMobile ? <span style={pill("green")}>{reserveReady ? "RESERVE READY" : "FREE TRIAL"}</span> : null}
-            </div>
+            ))}
+          </div>
+        </section>
+
+                {selectedDirection !== "business" && (
+          <section className="cc-selected-direction-content">
+            <div className="cc-kicker">Built on HomePlanet</div>
+
+            {selectedDirection === "community" && (
+              <>
+                <h2>Real community action stays connected.</h2>
+
+                <p className="cc-selected-direction-copy">
+                  Start with a need, offer, event, local project, paid-work
+                  opportunity, or live neighborhood activity. Keep the people,
+                  communication, money, proof, and final outcome connected.
+                </p>
+
+                <div className="cc-selected-system-grid">
+                  <article className="cc-selected-system-card">
+                    <span>Community coordination</span>
+                    <h3>Okeechobee Together</h3>
+                    <p>
+                      Residents, volunteers, nonprofits, events, cleanup
+                      projects, local help, and community action.
+                    </p>
+                  </article>
+
+                  <article className="cc-selected-system-card">
+                    <span>Paid local work</span>
+                    <h3>Lawn Program</h3>
+                    <p>
+                      Requests, worker assignment, Piggy Bank support,
+                      materials, receipts, payment, photos, and confirmation.
+                    </p>
+                  </article>
+
+                  <article className="cc-selected-system-card">
+                    <span>Live neighborhood commerce</span>
+                    <h3>Live Yard Sale</h3>
+                    <p>
+                      Item discovery, seller messages, live video, holds,
+                      deposits, payment, pickup, and complete history.
+                    </p>
+                  </article>
+                </div>
+
+                <div className="cc-selected-direction-path">
+                  Need or offer → conversation → coordination → action → proof
+                </div>
+              </>
+            )}
+
+            {selectedDirection === "organization" && (
+              <>
+                <h2>Your organization should not run through scattered pieces.</h2>
+
+                <p className="cc-selected-direction-copy">
+                  Connect the people, projects, responsibilities,
+                  communication, updates, decisions, proof, and history inside
+                  one working system.
+                </p>
+
+                <div className="cc-selected-system-grid cc-selected-system-grid-two">
+                  <article className="cc-selected-system-card">
+                    <span>People and responsibility</span>
+                    <h3>Everybody knows what happens next.</h3>
+                    <p>
+                      Members, staff, volunteers, partners, and leaders stay
+                      connected to the same work and current next action.
+                    </p>
+                  </article>
+
+                  <article className="cc-selected-system-card">
+                    <span>Projects and outcomes</span>
+                    <h3>The complete history stays attached.</h3>
+                    <p>
+                      Updates, decisions, documents, spending, proof, and
+                      results remain connected from beginning to end.
+                    </p>
+                  </article>
+                </div>
+
+                <div className="cc-selected-direction-path">
+                  People → project → next action → updates → outcome → history
+                </div>
+              </>
+            )}
+
+            {selectedDirection === "custom" && (
+              <>
+                <h2>Build the system that does not exist yet.</h2>
+
+                <p className="cc-selected-direction-copy">
+                  Start with the real problem, workflow, or idea. HomePlanet
+                  shapes the public entrance and the operating system around
+                  the way the work actually needs to move.
+                </p>
+
+                <div className="cc-selected-system-grid cc-selected-system-grid-two">
+                  <article className="cc-selected-system-card">
+                    <span>Start with reality</span>
+                    <h3>What is happening today?</h3>
+                    <p>
+                      Scattered communication, manual work, missing proof,
+                      disconnected people, or a completely new idea.
+                    </p>
+                  </article>
+
+                  <article className="cc-selected-system-card">
+                    <span>Build around it</span>
+                    <h3>No generic template required.</h3>
+                    <p>
+                      The system is shaped around the real people, actions,
+                      tools, money, and outcomes involved.
+                    </p>
+                  </article>
+                </div>
+
+                <div className="cc-selected-direction-path">
+                  Real problem → custom workflow → connected action → proven outcome
+                </div>
+              </>
+            )}
+
+            <button className="cc-button" onClick={openBuildDrawer}>
+              Build My System
+            </button>
+          </section>
+        )}
+<section
+          className="cc-customer-path-section"
+          aria-labelledby="customer-path-heading"
+          style={{
+            display: selectedDirection === "business" ? undefined : "none",
+          }}
+        >
+          <h2
+            className="cc-customer-path-heading"
+            id="customer-path-heading"
+          >
+            Your customer
+            <br />
+            never has to leave
+            <br />
+            <span>your system again.</span>
+          </h2>
+
+          <div className="cc-customer-path" aria-label="Connected customer path">
+            {[
+              "Customer",
+              "Request",
+              "Workspace",
+              "Payment",
+              "Proof",
+              "Review",
+              "History",
+            ].map((item, index, items) => (
+              <React.Fragment key={item}>
+                <div className="cc-customer-path-item">{item}</div>
+
+                {index < items.length - 1 && (
+                  <div
+                    className="cc-customer-path-arrow"
+                    aria-hidden="true"
+                  />
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+        </section>
+
+        <section
+          className="cc-work-section"
+          id="how-it-works"
+          style={{
+            display: selectedDirection === "business" ? undefined : "none",
+          }}
+        >
+          <div className="cc-section-heading">
+            <h2>One request becomes one connected job.</h2>
+
+            <p>
+              The customer reaches out. The business sees what needs attention.
+              The work opens with the next action already waiting.
+            </p>
           </div>
 
-          <div style={cockpitGrid}>
-            {!isCompact ? (
-              <aside style={{ display: "grid", gap: 14 }}>
-                <div style={panel}>
-                  <div style={panelHeader}>
-                    <div style={kicker}>Launch path</div>
-                    <div style={panelTitle}>Business launch path</div>
-                    <div style={muted}>Intake to launch.</div>
-                  </div>
-
-                  <div style={{ ...panelBody, display: "grid", gap: 10 }}>
-                    {trajectorySteps.map((step) => (
-                      <div key={step.id} style={stepTone(step.status)}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <span
-                            style={{
-                              width: 8,
-                              height: 8,
-                              borderRadius: 999,
-                              background:
-                                step.status === "complete"
-                                  ? "#70f2a3"
-                                  : step.status === "active"
-                                    ? "#67e8f9"
-                                    : step.status === "armed"
-                                      ? "#f8d36b"
-                                      : "rgba(255,255,255,0.35)",
-                            }}
-                          />
-                          <strong style={{ flex: 1, fontSize: 13 }}>{step.title}</strong>
-                          <span style={{ fontSize: 10, fontWeight: 900, color: "rgba(255,255,255,0.5)" }}>
-                            {step.status.toUpperCase()}
-                          </span>
-                        </div>
-                        <div style={muted}>{step.text}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div style={panel}>
-                  <div style={panelHeader}>
-                    <div style={kicker}>Board family</div>
-                    <div style={panelTitle}>{configPreview.familyLabel}</div>
-                    <div style={muted}>{configPreview.boardSubtitle}</div>
-                  </div>
-                </div>
-              </aside>
-            ) : null}
-
-            <main style={{ display: "grid", gap: 14 }}>
-              <section style={panel}>
-                <div style={{ ...panelBody, padding: isCompact ? 16 : 18 }}>
-                  <span style={pill("green")}>BUILD MY BUSINESS SYSTEM</span>
-
-                  <h1 style={{ ...title, marginTop: 12 }}>Creator City</h1>
-
-                  <div
-                    style={{
-                      marginTop: 10,
-                      maxWidth: 760,
-                      fontSize: isMobile ? 22 : 27,
-                      lineHeight: 1.05,
-                      fontWeight: 950,
-                      letterSpacing: -0.65,
-                    }}
-                  >
-                    {isMealBusinessMode ? (
-                      <>
-                        Launch your meal business
-                        <br />
-                        as a live system.
-                      </>
-                    ) : (
-                      <>
-                        Your business is not complicated.
-                        <br />
-                        Your tools are.
-                      </>
-                    )}
-                  </div>
-
-                  <div style={{ ...muted, fontSize: 15 }}>
-                    {isMealBusinessMode
-                      ? "Intake, weekly planning, customer preferences, food guardrails, and live decision control all in one place."
-                      : "Build your workflow into a live board."}
-                  </div>
-
-                  <div
-                    style={{
-                      display: "flex",
-                      flexWrap: "wrap",
-                      gap: 9,
-                      marginTop: 18,
-                    }}
-                  >
-                    <button style={primaryButton} onClick={scrollToIntakeForm}>
-                      Start My Free Demo
-                    </button>
-                    <button style={buttonBase} onClick={previewMealBusinessMode}>
-                      Meal Business System
-                    </button>
-                    <button style={buttonBase} onClick={scrollToCreatorSystems}>
-                      Open Creator Systems
-                    </button>
-                    <button style={buttonBase} onClick={() => openRoute(LIVE_CAMP_GUARDIAN_ROUTE)}>
-                      Camp Guardian
-                    </button>
-                    <button style={buttonBase} onClick={() => openRoute("/planet/experience")}>
-                      Experience Planet
-                    </button>
-                  </div>
-
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))",
-                      gap: 10,
-                      marginTop: 18,
-                    }}
-                  >
-                    {[
-                      ["Live demo", "Intake", "Your intake builds the board."],
-                      ["Board type", resolvedBusinessLabel, "Matched into a starter board family."],
-                      [
-                        "Next step",
-                        reserveReady ? "Reserve" : previewStages[0] || "Waiting",
-                        reserveReady ? "Trust-first build hold is ready." : "The board predicts the first stages.",
-                      ],
-                    ].map(([labelText, value, detail]) => (
-                      <div key={labelText} style={card}>
-                        <div style={kicker}>{labelText}</div>
-                        <div style={{ marginTop: 7, fontSize: 17, fontWeight: 900 }}>{value}</div>
-                        <div style={muted}>{detail}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </section>
-
-              <section style={panel}>
-                <div style={panelBody}>
-                  <div style={kicker}>Creator paths</div>
-                  <div style={{ ...panelTitle, fontSize: isMobile ? 24 : 28 }}>
-                    Pick the creator path you actually need.
-                  </div>
-                  <div style={muted}>
-                    Creator City should orient fast. Choose your lane, then go deeper into the
-                    real system that fits how you create.
-                  </div>
-
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: isMobile ? "1fr" : isTablet ? "1fr 1fr" : "repeat(4, minmax(0, 1fr))",
-                      gap: 10,
-                      marginTop: 16,
-                    }}
-                  >
-                    {[
-                      {
-                        tag: "MOMENT LAB",
-                        title: "Creator Studio",
-                        text: "Ideas, clips, edits, drops, and creator momentum.",
-                        action: "Open Creator Studio",
-                        to: CREATOR_STUDIO_ROUTE,
-                      },
-                      {
-                        tag: "SELL LIVE",
-                        title: "Live Selling",
-                        text: "For creators who actually sell while live.",
-                        action: "Open Live Selling",
-                        to: LIVE_PRODUCT_DEMO_ROUTE,
-                      },
-                      {
-                        tag: "LIVE SYSTEM",
-                        title: "Creator Systems",
-                        text: "Open every live creator system and demo board in one place.",
-                        action: "Open Creator Systems",
-                        to: CREATOR_SYSTEMS_ROUTE,
-                      },
-                      {
-                        tag: "BUILD PATH",
-                        title: "Build Your System",
-                        text: "Start a custom creator setup from intake.",
-                        action: "Start My Free Demo",
-                        to: "",
-                      },
-                    ].map((item) => (
-                      <div key={item.title} style={card}>
-                        <span style={pill("blue")}>{item.tag}</span>
-                        <div style={{ marginTop: 12, fontSize: 16, fontWeight: 950, lineHeight: 1.08 }}>
-                          {item.title}
-                        </div>
-                        <div style={{ ...muted, minHeight: isMobile ? "auto" : 58 }}>{item.text}</div>
-                        <button
-                          type="button"
-                          style={{
-                            ...buttonBase,
-                            width: "100%",
-                            marginTop: 10,
-                            borderRadius: 14,
-                          }}
-                          onClick={() => (item.to ? openRoute(item.to) : scrollToIntakeForm())}
-                        >
-                          {item.action}
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </section>
-
-              {!isCompact ? (
-                <section style={panel}>
-                  <div style={panelHeader}>
-                    <div style={kicker}>System truth</div>
-                    <div style={panelTitle}>Mission feed</div>
-                    <div style={muted}>Live intake signals.</div>
-                  </div>
-
-                  <div
-                    style={{
-                      ...panelBody,
-                      display: "grid",
-                      gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                      gap: 10,
-                    }}
-                  >
-                    {missionFeed.map((item) => (
-                      <div key={item.label} style={card}>
-                        <div style={kicker}>{item.label}</div>
-                        <div
-                          style={{
-                            marginTop: 8,
-                            color: item.active ? "#fff" : "rgba(255,255,255,0.48)",
-                            fontSize: 13,
-                            fontWeight: 900,
-                            wordBreak: "break-word",
-                          }}
-                        >
-                          {item.value}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              ) : null}
-
-              <section ref={intakeFormRef} style={panel}>
-                <div style={panelHeader}>
-                  <div style={kicker}>Mission intake</div>
-                  <div style={panelTitle}>Start your free live demo</div>
-                  <div style={muted}>
-                    {reserveReady
-                      ? "Your intake is in. Reserve the build slot to move forward."
-                      : "Fill this out. We’ll turn it into a live board."}
-                  </div>
-                </div>
-
-                <div style={panelBody}>
-                  <div
-                    style={{
-                      color: reserveReady ? "#70f2a3" : "rgba(187,247,208,0.96)",
-                      fontSize: 13,
-                      fontWeight: 900,
-                      marginBottom: 14,
-                    }}
-                  >
-                    {reserveReady ? "Your intake created the reserve step." : "This intake creates the demo."}
-                  </div>
-
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(3, minmax(0, 1fr))",
-                      gap: 10,
-                    }}
-                  >
-                    {intentCards.map((item) => (
-                      <div
-                        key={item.id}
-                        style={intentCard(wantsBuilt === item.id)}
-                        onClick={() => setWantsBuilt(item.id)}
-                      >
-                        <div style={{ fontSize: 14, fontWeight: 950 }}>{item.title}</div>
-                        <div style={muted}>{item.text}</div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {reserveReady ? (
-                    <div
-                      style={{
-                        ...card,
-                        marginTop: 16,
-                        border: "1px solid rgba(112,242,163,0.40)",
-                        background:
-                          "linear-gradient(180deg, rgba(112,242,163,0.12), rgba(255,255,255,0.035))",
-                      }}
-                    >
-                      <div style={{ fontSize: 19, fontWeight: 950 }}>Reserve Your Build</div>
-                      <div style={{ ...muted, color: "rgba(220,252,231,0.92)" }}>
-                        Your intake is locked in. The next step is simple: reserve the build
-                        so the flow moves cleanly into payment and live assembly.
-                      </div>
-
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))",
-                          gap: 10,
-                          marginTop: 14,
-                        }}
-                      >
-                        {reserveHighlights.map((item) => (
-                          <div key={item.label} style={card}>
-                            <div style={kicker}>{item.label}</div>
-                            <div style={{ ...muted, color: "#fff", fontWeight: 800 }}>
-                              {item.value}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-
-                      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 16 }}>
-                        <button type="button" style={primaryButton} onClick={() => openRoute(reservePaymentRoute)}>
-                          Reserve Your Build
-                        </button>
-                        <button type="button" style={buttonBase} onClick={resetIntake}>
-                          Edit Intake
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <form onSubmit={handleSubmit}>
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: isCompact ? "1fr" : "1fr 1fr",
-                          gap: 13,
-                          marginTop: 16,
-                        }}
-                      >
-                        {[
-                          ["Business name", businessName, setBusinessName, "Taylor Creek Contractors"],
-                          ["Business type", businessType, setBusinessType, "Home Services"],
-                          ["City", city, setCity, "Okeechobee"],
-                          ["Email or preferred contact", contact, setContact, "you@business.com"],
-                        ].map(([labelText, value, setter, placeholder]) => (
-                          <label key={labelText as string} style={{ display: "grid", gap: 8 }}>
-                            <span style={fieldLabel}>{labelText as string}</span>
-                            <input
-                              style={inputBase}
-                              value={value as string}
-                              placeholder={placeholder as string}
-                              onChange={(e) =>
-                                (setter as React.Dispatch<React.SetStateAction<string>>)(e.target.value)
-                              }
-                            />
-                          </label>
-                        ))}
-
-                        {[
-                          [
-                            "How do you run jobs right now?",
-                            currentWorkflow,
-                            setCurrentWorkflow,
-                            "Calls, texts, paper tickets, whiteboards, spreadsheets, or whatever you're doing now.",
-                          ],
-                          [
-                            "What wastes the most time?",
-                            biggestFriction,
-                            setBiggestFriction,
-                            "What keeps breaking the flow, creating delays, or causing confusion?",
-                          ],
-                          [
-                            "What do customers keep asking about?",
-                            customerQuestions,
-                            setCustomerQuestions,
-                            "What do they call, text, or ask about over and over?",
-                          ],
-                          [
-                            "What would make you say “holy shit, this solves it”?",
-                            holyShiftMoment,
-                            setHolyShiftMoment,
-                            "What would make the system instantly feel worth it?",
-                          ],
-                        ].map(([labelText, value, setter, placeholder]) => (
-                          <label
-                            key={labelText as string}
-                            style={{ display: "grid", gap: 8, gridColumn: "1 / -1" }}
-                          >
-                            <span style={fieldLabel}>{labelText as string}</span>
-                            <textarea
-                              style={textareaBase}
-                              value={value as string}
-                              placeholder={placeholder as string}
-                              onChange={(e) =>
-                                (setter as React.Dispatch<React.SetStateAction<string>>)(e.target.value)
-                              }
-                            />
-                          </label>
-                        ))}
-                      </div>
-
-                      <div
-                        style={{
-                          marginTop: 14,
-                          borderRadius: 16,
-                          border: "1px dashed rgba(103,232,249,0.35)",
-                          background: "rgba(8,47,73,0.18)",
-                          padding: 14,
-                        }}
-                      >
-                        <div style={fieldLabel}>Upload workflow photos</div>
-                        <div style={muted}>Show your current setup.</div>
-                        <input
-                          type="file"
-                          multiple
-                          accept="image/*"
-                          onChange={(e) => setWorkflowFiles(Array.from(e.target.files || []))}
-                          style={{ marginTop: 12, width: "100%", fontSize: isCompact ? 16 : 14 }}
-                        />
-                        <div style={{ ...muted, color: "rgba(186,230,253,0.9)" }}>
-                          {selectedFilesLabel}
-                        </div>
-                      </div>
-
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: isCompact ? "stretch" : "center",
-                          justifyContent: "space-between",
-                          gap: 14,
-                          flexDirection: isCompact ? "column" : "row",
-                          marginTop: 16,
-                        }}
-                      >
-                        <button
-                          type="submit"
-                          style={{
-                            ...primaryButton,
-                            opacity: submitting ? 0.72 : 1,
-                            cursor: submitting ? "progress" : "pointer",
-                          }}
-                          disabled={submitting}
-                        >
-                          {submitting ? "Preparing your reserve step..." : "Build My Free Demo"}
-                        </button>
-
-                        <div style={{ ...muted, maxWidth: 520 }}>
-                          Your intake becomes a trust-first reserve step before live build.
-                        </div>
-                      </div>
-                    </form>
-                  )}
-                </div>
-              </section>
-            </main>
-
-            {!isCompact ? (
-              <aside style={{ display: "grid", gap: 14 }}>
-                <div style={panel}>
-                  <div style={panelHeader}>
-                    <div style={kicker}>Actions</div>
-                    <div style={panelTitle}>Launch controls</div>
-                    <div style={muted}>Next actions only.</div>
-                  </div>
-
-                  <div style={{ ...panelBody, display: "grid", gap: 10 }}>
-                    <button style={sideButton} onClick={scrollToIntakeForm}>
-                      {reserveReady ? "Go to reserve step" : "Start my free demo"}
-                    </button>
-                    <button style={sideButton} onClick={previewMealBusinessMode}>
-                      Preview meal business mode
-                    </button>
-                    <button style={sideButton} onClick={() => openRoute(MEAL_BUSINESS_ROUTE)}>
-                      Open meal launch flow
-                    </button>
-                    {reserveReady ? (
-                      <button style={sideButton} onClick={() => openRoute(reservePaymentRoute)}>
-                        Open payment node
-                      </button>
-                    ) : null}
-                    <button style={sideButton} onClick={() => openRoute(LIVE_CAMP_GUARDIAN_ROUTE)}>
-                      Open Camp Guardian
-                    </button>
-                    <button style={sideButton} onClick={scrollToCreatorSystems}>
-                      Open creator systems
-                    </button>
-                    <button style={sideButton} onClick={() => openRoute("/planet/experience")}>
-                      Open Experience Planet
-                    </button>
-                    <button style={sideButton} onClick={() => openRoute(LIVE_PRODUCT_DEMO_ROUTE)}>
-                      Open product selling board
-                    </button>
-                  </div>
-                </div>
-
-                <div style={panel}>
-                  <div style={panelHeader}>
-                    <div style={kicker}>Build feed</div>
-                    <div style={panelTitle}>Board assembly preview</div>
-                    <div style={muted}>Live board build signals.</div>
-                  </div>
-
-                  <div style={{ ...panelBody, display: "grid", gap: 10 }}>
-                    {buildSequence.map((item) => (
-                      <div key={item.title} style={card}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <span
-                            style={{
-                              ...cityLight(item.complete ? "ready" : "live"),
-                              animation:
-                                warmMode && !item.complete
-                                  ? "hpLivePulse 1.6s ease-out infinite"
-                                  : "none",
-                            }}
-                          />
-                          <strong style={{ fontSize: 13 }}>{item.title}</strong>
-                        </div>
-                        <div style={muted}>{item.text}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div style={panel}>
-                  <div style={panelHeader}>
-                    <div style={kicker}>Stage preview</div>
-                    <div style={panelTitle}>{configPreview.familyLabel}</div>
-                    <div style={muted}>Early stage map.</div>
-                  </div>
-
-                  <div style={{ ...panelBody, display: "grid", gap: 10 }}>
-                    {(reserveReady ? ["Reserve Your Build", ...previewStages.slice(0, 3)] : previewStages).map(
-                      (stage, index) => (
-                        <div key={`${stage}-${index}`} style={card}>
-                          <span style={pill("blue")}>STAGE {index + 1}</span>
-                          <div style={{ marginTop: 10, fontSize: 14, fontWeight: 950 }}>
-                            {stage}
-                          </div>
-                          <div style={muted}>
-                            {index === 0 && reserveReady
-                              ? "Trust-first hold before live build."
-                              : "Part of the live board workflow."}
-                          </div>
-                        </div>
-                      ),
-                    )}
-                  </div>
-                </div>
-              </aside>
-            ) : null}
-          </div>
-
-          <div style={{ padding: isCompact ? "0 12px 24px" : "0 16px 28px" }}>
-            <section style={panel}>
-              <div style={panelHeader}>
-                <div style={kicker}>Creator systems</div>
-                <div style={panelTitle}>Ready systems now live on their own page</div>
-                <div style={muted}>
-                  Creator City stays locked on intake and build. Use the systems page when you want the full live demo lineup.
-                </div>
-              </div>
-
-              <div style={panelBody}>
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: isCompact ? "1fr" : "minmax(0, 1fr) auto",
-                    gap: 14,
-                    alignItems: "center",
-                  }}
-                >
-                  <div style={card}>
-                    <span style={pill("blue")}>SEPARATE DEMO PAGE</span>
-                    <div style={{ marginTop: 10, fontSize: 16, fontWeight: 950 }}>
-                      /planet/creator/systems
-                    </div>
-                    <div style={muted}>
-                      Open Creator Studio, live selling, Experience Planet, and the full HomePlanet demo board library without cluttering the intake flow.
-                    </div>
-                  </div>
-
-                  <div style={{ display: "grid", gap: 10 }}>
-                    <button type="button" style={primaryButton} onClick={scrollToCreatorSystems}>
-                      Open Creator Systems
-                    </button>
-                    <button type="button" style={buttonBase} onClick={() => openRoute(CREATOR_STUDIO_ROUTE)}>
-                      Open Creator Studio
-                    </button>
-                  </div>
-                </div>
-
-                <div style={{ marginTop: 22, fontSize: 20, fontWeight: 950 }}>
-                  Featured proof inside Creator City
-                </div>
-
-                <div
-                  style={{
-                    ...card,
-                    marginTop: 12,
-                    cursor: "pointer",
-                    border: "1px solid rgba(112,242,163,0.28)",
-                    background:
-                      "linear-gradient(180deg, rgba(112,242,163,0.10), rgba(255,255,255,0.035))",
-                  }}
-                  onClick={() => openRoute(PAYMENT_DESK_DEMO_ROUTE)}
-                >
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    <span style={pill("green")}>LIVE PAYMENT DESK</span>
-                    <span style={pill("blue")}>NO SCREENSHOT PAYMENTS</span>
-                  </div>
-
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: isCompact ? "1fr" : "minmax(0, 1fr) auto",
-                      gap: 14,
-                      marginTop: 14,
-                      alignItems: "start",
-                    }}
-                  >
-                    <div>
-                      <div style={{ fontSize: 22, fontWeight: 950 }}>No Screenshot Payments</div>
-                      <div style={{ ...muted, fontSize: 15 }}>
-                        Customer pays. System confirms. Work keeps moving. This is the clean proof page for showing how HomePlanet handles payment truth without screenshots, text chasing, or manual verification.
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      style={primaryButton}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openRoute(PAYMENT_DESK_DEMO_ROUTE);
-                      }}
-                    >
-                      Open live demo
-                    </button>
-                  </div>
-
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: isCompact ? "1fr" : "repeat(3, minmax(0, 1fr))",
-                      gap: 10,
-                      marginTop: 14,
-                    }}
-                  >
-                    {[
-                      ["Problem", "“Did you send it?” should not be a workflow."],
-                      ["What it proves", "Payment becomes visible truth the second it happens."],
-                      ["Best use", "Send as a direct standalone proof page or open from Creator City."],
-                    ].map(([labelText, value]) => (
-                      <div key={labelText} style={card}>
-                        <div style={kicker}>{labelText}</div>
-                        <div style={{ ...muted, color: "#fff", fontWeight: 800 }}>{value}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div style={{ marginTop: 22, fontSize: 20, fontWeight: 950 }}>
-                  More live system examples
-                </div>
-
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: isMobile ? "1fr" : isTablet ? "1fr 1fr" : "repeat(2, minmax(0, 1fr))",
-                    gap: 10,
-                    marginTop: 12,
-                  }}
-                >
-                  {systems
-                    .filter((item) => item.id !== "payments")
-                    .map((item) => (
-                      <button
-                        key={item.id}
-                        type="button"
-                        style={{
-                          ...card,
-                          textAlign: "left",
-                          color: "#fff",
-                          cursor: "pointer",
-                        }}
-                        onClick={() => openRoute(item.to)}
-                      >
-                        <span style={pill("blue")}>{item.tag}</span>
-                        <div style={{ marginTop: 12, fontSize: 16, fontWeight: 950 }}>
-                          {item.title}
-                        </div>
-                        <div style={muted}>{item.subtitle}</div>
-                        <div style={routeText}>{item.to}</div>
-                      </button>
-                    ))}
-                </div>
-              </div>
-            </section>
-
-            <div
-              style={{
-                marginTop: 30,
-                paddingTop: 22,
-                borderTop: "1px solid rgba(255,255,255,0.10)",
-                display: "grid",
-                justifyItems: "center",
-                gap: 10,
-              }}
-            >
-              <a
-                href="https://instagram.com/homeplanetlive"
-                target="_blank"
-                rel="noreferrer"
-                style={{
-                  ...buttonBase,
-                  textDecoration: "none",
-                  borderRadius: 14,
-                }}
-              >
-                Talk to a human
-              </a>
-
-              <p
-                style={{
-                  margin: 0,
-                  maxWidth: 460,
-                  textAlign: "center",
-                  color: "rgba(255,255,255,0.42)",
-                  fontSize: 12,
-                  lineHeight: 1.5,
-                }}
-              >
-                No accounts. No spam. No data traps. Just build and run your system.
+          <div className="cc-work-picture">
+            <article className="cc-work-stage">
+              <div className="cc-stage-label">01 - Customer page</div>
+              <h3>The customer asks.</h3>
+              <p>
+                A simple public page collects the information needed to begin.
               </p>
 
-              <div
-                style={{
-                  marginTop: 10,
-                  color: "rgba(255,255,255,0.46)",
-                  fontSize: 12,
-                  textAlign: "center",
-                }}
-              >
-                HomePlanet © 2026. All rights reserved.
-              </div>
+              <div className="cc-customer-card">
+                <div>
+                  <div className="cc-mini-brand">
+                    Only The Essentials Cleaning
+                  </div>
 
-              <div
-                style={{
-                  color: "rgba(255,255,255,0.42)",
-                  fontSize: 12,
-                  textAlign: "center",
-                }}
-              >
-                Your business is not complicated. Your tools are.
+                  <strong>Need help getting your home back in order?</strong>
+
+                  <p>
+                    Choose the service, preferred time, and add photos when
+                    helpful.
+                  </p>
+                </div>
+
+                <div className="cc-mini-button">Request Cleaning</div>
               </div>
+            </article>
+
+            <div className="cc-stage-arrow" aria-hidden="true">
+              <span>→</span>
             </div>
+
+            <article className="cc-work-stage">
+              <div className="cc-stage-label">02 - New job</div>
+              <h3>The business sees it.</h3>
+              <p>
+                The request becomes visible work instead of disappearing into
+                email.
+              </p>
+
+              <div className="cc-job-card">
+                <div className="cc-job-head">
+                  <div>
+                    <strong>Sarah Mitchell</strong>
+                    <p>House Cleaning</p>
+                  </div>
+
+                  <div className="cc-status">New</div>
+                </div>
+
+                <div className="cc-job-lines">
+                  <div className="cc-job-line">
+                    Service <b>Standard Cleaning</b>
+                  </div>
+
+                  <div className="cc-job-line">
+                    Preferred time <b>Friday Morning</b>
+                  </div>
+
+                  <div className="cc-job-line">
+                    Photos <b>3 attached</b>
+                  </div>
+                </div>
+
+                <div className="cc-open-workspace">Open Workspace</div>
+              </div>
+            </article>
+
+            <div className="cc-stage-arrow" aria-hidden="true">
+              <span>→</span>
+            </div>
+
+            <article className="cc-work-stage">
+              <div className="cc-stage-label">03 - Active workspace</div>
+              <h3>The work moves forward.</h3>
+              <p>
+                The customer, tools, next action, and complete history stay
+                together.
+              </p>
+
+              <div className="cc-workspace-card">
+                <div className="cc-workspace-head">
+                  <small>Sarah Mitchell</small>
+                  <strong>House Cleaning Workspace</strong>
+
+                  <div className="cc-next-action">
+                    <span>Next Action</span>
+                    <b>Send Estimate</b>
+                  </div>
+                </div>
+
+                <div className="cc-tools">
+                  <div className="cc-tool">Estimate</div>
+                  <div className="cc-tool">Agreement</div>
+                  <div className="cc-tool">Schedule</div>
+                  <div className="cc-tool">Photos</div>
+                  <div className="cc-tool">Payment</div>
+                  <div className="cc-tool">Proof</div>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <p className="cc-work-caption">
+            Most websites send an email and stop.
+            <br />
+            <strong>HomePlanet opens the actual work.</strong>
+          </p>
+        </section>
+      </div>
+
+      <section
+        className="cc-ecosystem"
+        style={{
+          display: selectedDirection === "business" ? undefined : "none",
+        }}
+      >
+        <div className="cc-shell">
+          <div className="cc-ecosystem-heading">
+            <h2>
+              Your business, conversations, and community should{" "}
+              <span>work as one.</span>
+            </h2>
+
+            <p>
+              A post can become a conversation. A conversation can become a
+              request. A request can become active work without forcing anyone
+              to jump between disconnected apps.
+            </p>
+          </div>
+
+          <div className="cc-ecosystem-flow">
+            {ecosystemSteps.map((step, index) => (
+              <article className="cc-ecosystem-step" key={step.label}>
+                <div className="cc-ecosystem-number">
+                  {String(index + 1).padStart(2, "0")}
+                </div>
+
+                <div className="cc-ecosystem-label">{step.label}</div>
+                <strong>{step.title}</strong>
+                <p>{step.detail}</p>
+              </article>
+            ))}
+          </div>
+
+          <div className="cc-ecosystem-truth">
+            <strong>Nothing gets lost. Everything stays connected.</strong>
+
+            <p>
+              One identity. One conversation. One truth chain from the first
+              signal to the final outcome.
+            </p>
           </div>
         </div>
-      </div>
-    </div>
+      </section>
+
+      <section
+        className="cc-proof"
+        style={{
+          display: selectedDirection === "business" ? undefined : "none",
+        }}
+      >
+        <div className="cc-shell">
+          <div className="cc-proof-heading">
+            <h2>Different businesses. The same connected idea.</h2>
+
+            <p>
+              These are not mockups. They are real public entrances built around
+              how each business actually works.
+            </p>
+          </div>
+
+          <div className="cc-system-list">
+            {liveSystems.map((system) => (
+              <article
+                className={`cc-system ${system.tone}`}
+                key={system.name}
+              >
+                <div className="cc-system-name">
+                  <strong>{system.name}</strong>
+                  <span>{system.type}</span>
+                </div>
+
+                <div className="cc-system-side">
+                  <small>Customer side</small>
+                  <strong>{system.customer}</strong>
+                  <span>The public entrance starts the relationship.</span>
+                </div>
+
+                <div className="cc-system-side">
+                  <small>Business side</small>
+                  <strong>{system.work}</strong>
+                  <span>The next action is already visible.</span>
+                </div>
+
+                <button
+                  className="cc-open-system"
+                  onClick={() => go(system.href)}
+                >
+                  Open Live Page
+                </button>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section
+        className="cc-final"
+        style={{
+          display: selectedDirection === "business" ? undefined : "none",
+        }}
+      >
+        <div className="cc-shell">
+          <h2>
+            Build the page customers see.
+            <br />
+            <span>Run the work from underneath.</span>
+          </h2>
+
+          <p>
+            Start with the public entrance. Grow the system around the real way
+            your business, customers, conversations, and community already work.
+          </p>
+
+          <div className="cc-actions">
+            <button className="cc-button" onClick={openBuildDrawer}>
+              Build My System
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {isBuildDrawerOpen && (
+        <div
+          className="cc-drawer-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              closeBuildDrawer();
+            }
+          }}
+        >
+          <aside
+            className="cc-build-drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="build-drawer-title"
+          >
+            <div className="cc-drawer-head">
+              <div>
+                <div className="cc-drawer-kicker">Start inside HomePlanet</div>
+                <h2 id="build-drawer-title">Build my system.</h2>
+              </div>
+
+              <button
+                className="cc-drawer-close"
+                type="button"
+                aria-label="Close build drawer"
+                onClick={closeBuildDrawer}
+              >
+                ×
+              </button>
+            </div>
+
+            {buildSubmitted ? (
+              <div className="cc-build-success">
+                <div className="cc-build-success-mark">✓</div>
+                <h3>Your build has started.</h3>
+                <p>
+                  Your information is together and ready for the next step
+                  inside HomePlanet.
+                </p>
+              </div>
+            ) : (
+              <form className="cc-build-form" onSubmit={submitBuildRequest}>
+                <div className="cc-form-group">
+                  <div className="cc-form-label">
+                    What are we building for?
+                  </div>
+
+                  <div className="cc-build-types">
+                    {[
+                      "Business",
+                      "Community",
+                      "Restaurant",
+                      "Service Company",
+                      "Something Else",
+                    ].map((type) => (
+                      <label className="cc-build-type" key={type}>
+                        <input
+                          type="radio"
+                          name="buildType"
+                          value={type}
+                          required
+                        />
+                        <span>{type}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="cc-form-group">
+                  <label htmlFor="cc-business-name">Business Name</label>
+                  <input
+                    className="cc-build-input"
+                    id="cc-business-name"
+                    name="businessName"
+                    type="text"
+                    autoComplete="organization"
+                    placeholder="Your business or project name"
+                    required
+                  />
+                </div>
+
+                <div className="cc-form-group">
+                  <label htmlFor="cc-happening">
+                    What's happening today?
+                  </label>
+                  <textarea
+                    className="cc-build-textarea"
+                    id="cc-happening"
+                    name="happeningToday"
+                    placeholder="Tell us what customers, staff, or the community are trying to do."
+                    required
+                  />
+                </div>
+
+                <div className="cc-form-group">
+                  <label htmlFor="cc-frustration">
+                    Biggest frustration?
+                  </label>
+                  <textarea
+                    className="cc-build-textarea"
+                    id="cc-frustration"
+                    name="biggestFrustration"
+                    placeholder="What keeps getting lost, delayed, repeated, or handled manually?"
+                    required
+                  />
+                </div>
+
+                <div className="cc-form-two-column">
+                  <div className="cc-form-group">
+                    <label htmlFor="cc-name">Name</label>
+                    <input
+                      className="cc-build-input"
+                      id="cc-name"
+                      name="name"
+                      type="text"
+                      autoComplete="name"
+                      placeholder="Your name"
+                      required
+                    />
+                  </div>
+
+                  <div className="cc-form-group">
+                    <label htmlFor="cc-phone">Phone</label>
+                    <input
+                      className="cc-build-input"
+                      id="cc-phone"
+                      name="phone"
+                      type="tel"
+                      autoComplete="tel"
+                      inputMode="tel"
+                      placeholder="Your phone number"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {buildSubmitError && (
+                  <div className="cc-build-error" role="alert">
+                    {buildSubmitError}
+                  </div>
+                )}
+
+                <button
+                  className="cc-build-submit"
+                  type="submit"
+                  disabled={isBuildSubmitting}
+                >
+                  {isBuildSubmitting ? "Sending..." : "Start My Build"}
+                </button>
+              </form>
+            )}
+          </aside>
+        </div>
+      )}
+
+      {isBuildDrawerOpen && (
+        <div
+          className="cc-drawer-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              closeBuildDrawer();
+            }
+          }}
+        >
+          <aside
+            className="cc-build-drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="build-drawer-title"
+          >
+            <div className="cc-drawer-head">
+              <div>
+                <div className="cc-drawer-kicker">Start inside HomePlanet</div>
+                <h2 id="build-drawer-title">Build my system.</h2>
+              </div>
+
+              <button
+                className="cc-drawer-close"
+                type="button"
+                aria-label="Close build drawer"
+                onClick={closeBuildDrawer}
+              >
+                ×
+              </button>
+            </div>
+
+            {buildSubmitted ? (
+              <div className="cc-build-success">
+                <div className="cc-build-success-mark">✓</div>
+                <h3>Your build has started.</h3>
+                <p>
+                  Your information is together and ready for the next step
+                  inside HomePlanet.
+                </p>
+              </div>
+            ) : (
+              <form className="cc-build-form" onSubmit={submitBuildRequest}>
+                <div className="cc-form-group">
+                  <div className="cc-form-label">
+                    What are we building for?
+                  </div>
+
+                  <div className="cc-build-types">
+                    {[
+                      "Business",
+                      "Community",
+                      "Restaurant",
+                      "Service Company",
+                      "Something Else",
+                    ].map((type) => (
+                      <label className="cc-build-type" key={type}>
+                        <input
+                          type="radio"
+                          name="buildType"
+                          value={type}
+                          required
+                        />
+                        <span>{type}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="cc-form-group">
+                  <label htmlFor="cc-business-name">Business Name</label>
+                  <input
+                    className="cc-build-input"
+                    id="cc-business-name"
+                    name="businessName"
+                    type="text"
+                    autoComplete="organization"
+                    placeholder="Your business or project name"
+                    required
+                  />
+                </div>
+
+                <div className="cc-form-group">
+                  <label htmlFor="cc-happening">
+                    What's happening today?
+                  </label>
+                  <textarea
+                    className="cc-build-textarea"
+                    id="cc-happening"
+                    name="happeningToday"
+                    placeholder="Tell us what customers, staff, or the community are trying to do."
+                    required
+                  />
+                </div>
+
+                <div className="cc-form-group">
+                  <label htmlFor="cc-frustration">
+                    Biggest frustration?
+                  </label>
+                  <textarea
+                    className="cc-build-textarea"
+                    id="cc-frustration"
+                    name="biggestFrustration"
+                    placeholder="What keeps getting lost, delayed, repeated, or handled manually?"
+                    required
+                  />
+                </div>
+
+                <div className="cc-form-two-column">
+                  <div className="cc-form-group">
+                    <label htmlFor="cc-name">Name</label>
+                    <input
+                      className="cc-build-input"
+                      id="cc-name"
+                      name="name"
+                      type="text"
+                      autoComplete="name"
+                      placeholder="Your name"
+                      required
+                    />
+                  </div>
+
+                  <div className="cc-form-group">
+                    <label htmlFor="cc-phone">Phone</label>
+                    <input
+                      className="cc-build-input"
+                      id="cc-phone"
+                      name="phone"
+                      type="tel"
+                      autoComplete="tel"
+                      inputMode="tel"
+                      placeholder="Your phone number"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {buildSubmitError && (
+                  <div className="cc-build-error" role="alert">
+                    {buildSubmitError}
+                  </div>
+                )}
+
+                <button
+                  className="cc-build-submit"
+                  type="submit"
+                  disabled={isBuildSubmitting}
+                >
+                  {isBuildSubmitting ? "Sending..." : "Start My Build"}
+                </button>
+              </form>
+            )}
+          </aside>
+        </div>
+      )}
+
+      <footer className="cc-footer">
+        Creator City - Powered by HomePlanet
+      </footer>
+    </main>
   );
 }
+
+
+
+
+
+
+
+
+
+
 
 
 
