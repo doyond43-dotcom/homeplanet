@@ -210,6 +210,7 @@ export default function App() {
         <Route path="/create" element={<OkeechobeeDomainCreateRedirect />} />
 
         <Route path="/onlytheessentials" element={<OnlyTheEssentialsLandingV2 />} />
+<Route path="/essentials" element={<OnlyTheEssentialsLandingV2 />} />
 
         <Route path="/:slug/*" element={<TenantPublicPage />} />
 
@@ -228,6 +229,7 @@ export default function App() {
     </BrowserRouter>
   );
 }
+
 
 
 
