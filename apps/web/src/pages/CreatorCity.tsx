@@ -2107,11 +2107,47 @@ export default function CreatorCity() {
             ))}
           </div>
         </section>
-
-                {selectedDirection !== "business" && (
+{selectedDirection && (
           <section className="cc-selected-direction-content">
             <div className="cc-kicker">Built on HomePlanet</div>
 
+            {selectedDirection === "business" && (
+              <>
+                <h2>Turn customer requests into connected work.</h2>
+
+                <p className="cc-selected-direction-copy">
+                  Give customers one clear place to reach you, then keep the
+                  request, estimate, schedule, communication, payment, proof,
+                  follow-up, and complete history connected underneath.
+                </p>
+
+                <div className="cc-selected-system-grid cc-selected-system-grid-two">
+                  <article className="cc-selected-system-card">
+                    <span>Customer entrance</span>
+                    <h3>Make it easy to begin.</h3>
+                    <p>
+                      Customers can request service, explain what they need,
+                      choose a preferred time, and attach useful photos or
+                      details.
+                    </p>
+                  </article>
+
+                  <article className="cc-selected-system-card">
+                    <span>Business workspace</span>
+                    <h3>See exactly what happens next.</h3>
+                    <p>
+                      Requests become organized work with estimates, schedules,
+                      messages, payment, proof, follow-up, and customer history
+                      in one place.
+                    </p>
+                  </article>
+                </div>
+
+                <div className="cc-selected-direction-path">
+                  Customer → request → estimate → schedule → payment → proof → follow-up
+                </div>
+              </>
+            )}
             {selectedDirection === "community" && (
               <>
                 <h2>Real community action stays connected.</h2>
@@ -2234,6 +2270,231 @@ export default function CreatorCity() {
             </button>
           </section>
         )}
+
+        <section className="cc-accountability-truth">
+          <div className="cc-kicker">Accountability Truth Chain</div>
+
+          <div className="cc-accountability-heading">
+            <h2>Keep the money connected to what it accomplished.</h2>
+
+            <p>
+              Track where money came from, what it was approved for, who
+              received it, what proof was attached, what outcome was produced,
+              and what remains.
+            </p>
+          </div>
+
+          <div
+            className="cc-accountability-chain"
+            aria-label="Money accountability chain"
+          >
+            {[
+              "Money in",
+              "Purpose",
+              "Approval",
+              "Payment",
+              "Receipt",
+              "Proof",
+              "Outcome",
+            ].map((step, index) => (
+              <React.Fragment key={step}>
+                <div>{step}</div>
+
+                {index < 6 && <span aria-hidden="true">→</span>}
+              </React.Fragment>
+            ))}
+          </div>
+
+          <div className="cc-accountability-grid">
+            <article>
+              <span>Business</span>
+              <strong>Payment stays attached to the job.</strong>
+              <p>
+                Deposit, invoice, completed work, proof, review, and customer
+                history.
+              </p>
+            </article>
+
+            <article>
+              <span>Community</span>
+              <strong>Support stays attached to the need.</strong>
+              <p>
+                Sponsor money, assigned help, local payment, proof, and the
+                remaining balance.
+              </p>
+            </article>
+
+            <article>
+              <span>Organization or nonprofit</span>
+              <strong>Funding stays attached to its purpose.</strong>
+              <p>
+                Donation or grant, approval, receipts, spending, outcome, and
+                board or donor visibility.
+              </p>
+            </article>
+
+            <article>
+              <span>Public projects</span>
+              <strong>Funding stays attached to public results.</strong>
+              <p>
+                Responsibility, milestones, spending, proof, resident
+                visibility, and complete history.
+              </p>
+            </article>
+          </div>
+
+          <div className="cc-accountability-note">
+            Public, shared with the right people, or private internally—the
+            system keeps the complete truth chain intact.
+          </div>
+        </section>
+
+        <style>{`
+          .cc-accountability-truth {
+            max-width: 1160px;
+            margin: 0 auto;
+            padding: 12px 24px 108px;
+            text-align: center;
+          }
+
+          .cc-accountability-heading {
+            max-width: 900px;
+            margin: 0 auto;
+          }
+
+          .cc-accountability-heading h2 {
+            margin: 20px 0 0;
+            font-size: clamp(43px, 6.5vw, 76px);
+            line-height: 0.96;
+            letter-spacing: -0.063em;
+          }
+
+          .cc-accountability-heading p {
+            max-width: 760px;
+            margin: 24px auto 0;
+            color: rgba(229, 245, 234, 0.62);
+            font-size: clamp(17px, 2vw, 20px);
+            line-height: 1.65;
+          }
+
+          .cc-accountability-chain {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 38px;
+          }
+
+          .cc-accountability-chain div {
+            padding: 13px 15px;
+            border: 1px solid rgba(94, 255, 149, 0.16);
+            border-radius: 14px;
+            color: #75ffa3;
+            background: rgba(83, 255, 141, 0.045);
+            font-size: 12px;
+            font-weight: 900;
+            white-space: nowrap;
+          }
+
+          .cc-accountability-chain span {
+            color: rgba(94, 255, 149, 0.48);
+            font-size: 16px;
+            font-weight: 900;
+          }
+
+          .cc-accountability-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 28px;
+            text-align: left;
+          }
+
+          .cc-accountability-grid article {
+            min-height: 210px;
+            padding: 22px;
+            border: 1px solid rgba(255, 255, 255, 0.085);
+            border-radius: 21px;
+            background:
+              radial-gradient(
+                circle at 50% 0%,
+                rgba(72, 255, 136, 0.06),
+                transparent 70%
+              ),
+              rgba(255, 255, 255, 0.018);
+          }
+
+          .cc-accountability-grid span,
+          .cc-accountability-grid strong {
+            display: block;
+          }
+
+          .cc-accountability-grid span {
+            color: #67ff99;
+            font-size: 9px;
+            font-weight: 950;
+            letter-spacing: 0.13em;
+            text-transform: uppercase;
+          }
+
+          .cc-accountability-grid strong {
+            margin-top: 17px;
+            font-size: 22px;
+            line-height: 1.08;
+            letter-spacing: -0.04em;
+          }
+
+          .cc-accountability-grid p {
+            margin: 15px 0 0;
+            color: rgba(226, 242, 231, 0.52);
+            font-size: 13px;
+            line-height: 1.6;
+          }
+
+          .cc-accountability-note {
+            max-width: 820px;
+            margin: 25px auto 0;
+            padding: 17px 20px;
+            border: 1px solid rgba(91, 255, 147, 0.14);
+            border-radius: 17px;
+            color: rgba(224, 255, 235, 0.78);
+            background: rgba(74, 255, 137, 0.04);
+            font-size: 14px;
+            font-weight: 800;
+            line-height: 1.55;
+          }
+
+          @media (max-width: 950px) {
+            .cc-accountability-chain {
+              display: grid;
+              grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .cc-accountability-chain span {
+              display: none;
+            }
+
+            .cc-accountability-grid {
+              grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+          }
+
+          @media (max-width: 620px) {
+            .cc-accountability-truth {
+              padding: 10px 18px 82px;
+            }
+
+            .cc-accountability-chain,
+            .cc-accountability-grid {
+              grid-template-columns: 1fr;
+            }
+
+            .cc-accountability-grid article {
+              min-height: 0;
+            }
+          }
+        `}</style>
+
 <section
           className="cc-customer-path-section"
           aria-labelledby="customer-path-heading"
@@ -2497,22 +2758,18 @@ export default function CreatorCity() {
         </div>
       </section>
 
-      <section
-        className="cc-final"
-        style={{
-          display: selectedDirection === "business" ? undefined : "none",
-        }}
-      >
+      <section className="cc-final">
         <div className="cc-shell">
           <h2>
-            Build the page customers see.
+            Build around the real work.
             <br />
-            <span>Run the work from underneath.</span>
+            <span>Keep everything connected underneath.</span>
           </h2>
 
           <p>
-            Start with the public entrance. Grow the system around the real way
-            your business, customers, conversations, and community already work.
+            Business, community, organization, or something completely custom—
+            start with what is happening now and build the connected system
+            around the people, money, actions, proof, and outcomes involved.
           </p>
 
           <div className="cc-actions">
@@ -2841,6 +3098,10 @@ export default function CreatorCity() {
     </main>
   );
 }
+
+
+
+
 
 
 

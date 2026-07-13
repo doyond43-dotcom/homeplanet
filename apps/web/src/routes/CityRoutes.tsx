@@ -1,4 +1,5 @@
-﻿import { Routes, Route, Link, Navigate, useLocation } from "react-router-dom";
+﻿import { Fragment } from "react";
+import { Routes, Route, Link, Navigate, useLocation } from "react-router-dom";
 import type { CSSProperties } from "react";
 import CreatorCity from "../pages/CreatorCity";
 import SafetyCityLanding from "../pages/SafetyCityLanding";
@@ -989,6 +990,438 @@ function AtlasIndex() {
           </div>
         </section>
 
+        <section className="hp-accountability-truth">
+          <div className="hp-accountability-shell">
+            <div className="hp-accountability-heading">
+              <div className="hp-real-world-label">
+                Accountability Truth Chain
+              </div>
+
+              <h2>
+                Money should never disappear
+                <span> into a black hole.</span>
+              </h2>
+
+              <p>
+                A customer payment, community contribution, nonprofit
+                donation, sponsorship, grant, or public dollar can remain
+                connected to why it was collected, who approved it, where it
+                went, what was completed, and what remains.
+              </p>
+            </div>
+
+            <div
+              className="hp-accountability-chain"
+              aria-label="Accountability truth chain"
+            >
+              {[
+                "Funded",
+                "Assigned",
+                "Approved",
+                "Spent",
+                "Proven",
+                "Completed",
+                "Remembered",
+              ].map((step, index) => (
+                <Fragment key={step}>
+                  <div className="hp-accountability-step">
+                    <span>{String(index + 1).padStart(2, "0")}</span>
+                    <strong>{step}</strong>
+                  </div>
+
+                  {index < 6 && (
+                    <div
+                      className="hp-accountability-arrow"
+                      aria-hidden="true"
+                    >
+                      →
+                    </div>
+                  )}
+                </Fragment>
+              ))}
+            </div>
+
+            <div className="hp-accountability-layout">
+              <article className="hp-accountability-example">
+                <div className="hp-accountability-example-head">
+                  <div>
+                    <span>Real example</span>
+                    <strong>Community Piggy Bank</strong>
+                  </div>
+
+                  <div className="hp-accountability-balance">$80 remains</div>
+                </div>
+
+                <div className="hp-accountability-ledger">
+                  <div>
+                    <span>Sponsor contribution</span>
+                    <strong>$100 added for local lawn support</strong>
+                    <b>+$100</b>
+                  </div>
+
+                  <div>
+                    <span>Approved need</span>
+                    <strong>$20 assigned to one resident’s lawn</strong>
+                    <b>−$20</b>
+                  </div>
+
+                  <div>
+                    <span>Paid local work</span>
+                    <strong>Worker paid after the job was completed</strong>
+                    <b>Recorded</b>
+                  </div>
+
+                  <div>
+                    <span>Proof attached</span>
+                    <strong>Before, after, receipt, and confirmation</strong>
+                    <b>Verified</b>
+                  </div>
+                </div>
+
+                <div className="hp-accountability-example-truth">
+                  People can see what the money accomplished—not only that
+                  money changed hands.
+                </div>
+              </article>
+
+              <div className="hp-accountability-uses">
+                <article>
+                  <span>Business</span>
+                  <h3>Payment stays connected to the job.</h3>
+                  <p>
+                    Deposit, invoice, completed work, receipt, proof, review,
+                    and full customer history.
+                  </p>
+                </article>
+
+                <article>
+                  <span>Community</span>
+                  <h3>Support stays connected to the person helped.</h3>
+                  <p>
+                    Sponsor contribution, assigned need, helper payment,
+                    before-and-after proof, and remaining balance.
+                  </p>
+                </article>
+
+                <article>
+                  <span>Nonprofit or organization</span>
+                  <h3>Funding stays connected to its approved purpose.</h3>
+                  <p>
+                    Donation or grant, approval, spending, receipts, project
+                    outcome, and board or donor visibility.
+                  </p>
+                </article>
+
+                <article>
+                  <span>Public projects</span>
+                  <h3>Residents can see what funding produced.</h3>
+                  <p>
+                    Responsibility, milestones, spending, proof, final outcome,
+                    and a history that does not disappear after approval.
+                  </p>
+                </article>
+              </div>
+            </div>
+
+            <div className="hp-accountability-visibility">
+              <strong>The right visibility for the right situation.</strong>
+
+              <p>
+                The complete chain can be public for community accountability,
+                shared with donors, boards, partners, or residents, or kept
+                private internally when the information should not be public.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <style>{`
+          .hp-accountability-truth {
+            padding: 112px 24px;
+            border-top: 1px solid rgba(255, 255, 255, 0.065);
+            background:
+              radial-gradient(
+                circle at 50% 0%,
+                rgba(66, 255, 130, 0.105),
+                transparent 42%
+              ),
+              #050806;
+          }
+
+          .hp-accountability-shell {
+            width: min(1180px, 100%);
+            margin: 0 auto;
+          }
+
+          .hp-accountability-heading {
+            max-width: 930px;
+          }
+
+          .hp-accountability-heading h2 {
+            margin: 18px 0 0;
+            color: #f1fff5;
+            font-size: clamp(48px, 7vw, 88px);
+            line-height: 0.94;
+            letter-spacing: -0.067em;
+          }
+
+          .hp-accountability-heading h2 span {
+            color: #62ff97;
+          }
+
+          .hp-accountability-heading p {
+            max-width: 830px;
+            margin: 26px 0 0;
+            color: rgba(232, 247, 237, 0.66);
+            font-size: clamp(18px, 2vw, 21px);
+            line-height: 1.65;
+          }
+
+          .hp-accountability-chain {
+            display: flex;
+            align-items: stretch;
+            gap: 8px;
+            margin-top: 50px;
+          }
+
+          .hp-accountability-step {
+            flex: 1;
+            min-width: 0;
+            padding: 17px 13px;
+            border: 1px solid rgba(98, 255, 151, 0.16);
+            border-radius: 16px;
+            background: rgba(85, 255, 142, 0.045);
+          }
+
+          .hp-accountability-step span,
+          .hp-accountability-step strong {
+            display: block;
+          }
+
+          .hp-accountability-step span {
+            color: #62ff97;
+            font-size: 9px;
+            font-weight: 950;
+            letter-spacing: 0.13em;
+          }
+
+          .hp-accountability-step strong {
+            margin-top: 8px;
+            color: #effff4;
+            font-size: 13px;
+          }
+
+          .hp-accountability-arrow {
+            display: grid;
+            place-items: center;
+            color: rgba(98, 255, 151, 0.54);
+            font-size: 17px;
+            font-weight: 900;
+          }
+
+          .hp-accountability-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+            gap: 18px;
+            margin-top: 30px;
+          }
+
+          .hp-accountability-example,
+          .hp-accountability-uses article {
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            background: rgba(8, 14, 10, 0.86);
+            box-shadow: inset 0 1px rgba(255, 255, 255, 0.035);
+          }
+
+          .hp-accountability-example {
+            padding: 26px;
+            border-radius: 27px;
+          }
+
+          .hp-accountability-example-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+          }
+
+          .hp-accountability-example-head span,
+          .hp-accountability-example-head strong {
+            display: block;
+          }
+
+          .hp-accountability-example-head span,
+          .hp-accountability-uses article > span {
+            color: #62ff97;
+            font-size: 10px;
+            font-weight: 950;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+          }
+
+          .hp-accountability-example-head strong {
+            margin-top: 7px;
+            color: #f0fff4;
+            font-size: 26px;
+            letter-spacing: -0.035em;
+          }
+
+          .hp-accountability-balance {
+            padding: 10px 13px;
+            border: 1px solid rgba(98, 255, 151, 0.18);
+            border-radius: 999px;
+            color: #72ffa1;
+            background: rgba(98, 255, 151, 0.07);
+            font-size: 12px;
+            font-weight: 900;
+            white-space: nowrap;
+          }
+
+          .hp-accountability-ledger {
+            margin-top: 24px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.075);
+            border-radius: 18px;
+          }
+
+          .hp-accountability-ledger > div {
+            display: grid;
+            grid-template-columns: 0.72fr 1.35fr auto;
+            align-items: center;
+            gap: 15px;
+            padding: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.065);
+          }
+
+          .hp-accountability-ledger > div:last-child {
+            border-bottom: 0;
+          }
+
+          .hp-accountability-ledger span,
+          .hp-accountability-ledger strong {
+            display: block;
+          }
+
+          .hp-accountability-ledger span {
+            color: rgba(229, 244, 234, 0.48);
+            font-size: 11px;
+          }
+
+          .hp-accountability-ledger strong {
+            color: rgba(242, 255, 246, 0.86);
+            font-size: 13px;
+            line-height: 1.4;
+          }
+
+          .hp-accountability-ledger b {
+            color: #6dff9e;
+            font-size: 12px;
+            text-align: right;
+          }
+
+          .hp-accountability-example-truth {
+            margin-top: 20px;
+            padding: 17px 18px;
+            border-radius: 16px;
+            color: #dffff0;
+            background: rgba(98, 255, 151, 0.065);
+            font-size: 14px;
+            font-weight: 800;
+            line-height: 1.55;
+          }
+
+          .hp-accountability-uses {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+          }
+
+          .hp-accountability-uses article {
+            min-height: 200px;
+            padding: 21px;
+            border-radius: 21px;
+          }
+
+          .hp-accountability-uses h3 {
+            margin: 16px 0 0;
+            color: #effff4;
+            font-size: 21px;
+            line-height: 1.06;
+            letter-spacing: -0.04em;
+          }
+
+          .hp-accountability-uses p {
+            margin: 14px 0 0;
+            color: rgba(229, 244, 234, 0.54);
+            font-size: 13px;
+            line-height: 1.58;
+          }
+
+          .hp-accountability-visibility {
+            display: grid;
+            grid-template-columns: 0.62fr 1.38fr;
+            gap: 30px;
+            margin-top: 18px;
+            padding: 24px 26px;
+            border: 1px solid rgba(98, 255, 151, 0.13);
+            border-radius: 22px;
+            background: rgba(98, 255, 151, 0.035);
+          }
+
+          .hp-accountability-visibility strong {
+            color: #effff4;
+            font-size: 18px;
+            line-height: 1.3;
+          }
+
+          .hp-accountability-visibility p {
+            margin: 0;
+            color: rgba(229, 244, 234, 0.58);
+            font-size: 14px;
+            line-height: 1.65;
+          }
+
+          @media (max-width: 900px) {
+            .hp-accountability-chain {
+              display: grid;
+              grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .hp-accountability-arrow {
+              display: none;
+            }
+
+            .hp-accountability-layout,
+            .hp-accountability-visibility {
+              grid-template-columns: 1fr;
+            }
+          }
+
+          @media (max-width: 620px) {
+            .hp-accountability-truth {
+              padding: 82px 18px;
+            }
+
+            .hp-accountability-chain,
+            .hp-accountability-uses {
+              grid-template-columns: 1fr;
+            }
+
+            .hp-accountability-ledger > div {
+              grid-template-columns: 1fr;
+              gap: 7px;
+            }
+
+            .hp-accountability-ledger b {
+              text-align: left;
+            }
+
+            .hp-accountability-example-head {
+              align-items: flex-start;
+              flex-direction: column;
+            }
+          }
+        `}</style>
         <section className="hp-homeplanet-point">
           <div className="hp-homeplanet-point-inner">
             <div className="hp-point-copy">
@@ -4391,6 +4824,8 @@ export default function CityRoutes() {
     </Routes>
   );
 }
+
+
 
 
 
