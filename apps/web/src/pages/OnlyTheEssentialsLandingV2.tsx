@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import {
   CalendarCheck,
   Heart,
@@ -253,27 +253,20 @@ export default function OnlyTheEssentialsCustomerLanding() {
                 for what matters.
               </p>
 
-              <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <a
-                  href={`tel:${phone}`}
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-pink-400 px-7 py-4 text-xs font-black uppercase tracking-[0.24em] text-black shadow-lg shadow-pink-500/25"
-                >
-                  <Phone size={16} />
-                  Call Kaitlin
-                </a>
-                <a
-                  href={kaitlinSmsHref(kaitlinNotifyText || "New Only The Essentials quote request submitted. Please check the HomePlanet dashboard.")}
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-pink-300/30 bg-white/5 px-7 py-4 text-xs font-black uppercase tracking-[0.24em] text-white"
-                >
-                  <MessageCircle size={16} />
-                  Text Kaitlin
-                </a>
-                <a
-                  href="/planet/only-the-essentials/request?type=book"
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-white/20 bg-white/10 px-7 py-4 text-xs font-black uppercase tracking-[0.24em] text-white"
+                  href="#only-essentials-quote"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-pink-400 px-7 py-4 text-xs font-black uppercase tracking-[0.24em] text-black shadow-lg shadow-pink-500/20 transition hover:-translate-y-0.5 hover:bg-pink-300"
                 >
                   <CalendarCheck size={16} />
-                  Request Cleaning
+                  Get My Cleaning Quote
+                </a>
+
+                <a
+                  href="#cleaning-services"
+                  className="inline-flex items-center justify-center rounded-full border border-white/20 bg-white/5 px-7 py-4 text-xs font-black uppercase tracking-[0.24em] text-white transition hover:-translate-y-0.5 hover:border-pink-300/40 hover:bg-white/10"
+                >
+                  View Services
                 </a>
               </div>
 
@@ -290,7 +283,7 @@ export default function OnlyTheEssentialsCustomerLanding() {
             </div>
 
 
-            <div className="mx-auto w-full max-w-md">
+            <div className="mx-auto w-full max-w-md lg:ml-auto lg:mr-0">
               <div className="rounded-[2.25rem] border border-pink-300/20 bg-white/5 p-5 shadow-2xl shadow-pink-950/40">
                 <div className="overflow-hidden rounded-[1.75rem] border border-white/10 bg-black">
                   <img
@@ -305,7 +298,7 @@ export default function OnlyTheEssentialsCustomerLanding() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-5 py-16 sm:px-8 lg:px-12">
+      <section id="cleaning-services" className="mx-auto max-w-7xl scroll-mt-6 px-5 py-16 sm:px-8 lg:px-12">
         <div className="text-center">
           <p className="text-xs font-black uppercase tracking-[0.4em] text-pink-300">
             Services
@@ -429,6 +422,93 @@ export default function OnlyTheEssentialsCustomerLanding() {
             </button>
           </div>
         </section>
+        <section
+          id="only-essentials-trust"
+          aria-labelledby="only-essentials-trust-heading"
+          className="relative mt-14 overflow-hidden rounded-[2rem] border border-pink-300/15 bg-white/[0.035] p-6 shadow-2xl shadow-black/30 sm:p-8 lg:p-10"
+        >
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_0%,rgba(244,114,182,0.13),transparent_34%),radial-gradient(circle_at_90%_100%,rgba(236,72,153,0.09),transparent_32%)]" />
+
+          <div className="relative">
+            <div className="mx-auto max-w-3xl text-center">
+              <p className="text-xs font-black uppercase tracking-[0.36em] text-pink-300">
+                Trusted In Okeechobee
+              </p>
+
+              <h2
+                id="only-essentials-trust-heading"
+                className="mt-4 font-serif text-4xl italic leading-tight text-pink-100 sm:text-5xl"
+              >
+                Real words from local customers.
+              </h2>
+
+              <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-zinc-300">
+                Real experiences from customers who trusted Kaitlin inside their homes.
+              </p>
+            </div>
+
+            <div className="mt-8 flex flex-wrap justify-center gap-3">
+              {[
+                "Locally Trusted",
+                "Verified Recommendations",
+                "Real Local Customers",
+              ].map((badge) => (
+                <span
+                  key={badge}
+                  className="rounded-full border border-pink-300/20 bg-pink-300/[0.07] px-4 py-2 text-[0.68rem] font-black uppercase tracking-[0.2em] text-pink-100"
+                >
+                  {badge}
+                </span>
+              ))}
+            </div>
+
+            <div className="mt-10 grid gap-5 lg:grid-cols-2">
+              <article className="flex h-full flex-col rounded-[1.75rem] border border-white/10 bg-black/25 p-6 shadow-xl shadow-black/20 transition duration-300 hover:-translate-y-1 hover:border-pink-300/25 sm:p-8">
+                <p
+                  aria-label="Five-star customer recommendation"
+                  className="text-3xl font-black leading-none tracking-[0.14em] text-yellow-400 drop-shadow-[0_0_12px_rgba(250,204,21,0.22)] sm:text-4xl"
+                >
+                  ★★★★★
+                </p>
+
+                <blockquote className="mt-6 flex-1 font-serif text-2xl italic leading-9 text-white sm:text-[1.7rem]">
+                  “Highly recommend! Kaitlyn did a great job helping us get back on
+                  track. From the ceiling to the floor she knocked it out of the
+                  park!”
+                </blockquote>
+
+                <div className="mt-8 border-t border-white/10 pt-5">
+                  <p className="font-black text-pink-100">Celia Atkinson</p>
+                  <p className="mt-1 text-xs font-bold uppercase tracking-[0.2em] text-zinc-500">
+                    Customer Recommendation
+                  </p>
+                </div>
+              </article>
+
+              <article className="flex h-full flex-col rounded-[1.75rem] border border-white/10 bg-black/25 p-6 shadow-xl shadow-black/20 transition duration-300 hover:-translate-y-1 hover:border-pink-300/25 sm:p-8">
+                <p
+                  aria-label="Five-star customer recommendation"
+                  className="text-3xl font-black leading-none tracking-[0.14em] text-yellow-400 drop-shadow-[0_0_12px_rgba(250,204,21,0.22)] sm:text-4xl"
+                >
+                  ★★★★★
+                </p>
+
+                <blockquote className="mt-6 flex-1 font-serif text-2xl italic leading-9 text-white sm:text-[1.7rem]">
+                  “I came home to super clean floors, sparkling bathrooms, beds made,
+                  sinks cleaned... Everything back in order! Highly recommend.”
+                </blockquote>
+
+                <div className="mt-8 border-t border-white/10 pt-5">
+                  <p className="font-black text-pink-100">Amanda Carames</p>
+                  <p className="mt-1 text-xs font-bold uppercase tracking-[0.2em] text-zinc-500">
+                    Customer Recommendation
+                  </p>
+                </div>
+              </article>
+            </div>
+          </div>
+        </section>
+
 <div className="mt-14 grid gap-8 rounded-[2rem] border border-pink-300/20 bg-pink-950/25 p-8 sm:p-10 lg:grid-cols-[0.9fr_1fr] lg:items-center">
           <h2 className="font-serif text-5xl italic leading-tight text-pink-200">
             Let&apos;s make life a little easier. {"\u2661"}
@@ -532,6 +612,11 @@ export default function OnlyTheEssentialsCustomerLanding() {
     </main>
   );
 }
+
+
+
+
+
 
 
 
