@@ -75,6 +75,7 @@ import HomePlanetNotepad from './pages/HomePlanetNotepad';
 
 import SlapABugLandingPage from "./pages/SlapABugLandingPage";
 import SlapABugBoardPage from "./pages/SlapABugBoardPage";
+import VZProfessionalLawncareLanding from "./pages/VZProfessionalLawncareLanding";
 function LiveShell() {
   return <Outlet />;
 }
@@ -156,7 +157,9 @@ export default function App() {
     <BrowserRouter>
       <Routes>
           <Route path="/planet/slap-a-bug/board" element={<SlapABugBoardPage />} />
-          <Route path="/planet/slap-a-bug" element={<SlapABugLandingPage />} />                    <Route path="/planet/transportation/request" element={<HomePlanetTransportationRequestPage />} />
+          <Route path="/planet/slap-a-bug" element={<SlapABugLandingPage />} />
+<Route path="/vz" element={<VZProfessionalLawncareLanding />} />
+<Route path="/planet/vz-professional-lawncare" element={<VZProfessionalLawncareLanding />} />                    <Route path="/planet/transportation/request" element={<HomePlanetTransportationRequestPage />} />
           <Route path="/planet/transportation" element={<HomePlanetTransportationPage />} />
 <Route path="/planet/demo/brightside-flow" element={<BrightSideFlowDemo />} />
           <Route path="/planet/demo/after-the-click" element={<HomePlanetAfterTheClickDemo />} />
