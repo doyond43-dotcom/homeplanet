@@ -139,29 +139,29 @@ export default function VZProfessionalLawncareLanding() {
             src="/images/vz-eric-trimming-hero.png"
             alt=""
             aria-hidden="true"
-            className="absolute inset-0 h-full w-full object-cover object-center"
+            className="absolute inset-0 h-full w-full object-cover object-[72%_center] sm:object-[68%_center] lg:object-center"
           />
 
           <div className="absolute inset-0 bg-[linear-gradient(90deg,#0D0D0D_0%,#0D0D0D_28%,rgba(13,13,13,0.96)_40%,rgba(13,13,13,0.58)_56%,rgba(13,13,13,0.12)_78%,rgba(13,13,13,0.04)_100%)]" />
 
           <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(13,13,13,0.08)_0%,transparent_48%,rgba(13,13,13,0.32)_100%)]" />
         </div>
-        <div className="relative mx-auto grid min-h-[700px] max-w-[1380px] items-center px-5 py-20 sm:px-8 lg:grid-cols-[1.08fr_0.92fr] lg:px-10 lg:py-24">
+        <div className="relative mx-auto grid min-h-[620px] max-w-[1380px] items-center px-5 py-12 sm:min-h-[660px] sm:px-8 sm:py-16 lg:min-h-[700px] lg:grid-cols-[1.08fr_0.92fr] lg:px-10 lg:py-24">
           <div className="max-w-[820px]">
-            <p className="text-[clamp(2.7rem,4.6vw,5rem)] font-black leading-none tracking-[-0.055em] text-[#FFD000]">
+            <p className="text-[2.35rem] font-black leading-none tracking-[-0.055em] text-[#FFD000] sm:text-[3.4rem] lg:text-[clamp(2.7rem,4.6vw,5rem)]">
               V&amp;Z
             </p>
 
-            <h1 className="mt-3 max-w-[820px] text-[clamp(3.5rem,6.8vw,7rem)] font-black leading-[0.9] tracking-[-0.06em] text-white">
+            <h1 className="mt-3 max-w-[820px] text-[3.15rem] font-black leading-[0.91] tracking-[-0.055em] text-white sm:text-[4.5rem] lg:text-[clamp(3.5rem,6.8vw,7rem)] lg:leading-[0.9] lg:tracking-[-0.06em]">
               Professional
               <span className="block">Lawncare</span>
             </h1>
 
-            <p className="mt-7 text-[clamp(1.35rem,2.2vw,2rem)] font-extrabold leading-tight tracking-[-0.025em] text-[#7CFC00]">
+            <p className="mt-5 text-[1.1rem] font-extrabold leading-tight tracking-[-0.025em] text-[#7CFC00] sm:mt-6 sm:text-[1.35rem] lg:mt-7 lg:text-[clamp(1.35rem,2.2vw,2rem)]">
               Lawn and exterior property care in Okeechobee, Florida.
             </p>
 
-            <p className="mt-6 max-w-[720px] text-lg leading-8 text-white/65 sm:text-xl">
+            <p className="mt-5 max-w-[720px] text-base leading-7 text-white/70 sm:text-lg sm:leading-8 lg:mt-6 lg:text-xl">
               Mowing, edging, trimming, mulch installation, gutter cleaning,
               window cleaning, roof cleaning, and additional exterior services.
             </p>
@@ -184,7 +184,7 @@ export default function VZProfessionalLawncareLanding() {
               </a>
             </div>
 
-            <div className="mt-10 flex flex-wrap gap-x-8 gap-y-4 border-t border-white/10 pt-6 text-[10px] font-black uppercase tracking-[0.18em] text-white/55">
+            <div className="mt-8 flex flex-wrap gap-x-5 gap-y-3 border-t border-white/10 pt-5 text-[9px] font-black uppercase tracking-[0.15em] text-white/60 sm:gap-x-8 sm:text-[10px] sm:tracking-[0.18em] lg:mt-10 lg:pt-6">
               <span className="inline-flex items-center gap-2">
                 <Check size={14} className="text-[#7CFC00]" />
                 Local service
@@ -213,14 +213,14 @@ export default function VZProfessionalLawncareLanding() {
         id="services"
         className="relative scroll-mt-6 overflow-hidden border-b border-white/10 bg-[radial-gradient(circle_at_18%_32%,rgba(8,127,35,0.16),transparent_34%),linear-gradient(180deg,#0c0f0c_0%,#0a0d0a_100%)]"
       >
-        <div className="mx-auto max-w-[1380px] px-5 py-20 sm:px-8 lg:px-10 lg:py-24">
-          <div className="grid gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:gap-16">
+        <div className="mx-auto max-w-[1380px] px-5 py-14 sm:px-8 sm:py-16 lg:px-10 lg:py-24">
+          <div className="grid gap-8 sm:gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:gap-16">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#FFD000]">
                 Services
               </p>
 
-              <h2 className="mt-4 max-w-[520px] text-4xl font-black leading-[0.94] tracking-[-0.045em] sm:text-5xl lg:text-6xl">
+              <h2 className="mt-4 max-w-[520px] text-3xl font-black leading-[0.96] tracking-[-0.04em] sm:text-4xl lg:text-6xl lg:leading-[0.94] lg:tracking-[-0.045em]">
                 <span className="block text-white">Property care</span>
                 <span className="mt-1 block text-[#7CFC00]">
                   without the runaround.
@@ -237,18 +237,18 @@ export default function VZProfessionalLawncareLanding() {
               {services.map((service) => (
                 <article
                   key={service.number}
-                  className="group relative grid gap-4 border-b border-[#087F23]/30 py-7 pl-4 transition duration-300 before:absolute before:bottom-5 before:left-0 before:top-5 before:w-[2px] before:bg-[#7CFC00] before:opacity-0 before:transition group-hover:border-[#7CFC00]/35 group-hover:bg-[#087F23]/[0.08] group-hover:before:opacity-100 sm:grid-cols-[70px_0.7fr_1.3fr] sm:items-start sm:pl-5"
+                  className="group relative grid grid-cols-[44px_1fr] gap-x-3 gap-y-2 border-b border-[#087F23]/30 py-5 pl-4 transition duration-300 before:absolute before:bottom-4 before:left-0 before:top-4 before:w-[2px] before:bg-[#7CFC00] before:opacity-60 before:transition group-hover:border-[#7CFC00]/35 group-hover:bg-[#087F23]/[0.08] group-hover:before:opacity-100 sm:grid-cols-[70px_0.7fr_1.3fr] sm:items-start sm:gap-4 sm:py-7 sm:pl-5 sm:before:bottom-5 sm:before:top-5 sm:before:opacity-0"
                 >
                   <p className="flex items-center gap-3 text-xs font-black tracking-[0.18em] text-[#FFD000]">
                     <span className="h-4 w-[2px] shrink-0 bg-[#7CFC00]" />
                     {service.number}
                   </p>
 
-                  <h3 className="text-xl font-black uppercase tracking-[-0.02em] text-white transition group-hover:text-[#7CFC00]">
+                  <h3 className="text-lg font-black uppercase tracking-[-0.02em] text-white transition group-hover:text-[#7CFC00] sm:text-xl">
                     {service.title}
                   </h3>
 
-                  <p className="text-sm leading-6 text-white/60 transition group-hover:text-white/75 sm:text-base">
+                  <p className="col-start-2 text-sm leading-6 text-white/65 transition group-hover:text-white/75 sm:col-start-auto sm:text-base">
                     {service.text}
                   </p>
                 </article>
@@ -275,13 +275,13 @@ export default function VZProfessionalLawncareLanding() {
           <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(9,11,9,0.03)_0%,transparent_52%,rgba(9,11,9,0.06)_100%)]" />
         </div>
 
-        <div className="relative mx-auto grid max-w-[1380px] gap-12 px-5 py-20 sm:px-8 lg:grid-cols-[0.82fr_1.18fr] lg:items-center lg:px-10 lg:py-24">
+        <div className="relative mx-auto grid max-w-[1380px] gap-8 px-5 py-14 sm:gap-10 sm:px-8 sm:py-16 lg:grid-cols-[0.82fr_1.18fr] lg:items-center lg:gap-12 lg:px-10 lg:py-24">
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#FFD000]">
               Request an estimate
             </p>
 
-            <h2 className="mt-4 max-w-[560px] text-4xl font-black uppercase leading-[0.94] tracking-[-0.045em] sm:text-5xl lg:text-6xl">
+            <h2 className="mt-4 max-w-[560px] text-3xl font-black uppercase leading-[0.96] tracking-[-0.04em] sm:text-4xl lg:text-6xl lg:leading-[0.94] lg:tracking-[-0.045em]">
               <span className="block text-white">Show Eric</span>
               <span className="block text-white">what needs</span>
               <span className="block text-[#7CFC00]">attention.</span>
@@ -318,7 +318,7 @@ export default function VZProfessionalLawncareLanding() {
 
           <form
             onSubmit={handleEstimateSubmit}
-            className="grid gap-4 rounded-[2rem] border border-[#FFD000]/45 bg-[#0b1b0f]/90 p-5 shadow-2xl shadow-black/50 ring-1 ring-[#7CFC00]/20 backdrop-blur-md sm:grid-cols-2 sm:p-8"
+            className="grid gap-3 rounded-[1.5rem] border border-[#FFD000]/45 bg-[#0b1b0f]/90 p-4 shadow-2xl shadow-black/50 ring-1 ring-[#7CFC00]/20 backdrop-blur-md sm:grid-cols-2 sm:gap-4 sm:rounded-[2rem] sm:p-8"
           >
             <label className="block">
               <span className="mb-2 block text-[11px] font-black uppercase tracking-[0.16em] text-white">
@@ -443,31 +443,31 @@ export default function VZProfessionalLawncareLanding() {
         </div>
       </section>
 <section className="relative overflow-hidden border-b border-white/10 bg-[radial-gradient(circle_at_82%_24%,rgba(8,127,35,0.16),transparent_30%),linear-gradient(180deg,#0c0f0c_0%,#091009_100%)]">
-        <div className="mx-auto max-w-[1380px] px-5 py-20 sm:px-8 lg:px-10 lg:py-24">
+        <div className="mx-auto max-w-[1380px] px-5 py-14 sm:px-8 sm:py-16 lg:px-10 lg:py-24">
           <div className="max-w-[760px]">
             <p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#FFD000]">
               How it works
             </p>
 
-            <h2 className="mt-4 text-4xl font-black uppercase leading-[0.94] tracking-[-0.045em] sm:text-5xl">
+            <h2 className="mt-4 text-3xl font-black uppercase leading-[0.96] tracking-[-0.04em] sm:text-4xl lg:text-5xl lg:leading-[0.94] lg:tracking-[-0.045em]">
               <span className="text-white">A clear path from request to </span>
               <span className="text-[#7CFC00]">service.</span>
             </h2>
           </div>
 
-          <div className="relative mt-12 grid border-t border-[#087F23]/35 md:grid-cols-3 md:before:absolute md:before:left-[16.66%] md:before:right-[16.66%] md:before:top-[3.25rem] md:before:h-px md:before:bg-[linear-gradient(90deg,#FFD000_0%,#7CFC00_50%,#FFD000_100%)] md:before:opacity-55">
+          <div className="relative mt-8 grid border-t border-[#087F23]/35 sm:mt-10 md:grid-cols-3 md:before:absolute md:before:left-[16.66%] md:before:right-[16.66%] md:before:top-[3.25rem] md:before:h-px md:before:bg-[linear-gradient(90deg,#FFD000_0%,#7CFC00_50%,#FFD000_100%)] md:before:opacity-55 lg:mt-12">
             {processSteps.map((step) => (
               <article
                 key={step.number}
-                className="relative border-b border-[#087F23]/25 py-8 md:border-b-0 md:border-r md:border-[#087F23]/25 md:px-8 md:first:pl-0 md:last:border-r-0"
+                className="relative border-b border-[#087F23]/25 py-6 sm:py-7 md:border-b-0 md:border-r md:border-[#087F23]/25 md:px-8 md:py-8 md:first:pl-0 md:last:border-r-0"
               >
                 <p className="relative z-10 flex h-10 w-10 items-center justify-center rounded-full border border-[#7CFC00]/55 bg-[#0D0D0D] text-xs font-black tracking-[0.12em] text-[#FFD000] shadow-[0_0_0_6px_rgba(12,15,12,0.92)]">
                   {step.number}
                 </p>
-                <h3 className="mt-6 text-xl font-black uppercase text-white">
+                <h3 className="mt-4 text-lg font-black uppercase text-white sm:mt-5 sm:text-xl md:mt-6">
                   {step.title}
                 </h3>
-                <p className="mt-4 max-w-sm text-sm leading-6 text-white/68 sm:text-base">
+                <p className="mt-3 max-w-sm text-sm leading-6 text-white/68 sm:mt-4 sm:text-base">
                   {step.text}
                 </p>
               </article>
@@ -481,7 +481,7 @@ export default function VZProfessionalLawncareLanding() {
         aria-labelledby="vz-trust-heading"
         className="relative overflow-hidden border-b border-white/10 bg-[radial-gradient(circle_at_14%_10%,rgba(255,208,0,0.08),transparent_30%),radial-gradient(circle_at_88%_90%,rgba(8,127,35,0.16),transparent_34%),linear-gradient(180deg,#090b09_0%,#0c100c_100%)]"
       >
-        <div className="mx-auto max-w-[1380px] px-5 py-14 sm:px-8 lg:px-10 lg:py-16">
+        <div className="mx-auto max-w-[1380px] px-5 py-10 sm:px-8 sm:py-12 lg:px-10 lg:py-16">
           <div className="mx-auto max-w-3xl text-center">
             <p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#FFD000]">
               Trusted in Okeechobee
@@ -503,16 +503,16 @@ export default function VZProfessionalLawncareLanding() {
             </p>
           </div>
 
-          <div className="mt-8 grid gap-4 lg:grid-cols-2">
-            <article className="flex h-full flex-col rounded-[1.75rem] border border-[#087F23]/35 bg-[#0D0D0D]/80 p-5 shadow-2xl shadow-black/30 ring-1 ring-[#7CFC00]/[0.06] transition duration-300 hover:-translate-y-1 hover:border-[#FFD000]/35 sm:p-6">
+          <div className="mt-6 grid gap-4 sm:mt-8 lg:grid-cols-2">
+            <article className="flex h-full flex-col rounded-[1.4rem] border border-[#087F23]/35 bg-[#0D0D0D]/80 p-4 shadow-2xl shadow-black/30 ring-1 ring-[#7CFC00]/[0.06] transition duration-300 hover:-translate-y-1 hover:border-[#FFD000]/35 sm:rounded-[1.75rem] sm:p-6">
               <p
                 aria-label="Five-star customer recommendation"
-                className="text-2xl tracking-[0.12em] text-[#FFD000]"
+                className="text-xl tracking-[0.1em] text-[#FFD000] sm:text-2xl sm:tracking-[0.12em]"
               >
                 ★★★★★
               </p>
 
-              <blockquote className="mt-5 flex-1 text-lg font-bold leading-7 text-white sm:text-xl sm:leading-8">
+              <blockquote className="mt-4 flex-1 text-base font-bold leading-6 text-white sm:mt-5 sm:text-xl sm:leading-8">
                 “Hard working, very dedicated to the job, has good prices, and
                 he gets the job done the first time the right way. Highly
                 recommend him for anything yard work related.”
@@ -528,15 +528,15 @@ export default function VZProfessionalLawncareLanding() {
               </div>
             </article>
 
-            <article className="flex h-full flex-col rounded-[1.75rem] border border-[#087F23]/35 bg-[#0D0D0D]/80 p-5 shadow-2xl shadow-black/30 ring-1 ring-[#7CFC00]/[0.06] transition duration-300 hover:-translate-y-1 hover:border-[#FFD000]/35 sm:p-6">
+            <article className="flex h-full flex-col rounded-[1.4rem] border border-[#087F23]/35 bg-[#0D0D0D]/80 p-4 shadow-2xl shadow-black/30 ring-1 ring-[#7CFC00]/[0.06] transition duration-300 hover:-translate-y-1 hover:border-[#FFD000]/35 sm:rounded-[1.75rem] sm:p-6">
               <p
                 aria-label="Five-star customer recommendation"
-                className="text-2xl tracking-[0.12em] text-[#FFD000]"
+                className="text-xl tracking-[0.1em] text-[#FFD000] sm:text-2xl sm:tracking-[0.12em]"
               >
                 ★★★★★
               </p>
 
-              <blockquote className="mt-5 flex-1 text-lg font-bold leading-7 text-white sm:text-xl sm:leading-8">
+              <blockquote className="mt-4 flex-1 text-base font-bold leading-6 text-white sm:mt-5 sm:text-xl sm:leading-8">
                 “These young gentlemen came to clean my yard up and brought my
                 garden back to life and did a phenomenal job. I’d definitely
                 give these guys my money ☺️”
@@ -557,14 +557,14 @@ export default function VZProfessionalLawncareLanding() {
             <section className="relative overflow-hidden bg-[#090b09]">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_78%_46%,rgba(8,127,35,0.18),transparent_34%),radial-gradient(circle_at_20%_78%,rgba(124,252,0,0.05),transparent_28%),linear-gradient(180deg,#090b09_0%,#0a0f0a_100%)]" />
 
-        <div className="relative mx-auto max-w-[1380px] px-5 py-14 sm:px-8 lg:px-10 lg:py-16">
-          <div className="relative overflow-hidden rounded-[2rem] border border-[#087F23]/50 bg-[linear-gradient(115deg,rgba(8,127,35,0.16),rgba(13,13,13,0.88)_48%,rgba(8,127,35,0.10))] px-6 py-9 shadow-2xl shadow-black/30 ring-1 ring-[#7CFC00]/[0.06] sm:px-9 sm:py-10 lg:flex lg:items-center lg:justify-between lg:gap-10">
+        <div className="relative mx-auto max-w-[1380px] px-5 py-10 sm:px-8 sm:py-12 lg:px-10 lg:py-16">
+          <div className="relative overflow-hidden rounded-[1.5rem] border border-[#087F23]/50 bg-[linear-gradient(115deg,rgba(8,127,35,0.16),rgba(13,13,13,0.88)_48%,rgba(8,127,35,0.10))] px-5 py-7 shadow-2xl shadow-black/30 ring-1 ring-[#7CFC00]/[0.06] sm:rounded-[2rem] sm:px-9 sm:py-10 lg:flex lg:items-center lg:justify-between lg:gap-10">
             <div className="max-w-[700px]">
               <p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#FFD000]">
                 Ready to get started?
               </p>
 
-              <h2 className="mt-4 text-3xl font-black leading-[0.95] tracking-[-0.04em] sm:text-4xl lg:text-5xl">
+              <h2 className="mt-4 text-2xl font-black leading-[0.98] tracking-[-0.035em] sm:text-4xl lg:text-5xl lg:leading-[0.95] lg:tracking-[-0.04em]">
                 <span className="block text-white">
                   Ready to get the property handled?
                 </span>
@@ -603,7 +603,7 @@ export default function VZProfessionalLawncareLanding() {
         </div>
       </section>
 <footer className="border-t border-white/10 bg-[#060706]">
-        <div className="mx-auto max-w-[1380px] px-5 py-9 text-center sm:px-8 lg:px-10">
+        <div className="mx-auto max-w-[1380px] px-5 py-7 text-center sm:px-8 sm:py-8 lg:px-10 lg:py-9">
           <p className="font-black text-white">
             V&amp;Z Professional Lawncare
           </p>
