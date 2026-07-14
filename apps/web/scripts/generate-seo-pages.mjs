@@ -46,6 +46,14 @@ const routes = [
           help with common pest problems.
         </p>
 
+        <p>
+          Slap-A-Bug Pest Control in Okeechobee, Florida helps local property
+          owners respond to pest activity with direct communication and a simple
+          way to request service. Whether the concern is inside a home, around
+          an exterior area or affecting another structure on the property,
+          customers can explain the problem and ask for local pest control help.
+        </p>
+
         <section>
           <h2>Pest control for common Okeechobee pest problems</h2>
 
