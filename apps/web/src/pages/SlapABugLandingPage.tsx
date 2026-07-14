@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 type PestForm = {
   service: string;
@@ -10,6 +10,145 @@ type PestForm = {
 };
 
 const storageKey = "hp-slap-a-bug-requests";
+
+type CustomerReview = {
+  name: string;
+  source: "Google" | "Facebook";
+  text: string;
+};
+
+const customerReviews: CustomerReview[] = [
+  {
+    name: "Dee Paris",
+    source: "Google",
+    text: "Brad deserves 5 stars. He actually answers his calls. He comes on schedule to do treatments and comes quickly when you need additional service. He is very knowledgeable and answers any questions you have."
+  },
+  {
+    name: "Jimmy Hank Spivey",
+    source: "Google",
+    text: "Slap A Bug was great. Brad really knows his stuff. He came in and took care of the problem. He was very knowledgeable and affordable and we will use him for our bimonthly services going forward."
+  },
+  {
+    name: "Bryan Martinez",
+    source: "Google",
+    text: "Brad showed up on time, he was very professional and relatable. You can tell he's not just here to get your money and do a job, he genuinely wants to help. Hands down 5 star service."
+  },
+  {
+    name: "Alex",
+    source: "Google",
+    text: "If you want an honest pest inspection and treatment this is your guy. Fast same day service, no pushy sales tactics, very reasonable pricing, and good customer service."
+  },
+  {
+    name: "Greg McCranie",
+    source: "Google",
+    text: "Brad and Ashley are great people to do business with for all your pest control needs. Very responsive and explains everything that will be done to get rid of any pests you may have. Highly recommend them."
+  },
+  {
+    name: "Kristi Cupelli",
+    source: "Google",
+    text: "We couldn't be happier with the service. Brad was professional, knowledgeable, and truly went the extra mile to help us with our ant problem. He was very prompt, thorough, and made sure all of our concerns were addressed."
+  },
+  {
+    name: "Nicole Hulen",
+    source: "Google",
+    text: "Slap A Bug has been a huge help with our fruit fly issue. Brad is so knowledgeable and gets to the root of the problem. They don't pressure you into contracts like the big name companies and treat you like family."
+  },
+  {
+    name: "Tommy Barroso",
+    source: "Google",
+    text: "Slap A Bug was awesome, super prompt to answer, and steered me away from services I did not need even though he could have billed me for it. Can't recommend them enough."
+  },
+  {
+    name: "Martin Gallagher",
+    source: "Google",
+    text: "I've had Slap A Bug address my fire ant problem. They showed up to my house promptly, addressed the problem, gave me a solution, and now we are totally ant free."
+  },
+  {
+    name: "Clare Little",
+    source: "Google",
+    text: "Brad's customer service is outstanding and we can tell he genuinely cares about his customers. Brad is super prompt, thorough, friendly, knowledgeable and professional. We have had no issues with ants or any other pests since we switched to Slap A Bug."
+  },
+  {
+    name: "Victoria Parks",
+    source: "Google",
+    text: "Brad and his wife made a special trip out to my house after business hours because of the urgency. I would highly recommend their company for pest control."
+  },
+  {
+    name: "Joseph Hennessey",
+    source: "Google",
+    text: "Slap A Bug is an exceptional service. Brad and Ashley go above and beyond and always answer the phones. Couldn't be more happy with my service. 10 out of 10 recommend their service."
+  },
+  {
+    name: "Leslie Fennell",
+    source: "Google",
+    text: "Responded right away. Very professional and educated me on pest control. Affordable and they work with you on how to treat best."
+  },
+  {
+    name: "Lake Okeechobee RV Park",
+    source: "Google",
+    text: "Have been doing an amazing job with our pest control. Highly recommend for your home or business. Very professional and responsive."
+  },
+  {
+    name: "David Winter",
+    source: "Google",
+    text: "Slap A Bug is the best pest control company we have ever had. Brad is prompt, thorough, very knowledgeable, and we never have a problem. I highly recommend this company to anyone."
+  },
+  {
+    name: "Johnnie Felix",
+    source: "Google",
+    text: "Very professional and courteous, willing to also educate in regards to the type of bugs and the type of chemicals being used to destroy the bugs."
+  },
+  {
+    name: "Francis Becker",
+    source: "Facebook",
+    text: "We work with Brad at Slap-A-Bug. He handles all our pest issues, is very knowledgeable, and explains everything to us. He has been a blessing. If there is a better pest control company in Okeechobee I haven't found them."
+  },
+  {
+    name: "Jimmy Spivey Jr.",
+    source: "Facebook",
+    text: "Competitive prices, easy to work with, and the owner is friendly and really cares about the customer's concerns. Brad worked with us and will continue to take great care of the home going forward."
+  },
+  {
+    name: "Les Fennell",
+    source: "Facebook",
+    text: "They responded right away. Very professional and they educate on how to treat best. Affordable. We are very pleased."
+  },
+  {
+    name: "Lara Weight Loss Journey",
+    source: "Facebook",
+    text: "I can't recommend this company enough. They are super responsible, always on time, and go the extra mile to help you with every problem. They take care of my business and also my house."
+  },
+  {
+    name: "Francesca Heath",
+    source: "Facebook",
+    text: "Awesome company, very helpful, and works with you not against you to get your pest issues under control. 10 out of 10 recommend."
+  },
+  {
+    name: "Anais Diaz",
+    source: "Facebook",
+    text: "Yes, I would 100% recommend. They were friendly and professional. Will definitely use them again."
+  },
+  {
+    name: "Maria Rodriguez",
+    source: "Facebook",
+    text: "They are such wonderful people. They took care of my parents' place and my niece's place. They are reasonably priced. My family no longer has a problem with any pest."
+  },
+  {
+    name: "David Almazan",
+    source: "Facebook",
+    text: "Professional and thorough in their work, impressively knowledgeable in their craft and reasonably priced. Overall great experience, highly recommended."
+  },
+  {
+    name: "Stephanie Burnham",
+    source: "Facebook",
+    text: "They came in at a reasonable price and got the bug problem under control. They are there when you need them and I still currently use them."
+  },
+  {
+    name: "Clint Howell",
+    source: "Facebook",
+    text: "Slap A Bug Pest Control offers premier customer service that puts them miles ahead of their competitors. Their family first mentality makes you feel like they are treating their own homes with care and professionalism."
+  }
+];
 
 function setMeta(name: string, content: string) {
   let tag = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
@@ -81,6 +220,13 @@ export default function SlapABugLandingPage() {
   });
 
   const [submitted, setSubmitted] = useState(false);
+  const [reviewsOpen, setReviewsOpen] = useState(false);
+  const [reviewSource, setReviewSource] = useState<"All" | "Google" | "Facebook">("All");
+
+  const visibleReviews =
+    reviewSource === "All"
+      ? customerReviews
+      : customerReviews.filter((review) => review.source === reviewSource);
 
   function updateField(field: keyof PestForm, value: string) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -261,6 +407,167 @@ export default function SlapABugLandingPage() {
           </div>
         </button>
       </section>
+
+      {/* TRUST */}
+      <section className="mx-auto max-w-6xl px-4 pb-10 sm:px-8 sm:pb-12">
+        <div className="text-center">
+          <p className="text-xs font-black uppercase tracking-[0.28em] text-[#8fc8ff]">
+            Local Trust
+          </p>
+
+          <h2 className="mt-3 text-3xl font-black sm:text-4xl">
+            What Okeechobee customers say.
+          </h2>
+        </div>
+
+        <div className="mt-8 grid gap-4 lg:grid-cols-2">
+          <article className="rounded-3xl border border-white/10 bg-white/[0.045] p-6 shadow-[0_0_34px_rgba(31,111,190,0.08)] sm:p-7">
+            <p className="text-lg tracking-[0.18em] text-[#ffd76a]">
+              ★★★★★
+            </p>
+
+            <p className="mt-5 text-sm leading-7 text-white/72">
+              “We work with Brad at Slap-A-Bug. He handles all our pest issues,
+              is very knowledgeable, and explains everything to us. He also does
+              exterior pest control for spiders at my mother's home. He has been
+              a blessing. If there is a better pest control company in
+              Okeechobee, I haven't found them. Slap-A-Bug's service and
+              professionalism are unbeatable. 5 stars!”
+            </p>
+
+            <p className="mt-5 text-sm font-black text-white">
+              Francis Becker
+            </p>
+          </article>
+
+          <article className="rounded-3xl border border-white/10 bg-white/[0.045] p-6 shadow-[0_0_34px_rgba(31,111,190,0.08)] sm:p-7">
+            <p className="text-lg tracking-[0.18em] text-[#ffd76a]">
+              ★★★★★
+            </p>
+
+            <p className="mt-5 text-sm leading-7 text-white/72">
+              “Competitive prices, easy to work with, and the owner is friendly
+              and really cares about the customer's concerns. This is our rental
+              home and we don't live in the same town. Brad worked with us and
+              will continue taking great care of the home going forward. I would
+              highly recommend Slap-A-Bug.”
+            </p>
+
+            <p className="mt-5 text-sm font-black text-white">
+              Jimmy Spivey Jr.
+            </p>
+          </article>
+        </div>
+
+        <div className="mt-6 text-center">
+          <p className="text-sm font-black text-white">
+            <span className="text-[#ffd76a]">5.0 ★</span>
+            <span className="text-white/45"> · </span>
+            110 Google reviews
+            <span className="text-white/45"> · </span>
+            More customer recommendations on Facebook
+          </p>
+
+          <button
+            type="button"
+            onClick={() => setReviewsOpen(true)}
+            className="mt-4 rounded-2xl border border-[#1d79d6]/55 bg-[#1d79d6]/16 px-6 py-3 text-sm font-black text-[#9dceff] transition hover:border-[#58a9ff]/80 hover:bg-[#1d79d6]/28 hover:text-white"
+          >
+            View customer reviews →
+          </button>
+        </div>
+      </section>
+
+      {reviewsOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm sm:items-center sm:p-6"
+          onClick={() => setReviewsOpen(false)}
+        >
+          <section
+            className="flex max-h-[88vh] w-full max-w-4xl flex-col overflow-hidden rounded-t-[2rem] border border-white/12 bg-[#050b12] shadow-[0_0_90px_rgba(31,111,190,0.24)] sm:max-h-[86vh] sm:rounded-[2rem]"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="border-b border-white/10 px-5 py-5 sm:px-7">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.28em] text-[#8fc8ff]">
+                    Customer Reviews
+                  </p>
+
+                  <h2 className="mt-2 text-3xl font-black">
+                    Real customer trust.
+                  </h2>
+
+                  <p className="mt-2 text-sm text-white/55">
+                    5.0 on Google · 110 Google reviews · Facebook recommendations
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setReviewsOpen(false)}
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/12 bg-white/[0.05] text-xl text-white/70 transition hover:bg-white/10 hover:text-white"
+                  aria-label="Close reviews"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="mt-5 flex gap-2 overflow-x-auto pb-1">
+                {(["All", "Google", "Facebook"] as const).map((source) => (
+                  <button
+                    key={source}
+                    type="button"
+                    onClick={() => setReviewSource(source)}
+                    className={`shrink-0 rounded-full px-4 py-2 text-xs font-black transition ${
+                      reviewSource === source
+                        ? "bg-[#28c765] text-black"
+                        : "border border-white/12 bg-white/[0.05] text-white/65 hover:text-white"
+                    }`}
+                  >
+                    {source}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="overflow-y-auto px-5 py-5 sm:px-7">
+              <div className="grid gap-3 md:grid-cols-2">
+                {visibleReviews.map((review) => (
+                  <article
+                    key={`${review.source}-${review.name}`}
+                    className="rounded-2xl border border-white/10 bg-white/[0.045] p-5"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-black text-white">
+                        {review.name}
+                      </p>
+
+                      <span
+                        className={`rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] ${
+                          review.source === "Google"
+                            ? "bg-[#1d79d6]/18 text-[#9dceff]"
+                            : "bg-[#28c765]/15 text-[#7eefab]"
+                        }`}
+                      >
+                        {review.source}
+                      </span>
+                    </div>
+
+                    <p className="mt-3 text-sm tracking-[0.15em] text-[#ffd76a]">
+                      ★★★★★
+                    </p>
+
+                    <p className="mt-4 text-sm leading-7 text-white/68">
+                      “{review.text}”
+                    </p>
+                  </article>
+                ))}
+              </div>
+            </div>
+          </section>
+        </div>
+      )}
 
       {/* REQUEST FORM */}
       <section id="request" className="mx-auto max-w-6xl px-4 pb-14 sm:px-8 sm:pb-16">
