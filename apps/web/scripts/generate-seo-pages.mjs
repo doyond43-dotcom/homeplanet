@@ -23,17 +23,18 @@ const publicSeoRegistry = [
     body: `
       <section>
         <h2>Live systems for local businesses and communities</h2>
-        <p>HomePlanet builds more than traditional websites. A public live page can help a customer, resident, or community member understand what is happening and take a clear next action.</p>
-        <p>Underneath the public page, a working system can organize requests, estimates, approvals, scheduling, photos, payment, proof, follow-up, and the timeline of what happened.</p>
+        <p>HomePlanet builds more than traditional websites. A public live page can help a customer, resident, or community member understand what is happening and take a clear next action. Instead of sending people through generic menus, disconnected forms, and contact pages that lead nowhere, a HomePlanet live system is designed around the real action that needs to happen next.</p>
+        <p>Underneath the public page, a working system can organize requests, estimates, approvals, scheduling, photos, payment, proof, follow-up, and the timeline of what happened. The public experience and the operating workflow can work together so important information does not disappear between a website, text messages, handwritten notes, and separate software tools.</p>
       </section>
       <section>
         <h2>From public action to active workflow</h2>
-        <p>HomePlanet systems are designed around real operations. A request can become active work instead of disappearing into random texts, paper notes, separate apps, or disconnected forms.</p>
-        <p>Local businesses and community projects can use a live system to make work easier to understand, easier to follow, and easier to prove.</p>
+        <p>HomePlanet systems are designed around real operations. A service request, customer question, community need, or local opportunity can become active work instead of disappearing into random texts, paper notes, separate apps, or disconnected forms. The system can show what came in, what needs attention, what action happened, and what should happen next.</p>
+        <p>For a local business, that may mean turning a quote request into an estimate, approval, scheduled job, work photos, payment, completed proof, and customer follow-up. For a community project, it may mean turning a public need into a clear response, organized follow-up, active coordination, and a visible record of the outcome. HomePlanet connects the public front door with the real work happening behind it.</p>
       </section>
       <section>
         <h2>Built around how people already work</h2>
-        <p>HomePlanet can start with a professional live page, grow into a complete business workflow, or become a custom operating system built around the way a person, team, or community already works.</p>
+        <p>HomePlanet can start with a professional live page, grow into a complete business workflow, or become a custom operating system built around the way a person, team, or community already works. The goal is not to force every business or project into the same dashboard. The system should reflect the actual decisions, actions, communication, and proof that matter in that specific workflow.</p>
+        <p>Local service businesses can use HomePlanet to make customer communication and job progress easier to follow. Community systems can make needs, offers, projects, and next actions easier to understand. Each public system can stay focused on its own purpose while using the same HomePlanet architecture for crawlable public pages, structured actions, connected workflows, and a clear history of what happened.</p>
       </section>
 
       <section>
