@@ -526,7 +526,7 @@ function AtlasIndex() {
             borderRadius: 34,
             border: "1px solid rgba(255,255,255,0.08)",
             backgroundImage:
-              "linear-gradient(90deg, rgba(2,5,4,0.82) 0%, rgba(2,5,4,0.62) 34%, rgba(2,5,4,0.24) 58%, rgba(2,5,4,0.00) 100%), linear-gradient(180deg, rgba(2,5,4,0.00), rgba(2,5,4,0.12)), url('/images/homeplanet-hero-connected-neighborhood.png')",
+              "linear-gradient(90deg, rgba(2,5,4,0.82) 0%, rgba(2,5,4,0.62) 34%, rgba(2,5,4,0.24) 58%, rgba(2,5,4,0.00) 100%), linear-gradient(180deg, rgba(2,5,4,0.00), rgba(2,5,4,0.12)), url('/images/homeplanet-hero-connected-neighborhood.webp')",
             backgroundSize: "cover",
             backgroundPosition: "center right",
             backgroundRepeat: "no-repeat",
@@ -626,7 +626,7 @@ function AtlasIndex() {
             <article className="hp-story hp-story-community">
               <img
                 className="hp-story-photo hp-community-photo"
-                src="/images/okeechobee-together-community-volunteers.png"
+                src="/images/okeechobee-together-community-volunteers.webp"
                 alt="Local volunteers working together at a community cleanup"
               />
               <div className="hp-story-copy">
@@ -709,7 +709,7 @@ function AtlasIndex() {
             <article className="hp-story hp-story-lawn">
               <img
                 className="hp-story-photo"
-                src="/images/homeplanet-lawn-program-local-worker.png"
+                src="/images/homeplanet-lawn-program-local-worker.webp"
                 alt="A local lawn worker mowing a resident's yard"
               />
               <div className="hp-story-copy">
@@ -816,7 +816,7 @@ function AtlasIndex() {
             <article className="hp-story hp-story-sale">
               <img
                 className="hp-story-photo hp-yard-sale-photo"
-                src="/images/homeplanet-live-yard-sale.png"
+                src="/images/homeplanet-live-yard-sale.webp"
                 alt="A live neighborhood yard sale with an item being shown by video"
               />
               <div className="hp-story-copy">
@@ -846,7 +846,7 @@ function AtlasIndex() {
                 <div className="hp-sale-image">
                   <img
                     className="hp-sale-real-image"
-                    src="/images/homeplanet-yard-sale-table.png"
+                    src="/images/homeplanet-yard-sale-table.webp"
                     alt="Solid wood side table available at a neighborhood yard sale"
                   />
 
@@ -913,7 +913,7 @@ function AtlasIndex() {
             <article className="hp-story hp-story-business">
               <img
                 className="hp-story-photo"
-                src="/images/homeplanet-business-control-chaos.png"
+                src="/images/homeplanet-business-control-chaos.webp"
                 alt="A small-business owner managing scattered calls, paperwork, and scheduling"
               />
               <div className="hp-story-copy">
@@ -1673,7 +1673,7 @@ function AtlasIndex() {
                 rgba(2,5,4,0.83) 56%,
                 rgba(2,5,4,0.24) 100%
               ),
-              url('/images/homeplanet-hero-connected-neighborhood.png') !important;
+              url('/images/homeplanet-hero-connected-neighborhood.webp') !important;
             background-position: 63% center !important;
           }
 
@@ -2731,7 +2731,7 @@ function AtlasIndex() {
                 rgba(2,5,4,0.83) 56%,
                 rgba(2,5,4,0.24) 100%
               ),
-              url('/images/homeplanet-hero-connected-neighborhood.png') !important;
+              url('/images/homeplanet-hero-connected-neighborhood.webp') !important;
             background-position: 63% center !important;
           }
 
@@ -3742,7 +3742,7 @@ function AtlasIndex() {
                 rgba(2,5,4,0.83) 56%,
                 rgba(2,5,4,0.24) 100%
               ),
-              url('/images/homeplanet-hero-connected-neighborhood.png') !important;
+              url('/images/homeplanet-hero-connected-neighborhood.webp') !important;
             background-position: 63% center !important;
           }
 
