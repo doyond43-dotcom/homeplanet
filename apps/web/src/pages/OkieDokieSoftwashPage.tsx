@@ -172,13 +172,16 @@ export default function OkieDokieSoftwashPage() {
               Call
             </a>
 
-            <a
-              href={`sms:+1${PHONE_DIGITS}`}
+            <button
+              type="button"
+              onClick={() => {
+                window.location.href = `sms:+1${PHONE_DIGITS}`;
+              }}
               className="flex min-h-[62px] items-center justify-center gap-3 rounded-2xl border border-emerald-400/35 bg-black/70 px-6 font-black text-white transition hover:-translate-y-0.5 hover:border-emerald-400/75 hover:bg-emerald-400/10"
             >
               <MessageCircle className="h-5 w-5 text-emerald-400" />
               Text
-            </a>
+            </button>
 
             <button
               type="button"

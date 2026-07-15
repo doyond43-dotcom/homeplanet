@@ -325,6 +325,19 @@ for (const route of routes) {
 
   const seoHead = `
     <link rel="canonical" href="${route.canonical}" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="HomePlanet" />
+    <meta property="og:title" content="${escapeAttribute(route.title)}" />
+    <meta property="og:description" content="${escapeAttribute(route.description)}" />
+    <meta property="og:image" content="${route.image}" />
+    <meta property="og:url" content="${route.canonical}" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="${escapeAttribute(route.title)}" />
+    <meta name="twitter:description" content="${escapeAttribute(route.description)}" />
+    <meta name="twitter:image" content="${route.image}" />
+
     <script type="application/ld+json">${JSON.stringify(route.schema)}</script>
   `;
 
