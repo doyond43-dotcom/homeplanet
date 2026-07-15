@@ -1,83 +1,50 @@
-import DemoPestControlLandingPage from "./pages/DemoPestControlLandingPage";
-import DemoPestControlBoardPage from "./pages/DemoPestControlBoardPage";
-import HomePlanetTransportationPage from "./pages/HomePlanetTransportationPage";
-
-import HomePlanetTransportationRequestPage from "./pages/HomePlanetTransportationRequestPage";
-
-import OkeechobeeLawnProgramPage from './pages/OkeechobeeLawnProgramPage';
-import OkeechobeeLawnIntelligenceDashboard from './pages/OkeechobeeLawnIntelligenceDashboard';
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useSearchParams } from "react-router-dom";
 
-
-import TaylorCreekRealDemoBoard from "./pages/TaylorCreekRealDemoBoard";
-
-import TaylorCreekRealDemoStaffBoard from "./pages/TaylorCreekRealDemoStaffBoard";
-
-import HomeServicesLiveSystemStaffBoard from "./pages/HomeServicesLiveSystemStaffBoard";
-
-
-import PublicPage from "./routes/PublicPage";
-
-import TenantPublicPage from "./routes/TenantPublicPage";
-
-import LiveShopTV from "./routes/LiveShopTV";
-
-import LiveIntakeBoard from "./routes/LiveIntakeBoard";
-
-import PrintWorkOrder from "./routes/PrintWorkOrder";
-
-
-import ServiceRoutes from "./service/ServiceRoutes";
-
-import CityRoutes from "./routes/CityRoutes";
-
-import TaylorCreekSite from "./routes/TaylorCreekSite";
-
-
-import PressPage from "./routes/PressPage";
-
-import PressKitTaylorCreek from "./routes/PressKitTaylorCreek";
-
-
-import PlanetRoutes from "./planet/PlanetRoutes";
-import OnlyTheEssentialsLandingV2 from "./pages/OnlyTheEssentialsLandingV2";
-
-import CreatorRoutes from "./routes/CreatorRoutes";
-
-import WorkspaceRoutes from "./app/WorkspaceRoutes";
-
-
-import LiveAwnitIntake from "./pages/LiveAwnitIntake";
-
-import LegalDemoBoard from "./pages/LegalDemoBoard";
-
-import DanFieldNotebookDesk from "./pages/DanFieldNotebookDesk";
-
-import LeeStudentNotebookDesk from "./pages/LeeStudentNotebookDesk";
-
-import NotFound from "./pages/NotFound";
-
-
-import BeamScreen from "./routes/BeamScreen";
-
-import BeamReceive from "./routes/BeamReceive";
-
-import BeamOpen from "./routes/BeamOpen";
-
-
-import WildingLiveBoardDispatch from "./pages/WildingLiveBoardDispatch";
-
-import HomePlanetMarketAwarenessFunnelV1, { HomePlanetMarketAwarenessDashboardV1 } from "./pages/HomePlanetMarketAwarenessFunnelV1";
-
-import HomePlanetAfterTheClickDemo from "./pages/HomePlanetAfterTheClickDemo";
-
-import BrightSideFlowDemo from "./pages/BrightSideFlowDemo";
-import HomePlanetNotepad from './pages/HomePlanetNotepad';
-
-
-import SlapABugLandingPage from "./pages/SlapABugLandingPage";
-import SlapABugBoardPage from "./pages/SlapABugBoardPage";
-import VZProfessionalLawncareLanding from "./pages/VZProfessionalLawncareLanding";
+const DemoPestControlLandingPage = lazy(() => import("./pages/DemoPestControlLandingPage"));
+const DemoPestControlBoardPage = lazy(() => import("./pages/DemoPestControlBoardPage"));
+const HomePlanetTransportationPage = lazy(() => import("./pages/HomePlanetTransportationPage"));
+const HomePlanetTransportationRequestPage = lazy(() => import("./pages/HomePlanetTransportationRequestPage"));
+const OkeechobeeLawnProgramPage = lazy(() => import("./pages/OkeechobeeLawnProgramPage"));
+const OkeechobeeLawnIntelligenceDashboard = lazy(() => import("./pages/OkeechobeeLawnIntelligenceDashboard"));
+const TaylorCreekRealDemoBoard = lazy(() => import("./pages/TaylorCreekRealDemoBoard"));
+const TaylorCreekRealDemoStaffBoard = lazy(() => import("./pages/TaylorCreekRealDemoStaffBoard"));
+const HomeServicesLiveSystemStaffBoard = lazy(() => import("./pages/HomeServicesLiveSystemStaffBoard"));
+const PublicPage = lazy(() => import("./routes/PublicPage"));
+const TenantPublicPage = lazy(() => import("./routes/TenantPublicPage"));
+const LiveShopTV = lazy(() => import("./routes/LiveShopTV"));
+const LiveIntakeBoard = lazy(() => import("./routes/LiveIntakeBoard"));
+const PrintWorkOrder = lazy(() => import("./routes/PrintWorkOrder"));
+const ServiceRoutes = lazy(() => import("./service/ServiceRoutes"));
+const CityRoutes = lazy(() => import("./routes/CityRoutes"));
+const TaylorCreekSite = lazy(() => import("./routes/TaylorCreekSite"));
+const PressPage = lazy(() => import("./routes/PressPage"));
+const PressKitTaylorCreek = lazy(() => import("./routes/PressKitTaylorCreek"));
+const PlanetRoutes = lazy(() => import("./planet/PlanetRoutes"));
+const OnlyTheEssentialsLandingV2 = lazy(() => import("./pages/OnlyTheEssentialsLandingV2"));
+const CreatorRoutes = lazy(() => import("./routes/CreatorRoutes"));
+const WorkspaceRoutes = lazy(() => import("./app/WorkspaceRoutes"));
+const LiveAwnitIntake = lazy(() => import("./pages/LiveAwnitIntake"));
+const LegalDemoBoard = lazy(() => import("./pages/LegalDemoBoard"));
+const DanFieldNotebookDesk = lazy(() => import("./pages/DanFieldNotebookDesk"));
+const LeeStudentNotebookDesk = lazy(() => import("./pages/LeeStudentNotebookDesk"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const BeamScreen = lazy(() => import("./routes/BeamScreen"));
+const BeamReceive = lazy(() => import("./routes/BeamReceive"));
+const BeamOpen = lazy(() => import("./routes/BeamOpen"));
+const WildingLiveBoardDispatch = lazy(() => import("./pages/WildingLiveBoardDispatch"));
+const HomePlanetMarketAwarenessFunnelV1 = lazy(() => import("./pages/HomePlanetMarketAwarenessFunnelV1"));
+const HomePlanetMarketAwarenessDashboardV1 = lazy(() =>
+  import("./pages/HomePlanetMarketAwarenessFunnelV1").then((module) => ({
+    default: module.HomePlanetMarketAwarenessDashboardV1,
+  }))
+);
+const HomePlanetAfterTheClickDemo = lazy(() => import("./pages/HomePlanetAfterTheClickDemo"));
+const BrightSideFlowDemo = lazy(() => import("./pages/BrightSideFlowDemo"));
+const HomePlanetNotepad = lazy(() => import("./pages/HomePlanetNotepad"));
+const SlapABugLandingPage = lazy(() => import("./pages/SlapABugLandingPage"));
+const SlapABugBoardPage = lazy(() => import("./pages/SlapABugBoardPage"));
+const VZProfessionalLawncareLanding = lazy(() => import("./pages/VZProfessionalLawncareLanding"));
 function LiveShell() {
   return <Outlet />;
 }
@@ -157,7 +124,8 @@ function OkeechobeeDomainCreateRedirect() {
 export default function App() {
   return (
     <BrowserRouter>
-      <Routes>
+      <Suspense fallback={null}>
+        <Routes>
                     <Route path="/planet/demo/pest-control/board" element={<DemoPestControlBoardPage />} />
           <Route path="/planet/demo/pest-control" element={<DemoPestControlLandingPage />} />          <Route path="/planet/slap-a-bug/board" element={<SlapABugBoardPage />} />
           <Route path="/planet/slap-a-bug" element={<SlapABugLandingPage />} />
@@ -232,6 +200,7 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
           <Route path="/planet/notepad" element={<HomePlanetNotepad />} />
         </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }
