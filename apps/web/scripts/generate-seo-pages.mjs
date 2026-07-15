@@ -51,20 +51,7 @@ const publicSeoRegistry = [
         </nav>
       </section>
 
-      <section>
-        <h2>Explore public HomePlanet live systems</h2>
-        <p>See public live pages and working system examples built for local businesses and community action.</p>
-        <nav aria-label="Public HomePlanet live systems">
-          <ul>
-            <li><a href="/planet/slap-a-bug">Slap-A-Bug Pest Control in Okeechobee</a></li>
-            <li><a href="/planet/demo/pest-control">Pest Control Live System Demo</a></li>
-            <li><a href="/planet/okie-dokie-softwash">Okie Dokie Softwash Pressure Washing in Okeechobee</a></li>
-            <li><a href="/planet/okeechobee">Okeechobee Together Community Action</a></li>
-            <li><a href="/planet/vz-professional-lawncare">V&amp;Z Professional Lawncare in Okeechobee</a></li>
-            <li><a href="/onlytheessentials">Only The Essentials Cleaning in Okeechobee</a></li>
-          </ul>
-        </nav>
-      </section>
+
     `,
     schema: {
       "@context": "https://schema.org",
