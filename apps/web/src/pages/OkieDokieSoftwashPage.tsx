@@ -214,7 +214,7 @@ export default function OkieDokieSoftwashPage() {
         <section className="mt-10 overflow-hidden rounded-[2rem] border border-emerald-400/30 bg-black shadow-[0_0_48px_rgba(16,185,129,0.08)]">
           <div className="relative min-h-[390px] sm:min-h-[500px]">
             <img
-              src="/images/okie-dokie-softwash-hero.png"
+              src="/images/okie-dokie-softwash-hero.webp"
               alt="Exterior pressure cleaning on a residential driveway in Okeechobee, Florida"
               className="absolute inset-0 h-full w-full object-cover object-center"
             />

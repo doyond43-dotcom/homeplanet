@@ -160,7 +160,7 @@ const routes = [
       "Okeechobee pressure washing and softwash for homes, driveways, roofs, pool cages, patios, fences, and exterior property cleaning. Request an estimate.",
     canonical: "https://www.homeplanet.city/planet/okie-dokie-softwash",
     image:
-      "https://www.homeplanet.city/images/okie-dokie-softwash-hero.png",
+      "https://www.homeplanet.city/images/okie-dokie-softwash-hero.webp",
     body: `
       <main>
         <h1>Pressure Washing and Softwash in Okeechobee, Florida</h1>
@@ -225,7 +225,7 @@ const routes = [
       "@type": "LocalBusiness",
       name: "Okie Dokie Softwash",
       url: "https://www.homeplanet.city/planet/okie-dokie-softwash",
-      image: "https://www.homeplanet.city/images/okie-dokie-softwash-hero.png",
+      image: "https://www.homeplanet.city/images/okie-dokie-softwash-hero.webp",
       description:
         "Pressure washing, soft washing, and exterior property cleaning in Okeechobee, Florida.",
       areaServed: {
