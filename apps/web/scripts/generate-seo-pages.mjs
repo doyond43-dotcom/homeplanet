@@ -152,6 +152,119 @@ const routes = [
       }
     }
   }
+  ,
+  {
+    output: path.join(distDir, "planet", "okie-dokie-softwash", "index.html"),
+    title: "Pressure Washing & Softwash in Okeechobee, FL",
+    description:
+      "Okeechobee pressure washing and softwash for homes, driveways, roofs, pool cages, patios, fences, and exterior property cleaning. Request an estimate.",
+    canonical: "https://www.homeplanet.city/planet/okie-dokie-softwash",
+    image:
+      "https://www.homeplanet.city/images/okie-dokie-softwash-hero.png",
+    body: `
+      <main>
+        <h1>Pressure Washing and Softwash in Okeechobee, Florida</h1>
+
+        <p>Okie Dokie Softwash provides exterior cleaning for homes and properties around Okeechobee, Florida. Customers can choose the area that needs cleaning, describe the condition of the property, and request an estimate through one clear service flow.</p>
+
+        <section>
+          <h2>Exterior cleaning services in Okeechobee</h2>
+
+          <h3>House washing</h3>
+          <p>House washing helps clean exterior siding, trim, soffits, painted surfaces, and other areas affected by dirt, algae, mildew, and Florida weather buildup.</p>
+          <p>Customers can describe the exterior condition, property access, and areas that need the most attention before follow-up and estimate review.</p>
+
+          <h3>Driveway and walkway cleaning</h3>
+          <p>Driveways, sidewalks, walkways, and concrete entry areas can collect dirt, organic growth, dark buildup, tire marks, and surface staining.</p>
+          <p>The estimate request can include project size, condition, access details, and notes about the areas that need pressure cleaning.</p>
+
+          <h3>Roof softwashing</h3>
+          <p>Roof softwash requests may include dark streaks, algae, organic growth, and visible exterior staining. Roof cleaning requires a cleaning method appropriate for the roof material and current condition.</p>
+          <p>Property details and photos can help review the roof, access, visible buildup, and cleaning needs before scheduling the work.</p>
+
+          <h3>Pool cage cleaning</h3>
+          <p>Pool cages, screen enclosures, frames, surrounding concrete, and outdoor living areas can develop dirt, green buildup, cobwebs, and weather-related staining.</p>
+          <p>Customers can identify the pool enclosure and nearby surfaces that need cleaning in the same estimate request.</p>
+
+          <h3>Patio and fence cleaning</h3>
+          <p>Patios, fences, seating areas, and exterior property surfaces can be included in a pressure washing or softwash request. The cleaning approach depends on the surface material and current condition.</p>
+
+          <h3>Exterior property cleaning</h3>
+          <p>Additional exterior cleaning requests can include gutters, property edges, exterior trim, and related outdoor surfaces. Customers can explain what they are seeing and send the property details before follow-up.</p>
+        </section>
+
+        <section>
+          <h2>Request a pressure cleaning estimate with property details</h2>
+          <p>The Okie Dokie Softwash live page is built around a clear customer action. Customers can select the service, identify the approximate project size, explain gate or property access, describe the buildup or staining, and provide contact information.</p>
+          <p>Project notes and property photos give the operator more context before the first conversation. This can reduce repeated questions and make estimate preparation and scheduling easier.</p>
+          <p>The goal is simple: show what needs cleaning, explain the property condition, and give the pressure cleaning operator enough information to determine the next step.</p>
+        </section>
+
+        <section>
+          <h2>From estimate request to active exterior cleaning workflow</h2>
+          <p>A customer request is only the beginning of the job. The operating workflow underneath the page can support estimate review, customer follow-up, project approval, scheduling, work photos, payment, completed-job proof, and review requests.</p>
+          <p>Customer communication and job details can remain connected to the active work instead of being scattered across separate forms, text messages, handwritten notes, and unrelated systems.</p>
+          <p>Before and after proof is especially useful for pressure cleaning because the finished result should be visible. Work photos can help document the property condition and the completed exterior cleaning.</p>
+        </section>
+
+        <section>
+          <h2>Local pressure washing and softwash service around Okeechobee</h2>
+          <p>Okie Dokie Softwash focuses on exterior cleaning needs common to Okeechobee homes and properties. Florida weather, humidity, organic growth, and outdoor exposure can affect driveways, house exteriors, roofs, pool cages, patios, fences, and other surfaces.</p>
+          <p>The service page is designed to help local customers start with the cleaning need they already recognize and move directly into an estimate request.</p>
+          <p>House washing, driveway cleaning, roof softwashing, pool cage cleaning, patio cleaning, fence cleaning, and exterior property cleanup can all begin through the same clear request process.</p>
+        </section>
+
+        <nav>
+          <a href="https://www.homeplanet.city/">HomePlanet home page</a>
+          <a href="https://www.homeplanet.city/planet/okie-dokie-softwash">Okie Dokie Softwash pressure washing page</a>
+        </nav>
+      </main>
+    `,
+    schema: {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      name: "Okie Dokie Softwash",
+      url: "https://www.homeplanet.city/planet/okie-dokie-softwash",
+      image: "https://www.homeplanet.city/images/okie-dokie-softwash-hero.png",
+      description:
+        "Pressure washing, soft washing, and exterior property cleaning in Okeechobee, Florida.",
+      areaServed: {
+        "@type": "City",
+        name: "Okeechobee",
+        addressRegion: "FL"
+      },
+      makesOffer: [
+        {
+          "@type": "Offer",
+          itemOffered: {
+            "@type": "Service",
+            name: "House Washing"
+          }
+        },
+        {
+          "@type": "Offer",
+          itemOffered: {
+            "@type": "Service",
+            name: "Driveway Cleaning"
+          }
+        },
+        {
+          "@type": "Offer",
+          itemOffered: {
+            "@type": "Service",
+            name: "Roof Softwashing"
+          }
+        },
+        {
+          "@type": "Offer",
+          itemOffered: {
+            "@type": "Service",
+            name: "Pool Cage Cleaning"
+          }
+        }
+      ]
+    }
+  }
 ];
 
 function escapeAttribute(value) {

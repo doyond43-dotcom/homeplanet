@@ -1,17 +1,21 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "rewrites": [
-    {
-      "source": "/planet/slap-a-bug",
-      "destination": "/planet/slap-a-bug/index.html"
-    },
-    {
-      "source": "/planet/demo/pest-control",
-      "destination": "/planet/demo/pest-control/index.html"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
-  ]
+    "$schema":  "https://openapi.vercel.sh/vercel.json",
+    "rewrites":  [
+                     {
+                         "source":  "/planet/slap-a-bug",
+                         "destination":  "/planet/slap-a-bug/index.html"
+                     },
+                     {
+                         "source":  "/planet/demo/pest-control",
+                         "destination":  "/planet/demo/pest-control/index.html"
+                     },
+                     {
+                         "source":  "/planet/okie-dokie-softwash",
+                         "destination":  "/planet/okie-dokie-softwash/index.html"
+                     },
+                     {
+                         "source":  "/(.*)",
+                         "destination":  "/index.html"
+                     }
+                 ]
 }
