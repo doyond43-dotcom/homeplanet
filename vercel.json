@@ -1,5 +1,4 @@
 {
-    "$schema":  "https://openapi.vercel.sh/vercel.json",
     "rewrites":  [
                      {
                          "source":  "/planet/slap-a-bug",
@@ -12,6 +11,18 @@
                      {
                          "source":  "/planet/okie-dokie-softwash",
                          "destination":  "/planet/okie-dokie-softwash/index.html"
+                     },
+                     {
+                         "source":  "/planet/okeechobee",
+                         "destination":  "/planet/okeechobee/index.html"
+                     },
+                     {
+                         "source":  "/planet/vz-professional-lawncare",
+                         "destination":  "/planet/vz-professional-lawncare/index.html"
+                     },
+                     {
+                         "source":  "/onlytheessentials",
+                         "destination":  "/onlytheessentials/index.html"
                      },
                      {
                          "source":  "/(.*)",

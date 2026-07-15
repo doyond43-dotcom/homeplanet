@@ -1,68 +1,88 @@
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const distDir = path.resolve("dist");
-const indexFile = path.join(distDir, "index.html");
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-if (!fs.existsSync(indexFile)) {
-  throw new Error("dist/index.html was not found. Run this after vite build.");
-}
+const appDir = path.resolve(__dirname, "..");
+const distDir = path.join(appDir, "dist");
+const publicDir = path.join(appDir, "public");
+const baseHtmlPath = path.join(distDir, "index.html");
 
-const baseHtml = fs.readFileSync(indexFile, "utf8");
+const SITE_URL = "https://www.homeplanet.city";
 
-const routes = [
+const publicSeoRegistry = [
   {
-    output: path.join(distDir, "planet", "slap-a-bug", "index.html"),
+    route: "/",
+    title: "HomePlanet | Live Systems for Local Business & Community",
+    description:
+      "HomePlanet builds live pages and operating workflows for local businesses, community projects, and real-world work that needs a clear next action.",
+    image: `${SITE_URL}/og-homeplanet.png`,
+    heading: "HomePlanet builds systems for real work.",
+    body: `
+      <section>
+        <h2>Live systems for local businesses and communities</h2>
+        <p>HomePlanet builds more than traditional websites. A public live page can help a customer, resident, or community member understand what is happening and take a clear next action.</p>
+        <p>Underneath the public page, a working system can organize requests, estimates, approvals, scheduling, photos, payment, proof, follow-up, and the timeline of what happened.</p>
+      </section>
+      <section>
+        <h2>From public action to active workflow</h2>
+        <p>HomePlanet systems are designed around real operations. A request can become active work instead of disappearing into random texts, paper notes, separate apps, or disconnected forms.</p>
+        <p>Local businesses and community projects can use a live system to make work easier to understand, easier to follow, and easier to prove.</p>
+      </section>
+      <section>
+        <h2>Built around how people already work</h2>
+        <p>HomePlanet can start with a professional live page, grow into a complete business workflow, or become a custom operating system built around the way a person, team, or community already works.</p>
+      </section>
+    `,
+    schema: {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": `${SITE_URL}/#organization`,
+          name: "HomePlanet",
+          url: `${SITE_URL}/`
+        },
+        {
+          "@type": "WebSite",
+          "@id": `${SITE_URL}/#website`,
+          name: "HomePlanet",
+          url: `${SITE_URL}/`,
+          publisher: {
+            "@id": `${SITE_URL}/#organization`
+          }
+        }
+      ]
+    }
+  },
+  {
+    route: "/planet/slap-a-bug",
     title: "Slap-A-Bug Pest Control | Okeechobee, FL",
     description:
-      "Local Okeechobee pest control for ants, roaches, rodents, spiders, mosquitoes and more. Call, text or request an estimate.",
-    canonical: "https://www.homeplanet.city/planet/slap-a-bug",
-    image:
-      "https://www.homeplanet.city/images/slap-a-bug-truck-hero.png",
+      "Local pest control in Okeechobee for roaches, ants, spiders, rodents, termites, mosquitoes, and other pest problems. Request service directly.",
+    image: `${SITE_URL}/images/slap-a-bug-truck-hero.webp`,
+    heading: "Pest control in Okeechobee, Florida",
     body: `
-      <main>
-        <h1>Slap-A-Bug Pest Control in Okeechobee, Florida</h1>
-
-        <section>
-          <h2>Pest control for common Okeechobee pest problems</h2>
-          <h3>Roach control</h3>
-          <p>Local pest control support for roach activity in kitchens, bathrooms, garages, and other areas of the property.</p>
-
-          <h3>Ant control</h3>
-          <p>Help with ant trails, entry points, kitchens, bathrooms, porches, and recurring ant activity around the home.</p>
-
-          <h3>Spider control</h3>
-          <p>Spider concerns around porches, garages, corners, lanais, and exterior areas can be included in a pest request.</p>
-
-          <h3>Rodent concerns</h3>
-          <p>Customers can describe rodent activity around sheds, barns, garages, feed rooms, RVs, and storage spaces.</p>
-
-          <h3>Mosquito concerns</h3>
-          <p>Mosquito requests can include yards, shaded areas, trees, bushes, fence lines, and outdoor gathering spaces.</p>
-        </section>
-
-        <section>
-          <h2>Local pest control with direct communication</h2>
-          <p>Customers can call, text, request an estimate, or start with the pest problem they are dealing with. The Slap-A-Bug live page is designed to make the next action clear and send request details into the business workflow for follow-up.</p>
-          <p>Requests can include the pest issue, where activity is being seen, the level of activity, contact information, and additional notes. This helps reduce repeated explanations and gives the pest control team useful details before following up.</p>
-        </section>
-
-        <nav>
-          <a href="https://www.homeplanet.city/">HomePlanet home page</a>
-          <a href="https://www.homeplanet.city/planet/slap-a-bug">Slap-A-Bug pest control page</a>
-        </nav>
-      </main>
+      <section>
+        <h2>Local pest control for common Okeechobee pest problems</h2>
+        <p>Slap-A-Bug Pest Control helps local customers start with the pest problem they already recognize. Roaches, ants, spiders, rodents, termites, mosquitoes, and other pest concerns can move directly into a clear service request.</p>
+      </section>
+      <section>
+        <h2>Request pest control service directly</h2>
+        <p>The Slap-A-Bug live page is designed around customer action. Customers can identify the pest issue, provide contact details, and begin direct follow-up without navigating a long traditional website.</p>
+      </section>
+      <section>
+        <h2>Local service with a working follow-up flow</h2>
+        <p>A customer request can move into an active workflow for contact, scheduling, service notes, payment, proof, and review follow-up.</p>
+      </section>
     `,
     schema: {
       "@context": "https://schema.org",
       "@type": "PestControlService",
       name: "Slap-A-Bug Pest Control LLC",
-      url: "https://www.homeplanet.city/planet/slap-a-bug",
-      telephone: "+1-863-368-3628",
-      image:
-        "https://www.homeplanet.city/images/slap-a-bug-truck-hero.png",
-      description:
-        "Local pest control serving Okeechobee homes, sheds, barns, RVs, mobile homes and businesses.",
+      url: `${SITE_URL}/planet/slap-a-bug`,
       areaServed: {
         "@type": "City",
         name: "Okeechobee",
@@ -71,161 +91,71 @@ const routes = [
     }
   },
   {
-    output: path.join(distDir, "planet", "demo", "pest-control", "index.html"),
+    route: "/planet/demo/pest-control",
     title: "Pest Control Live System Demo | HomePlanet",
     description:
-      "Explore a pest control live-page demo with customer intake, service requests, direct communication, and an operating workflow built by HomePlanet.",
-    canonical: "https://www.homeplanet.city/planet/demo/pest-control",
-    image:
-      "https://www.homeplanet.city/images/homeplanet-your-workflow-live-v1.png",
+      "Explore a HomePlanet pest control live system demo showing how customer requests can move into follow-up, scheduling, service work, payment, and proof.",
+    image: `${SITE_URL}/og-homeplanet.png`,
+    heading: "Pest control live system demo",
     body: `
-      <main>
-        <h1>Okie Dokie Pest Control Live System Demo</h1>
-
-        <p>Okie Dokie Pest Control is a fictional demonstration business created by HomePlanet to show how a local pest control live page and operating workflow can work together.</p>
-
-        <section>
-          <h2>A pest control page built around customer action</h2>
-          <p>The demo gives customers a clear way to call, text, request an estimate, or select the pest problem they are dealing with. The goal is to reduce confusion and make the next action obvious.</p>
-
-          <h3>Ant requests</h3>
-          <p>Customers can start a request for ant trails, kitchens, bathrooms, pantries, porches, and entry-point activity.</p>
-
-          <h3>Roach requests</h3>
-          <p>Roach activity in kitchens, bathrooms, garages, rentals, and other interior areas can be described before follow-up.</p>
-
-          <h3>Rodent requests</h3>
-          <p>Rodent concerns around sheds, barns, garages, food storage areas, RVs, and other spaces can be sent through the request flow.</p>
-
-          <h3>Spider requests</h3>
-          <p>Customers can report spider activity around porches, garages, corners, laundry areas, exterior webs, and other property areas.</p>
-
-          <h3>Flea and tick requests</h3>
-          <p>The request flow can capture flea and tick concerns in yards, pet areas, rental properties, and locations with repeat activity.</p>
-
-          <h3>Wasp and hornet requests</h3>
-          <p>Nests, rooflines, sheds, barns, entry areas, and other wasp or hornet concerns can be identified before the pest control team follows up.</p>
-
-          <h3>Mosquito service requests</h3>
-          <p>Mosquito concerns can be selected in the request form for yards, shaded areas, trees, bushes, fence lines, and outdoor gathering spaces.</p>
-        </section>
-
-        <section>
-          <h2>From a customer request to an active pest control workflow</h2>
-          <p>This HomePlanet demonstration shows more than a traditional pest control website. Customer request details can move into an intelligence board where the operator can review active signals and open a customer workspace.</p>
-          <p>The active workspace is designed around real next actions including customer follow-up, asking for photos, scheduling service, sending ready-to-edit messages, recording internal notes, tracking payment, adding proof, and requesting a review.</p>
-          <p>The public live page and private operating workflow are connected so the customer-facing experience and the work behind the business do not have to live in separate disconnected systems.</p>
-        </section>
-
-        <section>
-          <h2>Direct communication for local service businesses</h2>
-          <p>Customers can explain the issue, identify where they are seeing activity, describe how serious the problem appears, and leave additional notes. The request gives the operator useful context before the first follow-up.</p>
-          <p>The system is intentionally designed to stay clean and easy to use while still giving the business a deeper workflow underneath the public page.</p>
-        </section>
-
-        <section>
-          <h2>A fictional pest control demo built by HomePlanet</h2>
-          <p>Okie Dokie Pest Control is not represented as a real operating pest control company. The brand, phone number, reviews, and customer examples are fictional demo content used to demonstrate HomePlanet live-page and workflow capabilities for home service businesses.</p>
-        </section>
-
-        <nav>
-          <a href="https://www.homeplanet.city/">HomePlanet home page</a>
-          <a href="https://www.homeplanet.city/planet/demo/pest-control">Pest control live system demo</a>
-        </nav>
-      </main>
+      <section>
+        <h2>See what happens after a customer clicks</h2>
+        <p>This HomePlanet demonstration shows how a pest control business can turn a public service request into an active operating workflow.</p>
+      </section>
+      <section>
+        <h2>Customer request to active work</h2>
+        <p>The workflow can support customer follow-up, scheduling, service notes, payment, completed-job proof, and review requests in one connected system.</p>
+      </section>
+      <section>
+        <h2>A live system instead of another static website</h2>
+        <p>The demonstration is designed to show the difference between a page that only explains a business and a live system that helps move real work forward.</p>
+      </section>
     `,
     schema: {
       "@context": "https://schema.org",
       "@type": "WebPage",
-      name: "Okie Dokie Pest Control Live System Demo",
-      url: "https://www.homeplanet.city/planet/demo/pest-control",
-      description:
-        "A fictional pest control live-page and workflow demonstration built by HomePlanet.",
+      name: "Pest Control Live System Demo",
+      url: `${SITE_URL}/planet/demo/pest-control`,
       isPartOf: {
         "@type": "WebSite",
         name: "HomePlanet",
-        url: "https://www.homeplanet.city/"
-      },
-      about: {
-        "@type": "Thing",
-        name: "Pest control business workflow demonstration"
+        url: `${SITE_URL}/`
       }
     }
-  }
-  ,
+  },
   {
-    output: path.join(distDir, "planet", "okie-dokie-softwash", "index.html"),
+    route: "/planet/okie-dokie-softwash",
     title: "Pressure Washing & Softwash in Okeechobee, FL",
     description:
       "Okeechobee pressure washing and softwash for homes, driveways, roofs, pool cages, patios, fences, and exterior property cleaning. Request an estimate.",
-    canonical: "https://www.homeplanet.city/planet/okie-dokie-softwash",
-    image:
-      "https://www.homeplanet.city/images/okie-dokie-softwash-hero.webp",
+    image: `${SITE_URL}/images/okie-dokie-softwash-hero.webp`,
+    heading: "Pressure Washing and Softwash in Okeechobee, Florida",
     body: `
-      <main>
-        <h1>Pressure Washing and Softwash in Okeechobee, Florida</h1>
-
+      <section>
+        <h2>Exterior cleaning services in Okeechobee</h2>
         <p>Okie Dokie Softwash provides exterior cleaning for homes and properties around Okeechobee, Florida. Customers can choose the area that needs cleaning, describe the condition of the property, and request an estimate through one clear service flow.</p>
-
-        <section>
-          <h2>Exterior cleaning services in Okeechobee</h2>
-
-          <h3>House washing</h3>
-          <p>House washing helps clean exterior siding, trim, soffits, painted surfaces, and other areas affected by dirt, algae, mildew, and Florida weather buildup.</p>
-          <p>Customers can describe the exterior condition, property access, and areas that need the most attention before follow-up and estimate review.</p>
-
-          <h3>Driveway and walkway cleaning</h3>
-          <p>Driveways, sidewalks, walkways, and concrete entry areas can collect dirt, organic growth, dark buildup, tire marks, and surface staining.</p>
-          <p>The estimate request can include project size, condition, access details, and notes about the areas that need pressure cleaning.</p>
-
-          <h3>Roof softwashing</h3>
-          <p>Roof softwash requests may include dark streaks, algae, organic growth, and visible exterior staining. Roof cleaning requires a cleaning method appropriate for the roof material and current condition.</p>
-          <p>Property details and photos can help review the roof, access, visible buildup, and cleaning needs before scheduling the work.</p>
-
-          <h3>Pool cage cleaning</h3>
-          <p>Pool cages, screen enclosures, frames, surrounding concrete, and outdoor living areas can develop dirt, green buildup, cobwebs, and weather-related staining.</p>
-          <p>Customers can identify the pool enclosure and nearby surfaces that need cleaning in the same estimate request.</p>
-
-          <h3>Patio and fence cleaning</h3>
-          <p>Patios, fences, seating areas, and exterior property surfaces can be included in a pressure washing or softwash request. The cleaning approach depends on the surface material and current condition.</p>
-
-          <h3>Exterior property cleaning</h3>
-          <p>Additional exterior cleaning requests can include gutters, property edges, exterior trim, and related outdoor surfaces. Customers can explain what they are seeing and send the property details before follow-up.</p>
-        </section>
-
-        <section>
-          <h2>Request a pressure cleaning estimate with property details</h2>
-          <p>The Okie Dokie Softwash live page is built around a clear customer action. Customers can select the service, identify the approximate project size, explain gate or property access, describe the buildup or staining, and provide contact information.</p>
-          <p>Project notes and property photos give the operator more context before the first conversation. This can reduce repeated questions and make estimate preparation and scheduling easier.</p>
-          <p>The goal is simple: show what needs cleaning, explain the property condition, and give the pressure cleaning operator enough information to determine the next step.</p>
-        </section>
-
-        <section>
-          <h2>From estimate request to active exterior cleaning workflow</h2>
-          <p>A customer request is only the beginning of the job. The operating workflow underneath the page can support estimate review, customer follow-up, project approval, scheduling, work photos, payment, completed-job proof, and review requests.</p>
-          <p>Customer communication and job details can remain connected to the active work instead of being scattered across separate forms, text messages, handwritten notes, and unrelated systems.</p>
-          <p>Before and after proof is especially useful for pressure cleaning because the finished result should be visible. Work photos can help document the property condition and the completed exterior cleaning.</p>
-        </section>
-
-        <section>
-          <h2>Local pressure washing and softwash service around Okeechobee</h2>
-          <p>Okie Dokie Softwash focuses on exterior cleaning needs common to Okeechobee homes and properties. Florida weather, humidity, organic growth, and outdoor exposure can affect driveways, house exteriors, roofs, pool cages, patios, fences, and other surfaces.</p>
-          <p>The service page is designed to help local customers start with the cleaning need they already recognize and move directly into an estimate request.</p>
-          <p>House washing, driveway cleaning, roof softwashing, pool cage cleaning, patio cleaning, fence cleaning, and exterior property cleanup can all begin through the same clear request process.</p>
-        </section>
-
-        <nav>
-          <a href="https://www.homeplanet.city/">HomePlanet home page</a>
-          <a href="https://www.homeplanet.city/planet/okie-dokie-softwash">Okie Dokie Softwash pressure washing page</a>
-        </nav>
-      </main>
+        <p>Services can include house washing, driveway and walkway cleaning, roof softwashing, pool cage cleaning, patio cleaning, fence cleaning, and other exterior property cleaning needs.</p>
+      </section>
+      <section>
+        <h2>Request a pressure cleaning estimate with property details</h2>
+        <p>The Okie Dokie Softwash live page is built around a clear customer action. Customers can select the service, identify the approximate project size, explain gate or property access, describe the buildup or staining, and provide contact information.</p>
+      </section>
+      <section>
+        <h2>From estimate request to active exterior cleaning workflow</h2>
+        <p>A customer request is only the beginning of the job. The operating workflow underneath the page can support estimate review, customer follow-up, project approval, scheduling, work photos, payment, completed-job proof, and review requests.</p>
+      </section>
+      <section>
+        <h2>Local pressure washing and softwash service around Okeechobee</h2>
+        <p>Okie Dokie Softwash focuses on exterior cleaning needs common to Okeechobee homes and properties. Florida weather, humidity, organic growth, and outdoor exposure can affect driveways, house exteriors, roofs, pool cages, patios, fences, and other surfaces.</p>
+        <p>The service page is designed to help local customers start with the cleaning need they already recognize and move directly into an estimate request.</p>
+      </section>
     `,
     schema: {
       "@context": "https://schema.org",
       "@type": "LocalBusiness",
       name: "Okie Dokie Softwash",
-      url: "https://www.homeplanet.city/planet/okie-dokie-softwash",
-      image: "https://www.homeplanet.city/images/okie-dokie-softwash-hero.webp",
+      url: `${SITE_URL}/planet/okie-dokie-softwash`,
+      image: `${SITE_URL}/images/okie-dokie-softwash-hero.webp`,
       description:
         "Pressure washing, soft washing, and exterior property cleaning in Okeechobee, Florida.",
       areaServed: {
@@ -264,92 +194,251 @@ const routes = [
         }
       ]
     }
+  },
+  {
+    route: "/planet/okeechobee",
+    title: "Okeechobee Together | Local Help & Community Action",
+    description:
+      "Okeechobee Together helps local people share needs, offers, opportunities, events, and community action through one connected local system.",
+    image: `${SITE_URL}/og-homeplanet.png`,
+    heading: "Okeechobee Together connects local needs with local action.",
+    body: `
+      <section>
+        <h2>A community system for Okeechobee</h2>
+        <p>Okeechobee Together gives local people a clearer way to share a need, offer help, create an opportunity, organize an event, or surface something the community should know.</p>
+      </section>
+      <section>
+        <h2>Local needs and local help in one connected flow</h2>
+        <p>Community action should not depend on one person manually coordinating every message. Okeechobee Together is designed so a public signal can create a clear next action and help the right people move the work forward.</p>
+      </section>
+      <section>
+        <h2>Community coordination with a visible truth chain</h2>
+        <p>Needs, actions, and outcomes can stay connected so people can understand where something started, what happened next, and what was completed.</p>
+      </section>
+    `,
+    schema: {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      name: "Okeechobee Together",
+      url: `${SITE_URL}/planet/okeechobee`,
+      about: {
+        "@type": "City",
+        name: "Okeechobee",
+        addressRegion: "FL"
+      }
+    }
+  },
+  {
+    route: "/planet/vz-professional-lawncare",
+    title: "V&Z Professional Lawncare | Okeechobee, FL",
+    description:
+      "V&Z Professional Lawncare provides mowing, edging, trimming, mulch installation, gutter cleaning, window cleaning, roof cleaning, and exterior property care.",
+    image: `${SITE_URL}/images/vz-lawncare-eric-trimming-hero.jpeg`,
+    heading: "Professional lawn and exterior property care in Okeechobee.",
+    body: `
+      <section>
+        <h2>Lawn and exterior property care in Okeechobee</h2>
+        <p>V&amp;Z Professional Lawncare provides local property care including mowing, edging, trimming, mulch installation, gutter cleaning, window cleaning, roof cleaning, and additional exterior services.</p>
+      </section>
+      <section>
+        <h2>Start with the property work you need</h2>
+        <p>Customers can begin with the service they need and provide property details, yard condition, access information, timing, and photos when useful for reviewing the work.</p>
+      </section>
+      <section>
+        <h2>Direct communication and clear follow-up</h2>
+        <p>The V&amp;Z live page is designed to move a customer from the property need into direct communication and a clear service workflow.</p>
+      </section>
+    `,
+    schema: {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      name: "V&Z Professional Lawncare LLC",
+      url: `${SITE_URL}/planet/vz-professional-lawncare`,
+      telephone: "+1-863-532-8123",
+      areaServed: {
+        "@type": "City",
+        name: "Okeechobee",
+        addressRegion: "FL"
+      }
+    }
+  },
+  {
+    route: "/onlytheessentials",
+    title: "Only The Essentials Cleaning | Okeechobee, FL",
+    description:
+      "Only The Essentials Cleaning provides local home cleaning in Okeechobee with a clear quote request for bedrooms, bathrooms, pets, home condition, photos, and scheduling.",
+    image: `${SITE_URL}/images/only-the-essentials-cleaning-premium-logo.png`,
+    heading: "Home cleaning in Okeechobee with a simpler quote request.",
+    body: `
+      <section>
+        <h2>Local home cleaning in Okeechobee</h2>
+        <p>Only The Essentials Cleaning helps local customers request a cleaning quote by starting with the details that actually affect the work.</p>
+      </section>
+      <section>
+        <h2>Request a cleaning quote with the important home details</h2>
+        <p>Customers can provide bedroom and bathroom counts, pet information, home condition, preferred timing, contact details, and property photos when helpful.</p>
+      </section>
+      <section>
+        <h2>From cleaning quote to scheduled work</h2>
+        <p>The connected cleaning workflow can support estimate review, customer approval, scheduling, work photos, payment, completed-job proof, review follow-up, and recurring cleaning opportunities.</p>
+      </section>
+    `,
+    schema: {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      name: "Only The Essentials Cleaning",
+      url: `${SITE_URL}/onlytheessentials`,
+      areaServed: {
+        "@type": "City",
+        name: "Okeechobee",
+        addressRegion: "FL"
+      },
+      makesOffer: {
+        "@type": "Offer",
+        itemOffered: {
+          "@type": "Service",
+          name: "Home Cleaning"
+        }
+      }
+    }
   }
 ];
 
-function escapeAttribute(value) {
-  return value
+function escapeHtml(value) {
+  return String(value)
     .replaceAll("&", "&amp;")
-    .replaceAll('"', "&quot;")
     .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;");
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
 }
 
-for (const route of routes) {
+function routeOutput(route) {
+  if (route === "/") {
+    return path.join(distDir, "index.html");
+  }
+
+  return path.join(
+    distDir,
+    ...route.split("/").filter(Boolean),
+    "index.html"
+  );
+}
+
+function buildSeoHtml(baseHtml, page) {
+  const escapedTitle = escapeHtml(page.title);
+  const escapedDescription = escapeHtml(page.description);
+  const escapedCanonical = escapeHtml(`${SITE_URL}${page.route}`);
+  const escapedImage = escapeHtml(page.image);
+
   let html = baseHtml;
 
   html = html.replace(
     /<title>[\s\S]*?<\/title>/i,
-    `<title>${route.title}</title>`
+    `<title>${escapedTitle}</title>`
   );
 
   html = html.replace(
-    /<meta\s+name="description"\s+content="[\s\S]*?"\s*\/?>/i,
-    `<meta name="description" content="${escapeAttribute(route.description)}" />`
+    /<meta\s+name=["']description["'][^>]*>/i,
+    `<meta name="description" content="${escapedDescription}" />`
   );
 
   html = html.replace(
-    /<meta\s+property="og:title"\s+content="[\s\S]*?"\s*\/?>/i,
-    `<meta property="og:title" content="${escapeAttribute(route.title)}" />`
+    /<meta\s+property=["']og:title["'][^>]*>/i,
+    `<meta property="og:title" content="${escapedTitle}" />`
   );
 
   html = html.replace(
-    /<meta\s+property="og:description"\s+content="[\s\S]*?"\s*\/?>/i,
-    `<meta property="og:description" content="${escapeAttribute(route.description)}" />`
+    /<meta\s+property=["']og:description["'][^>]*>/i,
+    `<meta property="og:description" content="${escapedDescription}" />`
   );
 
   html = html.replace(
-    /<meta\s+property="og:image"\s+content="[\s\S]*?"\s*\/?>/i,
-    `<meta property="og:image" content="${route.image}" />`
+    /<meta\s+property=["']og:image["'][^>]*>/i,
+    `<meta property="og:image" content="${escapedImage}" />`
   );
 
   html = html.replace(
-    /<meta\s+property="og:url"\s+content="[\s\S]*?"\s*\/?>/i,
-    `<meta property="og:url" content="${route.canonical}" />`
+    /<meta\s+property=["']og:url["'][^>]*>/i,
+    `<meta property="og:url" content="${escapedCanonical}" />`
   );
 
   html = html.replace(
-    /<meta\s+name="twitter:title"\s+content="[\s\S]*?"\s*\/?>/i,
-    `<meta name="twitter:title" content="${escapeAttribute(route.title)}" />`
+    /<meta\s+name=["']twitter:title["'][^>]*>/i,
+    `<meta name="twitter:title" content="${escapedTitle}" />`
   );
 
   html = html.replace(
-    /<meta\s+name="twitter:description"\s+content="[\s\S]*?"\s*\/?>/i,
-    `<meta name="twitter:description" content="${escapeAttribute(route.description)}" />`
+    /<meta\s+name=["']twitter:description["'][^>]*>/i,
+    `<meta name="twitter:description" content="${escapedDescription}" />`
   );
 
   html = html.replace(
-    /<meta\s+name="twitter:image"\s+content="[\s\S]*?"\s*\/?>/i,
-    `<meta name="twitter:image" content="${route.image}" />`
+    /<meta\s+name=["']twitter:image["'][^>]*>/i,
+    `<meta name="twitter:image" content="${escapedImage}" />`
+  );
+
+  html = html.replace(
+    /\s*<link\s+rel=["']canonical["'][^>]*>/gi,
+    ""
+  );
+
+  html = html.replace(
+    /\s*<script\s+type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi,
+    ""
   );
 
   const seoHead = `
-    <link rel="canonical" href="${route.canonical}" />
-
-    <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="HomePlanet" />
-    <meta property="og:title" content="${escapeAttribute(route.title)}" />
-    <meta property="og:description" content="${escapeAttribute(route.description)}" />
-    <meta property="og:image" content="${route.image}" />
-    <meta property="og:url" content="${route.canonical}" />
-
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="${escapeAttribute(route.title)}" />
-    <meta name="twitter:description" content="${escapeAttribute(route.description)}" />
-    <meta name="twitter:image" content="${route.image}" />
-
-    <script type="application/ld+json">${JSON.stringify(route.schema)}</script>
-  `;
+    <link rel="canonical" href="${escapedCanonical}" />
+    <script type="application/ld+json">${JSON.stringify(page.schema)}</script>`;
 
   html = html.replace("</head>", `${seoHead}\n  </head>`);
 
+  const crawlableContent = `
+    <main id="seo-content" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:normal;border:0;">
+      <h1>${escapeHtml(page.heading)}</h1>
+      ${page.body}
+    </main>
+    <div id="root"></div>`;
+
   html = html.replace(
-    '<div id="root"></div>',
-    `<div id="root">${route.body}</div>`
+    /<div\s+id=["']root["']\s*><\/div>/i,
+    crawlableContent
   );
 
-  fs.mkdirSync(path.dirname(route.output), { recursive: true });
-  fs.writeFileSync(route.output, html, "utf8");
-
-  console.log(`Generated SEO shell: ${route.output}`);
+  return html;
 }
+
+if (!fs.existsSync(baseHtmlPath)) {
+  throw new Error(`Base Vite HTML was not found: ${baseHtmlPath}`);
+}
+
+const baseHtml = fs.readFileSync(baseHtmlPath, "utf8");
+
+for (const page of publicSeoRegistry) {
+  const output = routeOutput(page.route);
+  const html = buildSeoHtml(baseHtml, page);
+
+  fs.mkdirSync(path.dirname(output), { recursive: true });
+  fs.writeFileSync(output, html, "utf8");
+
+  console.log(`Generated SEO shell: ${output}`);
+}
+
+const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${publicSeoRegistry
+  .map(
+    (page) => `  <url>
+    <loc>${SITE_URL}${page.route}</loc>
+  </url>`
+  )
+  .join("\n")}
+</urlset>
+`;
+
+fs.writeFileSync(path.join(publicDir, "sitemap.xml"), sitemapXml, "utf8");
+fs.writeFileSync(path.join(distDir, "sitemap.xml"), sitemapXml, "utf8");
+
+console.log(
+  `Generated sitemap from public SEO registry: ${publicSeoRegistry.length} URLs`
+);
