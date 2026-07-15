@@ -1,4 +1,6 @@
-﻿import HomePlanetTransportationPage from "./pages/HomePlanetTransportationPage";
+import DemoPestControlLandingPage from "./pages/DemoPestControlLandingPage";
+import DemoPestControlBoardPage from "./pages/DemoPestControlBoardPage";
+import HomePlanetTransportationPage from "./pages/HomePlanetTransportationPage";
 
 import HomePlanetTransportationRequestPage from "./pages/HomePlanetTransportationRequestPage";
 
@@ -156,7 +158,8 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-          <Route path="/planet/slap-a-bug/board" element={<SlapABugBoardPage />} />
+                    <Route path="/planet/demo/pest-control/board" element={<DemoPestControlBoardPage />} />
+          <Route path="/planet/demo/pest-control" element={<DemoPestControlLandingPage />} />          <Route path="/planet/slap-a-bug/board" element={<SlapABugBoardPage />} />
           <Route path="/planet/slap-a-bug" element={<SlapABugLandingPage />} />
 <Route path="/vz" element={<VZProfessionalLawncareLanding />} />
 <Route path="/planet/vz-professional-lawncare" element={<VZProfessionalLawncareLanding />} />                    <Route path="/planet/transportation/request" element={<HomePlanetTransportationRequestPage />} />

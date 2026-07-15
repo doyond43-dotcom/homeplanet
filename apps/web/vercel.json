@@ -6,6 +6,10 @@
       "destination": "/planet/slap-a-bug/index.html"
     },
     {
+      "source": "/planet/demo/pest-control",
+      "destination": "/planet/demo/pest-control/index.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
