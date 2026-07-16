@@ -920,6 +920,13 @@ function AtlasIndex() {
                   The item page, buyer, seller, payment, hold status, video,
                   pickup, and final sale remain one connected experience.
                 </div>
+
+                <div className="hp-yard-sale-cta">
+                  <a href="/yard-sale/start">
+                    Start Your Yard Sale Page
+                  </a>
+                  <span>Create it in minutes. We help with the rest.</span>
+                </div>
               </div>
 
               <div className="hp-sale-board">
@@ -1830,6 +1837,48 @@ function AtlasIndex() {
           color: rgba(236, 250, 240, 0.74);
           font-size: 14px;
           line-height: 1.58;
+        }
+
+        .hp-yard-sale-cta {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 9px;
+          margin-top: 22px;
+        }
+
+        .hp-yard-sale-cta a {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 48px;
+          padding: 0 20px;
+          border: 1px solid rgba(89, 255, 145, 0.54);
+          border-radius: 14px;
+          background: #59ff91;
+          color: #031008;
+          font-size: 14px;
+          font-weight: 950;
+          text-decoration: none;
+          box-shadow:
+            0 12px 34px rgba(66, 255, 133, 0.14),
+            inset 0 1px rgba(255, 255, 255, 0.28);
+          transition:
+            transform 160ms ease,
+            box-shadow 160ms ease;
+        }
+
+        .hp-yard-sale-cta a:hover {
+          transform: translateY(-2px);
+          box-shadow:
+            0 16px 42px rgba(66, 255, 133, 0.22),
+            inset 0 1px rgba(255, 255, 255, 0.28);
+        }
+
+        .hp-yard-sale-cta span {
+          color: rgba(236, 250, 240, 0.58);
+          font-size: 12px;
+          line-height: 1.45;
         }
 
         .hp-truth-board,
