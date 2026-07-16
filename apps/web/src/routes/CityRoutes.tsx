@@ -545,7 +545,7 @@ function AtlasIndex() {
                 boxShadow: "0 0 18px rgba(84,255,141,0.8)",
               }}
             />
-            The Atlas starts at the core
+            Built Around Real Work
           </div>
 
           <h1
@@ -555,7 +555,7 @@ function AtlasIndex() {
               fontSize: "clamp(72px, 10vw, 138px)",
             }}
           >
-            HomePlanet
+            Bring Your Business
             <br />
 
             <span
@@ -564,7 +564,7 @@ function AtlasIndex() {
                 textShadow: "0 0 42px rgba(65,255,126,0.16)",
               }}
             >
-              Systems
+              Under Control.
             </span>
           </h1>
 
@@ -579,7 +579,7 @@ function AtlasIndex() {
               color: "#effff4",
             }}
           >
-            Real needs. Real action. One connected truth chain.
+            Start with the chaos. Build the operating system underneath.
           </div>
 
           <p
@@ -590,8 +590,9 @@ function AtlasIndex() {
               fontSize: "clamp(18px, 2vw, 22px)",
             }}
           >
-            HomePlanet connects people, work, money, communication, proof,
-            and outcomes without losing where anything started.
+            HomePlanet builds custom systems for local service businesses.
+            Connect customer requests, estimates, scheduling, communication,
+            payments, proof, and follow-up in one place.
           </p>
 
           <div style={actions}>
@@ -599,8 +600,8 @@ function AtlasIndex() {
               See How HomePlanet Works
             </a>
 
-            <a href="#directions" style={secondary}>
-              Choose Your Direction
+            <a href="/planet/builds" style={secondary}>
+              See Real Businesses
             </a>
           </div>
         </section>
@@ -623,6 +624,85 @@ function AtlasIndex() {
           </div>
 
           <div className="hp-story-stack">
+            
+            <article className="hp-story hp-story-business">
+              <img
+                className="hp-story-photo"
+                src="/images/homeplanet-business-control-chaos.webp"
+                alt="A small-business owner managing scattered calls, paperwork, and scheduling"
+              />
+              <div className="hp-story-copy">
+                <div className="hp-story-number">01</div>
+
+                <div className="hp-story-label">
+                  Bring a business under control
+                </div>
+
+                <h3>
+                  Start with the chaos. Build the operating system underneath.
+                </h3>
+
+                <p>
+                  A business owner does not arrive asking for software. They
+                  arrive with scattered calls, messages, customers, photos,
+                  estimates, schedules, payments, and unfinished follow-up.
+                </p>
+
+                <div className="hp-story-point">
+                  HomePlanet starts with what is happening today, then gives
+                  every request, decision, next action, payment, proof, and
+                  customer history a place.
+                </div>
+              </div>
+
+              <div className="hp-business-board">
+                <div className="hp-business-signal">
+                  <span>Real starting point</span>
+
+                  <strong>
+                    “I need help getting my business under control.”
+                  </strong>
+                </div>
+
+                <div className="hp-business-arrow">
+                  <span />
+                  HomePlanet organizes what happens next
+                  <span />
+                </div>
+
+                <div className="hp-workspace-preview">
+                  <div className="hp-board-head">
+                    <div>
+                      <span>Active workspace</span>
+                      <strong>Everything now has a place.</strong>
+                    </div>
+
+                    <div className="hp-live-badge">Live</div>
+                  </div>
+
+                  <div className="hp-next-action">
+                    <span>Next action</span>
+                    <strong>Review the newest customer request</strong>
+                  </div>
+
+                  <div className="hp-workspace-tools">
+                    {[
+                      "Requests",
+                      "Estimates",
+                      "Schedule",
+                      "Messages",
+                      "Photos",
+                      "Payment",
+                      "Proof",
+                      "History",
+                    ].map((tool) => (
+                      <div key={tool}>{tool}</div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </article>
+
             <article className="hp-story hp-story-community">
               <img
                 className="hp-story-photo hp-community-photo"
@@ -630,7 +710,7 @@ function AtlasIndex() {
                 alt="Local volunteers working together at a community cleanup"
               />
               <div className="hp-story-copy">
-                <div className="hp-story-number">01</div>
+                <div className="hp-story-number">02</div>
 
                 <div className="hp-story-label">
                   Free community coordination
@@ -713,7 +793,7 @@ function AtlasIndex() {
                 alt="A local lawn worker mowing a resident's yard"
               />
               <div className="hp-story-copy">
-                <div className="hp-story-number">02</div>
+                <div className="hp-story-number">03</div>
 
                 <div className="hp-story-label">
                   Community-powered paid work
@@ -820,7 +900,7 @@ function AtlasIndex() {
                 alt="A live neighborhood yard sale with an item being shown by video"
               />
               <div className="hp-story-copy">
-                <div className="hp-story-number">03</div>
+                <div className="hp-story-number">04</div>
 
                 <div className="hp-story-label">
                   Live commerce in the real world
@@ -905,84 +985,6 @@ function AtlasIndex() {
                       <i />
                       Picked up
                     </div>
-                  </div>
-                </div>
-              </div>
-            </article>
-
-            <article className="hp-story hp-story-business">
-              <img
-                className="hp-story-photo"
-                src="/images/homeplanet-business-control-chaos.webp"
-                alt="A small-business owner managing scattered calls, paperwork, and scheduling"
-              />
-              <div className="hp-story-copy">
-                <div className="hp-story-number">04</div>
-
-                <div className="hp-story-label">
-                  Bring a business under control
-                </div>
-
-                <h3>
-                  Start with the chaos. Build the operating system underneath.
-                </h3>
-
-                <p>
-                  A business owner does not arrive asking for software. They
-                  arrive with scattered calls, messages, customers, photos,
-                  estimates, schedules, payments, and unfinished follow-up.
-                </p>
-
-                <div className="hp-story-point">
-                  HomePlanet starts with what is happening today, then gives
-                  every request, decision, next action, payment, proof, and
-                  customer history a place.
-                </div>
-              </div>
-
-              <div className="hp-business-board">
-                <div className="hp-business-signal">
-                  <span>Real starting point</span>
-
-                  <strong>
-                    “I need help getting my business under control.”
-                  </strong>
-                </div>
-
-                <div className="hp-business-arrow">
-                  <span />
-                  HomePlanet organizes what happens next
-                  <span />
-                </div>
-
-                <div className="hp-workspace-preview">
-                  <div className="hp-board-head">
-                    <div>
-                      <span>Active workspace</span>
-                      <strong>Everything now has a place.</strong>
-                    </div>
-
-                    <div className="hp-live-badge">Live</div>
-                  </div>
-
-                  <div className="hp-next-action">
-                    <span>Next action</span>
-                    <strong>Review the newest customer request</strong>
-                  </div>
-
-                  <div className="hp-workspace-tools">
-                    {[
-                      "Requests",
-                      "Estimates",
-                      "Schedule",
-                      "Messages",
-                      "Photos",
-                      "Payment",
-                      "Proof",
-                      "History",
-                    ].map((tool) => (
-                      <div key={tool}>{tool}</div>
-                    ))}
                   </div>
                 </div>
               </div>
