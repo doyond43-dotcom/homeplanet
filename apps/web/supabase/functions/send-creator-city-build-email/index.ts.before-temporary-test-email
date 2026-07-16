@@ -1,0 +1,202 @@
+﻿import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { Resend } from "npm:resend";
+
+const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+type CreatorCityBuildPayload = {
+  build_type: string;
+  business_name: string;
+  happening_today: string;
+  biggest_frustration: string;
+  name: string;
+  phone: string;
+  submitted_at?: string;
+  source?: string;
+};
+
+function escapeHtml(value: unknown) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405,
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json",
+      },
+    });
+  }
+
+  try {
+    const fromEmail =
+      Deno.env.get("BUILD_FROM_EMAIL") ||
+      Deno.env.get("ORDER_FROM_EMAIL") ||
+      "onboarding@resend.dev";
+
+    const adminEmail =
+      Deno.env.get("CREATOR_CITY_ADMIN_EMAIL") ||
+      "homeplanetlive@gmail.com";
+
+    const body = (await req.json()) as CreatorCityBuildPayload;
+
+    const requiredFields: Array<keyof CreatorCityBuildPayload> = [
+      "build_type",
+      "business_name",
+      "happening_today",
+      "biggest_frustration",
+      "name",
+      "phone",
+    ];
+
+    for (const field of requiredFields) {
+      if (!String(body[field] ?? "").trim()) {
+        return new Response(
+          JSON.stringify({
+            ok: false,
+            error: `Missing required field: ${field}`,
+          }),
+          {
+            status: 400,
+            headers: {
+              ...corsHeaders,
+              "Content-Type": "application/json",
+            },
+          },
+        );
+      }
+    }
+
+    const submittedAt =
+      body.submitted_at || new Date().toISOString();
+
+    const subject =
+      `New HomePlanet Build Request - ${body.business_name}`;
+
+    const result = await resend.emails.send({
+      from: fromEmail,
+      to: [adminEmail],
+      subject,
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:720px;margin:0 auto;padding:24px;color:#111;">
+          <div style="margin-bottom:24px;">
+            <div style="font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#17853f;">
+              HomePlanet Creator City
+            </div>
+
+            <h2 style="margin:8px 0 0;font-size:28px;">
+              New Build Request
+            </h2>
+          </div>
+
+          <div style="margin-bottom:18px;padding:16px;border:1px solid #d9d9d9;border-radius:12px;">
+            <div style="margin-bottom:8px;">
+              <strong>Build Type:</strong>
+              ${escapeHtml(body.build_type)}
+            </div>
+
+            <div style="margin-bottom:8px;">
+              <strong>Business Name:</strong>
+              ${escapeHtml(body.business_name)}
+            </div>
+
+            <div style="margin-bottom:8px;">
+              <strong>Name:</strong>
+              ${escapeHtml(body.name)}
+            </div>
+
+            <div>
+              <strong>Phone:</strong>
+              <a href="tel:${escapeHtml(body.phone)}">
+                ${escapeHtml(body.phone)}
+              </a>
+            </div>
+          </div>
+
+          <div style="margin-bottom:18px;padding:16px;border:1px solid #d9d9d9;border-radius:12px;">
+            <div style="font-weight:700;margin-bottom:8px;">
+              What's happening today?
+            </div>
+
+            <div style="white-space:pre-wrap;line-height:1.55;">
+              ${escapeHtml(body.happening_today)}
+            </div>
+          </div>
+
+          <div style="margin-bottom:18px;padding:16px;border:1px solid #d9d9d9;border-radius:12px;">
+            <div style="font-weight:700;margin-bottom:8px;">
+              Biggest frustration
+            </div>
+
+            <div style="white-space:pre-wrap;line-height:1.55;">
+              ${escapeHtml(body.biggest_frustration)}
+            </div>
+          </div>
+
+          <div style="font-size:12px;color:#666;">
+            Submitted: ${escapeHtml(submittedAt)}
+            <br />
+            Source: ${escapeHtml(body.source || "Creator City")}
+          </div>
+        </div>
+      `,
+    });
+
+    if (result.error) {
+      throw new Error(result.error.message);
+    }
+
+    return new Response(
+      JSON.stringify({
+        ok: true,
+        email_id: result.data?.id ?? null,
+      }),
+      {
+        status: 200,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+        },
+      },
+    );
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Unknown Creator City email error";
+
+    console.error("Creator City build email failed:", message);
+
+    return new Response(
+      JSON.stringify({
+        ok: false,
+        error: message,
+      }),
+      {
+        status: 500,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+        },
+      },
+    );
+  }
+});
+

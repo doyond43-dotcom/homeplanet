@@ -1,0 +1,421 @@
+﻿560:               <div className="rounded-2xl bg-black p-4">
+561:                 <h3 className="font-black">Recurring cleaning is the win.</h3>
+562:                 <p className="mt-1 text-sm text-zinc-400">
+563:                   Weekly and biweekly leads should get follow-up first.
+564:                 </p>
+565:               </div>
+566:             </div>
+567:           </aside>
+568:         </section>
+569:       </section>
+570: 
+571:       {selected ? (
+572:         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm">
+573:           <aside className="ml-auto flex h-full w-full max-w-md flex-col border-l border-pink-300/20 bg-black p-5 shadow-2xl shadow-pink-950/40">
+574:             <div className="relative rounded-2xl border border-pink-300/20 bg-pink-400/10 p-4 pr-16">
+575:               <button
+576:                 onClick={() => {
+577:                   setSelected(null);
+578:                   setShowContactDetails(false);
+579:                   setShowHeaderDetails(false);
+580:                 }}
+581:                 className="absolute right-4 top-4 rounded-xl border border-white/10 bg-white/10 p-3"
+582:                 aria-label="Close drawer"
+583:               >
+584:                 <X size={18} />
+585:               </button>
+586: 
+587:               <p className="text-[10px] font-black uppercase tracking-[0.28em] text-pink-300">
+588:                 Active Workspace
+589:               </p>
+590:               <h2 className="mt-3 truncate whitespace-nowrap text-4xl font-black leading-tight">
+591:                 {selected.name}
+592:               </h2>
+593:               <p className="mt-1 truncate text-xl font-black text-pink-300">{selected.service}</p>
+594:               <p className="mt-1 truncate text-sm font-bold text-zinc-400">{selected.location}</p>
+595:             </div>
+596: 
+597:             <div className="mt-5 space-y-4 overflow-auto pb-6">
+598:               <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
+599:                 <button
+600:                   type="button"
+601:                   onClick={() => setShowContactDetails((current) => !current)}
+602:                   className="flex w-full items-center justify-between gap-3 text-left"
+603:                 >
+604:                   <div>
+605:                     <p className="text-[11px] font-black uppercase tracking-[0.35em] text-pink-200">
+606:                       CONTACT / DETAILS
+607:                     </p>
+608:                     <p className="mt-2 text-sm font-bold text-zinc-300">
+609:                       {selected.phone || "No phone"} • {selected.home} • {selected.preferred}
+610:                     </p>
+611:                   </div>
+612:                   <span className="rounded-full border border-pink-300/25 bg-pink-400/10 px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-pink-100">
+613:                     {showContactDetails ? "Hide" : "Show"}
+614:                   </span>
+615:                 </button>
+616: 
+617:                 {showContactDetails ? (
+618:                   <div className="mt-4 space-y-4 border-t border-white/10 pt-4">
+619:                     <div className="space-y-1 text-sm text-zinc-200">
+620:                       <div>{selected.name}</div>
+621:                       <div>{selected.phone || "No phone number provided"}</div>
+622:                       <div>{selected.location}</div>
+623:                     </div>
+624: 
+625:                     <div className="space-y-1 text-sm text-zinc-200">
+626:                       <div>Service: {selected.service}</div>
+627:                       <div>Home: {selected.home}</div>
+628:                       <div>Condition: {selected.condition}</div>
+629:                       <div>Pets: {selected.pets}</div>
+630:                       <div>Preferred: {selected.preferred}</div>
+631:                     </div>
+632: 
+633:                     <div className="grid grid-cols-3 gap-2">
+634:                       <a href={selected.phone ? `tel:${selected.phone}` : undefined} className="rounded-xl border border-pink-300/30 bg-pink-400/10 py-3 text-center text-xs font-black">
+635:                         <Phone className="mx-auto mb-1" size={16} />
+636:                         Call
+637:                       </a>
+638:                       <a href={smsBody(selected.phone, buildFirstReplyText(selected))} className="rounded-xl border border-pink-300/30 bg-pink-400/10 py-3 text-center text-xs font-black">
+639:                         <MessageCircle className="mx-auto mb-1" size={16} />
+640:                         Text
+641:                       </a>
+642:                       <a
+643:                         href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selected.location)}`}
+644:                         target="_blank"
+645:                         rel="noreferrer"
+646:                         className="rounded-xl border border-pink-300/30 bg-pink-400/10 py-3 text-center text-xs font-black"
+647:                       >
+648:                         <MapPin className="mx-auto mb-1" size={16} />
+649:                         Navigate
+650:                       </a>
+651:                     </div>
+652:                   </div>
+653:                 ) : null}
+654:               </div>
+655: 
+656:               <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
+657:                 <p className="text-[11px] font-black uppercase tracking-[0.35em] text-pink-200">
+658:                   INTELLIGENCE
+659:                 </p>
+660:                 <p className="mt-3 text-sm text-zinc-200">
+661:                   {selected.suggestion}
+662:                 </p>
+663:               </div>
+664: 
+665:               <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
+666:   <p className="text-[11px] font-black uppercase tracking-[0.35em] text-pink-200">
+667:     ESTIMATE
+668:   </p>
+669: 
+670:   <div className="mt-3 space-y-2 text-sm">
+671:     <div className="flex justify-between">
+672:       <span className="text-zinc-400">Status</span>
+673:       <span className="font-bold text-yellow-300">Not Sent</span>
+674:     </div>
+675: 
+676:     <div className="flex justify-between">
+677:       <span className="text-zinc-400">Hourly Rate</span>
+678:       <div className="flex items-center gap-2">
+679:         <span className="text-sm font-bold text-zinc-400">$</span>
+680:         <input
+681:           value={hourlyRate}
+682:           onChange={(event) => setHourlyRate(event.target.value)}
+683:           className="w-16 rounded-lg border border-pink-300/25 bg-black px-2 py-2 text-right font-bold text-white outline-none"
+684:         />
+685:         <span className="text-xs font-bold text-zinc-400">/hr</span>
+686:       </div>
+687:     </div>
+688: 
+689:     <div className="mt-3 flex items-center justify-between gap-3">
+690:       <span className="text-zinc-400">Estimated Hours</span>
+691:       <div className="flex items-center gap-2">
+692:         <input
+693:           value={estimatedLowHours}
+694:           onChange={(event) => setEstimatedLowHours(event.target.value)}
+695:           className="w-12 rounded-lg border border-pink-300/25 bg-black px-2 py-2 text-right font-bold text-white outline-none"
+696:         />
+697:         <span className="text-xs font-bold text-zinc-400">to</span>
+698:         <input
+699:           value={estimatedHighHours}
+700:           onChange={(event) => setEstimatedHighHours(event.target.value)}
+701:           className="w-12 rounded-lg border border-pink-300/25 bg-black px-2 py-2 text-right font-bold text-white outline-none"
+702:         />
+703:         <span className="text-xs font-bold text-zinc-400">hrs</span>
+704:       </div>
+705: 
+706:     </div>
+707: 
+708:     <div className="mt-3 flex items-center justify-between">
+709:       <span className="text-zinc-400">Estimated Total</span>
+710:       <span className="font-black text-pink-100">{moneyFromHours(hourlyRate, estimatedLowHours)}-{moneyFromHours(hourlyRate, estimatedHighHours)}</span>
+711:     </div>
+712:   </div>
+713:   <a
+714:     href={smsBody(selected.phone, `Hi ${selected.name}, this is Kaitlin with Only The Essentials Cleaning. Can you send a few photos of the main areas you want cleaned? This helps me give you a fair estimate and understand the condition before scheduling.`)}
+715:     className="mt-4 block rounded-xl bg-pink-400 py-3 text-center text-sm font-black text-black"
+716:   >
+717:     Request Photos Text
+718:   </a>
+719: <div className="mt-4 grid gap-2">
+720:     <button
+721:       type="button"
+722:       onClick={() => copyText("Estimate draft copied", buildEstimateText(selected, hourlyRate, estimatedLowHours, estimatedHighHours))}
+723:       className="rounded-xl border border-white/10 py-3 text-sm font-black"
+724:     >
+725:       Copy Estimate Draft
+726:     </button>
+727: 
+728:     <a
+729:       href={smsBody(selected.phone, buildEstimateText(selected, hourlyRate, estimatedLowHours, estimatedHighHours))}
+730:       className="rounded-xl bg-pink-400 py-3 text-center text-sm font-black text-black"
+731:     >
+732:       Send Estimate Text
+733:     </a>
+734:   </div>
+735: 
+736:   <div className="mt-4 rounded-xl bg-yellow-500/10 p-3 text-sm font-bold text-yellow-200">
+737:     Next Move: Ask for photos/details first if needed, then send estimate.
+738:   </div>
+739: </div>
+740: 
+741:                             <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
+742:                 <p className="text-[11px] font-black uppercase tracking-[0.35em] text-pink-200">
+743:                   AGREEMENT / JOB APPROVAL
+744:                 </p>
+745: 
+746:                 <p className="mt-2 text-sm text-zinc-300">
+747:                   Send the customer a simple confirmation before scheduling the job. Their YES reply becomes the approval record.
+748:                 </p>
+749: 
+750:                 <div className="mt-4 rounded-xl border border-pink-300/20 bg-pink-400/10 p-3 text-sm">
+751:                   <div className="flex justify-between">
+752:                     <span className="text-zinc-400">Rate</span>
+753:                     <span className="font-bold text-white">${hourlyRate}/hr</span>
+754:                   </div>
+755: 
+756:                   <div className="mt-2 flex justify-between">
+757:                     <span className="text-zinc-400">Estimated Time</span>
+758:                     <span className="font-bold text-white">{estimatedLowHours} to {estimatedHighHours} hrs</span>
+759:                   </div>
+760: 
+761:                   <div className="mt-2 flex justify-between">
+762:                     <span className="text-zinc-400">Estimated Total</span>
+763:                     <span className="font-bold text-pink-100">{moneyFromHours(hourlyRate, estimatedLowHours)}-{moneyFromHours(hourlyRate, estimatedHighHours)}</span>
+764:                   </div>
+765:                 </div>
+766: 
+767:                 <div className="mt-4 grid grid-cols-2 gap-2">
+768:                   <button
+769:                     type="button"
+770:                     onClick={() => copyText("Agreement text copied", buildAgreementText(selected, hourlyRate, estimatedLowHours, estimatedHighHours))}
+771:                     className="rounded-xl border border-white/10 py-3 text-sm font-black"
+772:                   >
+773:                     Copy Agreement Text
+774:                   </button>
+775: 
+776:                   <a
+777:                     href={smsBody(selected.phone, buildAgreementText(selected, hourlyRate, estimatedLowHours, estimatedHighHours))}
+778:                     className="rounded-xl bg-pink-400 py-3 text-center text-sm font-black text-black"
+779:                   >
+780:                     Send Agreement Text
+781:                   </a>
+782:                 </div>
+783: 
+784:                 <div className="mt-4 rounded-xl bg-yellow-500/10 p-3 text-sm font-bold text-yellow-100">
+785:                   Next Move: Wait for the customer to reply YES before confirming the schedule.
+786:                 </div>
+787:               </div>
+788: 
+789: <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
+790:   <p className="text-[11px] font-black uppercase tracking-[0.35em] text-pink-200">
+791:     SCHEDULE
+792:   </p>
+793: 
+794:   <div className="mt-3 space-y-2 text-sm">
+795:     <div className="flex justify-between">
+796:       <span className="text-zinc-400">Status</span>
+797:       <span className="font-bold text-yellow-300">Not Scheduled</span>
+798:     </div>
+799: 
+800:     <div className="flex justify-between">
+801:       <span className="text-zinc-400">Preferred</span>
+802:       <span className="font-bold">{selected.preferred}</span>
+803:     </div>
+804:   </div>
+805: <div className="mt-4 grid gap-2">
+806:     <a
+807:       href={smsBody(selected.phone, buildScheduleText(selected))}
+808:       className="rounded-xl bg-pink-400 py-3 text-center text-sm font-black text-black"
+809:     >
+810:       Confirm Schedule Text
+811:     </a>
+812:   </div>
+813: 
+814:   <div className="mt-4 rounded-xl bg-yellow-500/10 p-3 text-sm font-bold text-yellow-200">
+815:     Next Move: Book customer on calendar.
+816:   </div>
+817: </div>
+818: 
+819:               <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
+820:                 <p className="text-[11px] font-black uppercase tracking-[0.35em] text-pink-200">
+821:                   WORK / PHOTOS
+822:                 </p>
+823: 
+824:                 <div className="mt-3 space-y-2 text-sm">
+825:                   <div className="flex justify-between">
+826:                     <span className="text-zinc-400">Work Status</span>
+827:                     <span className="font-bold text-yellow-300">Not Started</span>
+828:                   </div>
+829: 
+830:                   <div className="flex justify-between">
+831:                     <span className="text-zinc-400">Before Photos</span>
+832:                     <span className="font-bold">{beforePhotos.length ? `${beforePhotos.length} Saved` : "Not Added"}</span>
+833:                   </div>
+834: 
+835:                   <div className="flex justify-between">
+836:                     <span className="text-zinc-400">After Photos</span>
+837:                     <span className="font-bold">{afterPhotos.length ? `${afterPhotos.length} Saved` : "Not Added"}</span>
+838:                   </div>
+839:                 </div>
+840: 
+841:                 <div className="mt-4 grid grid-cols-2 gap-2">
+842:                   <label className="rounded-xl border border-pink-300/25 bg-pink-400/10 py-3 text-center text-sm font-black text-pink-100">
+843:                     {uploadingPhotoType === "before" ? "Uploading..." : "Take Before"}
+844:                     <input
+845:                       type="file"
+846:                       accept="image/*"
+847:                       capture="environment"
+848:                       className="hidden"
+849:                       onChange={(event) => {
+850:                         void handlePhotoUpload("before", event.target.files);
+851:                         event.currentTarget.value = "";
+852:                       }}
+853:                     />
+854:                   </label>
+855: 
+856:                   <label className="rounded-xl border border-pink-300/25 bg-pink-400/10 py-3 text-center text-sm font-black text-pink-100">
+857:                     Upload Before
+858:                     <input
+859:                       type="file"
+860:                       accept="image/*"
+861:                       multiple
+862:                       className="hidden"
+863:                       onChange={(event) => {
+864:                         void handlePhotoUpload("before", event.target.files);
+865:                         event.currentTarget.value = "";
+866:                       }}
+867:                     />
+868:                   </label>
+869: 
+870:                   <label className="rounded-xl border border-pink-300/25 bg-pink-400/10 py-3 text-center text-sm font-black text-pink-100">
+871:                     {uploadingPhotoType === "after" ? "Uploading..." : "Take After"}
+872:                     <input
+873:                       type="file"
+874:                       accept="image/*"
+875:                       capture="environment"
+876:                       className="hidden"
+877:                       onChange={(event) => {
+878:                         void handlePhotoUpload("after", event.target.files);
+879:                         event.currentTarget.value = "";
+880:                       }}
+881:                     />
+882:                   </label>
+883: 
+884:                   <label className="rounded-xl border border-pink-300/25 bg-pink-400/10 py-3 text-center text-sm font-black text-pink-100">
+885:                     Upload After
+886:                     <input
+887:                       type="file"
+888:                       accept="image/*"
+889:                       multiple
+890:                       className="hidden"
+891:                       onChange={(event) => {
+892:                         void handlePhotoUpload("after", event.target.files);
+893:                         event.currentTarget.value = "";
+894:                       }}
+895:                     />
+896:                   </label>
+897:                 </div>
+898: 
+899:                 <div className="mt-4 space-y-4">
+900:                   <div>
+901:                     <p className="text-[10px] font-black uppercase tracking-[0.24em] text-zinc-500">Before Photos</p>
+902:                     {beforePhotos.length ? (
+903:                       <div className="mt-2 grid grid-cols-2 gap-2">
+904:                         {beforePhotos.map((photo) => (
+905:                           <div key={photo.id} className="overflow-hidden rounded-xl border border-white/10 bg-black">
+906:                             <img src={photo.public_url} alt="Before cleaning" className="h-28 w-full object-cover" />
+907:                             <div className="grid grid-cols-3 gap-1 p-2 text-[10px] font-black">
+908:                               <a href={photo.public_url} target="_blank" rel="noreferrer" className="rounded-lg bg-white/10 py-2 text-center">View</a>
+909:                               <button type="button" onClick={() => copyText("Photo link copied", photo.public_url)} className="rounded-lg bg-white/10 py-2">Copy</button>
+910:                               <button type="button" onClick={() => void removePhoto(photo)} className="rounded-lg bg-red-500/20 py-2 text-red-200">Remove</button>
+911:                             </div>
+912:                           </div>
+913:                         ))}
+914:                       </div>
+915:                     ) : (
+916:                       <div className="mt-2 rounded-xl border border-white/10 bg-black/40 p-3 text-sm font-bold text-zinc-400">No before photos saved yet.</div>
+917:                     )}
+918:                   </div>
+919: 
+920:                   <div>
+921:                     <p className="text-[10px] font-black uppercase tracking-[0.24em] text-zinc-500">After Photos</p>
+922:                     {afterPhotos.length ? (
+923:                       <div className="mt-2 grid grid-cols-2 gap-2">
+924:                         {afterPhotos.map((photo) => (
+925:                           <div key={photo.id} className="overflow-hidden rounded-xl border border-white/10 bg-black">
+926:                             <img src={photo.public_url} alt="After cleaning" className="h-28 w-full object-cover" />
+927:                             <div className="grid grid-cols-3 gap-1 p-2 text-[10px] font-black">
+928:                               <a href={photo.public_url} target="_blank" rel="noreferrer" className="rounded-lg bg-white/10 py-2 text-center">View</a>
+929:                               <button type="button" onClick={() => copyText("Photo link copied", photo.public_url)} className="rounded-lg bg-white/10 py-2">Copy</button>
+930:                               <button type="button" onClick={() => void removePhoto(photo)} className="rounded-lg bg-red-500/20 py-2 text-red-200">Remove</button>
+931:                             </div>
+932:                           </div>
+933:                         ))}
+934:                       </div>
+935:                     ) : (
+936:                       <div className="mt-2 rounded-xl border border-white/10 bg-black/40 p-3 text-sm font-bold text-zinc-400">No after photos saved yet.</div>
+937:                     )}
+938:                   </div>
+939:                 </div>
+940: 
+941:                 <div className="mt-4 rounded-xl bg-pink-400/10 p-3 text-sm font-bold text-pink-100">
+942:                   Next Move: Take before and after photos if needed so the job proof stays with the request.
+943:                 </div>
+944:               </div>
+945: 
+946:               <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
+947:                 <p className="text-[11px] font-black uppercase tracking-[0.35em] text-pink-200">
+948:                   PAYMENT
+949:                 </p>
+950: 
+951:                 <div className="mt-3 space-y-2 text-sm">
+952:                   <div className="flex justify-between">
+953:                     <span className="text-zinc-400">Status</span>
+954:                     <span className="font-bold text-yellow-300">Not Sent</span>
+955:                   </div>
+956: 
+957:                   <div className="flex justify-between">
+958:                     <span className="text-zinc-400">Rate</span>
+959:                     <span className="font-bold">${hourlyRate}/hr</span>
+960:                   </div>
+961:                 </div>
+962: 
+963:                 <div className="mt-4 rounded-xl border border-green-300/20 bg-green-500/10 p-3">
+964:                   <div className="flex items-center justify-between gap-3">
+965:                     <span className="text-sm font-bold text-zinc-300">Actual Hours Worked</span>
+966:                     <input
+967:                       value={actualHours}
+968:                       onChange={(event) => setActualHours(event.target.value)}
+969:                       className="w-20 rounded-lg border border-green-300/25 bg-black px-3 py-2 text-right font-black text-white outline-none"
+970:                     />
+971:                   </div>
+972: 
+973:                   <div className="mt-3 flex items-center justify-between">
+974:                     <span className="text-sm font-bold text-zinc-300">Final Amount Due</span>
+975:                     <span className="text-2xl font-black text-green-200">{moneyFromHours(hourlyRate, actualHours)}</span>
+976:                   </div>
+977:                 </div>
+978: 
+979:                 <div className="mt-4 rounded-xl border border-white/10 bg-black/30 p-3">
+980:                   <label className="text-xs font-black uppercase tracking-[0.22em] text-zinc-500">

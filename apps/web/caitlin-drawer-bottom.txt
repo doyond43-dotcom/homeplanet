@@ -1,0 +1,175 @@
+﻿946:               <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
+947:                 <p className="text-[11px] font-black uppercase tracking-[0.35em] text-pink-200">
+948:                   PAYMENT
+949:                 </p>
+950: 
+951:                 <div className="mt-3 space-y-2 text-sm">
+952:                   <div className="flex justify-between">
+953:                     <span className="text-zinc-400">Status</span>
+954:                     <span className="font-bold text-yellow-300">Not Sent</span>
+955:                   </div>
+956: 
+957:                   <div className="flex justify-between">
+958:                     <span className="text-zinc-400">Rate</span>
+959:                     <span className="font-bold">${hourlyRate}/hr</span>
+960:                   </div>
+961:                 </div>
+962: 
+963:                 <div className="mt-4 rounded-xl border border-green-300/20 bg-green-500/10 p-3">
+964:                   <div className="flex items-center justify-between gap-3">
+965:                     <span className="text-sm font-bold text-zinc-300">Actual Hours Worked</span>
+966:                     <input
+967:                       value={actualHours}
+968:                       onChange={(event) => setActualHours(event.target.value)}
+969:                       className="w-20 rounded-lg border border-green-300/25 bg-black px-3 py-2 text-right font-black text-white outline-none"
+970:                     />
+971:                   </div>
+972: 
+973:                   <div className="mt-3 flex items-center justify-between">
+974:                     <span className="text-sm font-bold text-zinc-300">Final Amount Due</span>
+975:                     <span className="text-2xl font-black text-green-200">{moneyFromHours(hourlyRate, actualHours)}</span>
+976:                   </div>
+977:                 </div>
+978: 
+979:                 <div className="mt-4 rounded-xl border border-white/10 bg-black/30 p-3">
+980:                   <label className="text-xs font-black uppercase tracking-[0.22em] text-zinc-500">
+981:                     Payment Method
+982:                   </label>
+983:                   <input
+984:                     value={paymentMethod}
+985:                     onChange={(event) => setPaymentMethod(event.target.value)}
+986:                     placeholder="Cash App, Zelle, Venmo, etc."
+987:                     className="mt-2 w-full rounded-lg border border-green-300/25 bg-black px-3 py-2 text-sm font-bold text-white outline-none"
+988:                   />
+989: 
+990:                   <label className="mt-4 block text-xs font-black uppercase tracking-[0.22em] text-zinc-500">
+991:                     Payment Link
+992:                   </label>
+993:                   <input
+994:                     value={paymentLink}
+995:                     onChange={(event) => setPaymentLink(event.target.value)}
+996:                     placeholder="https://cash.app/$YourName or Zelle note"
+997:                     className="mt-2 w-full rounded-lg border border-green-300/25 bg-black px-3 py-2 text-sm font-bold text-white outline-none"
+998:                   />
+999: 
+1000:                   {paymentLink.trim() ? (
+1001:                     <div className="mt-4 flex items-center gap-4 rounded-xl bg-white p-3 text-black">
+1002:                       <img
+1003:                         src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(paymentLink.trim())}`}
+1004:                         alt="Payment QR code"
+1005:                         className="h-28 w-28 rounded-lg"
+1006:                       />
+1007:                       <div>
+1008:                         <p className="text-sm font-black">Payment QR Code</p>
+1009:                         <p className="mt-1 text-xs font-bold text-zinc-600">Updates from the payment link field.</p>
+1010:                       </div>
+1011:                     </div>
+1012:                   ) : null}
+1013:                 </div>
+1014: 
+1015:                 <div className="mt-4 grid gap-2">
+1016:                   <a
+1017:                     href={smsBody(selected.phone, buildPaymentText(selected, hourlyRate, actualHours, paymentMethod, paymentLink))}
+1018:                     className="rounded-xl border border-green-400/40 bg-green-500/10 py-3 text-center text-sm font-black text-green-100"
+1019:                   >
+1020:                     Send Payment Link Text
+1021:                   </a>
+1022: 
+1023:                   <button
+1024:                     type="button"
+1025:                     onClick={() => copyText("Payment note copied", buildPaymentText(selected, hourlyRate, actualHours, paymentMethod, paymentLink))}
+1026:                     className="rounded-xl border border-white/10 py-3 text-sm font-black"
+1027:                   >
+1028:                     Copy Payment Note
+1029:                   </button>
+1030:                 </div>
+1031: 
+1032:                 <div className="mt-4 rounded-xl bg-yellow-500/10 p-3 text-sm font-bold text-yellow-200">
+1033:                   Next Move: Send payment link after the job is complete.
+1034:                 </div>
+1035:               </div>
+1036: 
+1037:               <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
+1038:                 <p className="text-[11px] font-black uppercase tracking-[0.35em] text-pink-200">
+1039:                   PROOF / REVIEW
+1040:                 </p>
+1041: 
+1042:                 <div className="mt-3 space-y-2 text-sm">
+1043:                   <div className="flex justify-between">
+1044:                     <span className="text-zinc-400">Proof Photos</span>
+1045:                     <span className="font-bold">{beforePhotos.length + afterPhotos.length ? `${beforePhotos.length + afterPhotos.length} Saved` : "Not Added"}</span>
+1046:                   </div>
+1047: 
+1048:                   <div className="flex justify-between">
+1049:                     <span className="text-zinc-400">Review</span>
+1050:                     <span className="font-bold text-yellow-300">Not Requested</span>
+1051:                   </div>
+1052:                 </div>
+1053: 
+1054:                 <div className="mt-4 grid gap-2">
+1055:                   <a
+1056:                     href={smsBody(selected.phone, buildProofText(selected, beforePhotos, afterPhotos))}
+1057:                     className="rounded-xl bg-pink-400 py-3 text-center text-sm font-black text-black"
+1058:                   >
+1059:                     Send Completion / Proof Text
+1060:                   </a>
+1061: 
+1062:                   <button
+1063:                     type="button"
+1064:                     onClick={() => copyText("Proof message copied", buildProofText(selected, beforePhotos, afterPhotos))}
+1065:                     className="rounded-xl border border-white/10 py-3 text-sm font-black"
+1066:                   >
+1067:                     Copy Proof Message
+1068:                   </button>
+1069: 
+1070:                   <a
+1071:                     href={smsBody(selected.phone, buildReviewText(selected))}
+1072:                     className="rounded-xl bg-pink-400 py-3 text-center text-sm font-black text-black"
+1073:                   >
+1074:                     Send Review Text
+1075:                   </a>
+1076: 
+1077:                   <button
+1078:                     type="button"
+1079:                     onClick={() => copyText("Post copied", buildSocialPost(selected))}
+1080:                     className="rounded-xl border border-white/10 py-3 text-sm font-black"
+1081:                   >
+1082:                     <Share2 className="mr-1 inline" size={14} />
+1083:                     Copy Proof Post
+1084:                   </button>
+1085:                 </div>
+1086: 
+1087:                 <div className="mt-4 rounded-xl bg-yellow-500/10 p-3 text-sm font-bold text-yellow-200">
+1088:                   Next Move: Turn finished work into proof, review, and shareable media.
+1089:                 </div>
+1090:               </div>
+1091: 
+1092:               <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
+1093:                 <p className="text-[11px] font-black uppercase tracking-[0.35em] text-pink-200">
+1094:                   TIMELINE
+1095:                 </p>
+1096: 
+1097:                 <button
+1098:                   onClick={() => deleteSignal(selected.id)}
+1099:                   className="mt-4 w-full rounded-xl border border-red-400/30 bg-red-500/10 py-3 text-sm font-black text-red-200"
+1100:                 >
+1101:                   Delete Request
+1102:                 </button>
+1103:               </div>
+1104:             </div>
+1105:           </aside>
+1106:         </div>
+1107:       ) : null}
+1108:     </main>
+1109:   );
+1110: }
+1111: 
+1112: 
+1113: 
+1114: 
+1115: 
+1116: 
+1117: 
+1118: 
+1119: 
+1120: 

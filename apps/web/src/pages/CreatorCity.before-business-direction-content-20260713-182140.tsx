@@ -1,0 +1,3079 @@
+﻿import React, { useState } from "react";
+import { supabase } from "../lib/supabase";
+
+const liveSystems = [
+  {
+    name: "Only The Essentials",
+    type: "Cleaning system",
+    customer: "Request a cleaning",
+    work: "Estimate waiting",
+    href: "/onlytheessentials",
+    tone: "green",
+  },
+  {
+    name: "Florida Cooling",
+    type: "HVAC service system",
+    customer: "Report an AC problem",
+    work: "Technician en route",
+    href: "/planet/florida-cooling",
+    tone: "blue",
+  },
+  {
+    name: "Slap-A-Bug",
+    type: "Pest control system",
+    customer: "Send pest photos",
+    work: "Estimate ready",
+    href: "/planet/slap-a-bug",
+    tone: "electric",
+  },
+];
+
+const ecosystemSteps = [
+  {
+    label: "Need + Conversation",
+    title: "I need a plumber.",
+    detail:
+      "A community need starts a real conversation without becoming a hundred-comment shouting match.",
+  },
+  {
+    label: "Request + Workspace",
+    title: "Photos attached. Estimate waiting.",
+    detail:
+      "The conversation becomes organized work with the customer, details, and next action already connected.",
+  },
+  {
+    label: "Outcome + Proof",
+    title: "Payment received. Work complete.",
+    detail:
+      "The result, proof, review, and complete history stay attached from beginning to end.",
+  },
+];
+
+export default function CreatorCity() {
+  const [isBuildDrawerOpen, setIsBuildDrawerOpen] = useState(false);
+  const [selectedDirection, setSelectedDirection] = useState("business");
+  const [buildSubmitted, setBuildSubmitted] = useState(false);
+  const [isBuildSubmitting, setIsBuildSubmitting] = useState(false);
+  const [buildSubmitError, setBuildSubmitError] = useState("");
+
+  const go = (href: string) => {
+    if (href.startsWith("#")) {
+      document
+        .querySelector(href)
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+
+    window.location.href = href;
+  };
+
+  const openBuildDrawer = () => {
+    setBuildSubmitted(false);
+    setBuildSubmitError("");
+    setIsBuildDrawerOpen(true);
+  };
+
+  const closeBuildDrawer = () => {
+    setIsBuildDrawerOpen(false);
+    setBuildSubmitted(false);
+    setBuildSubmitError("");
+  };
+
+  const submitBuildRequest = async (
+    event: React.FormEvent<HTMLFormElement>,
+  ) => {
+    event.preventDefault();
+
+    if (isBuildSubmitting) {
+      return;
+    }
+
+    setIsBuildSubmitting(true);
+    setBuildSubmitError("");
+
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+
+    const payload = {
+      build_type: String(formData.get("buildType") || "").trim(),
+      business_name: String(formData.get("businessName") || "").trim(),
+      happening_today: String(formData.get("happeningToday") || "").trim(),
+      biggest_frustration: String(
+        formData.get("biggestFrustration") || "",
+      ).trim(),
+      name: String(formData.get("name") || "").trim(),
+      phone: String(formData.get("phone") || "").trim(),
+      submitted_at: new Date().toISOString(),
+      source: "Creator City build drawer",
+    };
+
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        "send-creator-city-build-email",
+        {
+          body: payload,
+        },
+      );
+
+      if (error) {
+        let detail = error.message;
+
+        const context = (error as { context?: Response }).context;
+
+        if (context) {
+          try {
+            const responseBody = await context.clone().json();
+
+            detail =
+              responseBody?.error ||
+              responseBody?.message ||
+              detail;
+          } catch {
+            try {
+              const responseText = await context.clone().text();
+
+              if (responseText) {
+                detail = responseText;
+              }
+            } catch {
+              // Keep the original Supabase error message.
+            }
+          }
+        }
+
+        throw new Error(detail);
+      }
+
+      if (!data?.ok) {
+        throw new Error(
+          data?.error || "The build request could not be sent.",
+        );
+      }
+
+      form.reset();
+      setBuildSubmitted(true);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "The build request could not be sent.";
+
+      setBuildSubmitError(
+        `Something went wrong. Please try again. ${message}`,
+      );
+    } finally {
+      setIsBuildSubmitting(false);
+    }
+  };
+  return (
+    <main className="creator-city">
+      <style>{`
+        * {
+          box-sizing: border-box;
+        }
+
+        html {
+          scroll-behavior: smooth;
+        }
+
+        body {
+          margin: 0;
+          background: #020504;
+        }
+
+        button {
+          font: inherit;
+        }
+
+        .creator-city {
+          min-height: 100vh;
+          overflow: hidden;
+          color: #f4fff7;
+          background:
+            radial-gradient(
+              circle at 50% 7%,
+              rgba(62, 255, 128, 0.13),
+              transparent 29rem
+            ),
+            radial-gradient(
+              circle at 8% 46%,
+              rgba(43, 124, 255, 0.06),
+              transparent 32rem
+            ),
+            radial-gradient(
+              circle at 94% 75%,
+              rgba(65, 255, 132, 0.06),
+              transparent 30rem
+            ),
+            #020504;
+          font-family:
+            Inter,
+            ui-sans-serif,
+            system-ui,
+            -apple-system,
+            BlinkMacSystemFont,
+            "Segoe UI",
+            sans-serif;
+        }
+
+        .cc-shell {
+          width: min(1180px, calc(100% - 40px));
+          margin: 0 auto;
+        }
+
+        .cc-topbar {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          min-height: 78px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        .cc-brand {
+          display: flex;
+          align-items: center;
+          gap: 11px;
+          color: #f5fff8;
+          font-size: 15px;
+          font-weight: 950;
+          letter-spacing: -0.02em;
+        }
+
+        .cc-brand-dot {
+          width: 12px;
+          height: 12px;
+          border-radius: 999px;
+          background: #54ff8d;
+          box-shadow:
+            0 0 0 6px rgba(84, 255, 141, 0.08),
+            0 0 24px rgba(84, 255, 141, 0.72);
+        }
+
+        .cc-brand span {
+          color: rgba(231, 246, 236, 0.45);
+          font-size: 16px;
+          font-weight: 750;
+        }
+
+        .cc-button {
+          min-height: 48px;
+          padding: 0 21px;
+          border: 0;
+          border-radius: 14px;
+          cursor: pointer;
+          color: #031008;
+          background: #54ff8d;
+          font-size: 13px;
+          font-weight: 950;
+          transition:
+            transform 180ms ease,
+            box-shadow 180ms ease,
+            border-color 180ms ease,
+            background 180ms ease;
+        }
+
+        .cc-button:hover {
+          transform: translateY(-2px);
+          box-shadow:
+            0 0 0 1px rgba(102, 255, 155, 0.25),
+            0 15px 34px rgba(48, 255, 115, 0.2);
+        }
+
+        .cc-button-secondary {
+          color: #f0fff4;
+          border: 1px solid rgba(255, 255, 255, 0.14);
+          background: rgba(255, 255, 255, 0.035);
+        }
+
+        .cc-button-secondary:hover {
+          border-color: rgba(92, 255, 149, 0.4);
+          background: rgba(92, 255, 149, 0.07);
+          box-shadow: none;
+        }
+
+        .cc-topbar .cc-button {
+          min-height: 41px;
+          padding: 0 17px;
+          border-radius: 12px;
+        }
+
+        .cc-hero {
+          padding: 92px 0 72px;
+          text-align: center;
+        }
+
+        .cc-kicker {
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          margin-bottom: 25px;
+          color: #6cff9d;
+          font-size: 11px;
+          font-weight: 950;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+        }
+
+        .cc-kicker::before,
+        .cc-kicker::after {
+          content: "";
+          width: 24px;
+          height: 1px;
+          background: rgba(93, 255, 151, 0.62);
+          box-shadow: 0 0 12px rgba(93, 255, 151, 0.7);
+        }
+
+        .cc-hero h1 {
+          max-width: 980px;
+          margin: 0 auto;
+          font-size: clamp(54px, 8vw, 108px);
+          line-height: 0.92;
+          letter-spacing: -0.07em;
+          font-weight: 950;
+        }
+
+        .cc-hero h1 span {
+          color: #59ff91;
+          text-shadow: 0 0 38px rgba(65, 255, 126, 0.17);
+        }
+
+        .cc-hero-copy {
+          max-width: 690px;
+          margin: 30px auto 0;
+          color: rgba(229, 245, 234, 0.64);
+          font-size: clamp(18px, 2vw, 23px);
+          line-height: 1.55;
+        }
+
+        .cc-hero-copy strong {
+          color: #ffffff;
+        }
+
+        .cc-actions {
+          display: flex;
+          justify-content: center;
+          gap: 12px;
+          margin-top: 34px;
+        }
+
+        .cc-hero-note {
+          margin-top: 22px;
+          color: rgba(226, 241, 231, 0.36);
+          font-size: 16px;
+        }
+
+        .cc-direction-section {
+          padding: 0 0 94px;
+        }
+
+        .cc-direction-grid {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 12px;
+        }
+
+        .cc-direction-choice {
+          min-height: 154px;
+          padding: 23px 21px;
+          border: 1px solid rgba(255, 255, 255, 0.09);
+          border-radius: 20px;
+          cursor: pointer;
+          color: #f5fff7;
+          background:
+            radial-gradient(
+              circle at 50% 0%,
+              rgba(72, 255, 136, 0.055),
+              transparent 72%
+            ),
+            rgba(255, 255, 255, 0.018);
+          text-align: left;
+          transition:
+            border-color 160ms ease,
+            background 160ms ease,
+            box-shadow 160ms ease;
+        }
+
+        .cc-direction-choice:hover {
+          border-color: rgba(91, 255, 147, 0.25);
+        }
+
+        .cc-direction-choice.is-selected {
+          border-color: rgba(91, 255, 147, 0.5);
+          background:
+            radial-gradient(
+              circle at 50% 0%,
+              rgba(72, 255, 136, 0.13),
+              transparent 74%
+            ),
+            rgba(77, 255, 139, 0.035);
+          box-shadow:
+            0 18px 48px rgba(0, 0, 0, 0.3),
+            inset 0 0 0 1px rgba(91, 255, 147, 0.06);
+        }
+
+        .cc-direction-choice span,
+        .cc-direction-choice small {
+          display: block;
+        }
+
+        .cc-direction-choice span {
+          font-size: 21px;
+          font-weight: 900;
+          letter-spacing: -0.035em;
+        }
+
+        .cc-direction-choice small {
+          margin-top: 12px;
+          color: rgba(226, 242, 231, 0.52);
+          font-size: 13px;
+          line-height: 1.55;
+        }
+
+        .cc-selected-direction-content {
+          max-width: 1120px;
+          margin: 0 auto;
+          padding: 76px 24px 122px;
+          text-align: center;
+        }
+
+        .cc-selected-direction-content h2 {
+          max-width: 960px;
+          margin: 0 auto;
+          font-size: clamp(46px, 7vw, 82px);
+          line-height: 0.94;
+          letter-spacing: -0.067em;
+        }
+
+        .cc-selected-direction-copy {
+          max-width: 780px;
+          margin: 27px auto 0;
+          color: rgba(229, 245, 234, 0.62);
+          font-size: clamp(17px, 2vw, 21px);
+          line-height: 1.6;
+        }
+
+        .cc-selected-system-grid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 14px;
+          margin-top: 46px;
+          text-align: left;
+        }
+
+        .cc-selected-system-grid-two {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .cc-selected-system-card {
+          min-height: 240px;
+          padding: 25px;
+          border: 1px solid rgba(255, 255, 255, 0.085);
+          border-radius: 22px;
+          background:
+            radial-gradient(
+              circle at 50% 0%,
+              rgba(72, 255, 136, 0.07),
+              transparent 72%
+            ),
+            rgba(255, 255, 255, 0.018);
+        }
+
+        .cc-selected-system-card span {
+          color: #67ff99;
+          font-size: 10px;
+          font-weight: 950;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+        }
+
+        .cc-selected-system-card h3 {
+          margin: 18px 0 0;
+          font-size: 28px;
+          line-height: 1.02;
+          letter-spacing: -0.045em;
+        }
+
+        .cc-selected-system-card p {
+          margin: 17px 0 0;
+          color: rgba(226, 242, 231, 0.52);
+          font-size: 14px;
+          line-height: 1.62;
+        }
+
+        .cc-selected-direction-path {
+          max-width: 760px;
+          margin: 34px auto;
+          padding: 18px 22px;
+          border: 1px solid rgba(91, 255, 147, 0.16);
+          border-radius: 17px;
+          color: #6cff9d;
+          background: rgba(74, 255, 137, 0.045);
+          font-size: 14px;
+          font-weight: 850;
+          line-height: 1.5;
+        }
+        .cc-customer-path-section {
+          position: relative;
+          padding: 28px 0 112px;
+          text-align: center;
+        }
+
+        .cc-customer-path-section::before {
+          content: "";
+          position: absolute;
+          top: 0;
+          left: 50%;
+          width: min(720px, 88%);
+          height: 100%;
+          transform: translateX(-50%);
+          background: radial-gradient(
+            circle at 50% 46%,
+            rgba(65, 255, 126, 0.11),
+            transparent 68%
+          );
+          pointer-events: none;
+        }
+
+        .cc-customer-path-heading {
+          position: relative;
+          max-width: 890px;
+          margin: 0 auto;
+          font-size: clamp(46px, 7vw, 88px);
+          line-height: 0.96;
+          letter-spacing: -0.065em;
+          font-weight: 950;
+        }
+
+        .cc-customer-path-heading span {
+          color: #59ff91;
+          text-shadow: 0 0 38px rgba(65, 255, 126, 0.18);
+        }
+
+        .cc-customer-path {
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          width: min(420px, 100%);
+          margin: 54px auto 0;
+        }
+
+        .cc-customer-path-item {
+          position: relative;
+          z-index: 2;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 210px;
+          min-height: 52px;
+          padding: 0 24px;
+          border: 1px solid rgba(91, 255, 147, 0.18);
+          border-radius: 999px;
+          color: #f5fff8;
+          background:
+            linear-gradient(
+              145deg,
+              rgba(255, 255, 255, 0.05),
+              rgba(255, 255, 255, 0.018)
+            ),
+            rgba(5, 12, 8, 0.94);
+          font-size: 16px;
+          font-weight: 900;
+          letter-spacing: -0.01em;
+          box-shadow:
+            0 0 0 1px rgba(84, 255, 141, 0.025),
+            0 12px 34px rgba(0, 0, 0, 0.28),
+            0 0 28px rgba(65, 255, 126, 0.055);
+        }
+
+        .cc-customer-path-item:first-child,
+        .cc-customer-path-item:last-child {
+          border-color: rgba(91, 255, 147, 0.34);
+          color: #72ff9f;
+          box-shadow:
+            0 0 0 1px rgba(84, 255, 141, 0.05),
+            0 12px 34px rgba(0, 0, 0, 0.28),
+            0 0 34px rgba(65, 255, 126, 0.12);
+        }
+
+        .cc-customer-path-arrow {
+          position: relative;
+          z-index: 1;
+          width: 2px;
+          height: 26px;
+          border-radius: 999px;
+          background: linear-gradient(
+            to bottom,
+            rgba(91, 255, 147, 0.08),
+            rgba(91, 255, 147, 0.42),
+            rgba(91, 255, 147, 0.08)
+          );
+          box-shadow: 0 0 12px rgba(65, 255, 126, 0.14);
+        }
+
+        .cc-customer-path-arrow::after {
+          content: none;
+        }
+
+        .cc-work-section {
+          padding: 12px 0 92px;
+        }
+
+        .cc-section-heading {
+          max-width: 760px;
+          margin: 0 auto 42px;
+          text-align: center;
+        }
+
+        .cc-section-heading h2 {
+          margin: 0;
+          font-size: clamp(39px, 5.6vw, 72px);
+          line-height: 0.98;
+          letter-spacing: -0.055em;
+        }
+
+        .cc-section-heading p {
+          max-width: 720px;
+          margin: 18px auto 0;
+          color: rgba(230, 244, 234, 0.57);
+          font-size: 17px;
+          line-height: 1.6;
+        }
+
+        .cc-work-picture {
+          position: relative;
+          display: grid;
+          grid-template-columns: 1fr 58px 1fr 58px 1.08fr;
+          gap: 0;
+          align-items: stretch;
+          padding: 28px;
+          border: 1px solid rgba(94, 255, 150, 0.17);
+          border-radius: 30px;
+          background:
+            linear-gradient(
+              145deg,
+              rgba(255, 255, 255, 0.035),
+              rgba(255, 255, 255, 0.012)
+            ),
+            rgba(5, 10, 8, 0.88);
+          box-shadow:
+            0 26px 90px rgba(0, 0, 0, 0.4),
+            inset 0 1px rgba(255, 255, 255, 0.045);
+        }
+
+        .cc-work-picture::before {
+          content: "";
+          position: absolute;
+          inset: -65px 12%;
+          z-index: -1;
+          border-radius: 999px;
+          background: radial-gradient(
+            circle,
+            rgba(50, 255, 119, 0.105),
+            transparent 68%
+          );
+          pointer-events: none;
+        }
+
+        .cc-work-stage {
+          min-width: 0;
+          padding: 23px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 21px;
+          background: rgba(255, 255, 255, 0.024);
+        }
+
+        .cc-stage-label {
+          color: #66ff99;
+          font-size: 10px;
+          font-weight: 950;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+        }
+
+        .cc-work-stage h3 {
+          margin: 11px 0 7px;
+          font-size: 24px;
+          letter-spacing: -0.03em;
+        }
+
+        .cc-work-stage > p {
+          min-height: 44px;
+          margin: 0 0 19px;
+          color: rgba(229, 244, 234, 0.53);
+          font-size: 13px;
+          line-height: 1.5;
+        }
+
+        .cc-stage-arrow {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .cc-stage-arrow span {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 36px;
+          height: 36px;
+          border: 1px solid rgba(83, 255, 140, 0.18);
+          border-radius: 999px;
+          color: #71ff9f;
+          background: rgba(83, 255, 140, 0.055);
+          font-size: 24px;
+          box-shadow: 0 0 22px rgba(65, 255, 126, 0.08);
+        }
+
+        .cc-customer-card,
+        .cc-job-card,
+        .cc-workspace-card {
+          min-height: 252px;
+          border-radius: 17px;
+        }
+
+        .cc-customer-card {
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          padding: 19px;
+          border: 1px solid rgba(81, 255, 139, 0.17);
+          background:
+            radial-gradient(
+              circle at 50% 0%,
+              rgba(70, 255, 133, 0.105),
+              transparent 68%
+            ),
+            #07100b;
+        }
+
+        .cc-mini-brand {
+          color: #7aff9f;
+          font-size: 9px;
+          font-weight: 950;
+          letter-spacing: 0.11em;
+          text-transform: uppercase;
+        }
+
+        .cc-customer-card strong {
+          display: block;
+          margin-top: 16px;
+          font-size: 19px;
+          line-height: 1.25;
+        }
+
+        .cc-customer-card p {
+          margin: 8px 0 18px;
+          color: rgba(228, 243, 233, 0.52);
+          font-size: 16px;
+          line-height: 1.5;
+        }
+
+        .cc-mini-button {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 42px;
+          border-radius: 11px;
+          color: #041108;
+          background: #54ff8d;
+          font-size: 16px;
+          font-weight: 950;
+        }
+
+        .cc-job-card {
+          padding: 19px;
+          border: 1px solid rgba(79, 193, 255, 0.2);
+          background:
+            radial-gradient(
+              circle at 88% 0%,
+              rgba(48, 174, 255, 0.12),
+              transparent 58%
+            ),
+            #071012;
+        }
+
+        .cc-job-head {
+          display: flex;
+          justify-content: space-between;
+          gap: 12px;
+        }
+
+        .cc-job-head strong {
+          font-size: 17px;
+        }
+
+        .cc-job-head p {
+          margin: 5px 0 0;
+          color: rgba(228, 242, 238, 0.53);
+          font-size: 16px;
+        }
+
+        .cc-status {
+          height: fit-content;
+          padding: 5px 8px;
+          border-radius: 999px;
+          color: #9ce3ff;
+          background: rgba(71, 184, 255, 0.11);
+          font-size: 9px;
+          font-weight: 950;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+        }
+
+        .cc-job-lines {
+          display: grid;
+          gap: 8px;
+          margin: 22px 0;
+        }
+
+        .cc-job-line {
+          display: flex;
+          justify-content: space-between;
+          gap: 10px;
+          color: rgba(227, 241, 235, 0.46);
+          font-size: 11px;
+        }
+
+        .cc-job-line b {
+          color: #f3fff7;
+          font-weight: 800;
+        }
+
+        .cc-open-workspace {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 41px;
+          border: 1px solid rgba(84, 255, 142, 0.24);
+          border-radius: 11px;
+          color: #effff4;
+          background: rgba(84, 255, 142, 0.075);
+          font-size: 16px;
+          font-weight: 950;
+        }
+
+        .cc-workspace-card {
+          overflow: hidden;
+          border: 1px solid rgba(84, 255, 142, 0.22);
+          background:
+            radial-gradient(
+              circle at 50% 0%,
+              rgba(57, 255, 123, 0.11),
+              transparent 55%
+            ),
+            #07100b;
+        }
+
+        .cc-workspace-head {
+          padding: 18px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        .cc-workspace-head small {
+          color: #75ff9f;
+          font-size: 9px;
+          font-weight: 950;
+          letter-spacing: 0.11em;
+          text-transform: uppercase;
+        }
+
+        .cc-workspace-head strong {
+          display: block;
+          margin-top: 7px;
+          font-size: 17px;
+        }
+
+        .cc-next-action {
+          margin-top: 15px;
+          padding: 13px;
+          border: 1px solid rgba(83, 255, 141, 0.22);
+          border-radius: 12px;
+          background: rgba(83, 255, 141, 0.075);
+          box-shadow: 0 0 27px rgba(53, 255, 119, 0.06);
+        }
+
+        .cc-next-action span {
+          display: block;
+          color: rgba(228, 244, 234, 0.45);
+          font-size: 9px;
+          font-weight: 900;
+          letter-spacing: 0.11em;
+          text-transform: uppercase;
+        }
+
+        .cc-next-action b {
+          display: block;
+          margin-top: 4px;
+          color: #75ff9f;
+          font-size: 15px;
+        }
+
+        .cc-tools {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 7px;
+          padding: 14px;
+        }
+
+        .cc-tool {
+          padding: 10px 5px;
+          border: 1px solid rgba(255, 255, 255, 0.065);
+          border-radius: 9px;
+          color: rgba(239, 250, 242, 0.7);
+          background: rgba(255, 255, 255, 0.022);
+          font-size: 9px;
+          font-weight: 850;
+          text-align: center;
+        }
+
+        .cc-work-caption {
+          max-width: 760px;
+          margin: 30px auto 0;
+          text-align: center;
+          color: rgba(230, 244, 234, 0.63);
+          font-size: clamp(18px, 2vw, 22px);
+          line-height: 1.55;
+        }
+
+        .cc-work-caption strong {
+          color: #ffffff;
+        }
+
+        .cc-ecosystem {
+          position: relative;
+          padding: 92px 0;
+          border-top: 1px solid rgba(255, 255, 255, 0.065);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.065);
+          background:
+            radial-gradient(
+              circle at 50% 50%,
+              rgba(45, 255, 116, 0.055),
+              transparent 38rem
+            );
+        }
+
+        .cc-ecosystem-heading {
+          max-width: 830px;
+          margin-bottom: 48px;
+        }
+
+        .cc-ecosystem-heading h2 {
+          margin: 0;
+          font-size: clamp(43px, 6vw, 78px);
+          line-height: 0.98;
+          letter-spacing: -0.06em;
+        }
+
+        .cc-ecosystem-heading h2 span {
+          color: #59ff91;
+        }
+
+        .cc-ecosystem-heading p {
+          max-width: 680px;
+          margin: 20px 0 0;
+          color: rgba(230, 244, 234, 0.58);
+          font-size: 18px;
+          line-height: 1.6;
+        }
+
+        .cc-ecosystem-flow {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          overflow: hidden;
+          border: 1px solid rgba(99, 255, 151, 0.16);
+          border-radius: 26px;
+          background: rgba(5, 11, 8, 0.88);
+          box-shadow: 0 25px 90px rgba(0, 0, 0, 0.34);
+        }
+
+        .cc-ecosystem-step {
+          position: relative;
+          min-width: 0;
+          min-height: 260px;
+          padding: 30px 28px;
+          border-right: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        .cc-ecosystem-step:last-child {
+          border-right: 0;
+        }
+
+        .cc-ecosystem-step:nth-child(1) {
+          background:
+            radial-gradient(
+              circle at 20% 0%,
+              rgba(70, 158, 255, 0.11),
+              transparent 62%
+            );
+        }
+
+        .cc-ecosystem-step:nth-child(2) {
+          background:
+            radial-gradient(
+              circle at 50% 0%,
+              rgba(62, 255, 132, 0.11),
+              transparent 62%
+            );
+        }
+
+        .cc-ecosystem-step:nth-child(3) {
+          background:
+            radial-gradient(
+              circle at 80% 0%,
+              rgba(99, 255, 177, 0.09),
+              transparent 62%
+            );
+        }
+
+        .cc-ecosystem-step:not(:last-child)::after {
+          content: "›";
+          position: absolute;
+          top: 50%;
+          right: -10px;
+          z-index: 3;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 20px;
+          height: 30px;
+          margin-top: -15px;
+          color: #63ff98;
+          background: #07100b;
+          font-size: 25px;
+          text-shadow: 0 0 14px rgba(72, 255, 129, 0.5);
+        }
+
+        .cc-ecosystem-number {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 30px;
+          height: 30px;
+          border: 1px solid rgba(91, 255, 147, 0.2);
+          border-radius: 999px;
+          color: #6fff9b;
+          background: rgba(91, 255, 147, 0.06);
+          font-size: 10px;
+          font-weight: 950;
+        }
+
+        .cc-ecosystem-label {
+          margin-top: 28px;
+          color: rgba(104, 255, 158, 0.75);
+          font-size: 9px;
+          font-weight: 950;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+        }
+
+        .cc-ecosystem-step strong {
+          display: block;
+          margin-top: 8px;
+          font-size: 21px;
+          line-height: 1.3;
+        }
+
+        .cc-ecosystem-step p {
+          margin: 9px 0 0;
+          color: rgba(229, 243, 233, 0.46);
+          font-size: 16px;
+          line-height: 1.5;
+        }
+
+        .cc-ecosystem-truth {
+          max-width: 840px;
+          margin: 36px auto 0;
+          text-align: center;
+        }
+
+        .cc-ecosystem-truth strong {
+          display: block;
+          font-size: clamp(27px, 4vw, 44px);
+          letter-spacing: -0.04em;
+        }
+
+        .cc-ecosystem-truth p {
+          margin: 13px 0 0;
+          color: rgba(230, 245, 235, 0.58);
+          font-size: 17px;
+          line-height: 1.55;
+        }
+
+        .cc-proof {
+          padding: 92px 0;
+        }
+
+        .cc-proof-heading {
+          display: flex;
+          align-items: end;
+          justify-content: space-between;
+          gap: 32px;
+          margin-bottom: 35px;
+        }
+
+        .cc-proof-heading h2 {
+          max-width: 720px;
+          margin: 0;
+          font-size: clamp(40px, 5.4vw, 70px);
+          line-height: 0.98;
+          letter-spacing: -0.055em;
+        }
+
+        .cc-proof-heading p {
+          max-width: 410px;
+          margin: 0;
+          color: rgba(230, 244, 234, 0.55);
+          font-size: 15px;
+          line-height: 1.6;
+        }
+
+        .cc-system-list {
+          display: grid;
+          gap: 14px;
+        }
+
+        .cc-system {
+          position: relative;
+          display: grid;
+          grid-template-columns: 1.15fr 1fr 1fr auto;
+          align-items: center;
+          gap: 27px;
+          overflow: hidden;
+          min-height: 142px;
+          padding: 30px 31px;
+          border: 1px solid rgba(255, 255, 255, 0.085);
+          border-radius: 21px;
+          background:
+            radial-gradient(
+              circle at 12% 50%,
+              rgba(66, 255, 130, 0.055),
+              transparent 27rem
+            ),
+            linear-gradient(
+              90deg,
+              rgba(255, 255, 255, 0.034),
+              rgba(255, 255, 255, 0.012)
+            );
+          box-shadow:
+            0 18px 45px rgba(0, 0, 0, 0.18),
+            inset 0 1px rgba(255, 255, 255, 0.035);
+          transition:
+            transform 180ms ease,
+            border-color 180ms ease,
+            background 180ms ease;
+        }
+
+        .cc-system:hover {
+          transform: translateY(-3px);
+          border-color: rgba(101, 255, 155, 0.2);
+          background:
+            radial-gradient(
+              circle at 14% 50%,
+              rgba(66, 255, 130, 0.085),
+              transparent 28rem
+            ),
+            linear-gradient(
+              90deg,
+              rgba(255, 255, 255, 0.045),
+              rgba(255, 255, 255, 0.016)
+            );
+        }
+
+        .cc-system::before {
+          content: "";
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          left: 0;
+          width: 3px;
+          background: #58ff8f;
+          box-shadow: 0 0 20px rgba(88, 255, 143, 0.62);
+        }
+
+        .cc-system.blue::before {
+          background: #52caff;
+          box-shadow: 0 0 20px rgba(82, 202, 255, 0.62);
+        }
+
+        .cc-system.electric::before {
+          background: #678bff;
+          box-shadow: 0 0 20px rgba(103, 139, 255, 0.62);
+        }
+
+        .cc-system-name strong {
+          display: block;
+          font-size: 24px;
+          letter-spacing: -0.025em;
+        }
+
+        .cc-system-name span,
+        .cc-system-side span {
+          display: block;
+          margin-top: 5px;
+          color: rgba(230, 243, 234, 0.46);
+          font-size: 16px;
+        }
+
+        .cc-system-side small {
+          display: block;
+          color: rgba(105, 255, 157, 0.72);
+          font-size: 9px;
+          font-weight: 950;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+        }
+
+        .cc-system-side strong {
+          display: block;
+          margin-top: 6px;
+          font-size: 16px;
+        }
+
+        .cc-open-system {
+          min-height: 42px;
+          padding: 0 16px;
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          border-radius: 12px;
+          cursor: pointer;
+          color: #effff4;
+          background: rgba(255, 255, 255, 0.03);
+          font-size: 16px;
+          font-weight: 900;
+          transition:
+            transform 180ms ease,
+            border-color 180ms ease,
+            background 180ms ease;
+        }
+
+        .cc-open-system:hover {
+          transform: translateY(-2px);
+          border-color: rgba(88, 255, 146, 0.38);
+          background: rgba(88, 255, 146, 0.07);
+        }
+
+        .cc-final {
+          padding: 100px 0;
+          text-align: center;
+          border-top: 1px solid rgba(255, 255, 255, 0.065);
+          background:
+            radial-gradient(
+              circle at 50% 100%,
+              rgba(52, 255, 119, 0.125),
+              transparent 35rem
+            );
+        }
+
+        .cc-final h2 {
+          max-width: 950px;
+          margin: 0 auto;
+          font-size: clamp(45px, 6.7vw, 86px);
+          line-height: 0.97;
+          letter-spacing: -0.065em;
+        }
+
+        .cc-final h2 span {
+          color: #5cff92;
+        }
+
+        .cc-final p {
+          max-width: 720px;
+          margin: 23px auto 0;
+          color: rgba(230, 244, 234, 0.58);
+          font-size: 18px;
+          line-height: 1.6;
+        }
+
+        .cc-footer {
+          padding: 29px 0 38px;
+          color: rgba(225, 239, 229, 0.34);
+          font-size: 16px;
+          text-align: center;
+        }
+
+        .cc-drawer-backdrop {
+          position: fixed;
+          inset: 0;
+          z-index: 100;
+          display: flex;
+          justify-content: flex-end;
+          background: rgba(0, 0, 0, 0.72);
+          backdrop-filter: blur(9px);
+          animation: cc-fade-in 180ms ease;
+        }
+
+        .cc-build-drawer {
+          width: min(540px, 100%);
+          height: 100%;
+          overflow-y: auto;
+          padding: 28px;
+          border-left: 1px solid rgba(86, 255, 145, 0.18);
+          background:
+            radial-gradient(
+              circle at 50% 0%,
+              rgba(63, 255, 127, 0.12),
+              transparent 25rem
+            ),
+            #050a07;
+          box-shadow: -30px 0 90px rgba(0, 0, 0, 0.52);
+          animation: cc-drawer-in 220ms ease;
+        }
+
+        .cc-drawer-head {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 24px;
+          padding-bottom: 24px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .cc-drawer-kicker {
+          color: #68ff9a;
+          font-size: 10px;
+          font-weight: 950;
+          letter-spacing: 0.15em;
+          text-transform: uppercase;
+        }
+
+        .cc-drawer-head h2 {
+          margin: 10px 0 0;
+          font-size: clamp(35px, 5vw, 50px);
+          line-height: 0.98;
+          letter-spacing: -0.055em;
+        }
+
+        .cc-drawer-close {
+          flex: 0 0 auto;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 42px;
+          height: 42px;
+          border: 1px solid rgba(255, 255, 255, 0.11);
+          border-radius: 12px;
+          cursor: pointer;
+          color: #effff4;
+          background: rgba(255, 255, 255, 0.035);
+          font-size: 23px;
+          line-height: 1;
+        }
+
+        .cc-drawer-close:hover {
+          border-color: rgba(91, 255, 147, 0.35);
+          background: rgba(91, 255, 147, 0.07);
+        }
+
+        .cc-build-form {
+          display: grid;
+          gap: 20px;
+          padding-top: 25px;
+        }
+
+        .cc-form-group {
+          display: grid;
+          gap: 9px;
+        }
+
+        .cc-form-group > label,
+        .cc-form-label {
+          color: rgba(242, 255, 246, 0.82);
+          font-size: 12px;
+          font-weight: 900;
+        }
+
+        .cc-build-types {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 9px;
+        }
+
+        .cc-build-type {
+          position: relative;
+        }
+
+        .cc-build-type input {
+          position: absolute;
+          opacity: 0;
+          pointer-events: none;
+        }
+
+        .cc-build-type span {
+          display: flex;
+          align-items: center;
+          min-height: 48px;
+          padding: 0 15px;
+          border: 1px solid rgba(255, 255, 255, 0.09);
+          border-radius: 13px;
+          cursor: pointer;
+          color: rgba(238, 250, 242, 0.66);
+          background: rgba(255, 255, 255, 0.025);
+          font-size: 13px;
+          font-weight: 850;
+          transition:
+            border-color 160ms ease,
+            color 160ms ease,
+            background 160ms ease,
+            box-shadow 160ms ease;
+        }
+
+        .cc-build-type input:checked + span {
+          border-color: rgba(84, 255, 141, 0.42);
+          color: #72ff9f;
+          background: rgba(84, 255, 141, 0.075);
+          box-shadow: 0 0 25px rgba(65, 255, 126, 0.07);
+        }
+
+        .cc-build-input,
+        .cc-build-textarea {
+          width: 100%;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 13px;
+          outline: none;
+          color: #f3fff7;
+          background: rgba(255, 255, 255, 0.035);
+          font: inherit;
+          transition:
+            border-color 160ms ease,
+            background 160ms ease,
+            box-shadow 160ms ease;
+        }
+
+        .cc-build-input {
+          min-height: 51px;
+          padding: 0 15px;
+        }
+
+        .cc-build-textarea {
+          min-height: 104px;
+          resize: vertical;
+          padding: 14px 15px;
+          line-height: 1.5;
+        }
+
+        .cc-build-input::placeholder,
+        .cc-build-textarea::placeholder {
+          color: rgba(229, 243, 233, 0.28);
+        }
+
+        .cc-build-input:focus,
+        .cc-build-textarea:focus {
+          border-color: rgba(84, 255, 141, 0.42);
+          background: rgba(84, 255, 141, 0.045);
+          box-shadow: 0 0 0 4px rgba(84, 255, 141, 0.055);
+        }
+
+        .cc-form-two-column {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 12px;
+        }
+
+        .cc-build-submit {
+          width: 100%;
+          min-height: 56px;
+          margin-top: 4px;
+          border: 0;
+          border-radius: 14px;
+          cursor: pointer;
+          color: #031008;
+          background: #54ff8d;
+          font-size: 14px;
+          font-weight: 950;
+          box-shadow: 0 16px 38px rgba(48, 255, 115, 0.15);
+        }
+
+        .cc-build-submit:disabled {
+          cursor: wait;
+          opacity: 0.68;
+          transform: none;
+          box-shadow: none;
+        }
+
+        .cc-build-error {
+          padding: 13px 14px;
+          border: 1px solid rgba(255, 104, 104, 0.28);
+          border-radius: 12px;
+          color: #ffb0b0;
+          background: rgba(255, 78, 78, 0.07);
+          font-size: 13px;
+          line-height: 1.5;
+        }
+
+        .cc-build-submit:hover {
+          transform: translateY(-2px);
+          box-shadow:
+            0 0 0 1px rgba(102, 255, 155, 0.25),
+            0 18px 42px rgba(48, 255, 115, 0.22);
+        }
+
+        .cc-build-success {
+          margin-top: 26px;
+          padding: 26px;
+          border: 1px solid rgba(84, 255, 141, 0.22);
+          border-radius: 20px;
+          background:
+            radial-gradient(
+              circle at 50% 0%,
+              rgba(65, 255, 126, 0.12),
+              transparent 18rem
+            ),
+            rgba(84, 255, 141, 0.045);
+          text-align: center;
+        }
+
+        .cc-build-success-mark {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 52px;
+          height: 52px;
+          margin: 0 auto;
+          border: 1px solid rgba(84, 255, 141, 0.35);
+          border-radius: 999px;
+          color: #69ff99;
+          background: rgba(84, 255, 141, 0.08);
+          font-size: 24px;
+          font-weight: 950;
+          box-shadow: 0 0 30px rgba(65, 255, 126, 0.12);
+        }
+
+        .cc-build-success h3 {
+          margin: 18px 0 0;
+          font-size: 28px;
+          letter-spacing: -0.04em;
+        }
+
+        .cc-build-success p {
+          margin: 10px 0 0;
+          color: rgba(230, 244, 234, 0.56);
+          font-size: 15px;
+          line-height: 1.55;
+        }
+
+        @keyframes cc-fade-in {
+          from {
+            opacity: 0;
+          }
+
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes cc-drawer-in {
+          from {
+            transform: translateX(35px);
+            opacity: 0;
+          }
+
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+
+        .cc-drawer-backdrop {
+          position: fixed;
+          inset: 0;
+          z-index: 100;
+          display: flex;
+          justify-content: flex-end;
+          background: rgba(0, 0, 0, 0.72);
+          backdrop-filter: blur(9px);
+          animation: cc-fade-in 180ms ease;
+        }
+
+        .cc-build-drawer {
+          width: min(540px, 100%);
+          height: 100%;
+          overflow-y: auto;
+          padding: 28px;
+          border-left: 1px solid rgba(86, 255, 145, 0.18);
+          background:
+            radial-gradient(
+              circle at 50% 0%,
+              rgba(63, 255, 127, 0.12),
+              transparent 25rem
+            ),
+            #050a07;
+          box-shadow: -30px 0 90px rgba(0, 0, 0, 0.52);
+          animation: cc-drawer-in 220ms ease;
+        }
+
+        .cc-drawer-head {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 24px;
+          padding-bottom: 24px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .cc-drawer-kicker {
+          color: #68ff9a;
+          font-size: 10px;
+          font-weight: 950;
+          letter-spacing: 0.15em;
+          text-transform: uppercase;
+        }
+
+        .cc-drawer-head h2 {
+          margin: 10px 0 0;
+          font-size: clamp(35px, 5vw, 50px);
+          line-height: 0.98;
+          letter-spacing: -0.055em;
+        }
+
+        .cc-drawer-close {
+          flex: 0 0 auto;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 42px;
+          height: 42px;
+          border: 1px solid rgba(255, 255, 255, 0.11);
+          border-radius: 12px;
+          cursor: pointer;
+          color: #effff4;
+          background: rgba(255, 255, 255, 0.035);
+          font-size: 23px;
+          line-height: 1;
+        }
+
+        .cc-drawer-close:hover {
+          border-color: rgba(91, 255, 147, 0.35);
+          background: rgba(91, 255, 147, 0.07);
+        }
+
+        .cc-build-form {
+          display: grid;
+          gap: 20px;
+          padding-top: 25px;
+        }
+
+        .cc-form-group {
+          display: grid;
+          gap: 9px;
+        }
+
+        .cc-form-group > label,
+        .cc-form-label {
+          color: rgba(242, 255, 246, 0.82);
+          font-size: 12px;
+          font-weight: 900;
+        }
+
+        .cc-build-types {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 9px;
+        }
+
+        .cc-build-type {
+          position: relative;
+        }
+
+        .cc-build-type input {
+          position: absolute;
+          opacity: 0;
+          pointer-events: none;
+        }
+
+        .cc-build-type span {
+          display: flex;
+          align-items: center;
+          min-height: 48px;
+          padding: 0 15px;
+          border: 1px solid rgba(255, 255, 255, 0.09);
+          border-radius: 13px;
+          cursor: pointer;
+          color: rgba(238, 250, 242, 0.66);
+          background: rgba(255, 255, 255, 0.025);
+          font-size: 13px;
+          font-weight: 850;
+          transition:
+            border-color 160ms ease,
+            color 160ms ease,
+            background 160ms ease,
+            box-shadow 160ms ease;
+        }
+
+        .cc-build-type input:checked + span {
+          border-color: rgba(84, 255, 141, 0.42);
+          color: #72ff9f;
+          background: rgba(84, 255, 141, 0.075);
+          box-shadow: 0 0 25px rgba(65, 255, 126, 0.07);
+        }
+
+        .cc-build-input,
+        .cc-build-textarea {
+          width: 100%;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 13px;
+          outline: none;
+          color: #f3fff7;
+          background: rgba(255, 255, 255, 0.035);
+          font: inherit;
+          transition:
+            border-color 160ms ease,
+            background 160ms ease,
+            box-shadow 160ms ease;
+        }
+
+        .cc-build-input {
+          min-height: 51px;
+          padding: 0 15px;
+        }
+
+        .cc-build-textarea {
+          min-height: 104px;
+          resize: vertical;
+          padding: 14px 15px;
+          line-height: 1.5;
+        }
+
+        .cc-build-input::placeholder,
+        .cc-build-textarea::placeholder {
+          color: rgba(229, 243, 233, 0.28);
+        }
+
+        .cc-build-input:focus,
+        .cc-build-textarea:focus {
+          border-color: rgba(84, 255, 141, 0.42);
+          background: rgba(84, 255, 141, 0.045);
+          box-shadow: 0 0 0 4px rgba(84, 255, 141, 0.055);
+        }
+
+        .cc-form-two-column {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 12px;
+        }
+
+        .cc-build-submit {
+          width: 100%;
+          min-height: 56px;
+          margin-top: 4px;
+          border: 0;
+          border-radius: 14px;
+          cursor: pointer;
+          color: #031008;
+          background: #54ff8d;
+          font-size: 14px;
+          font-weight: 950;
+          box-shadow: 0 16px 38px rgba(48, 255, 115, 0.15);
+        }
+
+        .cc-build-submit:disabled {
+          cursor: wait;
+          opacity: 0.68;
+          transform: none;
+          box-shadow: none;
+        }
+
+        .cc-build-error {
+          padding: 13px 14px;
+          border: 1px solid rgba(255, 104, 104, 0.28);
+          border-radius: 12px;
+          color: #ffb0b0;
+          background: rgba(255, 78, 78, 0.07);
+          font-size: 13px;
+          line-height: 1.5;
+        }
+
+        .cc-build-submit:hover {
+          transform: translateY(-2px);
+          box-shadow:
+            0 0 0 1px rgba(102, 255, 155, 0.25),
+            0 18px 42px rgba(48, 255, 115, 0.22);
+        }
+
+        .cc-build-success {
+          margin-top: 26px;
+          padding: 26px;
+          border: 1px solid rgba(84, 255, 141, 0.22);
+          border-radius: 20px;
+          background:
+            radial-gradient(
+              circle at 50% 0%,
+              rgba(65, 255, 126, 0.12),
+              transparent 18rem
+            ),
+            rgba(84, 255, 141, 0.045);
+          text-align: center;
+        }
+
+        .cc-build-success-mark {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 52px;
+          height: 52px;
+          margin: 0 auto;
+          border: 1px solid rgba(84, 255, 141, 0.35);
+          border-radius: 999px;
+          color: #69ff99;
+          background: rgba(84, 255, 141, 0.08);
+          font-size: 24px;
+          font-weight: 950;
+          box-shadow: 0 0 30px rgba(65, 255, 126, 0.12);
+        }
+
+        .cc-build-success h3 {
+          margin: 18px 0 0;
+          font-size: 28px;
+          letter-spacing: -0.04em;
+        }
+
+        .cc-build-success p {
+          margin: 10px 0 0;
+          color: rgba(230, 244, 234, 0.56);
+          font-size: 15px;
+          line-height: 1.55;
+        }
+
+        @keyframes cc-fade-in {
+          from {
+            opacity: 0;
+          }
+
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes cc-drawer-in {
+          from {
+            transform: translateX(35px);
+            opacity: 0;
+          }
+
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+
+        @media (max-width: 1000px) {
+          .cc-work-picture {
+            grid-template-columns: 1fr;
+            gap: 14px;
+          }
+
+          .cc-stage-arrow {
+            min-height: 38px;
+          }
+
+          .cc-stage-arrow span {
+            transform: rotate(90deg);
+          }
+
+          .cc-work-stage > p {
+            min-height: 0;
+          }
+
+          .cc-ecosystem-flow {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+          }
+
+          .cc-ecosystem-step {
+            min-height: 0;
+            border-right: 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+          }
+
+          .cc-ecosystem-step:last-child {
+            border-bottom: 0;
+          }
+
+          .cc-ecosystem-step:not(:last-child)::after {
+            display: none;
+          }
+
+          .cc-system {
+            grid-template-columns: 1fr 1fr;
+          }
+
+          .cc-open-system {
+            width: fit-content;
+          }
+        }
+
+        @media (max-width: 700px) {
+          .cc-shell {
+            width: min(100% - 24px, 1180px);
+          }
+
+          .cc-topbar {
+            min-height: 260px;
+          }
+
+          .cc-brand span {
+            display: none;
+          }
+
+          .cc-topbar .cc-button {
+            min-height: 38px;
+            padding: 30px 28px;
+            font-size: 11px;
+          }
+
+          .cc-hero {
+            padding: 92px 0 72px;
+          }
+
+          .cc-hero h1 {
+            font-size: clamp(49px, 15vw, 74px);
+          }
+
+          .cc-hero-copy {
+            font-size: 17px;
+          }
+
+          .cc-direction-grid,
+          .cc-selected-system-grid,
+          .cc-selected-system-grid-two {
+            grid-template-columns: 1fr;
+          }
+
+          .cc-direction-section {
+            padding-bottom: 72px;
+          }
+
+          .cc-direction-choice {
+            min-height: 0;
+          }
+
+          .cc-actions {
+            flex-direction: column;
+          }
+
+          .cc-actions .cc-button {
+            width: 100%;
+          }
+
+          .cc-work-section,
+          .cc-ecosystem,
+          .cc-proof {
+            padding: 92px 0;
+          }
+
+          .cc-work-picture {
+            padding: 14px;
+            border-radius: 23px;
+          }
+
+          .cc-work-stage {
+            padding: 19px;
+          }
+
+          .cc-customer-card,
+          .cc-job-card,
+          .cc-workspace-card {
+            min-height: 0;
+          }
+
+          .cc-ecosystem-flow {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+          }
+
+          .cc-ecosystem-step {
+            min-height: 0;
+            border-right: 0;
+          }
+
+          .cc-proof-heading {
+            display: block;
+          }
+
+          .cc-proof-heading p {
+            margin-top: 17px;
+          }
+
+          .cc-system {
+            grid-template-columns: 1fr;
+            gap: 18px;
+            padding: 30px 28px;
+          }
+
+          .cc-final {
+            padding: 100px 0;
+          }
+
+          .cc-final h2 {
+            font-size: clamp(43px, 13vw, 66px);
+          }
+
+          .cc-build-drawer {
+            padding: 22px 18px 32px;
+          }
+
+          .cc-build-types,
+          .cc-form-two-column {
+            grid-template-columns: 1fr;
+          }
+
+          .cc-build-drawer {
+            padding: 22px 18px 32px;
+          }
+
+          .cc-build-types,
+          .cc-form-two-column {
+            grid-template-columns: 1fr;
+          }
+        }
+      `}</style>
+
+      <div className="cc-shell">
+        <header className="cc-topbar">
+          <div className="cc-brand">
+            <i className="cc-brand-dot" />
+            Creator City
+            <span>by HomePlanet</span>
+          </div>
+
+          <button className="cc-button" onClick={openBuildDrawer}>
+            Build My System
+          </button>
+        </header>
+
+        <section className="cc-hero">
+          <div className="cc-kicker">Creator City · Built on HomePlanet</div>
+
+          <h1>
+            What are you trying to <span>organize?</span>
+          </h1>
+
+          <p className="cc-hero-copy">
+            Start with what is happening in the real world.
+            <br />
+            <strong>HomePlanet builds the system around how you already work.</strong>
+          </p>
+
+          <div className="cc-actions">
+            <button className="cc-button" onClick={openBuildDrawer}>
+              Build My System
+            </button>
+
+            <button
+              className="cc-button cc-button-secondary"
+              onClick={() => go("#how-it-works")}
+            >
+              See How It Works
+            </button>
+          </div>
+
+          <div className="cc-hero-note">
+            Business, community, organization, or something completely custom.
+          </div>
+        </section>
+
+        <section className="cc-direction-section" aria-label="Choose what to organize">
+          <div className="cc-direction-grid">
+            {[
+              {
+                id: "business",
+                title: "My Business",
+                detail: "Customers, requests, schedules, payment, proof, and follow-up.",
+              },
+              {
+                id: "community",
+                title: "My Community",
+                detail: "Needs, offers, events, volunteers, and local action.",
+              },
+              {
+                id: "organization",
+                title: "My Organization",
+                detail: "People, projects, communication, updates, and outcomes.",
+              },
+              {
+                id: "custom",
+                title: "Something Completely Custom",
+                detail: "A system shaped around the way your real work already happens.",
+              },
+            ].map((direction) => (
+              <button
+                type="button"
+                key={direction.id}
+                className={`cc-direction-choice ${
+                  selectedDirection === direction.id ? "is-selected" : ""
+                }`}
+                onClick={() => setSelectedDirection(direction.id)}
+              >
+                <span>{direction.title}</span>
+                <small>{direction.detail}</small>
+              </button>
+            ))}
+          </div>
+        </section>
+{selectedDirection !== "business" && (
+          <section className="cc-selected-direction-content">
+            <div className="cc-kicker">Built on HomePlanet</div>
+
+            {selectedDirection === "community" && (
+              <>
+                <h2>Real community action stays connected.</h2>
+
+                <p className="cc-selected-direction-copy">
+                  Start with a need, offer, event, local project, paid-work
+                  opportunity, or live neighborhood activity. Keep the people,
+                  communication, money, proof, and final outcome connected.
+                </p>
+
+                <div className="cc-selected-system-grid">
+                  <article className="cc-selected-system-card">
+                    <span>Community coordination</span>
+                    <h3>Okeechobee Together</h3>
+                    <p>
+                      Residents, volunteers, nonprofits, events, cleanup
+                      projects, local help, and community action.
+                    </p>
+                  </article>
+
+                  <article className="cc-selected-system-card">
+                    <span>Paid local work</span>
+                    <h3>Lawn Program</h3>
+                    <p>
+                      Requests, worker assignment, Piggy Bank support,
+                      materials, receipts, payment, photos, and confirmation.
+                    </p>
+                  </article>
+
+                  <article className="cc-selected-system-card">
+                    <span>Live neighborhood commerce</span>
+                    <h3>Live Yard Sale</h3>
+                    <p>
+                      Item discovery, seller messages, live video, holds,
+                      deposits, payment, pickup, and complete history.
+                    </p>
+                  </article>
+                </div>
+
+                <div className="cc-selected-direction-path">
+                  Need or offer → conversation → coordination → action → proof
+                </div>
+              </>
+            )}
+
+            {selectedDirection === "organization" && (
+              <>
+                <h2>Your organization should not run through scattered pieces.</h2>
+
+                <p className="cc-selected-direction-copy">
+                  Connect the people, projects, responsibilities,
+                  communication, updates, decisions, proof, and history inside
+                  one working system.
+                </p>
+
+                <div className="cc-selected-system-grid cc-selected-system-grid-two">
+                  <article className="cc-selected-system-card">
+                    <span>People and responsibility</span>
+                    <h3>Everybody knows what happens next.</h3>
+                    <p>
+                      Members, staff, volunteers, partners, and leaders stay
+                      connected to the same work and current next action.
+                    </p>
+                  </article>
+
+                  <article className="cc-selected-system-card">
+                    <span>Projects and outcomes</span>
+                    <h3>The complete history stays attached.</h3>
+                    <p>
+                      Updates, decisions, documents, spending, proof, and
+                      results remain connected from beginning to end.
+                    </p>
+                  </article>
+                </div>
+
+                <div className="cc-selected-direction-path">
+                  People → project → next action → updates → outcome → history
+                </div>
+              </>
+            )}
+
+            {selectedDirection === "custom" && (
+              <>
+                <h2>Build the system that does not exist yet.</h2>
+
+                <p className="cc-selected-direction-copy">
+                  Start with the real problem, workflow, or idea. HomePlanet
+                  shapes the public entrance and the operating system around
+                  the way the work actually needs to move.
+                </p>
+
+                <div className="cc-selected-system-grid cc-selected-system-grid-two">
+                  <article className="cc-selected-system-card">
+                    <span>Start with reality</span>
+                    <h3>What is happening today?</h3>
+                    <p>
+                      Scattered communication, manual work, missing proof,
+                      disconnected people, or a completely new idea.
+                    </p>
+                  </article>
+
+                  <article className="cc-selected-system-card">
+                    <span>Build around it</span>
+                    <h3>No generic template required.</h3>
+                    <p>
+                      The system is shaped around the real people, actions,
+                      tools, money, and outcomes involved.
+                    </p>
+                  </article>
+                </div>
+
+                <div className="cc-selected-direction-path">
+                  Real problem → custom workflow → connected action → proven outcome
+                </div>
+              </>
+            )}
+
+            <button className="cc-button" onClick={openBuildDrawer}>
+              Build My System
+            </button>
+          </section>
+        )}
+
+        <section className="cc-accountability-truth">
+          <div className="cc-kicker">Accountability Truth Chain</div>
+
+          <div className="cc-accountability-heading">
+            <h2>Keep the money connected to what it accomplished.</h2>
+
+            <p>
+              Track where money came from, what it was approved for, who
+              received it, what proof was attached, what outcome was produced,
+              and what remains.
+            </p>
+          </div>
+
+          <div
+            className="cc-accountability-chain"
+            aria-label="Money accountability chain"
+          >
+            {[
+              "Money in",
+              "Purpose",
+              "Approval",
+              "Payment",
+              "Receipt",
+              "Proof",
+              "Outcome",
+            ].map((step, index) => (
+              <React.Fragment key={step}>
+                <div>{step}</div>
+
+                {index < 6 && <span aria-hidden="true">→</span>}
+              </React.Fragment>
+            ))}
+          </div>
+
+          <div className="cc-accountability-grid">
+            <article>
+              <span>Business</span>
+              <strong>Payment stays attached to the job.</strong>
+              <p>
+                Deposit, invoice, completed work, proof, review, and customer
+                history.
+              </p>
+            </article>
+
+            <article>
+              <span>Community</span>
+              <strong>Support stays attached to the need.</strong>
+              <p>
+                Sponsor money, assigned help, local payment, proof, and the
+                remaining balance.
+              </p>
+            </article>
+
+            <article>
+              <span>Organization or nonprofit</span>
+              <strong>Funding stays attached to its purpose.</strong>
+              <p>
+                Donation or grant, approval, receipts, spending, outcome, and
+                board or donor visibility.
+              </p>
+            </article>
+
+            <article>
+              <span>Public projects</span>
+              <strong>Funding stays attached to public results.</strong>
+              <p>
+                Responsibility, milestones, spending, proof, resident
+                visibility, and complete history.
+              </p>
+            </article>
+          </div>
+
+          <div className="cc-accountability-note">
+            Public, shared with the right people, or private internally—the
+            system keeps the complete truth chain intact.
+          </div>
+        </section>
+
+        <style>{`
+          .cc-accountability-truth {
+            max-width: 1160px;
+            margin: 0 auto;
+            padding: 12px 24px 108px;
+            text-align: center;
+          }
+
+          .cc-accountability-heading {
+            max-width: 900px;
+            margin: 0 auto;
+          }
+
+          .cc-accountability-heading h2 {
+            margin: 20px 0 0;
+            font-size: clamp(43px, 6.5vw, 76px);
+            line-height: 0.96;
+            letter-spacing: -0.063em;
+          }
+
+          .cc-accountability-heading p {
+            max-width: 760px;
+            margin: 24px auto 0;
+            color: rgba(229, 245, 234, 0.62);
+            font-size: clamp(17px, 2vw, 20px);
+            line-height: 1.65;
+          }
+
+          .cc-accountability-chain {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 38px;
+          }
+
+          .cc-accountability-chain div {
+            padding: 13px 15px;
+            border: 1px solid rgba(94, 255, 149, 0.16);
+            border-radius: 14px;
+            color: #75ffa3;
+            background: rgba(83, 255, 141, 0.045);
+            font-size: 12px;
+            font-weight: 900;
+            white-space: nowrap;
+          }
+
+          .cc-accountability-chain span {
+            color: rgba(94, 255, 149, 0.48);
+            font-size: 16px;
+            font-weight: 900;
+          }
+
+          .cc-accountability-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 28px;
+            text-align: left;
+          }
+
+          .cc-accountability-grid article {
+            min-height: 210px;
+            padding: 22px;
+            border: 1px solid rgba(255, 255, 255, 0.085);
+            border-radius: 21px;
+            background:
+              radial-gradient(
+                circle at 50% 0%,
+                rgba(72, 255, 136, 0.06),
+                transparent 70%
+              ),
+              rgba(255, 255, 255, 0.018);
+          }
+
+          .cc-accountability-grid span,
+          .cc-accountability-grid strong {
+            display: block;
+          }
+
+          .cc-accountability-grid span {
+            color: #67ff99;
+            font-size: 9px;
+            font-weight: 950;
+            letter-spacing: 0.13em;
+            text-transform: uppercase;
+          }
+
+          .cc-accountability-grid strong {
+            margin-top: 17px;
+            font-size: 22px;
+            line-height: 1.08;
+            letter-spacing: -0.04em;
+          }
+
+          .cc-accountability-grid p {
+            margin: 15px 0 0;
+            color: rgba(226, 242, 231, 0.52);
+            font-size: 13px;
+            line-height: 1.6;
+          }
+
+          .cc-accountability-note {
+            max-width: 820px;
+            margin: 25px auto 0;
+            padding: 17px 20px;
+            border: 1px solid rgba(91, 255, 147, 0.14);
+            border-radius: 17px;
+            color: rgba(224, 255, 235, 0.78);
+            background: rgba(74, 255, 137, 0.04);
+            font-size: 14px;
+            font-weight: 800;
+            line-height: 1.55;
+          }
+
+          @media (max-width: 950px) {
+            .cc-accountability-chain {
+              display: grid;
+              grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .cc-accountability-chain span {
+              display: none;
+            }
+
+            .cc-accountability-grid {
+              grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+          }
+
+          @media (max-width: 620px) {
+            .cc-accountability-truth {
+              padding: 10px 18px 82px;
+            }
+
+            .cc-accountability-chain,
+            .cc-accountability-grid {
+              grid-template-columns: 1fr;
+            }
+
+            .cc-accountability-grid article {
+              min-height: 0;
+            }
+          }
+        `}</style>
+
+<section
+          className="cc-customer-path-section"
+          aria-labelledby="customer-path-heading"
+          style={{
+            display: selectedDirection === "business" ? undefined : "none",
+          }}
+        >
+          <h2
+            className="cc-customer-path-heading"
+            id="customer-path-heading"
+          >
+            Your customer
+            <br />
+            never has to leave
+            <br />
+            <span>your system again.</span>
+          </h2>
+
+          <div className="cc-customer-path" aria-label="Connected customer path">
+            {[
+              "Customer",
+              "Request",
+              "Workspace",
+              "Payment",
+              "Proof",
+              "Review",
+              "History",
+            ].map((item, index, items) => (
+              <React.Fragment key={item}>
+                <div className="cc-customer-path-item">{item}</div>
+
+                {index < items.length - 1 && (
+                  <div
+                    className="cc-customer-path-arrow"
+                    aria-hidden="true"
+                  />
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+        </section>
+
+        <section
+          className="cc-work-section"
+          id="how-it-works"
+          style={{
+            display: selectedDirection === "business" ? undefined : "none",
+          }}
+        >
+          <div className="cc-section-heading">
+            <h2>One request becomes one connected job.</h2>
+
+            <p>
+              The customer reaches out. The business sees what needs attention.
+              The work opens with the next action already waiting.
+            </p>
+          </div>
+
+          <div className="cc-work-picture">
+            <article className="cc-work-stage">
+              <div className="cc-stage-label">01 - Customer page</div>
+              <h3>The customer asks.</h3>
+              <p>
+                A simple public page collects the information needed to begin.
+              </p>
+
+              <div className="cc-customer-card">
+                <div>
+                  <div className="cc-mini-brand">
+                    Only The Essentials Cleaning
+                  </div>
+
+                  <strong>Need help getting your home back in order?</strong>
+
+                  <p>
+                    Choose the service, preferred time, and add photos when
+                    helpful.
+                  </p>
+                </div>
+
+                <div className="cc-mini-button">Request Cleaning</div>
+              </div>
+            </article>
+
+            <div className="cc-stage-arrow" aria-hidden="true">
+              <span>→</span>
+            </div>
+
+            <article className="cc-work-stage">
+              <div className="cc-stage-label">02 - New job</div>
+              <h3>The business sees it.</h3>
+              <p>
+                The request becomes visible work instead of disappearing into
+                email.
+              </p>
+
+              <div className="cc-job-card">
+                <div className="cc-job-head">
+                  <div>
+                    <strong>Sarah Mitchell</strong>
+                    <p>House Cleaning</p>
+                  </div>
+
+                  <div className="cc-status">New</div>
+                </div>
+
+                <div className="cc-job-lines">
+                  <div className="cc-job-line">
+                    Service <b>Standard Cleaning</b>
+                  </div>
+
+                  <div className="cc-job-line">
+                    Preferred time <b>Friday Morning</b>
+                  </div>
+
+                  <div className="cc-job-line">
+                    Photos <b>3 attached</b>
+                  </div>
+                </div>
+
+                <div className="cc-open-workspace">Open Workspace</div>
+              </div>
+            </article>
+
+            <div className="cc-stage-arrow" aria-hidden="true">
+              <span>→</span>
+            </div>
+
+            <article className="cc-work-stage">
+              <div className="cc-stage-label">03 - Active workspace</div>
+              <h3>The work moves forward.</h3>
+              <p>
+                The customer, tools, next action, and complete history stay
+                together.
+              </p>
+
+              <div className="cc-workspace-card">
+                <div className="cc-workspace-head">
+                  <small>Sarah Mitchell</small>
+                  <strong>House Cleaning Workspace</strong>
+
+                  <div className="cc-next-action">
+                    <span>Next Action</span>
+                    <b>Send Estimate</b>
+                  </div>
+                </div>
+
+                <div className="cc-tools">
+                  <div className="cc-tool">Estimate</div>
+                  <div className="cc-tool">Agreement</div>
+                  <div className="cc-tool">Schedule</div>
+                  <div className="cc-tool">Photos</div>
+                  <div className="cc-tool">Payment</div>
+                  <div className="cc-tool">Proof</div>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <p className="cc-work-caption">
+            Most websites send an email and stop.
+            <br />
+            <strong>HomePlanet opens the actual work.</strong>
+          </p>
+        </section>
+      </div>
+
+      <section
+        className="cc-ecosystem"
+        style={{
+          display: selectedDirection === "business" ? undefined : "none",
+        }}
+      >
+        <div className="cc-shell">
+          <div className="cc-ecosystem-heading">
+            <h2>
+              Your business, conversations, and community should{" "}
+              <span>work as one.</span>
+            </h2>
+
+            <p>
+              A post can become a conversation. A conversation can become a
+              request. A request can become active work without forcing anyone
+              to jump between disconnected apps.
+            </p>
+          </div>
+
+          <div className="cc-ecosystem-flow">
+            {ecosystemSteps.map((step, index) => (
+              <article className="cc-ecosystem-step" key={step.label}>
+                <div className="cc-ecosystem-number">
+                  {String(index + 1).padStart(2, "0")}
+                </div>
+
+                <div className="cc-ecosystem-label">{step.label}</div>
+                <strong>{step.title}</strong>
+                <p>{step.detail}</p>
+              </article>
+            ))}
+          </div>
+
+          <div className="cc-ecosystem-truth">
+            <strong>Nothing gets lost. Everything stays connected.</strong>
+
+            <p>
+              One identity. One conversation. One truth chain from the first
+              signal to the final outcome.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section
+        className="cc-proof"
+        style={{
+          display: selectedDirection === "business" ? undefined : "none",
+        }}
+      >
+        <div className="cc-shell">
+          <div className="cc-proof-heading">
+            <h2>Different businesses. The same connected idea.</h2>
+
+            <p>
+              These are not mockups. They are real public entrances built around
+              how each business actually works.
+            </p>
+          </div>
+
+          <div className="cc-system-list">
+            {liveSystems.map((system) => (
+              <article
+                className={`cc-system ${system.tone}`}
+                key={system.name}
+              >
+                <div className="cc-system-name">
+                  <strong>{system.name}</strong>
+                  <span>{system.type}</span>
+                </div>
+
+                <div className="cc-system-side">
+                  <small>Customer side</small>
+                  <strong>{system.customer}</strong>
+                  <span>The public entrance starts the relationship.</span>
+                </div>
+
+                <div className="cc-system-side">
+                  <small>Business side</small>
+                  <strong>{system.work}</strong>
+                  <span>The next action is already visible.</span>
+                </div>
+
+                <button
+                  className="cc-open-system"
+                  onClick={() => go(system.href)}
+                >
+                  Open Live Page
+                </button>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="cc-final">
+        <div className="cc-shell">
+          <h2>
+            Build around the real work.
+            <br />
+            <span>Keep everything connected underneath.</span>
+          </h2>
+
+          <p>
+            Business, community, organization, or something completely custom—
+            start with what is happening now and build the connected system
+            around the people, money, actions, proof, and outcomes involved.
+          </p>
+
+          <div className="cc-actions">
+            <button className="cc-button" onClick={openBuildDrawer}>
+              Build My System
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {isBuildDrawerOpen && (
+        <div
+          className="cc-drawer-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              closeBuildDrawer();
+            }
+          }}
+        >
+          <aside
+            className="cc-build-drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="build-drawer-title"
+          >
+            <div className="cc-drawer-head">
+              <div>
+                <div className="cc-drawer-kicker">Start inside HomePlanet</div>
+                <h2 id="build-drawer-title">Build my system.</h2>
+              </div>
+
+              <button
+                className="cc-drawer-close"
+                type="button"
+                aria-label="Close build drawer"
+                onClick={closeBuildDrawer}
+              >
+                ×
+              </button>
+            </div>
+
+            {buildSubmitted ? (
+              <div className="cc-build-success">
+                <div className="cc-build-success-mark">✓</div>
+                <h3>Your build has started.</h3>
+                <p>
+                  Your information is together and ready for the next step
+                  inside HomePlanet.
+                </p>
+              </div>
+            ) : (
+              <form className="cc-build-form" onSubmit={submitBuildRequest}>
+                <div className="cc-form-group">
+                  <div className="cc-form-label">
+                    What are we building for?
+                  </div>
+
+                  <div className="cc-build-types">
+                    {[
+                      "Business",
+                      "Community",
+                      "Restaurant",
+                      "Service Company",
+                      "Something Else",
+                    ].map((type) => (
+                      <label className="cc-build-type" key={type}>
+                        <input
+                          type="radio"
+                          name="buildType"
+                          value={type}
+                          required
+                        />
+                        <span>{type}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="cc-form-group">
+                  <label htmlFor="cc-business-name">Business Name</label>
+                  <input
+                    className="cc-build-input"
+                    id="cc-business-name"
+                    name="businessName"
+                    type="text"
+                    autoComplete="organization"
+                    placeholder="Your business or project name"
+                    required
+                  />
+                </div>
+
+                <div className="cc-form-group">
+                  <label htmlFor="cc-happening">
+                    What's happening today?
+                  </label>
+                  <textarea
+                    className="cc-build-textarea"
+                    id="cc-happening"
+                    name="happeningToday"
+                    placeholder="Tell us what customers, staff, or the community are trying to do."
+                    required
+                  />
+                </div>
+
+                <div className="cc-form-group">
+                  <label htmlFor="cc-frustration">
+                    Biggest frustration?
+                  </label>
+                  <textarea
+                    className="cc-build-textarea"
+                    id="cc-frustration"
+                    name="biggestFrustration"
+                    placeholder="What keeps getting lost, delayed, repeated, or handled manually?"
+                    required
+                  />
+                </div>
+
+                <div className="cc-form-two-column">
+                  <div className="cc-form-group">
+                    <label htmlFor="cc-name">Name</label>
+                    <input
+                      className="cc-build-input"
+                      id="cc-name"
+                      name="name"
+                      type="text"
+                      autoComplete="name"
+                      placeholder="Your name"
+                      required
+                    />
+                  </div>
+
+                  <div className="cc-form-group">
+                    <label htmlFor="cc-phone">Phone</label>
+                    <input
+                      className="cc-build-input"
+                      id="cc-phone"
+                      name="phone"
+                      type="tel"
+                      autoComplete="tel"
+                      inputMode="tel"
+                      placeholder="Your phone number"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {buildSubmitError && (
+                  <div className="cc-build-error" role="alert">
+                    {buildSubmitError}
+                  </div>
+                )}
+
+                <button
+                  className="cc-build-submit"
+                  type="submit"
+                  disabled={isBuildSubmitting}
+                >
+                  {isBuildSubmitting ? "Sending..." : "Start My Build"}
+                </button>
+              </form>
+            )}
+          </aside>
+        </div>
+      )}
+
+      {isBuildDrawerOpen && (
+        <div
+          className="cc-drawer-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              closeBuildDrawer();
+            }
+          }}
+        >
+          <aside
+            className="cc-build-drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="build-drawer-title"
+          >
+            <div className="cc-drawer-head">
+              <div>
+                <div className="cc-drawer-kicker">Start inside HomePlanet</div>
+                <h2 id="build-drawer-title">Build my system.</h2>
+              </div>
+
+              <button
+                className="cc-drawer-close"
+                type="button"
+                aria-label="Close build drawer"
+                onClick={closeBuildDrawer}
+              >
+                ×
+              </button>
+            </div>
+
+            {buildSubmitted ? (
+              <div className="cc-build-success">
+                <div className="cc-build-success-mark">✓</div>
+                <h3>Your build has started.</h3>
+                <p>
+                  Your information is together and ready for the next step
+                  inside HomePlanet.
+                </p>
+              </div>
+            ) : (
+              <form className="cc-build-form" onSubmit={submitBuildRequest}>
+                <div className="cc-form-group">
+                  <div className="cc-form-label">
+                    What are we building for?
+                  </div>
+
+                  <div className="cc-build-types">
+                    {[
+                      "Business",
+                      "Community",
+                      "Restaurant",
+                      "Service Company",
+                      "Something Else",
+                    ].map((type) => (
+                      <label className="cc-build-type" key={type}>
+                        <input
+                          type="radio"
+                          name="buildType"
+                          value={type}
+                          required
+                        />
+                        <span>{type}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="cc-form-group">
+                  <label htmlFor="cc-business-name">Business Name</label>
+                  <input
+                    className="cc-build-input"
+                    id="cc-business-name"
+                    name="businessName"
+                    type="text"
+                    autoComplete="organization"
+                    placeholder="Your business or project name"
+                    required
+                  />
+                </div>
+
+                <div className="cc-form-group">
+                  <label htmlFor="cc-happening">
+                    What's happening today?
+                  </label>
+                  <textarea
+                    className="cc-build-textarea"
+                    id="cc-happening"
+                    name="happeningToday"
+                    placeholder="Tell us what customers, staff, or the community are trying to do."
+                    required
+                  />
+                </div>
+
+                <div className="cc-form-group">
+                  <label htmlFor="cc-frustration">
+                    Biggest frustration?
+                  </label>
+                  <textarea
+                    className="cc-build-textarea"
+                    id="cc-frustration"
+                    name="biggestFrustration"
+                    placeholder="What keeps getting lost, delayed, repeated, or handled manually?"
+                    required
+                  />
+                </div>
+
+                <div className="cc-form-two-column">
+                  <div className="cc-form-group">
+                    <label htmlFor="cc-name">Name</label>
+                    <input
+                      className="cc-build-input"
+                      id="cc-name"
+                      name="name"
+                      type="text"
+                      autoComplete="name"
+                      placeholder="Your name"
+                      required
+                    />
+                  </div>
+
+                  <div className="cc-form-group">
+                    <label htmlFor="cc-phone">Phone</label>
+                    <input
+                      className="cc-build-input"
+                      id="cc-phone"
+                      name="phone"
+                      type="tel"
+                      autoComplete="tel"
+                      inputMode="tel"
+                      placeholder="Your phone number"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {buildSubmitError && (
+                  <div className="cc-build-error" role="alert">
+                    {buildSubmitError}
+                  </div>
+                )}
+
+                <button
+                  className="cc-build-submit"
+                  type="submit"
+                  disabled={isBuildSubmitting}
+                >
+                  {isBuildSubmitting ? "Sending..." : "Start My Build"}
+                </button>
+              </form>
+            )}
+          </aside>
+        </div>
+      )}
+
+      <footer className="cc-footer">
+        Creator City - Powered by HomePlanet
+      </footer>
+    </main>
+  );
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

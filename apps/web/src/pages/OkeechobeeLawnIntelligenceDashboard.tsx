@@ -18,6 +18,26 @@ type LawnEvent = {
   created_at: string;
 };
 
+type LawnDashboardAccess = {
+  name: string;
+  role: "Owner Admin" | "Route Leader" | "Route Helper";
+};
+
+const LAWN_DASHBOARD_ACCESS_CODES: Record<string, LawnDashboardAccess> = {
+  "7711": {
+    name: "Daniel",
+    role: "Owner Admin",
+  },
+  "8822": {
+    name: "Brock",
+    role: "Route Leader",
+  },
+  "9933": {
+    name: "Helper",
+    role: "Route Helper",
+  },
+};
+
 type RequestSummary = {
   id: string;
   created_at: string;
@@ -205,6 +225,21 @@ export default function OkeechobeeLawnIntelligenceDashboard() {
   const [events, setEvents] = useState<LawnEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState<string>("");
+  const [accessCodeDraft, setAccessCodeDraft] = useState("");
+  const [accessError, setAccessError] = useState("");
+  const [dashboardAccess, setDashboardAccess] =
+    useState<LawnDashboardAccess | null>(() => {
+      if (typeof window === "undefined") return null;
+
+      const saved = window.localStorage.getItem("okeechobee_lawn_dashboard_access");
+      if (!saved) return null;
+
+      try {
+        return JSON.parse(saved) as LawnDashboardAccess;
+      } catch {
+        return null;
+      }
+    });
 
   async function loadEvents() {
     setLoading(true);
@@ -259,6 +294,31 @@ export default function OkeechobeeLawnIntelligenceDashboard() {
       supabase.removeChannel(channel);
     };
   }, []);
+
+  function unlockDashboard() {
+    const normalizedCode = accessCodeDraft.trim();
+    const access = LAWN_DASHBOARD_ACCESS_CODES[normalizedCode];
+
+    if (!access) {
+      setAccessError("That code did not work.");
+      return;
+    }
+
+    window.localStorage.setItem(
+      "okeechobee_lawn_dashboard_access",
+      JSON.stringify(access)
+    );
+
+    setDashboardAccess(access);
+    setAccessError("");
+    setAccessCodeDraft("");
+  }
+
+  function lockDashboard() {
+    window.localStorage.removeItem("okeechobee_lawn_dashboard_access");
+    setDashboardAccess(null);
+    setAccessCodeDraft("");
+  }
 
   async function saveRouteUpdate(
     request: RequestSummary,
@@ -427,6 +487,67 @@ export default function OkeechobeeLawnIntelligenceDashboard() {
     () => routePlanGroups.map((group) => group.routeName),
     [routePlanGroups]
   );
+
+  if (!dashboardAccess) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-black px-4 py-8 text-white">
+        <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/[0.03] p-6 shadow-2xl">
+          <div className="rounded-full border border-green-400/20 bg-green-400/10 px-4 py-2 text-center text-xs font-black uppercase tracking-widest text-green-300">
+            Private Dashboard
+          </div>
+
+          <h1 className="mt-6 text-3xl font-black tracking-tight">
+            Okeechobee Lawn Intelligence
+          </h1>
+
+          <p className="mt-3 text-sm font-semibold leading-relaxed text-white/60">
+            This board has real names, phone numbers, locations, and route planning. Enter your access code to continue.
+          </p>
+
+          <div className="mt-6">
+            <label className="text-xs font-black uppercase tracking-widest text-white/40">
+              Access Code
+            </label>
+
+            <input
+              value={accessCodeDraft}
+              onChange={(event) => {
+                setAccessCodeDraft(event.target.value);
+                setAccessError("");
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") unlockDashboard();
+              }}
+              placeholder="4-digit code"
+              className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-center text-2xl font-black tracking-[0.4em] text-white outline-none placeholder:text-sm placeholder:tracking-normal placeholder:text-white/30 focus:border-green-400/50"
+              type="password"
+              inputMode="numeric"
+              maxLength={4}
+            />
+
+            {accessError && (
+              <div className="mt-3 rounded-2xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm font-bold text-red-200">
+                {accessError}
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={unlockDashboard}
+              className="mt-4 w-full rounded-2xl bg-green-400 px-5 py-3 text-sm font-black text-black"
+            >
+              Unlock Dashboard
+            </button>
+          </div>
+
+          <p className="mt-5 text-xs font-semibold leading-relaxed text-white/35">
+            Public requests still go through the lawn program page. This private board is for route coordination only.
+          </p>
+        </div>
+      </main>
+    );
+  }
+
 
   return (
     <main className="min-h-screen bg-black px-4 py-8 text-white">
