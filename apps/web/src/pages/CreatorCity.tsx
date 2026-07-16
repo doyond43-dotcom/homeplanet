@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import { supabase } from "../lib/supabase";
 
 const liveSystems = [
@@ -19,11 +19,11 @@ const liveSystems = [
     tone: "blue",
   },
   {
-    name: "Slap-A-Bug",
-    type: "Pest control system",
-    customer: "Send pest photos",
-    work: "Estimate ready",
-    href: "/planet/slap-a-bug",
+    name: "V&Z Professional Lawncare",
+    type: "Lawn and property care system",
+    customer: "Request property service",
+    work: "Estimate and next steps",
+    href: "/planet/vz-professional-lawncare",
     tone: "electric",
   },
 ];
