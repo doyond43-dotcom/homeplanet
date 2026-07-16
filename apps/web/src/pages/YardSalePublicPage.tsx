@@ -21,6 +21,9 @@ type YardSaleRow = {
   start_time: string;
   description: string;
   contact: string;
+  contact_method: "text" | "facebook" | null;
+  contact_value: string | null;
+  facebook_url: string | null;
   featured_items: FeaturedItem[] | null;
   main_photo_url: string | null;
   status: string;
@@ -44,7 +47,10 @@ export default function YardSalePublicPage() {
   const [selectedItem, setSelectedItem] =
     useState<FeaturedItem | null>(null);
 
-  const [successOpen, setSuccessOpen] = useState(
+  
+  const [contactItemName, setContactItemName] =
+    useState<string | null>(null);
+const [successOpen, setSuccessOpen] = useState(
     Boolean(publishState?.justPublished),
   );
 
@@ -63,7 +69,7 @@ export default function YardSalePublicPage() {
       const result = await supabase
         .from("yard_sales")
         .select(
-          "id,slug,sale_name,area,sale_date,start_time,description,contact,featured_items,main_photo_url,status",
+          "id,slug,sale_name,area,sale_date,start_time,description,contact,contact_method,contact_value,facebook_url,featured_items,main_photo_url,status",
         )
         .eq("slug", normalizedSlug)
         .eq("status", "published")
@@ -172,27 +178,56 @@ export default function YardSalePublicPage() {
     }
   };
 
-  const contactSeller = async (itemName?: string) => {
+  const contactSeller = (itemName?: string) => {
     if (!sale?.contact) return;
 
-    const itemLine = itemName
-      ? `\n\nI am interested in: ${itemName}`
-      : "";
-
-    try {
-      await navigator.clipboard.writeText(
-        `${sale.contact}${itemLine}`,
-      );
-
-      window.alert(
-        itemName
-          ? `Seller contact and item name copied:\n\n${sale.contact}`
-          : `Seller contact copied:\n\n${sale.contact}`,
-      );
-    } catch {
-      window.alert(sale.contact);
-    }
+    setSelectedItem(null);
+    setContactItemName(itemName || "");
   };
+
+  const contactMessage =
+    contactItemName === null
+      ? ""
+      : contactItemName
+        ? `Hi, is the ${contactItemName} still available?`
+        : `Hi, I am interested in ${sale?.sale_name || "your yard sale"}.`;
+
+  const sellerContactMethod =
+    sale?.contact_method === "facebook" ? "facebook" : "text";
+
+  const sellerContactValue =
+    sale?.contact_value?.trim() || sale?.contact?.trim() || "";
+
+  const sellerFacebookUrl =
+    sale?.facebook_url?.trim() ||
+    (sellerContactMethod === "facebook" ? sellerContactValue : "");
+
+  const messageSellerHref = (() => {
+    if (!contactMessage) return "";
+
+    if (sellerContactMethod === "facebook") {
+      if (!sellerFacebookUrl) return "";
+
+      const separator = sellerFacebookUrl.includes("?") ? "&" : "?";
+
+      return `${sellerFacebookUrl}${separator}text=${encodeURIComponent(
+        contactMessage,
+      )}`;
+    }
+
+    const digits = sellerContactValue.replace(/\D/g, "");
+
+    if (!digits) return "";
+
+    const phone =
+      digits.length === 10
+        ? `+1${digits}`
+        : digits.startsWith("1")
+          ? `+${digits}`
+          : `+${digits}`;
+
+    return `sms:${phone}?&body=${encodeURIComponent(contactMessage)}`;
+  })();
 
   if (loading) {
     return (
@@ -427,24 +462,16 @@ export default function YardSalePublicPage() {
               onClick={() => setSelectedItem(null)}
               aria-label="Close item"
             >
-              ×
-            </button>
+              &#215;</button>
 
             <div
               className="ys-item-photo"
               style={{
-                backgroundImage: `
-                  linear-gradient(
-                    180deg,
-                    rgba(2, 6, 4, 0.02),
-                    rgba(2, 6, 4, 0.66)
-                  ),
-                  url("${
-                    selectedItem.image_url ||
-                    sale.main_photo_url ||
-                    "/images/homeplanet-live-yard-sale.webp"
-                  }")
-                `,
+                backgroundImage: `url("${
+                  selectedItem.image_url ||
+                  sale.main_photo_url ||
+                  "/images/homeplanet-live-yard-sale.webp"
+                }")`,
               }}
             />
 
@@ -489,6 +516,80 @@ export default function YardSalePublicPage() {
         </div>
       )}
 
+      {contactItemName !== null && (
+        <div
+          className="ys-contact-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              setContactItemName(null);
+            }
+          }}
+        >
+          <section
+            className="ys-contact-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="ys-contact-title"
+          >
+            <button
+              type="button"
+              className="ys-contact-close"
+              onClick={() => setContactItemName(null)}
+              aria-label="Close seller contact"
+            >
+              &#215;</button>
+
+            <span>Contact the seller</span>
+
+            <h2 id="ys-contact-title">
+              {contactItemName
+                ? `Ask about ${contactItemName}`
+                : "Reach out about this yard sale"}
+            </h2>
+
+            <p className="ys-contact-intro">
+              Copy the ready-to-send message, then contact the seller
+              using their preferred method.
+            </p>
+
+            <div className="ys-contact-message">
+              <span>Your message</span>
+              <strong>{contactMessage}</strong>
+            </div>
+            {messageSellerHref ? (
+              <a
+                className="ys-contact-message-seller"
+                href={messageSellerHref}
+                target={
+                  sellerContactMethod === "facebook"
+                    ? "_blank"
+                    : undefined
+                }
+                rel={
+                  sellerContactMethod === "facebook"
+                    ? "noreferrer"
+                    : undefined
+                }
+              >
+                Message Seller
+              </a>
+            ) : (
+              <div className="ys-contact-unavailable">
+                Seller contact is unavailable.
+              </div>
+            )}
+
+            <button
+              type="button"
+              className="ys-contact-done"
+              onClick={() => setContactItemName(null)}
+            >
+              Done
+            </button>
+          </section>
+        </div>
+      )}
       {successOpen && (
         <div
           className="ys-success-backdrop"
@@ -931,6 +1032,178 @@ export default function YardSalePublicPage() {
         }
 
         .ys-item-backdrop,
+        .ys-contact-backdrop {
+          position: fixed;
+          z-index: 1600;
+          inset: 0;
+          display: grid;
+          place-items: center;
+          overflow-y: auto;
+          padding: 22px;
+          background: rgba(0, 4, 2, 0.88);
+          backdrop-filter: blur(16px);
+        }
+
+        .ys-contact-card {
+          position: relative;
+          width: min(580px, 100%);
+          padding: 34px;
+          border: 1px solid rgba(89, 255, 145, 0.22);
+          border-radius: 28px;
+          background: #07100b;
+          box-shadow: 0 40px 130px rgba(0, 0, 0, 0.64);
+        }
+
+        .ys-contact-card > span {
+          color: #59ff91;
+          font-size: 10px;
+          font-weight: 950;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+        }
+
+        .ys-contact-card h2 {
+          max-width: 470px;
+          margin: 14px 52px 0 0;
+          font-size: clamp(34px, 6vw, 52px);
+          line-height: 0.96;
+          letter-spacing: -0.055em;
+        }
+
+        .ys-contact-intro {
+          max-width: 470px;
+          margin: 18px 0 0;
+          color: rgba(239, 252, 243, 0.62);
+          font-size: 13px;
+          line-height: 1.65;
+        }
+
+        .ys-contact-close {
+          position: absolute;
+          top: 16px;
+          right: 16px;
+          z-index: 2;
+          display: grid;
+          place-items: center;
+          width: 46px;
+          height: 46px;
+          padding: 0;
+          border: 1px solid rgba(255, 255, 255, 0.24);
+          border-radius: 999px;
+          background: rgba(1, 7, 4, 0.92);
+          color: #ffffff;
+          font-size: 29px;
+          font-weight: 700;
+          line-height: 1;
+          cursor: pointer;
+          box-shadow:
+            0 10px 28px rgba(0, 0, 0, 0.58),
+            inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+
+        .ys-contact-message,
+        .ys-contact-method {
+          margin-top: 24px;
+          padding: 18px;
+          border: 1px solid rgba(255, 255, 255, 0.09);
+          border-radius: 17px;
+          background: rgba(255, 255, 255, 0.035);
+        }
+
+        .ys-contact-message span,
+        .ys-contact-method span {
+          display: block;
+          color: rgba(239, 252, 243, 0.45);
+          font-size: 9px;
+          font-weight: 950;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+        }
+
+        .ys-contact-message strong,
+        .ys-contact-method strong {
+          display: block;
+          margin-top: 9px;
+          color: rgba(246, 255, 248, 0.94);
+          font-size: 14px;
+          line-height: 1.55;
+          overflow-wrap: anywhere;
+        }
+
+        .ys-contact-method strong {
+          color: #59ff91;
+        }
+
+                .ys-contact-done {
+          width: 100%;
+          min-height: 54px;
+          border-radius: 14px;
+          font-size: 12px;
+          font-weight: 950;
+          cursor: pointer;
+        }
+
+        .ys-contact-message-seller {
+          display: grid;
+          place-items: center;
+          width: 100%;
+          min-height: 56px;
+          margin-top: 24px;
+          border: 0;
+          border-radius: 14px;
+          background: #59ff91;
+          color: #031008;
+          font-size: 13px;
+          font-weight: 950;
+          text-align: center;
+          text-decoration: none;
+          cursor: pointer;
+          box-shadow: 0 16px 38px rgba(70, 255, 134, 0.16);
+        }
+
+        .ys-contact-message-seller:hover {
+          filter: brightness(1.07);
+        }
+
+        .ys-contact-message-seller:focus-visible {
+          outline: 3px solid rgba(89, 255, 145, 0.42);
+          outline-offset: 3px;
+        }
+
+        .ys-contact-unavailable {
+          margin-top: 24px;
+          padding: 17px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 14px;
+          background: rgba(255, 255, 255, 0.035);
+          color: rgba(242, 255, 246, 0.72);
+          font-size: 12px;
+          font-weight: 800;
+          text-align: center;
+        }
+
+        .ys-contact-done {
+          margin-top: 11px;
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          background: rgba(255, 255, 255, 0.045);
+          color: rgba(242, 255, 246, 0.9);
+        }
+
+        .ys-contact-close:hover,
+        .ys-contact-done:hover {
+          border-color: rgba(89, 255, 145, 0.58);
+          color: #59ff91;
+        }
+
+        .ys-contact-copy:hover {
+          filter: brightness(1.07);
+        }
+
+        .ys-contact-close:focus-visible,
+                .ys-contact-done:focus-visible {
+          outline: 3px solid rgba(89, 255, 145, 0.4);
+          outline-offset: 3px;
+        }
         .ys-success-backdrop {
           position: fixed;
           z-index: 1500;
@@ -954,39 +1227,56 @@ export default function YardSalePublicPage() {
           padding: 22px 30px 30px;
           border: 1px solid rgba(89, 255, 145, 0.18);
           border-radius: 27px;
-          background:
-            radial-gradient(
-              circle at 86% 0%,
-              rgba(89, 255, 145, 0.1),
-              transparent 30%
-            ),
-            #07100b;
+          background: #07100b;
           box-shadow: 0 40px 130px rgba(0, 0, 0, 0.6);
         }
 
         .ys-item-close {
           position: absolute;
-          top: 18px;
-          right: 18px;
-          width: 40px;
-          height: 40px;
-          border: 1px solid rgba(255, 255, 255, 0.09);
+          top: 16px;
+          right: 16px;
+          z-index: 10;
+          display: grid;
+          place-items: center;
+          width: 46px;
+          height: 46px;
+          padding: 0;
+          border: 1px solid rgba(255, 255, 255, 0.24);
           border-radius: 999px;
-          background: rgba(255, 255, 255, 0.03);
-          color: rgba(242, 255, 246, 0.7);
-          font-size: 24px;
+          background: rgba(1, 7, 4, 0.92);
+          color: #ffffff;
+          font-size: 29px;
+          font-weight: 700;
+          line-height: 1;
           cursor: pointer;
+          box-shadow:
+            0 10px 28px rgba(0, 0, 0, 0.58),
+            inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+
+        .ys-item-close:hover {
+          border-color: rgba(89, 255, 145, 0.62);
+          background: #0a1710;
+          color: #59ff91;
+        }
+
+        .ys-item-close:focus-visible {
+          outline: 3px solid rgba(89, 255, 145, 0.42);
+          outline-offset: 3px;
         }
 
         .ys-item-photo {
           width: 100%;
           min-height: 270px;
           margin-bottom: 24px;
+          overflow: hidden;
           border: 1px solid rgba(255, 255, 255, 0.075);
           border-radius: 19px;
+          background-color: #07100b;
           background-position: center;
           background-size: cover;
           background-repeat: no-repeat;
+          box-shadow: none;
         }
 
         .ys-item-drawer h2 {
@@ -1055,11 +1345,183 @@ export default function YardSalePublicPage() {
 
         .ys-item-share {
           margin-top: 9px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          background: rgba(255, 255, 255, 0.035);
-          color: rgba(242, 255, 246, 0.75);
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          background: rgba(255, 255, 255, 0.045);
+          color: rgba(242, 255, 246, 0.9);
         }
 
+        .ys-contact-backdrop {
+          position: fixed;
+          z-index: 1600;
+          inset: 0;
+          display: grid;
+          place-items: center;
+          overflow-y: auto;
+          padding: 22px;
+          background: rgba(0, 4, 2, 0.88);
+          backdrop-filter: blur(16px);
+        }
+
+        .ys-contact-card {
+          position: relative;
+          width: min(580px, 100%);
+          padding: 34px;
+          border: 1px solid rgba(89, 255, 145, 0.22);
+          border-radius: 28px;
+          background: #07100b;
+          box-shadow: 0 40px 130px rgba(0, 0, 0, 0.64);
+        }
+
+        .ys-contact-card > span {
+          color: #59ff91;
+          font-size: 10px;
+          font-weight: 950;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+        }
+
+        .ys-contact-card h2 {
+          max-width: 470px;
+          margin: 14px 52px 0 0;
+          font-size: clamp(34px, 6vw, 52px);
+          line-height: 0.96;
+          letter-spacing: -0.055em;
+        }
+
+        .ys-contact-intro {
+          max-width: 470px;
+          margin: 18px 0 0;
+          color: rgba(239, 252, 243, 0.62);
+          font-size: 13px;
+          line-height: 1.65;
+        }
+
+        .ys-contact-close {
+          position: absolute;
+          top: 16px;
+          right: 16px;
+          z-index: 2;
+          display: grid;
+          place-items: center;
+          width: 46px;
+          height: 46px;
+          padding: 0;
+          border: 1px solid rgba(255, 255, 255, 0.24);
+          border-radius: 999px;
+          background: rgba(1, 7, 4, 0.92);
+          color: #ffffff;
+          font-size: 29px;
+          font-weight: 700;
+          line-height: 1;
+          cursor: pointer;
+          box-shadow:
+            0 10px 28px rgba(0, 0, 0, 0.58),
+            inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+
+        .ys-contact-message,
+        .ys-contact-method {
+          margin-top: 24px;
+          padding: 18px;
+          border: 1px solid rgba(255, 255, 255, 0.09);
+          border-radius: 17px;
+          background: rgba(255, 255, 255, 0.035);
+        }
+
+        .ys-contact-message span,
+        .ys-contact-method span {
+          display: block;
+          color: rgba(239, 252, 243, 0.45);
+          font-size: 9px;
+          font-weight: 950;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+        }
+
+        .ys-contact-message strong,
+        .ys-contact-method strong {
+          display: block;
+          margin-top: 9px;
+          color: rgba(246, 255, 248, 0.94);
+          font-size: 14px;
+          line-height: 1.55;
+          overflow-wrap: anywhere;
+        }
+
+        .ys-contact-method strong {
+          color: #59ff91;
+        }
+
+                .ys-contact-done {
+          width: 100%;
+          min-height: 54px;
+          border-radius: 14px;
+          font-size: 12px;
+          font-weight: 950;
+          cursor: pointer;
+        }
+
+        .ys-contact-message-seller {
+          display: grid;
+          place-items: center;
+          width: 100%;
+          min-height: 56px;
+          margin-top: 24px;
+          border: 0;
+          border-radius: 14px;
+          background: #59ff91;
+          color: #031008;
+          font-size: 13px;
+          font-weight: 950;
+          text-align: center;
+          text-decoration: none;
+          cursor: pointer;
+          box-shadow: 0 16px 38px rgba(70, 255, 134, 0.16);
+        }
+
+        .ys-contact-message-seller:hover {
+          filter: brightness(1.07);
+        }
+
+        .ys-contact-message-seller:focus-visible {
+          outline: 3px solid rgba(89, 255, 145, 0.42);
+          outline-offset: 3px;
+        }
+
+        .ys-contact-unavailable {
+          margin-top: 24px;
+          padding: 17px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 14px;
+          background: rgba(255, 255, 255, 0.035);
+          color: rgba(242, 255, 246, 0.72);
+          font-size: 12px;
+          font-weight: 800;
+          text-align: center;
+        }
+
+        .ys-contact-done {
+          margin-top: 11px;
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          background: rgba(255, 255, 255, 0.045);
+          color: rgba(242, 255, 246, 0.9);
+        }
+
+        .ys-contact-close:hover,
+        .ys-contact-done:hover {
+          border-color: rgba(89, 255, 145, 0.58);
+          color: #59ff91;
+        }
+
+        .ys-contact-copy:hover {
+          filter: brightness(1.07);
+        }
+
+        .ys-contact-close:focus-visible,
+                .ys-contact-done:focus-visible {
+          outline: 3px solid rgba(89, 255, 145, 0.4);
+          outline-offset: 3px;
+        }
         .ys-success-backdrop {
           place-items: center;
           overflow-y: auto;

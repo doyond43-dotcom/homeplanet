@@ -15,7 +15,9 @@ type YardSaleDraft = {
   saleDate: string;
   startTime: string;
   description: string;
-  contact: string;
+  contactMethod: "text" | "facebook";
+  contactValue: string;
+  facebookUrl: string;
   items: FeaturedItem[];
 };
 
@@ -42,7 +44,9 @@ const emptyDraft: YardSaleDraft = {
   saleDate: "",
   startTime: "",
   description: "",
-  contact: "",
+  contactMethod: "text",
+  contactValue: "",
+  facebookUrl: "",
   items: [
     {
       name: "",
@@ -69,13 +73,25 @@ function loadDraft(): YardSaleDraft {
 
     return {
       saleName: typeof parsed.saleName === "string" ? parsed.saleName : "",
-      area: typeof parsed.area === "string" ? parsed.area : "",
+      area:
+        typeof parsed.area === "string"
+          ? parsed.area.replace(/\s+Date\s*$/i, "").trim()
+          : "",
       saleDate: typeof parsed.saleDate === "string" ? parsed.saleDate : "",
       startTime:
         typeof parsed.startTime === "string" ? parsed.startTime : "",
       description:
         typeof parsed.description === "string" ? parsed.description : "",
-      contact: typeof parsed.contact === "string" ? parsed.contact : "",
+      contactMethod:
+        parsed.contactMethod === "facebook" ? "facebook" : "text",
+      contactValue:
+        typeof parsed.contactValue === "string"
+          ? parsed.contactValue
+          : typeof parsed.contact === "string"
+            ? parsed.contact
+            : "",
+      facebookUrl:
+        typeof parsed.facebookUrl === "string" ? parsed.facebookUrl : "",
       items:
         Array.isArray(parsed.items) && parsed.items.length > 0
           ? parsed.items.slice(0, 6).map((item) => ({
@@ -106,7 +122,12 @@ export default function YardSaleStartPage() {
   const [saleDate, setSaleDate] = useState(initialDraft.saleDate);
   const [startTime, setStartTime] = useState(initialDraft.startTime);
   const [description, setDescription] = useState(initialDraft.description);
-  const [contact, setContact] = useState(initialDraft.contact);
+  const [contactMethod, setContactMethod] =
+    useState<"text" | "facebook">(initialDraft.contactMethod);
+  const [contactValue, setContactValue] =
+    useState(initialDraft.contactValue);
+  const [facebookUrl, setFacebookUrl] =
+    useState(initialDraft.facebookUrl);
   const [mainPhoto, setMainPhoto] = useState("");
   const [mainPhotoName, setMainPhotoName] = useState("");
   const [reviewOpen, setReviewOpen] = useState(false);
@@ -120,7 +141,9 @@ export default function YardSaleStartPage() {
       saleDate,
       startTime,
       description,
-      contact,
+      contactMethod,
+      contactValue,
+      facebookUrl,
       items,
     };
 
@@ -138,7 +161,9 @@ export default function YardSaleStartPage() {
     saleDate,
     startTime,
     description,
-    contact,
+    contactMethod,
+    contactValue,
+    facebookUrl,
     items,
   ]);
 
@@ -147,6 +172,44 @@ export default function YardSaleStartPage() {
   const displayDescription =
     description.trim() ||
     "Add a short description so people know what they can expect to find.";
+
+  const cleanPhoneNumber = contactValue.replace(/\D/g, "");
+
+  const normalizedPhone =
+    cleanPhoneNumber.length === 10
+      ? `+1${cleanPhoneNumber}`
+      : cleanPhoneNumber.length === 11 &&
+          cleanPhoneNumber.startsWith("1")
+        ? `+${cleanPhoneNumber}`
+        : "";
+
+  const normalizedFacebookUrl = (() => {
+    const value =
+      contactMethod === "facebook"
+        ? contactValue.trim()
+        : facebookUrl.trim();
+
+    if (!value) return "";
+
+    if (/^https?:\/\//i.test(value)) {
+      return value;
+    }
+
+    if (/^(m\.me|facebook\.com)\//i.test(value)) {
+      return `https://${value}`;
+    }
+
+    return value;
+  })();
+
+  const contactPreviewLabel =
+    contactMethod === "text"
+      ? contactValue.trim()
+        ? "Text Seller"
+        : "Phone number needed"
+      : contactValue.trim()
+        ? "Message Seller"
+        : "Messenger link needed";
 
   const formattedDate = useMemo(() => {
     if (!saleDate) return "Choose a date";
@@ -246,7 +309,8 @@ export default function YardSaleStartPage() {
     const cleanName = saleName.trim();
     const cleanArea = area.trim();
     const cleanDescription = description.trim();
-    const cleanContact = contact.trim();
+    const cleanContactValue = contactValue.trim();
+    const cleanFacebookUrl = facebookUrl.trim();
 
     const cleanItems = items
       .map((item, index) => ({
@@ -278,8 +342,43 @@ export default function YardSaleStartPage() {
       return;
     }
 
-    if (!cleanContact) {
-      window.alert("Please add the best contact method.");
+    if (!cleanContactValue) {
+      window.alert(
+        contactMethod === "text"
+          ? "Please add the phone number shoppers should text."
+          : "Please add your Facebook Messenger link.",
+      );
+      return;
+    }
+
+    if (contactMethod === "text" && !normalizedPhone) {
+      window.alert(
+        "Please enter a valid 10-digit phone number.",
+      );
+      return;
+    }
+
+    if (
+      contactMethod === "facebook" &&
+      !/^https?:\/\/(www\.)?(m\.me|facebook\.com)\//i.test(
+        normalizedFacebookUrl,
+      )
+    ) {
+      window.alert(
+        "Please enter a valid Facebook or Messenger link.",
+      );
+      return;
+    }
+
+    if (
+      cleanFacebookUrl &&
+      !/^https?:\/\/(www\.)?(m\.me|facebook\.com)\//i.test(
+        normalizedFacebookUrl,
+      )
+    ) {
+      window.alert(
+        "The optional Facebook link must be a valid Facebook or Messenger link.",
+      );
       return;
     }
 
@@ -411,7 +510,19 @@ export default function YardSaleStartPage() {
           sale_date: saleDate,
           start_time: startTime,
           description: cleanDescription,
-          contact: cleanContact,
+          contact:
+            contactMethod === "text"
+              ? contactValue.trim()
+              : normalizedFacebookUrl,
+          contact_method: contactMethod,
+          contact_value:
+            contactMethod === "text"
+              ? normalizedPhone
+              : normalizedFacebookUrl,
+          facebook_url:
+            contactMethod === "text"
+              ? normalizedFacebookUrl || null
+              : normalizedFacebookUrl,
           featured_items: publishedItems,
           main_photo_url: publicPhotoUrl,
           main_photo_path: uploadedPhotoPath,
@@ -426,14 +537,7 @@ export default function YardSaleStartPage() {
             "The yard sale page could not be saved.",
         );
       }
-
-      try {
-        window.localStorage.removeItem(YARD_SALE_DRAFT_KEY);
-      } catch {
-        // Successful publishing should not fail over local cleanup.
-      }
-
-      setReviewOpen(false);
+setReviewOpen(false);
       navigate(`/yard-sale/${insertResult.data.slug}`, {
         state: {
           justPublished: true,
@@ -568,14 +672,87 @@ export default function YardSaleStartPage() {
                 </div>
               </label>
 
-              <label>
-                <span>Best contact method</span>
-                <input
-                  value={contact}
-                  onChange={(event) => setContact(event.target.value)}
-                  placeholder="Phone number, email, or Facebook name"
-                />
-              </label>
+              <div className="ys-contact-builder">
+                <label>
+                  <span>How should shoppers contact you?</span>
+
+                  <select
+                    value={contactMethod}
+                    onChange={(event) => {
+                      const nextMethod =
+                        event.target.value === "facebook"
+                          ? "facebook"
+                          : "text";
+
+                      setContactMethod(nextMethod);
+                      setContactValue("");
+                    }}
+                  >
+                    <option value="text">
+                      Text message � recommended
+                    </option>
+                    <option value="facebook">
+                      Facebook Messenger
+                    </option>
+                  </select>
+                </label>
+
+                {contactMethod === "text" ? (
+                  <>
+                    <label>
+                      <span>Mobile phone number</span>
+                      <input
+                        type="tel"
+                        inputMode="tel"
+                        autoComplete="tel"
+                        value={contactValue}
+                        onChange={(event) =>
+                          setContactValue(event.target.value)
+                        }
+                        placeholder="(863) 555-0123"
+                      />
+                      <small>
+                        Shoppers will tap Text Seller and the item
+                        message will already be written.
+                      </small>
+                    </label>
+
+                    <label>
+                      <span>Facebook Messenger link � optional</span>
+                      <input
+                        type="url"
+                        inputMode="url"
+                        value={facebookUrl}
+                        onChange={(event) =>
+                          setFacebookUrl(event.target.value)
+                        }
+                        placeholder="https://m.me/yourusername"
+                      />
+                      <small>
+                        This gives shoppers a second direct contact
+                        option.
+                      </small>
+                    </label>
+                  </>
+                ) : (
+                  <label>
+                    <span>Facebook Messenger link</span>
+                    <input
+                      type="url"
+                      inputMode="url"
+                      value={contactValue}
+                      onChange={(event) =>
+                        setContactValue(event.target.value)
+                      }
+                      placeholder="https://m.me/yourusername"
+                    />
+                    <small>
+                      Open your Facebook profile, copy the username,
+                      and use https://m.me/username.
+                    </small>
+                  </label>
+                )}
+              </div>
             </div>
           </div>
 
@@ -754,7 +931,7 @@ export default function YardSaleStartPage() {
               </div>
 
               <button type="button">
-                {contact.trim() ? "Contact Seller" : "Contact will appear here"}
+                {contactPreviewLabel}
               </button>
             </div>
           </article>
@@ -794,8 +971,7 @@ export default function YardSaleStartPage() {
                 onClick={() => setReviewOpen(false)}
                 aria-label="Close review"
               >
-                ×
-              </button>
+                &#215;</button>
             </div>
 
             <div className="ys-review-summary">
@@ -807,7 +983,7 @@ export default function YardSaleStartPage() {
               <div>
                 <span>Date and time</span>
                 <strong>
-                  {formattedDate} · {startTime || "Time not selected"}
+                  {formattedDate} at {startTime || "Time not selected"}
                 </strong>
               </div>
 
@@ -830,7 +1006,15 @@ export default function YardSaleStartPage() {
 
               <div>
                 <span>Contact</span>
-                <strong>{contact.trim() || "Contact method not added"}</strong>
+                <strong>
+                  {contactMethod === "text"
+                    ? contactValue.trim()
+                      ? `Text: ${contactValue.trim()}`
+                      : "Phone number not added"
+                    : contactValue.trim()
+                      ? "Facebook Messenger"
+                      : "Messenger link not added"}
+                </strong>
               </div>
             </div>
 
@@ -1054,6 +1238,35 @@ export default function YardSaleStartPage() {
           display: grid;
           gap: 16px;
           margin-top: 22px;
+        }
+
+        .ys-contact-builder {
+          display: grid;
+          gap: 16px;
+          padding: 18px;
+          border: 1px solid rgba(89, 255, 145, 0.13);
+          border-radius: 19px;
+          background: rgba(89, 255, 145, 0.025);
+        }
+
+        .ys-contact-builder select {
+          width: 100%;
+          min-height: 52px;
+          padding: 0 14px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 14px;
+          background: #07100b;
+          color: rgba(244, 255, 247, 0.94);
+          font: inherit;
+          cursor: pointer;
+        }
+
+        .ys-contact-builder small {
+          display: block;
+          margin-top: 7px;
+          color: rgba(236, 250, 240, 0.48);
+          font-size: 11px;
+          line-height: 1.5;
         }
 
         .ys-field-row,
