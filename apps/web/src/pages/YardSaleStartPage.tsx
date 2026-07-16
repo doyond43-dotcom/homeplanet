@@ -689,7 +689,7 @@ setReviewOpen(false);
                     }}
                   >
                     <option value="text">
-                      Text message � recommended
+                      Text message - recommended
                     </option>
                     <option value="facebook">
                       Facebook Messenger
@@ -718,7 +718,7 @@ setReviewOpen(false);
                     </label>
 
                     <label>
-                      <span>Facebook Messenger link � optional</span>
+                      <span>Facebook Messenger link - optional</span>
                       <input
                         type="url"
                         inputMode="url"
