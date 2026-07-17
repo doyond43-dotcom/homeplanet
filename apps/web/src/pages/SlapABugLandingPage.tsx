@@ -192,12 +192,12 @@ export default function SlapABugLandingPage() {
     setPropertyMeta("og:description", description);
     setPropertyMeta("og:type", "website");
     setPropertyMeta("og:url", "https://www.homeplanet.city/planet/slap-a-bug");
-    setPropertyMeta("og:image", "https://www.homeplanet.city/images/slap-a-bug-truck-hero.png");
+    setPropertyMeta("og:image", "https://www.homeplanet.city/images/slap-a-bug-truck-hero.jpg");
 
     setMeta("twitter:card", "summary_large_image");
     setMeta("twitter:title", title);
     setMeta("twitter:description", description);
-    setMeta("twitter:image", "https://www.homeplanet.city/images/slap-a-bug-truck-hero.png");
+    setMeta("twitter:image", "https://www.homeplanet.city/images/slap-a-bug-truck-hero.jpg");
   }, []);
 
   const pestOptions = [
@@ -341,9 +341,13 @@ export default function SlapABugLandingPage() {
           <div className="mx-auto mt-10 max-w-5xl overflow-hidden rounded-[2rem] border border-white/10 bg-black/40 shadow-[0_0_95px_rgba(31,111,190,0.24)]">
             <div className="relative aspect-[4/3] min-h-[245px] sm:aspect-[16/7] sm:min-h-[300px]">
               <img
-                src="/images/slap-a-bug-truck-hero.png"
+                src="/images/slap-a-bug-truck-hero.jpg"
                 alt="Slap-A-Bug Pest Control truck in Okeechobee"
-                className="h-full w-full object-cover object-center"
+                width={1280}
+                height={720}
+                fetchPriority="high"
+                decoding="async"
+                className="h-full w-full scale-[1.08] object-cover object-center sm:scale-100"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/5 to-transparent" />
 
@@ -369,7 +373,7 @@ export default function SlapABugLandingPage() {
           <h2 className="mt-3 text-3xl font-black sm:text-4xl">
             What are you dealing with?
           </h2>
-          <p className="mt-4 text-sm leading-7 text-white/60">
+          <p className="mt-4 text-sm leading-7 text-white/75">
             Choose the closest issue. It will carry into the request form below.
           </p>
         </div>
@@ -382,7 +386,7 @@ export default function SlapABugLandingPage() {
               className="group rounded-3xl border border-white/10 bg-white/[0.045] p-5 text-left transition hover:-translate-y-1 hover:border-[#1d79d6]/65 hover:bg-[#061423] hover:shadow-[0_0_34px_rgba(31,111,190,0.18)] sm:p-6"
             >
               <h3 className="text-2xl font-black">{title}</h3>
-              <p className="mt-3 text-sm leading-6 text-white/62">{text}</p>
+              <p className="mt-3 text-sm leading-6 text-white/75">{text}</p>
               <p className="mt-5 text-xs font-black uppercase tracking-[0.18em] text-[#66dc3b]">
                 Select Issue
               </p>
@@ -397,7 +401,7 @@ export default function SlapABugLandingPage() {
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h3 className="text-2xl font-black">Not sure what it is?</h3>
-              <p className="mt-2 text-sm leading-6 text-white/60">
+              <p className="mt-2 text-sm leading-6 text-white/75">
                 Tell Brad what you’re seeing and where it’s happening.
               </p>
             </div>
@@ -432,7 +436,7 @@ export default function SlapABugLandingPage() {
               exterior pest control for spiders at my mother's home. He has been
               a blessing. If there is a better pest control company in
               Okeechobee, I haven't found them. Slap-A-Bug's service and
-              professionalism are unbeatable. 5 stars!”
+              professionalism are unbeatable. 5 stars!”
             </p>
 
             <p className="mt-5 text-sm font-black text-white">
@@ -450,7 +454,7 @@ export default function SlapABugLandingPage() {
               and really cares about the customer's concerns. This is our rental
               home and we don't live in the same town. Brad worked with us and
               will continue taking great care of the home going forward. I would
-              highly recommend Slap-A-Bug.”
+              highly recommend Slap-A-Bug.”
             </p>
 
             <p className="mt-5 text-sm font-black text-white">
@@ -462,9 +466,9 @@ export default function SlapABugLandingPage() {
         <div className="mt-6 text-center">
           <p className="text-sm font-black text-white">
             <span className="text-[#ffd76a]">5.0 ★</span>
-            <span className="text-white/45"> · </span>
+            <span className="text-white/75"> · </span>
             110 Google reviews
-            <span className="text-white/45"> · </span>
+            <span className="text-white/75"> · </span>
             More customer recommendations on Facebook
           </p>
 
@@ -498,7 +502,7 @@ export default function SlapABugLandingPage() {
                     Real customer trust.
                   </h2>
 
-                  <p className="mt-2 text-sm text-white/55">
+                  <p className="mt-2 text-sm text-white/75">
                     5.0 on Google · 110 Google reviews · Facebook recommendations
                   </p>
                 </div>
@@ -522,7 +526,7 @@ export default function SlapABugLandingPage() {
                     className={`shrink-0 rounded-full px-4 py-2 text-xs font-black transition ${
                       reviewSource === source
                         ? "bg-[#28c765] text-black"
-                        : "border border-white/12 bg-white/[0.05] text-white/65 hover:text-white"
+                        : "border border-white/12 bg-white/[0.05] text-white/75 hover:text-white"
                     }`}
                   >
                     {source}
@@ -558,8 +562,8 @@ export default function SlapABugLandingPage() {
                       ★★★★★
                     </p>
 
-                    <p className="mt-4 text-sm leading-7 text-white/68">
-                      “{review.text}”
+                    <p className="mt-4 text-sm leading-7 text-white/75">
+                      “{review.text}”
                     </p>
                   </article>
                 ))}
@@ -582,7 +586,7 @@ export default function SlapABugLandingPage() {
                 Send the details before the visit.
               </h2>
 
-              <p className="mt-4 text-sm leading-7 text-white/66">
+              <p className="mt-4 text-sm leading-7 text-white/75">
                 Pick the issue, tell Brad where it is, and send your contact info so he can follow up without you explaining everything twice.
               </p>
 
@@ -618,6 +622,7 @@ export default function SlapABugLandingPage() {
                 <form onSubmit={submitRequest} className="grid gap-3">
                   <div className="grid gap-3 md:grid-cols-3">
                     <select
+                      aria-label="Pest or service needed"
                       value={form.service}
                       onChange={(e) => updateField("service", e.target.value)}
                       className="sab-select rounded-2xl border border-[#1d79d6]/30 bg-black/65 px-4 py-4 text-white outline-none transition hover:border-[#58a9ff]/65 hover:bg-[#061423] focus:border-[#58a9ff]/80 focus:shadow-[0_0_24px_rgba(31,111,190,0.20)]"
@@ -629,6 +634,7 @@ export default function SlapABugLandingPage() {
                     </select>
 
                     <select
+                      aria-label="Where the pest activity is located"
                       value={form.location}
                       onChange={(e) => updateField("location", e.target.value)}
                       className="sab-select rounded-2xl border border-[#1d79d6]/30 bg-black/65 px-4 py-4 text-white outline-none transition hover:border-[#58a9ff]/65 hover:bg-[#061423] focus:border-[#58a9ff]/80 focus:shadow-[0_0_24px_rgba(31,111,190,0.20)]"
@@ -646,6 +652,7 @@ export default function SlapABugLandingPage() {
                     </select>
 
                     <select
+                      aria-label="Severity of pest activity"
                       value={form.severity}
                       onChange={(e) => updateField("severity", e.target.value)}
                       className="sab-select rounded-2xl border border-[#1d79d6]/30 bg-black/65 px-4 py-4 text-white outline-none transition hover:border-[#58a9ff]/65 hover:bg-[#061423] focus:border-[#58a9ff]/80 focus:shadow-[0_0_24px_rgba(31,111,190,0.20)]"
@@ -696,7 +703,7 @@ export default function SlapABugLandingPage() {
 
       {/* FOOTER */}
       <footer className="mx-auto max-w-6xl px-5 pb-14 text-center sm:px-8">
-        <p className="text-xs font-black uppercase tracking-[0.38em] text-white/40">
+        <p className="text-xs font-black uppercase tracking-[0.38em] text-white/70">
           Call or Text Today
         </p>
 
@@ -707,7 +714,7 @@ export default function SlapABugLandingPage() {
           (863) 368-3628
         </a>
 
-        <p className="mt-8 text-xs text-white/35">
+        <p className="mt-8 text-xs text-white/65">
           Made with HomePlanet
         </p>
       </footer>
