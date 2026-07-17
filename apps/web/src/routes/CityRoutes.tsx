@@ -511,8 +511,8 @@ function AtlasIndex() {
   };
 
   return (
-    <main style={shell}>
-      <div style={wrap}>
+    <main style={shell} className="hp-atlas-page">
+      <div style={wrap} className="hp-atlas-page-wrap">
 <section
           style={{
             ...hero,
@@ -596,11 +596,11 @@ function AtlasIndex() {
           </p>
 
           <div style={actions}>
-            <a href="#how-it-works" style={primary}>
+            <a href="#how-it-works" style={primary} className="hp-hero-primary-action">
               See How HomePlanet Works
             </a>
 
-            <a href="/planet/builds" style={secondary}>
+            <a href="/planet/builds" style={secondary} className="hp-hero-secondary-action">
               See Real Businesses
             </a>
           </div>
@@ -4840,6 +4840,163 @@ function AtlasIndex() {
           }
         }
       `}</style>
+
+      <style>{`
+        /* HOMEPPLANET MOBILE LAYOUT STANDARD V1 */
+        @media (max-width: 620px) {
+          .hp-atlas-page {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+          }
+
+          .hp-atlas-page-wrap {
+            width: calc(100% - 32px) !important;
+            max-width: none !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
+          }
+
+          .hp-atlas-hero-image {
+            width: 100% !important;
+            padding-left: 18px !important;
+            padding-right: 18px !important;
+            border-radius: 22px !important;
+          }
+
+          .hp-real-world-section {
+            width: 100% !important;
+            padding-top: 58px !important;
+            padding-bottom: 76px !important;
+          }
+
+          .hp-real-world-intro {
+            width: 100% !important;
+            max-width: none !important;
+            margin-bottom: 38px !important;
+          }
+
+          .hp-story-photo {
+            width: 100% !important;
+            max-width: none !important;
+            border-radius: 22px !important;
+          }
+
+          .hp-homeplanet-hero-visual {
+            width: 100% !important;
+            padding: 16px !important;
+            border-radius: 22px !important;
+          }
+
+          .hp-hero-need,
+          .hp-hero-workspace,
+          .hp-sale-board,
+          .hp-accountability-example,
+          .hp-homeplanet-point-inner {
+            width: 100% !important;
+            max-width: none !important;
+          }
+
+          .hp-hero-need,
+          .hp-hero-workspace,
+          .hp-sale-board,
+          .hp-accountability-example {
+            padding-left: 16px !important;
+            padding-right: 16px !important;
+            border-radius: 22px !important;
+          }
+
+          .hp-hero-tools,
+          .hp-sale-actions,
+          .hp-accountability-chain,
+          .hp-accountability-uses {
+            width: 100% !important;
+            gap: 10px !important;
+          }
+
+          .hp-hero-tool,
+          .hp-sale-action,
+          .hp-accountability-step,
+          .hp-accountability-use {
+            min-width: 0 !important;
+            padding-left: 14px !important;
+            padding-right: 14px !important;
+            border-radius: 18px !important;
+          }
+
+          .hp-accountability-truth {
+            width: calc(100% + 32px) !important;
+            margin-left: -16px !important;
+            margin-right: -16px !important;
+            padding: 72px 16px !important;
+          }
+
+          .hp-accountability-shell {
+            width: 100% !important;
+            max-width: none !important;
+          }
+
+          .hp-accountability-example {
+            padding: 20px 16px !important;
+          }
+
+          .hp-accountability-ledger > div {
+            padding-left: 14px !important;
+            padding-right: 14px !important;
+          }
+
+          .hp-homeplanet-point {
+            width: 100% !important;
+            padding-bottom: 68px !important;
+          }
+
+          .hp-homeplanet-point-inner {
+            padding: 22px 18px !important;
+            border-radius: 22px !important;
+          }
+
+          .hp-sale-image {
+            width: 100% !important;
+            max-width: none !important;
+            border-radius: 20px !important;
+          }
+
+          .hp-sale-content {
+            width: 100% !important;
+          }
+        }
+      `}</style>
+
+
+      <style>{`
+        /* HOMEPLANET MOBILE READABILITY POLISH V1 */
+        @media (max-width: 620px) {
+          .hp-hero-primary-action,
+          .hp-hero-secondary-action {
+            min-height: 56px !important;
+            padding-left: 22px !important;
+            padding-right: 22px !important;
+          }
+
+          .hp-hero-secondary-action {
+            background: rgba(255, 255, 255, 0.055) !important;
+            border-color: rgba(255, 255, 255, 0.19) !important;
+          }
+
+          .hp-atlas-hero-image > p,
+          .hp-real-world-intro p,
+          .hp-story-copy p,
+          .hp-hero-need-copy,
+          .hp-point-copy p,
+          .hp-accountability-heading p {
+            color: rgba(232, 247, 237, 0.68) !important;
+          }
+
+          .hp-story-point {
+            color: rgba(236, 250, 240, 0.8) !important;
+          }
+        }
+      `}</style>
+
     </main>
   );
 }
@@ -4910,6 +5067,7 @@ export default function CityRoutes() {
     </Routes>
   );
 }
+
 
 
 
