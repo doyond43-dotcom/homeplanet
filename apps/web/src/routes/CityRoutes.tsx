@@ -1,4 +1,4 @@
-﻿import { Fragment } from "react";
+import { Fragment } from "react";
 import { Routes, Route, Link, Navigate, useLocation } from "react-router-dom";
 import type { CSSProperties } from "react";
 import CreatorCity from "../pages/CreatorCity";
@@ -1674,21 +1674,21 @@ function AtlasIndex() {
         @media (max-width: 820px) {
           .hp-atlas-hero-image {
             min-height: 720px !important;
+            margin-top: 0 !important;
             padding: 76px 28px 70px !important;
+            border-color: transparent !important;
             background-image:
               linear-gradient(
                 180deg,
-                rgba(2,5,4,0.96) 0%,
-                rgba(2,5,4,0.83) 56%,
-                rgba(2,5,4,0.24) 100%
+                rgba(2,5,4,0.86) 0%,
+                rgba(2,5,4,0.80) 54%,
+                rgba(2,5,4,0.22) 100%
               ),
               url('/images/homeplanet-hero-connected-neighborhood.webp') !important;
+            background-size: cover !important;
             background-position: 63% center !important;
+            box-shadow: 0 30px 90px rgba(0,0,0,0.38) !important;
           }
-
-          .hp-atlas-hero-image {
-          margin-top: 30px !important;
-        }
 
         .hp-atlas-hero-image > div {
             max-width: 100% !important;
@@ -1699,7 +1699,7 @@ function AtlasIndex() {
           .hp-atlas-hero-image {
             min-height: 760px !important;
             padding: 62px 22px 58px !important;
-            border-radius: 27px !important;
+            border-radius: 22px !important;
             background-position: 68% center !important;
           }
         }
