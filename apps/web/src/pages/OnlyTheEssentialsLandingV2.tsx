@@ -560,10 +560,10 @@ export default function OnlyTheEssentialsCustomerLanding() {
   <p className="mt-3 text-sm font-semibold text-zinc-300">
     House cleaning in Okeechobee, Florida
   </p>
-  <p className="mt-6 text-xs text-zinc-500">
+  <p className="mt-6 text-xs text-zinc-400">
     &copy; 2026 Only The Essentials Cleaning
   </p>
-  <p className="mt-2 text-[11px] text-zinc-600">
+  <p className="mt-2 text-[11px] text-zinc-400">
     Made with HomePlanet
   </p>
 </footer>
