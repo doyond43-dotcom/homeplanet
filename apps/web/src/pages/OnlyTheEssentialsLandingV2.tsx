@@ -287,8 +287,15 @@ export default function OnlyTheEssentialsCustomerLanding() {
               <div className="rounded-[2.25rem] border border-pink-300/20 bg-white/5 p-5 shadow-2xl shadow-pink-950/40">
                 <div className="overflow-hidden rounded-[1.75rem] border border-white/10 bg-black">
                   <img
-                    src="/images/kaitlin-cleaning-profile.jpg"
+                    src="/images/kaitlin-cleaning-profile-768.jpg"
+                    srcSet="/images/kaitlin-cleaning-profile-480.jpg 480w, /images/kaitlin-cleaning-profile-768.jpg 768w"
+                    sizes="(max-width: 640px) calc(100vw - 72px), 448px"
+                    width={768}
+                    height={1152}
                     alt="Only The Essentials Cleaning"
+                    loading="eager"
+                    fetchPriority="high"
+                    decoding="async"
                     className="h-[520px] w-full object-cover"
                   />
                 </div>
