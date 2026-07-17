@@ -742,7 +742,10 @@ setReviewOpen(false);
                     : undefined
                 }
               >
-                <span>Yard sale name</span>
+                <span>
+                  Yard sale name
+                  <b className="ys-required-badge">Required</b>
+                </span>
                 <input
                   value={saleName}
                   onChange={(event) => setSaleName(event.target.value)}
@@ -766,7 +769,10 @@ setReviewOpen(false);
                     : undefined
                 }
               >
-                <span>Neighborhood or general area</span>
+                <span>
+                  Neighborhood, city, or general area
+                  <b className="ys-required-badge">Required</b>
+                </span>
                 <input
                   value={area}
                   onChange={(event) => setArea(event.target.value)}
@@ -789,7 +795,10 @@ setReviewOpen(false);
                       : undefined
                   }
                 >
-                  <span>Date</span>
+                  <span>
+                    Date
+                    <b className="ys-required-badge">Required</b>
+                  </span>
                   <input
                     type="date"
                     value={saleDate}
@@ -811,7 +820,10 @@ setReviewOpen(false);
                       : undefined
                   }
                 >
-                  <span>Start time</span>
+                  <span>
+                    Start time
+                    <b className="ys-required-badge">Required</b>
+                  </span>
                   <input
                     type="time"
                     value={startTime}
@@ -827,7 +839,10 @@ setReviewOpen(false);
               </div>
 
               <label>
-                <span>What will people find?</span>
+                <span>
+                  What will people find?
+                  <b className="ys-optional-badge">Optional</b>
+                </span>
                 <textarea
                   value={description}
                   onChange={(event) => setDescription(event.target.value)}
@@ -914,7 +929,10 @@ setReviewOpen(false);
                           : undefined
                       }
                     >
-                      <span>Mobile phone number</span>
+                      <span>
+                        Mobile phone number
+                        <b className="ys-required-badge">Required</b>
+                      </span>
                       <input
                         type="tel"
                         inputMode="tel"
@@ -983,7 +1001,10 @@ setReviewOpen(false);
                         : undefined
                     }
                   >
-                    <span>Facebook Messenger link</span>
+                    <span>
+                      Facebook Messenger link
+                      <b className="ys-required-badge">Required</b>
+                    </span>
                     <input
                       type="url"
                       inputMode="url"
