@@ -133,6 +133,10 @@ export default function YardSaleStartPage() {
   const [reviewOpen, setReviewOpen] = useState(false);
   const [items, setItems] = useState<FeaturedItem[]>(initialDraft.items);
   const [publishing, setPublishing] = useState(false);
+  const [validationError, setValidationError] = useState<{
+    fieldId: string;
+    message: string;
+  } | null>(null);
 
   useEffect(() => {
     const draft: YardSaleDraft = {
@@ -303,8 +307,137 @@ export default function YardSaleStartPage() {
     reader.readAsDataURL(file);
   };
 
+  const getValidationError = () => {
+    const cleanName = saleName.trim();
+    const cleanArea = area.trim();
+    const cleanContactValue = contactValue.trim();
+    const cleanFacebookUrl = facebookUrl.trim();
+
+    if (!cleanName) {
+      return {
+        fieldId: "ys-sale-name-field",
+        message: "Add a name for your yard sale.",
+      };
+    }
+
+    if (!cleanArea) {
+      return {
+        fieldId: "ys-area-field",
+        message: "Add the neighborhood or general area for the sale.",
+      };
+    }
+
+    if (!saleDate) {
+      return {
+        fieldId: "ys-date-field",
+        message: "Choose the date of your yard sale.",
+      };
+    }
+
+    if (!startTime) {
+      return {
+        fieldId: "ys-time-field",
+        message: "Choose the time your yard sale starts.",
+      };
+    }
+
+    if (!cleanContactValue) {
+      return {
+        fieldId: "ys-contact-field",
+        message:
+          contactMethod === "text"
+            ? "Add the mobile number shoppers should text."
+            : "Add your Facebook Messenger link.",
+      };
+    }
+
+    if (contactMethod === "text" && !normalizedPhone) {
+      return {
+        fieldId: "ys-contact-field",
+        message: "Enter a valid 10-digit mobile phone number.",
+      };
+    }
+
+    if (
+      contactMethod === "facebook" &&
+      !/^https?:\/\/(www\.)?(m\.me|facebook\.com)\//i.test(
+        normalizedFacebookUrl,
+      )
+    ) {
+      return {
+        fieldId: "ys-contact-field",
+        message: "Enter a valid Facebook or Messenger link.",
+      };
+    }
+
+    if (
+      cleanFacebookUrl &&
+      !/^https?:\/\/(www\.)?(m\.me|facebook\.com)\//i.test(
+        normalizedFacebookUrl,
+      )
+    ) {
+      return {
+        fieldId: "ys-optional-facebook-field",
+        message:
+          "This optional link must be a valid Facebook or Messenger link.",
+      };
+    }
+
+    if (!mainPhoto) {
+      return {
+        fieldId: "ys-main-photo-field",
+        message: "Add one main yard sale photo. This photo is required.",
+      };
+    }
+
+    return null;
+  };
+
+  const showValidationError = (
+    error: { fieldId: string; message: string },
+  ) => {
+    setReviewOpen(false);
+    setValidationError(error);
+
+    window.setTimeout(() => {
+      const field = document.getElementById(error.fieldId);
+
+      field?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+
+      const focusTarget = field?.querySelector<
+        HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+      >("input, textarea, select");
+
+      focusTarget?.focus({
+        preventScroll: true,
+      });
+    }, 60);
+  };
+
+  const openFinalReview = () => {
+    const error = getValidationError();
+
+    if (error) {
+      showValidationError(error);
+      return;
+    }
+
+    setValidationError(null);
+    setReviewOpen(true);
+  };
+
   const publishYardSale = async () => {
     if (publishing) return;
+
+    const validationIssue = getValidationError();
+
+    if (validationIssue) {
+      showValidationError(validationIssue);
+      return;
+    }
 
     const cleanName = saleName.trim();
     const cleanArea = area.trim();
@@ -601,41 +734,95 @@ setReviewOpen(false);
             </div>
 
             <div className="ys-fields">
-              <label>
+              <label
+                id="ys-sale-name-field"
+                className={
+                  validationError?.fieldId === "ys-sale-name-field"
+                    ? "ys-field-invalid"
+                    : undefined
+                }
+              >
                 <span>Yard sale name</span>
                 <input
                   value={saleName}
                   onChange={(event) => setSaleName(event.target.value)}
                   placeholder="Saturday neighborhood yard sale"
+                  aria-invalid={
+                    validationError?.fieldId === "ys-sale-name-field"
+                  }
                 />
+                {validationError?.fieldId === "ys-sale-name-field" && (
+                  <small className="ys-field-error">
+                    {validationError.message}
+                  </small>
+                )}
               </label>
 
-              <label>
+              <label
+                id="ys-area-field"
+                className={
+                  validationError?.fieldId === "ys-area-field"
+                    ? "ys-field-invalid"
+                    : undefined
+                }
+              >
                 <span>Neighborhood or general area</span>
                 <input
                   value={area}
                   onChange={(event) => setArea(event.target.value)}
                   placeholder="Taylor Creek, Okeechobee"
+                  aria-invalid={validationError?.fieldId === "ys-area-field"}
                 />
+                {validationError?.fieldId === "ys-area-field" && (
+                  <small className="ys-field-error">
+                    {validationError.message}
+                  </small>
+                )}
               </label>
 
               <div className="ys-field-row">
-                <label>
+                <label
+                  id="ys-date-field"
+                  className={
+                    validationError?.fieldId === "ys-date-field"
+                      ? "ys-field-invalid"
+                      : undefined
+                  }
+                >
                   <span>Date</span>
                   <input
                     type="date"
                     value={saleDate}
                     onChange={(event) => setSaleDate(event.target.value)}
+                    aria-invalid={validationError?.fieldId === "ys-date-field"}
                   />
+                  {validationError?.fieldId === "ys-date-field" && (
+                    <small className="ys-field-error">
+                      {validationError.message}
+                    </small>
+                  )}
                 </label>
 
-                <label>
+                <label
+                  id="ys-time-field"
+                  className={
+                    validationError?.fieldId === "ys-time-field"
+                      ? "ys-field-invalid"
+                      : undefined
+                  }
+                >
                   <span>Start time</span>
                   <input
                     type="time"
                     value={startTime}
                     onChange={(event) => setStartTime(event.target.value)}
+                    aria-invalid={validationError?.fieldId === "ys-time-field"}
                   />
+                  {validationError?.fieldId === "ys-time-field" && (
+                    <small className="ys-field-error">
+                      {validationError.message}
+                    </small>
+                  )}
                 </label>
               </div>
 
@@ -649,8 +836,18 @@ setReviewOpen(false);
                 />
               </label>
 
-              <label className="ys-photo-field">
-                <span>Main yard sale photo</span>
+              <label
+                id="ys-main-photo-field"
+                className={`ys-photo-field ${
+                  validationError?.fieldId === "ys-main-photo-field"
+                    ? "ys-field-invalid"
+                    : ""
+                }`}
+              >
+                <span>
+                  Main yard sale photo
+                  <b className="ys-required-badge">Required</b>
+                </span>
 
                 <div className="ys-photo-upload">
                   <input
@@ -659,17 +856,27 @@ setReviewOpen(false);
                     onChange={(event) =>
                       handleMainPhoto(event.target.files?.[0])
                     }
+                    aria-invalid={
+                      validationError?.fieldId === "ys-main-photo-field"
+                    }
                   />
 
                   <strong>
-                    {mainPhotoName || "Choose a wide photo"}
+                    {mainPhotoName || "Choose your main sale photo"}
                   </strong>
 
                   <small>
-                    Show the full setup, several good items, or yourself with
-                    the sale. Horizontal daylight photos work best.
+                    This photo is required and appears at the top of your live
+                    page. Show the full setup, several good items, or yourself
+                    with the sale. Horizontal daylight photos work best.
                   </small>
                 </div>
+
+                {validationError?.fieldId === "ys-main-photo-field" && (
+                  <small className="ys-field-error">
+                    {validationError.message}
+                  </small>
+                )}
               </label>
 
               <div className="ys-contact-builder">
@@ -699,7 +906,14 @@ setReviewOpen(false);
 
                 {contactMethod === "text" ? (
                   <>
-                    <label>
+                    <label
+                      id="ys-contact-field"
+                      className={
+                        validationError?.fieldId === "ys-contact-field"
+                          ? "ys-field-invalid"
+                          : undefined
+                      }
+                    >
                       <span>Mobile phone number</span>
                       <input
                         type="tel"
@@ -710,14 +924,30 @@ setReviewOpen(false);
                           setContactValue(event.target.value)
                         }
                         placeholder="(863) 555-0123"
+                        aria-invalid={
+                          validationError?.fieldId === "ys-contact-field"
+                        }
                       />
                       <small>
                         Shoppers will tap Text Seller and the item
                         message will already be written.
                       </small>
+                      {validationError?.fieldId === "ys-contact-field" && (
+                        <small className="ys-field-error">
+                          {validationError.message}
+                        </small>
+                      )}
                     </label>
 
-                    <label>
+                    <label
+                      id="ys-optional-facebook-field"
+                      className={
+                        validationError?.fieldId ===
+                        "ys-optional-facebook-field"
+                          ? "ys-field-invalid"
+                          : undefined
+                      }
+                    >
                       <span>Facebook Messenger link - optional</span>
                       <input
                         type="url"
@@ -727,15 +957,32 @@ setReviewOpen(false);
                           setFacebookUrl(event.target.value)
                         }
                         placeholder="https://m.me/yourusername"
+                        aria-invalid={
+                          validationError?.fieldId ===
+                          "ys-optional-facebook-field"
+                        }
                       />
                       <small>
                         This gives shoppers a second direct contact
                         option.
                       </small>
+                      {validationError?.fieldId ===
+                        "ys-optional-facebook-field" && (
+                        <small className="ys-field-error">
+                          {validationError.message}
+                        </small>
+                      )}
                     </label>
                   </>
                 ) : (
-                  <label>
+                  <label
+                    id="ys-contact-field"
+                    className={
+                      validationError?.fieldId === "ys-contact-field"
+                        ? "ys-field-invalid"
+                        : undefined
+                    }
+                  >
                     <span>Facebook Messenger link</span>
                     <input
                       type="url"
@@ -745,11 +992,19 @@ setReviewOpen(false);
                         setContactValue(event.target.value)
                       }
                       placeholder="https://m.me/yourusername"
+                      aria-invalid={
+                        validationError?.fieldId === "ys-contact-field"
+                      }
                     />
                     <small>
                       Open your Facebook profile, copy the username,
                       and use https://m.me/username.
                     </small>
+                    {validationError?.fieldId === "ys-contact-field" && (
+                      <small className="ys-field-error">
+                        {validationError.message}
+                      </small>
+                    )}
                   </label>
                 )}
               </div>
@@ -791,7 +1046,10 @@ setReviewOpen(false);
                   </label>
 
                   <label className="ys-item-photo-field">
-                    <span>Item photo optional</span>
+                    <span>
+                      Item photo
+                      <b className="ys-optional-badge">Optional</b>
+                    </span>
 
                     <div className="ys-item-photo-upload">
                       <input
@@ -858,7 +1116,7 @@ setReviewOpen(false);
               </p>
             </div>
 
-            <button type="button" onClick={() => setReviewOpen(true)}>
+            <button type="button" onClick={openFinalReview}>
               Review and Publish
             </button>
           </div>
@@ -1285,6 +1543,61 @@ setReviewOpen(false);
           color: rgba(236, 250, 240, 0.62);
           font-size: 12px;
           font-weight: 800;
+        }
+
+        .ys-required-badge,
+        .ys-optional-badge {
+          display: inline-flex;
+          align-items: center;
+          min-height: 20px;
+          margin-left: 8px;
+          padding: 2px 7px;
+          border-radius: 999px;
+          font-size: 9px;
+          font-weight: 950;
+          letter-spacing: 0.06em;
+          line-height: 1;
+          text-transform: uppercase;
+          vertical-align: middle;
+        }
+
+        .ys-required-badge {
+          border: 1px solid rgba(255, 154, 123, 0.42);
+          background: rgba(255, 120, 82, 0.12);
+          color: #ffb098;
+        }
+
+        .ys-optional-badge {
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          background: rgba(255, 255, 255, 0.045);
+          color: rgba(236, 250, 240, 0.58);
+        }
+
+        .ys-field-invalid > span {
+          color: #ffd1c2;
+        }
+
+        .ys-field-invalid input,
+        .ys-field-invalid textarea,
+        .ys-field-invalid select,
+        .ys-field-invalid .ys-photo-upload {
+          border-color: rgba(255, 122, 82, 0.92);
+          box-shadow:
+            0 0 0 4px rgba(255, 105, 63, 0.12),
+            0 0 28px rgba(255, 95, 50, 0.1);
+        }
+
+        .ys-field-error {
+          display: block;
+          margin-top: 2px;
+          padding: 11px 12px;
+          border: 1px solid rgba(255, 135, 99, 0.28);
+          border-radius: 11px;
+          background: rgba(255, 101, 58, 0.1);
+          color: #ffd4c7;
+          font-size: 12px;
+          font-weight: 800;
+          line-height: 1.45;
         }
 
         input,
@@ -1844,8 +2157,120 @@ setReviewOpen(false);
           }
 
           .ys-panel {
-            padding: 21px;
+            padding: 22px 19px;
             border-radius: 22px;
+          }
+
+          .ys-form-column {
+            gap: 24px;
+          }
+
+          .ys-panel-heading {
+            gap: 13px;
+            padding-bottom: 24px;
+          }
+
+          .ys-panel-heading strong,
+          .ys-publish-panel strong {
+            font-size: 23px;
+            line-height: 1.12;
+          }
+
+          .ys-panel-heading p,
+          .ys-publish-panel p {
+            margin-top: 9px;
+            font-size: 15px;
+            line-height: 1.58;
+          }
+
+          .ys-fields,
+          .ys-items {
+            gap: 21px;
+            margin-top: 25px;
+          }
+
+          label {
+            gap: 10px;
+          }
+
+          label > span {
+            color: rgba(244, 255, 247, 0.82);
+            font-size: 15px;
+            line-height: 1.35;
+          }
+
+          input,
+          textarea,
+          .ys-contact-builder select {
+            font-size: 16px;
+          }
+
+          input {
+            min-height: 57px;
+            padding: 0 16px;
+          }
+
+          textarea {
+            min-height: 126px;
+            padding: 16px;
+          }
+
+          .ys-contact-builder {
+            gap: 20px;
+            padding: 18px 16px;
+          }
+
+          .ys-contact-builder select {
+            min-height: 57px;
+            padding: 0 16px;
+          }
+
+          .ys-contact-builder small,
+          .ys-photo-upload small,
+          .ys-item-photo-empty small {
+            font-size: 14px;
+            line-height: 1.58;
+          }
+
+          .ys-photo-upload {
+            gap: 10px;
+            min-height: 132px;
+            padding: 20px 17px;
+          }
+
+          .ys-photo-upload strong {
+            font-size: 16px;
+            line-height: 1.35;
+          }
+
+          .ys-item-photo-upload,
+          .ys-item-photo-preview,
+          .ys-item-photo-empty {
+            min-height: 150px;
+          }
+
+          .ys-item-photo-empty strong,
+          .ys-item-photo-preview strong {
+            font-size: 15px;
+          }
+
+          .ys-required-badge,
+          .ys-optional-badge {
+            min-height: 23px;
+            margin-left: 7px;
+            padding: 3px 8px;
+            font-size: 10px;
+          }
+
+          .ys-field-error {
+            padding: 13px 14px;
+            font-size: 15px;
+            line-height: 1.5;
+          }
+
+          .ys-add-item {
+            min-height: 54px;
+            font-size: 15px;
           }
 
           .ys-field-row,
@@ -1857,10 +2282,14 @@ setReviewOpen(false);
           .ys-publish-panel {
             align-items: stretch;
             flex-direction: column;
+            gap: 22px;
+            padding: 24px 20px;
           }
 
           .ys-publish-panel button {
             width: 100%;
+            min-height: 58px;
+            font-size: 16px;
           }
 
           .ys-review-modal {
