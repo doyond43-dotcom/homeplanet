@@ -348,7 +348,7 @@ export default function OnlyTheEssentialsCustomerLanding() {
           </p>
 
           <div className="mt-6 grid gap-3 lg:grid-cols-3">
-            <select className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-sm text-white outline-none [color-scheme:dark]">
+            <select id="cleaning-service" name="cleaningService" aria-label="Cleaning service" className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-sm text-white outline-none [color-scheme:dark]">
               <option className="bg-[#120813] text-white">Deep Cleaning</option>
               <option className="bg-[#120813] text-white">Standard Cleaning</option>
               <option className="bg-[#120813] text-white">Move-In / Move-Out</option>
@@ -356,7 +356,7 @@ export default function OnlyTheEssentialsCustomerLanding() {
               <option className="bg-[#120813] text-white">Vacation Rental Reset</option>
             </select>
 
-            <select className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-sm text-white outline-none [color-scheme:dark]">
+            <select id="bedrooms" name="bedrooms" aria-label="Number of bedrooms" className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-sm text-white outline-none [color-scheme:dark]">
               <option className="bg-[#120813] text-white">Bedrooms</option>
               <option className="bg-[#120813] text-white">1 Bedroom</option>
               <option className="bg-[#120813] text-white">2 Bedrooms</option>
@@ -364,7 +364,7 @@ export default function OnlyTheEssentialsCustomerLanding() {
               <option className="bg-[#120813] text-white">4+ Bedrooms</option>
             </select>
 
-            <select className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-sm text-white outline-none [color-scheme:dark]">
+            <select id="bathrooms" name="bathrooms" aria-label="Number of bathrooms" className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-sm text-white outline-none [color-scheme:dark]">
               <option className="bg-[#120813] text-white">Bathrooms</option>
               <option className="bg-[#120813] text-white">1 Bathroom</option>
               <option className="bg-[#120813] text-white">2 Bathrooms</option>
@@ -372,7 +372,7 @@ export default function OnlyTheEssentialsCustomerLanding() {
               <option className="bg-[#120813] text-white">4+ Bathrooms</option>
             </select>
 
-            <select className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-sm text-white outline-none [color-scheme:dark]">
+            <select id="pets" name="pets" aria-label="Pets in the home" className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-sm text-white outline-none [color-scheme:dark]">
               <option className="bg-[#120813] text-white">Pets</option>
               <option className="bg-[#120813] text-white">No Pets</option>
               <option className="bg-[#120813] text-white">Cats</option>
@@ -380,7 +380,7 @@ export default function OnlyTheEssentialsCustomerLanding() {
               <option className="bg-[#120813] text-white">Multiple Animals</option>
             </select>
 
-            <select className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-sm text-white outline-none [color-scheme:dark]">
+            <select id="home-condition" name="homeCondition" aria-label="Current home condition" className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-sm text-white outline-none [color-scheme:dark]">
               <option className="bg-[#120813] text-white">Condition</option>
               <option className="bg-[#120813] text-white">Light Cleaning</option>
               <option className="bg-[#120813] text-white">Average</option>
@@ -388,7 +388,7 @@ export default function OnlyTheEssentialsCustomerLanding() {
               <option className="bg-[#120813] text-white">Heavy Deep Clean</option>
             </select>
 
-            <select className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-sm text-white outline-none [color-scheme:dark]">
+            <select id="preferred-time" name="preferredTime" aria-label="Preferred cleaning time" className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-sm text-white outline-none [color-scheme:dark]">
               <option className="bg-[#120813] text-white">Preferred Time</option>
               <option className="bg-[#120813] text-white">Mornings</option>
               <option className="bg-[#120813] text-white">Afternoons</option>
@@ -396,9 +396,9 @@ export default function OnlyTheEssentialsCustomerLanding() {
               <option className="bg-[#120813] text-white">Flexible</option>
             </select>
 
-            <input className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-sm text-white outline-none [color-scheme:dark] lg:col-span-1" placeholder="Your Name" />
+            <input id="customer-name" name="customerName" type="text" autoComplete="name" aria-label="Your name" className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-sm text-white outline-none [color-scheme:dark] lg:col-span-1" placeholder="Your Name" />
 
-            <input className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-sm text-white outline-none [color-scheme:dark] lg:col-span-2" placeholder="Phone Number" />
+            <input id="customer-phone" name="customerPhone" type="tel" inputMode="tel" autoComplete="tel" aria-label="Phone number" className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-sm text-white outline-none [color-scheme:dark] lg:col-span-2" placeholder="Phone Number" />
 
             <div className="grid gap-3 rounded-2xl border border-dashed border-pink-300/30 bg-black/30 p-4 text-sm text-zinc-300 lg:col-span-3 lg:grid-cols-3">
               <label className="block">
