@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+﻿import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useSearchParams } from "react-router-dom";
 
 const DemoPestControlLandingPage = lazy(() => import("./pages/DemoPestControlLandingPage"));
@@ -45,6 +45,7 @@ const HomePlanetAfterTheClickDemo = lazy(() => import("./pages/HomePlanetAfterTh
 const BrightSideFlowDemo = lazy(() => import("./pages/BrightSideFlowDemo"));
 const HomePlanetNotepad = lazy(() => import("./pages/HomePlanetNotepad"));
 const SlapABugLandingPage = lazy(() => import("./pages/SlapABugLandingPage"));
+const EcholsWaterTestingLandingPage = lazy(() => import("./pages/EcholsWaterTestingLandingPage"));
 const SlapABugBoardPage = lazy(() => import("./pages/SlapABugBoardPage"));
 const VZProfessionalLawncareLanding = lazy(() => import("./pages/VZProfessionalLawncareLanding"));
 function LiveShell() {
@@ -131,6 +132,8 @@ export default function App() {
                     <Route path="/planet/demo/pest-control/board" element={<DemoPestControlBoardPage />} />
           <Route path="/planet/demo/pest-control" element={<DemoPestControlLandingPage />} />          <Route path="/planet/slap-a-bug/board" element={<SlapABugBoardPage />} />
           <Route path="/planet/slap-a-bug" element={<SlapABugLandingPage />} />
+          <Route path="/planet/echols-water-testing" element={<EcholsWaterTestingLandingPage />} />
+          <Route path="/echols-water-test" element={<EcholsWaterTestingLandingPage />} />
 <Route path="/vz" element={<VZProfessionalLawncareLanding />} />
 <Route path="/planet/vz-professional-lawncare" element={<VZProfessionalLawncareLanding />} />                    <Route path="/planet/transportation/request" element={<HomePlanetTransportationRequestPage />} />
           <Route path="/planet/transportation" element={<HomePlanetTransportationPage />} />
@@ -208,6 +211,7 @@ export default function App() {
     </BrowserRouter>
   );
 }
+
 
 
 
