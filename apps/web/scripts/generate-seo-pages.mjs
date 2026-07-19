@@ -47,6 +47,7 @@ const publicSeoRegistry = [
             <li><a href="/planet/okie-dokie-softwash">Okie Dokie Softwash Pressure Washing in Okeechobee</a></li>
             <li><a href="/planet/okeechobee">Okeechobee Together Community Action</a></li>
             <li><a href="/planet/vz-professional-lawncare">V&amp;Z Professional Lawncare in Okeechobee</a></li>
+            <li><a href="/planet/jones-equipment-rental-repair">Jones Equipment Rental &amp; Repair</a></li>
             <li><a href="/onlytheessentials">Only The Essentials Cleaning in Okeechobee</a></li>
           </ul>
         </nav>
@@ -278,6 +279,70 @@ const publicSeoRegistry = [
         name: "Okeechobee",
         addressRegion: "FL"
       }
+    }
+  },
+  {
+    route: "/planet/jones-equipment-rental-repair",
+    title: "Jones Equipment Rental & Repair | Equipment Rentals and Repair",
+    description:
+      "Request equipment rentals or start an equipment repair request with Jones Equipment Rental & Repair. Call or text JME at 615-602-1524.",
+    image: `${SITE_URL}/images/jme-hero-service-truck-loader.jpg`,
+    heading: "Jones Equipment Rental and Repair",
+    body: `
+      <section>
+        <h2>Equipment rentals and equipment repair through one clear local system</h2>
+        <p>Jones Equipment Rental &amp; Repair gives customers two direct ways to begin: rent equipment or start an equipment repair request. JME reviews the request details and follows up directly by phone or text.</p>
+      </section>
+      <section>
+        <h2>Request rental equipment and the dates you need it</h2>
+        <p>The rental request starts with the equipment needed, requested dates, job or project details, location, and contact information so JME can review availability and follow up directly.</p>
+        <p>Availability, pricing, deposits, scheduling, equipment condition, return details, and final payment can remain connected to the original rental request instead of being separated across text messages, paper notes, and disconnected systems.</p>
+      </section>
+      <section>
+        <h2>Start an equipment repair request</h2>
+        <p>The repair request begins by identifying the equipment, adding brand or model details when available, describing the problem, explaining the machine condition, adding photos when helpful, and providing the equipment location and customer contact information.</p>
+        <p>Repair intake can stay connected to diagnosis, estimates, customer approval, parts, work status, photos, payment, pickup or delivery, and the completed repair outcome.</p>
+      </section>
+      <section>
+        <h2>A connected history for customers, rentals, repairs, and equipment</h2>
+        <p>The public page is the customer entrance. The operating system underneath can connect the customer, equipment, schedule, deposit, estimate, approval, parts, work, payment, proof, and final outcome.</p>
+        <p>Each machine can eventually maintain a continuous history of rentals, returns, inspections, maintenance, repairs, photos, payments, status changes, and availability.</p>
+      </section>
+    `,
+    schema: {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "@id": `${SITE_URL}/planet/jones-equipment-rental-repair#business`,
+      name: "Jones Equipment Rental & Repair",
+      alternateName: "JME",
+      url: `${SITE_URL}/planet/jones-equipment-rental-repair`,
+      telephone: "+1-615-602-1524",
+      image: `${SITE_URL}/images/jme-hero-service-truck-loader.jpg`,
+      logo: `${SITE_URL}/images/jme-logo-primary.jpg`,
+      description:
+        "Equipment rentals and equipment repair with direct customer requests by phone, text, or the JME live page.",
+      contactPoint: {
+        "@type": "ContactPoint",
+        telephone: "+1-615-602-1524",
+        contactType: "customer service",
+        availableLanguage: "English"
+      },
+      makesOffer: [
+        {
+          "@type": "Offer",
+          itemOffered: {
+            "@type": "Service",
+            name: "Equipment Rental Requests"
+          }
+        },
+        {
+          "@type": "Offer",
+          itemOffered: {
+            "@type": "Service",
+            name: "Equipment Repair Requests"
+          }
+        }
+      ]
     }
   },
   {

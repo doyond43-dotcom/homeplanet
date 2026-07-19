@@ -1,4 +1,4 @@
-﻿import { lazy, Suspense } from "react";
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useSearchParams } from "react-router-dom";
 
 const DemoPestControlLandingPage = lazy(() => import("./pages/DemoPestControlLandingPage"));
@@ -30,6 +30,9 @@ const LiveAwnitIntake = lazy(() => import("./pages/LiveAwnitIntake"));
 const LegalDemoBoard = lazy(() => import("./pages/LegalDemoBoard"));
 const DanFieldNotebookDesk = lazy(() => import("./pages/DanFieldNotebookDesk"));
 const LeeStudentNotebookDesk = lazy(() => import("./pages/LeeStudentNotebookDesk"));
+const Login = lazy(() => import("./pages/Login"));
+const Signup = lazy(() => import("./pages/Signup"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const BeamScreen = lazy(() => import("./routes/BeamScreen"));
 const BeamReceive = lazy(() => import("./routes/BeamReceive"));
@@ -46,6 +49,8 @@ const BrightSideFlowDemo = lazy(() => import("./pages/BrightSideFlowDemo"));
 const HomePlanetNotepad = lazy(() => import("./pages/HomePlanetNotepad"));
 const SlapABugLandingPage = lazy(() => import("./pages/SlapABugLandingPage"));
 const EcholsWaterTestingLandingPage = lazy(() => import("./pages/EcholsWaterTestingLandingPage"));
+const JonesEquipmentRentalRepairLandingPage = lazy(() => import("./pages/JonesEquipmentRentalRepairLandingPage"));
+const JonesEquipmentOperatorBoard = lazy(() => import("./pages/JonesEquipmentOperatorBoard"));
 const SlapABugBoardPage = lazy(() => import("./pages/SlapABugBoardPage"));
 const VZProfessionalLawncareLanding = lazy(() => import("./pages/VZProfessionalLawncareLanding"));
 function LiveShell() {
@@ -129,10 +134,17 @@ export default function App() {
     <BrowserRouter>
       <Suspense fallback={null}>
         <Routes>
-                    <Route path="/planet/demo/pest-control/board" element={<DemoPestControlBoardPage />} />
+                    <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/planet/demo/pest-control/board" element={<DemoPestControlBoardPage />} />
           <Route path="/planet/demo/pest-control" element={<DemoPestControlLandingPage />} />          <Route path="/planet/slap-a-bug/board" element={<SlapABugBoardPage />} />
           <Route path="/planet/slap-a-bug" element={<SlapABugLandingPage />} />
           <Route path="/planet/echols-water-testing" element={<EcholsWaterTestingLandingPage />} />
+          <Route path="/planet/jones-equipment-rental-repair" element={<JonesEquipmentRentalRepairLandingPage />} />
+          <Route path="/planet/jones-equipment-rental-repair/board" element={<JonesEquipmentOperatorBoard />} />
+          <Route path="/jme/board" element={<JonesEquipmentOperatorBoard />} />
+          <Route path="/jme" element={<JonesEquipmentRentalRepairLandingPage />} />
           <Route path="/echols-water-test" element={<EcholsWaterTestingLandingPage />} />
 <Route path="/vz" element={<VZProfessionalLawncareLanding />} />
 <Route path="/planet/vz-professional-lawncare" element={<VZProfessionalLawncareLanding />} />                    <Route path="/planet/transportation/request" element={<HomePlanetTransportationRequestPage />} />
@@ -211,6 +223,7 @@ export default function App() {
     </BrowserRouter>
   );
 }
+
 
 
 
