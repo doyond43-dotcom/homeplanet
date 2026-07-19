@@ -52,6 +52,7 @@ const HomePlanetNotepad = lazy(() => import("./pages/HomePlanetNotepad"));
 const EcholsWaterTestingLandingPage = lazy(() => import("./pages/EcholsWaterTestingLandingPage"));
 const JonesEquipmentRentalRepairLandingPage = lazy(() => import("./pages/JonesEquipmentRentalRepairLandingPage"));
 const JonesEquipmentOperatorBoard = lazy(() => import("./pages/JonesEquipmentOperatorBoard"));
+const JmeRentalSetupPage = lazy(() => import("./pages/JmeRentalSetupPage"));
 const VZProfessionalLawncareLanding = lazy(() => import("./pages/VZProfessionalLawncareLanding"));
 function LiveShell() {
   return <Outlet />;
@@ -148,6 +149,7 @@ export default function App() {
           <Route path="/planet/jones-equipment-rental-repair" element={<JonesEquipmentRentalRepairLandingPage />} />
           <Route path="/planet/jones-equipment-rental-repair/board" element={<JonesEquipmentOperatorBoard />} />
           <Route path="/jme/board" element={<JonesEquipmentOperatorBoard />} />
+          <Route path="/jme/rental-setup" element={<JmeRentalSetupPage />} />
           <Route path="/jme" element={<JonesEquipmentRentalRepairLandingPage />} />
           <Route path="/echols-water-test" element={<EcholsWaterTestingLandingPage />} />
 <Route path="/vz" element={<VZProfessionalLawncareLanding />} />
