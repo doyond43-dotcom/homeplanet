@@ -138,8 +138,7 @@ export default function App() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/planet/demo/pest-control/board" element={<DemoPestControlBoardPage />} />
-          <Route path="/planet/demo/pest-control" element={<DemoPestControlLandingPage />} />          <Route path="/planet/slap-a-bug/board" element={<SlapABugBoardPage />} />
-          <Route path="/planet/slap-a-bug" element={<SlapABugLandingPage />} />
+          <Route path="/planet/demo/pest-control" element={<DemoPestControlLandingPage />} />
           <Route path="/planet/echols-water-testing" element={<EcholsWaterTestingLandingPage />} />
           <Route path="/planet/jones-equipment-rental-repair" element={<JonesEquipmentRentalRepairLandingPage />} />
           <Route path="/planet/jones-equipment-rental-repair/board" element={<JonesEquipmentOperatorBoard />} />

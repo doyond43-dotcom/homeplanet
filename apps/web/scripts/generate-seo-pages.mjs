@@ -42,7 +42,7 @@ const publicSeoRegistry = [
         <p>See public live pages and working system examples built for local businesses and community action.</p>
         <nav aria-label="Public HomePlanet live systems">
           <ul>
-            <li><a href="/planet/slap-a-bug">Slap-A-Bug Pest Control in Okeechobee</a></li>
+
             <li><a href="/planet/demo/pest-control">Pest Control Live System Demo</a></li>
             <li><a href="/planet/okie-dokie-softwash">Okie Dokie Softwash Pressure Washing in Okeechobee</a></li>
             <li><a href="/planet/okeechobee">Okeechobee Together Community Action</a></li>
@@ -76,39 +76,7 @@ const publicSeoRegistry = [
       ]
     }
   },
-  {
-    route: "/planet/slap-a-bug",
-    title: "Slap-A-Bug Pest Control | Okeechobee, FL",
-    description:
-      "Local pest control in Okeechobee for roaches, ants, spiders, rodents, termites, mosquitoes, and other pest problems. Request service directly.",
-    image: `${SITE_URL}/images/slap-a-bug-truck-hero.webp`,
-    heading: "Pest control in Okeechobee, Florida",
-    body: `
-      <section>
-        <h2>Local pest control for common Okeechobee pest problems</h2>
-        <p>Slap-A-Bug Pest Control helps local customers start with the pest problem they already recognize. Roaches, ants, spiders, rodents, termites, mosquitoes, and other pest concerns can move directly into a clear service request.</p>
-      </section>
-      <section>
-        <h2>Request pest control service directly</h2>
-        <p>The Slap-A-Bug live page is designed around customer action. Customers can identify the pest issue, provide contact details, and begin direct follow-up without navigating a long traditional website.</p>
-      </section>
-      <section>
-        <h2>Local service with a working follow-up flow</h2>
-        <p>A customer request can move into an active workflow for contact, scheduling, service notes, payment, proof, and review follow-up.</p>
-      </section>
-    `,
-    schema: {
-      "@context": "https://schema.org",
-      "@type": "PestControlService",
-      name: "Slap-A-Bug Pest Control LLC",
-      url: `${SITE_URL}/planet/slap-a-bug`,
-      areaServed: {
-        "@type": "City",
-        name: "Okeechobee",
-        addressRegion: "FL"
-      }
-    }
-  },
+
   {
     route: "/planet/demo/pest-control",
     title: "Pest Control Live System Demo | HomePlanet",
