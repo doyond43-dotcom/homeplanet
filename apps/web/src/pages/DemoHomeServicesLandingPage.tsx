@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ChevronDown,
   ChevronUp,
@@ -309,7 +309,9 @@ export default function DemoHomeServicesLandingPage() {
             <div className="pointer-events-none absolute inset-0 z-10 bg-[linear-gradient(to_bottom,transparent_62%,rgba(2,7,6,0.82)_100%)]" />
 
             <img
-              src="/images/okee-dokie-home-services-hero.png"
+              src="/images/okee-dokie-home-services-hero-1600.jpg"
+              srcSet="/images/okee-dokie-home-services-hero-900.jpg 900w, /images/okee-dokie-home-services-hero-1600.jpg 1600w"
+              sizes="(max-width: 768px) 100vw, 50vw"
               alt="Okee Dokie Home Services crew providing multiple residential property services"
               width="1600"
               height="900"
@@ -748,7 +750,9 @@ export default function DemoHomeServicesLandingPage() {
               aria-label="Play meet the crew demo video"
             >
               <img
-                src="/images/okee-dokie-home-services-hero.png"
+                src="/images/okee-dokie-home-services-hero-1600.jpg"
+                srcSet="/images/okee-dokie-home-services-hero-900.jpg 900w, /images/okee-dokie-home-services-hero-1600.jpg 1600w"
+                sizes="(max-width: 768px) 100vw, 50vw"
                 alt=""
                 loading="lazy"
                 decoding="async"
@@ -784,7 +788,9 @@ export default function DemoHomeServicesLandingPage() {
               aria-label="Play job walkthrough demo video"
             >
               <img
-                src="/images/okee-dokie-mosquito-fogging-trust.png"
+                src="/images/okee-dokie-mosquito-fogging-trust-1200.jpg"
+                srcSet="/images/okee-dokie-mosquito-fogging-trust-700.jpg 700w, /images/okee-dokie-mosquito-fogging-trust-1200.jpg 1200w"
+                sizes="(max-width: 768px) 100vw, 50vw"
                 alt=""
                 loading="lazy"
                 decoding="async"
@@ -919,7 +925,3 @@ export default function DemoHomeServicesLandingPage() {
     </main>
   );
 }
-
-
-
-
