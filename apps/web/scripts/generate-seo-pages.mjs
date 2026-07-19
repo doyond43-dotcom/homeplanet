@@ -111,6 +111,44 @@ const publicSeoRegistry = [
     }
   },
   {
+    route: "/planet/demo/home-services",
+    title: "Home Services Live System Demo | HomePlanet",
+    description:
+      "Explore a HomePlanet home services live system demo showing how a customer request can move into estimate, approval, scheduling, work, payment, proof, and follow-up.",
+    image: `${SITE_URL}/images/okee-dokie-home-services-hero.png`,
+    heading: "Home services live system demo",
+    body: `
+      <section>
+        <h2>A home service page that keeps working after the click</h2>
+        <p>This HomePlanet demonstration shows how a local home-service business can give customers a clear front door for lawn and yard care, pressure cleaning, handyman work, exterior cleaning, property maintenance, and other household service needs.</p>
+        <p>Customers can choose the type of help they need, answer a few relevant questions, and send an organized request instead of a vague contact-form message.</p>
+      </section>
+
+      <section>
+        <h2>From customer request to active work</h2>
+        <p>The public Live Page is only the front door. Underneath, the same request can stay connected through review, estimate, customer approval, scheduling, work, payment, before-and-after proof, follow-up, and completion.</p>
+      </section>
+
+      <section>
+        <h2>Built as one connected home-service workflow</h2>
+        <p>The demonstration is designed to show the difference between an ordinary website that stops after form submission and a connected operating system that helps move the actual work forward.</p>
+      </section>
+    `,
+    schema: {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      name: "Home Services Live System Demo",
+      url: `${SITE_URL}/planet/demo/home-services`,
+      description:
+        "A HomePlanet demonstration of a connected home-service customer intake and operating workflow.",
+      isPartOf: {
+        "@type": "WebSite",
+        name: "HomePlanet",
+        url: `${SITE_URL}/`
+      }
+    }
+  },
+  {
     route: "/planet/okie-dokie-softwash",
     title: "Pressure Washing & Softwash in Okeechobee, FL",
     description:
