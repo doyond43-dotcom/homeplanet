@@ -49,11 +49,9 @@ const HomePlanetMarketAwarenessDashboardV1 = lazy(() =>
 const HomePlanetAfterTheClickDemo = lazy(() => import("./pages/HomePlanetAfterTheClickDemo"));
 const BrightSideFlowDemo = lazy(() => import("./pages/BrightSideFlowDemo"));
 const HomePlanetNotepad = lazy(() => import("./pages/HomePlanetNotepad"));
-const SlapABugLandingPage = lazy(() => import("./pages/SlapABugLandingPage"));
 const EcholsWaterTestingLandingPage = lazy(() => import("./pages/EcholsWaterTestingLandingPage"));
 const JonesEquipmentRentalRepairLandingPage = lazy(() => import("./pages/JonesEquipmentRentalRepairLandingPage"));
 const JonesEquipmentOperatorBoard = lazy(() => import("./pages/JonesEquipmentOperatorBoard"));
-const SlapABugBoardPage = lazy(() => import("./pages/SlapABugBoardPage"));
 const VZProfessionalLawncareLanding = lazy(() => import("./pages/VZProfessionalLawncareLanding"));
 function LiveShell() {
   return <Outlet />;
@@ -139,6 +137,9 @@ export default function App() {
                     <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          {/* Slap-A-Bug system intentionally offline */}
+          <Route path="/planet/slap-a-bug" element={<Navigate to="/" replace />} />
+          <Route path="/planet/slap-a-bug/*" element={<Navigate to="/" replace />} />
           <Route path="/planet/demo/pest-control/board" element={<DemoPestControlBoardPage />} />
           <Route path="/planet/demo/pest-control" element={<DemoPestControlLandingPage />} />
           <Route path="/planet/demo/home-services/board" element={<DemoHomeServicesBoardPage />} />
