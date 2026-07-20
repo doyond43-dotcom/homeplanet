@@ -1449,8 +1449,8 @@ function AtlasIndex() {
               </p>
             </div>
 
-            <Link to="/city/creator" className="hp-point-action">
-              Build With HomePlanet
+            <Link to="/planet/custom-systems" className="hp-point-action">
+              Explore Custom Systems
             </Link>
           </div>
         </section>

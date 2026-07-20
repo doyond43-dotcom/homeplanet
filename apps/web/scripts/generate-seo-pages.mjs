@@ -1,4 +1,4 @@
-import fs from "node:fs";
+﻿import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -111,6 +111,42 @@ const publicSeoRegistry = [
     }
   },
   {
+    route: "/planet/custom-systems",
+    title: "Custom Business Systems | Daniel | HomePlanet",
+    description:
+      "Custom systems built around how your business actually works. Organize customer requests, jobs, approvals, scheduling, updates, payments, follow-up, proof, and ongoing customer relationships in one connected workflow.",
+    image: `${SITE_URL}/images/homeplanet-hero-connected-neighborhood.webp`,
+    heading: "Custom systems built around how your business actually works",
+    body: `
+      <section>
+        <h2>Start with the real problem</h2>
+        <p>Daniel builds custom systems around the way a business already works instead of forcing the business into generic software. The process begins with what customers do today, where information gets scattered, what slows the work down, and what needs to happen next.</p>
+      </section>
+
+      <section>
+        <h2>From public request to active work</h2>
+        <p>A customer-facing Live Page can collect the right information first, then carry the same request into organized work underneath. Customer details, progress, approvals, scheduling, communication, payments, proof, and follow-up can stay connected instead of becoming separate conversations.</p>
+      </section>
+
+      <section>
+        <h2>Build progress and customer review stay connected</h2>
+        <p>Each build can preserve the original problem, current build state, screenshots, progress, customer review requests, requested changes, approvals, launch history, and ongoing improvements as one connected relationship.</p>
+      </section>
+    `,
+    schema: {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      name: "Daniel Custom Systems",
+      url: `${SITE_URL}/planet/custom-systems`,
+      description:
+        "Custom business systems built around real workflows, customer requests, active work, approvals, communication, proof, and follow-up.",
+      isPartOf: {
+        "@type": "WebSite",
+        name: "HomePlanet",
+        url: `${SITE_URL}/`
+      }
+    }
+  },  {
     route: "/planet/demo/home-services",
     title: "Home Services Live System Demo | HomePlanet",
     description:
@@ -531,3 +567,5 @@ fs.writeFileSync(path.join(distDir, "sitemap.xml"), sitemapXml, "utf8");
 console.log(
   `Generated sitemap from public SEO registry: ${publicSeoRegistry.length} URLs`
 );
+
+
