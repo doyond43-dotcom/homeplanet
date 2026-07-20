@@ -369,7 +369,7 @@ export default function DanielCustomSystemsLandingPage() {
           <div className="relative mx-auto mt-10 max-w-[1040px] overflow-hidden rounded-[2rem] border border-[#80df00]/25 bg-[radial-gradient(circle_at_50%_0%,rgba(126,224,0,0.09),transparent_42%),#06100a] p-5 text-left shadow-[0_24px_90px_rgba(0,0,0,0.55),0_0_50px_rgba(126,224,0,0.06)] sm:mt-12 sm:p-7">
             <div className="grid gap-4 lg:grid-cols-[0.8fr_auto_1.2fr] lg:items-center">
               <div className="rounded-[1.5rem] border border-white/10 bg-black/40 p-5">
-                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/40">
+                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/65">
                   Real Starting Point
                 </p>
 
@@ -695,6 +695,7 @@ export default function DanielCustomSystemsLandingPage() {
                           <button
                             key={option}
                             type="button"
+                            aria-label={option}
                             onClick={() => toggleBreakdown(option)}
                             className={`min-h-[54px] rounded-2xl border px-4 py-3 text-left text-sm font-black transition ${
                               active
