@@ -32,10 +32,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // ? NEVER block UI on profile creation
       setLoading(false);
-
-      if (s?.user) {
-        ensureProfile(s.user).catch((e) => console.warn("ensureProfile error", e));
-      }
     })();
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
@@ -43,10 +39,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // ? NEVER block UI on profile creation
       setLoading(false);
-
-      if (newSession?.user) {
-        ensureProfile(newSession.user).catch((e) => console.warn("ensureProfile error", e));
-      }
     });
 
     return () => {
@@ -54,6 +46,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       sub.subscription.unsubscribe();
     };
   }, []);
+  useEffect(() => {
+    const user = session?.user;
+
+    if (!user) {
+      return;
+    }
+
+    ensureProfile(user).catch((error) =>
+      console.warn("ensureProfile error", error),
+    );
+  }, [session?.user?.id]);
 
   const api = useMemo<AuthState>(
     () => ({
