@@ -1378,12 +1378,21 @@ export default function DanielCustomSystemsBuildBoard() {
               </p>
             </div>
 
-            <a
-              href="/planet/custom-systems"
-              className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-white/15 bg-white/[0.045] px-5 py-3 text-sm font-black text-white transition hover:border-[#7ee000]/55 hover:bg-[#7ee000]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7ee000]"
-            >
-              View Live Page
-            </a>
+            <div className="flex flex-wrap gap-3">
+              <a
+                href="/planet/custom-systems/activity"
+                className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-[#7ee000]/40 bg-[#7ee000]/10 px-5 py-3 text-sm font-black text-[#b8ff68] transition hover:border-[#7ee000]/75 hover:bg-[#7ee000]/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7ee000]"
+              >
+                Live Activity
+              </a>
+
+              <a
+                href="/planet/custom-systems"
+                className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-white/15 bg-white/[0.045] px-5 py-3 text-sm font-black text-white transition hover:border-[#7ee000]/55 hover:bg-[#7ee000]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7ee000]"
+              >
+                View Live Page
+              </a>
+            </div>
           </div>
         </header>
 

@@ -7,6 +7,7 @@ const DemoPestControlBoardPage = lazy(() => import("./pages/DemoPestControlBoard
 const DemoHomeServicesLandingPage = lazy(() => import("./pages/DemoHomeServicesLandingPage"));
 const DanielCustomSystemsLandingPage = lazy(() => import("./pages/DanielCustomSystemsLandingPage"));
 const DanielCustomSystemsBuildBoard = lazy(() => import("./pages/DanielCustomSystemsBuildBoard"));
+const DanielCustomSystemsLiveActivity = lazy(() => import("./pages/DanielCustomSystemsLiveActivity"));
 const DemoHomeServicesBoardPage = lazy(() => import("./pages/DemoHomeServicesBoardPage"));
 const HomePlanetTransportationPage = lazy(() => import("./pages/HomePlanetTransportationPage"));
 const HomePlanetTransportationRequestPage = lazy(() => import("./pages/HomePlanetTransportationRequestPage"));
@@ -149,6 +150,7 @@ export default function App() {
           <Route path="/planet/demo/home-services/board" element={<DemoHomeServicesBoardPage />} />
           <Route path="/planet/demo/home-services" element={<DemoHomeServicesLandingPage />} />
           <Route path="/planet/custom-systems/board" element={<RequireAuth><DanielCustomSystemsBuildBoard /></RequireAuth>} />
+          <Route path="/planet/custom-systems/activity" element={<RequireAuth><DanielCustomSystemsLiveActivity /></RequireAuth>} />
           <Route path="/planet/custom-systems" element={<DanielCustomSystemsLandingPage />} />
           <Route path="/planet/echols-water-testing" element={<EcholsWaterTestingLandingPage />} />
           <Route path="/planet/jones-equipment-rental-repair" element={<JonesEquipmentRentalRepairLandingPage />} />
