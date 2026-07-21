@@ -430,6 +430,134 @@ export default function OnlyTheEssentialsCustomerLanding() {
           </div>
         </section>
         <section
+          id="only-essentials-video-proof"
+          aria-labelledby="only-essentials-video-proof-heading"
+          className="mt-14"
+        >
+          <div className="max-w-3xl">
+            <p className="text-xs font-black uppercase tracking-[0.36em] text-pink-300">
+              Real Cleaning Proof
+            </p>
+
+            <h2
+              id="only-essentials-video-proof-heading"
+              className="mt-4 font-serif text-4xl italic leading-tight text-pink-100 sm:text-5xl"
+            >
+              See the work. See the difference.
+            </h2>
+
+            <p className="mt-5 max-w-2xl text-base leading-7 text-zinc-300">
+              Real cleaning work from Only The Essentials. Watch the before-and-after
+              results and see what Kaitlin can help bring back together.
+            </p>
+          </div>
+
+          <div className="mt-8 grid gap-5 lg:grid-cols-2">
+            <article className="overflow-hidden rounded-[2rem] border border-pink-300/20 bg-white/[0.04] shadow-2xl shadow-black/30">
+              <div className="bg-black">
+                <video
+                  controls
+                  playsInline
+                  preload="metadata"
+                  aria-label="Only The Essentials cleaning before-and-after video one"
+                  className="aspect-[9/16] max-h-[720px] w-full bg-black object-contain"
+                >
+                  <source
+                    src="/videos/only-the-essentials-before-after-1.mp4"
+                    type="video/mp4"
+                  />
+                  Your browser does not support the video.
+                </video>
+              </div>
+
+              <div className="p-6 sm:p-7">
+                <p className="text-[10px] font-black uppercase tracking-[0.26em] text-pink-300">
+                  Before &amp; After
+                </p>
+
+                <h3 className="mt-3 text-2xl font-black tracking-tight text-white">
+                  Real work. A visible difference.
+                </h3>
+
+                <p className="mt-3 text-sm leading-6 text-zinc-300">
+                  See how focused cleaning can help make a space feel lighter,
+                  fresher, and easier to enjoy again.
+                </p>
+              </div>
+            </article>
+
+            <article className="overflow-hidden rounded-[2rem] border border-pink-300/20 bg-white/[0.04] shadow-2xl shadow-black/30">
+              <div className="bg-black">
+                <video
+                  controls
+                  playsInline
+                  preload="metadata"
+                  aria-label="Only The Essentials cleaning before-and-after video two"
+                  className="aspect-[9/16] max-h-[720px] w-full bg-black object-contain"
+                >
+                  <source
+                    src="/videos/only-the-essentials-before-after-2.mp4"
+                    type="video/mp4"
+                  />
+                  Your browser does not support the video.
+                </video>
+              </div>
+
+              <div className="p-6 sm:p-7">
+                <p className="text-[10px] font-black uppercase tracking-[0.26em] text-pink-300">
+                  Cleaning Transformation
+                </p>
+
+                <h3 className="mt-3 text-2xl font-black tracking-tight text-white">
+                  See what getting caught back up can look like.
+                </h3>
+
+                <p className="mt-3 text-sm leading-6 text-zinc-300">
+                  Real before-and-after proof helps you understand the care and
+                  attention going into the work before you book.
+                </p>
+              </div>
+            </article>
+          </div>
+
+          <div className="mt-5 grid gap-4 sm:grid-cols-3">
+            {[
+              {
+                title: "Clear Expectations",
+                copy: "See the kind of work Kaitlin provides before requesting your cleaning.",
+              },
+              {
+                title: "Real Local Work",
+                copy: "These are real cleaning results, not generic stock photos or empty promises.",
+              },
+              {
+                title: "One Easy Next Step",
+                copy: "When you are ready, tell Kaitlin what you need using the organized quote form.",
+              },
+            ].map((item) => (
+              <article
+                key={item.title}
+                className="rounded-[1.5rem] border border-white/10 bg-white/[0.035] p-5 transition hover:border-pink-300/35 hover:bg-pink-400/[0.045]"
+              >
+                <h3 className="text-xl font-black text-white">
+                  {item.title}
+                </h3>
+
+                <p className="mt-2 text-sm leading-6 text-zinc-300">
+                  {item.copy}
+                </p>
+              </article>
+            ))}
+          </div>
+
+          <a
+            href="#only-essentials-quote"
+            className="mt-6 inline-flex min-h-[54px] w-full items-center justify-center rounded-2xl bg-pink-400 px-6 text-sm font-black uppercase tracking-[0.2em] text-black transition hover:-translate-y-0.5 hover:bg-pink-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-200"
+          >
+            Tell Kaitlin What You Need
+          </a>
+        </section>
+        <section
           id="only-essentials-trust"
           aria-labelledby="only-essentials-trust-heading"
           className="relative mt-14 overflow-hidden rounded-[2rem] border border-pink-300/15 bg-white/[0.035] p-6 shadow-2xl shadow-black/30 sm:p-8 lg:p-10"
