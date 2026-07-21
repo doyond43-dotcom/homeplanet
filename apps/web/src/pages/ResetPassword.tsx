@@ -93,6 +93,9 @@ export default function ResetPassword() {
 
       navigate("/login", {
         replace: true,
+        state: {
+          from: "/planet/custom-systems/board",
+        },
       });
     } catch (error) {
       setErrorMessage(
