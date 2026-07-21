@@ -50,8 +50,8 @@ export default function Login() {
   }
 
   return (
-    <div className="hpAuthPage">
-      <div style={{ width: 360 }}>
+    <div className="hpAuthPage" style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 24, background: "#07090a", color: "#f8f7f2" }}>
+      <div style={{ width: "min(100%, 420px)", padding: 28, border: "1px solid rgba(255,255,255,0.14)", background: "#0c1114", boxShadow: "0 28px 80px rgba(0,0,0,0.4)" }}>
         <h2 style={{ margin: 0, marginBottom: 10 }}>HomePlanet</h2>
         <p style={{ marginTop: 0, opacity: 0.75, fontSize: 13 }}>
           Sign in to continue.
@@ -77,7 +77,7 @@ export default function Login() {
 
             <input
               type="password"
-              placeholder="••••••••"
+              placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
@@ -112,9 +112,9 @@ export default function Login() {
             {err ? <div style={{ opacity: 0.9, fontSize: 13 }}>{err}</div> : null}
 
             <div style={{ display: "flex", gap: 10, fontSize: 13, opacity: 0.8 }}>
-              <Link to="/signup">Sign up</Link>
+              <Link to="/signup" style={{ color: "#79c8f4", fontWeight: 800 }}>Sign up</Link>
               <span style={{ opacity: 0.5 }}>·</span>
-              <Link to="/reset-password">Forgot password?</Link>
+              <Link to="/reset-password" style={{ color: "#79c8f4", fontWeight: 800 }}>Forgot password?</Link>
             </div>
           </div>
         </form>
