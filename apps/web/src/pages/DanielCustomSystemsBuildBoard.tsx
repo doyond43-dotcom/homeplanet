@@ -913,6 +913,117 @@ function formatRequestAge(value: string) {
     minute: "2-digit",
   }).format(new Date(value));
 }
+const CUSTOM_SYSTEMS_PUBLIC_REQUEST_TABLE =
+  "custom_systems_public_requests";
+
+const PUBLIC_REQUEST_BUILD_PREFIX = "public-request-";
+
+type CustomSystemsPublicRequestRow = {
+  id: string;
+  problem: string;
+  business_name: string;
+  what_you_do: string;
+  current_flow: string;
+  breakdowns: unknown;
+  existing_link: string | null;
+  name: string | null;
+  phone: string | null;
+  email: string | null;
+  contact_preference: string | null;
+  notes: string | null;
+  status: "New Lead" | "Claimed";
+  claimed_build_record_id: string | null;
+  created_at: string;
+  claimed_at: string | null;
+};
+
+function publicRequestBuildId(requestId: string) {
+  return `${PUBLIC_REQUEST_BUILD_PREFIX}${requestId}`;
+}
+
+function publicRequestIdFromBuildId(buildId: string) {
+  if (!buildId.startsWith(PUBLIC_REQUEST_BUILD_PREFIX)) {
+    return null;
+  }
+
+  return buildId.slice(PUBLIC_REQUEST_BUILD_PREFIX.length);
+}
+
+function publicRequestToBuildRecord(
+  request: CustomSystemsPublicRequestRow,
+): CustomSystemsBuildRecord {
+  const breakdowns = Array.isArray(request.breakdowns)
+    ? request.breakdowns.filter(
+        (item): item is string => typeof item === "string",
+      )
+    : [];
+
+  const contactDetails = [
+    request.name ? `Contact: ${request.name}` : "",
+    request.phone ? `Phone: ${request.phone}` : "",
+    request.email ? `Email: ${request.email}` : "",
+    request.contact_preference
+      ? `Preferred contact: ${request.contact_preference}`
+      : "",
+  ].filter(Boolean);
+
+  const originalRequest = [
+    `Starting problem: ${request.problem}`,
+    request.current_flow,
+    breakdowns.length > 0
+      ? `Where it gets messy: ${breakdowns.join(", ")}`
+      : "",
+    request.notes ? `Additional notes: ${request.notes}` : "",
+    request.existing_link ? `Useful link: ${request.existing_link}` : "",
+    contactDetails.length > 0 ? contactDetails.join("\n") : "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+
+  return {
+    id: publicRequestBuildId(request.id),
+    createdAt: request.created_at,
+    updatedAt: request.created_at,
+    customer: {
+      name: request.name?.trim() || "New Customer",
+      businessName: request.business_name.trim(),
+    },
+    originalRequest,
+    whatWeAreSolving: request.problem,
+    startingPoint: {
+      summary: request.current_flow,
+      proof: [],
+    },
+    status: "New Lead",
+    currentMilestone: "Review incoming request",
+    nextAction:
+      "Open the request and decide whether to pull it into active work.",
+    currentBuild: {
+      summary: "No build has started yet.",
+      versionLabel: "Incoming request",
+    },
+    progressProof: [],
+    customerReview: {
+      reviewRequest: "",
+      whatChanged: "",
+      decision: "pending",
+    },
+    communicationHistory: [],
+    timeline: [
+      {
+        id: `timeline-request-${request.id}`,
+        createdAt: request.created_at,
+        type: "request-received",
+        title: "Public Custom Systems request received",
+        actor: request.name?.trim() || "Customer",
+      },
+    ],
+    launch: {},
+    ongoing: {
+      active: false,
+    },
+  };
+}
 export default function DanielCustomSystemsBuildBoard() {
   const [buildRecords, setBuildRecords] = useState<CustomSystemsBuildRecord[]>([]);
   const [activeBuildId, setActiveBuildId] = useState<string | null>(null);
@@ -947,57 +1058,92 @@ export default function DanielCustomSystemsBuildBoard() {
       setRecordsLoading(true);
       setRecordsError("");
 
-      const { data, error } = await supabase
-        .from(CUSTOM_SYSTEMS_BUILD_TABLE)
-        .select("id, record, updated_at")
-        .order("updated_at", { ascending: false });
+      const [
+        { data: buildData, error: buildError },
+        { data: requestData, error: requestError },
+      ] = await Promise.all([
+        supabase
+          .from(CUSTOM_SYSTEMS_BUILD_TABLE)
+          .select("id, record, updated_at")
+          .order("updated_at", { ascending: false }),
+        supabase
+          .from(CUSTOM_SYSTEMS_PUBLIC_REQUEST_TABLE)
+          .select(
+            "id, problem, business_name, what_you_do, current_flow, breakdowns, existing_link, name, phone, email, contact_preference, notes, status, claimed_build_record_id, created_at, claimed_at",
+          )
+          .eq("status", "New Lead")
+          .is("claimed_build_record_id", null)
+          .order("created_at", { ascending: false }),
+      ]);
 
       if (cancelled) return;
 
-      if (error) {
-        setRecordsError(error.message);
+      if (buildError) {
+        setRecordsError(buildError.message);
         setRecordsLoading(false);
         return;
       }
 
-      const rows = (data ?? []) as CustomSystemsBuildRecordRow[];
+      if (requestError) {
+        setRecordsError(requestError.message);
+        setRecordsLoading(false);
+        return;
+      }
 
-      if (rows.length > 0) {
-        const persistedRecords = rows.map((row) => row.record);
+      const buildRows =
+        (buildData ?? []) as CustomSystemsBuildRecordRow[];
 
-        setBuildRecords(
-          import.meta.env.DEV
-            ? [...persistedRecords, ...STRESS_TEST_BUILD_RECORDS]
-            : persistedRecords,
+      const publicRequestRows =
+        (requestData ?? []) as CustomSystemsPublicRequestRow[];
+
+      const publicRequestRecords =
+        publicRequestRows.map(publicRequestToBuildRecord);
+
+      let persistedRecords: CustomSystemsBuildRecord[];
+
+      if (buildRows.length > 0) {
+        persistedRecords = buildRows.map((row) => row.record);
+      } else {
+        const seedRows = INITIAL_BUILD_RECORDS.map((record) => ({
+          id: record.id,
+          record,
+          updated_at: record.updatedAt,
+        }));
+
+        const { error: seedError } = await supabase
+          .from(CUSTOM_SYSTEMS_BUILD_TABLE)
+          .upsert(seedRows, { onConflict: "id" });
+
+        if (cancelled) return;
+
+        if (seedError) {
+          setRecordsError(seedError.message);
+          setRecordsLoading(false);
+          return;
+        }
+
+        persistedRecords = INITIAL_BUILD_RECORDS;
+      }
+
+      const persistedIds =
+        new Set(persistedRecords.map((record) => record.id));
+
+      const unclaimedPublicRecords =
+        publicRequestRecords.filter(
+          (record) => !persistedIds.has(record.id),
         );
 
-        setRecordsLoading(false);
-        return;
-      }
-
-      const seedRows = INITIAL_BUILD_RECORDS.map((record) => ({
-        id: record.id,
-        record,
-        updated_at: record.updatedAt,
-      }));
-
-      const { error: seedError } = await supabase
-        .from(CUSTOM_SYSTEMS_BUILD_TABLE)
-        .upsert(seedRows, { onConflict: "id" });
-
-      if (cancelled) return;
-
-      if (seedError) {
-        setRecordsError(seedError.message);
-        setRecordsLoading(false);
-        return;
-      }
+      const combinedRecords = [
+        ...persistedRecords,
+        ...unclaimedPublicRecords,
+      ];
 
       setBuildRecords(
         import.meta.env.DEV
-          ? [...INITIAL_BUILD_RECORDS, ...STRESS_TEST_BUILD_RECORDS]
-          : INITIAL_BUILD_RECORDS,
+          ? [...combinedRecords, ...STRESS_TEST_BUILD_RECORDS]
+          : combinedRecords,
       );
+
       setRecordsLoading(false);
     }
 
@@ -1036,11 +1182,8 @@ export default function DanielCustomSystemsBuildBoard() {
       ...record,
       status: "Understanding Problem",
       updatedAt: now,
-      currentMilestone:
-        record.currentMilestone || "Understand the real operating problem",
-      nextAction:
-        record.nextAction ||
-        "Review the request and map what is actually breaking.",
+      currentMilestone: "Understand the real operating problem",
+      nextAction: "Review the request and map what is actually breaking.",
       timeline: [
         ...record.timeline,
         {
@@ -1053,7 +1196,43 @@ export default function DanielCustomSystemsBuildBoard() {
       ],
     };
 
-    await updateBuildRecord(updatedRecord);
+    setRecordsError("");
+
+    try {
+      await persistBuildRecord(updatedRecord);
+
+      const publicRequestId =
+        publicRequestIdFromBuildId(record.id);
+
+      if (publicRequestId) {
+        const { error: claimError } = await supabase
+          .from(CUSTOM_SYSTEMS_PUBLIC_REQUEST_TABLE)
+          .update({
+            status: "Claimed",
+            claimed_build_record_id: updatedRecord.id,
+            claimed_at: now,
+          })
+          .eq("id", publicRequestId)
+          .eq("status", "New Lead");
+
+        if (claimError) {
+          throw claimError;
+        }
+      }
+
+      setBuildRecords((current) =>
+        current.map((item) =>
+          item.id === updatedRecord.id ? updatedRecord : item,
+        ),
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to pull request into work.";
+
+      setRecordsError(message);
+    }
   }
   async function updateBuildRecord(updatedRecord: CustomSystemsBuildRecord) {
     setRecordsError("");

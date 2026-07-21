@@ -1,4 +1,5 @@
-﻿import { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useEffect, useRef } from "react";
 import {
   ArrowRight,
   Check,
@@ -14,6 +15,8 @@ import {
   Workflow,
   Wrench,
 } from "lucide-react";
+import { trackCustomSystemsActivity } from "../lib/customSystemsActivity";
+import { supabase } from "../lib/supabase";
 
 type SystemRequest = {
   problem: string;
@@ -158,9 +161,35 @@ const buildExamples = [
 ];
 
 export default function DanielCustomSystemsLandingPage() {
+  const pageViewTrackedRef = useRef(false);
+  const requestStartedRef = useRef(false);
+
+  useEffect(() => {
+    if (pageViewTrackedRef.current) {
+      return;
+    }
+
+    pageViewTrackedRef.current = true;
+
+    void trackCustomSystemsActivity("page_view");
+  }, []);
+
+  function markRequestStarted() {
+    if (requestStartedRef.current) {
+      return;
+    }
+
+    requestStartedRef.current = true;
+
+    void trackCustomSystemsActivity("request_started", {
+      label: selectedProblem,
+    });
+  }
   const [selectedProblem, setSelectedProblem] = useState("Customer Requests");
   const [requestOpen, setRequestOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   const [requestForm, setRequestForm] = useState({
     businessName: "",
@@ -194,12 +223,18 @@ export default function DanielCustomSystemsLandingPage() {
   }
 
   function scrollToHowItWorks() {
+    void trackCustomSystemsActivity("how_it_works_click");
+
     document
       .getElementById("how-it-works")
       ?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   function openRequest() {
+    void trackCustomSystemsActivity("request_opened", {
+      label: selectedProblem,
+    });
+
     setRequestOpen(true);
     setSubmitted(false);
 
@@ -214,6 +249,8 @@ export default function DanielCustomSystemsLandingPage() {
     field: Exclude<keyof typeof requestForm, "breakdowns">,
     value: string,
   ) {
+    markRequestStarted();
+
     setRequestForm((current) => ({
       ...current,
       [field]: value,
@@ -221,6 +258,8 @@ export default function DanielCustomSystemsLandingPage() {
   }
 
   function toggleBreakdown(value: string) {
+    markRequestStarted();
+
     setRequestForm((current) => ({
       ...current,
       breakdowns: current.breakdowns.includes(value)
@@ -229,27 +268,49 @@ export default function DanielCustomSystemsLandingPage() {
     }));
   }
 
-  function submitRequest(event: React.FormEvent<HTMLFormElement>) {
+  async function submitRequest(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const request: SystemRequest = {
-      problem: selectedProblem,
-      ...requestForm,
-      createdAt: new Date().toISOString(),
-      status: "New Lead",
-    };
+    if (submitting) {
+      return;
+    }
 
-    const storageKey = "hp-daniel-custom-system-requests";
-    const existing = JSON.parse(
-      localStorage.getItem(storageKey) || "[]",
-    ) as SystemRequest[];
+    setSubmitting(true);
+    setSubmitError("");
+    setSubmitted(false);
 
-    localStorage.setItem(
-      storageKey,
-      JSON.stringify([request, ...existing]),
-    );
+    const { error } = await supabase
+      .from("custom_systems_public_requests")
+      .insert({
+        problem: selectedProblem,
+        business_name: requestForm.businessName.trim(),
+        what_you_do: requestForm.whatYouDo.trim(),
+        current_flow: requestForm.currentFlow.trim(),
+        breakdowns: requestForm.breakdowns,
+        existing_link: requestForm.existingLink.trim() || null,
+        name: requestForm.name.trim() || null,
+        phone: requestForm.phone.trim() || null,
+        email: requestForm.email.trim() || null,
+        contact_preference: requestForm.contactPreference || null,
+        notes: requestForm.notes.trim() || null,
+        status: "New Lead",
+      });
+
+    if (error) {
+      console.error("Custom Systems request submission error", error);
+      setSubmitError(
+        "Your request could not be sent. Please try again in a moment.",
+      );
+      setSubmitting(false);
+      return;
+    }
+
+    await trackCustomSystemsActivity("request_submitted", {
+      label: selectedProblem,
+    });
 
     setSubmitted(true);
+    setSubmitting(false);
   }
 
   return (
@@ -284,7 +345,10 @@ export default function DanielCustomSystemsLandingPage() {
           <button
             type="button"
             aria-label="Start my system request"
-            onClick={scrollToProblems}
+            onClick={() => {
+              void trackCustomSystemsActivity("start_here_click");
+              scrollToProblems();
+            }}
             className="flex min-h-[48px] shrink-0 items-center justify-center gap-2 rounded-xl border border-[#80df00]/40 bg-[#80df00]/10 px-4 text-sm font-black transition hover:border-[#80df00]/80 hover:bg-[#80df00]/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#80df00]"
           >
             <Sparkles
@@ -318,7 +382,10 @@ export default function DanielCustomSystemsLandingPage() {
           <div className="mx-auto mt-8 grid max-w-[720px] gap-3 sm:grid-cols-2">
             <button
               type="button"
-              onClick={scrollToProblems}
+              onClick={() => {
+              void trackCustomSystemsActivity("show_need_click");
+              scrollToProblems();
+            }}
               className="flex min-h-[62px] items-center justify-center gap-3 rounded-2xl bg-[#80df00] px-6 font-black text-black transition hover:-translate-y-0.5 hover:bg-[#9cff19] hover:shadow-[0_0_36px_rgba(126,224,0,0.28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b7ff59] focus-visible:ring-offset-2 focus-visible:ring-offset-[#020706]"
             >
               <ClipboardList className="h-5 w-5" aria-hidden="true" />
@@ -452,7 +519,12 @@ export default function DanielCustomSystemsLandingPage() {
                 <button
                   key={problem.name}
                   type="button"
-                  onClick={() => chooseProblem(problem.name)}
+                  onClick={() => {
+                    void trackCustomSystemsActivity("problem_selected", {
+                      label: problem.name,
+                    });
+                    chooseProblem(problem.name);
+                  }}
                   className={`rounded-[1.5rem] border p-6 text-left transition ${
                     active
                       ? "border-[#80df00]/65 bg-[#80df00]/[0.07] shadow-[0_0_36px_rgba(126,224,0,0.08)]"
@@ -833,10 +905,20 @@ export default function DanielCustomSystemsLandingPage() {
 
                   <button
                     type="submit"
-                    className="mt-5 min-h-[62px] w-full rounded-2xl bg-[#80df00] px-6 text-lg font-black text-black transition hover:-translate-y-0.5 hover:bg-[#9cff19] hover:shadow-[0_0_36px_rgba(126,224,0,0.24)]"
+                    disabled={submitting}
+                    className="mt-5 min-h-[62px] w-full rounded-2xl bg-[#80df00] px-6 text-lg font-black text-black transition hover:-translate-y-0.5 hover:bg-[#9cff19] hover:shadow-[0_0_36px_rgba(126,224,0,0.24)] disabled:cursor-wait disabled:opacity-60"
                   >
-                    Send My System Request
+                    {submitting ? "Sending..." : "Send My System Request"}
                   </button>
+
+                  {submitError && (
+                    <div
+                      role="alert"
+                      className="mt-4 rounded-2xl border border-red-400/35 bg-red-500/10 p-4 text-sm font-bold text-red-100"
+                    >
+                      {submitError}
+                    </div>
+                  )}
 
                   {submitted && (
                     <div
@@ -868,7 +950,7 @@ export default function DanielCustomSystemsLandingPage() {
                       className="h-4 w-4 text-[#80df00]"
                       aria-hidden="true"
                     />
-                    Prototype request data currently stays in this browser.
+                    Your request is securely sent to Daniel's Custom Systems intake.
                   </div>
                 </form>
               </div>
