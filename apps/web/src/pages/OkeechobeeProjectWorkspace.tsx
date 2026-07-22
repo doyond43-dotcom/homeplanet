@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
@@ -292,6 +292,28 @@ export default function OkeechobeeProjectWorkspace() {
     alert("Project marked as resolved.");
   }
 
+  const confirmedTimelineHelpers = (Array.isArray(project?.timeline) ? project.timeline : [])
+    .filter((item: any) =>
+      String(item.label || "").toLowerCase().includes(" joined as ")
+    )
+    .map((item: any, index: number) => {
+      const label = String(item.label || "");
+      const [name, helpType] = label.split(" joined as ");
+
+      return {
+        id: `confirmed-timeline-helper-${index}`,
+        name: name || "Volunteer",
+        help_type: helpType || "Volunteer",
+        phone: null,
+        email: null,
+        notes: "Confirmed from project timeline.",
+        created_at: item.time,
+      };
+    });
+
+  const displayHelpers =
+    helpers && helpers.length > 0 ? helpers : confirmedTimelineHelpers;
+
   return (
     <main
       style={{
@@ -421,7 +443,7 @@ export default function OkeechobeeProjectWorkspace() {
               <hr style={{ borderColor: "#222" }} />
 
               <p><strong>Volunteers</strong></p>
-              <p>{helpers.length}</p>
+              <p>{displayHelpers.length}</p>
 
               <p><strong>Materials Requested</strong></p>
               <p>{materials.length}</p>
@@ -500,9 +522,9 @@ export default function OkeechobeeProjectWorkspace() {
               padding: 20,
             }}
           >
-            <h2>Volunteer Assignments ({helpers.length})</h2>
+            <h2>Volunteer Assignments ({displayHelpers.length})</h2>
 
-            {helpers.map((helper: any) => (
+            {displayHelpers.map((helper: any) => (
               <div
                 key={helper.id}
                 style={{
@@ -907,6 +929,7 @@ export default function OkeechobeeProjectWorkspace() {
     </main>
   );
 }
+
 
 
 

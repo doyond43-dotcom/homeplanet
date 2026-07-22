@@ -162,6 +162,25 @@ export default function OkeechobeeEventPage() {
     alert("Thank you. Your information was saved.");
   }
 
+  function formatLookingForItem(item: any) {
+    if (typeof item === "string") return item;
+
+    if (item && typeof item === "object") {
+      return (
+        item.title ||
+        item.label ||
+        item.name ||
+        item.text ||
+        item.value ||
+        item.need ||
+        item.type ||
+        JSON.stringify(item)
+      );
+    }
+
+    return String(item || "");
+  }
+
   async function markResolved() {
     if (!event) return;
 
@@ -206,8 +225,7 @@ export default function OkeechobeeEventPage() {
   }
 
   const helperCount = (event.timeline || []).filter((item: any) =>
-    String(item.label || "").toLowerCase().includes("help") ||
-    String(item.label || "").toLowerCase().includes("joined")
+    String(item.label || "").toLowerCase().includes(" joined as ")
   ).length;
 
   const responseRate =

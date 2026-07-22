@@ -12,7 +12,6 @@ export default function OkeechobeeTogetherPage() {
       const { data, error } = await supabase
         .from("okeechobee_events")
         .select("*")
-        .in("status", ["Active", "Resolved"])
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -79,8 +78,8 @@ export default function OkeechobeeTogetherPage() {
     return !title.includes("test project") && !title.includes("coordinator test");
   });
 
-  const activeEvents = publicEvents.filter((event: any) => event.status !== "Resolved");
-  const completedEvents = publicEvents.filter((event: any) => event.status === "Resolved");
+  const activeEvents = publicEvents.filter((event: any) => String(event.status || "").toLowerCase() === "active");
+  const completedEvents = publicEvents.filter((event: any) => String(event.status || "").toLowerCase() === "resolved");
 
   return (
     <>
