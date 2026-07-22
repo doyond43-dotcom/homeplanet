@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+﻿import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useSearchParams } from "react-router-dom";
 import { RequireAuth } from "./auth/RequireAuth";
 
@@ -6,6 +6,7 @@ const DemoPestControlLandingPage = lazy(() => import("./pages/DemoPestControlLan
 const DemoPestControlBoardPage = lazy(() => import("./pages/DemoPestControlBoardPage"));
 const DemoHomeServicesLandingPage = lazy(() => import("./pages/DemoHomeServicesLandingPage"));
 const DanielCustomSystemsLandingPage = lazy(() => import("./pages/DanielCustomSystemsLandingPage"));
+const BestOfLakeVotingPage = lazy(() => import("./pages/BestOfLakeVotingPage"));
 const DanielCustomSystemsBuildBoard = lazy(() => import("./pages/DanielCustomSystemsBuildBoard"));
 const DanielCustomSystemsLiveActivity = lazy(() => import("./pages/DanielCustomSystemsLiveActivity"));
 const DemoHomeServicesBoardPage = lazy(() => import("./pages/DemoHomeServicesBoardPage"));
@@ -152,6 +153,7 @@ export default function App() {
           <Route path="/planet/custom-systems/board" element={<RequireAuth><DanielCustomSystemsBuildBoard /></RequireAuth>} />
           <Route path="/planet/custom-systems/activity" element={<RequireAuth><DanielCustomSystemsLiveActivity /></RequireAuth>} />
           <Route path="/planet/custom-systems" element={<DanielCustomSystemsLandingPage />} />
+          <Route path="/planet/best-of-the-lake" element={<BestOfLakeVotingPage />} />
           <Route path="/planet/echols-water-testing" element={<EcholsWaterTestingLandingPage />} />
           <Route path="/planet/jones-equipment-rental-repair" element={<JonesEquipmentRentalRepairLandingPage />} />
           <Route path="/planet/jones-equipment-rental-repair/board" element={<JonesEquipmentOperatorBoard />} />
@@ -236,4 +238,5 @@ export default function App() {
     </BrowserRouter>
   );
 }
+
 

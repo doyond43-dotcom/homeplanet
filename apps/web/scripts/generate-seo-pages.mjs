@@ -427,7 +427,42 @@ const publicSeoRegistry = [
       }
     }
   }
-];
+,
+  {
+    route: "/planet/best-of-the-lake",
+    title: "Best of the Lake Voting Experience Concept | HomePlanet",
+    description:
+      "Explore a HomePlanet redesign concept for a simpler Best of the Lake voting experience with search, guided category voting, ballot progress, and direct nominee doorways.",
+    image: `${SITE_URL}/og-homeplanet.png`,
+    heading: "A simpler way to move through Best of the Lake voting",
+    body: `
+      <section>
+        <h2>Find who you came to support</h2>
+        <p>This HomePlanet redesign concept demonstrates a simpler way to move through a large local voting ballot. Instead of searching through one long page of polls, a voter can search for a business, person, place, or category and move directly to the relevant choice.</p>
+      </section>
+      <section>
+        <h2>Vote one clear category at a time</h2>
+        <p>The experience is designed around large mobile-friendly choices, visible ballot progress, the ability to continue voting, and direct doorways into specific categories.</p>
+      </section>
+      <section>
+        <h2>A voting experience built around participation</h2>
+        <p>This prototype is an independent HomePlanet design concept and is not an official Lake Okeechobee News voting page. It demonstrates how the same ballot information can be organized around what the voter is trying to do.</p>
+      </section>
+    `,
+    schema: {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      name: "Best of the Lake Voting Experience Concept",
+      url: `${SITE_URL}/planet/best-of-the-lake`,
+      description:
+        "A HomePlanet redesign concept demonstrating search, guided voting, ballot progress, and direct category doorways.",
+      isPartOf: {
+        "@type": "WebSite",
+        name: "HomePlanet",
+        url: `${SITE_URL}/`
+      }
+    }
+  }];
 
 function escapeHtml(value) {
   return String(value)
@@ -567,5 +602,6 @@ fs.writeFileSync(path.join(distDir, "sitemap.xml"), sitemapXml, "utf8");
 console.log(
   `Generated sitemap from public SEO registry: ${publicSeoRegistry.length} URLs`
 );
+
 
 
