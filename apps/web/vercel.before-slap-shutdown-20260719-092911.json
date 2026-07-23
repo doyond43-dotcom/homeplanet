@@ -1,0 +1,32 @@
+{
+    "rewrites":  [
+                     {
+                         "source":  "/planet/slap-a-bug",
+                         "destination":  "/planet/slap-a-bug/index.html"
+                     },
+                     {
+                         "source":  "/planet/demo/pest-control",
+                         "destination":  "/planet/demo/pest-control/index.html"
+                     },
+                     {
+                         "source":  "/planet/okie-dokie-softwash",
+                         "destination":  "/planet/okie-dokie-softwash/index.html"
+                     },
+                     {
+                         "source":  "/planet/okeechobee",
+                         "destination":  "/planet/okeechobee/index.html"
+                     },
+                     {
+                         "source":  "/planet/vz-professional-lawncare",
+                         "destination":  "/planet/vz-professional-lawncare/index.html"
+                     },
+                     {
+                         "source":  "/onlytheessentials",
+                         "destination":  "/onlytheessentials/index.html"
+                     },
+                     {
+                         "source":  "/(.*)",
+                         "destination":  "/index.html"
+                     }
+                 ]
+}

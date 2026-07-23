@@ -1,0 +1,873 @@
+import { useMemo, useState } from "react";
+
+type FeaturedItem = {
+  name: string;
+  price: string;
+};
+
+export default function YardSaleStartPage() {
+  const [saleName, setSaleName] = useState("");
+  const [area, setArea] = useState("");
+  const [saleDate, setSaleDate] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [description, setDescription] = useState("");
+  const [contact, setContact] = useState("");
+  const [mainPhoto, setMainPhoto] = useState("");
+  const [mainPhotoName, setMainPhotoName] = useState("");
+  const [items, setItems] = useState<FeaturedItem[]>([
+    { name: "", price: "" },
+  ]);
+
+  const displayName = saleName.trim() || "Your Yard Sale";
+  const displayArea = area.trim() || "Your neighborhood";
+  const displayDescription =
+    description.trim() ||
+    "Add a short description so people know what they can expect to find.";
+
+  const formattedDate = useMemo(() => {
+    if (!saleDate) return "Choose a date";
+
+    const parsed = new Date(`${saleDate}T12:00:00`);
+
+    if (Number.isNaN(parsed.getTime())) return saleDate;
+
+    return parsed.toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+    });
+  }, [saleDate]);
+
+  const updateItem = (
+    index: number,
+    field: keyof FeaturedItem,
+    value: string,
+  ) => {
+    setItems((current) =>
+      current.map((item, itemIndex) =>
+        itemIndex === index ? { ...item, [field]: value } : item,
+      ),
+    );
+  };
+
+  const addItem = () => {
+    if (items.length >= 6) return;
+    setItems((current) => [...current, { name: "", price: "" }]);
+  };
+
+  const handleMainPhoto = (file?: File) => {
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      window.alert("Please choose an image file.");
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      if (typeof reader.result !== "string") return;
+
+      setMainPhoto(reader.result);
+      setMainPhotoName(file.name);
+    };
+
+    reader.readAsDataURL(file);
+  };
+
+  return (
+    <main className="ys-page">
+      <header className="ys-header">
+        <a href="/" className="ys-brand">
+          HomePlanet
+        </a>
+
+        <a href="/" className="ys-back">
+          Back to HomePlanet
+        </a>
+      </header>
+
+      <section className="ys-hero">
+        <div className="ys-eyebrow">Simple self-serve page</div>
+
+        <h1>
+          Start Your
+          <span> Yard Sale Page.</span>
+        </h1>
+
+        <p>
+          Add the basics, feature a few items, and see your page come together
+          while you build it.
+        </p>
+
+        <div className="ys-steps">
+          <span>1. Sale basics</span>
+          <span>2. Featured items</span>
+          <span>3. Review and publish</span>
+        </div>
+      </section>
+
+      <section className="ys-builder">
+        <div className="ys-form-column">
+          <div className="ys-panel">
+            <div className="ys-panel-heading">
+              <span>01</span>
+              <div>
+                <strong>Sale basics</strong>
+                <p>Tell people when, where, and what kind of sale it is.</p>
+              </div>
+            </div>
+
+            <div className="ys-fields">
+              <label>
+                <span>Yard sale name</span>
+                <input
+                  value={saleName}
+                  onChange={(event) => setSaleName(event.target.value)}
+                  placeholder="Saturday neighborhood yard sale"
+                />
+              </label>
+
+              <label>
+                <span>Neighborhood or general area</span>
+                <input
+                  value={area}
+                  onChange={(event) => setArea(event.target.value)}
+                  placeholder="Taylor Creek, Okeechobee"
+                />
+              </label>
+
+              <div className="ys-field-row">
+                <label>
+                  <span>Date</span>
+                  <input
+                    type="date"
+                    value={saleDate}
+                    onChange={(event) => setSaleDate(event.target.value)}
+                  />
+                </label>
+
+                <label>
+                  <span>Start time</span>
+                  <input
+                    type="time"
+                    value={startTime}
+                    onChange={(event) => setStartTime(event.target.value)}
+                  />
+                </label>
+              </div>
+
+              <label>
+                <span>What will people find?</span>
+                <textarea
+                  value={description}
+                  onChange={(event) => setDescription(event.target.value)}
+                  placeholder="Furniture, tools, clothes, kids items, home decor, and more."
+                  rows={4}
+                />
+              </label>
+
+              <label className="ys-photo-field">
+                <span>Main yard sale photo</span>
+
+                <div className="ys-photo-upload">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(event) =>
+                      handleMainPhoto(event.target.files?.[0])
+                    }
+                  />
+
+                  <strong>
+                    {mainPhotoName || "Choose a wide photo"}
+                  </strong>
+
+                  <small>
+                    Show the full setup, several good items, or yourself with
+                    the sale. Horizontal daylight photos work best.
+                  </small>
+                </div>
+              </label>
+
+              <label>
+                <span>Best contact method</span>
+                <input
+                  value={contact}
+                  onChange={(event) => setContact(event.target.value)}
+                  placeholder="Phone number, email, or Facebook name"
+                />
+              </label>
+            </div>
+          </div>
+
+          <div className="ys-panel">
+            <div className="ys-panel-heading">
+              <span>02</span>
+              <div>
+                <strong>Featured items</strong>
+                <p>Add a few things that will make people stop scrolling.</p>
+              </div>
+            </div>
+
+            <div className="ys-items">
+              {items.map((item, index) => (
+                <div className="ys-item-row" key={index}>
+                  <label>
+                    <span>Item {index + 1}</span>
+                    <input
+                      value={item.name}
+                      onChange={(event) =>
+                        updateItem(index, "name", event.target.value)
+                      }
+                      placeholder="Solid wood side table"
+                    />
+                  </label>
+
+                  <label className="ys-price-field">
+                    <span>Price</span>
+                    <input
+                      value={item.price}
+                      onChange={(event) =>
+                        updateItem(index, "price", event.target.value)
+                      }
+                      placeholder="$35"
+                    />
+                  </label>
+                </div>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              className="ys-add-item"
+              onClick={addItem}
+              disabled={items.length >= 6}
+            >
+              {items.length >= 6 ? "Six items added" : "Add Another Item"}
+            </button>
+          </div>
+
+          <div className="ys-publish-panel">
+            <div>
+              <span>03</span>
+              <strong>Ready for the next step?</strong>
+              <p>
+                Review your preview. Publishing and payment will be connected
+                after this page is approved.
+              </p>
+            </div>
+
+            <button type="button">Continue to Publish</button>
+          </div>
+        </div>
+
+        <aside className="ys-preview-column">
+          <div className="ys-preview-label">Live preview</div>
+
+          <article className="ys-preview">
+            <div
+              className="ys-preview-image"
+              style={{
+                backgroundImage: `
+                  linear-gradient(180deg, transparent, rgba(2, 6, 4, 0.72)),
+                  url("${mainPhoto || "/images/homeplanet-live-yard-sale.webp"}")
+                `,
+              }}
+            >
+              <div className="ys-preview-image-copy">
+                <span>Yard sale</span>
+                <strong>{displayName}</strong>
+              </div>
+            </div>
+
+            <div className="ys-preview-content">
+              <div className="ys-preview-status">
+                <span>Upcoming sale</span>
+                <b>Live page preview</b>
+              </div>
+
+              <h2>{displayName}</h2>
+
+              <div className="ys-preview-details">
+                <div>
+                  <span>Date</span>
+                  <strong>{formattedDate}</strong>
+                </div>
+
+                <div>
+                  <span>Starts</span>
+                  <strong>{startTime || "Choose a time"}</strong>
+                </div>
+
+                <div>
+                  <span>Area</span>
+                  <strong>{displayArea}</strong>
+                </div>
+              </div>
+
+              <p>{displayDescription}</p>
+
+              <div className="ys-preview-items">
+                <span>Featured items</span>
+
+                {items.some((item) => item.name.trim()) ? (
+                  items
+                    .filter((item) => item.name.trim())
+                    .map((item, index) => (
+                      <div key={`${item.name}-${index}`}>
+                        <strong>{item.name}</strong>
+                        <b>{item.price || "Ask seller"}</b>
+                      </div>
+                    ))
+                ) : (
+                  <div>
+                    <strong>Your first featured item</strong>
+                    <b>Add a price</b>
+                  </div>
+                )}
+              </div>
+
+              <button type="button">
+                {contact.trim() ? "Contact Seller" : "Contact will appear here"}
+              </button>
+            </div>
+          </article>
+
+          <div className="ys-preview-note">
+            Your finished page will have one clean link you can share on
+            Facebook, text messages, signs, and neighborhood groups.
+          </div>
+        </aside>
+      </section>
+
+      <style>{`
+        :root {
+          color-scheme: dark;
+        }
+
+        * {
+          box-sizing: border-box;
+        }
+
+        body {
+          margin: 0;
+          background: #020604;
+        }
+
+        button,
+        input,
+        textarea {
+          font: inherit;
+        }
+
+        .ys-page {
+          min-height: 100vh;
+          padding: 0 24px 80px;
+          background:
+            radial-gradient(circle at 82% 8%, rgba(70, 255, 134, 0.1), transparent 25%),
+            radial-gradient(circle at 10% 42%, rgba(70, 255, 134, 0.045), transparent 24%),
+            #020604;
+          color: #f1fff5;
+          font-family:
+            Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+            "Segoe UI", sans-serif;
+        }
+
+        .ys-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          width: min(1180px, 100%);
+          margin: 0 auto;
+          padding: 24px 0;
+        }
+
+        .ys-brand,
+        .ys-back {
+          color: inherit;
+          text-decoration: none;
+        }
+
+        .ys-brand {
+          color: #59ff91;
+          font-size: 18px;
+          font-weight: 950;
+          letter-spacing: -0.04em;
+        }
+
+        .ys-back {
+          color: rgba(236, 250, 240, 0.62);
+          font-size: 13px;
+          font-weight: 750;
+        }
+
+        .ys-hero {
+          width: min(1180px, 100%);
+          margin: 54px auto 0;
+        }
+
+        .ys-eyebrow,
+        .ys-preview-label {
+          color: #59ff91;
+          font-size: 11px;
+          font-weight: 950;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+        }
+
+        .ys-hero h1 {
+          max-width: 900px;
+          margin: 20px 0 0;
+          font-size: clamp(54px, 8vw, 104px);
+          line-height: 0.9;
+          letter-spacing: -0.075em;
+        }
+
+        .ys-hero h1 span {
+          color: #59ff91;
+        }
+
+        .ys-hero > p {
+          max-width: 670px;
+          margin: 26px 0 0;
+          color: rgba(236, 250, 240, 0.65);
+          font-size: clamp(17px, 2vw, 21px);
+          line-height: 1.6;
+        }
+
+        .ys-steps {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+          margin-top: 30px;
+        }
+
+        .ys-steps span {
+          padding: 10px 14px;
+          border: 1px solid rgba(89, 255, 145, 0.15);
+          border-radius: 999px;
+          background: rgba(89, 255, 145, 0.045);
+          color: rgba(236, 250, 240, 0.72);
+          font-size: 12px;
+          font-weight: 800;
+        }
+
+        .ys-builder {
+          display: grid;
+          grid-template-columns: minmax(0, 1.06fr) minmax(360px, 0.94fr);
+          gap: 28px;
+          width: min(1180px, 100%);
+          margin: 58px auto 0;
+          align-items: start;
+        }
+
+        .ys-form-column {
+          display: grid;
+          gap: 20px;
+        }
+
+        .ys-panel,
+        .ys-publish-panel,
+        .ys-preview,
+        .ys-preview-note {
+          border: 1px solid rgba(255, 255, 255, 0.085);
+          background: rgba(5, 12, 8, 0.82);
+          box-shadow:
+            0 26px 80px rgba(0, 0, 0, 0.28),
+            inset 0 1px rgba(255, 255, 255, 0.035);
+        }
+
+        .ys-panel {
+          padding: 26px;
+          border-radius: 26px;
+        }
+
+        .ys-panel-heading {
+          display: flex;
+          gap: 16px;
+          align-items: flex-start;
+          padding-bottom: 22px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        .ys-panel-heading > span,
+        .ys-publish-panel > div > span {
+          color: rgba(89, 255, 145, 0.55);
+          font-size: 12px;
+          font-weight: 950;
+        }
+
+        .ys-panel-heading strong,
+        .ys-publish-panel strong {
+          display: block;
+          font-size: 21px;
+          letter-spacing: -0.035em;
+        }
+
+        .ys-panel-heading p,
+        .ys-publish-panel p {
+          margin: 7px 0 0;
+          color: rgba(236, 250, 240, 0.52);
+          font-size: 13px;
+          line-height: 1.5;
+        }
+
+        .ys-fields,
+        .ys-items {
+          display: grid;
+          gap: 16px;
+          margin-top: 22px;
+        }
+
+        .ys-field-row,
+        .ys-item-row {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 14px;
+        }
+
+        label {
+          display: grid;
+          gap: 8px;
+        }
+
+        label > span {
+          color: rgba(236, 250, 240, 0.62);
+          font-size: 12px;
+          font-weight: 800;
+        }
+
+        input,
+        textarea {
+          width: 100%;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 14px;
+          outline: none;
+          background: rgba(255, 255, 255, 0.035);
+          color: #f2fff6;
+          transition:
+            border-color 160ms ease,
+            box-shadow 160ms ease;
+        }
+
+        input {
+          min-height: 50px;
+          padding: 0 14px;
+        }
+
+        textarea {
+          resize: vertical;
+          padding: 14px;
+          line-height: 1.5;
+        }
+
+        input:focus,
+        textarea:focus {
+          border-color: rgba(89, 255, 145, 0.65);
+          box-shadow: 0 0 0 4px rgba(89, 255, 145, 0.08);
+        }
+
+        input::placeholder,
+        textarea::placeholder {
+          color: rgba(236, 250, 240, 0.28);
+        }
+
+        .ys-photo-upload {
+          position: relative;
+          display: grid;
+          gap: 7px;
+          min-height: 104px;
+          padding: 16px;
+          border: 1px dashed rgba(89, 255, 145, 0.28);
+          border-radius: 15px;
+          background: rgba(89, 255, 145, 0.035);
+          cursor: pointer;
+        }
+
+        .ys-photo-upload input {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          opacity: 0;
+          cursor: pointer;
+        }
+
+        .ys-photo-upload strong {
+          color: #8dffb2;
+          font-size: 13px;
+        }
+
+        .ys-photo-upload small {
+          max-width: 460px;
+          color: rgba(236, 250, 240, 0.48);
+          font-size: 11px;
+          line-height: 1.5;
+        }
+
+        .ys-price-field {
+          grid-template-columns: 1fr;
+        }
+
+        .ys-add-item {
+          min-height: 46px;
+          margin-top: 18px;
+          padding: 0 17px;
+          border: 1px solid rgba(89, 255, 145, 0.22);
+          border-radius: 13px;
+          background: rgba(89, 255, 145, 0.06);
+          color: #8dffb2;
+          font-size: 13px;
+          font-weight: 900;
+          cursor: pointer;
+        }
+
+        .ys-add-item:disabled {
+          opacity: 0.48;
+          cursor: default;
+        }
+
+        .ys-publish-panel {
+          display: flex;
+          justify-content: space-between;
+          gap: 24px;
+          align-items: center;
+          padding: 24px 26px;
+          border-radius: 24px;
+        }
+
+        .ys-publish-panel button,
+        .ys-preview-content > button {
+          min-height: 50px;
+          padding: 0 20px;
+          border: 0;
+          border-radius: 14px;
+          background: #59ff91;
+          color: #031008;
+          font-size: 13px;
+          font-weight: 950;
+          cursor: pointer;
+          box-shadow: 0 14px 34px rgba(70, 255, 134, 0.15);
+        }
+
+        .ys-preview-column {
+          position: sticky;
+          top: 22px;
+        }
+
+        .ys-preview-label {
+          margin: 0 0 12px 4px;
+        }
+
+        .ys-preview {
+          overflow: hidden;
+          border-radius: 28px;
+        }
+
+        .ys-preview-image {
+          position: relative;
+          min-height: 250px;
+          background-color: #07110b;
+          background-position: center 52%;
+          background-size: cover;
+          background-repeat: no-repeat;
+        }
+
+        .ys-preview-image-copy {
+          position: absolute;
+          right: 22px;
+          bottom: 20px;
+          left: 22px;
+        }
+
+        .ys-preview-image-copy span,
+        .ys-preview-image-copy strong {
+          display: block;
+        }
+
+        .ys-preview-image-copy span {
+          color: #74ffa4;
+          font-size: 10px;
+          font-weight: 950;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+        }
+
+        .ys-preview-image-copy strong {
+          margin-top: 7px;
+          font-size: 26px;
+          letter-spacing: -0.045em;
+        }
+
+        .ys-preview-content {
+          padding: 24px;
+        }
+
+        .ys-preview-status {
+          display: flex;
+          justify-content: space-between;
+          gap: 14px;
+          color: rgba(236, 250, 240, 0.42);
+          font-size: 10px;
+          font-weight: 850;
+          text-transform: uppercase;
+        }
+
+        .ys-preview-status b {
+          color: #59ff91;
+        }
+
+        .ys-preview-content h2 {
+          margin: 18px 0 0;
+          font-size: 34px;
+          line-height: 1;
+          letter-spacing: -0.055em;
+        }
+
+        .ys-preview-details {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 8px;
+          margin-top: 20px;
+        }
+
+        .ys-preview-details div {
+          min-height: 78px;
+          padding: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.07);
+          border-radius: 13px;
+          background: rgba(255, 255, 255, 0.025);
+        }
+
+        .ys-preview-details span,
+        .ys-preview-details strong {
+          display: block;
+        }
+
+        .ys-preview-details span {
+          color: rgba(236, 250, 240, 0.4);
+          font-size: 9px;
+          text-transform: uppercase;
+        }
+
+        .ys-preview-details strong {
+          margin-top: 8px;
+          font-size: 12px;
+          line-height: 1.35;
+        }
+
+        .ys-preview-content > p {
+          margin: 20px 0 0;
+          color: rgba(236, 250, 240, 0.63);
+          font-size: 13px;
+          line-height: 1.6;
+        }
+
+        .ys-preview-items {
+          display: grid;
+          gap: 8px;
+          margin-top: 22px;
+        }
+
+        .ys-preview-items > span {
+          margin-bottom: 2px;
+          color: #59ff91;
+          font-size: 10px;
+          font-weight: 950;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+        }
+
+        .ys-preview-items > div {
+          display: flex;
+          justify-content: space-between;
+          gap: 16px;
+          padding: 12px 13px;
+          border: 1px solid rgba(255, 255, 255, 0.07);
+          border-radius: 12px;
+          background: rgba(255, 255, 255, 0.025);
+          font-size: 12px;
+        }
+
+        .ys-preview-items b {
+          color: #76ffa5;
+        }
+
+        .ys-preview-content > button {
+          width: 100%;
+          margin-top: 20px;
+        }
+
+        .ys-preview-note {
+          margin-top: 14px;
+          padding: 17px 18px;
+          border-radius: 17px;
+          color: rgba(236, 250, 240, 0.54);
+          font-size: 12px;
+          line-height: 1.55;
+        }
+
+        @media (max-width: 900px) {
+          .ys-builder {
+            grid-template-columns: 1fr;
+          }
+
+          .ys-preview-column {
+            position: static;
+          }
+        }
+
+        @media (max-width: 620px) {
+          .ys-page {
+            padding: 0 16px 54px;
+          }
+
+          .ys-header {
+            padding: 20px 0;
+          }
+
+          .ys-back {
+            font-size: 11px;
+          }
+
+          .ys-hero {
+            margin-top: 36px;
+          }
+
+          .ys-hero h1 {
+            font-size: clamp(50px, 16vw, 72px);
+          }
+
+          .ys-builder {
+            margin-top: 42px;
+          }
+
+          .ys-panel {
+            padding: 21px;
+            border-radius: 22px;
+          }
+
+          .ys-field-row,
+          .ys-item-row,
+          .ys-preview-details {
+            grid-template-columns: 1fr;
+          }
+
+          .ys-publish-panel {
+            align-items: stretch;
+            flex-direction: column;
+          }
+
+          .ys-publish-panel button {
+            width: 100%;
+          }
+
+          .ys-preview-image {
+            min-height: 210px;
+          }
+        }
+      `}</style>
+    </main>
+  );
+}

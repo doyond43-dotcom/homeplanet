@@ -59,6 +59,8 @@ const JonesEquipmentRentalRepairLandingPage = lazy(() => import("./pages/JonesEq
 const JonesEquipmentOperatorBoard = lazy(() => import("./pages/JonesEquipmentOperatorBoard"));
 const JmeRentalSetupPage = lazy(() => import("./pages/JmeRentalSetupPage"));
 const VZProfessionalLawncareLanding = lazy(() => import("./pages/VZProfessionalLawncareLanding"));
+const LateNightHotelsLandingPage = lazy(() => import("./pages/LateNightHotelsLandingPage"));
+const LateNightHotelsOperatorBoard = lazy(() => import("./pages/LateNightHotelsOperatorBoard"));
 function LiveShell() {
   return <Outlet />;
 }
@@ -154,6 +156,8 @@ export default function App() {
           <Route path="/planet/custom-systems/activity" element={<RequireAuth><DanielCustomSystemsLiveActivity /></RequireAuth>} />
           <Route path="/planet/custom-systems" element={<DanielCustomSystemsLandingPage />} />
           <Route path="/planet/best-of-the-lake" element={<BestOfLakeVotingPage />} />
+          <Route path="/planet/late-night-hotels" element={<LateNightHotelsLandingPage />} />
+          <Route path="/planet/late-night-hotels/board" element={<LateNightHotelsOperatorBoard />} />
           <Route path="/planet/echols-water-testing" element={<EcholsWaterTestingLandingPage />} />
           <Route path="/planet/jones-equipment-rental-repair" element={<JonesEquipmentRentalRepairLandingPage />} />
           <Route path="/planet/jones-equipment-rental-repair/board" element={<JonesEquipmentOperatorBoard />} />
