@@ -265,13 +265,15 @@ function PetTagLanding() {
           ===================================================== */}
       <section className="pb-14 pt-8 text-center sm:pb-18 sm:pt-10">
         <div className="mx-auto max-w-5xl">
-          <div className="flex justify-center">
-            <div className="inline-flex items-center justify-center">
-              <span className="relative inline-flex items-center rounded-full border border-cyan-300/30 bg-cyan-300/[0.07] py-2 pl-5 pr-4 text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">
-                <span className="absolute left-2.5 h-1.5 w-1.5 rounded-full border border-cyan-200/60" />
-                Pet Tag
-              </span>
-            </div>
+          <div className="flex w-full items-center gap-4 sm:gap-6">
+            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/15 to-cyan-300/45" />
+
+            <span className="relative inline-flex shrink-0 items-center rounded-full border border-cyan-300/30 bg-cyan-300/[0.07] py-2 pl-5 pr-4 text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">
+              <span className="absolute left-2.5 h-1.5 w-1.5 rounded-full border border-cyan-200/60" />
+              Pet Tag
+            </span>
+
+            <div className="h-px flex-1 bg-gradient-to-l from-transparent via-white/15 to-cyan-300/45" />
           </div>
 
           <h1 className="mx-auto mt-5 max-w-4xl text-6xl font-bold leading-[0.95] tracking-[-0.05em] text-white sm:text-7xl lg:text-8xl">
