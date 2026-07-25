@@ -31,6 +31,8 @@ export default function OkeechobeeEventPage() {
       setEvent(null);
     } else {
 
+      console.log("EVENT DATA:", data);
+
       const newViewCount = (data.views || 0) + 1;
 
       const referrer = document.referrer.toLowerCase();
@@ -205,7 +207,7 @@ export default function OkeechobeeEventPage() {
 
   if (loading) {
   
-  const descriptionLines = String(event?.description || "")
+  const descriptionLines = String(event?.public_description || event?.description || "")
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean);
@@ -296,7 +298,7 @@ export default function OkeechobeeEventPage() {
 
   if (!event) {
   
-  const descriptionLines = String(event?.description || "")
+  const descriptionLines = String(event?.public_description || event?.description || "")
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean);
@@ -418,18 +420,20 @@ export default function OkeechobeeEventPage() {
 
     if (navigator.share) {
       await navigator.share({
-        title: event.title,
-        text: event.description,
+        title: event.public_title || event.title,
+        text: event.public_description || event.description,
         url: shareUrl,
       });
     } else {
+
+      console.log("EVENT DATA:", data);
       await navigator.clipboard.writeText(shareUrl);
       alert("Link copied.");
     }
   }
 
 
-  const descriptionLines = String(event?.description || "")
+  const descriptionLines = String(event?.public_description || event?.description || "")
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean);
@@ -513,7 +517,7 @@ export default function OkeechobeeEventPage() {
     <main style={styles.page}>
       <section style={styles.card}>
         <p style={styles.kicker}>{event.type} - Okeechobee Together</p>
-        <h1 style={styles.title}>{event.title}</h1>
+        <h1 style={styles.title}>{event.public_title || event.title}</h1>
         <div style={styles.subtitle}>
           <div
             style={{
@@ -545,7 +549,18 @@ export default function OkeechobeeEventPage() {
                   color: "#86efac",
                 }}
               >
-                Looking for
+                Looking For
+              </p>
+
+              <p
+                style={{
+                  margin: "8px 0 14px",
+                  color: "#d1fae5",
+                  lineHeight: 1.6,
+                  fontSize: 15,
+                }}
+              >
+                If you're able to help with any of the following, we'd love to hear from you.
               </p>
 
               <div style={{ display: "grid", gap: 8 }}>
@@ -558,7 +573,8 @@ export default function OkeechobeeEventPage() {
                       style={{
                         padding: "10px 12px",
                         borderRadius: 14,
-                        background: "rgba(15, 23, 42, 0.65)",
+                        background: "rgba(255,255,255,0.05)",
+                        borderLeft: "4px solid #22c55e",
                         color: "#f8fafc",
                         lineHeight: 1.45,
                       }}
@@ -892,6 +908,9 @@ const styles: Record<string, React.CSSProperties> = {
     marginTop: 18,
   },
 };
+
+
+
 
 
 
