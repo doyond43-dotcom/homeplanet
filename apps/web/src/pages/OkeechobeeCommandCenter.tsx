@@ -1,16 +1,20 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
 export default function OkeechobeeCommandCenter() {
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [workingSlug, setWorkingSlug] = useState<string | null>(null);
+  const [notice, setNotice] = useState("");
 
   useEffect(() => {
     loadEvents();
   }, []);
 
   async function loadEvents() {
+    setLoading(true);
+
     const { data, error } = await supabase
       .from("okeechobee_events")
       .select("*")
@@ -18,6 +22,7 @@ export default function OkeechobeeCommandCenter() {
 
     if (error) {
       console.error(error);
+      setNotice("Could not load the projects.");
     } else {
       setEvents(data || []);
     }
@@ -25,118 +30,106 @@ export default function OkeechobeeCommandCenter() {
     setLoading(false);
   }
 
-  const totals = useMemo(() => {
-    const activeProjects = events.length;
+  async function changeStatus(event: any, status: string) {
+    if (status === "Archived Test") {
+      const confirmed = window.confirm(
+        `Archive "${event.title}" as a test or unused request?`
+      );
 
-    const totalViews = events.reduce(
-      (sum, event) => sum + (event.views || 0),
-      0
+      if (!confirmed) return;
+    }
+
+    setWorkingSlug(event.slug);
+    setNotice("");
+
+    const { error } = await supabase
+      .from("okeechobee_events")
+      .update({ status })
+      .eq("slug", event.slug);
+
+    if (error) {
+      console.error(error);
+      setNotice("The status could not be updated.");
+      setWorkingSlug(null);
+      return;
+    }
+
+    setEvents((current) =>
+      current.map((item) =>
+        item.slug === event.slug ? { ...item, status } : item
+      )
     );
 
-    const totalShares = events.reduce(
-      (sum, event) => sum + (event.shares || 0),
-      0
-    );
+    if (status === "Active") {
+      setNotice(`"${event.title}" is now active and ready to share.`);
+    } else if (status === "Pending Review") {
+      setNotice(`"${event.title}" has been paused.`);
+    } else {
+      setNotice(`"${event.title}" has been archived.`);
+    }
 
-    const totalHelpers = events.reduce((sum, event) => {
-      const helpers = (event.timeline || []).filter((item: any) =>
-        String(item.label || "").toLowerCase().includes("joined")
-      ).length;
+    setWorkingSlug(null);
+  }
 
-      return sum + helpers;
-    }, 0);
+  async function copyPublicLink(event: any) {
+    const publicUrl = `${window.location.origin}/planet/okeechobee/event/${event.slug}`;
 
-
-    const needsAttention = events.filter((event) => {
-      const helpers = (event.timeline || []).filter((item: any) =>
-        String(item.label || "").toLowerCase().includes("joined")
-      ).length;
-
-      return helpers === 0;
-    }).length;
-
-    const strongResponse = events.filter((event) => {
-      const views = event.views || 0;
-
-      const helpers = (event.timeline || []).filter((item: any) =>
-        String(item.label || "").toLowerCase().includes("joined")
-      ).length;
-
-      if (!views) return false;
-
-      return (helpers / views) * 100 >= 20;
-    }).length;
-
-    const moderateResponse =
-      activeProjects - needsAttention - strongResponse;
-
-    return {
-      activeProjects,
-      totalViews,
-      totalShares,
-      totalHelpers,
-      needsAttention,
-      moderateResponse,
-      strongResponse,
-    };
-  }, [events]);
+    try {
+      await navigator.clipboard.writeText(publicUrl);
+      setNotice(`Public link copied for "${event.title}".`);
+    } catch (error) {
+      console.error(error);
+      window.prompt("Copy this public link:", publicUrl);
+    }
+  }
 
   function helperCount(event: any) {
     return (event.timeline || []).filter((item: any) =>
-      String(item.label || "").toLowerCase().includes("joined")
+      String(item.label || "").toLowerCase().includes(" joined as ")
     ).length;
   }
 
-  function responseRate(event: any) {
-    const views = event.views || 0;
-    const helpers = helperCount(event);
+  const pendingEvents = useMemo(
+    () =>
+      events.filter(
+        (event) =>
+          String(event.status || "").toLowerCase() === "pending review"
+      ),
+    [events]
+  );
 
-    if (!views) return 0;
+  const activeEvents = useMemo(
+    () =>
+      events.filter(
+        (event) => String(event.status || "").toLowerCase() === "active"
+      ),
+    [events]
+  );
 
-    return Number(((helpers / views) * 100).toFixed(1));
-  }
-
-  function projectNeeds(event: any) {
-    const title = String(event.title || "").toLowerCase();
-
-    if (title.includes("recovery")) {
-      return [
-        "Wheelchair Ramp",
-        "Electrician",
-        "Transportation",
-        "Bathroom Vanity"
-      ];
-    }
-
-    if (title.includes("trailer")) {
-      return [
-        "Pickup Truck",
-        "Loading Assistance"
-      ];
-    }
-
-    if (title.includes("fence")) {
-      return [
-        "Fence Loading Help"
-      ];
-    }
-
-    return [];
-  }
-
-  function responseLabel(event: any) {
-    const rate = responseRate(event);
-
-    if (rate >= 20) return "🟢 Strong Community Response";
-    if (rate >= 10) return "🟡 Moderate Community Response";
-
-    return "🔴 Needs Attention";
-  }
+  const totals = useMemo(() => {
+    return {
+      activeProjects: activeEvents.length,
+      totalHelpers: activeEvents.reduce(
+        (sum, event) => sum + helperCount(event),
+        0
+      ),
+      totalViews: activeEvents.reduce(
+        (sum, event) => sum + (event.views || 0),
+        0
+      ),
+      totalShares: activeEvents.reduce(
+        (sum, event) => sum + (event.shares || 0),
+        0
+      ),
+    };
+  }, [activeEvents]);
 
   if (loading) {
     return (
       <main style={styles.page}>
-        <h1>Loading Command Center...</h1>
+        <div style={styles.container}>
+          <h1>Loading Community Operations Center...</h1>
+        </div>
       </main>
     );
   }
@@ -144,88 +137,198 @@ export default function OkeechobeeCommandCenter() {
   return (
     <main style={styles.page}>
       <div style={styles.container}>
+        <header style={styles.hero}>
+          <div style={styles.kicker}>Okeechobee Together</div>
 
-        <div style={{
-          background: "#111",
-          border: "1px solid #222",
-          borderRadius: 24,
-          padding: 24,
-          marginBottom: 24,
-        }}>
-          <div style={{
-            color: "#39FF14",
-            fontWeight: 800,
-            textTransform: "uppercase",
-            letterSpacing: 1,
-            marginBottom: 8,
-          }}>
-            Okeechobee Together
+          <h1 style={styles.heroTitle}>Community Operations Center</h1>
+
+          <p style={styles.heroText}>
+            Review new requests, activate real projects, and share the public
+            project page.
+          </p>
+        </header>
+
+        {notice ? <div style={styles.notice}>{notice}</div> : null}
+
+        <section style={styles.section}>
+          <div style={styles.sectionHeading}>
+            <div>
+              <div style={styles.sectionEyebrow}>Incoming requests</div>
+              <h2 style={styles.sectionTitle}>Needs Waiting for Review</h2>
+              <p style={styles.sectionText}>
+                Review these before making them visible as active projects.
+              </p>
+            </div>
+
+            <div style={styles.countBadge}>{pendingEvents.length}</div>
           </div>
 
-          <div style={{
-            fontSize: 42,
-            fontWeight: 900,
-          }}>
-            Community Operations Center
-          </div>
+          {pendingEvents.length === 0 ? (
+            <div style={styles.emptyCard}>
+              No requests are waiting for review.
+            </div>
+          ) : (
+            <div style={styles.cards}>
+              {pendingEvents.map((event) => (
+                <article key={event.id} style={styles.pendingCard}>
+                  <div style={styles.cardTop}>
+                    <div>
+                      <div style={styles.pendingBadge}>Pending Review</div>
+                      <h3 style={styles.cardTitle}>{event.title}</h3>
+                    </div>
+                  </div>
 
-          <div style={{
-            color: "#999",
-            marginTop: 8,
-          }}>
-            Active projects, volunteers, needs, and community response.
-          </div>
-        </div>
+                  <div style={styles.detailsGrid}>
+                    <div style={styles.detailBox}>
+                      <span style={styles.detailLabel}>Location</span>
+                      <span>{event.location || "Not listed"}</span>
+                    </div>
 
-        <h1 style={{ display: "none" }}>
-          Okeechobee Together Command Center
-        </h1>
+                    <div style={styles.detailBox}>
+                      <span style={styles.detailLabel}>Contact</span>
+                      <span>{event.contact || "Not listed"}</span>
+                    </div>
+                  </div>
+
+                  <div style={styles.actions}>
+                    <Link
+                      to={`/planet/okeechobee/event/${event.slug}`}
+                      style={styles.secondaryButton}
+                    >
+                      Review Request
+                    </Link>
+
+                    <button
+                      type="button"
+                      style={styles.primaryButton}
+                      disabled={workingSlug === event.slug}
+                      onClick={() => changeStatus(event, "Active")}
+                    >
+                      {workingSlug === event.slug
+                        ? "Updating..."
+                        : "Make Active"}
+                    </button>
+
+                    <button
+                      type="button"
+                      style={styles.secondaryButton}
+                      onClick={() => copyPublicLink(event)}
+                    >
+                      Copy Public Link
+                    </button>
+
+                    <button
+                      type="button"
+                      style={styles.archiveButton}
+                      disabled={workingSlug === event.slug}
+                      onClick={() => changeStatus(event, "Archived Test")}
+                    >
+                      Archive
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
 
         <div style={styles.statsGrid}>
           <div style={styles.statCard}>
             <strong>Active Projects</strong>
-            <div>{totals.activeProjects}</div>
+            <div style={styles.statNumber}>{totals.activeProjects}</div>
           </div>
 
           <div style={styles.statCard}>
             <strong>Total Helpers</strong>
-            <div>{totals.totalHelpers}</div>
+            <div style={styles.statNumber}>{totals.totalHelpers}</div>
           </div>
 
           <div style={styles.statCard}>
             <strong>Total Views</strong>
-            <div>{totals.totalViews}</div>
+            <div style={styles.statNumber}>{totals.totalViews}</div>
           </div>
 
           <div style={styles.statCard}>
             <strong>Total Shares</strong>
-            <div>{totals.totalShares}</div>
+            <div style={styles.statNumber}>{totals.totalShares}</div>
           </div>
         </div>
 
-        <div style={styles.cards}>
-          {[...events]
-            .sort((a, b) => responseRate(a) - responseRate(b))
-            .map((event) => (
-            <div key={event.id} style={styles.card}>
-              <h2 style={styles.cardTitle}>{event.title}</h2>
-
-              <p>{responseLabel(event)}</p>
-
-              <p>Views: {event.views || 0}</p>
-              <p>Shares: {event.shares || 0}</p>
-              <p>Helpers: {helperCount(event)}</p>
-              <p>Response Rate: {responseRate(event)}%</p>
-
-              <Link
-                to={`/planet/okeechobee/project/${event.slug}`}
-                style={styles.button}
-              >
-                View Project
-              </Link>
+        <section style={styles.section}>
+          <div style={styles.sectionHeading}>
+            <div>
+              <div style={styles.sectionEyebrow}>Public projects</div>
+              <h2 style={styles.sectionTitle}>Active Projects</h2>
+              <p style={styles.sectionText}>
+                These projects are currently visible to the community.
+              </p>
             </div>
-          ))}
-        </div>
+
+            <div style={styles.activeCountBadge}>{activeEvents.length}</div>
+          </div>
+
+          {activeEvents.length === 0 ? (
+            <div style={styles.emptyCard}>There are no active projects.</div>
+          ) : (
+            <div style={styles.cards}>
+              {activeEvents.map((event) => (
+                <article key={event.id} style={styles.activeCard}>
+                  <div style={styles.cardTop}>
+                    <div>
+                      <div style={styles.activeBadge}>Active</div>
+                      <h3 style={styles.cardTitle}>{event.title}</h3>
+                    </div>
+
+                    <div style={styles.helperBadge}>
+                      {helperCount(event)}{" "}
+                      {helperCount(event) === 1 ? "helper" : "helpers"}
+                    </div>
+                  </div>
+
+                  <div style={styles.projectStats}>
+                    <span>{event.views || 0} views</span>
+                    <span>{event.shares || 0} shares</span>
+                  </div>
+
+                  <div style={styles.actions}>
+                    <Link
+                      to={`/planet/okeechobee/project/${event.slug}`}
+                      style={styles.primaryButton}
+                    >
+                      Open Workspace
+                    </Link>
+
+                    <Link
+                      to={`/planet/okeechobee/event/${event.slug}`}
+                      style={styles.secondaryButton}
+                    >
+                      Open Public Page
+                    </Link>
+
+                    <button
+                      type="button"
+                      style={styles.secondaryButton}
+                      onClick={() => copyPublicLink(event)}
+                    >
+                      Copy Public Link
+                    </button>
+
+                    <button
+                      type="button"
+                      style={styles.pauseButton}
+                      disabled={workingSlug === event.slug}
+                      onClick={() => changeStatus(event, "Pending Review")}
+                    >
+                      {workingSlug === event.slug
+                        ? "Updating..."
+                        : "Pause Project"}
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
       </div>
     </main>
   );
@@ -235,58 +338,277 @@ const styles: Record<string, React.CSSProperties> = {
   page: {
     minHeight: "100vh",
     background: "#050505",
-    color: "white",
-    padding: 24,
+    color: "#ffffff",
+    padding: "24px 16px 64px",
     fontFamily: "Inter, sans-serif",
   },
   container: {
     maxWidth: 1200,
     margin: "0 auto",
   },
-  title: {
-    marginBottom: 24,
+  hero: {
+    background: "#111111",
+    border: "1px solid #242424",
+    borderRadius: 24,
+    padding: 24,
+    marginBottom: 20,
+  },
+  kicker: {
+    color: "#39ff14",
+    fontWeight: 900,
+    textTransform: "uppercase",
+    letterSpacing: 1.2,
+    marginBottom: 8,
+  },
+  heroTitle: {
+    margin: 0,
+    fontSize: "clamp(32px, 6vw, 48px)",
+    lineHeight: 1.05,
+  },
+  heroText: {
+    color: "#a3a3a3",
+    margin: "12px 0 0",
+    fontSize: 17,
+    lineHeight: 1.55,
+  },
+  notice: {
+    marginBottom: 20,
+    padding: "14px 16px",
+    borderRadius: 16,
+    background: "rgba(57, 255, 20, 0.1)",
+    border: "1px solid rgba(57, 255, 20, 0.32)",
+    color: "#c8ffbe",
+    fontWeight: 800,
+  },
+  section: {
+    marginBottom: 28,
+  },
+  sectionHeading: {
+    display: "flex",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 16,
+    marginBottom: 14,
+  },
+  sectionEyebrow: {
+    color: "#8b8b8b",
+    fontSize: 12,
+    fontWeight: 900,
+    textTransform: "uppercase",
+    letterSpacing: 1.2,
+    marginBottom: 5,
+  },
+  sectionTitle: {
+    margin: 0,
+    fontSize: "clamp(25px, 5vw, 34px)",
+  },
+  sectionText: {
+    margin: "7px 0 0",
+    color: "#9a9a9a",
+    lineHeight: 1.5,
+  },
+  countBadge: {
+    minWidth: 44,
+    height: 44,
+    display: "grid",
+    placeItems: "center",
+    borderRadius: 999,
+    background: "#facc15",
+    color: "#111111",
+    fontWeight: 900,
+    fontSize: 19,
+  },
+  activeCountBadge: {
+    minWidth: 44,
+    height: 44,
+    display: "grid",
+    placeItems: "center",
+    borderRadius: 999,
+    background: "#39ff14",
+    color: "#050505",
+    fontWeight: 900,
+    fontSize: 19,
   },
   statsGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))",
-    gap: 16,
-    marginBottom: 24,
+    gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+    gap: 12,
+    marginBottom: 30,
   },
   statCard: {
-    background: "#111",
-    border: "1px solid #222",
+    background: "#111111",
+    border: "1px solid #242424",
     borderRadius: 18,
-    padding: 20,
+    padding: 18,
+    color: "#b7b7b7",
+  },
+  statNumber: {
+    marginTop: 8,
+    color: "#ffffff",
+    fontSize: 30,
+    fontWeight: 900,
   },
   cards: {
     display: "grid",
-    gap: 16,
+    gap: 14,
   },
-  card: {
-    background: "#111",
-    border: "1px solid #222",
-    borderRadius: 18,
+  pendingCard: {
+    background: "#111111",
+    border: "1px solid rgba(250, 204, 21, 0.32)",
+    borderRadius: 20,
     padding: 20,
   },
-  cardTitle: {
-    marginTop: 0,
+  activeCard: {
+    background: "#111111",
+    border: "1px solid rgba(57, 255, 20, 0.24)",
+    borderRadius: 20,
+    padding: 20,
   },
-  button: {
-    display: "inline-block",
-    marginTop: 12,
-    padding: "10px 16px",
+  emptyCard: {
+    padding: 22,
+    borderRadius: 18,
+    border: "1px dashed #333333",
+    color: "#999999",
+    background: "#0d0d0d",
+  },
+  cardTop: {
+    display: "flex",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 14,
+    flexWrap: "wrap",
+  },
+  cardTitle: {
+    margin: "10px 0 0",
+    fontSize: 23,
+    lineHeight: 1.25,
+  },
+  pendingBadge: {
+    display: "inline-flex",
+    padding: "6px 10px",
     borderRadius: 999,
-    background: "#39FF14",
-    color: "#050505",
-    textDecoration: "none",
+    background: "rgba(250, 204, 21, 0.14)",
+    color: "#fde047",
+    fontSize: 12,
+    fontWeight: 900,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+  },
+  activeBadge: {
+    display: "inline-flex",
+    padding: "6px 10px",
+    borderRadius: 999,
+    background: "rgba(57, 255, 20, 0.12)",
+    color: "#86ff70",
+    fontSize: 12,
+    fontWeight: 900,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+  },
+  helperBadge: {
+    padding: "8px 11px",
+    borderRadius: 999,
+    background: "#1c1c1c",
+    color: "#d4d4d4",
     fontWeight: 800,
   },
+  detailsGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+    gap: 10,
+    marginTop: 16,
+  },
+  detailBox: {
+    display: "grid",
+    gap: 5,
+    padding: 13,
+    borderRadius: 14,
+    background: "#0b0b0b",
+    border: "1px solid #242424",
+    lineHeight: 1.45,
+    overflowWrap: "anywhere",
+  },
+  detailLabel: {
+    color: "#858585",
+    fontSize: 11,
+    fontWeight: 900,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+  },
+  projectStats: {
+    display: "flex",
+    gap: 14,
+    flexWrap: "wrap",
+    marginTop: 14,
+    color: "#9d9d9d",
+    fontWeight: 700,
+  },
+  actions: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 10,
+    marginTop: 18,
+  },
+  primaryButton: {
+    appearance: "none",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 44,
+    padding: "11px 16px",
+    borderRadius: 999,
+    border: "1px solid #39ff14",
+    background: "#39ff14",
+    color: "#050505",
+    textDecoration: "none",
+    fontWeight: 900,
+    cursor: "pointer",
+    fontSize: 14,
+  },
+  secondaryButton: {
+    appearance: "none",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 44,
+    padding: "11px 16px",
+    borderRadius: 999,
+    border: "1px solid #343434",
+    background: "#181818",
+    color: "#ffffff",
+    textDecoration: "none",
+    fontWeight: 850,
+    cursor: "pointer",
+    fontSize: 14,
+  },
+  pauseButton: {
+    appearance: "none",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 44,
+    padding: "11px 16px",
+    borderRadius: 999,
+    border: "1px solid rgba(250, 204, 21, 0.42)",
+    background: "rgba(250, 204, 21, 0.08)",
+    color: "#fde047",
+    fontWeight: 850,
+    cursor: "pointer",
+    fontSize: 14,
+  },
+  archiveButton: {
+    appearance: "none",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 44,
+    padding: "11px 16px",
+    borderRadius: 999,
+    border: "1px solid rgba(248, 113, 113, 0.35)",
+    background: "rgba(248, 113, 113, 0.07)",
+    color: "#fca5a5",
+    fontWeight: 850,
+    cursor: "pointer",
+    fontSize: 14,
+  },
 };
-
-
-
-
-
-
-
-
