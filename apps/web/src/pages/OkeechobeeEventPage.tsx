@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
@@ -204,7 +204,88 @@ export default function OkeechobeeEventPage() {
   }
 
   if (loading) {
+  
+  const descriptionLines = String(event?.description || "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  function renderDescriptionLine(line: string, index: number) {
+    const clean = line.trim();
+
+    if (clean.toLowerCase() === "request details:") {
+      return (
+        <p
+          key={`description-line-${index}`}
+          style={{
+            margin: "18px 0 8px",
+            fontSize: 13,
+            fontWeight: 900,
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+            color: "#facc15",
+          }}
+        >
+          Request details
+        </p>
+      );
+    }
+
+    const match = clean.match(/^([^:]{1,45}):\s*(.*)$/);
+
+    if (match) {
+      return (
+        <div
+          key={`description-line-${index}`}
+          style={{
+            display: "grid",
+            gap: 6,
+            padding: "12px 14px",
+            borderRadius: 16,
+            background: "rgba(15, 23, 42, 0.72)",
+            border: "1px solid rgba(148, 163, 184, 0.22)",
+          }}
+        >
+          <span
+            style={{
+              fontSize: 12,
+              fontWeight: 900,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              color: "#94a3b8",
+            }}
+          >
+            {match[1]}
+          </span>
+          <span
+            style={{
+              fontSize: 16,
+              lineHeight: 1.55,
+              color: "#f8fafc",
+            }}
+          >
+            {match[2] || "Not listed"}
+          </span>
+        </div>
+      );
+    }
+
     return (
+      <p
+        key={`description-line-${index}`}
+        style={{
+          margin: "0 0 12px",
+          fontSize: 17,
+          lineHeight: 1.75,
+          color: "#e5e7eb",
+        }}
+      >
+        {clean}
+      </p>
+    );
+  }
+
+  return (
       <main style={styles.page}>
         <section style={styles.card}>
           <p style={styles.subtitle}>Loading community post...</p>
@@ -214,7 +295,88 @@ export default function OkeechobeeEventPage() {
   }
 
   if (!event) {
+  
+  const descriptionLines = String(event?.description || "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  function renderDescriptionLine(line: string, index: number) {
+    const clean = line.trim();
+
+    if (clean.toLowerCase() === "request details:") {
+      return (
+        <p
+          key={`description-line-${index}`}
+          style={{
+            margin: "18px 0 8px",
+            fontSize: 13,
+            fontWeight: 900,
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+            color: "#facc15",
+          }}
+        >
+          Request details
+        </p>
+      );
+    }
+
+    const match = clean.match(/^([^:]{1,45}):\s*(.*)$/);
+
+    if (match) {
+      return (
+        <div
+          key={`description-line-${index}`}
+          style={{
+            display: "grid",
+            gap: 6,
+            padding: "12px 14px",
+            borderRadius: 16,
+            background: "rgba(15, 23, 42, 0.72)",
+            border: "1px solid rgba(148, 163, 184, 0.22)",
+          }}
+        >
+          <span
+            style={{
+              fontSize: 12,
+              fontWeight: 900,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              color: "#94a3b8",
+            }}
+          >
+            {match[1]}
+          </span>
+          <span
+            style={{
+              fontSize: 16,
+              lineHeight: 1.55,
+              color: "#f8fafc",
+            }}
+          >
+            {match[2] || "Not listed"}
+          </span>
+        </div>
+      );
+    }
+
     return (
+      <p
+        key={`description-line-${index}`}
+        style={{
+          margin: "0 0 12px",
+          fontSize: 17,
+          lineHeight: 1.75,
+          color: "#e5e7eb",
+        }}
+      >
+        {clean}
+      </p>
+    );
+  }
+
+  return (
       <main style={styles.page}>
         <section style={styles.card}>
           <h1 style={styles.title}>Event not found</h1>
@@ -266,28 +428,159 @@ export default function OkeechobeeEventPage() {
     }
   }
 
+
+  const descriptionLines = String(event?.description || "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  function renderDescriptionLine(line: string, index: number) {
+    const clean = line.trim();
+
+    if (clean.toLowerCase() === "request details:") {
+      return (
+        <p
+          key={`description-line-${index}`}
+          style={{
+            margin: "18px 0 8px",
+            fontSize: 13,
+            fontWeight: 900,
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+            color: "#facc15",
+          }}
+        >
+          Request details
+        </p>
+      );
+    }
+
+    const match = clean.match(/^([^:]{1,45}):\s*(.*)$/);
+
+    if (match) {
+      return (
+        <div
+          key={`description-line-${index}`}
+          style={{
+            display: "grid",
+            gap: 6,
+            padding: "12px 14px",
+            borderRadius: 16,
+            background: "rgba(15, 23, 42, 0.72)",
+            border: "1px solid rgba(148, 163, 184, 0.22)",
+          }}
+        >
+          <span
+            style={{
+              fontSize: 12,
+              fontWeight: 900,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              color: "#94a3b8",
+            }}
+          >
+            {match[1]}
+          </span>
+          <span
+            style={{
+              fontSize: 16,
+              lineHeight: 1.55,
+              color: "#f8fafc",
+            }}
+          >
+            {match[2] || "Not listed"}
+          </span>
+        </div>
+      );
+    }
+
+    return (
+      <p
+        key={`description-line-${index}`}
+        style={{
+          margin: "0 0 12px",
+          fontSize: 17,
+          lineHeight: 1.75,
+          color: "#e5e7eb",
+        }}
+      >
+        {clean}
+      </p>
+    );
+  }
+
   return (
     <main style={styles.page}>
       <section style={styles.card}>
         <p style={styles.kicker}>{event.type} - Okeechobee Together</p>
         <h1 style={styles.title}>{event.title}</h1>
         <div style={styles.subtitle}>
-          <p>{event.description}</p>
+          <div
+            style={{
+              display: "grid",
+              gap: 12,
+              marginTop: 18,
+            }}
+          >
+            {descriptionLines.map((line, index) => renderDescriptionLine(line, index))}
+          </div>
 
           {event.project_needs && Array.isArray(event.project_needs) && event.project_needs.length > 0 ? (
-            <>
-              <p><strong>Looking For:</strong></p>
-
-              <p>
-                {event.project_needs
-                  .map((need: any) => need.text || need)
-                  .filter(Boolean)
-                  .join(" - ")}
+            <div
+              style={{
+                marginTop: 18,
+                padding: "14px",
+                borderRadius: 18,
+                background: "rgba(22, 163, 74, 0.12)",
+                border: "1px solid rgba(34, 197, 94, 0.25)",
+              }}
+            >
+              <p
+                style={{
+                  margin: "0 0 10px",
+                  fontSize: 13,
+                  fontWeight: 900,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  color: "#86efac",
+                }}
+              >
+                Looking for
               </p>
-            </>
+
+              <div style={{ display: "grid", gap: 8 }}>
+                {event.project_needs
+                  .map((need: any) => formatLookingForItem(need))
+                  .filter(Boolean)
+                  .map((need: any, index: number) => (
+                    <div
+                      key={`need-${index}`}
+                      style={{
+                        padding: "10px 12px",
+                        borderRadius: 14,
+                        background: "rgba(15, 23, 42, 0.65)",
+                        color: "#f8fafc",
+                        lineHeight: 1.45,
+                      }}
+                    >
+                      {need}
+                    </div>
+                  ))}
+              </div>
+            </div>
           ) : null}
 
-          <p>A little time. A little care. A big difference.</p>
+          <p
+            style={{
+              margin: "20px 0 0",
+              fontSize: 18,
+              lineHeight: 1.55,
+              fontWeight: 800,
+              color: "#facc15",
+            }}
+          >
+            A little time. A little care. A big difference.
+          </p>
         </div>
 
         <div style={styles.infoBox}>
@@ -599,6 +892,8 @@ const styles: Record<string, React.CSSProperties> = {
     marginTop: 18,
   },
 };
+
+
 
 
 
