@@ -8,21 +8,6 @@ export default function OkeechobeeCommandCenter() {
   const [workingSlug, setWorkingSlug] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
 
-  const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
-  const [draftTitle, setDraftTitle] = useState("");
-  const [draftDescription, setDraftDescription] = useState("");
-
-  function openReview(event: any) {
-    setSelectedEvent(event);
-    setDraftTitle(event.public_title || event.title || "");
-    setDraftDescription(event.public_description || event.description || "");
-  }
-
-  function closeReview() {
-    setSelectedEvent(null);
-  }
-
-
   useEffect(() => {
     loadEvents();
   }, []);
@@ -48,7 +33,7 @@ export default function OkeechobeeCommandCenter() {
   async function changeStatus(event: any, status: string) {
     if (status === "Archived Test") {
       const confirmed = window.confirm(
-        `Archive "${event.public_title || event.title}" as a test or unused request?`
+        `Archive "${event.title}" as a test or unused request?`
       );
 
       if (!confirmed) return;
@@ -76,11 +61,11 @@ export default function OkeechobeeCommandCenter() {
     );
 
     if (status === "Active") {
-      setNotice(`"${event.public_title || event.title}" is now active and ready to share.`);
+      setNotice(`"${event.title}" is now active and ready to share.`);
     } else if (status === "Pending Review") {
-      setNotice(`"${event.public_title || event.title}" has been paused.`);
+      setNotice(`"${event.title}" has been paused.`);
     } else {
-      setNotice(`"${event.public_title || event.title}" has been archived.`);
+      setNotice(`"${event.title}" has been archived.`);
     }
 
     setWorkingSlug(null);
@@ -91,7 +76,7 @@ export default function OkeechobeeCommandCenter() {
 
     try {
       await navigator.clipboard.writeText(publicUrl);
-      setNotice(`Public link copied for "${event.public_title || event.title}".`);
+      setNotice(`Public link copied for "${event.title}".`);
     } catch (error) {
       console.error(error);
       window.prompt("Copy this public link:", publicUrl);
@@ -189,7 +174,7 @@ export default function OkeechobeeCommandCenter() {
                   <div style={styles.cardTop}>
                     <div>
                       <div style={styles.pendingBadge}>Pending Review</div>
-                      <h3 style={styles.cardTitle}>{event.public_title || event.title}</h3>
+                      <h3 style={styles.cardTitle}>{event.title}</h3>
                     </div>
                   </div>
 
@@ -206,13 +191,12 @@ export default function OkeechobeeCommandCenter() {
                   </div>
 
                   <div style={styles.actions}>
-                    <button
-                      type="button"
+                    <Link
+                      to={`/planet/okeechobee/event/${event.slug}`}
                       style={styles.secondaryButton}
-                      onClick={() => openReview(event)}
                     >
                       Review Request
-                    </button>
+                    </Link>
 
                     <button
                       type="button"
@@ -292,7 +276,7 @@ export default function OkeechobeeCommandCenter() {
                   <div style={styles.cardTop}>
                     <div>
                       <div style={styles.activeBadge}>Active</div>
-                      <h3 style={styles.cardTitle}>{event.public_title || event.title}</h3>
+                      <h3 style={styles.cardTitle}>{event.title}</h3>
                     </div>
 
                     <div style={styles.helperBadge}>
@@ -345,107 +329,6 @@ export default function OkeechobeeCommandCenter() {
             </div>
           )}
         </section>
-        {selectedEvent && (
-          <div style={styles.drawerBackdrop} onClick={closeReview}>
-            <aside
-              style={styles.drawer}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h2 style={{ marginTop: 0 }}>Review Request</h2>
-
-              <div style={styles.drawerSection}>
-                <div style={styles.detailLabel}>Resident Request</div>
-                <div style={styles.readOnlyBox}>
-                  <strong>{selectedEvent.title}</strong>
-                  <div style={{ marginTop: 8 }}>
-                    {selectedEvent.description || "No description provided."}
-                  </div>
-                </div>
-              </div>
-
-              <div style={styles.drawerSection}>
-                <div style={styles.detailLabel}>Project Title</div>
-
-                <input
-                  value={draftTitle}
-                  onChange={(e) => setDraftTitle(e.target.value)}
-                  style={styles.input}
-                />
-
-                <div style={{ height: 16 }} />
-
-                <div style={styles.detailLabel}>Project Description</div>
-
-                <textarea
-                  value={draftDescription}
-                  onChange={(e) => setDraftDescription(e.target.value)}
-                  style={styles.textarea}
-                />
-              </div>
-
-              <div style={styles.actions}>
-                <button
-                  style={styles.secondaryButton}
-                  onClick={async () => {
-                    if (!selectedEvent) return;
-
-                    const { error } = await supabase
-                      .from("okeechobee_events")
-                      .update({
-                        public_title: draftTitle,
-                        public_description: draftDescription,
-                      })
-                      .eq("id", selectedEvent.id);
-
-                    if (error) {
-                      alert(error.message);
-                      return;
-                    }
-
-                    await loadEvents();
-                    closeReview();
-                  }}
-                >
-                  Save
-                </button>
-
-                <button
-                  style={styles.primaryButton}
-                  onClick={async () => {
-                    if (!selectedEvent) return;
-
-                    const { error } = await supabase
-                      .from("okeechobee_events")
-                      .update({
-                        public_title: draftTitle,
-                        public_description: draftDescription,
-                        status: "Active",
-                      })
-                      .eq("id", selectedEvent.id);
-
-                    if (error) {
-                      alert(error.message);
-                      return;
-                    }
-
-                    await loadEvents();
-                    closeReview();
-                  }}
-                >
-                  Publish Project
-                </button>
-
-                <button
-                  style={styles.archiveButton}
-                  onClick={closeReview}
-                >
-                  Close
-                </button>
-              </div>
-            </aside>
-          </div>
-        )}
-
       </div>
     </main>
   );
@@ -727,59 +610,5 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 850,
     cursor: "pointer",
     fontSize: 14,
-  },
-
-  drawerBackdrop: {
-    position: "fixed",
-    inset: 0,
-    background: "rgba(0,0,0,.65)",
-    display: "flex",
-    justifyContent: "flex-end",
-    zIndex: 1000,
-  },
-
-  drawer: {
-    width: "min(720px,100%)",
-    height: "100%",
-    overflowY: "auto",
-    background: "#111111",
-    padding: 28,
-    borderLeft: "1px solid #2a2a2a",
-  },
-
-  drawerSection: {
-    marginBottom: 24,
-  },
-
-  readOnlyBox: {
-    background: "#0b0b0b",
-    border: "1px solid #2b2b2b",
-    borderRadius: 14,
-    padding: 16,
-    lineHeight: 1.6,
-  },
-
-  input: {
-    width: "100%",
-    padding: 12,
-    borderRadius: 12,
-    border: "1px solid #333",
-    background: "#0d0d0d",
-    color: "#fff",
-    fontSize: 16,
-    boxSizing: "border-box",
-  },
-
-  textarea: {
-    width: "100%",
-    minHeight: 180,
-    padding: 12,
-    borderRadius: 12,
-    border: "1px solid #333",
-    background: "#0d0d0d",
-    color: "#fff",
-    fontSize: 16,
-    resize: "vertical",
-    boxSizing: "border-box",
   },
 };

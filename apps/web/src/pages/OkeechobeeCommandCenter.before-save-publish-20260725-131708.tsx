@@ -48,7 +48,7 @@ export default function OkeechobeeCommandCenter() {
   async function changeStatus(event: any, status: string) {
     if (status === "Archived Test") {
       const confirmed = window.confirm(
-        `Archive "${event.public_title || event.title}" as a test or unused request?`
+        `Archive "${event.title}" as a test or unused request?`
       );
 
       if (!confirmed) return;
@@ -76,11 +76,11 @@ export default function OkeechobeeCommandCenter() {
     );
 
     if (status === "Active") {
-      setNotice(`"${event.public_title || event.title}" is now active and ready to share.`);
+      setNotice(`"${event.title}" is now active and ready to share.`);
     } else if (status === "Pending Review") {
-      setNotice(`"${event.public_title || event.title}" has been paused.`);
+      setNotice(`"${event.title}" has been paused.`);
     } else {
-      setNotice(`"${event.public_title || event.title}" has been archived.`);
+      setNotice(`"${event.title}" has been archived.`);
     }
 
     setWorkingSlug(null);
@@ -91,7 +91,7 @@ export default function OkeechobeeCommandCenter() {
 
     try {
       await navigator.clipboard.writeText(publicUrl);
-      setNotice(`Public link copied for "${event.public_title || event.title}".`);
+      setNotice(`Public link copied for "${event.title}".`);
     } catch (error) {
       console.error(error);
       window.prompt("Copy this public link:", publicUrl);
@@ -189,7 +189,7 @@ export default function OkeechobeeCommandCenter() {
                   <div style={styles.cardTop}>
                     <div>
                       <div style={styles.pendingBadge}>Pending Review</div>
-                      <h3 style={styles.cardTitle}>{event.public_title || event.title}</h3>
+                      <h3 style={styles.cardTitle}>{event.title}</h3>
                     </div>
                   </div>
 
@@ -292,7 +292,7 @@ export default function OkeechobeeCommandCenter() {
                   <div style={styles.cardTop}>
                     <div>
                       <div style={styles.activeBadge}>Active</div>
-                      <h3 style={styles.cardTitle}>{event.public_title || event.title}</h3>
+                      <h3 style={styles.cardTitle}>{event.title}</h3>
                     </div>
 
                     <div style={styles.helperBadge}>
@@ -384,54 +384,11 @@ export default function OkeechobeeCommandCenter() {
               </div>
 
               <div style={styles.actions}>
-                <button
-                  style={styles.secondaryButton}
-                  onClick={async () => {
-                    if (!selectedEvent) return;
-
-                    const { error } = await supabase
-                      .from("okeechobee_events")
-                      .update({
-                        public_title: draftTitle,
-                        public_description: draftDescription,
-                      })
-                      .eq("id", selectedEvent.id);
-
-                    if (error) {
-                      alert(error.message);
-                      return;
-                    }
-
-                    await loadEvents();
-                    closeReview();
-                  }}
-                >
+                <button style={styles.secondaryButton}>
                   Save
                 </button>
 
-                <button
-                  style={styles.primaryButton}
-                  onClick={async () => {
-                    if (!selectedEvent) return;
-
-                    const { error } = await supabase
-                      .from("okeechobee_events")
-                      .update({
-                        public_title: draftTitle,
-                        public_description: draftDescription,
-                        status: "Active",
-                      })
-                      .eq("id", selectedEvent.id);
-
-                    if (error) {
-                      alert(error.message);
-                      return;
-                    }
-
-                    await loadEvents();
-                    closeReview();
-                  }}
-                >
+                <button style={styles.primaryButton}>
                   Publish Project
                 </button>
 
