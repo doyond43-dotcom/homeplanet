@@ -538,7 +538,7 @@ function PetTagLanding() {
                     className="h-[440px] w-full object-cover object-center sm:h-[520px]"
                   />
 
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#07111f]/70 via-transparent to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#07111f]/45 via-transparent to-transparent" />
 
                   <div className="absolute bottom-5 left-5 right-5 rounded-[20px] border border-white/10 bg-[#07111f]/88 p-4 backdrop-blur-md">
                     <div className="flex items-center justify-between gap-4">
