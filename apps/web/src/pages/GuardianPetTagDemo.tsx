@@ -1,6 +1,5 @@
-import { type ReactNode, useMemo, useState } from "react";
+﻿import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import HomePlanetFooter from "../components/HomePlanetFooter";
 
 type PetStatus = "missing" | "safe" | "traveling";
 
@@ -15,53 +14,29 @@ type DemoPet = {
   ownerName: string;
   callNumber: string;
   textNumber: string;
-  emergencyNote: string;
   temperament: string;
   lastSeen: string;
   rewardText: string;
   status: PetStatus;
 };
 
+type FinderSituation =
+  | "safe-with-me"
+  | "seen-nearby"
+  | "appears-hurt"
+  | "";
+
 type FinderFormState = {
+  situation: FinderSituation;
   finderName: string;
   callbackNumber: string;
   foundLocation: string;
   message: string;
 };
 
-type RadarEvent = {
-  time: string;
-  title: string;
-  detail: string;
-};
-
-type CareEventType =
-  | "fed"
-  | "water"
-  | "walked"
-  | "potty"
-  | "medication"
-  | "groomed"
-  | "vet"
-  | "service";
-
-type CareTimelineEvent = {
-  id: string;
-  time: string;
-  title: string;
-  detail: string;
-  type: CareEventType;
-  proof?: string;
-};
-
 const PET_BASE_PATH = "/planet/guardian-pet";
 
-const FIRST_PET_SETUP = 25;
-const FIRST_PET_MONTHLY = 5;
-const EXTRA_PET_SETUP = 15;
-const EXTRA_PET_MONTHLY = 3;
-
-const DEMO_PET: DemoPet = {
+const BELLA: DemoPet = {
   id: "bella-demo",
   name: "Bella",
   type: "Dog",
@@ -72,8 +47,6 @@ const DEMO_PET: DemoPet = {
   ownerName: "Dan",
   callNumber: "863-532-0683",
   textNumber: "863-532-0683",
-  emergencyNote:
-    "If Bella is safe with you, please tap Report Found Location so we can respond quickly.",
   temperament:
     "Friendly and gentle. May be nervous if scared. Responds to Bella. Loves treats and a calm voice.",
   lastSeen: "Near Taylor Creek / neighborhood park area",
@@ -81,7 +54,7 @@ const DEMO_PET: DemoPet = {
   status: "missing",
 };
 
-const VAMP_PET: DemoPet = {
+const VAMP: DemoPet = {
   id: "vamp",
   name: "Vamp",
   type: "Cat",
@@ -89,98 +62,18 @@ const VAMP_PET: DemoPet = {
   age: "3 years old",
   color: "Black",
   photoUrl: "/images/guardian/vamp.jpg",
-  ownerName: "HAYLEY",
+  ownerName: "Hayley",
   callNumber: "903-246-6394",
   textNumber: "903-246-6394",
-  emergencyNote:
-    "If Vamp is safe with you, please tap Report Found Location so we can respond quickly.",
   temperament:
-    "Friendly and gentle. May be nervous if scared. Responds to Vamp. Loves treats and a calm voice.",
+    "Friendly and gentle. May be nervous if scared. Responds to Vamp. Approach slowly and calmly.",
   lastSeen: "Near Taylor Creek / neighborhood park area",
   rewardText: "Reward available upon safe return.",
   status: "missing",
 };
 
-const RADAR_EVENTS: RadarEvent[] = [
-  {
-    time: "8:42 AM",
-    title: "Vamp marked missing",
-    detail: "Owner activated Planet Guardian Rescue Radar.",
-  },
-  {
-    time: "8:55 AM",
-    title: "Tag scanned near Taylor Creek",
-    detail: "The public rescue page was opened from the collar tag.",
-  },
-  {
-    time: "9:02 AM",
-    title: "Finder opened rescue page",
-    detail: "Immediate actions became available: call, text, or report found.",
-  },
-  {
-    time: "9:04 AM",
-    title: "Finder report started",
-    detail: "Location and notes can now flow into the rescue timeline.",
-  },
-];
-
-const Vamp_CARE_TIMELINE: CareTimelineEvent[] = [
-  {
-    id: "care-1",
-    time: "6:52 AM",
-    title: "Breakfast logged",
-    detail: "Vamp finished morning meal. Appetite looked normal.",
-    type: "fed",
-    proof: "Bowl check captured",
-  },
-  {
-    id: "care-2",
-    time: "7:08 AM",
-    title: "Water refreshed",
-    detail: "Fresh water added and bowl level confirmed.",
-    type: "water",
-  },
-  {
-    id: "care-3",
-    time: "7:24 AM",
-    title: "Morning potty break",
-    detail: "Bathroom break completed before neighborhood walk.",
-    type: "potty",
-  },
-  {
-    id: "care-4",
-    time: "7:42 AM",
-    title: "Walk completed",
-    detail: "18-minute walk logged. Calm pace. No issues noted.",
-    type: "walked",
-    proof: "Walk route / duration ready",
-  },
-  {
-    id: "care-5",
-    time: "1:20 PM",
-    title: "Medication confirmed",
-    detail: "Midday dose recorded by caregiver.",
-    type: "medication",
-  },
-  {
-    id: "care-6",
-    time: "4:10 PM",
-    title: "Service visit recorded",
-    detail:
-      "Dog walker / pet service demo: service provider scanned the tag, opened Vamp's timeline, and logged the visit.",
-    type: "service",
-    proof: "Presence-ready service event",
-  },
-  {
-    id: "care-7",
-    time: "5:35 PM",
-    title: "Vet follow-up note",
-    detail: "Reminder added for checkup and activity monitoring.",
-    type: "vet",
-  },
-];
-
 const INITIAL_FINDER_FORM: FinderFormState = {
+  situation: "",
   finderName: "",
   callbackNumber: "",
   foundLocation: "",
@@ -191,46 +84,8 @@ function cn(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
 }
 
-function currency(value: number) {
-  return `$${value}`;
-}
-
-function getPricing(petCount: number) {
-  const extraPets = Math.max(0, petCount - 1);
-  return {
-    petCount,
-    extraPets,
-    setupTotal: FIRST_PET_SETUP + extraPets * EXTRA_PET_SETUP,
-    monthlyTotal: FIRST_PET_MONTHLY + extraPets * EXTRA_PET_MONTHLY,
-  };
-}
-
-function getStatusPill(status: PetStatus) {
-  switch (status) {
-    case "missing":
-      return {
-        label: "Missing",
-        classes:
-          "border-rose-400/40 bg-rose-500/15 text-rose-200 shadow-[0_0_28px_rgba(244,63,94,0.18)]",
-      };
-    case "safe":
-      return {
-        label: "Safe at Home",
-        classes:
-          "border-emerald-400/40 bg-emerald-500/15 text-emerald-200 shadow-[0_0_28px_rgba(16,185,129,0.18)]",
-      };
-    case "traveling":
-      return {
-        label: "Traveling",
-        classes:
-          "border-sky-400/40 bg-sky-500/15 text-sky-200 shadow-[0_0_28px_rgba(56,189,248,0.18)]",
-      };
-    default:
-      return {
-        label: "Unknown",
-        classes: "border-white/20 bg-white/10 text-white",
-      };
-  }
+function buildTelHref(number: string) {
+  return `tel:${number.replace(/\D/g, "")}`;
 }
 
 function buildSmsHref(number: string, body: string) {
@@ -238,703 +93,1488 @@ function buildSmsHref(number: string, body: string) {
   return `sms:${cleanNumber}&body=${encodeURIComponent(body)}`;
 }
 
-function buildTelHref(number: string) {
-  const cleanNumber = number.replace(/\D/g, "");
-  return `tel:${cleanNumber}`;
-}
-
-function MetricCard({ value, label }: { value: string; label: string }) {
+function PetTagShell({
+  children,
+  compact = false,
+}: {
+  children: ReactNode;
+  compact?: boolean;
+}) {
   return (
-    <div className="rounded-[24px] border border-cyan-300/12 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.08),transparent_42%),rgba(255,255,255,0.045)] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-      <div className="text-2xl font-semibold text-white">{value}</div>
-      <div className="mt-1 text-sm text-white/65">{label}</div>
+    <div className="min-h-screen bg-[#07111f] text-white">
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute left-[-180px] top-[40px] h-[430px] w-[430px] rounded-full bg-cyan-400/[0.07] blur-3xl" />
+        <div className="absolute right-[-180px] top-[42%] h-[380px] w-[380px] rounded-full bg-amber-200/[0.04] blur-3xl" />
+      </div>
+
+      <div className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 sm:px-6 lg:px-8">
+<main className={compact ? "flex-1 pt-6 sm:pt-8" : "flex-1"}>{children}</main>
+      </div>
+    </div>
+  );
+}
+function PetModePreview({
+  pet,
+  mode,
+}: {
+  pet: DemoPet;
+  mode: "normal" | "lost";
+}) {
+  const lost = mode === "lost";
+
+  return (
+    <div
+      className={cn(
+        "overflow-hidden rounded-[28px]",
+        lost
+          ? "bg-[#17101a]"
+          : "bg-[#0b1820]"
+      )}
+    >
+      <div className="relative aspect-[4/3] overflow-hidden">
+        <img
+          src={pet.photoUrl}
+          alt={`${pet.name} ${lost ? "lost" : "normal"} Pet Tag example`}
+          className="h-full w-full object-cover"
+        />
+
+        <div
+          className={cn(
+            "absolute inset-0 bg-gradient-to-t",
+            lost
+              ? "from-[#17101a] via-transparent to-transparent"
+              : "from-[#0b1820] via-transparent to-transparent"
+          )}
+        />
+
+        <div className="absolute inset-x-0 bottom-0 p-5">
+          <div
+            className={cn(
+              "inline-flex rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em]",
+              lost
+                ? "bg-rose-300 text-[#281017]"
+                : "bg-emerald-300 text-[#062018]"
+            )}
+          >
+            {lost ? "Missing" : "Safe"}
+          </div>
+
+          <h3 className="mt-3 text-4xl font-bold tracking-tight text-white">
+            {pet.name}
+          </h3>
+
+          <p className="mt-1 text-sm text-white/72">
+            {pet.breed} · {pet.color}
+          </p>
+        </div>
+      </div>
+
+      <div className="p-5 sm:p-6">
+        {lost ? (
+          <>
+            <h4 className="text-xl font-bold text-white">
+              {pet.name} is missing.
+            </h4>
+
+            <p className="mt-2 text-sm leading-6 text-white/65">
+              Last seen near Taylor Creek. Please contact the owner or send a
+              quick found update.
+            </p>
+
+            <div className="mt-5 grid gap-2">
+              <div className="rounded-2xl bg-emerald-300 px-4 py-3.5 text-center text-sm font-bold text-[#07111f]">
+                Call Owner
+              </div>
+
+              <div className="rounded-2xl bg-sky-300 px-4 py-3.5 text-center text-sm font-bold text-[#07111f]">
+                Text Owner
+              </div>
+
+              <Link
+                to={`${PET_BASE_PATH}/found/${pet.id}`}
+                className="rounded-2xl bg-white/[0.08] px-4 py-3.5 text-center text-sm font-bold text-white"
+              >
+                I Found {pet.name}
+              </Link>
+            </div>
+          </>
+        ) : (
+          <>
+            <h4 className="text-xl font-bold text-white">
+              You found {pet.name}?
+            </h4>
+
+            <p className="mt-2 text-sm leading-6 text-white/65">
+              Thanks for checking the tag. Contact the owner if {pet.name}
+              appears to be away from home.
+            </p>
+
+            <div className="mt-5 grid gap-2">
+              <div className="rounded-2xl bg-white/[0.08] px-4 py-3.5">
+                <div className="text-xs font-bold uppercase tracking-[0.15em] text-white/42">
+                  Owner
+                </div>
+                <div className="mt-1 font-semibold text-white">
+                  Dan
+                </div>
+              </div>
+
+              <div className="rounded-2xl bg-white/[0.08] px-4 py-3.5">
+                <div className="text-xs font-bold uppercase tracking-[0.15em] text-white/42">
+                  About Bella
+                </div>
+                <div className="mt-1 text-sm leading-6 text-white/72">
+                  Friendly, gentle, and responds to Bella.
+                </div>
+              </div>
+
+              <div className="rounded-2xl bg-cyan-300 px-4 py-3.5 text-center text-sm font-bold text-[#07111f]">
+                Contact Bella's Family
+              </div>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }
 
-function InfoPanel({ title, body }: { title: string; body: string }) {
-  return (
-    <div className="rounded-[24px] border border-cyan-300/12 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.08),transparent_42%),rgba(255,255,255,0.045)] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200">
-        {title}
-      </p>
-      <p className="mt-2 text-sm leading-6 text-white/78">{body}</p>
-    </div>
-  );
-}
-
-function StepCard({
-  index,
+function StepItem({
+  number,
   title,
   body,
 }: {
-  index: string;
+  number: string;
   title: string;
   body: string;
 }) {
   return (
-    <div className="rounded-[26px] border border-cyan-300/12 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.07),transparent_42%),rgba(255,255,255,0.045)] p-5">
-      <div className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200">
-        {index}
+    <div className="relative pt-5">
+      <div className="text-xs font-black tracking-[0.2em] text-cyan-200">
+        {number}
       </div>
-      <h4 className="mt-3 text-lg font-semibold text-white">{title}</h4>
-      <p className="mt-2 text-sm leading-6 text-white/70">{body}</p>
+      <h3 className="mt-4 text-2xl font-bold tracking-tight text-white">
+        {title}
+      </h3>
+      <p className="mt-3 max-w-sm text-sm leading-7 text-white/60 sm:text-base">
+        {body}
+      </p>
     </div>
   );
 }
-
-function RadarPanel({
-  title = "Neighborhood Rescue Radar",
-  subtitle = "Each scan and report helps build a clearer recovery timeline.",
-  events,
-}: {
-  title?: string;
-  subtitle?: string;
-  events: RadarEvent[];
-}) {
+function PetTagLanding() {
   return (
-    <div className="rounded-[32px] border border-cyan-300/15 bg-white/6 p-6 backdrop-blur-xl sm:p-8">
-      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200">
-        {title}
-      </p>
-      <p className="mt-3 text-sm leading-6 text-white/72">{subtitle}</p>
-
-      <div className="mt-6 space-y-4">
-        {events.map((event, index) => (
-          <div
-            key={`${event.time}-${event.title}-${index}`}
-            className="flex gap-4 rounded-[22px] border border-cyan-300/12 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.08),transparent_42%),rgba(255,255,255,0.045)] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
-          >
-            <div className="flex flex-col items-center">
-              <div className="mt-1 h-3 w-3 rounded-full bg-cyan-300 shadow-[0_0_18px_rgba(34,211,238,0.5)]" />
-              {index < events.length - 1 ? (
-                <div className="mt-2 h-full min-h-[32px] w-px bg-white/12" />
-              ) : null}
-            </div>
-
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="rounded-full border border-white/12 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80">
-                  {event.time}
-                </span>
-                <h4 className="text-sm font-semibold text-white sm:text-base">
-                  {event.title}
-                </h4>
-              </div>
-              <p className="mt-2 text-sm leading-6 text-white/68">
-                {event.detail}
-              </p>
+    <div>
+      {/* =====================================================
+          HERO
+          ===================================================== */}
+      <section className="pb-14 pt-8 text-center sm:pb-18 sm:pt-10">
+        <div className="mx-auto max-w-5xl">
+          <div className="flex justify-center">
+            <div className="inline-flex items-center justify-center">
+              <span className="relative inline-flex items-center rounded-full border border-cyan-300/30 bg-cyan-300/[0.07] py-2 pl-5 pr-4 text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">
+                <span className="absolute left-2.5 h-1.5 w-1.5 rounded-full border border-cyan-200/60" />
+                Pet Tag
+              </span>
             </div>
           </div>
-        ))}
+
+          <h1 className="mx-auto mt-5 max-w-4xl text-6xl font-bold leading-[0.95] tracking-[-0.05em] text-white sm:text-7xl lg:text-8xl">
+            Help your pet
+            <span className="block text-cyan-300">
+              get home faster.
+            </span>
+          </h1>
+
+          <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-white/72 sm:text-xl">
+            If your pet ever gets out, someone can scan the tag and know exactly
+            what to do.
+          </p>
+
+          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+            <Link
+              to={`${PET_BASE_PATH}/pet/bella-demo`}
+              className="rounded-2xl bg-cyan-300 px-8 py-4 text-center text-base font-bold text-[#07111f] transition hover:bg-cyan-200"
+            >
+              See Bella&apos;s Live Tag
+            </Link>
+
+            <Link
+              to="/planet/guardian-join?item=pet-tag&pets=1"
+              className="rounded-2xl border border-white/16 bg-white/[0.035] px-8 py-4 text-center text-base font-bold text-white transition hover:bg-white/[0.07]"
+            >
+              Get a Pet Tag
+            </Link>
+          </div>
+
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            {[
+              "No app needed",
+              "Scan to help",
+              "Reach the owner fast",
+            ].map((item) => (
+              <span
+                key={item}
+                className="rounded-full border border-white/[0.09] bg-white/[0.035] px-4 py-2 text-sm font-semibold text-white/68"
+              >
+                {item}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className="mx-auto mt-10 max-w-5xl overflow-hidden rounded-[30px] bg-[#122130] shadow-[0_22px_70px_rgba(0,0,0,0.22)]">
+          <div className="relative h-[390px] sm:h-[510px] lg:h-[600px]">
+            <img
+              src="/images/bella-demo.jpg"
+              alt="Bella wearing her HomePlanet Pet Tag"
+              className="h-full w-full object-cover object-center"
+            />
+
+            <div className="absolute inset-0 bg-gradient-to-t from-[#07111f]/18 via-transparent to-transparent" />
+
+            <div className="absolute bottom-5 left-5 rounded-full bg-[#07111f]/78 px-4 py-2 text-sm font-bold text-white backdrop-blur-md sm:bottom-7 sm:left-7">
+              One tag. One scan. A clear way to help.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* =====================================================
+          REAL SCAN FLOW
+          ===================================================== */}
+      <section
+        id="see-it-work"
+        className="border-t border-white/[0.07] py-16 sm:py-20"
+      >
+        <div className="mx-auto max-w-5xl">
+          <div className="text-center">
+            <div className="text-sm font-bold uppercase tracking-[0.22em] text-cyan-200">
+              See how it works
+            </div>
+
+            <h2 className="mx-auto mt-4 max-w-4xl text-4xl font-bold leading-[1.02] tracking-[-0.04em] text-white sm:text-5xl lg:text-6xl">
+              If someone finds your pet,
+              <span className="block text-cyan-300">
+                this is all they do.
+              </span>
+            </h2>
+
+            <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-white/65">
+              They see the tag, scan it with their phone, and your pet&apos;s page opens.
+            </p>
+          </div>
+
+          <div className="mt-10 overflow-hidden rounded-[30px] border border-white/[0.08] bg-[#b8b2a7] p-5 text-[#0b1626] sm:p-8 lg:p-10">
+            <div className="grid gap-8 lg:grid-cols-3 lg:gap-6">
+
+              <div>
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-cyan-700 text-sm font-bold text-white">
+                    1
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold">
+                      They see the tag.
+                    </h3>
+                    <p className="mt-1 text-sm text-slate-600">
+                      Your pet wears one simple QR tag.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="overflow-hidden rounded-[24px] bg-slate-200">
+                  <img
+                    src="/images/bella-demo.jpg"
+                    alt="Bella wearing her pet tag"
+                    className="h-[330px] w-full object-cover object-[50%_72%]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-cyan-700 text-sm font-bold text-white">
+                    2
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold">
+                      They scan it.
+                    </h3>
+                    <p className="mt-1 text-sm text-slate-600">
+                      They use the camera already on their phone.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex h-[330px] items-center justify-center overflow-hidden rounded-[24px] bg-[#aeb9b7] p-6">
+                  <div className="w-full max-w-[240px] rounded-[30px] border-[8px] border-[#101820] bg-[#101820] p-3 shadow-xl">
+                    <div className="rounded-[20px] bg-[#07111f] p-3">
+                      <div className="mb-3 text-center text-[10px] font-bold uppercase tracking-[0.18em] text-cyan-200">
+                        Camera
+                      </div>
+
+                      <div className="relative overflow-hidden rounded-[16px] bg-slate-700">
+                        <img
+                          src="/images/bella-demo.jpg"
+                          alt="Phone camera aimed at Bella's pet tag"
+                          className="h-[210px] w-full object-cover object-[50%_78%]"
+                        />
+
+                        <div className="absolute inset-x-[25%] bottom-[18%] top-[48%] rounded-xl border-4 border-cyan-300" />
+                      </div>
+
+                      <div className="mx-auto mt-3 h-10 w-10 rounded-full border-4 border-white/80" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-cyan-700 text-sm font-bold text-white">
+                    3
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold">
+                      Your pet&apos;s page opens.
+                    </h3>
+                    <p className="mt-1 text-sm text-slate-600">
+                      They see your pet&apos;s information and what to do next.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="rounded-[24px] bg-[#07111f] p-5 text-white shadow-xl">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-3xl font-bold">
+                          Bella
+                        </h3>
+                        <span className="rounded-full border border-red-400/50 bg-red-500/10 px-3 py-1 text-xs font-bold text-red-300">
+                          MISSING
+                        </span>
+                      </div>
+
+                      <p className="mt-2 text-sm text-white/60">
+                        Golden Retriever · 3 years
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 space-y-3">
+                    <a
+                      href="tel:8635320683"
+                      className="block rounded-xl bg-emerald-400 px-4 py-3 text-center text-sm font-bold text-[#07111f]"
+                    >
+                      Call Owner
+                    </a>
+
+                    <a
+                      href="sms:8635320683"
+                      className="block rounded-xl bg-sky-400 px-4 py-3 text-center text-sm font-bold text-[#07111f]"
+                    >
+                      Text Owner
+                    </a>
+
+                    <Link
+                      to={`${PET_BASE_PATH}/found/bella-demo`}
+                      className="block rounded-xl bg-white px-4 py-3 text-center text-sm font-bold text-[#07111f]"
+                    >
+                      I Found Bella
+                    </Link>
+                  </div>
+
+                  <div className="mt-5 space-y-4 text-sm">
+                    <div>
+                      <div className="font-bold text-cyan-300">
+                        Last seen
+                      </div>
+                      <div className="mt-1 text-white/72">
+                        Taylor Creek neighborhood area
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="font-bold text-cyan-300">
+                        Temperament
+                      </div>
+                      <div className="mt-1 text-white/72">
+                        Friendly and gentle. May be nervous if scared.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <div className="mt-10 flex flex-col items-center justify-between gap-5 border-t border-slate-300 pt-7 text-center sm:flex-row sm:text-left">
+              <div>
+                <div className="text-xl font-bold">
+                  No app. No account. Just scan and help.
+                </div>
+                <div className="mt-1 text-sm text-slate-600">
+                  The finder gets the information they need and a clear way to reach the owner.
+                </div>
+              </div>
+
+              <Link
+                to={`${PET_BASE_PATH}/pet/bella-demo`}
+                className="inline-flex rounded-2xl bg-cyan-700 px-7 py-4 text-base font-bold text-white transition hover:bg-cyan-800"
+              >
+                Try Bella&apos;s Live Tag
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* =====================================================
+          THE ACTUAL PRODUCT
+          ===================================================== */}
+      <section className="border-t border-white/[0.07] py-16 sm:py-20">
+        <div className="mx-auto max-w-5xl">
+          <div className="grid items-center gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-14">
+
+            {/* PRODUCT VISUAL */}
+            <div className="relative">
+              <div className="overflow-hidden rounded-[30px] border border-white/[0.08] bg-[#101e2b] p-4">
+                <div className="relative overflow-hidden rounded-[24px]">
+                  <img
+                    src="/images/bella-demo.jpg"
+                    alt="Bella wearing her HomePlanet Pet Tag"
+                    className="h-[440px] w-full object-cover object-center sm:h-[520px]"
+                  />
+
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#07111f]/70 via-transparent to-transparent" />
+
+                  <div className="absolute bottom-5 left-5 right-5 rounded-[20px] border border-white/10 bg-[#07111f]/88 p-4 backdrop-blur-md">
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <div className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-200">
+                          Bella&apos;s Pet Tag
+                        </div>
+                        <div className="mt-1 text-lg font-bold text-white">
+                          Active and ready
+                        </div>
+                      </div>
+
+                      <span className="rounded-full bg-emerald-400/15 px-3 py-2 text-xs font-bold text-emerald-300">
+                        LIVE
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* PRODUCT STORY */}
+            <div>
+              <div className="text-sm font-bold uppercase tracking-[0.22em] text-cyan-200">
+                Bella&apos;s tag is connected
+              </div>
+
+              <h2 className="mt-4 text-4xl font-bold leading-[1.03] tracking-[-0.04em] text-white sm:text-5xl">
+                One small tag.
+                <span className="block text-cyan-300">
+                  A live page for Bella.
+                </span>
+              </h2>
+
+              <p className="mt-6 max-w-xl text-lg leading-8 text-white/65">
+                Bella&apos;s tag connects directly to her live page. If she ever gets
+                out, the person who finds her has one clear place to see who she is
+                and what to do next.
+              </p>
+
+              <div className="mt-8 divide-y divide-white/[0.08] border-y border-white/[0.08]">
+
+                <div className="grid gap-2 py-5 sm:grid-cols-[170px_1fr] sm:gap-6">
+                  <div className="font-bold text-white">
+                    About Bella
+                  </div>
+                  <div className="text-white/58">
+                    Photo, name, breed, age, temperament, and important safety information.
+                  </div>
+                </div>
+
+                <div className="grid gap-2 py-5 sm:grid-cols-[170px_1fr] sm:gap-6">
+                  <div className="font-bold text-white">
+                    Reach the owner
+                  </div>
+                  <div className="text-white/58">
+                    Give the finder a clear way to call or text you immediately.
+                  </div>
+                </div>
+
+                <div className="grid gap-2 py-5 sm:grid-cols-[170px_1fr] sm:gap-6">
+                  <div className="font-bold text-white">
+                    Lost Mode
+                  </div>
+                  <div className="text-white/58">
+                    Show last-seen details, approach guidance, and the information that matters most.
+                  </div>
+                </div>
+
+                <div className="grid gap-2 py-5 sm:grid-cols-[170px_1fr] sm:gap-6">
+                  <div className="font-bold text-white">
+                    Someone found her
+                  </div>
+                  <div className="text-white/58">
+                    Someone who finds your pet can tell you where they are and send a quick report.
+                  </div>
+                </div>
+
+                <div className="grid gap-2 py-5 sm:grid-cols-[170px_1fr] sm:gap-6">
+                  <div className="font-bold text-white">
+                    Keep it current
+                  </div>
+                  <div className="text-white/58">
+                    Change the photo, contact information, status, or safety notes without replacing the tag.
+                  </div>
+                </div>
+
+              </div>
+
+              <Link
+                to={`${PET_BASE_PATH}/pet/bella-demo`}
+                className="mt-7 inline-flex rounded-2xl bg-cyan-300 px-7 py-4 text-base font-bold text-[#07111f] transition hover:bg-cyan-200"
+              >
+                See Bella&apos;s Live Tag
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* =====================================================
+          LIVE PET PAGE EXPERIENCE
+          ===================================================== */}
+      <section className="py-16 sm:py-20">
+        <div className="mx-auto max-w-5xl overflow-hidden rounded-[32px] border border-cyan-300/10 bg-[#102330] p-6 sm:p-8 lg:p-12">
+          <div className="grid items-center gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-14">
+
+            {/* MESSAGE */}
+            <div>
+              <div className="text-sm font-bold uppercase tracking-[0.22em] text-cyan-200">
+                When Bella is found
+              </div>
+
+              <h2 className="mt-4 text-4xl font-bold leading-[1.03] tracking-[-0.04em] text-white sm:text-5xl">
+                Scan the tag.
+                <span className="block text-cyan-300">
+                  Bella opens right away.
+                </span>
+              </h2>
+
+              <p className="mt-6 text-lg leading-8 text-white/62">
+                No homepage to search through. The scan opens Bella&apos;s live page
+                with the information and actions that matter in that moment.
+              </p>
+
+              <div className="mt-8 space-y-4">
+                {[
+                  "No app to download",
+                  "No finder account or login",
+                  "No menus to hunt through",
+                  "Clear contact and found actions immediately",
+                ].map((item) => (
+                  <div
+                    key={item}
+                    className="flex items-center gap-3 text-base font-semibold text-white/78"
+                  >
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-cyan-300/12 text-sm font-bold text-cyan-200">
+                      ✓
+                    </span>
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* REALISTIC LIVE PAGE */}
+            <div className="mx-auto w-full max-w-[470px]">
+              <div className="rounded-[34px] border border-white/[0.12] bg-[#07111f] p-3 shadow-[0_28px_80px_rgba(0,0,0,0.32)]">
+                <div className="overflow-hidden rounded-[26px] bg-[#0b1725]">
+
+                  <div className="relative h-[260px] overflow-hidden sm:h-[310px]">
+                    <img
+                      src="/images/bella-demo.jpg"
+                      alt="Bella's live pet page"
+                      className="h-full w-full object-cover object-center"
+                    />
+
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#07111f] via-[#07111f]/10 to-transparent" />
+
+                    <div className="absolute bottom-5 left-5 right-5">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <h3 className="text-4xl font-bold text-white">
+                          Bella
+                        </h3>
+
+                        <span className="rounded-full border border-red-400/50 bg-red-500/20 px-3 py-1 text-xs font-bold text-red-200 backdrop-blur-md">
+                          MISSING
+                        </span>
+                      </div>
+
+                      <p className="mt-2 text-sm text-white/70">
+                        Golden Retriever · 3 years · Golden
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="p-5 sm:p-6">
+                    <div className="grid gap-3">
+                      <a
+                        href="tel:8635320683"
+                        className="rounded-xl bg-emerald-400 px-5 py-4 text-center text-base font-bold text-[#07111f]"
+                      >
+                        Call Owner
+                      </a>
+
+                      <a
+                        href="sms:8635320683"
+                        className="rounded-xl bg-sky-400 px-5 py-4 text-center text-base font-bold text-[#07111f]"
+                      >
+                        Text Owner
+                      </a>
+
+                      <Link
+                        to={`${PET_BASE_PATH}/found/bella-demo`}
+                        className="rounded-xl bg-white px-5 py-4 text-center text-base font-bold text-[#07111f]"
+                      >
+                        I Found Bella
+                      </Link>
+                    </div>
+
+                    <div className="mt-6 grid gap-5 sm:grid-cols-2">
+                      <div>
+                        <div className="text-xs font-bold uppercase tracking-[0.16em] text-cyan-300">
+                          Last seen
+                        </div>
+                        <p className="mt-2 text-sm leading-6 text-white/68">
+                          Taylor Creek neighborhood area
+                        </p>
+                      </div>
+
+                      <div>
+                        <div className="text-xs font-bold uppercase tracking-[0.16em] text-cyan-300">
+                          Temperament
+                        </div>
+                        <p className="mt-2 text-sm leading-6 text-white/68">
+                          Friendly and gentle. May be nervous if scared.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-5 rounded-[18px] border border-amber-200/10 bg-amber-100/[0.05] p-4">
+                      <div className="text-xs font-bold uppercase tracking-[0.16em] text-amber-200">
+                        Important note
+                      </div>
+                      <p className="mt-2 text-sm leading-6 text-white/68">
+                        Please approach calmly and contact the owner as soon as possible.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+
+            </div>
+
+          </div>
+        </div>
+      </section>
+      {/* =====================================================
+          HOMEPLANET LIVE ACTIVITY
+          ===================================================== */}
+      <section className="border-t border-white/[0.07] py-16 sm:py-20">
+        <div className="mx-auto max-w-5xl">
+
+          <div className="grid items-start gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-14">
+
+            {/* STORY */}
+            <div className="lg:sticky lg:top-8">
+              <div className="text-sm font-bold uppercase tracking-[0.22em] text-cyan-200">
+                More than a QR code
+              </div>
+
+              <h2 className="mt-4 text-4xl font-bold leading-[1.03] tracking-[-0.04em] text-white sm:text-5xl">
+                The scan is only
+                <span className="block text-cyan-300">
+                  the beginning.
+                </span>
+              </h2>
+
+              <p className="mt-6 text-lg leading-8 text-white/62">
+                When Bella&apos;s tag is scanned, her page comes alive. The scan,
+                the finder&apos;s next action, and what happens afterward can become
+                part of one clear recovery story.
+              </p>
+
+              <div className="mt-8 border-l-2 border-cyan-300/30 pl-5">
+                <div className="text-sm font-bold text-white">
+                  The tag is the doorway.
+                </div>
+
+                <div className="mt-2 text-sm leading-6 text-white/52">
+                  Bella&apos;s live page handles what happens next.
+                </div>
+              </div>
+            </div>
+
+            {/* LIVE ACTIVITY */}
+            <div className="overflow-hidden rounded-[30px] border border-white/[0.09] bg-[#0d1c29]">
+
+              <div className="border-b border-white/[0.08] px-5 py-5 sm:px-7">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <div className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">
+                      Bella · Live Activity
+                    </div>
+
+                    <div className="mt-1 text-xl font-bold text-white">
+                      Someone just scanned Bella&apos;s tag.
+                    </div>
+                  </div>
+
+                  <span className="rounded-full bg-cyan-300/10 px-3 py-2 text-xs font-bold text-cyan-200">
+                    LIVE
+                  </span>
+                </div>
+              </div>
+
+              <div className="px-5 py-2 sm:px-7">
+
+                <div className="grid grid-cols-[76px_18px_1fr] gap-3 border-b border-white/[0.07] py-5">
+                  <div className="pt-1 text-sm font-semibold text-white/42">
+                    10:42 AM
+                  </div>
+
+                  <div className="relative flex justify-center">
+                    <span className="relative z-10 mt-1 h-3 w-3 rounded-full bg-cyan-300" />
+                    <span className="absolute bottom-[-22px] top-4 w-px bg-white/[0.10]" />
+                  </div>
+
+                  <div>
+                    <div className="font-bold text-white">
+                      Tag scanned
+                    </div>
+                    <div className="mt-1 text-sm leading-6 text-white/50">
+                      Bella&apos;s tag was scanned from a phone.
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-[76px_18px_1fr] gap-3 border-b border-white/[0.07] py-5">
+                  <div className="pt-1 text-sm font-semibold text-white/42">
+                    10:42 AM
+                  </div>
+
+                  <div className="relative flex justify-center">
+                    <span className="relative z-10 mt-1 h-3 w-3 rounded-full bg-cyan-300" />
+                    <span className="absolute bottom-[-22px] top-4 w-px bg-white/[0.10]" />
+                  </div>
+
+                  <div>
+                    <div className="font-bold text-white">
+                      Bella&apos;s page opened
+                    </div>
+                    <div className="mt-1 text-sm leading-6 text-white/50">
+                      The finder saw Bella&apos;s information and the available next actions.
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-[76px_18px_1fr] gap-3 border-b border-white/[0.07] py-5">
+                  <div className="pt-1 text-sm font-semibold text-white/42">
+                    10:43 AM
+                  </div>
+
+                  <div className="relative flex justify-center">
+                    <span className="relative z-10 mt-1 h-3 w-3 rounded-full bg-amber-300" />
+                    <span className="absolute bottom-[-22px] top-4 w-px bg-white/[0.10]" />
+                  </div>
+
+                  <div>
+                    <div className="font-bold text-white">
+                      Finder tapped “I Found Bella”
+                    </div>
+                    <div className="mt-1 text-sm leading-6 text-white/50">
+                      A recovery action started instead of the scan ending at a static page.
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-[76px_18px_1fr] gap-3 py-5">
+                  <div className="pt-1 text-sm font-semibold text-white/42">
+                    10:44 AM
+                  </div>
+
+                  <div className="flex justify-center">
+                    <span className="mt-1 h-3 w-3 rounded-full bg-emerald-300" />
+                  </div>
+
+                  <div>
+                    <div className="font-bold text-white">
+                      Owner contacted
+                    </div>
+                    <div className="mt-1 text-sm leading-6 text-white/50">
+                      The next step is clear and the recovery story keeps moving.
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              <div className="border-t border-white/[0.08] bg-cyan-300/[0.045] px-5 py-5 sm:px-7">
+                <div className="text-sm font-bold text-cyan-200">
+                  Signal → action → next action → outcome
+                </div>
+
+                <p className="mt-2 text-sm leading-6 text-white/52">
+                  That is the difference between a QR code that opens a page and
+                  a live system that helps move Bella toward home.
+                </p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* =====================================================
+          QUIET TRUST STRIP
+          ===================================================== */}
+      <section className="py-8 sm:py-10">
+        <div className="mx-auto max-w-5xl border-y border-white/[0.08] py-8">
+          <div className="grid gap-6 sm:grid-cols-3">
+
+            <div>
+              <div className="text-sm font-bold text-white">
+                No app needed to help
+              </div>
+              <div className="mt-2 text-sm leading-6 text-white/48">
+                A finder can scan with the phone they already have.
+              </div>
+            </div>
+
+            <div>
+              <div className="text-sm font-bold text-white">
+                No battery in the tag
+              </div>
+              <div className="mt-2 text-sm leading-6 text-white/48">
+                The tag stays scannable without charging or replacing a battery.
+              </div>
+            </div>
+
+            <div>
+              <div className="text-sm font-bold text-white">
+                No constant location tracking
+              </div>
+              <div className="mt-2 text-sm leading-6 text-white/48">
+                The tag does not continuously broadcast where your pet is. The scan is the signal that starts the recovery process.
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+      {/* =====================================================
+          FINAL CTA
+          ===================================================== */}
+      <section className="border-t border-white/[0.07] py-16 text-center sm:py-20">
+        <div className="mx-auto max-w-4xl">
+          <div className="text-sm font-bold uppercase tracking-[0.22em] text-cyan-200">
+            HomePlanet Pet Tag
+          </div>
+
+          <h2 className="mt-4 text-4xl font-bold leading-[1.03] tracking-[-0.04em] text-white sm:text-5xl lg:text-6xl">
+            Put the next step
+            <span className="block text-cyan-300">
+              right on their collar.
+            </span>
+          </h2>
+
+          <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-white/62">
+            If your pet ever gets out, give the person who finds them a clear way to help.
+          </p>
+
+          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+            <Link
+              to="/planet/guardian-join?item=pet-tag&pets=1"
+              className="rounded-2xl bg-cyan-300 px-8 py-4 text-base font-bold text-[#07111f] transition hover:bg-cyan-200"
+            >
+              Get a Pet Tag
+            </Link>
+
+            <Link
+              to={`${PET_BASE_PATH}/pet/bella-demo`}
+              className="rounded-2xl border border-white/16 bg-white/[0.035] px-8 py-4 text-base font-bold text-white transition hover:bg-white/[0.07]"
+            >
+              See Bella&apos;s Live Tag
+            </Link>
+          </div>
+        </div>
+      </section>
+      {/* =====================================================
+          PET TAG FOOTER
+          ===================================================== */}
+      <footer className="border-t border-white/[0.08] py-10 sm:py-12">
+        <div className="mx-auto max-w-5xl">
+
+          <div className="grid gap-8 sm:grid-cols-[1fr_auto] sm:items-end">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold uppercase tracking-[0.28em] text-white/38">
+                  HomePlanet
+                </span>
+
+                <span className="relative inline-flex items-center rounded-full border border-cyan-300/25 bg-cyan-300/[0.06] py-1.5 pl-4 pr-3 text-[10px] font-bold uppercase tracking-[0.16em] text-cyan-200">
+                  <span className="absolute left-2 h-1 w-1 rounded-full border border-cyan-200/55" />
+                  Pet Tag
+                </span>
+              </div>
+
+              <p className="mt-4 max-w-md text-sm leading-6 text-white/50">
+                Pet identification built for real-world lost-and-found moments.
+              </p>
+
+              <p className="mt-3 text-sm font-semibold text-white/68">
+                Scan. Connect. Help them get home.
+              </p>
+            </div>
+
+            <nav
+              aria-label="Pet Tag footer"
+              className="flex flex-wrap gap-x-6 gap-y-3 text-sm font-semibold text-white/48 sm:justify-end"
+            >
+              <Link
+                to={PET_BASE_PATH}
+                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                className="transition hover:text-white"
+              >
+                Pet Tag
+              </Link>
+
+              <Link
+                to="/planet/guardian-pet/privacy"
+                className="transition hover:text-white"
+              >
+                Privacy
+              </Link>
+
+              <Link
+                to="/"
+                className="transition hover:text-white"
+              >
+                HomePlanet
+              </Link>
+            </nav>
+          </div>
+
+          <div className="mt-8 border-t border-white/[0.06] pt-6 text-xs text-white/32">
+            © 2026 HomePlanet. All rights reserved.
+          </div>
+
+        </div>
+      </footer>
+    </div>
+  );
+}
+function FinderMessageFlow({
+  petName,
+}: {
+  petName: string;
+}) {
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [message, setMessage] = useState(`I found ${petName}.`);
+
+  const [showLocation, setShowLocation] = useState(false);
+  const [location, setLocation] = useState("");
+
+  const [helpChoice, setHelpChoice] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+
+  const hasLocation = location.trim().length > 0;
+
+  if (submitted) {
+    return (
+      <div className="mt-5 rounded-[24px] border border-emerald-300/25 bg-emerald-300/[0.075] p-5 sm:p-6">
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-300 text-2xl font-bold text-[#07111f]">
+          ✓
+        </div>
+
+        <h3 className="mt-4 text-2xl font-bold tracking-tight text-white">
+          Update submitted
+        </h3>
+
+        <p className="mt-2 text-base leading-7 text-white/65">
+          Your message and any details you included are together in one recovery update for {petName}&apos;s family.
+        </p>
+
+        <div className="mt-5 rounded-[18px] border border-white/[0.08] bg-[#07111f]/45 p-4 text-sm">
+          <div className="font-semibold text-white">
+            {message.trim() || `I found ${petName}.`}
+          </div>
+
+          {name && (
+            <div className="mt-3 text-white/55">
+              From: {name}
+            </div>
+          )}
+
+          {phone && (
+            <div className="mt-1 text-white/55">
+              Phone: {phone}
+            </div>
+          )}
+
+          {hasLocation && (
+            <div className="mt-1 text-white/55">
+              Location: {location}
+            </div>
+          )}
+
+          {helpChoice && (
+            <div className="mt-1 text-white/55">
+              {helpChoice}
+            </div>
+          )}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setSubmitted(false)}
+          className="mt-5 text-sm font-bold text-cyan-200 hover:text-cyan-100"
+        >
+          Edit update
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-5 rounded-[22px] border border-white/10 bg-[#0b1725] p-4 sm:p-5">
+      <div className="text-lg font-bold text-white">
+        I found {petName}
+      </div>
+
+      <p className="mt-2 text-sm leading-6 text-white/58">
+        Send one quick message to {petName}&apos;s family.
+      </p>
+
+      <div className="mt-4 grid gap-3">
+        <input
+          type="text"
+          name="name"
+          autoComplete="name"
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          placeholder="Your name (optional)"
+          className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-base text-white outline-none placeholder:text-white/35 focus:border-cyan-300/50"
+        />
+
+        <input
+          type="tel"
+          name="tel"
+          autoComplete="tel"
+          inputMode="tel"
+          value={phone}
+          onChange={(event) => setPhone(event.target.value)}
+          placeholder="Your phone number (optional)"
+          className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-base text-white outline-none placeholder:text-white/35 focus:border-cyan-300/50"
+        />
+
+        <textarea
+          rows={2}
+          value={message}
+          onChange={(event) => setMessage(event.target.value)}
+          className="w-full resize-none rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-base text-white outline-none placeholder:text-white/35 focus:border-cyan-300/50"
+        />
+      </div>
+
+      {/* OPTIONAL DETAILS - PART OF THE SAME MESSAGE */}
+      <div className="mt-5 border-t border-white/[0.08] pt-4">
+        <div className="text-xs font-bold uppercase tracking-[0.15em] text-white/38">
+          Optional
+        </div>
+
+        <div className="mt-3 grid gap-2">
+          {!showLocation && !hasLocation && (
+            <button
+              type="button"
+              onClick={() => setShowLocation(true)}
+              className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-left text-sm font-semibold text-white"
+            >
+              + Add where {petName} is
+            </button>
+          )}
+
+          {showLocation && (
+            <div className="rounded-xl border border-white/10 bg-white/[0.025] p-3">
+              <input
+                type="text"
+                value={location}
+                onChange={(event) => setLocation(event.target.value)}
+                placeholder={`Where are you with ${petName}?`}
+                className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-base text-white outline-none placeholder:text-white/35 focus:border-cyan-300/50"
+              />
+
+              <div className="mt-2 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowLocation(false)}
+                  className="flex-1 rounded-xl border border-white/10 px-4 py-3 text-sm font-semibold text-white/65"
+                >
+                  Done
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLocation("");
+                    setShowLocation(false);
+                  }}
+                  className="rounded-xl px-4 py-3 text-sm font-semibold text-white/38"
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+          )}
+
+          {hasLocation && !showLocation && (
+            <button
+              type="button"
+              onClick={() => setShowLocation(true)}
+              className="w-full rounded-xl border border-sky-300/15 bg-sky-300/[0.05] px-4 py-3 text-left"
+            >
+              <div className="text-sm font-bold text-sky-100">
+                ✓ Location included
+              </div>
+
+              <div className="mt-1 text-sm text-white/55">
+                {location}
+              </div>
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={() =>
+              setHelpChoice(
+                helpChoice === `I can wait with ${petName}`
+                  ? ""
+                  : `I can wait with ${petName}`
+              )
+            }
+            className={
+              helpChoice === `I can wait with ${petName}`
+                ? "w-full rounded-xl border border-emerald-300/20 bg-emerald-300/[0.07] px-4 py-3 text-left text-sm font-bold text-emerald-100"
+                : "w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-left text-sm font-semibold text-white"
+            }
+          >
+            {helpChoice === `I can wait with ${petName}` ? "✓ " : ""}
+            I can wait with {petName}
+          </button>
+
+          <button
+            type="button"
+            onClick={() =>
+              setHelpChoice(
+                helpChoice === `I can help bring ${petName} home`
+                  ? ""
+                  : `I can help bring ${petName} home`
+              )
+            }
+            className={
+              helpChoice === `I can help bring ${petName} home`
+                ? "w-full rounded-xl border border-emerald-300/20 bg-emerald-300/[0.07] px-4 py-3 text-left text-sm font-bold text-emerald-100"
+                : "w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-left text-sm font-semibold text-white"
+            }
+          >
+            {helpChoice === `I can help bring ${petName} home` ? "✓ " : ""}
+            I can help bring {petName} home
+          </button>
+        </div>
+      </div>
+
+      {/* ONE SEND - EVERYTHING ABOVE GOES TOGETHER */}
+      <button
+        type="button"
+        onClick={() => {
+          const payload = {
+            petName,
+            finderName: name.trim(),
+            finderPhone: phone.trim(),
+            message: message.trim() || `I found ${petName}.`,
+            location: location.trim(),
+            helpChoice,
+          };
+
+          window.dispatchEvent(
+            new CustomEvent("pet-finder-message-ready", {
+              detail: payload,
+            })
+          );
+
+          setSubmitted(true);
+        }}
+        className="mt-5 w-full rounded-2xl bg-emerald-300 px-5 py-4 text-center text-base font-bold text-[#07111f] active:scale-[0.99]"
+      >
+        Send to {petName}&apos;s Family
+      </button>
+
+      <div className="mt-4 border-t border-white/[0.07] pt-4 text-center">
+        <p className="text-xs leading-5 text-white/38">
+          The owner&apos;s private contact details stay hidden until they choose how to respond.
+        </p>
       </div>
     </div>
   );
 }
+function PetIdentity({ pet }: { pet: DemoPet }) {
+  const isMissing = pet.status === "missing";
 
-function getCareTypePill(type: CareEventType) {
-  switch (type) {
-    case "fed":
-      return "border-emerald-400/30 bg-emerald-400/10 text-emerald-100";
-    case "water":
-      return "border-sky-400/30 bg-sky-400/10 text-sky-100";
-    case "walked":
-      return "border-cyan-400/30 bg-cyan-400/10 text-cyan-100";
-    case "potty":
-      return "border-amber-400/30 bg-amber-400/10 text-amber-100";
-    case "medication":
-      return "border-fuchsia-400/30 bg-fuchsia-400/10 text-fuchsia-100";
-    case "groomed":
-      return "border-violet-400/30 bg-violet-400/10 text-violet-100";
-    case "vet":
-      return "border-rose-400/30 bg-rose-400/10 text-rose-100";
-    case "service":
-      return "border-white/20 bg-white/10 text-white";
-    default:
-      return "border-white/20 bg-white/10 text-white";
-  }
-}
-
-function careTypeLabel(type: CareEventType) {
-  switch (type) {
-    case "fed":
-      return "Fed";
-    case "water":
-      return "Water";
-    case "walked":
-      return "Walked";
-    case "potty":
-      return "Potty";
-    case "medication":
-      return "Medication";
-    case "groomed":
-      return "Groomed";
-    case "vet":
-      return "Vet";
-    case "service":
-      return "Service Visit";
-    default:
-      return "Event";
-  }
-}
-
-function PetCareTimelinePreview({
-  events,
-}: {
-  events: CareTimelineEvent[];
-}) {
   return (
-    <section className="rounded-[32px] border border-cyan-300/12 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.06),transparent_38%),rgba(255,255,255,0.045)] p-6 backdrop-blur-xl sm:p-8">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200">
-            Vamp's care timeline
+    <section className="overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.045]">
+      <div className="relative aspect-[4/3] min-h-[290px] overflow-hidden sm:aspect-[16/9] lg:aspect-auto lg:h-[500px]">
+        <img
+          src={pet.photoUrl}
+          alt={pet.name}
+          className="h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#07111f] via-[#07111f]/15 to-transparent" />
+
+        <div className="absolute inset-x-0 bottom-0 p-5 sm:p-7">
+          <div
+            className={cn(
+              "inline-flex rounded-full border px-3 py-1.5 text-xs font-bold uppercase tracking-[0.16em]",
+              isMissing
+                ? "border-rose-300/30 bg-rose-500/25 text-rose-100"
+                : "border-emerald-300/30 bg-emerald-500/20 text-emerald-100"
+            )}
+          >
+            {isMissing ? "Missing" : "Safe"}
+          </div>
+
+          <h1 className="mt-3 text-5xl font-bold tracking-[-0.04em] text-white sm:text-6xl">
+            {pet.name}
+          </h1>
+
+          <p className="mt-2 text-sm text-white/72 sm:text-base">
+            {pet.breed} · {pet.age} · {pet.color}
           </p>
-          <h3 className="mt-2 text-2xl font-semibold text-white sm:text-3xl">
-            More than a lost pet page
-          </h3>
-          <p className="mt-3 max-w-3xl text-sm leading-7 text-white/72 sm:text-base">
-            This same tag can later support pet walkers, pooper-scooper companies,
-            groomers, sitters, and vet staff. Each visit can become a presence-ready
-            care event with proof, timing, and service notes.
-          </p>
-        </div>
-
-        <div className="rounded-full border border-cyan-300/25 bg-cyan-400/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100">
-          Presence-ready
-        </div>
-      </div>
-
-      <div className="mt-6 grid gap-4 lg:grid-cols-[0.88fr_1.12fr]">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-          <MetricCard value={`${events.length}`} label="recent care events" />
-          <MetricCard value="1 tag" label="lost pet + care history" />
-          <MetricCard value="Service-ready" label="walkers, vets, groomers" />
-        </div>
-
-        <div className="space-y-4">
-          {events.slice(0, 5).map((event) => (
-            <div
-              key={event.id}
-              className="rounded-[24px] border border-cyan-300/14 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.08),transparent_44%),#08101f] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.035)]"
-            >
-              <div className="flex flex-wrap items-center gap-3">
-                <span
-                  className={cn(
-                    "rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em]",
-                    getCareTypePill(event.type)
-                  )}
-                >
-                  {careTypeLabel(event.type)}
-                </span>
-                <span className="text-xs text-white/55">{event.time}</span>
-              </div>
-
-              <h4 className="mt-3 text-base font-semibold text-white">
-                {event.title}
-              </h4>
-              <p className="mt-2 text-sm leading-6 text-white/70">
-                {event.detail}
-              </p>
-
-              {event.proof ? (
-                <div className="mt-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/70">
-                  {event.proof}
-                </div>
-              ) : null}
-            </div>
-          ))}
         </div>
       </div>
     </section>
   );
 }
 
-function GuardianShell({
-  children,
-  pet,
+function PetLivePage({ pet }: { pet: DemoPet }) {
+  const location = useLocation();
+  const isMissing = pet.status === "missing";
+
+  // Bella is the public demo reached from the Pet Tag landing page.
+  // Real QR-scanned pet pages should keep the Pet Tag identity
+  // but should not send the finder backward into marketing.
+  const isLandingDemo =
+    pet.id === "bella-demo" &&
+    location.pathname === `${PET_BASE_PATH}/pet/bella-demo`;
+  const callHref = buildTelHref(pet.callNumber);
+  const textHref = buildSmsHref(
+    pet.textNumber,
+    `Hi ${pet.ownerName}, I found ${pet.name}. I scanned ${pet.name}'s HomePlanet Pet Tag.`
+  );
+
+  return (
+    <div className="mx-auto max-w-3xl space-y-4 pb-8">
+
+      {/* PET TAG LIVE PAGE HEADER */}
+      <header className="flex min-h-[52px] items-center border-b border-white/[0.07] px-1 pb-3">
+        {isLandingDemo ? (
+          <Link
+            to={PET_BASE_PATH}
+            className="inline-flex items-center gap-3 text-white/72 transition hover:text-white"
+          >
+            <span
+              aria-hidden="true"
+              className="text-lg leading-none text-white/52"
+            >
+              ←
+            </span>
+
+            <span className="relative inline-flex items-center rounded-full border border-cyan-300/25 bg-cyan-300/[0.06] py-1.5 pl-4 pr-3 text-[10px] font-bold uppercase tracking-[0.16em] text-cyan-200">
+              <span className="absolute left-2 h-1 w-1 rounded-full border border-cyan-200/55" />
+              Pet Tag
+            </span>
+          </Link>
+        ) : (
+          <div className="relative inline-flex items-center rounded-full border border-cyan-300/25 bg-cyan-300/[0.06] py-1.5 pl-4 pr-3 text-[10px] font-bold uppercase tracking-[0.16em] text-cyan-200">
+            <span className="absolute left-2 h-1 w-1 rounded-full border border-cyan-200/55" />
+            Pet Tag
+          </div>
+        )}
+      </header>
+
+      <PetIdentity pet={pet} />
+
+      <section
+        className={cn(
+          "rounded-[28px] border p-5 sm:p-7",
+          isMissing
+            ? "border-rose-300/20 bg-rose-500/[0.07]"
+            : "border-emerald-300/20 bg-emerald-500/[0.06]"
+        )}
+      >
+        <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+          {isMissing
+            ? `Thank you for stopping to help ${pet.name}.`
+            : `Thanks for checking ${pet.name}'s tag.`}
+        </h2>
+
+        <p className="mt-3 text-sm leading-7 text-white/70 sm:text-base">
+          {isMissing
+            ? `${pet.name}'s family is looking for her. If you found ${pet.name}, send them a quick message below.`
+            : `${pet.name} appears to be away from home. You can contact ${pet.ownerName} or send a quick found update below.`}
+        </p>
+
+        <FinderMessageFlow petName={pet.name} />
+      </section>
+
+      <section className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5 sm:p-7">
+        <div className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">
+          How to approach {pet.name}
+        </div>
+        <p className="mt-3 text-base leading-7 text-white/80">
+          {pet.temperament}
+        </p>
+      </section>
+
+      {isMissing && (
+        <section className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded-[26px] border border-white/10 bg-white/[0.04] p-5">
+            <div className="text-xs font-bold uppercase tracking-[0.17em] text-white/50">
+              Last seen
+            </div>
+            <p className="mt-2 text-base font-semibold leading-6 text-white">
+              {pet.lastSeen}
+            </p>
+          </div>
+
+          <div className="rounded-[26px] border border-white/10 bg-white/[0.04] p-5">
+            <div className="text-xs font-bold uppercase tracking-[0.17em] text-white/50">
+              Safe return
+            </div>
+            <p className="mt-2 text-base font-semibold leading-6 text-white">
+              {pet.rewardText}
+            </p>
+          </div>
+        </section>
+      )}
+
+      <section className="rounded-[26px] border border-cyan-300/12 bg-cyan-400/[0.04] p-5 text-center">
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-100">
+          HomePlanet Pet Tag
+        </p>
+
+        <p className="mt-2 text-sm leading-6 text-white/55">
+          This page is connected directly to {pet.name}&apos;s Pet Tag. No app or account is needed to help.
+        </p>
+      </section>
+
+      {/* PET TAG LIVE PAGE FOOTER */}
+      <footer className="mt-8 border-t border-white/[0.08] px-1 pb-3 pt-7">
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-[0.28em] text-white/35">
+                HomePlanet
+              </span>
+
+              <span className="relative inline-flex items-center rounded-full border border-cyan-300/25 bg-cyan-300/[0.06] py-1.5 pl-4 pr-3 text-[10px] font-bold uppercase tracking-[0.16em] text-cyan-200">
+                <span className="absolute left-2 h-1 w-1 rounded-full border border-cyan-200/55" />
+                Pet Tag
+              </span>
+            </div>
+
+            <p className="mt-3 max-w-md text-sm leading-6 text-white/45">
+              Helping pets and the people who find them connect safely.
+            </p>
+          </div>
+
+          <nav
+            aria-label="Pet Tag live page footer"
+            className="flex flex-wrap gap-x-5 gap-y-3 text-sm font-semibold text-white/45"
+          >
+            <Link
+              to={PET_BASE_PATH}
+              className="transition hover:text-white"
+            >
+              Pet Tag
+            </Link>
+
+            <Link
+              to={`${PET_BASE_PATH}/privacy`}
+              className="transition hover:text-white"
+            >
+              Privacy
+            </Link>
+
+            <Link
+              to="/"
+              className="transition hover:text-white"
+            >
+              HomePlanet
+            </Link>
+          </nav>
+        </div>
+
+        <div className="mt-6 border-t border-white/[0.06] pt-5 text-xs text-white/30">
+          © 2026 HomePlanet. All rights reserved.
+        </div>
+      </footer>
+
+    </div>
+  );
+}
+
+function SituationButton({
+  active,
+  title,
+  body,
+  onClick,
 }: {
-  children: ReactNode;
-  pet: DemoPet;
+  active: boolean;
+  title: string;
+  body: string;
+  onClick: () => void;
 }) {
   return (
-    <div className="min-h-screen bg-[#050816] text-white">
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute left-[-120px] top-[-60px] h-[320px] w-[320px] rounded-full bg-fuchsia-500/12 blur-3xl" />
-        <div className="absolute right-[-90px] top-[140px] h-[320px] w-[320px] rounded-full bg-cyan-400/12 blur-3xl" />
-        <div className="absolute bottom-[-100px] left-[20%] h-[280px] w-[280px] rounded-full bg-emerald-400/10 blur-3xl" />
-      </div>
-
-      <div className="relative mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-5 sm:px-6 lg:px-8">
-        <header className="mb-6 rounded-[28px] border border-white/10 bg-white/5 backdrop-blur-xl">
-          <div className="flex flex-col gap-4 px-5 py-5 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-200">
-                Planet Guardian Pet
-              </div>
-              <h1 className="mt-3 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-                Live rescue pages for lost pets
-              </h1>
-              <p className="mt-2 max-w-2xl text-sm text-white/70 sm:text-base">
-                Pet Guardian stays separate from the main Guardian landing for now.
-                This page is the dedicated pet tag demo, sales flow, and finder flow.
-              </p>
-            </div>
-
-            <nav className="flex flex-wrap gap-2">
-              <Link
-                to={PET_BASE_PATH}
-                className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white/85 transition hover:border-cyan-300/40 hover:bg-cyan-400/10"
-              >
-                Sales Page
-              </Link>
-              <Link
-                to={`${PET_BASE_PATH}/pet/${pet.id}`}
-                className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white/85 transition hover:border-cyan-300/40 hover:bg-cyan-400/10"
-              >
-                Public QR Access
-              </Link>
-              <Link
-                to={`${PET_BASE_PATH}/found/${pet.id}`}
-                className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white/85 transition hover:border-cyan-300/40 hover:bg-cyan-400/10"
-              >
-                Finder Report
-              </Link>
-              <Link
-                to="/planet/guardian"
-                className="rounded-full border border-emerald-300/25 bg-emerald-400/10 px-4 py-2 text-sm font-medium text-emerald-100 transition hover:bg-emerald-400/18"
-              >
-                Main Guardian
-              </Link>
-            </nav>
-          </div>
-        </header>
-
-        <div className="flex-1">{children}</div>
-
-        <HomePlanetFooter />
-      </div>
-    </div>
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "w-full rounded-[22px] border p-4 text-left transition",
+        active
+          ? "border-cyan-300/45 bg-cyan-400/12"
+          : "border-white/10 bg-white/[0.035] hover:bg-white/[0.06]"
+      )}
+    >
+      <div className="text-base font-bold text-white">{title}</div>
+      <div className="mt-1 text-sm leading-6 text-white/58">{body}</div>
+    </button>
   );
 }
 
-function GuardianSalesPage({ pet }: { pet: DemoPet }) {
-  const scanDemoLink = `${PET_BASE_PATH}/pet/vamp`;
-  const [petCount, setPetCount] = useState(1);
-  const pricing = getPricing(petCount);
-
-  return (
-    <div className="space-y-6">
-      <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="rounded-[32px] border border-cyan-300/12 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.06),transparent_38%),rgba(255,255,255,0.045)] p-6 backdrop-blur-xl sm:p-8">
-          <div className="inline-flex items-center gap-2 rounded-full border border-amber-300/25 bg-amber-300/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-amber-200">
-            Pet Guardian System
-          </div>
-
-          <h2 className="mt-4 max-w-3xl text-3xl font-semibold tracking-tight text-white sm:text-5xl">
-            From dumb pet tags to live rescue pages.
-          </h2>
-
-          <p className="mt-4 max-w-2xl text-base leading-7 text-white/85 sm:text-lg">
-            When a pet gets lost, every minute matters. Pet Guardian gives every pet a
-            QR-powered rescue page with live status, one-tap owner contact, a fast
-            finder report flow, and a neighborhood rescue timeline that feels like a
-            real recovery system.
-          </p>
-
-          <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            <MetricCard value="$25 + $5/mo" label="first pet" />
-            <MetricCard value="$15 + $3/mo" label="each extra pet" />
-            <MetricCard value="multi-pet ready" label="single or household flow" />
-          </div>
-
-          <div className="mt-6 rounded-[24px] border border-emerald-300/20 bg-emerald-400/10 p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-100">
-              Live pricing
-            </p>
-
-            <div className="mt-4 space-y-3 text-sm text-white/85">
-              <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-[#08101f] px-4 py-3">
-                <span>First pet</span>
-                <span>{currency(FIRST_PET_SETUP)} setup + {currency(FIRST_PET_MONTHLY)}/month</span>
-              </div>
-              <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-[#08101f] px-4 py-3">
-                <span>Extra pets</span>
-                <span>{currency(EXTRA_PET_SETUP)} setup + {currency(EXTRA_PET_MONTHLY)}/month each</span>
-              </div>
-            </div>
-
-            <div className="mt-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200">
-                Choose pet count
-              </p>
-
-              <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                {[1, 2, 3].map((count) => (
-                  <button
-                    key={count}
-                    type="button"
-                    onClick={() => setPetCount(count)}
-                    className={cn(
-                      "rounded-2xl border px-4 py-4 text-left transition",
-                      petCount === count
-                        ? "border-cyan-300/35 bg-cyan-400/15"
-                        : "border-white/10 bg-white/5 hover:bg-white/10"
-                    )}
-                  >
-                    <div className="text-base font-semibold text-white">
-                      {count} {count === 1 ? "pet" : "pets"}
-                    </div>
-                    <div className="mt-1 text-xs text-white/60">
-                      {count === 1 ? "Single-pet setup" : `${count - 1} extra pet${count - 1 > 1 ? "s" : ""}`}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl border border-white/10 bg-[#08101f] px-4 py-4">
-                <div className="text-xs uppercase tracking-[0.18em] text-white/55">setup total</div>
-                <div className="mt-2 text-2xl font-semibold text-white">{currency(pricing.setupTotal)}</div>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-[#08101f] px-4 py-4">
-                <div className="text-xs uppercase tracking-[0.18em] text-white/55">monthly total</div>
-                <div className="mt-2 text-2xl font-semibold text-white">{currency(pricing.monthlyTotal)}/month</div>
-              </div>
-            </div>
-
-            <div className="mt-5 flex flex-wrap gap-3">
-              <Link
-                to={`/planet/guardian-join?item=pet-tag&pets=${petCount}`}
-                className="rounded-2xl border border-cyan-300/35 bg-cyan-400/18 px-5 py-3 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/26"
-              >
-                Start tag order
-              </Link>
-              <Link
-                to={scanDemoLink}
-                className="rounded-2xl border border-white/15 bg-white/6 px-5 py-3 text-sm font-semibold text-white/90 transition hover:bg-white/10"
-              >
-                Scan Vamp's live rescue page
-              </Link>
-            </div>
-          </div>
-
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link
-              to={`${PET_BASE_PATH}/found/${pet.id}`}
-              className="rounded-2xl border border-white/15 bg-white/6 px-5 py-3 text-sm font-semibold text-white/90 transition hover:bg-white/10"
-            >
-              Open finder report page
-            </Link>
-            <Link
-              to="/planet/found-layer"
-              className="rounded-2xl border border-cyan-300/25 bg-cyan-400/10 px-5 py-3 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/18"
-            >
-              Not just for pets
-            </Link>
-          </div>
-
-          <p className="mt-6 text-sm leading-6 text-white/68">
-            Designed for pet owners, shelters, rescues, vets, groomers, walkers, sitters, and neighborhoods. This same found layer can also work on tools, bikes, jackets, vehicles, and gear.
-          </p>
-        </div>
-
-        <div className="overflow-hidden rounded-[32px] border border-white/10 bg-white/6 backdrop-blur-xl">
-          <div className="relative h-full min-h-[380px]">
-            <img src="/images/pet-tag-sales.jpg" alt={`${pet.name} demo pet`}
-              className="h-[68vh] w-full object-cover object-center lg:h-full"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#050816] via-[#050816]/35 to-transparent" />
-            <div className="hidden md:block absolute inset-x-0 bottom-0 p-5 sm:p-6">
-              <div className="rounded-[24px] border border-white/15 bg-black/35 p-5 backdrop-blur-md">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200/90">
-                      Protected pet profile
-                    </p>
-                    <h3 className="mt-2 text-2xl font-semibold text-white">
-                      {pet.name}
-                    </h3>
-                    <p className="mt-1 text-sm text-white/75">
-                      {pet.breed} � {pet.age}
-                    </p>
-                  </div>
-
-                  <span
-                    className={cn(
-                      "rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em]",
-                      getStatusPill(pet.status).classes
-                    )}
-                  >
-                    {getStatusPill(pet.status).label}
-                  </span>
-                </div>
-
-                <p className="mt-4 text-sm leading-6 text-white/75">
-                  "If I'm lost, please scan." The tag becomes a live rescue page with
-                  owner contact, rescue radar activity, notes, and a finder report flow.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="grid gap-6 lg:grid-cols-3">
-        <InfoPanel
-          title="The problem"
-          body="Most pet tags only show a phone number. If the number is old, unreadable, or unanswered, the rescue stalls fast."
-        />
-        <InfoPanel
-          title="The solution"
-          body="Pet Guardian turns a pet tag into a live page that opens instantly when scanned, with clear actions for the person helping."
-        />
-        <InfoPanel
-          title="The bigger play"
-          body="The same tag can later support walkers, pooper-scooper services, groomers, sitters, and vets with presence-ready care logging."
-        />
-      </section>
-
-      <RadarPanel
-        subtitle="When a pet is marked missing, Pet Guardian activates a live awareness ring. Each scan and report becomes part of the recovery story."
-        events={RADAR_EVENTS}
-      />
-
-      <PetCareTimelinePreview events={Vamp_CARE_TIMELINE} />
-
-      <section className="rounded-[32px] border border-cyan-300/12 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.06),transparent_38%),rgba(255,255,255,0.045)] p-6 backdrop-blur-xl sm:p-8">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200">
-              How it works
-            </p>
-            <h3 className="mt-2 text-2xl font-semibold text-white sm:text-3xl">
-              A simple flow people understand immediately
-            </h3>
-          </div>
-          <p className="max-w-2xl text-sm leading-6 text-white/70">
-            Keep the hardware simple. Sell the page experience, the recovery speed, and
-            the fact that the system creates a real rescue timeline.
-          </p>
-        </div>
-
-        <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-          <StepCard
-            index="01"
-            title="Owner creates profile"
-            body="Pet name, photo, contact number, and rescue notes."
-          />
-          <StepCard
-            index="02"
-            title="QR tag goes on collar"
-            body="Printed plastic tag, flat square, hole punch, clip, done."
-          />
-          <StepCard
-            index="03"
-            title="Finder scans"
-            body="The public pet page opens instantly with the next best action."
-          />
-          <StepCard
-            index="04"
-            title="Finder reports"
-            body="Call, text, or send a found-location report in seconds."
-          />
-          <StepCard
-            index="05"
-            title="Pet gets home faster"
-            body="A real rescue system instead of hoping a phone number works."
-          />
-        </div>
-      </section>
-
-      <section className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-        <div className="rounded-[32px] border border-cyan-300/12 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.06),transparent_38%),rgba(255,255,255,0.045)] p-6 backdrop-blur-xl sm:p-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200">
-            Prototype tag wording
-          </p>
-          <div className="mt-5 rounded-[28px] border border-dashed border-cyan-300/35 bg-[#071325] p-6 shadow-[inset_0_0_40px_rgba(34,211,238,0.05)]">
-            <div className="mx-auto flex max-w-[320px] flex-col items-center rounded-[28px] border border-white/10 bg-[#0b1020] px-6 py-8 text-center">
-              <div className="rounded-full border border-cyan-300/25 bg-cyan-400/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-200">
-                Planet Guardian Pet
-              </div>
-              <h4 className="mt-4 text-xl font-semibold text-white">
-                If I'm lost, please scan
-              </h4>
-              <div className="mt-5 grid h-36 w-36 place-items-center rounded-2xl border border-white/15 bg-white">
-                <div className="grid h-24 w-24 grid-cols-6 gap-[2px] rounded-md bg-white p-[6px]">
-                  {Array.from({ length: 36 }).map((_, index) => (
-                    <div
-                      key={index}
-                      className={cn(
-                        "rounded-[1px]",
-                        index % 2 === 0 || index % 5 === 0 || index % 7 === 0
-                          ? "bg-black"
-                          : "bg-white"
-                      )}
-                    />
-                  ))}
-                </div>
-              </div>
-              <p className="mt-5 text-sm text-white/75">HomePlanet.city</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-[32px] border border-cyan-300/12 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.06),transparent_38%),rgba(255,255,255,0.045)] p-6 backdrop-blur-xl sm:p-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200">
-            Quick brochure copy
-          </p>
-
-          <div className="mt-5 space-y-4 text-sm leading-7 text-white/78 sm:text-[15px]">
-            <p>
-              <span className="font-semibold text-white">Pet Guardian</span> helps
-              lost pets get home faster by turning a pet tag into a live rescue page.
-            </p>
-            <p>
-              When someone scans the tag, they immediately see the pet's name, photo,
-              status, owner contact options, and a simple way to report where the pet
-              was found.
-            </p>
-            <p>
-              Rescue Radar adds a live awareness layer by turning scans and reports into
-              recovery activity the owner, shelter, or rescue can follow.
-            </p>
-            <p>
-              The same tag can later support care visits, dog walking, poop pickup,
-              grooming, and vet logs as timestamped pet service events.
-            </p>
-            <p className="font-semibold text-cyan-100">
-              Powered by HomePlanet - a real-world safety layer built for faster reunions
-              and trustworthy pet care records.
-            </p>
-          </div>
-
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link
-              to={scanDemoLink}
-              className="rounded-2xl border border-cyan-300/35 bg-cyan-400/15 px-5 py-3 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/22"
-            >
-              Open Vamp's live rescue page
-            </Link>
-            <Link
-              to={`${PET_BASE_PATH}/found/${pet.id}`}
-              className="rounded-2xl border border-white/15 bg-white/6 px-5 py-3 text-sm font-semibold text-white/90 transition hover:bg-white/10"
-            >
-              Open finder report
-            </Link>
-          </div>
-        </div>
-      </section>
-    </div>
-  );
-}
-
-function GuardianPetPage({ pet }: { pet: DemoPet }) {
-  const smsBody = `Hi ${pet.ownerName}, I found ${pet.name}. I scanned the Planet Guardian pet tag.`;
-  const callHref = buildTelHref(pet.callNumber);
-  const smsHref = buildSmsHref(pet.textNumber, smsBody);
-
-  return (
-    <div className="space-y-6">
-      <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-        <section className="overflow-hidden rounded-[32px] border border-white/10 bg-white/6 backdrop-blur-xl">
-          <div className="relative min-h-[360px]">
-            <img
-              src={pet.photoUrl}
-              alt={pet.name}
-              className="h-[68vh] w-full object-cover object-center lg:h-full"
-            />
-            <div className="hidden lg:block absolute inset-0 bg-gradient-to-t from-[#050816] via-[#050816]/30 to-transparent" />
-          </div>
-        </section>
-
-        <section className="space-y-6">
-          <div className="rounded-[32px] border border-cyan-300/12 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.06),transparent_38%),rgba(255,255,255,0.045)] p-6 backdrop-blur-xl sm:p-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200">
-              Immediate actions
-            </p>
-
-            <div className="mt-5 grid gap-3 sm:grid-cols-3">
-              <a
-                href={callHref}
-                className="rounded-[22px] border border-emerald-300/30 bg-emerald-400/15 px-4 py-4 text-center text-sm font-semibold text-emerald-100 transition hover:bg-emerald-400/22"
-              >
-                Call Owner
-              </a>
-              <a
-                href={smsHref}
-                className="rounded-[22px] border border-sky-300/30 bg-sky-400/15 px-4 py-4 text-center text-sm font-semibold text-sky-100 transition hover:bg-sky-400/22"
-              >
-                Text Owner
-              </a>
-              <Link
-                to={`${PET_BASE_PATH}/found/${pet.id}`}
-                className="rounded-[22px] border border-cyan-300/30 bg-cyan-400/15 px-4 py-4 text-center text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/22"
-              >
-                Report Found Location
-              </Link>
-            </div>
-
-            <div className="mt-6 rounded-[24px] border border-amber-300/20 bg-amber-300/10 p-4 text-sm leading-6 text-amber-100/90">
-              {pet.emergencyNote}
-            </div>
-
-            <div className="mt-4">
-              <Link
-                to="/planet/guardian-join?item=pet-tag&pets=1"
-                className="block rounded-[22px] border border-cyan-300/30 bg-cyan-400/15 px-4 py-4 text-center text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/22"
-              >
-                Create Your Pet Tag
-              </Link>
-            </div>
-          </div>
-
-          <div className="grid gap-6 lg:grid-cols-2">
-            <InfoPanel title="Owner" body={`${pet.ownerName} � ${pet.callNumber}`} />
-            <InfoPanel title="Last seen" body={pet.lastSeen} />
-            <InfoPanel title="Temperament" body={pet.temperament} />
-            <InfoPanel title="Reward" body={pet.rewardText} />
-          </div>
-
-          <div className="rounded-[32px] border border-cyan-300/12 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.06),transparent_38%),rgba(255,255,255,0.045)] p-6 backdrop-blur-xl sm:p-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200">
-              Why this works
-            </p>
-            <div className="mt-5 grid gap-3 sm:grid-cols-4">
-              <MetricCard value="Fast" label="clear next action" />
-              <MetricCard value="Human" label="thank-you rescue tone" />
-              <MetricCard value="Live" label="better than number-only tags" />
-              <MetricCard value="Community" label="nearby scans create awareness" />
-            </div>
-          </div>
-        </section>
-      </div>
-
-      <PetCareTimelinePreview events={Vamp_CARE_TIMELINE} />
-
-      <RadarPanel
-        subtitle="Every scan, page open, and report can become part of the live recovery timeline."
-        events={RADAR_EVENTS}
-      />
-    </div>
-  );
-}
-
-function GuardianFoundPage({ pet }: { pet: DemoPet }) {
+function FinderPage({ pet }: { pet: DemoPet }) {
   const [form, setForm] = useState<FinderFormState>(INITIAL_FINDER_FORM);
   const [submitted, setSubmitted] = useState(false);
-
-  const summary = useMemo(() => {
-    return [
-      form.finderName ? `Finder: ${form.finderName}` : null,
-      form.callbackNumber ? `Callback: ${form.callbackNumber}` : null,
-      form.foundLocation ? `Found at: ${form.foundLocation}` : null,
-      form.message ? `Message: ${form.message}` : null,
-    ]
-      .filter(Boolean)
-      .join("\n");
-  }, [form]);
 
   function updateField<K extends keyof FinderFormState>(
     field: K,
@@ -951,207 +1591,221 @@ function GuardianFoundPage({ pet }: { pet: DemoPet }) {
     setSubmitted(true);
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="grid gap-6 xl:grid-cols-[0.92fr_1.08fr]">
-        <section className="rounded-[32px] border border-cyan-300/12 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.06),transparent_38%),rgba(255,255,255,0.045)] p-6 backdrop-blur-xl sm:p-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200">
-            Finder report
-          </p>
-          <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-            Report where you found {pet.name}
-          </h2>
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-white/75 sm:text-base">
-            Keep this quick and simple. The goal is speed. If {pet.name} is safe with
-            you, send the location and a short note so the owner can respond fast.
+  const canSubmit = Boolean(form.situation && form.foundLocation.trim());
+
+  if (submitted) {
+    return (
+      <div className="mx-auto max-w-xl pb-8 pt-2">
+        <section className="rounded-[30px] border border-emerald-300/20 bg-emerald-400/[0.07] p-6 text-center sm:p-8">
+          <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-emerald-300 text-2xl font-black text-[#07111f]">
+            ✓
+          </div>
+
+          <h1 className="mt-5 text-3xl font-bold tracking-tight text-white">
+            Thank you for helping {pet.name}.
+          </h1>
+
+          <p className="mt-3 text-sm leading-7 text-white/68">
+            Your update has been captured in this Pet Tag preview. Keep
+            {pet.name} safe if you can, and contact {pet.ownerName} directly for
+            the fastest response.
           </p>
 
           <div className="mt-6 grid gap-3">
-            <InfoPanel title="Pet" body={`${pet.name} � ${pet.breed}`} />
-            <InfoPanel title="Owner contact" body={`${pet.ownerName} � ${pet.callNumber}`} />
-          </div>
-
-          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-white/85">
-                Your first name
-              </span>
-              <input
-                value={form.finderName}
-                onChange={(event) => updateField("finderName", event.target.value)}
-                placeholder="Your name"
-                className="w-full rounded-2xl border border-white/12 bg-white px-4 py-3 text-sm text-black outline-none placeholder:text-gray-500 focus:border-cyan-300/50"
-              />
-            </label>
-
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-white/85">
-                Callback number
-              </span>
-              <input
-                value={form.callbackNumber}
-                onChange={(event) => updateField("callbackNumber", event.target.value)}
-                placeholder="Optional phone number"
-                className="w-full rounded-2xl border border-white/12 bg-white px-4 py-3 text-sm text-black outline-none placeholder:text-gray-500 focus:border-cyan-300/50"
-              />
-            </label>
-
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-white/85">
-                Where did you find {pet.name}?
-              </span>
-              <input
-                value={form.foundLocation}
-                onChange={(event) => updateField("foundLocation", event.target.value)}
-                placeholder="Street, park, neighborhood, landmark"
-                className="w-full rounded-2xl border border-white/12 bg-white px-4 py-3 text-sm text-black outline-none placeholder:text-gray-500 focus:border-cyan-300/50"
-              />
-            </label>
-
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-white/85">
-                Message
-              </span>
-              <textarea
-                value={form.message}
-                onChange={(event) => updateField("message", event.target.value)}
-                placeholder="Vamp is safe with me. I found her near..."
-                rows={5}
-                className="w-full rounded-2xl border border-white/12 bg-white px-4 py-3 text-sm text-black outline-none placeholder:text-gray-500 focus:border-cyan-300/50"
-              />
-            </label>
-
-            <button
-              type="submit"
-              className="rounded-2xl border border-cyan-300/35 bg-cyan-400/15 px-5 py-3 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/22"
+            <a
+              href={buildTelHref(pet.callNumber)}
+              className="rounded-2xl bg-emerald-300 px-5 py-4 text-sm font-bold text-[#07111f]"
             >
-              Send Report
-            </button>
-          </form>
-        </section>
-
-        <section className="space-y-6">
-          <div className="rounded-[32px] border border-cyan-300/12 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.06),transparent_38%),rgba(255,255,255,0.045)] p-6 backdrop-blur-xl sm:p-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200">
-              Live preview
-            </p>
-            <div className="mt-5 rounded-[24px] border border-white/10 bg-[#08101f] p-5">
-              <p className="whitespace-pre-wrap text-sm leading-7 text-white/78">
-                {summary || "Your finder report preview will appear here."}
-              </p>
-            </div>
-          </div>
-
-          <div className="rounded-[32px] border border-cyan-300/12 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.06),transparent_38%),rgba(255,255,255,0.045)] p-6 backdrop-blur-xl sm:p-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200">
-              Status
-            </p>
-            <div className="mt-5 rounded-[24px] border border-cyan-300/12 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.07),transparent_42%),rgba(255,255,255,0.045)] p-5">
-              {submitted ? (
-                <div>
-                  <h3 className="text-xl font-semibold text-emerald-200">
-                    Report captured
-                  </h3>
-                  <p className="mt-2 text-sm leading-6 text-white/75">
-                    Reports stay active so the owner can review updates and respond quickly during a recovery situation.
-                  </p>
-                </div>
-              ) : (
-                <div>
-                  <h3 className="text-xl font-semibold text-white">
-                    Ready to submit
-                  </h3>
-                  <p className="mt-2 text-sm leading-6 text-white/75">
-                    Submit a report to alert the owner and begin the recovery flow.
-                  </p>
-                </div>
+              Call {pet.ownerName}
+            </a>
+            <a
+              href={buildSmsHref(
+                pet.textNumber,
+                `Hi ${pet.ownerName}, I found ${pet.name}. I submitted a found update from ${pet.name}'s HomePlanet Pet Tag.`
               )}
-            </div>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <MetricCard value="Simple" label="low-friction finder flow" />
-            <MetricCard value="Sellable" label="good enough for today" />
+              className="rounded-2xl bg-sky-300 px-5 py-4 text-sm font-bold text-[#07111f]"
+            >
+              Text {pet.ownerName}
+            </a>
+            <Link
+              to={`${PET_BASE_PATH}/pet/${pet.id}`}
+              className="rounded-2xl border border-white/12 bg-white/[0.05] px-5 py-4 text-sm font-bold text-white"
+            >
+              Back to {pet.name}'s Page
+            </Link>
           </div>
         </section>
       </div>
+    );
+  }
 
-      <RadarPanel
-        title="Live Rescue Timeline"
-        subtitle="Finder actions can become timestamped presence events in the Guardian recovery flow."
-        events={RADAR_EVENTS}
-      />
+  return (
+    <div className="mx-auto max-w-xl space-y-4 pb-8 pt-2">
+      <section className="rounded-[30px] border border-white/10 bg-white/[0.045] p-5 sm:p-7">
+        <div className="flex items-center gap-4">
+          <img
+            src={pet.photoUrl}
+            alt={pet.name}
+            className="h-20 w-20 shrink-0 rounded-[20px] object-cover"
+          />
+          <div>
+            <div className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">
+              Found pet update
+            </div>
+            <h1 className="mt-1 text-3xl font-bold tracking-tight text-white">
+              You found {pet.name}?
+            </h1>
+          </div>
+        </div>
+
+        <p className="mt-5 text-sm leading-7 text-white/68">
+          Keep this quick. Tell {pet.ownerName} what is happening and where
+          {pet.name} is.
+        </p>
+      </section>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <section className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5">
+          <label className="text-sm font-bold text-white">
+            What is happening right now?
+          </label>
+
+          <div className="mt-4 space-y-2">
+            <SituationButton
+              active={form.situation === "safe-with-me"}
+              title={`${pet.name} is safe with me`}
+              body="I have the pet with me now."
+              onClick={() => updateField("situation", "safe-with-me")}
+            />
+            <SituationButton
+              active={form.situation === "seen-nearby"}
+              title={`I saw ${pet.name} nearby`}
+              body="I saw the pet but could not safely catch or keep them."
+              onClick={() => updateField("situation", "seen-nearby")}
+            />
+            <SituationButton
+              active={form.situation === "appears-hurt"}
+              title={`${pet.name} may be hurt`}
+              body="The pet appears injured, sick, or in immediate distress."
+              onClick={() => updateField("situation", "appears-hurt")}
+            />
+          </div>
+        </section>
+
+        <section className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5">
+          <label className="block">
+            <span className="text-sm font-bold text-white">
+              Where is {pet.name}?
+            </span>
+            <span className="mt-1 block text-xs leading-5 text-white/48">
+              Street, neighborhood, park, landmark, or another clear location.
+            </span>
+
+            <input
+              required
+              value={form.foundLocation}
+              onChange={(event) =>
+                updateField("foundLocation", event.target.value)
+              }
+              placeholder="Example: Taylor Creek near the boat ramp"
+              className="mt-3 w-full rounded-2xl border border-white/12 bg-white px-4 py-4 text-base text-black outline-none placeholder:text-gray-500 focus:border-cyan-400"
+            />
+          </label>
+        </section>
+
+        <section className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5">
+          <div className="text-sm font-bold text-white">
+            Optional details
+          </div>
+          <p className="mt-1 text-xs leading-5 text-white/48">
+            Add only what could help the owner respond.
+          </p>
+
+          <div className="mt-4 space-y-3">
+            <input
+              value={form.finderName}
+              onChange={(event) =>
+                updateField("finderName", event.target.value)
+              }
+              placeholder="Your first name"
+              className="w-full rounded-2xl border border-white/12 bg-white px-4 py-4 text-base text-black outline-none placeholder:text-gray-500 focus:border-cyan-400"
+            />
+
+            <input
+              value={form.callbackNumber}
+              onChange={(event) =>
+                updateField("callbackNumber", event.target.value)
+              }
+              placeholder="Callback number"
+              inputMode="tel"
+              className="w-full rounded-2xl border border-white/12 bg-white px-4 py-4 text-base text-black outline-none placeholder:text-gray-500 focus:border-cyan-400"
+            />
+
+            <textarea
+              value={form.message}
+              onChange={(event) =>
+                updateField("message", event.target.value)
+              }
+              placeholder={`Anything ${pet.ownerName} should know?`}
+              rows={4}
+              className="w-full rounded-2xl border border-white/12 bg-white px-4 py-4 text-base text-black outline-none placeholder:text-gray-500 focus:border-cyan-400"
+            />
+          </div>
+        </section>
+
+        <button
+          type="submit"
+          disabled={!canSubmit}
+          className={cn(
+            "w-full rounded-2xl px-5 py-4 text-base font-bold transition",
+            canSubmit
+              ? "bg-cyan-300 text-[#06111d] active:scale-[0.99]"
+              : "cursor-not-allowed bg-white/8 text-white/35"
+          )}
+        >
+          Send Found Update
+        </button>
+
+        <div className="grid grid-cols-2 gap-2">
+          <a
+            href={buildTelHref(pet.callNumber)}
+            className="rounded-2xl border border-white/12 bg-white/[0.05] px-4 py-3 text-center text-sm font-semibold text-white"
+          >
+            Call Owner
+          </a>
+          <Link
+            to={`${PET_BASE_PATH}/pet/${pet.id}`}
+            className="rounded-2xl border border-white/12 bg-white/[0.05] px-4 py-3 text-center text-sm font-semibold text-white"
+          >
+            Back to Pet
+          </Link>
+        </div>
+      </form>
     </div>
   );
 }
 
 export default function GuardianPetTagDemo() {
   const location = useLocation();
-  const isVampRoute = location.pathname.includes("/vamp");
-  const pet = isVampRoute ? VAMP_PET : DEMO_PET;
 
-  const currentStep = useMemo(() => {
+  const pet = useMemo(() => {
+    return location.pathname.toLowerCase().includes("vamp") ? VAMP : BELLA;
+  }, [location.pathname]);
+
+  const currentView = useMemo(() => {
     if (location.pathname.includes("/guardian-pet/found/")) return "found";
     if (location.pathname.includes("/guardian-pet/pet/")) return "pet";
-    return "sales";
+    return "landing";
   }, [location.pathname]);
 
   return (
-    <GuardianShell pet={pet}>
-      <div className="mb-6 flex flex-wrap gap-2">
-        <span
-          className={cn(
-            "rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em]",
-            currentStep === "sales"
-              ? "border-cyan-300/35 bg-cyan-400/15 text-cyan-100"
-              : "border-white/12 bg-white/5 text-white/60"
-          )}
-        >
-          Sales
-        </span>
-        <span
-          className={cn(
-            "rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em]",
-            currentStep === "pet"
-              ? "border-cyan-300/35 bg-cyan-400/15 text-cyan-100"
-              : "border-white/12 bg-white/5 text-white/60"
-          )}
-        >
-          QR Landing
-        </span>
-        <span
-          className={cn(
-            "rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em]",
-            currentStep === "found"
-              ? "border-cyan-300/35 bg-cyan-400/15 text-cyan-100"
-              : "border-white/12 bg-white/5 text-white/60"
-          )}
-        >
-          Finder Report
-        </span>
-      </div>
-
-      {currentStep === "sales" && <GuardianSalesPage pet={pet} />}
-      {currentStep === "pet" && <GuardianPetPage pet={pet} />}
-      {currentStep === "found" && <GuardianFoundPage pet={pet} />}
-    </GuardianShell>
+    <PetTagShell compact={currentView !== "landing"}>
+      {currentView === "landing" && <PetTagLanding />}
+      {currentView === "pet" && <PetLivePage pet={pet} />}
+      {currentView === "found" && <FinderPage pet={pet} />}
+    </PetTagShell>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

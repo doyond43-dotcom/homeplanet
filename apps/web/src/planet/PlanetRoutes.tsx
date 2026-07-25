@@ -1,4 +1,5 @@
-﻿
+﻿import GuardianPetPrivacyPage from "../pages/GuardianPetPrivacyPage";
+
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import EcosystemInfrastructureLayer from "../pages/EcosystemInfrastructureLayer";
@@ -654,6 +655,7 @@ export default function PlanetRoutes() {
 
       <Route path="guardian" element={<PlanetGuardian />} />
       <Route path="guardian-pet" element={<GuardianPetTagDemo />} />
+      <Route path="guardian-pet/privacy" element={<GuardianPetPrivacyPage />} />
       <Route path="guardian-pet/pet/:petId" element={<GuardianPetTagDemo />} />
       <Route path="guardian-pet/found/:petId" element={<GuardianPetTagDemo />} />
       <Route path="guardian-pet/bella" element={<GuardianBellaPreview />} />
@@ -832,6 +834,8 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
+
 
 
 
