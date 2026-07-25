@@ -1,4 +1,4 @@
-﻿import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
 type PetStatus = "missing" | "safe" | "traveling";
@@ -164,7 +164,7 @@ function PetModePreview({
           </h3>
 
           <p className="mt-1 text-sm text-white/72">
-            {pet.breed} · {pet.color}
+            {pet.breed} • {pet.color}
           </p>
         </div>
       </div>
@@ -190,12 +190,7 @@ function PetModePreview({
                 Text Owner
               </div>
 
-              <Link
-                to={`${PET_BASE_PATH}/found/${pet.id}`}
-                className="rounded-2xl bg-white/[0.08] px-4 py-3.5 text-center text-sm font-bold text-white"
-              >
-                I Found {pet.name}
-              </Link>
+
             </div>
           </>
         ) : (
@@ -458,7 +453,7 @@ function PetTagLanding() {
                       </div>
 
                       <p className="mt-2 text-sm text-white/60">
-                        Golden Retriever · 3 years
+                        Golden Retriever • 3 years
                       </p>
                     </div>
                   </div>
@@ -472,18 +467,13 @@ function PetTagLanding() {
                     </a>
 
                     <a
-                      href="sms:8635320683"
+                      href="sms:8635320683&body=Hi%2C%20I%20found%20Bella.%20I%20scanned%20her%20HomePlanet%20Pet%20Tag."
                       className="block rounded-xl bg-sky-400 px-4 py-3 text-center text-sm font-bold text-[#07111f]"
                     >
                       Text Owner
                     </a>
 
-                    <Link
-                      to={`${PET_BASE_PATH}/found/bella-demo`}
-                      className="block rounded-xl bg-white px-4 py-3 text-center text-sm font-bold text-[#07111f]"
-                    >
-                      I Found Bella
-                    </Link>
+
                   </div>
 
                   <div className="mt-5 space-y-4 text-sm">
@@ -620,7 +610,7 @@ function PetTagLanding() {
 
                 <div className="grid gap-2 py-5 sm:grid-cols-[170px_1fr] sm:gap-6">
                   <div className="font-bold text-white">
-                    Someone found her
+                    Someone reaches you
                   </div>
                   <div className="text-white/58">
                     Someone who finds your pet can tell you where they are and send a quick report.
@@ -665,21 +655,21 @@ function PetTagLanding() {
               <h2 className="mt-4 text-4xl font-bold leading-[1.03] tracking-[-0.04em] text-white sm:text-5xl">
                 Scan the tag.
                 <span className="block text-cyan-300">
-                  Bella opens right away.
+                  Call or text right away.
                 </span>
               </h2>
 
               <p className="mt-6 text-lg leading-8 text-white/62">
-                No homepage to search through. The scan opens Bella&apos;s live page
-                with the information and actions that matter in that moment.
+                Bella&apos;s live page opens immediately with her important details
+                and direct buttons to call or text her owner.
               </p>
 
               <div className="mt-8 space-y-4">
                 {[
                   "No app to download",
                   "No finder account or login",
-                  "No menus to hunt through",
-                  "Clear contact and found actions immediately",
+                  "Call the owner with one tap",
+                  "Open a prepared text with one tap",
                 ].map((item) => (
                   <div
                     key={item}
@@ -720,7 +710,7 @@ function PetTagLanding() {
                       </div>
 
                       <p className="mt-2 text-sm text-white/70">
-                        Golden Retriever · 3 years · Golden
+                        Golden Retriever • 3 years • Golden
                       </p>
                     </div>
                   </div>
@@ -735,18 +725,13 @@ function PetTagLanding() {
                       </a>
 
                       <a
-                        href="sms:8635320683"
+                        href="sms:8635320683&body=Hi%2C%20I%20found%20Bella.%20I%20scanned%20her%20HomePlanet%20Pet%20Tag."
                         className="rounded-xl bg-sky-400 px-5 py-4 text-center text-base font-bold text-[#07111f]"
                       >
                         Text Owner
                       </a>
 
-                      <Link
-                        to={`${PET_BASE_PATH}/found/bella-demo`}
-                        className="rounded-xl bg-white px-5 py-4 text-center text-base font-bold text-[#07111f]"
-                      >
-                        I Found Bella
-                      </Link>
+
                     </div>
 
                     <div className="mt-6 grid gap-5 sm:grid-cols-2">
@@ -832,7 +817,7 @@ function PetTagLanding() {
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div>
                     <div className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">
-                      Bella · Live Activity
+                      Bella • Live Activity
                     </div>
 
                     <div className="mt-1 text-xl font-bold text-white">
@@ -900,10 +885,10 @@ function PetTagLanding() {
 
                   <div>
                     <div className="font-bold text-white">
-                      Finder tapped “I Found Bella”
+                      Finder tapped "Text Owner"
                     </div>
                     <div className="mt-1 text-sm leading-6 text-white/50">
-                      A recovery action started instead of the scan ending at a static page.
+                      Their phone opened a prepared text so they could contact Bella&apos;s owner immediately.
                     </div>
                   </div>
                 </div>
@@ -931,7 +916,7 @@ function PetTagLanding() {
 
               <div className="border-t border-white/[0.08] bg-cyan-300/[0.045] px-5 py-5 sm:px-7">
                 <div className="text-sm font-bold text-cyan-200">
-                  Signal → action → next action → outcome
+                  Signal ? action ? next action ? outcome
                 </div>
 
                 <p className="mt-2 text-sm leading-6 text-white/52">
@@ -1351,23 +1336,25 @@ function PetIdentity({ pet }: { pet: DemoPet }) {
         <div className="absolute inset-0 bg-gradient-to-t from-[#07111f] via-[#07111f]/15 to-transparent" />
 
         <div className="absolute inset-x-0 bottom-0 p-5 sm:p-7">
-          <div
-            className={cn(
-              "inline-flex rounded-full border px-3 py-1.5 text-xs font-bold uppercase tracking-[0.16em]",
-              isMissing
-                ? "border-rose-300/30 bg-rose-500/25 text-rose-100"
-                : "border-emerald-300/30 bg-emerald-500/20 text-emerald-100"
-            )}
-          >
-            {isMissing ? "Missing" : "Safe"}
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-5xl font-bold tracking-[-0.04em] text-white sm:text-6xl">
+              {pet.name}
+            </h1>
+
+            <div
+              className={cn(
+                "inline-flex rounded-full border px-3 py-1.5 text-xs font-bold uppercase tracking-[0.16em]",
+                isMissing
+                  ? "border-rose-300/30 bg-rose-500/25 text-rose-100"
+                  : "border-emerald-300/30 bg-emerald-500/20 text-emerald-100"
+              )}
+            >
+              {isMissing ? "Missing" : "Safe"}
+            </div>
           </div>
 
-          <h1 className="mt-3 text-5xl font-bold tracking-[-0.04em] text-white sm:text-6xl">
-            {pet.name}
-          </h1>
-
           <p className="mt-2 text-sm text-white/72 sm:text-base">
-            {pet.breed} · {pet.age} · {pet.color}
+            {pet.breed} • {pet.age} • {pet.color}
           </p>
         </div>
       </div>
@@ -1405,17 +1392,17 @@ function PetLivePage({ pet }: { pet: DemoPet }) {
               aria-hidden="true"
               className="text-lg leading-none text-white/52"
             >
-              ←
+              &larr;
             </span>
 
-            <span className="relative inline-flex items-center rounded-full border border-cyan-300/25 bg-cyan-300/[0.06] py-1.5 pl-4 pr-3 text-[10px] font-bold uppercase tracking-[0.16em] text-cyan-200">
-              <span className="absolute left-2 h-1 w-1 rounded-full border border-cyan-200/55" />
+            <span className="relative inline-flex items-center rounded-full border border-cyan-300/30 bg-cyan-300/[0.07] py-2 pl-5 pr-4 text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">
+              <span className="absolute left-2.5 h-1.5 w-1.5 rounded-full border border-cyan-200/60" />
               Pet Tag
             </span>
           </Link>
         ) : (
-          <div className="relative inline-flex items-center rounded-full border border-cyan-300/25 bg-cyan-300/[0.06] py-1.5 pl-4 pr-3 text-[10px] font-bold uppercase tracking-[0.16em] text-cyan-200">
-            <span className="absolute left-2 h-1 w-1 rounded-full border border-cyan-200/55" />
+          <div className="relative inline-flex items-center rounded-full border border-cyan-300/30 bg-cyan-300/[0.07] py-2 pl-5 pr-4 text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">
+            <span className="absolute left-2.5 h-1.5 w-1.5 rounded-full border border-cyan-200/60" />
             Pet Tag
           </div>
         )}
@@ -1427,7 +1414,7 @@ function PetLivePage({ pet }: { pet: DemoPet }) {
         className={cn(
           "rounded-[28px] border p-5 sm:p-7",
           isMissing
-            ? "border-rose-300/20 bg-rose-500/[0.07]"
+            ? "border-cyan-300/16 bg-cyan-300/[0.045]"
             : "border-emerald-300/20 bg-emerald-500/[0.06]"
         )}
       >
@@ -1437,18 +1424,46 @@ function PetLivePage({ pet }: { pet: DemoPet }) {
             : `Thanks for checking ${pet.name}'s tag.`}
         </h2>
 
-        <p className="mt-3 text-sm leading-7 text-white/70 sm:text-base">
-          {isMissing
-            ? `${pet.name}'s family is looking for her. If you found ${pet.name}, send them a quick message below.`
-            : `${pet.name} appears to be away from home. You can contact ${pet.ownerName} or send a quick found update below.`}
-        </p>
+        {isMissing ? (
+          <>
+            <p className="mt-3 text-base font-semibold leading-7 text-rose-200">
+              {pet.name} is deeply loved, and her family is waiting to hear that she is safe.
+            </p>
 
-        <FinderMessageFlow petName={pet.name} />
+            <p className="mt-2 text-sm leading-7 text-white/70 sm:text-base">
+              If you are with her, please call or text them directly below.
+            </p>
+          </>
+        ) : (
+          <p className="mt-3 text-sm leading-7 text-white/70 sm:text-base">
+            {pet.name} appears to be away from home. Call or text {pet.ownerName} directly below.
+          </p>
+        )}
+
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <a
+            href={callHref}
+            className="rounded-2xl bg-emerald-300 px-5 py-4 text-center text-base font-bold text-[#07111f] transition hover:bg-emerald-200"
+          >
+            Call Owner
+          </a>
+
+          <a
+            href={textHref}
+            className="rounded-2xl bg-sky-300 px-5 py-4 text-center text-base font-bold text-[#07111f] transition hover:bg-sky-200"
+          >
+            Text Owner
+          </a>
+        </div>
+
+        <p className="mt-4 text-center text-xs leading-5 text-white/45">
+          Opens a ready-to-send text message.
+        </p>
       </section>
 
       <section className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5 sm:p-7">
         <div className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">
-          How to approach {pet.name}
+          A little about {pet.name}
         </div>
         <p className="mt-3 text-base leading-7 text-white/80">
           {pet.temperament}
@@ -1468,7 +1483,7 @@ function PetLivePage({ pet }: { pet: DemoPet }) {
 
           <div className="rounded-[26px] border border-white/10 bg-white/[0.04] p-5">
             <div className="text-xs font-bold uppercase tracking-[0.17em] text-white/50">
-              Safe return
+              Help bring {pet.name} home
             </div>
             <p className="mt-2 text-base font-semibold leading-6 text-white">
               {pet.rewardText}
@@ -1486,6 +1501,27 @@ function PetLivePage({ pet }: { pet: DemoPet }) {
           This page is connected directly to {pet.name}&apos;s Pet Tag. No app or account is needed to help.
         </p>
       </section>
+
+      {pet.id === "bella-demo" && (
+        <section className="overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.035]">
+          <img
+            src="/images/bella-reunion.jpg"
+            alt="A beloved golden retriever reunited safely with her owner"
+            className="aspect-[16/10] w-full object-cover sm:aspect-[16/9]"
+          />
+
+          <div className="p-5 text-left sm:p-7">
+            <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+              Every scan has the chance to become a moment like this.
+            </h2>
+
+            <p className="mt-3 max-w-2xl text-base leading-7 text-white/65">
+              A stranger took a minute to help. One phone call or text changed
+              everything. Thank you for helping pets find their way back home.
+            </p>
+          </div>
+        </section>
+      )}
 
       {/* PET TAG LIVE PAGE FOOTER */}
       <footer className="mt-8 border-t border-white/[0.08] px-1 pb-3 pt-7">
@@ -1806,6 +1842,9 @@ export default function GuardianPetTagDemo() {
     </PetTagShell>
   );
 }
+
+
+
 
 
 
