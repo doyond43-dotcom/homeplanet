@@ -974,6 +974,28 @@ function PetTagLanding() {
           ===================================================== */}
       <section className="border-t border-white/[0.07] py-16 text-center sm:py-20">
         <div className="mx-auto max-w-4xl">
+          {/* Final Pet Tag reunion outcome */}
+          <div className="mx-auto mb-10 max-w-3xl overflow-hidden rounded-[30px] border border-white/[0.08] bg-[#101e2b] p-3 shadow-[0_22px_70px_rgba(0,0,0,0.20)] sm:mb-12">
+            <div className="relative overflow-hidden rounded-[24px]">
+              <img
+                src="/images/bella-reunion.jpg"
+                alt="A beloved golden retriever safely reunited with her owner"
+                className="h-[280px] w-full object-cover object-center sm:h-[360px]"
+              />
+
+              <div className="absolute inset-0 bg-gradient-to-t from-[#07111f]/45 via-transparent to-transparent" />
+
+              <div className="absolute bottom-4 left-4 right-4 rounded-[18px] border border-white/10 bg-[#07111f]/82 px-4 py-3 text-left backdrop-blur-md sm:bottom-5 sm:left-5 sm:right-5">
+                <div className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">
+                  Safely back home
+                </div>
+
+                <div className="mt-1 text-sm font-semibold text-white/82">
+                  The outcome every scan is working toward.
+                </div>
+              </div>
+            </div>
+          </div>
           <div className="text-sm font-bold uppercase tracking-[0.22em] text-cyan-200">
             HomePlanet Pet Tag
           </div>
@@ -1009,34 +1031,31 @@ function PetTagLanding() {
       {/* =====================================================
           PET TAG FOOTER
           ===================================================== */}
-      <footer className="border-t border-white/[0.08] py-10 sm:py-12">
+      <footer className="border-t border-white/[0.08] py-10 text-center sm:py-12">
         <div className="mx-auto max-w-5xl">
+          <div className="flex flex-col items-center">
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-[0.28em] text-white/38">
+                HomePlanet
+              </span>
 
-          <div className="grid gap-8 sm:grid-cols-[1fr_auto] sm:items-end">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold uppercase tracking-[0.28em] text-white/38">
-                  HomePlanet
-                </span>
-
-                <span className="relative inline-flex items-center rounded-full border border-cyan-300/25 bg-cyan-300/[0.06] py-1.5 pl-4 pr-3 text-[10px] font-bold uppercase tracking-[0.16em] text-cyan-200">
-                  <span className="absolute left-2 h-1 w-1 rounded-full border border-cyan-200/55" />
-                  Pet Tag
-                </span>
-              </div>
-
-              <p className="mt-4 max-w-md text-sm leading-6 text-white/50">
-                Pet identification built for real-world lost-and-found moments.
-              </p>
-
-              <p className="mt-3 text-sm font-semibold text-white/68">
-                Scan. Connect. Help them get home.
-              </p>
+              <span className="relative inline-flex items-center rounded-full border border-cyan-300/25 bg-cyan-300/[0.06] py-1.5 pl-4 pr-3 text-[10px] font-bold uppercase tracking-[0.16em] text-cyan-200">
+                <span className="absolute left-2 h-1 w-1 rounded-full border border-cyan-200/55" />
+                Pet Tag
+              </span>
             </div>
+
+            <p className="mx-auto mt-4 max-w-md text-sm leading-6 text-white/50">
+              Pet identification built for real-world lost-and-found moments.
+            </p>
+
+            <p className="mt-3 text-sm font-semibold text-white/68">
+              Scan. Connect. Help them get home.
+            </p>
 
             <nav
               aria-label="Pet Tag footer"
-              className="flex flex-wrap gap-x-6 gap-y-3 text-sm font-semibold text-white/48 sm:justify-end"
+              className="mt-7 flex flex-wrap justify-center gap-x-6 gap-y-3 text-sm font-semibold text-white/48"
             >
               <Link
                 to={PET_BASE_PATH}
@@ -1062,10 +1081,11 @@ function PetTagLanding() {
             </nav>
           </div>
 
-          <div className="mt-8 border-t border-white/[0.06] pt-6 text-xs text-white/32">
-            © 2026 HomePlanet. All rights reserved.
+          <div className="mx-auto mt-8 max-w-3xl border-t border-white/[0.08] pt-6">
+            <p className="text-xs text-white/38">
+              © 2026 HomePlanet. All rights reserved.
+            </p>
           </div>
-
         </div>
       </footer>
     </div>

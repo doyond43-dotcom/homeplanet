@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { CheckCircle2, ExternalLink, QrCode } from "lucide-react";
 import { supabase } from "../lib/supabase";
@@ -156,7 +156,12 @@ export default function GuardianJoinDesk() {
   const [copiedLabel, setCopiedLabel] = useState<string | null>(null);
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [paymentDrawerOpen, setPaymentDrawerOpen] = useState(false);
+  const [confirmationDrawerOpen, setConfirmationDrawerOpen] = useState(false);
+  const [paymentConfirmationMessage, setPaymentConfirmationMessage] = useState(
+    "Payment submitted. Your order is waiting for verification.",
+  );
   const [paymentMarked, setPaymentMarked] = useState(false);
+  const [markingPayment, setMarkingPayment] = useState(false);
   const [orderId, setOrderId] = useState(makeOrderId());
   const [submittingOrder, setSubmittingOrder] = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -310,9 +315,8 @@ function isValid() {
 
       setOrderPlaced(true);
 
-      setPaymentDrawerOpen(true);
-
-
+      setPaymentDrawerOpen(false);
+      setConfirmationDrawerOpen(false);
       setPaymentMarked(false);
 
 
@@ -366,35 +370,53 @@ function isValid() {
   }
 
   async function markPaid() {
-    if (!orderPlaced) {
-      alert("Place the order first so the payment ties to a real order.");
+    if (!orderPlaced || markingPayment) {
       return;
     }
 
     setSubmitError("");
+    setMarkingPayment(true);
 
-    const { error } = await supabase
-      .from("guardian_orders")
-      .update({
-        status: "payment_submitted",
-      })
-      .eq("order_id", orderId);
+    try {
+      const { data, error } = await supabase.rpc(
+        "submit_guardian_order_payment",
+        {
+          submitted_order_id: orderId,
+          submitted_customer_email: mailing.email.trim(),
+        },
+      );
 
-    if (error) {
+      if (error) {
+        throw error;
+      }
+
+      const alreadySubmitted = data !== true;
+
+      setPaymentMarked(true);
+
+      setPaymentConfirmationMessage(
+        alreadySubmitted
+          ? "Payment already submitted. Your order is waiting for verification."
+          : "Payment submitted. Your order is waiting for verification.",
+      );
+
+      setPaymentDrawerOpen(false);
+
+      window.setTimeout(() => {
+        setConfirmationDrawerOpen(true);
+      }, 180);
+    } catch (error) {
       console.error("Could not record payment submission:", error);
 
       setSubmitError(
-        "Your order is saved, but we could not record that payment was submitted. Please contact us before trying again."
+        error instanceof Error && error.message
+          ? error.message
+          : "Your order is saved, but we could not record that payment was submitted. Please contact us before trying again.",
       );
-
-      return;
+    } finally {
+      setMarkingPayment(false);
     }
-
-    setPaymentMarked(true);
-
-    setPaymentDrawerOpen(false);
   }
-
   const cashAppUrl = useMemo(
     () => buildCashAppUrl(paymentAmount, paymentMemo),
     [paymentAmount, paymentMemo],
@@ -479,6 +501,7 @@ function isValid() {
               </div>
             </div>
 
+            <div className={orderPlaced ? "hidden" : ""}>
             <div className="mt-3 rounded-[28px] border border-white/[0.08] bg-[#091724] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.025)]">
               <div className="mb-4 flex items-start justify-between gap-4 border-b border-white/[0.08] pb-4">
                 <div>
@@ -825,21 +848,29 @@ function isValid() {
               </div>
             </div>
 
+            </div>
+
             {orderPlaced && !paymentMarked && !paymentDrawerOpen ? (
               <button
                 type="button"
                 onClick={() => setPaymentDrawerOpen(true)}
                 className="mt-3 w-full rounded-2xl border border-cyan-300/25 bg-cyan-300 px-5 py-4 text-base font-bold text-[#07111f] transition hover:bg-cyan-200"
               >
-                Resume Payment
+                Continue to Payment
               </button>
             ) : null}
-            <div className={`${paymentMarked ? "" : "hidden"} mt-3 rounded-[28px] border border-white/[0.08] bg-[#091724] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.025)]`}>
+            <div className={`${orderPlaced ? "" : "hidden"} mt-3 rounded-[28px] border border-white/[0.08] bg-[#091724] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.025)]`}>
               <div className="mb-4 flex items-start justify-between gap-4 border-b border-white/[0.08] pb-4">
                 <div>
-                  <h2 className="text-2xl font-bold tracking-[-0.025em] text-white">You're all set</h2>
+                  <h2 className="text-2xl font-bold tracking-[-0.025em] text-white">
+                    {paymentMarked
+                      ? "Payment submitted"
+                      : "Your Pet Tag order is ready"}
+                  </h2>
                   <p className="mt-1 text-sm text-white/45">
-                    Your Pet Tag order and payment update are together here.
+                    {paymentMarked
+                      ? "Your payment update and order details are together here."
+                      : "This is your order receipt. Continue to payment when you are ready."}
                   </p>
                 </div>
                 <div className="rounded-full border border-white/[0.12] bg-[#07111f]/70 px-3 py-1 text-xs font-semibold text-white/70">
@@ -932,7 +963,151 @@ function isValid() {
             </div>
           </div>
 
-          {orderPlaced && !paymentMarked && paymentDrawerOpen ? (
+          {orderPlaced && confirmationDrawerOpen ? (
+            <div
+              className="fixed inset-0 z-[110] flex items-start justify-center bg-black/75 px-0 backdrop-blur-sm sm:px-4 sm:pt-6"
+              role="presentation"
+            >
+              <button
+                type="button"
+                aria-label="Close payment confirmation"
+                onClick={() => setConfirmationDrawerOpen(false)}
+                className="absolute inset-0 cursor-default"
+              />
+
+              <aside
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="pet-tag-confirmation-title"
+                className="relative z-10 max-h-[94vh] w-full overflow-y-auto rounded-b-[28px] border border-emerald-300/15 bg-[#091824] p-5 shadow-[0_18px_60px_rgba(0,0,0,0.5)] sm:max-w-2xl sm:rounded-[28px]"
+              >
+                <button
+                  type="button"
+                  aria-label="Close payment confirmation"
+                  onClick={() => setConfirmationDrawerOpen(false)}
+                  className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full border border-white/[0.12] bg-[#050e18]/90 text-xl font-semibold text-white/70 transition hover:bg-white/[0.08] hover:text-white"
+                >
+                  &times;
+                </button>
+
+                <div className="pr-12">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-emerald-300">
+                    Payment submitted
+                  </p>
+
+                  <h2
+                    id="pet-tag-confirmation-title"
+                    className="mt-2 text-2xl font-bold tracking-[-0.025em] text-white"
+                  >
+                    We received your payment update
+                  </h2>
+
+                  <p className="mt-2 text-sm leading-6 text-white/65">
+                    {paymentConfirmationMessage}
+                  </p>
+                </div>
+
+                <div className="mt-6 rounded-[24px] border border-white/[0.08] bg-[#06111c] p-4">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-300 text-[#07111f]">
+                        <CheckCircle2 className="h-4 w-4" />
+                      </div>
+
+                      <div>
+                        <p className="text-sm font-semibold text-white">
+                          Order received
+                        </p>
+                        <p className="text-xs text-white/45">
+                          Your Guardian Pet Tag order is saved.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="ml-3 h-4 border-l border-emerald-300/30" />
+
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-300 text-[#07111f]">
+                        <CheckCircle2 className="h-4 w-4" />
+                      </div>
+
+                      <div>
+                        <p className="text-sm font-semibold text-white">
+                          Payment submitted
+                        </p>
+                        <p className="text-xs text-white/45">
+                          Your payment update is attached to this order.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="ml-3 h-4 border-l border-cyan-300/35" />
+
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-cyan-300/50 bg-cyan-300/10">
+                        <div className="h-2.5 w-2.5 rounded-full bg-cyan-300" />
+                      </div>
+
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-sm font-semibold text-cyan-100">
+                            Verification
+                          </p>
+
+                          <span className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-cyan-200">
+                            Current step
+                          </span>
+                        </div>
+
+                        <p className="text-xs text-white/45">
+                          We are confirming the payment before activation.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="ml-3 h-4 border-l border-white/[0.12]" />
+
+                    <div className="flex items-center gap-3 opacity-55">
+                      <div className="h-7 w-7 shrink-0 rounded-full border border-white/[0.18] bg-white/[0.03]" />
+
+                      <div>
+                        <p className="text-sm font-semibold text-white">
+                          Tag activation
+                        </p>
+                        <p className="text-xs text-white/45">
+                          Your Guardian profile and tag will be prepared.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="ml-3 h-4 border-l border-white/[0.12]" />
+
+                    <div className="flex items-center gap-3 opacity-55">
+                      <div className="h-7 w-7 shrink-0 rounded-full border border-white/[0.18] bg-white/[0.03]" />
+
+                      <div>
+                        <p className="text-sm font-semibold text-white">
+                          Shipping
+                        </p>
+                        <p className="text-xs text-white/45">
+                          Tracking will appear when your tag ships.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setConfirmationDrawerOpen(false)}
+                  className="mt-5 w-full rounded-2xl bg-emerald-300 px-5 py-4 text-base font-bold text-[#07111f] transition hover:bg-emerald-200"
+                >
+                  View My Order
+                </button>
+              </aside>
+            </div>
+          ) : null}
+          {orderPlaced && paymentDrawerOpen ? (
             <div
               className="fixed inset-0 z-[100] flex items-end justify-center bg-black/75 px-0 backdrop-blur-sm sm:items-center sm:px-4 sm:py-6"
               role="presentation"
@@ -956,7 +1131,7 @@ function isValid() {
                   onClick={() => setPaymentDrawerOpen(false)}
                   className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full border border-white/[0.12] bg-[#050e18]/90 text-xl font-semibold text-white/70 transition hover:bg-white/[0.08] hover:text-white"
                 >
-                  ×
+                  &times;
                 </button>
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -1001,7 +1176,7 @@ function isValid() {
               <div className="mt-4 space-y-3">
                 <div className="flex items-center gap-3">
                   <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-300 text-xs font-bold text-[#07111f]">
-                    ✓
+                    <CheckCircle2 className="h-4 w-4" />
                   </div>
 
                   <span className="text-sm font-semibold text-white">
@@ -1029,7 +1204,7 @@ function isValid() {
                   <>
                     <div className="flex items-center gap-3">
                       <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-300 text-xs font-bold text-[#07111f]">
-                        ✓
+                        <CheckCircle2 className="h-4 w-4" />
                       </div>
 
                       <span className="text-sm font-semibold text-white">
@@ -1257,16 +1432,25 @@ function isValid() {
 
             <button
               type="button"
-              onClick={markPaid}
+              onClick={() => void markPaid()}
               className={`mt-4 w-full rounded-2xl border px-4 py-3 text-sm font-semibold transition ${
-                orderPlaced
+                orderPlaced && !markingPayment
                   ? "border-emerald-300/25 bg-emerald-300 text-[#07111f] hover:bg-emerald-200"
                   : "cursor-not-allowed border-neutral-800 bg-neutral-900 text-white/45"
               }`}
-              disabled={!orderPlaced}
+              disabled={!orderPlaced || markingPayment}
             >
-              I've Sent My Payment
+              {markingPayment ? "Recording Payment..." : "I've Sent My Payment"}
             </button>
+
+            {submitError ? (
+              <div
+                role="alert"
+                className="mt-3 rounded-2xl border border-rose-400/25 bg-rose-400/10 p-4 text-sm font-semibold leading-6 text-rose-100"
+              >
+                {submitError}
+              </div>
+            ) : null}
 
             <div className="mt-3 rounded-2xl border border-white/[0.08] bg-[#050e18]/75 p-4 text-xs leading-6 text-white/55">
               Send the exact setup payment through Cash App or Zelle, then tap I've Sent My Payment. We verify the payment before fulfillment.
@@ -1279,6 +1463,8 @@ function isValid() {
     </div>
   );
 }
+
+
 
 
 
