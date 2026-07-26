@@ -163,7 +163,8 @@ export default function GuardianJoinDesk() {
   const [paymentMarked, setPaymentMarked] = useState(false);
   const [markingPayment, setMarkingPayment] = useState(false);
   const [orderId, setOrderId] = useState(makeOrderId());
-  const [submittingOrder, setSubmittingOrder] = useState(false);
+    const [customerAccessToken, setCustomerAccessToken] =
+    useState("");const [submittingOrder, setSubmittingOrder] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [emailState, setEmailState] = useState<EmailState>("idle");
 
@@ -280,7 +281,9 @@ function isValid() {
     setSubmitError("");
     setEmailState("idle");
 
-    const nextOrderId = makeOrderId();
+    const nextOrderId = makeOrderId();    const nextCustomerAccessToken = crypto.randomUUID();
+
+
 
     const orderPayload = {
       order_id: nextOrderId,
@@ -300,6 +303,7 @@ function isValid() {
       pets,
       status: "pending_payment",
       payment_marked: false,
+          customer_access_token: nextCustomerAccessToken,
     };
 
     try {
@@ -312,6 +316,7 @@ function isValid() {
       }
 
       setOrderId(nextOrderId);
+      setCustomerAccessToken(nextCustomerAccessToken);
 
       setOrderPlaced(true);
 
@@ -434,7 +439,7 @@ function isValid() {
     firstPet?.name?.trim() || mailing.fullName || "Pet tag order";
 
   const receiptStatusLabel = paymentMarked
-    ? "Payment Submitted"
+    ? "Waiting for verification"
     : orderPlaced
       ? "Pending Payment"
       : "Not Placed";
@@ -485,10 +490,14 @@ function isValid() {
               </div>
 
               <h1 className="mt-6 text-4xl font-bold leading-[1.02] tracking-[-0.04em] text-white sm:text-5xl">
-                Get your pet's tag set up.
+                {orderPlaced
+                ? `${selectedOrderTitle}'s Pet Tag Order`
+                : "Get your pet's tag set up."}
               </h1>
               <p className="mt-4 max-w-2xl text-base leading-7 text-white/60 sm:text-lg">
-                Add your information and your pet. We'll take care of the rest.
+                {orderPlaced
+                ? "Follow your order from payment verification through activation, shipping, and delivery."
+                : "Add your information and your pet. We'll take care of the rest."}
               </p>
 
               <div className="hidden">
@@ -552,7 +561,7 @@ function isValid() {
 
                 <div className="grid gap-3 sm:grid-cols-2">
                   <input
-                    placeholder="Confirmation email"
+                    placeholder="Email"
                     value={mailing.email}
                     onChange={(e) => updateField("email", e.target.value)}
                     className="w-full rounded-xl border border-white/[0.10] bg-[#050e18]/85 px-4 py-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-cyan-300/50"
@@ -815,6 +824,18 @@ function isValid() {
                   </div>
                 </div>
 
+                <div className="rounded-2xl border border-emerald-300/15 bg-emerald-300/[0.06] p-4 sm:col-span-2">
+                  <div className="text-xs uppercase tracking-[0.18em] text-emerald-200/70">
+                    Shipping
+                  </div>
+                  <div className="mt-2 text-base font-semibold text-white">
+                    Standard tracked shipping included
+                  </div>
+                  <div className="mt-1 text-sm text-white/50">
+                    No additional shipping charge.
+                  </div>
+                </div>
+
                 <div className="rounded-2xl border border-white/[0.08] bg-[#050e18]/75 p-4">
                   <div className="text-xs uppercase tracking-[0.18em] text-white/45">
                     Payment memo
@@ -869,7 +890,7 @@ function isValid() {
                   </h2>
                   <p className="mt-1 text-sm text-white/45">
                     {paymentMarked
-                      ? "Your payment update and order details are together here."
+                      ? "Your order is waiting for verification."
                       : "This is your order receipt. Continue to payment when you are ready."}
                   </p>
                 </div>
@@ -914,6 +935,15 @@ function isValid() {
                   </span>
                 </div>
                 <div className="mt-2">
+                  <span className="text-white/45">Shipping:</span>{" "}
+                  <span className="font-semibold text-white">
+                    Standard tracked shipping included
+                  </span>
+                </div>
+                <div className="mt-1 text-sm text-white/45">
+                  No additional shipping charge.
+                </div>
+                <div className="mt-2">
                   <span className="text-white/45">Payment method:</span>{" "}
                   <span className="font-semibold text-white">Cash App primary / Zelle backup</span>
                 </div>
@@ -949,13 +979,22 @@ function isValid() {
                   </div>
                 </div>
               </div>
+              {customerAccessToken ? (
+                <Link
+                  to={`/planet/guardian-pet/order/${customerAccessToken}`}
+                  className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-cyan-300 px-5 py-3 text-sm font-bold text-[#07111f] transition hover:bg-cyan-200"
+                >
+                  View My Order
+                </Link>
+              ) : null}
+
 
               {paymentMarked ? (
                 <div className="mt-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4">
                   <div className="flex items-center gap-2 text-emerald-200">
                     <CheckCircle2 className="h-4 w-4" />
                     <span className="text-sm font-semibold">
-                      Payment submitted. We will verify it before the order moves to fulfillment.
+                      We'll update this page when your payment is verified and your tag moves into preparation.
                     </span>
                   </div>
                 </div>
@@ -1463,6 +1502,8 @@ function isValid() {
     </div>
   );
 }
+
+
 
 
 

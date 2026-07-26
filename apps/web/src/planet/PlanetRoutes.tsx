@@ -297,6 +297,8 @@ import GuardianPresenceDesk from "../pages/GuardianPresenceDesk";
 
 import GuardianJoinDesk from "../pages/GuardianJoinDesk";
 
+import GuardianPetOrderStatus from "../pages/GuardianPetOrderStatus";
+
 import GuardianPetTagDemo from "../pages/GuardianPetTagDemo";
 
 import GuardianBellaPreview from "../pages/GuardianBellaPreview";
@@ -320,6 +322,8 @@ import GuardianWearablePanicDemo from "../pages/GuardianWearablePanicDemo";
 import PetCareTimelinePanel from "../components/guardian/PetCareTimelinePanel";
 
 import PetTagFulfillmentBoard from "../pages/PetTagFulfillmentBoard";
+
+import { RequireAuth } from "../auth/RequireAuth";
 
 
 import EmilyLearningDesk from "../pages/EmilyLearningDesk";
@@ -660,6 +664,10 @@ export default function PlanetRoutes() {
       <Route path="guardian-pet/found/:petId" element={<GuardianPetTagDemo />} />
       <Route path="guardian-pet/bella" element={<GuardianBellaPreview />} />
       <Route path="guardian-join" element={<GuardianJoinDesk />} />
+      <Route
+        path="guardian-pet/order/:accessToken"
+        element={<GuardianPetOrderStatus />}
+      />
       <Route path="guardian/presence" element={<GuardianPresenceDesk />} />
       <Route path="guardian/home" element={<GuardianHomePage />} />
       <Route path="guardian/start" element={<GuardianStartPage />} />
@@ -674,7 +682,7 @@ export default function PlanetRoutes() {
       <Route path="guardian/public/:guardianId" element={<GuardianPublicProfilePage />} />
       <Route path="guardian/mobility" element={<GuardianMobilityLiveBoard />} />
       <Route path="guardian/pet-care" element={<PetCareTimelinePanel />} />
-      <Route path="guardian-pet/fulfillment" element={<PetTagFulfillmentBoard />} />
+      <Route path="guardian-pet/fulfillment" element={<RequireAuth><PetTagFulfillmentBoard /></RequireAuth>} />
 
       <Route path="demo/home-services" element={<AwnitDemoBoard />} />
       <Route path="demo/cleaning-board" element={<OnlyTheEssentialsBoard />} />
@@ -834,6 +842,7 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
 
 
 
