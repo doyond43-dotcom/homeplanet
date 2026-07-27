@@ -1,4 +1,4 @@
-﻿-- Guardian Pet Tag secure operator stage correction.
+-- Guardian Pet Tag secure operator stage correction.
 -- This migration mirrors the function already applied through the SQL Editor.
 
 create or replace function public.set_guardian_fulfillment_stage(

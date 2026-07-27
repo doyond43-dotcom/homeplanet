@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { CheckCircle2, ExternalLink, QrCode } from "lucide-react";
 import { supabase } from "../lib/supabase";
@@ -150,7 +150,7 @@ export default function GuardianJoinDesk() {
   });
 
   const [pets, setPets] = useState<PetProfile[]>(() => createEmptyPets(petCount));
-  const [paymentMethod] = useState<PaymentMethod>("cashapp");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cashapp");
   const [paymentAmount, setPaymentAmount] = useState(pricing.setupTotal.toFixed(2));
   const [paymentMemo, setPaymentMemo] = useState(buildPetAwareMemo("", petCount, []));
   const [copiedLabel, setCopiedLabel] = useState<string | null>(null);
@@ -311,8 +311,22 @@ function isValid() {
         .from("guardian_orders")
         .insert(orderPayload);
 
-      if (insertError) {
+            if (insertError) {
         throw new Error(insertError.message);
+      }
+
+      const { error: checkoutError } = await supabase.rpc(
+        "create_guardian_homeplanet_checkout",
+        {
+          requested_order_id: nextOrderId,
+          requested_access_token: nextCustomerAccessToken,
+        },
+      );
+
+      if (checkoutError) {
+        throw new Error(
+          `Order saved, but HomePlanet Checkout could not be created: ${checkoutError.message}`,
+        );
       }
 
       setOrderId(nextOrderId);
@@ -383,11 +397,20 @@ function isValid() {
     setMarkingPayment(true);
 
     try {
-      const { data, error } = await supabase.rpc(
-        "submit_guardian_order_payment",
+            if (!customerAccessToken) {
+        throw new Error(
+          "Your checkout access token is missing. Reopen your order receipt before submitting payment.",
+        );
+      }
+
+      const checkoutPaymentMethod =
+        paymentMethod === "zelle" ? "zelle" : "cash_app";
+
+      const { error } = await supabase.rpc(
+        "submit_homeplanet_manual_payment",
         {
-          submitted_order_id: orderId,
-          submitted_customer_email: mailing.email.trim(),
+          requested_access_token: customerAccessToken,
+          requested_payment_method: checkoutPaymentMethod,
         },
       );
 
@@ -395,14 +418,12 @@ function isValid() {
         throw error;
       }
 
-      const alreadySubmitted = data !== true;
-
       setPaymentMarked(true);
 
       setPaymentConfirmationMessage(
-        alreadySubmitted
-          ? "Payment already submitted. Your order is waiting for verification."
-          : "Payment submitted. Your order is waiting for verification.",
+        paymentMethod === "zelle"
+          ? "Zelle payment submitted. Your order is waiting for verification."
+          : "Cash App payment submitted. Your order is waiting for verification.",
       );
 
       setPaymentDrawerOpen(false);
@@ -1394,7 +1415,12 @@ function isValid() {
 
               <div className="mt-3 grid gap-2">
                 <a
-                  href={orderPlaced ? cashAppUrl : undefined}
+                                    href={orderPlaced ? cashAppUrl : undefined}
+                  onClick={() => {
+                    if (orderPlaced) {
+                      setPaymentMethod("cashapp");
+                    }
+                  }}
                   aria-disabled={!orderPlaced}
                   tabIndex={orderPlaced ? 0 : -1}
                   target="_blank"
@@ -1406,8 +1432,9 @@ function isValid() {
                 </a>
                 <button
                   type="button"
-                  onClick={() => {
+                                    onClick={() => {
                     if (!orderPlaced) return;
+                    setPaymentMethod("cashapp");
                     copyText(cashAppUrl, "Cash App link");
                   }}
                   disabled={!orderPlaced}
@@ -1444,8 +1471,9 @@ function isValid() {
               <div className="mt-3 grid gap-2">
                 <button
                   type="button"
-                  onClick={() => {
+                                    onClick={() => {
                     if (!orderPlaced) return;
+                    setPaymentMethod("zelle");
                     copyText(zelleCopyText, "Zelle payment details");
                   }}
                   disabled={!orderPlaced}
@@ -1457,8 +1485,9 @@ function isValid() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
+                                    onClick={() => {
                     if (!orderPlaced) return;
+                    setPaymentMethod("zelle");
                     copyText(paymentMemo, "memo");
                   }}
                   disabled={!orderPlaced}

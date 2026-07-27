@@ -1,4 +1,4 @@
-﻿-- Guardian Pet Tag fulfillment system.
+-- Guardian Pet Tag fulfillment system.
 -- Adds operator authorization, secure fulfillment transitions,
 -- customer tracking access, shipping information, and activity history.
 

@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+﻿import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
 type PetStatus = "missing" | "safe" | "traveling";
@@ -164,7 +164,7 @@ function PetModePreview({
           </h3>
 
           <p className="mt-1 text-sm text-white/72">
-            {pet.breed} • {pet.color}
+            {pet.breed}{" \u2022 "}{pet.color}
           </p>
         </div>
       </div>
@@ -455,7 +455,7 @@ function PetTagLanding() {
                       </div>
 
                       <p className="mt-2 text-sm text-white/60">
-                        Golden Retriever • 3 years
+                        Golden Retriever{" \u2022 "}3 years
                       </p>
                     </div>
                   </div>
@@ -678,7 +678,7 @@ function PetTagLanding() {
                     className="flex items-center gap-3 text-base font-semibold text-white/78"
                   >
                     <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-cyan-300/12 text-sm font-bold text-cyan-200">
-                      ✓
+                      âœ“
                     </span>
                     {item}
                   </div>
@@ -712,7 +712,7 @@ function PetTagLanding() {
                       </div>
 
                       <p className="mt-2 text-sm text-white/70">
-                        Golden Retriever • 3 years • Golden
+                        Golden Retriever{" \u2022 "}3 years{" \u2022 "}Golden
                       </p>
                     </div>
                   </div>
@@ -819,7 +819,7 @@ function PetTagLanding() {
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div>
                     <div className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">
-                      Bella • Live Activity
+                      Bella{" \u2022 "}Live Activity
                     </div>
 
                     <div className="mt-1 text-xl font-bold text-white">
@@ -887,7 +887,7 @@ function PetTagLanding() {
 
                   <div>
                     <div className="font-bold text-white">
-                      Finder tapped "Text Owner"
+                      Finder tapped "Text Owner"Â
                     </div>
                     <div className="mt-1 text-sm leading-6 text-white/50">
                       Their phone opened a prepared text so they could contact Bella&apos;s owner immediately.
@@ -1083,7 +1083,7 @@ function PetTagLanding() {
 
           <div className="mx-auto mt-8 max-w-3xl border-t border-white/[0.08] pt-6">
             <p className="text-xs text-white/38">
-              © 2026 HomePlanet. All rights reserved.
+              Â© 2026 HomePlanet. All rights reserved.
             </p>
           </div>
         </div>
@@ -1112,7 +1112,7 @@ function FinderMessageFlow({
     return (
       <div className="mt-5 rounded-[24px] border border-emerald-300/25 bg-emerald-300/[0.075] p-5 sm:p-6">
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-300 text-2xl font-bold text-[#07111f]">
-          ✓
+          âœ“
         </div>
 
         <h3 className="mt-4 text-2xl font-bold tracking-tight text-white">
@@ -1261,7 +1261,7 @@ function FinderMessageFlow({
               className="w-full rounded-xl border border-sky-300/15 bg-sky-300/[0.05] px-4 py-3 text-left"
             >
               <div className="text-sm font-bold text-sky-100">
-                ✓ Location included
+                âœ“ Location included
               </div>
 
               <div className="mt-1 text-sm text-white/55">
@@ -1285,7 +1285,7 @@ function FinderMessageFlow({
                 : "w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-left text-sm font-semibold text-white"
             }
           >
-            {helpChoice === `I can wait with ${petName}` ? "✓ " : ""}
+            {helpChoice === `I can wait with ${petName}` ? "âœ“ " : ""}
             I can wait with {petName}
           </button>
 
@@ -1304,7 +1304,7 @@ function FinderMessageFlow({
                 : "w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-left text-sm font-semibold text-white"
             }
           >
-            {helpChoice === `I can help bring ${petName} home` ? "✓ " : ""}
+            {helpChoice === `I can help bring ${petName} home` ? "âœ“ " : ""}
             I can help bring {petName} home
           </button>
         </div>
@@ -1376,7 +1376,7 @@ function PetIdentity({ pet }: { pet: DemoPet }) {
           </div>
 
           <p className="mt-2 text-sm text-white/72 sm:text-base">
-            {pet.breed} • {pet.age} • {pet.color}
+            {pet.breed}{" \u2022 "}{pet.age}{" \u2022 "}{pet.color}
           </p>
         </div>
       </div>
@@ -1594,7 +1594,7 @@ function PetLivePage({ pet }: { pet: DemoPet }) {
         </div>
 
         <div className="mt-6 border-t border-white/[0.06] pt-5 text-xs text-white/30">
-          © 2026 HomePlanet. All rights reserved.
+          Â© 2026 HomePlanet. All rights reserved.
         </div>
       </footer>
 
@@ -1656,7 +1656,7 @@ function FinderPage({ pet }: { pet: DemoPet }) {
       <div className="mx-auto max-w-xl pb-8 pt-2">
         <section className="rounded-[30px] border border-emerald-300/20 bg-emerald-400/[0.07] p-6 text-center sm:p-8">
           <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-emerald-300 text-2xl font-black text-[#07111f]">
-            ✓
+            âœ“
           </div>
 
           <h1 className="mt-5 text-3xl font-bold tracking-tight text-white">
@@ -1864,6 +1864,10 @@ export default function GuardianPetTagDemo() {
     </PetTagShell>
   );
 }
+
+
+
+
 
 
 

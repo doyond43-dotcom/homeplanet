@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   CheckCircle2,
   ExternalLink,
@@ -26,6 +26,10 @@ type GuardianPet = {
   age?: string;
   color?: string;
   notes?: string;
+  photoDataUrl?: string;
+  photoUrl?: string;
+  publicId?: string;
+  ownerToken?: string;
 };
 
 type GuardianOrder = {
@@ -58,6 +62,24 @@ type GuardianOrder = {
   shipped_at: string | null;
   delivered_at: string | null;
   fulfillment_updated_at: string | null;
+};
+
+type HomePlanetOperatorCheckout = {
+  checkout_id: string;
+  checkout_reference: string;
+  checkout_status: string;
+  selected_payment_method: string | null;
+  total_amount: number | string | null;
+  currency: string;
+  completed_at: string | null;
+  transaction_id: string | null;
+  transaction_provider: string | null;
+  transaction_status: string | null;
+  provider_order_id: string | null;
+  provider_capture_id: string | null;
+  verification_method: string | null;
+  submitted_at: string | null;
+  verified_at: string | null;
 };
 
 type GuardianActivity = {
@@ -138,6 +160,23 @@ const stageOptions: Array<{
   { value: "shipped", label: "Shipped" },
   { value: "delivered", label: "Delivered" },
 ];
+
+function normalizeOperatorCheckout(
+  value: unknown,
+): HomePlanetOperatorCheckout | null {
+  if (Array.isArray(value)) {
+    return (
+      (value[0] as HomePlanetOperatorCheckout | undefined) ??
+      null
+    );
+  }
+
+  if (value && typeof value === "object") {
+    return value as HomePlanetOperatorCheckout;
+  }
+
+  return null;
+}
 
 function getFirstPet(order: GuardianOrder) {
   return Array.isArray(order.pets) ? order.pets[0] ?? null : null;
@@ -287,8 +326,10 @@ export default function PetTagFulfillmentBoard() {
   const [inPersonOrderOpen, setInPersonOrderOpen] =
     useState(false);
   const [orders, setOrders] = useState<GuardianOrder[]>([]);
-  const [selectedOrder, setSelectedOrder] =
+    const [selectedOrder, setSelectedOrder] =
     useState<GuardianOrder | null>(null);
+  const [operatorCheckout, setOperatorCheckout] =
+    useState<HomePlanetOperatorCheckout | null>(null);
   const [activity, setActivity] = useState<GuardianActivity[]>([]);
 
   const [shippingDraft, setShippingDraft] = useState<ShippingDraft>({
@@ -354,24 +395,42 @@ export default function PetTagFulfillmentBoard() {
     }
   }, []);
 
-  const loadActivity = useCallback(async (orderId: string) => {
+    const loadActivity = useCallback(async (orderId: string) => {
     setActivityLoading(true);
     setDrawerError("");
 
     try {
-      const { data, error } = await supabase.rpc(
-        "get_guardian_operator_activity",
-        {
-          requested_order_id: orderId,
-        },
-      );
+      const [activityResponse, checkoutResponse] =
+        await Promise.all([
+          supabase.rpc("get_guardian_operator_activity", {
+            requested_order_id: orderId,
+          }),
+          supabase.rpc("get_homeplanet_operator_checkout", {
+            requested_product_type: "guardian_pet_tag",
+            requested_product_order_id: orderId,
+          }),
+        ]);
 
-      if (error) throw new Error(error.message);
+      if (activityResponse.error) {
+        throw new Error(activityResponse.error.message);
+      }
+
+      if (checkoutResponse.error) {
+        throw new Error(checkoutResponse.error.message);
+      }
 
       setActivity(
-        Array.isArray(data) ? (data as GuardianActivity[]) : [],
+        Array.isArray(activityResponse.data)
+          ? (activityResponse.data as GuardianActivity[])
+          : [],
+      );
+
+      setOperatorCheckout(
+        normalizeOperatorCheckout(checkoutResponse.data),
       );
     } catch (error) {
+      setOperatorCheckout(null);
+
       setDrawerError(
         error instanceof Error
           ? error.message
@@ -387,8 +446,9 @@ export default function PetTagFulfillmentBoard() {
   }, [loadOrders]);
 
   useEffect(() => {
-    if (!selectedOrder) {
+        if (!selectedOrder) {
       setActivity([]);
+      setOperatorCheckout(null);
       return;
     }
 
@@ -497,10 +557,11 @@ export default function PetTagFulfillmentBoard() {
     setShippingDraft(shippingDraftFor(order));
   };
 
-  const closeDrawer = () => {
+    const closeDrawer = () => {
     if (saving) return;
 
     setSelectedOrder(null);
+    setOperatorCheckout(null);
     setDrawerError("");
     setCorrectionOpen(false);
     setCorrectionReason("");
@@ -529,7 +590,49 @@ export default function PetTagFulfillmentBoard() {
     setSaving(true);
     setDrawerError("");
 
-    try {
+        try {
+      if (selectedOrder.status === "payment_submitted") {
+        if (!operatorCheckout?.checkout_id) {
+          throw new Error(
+            "The HomePlanet Checkout record could not be found for this order.",
+          );
+        }
+
+        if (!operatorCheckout.transaction_id) {
+          throw new Error(
+            "No submitted payment transaction is available to verify.",
+          );
+        }
+
+        const { error: verificationError } =
+          await supabase.rpc(
+            "verify_homeplanet_manual_payment",
+            {
+              requested_checkout_id:
+                operatorCheckout.checkout_id,
+              requested_transaction_id:
+                operatorCheckout.transaction_id,
+            },
+          );
+
+        if (verificationError) {
+          throw new Error(verificationError.message);
+        }
+
+        await loadOrders();
+
+        setSelectedOrder(null);
+        setOperatorCheckout(null);
+        setActivity([]);
+        setDrawerError("");
+
+        showSuccess(
+          `${getPetName(selectedOrder)} payment was verified through HomePlanet Checkout.`,
+        );
+
+        return;
+      }
+
       const { data, error } = await supabase.rpc(
         "advance_guardian_fulfillment",
         {
@@ -540,12 +643,39 @@ export default function PetTagFulfillmentBoard() {
 
       if (error) throw new Error(error.message);
 
-      const updated = normalizeRpcOrder(data);
+      let updated = normalizeRpcOrder(data);
 
       if (!updated) {
         throw new Error(
           "Supabase did not return the updated order.",
         );
+      }
+
+      if (requestedNextStatus === "tag_activated") {
+        const {
+          data: profileOrderData,
+          error: profileOrderError,
+        } = await supabase.rpc(
+          "ensure_guardian_pet_profile",
+          {
+            requested_order_id: updated.order_id,
+          },
+        );
+
+        if (profileOrderError) {
+          throw new Error(profileOrderError.message);
+        }
+
+        const profileOrder =
+          normalizeRpcOrder(profileOrderData);
+
+        if (!profileOrder) {
+          throw new Error(
+            "The Pet Tag profile was created, but Supabase did not return the updated order.",
+          );
+        }
+
+        updated = profileOrder;
       }
 
       await loadOrders();
@@ -1189,6 +1319,76 @@ export default function PetTagFulfillmentBoard() {
                 ) : null}
               </section>
 
+              {selectedPet?.publicId &&
+              selectedPet?.ownerToken ? (
+                <section className="rounded-3xl border border-cyan-300/15 bg-cyan-300/[0.045] p-5">
+                  <h3 className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-100/70">
+                    Permanent Pet Tag Pages
+                  </h3>
+
+                  <p className="mt-2 text-sm leading-6 text-white/55">
+                    The public link belongs on the QR code.
+                    Keep the owner link private.
+                  </p>
+
+                  <div className="mt-4 grid gap-3">
+                    <a
+                      href={`/planet/guardian-pet/pet/${selectedPet.publicId}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-300 px-4 py-3.5 text-sm font-bold text-[#07111f]"
+                    >
+                      Open Pet Live Page
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void navigator.clipboard.writeText(
+                          `${window.location.origin}/planet/guardian-pet/pet/${selectedPet.publicId}`,
+                        );
+
+                        showSuccess(
+                          `${selectedPet.name || "Pet"}'s public QR link copied.`,
+                        );
+                      }}
+                      className="rounded-2xl border border-white/12 bg-white/[0.05] px-4 py-3.5 text-sm font-bold text-white"
+                    >
+                      Copy Public Pet Link
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void navigator.clipboard.writeText(
+                          `${window.location.origin}/planet/guardian-pet/manage/${selectedPet.ownerToken}`,
+                        );
+
+                        showSuccess(
+                          `${selectedPet.name || "Pet"}'s private owner link copied.`,
+                        );
+                      }}
+                      className="rounded-2xl border border-cyan-300/20 bg-cyan-300/[0.07] px-4 py-3.5 text-sm font-bold text-cyan-100"
+                    >
+                      Copy Private Owner Link
+                    </button>
+                  </div>
+                </section>
+              ) : selectedOrder.status === "tag_preparation" ? (
+                <section className="rounded-3xl border border-white/[0.08] bg-white/[0.035] p-5">
+                  <h3 className="text-xs font-bold uppercase tracking-[0.18em] text-white/45">
+                    Permanent Pet Tag Pages
+                  </h3>
+
+                  <p className="mt-2 text-sm leading-6 text-white/55">
+                    The public QR page and private owner
+                    link will be created when you confirm
+                    Tag Activation.
+                  </p>
+                </section>
+              ) : null}
+
               {selectedOrder.status === "ready_to_ship" ? (
                 <section className="rounded-3xl border border-orange-300/18 bg-orange-300/[0.055] p-5">
                   <h3 className="text-lg font-bold">
@@ -1485,3 +1685,4 @@ export default function PetTagFulfillmentBoard() {
     </div>
   );
 }
+

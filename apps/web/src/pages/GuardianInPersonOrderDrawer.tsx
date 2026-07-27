@@ -1,10 +1,9 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { CheckCircle2, Copy, ExternalLink, X } from "lucide-react";
 import { supabase } from "../lib/supabase";
 
 type PaymentStatus =
   | "pending_payment"
-  | "payment_submitted"
   | "payment_verified";
 
 type CreatedOrder = {
@@ -171,7 +170,7 @@ export default function GuardianInPersonOrderDrawer({
           requested_pet_color: form.color.trim(),
           requested_pet_notes: form.notes.trim(),
           requested_pet_photo_data_url: form.photoDataUrl,
-          requested_payment_status: form.paymentStatus,
+                    requested_payment_status: "pending_payment",
         },
       );
 
@@ -188,6 +187,64 @@ export default function GuardianInPersonOrderDrawer({
         throw new Error(
           "The new order was created without a customer link.",
         );
+      }
+
+            const { error: checkoutError } = await supabase.rpc(
+        "create_guardian_homeplanet_checkout",
+        {
+          requested_order_id: created.order_id,
+          requested_access_token:
+            created.customer_access_token,
+        },
+      );
+
+      if (checkoutError) {
+        throw new Error(
+          `Order created, but HomePlanet Checkout could not be created: ${checkoutError.message}`,
+        );
+      }
+
+      if (form.paymentStatus === "payment_verified") {
+        const { data: checkoutData, error: checkoutReadError } =
+          await supabase.rpc(
+            "get_homeplanet_operator_checkout",
+            {
+              requested_product_type: "guardian_pet_tag",
+              requested_product_order_id: created.order_id,
+            },
+          );
+
+        if (checkoutReadError) {
+          throw new Error(checkoutReadError.message);
+        }
+
+        const checkoutRecord = Array.isArray(checkoutData)
+          ? checkoutData[0]
+          : checkoutData;
+
+        const checkoutId =
+          checkoutRecord &&
+          typeof checkoutRecord === "object" &&
+          "checkout_id" in checkoutRecord
+            ? String(checkoutRecord.checkout_id)
+            : "";
+
+        if (!checkoutId) {
+          throw new Error(
+            "The shared checkout was created without an operator checkout ID.",
+          );
+        }
+
+        const { error: cashPaymentError } = await supabase.rpc(
+          "record_homeplanet_cash_payment",
+          {
+            requested_checkout_id: checkoutId,
+          },
+        );
+
+        if (cashPaymentError) {
+          throw new Error(cashPaymentError.message);
+        }
       }
 
       setCreatedOrder(created);
@@ -282,8 +339,12 @@ export default function GuardianInPersonOrderDrawer({
                     Order Created
                   </h3>
 
-                  <p className="mt-1 text-sm text-emerald-100/65">
+                                    <p className="mt-1 text-sm text-emerald-100/65">
                     {createdOrder.order_id}
+                  </p>
+
+                  <p className="mt-2 text-xs leading-5 text-emerald-100/55">
+                    The order and its HomePlanet Checkout record are connected.
                   </p>
                 </div>
               </div>
@@ -555,24 +616,18 @@ export default function GuardianInPersonOrderDrawer({
                 <h3 className="text-lg font-bold">Payment</h3>
 
                 <div className="mt-5 space-y-3">
-                  {[
+                                    {[
                     {
                       value: "pending_payment",
                       title: "Waiting for Payment",
                       description:
-                        "Create the order now. The customer will pay afterward.",
-                    },
-                    {
-                      value: "payment_submitted",
-                      title: "Payment Submitted",
-                      description:
-                        "Payment was sent but still needs verification.",
+                        "Create the order now. The customer can pay from their private order page.",
                     },
                     {
                       value: "payment_verified",
-                      title: "Payment Received and Verified",
+                      title: "Cash Received and Verified",
                       description:
-                        "You personally confirmed the payment.",
+                        "You personally received the cash payment. HomePlanet will record and verify it now.",
                     },
                   ].map((option) => (
                     <button

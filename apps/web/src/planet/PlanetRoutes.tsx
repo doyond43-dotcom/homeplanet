@@ -300,6 +300,8 @@ import GuardianJoinDesk from "../pages/GuardianJoinDesk";
 import GuardianPetOrderStatus from "../pages/GuardianPetOrderStatus";
 
 import GuardianPetTagDemo from "../pages/GuardianPetTagDemo";
+import GuardianPetLivePage from "../pages/GuardianPetLivePage";
+import GuardianPetManagePage from "../pages/GuardianPetManagePage";
 
 import GuardianBellaPreview from "../pages/GuardianBellaPreview";
 
@@ -660,8 +662,9 @@ export default function PlanetRoutes() {
       <Route path="guardian" element={<PlanetGuardian />} />
       <Route path="guardian-pet" element={<GuardianPetTagDemo />} />
       <Route path="guardian-pet/privacy" element={<GuardianPetPrivacyPage />} />
-      <Route path="guardian-pet/pet/:petId" element={<GuardianPetTagDemo />} />
-      <Route path="guardian-pet/found/:petId" element={<GuardianPetTagDemo />} />
+      <Route path="guardian-pet/pet/:petId" element={<GuardianPetLivePage />} />
+      <Route path="guardian-pet/found/:petId" element={<GuardianPetLivePage />} />
+      <Route path="guardian-pet/manage/:ownerToken" element={<GuardianPetManagePage />} />
       <Route path="guardian-pet/bella" element={<GuardianBellaPreview />} />
       <Route path="guardian-join" element={<GuardianJoinDesk />} />
       <Route
@@ -842,6 +845,7 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
 
 
 

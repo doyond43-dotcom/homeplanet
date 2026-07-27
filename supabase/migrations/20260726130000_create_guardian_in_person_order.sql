@@ -1,4 +1,4 @@
-﻿create or replace function public.create_guardian_in_person_order(
+create or replace function public.create_guardian_in_person_order(
   requested_customer_name text,
   requested_customer_email text,
   requested_customer_phone text,
