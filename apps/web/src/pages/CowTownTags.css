@@ -1,0 +1,794 @@
+﻿:root {
+  color-scheme: dark;
+}
+
+.cowtown-page {
+  min-height: 100vh;
+  overflow-x: hidden;
+  background:
+    radial-gradient(circle at 15% 0%, rgba(202, 138, 4, 0.18), transparent 34rem),
+    radial-gradient(circle at 90% 15%, rgba(22, 101, 52, 0.22), transparent 32rem),
+    #07110c;
+  color: #f8fafc;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+}
+
+.cowtown-shell {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+}
+
+.cowtown-header {
+  position: relative;
+  z-index: 10;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(7, 17, 12, 0.86);
+  backdrop-filter: blur(18px);
+}
+
+.cowtown-header-inner {
+  min-height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.cowtown-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #fff;
+  text-decoration: none;
+}
+
+.cowtown-brand-mark {
+  width: 48px;
+  height: 48px;
+  border: 2px solid rgba(250, 204, 21, 0.65);
+  border-radius: 16px 16px 20px 20px;
+  display: grid;
+  place-items: center;
+  background:
+    linear-gradient(145deg, rgba(250, 204, 21, 0.18), rgba(120, 53, 15, 0.32));
+  box-shadow:
+    inset 0 0 0 4px rgba(7, 17, 12, 0.78),
+    0 12px 28px rgba(0, 0, 0, 0.28);
+  font-size: 20px;
+  font-weight: 950;
+  letter-spacing: -0.05em;
+}
+
+.cowtown-brand-copy strong {
+  display: block;
+  font-size: 18px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.cowtown-brand-copy span {
+  display: block;
+  margin-top: 5px;
+  color: #a3b6aa;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.cowtown-header-action {
+  border: 1px solid rgba(250, 204, 21, 0.32);
+  border-radius: 999px;
+  padding: 11px 16px;
+  background: rgba(250, 204, 21, 0.08);
+  color: #fef3c7;
+  font-size: 14px;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.cowtown-hero {
+  position: relative;
+  padding: 72px 0 56px;
+}
+
+.cowtown-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(330px, 0.92fr);
+  gap: 52px;
+  align-items: center;
+}
+
+.cowtown-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 22px;
+  border: 1px solid rgba(250, 204, 21, 0.28);
+  border-radius: 999px;
+  padding: 9px 13px;
+  background: rgba(250, 204, 21, 0.07);
+  color: #fde68a;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.cowtown-title {
+  max-width: 760px;
+  margin: 0;
+  font-size: clamp(45px, 7vw, 82px);
+  line-height: 0.96;
+  letter-spacing: -0.058em;
+}
+
+.cowtown-title-accent {
+  display: block;
+  color: #facc15;
+}
+
+.cowtown-lead {
+  max-width: 720px;
+  margin: 26px 0 0;
+  color: #c3d0c7;
+  font-size: clamp(18px, 2.2vw, 22px);
+  line-height: 1.55;
+}
+
+.cowtown-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 31px;
+}
+
+.cowtown-button {
+  min-height: 55px;
+  border: 1px solid transparent;
+  border-radius: 15px;
+  padding: 0 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  font-size: 16px;
+  font-weight: 950;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease;
+}
+
+.cowtown-button:hover {
+  transform: translateY(-2px);
+}
+
+.cowtown-button-primary {
+  background: #facc15;
+  color: #1c1917;
+  box-shadow: 0 16px 38px rgba(250, 204, 21, 0.18);
+}
+
+.cowtown-button-secondary {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.055);
+  color: #fff;
+}
+
+.cowtown-trust-line {
+  margin-top: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  color: #93a49a;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.cowtown-trust-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.cowtown-visual {
+  position: relative;
+  min-height: 500px;
+  display: grid;
+  place-items: center;
+}
+
+.cowtown-glow {
+  position: absolute;
+  inset: 10% 5%;
+  border-radius: 50%;
+  background: rgba(250, 204, 21, 0.12);
+  filter: blur(65px);
+}
+
+.cowtown-ear-tag {
+  position: relative;
+  width: min(340px, 88vw);
+  min-height: 445px;
+  border: 3px solid #713f12;
+  border-radius: 42px 42px 72px 72px;
+  padding: 32px 27px 30px;
+  background:
+    linear-gradient(145deg, #fde047 0%, #facc15 52%, #eab308 100%);
+  color: #1c1917;
+  box-shadow:
+    0 38px 90px rgba(0, 0, 0, 0.48),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  transform: rotate(2deg);
+}
+
+.cowtown-tag-hole {
+  width: 46px;
+  height: 46px;
+  margin: -10px auto 20px;
+  border: 8px solid #a16207;
+  border-radius: 50%;
+  background: #422006;
+  box-shadow: inset 0 0 0 5px #1c1917;
+}
+
+.cowtown-tag-label {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 950;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.cowtown-tag-number {
+  margin: 8px 0 15px;
+  text-align: center;
+  font-size: 68px;
+  line-height: 1;
+  font-weight: 1000;
+  letter-spacing: -0.075em;
+}
+
+.cowtown-qr-wrap {
+  width: 190px;
+  min-height: 190px;
+  margin: 0 auto;
+  border: 8px solid #fff;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #fff;
+}
+
+.cowtown-tag-help {
+  margin-top: 15px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 1000;
+  letter-spacing: 0.025em;
+}
+
+.cowtown-tag-id {
+  margin-top: 5px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.cowtown-section {
+  padding: 68px 0;
+}
+
+.cowtown-section-muted {
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.cowtown-section-heading {
+  max-width: 740px;
+  margin-bottom: 30px;
+}
+
+.cowtown-kicker {
+  color: #facc15;
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.cowtown-h2 {
+  margin: 9px 0 0;
+  font-size: clamp(32px, 4.5vw, 52px);
+  line-height: 1.04;
+  letter-spacing: -0.045em;
+}
+
+.cowtown-section-copy {
+  margin: 16px 0 0;
+  color: #aebdb3;
+  font-size: 17px;
+  line-height: 1.65;
+}
+
+.cowtown-door-grid,
+.cowtown-product-grid,
+.cowtown-step-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.cowtown-door-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.cowtown-product-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.cowtown-step-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.cowtown-card {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 22px;
+  padding: 25px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.067), rgba(255, 255, 255, 0.025));
+  box-shadow: 0 24px 55px rgba(0, 0, 0, 0.18);
+}
+
+.cowtown-door {
+  min-height: 285px;
+  display: flex;
+  flex-direction: column;
+}
+
+.cowtown-door-primary {
+  border-color: rgba(250, 204, 21, 0.34);
+  background:
+    linear-gradient(145deg, rgba(250, 204, 21, 0.12), rgba(255, 255, 255, 0.025));
+}
+
+.cowtown-card-icon {
+  width: 50px;
+  height: 50px;
+  border: 1px solid rgba(250, 204, 21, 0.25);
+  border-radius: 15px;
+  display: grid;
+  place-items: center;
+  background: rgba(250, 204, 21, 0.08);
+  color: #fde047;
+}
+
+.cowtown-card h3 {
+  margin: 21px 0 10px;
+  font-size: 23px;
+  letter-spacing: -0.025em;
+}
+
+.cowtown-card p {
+  margin: 0;
+  color: #aab9af;
+  line-height: 1.6;
+}
+
+.cowtown-card-link {
+  margin-top: auto;
+  padding-top: 22px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #fde68a;
+  font-weight: 950;
+  text-decoration: none;
+}
+
+.cowtown-product-label {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 7px 10px;
+  background: rgba(250, 204, 21, 0.1);
+  color: #fde68a;
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.cowtown-list {
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 11px;
+}
+
+.cowtown-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  color: #d4ddd7;
+  line-height: 1.45;
+}
+
+.cowtown-list li svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: #facc15;
+}
+
+.cowtown-step {
+  position: relative;
+}
+
+.cowtown-step-number {
+  color: #facc15;
+  font-size: 14px;
+  font-weight: 1000;
+}
+
+.cowtown-step h3 {
+  margin: 13px 0 8px;
+  font-size: 19px;
+}
+
+.cowtown-step p {
+  color: #a8b7ad;
+  line-height: 1.55;
+}
+
+.cowtown-footer {
+  padding: 38px 0 48px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  color: #8ea096;
+  font-size: 13px;
+}
+
+.cowtown-footer-inner {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+/* Public animal recovery page */
+
+.cowtown-recovery-main {
+  padding: 38px 0 70px;
+}
+
+.cowtown-alert {
+  margin-bottom: 18px;
+  border: 1px solid rgba(250, 204, 21, 0.3);
+  border-radius: 16px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  background: rgba(250, 204, 21, 0.08);
+  color: #fef3c7;
+}
+
+.cowtown-recovery-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(360px, 1.15fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.cowtown-animal-card {
+  position: sticky;
+  top: 24px;
+}
+
+.cowtown-animal-photo {
+  min-height: 330px;
+  border-radius: 19px;
+  display: flex;
+  align-items: flex-end;
+  padding: 24px;
+  overflow: hidden;
+  background:
+    linear-gradient(to top, rgba(4, 13, 8, 0.88), rgba(4, 13, 8, 0.08)),
+    radial-gradient(circle at 72% 30%, #a16207, transparent 17%),
+    linear-gradient(145deg, #294b31, #152b1c 48%, #6b4e22);
+}
+
+.cowtown-animal-silhouette {
+  width: 100%;
+  text-align: center;
+  font-size: 96px;
+  filter: drop-shadow(0 18px 18px rgba(0, 0, 0, 0.35));
+}
+
+.cowtown-animal-meta {
+  padding-top: 21px;
+}
+
+.cowtown-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border-radius: 999px;
+  padding: 7px 11px;
+  background: rgba(34, 197, 94, 0.1);
+  color: #86efac;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.cowtown-animal-name {
+  margin: 15px 0 3px;
+  font-size: 33px;
+  letter-spacing: -0.04em;
+}
+
+.cowtown-animal-description {
+  color: #aebdb3;
+}
+
+.cowtown-detail-grid {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.cowtown-detail {
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 13px;
+  padding: 13px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.cowtown-detail span {
+  display: block;
+  color: #82958a;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cowtown-detail strong {
+  display: block;
+  margin-top: 5px;
+  color: #eef4f0;
+}
+
+.cowtown-recovery-panel {
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 24px;
+  padding: clamp(22px, 4vw, 34px);
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.cowtown-recovery-panel h1 {
+  margin: 0;
+  font-size: clamp(35px, 5vw, 55px);
+  line-height: 1;
+  letter-spacing: -0.05em;
+}
+
+.cowtown-recovery-panel > p {
+  margin: 17px 0 0;
+  color: #b4c2b9;
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+.cowtown-action-stack {
+  margin-top: 24px;
+  display: grid;
+  gap: 11px;
+}
+
+.cowtown-action-button {
+  width: 100%;
+  min-height: 61px;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 15px;
+  padding: 0 17px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.045);
+  color: #fff;
+  font: inherit;
+  font-weight: 950;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cowtown-action-button-primary {
+  border-color: #facc15;
+  background: #facc15;
+  color: #1c1917;
+}
+
+.cowtown-safety-box {
+  margin-top: 24px;
+  border-left: 3px solid #facc15;
+  border-radius: 0 13px 13px 0;
+  padding: 15px 17px;
+  background: rgba(250, 204, 21, 0.065);
+}
+
+.cowtown-safety-box strong {
+  display: block;
+  color: #fef3c7;
+}
+
+.cowtown-safety-box p {
+  margin: 7px 0 0;
+  color: #b8c3bc;
+  line-height: 1.55;
+}
+
+.cowtown-form {
+  margin-top: 27px;
+  display: grid;
+  gap: 16px;
+}
+
+.cowtown-form-field {
+  display: grid;
+  gap: 7px;
+}
+
+.cowtown-form-field label {
+  color: #d8e1db;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.cowtown-input,
+.cowtown-select,
+.cowtown-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 13px;
+  padding: 14px 15px;
+  background: #0a1810;
+  color: #fff;
+  font: inherit;
+  outline: none;
+}
+
+.cowtown-textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+.cowtown-input:focus,
+.cowtown-select:focus,
+.cowtown-textarea:focus {
+  border-color: rgba(250, 204, 21, 0.7);
+  box-shadow: 0 0 0 3px rgba(250, 204, 21, 0.08);
+}
+
+.cowtown-success {
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 18px;
+  padding: 22px;
+  background: rgba(34, 197, 94, 0.08);
+}
+
+.cowtown-success h2 {
+  margin: 0;
+  color: #bbf7d0;
+}
+
+.cowtown-success p {
+  color: #b6c9bc;
+  line-height: 1.55;
+}
+
+@media (max-width: 920px) {
+  .cowtown-hero-grid,
+  .cowtown-recovery-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cowtown-door-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cowtown-step-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cowtown-visual {
+    min-height: 455px;
+  }
+
+  .cowtown-animal-card {
+    position: static;
+  }
+}
+
+@media (max-width: 680px) {
+  .cowtown-shell {
+    width: min(100% - 22px, 1180px);
+  }
+
+  .cowtown-header-inner {
+    min-height: 68px;
+  }
+
+  .cowtown-brand-copy span {
+    display: none;
+  }
+
+  .cowtown-header-action {
+    padding: 9px 12px;
+    font-size: 12px;
+  }
+
+  .cowtown-hero {
+    padding: 48px 0 35px;
+  }
+
+  .cowtown-title {
+    font-size: clamp(43px, 14vw, 63px);
+  }
+
+  .cowtown-lead {
+    font-size: 17px;
+  }
+
+  .cowtown-hero-actions {
+    display: grid;
+  }
+
+  .cowtown-button {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .cowtown-product-grid,
+  .cowtown-step-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cowtown-section {
+    padding: 48px 0;
+  }
+
+  .cowtown-ear-tag {
+    min-height: 408px;
+    padding: 28px 22px;
+  }
+
+  .cowtown-tag-number {
+    font-size: 59px;
+  }
+
+  .cowtown-qr-wrap {
+    width: 170px;
+    min-height: 170px;
+  }
+
+  .cowtown-footer-inner {
+    flex-direction: column;
+  }
+
+  .cowtown-recovery-main {
+    padding-top: 20px;
+  }
+
+  .cowtown-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
