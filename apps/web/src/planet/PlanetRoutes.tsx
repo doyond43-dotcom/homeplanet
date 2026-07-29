@@ -1,4 +1,4 @@
-﻿import GuardianPetPrivacyPage from "../pages/GuardianPetPrivacyPage";
+import GuardianPetPrivacyPage from "../pages/GuardianPetPrivacyPage";
 
 import { Routes, Route, Navigate } from "react-router-dom";
 
@@ -301,6 +301,8 @@ import GuardianPetOrderStatus from "../pages/GuardianPetOrderStatus";
 
 import CowTownTagsLandingPage from "../pages/CowTownTagsLandingPage";
 import CowTownPublicTagPage from "../pages/CowTownPublicTagPage";
+import CowTownOrderPage from "../pages/CowTownOrderPage";
+import CowTownOrderReceiptPage from "../pages/CowTownOrderReceiptPage";
 import GuardianPetTagDemo from "../pages/GuardianPetTagDemo";
 import GuardianPetLivePage from "../pages/GuardianPetLivePage";
 import GuardianPetManagePage from "../pages/GuardianPetManagePage";
@@ -662,6 +664,11 @@ export default function PlanetRoutes() {
       <Route path="found/:type/report" element={<FoundItemPage />} />
 
       <Route path="cow-town-tags" element={<CowTownTagsLandingPage />} />
+      <Route path="cow-town-tags/order" element={<CowTownOrderPage />} />
+      <Route
+        path="cow-town-tags/receipt/:accessToken"
+        element={<CowTownOrderReceiptPage />}
+      />
       <Route path="cow-town-tags/tag/:tagId" element={<CowTownPublicTagPage />} />
       <Route path="guardian" element={<PlanetGuardian />} />
       <Route path="guardian-pet" element={<GuardianPetTagDemo />} />
@@ -849,6 +856,7 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
 
 
 

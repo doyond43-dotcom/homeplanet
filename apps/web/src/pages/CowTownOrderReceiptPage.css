@@ -1,0 +1,305 @@
+.ct-receipt-page {
+  min-height: 100vh;
+  padding: 32px 18px 72px;
+  background:
+    radial-gradient(circle at top right, rgba(231, 178, 54, 0.14), transparent 34rem),
+    linear-gradient(180deg, #102b20 0%, #071b14 100%);
+  color: #f8f2df;
+}
+
+.ct-receipt-shell {
+  width: min(1080px, 100%);
+  margin: 0 auto;
+}
+
+.ct-receipt-back {
+  display: inline-flex;
+  margin-bottom: 28px;
+  color: #f1c85c;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.ct-receipt-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 290px;
+  gap: 24px;
+  align-items: stretch;
+}
+
+.ct-receipt-hero > div:first-child,
+.ct-receipt-status,
+.ct-receipt-progress,
+.ct-receipt-grid article,
+.ct-receipt-totals,
+.ct-receipt-payment {
+  border: 1px solid rgba(242, 211, 126, 0.2);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.065);
+  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.2);
+}
+
+.ct-receipt-hero > div:first-child {
+  padding: clamp(28px, 5vw, 54px);
+}
+
+.ct-receipt-kicker {
+  margin: 0 0 10px;
+  color: #f1c85c;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.ct-receipt-hero h1,
+.ct-receipt-shell > h1 {
+  margin: 0;
+  max-width: 720px;
+  font-size: clamp(2.25rem, 6vw, 4.7rem);
+  line-height: 0.98;
+}
+
+.ct-receipt-hero p {
+  max-width: 720px;
+  margin: 20px 0 0;
+  color: rgba(248, 242, 223, 0.76);
+  font-size: 1.04rem;
+  line-height: 1.65;
+}
+
+.ct-receipt-status {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 28px;
+  background: #f0c84f;
+  color: #102b20;
+}
+
+.ct-receipt-status span,
+.ct-receipt-grid span,
+.ct-receipt-totals span {
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.ct-receipt-status strong {
+  margin: 10px 0;
+  font-size: 1.8rem;
+  line-height: 1.05;
+}
+
+.ct-receipt-status small {
+  font-weight: 800;
+  opacity: 0.74;
+}
+
+.ct-receipt-progress {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 24px;
+  padding: 22px;
+}
+
+.ct-receipt-progress article {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px;
+  border-radius: 16px;
+}
+
+.ct-receipt-progress article > span {
+  display: grid;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 1px solid rgba(241, 200, 92, 0.35);
+  border-radius: 50%;
+  color: #f1c85c;
+  font-weight: 900;
+}
+
+.ct-receipt-progress article.is-current {
+  background: rgba(241, 200, 92, 0.12);
+}
+
+.ct-receipt-progress article.is-current > span {
+  background: #f1c85c;
+  color: #102b20;
+}
+
+.ct-receipt-progress strong,
+.ct-receipt-progress small {
+  display: block;
+}
+
+.ct-receipt-progress small {
+  margin-top: 5px;
+  color: rgba(248, 242, 223, 0.62);
+  line-height: 1.35;
+}
+
+.ct-receipt-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 24px;
+}
+
+.ct-receipt-grid article {
+  display: flex;
+  min-height: 170px;
+  flex-direction: column;
+  padding: 24px;
+}
+
+.ct-receipt-grid article > span {
+  color: #f1c85c;
+}
+
+.ct-receipt-grid strong {
+  margin-top: 14px;
+  font-size: 1.3rem;
+}
+
+.ct-receipt-grid small {
+  margin-top: 7px;
+  color: rgba(248, 242, 223, 0.66);
+  line-height: 1.4;
+}
+
+.ct-receipt-grid b {
+  margin-top: auto;
+  padding-top: 18px;
+  color: #f1c85c;
+}
+
+.ct-receipt-totals {
+  margin-top: 24px;
+  overflow: hidden;
+}
+
+.ct-receipt-totals > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px 24px;
+  border-bottom: 1px solid rgba(242, 211, 126, 0.14);
+}
+
+.ct-receipt-totals > div:last-child {
+  border-bottom: 0;
+}
+
+.ct-receipt-totals .is-emphasized {
+  background: rgba(241, 200, 92, 0.1);
+}
+
+.ct-receipt-totals strong {
+  font-size: 1.2rem;
+}
+
+.ct-receipt-payment {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 24px;
+  padding: 28px;
+}
+
+.ct-receipt-payment p {
+  margin: 0 0 7px;
+  color: #f1c85c;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.ct-receipt-payment h2 {
+  margin: 0;
+  font-size: clamp(1.5rem, 4vw, 2.4rem);
+}
+
+.ct-receipt-payment span {
+  display: block;
+  max-width: 700px;
+  margin-top: 10px;
+  color: rgba(248, 242, 223, 0.7);
+  line-height: 1.55;
+}
+
+.ct-receipt-payment button,
+.ct-receipt-actions button,
+.ct-receipt-actions a {
+  min-height: 52px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 14px;
+  background: #f1c85c;
+  color: #102b20;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.ct-receipt-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.ct-receipt-actions a {
+  display: inline-flex;
+  align-items: center;
+}
+
+@media (max-width: 800px) {
+  .ct-receipt-hero,
+  .ct-receipt-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ct-receipt-progress {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .ct-receipt-payment {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 520px) {
+  .ct-receipt-page {
+    padding: 20px 12px 52px;
+  }
+
+  .ct-receipt-progress {
+    grid-template-columns: 1fr;
+  }
+
+  .ct-receipt-hero > div:first-child,
+  .ct-receipt-status,
+  .ct-receipt-payment {
+    padding: 22px;
+    border-radius: 19px;
+  }
+
+  .ct-receipt-grid article {
+    min-height: 150px;
+    border-radius: 19px;
+  }
+
+  .ct-receipt-totals > div {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 7px;
+  }
+}
