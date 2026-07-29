@@ -1,4 +1,6 @@
-﻿import {
+﻿import { useState } from "react";
+import type { FormEvent } from "react";
+import {
   Activity,
   ArrowRight,
   BadgeCheck,
@@ -12,15 +14,84 @@
   ScanLine,
   ShieldCheck,
   Tags,
+  X,
 } from "lucide-react";
 import QRCode from "react-qr-code";
 import { Link } from "react-router-dom";
+import { supabase } from "../lib/supabase";
 import "./CowTownTagsLandingV2.css";
 
 const demoTagUrl =
   "https://www.homeplanet.city/planet/cow-town-tags/tag/CT-0847";
 
 export default function CowTownTagsLandingPage() {
+  const [contactOpen, setContactOpen] = useState(false);
+  const [contactName, setContactName] = useState("");
+  const [contactMethod, setContactMethod] = useState("");
+  const [ranchName, setRanchName] = useState("");
+  const [contactMessage, setContactMessage] = useState("");
+  const [contactSending, setContactSending] = useState(false);
+  const [contactSent, setContactSent] = useState(false);
+  const [contactError, setContactError] = useState("");
+
+  async function submitContact(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setContactError("");
+    setContactSending(true);
+
+    const { data: inquiryId, error } = await supabase.rpc(
+      "submit_cow_town_inquiry",
+      {
+        p_name: contactName,
+        p_contact: contactMethod,
+        p_ranch_or_business: ranchName,
+        p_message: contactMessage,
+      }
+    );
+
+    if (error) {
+      setContactSending(false);
+      setContactError(
+        error.message || "We could not send your message. Please try again."
+      );
+      return;
+    }
+
+    const { error: emailError } = await supabase.functions.invoke(
+      "send-cow-town-inquiry-email",
+      {
+        body: {
+          inquiry_id: inquiryId,
+          name: contactName,
+          contact: contactMethod,
+          ranch_or_business: ranchName,
+          message: contactMessage,
+        },
+      }
+    );
+
+    setContactSending(false);
+
+    if (emailError) {
+      console.error("Cow Town inquiry email failed:", emailError);
+    }
+
+    setContactSent(true);
+  }
+
+  function closeContact() {
+    setContactOpen(false);
+    setContactError("");
+
+    if (contactSent) {
+      setContactSent(false);
+      setContactName("");
+      setContactMethod("");
+      setRanchName("");
+      setContactMessage("");
+    }
+  }
+
   return (
     <div className="ctv2-page">
       <header className="ctv2-header">
@@ -606,10 +677,145 @@ export default function CowTownTagsLandingPage() {
 
       <footer className="ctv2-footer">
         <div className="ctv2-shell">
-          <span>Cow Town Tags</span>
-          <span>Built on HomePlanet for real livestock recovery.</span>
+          <div className="ctv2-footer-brand">
+            <span>Cow Town Tags</span>
+            <small>Built on HomePlanet for real livestock recovery.</small>
+          </div>
+
+          <div className="ctv2-footer-contact">
+            <span>Questions about Cow Town Tags?</span>
+
+            <button
+              type="button"
+              className="ctv2-footer-contact-button"
+              onClick={() => setContactOpen(true)}
+            >
+              <MessageCircle size={17} />
+              Contact Us
+            </button>
+          </div>
         </div>
       </footer>
+
+      {contactOpen && (
+        <div
+          className="ctv2-contact-overlay"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              closeContact();
+            }
+          }}
+        >
+          <section
+            className="ctv2-contact-drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cow-town-contact-title"
+          >
+            <button
+              type="button"
+              className="ctv2-contact-close"
+              onClick={closeContact}
+              aria-label="Close contact form"
+            >
+              <X size={21} />
+            </button>
+
+            {contactSent ? (
+              <div className="ctv2-contact-success">
+                <BadgeCheck size={38} />
+                <span>Message received</span>
+
+                <h2 id="cow-town-contact-title">
+                  We will get back to you soon.
+                </h2>
+
+                <button
+                  type="button"
+                  className="ctv2-button ctv2-button-primary"
+                  onClick={closeContact}
+                >
+                  Done
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="ctv2-contact-heading">
+                  <span>Questions about Cow Town Tags?</span>
+                  <h2 id="cow-town-contact-title">Contact Us</h2>
+
+                  <p>
+                    Send a quick message and tell us how we can reach you.
+                  </p>
+                </div>
+
+                <form className="ctv2-contact-form" onSubmit={submitContact}>
+                  <label>
+                    Your name
+                    <input
+                      type="text"
+                      value={contactName}
+                      onChange={(event) => setContactName(event.target.value)}
+                      required
+                      minLength={2}
+                      autoComplete="name"
+                    />
+                  </label>
+
+                  <label>
+                    Phone number or email
+                    <input
+                      type="text"
+                      value={contactMethod}
+                      onChange={(event) => setContactMethod(event.target.value)}
+                      required
+                      minLength={5}
+                    />
+                  </label>
+
+                  <label>
+                    Ranch or business name
+                    <span>Optional</span>
+
+                    <input
+                      type="text"
+                      value={ranchName}
+                      onChange={(event) => setRanchName(event.target.value)}
+                    />
+                  </label>
+
+                  <label>
+                    Message
+                    <textarea
+                      value={contactMessage}
+                      onChange={(event) => setContactMessage(event.target.value)}
+                      required
+                      minLength={5}
+                      rows={5}
+                    />
+                  </label>
+
+                  {contactError && (
+                    <p className="ctv2-contact-error" role="alert">
+                      {contactError}
+                    </p>
+                  )}
+
+                  <button
+                    type="submit"
+                    className="ctv2-button ctv2-button-primary ctv2-contact-submit"
+                    disabled={contactSending}
+                  >
+                    <MessageCircle size={18} />
+                    {contactSending ? "Sending..." : "Send Message"}
+                  </button>
+                </form>
+              </>
+            )}
+          </section>
+        </div>
+      )}
     </div>
   );
 }

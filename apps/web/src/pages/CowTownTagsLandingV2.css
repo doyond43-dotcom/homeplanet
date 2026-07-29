@@ -2475,3 +2475,216 @@
     width: 100%;
   }
 }
+
+/* ============================================================
+   COW TOWN CONTACT DRAWER
+   ============================================================ */
+
+.ctv2-footer .ctv2-shell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.ctv2-footer-brand,
+.ctv2-footer-contact {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ctv2-footer-brand small {
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.82rem;
+}
+
+.ctv2-footer-contact {
+  align-items: flex-end;
+}
+
+.ctv2-footer-contact > span {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.86rem;
+}
+
+.ctv2-footer-contact-button {
+  min-height: 42px;
+  padding: 0 17px;
+  border: 1px solid rgba(250, 204, 21, 0.38);
+  border-radius: 999px;
+  background: rgba(250, 204, 21, 0.1);
+  color: #fef3c7;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.ctv2-contact-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-end;
+  background: rgba(0, 0, 0, 0.68);
+  backdrop-filter: blur(5px);
+}
+
+.ctv2-contact-drawer {
+  position: relative;
+  width: min(100%, 470px);
+  height: 100%;
+  overflow-y: auto;
+  padding: 68px 30px 34px;
+  border-left: 1px solid rgba(250, 204, 21, 0.2);
+  background: #08140d;
+  box-shadow: -24px 0 70px rgba(0, 0, 0, 0.45);
+}
+
+.ctv2-contact-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.ctv2-contact-heading > span,
+.ctv2-contact-success > span {
+  color: #facc15;
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.ctv2-contact-heading h2,
+.ctv2-contact-success h2 {
+  margin: 10px 0;
+  color: #fff;
+  font-size: clamp(2rem, 7vw, 3rem);
+  line-height: 1;
+}
+
+.ctv2-contact-heading p {
+  margin: 0 0 26px;
+  color: rgba(255, 255, 255, 0.68);
+  line-height: 1.6;
+}
+
+.ctv2-contact-form {
+  display: grid;
+  gap: 18px;
+}
+
+.ctv2-contact-form label {
+  display: grid;
+  gap: 8px;
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.ctv2-contact-form label > span {
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.ctv2-contact-form input,
+.ctv2-contact-form textarea {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.055);
+  color: #fff;
+  font: inherit;
+  outline: none;
+}
+
+.ctv2-contact-form input {
+  min-height: 50px;
+  padding: 0 14px;
+}
+
+.ctv2-contact-form textarea {
+  padding: 14px;
+  resize: vertical;
+}
+
+.ctv2-contact-form input:focus,
+.ctv2-contact-form textarea:focus {
+  border-color: rgba(250, 204, 21, 0.72);
+  box-shadow: 0 0 0 3px rgba(250, 204, 21, 0.1);
+}
+
+.ctv2-contact-submit {
+  width: 100%;
+  border: 0;
+  cursor: pointer;
+}
+
+.ctv2-contact-submit:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.ctv2-contact-error {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(248, 113, 113, 0.28);
+  border-radius: 12px;
+  background: rgba(127, 29, 29, 0.2);
+  color: #fecaca;
+  font-size: 0.86rem;
+}
+
+.ctv2-contact-success {
+  min-height: 65vh;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.ctv2-contact-success > svg {
+  margin-bottom: 24px;
+  color: #facc15;
+}
+
+.ctv2-contact-success .ctv2-button {
+  margin-top: 22px;
+  border: 0;
+  cursor: pointer;
+}
+
+@media (max-width: 620px) {
+  .ctv2-footer .ctv2-shell {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .ctv2-footer-contact {
+    width: 100%;
+    align-items: flex-start;
+  }
+
+  .ctv2-footer-contact-button {
+    width: 100%;
+  }
+
+  .ctv2-contact-drawer {
+    padding: 66px 20px 28px;
+  }
+}
