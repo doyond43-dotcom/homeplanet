@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import {
   Activity,
@@ -6,6 +6,7 @@ import {
   BadgeCheck,
   Check,
   Fence,
+  Globe2,
   MapPin,
   MessageCircle,
   Phone,
@@ -19,12 +20,22 @@ import {
 import QRCode from "react-qr-code";
 import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import {
+  translateCowTownPage,
+  type CowTownLanguage,
+} from "./cowTownTranslations";
 import "./CowTownTagsLandingV2.css";
 
 const demoTagUrl =
   "https://www.homeplanet.city/planet/cow-town-tags/tag/CT-0847";
 
 export default function CowTownTagsLandingPage() {
+  const pageRef = useRef<HTMLDivElement>(null);
+  const [language, setLanguage] = useState<CowTownLanguage>(() => {
+    const saved = window.localStorage.getItem("cow-town-language");
+
+    return saved === "es" || saved === "fr" ? saved : "en";
+  });
   const [contactOpen, setContactOpen] = useState(false);
   const [contactName, setContactName] = useState("");
   const [contactMethod, setContactMethod] = useState("");
@@ -33,6 +44,36 @@ export default function CowTownTagsLandingPage() {
   const [contactSending, setContactSending] = useState(false);
   const [contactSent, setContactSent] = useState(false);
   const [contactError, setContactError] = useState("");
+
+  useEffect(() => {
+    const root = pageRef.current;
+
+    if (!root) {
+      return;
+    }
+
+    window.localStorage.setItem("cow-town-language", language);
+    document.documentElement.lang =
+      language === "es" ? "es" : language === "fr" ? "fr-CA" : "en";
+
+    const applyTranslation = () => {
+      translateCowTownPage(root, language);
+    };
+
+    applyTranslation();
+
+    const observer = new MutationObserver(() => {
+      window.requestAnimationFrame(applyTranslation);
+    });
+
+    observer.observe(root, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+    });
+
+    return () => observer.disconnect();
+  }, [language, contactOpen, contactSent, contactSending]);
 
   async function submitContact(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -93,7 +134,7 @@ export default function CowTownTagsLandingPage() {
   }
 
   return (
-    <div className="ctv2-page">
+    <div className="ctv2-page" ref={pageRef}>
       <header className="ctv2-header">
         <div className="ctv2-shell ctv2-header-inner">
           <Link className="ctv2-brand" to="/planet/cow-town-tags">
@@ -105,12 +146,32 @@ export default function CowTownTagsLandingPage() {
             </span>
           </Link>
 
-          <Link
-            className="ctv2-small-action"
-            to="/planet/cow-town-tags/tag/CT-0847"
-          >
-            See Live Tag
-          </Link>
+          <div className="ctv2-header-actions">
+            <label className="ctv2-language-control">
+              <Globe2 size={16} aria-hidden="true" />
+
+              <span className="ctv2-language-label">Language</span>
+
+              <select
+                value={language}
+                onChange={(event) =>
+                  setLanguage(event.target.value as CowTownLanguage)
+                }
+                aria-label="Language"
+              >
+                <option value="en">EN</option>
+                <option value="es">ES</option>
+                <option value="fr">FR</option>
+              </select>
+            </label>
+
+            <Link
+              className="ctv2-small-action"
+              to="/planet/cow-town-tags/tag/CT-0847"
+            >
+              See Live Tag
+            </Link>
+          </div>
         </div>
       </header>
 
