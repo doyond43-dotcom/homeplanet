@@ -459,6 +459,7 @@ export default function OnlyTheEssentialsCustomerLanding() {
                   controls
                   playsInline
                   preload="metadata"
+                  poster="/images/only-the-essentials-video-1-poster.jpg"
                   aria-label="Only The Essentials cleaning before-and-after video one"
                   className="aspect-[9/16] max-h-[720px] w-full bg-black object-contain"
                 >
@@ -492,6 +493,7 @@ export default function OnlyTheEssentialsCustomerLanding() {
                   controls
                   playsInline
                   preload="metadata"
+                  poster="/images/only-the-essentials-video-2-poster.jpg"
                   aria-label="Only The Essentials cleaning before-and-after video two"
                   className="aspect-[9/16] max-h-[720px] w-full bg-black object-contain"
                 >
