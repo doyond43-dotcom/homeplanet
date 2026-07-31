@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CalendarCheck, MapPin, MessageCircle, Phone, Share2, Trash2, X } from "lucide-react";
 import { supabase } from "../lib/supabase";
 
@@ -459,6 +459,15 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
           <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-300">
             Signals, follow-ups, job difficulty, and next moves for Kaitlin&apos;s cleaning requests.
           </p>
+
+          <div className="mt-6">
+            <a
+              href="/planet/only-the-essentials/live-activity"
+              className="inline-flex min-h-[54px] w-full items-center justify-center rounded-2xl bg-pink-400 px-6 text-center text-sm font-black uppercase tracking-[0.2em] text-black shadow-lg shadow-pink-500/20 transition hover:-translate-y-0.5 hover:bg-pink-300 sm:w-auto"
+            >
+              Open Live Activity
+            </a>
+          </div>
 
           <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
             {metrics.map((metric) => (
@@ -1108,44 +1117,3 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
     </main>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

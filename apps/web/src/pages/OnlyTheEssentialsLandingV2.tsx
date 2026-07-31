@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   CalendarCheck,
   Heart,
@@ -21,6 +21,48 @@ export default function OnlyTheEssentialsCustomerLanding() {
   const [quoteSubmitting, setQuoteSubmitting] = useState(false);
   const [quoteError, setQuoteError] = useState("");
   const [kaitlinNotifyText, setKaitlinNotifyText] = useState("");
+
+  const quoteStartedRef = useRef(false);
+  const videoOnePlayedRef = useRef(false);
+  const videoTwoPlayedRef = useRef(false);
+
+  function trackLandingEvent(
+    event: string,
+    meta: Record<string, string | number | boolean> = {}
+  ) {
+    void hpEvent({
+      event,
+      board: "only-the-essentials",
+      meta: {
+        source: "OnlyTheEssentialsLandingV2",
+        path: window.location.pathname,
+        ...meta,
+      },
+    });
+  }
+
+  function trackQuoteStarted(trigger: string) {
+    if (quoteStartedRef.current) return;
+
+    quoteStartedRef.current = true;
+    trackLandingEvent("quote_started", { trigger });
+  }
+
+  function trackVideoPlayed(video: "video_1" | "video_2") {
+    const playedRef =
+      video === "video_1" ? videoOnePlayedRef : videoTwoPlayedRef;
+
+    if (playedRef.current) return;
+
+    playedRef.current = true;
+    trackLandingEvent("video_played", { video });
+  }
+
+  useEffect(() => {
+    trackLandingEvent("landing_page_opened", {
+      referrer: document.referrer || "direct",
+    });
+  }, []);
 
   async function handleQuoteSubmit() {
     const section = document.getElementById("only-essentials-quote");
@@ -86,18 +128,13 @@ export default function OnlyTheEssentialsCustomerLanding() {
       if (error) {
         throw error;
       }
-
-      hpEvent("only-the-essentials", "quote_request_submitted", {
-        source: "OnlyTheEssentialsLandingV2",
+      trackLandingEvent("quote_request_submitted", {
         serviceType,
         bedrooms,
         bathrooms,
         pets,
         condition,
         preferredTime,
-        name,
-        phone: phoneNumber,
-        streetAddress,
         photoCount,
       });
 
@@ -115,7 +152,7 @@ export default function OnlyTheEssentialsCustomerLanding() {
             bathrooms,
             pets,
             condition,
-            notes,
+            notes: quoteDetails,
           }),
         });
 
@@ -222,6 +259,9 @@ export default function OnlyTheEssentialsCustomerLanding() {
             <div className="hidden items-center gap-3 sm:flex">
               <a
                 href={`tel:${phone}`}
+                onClick={() =>
+                  trackLandingEvent("call_clicked", { location: "header" })
+                }
                 className="inline-flex items-center gap-2 rounded-full bg-pink-400 px-6 py-3 text-xs font-black uppercase tracking-[0.22em] text-black shadow-lg shadow-pink-500/25"
               >
                 <Phone size={15} />
@@ -229,6 +269,9 @@ export default function OnlyTheEssentialsCustomerLanding() {
               </a>
               <a
                 href={kaitlinSmsHref(kaitlinNotifyText || "New Only The Essentials quote request submitted. Please check the HomePlanet dashboard.")}
+                onClick={() =>
+                  trackLandingEvent("text_clicked", { location: "header" })
+                }
                 className="inline-flex items-center gap-2 rounded-full border border-pink-300/30 bg-white/5 px-6 py-3 text-xs font-black uppercase tracking-[0.22em] text-white"
               >
                 <MessageCircle size={15} />
@@ -256,6 +299,7 @@ export default function OnlyTheEssentialsCustomerLanding() {
               <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <a
                   href="#only-essentials-quote"
+                  onClick={() => trackQuoteStarted("hero_quote_button")}
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-pink-400 px-7 py-4 text-xs font-black uppercase tracking-[0.24em] text-black shadow-lg shadow-pink-500/20 transition hover:-translate-y-0.5 hover:bg-pink-300"
                 >
                   <CalendarCheck size={16} />
@@ -334,7 +378,13 @@ export default function OnlyTheEssentialsCustomerLanding() {
               </article>
             );
           })}
-        </div>        <section id="only-essentials-quote" className="mt-14 rounded-[2rem] border border-pink-300/20 bg-pink-950/20 p-6 shadow-2xl shadow-pink-950/25 sm:p-8">
+        </div>
+
+        <section
+          id="only-essentials-quote"
+          onFocusCapture={() => trackQuoteStarted("form_field")}
+          className="mt-14 rounded-[2rem] border border-pink-300/20 bg-pink-950/20 p-6 shadow-2xl shadow-pink-950/25 sm:p-8"
+        >
           <p className="text-xs font-black uppercase tracking-[0.32em] text-pink-300">
             Get My Cleaning Quote
           </p>
@@ -459,6 +509,7 @@ export default function OnlyTheEssentialsCustomerLanding() {
                   controls
                   playsInline
                   preload="metadata"
+                  onPlay={() => trackVideoPlayed("video_1")}
                   poster="/images/only-the-essentials-video-1-poster.jpg"
                   aria-label="Only The Essentials cleaning before-and-after video one"
                   className="aspect-[9/16] max-h-[720px] w-full bg-black object-contain"
@@ -493,6 +544,7 @@ export default function OnlyTheEssentialsCustomerLanding() {
                   controls
                   playsInline
                   preload="metadata"
+                  onPlay={() => trackVideoPlayed("video_2")}
                   poster="/images/only-the-essentials-video-2-poster.jpg"
                   aria-label="Only The Essentials cleaning before-and-after video two"
                   className="aspect-[9/16] max-h-[720px] w-full bg-black object-contain"
@@ -554,6 +606,7 @@ export default function OnlyTheEssentialsCustomerLanding() {
 
           <a
             href="#only-essentials-quote"
+            onClick={() => trackQuoteStarted("proof_quote_button")}
             className="mt-6 inline-flex min-h-[54px] w-full items-center justify-center rounded-2xl bg-pink-400 px-6 text-sm font-black uppercase tracking-[0.2em] text-black transition hover:-translate-y-0.5 hover:bg-pink-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-200"
           >
             Tell Kaitlin What You Need
@@ -660,6 +713,11 @@ export default function OnlyTheEssentialsCustomerLanding() {
             <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <a
                 href={`tel:${phone}`}
+                onClick={() =>
+                  trackLandingEvent("call_clicked", {
+                    location: "lower_cta",
+                  })
+                }
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-pink-400 px-7 py-4 text-xs font-black uppercase tracking-[0.24em] text-black"
               >
                 <Phone size={16} />
@@ -667,13 +725,23 @@ export default function OnlyTheEssentialsCustomerLanding() {
               </a>
               <a
                 href={kaitlinSmsHref(kaitlinNotifyText || "New Only The Essentials quote request submitted. Please check the HomePlanet dashboard.")}
+                onClick={() =>
+                  trackLandingEvent("text_clicked", {
+                    location: "lower_cta",
+                  })
+                }
                 className="inline-flex items-center justify-center gap-2 rounded-full border border-pink-300/30 bg-white/5 px-7 py-4 text-xs font-black uppercase tracking-[0.24em] text-white"
               >
                 <MessageCircle size={16} />
                 Text Kaitlin
               </a>
               <a
-                href="/planet/only-the-essentials/request?type=book"
+                href="#only-essentials-quote"
+                onClick={() =>
+                  trackLandingEvent("request_cleaning_clicked", {
+                    location: "lower_cta",
+                  })
+                }
                 className="inline-flex items-center justify-center gap-2 rounded-full border border-white/15 bg-black/20 px-7 py-4 text-xs font-black uppercase tracking-[0.24em] text-white"
               >
                 <CalendarCheck size={16} />
@@ -721,6 +789,11 @@ export default function OnlyTheEssentialsCustomerLanding() {
             <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:justify-center">
               <a
                 href={`tel:${phone}`}
+                onClick={() =>
+                  trackLandingEvent("call_clicked", {
+                    location: "confirmation",
+                  })
+                }
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-pink-400 px-6 py-3 text-xs font-black uppercase tracking-[0.22em] text-black"
               >
                 <Phone size={15} />
@@ -729,6 +802,11 @@ export default function OnlyTheEssentialsCustomerLanding() {
 
               <a
                 href={kaitlinSmsHref(kaitlinNotifyText || "New Only The Essentials quote request submitted. Please check the HomePlanet dashboard.")}
+                onClick={() =>
+                  trackLandingEvent("text_clicked", {
+                    location: "confirmation",
+                  })
+                }
                 className="inline-flex items-center justify-center gap-2 rounded-full border border-pink-300/30 bg-white/5 px-6 py-3 text-xs font-black uppercase tracking-[0.22em] text-white"
               >
                 <MessageCircle size={15} />
@@ -749,28 +827,3 @@ export default function OnlyTheEssentialsCustomerLanding() {
     </main>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

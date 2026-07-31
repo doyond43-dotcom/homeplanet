@@ -55,6 +55,7 @@ import OnlyTheEssentialsPublicLanding from "../pages/OnlyTheEssentialsPublicLand
 import OnlyTheEssentialsRequest from "../pages/OnlyTheEssentialsRequest";
 import OnlyTheEssentialsRequestV2 from "../pages/OnlyTheEssentialsRequestV2";
 import OnlyTheEssentialsIntelligenceDashboard from "../pages/OnlyTheEssentialsIntelligenceDashboard";
+import OnlyTheEssentialsLiveActivity from "../pages/OnlyTheEssentialsLiveActivity";
 import RidgelineIntelligenceDashboard from "../pages/RidgelineIntelligenceDashboard";
 import RidgelineRequestV2 from "../pages/RidgelineRequestV2";
 
@@ -579,7 +580,9 @@ export default function PlanetRoutes() {
       <Route path="only-the-essentials/v2" element={<OnlyTheEssentialsLandingV2 />} />
       <Route path="only-the-essentials/request" element={<OnlyTheEssentialsRequest />} />
       <Route path="only-the-essentials/request-v2" element={<OnlyTheEssentialsRequestV2 />} />
-      <Route path="only-the-essentials/intelligence" element={<OnlyTheEssentialsIntelligenceDashboard />} />      <Route path="only-the-essentials/board" element={<OnlyTheEssentialsBoard />} />
+      <Route path="only-the-essentials/intelligence" element={<OnlyTheEssentialsIntelligenceDashboard />} />
+      <Route path="only-the-essentials/live-activity" element={<OnlyTheEssentialsLiveActivity />} />
+      <Route path="only-the-essentials/board" element={<Navigate to="/planet/only-the-essentials/intelligence" replace />} />
       <Route path="only-the-essentials/messages" element={<OnlyTheEssentialsMessagesBoard />} />
       <Route path="ridgeline" element={<HomeServicesLiveDemoFlow />} />
       <Route path="ridgeline/intelligence" element={<RidgelineIntelligenceDashboard />} />
@@ -856,34 +859,3 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
