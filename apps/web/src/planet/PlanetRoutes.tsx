@@ -304,6 +304,8 @@ import CowTownTagsLandingPage from "../pages/CowTownTagsLandingPage";
 import CowTownPublicTagPage from "../pages/CowTownPublicTagPage";
 import CowTownOrderPage from "../pages/CowTownOrderPage";
 import CowTownOrderReceiptPage from "../pages/CowTownOrderReceiptPage";
+import CowTownOwnershipTransferPage from "../pages/CowTownOwnershipTransferPage";
+import CowTownOwnershipAcceptPage from "../pages/CowTownOwnershipAcceptPage";
 import GuardianPetTagDemo from "../pages/GuardianPetTagDemo";
 import GuardianPetLivePage from "../pages/GuardianPetLivePage";
 import GuardianPetManagePage from "../pages/GuardianPetManagePage";
@@ -673,6 +675,14 @@ export default function PlanetRoutes() {
         element={<CowTownOrderReceiptPage />}
       />
       <Route path="cow-town-tags/tag/:tagId" element={<CowTownPublicTagPage />} />
+      <Route
+        path="cow-town-tags/transfer/start/:managementToken"
+        element={<CowTownOwnershipTransferPage />}
+      />
+      <Route
+        path="cow-town-tags/transfer/accept/:acceptanceToken"
+        element={<CowTownOwnershipAcceptPage />}
+      />
       <Route path="guardian" element={<PlanetGuardian />} />
       <Route path="guardian-pet" element={<GuardianPetTagDemo />} />
       <Route path="guardian-pet/privacy" element={<GuardianPetPrivacyPage />} />

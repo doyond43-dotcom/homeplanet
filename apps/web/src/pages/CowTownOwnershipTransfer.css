@@ -1,0 +1,335 @@
+.ct-transfer-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(217, 170, 54, 0.09),
+      transparent 30rem
+    ),
+    #06150e;
+  color: #f7f1df;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.ct-transfer-page *,
+.ct-transfer-page *::before,
+.ct-transfer-page *::after {
+  box-sizing: border-box;
+}
+
+.ct-transfer-header {
+  width: min(920px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 24px 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border-bottom: 1px solid rgba(241, 202, 84, 0.12);
+}
+
+.ct-transfer-header > div {
+  text-align: right;
+}
+
+.ct-transfer-header p {
+  margin: 0;
+  color: #e4b943;
+  font-size: 0.7rem;
+  font-weight: 950;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.ct-transfer-header strong {
+  display: block;
+  margin-top: 3px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.05rem;
+}
+
+.ct-transfer-back {
+  color: rgba(255, 246, 216, 0.62);
+  font-size: 0.88rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.ct-transfer-back:hover {
+  color: #f1ca54;
+}
+
+.ct-transfer-shell {
+  width: min(760px, calc(100% - 24px));
+  margin: 32px auto 0;
+  padding-bottom: 80px;
+}
+
+.ct-transfer-card {
+  padding: clamp(22px, 5vw, 42px);
+  border: 1px solid rgba(241, 202, 84, 0.14);
+  border-radius: 30px;
+  background: rgba(10, 34, 23, 0.94);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.28);
+}
+
+.ct-transfer-heading p,
+.ct-transfer-success > p {
+  margin: 0;
+  color: #e4b943;
+  font-size: 0.72rem;
+  font-weight: 950;
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+}
+
+.ct-transfer-heading h1,
+.ct-transfer-state h1,
+.ct-transfer-success h1 {
+  margin: 10px 0 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2.1rem, 6vw, 3.6rem);
+  line-height: 1;
+  letter-spacing: -0.045em;
+}
+
+.ct-transfer-heading > span,
+.ct-transfer-success > span {
+  display: block;
+  margin-top: 15px;
+  color: rgba(247, 241, 223, 0.58);
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+.ct-transfer-form {
+  margin-top: 28px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.ct-transfer-field {
+  display: grid;
+  gap: 7px;
+}
+
+.ct-transfer-wide {
+  grid-column: 1 / -1;
+}
+
+.ct-transfer-field > span {
+  color: rgba(247, 241, 223, 0.65);
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.ct-transfer-field input,
+.ct-transfer-field select,
+.ct-transfer-field textarea {
+  width: 100%;
+  border: 1px solid rgba(247, 241, 223, 0.12);
+  border-radius: 13px;
+  padding: 13px 14px;
+  background: rgba(3, 15, 9, 0.8);
+  color: #fff9e7;
+  font: inherit;
+  outline: none;
+}
+
+.ct-transfer-field textarea {
+  resize: vertical;
+}
+
+.ct-transfer-field input:focus,
+.ct-transfer-field select:focus,
+.ct-transfer-field textarea:focus {
+  border-color: #e4b943;
+  box-shadow: 0 0 0 3px rgba(228, 185, 67, 0.1);
+}
+
+.ct-transfer-summary {
+  margin-top: 28px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ct-transfer-summary article {
+  padding: 18px;
+  border: 1px solid rgba(247, 241, 223, 0.08);
+  border-radius: 18px;
+  background: rgba(4, 19, 12, 0.68);
+}
+
+.ct-transfer-summary span,
+.ct-transfer-summary strong {
+  display: block;
+}
+
+.ct-transfer-summary span {
+  color: rgba(247, 241, 223, 0.4);
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.ct-transfer-summary strong {
+  margin-top: 8px;
+  text-transform: capitalize;
+}
+
+.ct-transfer-actions {
+  margin-top: 28px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.ct-transfer-actions button,
+.ct-transfer-success a {
+  min-height: 50px;
+  border: 1px solid #e4b943;
+  border-radius: 15px;
+  padding: 0 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #e4b943;
+  color: #102017;
+  font: inherit;
+  font-weight: 950;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.ct-transfer-actions button:hover:not(:disabled),
+.ct-transfer-success a:hover {
+  background: #f1ca54;
+}
+
+.ct-transfer-actions button:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.ct-transfer-error {
+  margin-top: 18px;
+  padding: 16px 18px;
+  border: 1px solid rgba(255, 142, 112, 0.42);
+  border-radius: 15px;
+  display: grid;
+  gap: 6px;
+  background: rgba(112, 28, 16, 0.28);
+  color: #fff4ee;
+}
+
+.ct-transfer-error span,
+.ct-transfer-state p {
+  line-height: 1.5;
+}
+
+.ct-transfer-state p {
+  color: rgba(247, 241, 223, 0.58);
+}
+
+.ct-transfer-token {
+  margin: 24px 0;
+  padding: 18px;
+  border: 1px solid rgba(241, 202, 84, 0.22);
+  border-radius: 18px;
+  background: rgba(228, 185, 67, 0.07);
+}
+
+.ct-transfer-token small,
+.ct-transfer-token code {
+  display: block;
+}
+
+.ct-transfer-token small {
+  color: rgba(247, 241, 223, 0.48);
+  font-weight: 850;
+}
+
+.ct-transfer-token code {
+  margin-top: 9px;
+  overflow-wrap: anywhere;
+  color: #f1ca54;
+  font-size: 0.92rem;
+}
+
+@media (max-width: 720px) {
+  .ct-transfer-form,
+  .ct-transfer-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .ct-transfer-wide {
+    grid-column: auto;
+  }
+
+  .ct-transfer-card {
+    border-radius: 24px;
+  }
+}
+
+@media (max-width: 520px) {
+  .ct-transfer-header {
+    width: min(100% - 24px, 920px);
+    align-items: flex-start;
+  }
+
+  .ct-transfer-header > div {
+    max-width: 165px;
+  }
+
+  .ct-transfer-heading h1,
+  .ct-transfer-state h1,
+  .ct-transfer-success h1 {
+    font-size: 2.35rem;
+  }
+
+  .ct-transfer-actions button,
+  .ct-transfer-success a {
+    width: 100%;
+  }
+}
+
+
+.ct-transfer-security-warning {
+  margin-top: 22px;
+  padding: 16px 18px;
+  border: 1px solid rgba(255, 194, 74, 0.34);
+  border-radius: 16px;
+  display: grid;
+  gap: 6px;
+  background: rgba(124, 75, 8, 0.22);
+}
+
+.ct-transfer-security-warning strong {
+  color: #f1ca54;
+}
+
+.ct-transfer-security-warning span {
+  color: rgba(247, 241, 223, 0.68);
+  line-height: 1.5;
+}
+
+.ct-transfer-token button {
+  min-height: 44px;
+  margin-top: 15px;
+  border: 1px solid rgba(241, 202, 84, 0.48);
+  border-radius: 13px;
+  padding: 0 18px;
+  background: rgba(228, 185, 67, 0.1);
+  color: #f1ca54;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.ct-transfer-token button:hover {
+  background: rgba(228, 185, 67, 0.17);
+}
