@@ -792,3 +792,112 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* ============================================================
+   COW TOWN PUBLIC ANIMAL RECORD
+   ============================================================ */
+
+.cowtown-animal-record {
+  margin-top: 20px;
+  border: 1px solid rgba(250, 204, 21, 0.18);
+  border-radius: 17px;
+  padding: 17px;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(250, 204, 21, 0.07),
+      rgba(255, 255, 255, 0.025)
+    );
+}
+
+.cowtown-animal-record-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.cowtown-animal-record-heading span {
+  display: block;
+  color: #facc15;
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.cowtown-animal-record-heading h3 {
+  margin: 5px 0 0;
+  font-size: 21px;
+  letter-spacing: -0.025em;
+}
+
+.cowtown-animal-record-heading small {
+  flex: 0 0 auto;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  padding: 6px 9px;
+  background: rgba(255, 255, 255, 0.045);
+  color: #9daf9f;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.cowtown-animal-record-grid {
+  margin-top: 15px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.cowtown-animal-record-grid > div {
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  padding: 11px 12px;
+  background: rgba(5, 16, 10, 0.38);
+}
+
+.cowtown-animal-record-grid span {
+  display: block;
+  color: #82958a;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.cowtown-animal-record-grid strong {
+  display: block;
+  margin-top: 5px;
+  color: #eef4f0;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.cowtown-animal-record-grid .cowtown-record-current {
+  color: #86efac;
+}
+
+.cowtown-animal-record-wide {
+  grid-column: 1 / -1;
+}
+
+.cowtown-animal-record > p {
+  margin: 13px 0 0;
+  color: #8fa197;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+@media (max-width: 680px) {
+  .cowtown-animal-record-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cowtown-animal-record-wide {
+    grid-column: auto;
+  }
+}

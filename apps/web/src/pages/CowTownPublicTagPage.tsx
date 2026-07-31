@@ -114,6 +114,56 @@ export default function CowTownPublicTagPage() {
                     <strong>Cow</strong>
                   </div>
                 </div>
+
+                <section
+                  className="cowtown-animal-record"
+                  aria-labelledby="cowtown-animal-record-title"
+                >
+                  <div className="cowtown-animal-record-heading">
+                    <div>
+                      <span>Public animal summary</span>
+                      <h3 id="cowtown-animal-record-title">
+                        Animal Record
+                      </h3>
+                    </div>
+
+                    <small>Demo record</small>
+                  </div>
+
+                  <div className="cowtown-animal-record-grid">
+                    <div>
+                      <span>Breed</span>
+                      <strong>Brangus</strong>
+                    </div>
+
+                    <div>
+                      <span>Age</span>
+                      <strong>4 years</strong>
+                    </div>
+
+                    <div>
+                      <span>Vaccinations</span>
+                      <strong className="cowtown-record-current">
+                        Current
+                      </strong>
+                    </div>
+
+                    <div>
+                      <span>Last health update</span>
+                      <strong>July 2026</strong>
+                    </div>
+
+                    <div className="cowtown-animal-record-wide">
+                      <span>Ownership status</span>
+                      <strong>Active with current ranch</strong>
+                    </div>
+                  </div>
+
+                  <p>
+                    Detailed health, ownership, sale and transfer records are
+                    available only to authorized users.
+                  </p>
+                </section>
               </div>
             </aside>
 
