@@ -1524,6 +1524,92 @@ function PetLivePage({ pet }: { pet: DemoPet }) {
         </p>
       </section>
 
+      {/* PET TAG RECOVERY TRUTH CHAIN */}
+      {pet.id === "bella-demo" && (
+        <section className="rounded-[28px] border border-white/[0.08] bg-white/[0.025] px-5 py-7 sm:px-7 sm:py-9">
+          <div className="mx-auto max-w-2xl text-center">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-200">
+              From scan to safe return
+            </p>
+
+            <h2 className="mt-3 text-2xl font-bold leading-tight tracking-[-0.025em] text-white sm:text-3xl">
+              The tag starts the connection.
+              <span className="block text-cyan-300">
+                The system carries it through.
+              </span>
+            </h2>
+          </div>
+
+          <div className="relative mx-auto mt-8 max-w-3xl">
+            <div
+              aria-hidden="true"
+              className="absolute left-[11px] top-3 h-[calc(100%-24px)] w-px bg-gradient-to-b from-cyan-300/55 via-cyan-300/25 to-emerald-300/55 md:left-[12.5%] md:right-[12.5%] md:top-[11px] md:h-px md:w-auto"
+            />
+
+            <div className="relative grid gap-6 md:grid-cols-4 md:gap-4">
+              <div className="relative pl-9 md:px-2 md:pt-8 md:text-center">
+                <span className="absolute left-0 top-0 flex h-[23px] w-[23px] items-center justify-center rounded-full border border-cyan-200/60 bg-[#07111f] md:left-1/2 md:-translate-x-1/2">
+                  <span className="h-2 w-2 rounded-full bg-cyan-300" />
+                </span>
+
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">
+                  Scan
+                </p>
+
+                <p className="mt-2 text-sm leading-6 text-white/62">
+                  Bella&apos;s live page opens.
+                </p>
+              </div>
+
+              <div className="relative pl-9 md:px-2 md:pt-8 md:text-center">
+                <span className="absolute left-0 top-0 flex h-[23px] w-[23px] items-center justify-center rounded-full border border-cyan-200/60 bg-[#07111f] md:left-1/2 md:-translate-x-1/2">
+                  <span className="h-2 w-2 rounded-full bg-cyan-300" />
+                </span>
+
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">
+                  Connect
+                </p>
+
+                <p className="mt-2 text-sm leading-6 text-white/62">
+                  The finder reaches her family.
+                </p>
+              </div>
+
+              <div className="relative pl-9 md:px-2 md:pt-8 md:text-center">
+                <span className="absolute left-0 top-0 flex h-[23px] w-[23px] items-center justify-center rounded-full border border-cyan-200/60 bg-[#07111f] md:left-1/2 md:-translate-x-1/2">
+                  <span className="h-2 w-2 rounded-full bg-cyan-300" />
+                </span>
+
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">
+                  Coordinate
+                </p>
+
+                <p className="mt-2 text-sm leading-6 text-white/62">
+                  Location and next steps are shared.
+                </p>
+              </div>
+
+              <div className="relative pl-9 md:px-2 md:pt-8 md:text-center">
+                <span className="absolute left-0 top-0 flex h-[23px] w-[23px] items-center justify-center rounded-full border border-emerald-200/60 bg-[#07111f] md:left-1/2 md:-translate-x-1/2">
+                  <span className="h-2 w-2 rounded-full bg-emerald-300" />
+                </span>
+
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-200">
+                  Home
+                </p>
+
+                <p className="mt-2 text-sm leading-6 text-white/62">
+                  Bella is safely reunited.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <p className="mx-auto mt-8 max-w-xl border-t border-white/[0.07] pt-6 text-center text-sm font-semibold leading-6 text-white/58">
+            Every step stays connected from the first scan to the safe return.
+          </p>
+        </section>
+      )}
       {pet.id === "bella-demo" && (
         <section className="overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.035]">
           <img
