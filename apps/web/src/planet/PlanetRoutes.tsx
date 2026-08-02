@@ -686,6 +686,7 @@ export default function PlanetRoutes() {
       <Route path="guardian" element={<PlanetGuardian />} />
       <Route path="guardian-pet" element={<GuardianPetTagDemo />} />
       <Route path="guardian-pet/privacy" element={<GuardianPetPrivacyPage />} />
+      <Route path="guardian-pet/pet/bella-demo" element={<GuardianPetTagDemo />} />
       <Route path="guardian-pet/pet/:petId" element={<GuardianPetLivePage />} />
       <Route path="guardian-pet/found/:petId" element={<GuardianPetLivePage />} />
       <Route path="guardian-pet/manage/:ownerToken" element={<GuardianPetManagePage />} />

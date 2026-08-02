@@ -1,4 +1,4 @@
-﻿import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
 type PetStatus = "missing" | "safe" | "traveling";
@@ -1083,7 +1083,7 @@ function PetTagLanding() {
 
           <div className="mx-auto mt-8 max-w-3xl border-t border-white/[0.08] pt-6">
             <p className="text-xs text-white/38">
-              Â© 2026 HomePlanet. All rights reserved.
+              © 2026 HomePlanet. All rights reserved.
             </p>
           </div>
         </div>
@@ -1594,7 +1594,7 @@ function PetLivePage({ pet }: { pet: DemoPet }) {
         </div>
 
         <div className="mt-6 border-t border-white/[0.06] pt-5 text-xs text-white/30">
-          Â© 2026 HomePlanet. All rights reserved.
+          © 2026 HomePlanet. All rights reserved.
         </div>
       </footer>
 
