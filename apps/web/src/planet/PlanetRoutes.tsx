@@ -414,7 +414,7 @@ import GreenBasketBrandPalettePage from "../pages/GreenBasketBrandPalettePage";
 import StarterGeneratedLivePage from "../pages/StarterGeneratedLivePage";
 
 import EcosystemInfrastructurePortal from "../pages/EcosystemInfrastructurePortal";
-import EcosystemAtlasPage from "../pages/EcosystemAtlasPage";
+import EcosystemAtlasV2Page from "../pages/EcosystemAtlasV2Page";
 import CommunityPulsePage from "../pages/CommunityPulsePage";
 import CommunityPulseVisualPage from "../pages/CommunityPulseVisualPage";
 import CommunityPulseRainyEveningVisualPage from "../pages/CommunityPulseRainyEveningVisualPage";
@@ -801,7 +801,7 @@ export default function PlanetRoutes() {
       <Route path="ecosystem/infrastructure" element={<EcosystemInfrastructureLayer />} />
       <Route path="participation-living" element={<ParticipationLivingPage />} />
 <Route path="participation-living-infrastructure" element={<ParticipationLivingInfrastructurePage />} />
-<Route path="atlas" element={<EcosystemAtlasPage />} />
+<Route path="atlas" element={<RequireAuth><EcosystemAtlasV2Page /></RequireAuth>} />
 <Route path="community-pulse" element={<CommunityPulsePage />} />
 <Route path="community-pulse-visual" element={<CommunityPulseVisualPage />} />
 <Route path="community-pulse-rainy-evening" element={<CommunityPulseRainyEveningVisualPage />} />
