@@ -16,6 +16,18 @@ type Signal = {
   nextMove: string;
   suggestion: string;
   message: string;
+  createdAt: string;
+};
+
+type CleaningTruthEvent = {
+  id: string;
+  request_id: string;
+  business_slug: string;
+  event_type: string;
+  event_label: string;
+  event_detail: string | null;
+  event_meta: Record<string, unknown>;
+  created_at: string;
 };
 
 type CleaningPhoto = {
@@ -38,10 +50,11 @@ const initialSignals: Signal[] = [
     condition: "Heavy Deep Clean",
     pets: "Multiple Pets",
     preferred: "Mornings",
-    value: "$160–$240 est.",
+    value: "$160ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“$240 est.",
     nextMove: "Ask for photos before final quote.",
     suggestion: "This looks like a heavier job. Confirm photos, pets, access, and expected time before scheduling.",
     message: "Hey Dan, thanks for reaching out. Before I lock in a quote, can you send a few photos of the main areas so I can give you a fair estimate?",
+    createdAt: new Date().toISOString(),
   },
   {
     id: "sarah-weekly",
@@ -56,6 +69,7 @@ const initialSignals: Signal[] = [
     nextMove: "Offer a recurring schedule.",
     suggestion: "This could become steady weekly work. Offer a simple recurring cleaning spot.",
     message: "Hey Sarah, I can help with weekly cleaning. If you want, I can hold a regular spot so you do not have to keep rebooking each week.",
+    createdAt: new Date().toISOString(),
   },
   {
     id: "moveout-airbnb",
@@ -70,6 +84,7 @@ const initialSignals: Signal[] = [
     nextMove: "Confirm checkout/check-in window.",
     suggestion: "Timing matters most here. Confirm the exact turnover window before accepting.",
     message: "Hey there, I can help with the rental reset. What time is checkout and what time does the next guest arrive?",
+    createdAt: new Date().toISOString(),
   },
 ];
 
@@ -83,9 +98,9 @@ function smsBody(phone: string, body: string) {
 }
 
 function buildFirstReplyText(signal: Signal) {
-  return `Hi ${signal.name}, this is Kaitlin with Only The Essentials Cleaning. I received your cleaning request and I’m reviewing the details now.
+  return `Hi ${signal.name}, this is Kaitlin with Only The Essentials Cleaning. I received your cleaning request and IÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢m reviewing the details now.
 
-I’ll reply here with the next step.`;
+IÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ll reply here with the next step.`;
 }
 
 function moneyFromHours(rate: string, hours: string) {
@@ -207,6 +222,97 @@ function copyText(label: string, text: string) {
   navigator.clipboard?.writeText(text);
   alert(label);
 }
+const ONLY_ESSENTIALS_LIVE_PAGE =
+  "https://www.homeplanet.city/planet/only-the-essentials-cleaning";
+
+const BUSINESS_QUICK_REPLIES = [
+  {
+    label: "Someone looking for this service",
+    reply: `Hi! Only The Essentials Cleaning would be happy to help. You can see our services and request a cleaning quote here:
+
+Ã°Å¸â€˜â€¡Ã°Å¸â€˜â€¡Ã°Å¸â€˜â€¡
+
+${ONLY_ESSENTIALS_LIVE_PAGE}`,
+  },
+  {
+    label: "Someone tagged the business",
+    reply: `Thank you for tagging Only The Essentials Cleaning! Here is our page with services, real cleaning work, and the quote form:
+
+Ã°Å¸â€˜â€¡Ã°Å¸â€˜â€¡Ã°Å¸â€˜â€¡
+
+${ONLY_ESSENTIALS_LIVE_PAGE}`,
+  },
+  {
+    label: "Send my Live Page",
+    reply: `Here is the Only The Essentials Cleaning Live Page. You can view our services, see real cleaning proof, and request a quote:
+
+Ã°Å¸â€˜â€¡Ã°Å¸â€˜â€¡Ã°Å¸â€˜â€¡
+
+${ONLY_ESSENTIALS_LIVE_PAGE}`,
+  },
+  {
+    label: "Request a quote",
+    reply: `Absolutely! You can tell Only The Essentials Cleaning what you need and request your quote right here:
+
+Ã°Å¸â€˜â€¡Ã°Å¸â€˜â€¡Ã°Å¸â€˜â€¡
+
+${ONLY_ESSENTIALS_LIVE_PAGE}`,
+  },
+  {
+    label: "Messenger reply",
+    reply: `Hi! Thanks for reaching out to Only The Essentials Cleaning. Here is our page where you can see our work and send your cleaning request:
+
+Ã°Å¸â€˜â€¡Ã°Å¸â€˜â€¡Ã°Å¸â€˜â€¡
+
+${ONLY_ESSENTIALS_LIVE_PAGE}`,
+  },
+  {
+    label: "Text reply",
+    reply: `Hi! This is Only The Essentials Cleaning. You can see our services and request your cleaning quote here:
+
+Ã°Å¸â€˜â€¡Ã°Å¸â€˜â€¡Ã°Å¸â€˜â€¡
+
+${ONLY_ESSENTIALS_LIVE_PAGE}`,
+  },
+];
+
+async function copyBusinessReply(reply: string) {
+  await navigator.clipboard.writeText(reply);
+}
+
+function formatTruthTime(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Time unavailable";
+  }
+
+  return date.toLocaleString([], {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+const TRUTH_EVENT_ORDER = [
+  "request_received",
+  "request_reviewed",
+  "estimate_sent",
+  "agreement_sent",
+  "customer_approved",
+  "schedule_sent",
+  "cleaning_scheduled",
+  "before_photo_added",
+  "work_started",
+  "after_photo_added",
+  "work_completed",
+  "payment_sent",
+  "payment_received",
+  "proof_sent",
+  "review_requested",
+  "outcome_closed",
+];
 export default function OnlyTheEssentialsIntelligenceDashboard() {
   const [signals, setSignals] = useState<Signal[]>([]);
   const [selected, setSelected] = useState<Signal | null>(null);
@@ -222,6 +328,8 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
   const [showHeaderDetails, setShowHeaderDetails] = useState(false);
   const [photos, setPhotos] = useState<CleaningPhoto[]>([]);
   const [uploadingPhotoType, setUploadingPhotoType] = useState<"before" | "after" | null>(null);
+  const [truthEvents, setTruthEvents] = useState<CleaningTruthEvent[]>([]);
+  const [recordingTruthType, setRecordingTruthType] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadRequests() {
@@ -274,15 +382,164 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
           nextMove: heavy ? "Ask for photos before final quote." : hasPets ? "Confirm pet notes before scheduling." : "Review request and follow up with customer.",
           suggestion: heavy ? "This looks like a heavier job. Confirm photos, pets, access, and expected time before scheduling." : hasPets ? "Pet home request. Confirm animals, access, and any extra cleaning needs before quoting." : "New customer request. Review the details and follow up while the lead is fresh.",
           message: `Hey ${row.customer_name || "there"}, thanks for reaching out. I received your cleaning request and will review the details before confirming the quote.`,
+          createdAt: row.created_at || new Date().toISOString(),
         };
       });
 
       setSignals(liveSignals);
+
+      const { data: existingTruth, error: truthReadError } = await supabase
+        .from("cleaning_request_truth_events")
+        .select("*")
+        .eq("business_slug", "only-the-essentials")
+        .order("created_at", { ascending: false })
+        .limit(200);
+
+      if (truthReadError) {
+        console.error("Could not load cleaning truth events:", truthReadError);
+        return;
+      }
+
+      const currentTruth = (existingTruth || []) as CleaningTruthEvent[];
+      const receivedRequestIds = new Set(
+        currentTruth
+          .filter((event) => event.event_type === "request_received")
+          .map((event) => event.request_id)
+      );
+
+      const missingReceivedEvents = liveSignals
+        .filter((signal) => !receivedRequestIds.has(signal.id))
+        .map((signal) => ({
+          request_id: signal.id,
+          business_slug: "only-the-essentials",
+          event_type: "request_received",
+          event_label: "Request received",
+          event_detail: `${signal.name} requested ${signal.service}.`,
+          event_meta: {
+            customer_name: signal.name,
+            service: signal.service,
+          },
+          created_at: signal.createdAt,
+        }));
+
+      if (missingReceivedEvents.length) {
+        const { data: insertedTruth, error: truthInsertError } = await supabase
+          .from("cleaning_request_truth_events")
+          .insert(missingReceivedEvents)
+          .select("*");
+
+        if (truthInsertError) {
+          console.error("Could not begin cleaning truth chains:", truthInsertError);
+        } else {
+          setTruthEvents([
+            ...((insertedTruth || []) as CleaningTruthEvent[]),
+            ...currentTruth,
+          ].sort(
+            (a, b) =>
+              new Date(b.created_at).getTime() -
+              new Date(a.created_at).getTime()
+          ));
+        }
+      } else {
+        setTruthEvents(currentTruth);
+      }
     }
 
     loadRequests();
   }, []);
 
+  async function recordTruthEvent(
+    requestId: string,
+    eventType: string,
+    eventLabel: string,
+    eventDetail: string,
+    eventMeta: Record<string, unknown> = {}
+  ) {
+    const duplicate = truthEvents.some(
+      (event) =>
+        event.request_id === requestId &&
+        event.event_type === eventType
+    );
+
+    if (duplicate) {
+      window.alert(`${eventLabel} is already recorded.`);
+      return;
+    }
+
+    setRecordingTruthType(eventType);
+
+    const { data, error } = await supabase
+      .from("cleaning_request_truth_events")
+      .insert({
+        request_id: requestId,
+        business_slug: "only-the-essentials",
+        event_type: eventType,
+        event_label: eventLabel,
+        event_detail: eventDetail,
+        event_meta: eventMeta,
+      })
+      .select("*")
+      .single();
+
+    setRecordingTruthType(null);
+
+    if (error) {
+      console.error("Could not record truth event:", error);
+      window.alert("Could not record this milestone. Check the console.");
+      return;
+    }
+
+    setTruthEvents((current) =>
+      [data as CleaningTruthEvent, ...current].sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() -
+          new Date(a.created_at).getTime()
+      )
+    );
+  }
+
+  const visibleTruthEvents = useMemo(
+    () =>
+      [...truthEvents]
+        .sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() -
+            new Date(a.created_at).getTime()
+        )
+        .slice(0, 12),
+    [truthEvents]
+  );
+
+  const selectedTruthEvents = useMemo(
+    () =>
+      selected
+        ? [...truthEvents]
+            .filter((event) => event.request_id === selected.id)
+            .sort(
+              (a, b) =>
+                new Date(a.created_at).getTime() -
+                new Date(b.created_at).getTime()
+            )
+        : [],
+    [selected, truthEvents]
+  );
+
+  function hasSelectedTruthEvent(eventType: string) {
+    return selectedTruthEvents.some(
+      (event) => event.event_type === eventType
+    );
+  }
+
+  const selectedNextTruthStep = useMemo(() => {
+    if (!selected) return null;
+
+    return TRUTH_EVENT_ORDER.find(
+      (eventType) =>
+        !selectedTruthEvents.some(
+          (event) => event.event_type === eventType
+        )
+    );
+  }, [selected, selectedTruthEvents]);
   const metrics = useMemo(() => {
     const heavy = signals.filter((s) => {
       const condition = s.condition.toLowerCase();
@@ -407,6 +664,39 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
       }
 
       setPhotos((current) => [...savedPhotos, ...current]);
+
+      if (selected && savedPhotos.length) {
+        const eventType =
+          photoType === "before"
+            ? "before_photo_added"
+            : "after_photo_added";
+
+        const eventLabel =
+          photoType === "before"
+            ? "Before photos added"
+            : "After photos added";
+
+        const existingPhotoEvent = truthEvents.some(
+          (event) =>
+            event.request_id === selected.id &&
+            event.event_type === eventType
+        );
+
+        if (!existingPhotoEvent) {
+          await recordTruthEvent(
+            selected.id,
+            eventType,
+            eventLabel,
+            `${savedPhotos.length} ${photoType} photo${
+              savedPhotos.length === 1 ? "" : "s"
+            } saved with this cleaning request.`,
+            {
+              photo_type: photoType,
+              photo_count: savedPhotos.length,
+            }
+          );
+        }
+      }
     } catch (error) {
       console.error("Photo upload failed:", error);
       window.alert("Photo upload failed. Check console.");
@@ -469,6 +759,139 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
             </a>
           </div>
 
+          <details className="group mt-4 rounded-[1.6rem] border border-white/10 bg-white/[0.035]">
+            <summary className="flex min-h-[58px] cursor-pointer list-none items-center justify-between gap-4 px-5 py-4">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-pink-300">
+                  Business Quick Replies
+                </p>
+                <p className="mt-1 text-sm font-semibold text-white/55">
+                  Ready-to-copy replies for Facebook, Messenger, and text.
+                </p>
+              </div>
+
+              <span className="shrink-0 text-2xl font-light text-white/45 transition group-open:rotate-45">
+                +
+              </span>
+            </summary>
+
+            <div className="border-t border-white/10 p-4 sm:p-5">
+              <div className="grid gap-3 md:grid-cols-2">
+                {BUSINESS_QUICK_REPLIES.map((item) => (
+                  <article
+                    key={item.label}
+                    className="rounded-2xl border border-white/10 bg-black/25 p-4"
+                  >
+                    <p className="text-sm font-black text-white">
+                      {item.label}
+                    </p>
+
+                    <p className="mt-3 whitespace-pre-line text-sm leading-6 text-white/65">
+                      {item.reply}
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={() => void copyBusinessReply(item.reply)}
+                      className="mt-4 inline-flex min-h-[48px] w-full items-center justify-center rounded-xl bg-pink-400 px-4 text-xs font-black uppercase tracking-[0.16em] text-black transition hover:bg-pink-300"
+                    >
+                      Copy Reply
+                    </button>
+                  </article>
+                ))}
+              </div>
+            </div>
+          </details>
+
+          <details className="group mt-4 rounded-[1.6rem] border border-white/10 bg-white/[0.035]">
+            <summary className="flex min-h-[58px] cursor-pointer list-none items-center justify-between gap-4 px-5 py-4">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-pink-300">
+                  Truth Chain
+                </p>
+
+                <p className="mt-1 text-sm font-semibold text-white/55">
+                  See the full path from customer signal to completed outcome.
+                </p>
+              </div>
+
+              <span className="shrink-0 text-2xl font-light text-white/45 transition group-open:rotate-45">
+                +
+              </span>
+            </summary>
+
+            <div className="border-t border-white/10 p-4 sm:p-5">
+              {visibleTruthEvents.length ? (
+                <>
+                  <div className="relative space-y-3">
+                    {visibleTruthEvents.map((event, index) => {
+                      const request = signals.find(
+                        (signal) => signal.id === event.request_id
+                      );
+
+                      return (
+                        <div
+                          key={event.id}
+                          className="relative grid grid-cols-[40px_1fr] gap-3"
+                        >
+                          {index < visibleTruthEvents.length - 1 ? (
+                            <span className="absolute left-[19px] top-10 h-[calc(100%+12px)] w-px bg-pink-300/18" />
+                          ) : null}
+
+                          <div className="relative z-10 flex h-10 w-10 items-center justify-center rounded-full border border-pink-300/30 bg-pink-400/10 text-[10px] font-black tracking-[0.14em] text-pink-200">
+                            {String(visibleTruthEvents.length - index).padStart(2, "0")}
+                          </div>
+
+                          <div className="rounded-2xl border border-white/10 bg-black/25 px-4 py-3">
+                            <div className="flex flex-wrap items-start justify-between gap-2">
+                              <div>
+                                <p className="text-sm font-black text-white">
+                                  {event.event_label}
+                                </p>
+
+                                <p className="mt-1 text-xs font-bold text-pink-200/70">
+                                  {request?.name || "Cleaning request"}
+                                </p>
+                              </div>
+
+                              <span className="text-[10px] font-black uppercase tracking-[0.15em] text-white/35">
+                                {formatTruthTime(event.created_at)}
+                              </span>
+                            </div>
+
+                            {event.event_detail ? (
+                              <p className="mt-2 text-sm leading-6 text-white/50">
+                                {event.event_detail}
+                              </p>
+                            ) : null}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="mt-4 rounded-2xl border border-pink-300/15 bg-pink-400/[0.06] px-4 py-3">
+                    <p className="text-sm font-bold leading-6 text-pink-100/75">
+                      These are real recorded events. New customer requests and
+                      completed milestones will appear here automatically.
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <div className="rounded-2xl border border-dashed border-pink-300/20 bg-black/25 px-5 py-7 text-center">
+                  <p className="text-base font-black text-white">
+                    No truth signals recorded yet
+                  </p>
+
+                  <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-white/50">
+                    The first customer request will begin the Truth Chain
+                    automatically. Real milestones will replace this empty state
+                    as the work moves forward.
+                  </p>
+                </div>
+              )}
+            </div>
+          </details>
           <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
             {metrics.map((metric) => (
               <div key={metric.label} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
@@ -615,7 +1038,7 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
                       CONTACT / DETAILS
                     </p>
                     <p className="mt-2 text-sm font-bold text-zinc-300">
-                      {selected.phone || "No phone"} • {selected.home} • {selected.preferred}
+                      {selected.phone || "No phone"} ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ {selected.home} ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ {selected.preferred}
                     </p>
                   </div>
                   <span className="rounded-full border border-pink-300/25 bg-pink-400/10 px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-pink-100">
@@ -740,6 +1163,26 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
     >
       Send Estimate Text
     </a>
+    <button
+      type="button"
+      disabled={recordingTruthType === "estimate_sent" || hasSelectedTruthEvent("estimate_sent")}
+      onClick={() =>
+        void recordTruthEvent(
+          selected.id,
+          "estimate_sent",
+          "Estimate sent",
+          `Estimate recorded at ${hourlyRate}/hr for ${estimatedLowHours} to ${estimatedHighHours} hours.`,
+          {
+            hourly_rate: hourlyRate,
+            estimated_low_hours: estimatedLowHours,
+            estimated_high_hours: estimatedHighHours,
+          }
+        )
+      }
+      className="rounded-xl border border-pink-300/25 bg-pink-400/10 py-3 text-sm font-black text-pink-100 disabled:cursor-default disabled:opacity-45"
+    >
+      {hasSelectedTruthEvent("estimate_sent") ? "Estimate Recorded" : "Mark Estimate Sent"}
+    </button>
   </div>
 
   <div className="mt-4 rounded-xl bg-yellow-500/10 p-3 text-sm font-bold text-yellow-200">
@@ -788,6 +1231,37 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
                   >
                     Send Agreement Text
                   </a>
+                  <button
+                    type="button"
+                    disabled={recordingTruthType === "agreement_sent" || hasSelectedTruthEvent("agreement_sent")}
+                    onClick={() =>
+                      void recordTruthEvent(
+                        selected.id,
+                        "agreement_sent",
+                        "Agreement sent",
+                        "Cleaning agreement and approval request sent to the customer."
+                      )
+                    }
+                    className="col-span-2 rounded-xl border border-pink-300/25 bg-pink-400/10 py-3 text-sm font-black text-pink-100 disabled:cursor-default disabled:opacity-45"
+                  >
+                    {hasSelectedTruthEvent("agreement_sent") ? "Agreement Recorded" : "Mark Agreement Sent"}
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={recordingTruthType === "customer_approved" || hasSelectedTruthEvent("customer_approved")}
+                    onClick={() =>
+                      void recordTruthEvent(
+                        selected.id,
+                        "customer_approved",
+                        "Customer approved",
+                        "Customer confirmed the cleaning agreement."
+                      )
+                    }
+                    className="col-span-2 rounded-xl border border-green-300/25 bg-green-400/10 py-3 text-sm font-black text-green-100 disabled:cursor-default disabled:opacity-45"
+                  >
+                    {hasSelectedTruthEvent("customer_approved") ? "Approval Recorded" : "Mark Customer Approved"}
+                  </button>
                 </div>
 
                 <div className="mt-4 rounded-xl bg-yellow-500/10 p-3 text-sm font-bold text-yellow-100">
@@ -818,6 +1292,21 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
     >
       Confirm Schedule Text
     </a>
+    <button
+      type="button"
+      disabled={recordingTruthType === "cleaning_scheduled" || hasSelectedTruthEvent("cleaning_scheduled")}
+      onClick={() =>
+        void recordTruthEvent(
+          selected.id,
+          "cleaning_scheduled",
+          "Cleaning scheduled",
+          `Cleaning scheduled after reviewing the customer's preferred time: ${selected.preferred}.`
+        )
+      }
+      className="rounded-xl border border-pink-300/25 bg-pink-400/10 py-3 text-sm font-black text-pink-100 disabled:cursor-default disabled:opacity-45"
+    >
+      {hasSelectedTruthEvent("cleaning_scheduled") ? "Schedule Recorded" : "Mark Cleaning Scheduled"}
+    </button>
   </div>
 
   <div className="mt-4 rounded-xl bg-yellow-500/10 p-3 text-sm font-bold text-yellow-200">
@@ -947,6 +1436,40 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
                   </div>
                 </div>
 
+                <div className="mt-4 grid gap-2">
+                  <button
+                    type="button"
+                    disabled={recordingTruthType === "work_started" || hasSelectedTruthEvent("work_started")}
+                    onClick={() =>
+                      void recordTruthEvent(
+                        selected.id,
+                        "work_started",
+                        "Work started",
+                        "Cleaning work began."
+                      )
+                    }
+                    className="rounded-xl border border-pink-300/25 bg-pink-400/10 py-3 text-sm font-black text-pink-100 disabled:cursor-default disabled:opacity-45"
+                  >
+                    {hasSelectedTruthEvent("work_started") ? "Work Start Recorded" : "Mark Work Started"}
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={recordingTruthType === "work_completed" || hasSelectedTruthEvent("work_completed")}
+                    onClick={() =>
+                      void recordTruthEvent(
+                        selected.id,
+                        "work_completed",
+                        "Work completed",
+                        "Cleaning work was completed."
+                      )
+                    }
+                    className="rounded-xl border border-green-300/25 bg-green-400/10 py-3 text-sm font-black text-green-100 disabled:cursor-default disabled:opacity-45"
+                  >
+                    {hasSelectedTruthEvent("work_completed") ? "Completion Recorded" : "Mark Work Completed"}
+                  </button>
+                </div>
+
                 <div className="mt-4 rounded-xl bg-pink-400/10 p-3 text-sm font-bold text-pink-100">
                   Next Move: Take before and after photos if needed so the job proof stays with the request.
                 </div>
@@ -1036,6 +1559,47 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
                   >
                     Copy Payment Note
                   </button>
+                  <button
+                    type="button"
+                    disabled={recordingTruthType === "payment_sent" || hasSelectedTruthEvent("payment_sent")}
+                    onClick={() =>
+                      void recordTruthEvent(
+                        selected.id,
+                        "payment_sent",
+                        "Payment request sent",
+                        `Payment request recorded for ${moneyFromHours(hourlyRate, actualHours)} through ${paymentMethod}.`,
+                        {
+                          hourly_rate: hourlyRate,
+                          actual_hours: actualHours,
+                          payment_method: paymentMethod,
+                          amount: moneyFromHours(hourlyRate, actualHours),
+                        }
+                      )
+                    }
+                    className="rounded-xl border border-green-300/25 bg-green-400/10 py-3 text-sm font-black text-green-100 disabled:cursor-default disabled:opacity-45"
+                  >
+                    {hasSelectedTruthEvent("payment_sent") ? "Payment Request Recorded" : "Mark Payment Sent"}
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={recordingTruthType === "payment_received" || hasSelectedTruthEvent("payment_received")}
+                    onClick={() =>
+                      void recordTruthEvent(
+                        selected.id,
+                        "payment_received",
+                        "Payment received",
+                        `Payment received through ${paymentMethod}.`,
+                        {
+                          payment_method: paymentMethod,
+                          amount: moneyFromHours(hourlyRate, actualHours),
+                        }
+                      )
+                    }
+                    className="rounded-xl border border-green-300/35 bg-green-400/15 py-3 text-sm font-black text-green-100 disabled:cursor-default disabled:opacity-45"
+                  >
+                    {hasSelectedTruthEvent("payment_received") ? "Payment Recorded" : "Mark Payment Received"}
+                  </button>
                 </div>
 
                 <div className="mt-4 rounded-xl bg-yellow-500/10 p-3 text-sm font-bold text-yellow-200">
@@ -1082,6 +1646,37 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
                   >
                     Send Review Text
                   </a>
+                  <button
+                    type="button"
+                    disabled={recordingTruthType === "review_requested" || hasSelectedTruthEvent("review_requested")}
+                    onClick={() =>
+                      void recordTruthEvent(
+                        selected.id,
+                        "review_requested",
+                        "Review requested",
+                        "Customer was asked to leave a review after the completed cleaning."
+                      )
+                    }
+                    className="rounded-xl border border-pink-300/25 bg-pink-400/10 py-3 text-sm font-black text-pink-100 disabled:cursor-default disabled:opacity-45"
+                  >
+                    {hasSelectedTruthEvent("review_requested") ? "Review Request Recorded" : "Mark Review Requested"}
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={recordingTruthType === "outcome_closed" || hasSelectedTruthEvent("outcome_closed")}
+                    onClick={() =>
+                      void recordTruthEvent(
+                        selected.id,
+                        "outcome_closed",
+                        "Outcome closed",
+                        "The cleaning request reached its final recorded outcome."
+                      )
+                    }
+                    className="rounded-xl border border-green-300/35 bg-green-400/15 py-3 text-sm font-black text-green-100 disabled:cursor-default disabled:opacity-45"
+                  >
+                    {hasSelectedTruthEvent("outcome_closed") ? "Outcome Closed" : "Close Truth Chain"}
+                  </button>
 
                   <button
                     type="button"
@@ -1100,12 +1695,57 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
 
               <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
                 <p className="text-[11px] font-black uppercase tracking-[0.35em] text-pink-200">
-                  TIMELINE
+                  TRUTH TIMELINE
                 </p>
+
+                {selectedTruthEvents.length ? (
+                  <div className="mt-4 space-y-3">
+                    {selectedTruthEvents.map((event, index) => (
+                      <div
+                        key={event.id}
+                        className="relative border-l border-pink-300/25 pl-4"
+                      >
+                        <span className="absolute -left-[5px] top-1 h-2.5 w-2.5 rounded-full bg-pink-300" />
+
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <p className="text-sm font-black text-white">
+                            {event.event_label}
+                          </p>
+
+                          <span className="text-[10px] font-black uppercase tracking-[0.14em] text-white/35">
+                            {formatTruthTime(event.created_at)}
+                          </span>
+                        </div>
+
+                        {event.event_detail ? (
+                          <p className="mt-1 text-sm leading-6 text-white/50">
+                            {event.event_detail}
+                          </p>
+                        ) : null}
+
+                        {index === selectedTruthEvents.length - 1 &&
+                        selectedNextTruthStep ? (
+                          <p className="mt-2 text-xs font-bold text-yellow-200/75">
+                            Next unrecorded step:{" "}
+                            {selectedNextTruthStep
+                              .replaceAll("_", " ")
+                              .replace(/\b\w/g, (letter) =>
+                                letter.toUpperCase()
+                              )}
+                          </p>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="mt-4 rounded-xl border border-dashed border-white/10 bg-black/35 p-4 text-sm font-bold text-white/45">
+                    This request does not have recorded milestones yet.
+                  </div>
+                )}
 
                 <button
                   onClick={() => deleteSignal(selected.id)}
-                  className="mt-4 w-full rounded-xl border border-red-400/30 bg-red-500/10 py-3 text-sm font-black text-red-200"
+                  className="mt-5 w-full rounded-xl border border-red-400/30 bg-red-500/10 py-3 text-sm font-black text-red-200"
                 >
                   Delete Request
                 </button>
