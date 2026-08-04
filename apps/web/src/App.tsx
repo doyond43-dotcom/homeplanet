@@ -1,4 +1,4 @@
-﻿import { lazy, Suspense } from "react";
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useSearchParams } from "react-router-dom";
 import { RequireAuth } from "./auth/RequireAuth";
 
@@ -59,6 +59,9 @@ const JonesEquipmentRentalRepairLandingPage = lazy(() => import("./pages/JonesEq
 const JonesEquipmentOperatorBoard = lazy(() => import("./pages/JonesEquipmentOperatorBoard"));
 const JmeRentalSetupPage = lazy(() => import("./pages/JmeRentalSetupPage"));
 const VZProfessionalLawncareLanding = lazy(() => import("./pages/VZProfessionalLawncareLanding"));
+const VZProfessionalLawncareIntelligenceDashboard = lazy(() =>
+  import("./pages/VZProfessionalLawncareIntelligenceDashboard")
+);
 const LateNightHotelsLandingPage = lazy(() => import("./pages/LateNightHotelsLandingPage"));
 const LateNightHotelsOperatorBoard = lazy(() => import("./pages/LateNightHotelsOperatorBoard"));
 function LiveShell() {
@@ -166,7 +169,11 @@ export default function App() {
           <Route path="/jme" element={<JonesEquipmentRentalRepairLandingPage />} />
           <Route path="/echols-water-test" element={<EcholsWaterTestingLandingPage />} />
 <Route path="/vz" element={<VZProfessionalLawncareLanding />} />
-<Route path="/planet/vz-professional-lawncare" element={<VZProfessionalLawncareLanding />} />                    <Route path="/planet/transportation/request" element={<HomePlanetTransportationRequestPage />} />
+<Route path="/planet/vz-professional-lawncare" element={<VZProfessionalLawncareLanding />} />
+<Route
+  path="/planet/vz-professional-lawncare/intelligence"
+  element={<VZProfessionalLawncareIntelligenceDashboard />}
+/>                    <Route path="/planet/transportation/request" element={<HomePlanetTransportationRequestPage />} />
           <Route path="/planet/transportation" element={<HomePlanetTransportationPage />} />
 <Route path="/planet/demo/brightside-flow" element={<BrightSideFlowDemo />} />
           <Route path="/planet/demo/after-the-click" element={<HomePlanetAfterTheClickDemo />} />

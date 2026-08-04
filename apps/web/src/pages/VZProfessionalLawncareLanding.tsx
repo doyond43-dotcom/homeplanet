@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import {
   ArrowRight,
@@ -9,8 +9,9 @@ import {
   MessageCircle,
   Phone,
 } from "lucide-react";
+import { supabase } from "../lib/supabaseClient";
 
-const phone = "8634477915";
+const phone = "+18634477915";
 const formattedPhone = "(863) 447-7915";
 
 const services = [
@@ -70,6 +71,9 @@ const processSteps = [
 ];
 
 export default function VZProfessionalLawncareLanding() {
+  const [isSubmittingEstimate, setIsSubmittingEstimate] = useState(false);
+  const [estimateError, setEstimateError] = useState("");
+
   useEffect(() => {
     const previousTitle = document.title;
     const existingDescription = document.querySelector(
@@ -103,10 +107,15 @@ export default function VZProfessionalLawncareLanding() {
     };
   }, []);
 
-  const handleEstimateSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleEstimateSubmit = async (
+    event: FormEvent<HTMLFormElement>,
+  ) => {
     event.preventDefault();
 
-    const form = new FormData(event.currentTarget);
+    if (isSubmittingEstimate) return;
+
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
 
     const name = String(form.get("name") || "").trim();
     const customerPhone = String(form.get("phone") || "").trim();
@@ -115,6 +124,30 @@ export default function VZProfessionalLawncareLanding() {
     const address = String(form.get("address") || "").trim();
     const timing = String(form.get("timing") || "").trim();
     const details = String(form.get("details") || "").trim();
+
+    setEstimateError("");
+    setIsSubmittingEstimate(true);
+
+    const { error } = await supabase.from("vz_lawncare_requests").insert({
+      business_slug: "vz-professional-lawncare",
+      customer_name: name,
+      phone: customerPhone,
+      service_needed: service,
+      property_location: address,
+      yard_condition: condition,
+      preferred_timing: timing,
+      customer_notes: details || null,
+      request_status: "new",
+    });
+
+    if (error) {
+      console.error("Could not save V&Z estimate request:", error);
+      setEstimateError(
+        "Your request could not be saved. Please try again or call Eric directly.",
+      );
+      setIsSubmittingEstimate(false);
+      return;
+    }
 
     const message = [
       "Hi Eric, I would like an estimate from V&Z Professional Lawncare.",
@@ -128,7 +161,11 @@ export default function VZProfessionalLawncareLanding() {
       `Details: ${details || "No additional details provided."}`,
     ].join("\n");
 
-    window.location.href = `sms:${phone}?&body=${encodeURIComponent(message)}`;
+    window.location.href = `sms:${phone}?body=${encodeURIComponent(message)}`;
+
+    window.setTimeout(() => {
+      setIsSubmittingEstimate(false);
+    }, 1200);
   };
 
   return (
@@ -429,11 +466,21 @@ export default function VZProfessionalLawncareLanding() {
               />
             </label>
 
+            {estimateError ? (
+              <div className="rounded-xl border border-red-300/30 bg-red-950/45 px-4 py-3 text-sm font-bold leading-6 text-red-100 sm:col-span-2">
+                {estimateError}
+              </div>
+            ) : null}
+
             <button
               type="submit"
-              className="group inline-flex min-h-[58px] items-center justify-center gap-3 rounded-xl bg-[#FFD000] px-7 text-sm font-black uppercase tracking-[0.12em] text-[#0D0D0D] transition hover:bg-[#ffe04a] sm:col-span-2"
+              disabled={isSubmittingEstimate}
+              className="group inline-flex min-h-[58px] items-center justify-center gap-3 rounded-xl bg-[#FFD000] px-7 text-sm font-black uppercase tracking-[0.12em] text-[#0D0D0D] transition hover:bg-[#ffe04a] disabled:cursor-wait disabled:opacity-65 sm:col-span-2"
             >
-              Request My Estimate
+              {isSubmittingEstimate
+                ? "Saving Your Request..."
+                : "Request My Estimate"}
+
               <ArrowRight
                 size={17}
                 className="transition-transform group-hover:translate-x-1"

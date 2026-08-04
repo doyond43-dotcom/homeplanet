@@ -78,6 +78,64 @@ const publicSeoRegistry = [
   },
 
   {
+    route: "/planet/cow-town-tags",
+    title: "Cow Town Tags | Livestock Recovery and Ranch Management",
+    description:
+      "Cow Town Tags is a livestock recovery and ranch management system using visible ear tags, public QR scanning, found-livestock reporting, safe recovery workflows, ranch activity timelines, and future RFID support.",
+    image: `${SITE_URL}/og-homeplanet.png`,
+    heading: "Livestock recovery starts with one visible tag",
+    body: `
+      <section>
+        <h2>A public livestock recovery doorway</h2>
+        <p>Cow Town Tags gives livestock a visible identification and recovery doorway through a large ear tag, human-readable Cow Town ID, and public QR code. A person who finds loose, lost, or escaped livestock can scan the tag, confirm the animal, report its location, and contact the ranch without downloading an application.</p>
+        <p>The public experience is designed to make the next safe action clear while protecting private ranch information. A finder can share a location, direction of travel, nearby landmark, photographs, and useful details without needing access to the ranch's internal records.</p>
+      </section>
+
+      <section>
+        <h2>More than an ear tag</h2>
+        <p>The physical tag is the entrance to a connected livestock operating system. Underneath the public page, ranch owners can manage animal records, lost and escaped livestock incidents, incoming sightings, recovery assignments, communication, proof, outcomes, and activity timelines.</p>
+        <p>Each recovery can preserve what happened, when the animal was reported, who acted, what location information was received, how the animal was recovered, and how the incident ended.</p>
+      </section>
+
+      <section>
+        <h2>Complete Cow Town Tags and existing-tag upgrades</h2>
+        <p>Ranches can begin with a purpose-built Cow Town livestock ear tag or upgrade existing ear tags using a durable weather-resistant QR decal. This allows a ranch to test the recovery system without replacing every tag already in use, then move into complete Cow Town Tags as animals or tags are added and replaced.</p>
+      </section>
+
+      <section>
+        <h2>Built for cattle country</h2>
+        <p>Cow Town Tags is being developed around real livestock recovery, ranch responsibility, public safety, and the working relationships that exist between ranch owners, ranch hands, neighbors, motorists, law enforcement, animal control, veterinarians, and agricultural communities.</p>
+        <p>Future expansion can support RFID connections, herd organization, pasture movement, fence and gate incidents, livestock transportation, animal history, ranch Intelligence, and wider livestock recovery networks.</p>
+      </section>
+    `,
+    schema: {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebPage",
+          name: "Cow Town Tags Livestock Recovery System",
+          url: `${SITE_URL}/planet/cow-town-tags`,
+          description:
+            "A public livestock recovery and ranch management system using visible ear tags, QR identification, recovery reporting, ranch workflows, and activity timelines.",
+          isPartOf: {
+            "@type": "WebSite",
+            name: "HomePlanet",
+            url: `${SITE_URL}/`
+          }
+        },
+        {
+          "@type": "SoftwareApplication",
+          name: "Cow Town Tags",
+          applicationCategory: "BusinessApplication",
+          operatingSystem: "Web",
+          url: `${SITE_URL}/planet/cow-town-tags`,
+          description:
+            "Livestock recovery and ranch management software connected to physical livestock identification tags."
+        }
+      ]
+    }
+  },
+  {
     route: "/planet/demo/pest-control",
     title: "Pest Control Live System Demo | HomePlanet",
     description:
@@ -602,6 +660,7 @@ fs.writeFileSync(path.join(distDir, "sitemap.xml"), sitemapXml, "utf8");
 console.log(
   `Generated sitemap from public SEO registry: ${publicSeoRegistry.length} URLs`
 );
+
 
 
 
