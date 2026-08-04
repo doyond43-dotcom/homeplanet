@@ -50,7 +50,7 @@ const initialSignals: Signal[] = [
     condition: "Heavy Deep Clean",
     pets: "Multiple Pets",
     preferred: "Mornings",
-    value: "$160ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“$240 est.",
+    value: "$160ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œ$240 est.",
     nextMove: "Ask for photos before final quote.",
     suggestion: "This looks like a heavier job. Confirm photos, pets, access, and expected time before scheduling.",
     message: "Hey Dan, thanks for reaching out. Before I lock in a quote, can you send a few photos of the main areas so I can give you a fair estimate?",
@@ -98,9 +98,9 @@ function smsBody(phone: string, body: string) {
 }
 
 function buildFirstReplyText(signal: Signal) {
-  return `Hi ${signal.name}, this is Kaitlin with Only The Essentials Cleaning. I received your cleaning request and IÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢m reviewing the details now.
+  return `Hi ${signal.name}, this is Kaitlin with Only The Essentials Cleaning. I received your cleaning request and IÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢m reviewing the details now.
 
-IÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ll reply here with the next step.`;
+IÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ll reply here with the next step.`;
 }
 
 function moneyFromHours(rate: string, hours: string) {
@@ -230,7 +230,7 @@ const BUSINESS_QUICK_REPLIES = [
     label: "Someone looking for this service",
     reply: `Hi! Only The Essentials Cleaning would be happy to help. You can see our services and request a cleaning quote here:
 
-Ã°Å¸â€˜â€¡Ã°Å¸â€˜â€¡Ã°Å¸â€˜â€¡
+\u{1F447}\u{1F447}\u{1F447}
 
 ${ONLY_ESSENTIALS_LIVE_PAGE}`,
   },
@@ -238,7 +238,7 @@ ${ONLY_ESSENTIALS_LIVE_PAGE}`,
     label: "Someone tagged the business",
     reply: `Thank you for tagging Only The Essentials Cleaning! Here is our page with services, real cleaning work, and the quote form:
 
-Ã°Å¸â€˜â€¡Ã°Å¸â€˜â€¡Ã°Å¸â€˜â€¡
+\u{1F447}\u{1F447}\u{1F447}
 
 ${ONLY_ESSENTIALS_LIVE_PAGE}`,
   },
@@ -246,7 +246,7 @@ ${ONLY_ESSENTIALS_LIVE_PAGE}`,
     label: "Send my Live Page",
     reply: `Here is the Only The Essentials Cleaning Live Page. You can view our services, see real cleaning proof, and request a quote:
 
-Ã°Å¸â€˜â€¡Ã°Å¸â€˜â€¡Ã°Å¸â€˜â€¡
+\u{1F447}\u{1F447}\u{1F447}
 
 ${ONLY_ESSENTIALS_LIVE_PAGE}`,
   },
@@ -254,7 +254,7 @@ ${ONLY_ESSENTIALS_LIVE_PAGE}`,
     label: "Request a quote",
     reply: `Absolutely! You can tell Only The Essentials Cleaning what you need and request your quote right here:
 
-Ã°Å¸â€˜â€¡Ã°Å¸â€˜â€¡Ã°Å¸â€˜â€¡
+\u{1F447}\u{1F447}\u{1F447}
 
 ${ONLY_ESSENTIALS_LIVE_PAGE}`,
   },
@@ -262,7 +262,7 @@ ${ONLY_ESSENTIALS_LIVE_PAGE}`,
     label: "Messenger reply",
     reply: `Hi! Thanks for reaching out to Only The Essentials Cleaning. Here is our page where you can see our work and send your cleaning request:
 
-Ã°Å¸â€˜â€¡Ã°Å¸â€˜â€¡Ã°Å¸â€˜â€¡
+\u{1F447}\u{1F447}\u{1F447}
 
 ${ONLY_ESSENTIALS_LIVE_PAGE}`,
   },
@@ -270,7 +270,7 @@ ${ONLY_ESSENTIALS_LIVE_PAGE}`,
     label: "Text reply",
     reply: `Hi! This is Only The Essentials Cleaning. You can see our services and request your cleaning quote here:
 
-Ã°Å¸â€˜â€¡Ã°Å¸â€˜â€¡Ã°Å¸â€˜â€¡
+\u{1F447}\u{1F447}\u{1F447}
 
 ${ONLY_ESSENTIALS_LIVE_PAGE}`,
   },
@@ -1038,7 +1038,7 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
                       CONTACT / DETAILS
                     </p>
                     <p className="mt-2 text-sm font-bold text-zinc-300">
-                      {selected.phone || "No phone"} ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ {selected.home} ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ {selected.preferred}
+                      {selected.phone || "No phone"} ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¢ {selected.home} ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¢ {selected.preferred}
                     </p>
                   </div>
                   <span className="rounded-full border border-pink-300/25 bg-pink-400/10 px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-pink-100">
