@@ -185,9 +185,11 @@ export default function VZProfessionalLawncareLanding() {
         </div>
         <div className="relative mx-auto grid min-h-[620px] max-w-[1380px] items-center px-5 py-12 sm:min-h-[660px] sm:px-8 sm:py-16 lg:min-h-[700px] lg:grid-cols-[1.08fr_0.92fr] lg:px-10 lg:py-24">
           <div className="max-w-[820px]">
-            <p className="text-[2.35rem] font-black leading-none tracking-[-0.055em] text-[#FFD000] sm:text-[3.4rem] lg:text-[clamp(2.7rem,4.6vw,5rem)]">
-              V&amp;Z
-            </p>
+            <img
+              src="/images/vz-logo-yellow-monogram-clean.png"
+              alt="V&Z Professional Lawncare"
+              className="mb-4 mt-2 h-auto w-[114px] object-contain sm:mb-5 sm:w-[126px] lg:w-[136px]"
+            />
 
             <h1 className="mt-3 max-w-[820px] text-[3.15rem] font-black leading-[0.91] tracking-[-0.055em] text-white sm:text-[4.5rem] lg:text-[clamp(3.5rem,6.8vw,7rem)] lg:leading-[0.9] lg:tracking-[-0.06em]">
               Professional
