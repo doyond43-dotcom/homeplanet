@@ -62,6 +62,9 @@ const VZProfessionalLawncareLanding = lazy(() => import("./pages/VZProfessionalL
 const VZProfessionalLawncareIntelligenceDashboard = lazy(() =>
   import("./pages/VZProfessionalLawncareIntelligenceDashboard")
 );
+const VZProfessionalLawncareLiveActivity = lazy(() =>
+  import("./pages/VZProfessionalLawncareLiveActivity")
+);
 const LateNightHotelsLandingPage = lazy(() => import("./pages/LateNightHotelsLandingPage"));
 const LateNightHotelsOperatorBoard = lazy(() => import("./pages/LateNightHotelsOperatorBoard"));
 function LiveShell() {
@@ -173,6 +176,10 @@ export default function App() {
 <Route
   path="/planet/vz-professional-lawncare/intelligence"
   element={<VZProfessionalLawncareIntelligenceDashboard />}
+/>
+<Route
+  path="/planet/vz-professional-lawncare/live-activity"
+  element={<VZProfessionalLawncareLiveActivity />}
 />                    <Route path="/planet/transportation/request" element={<HomePlanetTransportationRequestPage />} />
           <Route path="/planet/transportation" element={<HomePlanetTransportationPage />} />
 <Route path="/planet/demo/brightside-flow" element={<BrightSideFlowDemo />} />

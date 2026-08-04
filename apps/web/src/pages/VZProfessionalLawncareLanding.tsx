@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import {
   ArrowRight,
@@ -10,6 +10,7 @@ import {
   Phone,
 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
+import { hpEvent } from "../lib/hpEvent";
 
 const phone = "+18634477915";
 const formattedPhone = "(863) 447-7915";
@@ -73,6 +74,29 @@ const processSteps = [
 export default function VZProfessionalLawncareLanding() {
   const [isSubmittingEstimate, setIsSubmittingEstimate] = useState(false);
   const [estimateError, setEstimateError] = useState("");
+  const estimateStartedRef = useRef(false);
+
+  function trackLandingEvent(
+    event: string,
+    meta: Record<string, string | number | boolean> = {},
+  ) {
+    void hpEvent({
+      event,
+      board: "vz-professional-lawncare",
+      meta: {
+        source: "VZProfessionalLawncareLanding",
+        path: window.location.pathname,
+        ...meta,
+      },
+    });
+  }
+
+  function trackEstimateStarted(trigger: string) {
+    if (estimateStartedRef.current) return;
+
+    estimateStartedRef.current = true;
+    trackLandingEvent("estimate_started", { trigger });
+  }
 
   useEffect(() => {
     const previousTitle = document.title;
@@ -105,6 +129,12 @@ export default function VZProfessionalLawncareLanding() {
         descriptionMeta.remove();
       }
     };
+  }, []);
+
+  useEffect(() => {
+    trackLandingEvent("landing_page_opened", {
+      referrer: document.referrer || "direct",
+    });
   }, []);
 
   const handleEstimateSubmit = async (
@@ -148,6 +178,12 @@ export default function VZProfessionalLawncareLanding() {
       setIsSubmittingEstimate(false);
       return;
     }
+
+    trackLandingEvent("estimate_request_submitted", {
+      service,
+      condition,
+      timing,
+    });
 
     const message = [
       "Hi Eric, I would like an estimate from V&Z Professional Lawncare.",
@@ -208,6 +244,9 @@ export default function VZProfessionalLawncareLanding() {
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <a
                 href={`tel:${phone}`}
+                onClick={() =>
+                  trackLandingEvent("call_clicked", { location: "hero" })
+                }
                 className="inline-flex min-h-[58px] items-center justify-center gap-3 rounded-xl bg-[#FFD000] px-7 text-sm font-black uppercase tracking-[0.12em] text-[#0D0D0D] transition hover:bg-[#ffe04a]"
               >
                 <Phone size={18} />
@@ -216,6 +255,9 @@ export default function VZProfessionalLawncareLanding() {
 
               <a
                 href={`sms:${phone}`}
+                onClick={() =>
+                  trackLandingEvent("text_clicked", { location: "hero" })
+                }
                 className="inline-flex min-h-[58px] items-center justify-center gap-3 rounded-xl border border-[#7CFC00]/45 bg-[#0D0D0D]/45 px-7 text-sm font-black uppercase tracking-[0.12em] text-white transition hover:border-[#7CFC00] hover:bg-[#087F23]/20"
               >
                 <MessageCircle size={18} />
@@ -357,6 +399,7 @@ export default function VZProfessionalLawncareLanding() {
 
           <form
             onSubmit={handleEstimateSubmit}
+            onFocusCapture={() => trackEstimateStarted("estimate_form")}
             className="grid gap-3 rounded-[1.5rem] border border-[#FFD000]/45 bg-[#0b1b0f]/90 p-4 shadow-2xl shadow-black/50 ring-1 ring-[#7CFC00]/20 backdrop-blur-md sm:grid-cols-2 sm:gap-4 sm:rounded-[2rem] sm:p-8"
           >
             <label className="block">
@@ -626,6 +669,9 @@ export default function VZProfessionalLawncareLanding() {
             <div className="mt-8 flex flex-col gap-3 sm:flex-row lg:mt-0 lg:shrink-0">
               <a
                 href={`tel:${phone}`}
+                onClick={() =>
+                  trackLandingEvent("call_clicked", { location: "lower_cta" })
+                }
                 className="inline-flex min-h-[60px] items-center justify-center gap-3 rounded-xl bg-[#FFD000] px-7 text-[#0D0D0D] transition hover:bg-[#ffe04a]"
               >
                 <Phone size={18} />
@@ -642,6 +688,9 @@ export default function VZProfessionalLawncareLanding() {
 
               <a
                 href={`sms:${phone}`}
+                onClick={() =>
+                  trackLandingEvent("text_clicked", { location: "lower_cta" })
+                }
                 className="inline-flex min-h-[60px] items-center justify-center gap-3 rounded-xl border border-[#7CFC00]/45 bg-[#0D0D0D]/55 px-7 text-sm font-black uppercase tracking-[0.12em] text-white transition hover:border-[#7CFC00] hover:bg-[#087F23]/20"
               >
                 <MessageCircle size={18} />

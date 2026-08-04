@@ -1790,15 +1790,13 @@ The record will remain visible until you archive it.`,
             </div>
 
             <div className="flex w-full flex-col gap-2 sm:w-auto">
-              <button
-                type="button"
-                disabled
-                title="Live Activity will be connected after the customer workflow."
-                className="inline-flex min-h-[54px] w-full cursor-not-allowed items-center justify-center gap-2 rounded-2xl border border-[#7CFC00]/20 bg-[#7CFC00]/10 px-6 text-center text-sm font-black uppercase tracking-[0.16em] text-[#B9FF79] opacity-60 sm:w-auto"
+              <a
+                href="/planet/vz-professional-lawncare/live-activity"
+                className="inline-flex min-h-[54px] w-full items-center justify-center gap-2 rounded-2xl bg-[#7CFC00] px-6 text-center text-sm font-black uppercase tracking-[0.16em] text-black shadow-lg shadow-[#7CFC00]/15 transition hover:-translate-y-0.5 hover:bg-[#A8FF55] sm:w-auto"
               >
                 <Activity size={18} />
                 Open Live Activity
-              </button>
+              </a>
 
               <button
                 type="button"
