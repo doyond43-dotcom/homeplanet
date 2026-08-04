@@ -65,6 +65,65 @@ type VZPhoto = {
   signed_url?: string;
 };
 
+const MAX_JOB_PHOTO_EDGE = 1920;
+const JOB_PHOTO_QUALITY = 0.78;
+
+async function compressJobPhoto(file: File): Promise<File> {
+  if (!file.type.startsWith("image/")) return file;
+
+  try {
+    const bitmap = await createImageBitmap(file);
+    const longestEdge = Math.max(bitmap.width, bitmap.height);
+    const scale =
+      longestEdge > MAX_JOB_PHOTO_EDGE
+        ? MAX_JOB_PHOTO_EDGE / longestEdge
+        : 1;
+
+    const width = Math.max(1, Math.round(bitmap.width * scale));
+    const height = Math.max(1, Math.round(bitmap.height * scale));
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+
+    const context = canvas.getContext("2d");
+
+    if (!context) {
+      bitmap.close();
+      return file;
+    }
+
+    context.drawImage(bitmap, 0, 0, width, height);
+    bitmap.close();
+
+    const compressedBlob = await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob(resolve, "image/jpeg", JOB_PHOTO_QUALITY);
+    });
+
+    if (!compressedBlob) return file;
+
+    const baseName =
+      file.name.replace(/\.[^.]+$/, "").replace(/[^a-z0-9_-]+/gi, "-") ||
+      "job-photo";
+
+    return new File(
+      [compressedBlob],
+      `${baseName}-${Date.now()}.jpg`,
+      {
+        type: "image/jpeg",
+        lastModified: Date.now(),
+      },
+    );
+  } catch (error) {
+    console.warn(
+      "V&Z photo compression was unavailable. Uploading the original file.",
+      error,
+    );
+
+    return file;
+  }
+}
+
 const quickReplies = [
   {
     label: "Someone needs lawn service",
@@ -994,7 +1053,8 @@ The record will remain visible until you archive it.`,
       const savedPhotos: VZPhoto[] = [];
 
       for (const file of Array.from(files)) {
-        const safeName = file.name
+        const uploadFile = await compressJobPhoto(file);
+        const safeName = uploadFile.name
           .toLowerCase()
           .replace(/[^a-z0-9._-]+/g, "-");
 
@@ -1006,7 +1066,7 @@ The record will remain visible until you archive it.`,
 
         const { error: uploadError } = await supabase.storage
           .from("vz-lawncare-job-photos")
-          .upload(storagePath, file, {
+          .upload(storagePath, uploadFile, {
             cacheControl: "3600",
             upsert: false,
             contentType: file.type || undefined,
@@ -1142,7 +1202,8 @@ The record will remain visible until you archive it.`,
       const savedPhotos: VZPhoto[] = [];
 
       for (const file of Array.from(files)) {
-        const safeName = file.name
+        const uploadFile = await compressJobPhoto(file);
+        const safeName = uploadFile.name
           .toLowerCase()
           .replace(/[^a-z0-9._-]+/g, "-");
 
@@ -1154,7 +1215,7 @@ The record will remain visible until you archive it.`,
 
         const { error: uploadError } = await supabase.storage
           .from("vz-lawncare-job-photos")
-          .upload(storagePath, file, {
+          .upload(storagePath, uploadFile, {
             cacheControl: "3600",
             upsert: false,
             contentType: file.type || undefined,
@@ -2737,33 +2798,76 @@ The record will remain visible until you archive it.`,
                     </span>
                   </div>
 
-                  <label
-                    className={`mt-4 flex min-h-[54px] w-full items-center justify-center rounded-xl border px-4 text-center text-xs font-black uppercase tracking-[0.15em] transition ${
-                      selectedRequest.request_status === "in_progress" &&
-                      !uploadingBeforePhotos
-                        ? "cursor-pointer border-[#7CFC00]/30 bg-[#7CFC00]/10 text-[#C8FF98]"
-                        : "cursor-not-allowed border-white/10 bg-white/[0.03] text-white/25"
-                    }`}
-                  >
-                    {uploadingBeforePhotos
-                      ? "Uploading Photos..."
-                      : "Add Before Photos"}
-
-                    <input
-                      type="file"
-                      multiple
-                      accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
-                      disabled={
-                        selectedRequest.request_status !== "in_progress" ||
-                        uploadingBeforePhotos
-                      }
-                      onChange={(event) => {
-                        void uploadBeforePhotos(event.target.files);
-                        event.currentTarget.value = "";
-                      }}
-                      className="sr-only"
-                    />
-                  </label>
+                  {selectedRequest.request_status === "in_progress" ? (
+                    <>
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                      <label
+                        className={`flex min-h-[54px] items-center justify-center rounded-xl px-4 text-center text-xs font-black uppercase tracking-[0.15em] transition ${
+                          selectedRequest.request_status === "in_progress" &&
+                          !uploadingBeforePhotos
+                            ? "cursor-pointer bg-[#7CFC00] text-black"
+                            : "cursor-not-allowed bg-white/[0.05] text-white/25"
+                        }`}
+                      >
+                        {uploadingBeforePhotos
+                          ? "Uploading Photo..."
+                          : "Take Job Photo"}
+  
+                        <input
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          disabled={
+                            selectedRequest.request_status !== "in_progress" ||
+                            uploadingBeforePhotos
+                          }
+                          onChange={(event) => {
+                            void uploadBeforePhotos(event.target.files);
+                            event.currentTarget.value = "";
+                          }}
+                          className="sr-only"
+                        />
+                      </label>
+  
+                      <label
+                        className={`flex min-h-[54px] items-center justify-center rounded-xl border px-4 text-center text-xs font-black uppercase tracking-[0.15em] transition ${
+                          selectedRequest.request_status === "in_progress" &&
+                          !uploadingBeforePhotos
+                            ? "cursor-pointer border-[#7CFC00]/30 bg-[#7CFC00]/10 text-[#C8FF98]"
+                            : "cursor-not-allowed border-white/10 bg-white/[0.03] text-white/25"
+                        }`}
+                      >
+                        Choose Existing Photos
+  
+                        <input
+                          type="file"
+                          multiple
+                          accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+                          disabled={
+                            selectedRequest.request_status !== "in_progress" ||
+                            uploadingBeforePhotos
+                          }
+                          onChange={(event) => {
+                            void uploadBeforePhotos(event.target.files);
+                            event.currentTarget.value = "";
+                          }}
+                          className="sr-only"
+                        />
+                      </label>
+                    </div>
+  
+                    <p className="mt-2 text-xs font-bold leading-5 text-white/35">
+                      Direct camera upload. Photos are compressed before being
+                      stored with this job.
+                    </p>
+                    </>
+                  ) : selectedRequest.request_status === "completed" ||
+                    selectedRequest.request_status === "archived" ? null : (
+                    <div className="mt-4 rounded-xl border border-white/10 bg-black/30 px-4 py-4 text-sm font-bold leading-6 text-white/40">
+                      Schedule and start the job to unlock the camera and photo
+                      uploads.
+                    </div>
+                  )}
 
                   {photoError ? (
                     <div className="mt-4 rounded-xl border border-red-400/25 bg-red-500/10 px-4 py-3 text-sm font-bold leading-6 text-red-100">
@@ -2833,33 +2937,76 @@ The record will remain visible until you archive it.`,
                     </span>
                   </div>
 
-                  <label
-                    className={`mt-4 flex min-h-[54px] w-full items-center justify-center rounded-xl border px-4 text-center text-xs font-black uppercase tracking-[0.15em] transition ${
-                      selectedRequest.request_status === "in_progress" &&
-                      !uploadingAfterPhotos
-                        ? "cursor-pointer border-[#7CFC00]/30 bg-[#7CFC00]/10 text-[#C8FF98]"
-                        : "cursor-not-allowed border-white/10 bg-white/[0.03] text-white/25"
-                    }`}
-                  >
-                    {uploadingAfterPhotos
-                      ? "Uploading Photos..."
-                      : "Add After Photos"}
-
-                    <input
-                      type="file"
-                      multiple
-                      accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
-                      disabled={
-                        selectedRequest.request_status !== "in_progress" ||
-                        uploadingAfterPhotos
-                      }
-                      onChange={(event) => {
-                        void uploadAfterPhotos(event.target.files);
-                        event.currentTarget.value = "";
-                      }}
-                      className="sr-only"
-                    />
-                  </label>
+                  {selectedRequest.request_status === "in_progress" ? (
+                    <>
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                      <label
+                        className={`flex min-h-[54px] items-center justify-center rounded-xl px-4 text-center text-xs font-black uppercase tracking-[0.15em] transition ${
+                          selectedRequest.request_status === "in_progress" &&
+                          !uploadingAfterPhotos
+                            ? "cursor-pointer bg-[#7CFC00] text-black"
+                            : "cursor-not-allowed bg-white/[0.05] text-white/25"
+                        }`}
+                      >
+                        {uploadingAfterPhotos
+                          ? "Uploading Photo..."
+                          : "Take Job Photo"}
+  
+                        <input
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          disabled={
+                            selectedRequest.request_status !== "in_progress" ||
+                            uploadingAfterPhotos
+                          }
+                          onChange={(event) => {
+                            void uploadAfterPhotos(event.target.files);
+                            event.currentTarget.value = "";
+                          }}
+                          className="sr-only"
+                        />
+                      </label>
+  
+                      <label
+                        className={`flex min-h-[54px] items-center justify-center rounded-xl border px-4 text-center text-xs font-black uppercase tracking-[0.15em] transition ${
+                          selectedRequest.request_status === "in_progress" &&
+                          !uploadingAfterPhotos
+                            ? "cursor-pointer border-[#7CFC00]/30 bg-[#7CFC00]/10 text-[#C8FF98]"
+                            : "cursor-not-allowed border-white/10 bg-white/[0.03] text-white/25"
+                        }`}
+                      >
+                        Choose Existing Photos
+  
+                        <input
+                          type="file"
+                          multiple
+                          accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+                          disabled={
+                            selectedRequest.request_status !== "in_progress" ||
+                            uploadingAfterPhotos
+                          }
+                          onChange={(event) => {
+                            void uploadAfterPhotos(event.target.files);
+                            event.currentTarget.value = "";
+                          }}
+                          className="sr-only"
+                        />
+                      </label>
+                    </div>
+  
+                    <p className="mt-2 text-xs font-bold leading-5 text-white/35">
+                      Direct camera upload. Photos are compressed before being
+                      stored with this job.
+                    </p>
+                    </>
+                  ) : selectedRequest.request_status === "completed" ||
+                    selectedRequest.request_status === "archived" ? null : (
+                    <div className="mt-4 rounded-xl border border-white/10 bg-black/30 px-4 py-4 text-sm font-bold leading-6 text-white/40">
+                      Schedule and start the job to unlock the camera and photo
+                      uploads.
+                    </div>
+                  )}
 
                   {photos.filter(
                     (photo) => photo.photo_type === "after",
