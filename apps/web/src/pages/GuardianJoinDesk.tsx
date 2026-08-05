@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { CheckCircle2, ExternalLink, QrCode } from "lucide-react";
 import { supabase } from "../lib/supabase";
@@ -162,6 +162,9 @@ export default function GuardianJoinDesk() {
   );
   const [paymentMarked, setPaymentMarked] = useState(false);
   const [markingPayment, setMarkingPayment] = useState(false);
+  const [paymentVerified, setPaymentVerified] = useState(false);
+  const [manualPaymentOpen, setManualPaymentOpen] = useState(false);
+  const paypalCaptureStarted = useRef(false);
   const [orderId, setOrderId] = useState(makeOrderId());
     const [customerAccessToken, setCustomerAccessToken] =
     useState("");const [submittingOrder, setSubmittingOrder] = useState(false);
@@ -200,6 +203,179 @@ export default function GuardianJoinDesk() {
     );
   }, [mailing.fullName, petCount, pets, orderPlaced]);
 
+  useEffect(() => {
+    const paypalFlow = searchParams.get("paypal");
+    const paypalOrderId = searchParams.get("token");
+
+    if (!paypalFlow) return;
+
+    const storedCheckoutRaw = window.localStorage.getItem(
+      "guardian-paypal-checkout",
+    );
+
+    let storedCheckout: {
+      orderId?: string;
+      customerAccessToken?: string;
+    } | null = null;
+
+    try {
+      storedCheckout = storedCheckoutRaw
+        ? JSON.parse(storedCheckoutRaw)
+        : null;
+    } catch {
+      storedCheckout = null;
+    }
+
+    const storedOrderId = storedCheckout?.orderId?.trim() || "";
+    const storedAccessToken =
+      storedCheckout?.customerAccessToken?.trim() || "";
+
+    if (storedOrderId) {
+      setOrderId(storedOrderId);
+      setOrderPlaced(true);
+    }
+
+    if (storedAccessToken) {
+      setCustomerAccessToken(storedAccessToken);
+    }
+
+    const cleanPayPalQuery = () => {
+      const cleanUrl = new URL(window.location.href);
+
+      cleanUrl.searchParams.delete("paypal");
+      cleanUrl.searchParams.delete("token");
+      cleanUrl.searchParams.delete("PayerID");
+
+      window.history.replaceState(
+        {},
+        document.title,
+        `${cleanUrl.pathname}${cleanUrl.search}${cleanUrl.hash}`,
+      );
+    };
+
+    if (paypalFlow === "cancel") {
+      setPaymentDrawerOpen(true);
+      setConfirmationDrawerOpen(false);
+      setSubmitError(
+        "PayPal checkout was canceled. Your Guardian order is still saved.",
+      );
+      cleanPayPalQuery();
+      return;
+    }
+
+    if (
+      paypalFlow !== "return" ||
+      !paypalOrderId ||
+      !storedOrderId ||
+      !storedAccessToken ||
+      paypalCaptureStarted.current
+    ) {
+      return;
+    }
+
+    paypalCaptureStarted.current = true;
+    setSubmitError("");
+    setMarkingPayment(true);
+
+    void (async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke(
+          "paypal-capture-order",
+          {
+            body: {
+              order_id: storedOrderId,
+              customer_access_token: storedAccessToken,
+              paypal_order_id: paypalOrderId,
+            },
+          },
+        );
+
+        if (error) throw error;
+
+        if (!data?.ok) {
+          throw new Error(
+            data?.error || "PayPal payment could not be verified.",
+          );
+        }
+
+        const { data: restoredOrderData, error: restoredOrderError } =
+          await supabase.rpc("get_guardian_customer_order", {
+            requested_access_token: storedAccessToken,
+          });
+
+        if (restoredOrderError) {
+          throw new Error(
+            `Payment was verified, but the order receipt could not be restored: ${restoredOrderError.message}`,
+          );
+        }
+
+        const restoredOrder = Array.isArray(restoredOrderData)
+          ? restoredOrderData[0]
+          : restoredOrderData;
+
+        if (!restoredOrder) {
+          throw new Error(
+            "Payment was verified, but the saved Guardian order could not be found.",
+          );
+        }
+
+        const restoredPets = Array.isArray(restoredOrder.pets)
+          ? restoredOrder.pets
+          : [];
+
+        setMailing({
+          fullName: restoredOrder.customer_name || "",
+          address: restoredOrder.shipping_address || "",
+          city: restoredOrder.shipping_city || "",
+          state: restoredOrder.shipping_state || "",
+          zip: restoredOrder.shipping_zip || "",
+          email: restoredOrder.customer_email || "",
+          phone: restoredOrder.customer_phone || "",
+        });
+
+        if (restoredPets.length > 0) {
+          setPets(restoredPets);
+          setPetCount(restoredPets.length);
+        }
+
+        setPaymentAmount(
+          Number(restoredOrder.setup_total || 0).toFixed(2),
+        );
+
+        setPaymentMemo(
+          restoredOrder.payment_memo ||
+            `${storedOrderId} Â· Guardian Pet Tag`,
+        );
+
+        setPaymentMarked(true);
+        setPaymentVerified(true);
+        setPaymentConfirmationMessage(
+          "PayPal payment captured and verified. Your Guardian Pet Tag order is moving into fulfillment.",
+        );
+
+        setPaymentDrawerOpen(false);
+        cleanPayPalQuery();
+        window.localStorage.removeItem("guardian-paypal-checkout");
+
+        window.setTimeout(() => {
+          setConfirmationDrawerOpen(true);
+        }, 180);
+      } catch (error) {
+        console.error("Could not capture PayPal payment:", error);
+
+        paypalCaptureStarted.current = false;
+        setPaymentDrawerOpen(true);
+
+        setSubmitError(
+          error instanceof Error && error.message
+            ? error.message
+            : "Your PayPal approval was received, but HomePlanet could not verify the capture. Your order is still saved.",
+        );
+      } finally {
+        setMarkingPayment(false);
+      }
+    })();
+  }, [searchParams]);
   function updateField(field: keyof MailingState, value: string) {
     setMailing((prev) => ({
       ...prev,
@@ -337,6 +513,7 @@ function isValid() {
       setPaymentDrawerOpen(false);
       setConfirmationDrawerOpen(false);
       setPaymentMarked(false);
+      setPaymentVerified(false);
 
 
       setPaymentMemo(
@@ -388,6 +565,70 @@ function isValid() {
     }
   }
 
+  async function startPayPalCheckout() {
+    if (!orderPlaced || markingPayment) return;
+
+    setSubmitError("");
+    setMarkingPayment(true);
+
+    try {
+      if (!customerAccessToken) {
+        throw new Error(
+          "Your checkout access token is missing. Reopen your order receipt before starting PayPal.",
+        );
+      }
+
+      const returnUrl = new URL(window.location.href);
+      returnUrl.searchParams.set("paypal", "return");
+      returnUrl.searchParams.delete("token");
+      returnUrl.searchParams.delete("PayerID");
+
+      const cancelUrl = new URL(window.location.href);
+      cancelUrl.searchParams.set("paypal", "cancel");
+      cancelUrl.searchParams.delete("token");
+      cancelUrl.searchParams.delete("PayerID");
+
+      window.localStorage.setItem(
+        "guardian-paypal-checkout",
+        JSON.stringify({
+          orderId,
+          customerAccessToken,
+        }),
+      );
+
+      const { data, error } = await supabase.functions.invoke(
+        "paypal-create-order",
+        {
+          body: {
+            order_id: orderId,
+            customer_access_token: customerAccessToken,
+            return_url: returnUrl.toString(),
+            cancel_url: cancelUrl.toString(),
+          },
+        },
+      );
+
+      if (error) throw error;
+
+      if (!data?.ok || !data?.approval_url) {
+        throw new Error(
+          data?.error || "PayPal did not return a checkout link.",
+        );
+      }
+
+      window.location.assign(data.approval_url);
+    } catch (error) {
+      console.error("Could not start PayPal checkout:", error);
+
+      setSubmitError(
+        error instanceof Error && error.message
+          ? error.message
+          : "Your order is saved, but PayPal checkout could not be started.",
+      );
+
+      setMarkingPayment(false);
+    }
+  }
   async function markPaid() {
     if (!orderPlaced || markingPayment) {
       return;
@@ -459,17 +700,21 @@ function isValid() {
   const selectedOrderTitle =
     firstPet?.name?.trim() || mailing.fullName || "Pet tag order";
 
-  const receiptStatusLabel = paymentMarked
-    ? "Waiting for verification"
-    : orderPlaced
-      ? "Pending Payment"
-      : "Not Placed";
+  const receiptStatusLabel = paymentVerified
+    ? "Payment Verified"
+    : paymentMarked
+      ? "Waiting for verification"
+      : orderPlaced
+        ? "Pending Payment"
+        : "Not Placed";
 
-  const receiptStatusText = paymentMarked
-    ? "Waiting for verification"
-    : orderPlaced
-      ? "Waiting for payment"
-      : "Checkout not submitted";
+  const receiptStatusText = paymentVerified
+    ? "PayPal payment captured and verified"
+    : paymentMarked
+      ? "Waiting for verification"
+      : orderPlaced
+        ? "Waiting for payment"
+        : "Checkout not submitted";
 
   const emailStatusText =
     emailState === "sent"
@@ -905,14 +1150,18 @@ function isValid() {
               <div className="mb-4 flex items-start justify-between gap-4 border-b border-white/[0.08] pb-4">
                 <div>
                   <h2 className="text-2xl font-bold tracking-[-0.025em] text-white">
-                    {paymentMarked
-                      ? "Payment submitted"
-                      : "Your Pet Tag order is ready"}
+                    {paymentVerified
+                      ? "Payment verified"
+                      : paymentMarked
+                        ? "Payment submitted"
+                        : "Your Pet Tag order is ready"}
                   </h2>
                   <p className="mt-1 text-sm text-white/45">
-                    {paymentMarked
-                      ? "Your order is waiting for verification."
-                      : "This is your order receipt. Continue to payment when you are ready."}
+                    {paymentVerified
+                      ? "Your PayPal payment is verified and fulfillment can begin."
+                      : paymentMarked
+                        ? "Your order is waiting for verification."
+                        : "This is your order receipt. Continue to payment when you are ready."}
                   </p>
                 </div>
                 <div className="rounded-full border border-white/[0.12] bg-[#07111f]/70 px-3 py-1 text-xs font-semibold text-white/70">
@@ -966,7 +1215,13 @@ function isValid() {
                 </div>
                 <div className="mt-2">
                   <span className="text-white/45">Payment method:</span>{" "}
-                  <span className="font-semibold text-white">Cash App primary / Zelle backup</span>
+                  <span className="font-semibold text-white">
+                    {paymentVerified
+                      ? "PayPal"
+                      : paymentMethod === "zelle"
+                        ? "Zelle"
+                        : "Cash App"}
+                  </span>
                 </div>
                 <div className="mt-2">
                   <span className="text-white/45">Status:</span>{" "}
@@ -1015,7 +1270,9 @@ function isValid() {
                   <div className="flex items-center gap-2 text-emerald-200">
                     <CheckCircle2 className="h-4 w-4" />
                     <span className="text-sm font-semibold">
-                      We'll update this page when your payment is verified and your tag moves into preparation.
+                      {paymentVerified
+                        ? "Your payment is verified. We'll update this page as your tag moves into preparation and shipping."
+                        : "We'll update this page when your payment is verified and your tag moves into preparation."}
                     </span>
                   </div>
                 </div>
@@ -1111,11 +1368,11 @@ function isValid() {
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="text-sm font-semibold text-cyan-100">
-                            Verification
+                            {paymentVerified ? "Payment verified" : "Verification"}
                           </p>
 
                           <span className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-cyan-200">
-                            Current step
+                            {paymentVerified ? "Complete" : "Current step"}
                           </span>
                         </div>
 
@@ -1374,142 +1631,207 @@ function isValid() {
               </div>
             ) : null}
 
-            <div
-              className={`mt-4 rounded-2xl border border-cyan-400/20 bg-cyan-400/10 p-3 ${
-                orderPlaced ? "" : "pointer-events-none opacity-40"
-              }`}
-            >
-              <div className="mb-2 flex items-center justify-between gap-3">
-                <div className="text-sm font-semibold text-white">Cash App</div>
-                <div className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-300">
-                  Primary
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-white/[0.08] bg-[#07131f] p-3 text-sm text-white/70">
-                Amount: <span className="font-semibold text-white">${paymentAmount || "0.00"}</span>
-                <br />
-                Memo: <span className="font-semibold text-white">{paymentMemo || "No memo"}</span>
-              </div>
-
-              <div className="mt-3 rounded-2xl border border-white/[0.08] bg-[#07131f] p-4">
-                <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-white/55">
-                  <QrCode className="h-4 w-4" />
-                  Scan to pay
-                </div>
-
-                <div className="flex justify-center">
-                  <img
-                    src={cashAppQr}
-                    alt="Cash App payment QR"
-                    className={`h-56 w-56 rounded-2xl border border-white/10 bg-white p-3 ${
-                      orderPlaced ? "" : "blur-lg"
-                    }`}
-                  />
-                </div>
-
-                <p className="mt-3 text-center text-xs leading-5 text-white/55">
-                  On desktop: scan this QR with your phone to open Cash App fast.
-                </p>
-              </div>
-
-              <div className="mt-3 grid gap-2">
-                <a
-                                    href={orderPlaced ? cashAppUrl : undefined}
-                  onClick={() => {
-                    if (orderPlaced) {
-                      setPaymentMethod("cashapp");
-                    }
-                  }}
-                  aria-disabled={!orderPlaced}
-                  tabIndex={orderPlaced ? 0 : -1}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-300 px-5 py-4 text-base font-bold text-[#07111f] transition hover:bg-cyan-200"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                  Pay with Cash App
-                </a>
-                <button
-                  type="button"
-                                    onClick={() => {
-                    if (!orderPlaced) return;
-                    setPaymentMethod("cashapp");
-                    copyText(cashAppUrl, "Cash App link");
-                  }}
-                  disabled={!orderPlaced}
-                  className="inline-flex items-center justify-center rounded-2xl border border-white/16 bg-white/[0.035] px-5 py-3 text-sm font-bold text-white transition hover:bg-white/[0.07]"
-                >
-                  {copiedLabel === "Cash App link" ? "Copied Cash App Link" : "Copy Cash App Link"}
-                </button>
-              </div>
-            </div>
-
-            <div
-              className={`mt-4 rounded-2xl border border-neutral-800 bg-black/50 p-4 ${
-                orderPlaced ? "" : "pointer-events-none opacity-40"
-              }`}
-            >
-              <div className="mb-2 flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-semibold text-white">Zelle</p>
-                  <p className="mt-1 text-xs text-white/55">{ZELLE_CONTACT}</p>
-                </div>
-                <div className="rounded-full border border-fuchsia-500/20 bg-fuchsia-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-fuchsia-300">
-                  Backup
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-white/[0.08] bg-[#07131f] p-3 text-sm text-white/70">
-                Send to: <span className="font-semibold text-white">{ZELLE_CONTACT}</span>
-                <br />
-                Memo: <span className="font-semibold text-white">{paymentMemo || "No memo"}</span>
-                <br />
-                Phone: <span className="font-semibold text-white">{ORDER_CONTACT_PHONE}</span>
-              </div>
-
-              <div className="mt-3 grid gap-2">
-                <button
-                  type="button"
-                                    onClick={() => {
-                    if (!orderPlaced) return;
-                    setPaymentMethod("zelle");
-                    copyText(zelleCopyText, "Zelle payment details");
-                  }}
-                  disabled={!orderPlaced}
-                  className="inline-flex items-center justify-center rounded-xl bg-white px-4 py-3 text-sm font-semibold text-black"
-                >
-                  {copiedLabel === "Zelle payment details"
-                    ? "Copied Zelle Details"
-                    : "Copy Zelle Details"}
-                </button>
-                <button
-                  type="button"
-                                    onClick={() => {
-                    if (!orderPlaced) return;
-                    setPaymentMethod("zelle");
-                    copyText(paymentMemo, "memo");
-                  }}
-                  disabled={!orderPlaced}
-                  className="inline-flex items-center justify-center rounded-2xl border border-white/16 bg-white/[0.035] px-5 py-3 text-sm font-bold text-white transition hover:bg-white/[0.07]"
-                >
-                  {copiedLabel === "memo" ? "Copied Memo" : "Copy Memo Only"}
-                </button>
-              </div>
-            </div>
-
             <button
               type="button"
-              onClick={() => void markPaid()}
-              className={`mt-4 w-full rounded-2xl border px-4 py-3 text-sm font-semibold transition ${
+              onClick={() => void startPayPalCheckout()}
+              className={`mt-4 w-full rounded-2xl border px-5 py-4 text-base font-bold transition ${
                 orderPlaced && !markingPayment
-                  ? "border-emerald-300/25 bg-emerald-300 text-[#07111f] hover:bg-emerald-200"
+                  ? "border-[#0070ba]/40 bg-[#0070ba] text-white hover:bg-[#005ea6]"
                   : "cursor-not-allowed border-neutral-800 bg-neutral-900 text-white/45"
               }`}
               disabled={!orderPlaced || markingPayment}
             >
-              {markingPayment ? "Recording Payment..." : "I've Sent My Payment"}
+              {markingPayment ? "Opening PayPal..." : "Pay Securely with PayPal"}
             </button>
+
+            <p className="mt-2 text-center text-xs leading-5 text-white/45">
+              PayPal verifies your setup payment automatically.
+            </p>
+
+            <button
+              type="button"
+              onClick={() => setManualPaymentOpen((current) => !current)}
+              className="mt-4 flex w-full items-center justify-between rounded-2xl border border-white/[0.10] bg-white/[0.035] px-4 py-3 text-left transition hover:bg-white/[0.06]"
+              aria-expanded={manualPaymentOpen}
+            >
+              <span>
+                <span className="block text-sm font-semibold text-white">
+                  Other payment options
+                </span>
+                <span className="mt-0.5 block text-xs text-white/45">
+                  Cash App or Zelle
+                </span>
+              </span>
+
+              <span className="text-lg font-semibold text-white/55">
+                {manualPaymentOpen ? "Ã¢Ë†â€™" : "+"}
+              </span>
+            </button>
+
+            {manualPaymentOpen ? (
+              <div className="mt-3 rounded-2xl border border-white/[0.08] bg-[#050e18]/70 p-3">
+                <div
+                  className={`rounded-2xl border border-cyan-400/20 bg-cyan-400/10 p-3 ${
+                    orderPlaced ? "" : "pointer-events-none opacity-40"
+                  }`}
+                >
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <div className="text-sm font-semibold text-white">Cash App</div>
+                    <div className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/50">
+                      Manual
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-white/[0.08] bg-[#07131f] p-3 text-sm text-white/70">
+                    Amount:{" "}
+                    <span className="font-semibold text-white">
+                      ${paymentAmount || "0.00"}
+                    </span>
+                    <br />
+                    Memo:{" "}
+                    <span className="font-semibold text-white">
+                      {paymentMemo || "No memo"}
+                    </span>
+                  </div>
+
+                  <div className="mt-3 rounded-2xl border border-white/[0.08] bg-[#07131f] p-4">
+                    <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-white/55">
+                      <QrCode className="h-4 w-4" />
+                      Scan to pay
+                    </div>
+
+                    <div className="flex justify-center">
+                      <img
+                        src={cashAppQr}
+                        alt="Cash App payment QR"
+                        className={`h-56 w-56 rounded-2xl border border-white/10 bg-white p-3 ${
+                          orderPlaced ? "" : "blur-lg"
+                        }`}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-3 grid gap-2">
+                    <a
+                      href={orderPlaced ? cashAppUrl : undefined}
+                      onClick={() => {
+                        if (orderPlaced) {
+                          setPaymentMethod("cashapp");
+                        }
+                      }}
+                      aria-disabled={!orderPlaced}
+                      tabIndex={orderPlaced ? 0 : -1}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-300 px-5 py-3 text-sm font-bold text-[#07111f] transition hover:bg-cyan-200"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      Pay with Cash App
+                    </a>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!orderPlaced) return;
+                        setPaymentMethod("cashapp");
+                        copyText(cashAppUrl, "Cash App link");
+                      }}
+                      disabled={!orderPlaced}
+                      className="inline-flex items-center justify-center rounded-xl border border-white/16 bg-white/[0.035] px-4 py-3 text-sm font-bold text-white transition hover:bg-white/[0.07]"
+                    >
+                      {copiedLabel === "Cash App link"
+                        ? "Copied Cash App Link"
+                        : "Copy Cash App Link"}
+                    </button>
+                  </div>
+                </div>
+
+                <div
+                  className={`mt-3 rounded-2xl border border-neutral-800 bg-black/50 p-4 ${
+                    orderPlaced ? "" : "pointer-events-none opacity-40"
+                  }`}
+                >
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-white">Zelle</p>
+                      <p className="mt-1 text-xs text-white/55">
+                        {ZELLE_CONTACT}
+                      </p>
+                    </div>
+
+                    <div className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/50">
+                      Manual
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-white/[0.08] bg-[#07131f] p-3 text-sm text-white/70">
+                    Send to:{" "}
+                    <span className="font-semibold text-white">
+                      {ZELLE_CONTACT}
+                    </span>
+                    <br />
+                    Memo:{" "}
+                    <span className="font-semibold text-white">
+                      {paymentMemo || "No memo"}
+                    </span>
+                    <br />
+                    Phone:{" "}
+                    <span className="font-semibold text-white">
+                      {ORDER_CONTACT_PHONE}
+                    </span>
+                  </div>
+
+                  <div className="mt-3 grid gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!orderPlaced) return;
+                        setPaymentMethod("zelle");
+                        copyText(zelleCopyText, "Zelle payment details");
+                      }}
+                      disabled={!orderPlaced}
+                      className="inline-flex items-center justify-center rounded-xl bg-white px-4 py-3 text-sm font-semibold text-black"
+                    >
+                      {copiedLabel === "Zelle payment details"
+                        ? "Copied Zelle Details"
+                        : "Copy Zelle Details"}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!orderPlaced) return;
+                        setPaymentMethod("zelle");
+                        copyText(paymentMemo, "memo");
+                      }}
+                      disabled={!orderPlaced}
+                      className="inline-flex items-center justify-center rounded-xl border border-white/16 bg-white/[0.035] px-4 py-3 text-sm font-bold text-white transition hover:bg-white/[0.07]"
+                    >
+                      {copiedLabel === "memo" ? "Copied Memo" : "Copy Memo Only"}
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => void markPaid()}
+                  className={`mt-3 w-full rounded-2xl border px-4 py-3 text-sm font-semibold transition ${
+                    orderPlaced && !markingPayment
+                      ? "border-emerald-300/25 bg-emerald-300 text-[#07111f] hover:bg-emerald-200"
+                      : "cursor-not-allowed border-neutral-800 bg-neutral-900 text-white/45"
+                  }`}
+                  disabled={!orderPlaced || markingPayment}
+                >
+                  {markingPayment
+                    ? "Submitting Payment..."
+                    : "Submit Manual Payment for Verification"}
+                </button>
+
+                <p className="mt-3 text-xs leading-5 text-white/45">
+                  Manual payments must be reviewed before tag fulfillment begins.
+                </p>
+              </div>
+            ) : null}
 
             {submitError ? (
               <div
@@ -1519,10 +1841,6 @@ function isValid() {
                 {submitError}
               </div>
             ) : null}
-
-            <div className="mt-3 rounded-2xl border border-white/[0.08] bg-[#050e18]/75 p-4 text-xs leading-6 text-white/55">
-              Send the exact setup payment through Cash App or Zelle, then tap I've Sent My Payment. We verify the payment before fulfillment.
-            </div>
               </aside>
             </div>
           ) : null}

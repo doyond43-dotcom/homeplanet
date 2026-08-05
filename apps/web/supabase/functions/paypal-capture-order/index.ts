@@ -1,4 +1,4 @@
-﻿import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -8,18 +8,16 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-type CreatePayPalOrderRequest = {
+type CaptureRequest = {
   order_id: string;
   customer_access_token: string;
-  return_url: string;
-  cancel_url: string;
+  paypal_order_id: string;
 };
 
 type CheckoutRow = {
   id: string;
   product_type: string;
   product_order_id: string;
-  customer_name: string | null;
   currency: string;
   total_amount: number | string;
   status: string;
@@ -31,16 +29,23 @@ type PayPalAccessTokenResponse = {
   error_description?: string;
 };
 
-type PayPalLink = {
-  href: string;
-  rel: string;
-  method?: string;
-};
-
-type PayPalOrderResponse = {
+type PayPalCapture = {
   id?: string;
   status?: string;
-  links?: PayPalLink[];
+  amount?: {
+    currency_code?: string;
+    value?: string;
+  };
+};
+
+type PayPalCaptureResponse = {
+  id?: string;
+  status?: string;
+  purchase_units?: Array<{
+    payments?: {
+      captures?: PayPalCapture[];
+    };
+  }>;
   name?: string;
   message?: string;
   details?: Array<{
@@ -69,29 +74,14 @@ function getPayPalBaseUrl(environment: string): string {
 }
 
 function getPayPalErrorMessage(
-  response: PayPalOrderResponse,
+  response: PayPalCaptureResponse,
   fallback: string,
 ): string {
-  const detail = response.details?.[0];
-
   return (
-    detail?.description ||
+    response.details?.[0]?.description ||
     response.message ||
     fallback
   );
-}
-
-function getDescription(productType: string): string {
-  switch (productType) {
-    case "cow_town_tags":
-      return "Cow Town Tags physical tag order";
-
-    case "guardian_pet_tag":
-      return "HomePlanet Guardian Pet Tag setup";
-
-    default:
-      return "HomePlanet order";
-  }
 }
 
 serve(async (req) => {
@@ -141,17 +131,8 @@ serve(async (req) => {
       );
     }
 
-    if (
-      paypalEnvironment !== "sandbox" &&
-      paypalEnvironment !== "live"
-    ) {
-      throw new Error(
-        'PAYPAL_ENVIRONMENT must be either "sandbox" or "live".',
-      );
-    }
-
     const body =
-      (await req.json()) as Partial<CreatePayPalOrderRequest>;
+      (await req.json()) as Partial<CaptureRequest>;
 
     const orderId =
       typeof body.order_id === "string"
@@ -163,69 +144,21 @@ serve(async (req) => {
         ? body.customer_access_token.trim()
         : "";
 
-    const returnUrl =
-      typeof body.return_url === "string"
-        ? body.return_url.trim()
+    const paypalOrderId =
+      typeof body.paypal_order_id === "string"
+        ? body.paypal_order_id.trim()
         : "";
-
-    const cancelUrl =
-      typeof body.cancel_url === "string"
-        ? body.cancel_url.trim()
-        : "";
-
-    if (!returnUrl || !cancelUrl) {
-      return jsonResponse(
-        {
-          ok: false,
-          error: "PayPal return and cancel URLs are required.",
-        },
-        400,
-      );
-    }
-
-    let parsedReturnUrl: URL;
-    let parsedCancelUrl: URL;
-
-    try {
-      parsedReturnUrl = new URL(returnUrl);
-      parsedCancelUrl = new URL(cancelUrl);
-    } catch {
-      return jsonResponse(
-        {
-          ok: false,
-          error: "PayPal return or cancel URL is invalid.",
-        },
-        400,
-      );
-    }
-
-    const allowedHosts = new Set([
-      "homeplanet.city",
-      "www.homeplanet.city",
-      "localhost",
-      "127.0.0.1",
-    ]);
 
     if (
-      !allowedHosts.has(parsedReturnUrl.hostname) ||
-      !allowedHosts.has(parsedCancelUrl.hostname) ||
-      !["http:", "https:"].includes(parsedReturnUrl.protocol) ||
-      !["http:", "https:"].includes(parsedCancelUrl.protocol)
+      !orderId ||
+      !customerAccessToken ||
+      !paypalOrderId
     ) {
       return jsonResponse(
         {
           ok: false,
-          error: "PayPal return or cancel URL is not allowed.",
-        },
-        400,
-      );
-    }
-    if (!orderId || !customerAccessToken) {
-      return jsonResponse(
-        {
-          ok: false,
           error:
-            "Order ID and customer access token are required.",
+            "Order ID, access token, and PayPal order ID are required.",
         },
         400,
       );
@@ -250,7 +183,6 @@ serve(async (req) => {
             "id",
             "product_type",
             "product_order_id",
-            "customer_name",
             "currency",
             "total_amount",
             "status",
@@ -280,47 +212,14 @@ serve(async (req) => {
     }
 
     if (checkout.status === "paid") {
-      return jsonResponse(
-        {
-          ok: false,
-          error: "This checkout is already paid.",
-        },
-        409,
-      );
+      return jsonResponse({
+        ok: true,
+        already_verified: true,
+        homeplanet_order_id:
+          checkout.product_order_id,
+        product_type: checkout.product_type,
+      });
     }
-
-    if (
-      checkout.status !== "open" &&
-      checkout.status !== "approval_pending"
-    ) {
-      return jsonResponse(
-        {
-          ok: false,
-          error:
-            "This checkout is not currently available for PayPal.",
-        },
-        409,
-      );
-    }
-
-    const totalAmount = Number(checkout.total_amount);
-
-    if (
-      !Number.isFinite(totalAmount) ||
-      totalAmount <= 0
-    ) {
-      return jsonResponse(
-        {
-          ok: false,
-          error:
-            "The checkout does not have a valid total.",
-        },
-        400,
-      );
-    }
-
-    const currency =
-      checkout.currency.trim().toUpperCase();
 
     const paypalBaseUrl =
       getPayPalBaseUrl(paypalEnvironment);
@@ -350,11 +249,6 @@ serve(async (req) => {
       !tokenResponse.ok ||
       !tokenData.access_token
     ) {
-      console.error(
-        "PayPal access-token error:",
-        tokenData,
-      );
-
       throw new Error(
         tokenData.error_description ||
           tokenData.error ||
@@ -362,17 +256,8 @@ serve(async (req) => {
       );
     }
 
-    const requestId = [
-      "homeplanet",
-      checkout.product_type,
-      checkout.product_order_id,
-    ]
-      .join("-")
-      .replace(/[^a-zA-Z0-9-]/g, "-")
-      .slice(0, 108);
-
-    const paypalOrderResponse = await fetch(
-      `${paypalBaseUrl}/v2/checkout/orders`,
+    const captureResponse = await fetch(
+      `${paypalBaseUrl}/v2/checkout/orders/${encodeURIComponent(paypalOrderId)}/capture`,
       {
         method: "POST",
         headers: {
@@ -380,110 +265,105 @@ serve(async (req) => {
             `Bearer ${tokenData.access_token}`,
           "Content-Type": "application/json",
           Accept: "application/json",
-          "PayPal-Request-Id": requestId,
+          "PayPal-Request-Id":
+            `capture-${paypalOrderId}`.slice(
+              0,
+              108,
+            ),
         },
-        body: JSON.stringify({
-          intent: "CAPTURE",
-          purchase_units: [
-            {
-              reference_id:
-                checkout.product_order_id,
-              custom_id:
-                checkout.product_order_id,
-              description:
-                getDescription(checkout.product_type),
-              amount: {
-                currency_code: currency,
-                value: totalAmount.toFixed(2),
-              },
-            },
-          ],
-          payment_source: {
-            paypal: {
-              experience_context: {
-                user_action: "PAY_NOW",
-                return_url: parsedReturnUrl.toString(),
-                cancel_url: parsedCancelUrl.toString(),
-              },
-            },
-          },
-        }),
+        body: "{}",
       },
     );
 
-    const paypalOrder =
-      (await paypalOrderResponse.json()) as PayPalOrderResponse;
+    const captureData =
+      (await captureResponse.json()) as PayPalCaptureResponse;
 
-    if (
-      !paypalOrderResponse.ok ||
-      !paypalOrder.id
-    ) {
+    if (!captureResponse.ok) {
       console.error(
-        "PayPal create-order error:",
-        paypalOrder,
+        "PayPal capture error:",
+        captureData,
       );
 
       throw new Error(
         getPayPalErrorMessage(
-          paypalOrder,
-          "PayPal could not create the checkout order.",
+          captureData,
+          "PayPal could not capture the payment.",
         ),
       );
     }
 
-    const { error: recordError } =
+    const capture =
+      captureData.purchase_units?.[0]
+        ?.payments?.captures?.[0];
+
+    if (
+      captureData.status !== "COMPLETED" ||
+      capture?.status !== "COMPLETED" ||
+      !capture.id ||
+      !capture.amount?.value ||
+      !capture.amount.currency_code
+    ) {
+      throw new Error(
+        "PayPal did not return a completed capture.",
+      );
+    }
+
+    const capturedAmount =
+      Number(capture.amount.value);
+
+    if (!Number.isFinite(capturedAmount)) {
+      throw new Error(
+        "PayPal returned an invalid captured amount.",
+      );
+    }
+
+    const { data: completedCheckout, error: completeError } =
       await supabaseAdmin.rpc(
-        "record_homeplanet_paypal_order",
+        "complete_homeplanet_paypal_capture",
         {
           requested_access_token:
             customerAccessToken,
           requested_paypal_order_id:
-            paypalOrder.id,
+            paypalOrderId,
+          requested_paypal_capture_id:
+            capture.id,
+          requested_captured_amount:
+            capturedAmount,
+          requested_currency:
+            capture.amount.currency_code,
           requested_provider_payload:
-            paypalOrder,
+            captureData,
         },
       );
 
-    if (recordError) {
+    if (completeError) {
       throw new Error(
-        `PayPal order was created, but HomePlanet could not record it: ${recordError.message}`,
-      );
-    }
-
-    const approvalUrl =
-      paypalOrder.links?.find(
-        (link) =>
-          link.rel === "payer-action" ||
-          link.rel === "approve",
-      )?.href || null;
-
-    if (!approvalUrl) {
-      throw new Error(
-        "PayPal did not return an approval link.",
+        `Payment was captured, but HomePlanet could not verify it: ${completeError.message}`,
       );
     }
 
     return jsonResponse({
       ok: true,
-      paypal_order_id: paypalOrder.id,
-      paypal_status:
-        paypalOrder.status || "CREATED",
-      approval_url: approvalUrl,
+      paypal_order_id: paypalOrderId,
+      paypal_capture_id: capture.id,
+      paypal_status: capture.status,
+      amount: capturedAmount.toFixed(2),
+      currency:
+        capture.amount.currency_code,
       homeplanet_order_id:
         checkout.product_order_id,
       product_type: checkout.product_type,
-      amount: totalAmount.toFixed(2),
-      currency,
+      checkout: completedCheckout,
       environment: paypalEnvironment,
     });
   } catch (error) {
     const message =
       error instanceof Error
         ? error.message
-        : "An unknown PayPal checkout error occurred.";
+        : "An unknown PayPal capture error occurred.";
 
     console.error(
-      "paypal-create-order failed:",
+      "paypal-capture-order failed:",
       error,
     );
 
@@ -496,4 +376,3 @@ serve(async (req) => {
     );
   }
 });
-
