@@ -29,6 +29,8 @@ import AutoRepairLivePage from "../pages/AutoRepairLivePage";
 import PlanetGuardianLivePage from "../pages/PlanetGuardianLivePage";
 import RetailLivePage from "../pages/RetailLivePage";
 import ExperiencesLivePage from "../pages/ExperiencesLivePage";
+import CaptainJacksDemoPage from "../pages/CaptainJacksDemoPage";
+import CaptainJacksLiveBoard from "../pages/CaptainJacksLiveBoard";
 
 import BirdbathLandingPage from "../pages/BirdbathLandingPage";
 
@@ -487,6 +489,8 @@ export default function PlanetRoutes() {
 
       <Route path="live-systems" element={<HomePlanetFrontDoor />} />
       <Route path="demo/business" element={<BusinessDemoDirectory />} />
+      <Route path="demo/captain-jacks" element={<CaptainJacksDemoPage />} />
+      <Route path="demo/captain-jacks/board" element={<CaptainJacksLiveBoard />} />
       <Route path="demo/business/home-services" element={<HomeServicesDemoPage />} />
           <Route path="demo/home-services-live" element={<HomeServicesLiveDemoFlow />} />
       <Route path="liveboard-v2/:boardSlug" element={<OperationalLiveBoardV2 />} />
