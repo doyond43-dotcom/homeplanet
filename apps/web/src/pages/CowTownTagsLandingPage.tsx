@@ -205,10 +205,10 @@ export default function CowTownTagsLandingPage() {
 
                 <a
                   className="ctv2-button ctv2-button-secondary"
-                  href="#tag-options"
+                  href="/planet/cow-town-tags/order"
                 >
                   <Tags size={19} />
-                  Protect My Herd
+                  Buy Tags / Create Animal Pages
                 </a>
               </div>
 
@@ -725,10 +725,10 @@ export default function CowTownTagsLandingPage() {
 
                 <a
                   className="ctv2-button ctv2-button-secondary"
-                  href="#tag-options"
+                  href="/planet/cow-town-tags/order"
                 >
                   <Fence size={19} />
-                  Explore Tag Options
+                  Start My Order
                 </a>
               </div>
             </div>

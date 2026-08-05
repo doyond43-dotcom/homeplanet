@@ -9,11 +9,25 @@
   Phone,
   ShieldAlert,
 } from "lucide-react";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { supabase } from "../lib/supabase";
 import "./CowTownTags.css";
 
 type RecoveryMode = "actions" | "report" | "success";
+
+type PublicCowTownTag = {
+  cow_town_id: string;
+  visible_tag_number: string;
+  name: string | null;
+  breed: string | null;
+  sex: string | null;
+  color: string | null;
+  birth_year: number | null;
+  animal_status: string;
+  activation_status: string;
+  recovery_phone: string | null;
+};
 
 export default function CowTownPublicTagPage() {
   const { tagId = "CT-0847" } = useParams();
@@ -22,6 +36,91 @@ export default function CowTownPublicTagPage() {
   const [condition, setCondition] = useState("Standing near the roadway");
   const [notes, setNotes] = useState("");
   const [phone, setPhone] = useState("");
+  const [publicTag, setPublicTag] = useState<PublicCowTownTag | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadPublicTag() {
+      const normalizedTagId = tagId.toUpperCase();
+
+      const { data, error } = await supabase.rpc(
+        "get_public_cow_town_tag",
+        {
+          requested_cow_town_id: normalizedTagId,
+        }
+      );
+
+      if (cancelled) {
+        return;
+      }
+
+      if (error || !data?.found || !data?.tag) {
+        setPublicTag(null);
+        return;
+      }
+
+      setPublicTag(data.tag as PublicCowTownTag);
+    }
+
+    void loadPublicTag();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [tagId]);
+
+  const normalizedTagId = tagId.toUpperCase();
+  const isLiveRecord = publicTag !== null;
+
+  const animalName =
+    publicTag?.name ||
+    (normalizedTagId === "CT-0847" ? "Cattle No. 0847" : normalizedTagId);
+
+  const visibleTagNumber =
+    publicTag?.visible_tag_number ||
+    (normalizedTagId === "CT-0847" ? "0847" : normalizedTagId.replace("CT-", ""));
+
+  const animalBreed =
+    publicTag?.breed ||
+    (normalizedTagId === "CT-0847" ? "Brangus" : "Not provided");
+
+  const animalSex =
+    publicTag?.sex ||
+    (normalizedTagId === "CT-0847" ? "Cow" : "Not provided");
+
+  const animalColor =
+    publicTag?.color ||
+    (normalizedTagId === "CT-0847" ? "Brown and white" : "Not provided");
+
+  const animalAge =
+    normalizedTagId === "CT-0056"
+      ? "9 years old"
+      : publicTag?.birth_year
+        ? `${new Date().getFullYear() - publicTag.birth_year} years old`
+        : normalizedTagId === "CT-0847"
+          ? "4 years old"
+          : "Not provided";
+
+  const recoveryPhone =
+    publicTag?.recovery_phone ||
+    (normalizedTagId === "CT-0847" ? "8635550147" : "");
+
+  const telephoneHref = recoveryPhone
+    ? `tel:+1${recoveryPhone.replace(/\D/g, "").replace(/^1/, "")}`
+    : undefined;
+
+  const smsHref = recoveryPhone
+    ? `sms:+1${recoveryPhone.replace(/\D/g, "").replace(/^1/, "")}?body=${encodeURIComponent(
+        `I found livestock wearing Cow Town Tag ${normalizedTagId}.`
+      )}`
+    : undefined;
+
+  const animalImage =
+    normalizedTagId === "CT-0056"
+      ? "/images/princess-black-angus.png"
+      : "/images/cow-town-tags-animal.jpg";
+
 
   function submitReport(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -68,8 +167,8 @@ export default function CowTownPublicTagPage() {
             <aside className="cowtown-card cowtown-animal-card">
               <div className="cowtown-animal-photo">
                 <img
-                  src="/images/cow-town-tags-animal.jpg"
-                  alt="Brown-and-white demo cow wearing yellow Cow Town ear tag 0847"
+                  src={animalImage}
+                  alt={`${animalName}, ${animalColor} livestock wearing tag ${visibleTagNumber}`}
                   style={{
                     width: "100%",
                     height: "100%",
@@ -87,10 +186,10 @@ export default function CowTownPublicTagPage() {
                   Active Cow Town Tag
                 </span>
 
-                <h2 className="cowtown-animal-name">Cattle No. 0847</h2>
+                <h2 className="cowtown-animal-name">{animalName}</h2>
 
                 <div className="cowtown-animal-description">
-                  Brown-and-white cow wearing yellow ear tag 0847.
+                  {animalColor} livestock wearing visible tag {visibleTagNumber}.
                 </div>
 
                 <div className="cowtown-detail-grid">
@@ -101,7 +200,7 @@ export default function CowTownPublicTagPage() {
 
                   <div className="cowtown-detail">
                     <span>Animal No.</span>
-                    <strong>0847</strong>
+                    <strong>{visibleTagNumber}</strong>
                   </div>
 
                   <div className="cowtown-detail">
@@ -111,7 +210,7 @@ export default function CowTownPublicTagPage() {
 
                   <div className="cowtown-detail">
                     <span>Sex</span>
-                    <strong>Cow</strong>
+                    <strong>{animalSex}</strong>
                   </div>
                 </div>
 
@@ -127,30 +226,30 @@ export default function CowTownPublicTagPage() {
                       </h3>
                     </div>
 
-                    <small>Demo record</small>
+                    <small>{isLiveRecord ? "Live record" : "Demo record"}</small>
                   </div>
 
                   <div className="cowtown-animal-record-grid">
                     <div>
                       <span>Breed</span>
-                      <strong>Brangus</strong>
+                      <strong>{animalBreed}</strong>
                     </div>
 
                     <div>
                       <span>Age</span>
-                      <strong>4 years</strong>
+                      <strong>{animalAge}</strong>
                     </div>
 
                     <div>
                       <span>Vaccinations</span>
                       <strong className="cowtown-record-current">
-                        Current
+                        {isLiveRecord ? "Not provided" : "Current"}
                       </strong>
                     </div>
 
                     <div>
                       <span>Last health update</span>
-                      <strong>July 2026</strong>
+                      <strong>{isLiveRecord ? "Not provided" : "July 2026"}</strong>
                     </div>
 
                     <div className="cowtown-animal-record-wide">
@@ -210,7 +309,7 @@ export default function CowTownPublicTagPage() {
 
                     <a
                       className="cowtown-action-button"
-                      href="tel:+18635550147"
+                      href={telephoneHref}
                     >
                       <span>
                         <Phone size={20} />
@@ -222,7 +321,7 @@ export default function CowTownPublicTagPage() {
 
                     <a
                       className="cowtown-action-button"
-                      href="sms:+18635550147?body=I%20found%20livestock%20wearing%20Cow%20Town%20Tag%20CT-0847."
+                      href={smsHref}
                     >
                       <span>
                         <MessageCircle size={20} />
