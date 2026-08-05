@@ -303,3 +303,123 @@
     gap: 7px;
   }
 }
+
+.ct-payment-main {
+  flex: 1;
+}
+
+.ct-payment-actions {
+  width: min(100%, 360px);
+  display: grid;
+  gap: 10px;
+}
+
+.ct-payment-actions button,
+.ct-payment-actions a {
+  min-height: 52px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 14px;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.ct-paypal-button {
+  background: #0070ba !important;
+  color: white !important;
+}
+
+.ct-paypal-button:hover {
+  background: #005ea6 !important;
+}
+
+.ct-paypal-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.ct-paypal-note {
+  text-align: center;
+  color: rgba(248, 242, 223, 0.56);
+}
+
+.ct-manual-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.07) !important;
+  color: #f8f2df !important;
+  text-align: left;
+}
+
+.ct-manual-toggle span {
+  margin: 0;
+}
+
+.ct-manual-toggle strong,
+.ct-manual-toggle small {
+  display: block;
+}
+
+.ct-manual-toggle small {
+  margin-top: 3px;
+  color: rgba(248, 242, 223, 0.55);
+}
+
+.ct-manual-options {
+  display: grid;
+  gap: 12px;
+}
+
+.ct-manual-options article {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid rgba(242, 211, 126, 0.15);
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.ct-manual-options article > span,
+.ct-manual-options article > small {
+  margin: 0;
+  color: rgba(248, 242, 223, 0.7);
+}
+
+.ct-manual-options a,
+.ct-manual-options button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  background: #f1c85c;
+  color: #102b20;
+}
+
+.ct-payment-error,
+.ct-payment-success {
+  margin-top: 16px;
+  padding: 13px 15px;
+  border-radius: 14px;
+  line-height: 1.45;
+}
+
+.ct-payment-error {
+  border: 1px solid rgba(255, 115, 115, 0.3);
+  background: rgba(255, 75, 75, 0.12);
+  color: #ffd1d1;
+}
+
+.ct-payment-success {
+  border: 1px solid rgba(91, 220, 151, 0.28);
+  background: rgba(91, 220, 151, 0.1);
+  color: #c9ffe1;
+}
+
+@media (max-width: 800px) {
+  .ct-payment-actions {
+    width: 100%;
+  }
+}
