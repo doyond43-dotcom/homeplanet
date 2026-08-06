@@ -190,7 +190,7 @@ export default function ElectricianLandingPage() {
 
             <div className="relative overflow-hidden rounded-[2rem] border border-blue-300/20 bg-[#0a101a] p-3 shadow-2xl shadow-blue-950/40">
               <img
-                src="/images/electrician_beside_open_breaker_panel.png"
+                src="/images/electrician-hero.webp"
                 alt="Professional electrician beside a modern electrical panel"
                 className="h-[500px] w-full rounded-[1.45rem] object-cover object-center"
               />
@@ -319,17 +319,17 @@ export default function ElectricianLandingPage() {
                   {[
                     {
                       label: "Before",
-                      image: "/images/electrician-panel-before.png",
+                      image: "/images/electrician-panel-before.webp",
                       alt: "Older electrical panel before an upgrade",
                     },
                     {
                       label: "Work",
-                      image: "/images/electrician-panel-work.png",
+                      image: "/images/electrician-panel-work.webp",
                       alt: "Electrician completing an electrical panel upgrade",
                     },
                     {
                       label: "Finished",
-                      image: "/images/electrician-panel-finished.png",
+                      image: "/images/electrician-panel-finished.webp",
                       alt: "Completed modern electrical panel installation",
                     },
                   ].map((item) => (
@@ -644,5 +644,9 @@ export default function ElectricianLandingPage() {
     </main>
   );
 }
+
+
+
+
 
 
