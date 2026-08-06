@@ -1,4 +1,4 @@
-import GuardianPetPrivacyPage from "../pages/GuardianPetPrivacyPage";
+﻿import GuardianPetPrivacyPage from "../pages/GuardianPetPrivacyPage";
 
 import { Routes, Route, Navigate } from "react-router-dom";
 
@@ -57,6 +57,9 @@ import OnlyTheEssentialsPublicLanding from "../pages/OnlyTheEssentialsPublicLand
 import OnlyTheEssentialsRequest from "../pages/OnlyTheEssentialsRequest";
 import OnlyTheEssentialsRequestV2 from "../pages/OnlyTheEssentialsRequestV2";
 import OnlyTheEssentialsIntelligenceDashboard from "../pages/OnlyTheEssentialsIntelligenceDashboard";
+import ElectricianIntelligenceDashboard from "../pages/ElectricianIntelligenceDashboard";
+import ElectricianLandingPage from "../pages/ElectricianLandingPage";
+import ElectricianRequestPage from "../pages/ElectricianRequestPage";
 import OnlyTheEssentialsLiveActivity from "../pages/OnlyTheEssentialsLiveActivity";
 import RidgelineIntelligenceDashboard from "../pages/RidgelineIntelligenceDashboard";
 import RidgelineRequestV2 from "../pages/RidgelineRequestV2";
@@ -718,6 +721,9 @@ export default function PlanetRoutes() {
 
       <Route path="demo/home-services" element={<AwnitDemoBoard />} />
       <Route path="demo/cleaning-board" element={<OnlyTheEssentialsBoard />} />
+  <Route path="demo/electrician" element={<ElectricianLandingPage />} />
+  <Route path="demo/electrician/request" element={<ElectricianRequestPage />} />
+  <Route path="demo/electrician/intelligence" element={<ElectricianIntelligenceDashboard />} />
       <Route path="demo/auto-service" element={<AutoRepairLiveBoardSample />} />
       <Route path="demo/auto-service-sample" element={<AutoRepairLiveBoardSample />} />
       <Route path="demo/camp-aquaflow" element={<CampAquaflowStandalone />} />
@@ -874,3 +880,6 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
+
+
