@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 import {
   ArrowLeft,
@@ -63,7 +63,7 @@ const sampleHotels = [
     name: "Harbor Lights Hotel",
     status: "AVAILABLE NOW",
     statusTone: "confirmed",
-    checkIn: "Check-in confirmed until 3:30 AM",
+    checkIn: "Late-night check-in available",
     distance: "1.8 miles away",
     price: "$129",
     match: "Quiet & Comfortable",
@@ -84,7 +84,7 @@ const sampleHotels = [
 function LateNightHotelsLandingPage() {
   const [step, setStep] = useState<FlowStep>("closed");
   const [location, setLocation] = useState("");
-  const [timing, setTiming] = useState("Right now");
+  const [timing] = useState("12 AM - 6 AM");
   const [intent, setIntent] = useState("Best Deal");
   const [selectedHotelName, setSelectedHotelName] = useState("");
   const [travelerName, setTravelerName] = useState("");
@@ -197,6 +197,21 @@ function LateNightHotelsLandingPage() {
   async function submitRoomRequest() {
     if (!selectedHotel || requestSaving) return;
 
+    const cleanName = travelerName.trim();
+    const cleanPhone = travelerPhone.replace(/\D/g, "");
+
+    if (!cleanName) {
+      setRequestError("Enter your name so we know who the room is for.");
+      return;
+    }
+
+    if (cleanPhone.length < 7) {
+      setRequestError(
+        "Enter a valid mobile number so we can send your confirmation."
+      );
+      return;
+    }
+
     setRequestSaving(true);
     setRequestError("");
 
@@ -277,8 +292,7 @@ function LateNightHotelsLandingPage() {
   };
 
   const goBack = () => {
-    if (step === "timing") setStep("location");
-    else if (step === "intent") setStep("timing");
+    if (step === "intent") setStep("location");
     else if (step === "results") setStep("intent");
     else if (step === "request") setStep("results");
     else if (step === "requested") setStep("request");
@@ -295,7 +309,7 @@ function LateNightHotelsLandingPage() {
                 Working Concept
               </div>
               <div className="truncate text-lg font-black tracking-tight">
-                Late Night Hotels
+                Hotels Open After Midnight
               </div>
             </div>
 
@@ -323,15 +337,15 @@ function LateNightHotelsLandingPage() {
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/75">
                 <MoonStar className="h-4 w-4 text-[#f3c57d]" />
-                Late-night check-in made simpler
+                The Overnight Hotel Network
               </div>
 
               <h1 className="mt-5 max-w-2xl text-4xl font-black leading-[1.02] tracking-[-0.04em] sm:text-5xl md:text-6xl">
-                Need a room tonight?
+                Need a room after midnight?
               </h1>
 
               <p className="mt-4 max-w-xl text-base leading-7 text-white/70 sm:text-lg">
-                Find a place that can actually check you in when you need it.
+                Find hotels, motels, and motor lodges that accept check-ins between 12 AM and 6 AM.
               </p>
 
               <div className="mt-7 grid gap-3">
@@ -359,15 +373,15 @@ function LateNightHotelsLandingPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
-                    onClick={() => setStep("timing")}
+                    onClick={() => setStep("intent")}
                     className="rounded-2xl border border-white/10 bg-white/[0.07] p-4 text-left transition hover:bg-white/10"
                   >
                     <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/45">
-                      Check-in
+                      Hours
                     </div>
                     <div className="mt-1 flex items-center gap-2 font-bold">
                       <Clock3 className="h-5 w-5 text-[#f3c57d]" />
-                      Tonight
+                      12 AM - 6 AM
                     </div>
                   </button>
 
@@ -380,7 +394,7 @@ function LateNightHotelsLandingPage() {
                     </div>
                     <div className="mt-1 flex items-center gap-2 font-bold">
                       <Users className="h-5 w-5 text-[#f3c57d]" />
-                      1 Room · 2
+                      1 Room · 2 Guests
                     </div>
                   </button>
                 </div>
@@ -391,12 +405,12 @@ function LateNightHotelsLandingPage() {
                   className="flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-[#f0b65d] px-5 py-4 text-base font-black text-[#142033] transition hover:bg-[#f4c573] active:scale-[0.99]"
                 >
                   <Search className="h-5 w-5" />
-                  FIND A ROOM NOW
+                  FIND A ROOM AFTER MIDNIGHT
                 </button>
 
                 <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-white/50">
-                  <span>Late-night availability</span>
-                  <span>Clear check-in times</span>
+                  <span>12 AM - 6 AM check-in</span>
+                  <span>Committed properties</span>
                   <span>No endless searching</span>
                 </div>
               </div>
@@ -412,7 +426,7 @@ function LateNightHotelsLandingPage() {
                       A late-night match
                     </div>
                     <div className="mt-1 text-2xl font-black">
-                      Know before you drive.
+                      Don't drive hotel to hotel.
                     </div>
                   </div>
 
@@ -433,7 +447,7 @@ function LateNightHotelsLandingPage() {
                     </div>
 
                     <div className="mt-2 text-sm font-bold text-white/85">
-                      Check-in confirmed until 3:30 AM
+                      Late-night check-in available
                     </div>
 
                     <div className="mt-4 flex items-end justify-between gap-3">
@@ -448,7 +462,7 @@ function LateNightHotelsLandingPage() {
 
                       <div className="text-right">
                         <div className="text-xs uppercase tracking-[0.14em] text-white/40">
-                          Tonight
+                          Overnight
                         </div>
                         <div className="text-2xl font-black">$129</div>
                       </div>
@@ -457,8 +471,8 @@ function LateNightHotelsLandingPage() {
                 </div>
 
                 <p className="mt-4 text-sm leading-6 text-white/55">
-                  Familiar hotel information, but the most important question comes
-                  first: can they actually check you in right now?
+                  The most important question comes first: will this property
+                  actually check you in after midnight?
                 </p>
               </div>
             </div>
@@ -467,15 +481,15 @@ function LateNightHotelsLandingPage() {
 
         <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
           <div className="max-w-2xl">
-            <div className="text-xs font-bold uppercase tracking-[0.18em] text-white/45">
+            <div className="text-xs font-bold uppercase tracking-[0.18em] text-white/65">
               Smarter than a random hotel list
             </div>
             <h2 className="mt-2 text-3xl font-black tracking-tight">
-              What matters tonight?
+              What kind of stay do you need?
             </h2>
             <p className="mt-3 text-white/60">
-              Start with the reason behind the search. We narrow the choices before
-              making you sort through dozens of properties.
+              Choose the kind of stay you need, and we'll focus the late-night
+              matches around it.
             </p>
           </div>
 
@@ -514,11 +528,11 @@ function LateNightHotelsLandingPage() {
                 </div>
 
                 <h2 className="mt-3 text-3xl font-black tracking-tight">
-                  Have rooms available tonight?
+                  Want more overnight guests?
                 </h2>
 
                 <p className="mt-3 max-w-2xl leading-7 text-white/65">
-                  Reach travelers actively looking for somewhere to stay right now.
+                  Join our overnight hotel network and receive guests looking for rooms after midnight.
                 </p>
               </div>
 
@@ -532,8 +546,8 @@ function LateNightHotelsLandingPage() {
           </div>
         </section>
 
-        <footer className="mx-auto max-w-6xl px-4 py-8 text-sm text-white/40 sm:px-6">
-          Initial Level One traveler experience · Built with HomePlanet
+        <footer className="mx-auto max-w-6xl px-4 py-8 text-sm text-white/65 sm:px-6">
+          Level One overnight traveler experience | Built with HomePlanet
         </footer>
       </div>
 
@@ -546,7 +560,7 @@ function LateNightHotelsLandingPage() {
             ref={flowScrollRef}
             role="dialog"
             aria-modal="true"
-            aria-label="Find a room tonight"
+            aria-label="Find a room after midnight"
             className="max-h-[94dvh] w-full overflow-y-auto overscroll-contain rounded-t-[30px] border border-white/10 bg-[#0d1a2b] text-white shadow-2xl sm:max-w-lg sm:rounded-[30px]"
           >
             <div className="sticky top-0 z-10 border-b border-white/10 bg-[#0d1a2b]/95 px-4 pb-4 pt-3 backdrop-blur">
@@ -567,9 +581,8 @@ function LateNightHotelsLandingPage() {
                     {summary}
                   </div>
                   <div className="mt-1 text-sm text-white/55">
-                    {step === "location" && "Step 1 of 3"}
-                    {step === "timing" && "Step 2 of 3"}
-                    {step === "intent" && "Step 3 of 3"}
+                    {step === "location" && "Step 1 of 2"}
+                    {step === "intent" && "Step 2 of 2"}
                     {step === "results" && "Best matches for you"}
                     {step === "request" && "Request this room"}
                     {step === "requested" && "Request sent"}
@@ -611,7 +624,7 @@ function LateNightHotelsLandingPage() {
                         onChange={(event) => setLocation(event.target.value)}
                         onKeyDown={(event) => {
                           if (event.key === "Enter" && location.trim()) {
-                            setStep("timing");
+                            setStep("intent");
                           }
                         }}
                         className="min-w-0 flex-1 border-0 bg-transparent p-0 text-lg font-semibold text-white outline-none placeholder:text-white/25"
@@ -632,7 +645,7 @@ function LateNightHotelsLandingPage() {
                   <button
                     type="button"
                     disabled={!location.trim()}
-                    onClick={() => setStep("timing")}
+                    onClick={() => setStep("intent")}
                     className="mt-6 w-full rounded-2xl bg-[#f0b65d] px-5 py-4 font-black text-[#142033] transition hover:bg-[#f4c573] disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     CONTINUE
@@ -640,51 +653,15 @@ function LateNightHotelsLandingPage() {
                 </div>
               )}
 
-              {step === "timing" && (
-                <div>
-                  <h2 className="text-3xl font-black tracking-tight">
-                    When do you need to check in?
-                  </h2>
-
-                  <p className="mt-2 leading-6 text-white/60">
-                    We’ll prioritize places that can actually accept you at that
-                    time.
-                  </p>
-
-                  <div className="mt-6 grid gap-3">
-                    {["Right now", "Within 1 hour", "Later tonight"].map(
-                      (option) => (
-                        <button
-                          type="button"
-                          key={option}
-                          onClick={() => {
-                            setTiming(option);
-                            setStep("intent");
-                          }}
-                          className={`flex min-h-16 items-center justify-between rounded-2xl border px-4 py-4 text-left font-black transition ${
-                            timing === option
-                              ? "border-[#f0b65d]/60 bg-[#f0b65d]/10"
-                              : "border-white/10 bg-white/[0.05] hover:bg-white/[0.08]"
-                          }`}
-                        >
-                          <span>{option}</span>
-                          <ChevronRight className="h-5 w-5 text-white/35" />
-                        </button>
-                      ),
-                    )}
-                  </div>
-                </div>
-              )}
-
               {step === "intent" && (
                 <div>
                   <h2 className="text-3xl font-black tracking-tight">
-                    What matters tonight?
+                    What kind of stay do you need?
                   </h2>
 
                   <p className="mt-2 leading-6 text-white/60">
-                    Pick the one thing that matters most. We’ll use it to focus
-                    the matches.
+                    Choose the preference that best describes tonight's stay.
+                    We'll use it to focus the right late-night properties.
                   </p>
 
                   <div className="mt-6 grid gap-3">
@@ -727,7 +704,7 @@ function LateNightHotelsLandingPage() {
               {step === "results" && (
                 <div className="pt-1">
                   <h2 className="text-3xl font-black tracking-tight">
-                    Best matches for you right now
+                    Available late-night check-ins
                   </h2>
 
                   <p className="mt-2 leading-6 text-white/60">
@@ -797,7 +774,7 @@ function LateNightHotelsLandingPage() {
                           <div className="mt-5 flex items-end justify-between gap-3">
                             <div>
                               <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-white/40">
-                                Tonight
+                                Overnight
                               </div>
                               <div className="text-3xl font-black">
                                 {hotel.price}
@@ -861,7 +838,7 @@ function LateNightHotelsLandingPage() {
 
                       <div className="text-right">
                         <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-white/40">
-                          Tonight
+                          Overnight
                         </div>
                         <div className="text-2xl font-black">
                           {selectedHotel.price}
@@ -917,12 +894,12 @@ function LateNightHotelsLandingPage() {
 
                       <div>
                         <div className="font-black">
-                          This does not confirm the room yet.
+                          We'll confirm the room before you travel.
                         </div>
 
                         <p className="mt-1 text-sm leading-6 text-white/60">
-                          Your room is confirmed only after the property accepts
-                          the request and you receive a confirmation.
+                          Send the request now. Stay on this screen and we'll
+                          update it when a property confirms your room.
                         </p>
                       </div>
                     </div>
@@ -930,15 +907,13 @@ function LateNightHotelsLandingPage() {
 
                   <button
                     type="button"
-                    disabled={
-                      requestSaving ||
-                      !travelerName.trim() ||
-                      travelerPhone.replace(/\D/g, "").length < 7
-                    }
+                    disabled={requestSaving}
                     onClick={submitRoomRequest}
                     className="mt-6 w-full rounded-2xl bg-[#f0b65d] px-5 py-4 font-black text-[#142033] transition hover:bg-[#f4c573] disabled:cursor-not-allowed disabled:opacity-40"
                   >
-                    {requestSaving ? "SENDING REQUEST..." : "REQUEST THIS ROOM"}
+                    {requestSaving
+                      ? "SENDING YOUR REQUEST..."
+                      : "SEND MY LATE-NIGHT REQUEST"}
                   </button>
 
                   {requestError && (

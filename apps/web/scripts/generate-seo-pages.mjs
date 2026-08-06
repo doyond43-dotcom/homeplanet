@@ -487,6 +487,44 @@ const publicSeoRegistry = [
   }
 ,
   {
+    route: "/planet/late-night-hotels",
+    title: "Hotels Open After Midnight | 12 AM-6 AM Check-Ins",
+    description:
+      "Find hotels, motels, and motor lodges that accept check-ins between 12 AM and 6 AM. Submit a late-night room request and wait for confirmation before you travel.",
+    image: `${SITE_URL}/og-homeplanet.png`,
+    heading: "Hotels Open After Midnight",
+    body: `
+      <section>
+        <h2>Find a hotel that can check you in after midnight</h2>
+        <p>Finding an available room does not always mean a property will accept a late-night arrival. Hotels Open After Midnight is designed for travelers who need a hotel, motel, or motor lodge that accepts check-ins between 12 AM and 6 AM.</p>
+        <p>Instead of driving from property to property, travelers can submit one overnight room request and wait for confirmation before traveling to the property.</p>
+      </section>
+
+      <section>
+        <h2>Built specifically for 12 AM-6 AM check-ins</h2>
+        <p>The Overnight Hotel Network focuses on the hours when traditional hotel-search experiences often provide the least clarity. Participating properties can receive late-night traveler requests and confirm whether a room and overnight arrival are available.</p>
+      </section>
+
+      <section>
+        <h2>Hotels, motels, and motor lodges open after midnight</h2>
+        <p>The traveler experience is built to make the next step simple: choose an area, select the kind of stay needed, submit a request, and remain on the same screen while the request is reviewed.</p>
+      </section>
+    `,
+    schema: {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      name: "Hotels Open After Midnight",
+      url: `${SITE_URL}/planet/late-night-hotels`,
+      description:
+        "Find hotels, motels, and motor lodges accepting check-ins between 12 AM and 6 AM.",
+      isPartOf: {
+        "@type": "WebSite",
+        name: "HomePlanet",
+        url: `${SITE_URL}/`
+      }
+    }
+  },
+  {
     route: "/planet/best-of-the-lake",
     title: "Best of the Lake Voting Experience Concept | HomePlanet",
     description:
