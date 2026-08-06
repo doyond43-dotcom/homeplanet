@@ -178,24 +178,6 @@ export default function ElectricianLandingPage() {
                 alt="Electrician working on an electrical panel"
                 className="h-[500px] w-full rounded-[1.45rem] object-cover"
               />
-
-              <div className="absolute inset-x-6 bottom-6 rounded-2xl border border-white/15 bg-black/75 p-5 backdrop-blur-xl">
-                <div className="flex items-start gap-3">
-                  <span className="rounded-xl border border-blue-400/30 bg-blue-500/15 p-2.5 text-blue-300">
-                    <Zap size={20} />
-                  </span>
-
-                  <div>
-                    <p className="text-sm font-black">
-                      Tell us what is happening.
-                    </p>
-                    <p className="mt-1 text-xs leading-5 text-white/60">
-                      Start with the problem, property location, urgency, and any
-                      photos that help explain the electrical work.
-                    </p>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -401,3 +383,4 @@ export default function ElectricianLandingPage() {
     </main>
   );
 }
+

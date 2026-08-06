@@ -12,6 +12,7 @@ import {
   Send,
   Sparkles,
   Zap,
+  X,
 } from "lucide-react";
 
 const QUICK_REPLIES = [
@@ -204,6 +205,8 @@ export default function ElectricianIntelligenceDashboard() {
   const [requests, setRequests] = useState<ElectricianRequest[]>([]);
   const [requestsLoading, setRequestsLoading] = useState(true);
   const [requestsError, setRequestsError] = useState("");
+  const [selectedRequest, setSelectedRequest] =
+    useState<ElectricianRequest | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -409,17 +412,19 @@ export default function ElectricianIntelligenceDashboard() {
                 const submittedAt = new Date(request.created_at);
 
                 return (
-                  <article
+                  <button
                     key={request.id}
-                    className="rounded-xl border border-white/10 bg-black/30 p-4"
+                    type="button"
+                    onClick={() => setSelectedRequest(request)}
+                    className="group w-full rounded-2xl border border-white/10 bg-black/30 p-4 text-left transition duration-200 hover:-translate-y-0.5 hover:border-blue-400/45 hover:bg-blue-500/[0.07] hover:shadow-xl hover:shadow-blue-950/20 active:translate-y-0"
                   >
                     <div className="flex gap-3">
-                      <span className="mt-0.5 text-blue-400">
+                      <span className="mt-0.5 rounded-lg border border-blue-400/20 bg-blue-500/10 p-2 text-blue-400 transition group-hover:border-blue-400/40 group-hover:bg-blue-500/15">
                         <Zap size={19} />
                       </span>
 
                       <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
                           <div>
                             <h3 className="font-black">
                               {request.customer_name || "Electrical customer"}
@@ -436,12 +441,12 @@ export default function ElectricianIntelligenceDashboard() {
                           </span>
                         </div>
 
-                        <p className="mt-3 whitespace-pre-line text-sm leading-6 text-white/60">
+                        <p className="mt-3 line-clamp-2 whitespace-pre-line text-sm leading-6 text-white/60">
                           {request.problem_details ||
                             "The customer submitted an electrical service request."}
                         </p>
 
-                        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2.5">
+                        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-3">
                           <span className="text-xs font-bold text-white/45">
                             Submitted{" "}
                             {Number.isNaN(submittedAt.getTime())
@@ -449,18 +454,16 @@ export default function ElectricianIntelligenceDashboard() {
                               : submittedAt.toLocaleString()}
                           </span>
 
-                          <span className="text-[10px] font-black uppercase tracking-[0.08em] text-blue-300">
-                            Live Request
+                          <span className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.08em] text-blue-300">
+                            Open Request
+                            <span className="text-base transition-transform group-hover:translate-x-1">
+                              →
+                            </span>
                           </span>
                         </div>
-
-                        <p className="mt-3 text-[11px] leading-5 text-white/35">
-                          Phone number and property address are protected in this
-                          public demo view.
-                        </p>
                       </div>
                     </div>
-                  </article>
+                  </button>
                 );
               })}
             </div>
@@ -501,6 +504,171 @@ export default function ElectricianIntelligenceDashboard() {
           </div>
         </section>
 
+        <section className="mt-5">
+          <button
+            type="button"
+            onClick={() =>
+              window.location.assign(
+                "/planet/demo/electrician/truth-chain"
+              )
+            }
+            className="flex w-full items-center justify-between rounded-2xl border border-blue-400/30 bg-blue-500/10 px-5 py-4 text-left transition hover:border-blue-400/60 hover:bg-blue-500/15"
+          >
+            <div>
+              <div className="flex items-center gap-2 font-black">
+                <ClipboardList size={19} className="text-blue-300" />
+                Open Live Truth Chain
+              </div>
+              <p className="mt-1 text-sm text-white/45">
+                Move the request from received through the completed outcome.
+              </p>
+            </div>
+
+            <span className="text-xl text-blue-300">→</span>
+          </button>
+        </section>
+
+        {selectedRequest && (
+          <div
+            className="fixed inset-0 z-50 flex justify-end bg-black/75 backdrop-blur-sm"
+            onClick={() => setSelectedRequest(null)}
+          >
+            <aside
+              role="dialog"
+              aria-modal="true"
+              aria-label="Active Request Drawer"
+              onClick={(event) => event.stopPropagation()}
+              className="h-full w-full overflow-y-auto border-l border-blue-400/25 bg-[#070b11] shadow-2xl shadow-black sm:max-w-xl"
+            >
+              <div className="sticky top-0 z-10 border-b border-white/10 bg-[#070b11]/95 px-5 py-4 backdrop-blur">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <div className="text-xs font-black uppercase tracking-[0.12em] text-blue-300">
+                      Active Request
+                    </div>
+
+                    <h2 className="mt-1 text-xl font-black">
+                      {selectedRequest.customer_name ||
+                        "Electrical customer"}
+                    </h2>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedRequest(null)}
+                    className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/60 transition hover:border-blue-400/35 hover:bg-blue-500/10 hover:text-white"
+                    aria-label="Close active request"
+                  >
+                    <X size={19} />
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-5 p-5">
+                <section className="rounded-2xl border border-blue-400/25 bg-blue-500/[0.07] p-5">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <div className="text-xs font-black uppercase tracking-[0.1em] text-white/35">
+                        Service requested
+                      </div>
+
+                      <h3 className="mt-2 text-xl font-black text-blue-200">
+                        {selectedRequest.service_type ||
+                          "Electrical service request"}
+                      </h3>
+                    </div>
+
+                    <span className="rounded-full border border-orange-400/25 bg-orange-500/10 px-3 py-1.5 text-xs font-black text-orange-200">
+                      {selectedRequest.urgency || "Timing not provided"}
+                    </span>
+                  </div>
+
+                  <div className="mt-5 rounded-xl border border-white/10 bg-black/30 p-4">
+                    <div className="text-xs font-black uppercase tracking-[0.1em] text-white/35">
+                      Customer details
+                    </div>
+
+                    <p className="mt-2 whitespace-pre-line text-sm leading-6 text-white/70">
+                      {selectedRequest.problem_details ||
+                        "No additional request details were provided."}
+                    </p>
+                  </div>
+
+                  <p className="mt-4 text-xs leading-5 text-white/35">
+                    Private customer contact details are hidden in this public
+                    demonstration.
+                  </p>
+                </section>
+
+                <section className="rounded-2xl border border-white/10 bg-[#0b0f15] p-5">
+                  <div className="mb-4 flex items-center gap-3">
+                    <span className="rounded-xl border border-blue-400/30 bg-blue-500/10 p-2 text-blue-300">
+                      <Sparkles size={18} />
+                    </span>
+
+                    <div>
+                      <h3 className="font-black">What to do next</h3>
+                      <p className="text-xs text-white/45">
+                        Live guidance based on this request.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    {buildLiveSuggestions([selectedRequest]).map(
+                      (suggestion, index) => (
+                        <div
+                          key={suggestion.title}
+                          className="flex gap-3 rounded-xl border border-white/10 bg-black/30 p-4"
+                        >
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-blue-400/30 bg-blue-500/10 text-xs font-black text-blue-300">
+                            {index + 1}
+                          </span>
+
+                          <div>
+                            <div className="text-sm font-black">
+                              {suggestion.title}
+                            </div>
+
+                            <p className="mt-1 text-sm leading-6 text-white/55">
+                              {suggestion.detail}
+                            </p>
+                          </div>
+                        </div>
+                      )
+                    )}
+                  </div>
+                </section>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    window.location.assign(
+                      "/planet/demo/electrician/truth-chain"
+                    )
+                  }
+                  className="flex w-full items-center justify-between rounded-2xl border border-blue-400/40 bg-blue-500/15 px-5 py-4 text-left transition hover:border-blue-300 hover:bg-blue-500/20"
+                >
+                  <div>
+                    <div className="flex items-center gap-2 font-black">
+                      <ClipboardList
+                        size={19}
+                        className="text-blue-300"
+                      />
+                      Open Live Truth Chain
+                    </div>
+
+                    <p className="mt-1 text-sm text-white/45">
+                      Move this request through the customer outcome.
+                    </p>
+                  </div>
+
+                  <span className="text-xl text-blue-300">→</span>
+                </button>
+              </div>
+            </aside>
+          </div>
+        )}
         <footer className="py-8 text-center text-xs font-bold text-white/30">
           HomePlanet Live Board Demo
         </footer>
@@ -508,6 +676,8 @@ export default function ElectricianIntelligenceDashboard() {
     </main>
   );
 }
+
+
 
 
 

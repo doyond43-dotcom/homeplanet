@@ -60,6 +60,7 @@ import OnlyTheEssentialsIntelligenceDashboard from "../pages/OnlyTheEssentialsIn
 import ElectricianIntelligenceDashboard from "../pages/ElectricianIntelligenceDashboard";
 import ElectricianLandingPage from "../pages/ElectricianLandingPage";
 import ElectricianRequestPage from "../pages/ElectricianRequestPage";
+import ElectricianTruthChain from "../pages/ElectricianTruthChain";
 import OnlyTheEssentialsLiveActivity from "../pages/OnlyTheEssentialsLiveActivity";
 import RidgelineIntelligenceDashboard from "../pages/RidgelineIntelligenceDashboard";
 import RidgelineRequestV2 from "../pages/RidgelineRequestV2";
@@ -724,6 +725,7 @@ export default function PlanetRoutes() {
   <Route path="demo/electrician" element={<ElectricianLandingPage />} />
   <Route path="demo/electrician/request" element={<ElectricianRequestPage />} />
   <Route path="demo/electrician/intelligence" element={<ElectricianIntelligenceDashboard />} />
+  <Route path="demo/electrician/truth-chain" element={<ElectricianTruthChain />} />
       <Route path="demo/auto-service" element={<AutoRepairLiveBoardSample />} />
       <Route path="demo/auto-service-sample" element={<AutoRepairLiveBoardSample />} />
       <Route path="demo/camp-aquaflow" element={<CampAquaflowStandalone />} />
@@ -880,6 +882,7 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
 
 
 
