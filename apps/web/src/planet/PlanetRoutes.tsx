@@ -1,4 +1,5 @@
-﻿import GuardianPetPrivacyPage from "../pages/GuardianPetPrivacyPage";
+﻿import { lazy, Suspense } from "react";
+import GuardianPetPrivacyPage from "../pages/GuardianPetPrivacyPage";
 
 import { Routes, Route, Navigate } from "react-router-dom";
 
@@ -57,10 +58,6 @@ import OnlyTheEssentialsPublicLanding from "../pages/OnlyTheEssentialsPublicLand
 import OnlyTheEssentialsRequest from "../pages/OnlyTheEssentialsRequest";
 import OnlyTheEssentialsRequestV2 from "../pages/OnlyTheEssentialsRequestV2";
 import OnlyTheEssentialsIntelligenceDashboard from "../pages/OnlyTheEssentialsIntelligenceDashboard";
-import ElectricianIntelligenceDashboard from "../pages/ElectricianIntelligenceDashboard";
-import ElectricianLandingPage from "../pages/ElectricianLandingPage";
-import ElectricianRequestPage from "../pages/ElectricianRequestPage";
-import ElectricianTruthChain from "../pages/ElectricianTruthChain";
 import OnlyTheEssentialsLiveActivity from "../pages/OnlyTheEssentialsLiveActivity";
 import RidgelineIntelligenceDashboard from "../pages/RidgelineIntelligenceDashboard";
 import RidgelineRequestV2 from "../pages/RidgelineRequestV2";
@@ -479,6 +476,32 @@ import HydraJobDetailPage from "../pages/HydraJobDetailPage";
 import IceConstructionCommandPage from "../pages/IceConstructionCommandPage";
 import IceConstructionLandingPage from "../pages/IceConstructionLandingPage";
 // Ridgeline production route refresh
+const ElectricianLandingPage = lazy(
+  () => import("../pages/ElectricianLandingPage"),
+);
+
+const ElectricianRequestPage = lazy(
+  () => import("../pages/ElectricianRequestPage"),
+);
+
+const ElectricianIntelligenceDashboard = lazy(
+  () => import("../pages/ElectricianIntelligenceDashboard"),
+);
+
+const ElectricianTruthChain = lazy(
+  () => import("../pages/ElectricianTruthChain"),
+);
+
+const ElectricianRouteFallback = () => (
+  <div className="flex min-h-screen items-center justify-center bg-[#04070c] px-6 text-white">
+    <div className="text-center">
+      <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-white/15 border-t-cyan-400" />
+      <p className="mt-4 text-sm font-bold uppercase tracking-[0.16em] text-white/70">
+        Loading electrical system
+      </p>
+    </div>
+  </div>
+);
 export default function PlanetRoutes() {
   return (
     <Routes>
@@ -722,10 +745,38 @@ export default function PlanetRoutes() {
 
       <Route path="demo/home-services" element={<AwnitDemoBoard />} />
       <Route path="demo/cleaning-board" element={<OnlyTheEssentialsBoard />} />
-  <Route path="demo/electrician" element={<ElectricianLandingPage />} />
-  <Route path="demo/electrician/request" element={<ElectricianRequestPage />} />
-  <Route path="demo/electrician/intelligence" element={<ElectricianIntelligenceDashboard />} />
-  <Route path="demo/electrician/truth-chain" element={<ElectricianTruthChain />} />
+  <Route
+        path="demo/electrician"
+        element={
+          <Suspense fallback={<ElectricianRouteFallback />}>
+            <ElectricianLandingPage />
+          </Suspense>
+        }
+      />
+  <Route
+        path="demo/electrician/request"
+        element={
+          <Suspense fallback={<ElectricianRouteFallback />}>
+            <ElectricianRequestPage />
+          </Suspense>
+        }
+      />
+  <Route
+        path="demo/electrician/intelligence"
+        element={
+          <Suspense fallback={<ElectricianRouteFallback />}>
+            <ElectricianIntelligenceDashboard />
+          </Suspense>
+        }
+      />
+  <Route
+        path="demo/electrician/truth-chain"
+        element={
+          <Suspense fallback={<ElectricianRouteFallback />}>
+            <ElectricianTruthChain />
+          </Suspense>
+        }
+      />
       <Route path="demo/auto-service" element={<AutoRepairLiveBoardSample />} />
       <Route path="demo/auto-service-sample" element={<AutoRepairLiveBoardSample />} />
       <Route path="demo/camp-aquaflow" element={<CampAquaflowStandalone />} />
@@ -882,6 +933,7 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
 
 
 

@@ -1,4 +1,5 @@
-﻿import {
+﻿import { useEffect } from "react";
+import {
   ArrowRight,
   BatteryCharging,
   Camera,
@@ -78,6 +79,89 @@ const reviews = [
 ];
 
 export default function ElectricianLandingPage() {
+  useEffect(() => {
+    const canonicalUrl =
+      "https://www.homeplanet.city/planet/demo/electrician";
+
+    const title =
+      "Electrician Live Page & Business Operating System | HomePlanet";
+
+    const description =
+      "Explore a working electrician Live Page, customer request flow, Operator Live Board, customer intelligence, quick replies, and Truth Chain built by HomePlanet.";
+
+    const previousTitle = document.title;
+
+    const descriptionTag =
+      document.querySelector<HTMLMetaElement>('meta[name="description"]');
+
+    const previousDescription =
+      descriptionTag?.getAttribute("content") ?? null;
+
+    let canonicalTag =
+      document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+
+    const canonicalWasCreated = !canonicalTag;
+    const previousCanonical =
+      canonicalTag?.getAttribute("href") ?? null;
+
+    if (!canonicalTag) {
+      canonicalTag = document.createElement("link");
+      canonicalTag.setAttribute("rel", "canonical");
+      document.head.appendChild(canonicalTag);
+    }
+
+    document.title = title;
+
+    if (descriptionTag) {
+      descriptionTag.setAttribute("content", description);
+    } else {
+      const createdDescription = document.createElement("meta");
+      createdDescription.setAttribute("name", "description");
+      createdDescription.setAttribute("content", description);
+      createdDescription.setAttribute(
+        "data-electrician-description",
+        "true",
+      );
+      document.head.appendChild(createdDescription);
+    }
+
+    canonicalTag.setAttribute("href", canonicalUrl);
+
+    return () => {
+      document.title = previousTitle;
+
+      const createdDescription = document.querySelector(
+        'meta[data-electrician-description="true"]',
+      );
+
+      createdDescription?.remove();
+
+      if (descriptionTag) {
+        if (previousDescription === null) {
+          descriptionTag.removeAttribute("content");
+        } else {
+          descriptionTag.setAttribute(
+            "content",
+            previousDescription,
+          );
+        }
+      }
+
+      if (canonicalWasCreated) {
+        canonicalTag?.remove();
+      } else if (canonicalTag) {
+        if (previousCanonical === null) {
+          canonicalTag.removeAttribute("href");
+        } else {
+          canonicalTag.setAttribute(
+            "href",
+            previousCanonical,
+          );
+        }
+      }
+    };
+  }, []);
+
   const textMessage =
     "Hi, I found Okee Dokie Electric through HomePlanet and need help with an electrical project.";
 
@@ -644,6 +728,7 @@ export default function ElectricianLandingPage() {
     </main>
   );
 }
+
 
 
 
