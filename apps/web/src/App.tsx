@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+﻿import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useSearchParams } from "react-router-dom";
 import { RequireAuth } from "./auth/RequireAuth";
 
@@ -67,6 +67,12 @@ const VZProfessionalLawncareLiveActivity = lazy(() =>
 );
 const LateNightHotelsLandingPage = lazy(() => import("./pages/LateNightHotelsLandingPage"));
 const LateNightHotelsOperatorBoard = lazy(() => import("./pages/LateNightHotelsOperatorBoard"));
+const ElectricianLandingPage = lazy(() => import("./pages/ElectricianLandingPage"));
+const ElectricianRequestPage = lazy(() => import("./pages/ElectricianRequestPage"));
+const ElectricianIntelligenceDashboard = lazy(() =>
+  import("./pages/ElectricianIntelligenceDashboard")
+);
+const ElectricianTruthChain = lazy(() => import("./pages/ElectricianTruthChain"));
 function LiveShell() {
   return <Outlet />;
 }
@@ -154,6 +160,22 @@ export default function App() {
           {/* Slap-A-Bug system intentionally offline */}
           <Route path="/planet/slap-a-bug" element={<Navigate to="/" replace />} />
           <Route path="/planet/slap-a-bug/*" element={<Navigate to="/" replace />} />
+          <Route
+            path="/planet/demo/electrician"
+            element={<ElectricianLandingPage />}
+          />
+          <Route
+            path="/planet/demo/electrician/request"
+            element={<ElectricianRequestPage />}
+          />
+          <Route
+            path="/planet/demo/electrician/intelligence"
+            element={<ElectricianIntelligenceDashboard />}
+          />
+          <Route
+            path="/planet/demo/electrician/truth-chain"
+            element={<ElectricianTruthChain />}
+          />
           <Route path="/planet/demo/pest-control/board" element={<DemoPestControlBoardPage />} />
           <Route path="/planet/demo/pest-control" element={<DemoPestControlLandingPage />} />
           <Route path="/planet/demo/home-services/board" element={<DemoHomeServicesBoardPage />} />
@@ -256,5 +278,6 @@ export default function App() {
     </BrowserRouter>
   );
 }
+
 
 
