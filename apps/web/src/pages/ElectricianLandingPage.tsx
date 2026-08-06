@@ -1,14 +1,18 @@
 ﻿import {
   ArrowRight,
   BatteryCharging,
+  Camera,
   CheckCircle2,
   CircuitBoard,
+  Clock3,
   House,
   LampCeiling,
   MessageCircle,
   Phone,
+  Play,
   ShieldCheck,
   Sparkles,
+  Star,
   Wrench,
   Zap,
 } from "lucide-react";
@@ -55,11 +59,22 @@ const services = [
   },
 ];
 
-const trustPoints = [
-  "Clear communication before work begins",
-  "Safety concerns taken seriously",
-  "Photos can be reviewed before an estimate",
-  "Simple request and follow-up process",
+const reviews = [
+  {
+    name: "Homeowner Review",
+    text:
+      "Clear communication, professional work, and everything was explained before the project moved forward.",
+  },
+  {
+    name: "Local Customer",
+    text:
+      "The request process was simple, the follow-up was fast, and we always knew what the next step was.",
+  },
+  {
+    name: "Residential Customer",
+    text:
+      "Professional from the first message through the completed electrical work.",
+  },
 ];
 
 export default function ElectricianLandingPage() {
@@ -67,8 +82,8 @@ export default function ElectricianLandingPage() {
     "Hi, I found Okee Dokie Electric through HomePlanet and need help with an electrical project.";
 
   return (
-    <main className="min-h-screen bg-[#04070c] text-white">
-      <header className="border-b border-white/10 bg-[#05080d]/95">
+    <main className="min-h-screen bg-[#04070c] pb-20 text-white sm:pb-0">
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-[#05080d]/90 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-4">
           <a
             href="/planet/demo/electrician"
@@ -129,14 +144,15 @@ export default function ElectricianLandingPage() {
             </h1>
 
             <p className="mt-6 max-w-xl text-base leading-7 text-white/65 sm:text-lg">
-              Tell us what is happening, share photos when helpful, and request
-              electrical service through one simple doorway.
+              Professional residential electrical service with a clear request
+              process, dependable communication, and one simple place to get
+              started.
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <a
                 href="#request-electrical-service"
-                className="flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-blue-500 px-6 text-sm font-black uppercase tracking-[0.08em] text-white shadow-[0_18px_50px_rgba(37,99,235,0.3)] transition hover:bg-blue-400"
+                className="flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-blue-500 px-6 text-sm font-black uppercase tracking-[0.08em] shadow-[0_18px_50px_rgba(37,99,235,0.3)] transition hover:bg-blue-400"
               >
                 Request Electrical Service
                 <ArrowRight size={18} />
@@ -154,12 +170,12 @@ export default function ElectricianLandingPage() {
             <div className="mt-7 flex flex-wrap gap-x-5 gap-y-3 text-xs font-bold text-white/55">
               <span className="flex items-center gap-2">
                 <CheckCircle2 size={15} className="text-blue-400" />
-                Residential service
+                Residential electrical service
               </span>
 
               <span className="flex items-center gap-2">
                 <CheckCircle2 size={15} className="text-blue-400" />
-                Estimate requests
+                Clear estimate requests
               </span>
 
               <span className="flex items-center gap-2">
@@ -174,16 +190,19 @@ export default function ElectricianLandingPage() {
 
             <div className="relative overflow-hidden rounded-[2rem] border border-blue-300/20 bg-[#0a101a] p-3 shadow-2xl shadow-blue-950/40">
               <img
-                src="https://images.unsplash.com/photo-1621905252507-b35492cc74b4?auto=format&fit=crop&w=1200&q=88"
-                alt="Electrician working on an electrical panel"
-                className="h-[500px] w-full rounded-[1.45rem] object-cover"
+                src="/images/electrician_beside_open_breaker_panel.png"
+                alt="Professional electrician beside a modern electrical panel"
+                className="h-[500px] w-full rounded-[1.45rem] object-cover object-center"
               />
             </div>
           </div>
         </div>
       </section>
 
-      <section id="electrical-services" className="border-b border-white/10 px-5 py-20">
+      <section
+        id="electrical-services"
+        className="border-b border-white/10 px-5 py-20"
+      >
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
             <p className="text-xs font-black uppercase tracking-[0.24em] text-blue-400">
@@ -195,8 +214,8 @@ export default function ElectricianLandingPage() {
             </h2>
 
             <p className="mt-4 text-base leading-7 text-white/55">
-              Select the electrical issue or project that best matches what is
-              happening at your property.
+              Choose the service that best matches your electrical issue or
+              upcoming project.
             </p>
           </div>
 
@@ -232,10 +251,246 @@ export default function ElectricianLandingPage() {
       </section>
 
       <section className="border-b border-white/10 bg-[#070b11] px-5 py-20">
+        <div className="mx-auto max-w-6xl">
+          <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.24em] text-blue-400">
+                Professional From Start To Finish
+              </p>
+
+              <h2 className="mt-4 text-3xl font-black leading-tight tracking-tight sm:text-5xl">
+                A better customer experience before the work even begins.
+              </h2>
+
+              <p className="mt-5 max-w-xl text-base leading-7 text-white/60">
+                Customers should be able to understand the services, see the
+                quality of the business, and know exactly how to request help
+                without chasing down scattered information.
+              </p>
+
+              <div className="mt-8 grid gap-3 sm:grid-cols-2">
+                {[
+                  "Clear service information",
+                  "Real project photos",
+                  "Customer video updates",
+                  "Simple estimate requests",
+                  "Reviews and trust",
+                  "Direct call and text access",
+                ].map((item) => (
+                  <div
+                    key={item}
+                    className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/25 p-4"
+                  >
+                    <CheckCircle2
+                      size={18}
+                      className="shrink-0 text-blue-400"
+                    />
+                    <span className="text-sm font-bold text-white/75">
+                      {item}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <article className="sm:col-span-2 rounded-[2rem] border border-blue-400/25 bg-[linear-gradient(135deg,rgba(37,99,235,0.18),rgba(5,8,13,0.95))] p-6 shadow-xl shadow-blue-950/20">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-300">
+                      Featured Project
+                    </p>
+                    <h3 className="mt-3 text-2xl font-black">
+                      Electrical panel upgrade
+                    </h3>
+                    <p className="mt-3 max-w-lg text-sm leading-6 text-white/55">
+                      A polished project feature can show the customer what was
+                      needed, what was completed, and the finished result.
+                    </p>
+                  </div>
+
+                  <CircuitBoard
+                    size={42}
+                    className="shrink-0 text-blue-300"
+                  />
+                </div>
+
+                <div className="mt-6 grid grid-cols-3 gap-2">
+                  {[
+                    {
+                      label: "Before",
+                      image: "/images/electrician-panel-before.png",
+                      alt: "Older electrical panel before an upgrade",
+                    },
+                    {
+                      label: "Work",
+                      image: "/images/electrician-panel-work.png",
+                      alt: "Electrician completing an electrical panel upgrade",
+                    },
+                    {
+                      label: "Finished",
+                      image: "/images/electrician-panel-finished.png",
+                      alt: "Completed modern electrical panel installation",
+                    },
+                  ].map((item) => (
+                    <div
+                      key={item.label}
+                      className="group relative min-h-28 overflow-hidden rounded-2xl border border-white/10 bg-black/30"
+                    >
+                      <img
+                        src={item.image}
+                        alt={item.alt}
+                        className="absolute inset-0 h-full w-full object-cover opacity-75 transition duration-500 group-hover:scale-105 group-hover:opacity-90"
+                      />
+
+                      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/10 to-transparent" />
+
+                      <div className="absolute inset-x-0 bottom-0 p-3">
+                        <span className="inline-flex rounded-full border border-white/15 bg-black/60 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.1em] text-white/90 backdrop-blur">
+                          {item.label}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </article>
+
+              <article className="rounded-3xl border border-white/10 bg-[#090d14] p-6">
+                <Camera size={28} className="text-blue-300" />
+                <h3 className="mt-5 text-xl font-black">Project Gallery</h3>
+                <p className="mt-3 text-sm leading-6 text-white/50">
+                  Finished work, installations, repairs, and before-and-after
+                  results presented cleanly.
+                </p>
+              </article>
+
+              <article className="rounded-3xl border border-white/10 bg-[#090d14] p-6">
+                <MessageCircle size={28} className="text-blue-300" />
+                <h3 className="mt-5 text-xl font-black">
+                  Clear Communication
+                </h3>
+                <p className="mt-3 text-sm leading-6 text-white/50">
+                  Customers always know how to ask questions, request service,
+                  and understand what happens next.
+                </p>
+              </article>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="border-b border-white/10 px-5 py-20">
+        <div className="mx-auto max-w-6xl">
+          <div className="grid gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
+            <div className="relative overflow-hidden rounded-[2rem] border border-blue-400/20 bg-[radial-gradient(circle_at_70%_20%,rgba(59,130,246,0.2),transparent_35%),linear-gradient(135deg,#0a111d,#05080d)] p-8 shadow-2xl shadow-blue-950/20 sm:p-10">
+              <div className="flex min-h-[360px] flex-col justify-between">
+                <div className="flex items-center justify-between gap-4">
+                  <span className="rounded-full border border-blue-400/25 bg-blue-500/10 px-4 py-2 text-xs font-black uppercase tracking-[0.15em] text-blue-300">
+                    Project Video
+                  </span>
+
+                  <span className="flex h-12 w-12 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white">
+                    <Play size={20} fill="currentColor" />
+                  </span>
+                </div>
+
+                <div>
+                  <p className="text-sm font-black uppercase tracking-[0.14em] text-blue-300">
+                    See The Finished Work
+                  </p>
+                  <h2 className="mt-4 max-w-xl text-3xl font-black leading-tight sm:text-5xl">
+                    Let customers see the quality for themselves.
+                  </h2>
+                  <p className="mt-4 max-w-xl text-base leading-7 text-white/55">
+                    A professional video section gives the business a place to
+                    show completed work, explain the project, and build trust
+                    before the customer ever calls.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.24em] text-blue-400">
+                What Customers Want To Know
+              </p>
+
+              <div className="mt-6 space-y-3">
+                {[
+                  {
+                    icon: Camera,
+                    title: "What does the finished work look like?",
+                  },
+                  {
+                    icon: Clock3,
+                    title: "What happens after I submit a request?",
+                  },
+                  {
+                    icon: ShieldCheck,
+                    title: "Can I trust the business with my property?",
+                  },
+                ].map((item) => {
+                  const Icon = item.icon;
+
+                  return (
+                    <article
+                      key={item.title}
+                      className="flex items-center gap-4 rounded-2xl border border-white/10 bg-[#090d14] p-5"
+                    >
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-blue-400/25 bg-blue-500/10 text-blue-300">
+                        <Icon size={20} />
+                      </span>
+
+                      <p className="font-black text-white/80">{item.title}</p>
+                    </article>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="border-b border-white/10 bg-[#070b11] px-5 py-20">
+        <div className="mx-auto max-w-6xl">
+          <div className="mx-auto max-w-2xl text-center">
+            <p className="text-xs font-black uppercase tracking-[0.24em] text-blue-400">
+              Customer Reviews
+            </p>
+
+            <h2 className="mt-4 text-3xl font-black tracking-tight sm:text-5xl">
+              Trust built through real customer experiences.
+            </h2>
+          </div>
+
+          <div className="mt-10 grid gap-4 lg:grid-cols-3">
+            {reviews.map((review) => (
+              <article
+                key={review.name}
+                className="rounded-3xl border border-white/10 bg-[#090d14] p-6"
+              >
+                <div className="flex gap-1 text-blue-400">
+                  {Array.from({ length: 5 }).map((_, index) => (
+                    <Star key={index} size={17} fill="currentColor" />
+                  ))}
+                </div>
+
+                <p className="mt-5 text-base leading-7 text-white/70">
+                  “{review.text}”
+                </p>
+
+                <p className="mt-6 text-sm font-black">{review.name}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="border-b border-white/10 px-5 py-20">
         <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[0.92fr_1.08fr] lg:items-center">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.24em] text-blue-400">
-              Safety comes first
+              Safety Comes First
             </p>
 
             <h2 className="mt-4 text-3xl font-black leading-tight tracking-tight sm:text-5xl">
@@ -249,23 +504,30 @@ export default function ElectricianLandingPage() {
 
             <div className="mt-7 rounded-3xl border border-blue-400/25 bg-blue-500/10 p-5">
               <div className="flex gap-3">
-                <ShieldCheck className="mt-0.5 shrink-0 text-blue-300" size={22} />
+                <ShieldCheck
+                  className="mt-0.5 shrink-0 text-blue-300"
+                  size={22}
+                />
 
                 <p className="text-sm leading-6 text-blue-50/85">
-                  Do not touch exposed wiring. Turn off the affected circuit only
-                  when it is safe to do so, and contact a qualified electrician.
-                  Call emergency services when there is fire, smoke, or immediate
-                  danger.
+                  Do not touch exposed wiring. Turn off the affected circuit
+                  only when it is safe to do so. Call emergency services when
+                  there is fire, smoke, or immediate danger.
                 </p>
               </div>
             </div>
           </div>
 
           <div className="grid gap-3">
-            {trustPoints.map((point) => (
+            {[
+              "Clear communication before work begins",
+              "Safety concerns taken seriously",
+              "Photos can be included with the request",
+              "Simple request and follow-up process",
+            ].map((point) => (
               <article
                 key={point}
-                className="flex items-center gap-4 rounded-2xl border border-white/10 bg-black/25 p-5"
+                className="flex items-center gap-4 rounded-2xl border border-white/10 bg-[#090d14] p-5"
               >
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-blue-400/25 bg-blue-500/10 text-blue-300">
                   <CheckCircle2 size={20} />
@@ -279,13 +541,13 @@ export default function ElectricianLandingPage() {
       </section>
 
       <section id="request-electrical-service" className="px-5 py-20">
-        <div className="mx-auto max-w-6xl overflow-hidden rounded-[2rem] border border-blue-400/25 bg-[linear-gradient(135deg,rgba(37,99,235,0.18),rgba(5,8,13,0.98)_55%)] shadow-[0_30px_100px_rgba(0,0,0,0.35)]">
+        <div className="mx-auto max-w-6xl overflow-hidden rounded-[2rem] border border-blue-400/25 bg-[linear-gradient(135deg,rgba(37,99,235,0.2),rgba(5,8,13,0.98)_55%)] shadow-[0_30px_100px_rgba(0,0,0,0.35)]">
           <div className="grid gap-8 p-7 sm:p-10 lg:grid-cols-[1fr_auto] lg:items-center">
             <div>
               <div className="flex items-center gap-2 text-blue-300">
                 <Sparkles size={18} />
                 <p className="text-xs font-black uppercase tracking-[0.22em]">
-                  Ready to get started?
+                  Ready To Get Started?
                 </p>
               </div>
 
@@ -294,9 +556,8 @@ export default function ElectricianLandingPage() {
               </h2>
 
               <p className="mt-4 max-w-2xl text-base leading-7 text-white/60">
-                Share the problem, the property location, when you need help,
-                and any useful photos. The electrician can review the request
-                before following up.
+                Share what is happening, the property location, when you need
+                help, and any photos that help explain the work.
               </p>
             </div>
 
@@ -340,14 +601,14 @@ export default function ElectricianLandingPage() {
           </div>
 
           <p className="mt-3 text-sm text-white/45">
-            Electrical service demo powered by HomePlanet.
+            Customer-facing Live Page powered by HomePlanet.
           </p>
 
           <a
             href="/planet/demo/electrician/intelligence"
             className="mt-6 inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-blue-400"
           >
-            View Customer Intelligence
+            View The Engine Underneath
             <ArrowRight size={14} />
           </a>
         </div>
@@ -383,4 +644,5 @@ export default function ElectricianLandingPage() {
     </main>
   );
 }
+
 
