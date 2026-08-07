@@ -219,6 +219,11 @@ export default function App() {
         <Route path="/dan-field-notebook-desk" element={<DanFieldNotebookDesk />} />
         <Route path="/lee-student-notebook-desk" element={<LeeStudentNotebookDesk />} />
 
+        <Route
+          path="/guardian-pet"
+          element={<Navigate to="/planet/guardian-pet" replace />}
+        />
+
         <Route path="/planet/*" element={<PlanetRoutes />} />
         <Route path="/creator/*" element={<CreatorRoutes />} />
         <Route path="/app/*" element={<WorkspaceRoutes />} />
