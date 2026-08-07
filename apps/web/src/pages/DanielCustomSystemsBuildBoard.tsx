@@ -266,7 +266,7 @@ function formatActivity(value: string) {
 function statusTone(lane: CustomSystemsAwarenessLane) {
   switch (lane) {
     case "Needs My Action":
-      return "border-[#7ee000]/35 bg-[#7ee000]/[0.07] text-[#b8ff68]";
+      return "border-[#80df00]/35 bg-[#80df00]/[0.07] text-[#a6ff3d]";
     case "Waiting On Customer":
       return "border-amber-300/25 bg-amber-300/[0.07] text-amber-100";
     case "Ready For Review":
@@ -795,7 +795,6 @@ function BuildActionWorkspace({
   function handleSave() {
     const updated = buildUpdatedRecord();
     onSave(updated);
-    setProgressNote("");
   }
 
   function handleCompleteAndClose() {
@@ -804,15 +803,14 @@ function BuildActionWorkspace({
   }
 
   return (
-    <section className="rounded-[24px] border border-[#7ee000]/28 bg-[#7ee000]/[0.07] p-5">
+    <section className="rounded-[24px] border border-white/10 bg-white/[0.025] p-5">
       <div>
-        <p className="text-xs font-black uppercase tracking-[0.17em] text-[#9ae93c]">
-          Action Workspace
+        <p className="text-xs font-black uppercase tracking-[0.17em] text-[#80df00]">
+          Work Area
         </p>
 
         <p className="mt-2 text-sm leading-6 text-white/58">
-          Work this Build Record here. Saving updates the same record the board
-          and timeline use.
+          Update the work here. Everything stays connected.
         </p>
       </div>
 
@@ -829,7 +827,7 @@ function BuildActionWorkspace({
                 event.target.value as CustomSystemsBuildRecord["status"],
               )
             }
-            className="mt-2 min-h-12 w-full rounded-2xl border border-white/12 bg-[#0b110d] px-4 py-3 text-sm font-bold text-white outline-none transition focus:border-[#7ee000]/65 focus:ring-2 focus:ring-[#7ee000]/20"
+            className="mt-2 min-h-12 w-full rounded-2xl border border-white/12 bg-[#090b0a] px-4 py-3 text-sm font-bold text-white outline-none transition focus:border-[#80df00]/65 focus:ring-2 focus:ring-[#80df00]/20"
           >
             {CUSTOM_SYSTEMS_BUILD_STATUSES.map((option) => (
               <option key={option} value={option}>
@@ -847,7 +845,7 @@ function BuildActionWorkspace({
           <input
             value={currentMilestone}
             onChange={(event) => setCurrentMilestone(event.target.value)}
-            className="mt-2 min-h-12 w-full rounded-2xl border border-white/12 bg-[#0b110d] px-4 py-3 text-sm font-semibold text-white outline-none transition placeholder:text-white/25 focus:border-[#7ee000]/65 focus:ring-2 focus:ring-[#7ee000]/20"
+            className="mt-2 min-h-12 w-full rounded-2xl border border-white/12 bg-[#090b0a] px-4 py-3 text-sm font-semibold text-white outline-none transition placeholder:text-white/25 focus:border-[#80df00]/65 focus:ring-2 focus:ring-[#80df00]/20"
           />
         </label>
 
@@ -860,7 +858,7 @@ function BuildActionWorkspace({
             value={nextAction}
             onChange={(event) => setNextAction(event.target.value)}
             rows={3}
-            className="mt-2 w-full resize-y rounded-2xl border border-white/12 bg-[#0b110d] px-4 py-3 text-sm font-semibold leading-6 text-white outline-none transition placeholder:text-white/25 focus:border-[#7ee000]/65 focus:ring-2 focus:ring-[#7ee000]/20"
+            className="mt-2 w-full resize-y rounded-2xl border border-white/12 bg-[#090b0a] px-4 py-3 text-sm font-semibold leading-6 text-white outline-none transition placeholder:text-white/25 focus:border-[#80df00]/65 focus:ring-2 focus:ring-[#80df00]/20"
           />
         </label>
 
@@ -874,7 +872,7 @@ function BuildActionWorkspace({
             onChange={(event) => setProgressNote(event.target.value)}
             rows={3}
             placeholder="What did you just do, decide, fix, or learn?"
-            className="mt-2 w-full resize-y rounded-2xl border border-white/12 bg-[#0b110d] px-4 py-3 text-sm leading-6 text-white outline-none transition placeholder:text-white/25 focus:border-[#7ee000]/65 focus:ring-2 focus:ring-[#7ee000]/20"
+            className="mt-2 w-full resize-y rounded-2xl border border-white/12 bg-[#090b0a] px-4 py-3 text-sm leading-6 text-white outline-none transition placeholder:text-white/25 focus:border-[#80df00]/65 focus:ring-2 focus:ring-[#80df00]/20"
           />
 
           <span className="mt-2 block text-xs leading-5 text-white/35">
@@ -886,7 +884,7 @@ function BuildActionWorkspace({
           <button
             type="button"
             onClick={handleSave}
-            className="min-h-12 rounded-2xl border border-white/14 bg-white/[0.055] px-4 py-3 text-sm font-black text-white transition hover:border-white/30 hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7ee000]"
+            className="min-h-12 rounded-2xl border border-white/14 bg-white/[0.055] px-4 py-3 text-sm font-black text-white transition hover:border-white/30 hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#80df00]"
           >
             Save Progress
           </button>
@@ -894,7 +892,7 @@ function BuildActionWorkspace({
           <button
             type="button"
             onClick={handleCompleteAndClose}
-            className="min-h-12 rounded-2xl border border-[#7ee000]/40 bg-[#7ee000]/14 px-4 py-3 text-sm font-black text-[#c5ff82] transition hover:border-[#7ee000]/75 hover:bg-[#7ee000]/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7ee000]"
+            className="min-h-12 rounded-2xl border border-[#80df00]/40 bg-[#80df00]/14 px-4 py-3 text-sm font-black text-[#b7ff59] transition hover:border-[#80df00]/75 hover:bg-[#80df00]/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#80df00]"
           >
             Complete Action & Close
           </button>
@@ -1029,16 +1027,17 @@ export default function DanielCustomSystemsBuildBoard() {
   const [activeBuildId, setActiveBuildId] = useState<string | null>(null);
   const [recordsLoading, setRecordsLoading] = useState(true);
   const [recordsError, setRecordsError] = useState("");
+  const [drawerNote, setDrawerNote] = useState("");
   const [requestPileSort, setRequestPileSort] =
-    useState<RequestPileSort>("oldest");
+    useState<RequestPileSort>("newest");
 
   const [openLanes, setOpenLanes] = useState<
     Record<CustomSystemsAwarenessLane, boolean>
   >({
-    "Needs My Action": true,
-    "Waiting On Customer": true,
-    "Ready For Review": true,
-    "Ready To Launch": true,
+    "Needs My Action": false,
+    "Waiting On Customer": false,
+    "Ready For Review": false,
+    "Ready To Launch": false,
   });
 
   function toggleLane(lane: CustomSystemsAwarenessLane) {
@@ -1356,45 +1355,172 @@ export default function DanielCustomSystemsBuildBoard() {
     return result;
   }, [buildRecords]);
 
+  const commandNeedsAttention = buildRecords
+    .filter(
+      (record) =>
+        record.status !== "New Lead" &&
+        toCustomSystemsBuildCardView(record).awarenessLane === "Needs My Action",
+    )
+    .sort(
+      (a, b) =>
+        new Date(b.updatedAt).getTime() -
+        new Date(a.updatedAt).getTime(),
+    );
+
+  const commandWaiting = buildRecords.filter(
+    (record) =>
+      record.status !== "New Lead" &&
+      toCustomSystemsBuildCardView(record).awarenessLane === "Waiting On Customer",
+  );
+
+  const commandMoving = buildRecords.filter((record) => {
+    if (record.status === "New Lead") {
+      return false;
+    }
+
+    const lane = toCustomSystemsBuildCardView(record).awarenessLane;
+
+    return lane === "Ready For Review" || lane === "Ready To Launch";
+  });
+
+  const commandCompleted = buildRecords.filter((record) =>
+    ["Launched", "Complete", "Completed", "Closed"].includes(
+      record.status as string,
+    ),
+  );
+
+
   return (
-    <main className="min-h-screen bg-[#070b09] text-white">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(126,224,0,0.07),transparent_34%)]" />
+    <main className="min-h-screen bg-[#020706] text-white">
+      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(128,223,0,0.035),transparent_30%)]" />
 
       <div className="relative mx-auto max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
         <header className="mb-7 rounded-[28px] border border-white/10 bg-white/[0.035] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.28)] sm:p-7">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.22em] text-[#9ae93c]">
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-[#80df00]">
                 HomePlanet · Daniel / Custom Systems
               </p>
 
               <h1 className="mt-3 text-3xl font-black tracking-[-0.04em] text-white sm:text-4xl">
-                Live Board
+                Command Center
               </h1>
 
-              <p className="mt-3 max-w-3xl text-sm leading-6 text-white/62 sm:text-base">
-                Awareness first. See what needs attention, open one Build Record,
-                do the work in the Active Drawer, complete the action, then close it.
-              </p>
+              <div className="mt-5">
+                <p className="text-xl font-black tracking-tight text-white sm:text-2xl">
+                  Good Morning, Daniel.
+                </p>
+
+                <p className="mt-1 text-sm font-semibold text-white/55 sm:text-base">
+                  Here's what's waiting for you today.
+                </p>
+              </div>
             </div>
 
             <div className="flex flex-wrap gap-3">
               <a
                 href="/planet/custom-systems/activity"
-                className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-[#7ee000]/40 bg-[#7ee000]/10 px-5 py-3 text-sm font-black text-[#b8ff68] transition hover:border-[#7ee000]/75 hover:bg-[#7ee000]/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7ee000]"
+                className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-[#80df00]/40 bg-[#80df00]/10 px-5 py-3 text-sm font-black text-[#a6ff3d] transition hover:border-[#80df00]/75 hover:bg-[#80df00]/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#80df00]"
               >
                 Live Activity
               </a>
 
               <a
                 href="/planet/custom-systems"
-                className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-white/15 bg-white/[0.045] px-5 py-3 text-sm font-black text-white transition hover:border-[#7ee000]/55 hover:bg-[#7ee000]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7ee000]"
+                className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-white/15 bg-white/[0.045] px-5 py-3 text-sm font-black text-white transition hover:border-[#80df00]/55 hover:bg-[#80df00]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#80df00]"
               >
                 View Live Page
               </a>
             </div>
           </div>
         </header>
+
+        {!recordsLoading && !recordsError && (
+          <section
+            aria-label="Command Center morning briefing"
+            className="mb-7 space-y-3"
+          >
+            <div className="rounded-[22px] border border-red-400/20 bg-[#080a09] px-5 py-4 sm:px-6">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <span className="h-3 w-3 rounded-full bg-red-400 shadow-[0_0_18px_rgba(248,113,113,0.45)]" />
+
+                  <span className="font-black text-white">
+                    Needs Your Attention
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-black text-white/55">
+                    {commandNeedsAttention.length}
+                  </span>
+
+
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-[22px] border border-amber-300/15 bg-[#080a09] px-5 py-4 sm:px-6">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <span className="h-3 w-3 rounded-full bg-amber-300" />
+
+                  <span className="font-black text-white">
+                    Waiting On Customer
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-black text-white/55">
+                    {commandWaiting.length}
+                  </span>
+
+
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-[22px] border border-[#80df00]/15 bg-[#080a09] px-5 py-4 sm:px-6">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <span className="h-3 w-3 rounded-full bg-[#80df00] shadow-[0_0_14px_rgba(128,223,0,0.35)]" />
+
+                  <span className="font-black text-white">
+                    Builds Moving Smoothly
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-black text-white/55">
+                    {commandMoving.length}
+                  </span>
+
+
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-[22px] border border-sky-300/15 bg-[#080a09] px-5 py-4 sm:px-6">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <span className="h-3 w-3 rounded-full bg-sky-300" />
+
+                  <span className="font-black text-white">
+                    Recently Completed
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-black text-white/55">
+                    {commandCompleted.length}
+                  </span>
+
+
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
 
         {recordsLoading && (
           <div className="mb-5 rounded-[22px] border border-white/10 bg-white/[0.035] px-5 py-4 text-sm font-semibold text-white/60">
@@ -1412,11 +1538,11 @@ export default function DanielCustomSystemsBuildBoard() {
           <>
             <section
               aria-labelledby="custom-systems-new-requests-title"
-              className="mb-7 rounded-[26px] border border-white/10 bg-[#0c120f]/92 p-4 shadow-[0_22px_60px_rgba(0,0,0,0.24)] sm:p-5"
+              className="mb-7 rounded-[26px] border border-white/10 bg-[#080a09] p-4 shadow-[0_22px_60px_rgba(0,0,0,0.24)] sm:p-5"
             >
               <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[#9ae93c]">
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[#80df00]">
                     Incoming Pile
                   </p>
 
@@ -1428,7 +1554,7 @@ export default function DanielCustomSystemsBuildBoard() {
                       New Requests
                     </h2>
 
-                    <span className="inline-flex min-w-9 items-center justify-center rounded-full border border-[#7ee000]/30 bg-[#7ee000]/10 px-3 py-1 text-xs font-black text-[#b8ff68]">
+                    <span className="inline-flex min-w-9 items-center justify-center rounded-full border border-[#80df00]/30 bg-[#80df00]/10 px-3 py-1 text-xs font-black text-[#a6ff3d]">
                       {newRequests.length}
                     </span>
                   </div>
@@ -1451,7 +1577,7 @@ export default function DanielCustomSystemsBuildBoard() {
                         current === "oldest" ? "newest" : "oldest",
                       )
                     }
-                    className="min-h-10 rounded-xl border border-white/12 bg-white/[0.045] px-4 py-2 text-xs font-black text-white/75 transition hover:border-[#7ee000]/45 hover:text-white"
+                    className="min-h-10 rounded-xl border border-white/12 bg-white/[0.045] px-4 py-2 text-xs font-black text-white/75 transition hover:border-[#80df00]/45 hover:text-white"
                   >
                     {requestPileSort === "oldest"
                       ? "Oldest First"
@@ -1483,12 +1609,12 @@ export default function DanielCustomSystemsBuildBoard() {
                             Customer / Business
                           </p>
 
-                          <h3 className="mt-1 break-words text-lg font-black leading-tight text-[#b8ff68]">
+                          <h3 className="mt-1 break-words text-lg font-black leading-tight text-[#a6ff3d]">
                             {record.customer.businessName || record.customer.name}
                           </h3>
                         </div>
 
-                        <span className="shrink-0 rounded-full border border-[#7ee000]/22 bg-[#7ee000]/8 px-2.5 py-1 text-[11px] font-black text-[#b8ff68]">
+                        <span className="shrink-0 rounded-full border border-[#80df00]/22 bg-[#80df00]/8 px-2.5 py-1 text-[11px] font-black text-[#a6ff3d]">
                           New
                         </span>
                       </div>
@@ -1519,7 +1645,7 @@ export default function DanielCustomSystemsBuildBoard() {
                         <button
                           type="button"
                           onClick={() => void pullRequestIntoWork(record)}
-                          className="min-h-11 rounded-xl border border-[#7ee000]/35 bg-[#7ee000]/10 px-3 py-2 text-xs font-black text-[#b8ff68] transition hover:border-[#7ee000]/70 hover:bg-[#7ee000]/15"
+                          className="min-h-11 rounded-xl border border-[#80df00]/35 bg-[#80df00]/10 px-3 py-2 text-xs font-black text-[#a6ff3d] transition hover:border-[#80df00]/70 hover:bg-[#80df00]/15"
                         >
                           Pull Into Work
                         </button>
@@ -1536,7 +1662,7 @@ export default function DanielCustomSystemsBuildBoard() {
                   Active Work
                 </p>
                 <h2 className="mt-1 text-xl font-black text-white">
-                  Builds In Motion
+                  Active Work
                 </h2>
               </div>
 
@@ -1558,13 +1684,13 @@ export default function DanielCustomSystemsBuildBoard() {
             return (
               <section
                 key={lane}
-                className="min-w-0 rounded-[26px] border border-white/10 bg-[#0c120f]/92 p-4 shadow-[0_22px_60px_rgba(0,0,0,0.24)]"
+                className="min-w-0 rounded-[26px] border border-white/10 bg-[#080a09] p-4 shadow-[0_22px_60px_rgba(0,0,0,0.24)]"
               >
                 <button
                   type="button"
                   onClick={() => toggleLane(lane)}
                   aria-expanded={openLanes[lane]}
-                  className="mb-4 flex w-full items-center justify-between gap-3 rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7ee000]"
+                  className="mb-4 flex w-full items-center justify-between gap-3 rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#80df00]"
                 >
                   <div>
                     <p className="text-xs font-black uppercase tracking-[0.18em] text-white/48">
@@ -1612,7 +1738,7 @@ export default function DanielCustomSystemsBuildBoard() {
                               Customer / Business
                             </p>
 
-                            <h3 className="mt-1 break-words text-lg font-black leading-tight text-[#b8ff68]">
+                            <h3 className="mt-1 break-words text-lg font-black leading-tight text-[#a6ff3d]">
                               {card.customerLabel}
                             </h3>
                           </div>
@@ -1633,7 +1759,7 @@ export default function DanielCustomSystemsBuildBoard() {
                                 event.target.value as CustomSystemsAwarenessLane,
                               )
                             }
-                            className="mt-2 min-h-11 w-full cursor-pointer rounded-xl border border-white/12 bg-[#0b110d] px-3 py-2 text-sm font-black text-white outline-none transition hover:border-[#7ee000]/45 focus:border-[#7ee000]/65 focus:ring-2 focus:ring-[#7ee000]/20"
+                            className="mt-2 min-h-11 w-full cursor-pointer rounded-xl border border-white/12 bg-[#090b0a] px-3 py-2 text-sm font-black text-white outline-none transition hover:border-[#80df00]/45 focus:border-[#80df00]/65 focus:ring-2 focus:ring-[#80df00]/20"
                           >
                             {CUSTOM_SYSTEMS_AWARENESS_LANES.map((stage) => (
                               <option key={stage} value={stage}>
@@ -1674,7 +1800,7 @@ export default function DanielCustomSystemsBuildBoard() {
                         <button
                           type="button"
                           onClick={() => setActiveBuildId(card.id)}
-                          className="mt-5 flex min-h-12 w-full items-center justify-center rounded-2xl border border-[#7ee000]/35 bg-[#7ee000]/10 px-4 py-3 text-sm font-black text-[#b8ff68] transition hover:border-[#7ee000]/70 hover:bg-[#7ee000]/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7ee000]"
+                          className="mt-5 flex min-h-12 w-full items-center justify-center rounded-2xl border border-[#80df00]/35 bg-[#80df00]/10 px-4 py-3 text-sm font-black text-[#a6ff3d] transition hover:border-[#80df00]/70 hover:bg-[#80df00]/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#80df00]"
                         >
                           Open Build
                         </button>
@@ -1691,7 +1817,7 @@ export default function DanielCustomSystemsBuildBoard() {
         )}
 
         <footer className="mt-6 rounded-[22px] border border-white/8 bg-white/[0.025] px-5 py-4 text-sm leading-6 text-white/46">
-          Live Board = awareness and pull-based work. New requests wait in the pile
+          Command Center = awareness and next-action work. New requests wait in the pile
           until Daniel chooses what to pull into active work. The Build Record remains
           the source of truth.
         </footer>
@@ -1710,12 +1836,12 @@ export default function DanielCustomSystemsBuildBoard() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="custom-systems-active-drawer-title"
-            className="absolute inset-y-0 right-0 flex w-full max-w-[760px] flex-col border-l border-white/10 bg-[#090e0b] shadow-[-30px_0_90px_rgba(0,0,0,0.55)]"
+            className="absolute inset-y-0 right-0 flex w-full max-w-[760px] flex-col border-l border-white/10 bg-[#070908] shadow-[-30px_0_90px_rgba(0,0,0,0.55)]"
           >
-            <header className="shrink-0 border-b border-white/10 bg-[#0d140f] px-5 py-5 sm:px-7">
+            <header className="shrink-0 border-b border-white/10 bg-[#0a0c0b] px-5 py-5 sm:px-7">
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
-                  <p className="text-xs font-black uppercase tracking-[0.2em] text-[#9ae93c]">
+                  <p className="text-xs font-black uppercase tracking-[0.2em] text-[#80df00]">
                     Active Drawer
                   </p>
 
@@ -1732,16 +1858,18 @@ export default function DanielCustomSystemsBuildBoard() {
                       {activeBuild.status}
                     </span>
 
-                    <span className="rounded-full border border-[#7ee000]/25 bg-[#7ee000]/[0.07] px-3 py-1 text-xs font-bold text-[#b8ff68]">
-                      {activeBuild.currentMilestone}
-                    </span>
+                    {activeBuild.status !== "New Lead" ? (
+                      <span className="rounded-full border border-[#80df00]/25 bg-[#80df00]/[0.07] px-3 py-1 text-xs font-bold text-[#a6ff3d]">
+                        {activeBuild.currentMilestone}
+                      </span>
+                    ) : null}
                   </div>
                 </div>
 
                 <button
                   type="button"
                   onClick={() => setActiveBuildId(null)}
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/12 bg-white/[0.045] text-xl font-black text-white/75 transition hover:border-white/30 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7ee000]"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/12 bg-white/[0.045] text-xl font-black text-white/75 transition hover:border-white/30 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#80df00]"
                   aria-label="Close Active Drawer"
                 >
                   ×
@@ -1752,8 +1880,354 @@ export default function DanielCustomSystemsBuildBoard() {
             <div className="flex-1 overflow-y-auto px-5 py-5 sm:px-7 sm:py-7">
               <div className="space-y-4">
 
-                <section className="rounded-[24px] border border-[#7ee000]/22 bg-[#7ee000]/[0.055] p-5">
-                  <p className="text-xs font-black uppercase tracking-[0.17em] text-[#9ae93c]">
+                {activeBuild.status === "New Lead" ? (
+                  <>
+                    <section className="rounded-[24px] border border-white/10 bg-white/[0.025] p-5">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <p className="text-xs font-black uppercase tracking-[0.17em] text-[#80df00]">
+                          What They Asked For
+                        </p>
+
+                        <span className="rounded-full border border-[#80df00]/25 bg-[#80df00]/10 px-3 py-1 text-xs font-black text-[#a6ff3d]">
+                          New Lead
+                        </span>
+                      </div>
+
+                      <p className="mt-4 text-xl font-black leading-7 text-white">
+                        {activeBuild.whatWeAreSolving}
+                      </p>
+                    </section>
+
+                    <section className="rounded-[24px] border border-white/10 bg-white/[0.025] p-5">
+                      <p className="text-xs font-black uppercase tracking-[0.17em] text-white/45">
+                        Their Original Words
+                      </p>
+
+                      <blockquote className="mt-3 border-l-2 border-[#80df00]/45 pl-4 text-base leading-7 text-white/78">
+                        {activeBuild.whatWeAreSolving}
+                      </blockquote>
+                    </section>
+
+                    <section className="rounded-[24px] border border-white/10 bg-white/[0.025] p-5">
+                      <p className="text-xs font-black uppercase tracking-[0.17em] text-white/45">
+                        Contact
+                      </p>
+
+                      <div className="mt-4 space-y-2">
+                        {activeBuild.customer.name &&
+                        activeBuild.customer.name !== "New Customer" ? (
+                          <p className="text-base font-black text-white">
+                            {activeBuild.customer.name}
+                          </p>
+                        ) : null}
+
+                        {activeBuild.originalRequest.match(
+                          /(?:^|\n)Phone:\s*([^\n]+)/,
+                        )?.[1] ? (
+                          <p className="text-sm font-semibold text-white/70">
+                            {
+                              activeBuild.originalRequest.match(
+                                /(?:^|\n)Phone:\s*([^\n]+)/,
+                              )?.[1]
+                            }
+                          </p>
+                        ) : null}
+
+                        {activeBuild.originalRequest.match(
+                          /(?:^|\n)Email:\s*([^\n]+)/,
+                        )?.[1] ? (
+                          <p className="text-sm font-semibold text-white/70">
+                            {
+                              activeBuild.originalRequest.match(
+                                /(?:^|\n)Email:\s*([^\n]+)/,
+                              )?.[1]
+                            }
+                          </p>
+                        ) : null}
+
+                        {!activeBuild.originalRequest.match(
+                          /(?:^|\n)(?:Phone|Email):\s*([^\n]+)/,
+                        ) &&
+                        (!activeBuild.customer.name ||
+                          activeBuild.customer.name === "New Customer") ? (
+                          <p className="text-sm text-white/38">
+                            No contact information was provided.
+                          </p>
+                        ) : null}
+                      </div>
+                    </section>
+
+                    <section className="rounded-[24px] border border-white/10 bg-white/[0.025] p-5">
+                      <p className="text-xs font-black uppercase tracking-[0.17em] text-[#80df00]">
+                        Next Action
+                      </p>
+
+                      <p className="mt-3 text-base font-black leading-7 text-white">
+                        {activeBuild.nextAction}
+                      </p>
+
+                      <button
+                        type="button"
+                        onClick={() => void pullRequestIntoWork(activeBuild)}
+                        className="mt-5 flex min-h-12 w-full items-center justify-center rounded-2xl bg-[#80df00] px-5 py-3 text-sm font-black text-black transition hover:bg-[#9cff19] hover:shadow-[0_0_34px_rgba(128,223,0,0.22)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b7ff59]"
+                      >
+                        Pull Into Work
+                      </button>
+                    </section>
+
+                    <details className="rounded-[24px] border border-white/10 bg-white/[0.025]">
+                      <summary className="cursor-pointer list-none px-5 py-4 text-sm font-black text-white">
+                        <span className="flex items-center justify-between gap-4">
+                          Add Internal Note
+                          <span className="text-[#80df00]">+</span>
+                        </span>
+                      </summary>
+
+                      <div className="border-t border-white/8 p-5">
+                        <textarea
+                          value={drawerNote}
+                          onChange={(event) => setDrawerNote(event.target.value)}
+                          rows={3}
+                          placeholder="Add a quick note..."
+                          className="w-full resize-y rounded-2xl border border-white/12 bg-[#090b0a] px-4 py-3 text-sm leading-6 text-white outline-none placeholder:text-white/25 focus:border-[#80df00]/65 focus:ring-2 focus:ring-[#80df00]/20"
+                        />
+
+                        <button
+                          type="button"
+                          disabled={!drawerNote.trim()}
+                          onClick={() => {
+                            const note = drawerNote.trim();
+
+                            if (!note) {
+                              return;
+                            }
+
+                            const now = new Date().toISOString();
+
+                            void updateBuildRecord({
+                              ...activeBuild,
+                              updatedAt: now,
+                              timeline: [
+                                ...activeBuild.timeline,
+                                {
+                                  id: `internal-note-${Date.now()}`,
+                                  createdAt: now,
+                                  type: "build-progress",
+                                  title: note,
+                                  actor: "Daniel",
+                                },
+                              ],
+                            });
+
+                            setDrawerNote("");
+                          }}
+                          className="mt-3 min-h-11 w-full rounded-2xl border border-[#80df00]/30 bg-[#80df00]/10 px-4 py-2 text-sm font-black text-[#a6ff3d] transition hover:border-[#80df00]/65 hover:bg-[#80df00]/15 disabled:cursor-not-allowed disabled:opacity-35"
+                        >
+                          Save Note
+                        </button>
+                      </div>
+                    </details>
+
+                    <details className="rounded-[24px] border border-white/10 bg-white/[0.025]">
+                      <summary className="cursor-pointer list-none px-5 py-4 text-sm font-black text-white">
+                        <span className="flex items-center justify-between gap-4">
+                          <span>
+                            History{" "}
+                            <span className="text-white/35">
+                              ({activeBuild.timeline.length})
+                            </span>
+                          </span>
+
+                          <span className="text-[#80df00]">›</span>
+                        </span>
+                      </summary>
+
+                      <div className="border-t border-white/8 p-5">
+                        {activeBuild.timeline.length > 0 ? (
+                          <div className="space-y-4">
+                            {[...activeBuild.timeline]
+                              .sort(
+                                (a, b) =>
+                                  new Date(b.createdAt).getTime() -
+                                  new Date(a.createdAt).getTime(),
+                              )
+                              .map((event) => (
+                                <div
+                                  key={event.id}
+                                  className="border-b border-white/[0.07] pb-4 last:border-0 last:pb-0"
+                                >
+                                  <p className="text-sm font-black text-white/85">
+                                    {event.title}
+                                  </p>
+
+                                  <p className="mt-1 text-xs text-white/38">
+                                    {formatActivity(event.createdAt)}
+                                    {event.actor ? ` · ${event.actor}` : ""}
+                                  </p>
+                                </div>
+                              ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-white/38">
+                            No history yet.
+                          </p>
+                        )}
+                      </div>
+                    </details>
+                  </>
+                ) : null}
+
+                {(activeBuild.status === "Understanding Problem" ||
+                  activeBuild.status === "Building") ? (
+                  <>
+                    <section className="rounded-[24px] border border-white/10 bg-white/[0.025] p-5">
+                      <div className="flex items-center justify-between gap-4">
+                        <p className="text-xs font-black uppercase tracking-[0.17em] text-[#80df00]">
+                          Current Milestone
+                        </p>
+
+                        <span className="rounded-full border border-[#80df00]/25 bg-[#80df00]/10 px-3 py-1 text-xs font-black text-[#a6ff3d]">
+                          {activeBuild.status}
+                        </span>
+                      </div>
+
+                      <p className="mt-3 text-lg font-black leading-7 text-white">
+                        {activeBuild.currentMilestone}
+                      </p>
+                    </section>
+
+                    <section className="rounded-[24px] border border-white/10 bg-white/[0.025] p-5">
+                      <p className="text-xs font-black uppercase tracking-[0.17em] text-[#80df00]">
+                        Next Action
+                      </p>
+
+                      <p className="mt-3 text-base font-black leading-7 text-white">
+                        {activeBuild.nextAction}
+                      </p>
+                    </section>
+
+                    {activeBuild.currentBuild.summary &&
+                    activeBuild.currentBuild.summary !==
+                      "No build has started yet." ? (
+                      <section className="rounded-[24px] border border-white/10 bg-white/[0.025] p-5">
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                          <div>
+                            <p className="text-xs font-black uppercase tracking-[0.17em] text-white/45">
+                              Current Build
+                            </p>
+
+                            <p className="mt-3 text-base font-bold leading-6 text-white/88">
+                              {activeBuild.currentBuild.summary}
+                            </p>
+                          </div>
+
+                          {activeBuild.currentBuild.url ? (
+                            <a
+                              href={activeBuild.currentBuild.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-2xl border border-[#80df00]/30 bg-[#80df00]/10 px-4 py-2 text-sm font-black text-[#a6ff3d]"
+                            >
+                              Open Build
+                            </a>
+                          ) : null}
+                        </div>
+                      </section>
+                    ) : null}
+
+                    {activeBuild.progressProof.length > 0 ? (
+                      <section className="rounded-[24px] border border-white/10 bg-white/[0.025] p-5">
+                        <p className="text-xs font-black uppercase tracking-[0.17em] text-white/45">
+                          Progress & Proof
+                        </p>
+
+                        <div className="mt-4 space-y-2">
+                          {activeBuild.progressProof.map((proof) => (
+                            <div
+                              key={proof.id}
+                              className="rounded-2xl border border-white/8 bg-black/15 p-3"
+                            >
+                              <p className="text-sm font-bold text-white/85">
+                                {proof.label}
+                              </p>
+
+                              {proof.description ? (
+                                <p className="mt-1 text-sm leading-5 text-white/55">
+                                  {proof.description}
+                                </p>
+                              ) : null}
+                            </div>
+                          ))}
+                        </div>
+                      </section>
+                    ) : null}
+
+                    <BuildActionWorkspace
+                      key={activeBuild.id}
+                      record={activeBuild}
+                      onSave={updateBuildRecord}
+                      onCompleteAndClose={completeBuildAction}
+                    />
+
+                    <details className="rounded-[24px] border border-white/10 bg-white/[0.025]">
+                      <summary className="cursor-pointer list-none px-5 py-4 text-sm font-black text-white">
+                        <span className="flex items-center justify-between gap-4">
+                          <span>
+                            History{" "}
+                            <span className="text-white/35">
+                              ({activeBuild.timeline.length})
+                            </span>
+                          </span>
+
+                          <span className="text-[#80df00]">›</span>
+                        </span>
+                      </summary>
+
+                      <div className="border-t border-white/8 p-5">
+                        {activeBuild.timeline.length > 0 ? (
+                          <div className="space-y-4">
+                            {[...activeBuild.timeline]
+                              .sort(
+                                (a, b) =>
+                                  new Date(b.createdAt).getTime() -
+                                  new Date(a.createdAt).getTime(),
+                              )
+                              .map((event) => (
+                                <div
+                                  key={event.id}
+                                  className="border-b border-white/[0.07] pb-4 last:border-0 last:pb-0"
+                                >
+                                  <p className="text-sm font-black text-white/85">
+                                    {event.title}
+                                  </p>
+
+                                  <p className="mt-1 text-xs text-white/38">
+                                    {formatActivity(event.createdAt)}
+                                    {event.actor ? ` · ${event.actor}` : ""}
+                                  </p>
+                                </div>
+                              ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-white/38">
+                            No history yet.
+                          </p>
+                        )}
+                      </div>
+                    </details>
+                  </>
+                ) : null}
+                <div
+                  className={
+                    activeBuild.status === "New Lead" ||
+                    activeBuild.status === "Understanding Problem" ||
+                    activeBuild.status === "Building"
+                      ? "hidden"
+                      : "contents"
+                  }
+                >
+                <section className="rounded-[24px] border border-white/10 bg-white/[0.025] p-5">
+                  <p className="text-xs font-black uppercase tracking-[0.17em] text-[#80df00]">
                     What We Are Solving
                   </p>
                   <p className="mt-3 text-base font-semibold leading-7 text-white/88">
@@ -1765,7 +2239,7 @@ export default function DanielCustomSystemsBuildBoard() {
                   <p className="text-xs font-black uppercase tracking-[0.17em] text-white/45">
                     Customer's Original Words / Problem
                   </p>
-                  <blockquote className="mt-3 border-l-2 border-[#7ee000]/45 pl-4 text-base leading-7 text-white/78">
+                  <blockquote className="mt-3 border-l-2 border-[#80df00]/45 pl-4 text-base leading-7 text-white/78">
                     {activeBuild.originalRequest}
                   </blockquote>
                 </section>
@@ -1826,7 +2300,7 @@ export default function DanielCustomSystemsBuildBoard() {
                         href={activeBuild.currentBuild.url}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-2xl border border-[#7ee000]/30 bg-[#7ee000]/10 px-4 py-2 text-sm font-black text-[#b8ff68] transition hover:border-[#7ee000]/65 hover:bg-[#7ee000]/15"
+                        className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-2xl border border-[#80df00]/30 bg-[#80df00]/10 px-4 py-2 text-sm font-black text-[#a6ff3d] transition hover:border-[#80df00]/65 hover:bg-[#80df00]/15"
                       >
                         Open Current Build
                       </a>
@@ -1918,8 +2392,8 @@ export default function DanielCustomSystemsBuildBoard() {
                   </div>
                 </section>
 
-                <section className="rounded-[24px] border border-[#7ee000]/22 bg-[#7ee000]/[0.055] p-5">
-                  <p className="text-xs font-black uppercase tracking-[0.17em] text-[#9ae93c]">
+                <section className="rounded-[24px] border border-white/10 bg-white/[0.025] p-5">
+                  <p className="text-xs font-black uppercase tracking-[0.17em] text-[#80df00]">
                     Next Action
                   </p>
                   <p className="mt-3 text-base font-black leading-7 text-white">
@@ -1928,7 +2402,7 @@ export default function DanielCustomSystemsBuildBoard() {
                 </section>
 
                 <BuildActionWorkspace
-                  key={`${activeBuild.id}-${activeBuild.updatedAt}`}
+                  key={activeBuild.id}
                   record={activeBuild}
                   onSave={updateBuildRecord}
                   onCompleteAndClose={completeBuildAction}
@@ -1999,7 +2473,7 @@ export default function DanielCustomSystemsBuildBoard() {
                             className="relative flex gap-4 pb-5 last:pb-0"
                           >
                             <div className="relative flex w-4 shrink-0 justify-center">
-                              <span className="relative z-10 mt-1 h-3 w-3 rounded-full border-2 border-[#7ee000]/65 bg-[#0b110d]" />
+                              <span className="relative z-10 mt-1 h-3 w-3 rounded-full border-2 border-[#80df00]/65 bg-[#090b0a]" />
 
                               {index < events.length - 1 ? (
                                 <span className="absolute bottom-[-4px] top-3 w-px bg-white/10" />
@@ -2039,10 +2513,11 @@ export default function DanielCustomSystemsBuildBoard() {
                   )}
                 </section>
 
+                </div>
               </div>
             </div>
 
-            <footer className="shrink-0 border-t border-white/10 bg-[#0d140f] px-5 py-4 sm:px-7">
+            <footer className="shrink-0 border-t border-white/10 bg-[#0a0c0b] px-5 py-4 sm:px-7">
               <div className="flex items-center justify-between gap-4">
                 <p className="text-xs leading-5 text-white/38">
                   One Build Record · permanent history
@@ -2051,9 +2526,9 @@ export default function DanielCustomSystemsBuildBoard() {
                 <button
                   type="button"
                   onClick={() => setActiveBuildId(null)}
-                  className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-white/14 bg-white/[0.05] px-5 py-2 text-sm font-black text-white transition hover:border-white/30 hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7ee000]"
+                  className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-white/14 bg-white/[0.05] px-5 py-2 text-sm font-black text-white transition hover:border-white/30 hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#80df00]"
                 >
-                  Close Build
+                  Close
                 </button>
               </div>
             </footer>
