@@ -1880,6 +1880,98 @@ export default function DanielCustomSystemsBuildBoard() {
             <div className="flex-1 overflow-y-auto px-5 py-5 sm:px-7 sm:py-7">
               <div className="space-y-4">
 
+                <section className="rounded-[24px] border border-white/10 bg-white/[0.025] p-5">
+                  <p className="text-xs font-black uppercase tracking-[0.17em] text-[#80df00]">
+                    Customer / Contact
+                  </p>
+
+                  <div className="mt-4 space-y-3">
+                    {activeBuild.customer.name &&
+                    activeBuild.customer.name !== "New Customer" ? (
+                      <div>
+                        <p className="text-[11px] font-black uppercase tracking-[0.13em] text-white/35">
+                          Name
+                        </p>
+                        <p className="mt-1 text-base font-black text-white">
+                          {activeBuild.customer.name}
+                        </p>
+                      </div>
+                    ) : null}
+
+                    {activeBuild.customer.businessName?.trim() ? (
+                      <div>
+                        <p className="text-[11px] font-black uppercase tracking-[0.13em] text-white/35">
+                          Business
+                        </p>
+                        <p className="mt-1 text-sm font-semibold text-white/75">
+                          {activeBuild.customer.businessName}
+                        </p>
+                      </div>
+                    ) : null}
+
+                    {activeBuild.originalRequest.match(
+                      /(?:^|\n)Phone:\s*([^\n]+)/,
+                    )?.[1] ? (
+                      <div>
+                        <p className="text-[11px] font-black uppercase tracking-[0.13em] text-white/35">
+                          Phone
+                        </p>
+                        <p className="mt-1 text-sm font-semibold text-white/75">
+                          {
+                            activeBuild.originalRequest.match(
+                              /(?:^|\n)Phone:\s*([^\n]+)/,
+                            )?.[1]
+                          }
+                        </p>
+                      </div>
+                    ) : null}
+
+                    {activeBuild.originalRequest.match(
+                      /(?:^|\n)Email:\s*([^\n]+)/,
+                    )?.[1] ? (
+                      <div>
+                        <p className="text-[11px] font-black uppercase tracking-[0.13em] text-white/35">
+                          Email
+                        </p>
+                        <p className="mt-1 break-all text-sm font-semibold text-white/75">
+                          {
+                            activeBuild.originalRequest.match(
+                              /(?:^|\n)Email:\s*([^\n]+)/,
+                            )?.[1]
+                          }
+                        </p>
+                      </div>
+                    ) : null}
+
+                    {activeBuild.originalRequest.match(
+                      /(?:^|\n)Preferred contact:\s*([^\n]+)/,
+                    )?.[1] ? (
+                      <div>
+                        <p className="text-[11px] font-black uppercase tracking-[0.13em] text-white/35">
+                          Preferred Contact
+                        </p>
+                        <p className="mt-1 text-sm font-semibold text-white/75">
+                          {
+                            activeBuild.originalRequest.match(
+                              /(?:^|\n)Preferred contact:\s*([^\n]+)/,
+                            )?.[1]
+                          }
+                        </p>
+                      </div>
+                    ) : null}
+
+                    {!activeBuild.customer.name &&
+                    !activeBuild.customer.businessName &&
+                    !activeBuild.originalRequest.match(
+                      /(?:^|\n)(?:Phone|Email|Preferred contact):\s*([^\n]+)/,
+                    ) ? (
+                      <p className="text-sm text-white/38">
+                        No customer contact information was provided.
+                      </p>
+                    ) : null}
+                  </div>
+                </section>
+
                 {activeBuild.status === "New Lead" ? (
                   <>
                     <section className="rounded-[24px] border border-white/10 bg-white/[0.025] p-5">
@@ -1908,54 +2000,6 @@ export default function DanielCustomSystemsBuildBoard() {
                       </blockquote>
                     </section>
 
-                    <section className="rounded-[24px] border border-white/10 bg-white/[0.025] p-5">
-                      <p className="text-xs font-black uppercase tracking-[0.17em] text-white/45">
-                        Contact
-                      </p>
-
-                      <div className="mt-4 space-y-2">
-                        {activeBuild.customer.name &&
-                        activeBuild.customer.name !== "New Customer" ? (
-                          <p className="text-base font-black text-white">
-                            {activeBuild.customer.name}
-                          </p>
-                        ) : null}
-
-                        {activeBuild.originalRequest.match(
-                          /(?:^|\n)Phone:\s*([^\n]+)/,
-                        )?.[1] ? (
-                          <p className="text-sm font-semibold text-white/70">
-                            {
-                              activeBuild.originalRequest.match(
-                                /(?:^|\n)Phone:\s*([^\n]+)/,
-                              )?.[1]
-                            }
-                          </p>
-                        ) : null}
-
-                        {activeBuild.originalRequest.match(
-                          /(?:^|\n)Email:\s*([^\n]+)/,
-                        )?.[1] ? (
-                          <p className="text-sm font-semibold text-white/70">
-                            {
-                              activeBuild.originalRequest.match(
-                                /(?:^|\n)Email:\s*([^\n]+)/,
-                              )?.[1]
-                            }
-                          </p>
-                        ) : null}
-
-                        {!activeBuild.originalRequest.match(
-                          /(?:^|\n)(?:Phone|Email):\s*([^\n]+)/,
-                        ) &&
-                        (!activeBuild.customer.name ||
-                          activeBuild.customer.name === "New Customer") ? (
-                          <p className="text-sm text-white/38">
-                            No contact information was provided.
-                          </p>
-                        ) : null}
-                      </div>
-                    </section>
 
                     <section className="rounded-[24px] border border-white/10 bg-white/[0.025] p-5">
                       <p className="text-xs font-black uppercase tracking-[0.17em] text-[#80df00]">
