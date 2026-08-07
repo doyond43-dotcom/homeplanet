@@ -678,7 +678,7 @@ function PetTagLanding() {
                     className="flex items-center gap-3 text-base font-semibold text-white/78"
                   >
                     <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-cyan-300/12 text-sm font-bold text-cyan-200">
-                      âœ“
+                      ✓
                     </span>
                     {item}
                   </div>
@@ -887,7 +887,7 @@ function PetTagLanding() {
 
                   <div>
                     <div className="font-bold text-white">
-                      Finder tapped "Text Owner"Â
+                      Finder tapped "Text Owner"
                     </div>
                     <div className="mt-1 text-sm leading-6 text-white/50">
                       Their phone opened a prepared text so they could contact Bella&apos;s owner immediately.
@@ -918,7 +918,7 @@ function PetTagLanding() {
 
               <div className="border-t border-white/[0.08] bg-cyan-300/[0.045] px-5 py-5 sm:px-7">
                 <div className="text-sm font-bold text-cyan-200">
-                  Signal ? action ? next action ? outcome
+                  Signal → action → next action → outcome
                 </div>
 
                 <p className="mt-2 text-sm leading-6 text-white/52">
@@ -1112,7 +1112,7 @@ function FinderMessageFlow({
     return (
       <div className="mt-5 rounded-[24px] border border-emerald-300/25 bg-emerald-300/[0.075] p-5 sm:p-6">
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-300 text-2xl font-bold text-[#07111f]">
-          âœ“
+          ✓
         </div>
 
         <h3 className="mt-4 text-2xl font-bold tracking-tight text-white">
@@ -1261,7 +1261,7 @@ function FinderMessageFlow({
               className="w-full rounded-xl border border-sky-300/15 bg-sky-300/[0.05] px-4 py-3 text-left"
             >
               <div className="text-sm font-bold text-sky-100">
-                âœ“ Location included
+                ✓ Location included
               </div>
 
               <div className="mt-1 text-sm text-white/55">
@@ -1285,7 +1285,7 @@ function FinderMessageFlow({
                 : "w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-left text-sm font-semibold text-white"
             }
           >
-            {helpChoice === `I can wait with ${petName}` ? "âœ“ " : ""}
+            {helpChoice === `I can wait with ${petName}` ? "✓ " : ""}
             I can wait with {petName}
           </button>
 
@@ -1304,7 +1304,7 @@ function FinderMessageFlow({
                 : "w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-left text-sm font-semibold text-white"
             }
           >
-            {helpChoice === `I can help bring ${petName} home` ? "âœ“ " : ""}
+            {helpChoice === `I can help bring ${petName} home` ? "✓ " : ""}
             I can help bring {petName} home
           </button>
         </div>
@@ -1742,7 +1742,7 @@ function FinderPage({ pet }: { pet: DemoPet }) {
       <div className="mx-auto max-w-xl pb-8 pt-2">
         <section className="rounded-[30px] border border-emerald-300/20 bg-emerald-400/[0.07] p-6 text-center sm:p-8">
           <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-emerald-300 text-2xl font-black text-[#07111f]">
-            âœ“
+            ✓
           </div>
 
           <h1 className="mt-5 text-3xl font-bold tracking-tight text-white">
