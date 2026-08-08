@@ -50,7 +50,7 @@ const initialSignals: Signal[] = [
     condition: "Heavy Deep Clean",
     pets: "Multiple Pets",
     preferred: "Mornings",
-    value: "$160ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œ$240 est.",
+    value: "$160-$240 est.",
     nextMove: "Ask for photos before final quote.",
     suggestion: "This looks like a heavier job. Confirm photos, pets, access, and expected time before scheduling.",
     message: "Hey Dan, thanks for reaching out. Before I lock in a quote, can you send a few photos of the main areas so I can give you a fair estimate?",
@@ -98,9 +98,9 @@ function smsBody(phone: string, body: string) {
 }
 
 function buildFirstReplyText(signal: Signal) {
-  return `Hi ${signal.name}, this is Kaitlin with Only The Essentials Cleaning. I received your cleaning request and IÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢m reviewing the details now.
+  return `Hi ${signal.name}, this is Kaitlin with Only The Essentials Cleaning. I received your cleaning request and I'm reviewing the details now.
 
-IÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ll reply here with the next step.`;
+I'll reply here with the next step.`;
 }
 
 function moneyFromHours(rate: string, hours: string) {
@@ -423,25 +423,30 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
         }));
 
       if (missingReceivedEvents.length) {
-        const { data: insertedTruth, error: truthInsertError } = await supabase
+        const { error: truthInsertError } = await supabase
           .from("cleaning_request_truth_events")
-          .insert(missingReceivedEvents)
-          .select("*");
+          .upsert(missingReceivedEvents, {
+            onConflict: "request_id,event_type",
+            ignoreDuplicates: true,
+          });
 
         if (truthInsertError) {
           console.error("Could not begin cleaning truth chains:", truthInsertError);
-        } else {
-          setTruthEvents([
-            ...((insertedTruth || []) as CleaningTruthEvent[]),
-            ...currentTruth,
-          ].sort(
-            (a, b) =>
-              new Date(b.created_at).getTime() -
-              new Date(a.created_at).getTime()
-          ));
         }
-      } else {
+      }
+
+      const { data: refreshedTruth, error: refreshedTruthError } = await supabase
+        .from("cleaning_request_truth_events")
+        .select("*")
+        .eq("business_slug", "only-the-essentials")
+        .order("created_at", { ascending: false })
+        .limit(200);
+
+      if (refreshedTruthError) {
+        console.error("Could not refresh cleaning truth events:", refreshedTruthError);
         setTruthEvents(currentTruth);
+      } else {
+        setTruthEvents((refreshedTruth || []) as CleaningTruthEvent[]);
       }
     }
 
@@ -1002,7 +1007,7 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
 
       {selected ? (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm">
-          <aside className="ml-auto flex h-full w-full max-w-md flex-col border-l border-pink-300/20 bg-black p-5 shadow-2xl shadow-pink-950/40">
+          <aside className="ml-auto flex h-full w-full max-w-md flex-col border-l border-pink-300/20 bg-black p-5 shadow-2xl shadow-pink-950/40 [&_button[disabled]]:cursor-not-allowed [&_button[disabled]]:opacity-30 [&_button[disabled]]:saturate-0 [&_button[disabled]]:shadow-none">
             <div className="relative rounded-2xl border border-pink-300/20 bg-pink-400/10 p-4 pr-16">
               <button
                 onClick={() => {
@@ -1038,7 +1043,7 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
                       CONTACT / DETAILS
                     </p>
                     <p className="mt-2 text-sm font-bold text-zinc-300">
-                      {selected.phone || "No phone"} ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¢ {selected.home} ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¢ {selected.preferred}
+                      {selected.phone || "No phone"} / {selected.home} / {selected.preferred}
                     </p>
                   </div>
                   <span className="rounded-full border border-pink-300/25 bg-pink-400/10 px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-pink-100">
@@ -1092,6 +1097,22 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
                 <p className="mt-3 text-sm text-zinc-200">
                   {selected.suggestion}
                 </p>
+
+                <button
+                  type="button"
+                  disabled={recordingTruthType === "request_reviewed" || hasSelectedTruthEvent("request_reviewed")}
+                  onClick={() =>
+                    void recordTruthEvent(
+                      selected.id,
+                      "request_reviewed",
+                      "Request reviewed",
+                      "Customer request details were reviewed and the next step was identified."
+                    )
+                  }
+                  className="mt-4 w-full rounded-xl border border-pink-300/25 bg-pink-400/10 py-3 text-sm font-black text-pink-100 disabled:cursor-default disabled:opacity-45 enabled:border-pink-300/60 enabled:bg-pink-400/15 enabled:text-pink-100 enabled:shadow-[0_0_20px_rgba(244,114,182,0.12)] enabled:hover:bg-pink-400/25"
+                >
+                  {hasSelectedTruthEvent("request_reviewed") ? "Request Reviewed" : "Mark Request Reviewed"}
+                </button>
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
@@ -1179,7 +1200,7 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
           }
         )
       }
-      className="rounded-xl border border-pink-300/25 bg-pink-400/10 py-3 text-sm font-black text-pink-100 disabled:cursor-default disabled:opacity-45"
+      className="rounded-xl border border-pink-300/25 bg-pink-400/10 py-3 text-sm font-black text-pink-100 disabled:cursor-default disabled:opacity-45 enabled:border-pink-300/60 enabled:bg-pink-400/15 enabled:text-pink-100 enabled:shadow-[0_0_20px_rgba(244,114,182,0.12)] enabled:hover:bg-pink-400/25"
     >
       {hasSelectedTruthEvent("estimate_sent") ? "Estimate Recorded" : "Mark Estimate Sent"}
     </button>
@@ -1242,7 +1263,7 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
                         "Cleaning agreement and approval request sent to the customer."
                       )
                     }
-                    className="col-span-2 rounded-xl border border-pink-300/25 bg-pink-400/10 py-3 text-sm font-black text-pink-100 disabled:cursor-default disabled:opacity-45"
+                    className="col-span-2 rounded-xl border border-pink-300/25 bg-pink-400/10 py-3 text-sm font-black text-pink-100 disabled:cursor-default disabled:opacity-45 enabled:border-pink-300/60 enabled:bg-pink-400/15 enabled:text-pink-100 enabled:shadow-[0_0_20px_rgba(244,114,182,0.12)] enabled:hover:bg-pink-400/25"
                   >
                     {hasSelectedTruthEvent("agreement_sent") ? "Agreement Recorded" : "Mark Agreement Sent"}
                   </button>
@@ -1258,7 +1279,7 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
                         "Customer confirmed the cleaning agreement."
                       )
                     }
-                    className="col-span-2 rounded-xl border border-green-300/25 bg-green-400/10 py-3 text-sm font-black text-green-100 disabled:cursor-default disabled:opacity-45"
+                    className="col-span-2 rounded-xl border border-green-300/25 bg-green-400/10 py-3 text-sm font-black text-green-100 disabled:cursor-default disabled:opacity-45 enabled:border-pink-300/60 enabled:bg-pink-400/15 enabled:text-pink-100 enabled:shadow-[0_0_20px_rgba(244,114,182,0.12)] enabled:hover:bg-pink-400/25"
                   >
                     {hasSelectedTruthEvent("customer_approved") ? "Approval Recorded" : "Mark Customer Approved"}
                   </button>
@@ -1303,7 +1324,7 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
           `Cleaning scheduled after reviewing the customer's preferred time: ${selected.preferred}.`
         )
       }
-      className="rounded-xl border border-pink-300/25 bg-pink-400/10 py-3 text-sm font-black text-pink-100 disabled:cursor-default disabled:opacity-45"
+      className="rounded-xl border border-pink-300/25 bg-pink-400/10 py-3 text-sm font-black text-pink-100 disabled:cursor-default disabled:opacity-45 enabled:border-pink-300/60 enabled:bg-pink-400/15 enabled:text-pink-100 enabled:shadow-[0_0_20px_rgba(244,114,182,0.12)] enabled:hover:bg-pink-400/25"
     >
       {hasSelectedTruthEvent("cleaning_scheduled") ? "Schedule Recorded" : "Mark Cleaning Scheduled"}
     </button>
@@ -1448,7 +1469,7 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
                         "Cleaning work began."
                       )
                     }
-                    className="rounded-xl border border-pink-300/25 bg-pink-400/10 py-3 text-sm font-black text-pink-100 disabled:cursor-default disabled:opacity-45"
+                    className="rounded-xl border border-pink-300/25 bg-pink-400/10 py-3 text-sm font-black text-pink-100 disabled:cursor-default disabled:opacity-45 enabled:border-pink-300/60 enabled:bg-pink-400/15 enabled:text-pink-100 enabled:shadow-[0_0_20px_rgba(244,114,182,0.12)] enabled:hover:bg-pink-400/25"
                   >
                     {hasSelectedTruthEvent("work_started") ? "Work Start Recorded" : "Mark Work Started"}
                   </button>
@@ -1464,7 +1485,7 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
                         "Cleaning work was completed."
                       )
                     }
-                    className="rounded-xl border border-green-300/25 bg-green-400/10 py-3 text-sm font-black text-green-100 disabled:cursor-default disabled:opacity-45"
+                    className="rounded-xl border border-green-300/25 bg-green-400/10 py-3 text-sm font-black text-green-100 disabled:cursor-default disabled:opacity-45 enabled:border-pink-300/60 enabled:bg-pink-400/15 enabled:text-pink-100 enabled:shadow-[0_0_20px_rgba(244,114,182,0.12)] enabled:hover:bg-pink-400/25"
                   >
                     {hasSelectedTruthEvent("work_completed") ? "Completion Recorded" : "Mark Work Completed"}
                   </button>
@@ -1576,7 +1597,7 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
                         }
                       )
                     }
-                    className="rounded-xl border border-green-300/25 bg-green-400/10 py-3 text-sm font-black text-green-100 disabled:cursor-default disabled:opacity-45"
+                    className="rounded-xl border border-green-300/25 bg-green-400/10 py-3 text-sm font-black text-green-100 disabled:cursor-default disabled:opacity-45 enabled:border-pink-300/60 enabled:bg-pink-400/15 enabled:text-pink-100 enabled:shadow-[0_0_20px_rgba(244,114,182,0.12)] enabled:hover:bg-pink-400/25"
                   >
                     {hasSelectedTruthEvent("payment_sent") ? "Payment Request Recorded" : "Mark Payment Sent"}
                   </button>
@@ -1596,7 +1617,7 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
                         }
                       )
                     }
-                    className="rounded-xl border border-green-300/35 bg-green-400/15 py-3 text-sm font-black text-green-100 disabled:cursor-default disabled:opacity-45"
+                    className="rounded-xl border border-green-300/35 bg-green-400/15 py-3 text-sm font-black text-green-100 disabled:cursor-default disabled:opacity-45 enabled:border-pink-300/60 enabled:bg-pink-400/15 enabled:text-pink-100 enabled:shadow-[0_0_20px_rgba(244,114,182,0.12)] enabled:hover:bg-pink-400/25"
                   >
                     {hasSelectedTruthEvent("payment_received") ? "Payment Recorded" : "Mark Payment Received"}
                   </button>
@@ -1657,7 +1678,7 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
                         "Customer was asked to leave a review after the completed cleaning."
                       )
                     }
-                    className="rounded-xl border border-pink-300/25 bg-pink-400/10 py-3 text-sm font-black text-pink-100 disabled:cursor-default disabled:opacity-45"
+                    className="rounded-xl border border-pink-300/25 bg-pink-400/10 py-3 text-sm font-black text-pink-100 disabled:cursor-default disabled:opacity-45 enabled:border-pink-300/60 enabled:bg-pink-400/15 enabled:text-pink-100 enabled:shadow-[0_0_20px_rgba(244,114,182,0.12)] enabled:hover:bg-pink-400/25"
                   >
                     {hasSelectedTruthEvent("review_requested") ? "Review Request Recorded" : "Mark Review Requested"}
                   </button>
@@ -1673,7 +1694,7 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
                         "The cleaning request reached its final recorded outcome."
                       )
                     }
-                    className="rounded-xl border border-green-300/35 bg-green-400/15 py-3 text-sm font-black text-green-100 disabled:cursor-default disabled:opacity-45"
+                    className="rounded-xl border border-green-300/35 bg-green-400/15 py-3 text-sm font-black text-green-100 disabled:cursor-default disabled:opacity-45 enabled:border-pink-300/60 enabled:bg-pink-400/15 enabled:text-pink-100 enabled:shadow-[0_0_20px_rgba(244,114,182,0.12)] enabled:hover:bg-pink-400/25"
                   >
                     {hasSelectedTruthEvent("outcome_closed") ? "Outcome Closed" : "Close Truth Chain"}
                   </button>
