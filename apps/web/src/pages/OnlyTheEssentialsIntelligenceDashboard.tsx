@@ -114,9 +114,8 @@ function moneyFromHours(rate: string, hours: string) {
   return "$" + Math.round(rateNumber * hoursNumber);
 }
 
-function buildEstimateText(signal: Signal, hourlyRate = "40", estimatedLowHours = "4", estimatedHighHours = "6") {
-  const lowTotal = moneyFromHours(hourlyRate, estimatedLowHours);
-  const highTotal = moneyFromHours(hourlyRate, estimatedHighHours);
+function buildEstimateText(signal: Signal, hourlyRate = "40", estimatedHours = "4") {
+  const estimatedTotal = moneyFromHours(hourlyRate, estimatedHours);
 
   return `Hi ${signal.name}, this is Kaitlin with Only The Essentials Cleaning.
 
@@ -125,19 +124,17 @@ I reviewed your cleaning request:
 Service: ${signal.service}
 Home: ${signal.home}
 Condition: ${signal.condition}
-Pets: ${signal.pets}
 Preferred time: ${signal.preferred}
 
-My rate is $${hourlyRate}/hr.
-Estimated hours: ${estimatedLowHours} to ${estimatedHighHours} hours
-Estimated total: ${lowTotal}-${highTotal}
+My rate is ${hourlyRate}/hr.
+Estimated hours: ${estimatedHours}
+Estimated total: ${estimatedTotal}
 
-I can help with this. I'll confirm the final time based on the home details, condition, and any photos/notes you sent.`;
+I can help with this. I'll confirm the final amount after the cleaning based on the actual work completed.`;
 }
 
-function buildAgreementText(signal: Signal, hourlyRate = "40", estimatedLowHours = "4", estimatedHighHours = "6") {
-  const lowTotal = moneyFromHours(hourlyRate, estimatedLowHours);
-  const highTotal = moneyFromHours(hourlyRate, estimatedHighHours);
+function buildAgreementText(signal: Signal, hourlyRate = "40", estimatedHours = "4") {
+  const estimatedTotal = moneyFromHours(hourlyRate, estimatedHours);
 
   return `Hi ${signal.name}, this is Kaitlin with Only The Essentials Cleaning.
 
@@ -146,8 +143,8 @@ Before I schedule the job, please reply YES to confirm the cleaning agreement:
 Service: ${signal.service}
 Home: ${signal.home}
 Rate: ${hourlyRate}/hr
-Estimated hours: ${estimatedLowHours} to ${estimatedHighHours} hours
-Estimated total: ${lowTotal}-${highTotal}
+Estimated hours: ${estimatedHours}
+Estimated total: ${estimatedTotal}
 Preferred time: ${signal.preferred}
 
 By replying YES, you confirm the cleaning details, hourly rate, estimated time, and that payment is due when the job is complete.
@@ -177,8 +174,15 @@ Your feedback helps other local families know they can trust Only The Essentials
 Thank you.`;
 }
 
-function buildPaymentText(signal: Signal, hourlyRate = "40", actualHours = "5", paymentMethod = "Cash App", paymentLink = "") {
-  const finalAmount = moneyFromHours(hourlyRate, actualHours);
+function buildPaymentText(
+  signal: Signal,
+  hourlyRate = "40",
+  actualHours = "4",
+  finalAmount = "160",
+  paymentMethod = "Cash App",
+  paymentLink = ""
+) {
+  const amountDue = `${finalAmount || "0"}`;
   const payLine = paymentLink.trim()
     ? `Payment link: ${paymentLink.trim()}`
     : "I can send the payment link here once everything is confirmed.";
@@ -187,9 +191,9 @@ function buildPaymentText(signal: Signal, hourlyRate = "40", actualHours = "5", 
 
 Your cleaning is complete and ready for payment.
 
-Rate: $${hourlyRate}/hr
+Rate: ${hourlyRate}/hr
 Actual hours worked: ${actualHours} hours
-Amount due: ${finalAmount}
+Final amount due: ${amountDue}
 Payment method: ${paymentMethod}
 
 ${payLine}
@@ -317,9 +321,9 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
   const [signals, setSignals] = useState<Signal[]>([]);
   const [selected, setSelected] = useState<Signal | null>(null);
   const [hourlyRate, setHourlyRate] = useState("40");
-  const [estimatedLowHours, setEstimatedLowHours] = useState("4");
-  const [estimatedHighHours, setEstimatedHighHours] = useState("6");
-  const [actualHours, setActualHours] = useState("5");
+  const [estimatedHours, setEstimatedHours] = useState("4");
+  const [finalAmount, setFinalAmount] = useState("160");
+  const [actualHours, setActualHours] = useState("4");
   const [paymentMethod, setPaymentMethod] = useState("Cash App");
   const [paymentLink, setPaymentLink] = useState("https://cash.app/$OnlyTheEssentials");
   const [beforePhotoCount, setBeforePhotoCount] = useState(0);
@@ -925,9 +929,9 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
                     <button onClick={() => {
                       setSelected(signal);
                       setHourlyRate("40");
-                      setEstimatedLowHours("4");
-                      setEstimatedHighHours("6");
-                      setActualHours("5");
+                      setEstimatedHours("4");
+                      setFinalAmount("160");
+                      setActualHours("4");
                       setPaymentMethod("Cash App");
                       setPaymentLink("https://cash.app/$OnlyTheEssentials");
                       setShowContactDetails(false);
@@ -950,9 +954,9 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
                   <button onClick={() => {
                     setSelected(signal);
                     setHourlyRate("40");
-                      setEstimatedLowHours("4");
-                      setEstimatedHighHours("6");
-                      setActualHours("5");
+                      setEstimatedHours("4");
+                      setFinalAmount("160");
+                      setActualHours("4");
                       setPaymentMethod("Cash App");
                       setPaymentLink("https://cash.app/$OnlyTheEssentials");
                     setShowContactDetails(false);
@@ -1143,24 +1147,20 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
       <span className="text-zinc-400">Estimated Hours</span>
       <div className="flex items-center gap-2">
         <input
-          value={estimatedLowHours}
-          onChange={(event) => setEstimatedLowHours(event.target.value)}
-          className="w-12 rounded-lg border border-pink-300/25 bg-black px-2 py-2 text-right font-bold text-white outline-none"
-        />
-        <span className="text-xs font-bold text-zinc-400">to</span>
-        <input
-          value={estimatedHighHours}
-          onChange={(event) => setEstimatedHighHours(event.target.value)}
-          className="w-12 rounded-lg border border-pink-300/25 bg-black px-2 py-2 text-right font-bold text-white outline-none"
+          value={estimatedHours}
+          onChange={(event) => setEstimatedHours(event.target.value)}
+          inputMode="decimal"
+          className="w-20 rounded-lg border border-pink-300/25 bg-black px-3 py-2 text-right font-bold text-white outline-none"
         />
         <span className="text-xs font-bold text-zinc-400">hrs</span>
       </div>
-
     </div>
 
     <div className="mt-3 flex items-center justify-between">
       <span className="text-zinc-400">Estimated Total</span>
-      <span className="font-black text-pink-100">{moneyFromHours(hourlyRate, estimatedLowHours)}-{moneyFromHours(hourlyRate, estimatedHighHours)}</span>
+      <span className="font-black text-pink-100">
+        {moneyFromHours(hourlyRate, estimatedHours)}
+      </span>
     </div>
   </div>
   <a
@@ -1172,14 +1172,14 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
 <div className="mt-4 grid gap-2">
     <button
       type="button"
-      onClick={() => copyText("Estimate draft copied", buildEstimateText(selected, hourlyRate, estimatedLowHours, estimatedHighHours))}
+      onClick={() => copyText("Estimate draft copied", buildEstimateText(selected, hourlyRate, estimatedHours))}
       className="rounded-xl border border-white/10 py-3 text-sm font-black"
     >
       Copy Estimate Draft
     </button>
 
     <a
-      href={smsBody(selected.phone, buildEstimateText(selected, hourlyRate, estimatedLowHours, estimatedHighHours))}
+      href={smsBody(selected.phone, buildEstimateText(selected, hourlyRate, estimatedHours))}
       className="rounded-xl bg-pink-400 py-3 text-center text-sm font-black text-black"
     >
       Send Estimate Text
@@ -1192,11 +1192,11 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
           selected.id,
           "estimate_sent",
           "Estimate sent",
-          `Estimate recorded at ${hourlyRate}/hr for ${estimatedLowHours} to ${estimatedHighHours} hours.`,
+          `Estimate recorded at ${hourlyRate}/hr for ${estimatedHours} estimated hours, totaling ${moneyFromHours(hourlyRate, estimatedHours)}.`,
           {
             hourly_rate: hourlyRate,
-            estimated_low_hours: estimatedLowHours,
-            estimated_high_hours: estimatedHighHours,
+            estimated_hours: estimatedHours,
+            estimated_total: moneyFromHours(hourlyRate, estimatedHours),
           }
         )
       }
@@ -1228,26 +1228,26 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
 
                   <div className="mt-2 flex justify-between">
                     <span className="text-zinc-400">Estimated Time</span>
-                    <span className="font-bold text-white">{estimatedLowHours} to {estimatedHighHours} hrs</span>
+                    <span className="font-bold text-white">{estimatedHours} hrs</span>
                   </div>
 
                   <div className="mt-2 flex justify-between">
                     <span className="text-zinc-400">Estimated Total</span>
-                    <span className="font-bold text-pink-100">{moneyFromHours(hourlyRate, estimatedLowHours)}-{moneyFromHours(hourlyRate, estimatedHighHours)}</span>
+                    <span className="font-bold text-pink-100">{moneyFromHours(hourlyRate, estimatedHours)}</span>
                   </div>
                 </div>
 
                 <div className="mt-4 grid grid-cols-2 gap-2">
                   <button
                     type="button"
-                    onClick={() => copyText("Agreement text copied", buildAgreementText(selected, hourlyRate, estimatedLowHours, estimatedHighHours))}
+                    onClick={() => copyText("Agreement text copied", buildAgreementText(selected, hourlyRate, estimatedHours))}
                     className="rounded-xl border border-white/10 py-3 text-sm font-black"
                   >
                     Copy Agreement Text
                   </button>
 
                   <a
-                    href={smsBody(selected.phone, buildAgreementText(selected, hourlyRate, estimatedLowHours, estimatedHighHours))}
+                    href={smsBody(selected.phone, buildAgreementText(selected, hourlyRate, estimatedHours))}
                     className="rounded-xl bg-pink-400 py-3 text-center text-sm font-black text-black"
                   >
                     Send Agreement Text
@@ -1523,9 +1523,18 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
                     />
                   </div>
 
-                  <div className="mt-3 flex items-center justify-between">
-                    <span className="text-sm font-bold text-zinc-300">Final Amount Due</span>
-                    <span className="text-2xl font-black text-green-200">{moneyFromHours(hourlyRate, actualHours)}</span>
+                  <div className="mt-3 flex items-center justify-between gap-3">
+                    <span className="text-sm font-bold text-zinc-300">Final Amount Charged</span>
+
+                    <div className="flex items-center gap-1 rounded-lg border border-green-300/30 bg-black px-3 py-2">
+                      <span className="font-black text-green-200">$</span>
+                      <input
+                        value={finalAmount}
+                        onChange={(event) => setFinalAmount(event.target.value)}
+                        inputMode="decimal"
+                        className="w-24 bg-transparent text-right text-xl font-black text-green-200 outline-none"
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -1567,7 +1576,7 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
 
                 <div className="mt-4 grid gap-2">
                   <a
-                    href={smsBody(selected.phone, buildPaymentText(selected, hourlyRate, actualHours, paymentMethod, paymentLink))}
+                    href={smsBody(selected.phone, buildPaymentText(selected, hourlyRate, actualHours, finalAmount, paymentMethod, paymentLink))}
                     className="rounded-xl border border-green-400/40 bg-green-500/10 py-3 text-center text-sm font-black text-green-100"
                   >
                     Send Payment Link Text
@@ -1575,7 +1584,7 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
 
                   <button
                     type="button"
-                    onClick={() => copyText("Payment note copied", buildPaymentText(selected, hourlyRate, actualHours, paymentMethod, paymentLink))}
+                    onClick={() => copyText("Payment note copied", buildPaymentText(selected, hourlyRate, actualHours, finalAmount, paymentMethod, paymentLink))}
                     className="rounded-xl border border-white/10 py-3 text-sm font-black"
                   >
                     Copy Payment Note
@@ -1593,7 +1602,7 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
                           hourly_rate: hourlyRate,
                           actual_hours: actualHours,
                           payment_method: paymentMethod,
-                          amount: moneyFromHours(hourlyRate, actualHours),
+                          amount: `$${finalAmount || "0"}`,
                         }
                       )
                     }
@@ -1613,7 +1622,7 @@ export default function OnlyTheEssentialsIntelligenceDashboard() {
                         `Payment received through ${paymentMethod}.`,
                         {
                           payment_method: paymentMethod,
-                          amount: moneyFromHours(hourlyRate, actualHours),
+                          amount: `$${finalAmount || "0"}`,
                         }
                       )
                     }
