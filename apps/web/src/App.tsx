@@ -69,6 +69,9 @@ const VZProfessionalLawncareLiveActivity = lazy(() =>
 const LateNightHotelsLandingPage = lazy(() => import("./pages/LateNightHotelsLandingPage"));
 const LateNightHotelsOperatorBoard = lazy(() => import("./pages/LateNightHotelsOperatorBoard"));
 const ElectricianLandingPage = lazy(() => import("./pages/ElectricianLandingPage"));
+const PerformancePowerboatsLandingPage = lazy(() => import("./pages/PerformancePowerboatsLandingPage"));
+const PerformancePowerboatsLiveBoard = lazy(() => import("./pages/PerformancePowerboatsLiveBoard"));
+const PerformancePowerboatsCustomerProjectPage = lazy(() => import("./pages/PerformancePowerboatsCustomerProjectPage"));
 const ElectricianRequestPage = lazy(() => import("./pages/ElectricianRequestPage"));
 const ElectricianIntelligenceDashboard = lazy(() =>
   import("./pages/ElectricianIntelligenceDashboard")
@@ -177,6 +180,9 @@ export default function App() {
             path="/planet/demo/electrician/truth-chain"
             element={<ElectricianTruthChain />}
           />
+          <Route path="/planet/performance-powerboats" element={<PerformancePowerboatsLandingPage />} />
+          <Route path="/planet/performance-powerboats/board" element={<RequireAuth><PerformancePowerboatsLiveBoard /></RequireAuth>} />
+          <Route path="/planet/performance-powerboats/project/:id" element={<PerformancePowerboatsCustomerProjectPage />} />
           <Route path="/planet/demo/pest-control/board" element={<DemoPestControlBoardPage />} />
           <Route path="/planet/demo/pest-control" element={<DemoPestControlLandingPage />} />
           <Route path="/planet/demo/home-services/board" element={<DemoHomeServicesBoardPage />} />
@@ -285,7 +291,6 @@ export default function App() {
     </BrowserRouter>
   );
 }
-
 
 
 

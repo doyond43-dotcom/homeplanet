@@ -1,5 +1,13 @@
 {
+    "framework": "vite",
+    "installCommand": "npm install",
+    "buildCommand": "npm run build --workspace web",
+    "outputDirectory": "apps/web/dist",
     "rewrites":  [
+                     {
+                         "source":  "/planet/performance-powerboats/project/:id",
+                         "destination":  "/index.html"
+                     },
                      {
                          "source":  "/planet/demo/pest-control",
                          "destination":  "/planet/demo/pest-control/index.html"
