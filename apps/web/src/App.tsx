@@ -72,6 +72,7 @@ const ElectricianLandingPage = lazy(() => import("./pages/ElectricianLandingPage
 const PerformancePowerboatsLandingPage = lazy(() => import("./pages/PerformancePowerboatsLandingPage"));
 const PerformancePowerboatsLiveBoard = lazy(() => import("./pages/PerformancePowerboatsLiveBoard"));
 const PerformancePowerboatsCustomerProjectPage = lazy(() => import("./pages/PerformancePowerboatsCustomerProjectPage"));
+const PerformancePowerboatsTechPad = lazy(() => import("./pages/PerformancePowerboatsTechPad"));
 const ElectricianRequestPage = lazy(() => import("./pages/ElectricianRequestPage"));
 const ElectricianIntelligenceDashboard = lazy(() =>
   import("./pages/ElectricianIntelligenceDashboard")
@@ -183,6 +184,7 @@ export default function App() {
           <Route path="/planet/performance-powerboats" element={<PerformancePowerboatsLandingPage />} />
           <Route path="/planet/performance-powerboats/board" element={<RequireAuth><PerformancePowerboatsLiveBoard /></RequireAuth>} />
           <Route path="/planet/performance-powerboats/project/:id" element={<PerformancePowerboatsCustomerProjectPage />} />
+          <Route path="/planet/performance-powerboats/tech/:id" element={<RequireAuth><PerformancePowerboatsTechPad /></RequireAuth>} />
           <Route path="/planet/demo/pest-control/board" element={<DemoPestControlBoardPage />} />
           <Route path="/planet/demo/pest-control" element={<DemoPestControlLandingPage />} />
           <Route path="/planet/demo/home-services/board" element={<DemoHomeServicesBoardPage />} />
@@ -291,6 +293,5 @@ export default function App() {
     </BrowserRouter>
   );
 }
-
 
 

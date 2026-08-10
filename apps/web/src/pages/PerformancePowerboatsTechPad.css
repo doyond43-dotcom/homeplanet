@@ -1,0 +1,60 @@
+.ppt-page { min-height: 100vh; background: #030c14; color: #fff; font-family: Inter, system-ui, sans-serif; }
+.ppt-page * { box-sizing: border-box; }
+.ppt-header { min-height: 76px; padding: 16px max(16px, calc((100vw - 760px) / 2)); display: flex; align-items: center; justify-content: space-between; gap: 16px; border-bottom: 1px solid rgba(255,255,255,.2); background: #071824; }
+.ppt-brand { display: grid; line-height: .9; }
+.ppt-brand span { font-size: 17px; font-weight: 950; }
+.ppt-brand strong { margin-top: 5px; color: #f0c45a; font-size: 9px; letter-spacing: .24em; }
+.ppt-pad-label { padding: 8px 10px; border: 1px solid rgba(240,196,90,.7); border-radius: 7px; background: rgba(240,196,90,.08); color: #f0c45a; font-size: 10px; font-weight: 950; letter-spacing: .16em; }
+.ppt-shell { width: min(760px, calc(100% - 24px)); margin: 0 auto; padding: 22px 0 80px; }
+.ppt-job { padding: 10px 4px 24px; }
+.ppt-job > span, .ppt-card span, .ppt-status-card span { color: #f5cd68; font-size: 9px; font-weight: 900; letter-spacing: .14em; }
+.ppt-job h1 { margin: 8px 0 6px; font-size: clamp(31px, 9vw, 55px); line-height: .96; letter-spacing: -.045em; }
+.ppt-job p { margin: 0; color: #d1d9de; }
+.ppt-card, .ppt-status-card { margin-bottom: 12px; padding: 18px; border: 1px solid rgba(255,255,255,.22); border-radius: 14px; background: #0b1d2b; box-shadow: inset 0 1px 0 rgba(255,255,255,.04); }
+.ppt-basics { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.ppt-basics div { display: grid; gap: 5px; }
+.ppt-basics strong, .ppt-basics a { color: #fff; font-size: 15px; font-weight: 900; text-decoration: none; }
+.ppt-basics .ppt-wide { grid-column: 1 / -1; }
+.ppt-basics p { margin: 0; color: #e0e5e8; line-height: 1.45; }
+.ppt-status-card { display: grid; gap: 15px; border-color: rgba(240,196,90,.6); background: linear-gradient(100deg, rgba(240,196,90,.12), transparent 60%), #0b1d2b; }
+.ppt-status-card div { display: grid; gap: 5px; }
+.ppt-status-card strong { color: #fff; font-size: 17px; font-weight: 900; line-height: 1.3; }
+.ppt-section-head { margin-bottom: 13px; display: flex; align-items: center; gap: 9px; }
+.ppt-section-head > span { width: 25px; height: 25px; display: grid; place-items: center; border-radius: 50%; background: rgba(240,196,90,.24); }
+.ppt-section-head h2 { margin: 0; color: #fff; font-size: 14px; font-weight: 900; letter-spacing: .06em; }
+.ppt-card textarea, .ppt-card input { width: 100%; border: 1px solid rgba(255,255,255,.3); border-radius: 9px; background: #03101a; color: #fff; font: inherit; }
+.ppt-card textarea { min-height: 112px; padding: 13px; resize: vertical; line-height: 1.45; }
+.ppt-card input { min-height: 48px; padding: 0 12px; }
+.ppt-card textarea::placeholder, .ppt-card input::placeholder { color: #c8d1d7; opacity: 1; }
+.ppt-card textarea:focus-visible, .ppt-card input:focus-visible, .ppt-card button:focus-visible, .ppt-photo-button:focus-visible { outline: 3px solid #f0c45a; outline-offset: 2px; }
+.ppt-card button, .ppt-photo-button { min-height: 48px; border: 1px solid rgba(255,255,255,.3); border-radius: 9px; background: #183044; color: #fff; font: inherit; font-size: 11px; font-weight: 900; letter-spacing: .06em; cursor: pointer; }
+.ppt-card button:disabled, .ppt-photo-button:has(input:disabled) { opacity: .5; cursor: wait; }
+.ppt-card > button { width: 100%; margin-top: 10px; }
+.ppt-card .ppt-primary { border-color: #f0c45a; background: #f0c45a; color: #03101a; }
+.ppt-card .ppt-secondary { border-color: rgba(240,196,90,.72); border-style: dashed; color: #f0c45a; }
+.ppt-parts { display: grid; gap: 8px; }
+.ppt-part { display: grid; grid-template-columns: 1fr 78px 44px; gap: 7px; align-items: end; }
+.ppt-part label { display: grid; gap: 4px; }
+.ppt-part label span { text-align: center; }
+.ppt-part button { min-height: 48px; font-size: 22px; }
+.ppt-action-row { margin-top: 10px; display: grid; grid-template-columns: .75fr 1.25fr; gap: 8px; }
+.ppt-action-row button { min-height: 52px; }
+.ppt-help { margin: -3px 0 13px; color: #d7dee2; font-size: 13px; line-height: 1.45; }
+.ppt-photo-types { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.ppt-photo-button { min-height: 66px; padding: 10px; display: grid; place-items: center; align-content: center; gap: 3px; text-align: center; }
+.ppt-photo-button input { position: absolute; opacity: 0; pointer-events: none; }
+.ppt-photo-button span { color: #fff; font-size: 10px; }
+.ppt-photo-button small { color: #d2dade; font-size: 10px; font-weight: 700; }
+.ppt-completion { display: grid; gap: 8px; }
+.ppt-completion .ppt-section-head { margin-bottom: 5px; }
+.ppt-completion > button { margin-top: 0; }
+.ppt-completion .ppt-complete { min-height: 58px; border-color: #f0c45a; background: #f0c45a; color: #03101a; }
+.ppt-feedback { min-height: 24px; padding: 4px; color: #f0c45a; text-align: center; font-size: 12px; font-weight: 800; }
+.ppt-state { min-height: 100vh; display: grid; place-items: center; padding: 24px; color: #d1d9de; }
+@media (max-width: 480px) {
+  .ppt-shell { width: min(100% - 16px, 760px); }
+  .ppt-card, .ppt-status-card { padding: 15px; }
+  .ppt-basics { grid-template-columns: 1fr; gap: 14px; }
+  .ppt-basics .ppt-wide { grid-column: auto; }
+  .ppt-action-row { grid-template-columns: 1fr; }
+}
