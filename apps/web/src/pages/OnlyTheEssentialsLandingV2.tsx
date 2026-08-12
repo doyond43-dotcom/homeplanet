@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+﻿import { useEffect, useRef, useState } from "react";
 import {
   CalendarCheck,
   Heart,
@@ -165,7 +165,33 @@ export default function OnlyTheEssentialsCustomerLanding() {
         console.warn("Kaitlin SMS notification request failed:", notifyError);
       }
 
-      setQuoteSubmitted(true);
+      try {
+      const { error: emailError } = await supabase.functions.invoke(
+        "send-only-the-essentials-request-email",
+        {
+          body: {
+            name,
+            phone: phoneNumber,
+            address: streetAddress,
+            preferredTime,
+            serviceType,
+            bedrooms,
+            bathrooms,
+            pets,
+            condition,
+            notes: quoteDetails,
+          },
+        }
+      );
+
+      if (emailError) {
+        console.error("Kaitlin email notification failed:", emailError);
+      }
+    } catch (emailError) {
+      console.error("Kaitlin email notification request failed:", emailError);
+    }
+
+    setQuoteSubmitted(true);
     } catch (error) {
       console.error("Only The Essentials quote request failed:", error);
       const message = error instanceof Error ? error.message : JSON.stringify(error);
@@ -453,7 +479,7 @@ export default function OnlyTheEssentialsCustomerLanding() {
             <div className="grid gap-3 rounded-2xl border border-dashed border-pink-300/30 bg-black/30 p-4 text-sm text-zinc-300 lg:col-span-3 lg:grid-cols-3">
               <label className="block">
                 <span className="mb-2 block text-xs font-black uppercase tracking-[0.2em] text-pink-200">Upload Photos</span>
-                <p className="mb-3 text-xs leading-5 text-zinc-400">Optional — show problem areas, rooms, pets, or mess level.</p>
+                <p className="mb-3 text-xs leading-5 text-zinc-400">Optional â€” show problem areas, rooms, pets, or mess level.</p>
                 <input type="file" multiple className="block w-full text-xs text-zinc-400" />
               </label>
 
@@ -658,13 +684,13 @@ export default function OnlyTheEssentialsCustomerLanding() {
                   aria-label="Five-star customer recommendation"
                   className="text-3xl font-black leading-none tracking-[0.14em] text-yellow-400 drop-shadow-[0_0_12px_rgba(250,204,21,0.22)] sm:text-4xl"
                 >
-                  ★★★★★
+                  â˜…â˜…â˜…â˜…â˜…
                 </p>
 
                 <blockquote className="mt-6 flex-1 font-serif text-2xl italic leading-9 text-white sm:text-[1.7rem]">
-                  “Highly recommend! Kaitlyn did a great job helping us get back on
+                  â€œHighly recommend! Kaitlyn did a great job helping us get back on
                   track. From the ceiling to the floor she knocked it out of the
-                  park!”
+                  park!â€
                 </blockquote>
 
                 <div className="mt-8 border-t border-white/10 pt-5">
@@ -680,12 +706,12 @@ export default function OnlyTheEssentialsCustomerLanding() {
                   aria-label="Five-star customer recommendation"
                   className="text-3xl font-black leading-none tracking-[0.14em] text-yellow-400 drop-shadow-[0_0_12px_rgba(250,204,21,0.22)] sm:text-4xl"
                 >
-                  ★★★★★
+                  â˜…â˜…â˜…â˜…â˜…
                 </p>
 
                 <blockquote className="mt-6 flex-1 font-serif text-2xl italic leading-9 text-white sm:text-[1.7rem]">
-                  “I came home to super clean floors, sparkling bathrooms, beds made,
-                  sinks cleaned... Everything back in order! Highly recommend.”
+                  â€œI came home to super clean floors, sparkling bathrooms, beds made,
+                  sinks cleaned... Everything back in order! Highly recommend.â€
                 </blockquote>
 
                 <div className="mt-8 border-t border-white/10 pt-5">
@@ -827,3 +853,5 @@ export default function OnlyTheEssentialsCustomerLanding() {
     </main>
   );
 }
+
+
