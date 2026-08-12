@@ -70,8 +70,10 @@ const LateNightHotelsLandingPage = lazy(() => import("./pages/LateNightHotelsLan
 const LateNightHotelsOperatorBoard = lazy(() => import("./pages/LateNightHotelsOperatorBoard"));
 const ElectricianLandingPage = lazy(() => import("./pages/ElectricianLandingPage"));
 const PerformancePowerboatsLandingPage = lazy(() => import("./pages/PerformancePowerboatsLandingPage"));
+const PerformancePowerboatsBuildPage = lazy(() => import("./pages/PerformancePowerboatsBuildPage"));
 const PerformancePowerboatsLiveBoard = lazy(() => import("./pages/PerformancePowerboatsLiveBoard"));
 const PerformancePowerboatsCustomerProjectPage = lazy(() => import("./pages/PerformancePowerboatsCustomerProjectPage"));
+const PerformancePowerboatsEstimatePage = lazy(() => import("./pages/PerformancePowerboatsEstimatePage"));
 const PerformancePowerboatsTechPad = lazy(() => import("./pages/PerformancePowerboatsTechPad"));
 const ElectricianRequestPage = lazy(() => import("./pages/ElectricianRequestPage"));
 const ElectricianIntelligenceDashboard = lazy(() =>
@@ -182,6 +184,8 @@ export default function App() {
             element={<ElectricianTruthChain />}
           />
           <Route path="/planet/performance-powerboats" element={<PerformancePowerboatsLandingPage />} />
+          <Route path="/planet/performance-powerboats/build" element={<PerformancePowerboatsBuildPage />} />
+          <Route path="/planet/performance-powerboats/estimate/:id" element={<PerformancePowerboatsEstimatePage />} />
           <Route path="/planet/performance-powerboats/board" element={<RequireAuth><PerformancePowerboatsLiveBoard /></RequireAuth>} />
           <Route path="/planet/performance-powerboats/project/:id" element={<PerformancePowerboatsCustomerProjectPage />} />
           <Route path="/planet/performance-powerboats/tech/:id" element={<RequireAuth><PerformancePowerboatsTechPad /></RequireAuth>} />

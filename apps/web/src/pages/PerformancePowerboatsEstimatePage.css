@@ -1,0 +1,254 @@
+﻿.ppe-page {
+  min-height: 100vh;
+  background:
+    linear-gradient(180deg, #eef5f8 0%, #ffffff 42%, #edf3f5 100%);
+  color: #102535;
+  padding: 28px 16px 56px;
+}
+
+.ppe-shell {
+  width: min(760px, 100%);
+  margin: 0 auto;
+}
+
+.ppe-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.ppe-brand {
+  display: flex;
+  flex-direction: column;
+  line-height: 0.92;
+  letter-spacing: 0.08em;
+}
+
+.ppe-brand span {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #9b741b;
+}
+
+.ppe-brand strong {
+  font-size: 1.3rem;
+  color: #0d2d42;
+}
+
+.ppe-status {
+  border: 1px solid rgba(13, 45, 66, 0.16);
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: #fff;
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.ppe-status.is-approved {
+  background: #eaf6ed;
+}
+
+.ppe-estimate {
+  background: #fff;
+  border: 1px solid rgba(13, 45, 66, 0.12);
+  border-radius: 22px;
+  box-shadow: 0 18px 48px rgba(19, 49, 67, 0.08);
+  overflow: hidden;
+}
+
+.ppe-estimate-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 20px;
+  padding: 28px;
+  background:
+    linear-gradient(135deg, #0b2d43 0%, #164d6b 100%);
+  color: #fff;
+}
+
+.ppe-kicker,
+.ppe-customer span,
+.ppe-block > span,
+.ppe-grand-total span,
+.ppe-approved span {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  color: #a8791d;
+}
+
+.ppe-estimate-top h1 {
+  margin: 0;
+  font-size: clamp(1.8rem, 5vw, 2.8rem);
+}
+
+.ppe-total {
+  font-size: clamp(1.7rem, 5vw, 2.5rem);
+  white-space: nowrap;
+}
+
+.ppe-customer,
+.ppe-block,
+.ppe-grand-total,
+.ppe-actions,
+.ppe-approved {
+  padding: 22px 28px;
+}
+
+.ppe-customer,
+.ppe-block {
+  border-bottom: 1px solid rgba(13, 45, 66, 0.1);
+}
+
+.ppe-customer strong {
+  display: block;
+  font-size: 1.35rem;
+}
+
+.ppe-customer p,
+.ppe-block p {
+  margin: 5px 0 0;
+  line-height: 1.6;
+  color: #4d6270;
+}
+
+.ppe-lines {
+  display: grid;
+  gap: 10px;
+}
+
+.ppe-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 11px 0;
+  border-bottom: 1px solid rgba(13, 45, 66, 0.08);
+}
+
+.ppe-line:last-child {
+  border-bottom: 0;
+}
+
+.ppe-grand-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  background: #f5f8f9;
+}
+
+.ppe-grand-total strong {
+  font-size: 1.8rem;
+  color: #0d2d42;
+}
+
+.ppe-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.ppe-actions button,
+.ppe-actions a {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  font-weight: 900;
+  text-decoration: none;
+  letter-spacing: 0.03em;
+}
+
+.ppe-approve {
+  border: 0;
+  background: #c99425;
+  color: #102535;
+  cursor: pointer;
+}
+
+.ppe-actions a {
+  border: 1px solid rgba(13, 45, 66, 0.18);
+  background: #fff;
+  color: #0d2d42;
+}
+
+.ppe-approved {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  background: #eef8f0;
+}
+
+.ppe-approved strong {
+  display: block;
+}
+
+.ppe-check {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #23733f;
+  color: #fff;
+  font-size: 1.3rem;
+  font-weight: 900;
+}
+
+.ppe-error {
+  margin: 0;
+  padding: 0 28px 22px;
+  color: #9d2525;
+  font-weight: 700;
+}
+
+.ppe-state {
+  width: min(600px, 100%);
+  margin: 80px auto;
+  padding: 30px;
+  background: #fff;
+  border-radius: 18px;
+  text-align: center;
+  font-weight: 800;
+}
+
+.ppe-shell footer {
+  padding: 22px 4px 0;
+  text-align: center;
+  color: #667a86;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+}
+
+@media (max-width: 620px) {
+  .ppe-page {
+    padding: 16px 10px 38px;
+  }
+
+  .ppe-estimate-top {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .ppe-customer,
+  .ppe-block,
+  .ppe-grand-total,
+  .ppe-actions,
+  .ppe-approved {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .ppe-grand-total {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

@@ -3,14 +3,32 @@ import { supabase } from "../lib/supabase";
 import "./PerformancePowerboatsLandingPage.css";
 
 type ProjectType =
-  | "New Build"
-  | "Boat Repair"
-  | "Restoration & Refit"
-  | "Marine Service"
+  | "Build a Performance"
+  | "Service & Repair"
+  | "Custom Metal Fabrication"
   | null;
+
+const PROJECT_COPY = {
+  "Build a Performance": {
+    heading: "TELL US WHAT YOU WANT TO BUILD.",
+    descriptionLabel: "What are you looking for in your Performance boat?",
+    descriptionPlaceholder: "Tell us about the model, size, use and setup you have in mind...",
+  },
+  "Service & Repair": {
+    heading: "TELL US ABOUT YOUR BOAT.",
+    descriptionLabel: "What does the boat need?",
+    descriptionPlaceholder: "Service, repair, repower, rigging, gel coat or other work...",
+  },
+  "Custom Metal Fabrication": {
+    heading: "TELL US WHAT YOU NEED FABRICATED.",
+    descriptionLabel: "Describe the fabrication project",
+    descriptionPlaceholder: "Tell us what you need built, how it will be used and any measurements you know...",
+  },
+} as const;
 
 export default function PerformancePowerboatsLandingPage() {
   const [projectType, setProjectType] = useState<ProjectType>(null);
+  const [openDoor, setOpenDoor] = useState<ProjectType>(null);
   const [intakeStep, setIntakeStep] = useState<"details" | "contact" | "done">("details");
   const [form, setForm] = useState({
     year: "",
@@ -23,6 +41,8 @@ export default function PerformancePowerboatsLandingPage() {
     phone: "",
     email: "",
   });
+  const isFabrication = projectType === "Custom Metal Fabrication";
+  const projectCopy = projectType ? PROJECT_COPY[projectType] : null;
 
   const scrollToStart = () => {
     document
@@ -30,16 +50,32 @@ export default function PerformancePowerboatsLandingPage() {
       ?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  const chooseProject = (type: Exclude<ProjectType, null>) => {
+  const openPerformanceModels = () => {
+    setProjectType(null);
+    setOpenDoor("Build a Performance");
+
+    window.setTimeout(() => {
+      document
+        .getElementById("start-project")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
+  };
+
+  const chooseProject = (
+    type: Exclude<ProjectType, null>,
+    starter = "",
+    model = ""
+  ) => {
     setProjectType(type);
+    setOpenDoor(null);
     setIntakeStep("details");
     setForm({
       year: "",
-      makeModel: "",
+      makeModel: model,
       length: "",
       engines: "",
       location: "",
-      description: "",
+      description: starter,
       name: "",
       phone: "",
       email: "",
@@ -99,11 +135,10 @@ export default function PerformancePowerboatsLandingPage() {
           <div className="pp-eyebrow">PERFORMANCE POWERBOATS</div>
 
           <h1>
-            BUILT HERE.
-            <br />
-            RUN HARD.
-            <br />
-            <span>MADE FOR THE WATER.</span>
+            <span>BUILT <strong>HERE.</strong></span>
+            <span>RUN HARD.</span>
+            <span>MADE FOR THE</span>
+            <span><strong>WATER.</strong></span>
           </h1>
 
           <p>
@@ -114,13 +149,9 @@ export default function PerformancePowerboatsLandingPage() {
           <div className="pp-actions">
             <button
               className="pp-btn pp-btn-gold"
-              onClick={() =>
-                document
-                  .getElementById("boats")
-                  ?.scrollIntoView({ behavior: "smooth" })
-              }
+              onClick={openPerformanceModels}
             >
-              SEE THE BOATS
+              VIEW PERFORMANCE MODELS
             </button>
 
             <button className="pp-btn pp-btn-dark" onClick={scrollToStart}>
@@ -130,6 +161,310 @@ export default function PerformancePowerboatsLandingPage() {
         </div>
       </section>
 
+      <section className="pp-service-bridge">
+        <div className="pp-service-bridge-inner">
+          <div className="pp-kicker">BUILT HERE. SERVICED HERE.</div>
+
+          <h2>THE WORK DOESN'T STOP WHEN THE BOAT LEAVES THE SHOP.</h2>
+
+          <p>
+            From routine service and rigging to repowers, electrical work and repairs,
+            the same hands-on marine experience stays behind the boat.
+          </p>
+
+          <div className="pp-service-bridge-points">
+            <span>BUILD</span>
+            <span>SERVICE</span>
+            <span>REPOWER</span>
+          </div>
+        </div>
+      </section>
+      <section className="pp-section pp-start" id="start-project">
+        <div className="pp-center-heading">
+          <div className="pp-kicker">SERVICE &amp; REPAIR</div>
+          <h2>WHAT DOES YOUR BOAT NEED?</h2>
+          <p>
+            Choose what you need help with, send a quick request, or call Performance directly.
+          </p>
+
+          <div className="pp-service-direct-call">
+            <a href="tel:+19548019524">CALL PERFORMANCE</a>
+          </div>
+        </div>
+
+        {!projectType ? (
+          <div className="pp-door-grid pp-service-grid">
+            {[
+              {
+                title: "MOTOR / ENGINE",
+                copy: "Running issues, diagnostics, maintenance or engine problems.",
+                starter: "I need help with a motor or engine issue.",
+              },
+              {
+                title: "ELECTRICAL / WIRING",
+                copy: "Electrical problems, wiring, switches, batteries and onboard systems.",
+                starter: "I need help with an electrical or wiring issue.",
+              },
+              {
+                title: "RIGGING",
+                copy: "Controls, steering, engines, systems and boat setup.",
+                starter: "I need help with rigging or boat setup.",
+              },
+              {
+                title: "REPOWER",
+                copy: "Talk through engine replacement, power options and setup.",
+                starter: "I want to discuss repowering my boat.",
+              },
+              {
+                title: "GEL COAT / REFINISH",
+                copy: "Gel coat repair, refinishing and related restoration work.",
+                starter: "I need gel coat or refinishing work.",
+              },
+              {
+                title: "GENERAL SERVICE / REPAIR",
+                copy: "Not sure where it fits? Tell Performance what the boat is doing.",
+                starter: "I need service or repair work on my boat.",
+              },
+            ].map((service) => (
+              <button
+                key={service.title}
+                type="button"
+                className="pp-door pp-service-choice"
+                onClick={() =>
+                  chooseProject("Service & Repair", service.starter)
+                }
+              >
+                <span className="pp-door-title">{service.title}</span>
+                <span className="pp-door-copy">{service.copy}</span>
+                <span className="pp-door-arrow">→</span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="pp-intake">
+            {intakeStep !== "done" && (
+              <div className="pp-intake-top">
+                <button
+                  className="pp-back"
+                  onClick={() => {
+                    if (intakeStep === "details") {
+                      setProjectType(null);
+                    } else {
+                      setIntakeStep("details");
+                    }
+                  }}
+                >
+                  ← BACK
+                </button>
+
+                <span className="pp-selected">{projectType}</span>
+              </div>
+            )}
+
+            {intakeStep === "details" && (
+              <div className="pp-intake-step">
+                <div className="pp-intake-label">YOUR PROJECT</div>
+                <h3>{projectCopy?.heading}</h3>
+
+                <div className="pp-form-grid">
+                  {!isFabrication && (
+                  <>
+                  <label>
+                    {projectType === "Build a Performance" ? "Target Year" : "Year"}
+                    <input
+                      value={form.year}
+                      onChange={(event) => updateForm("year", event.target.value)}
+                      placeholder="2012"
+                    />
+                  </label>
+
+                  <label>
+                    {projectType === "Build a Performance" ? "Performance Model / Boat Interest" : "Make / Model"}
+                    <input
+                      value={form.makeModel}
+                      onChange={(event) => updateForm("makeModel", event.target.value)}
+                      placeholder={projectType === "Build a Performance" ? "Performance 43 or not sure yet" : "SeaCraft"}
+                    />
+                  </label>
+
+                  <label>
+                    {projectType === "Build a Performance" ? "Target Length" : "Length"}
+                    <input
+                      value={form.length}
+                      onChange={(event) => updateForm("length", event.target.value)}
+                      placeholder="25 ft"
+                    />
+                  </label>
+
+                  <label>
+                    {projectType === "Build a Performance" ? "Engine / Power Preference" : "Engines"}
+                    <input
+                      value={form.engines}
+                      onChange={(event) => updateForm("engines", event.target.value)}
+                      placeholder={projectType === "Build a Performance" ? "Tell us what you have in mind" : "Twin Yamaha"}
+                    />
+                  </label>
+                  </>
+                  )}
+
+                  {!isFabrication && (
+                    <label className="pp-full">
+                      {projectType === "Build a Performance"
+                        ? "Where will the boat be used or delivered?"
+                        : "Boat Location"}
+                      <input
+                        value={form.location}
+                        onChange={(event) => updateForm("location", event.target.value)}
+                        placeholder="Stuart, FL"
+                      />
+                    </label>
+                  )}
+
+                  <label className="pp-full">
+                    {projectCopy?.descriptionLabel}
+                    <textarea
+                      rows={5}
+                      value={form.description}
+                      onChange={(event) => updateForm("description", event.target.value)}
+                      placeholder={projectCopy?.descriptionPlaceholder}
+                    />
+                  </label>
+                </div>
+
+                <button
+                  className="pp-submit"
+                  type="button"
+                  onClick={() => setIntakeStep("contact")}
+                >
+                  CONTINUE
+                </button>
+              </div>
+            )}
+
+            {intakeStep === "contact" && (
+              <div className="pp-intake-step">
+                <div className="pp-intake-label">HOW SHOULD WE REACH YOU?</div>
+                <h3>LET'S GET THIS IN FRONT OF MAX.</h3>
+
+                <p className="pp-intake-intro">
+                  Send the request now. Photos, measurements and other project details can be added to the same work order later.
+                </p>
+
+                <div className="pp-form-grid">
+                  <label>
+                    Name *
+                    <input
+                      value={form.name}
+                      onChange={(event) => updateForm("name", event.target.value)}
+                      placeholder="Your name"
+                    />
+                  </label>
+
+                  <label>
+                    Phone *
+                    <input
+                      value={form.phone}
+                      onChange={(event) => updateForm("phone", event.target.value)}
+                      placeholder="Your phone"
+                      inputMode="tel"
+                    />
+                  </label>
+
+                  <label className="pp-full">
+                    Email
+                    <input
+                      value={form.email}
+                      onChange={(event) => updateForm("email", event.target.value)}
+                      placeholder="Your email"
+                      inputMode="email"
+                    />
+                  </label>
+                </div>
+
+                <button
+                  className="pp-submit"
+                  type="button"
+                  disabled={!form.name.trim() || !form.phone.trim()}
+                  onClick={finishRequest}
+                >
+                  SEND TO PERFORMANCE POWERBOATS
+                </button>
+              </div>
+            )}
+
+            {intakeStep === "done" && (
+              <div className="pp-confirmation">
+                <div className="pp-confirmation-check">✓</div>
+                <div className="pp-kicker">REQUEST RECEIVED</div>
+                <h3>GOT IT.</h3>
+
+                <p>
+                  Your project is now with Performance Powerboats.
+                  Max's team can review it, contact you and keep the work organized from here.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </section>
+
+      <section className="pp-section pp-production-engine">
+        <div className="pp-production-engine-grid">
+          <div className="pp-production-engine-copy">
+            <div className="pp-kicker">THE PRODUCTION ENGINE</div>
+
+            <h2>
+              MOLDS. TOOLING.
+              <br />
+              <span>BUILT TO KEEP MOVING.</span>
+            </h2>
+
+            <p className="pp-production-lead">
+              Performance Powerboats uses established molds and dedicated tooling
+              to produce proven hulls, consoles, compartments and components
+              with consistency from build to build.
+            </p>
+
+            <div className="pp-production-points">
+              <div className="pp-production-point">
+                <strong>HULL &amp; MODEL TOOLING</strong>
+                <span>
+                  The foundation behind proven Performance hulls and repeatable production.
+                </span>
+              </div>
+
+              <div className="pp-production-point">
+                <strong>CONSOLES &amp; COMPARTMENTS</strong>
+                <span>
+                  Dedicated tooling creates components engineered specifically for the boats they were built for.
+                </span>
+              </div>
+
+              <div className="pp-production-point">
+                <strong>CONSISTENCY BY DESIGN</strong>
+                <span>
+                  Proven molds and tooling carry Performance standards from one build to the next.
+                </span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="pp-production-cta"
+              onClick={openPerformanceModels}
+            >
+              VIEW PERFORMANCE MODELS →
+            </button>
+          </div>
+
+          <div className="pp-real-image pp-production-engine-image">
+            <img
+              src="/images/performance-powerboats/10-large-hull-inside-shop.jpg"
+              alt="Performance Powerboats production work inside the shop"
+            />
+          </div>
+        </div>
+      </section>
       <section className="pp-section pp-facility">
         <div className="pp-copy-block">
           <div className="pp-kicker">THE NEXT CHAPTER</div>
@@ -233,219 +568,6 @@ export default function PerformancePowerboatsLandingPage() {
         </div>
       </section>
 
-      <section className="pp-section pp-start" id="start-project">
-        <div className="pp-center-heading">
-          <div className="pp-kicker">START A PROJECT</div>
-          <h2>READY TO TALK ABOUT YOUR BOAT?</h2>
-          <p>Choose what you need and tell Performance Powerboats what you're working on.</p>
-        </div>
-
-        {!projectType ? (
-          <div className="pp-door-grid">
-            <button
-              className="pp-door"
-              onClick={() => chooseProject("New Build")}
-            >
-              <span className="pp-door-title">NEW BUILD</span>
-              <span className="pp-door-copy">
-                I'm interested in a new Performance Powerboat.
-              </span>
-              <span className="pp-door-arrow">→</span>
-            </button>
-
-            <button
-              className="pp-door"
-              onClick={() => chooseProject("Boat Repair")}
-            >
-              <span className="pp-door-title">BOAT REPAIR</span>
-              <span className="pp-door-copy">
-                Something needs to be fixed.
-              </span>
-              <span className="pp-door-arrow">→</span>
-            </button>
-
-            <button
-              className="pp-door"
-              onClick={() => chooseProject("Restoration & Refit")}
-            >
-              <span className="pp-door-title">RESTORATION & REFIT</span>
-              <span className="pp-door-copy">
-                Rebuild, restore, repower or upgrade.
-              </span>
-              <span className="pp-door-arrow">→</span>
-            </button>
-
-            <button
-              className="pp-door"
-              onClick={() => chooseProject("Marine Service")}
-            >
-              <span className="pp-door-title">MARINE SERVICE</span>
-              <span className="pp-door-copy">
-                Service, engines, rigging, diagnostics or maintenance.
-              </span>
-              <span className="pp-door-arrow">→</span>
-            </button>
-          </div>
-        ) : (
-          <div className="pp-intake">
-            {intakeStep !== "done" && (
-              <div className="pp-intake-top">
-                <button
-                  className="pp-back"
-                  onClick={() => {
-                    if (intakeStep === "details") {
-                      setProjectType(null);
-                    } else {
-                      setIntakeStep("details");
-                    }
-                  }}
-                >
-                  ← BACK
-                </button>
-
-                <span className="pp-selected">{projectType}</span>
-              </div>
-            )}
-
-            {intakeStep === "details" && (
-              <div className="pp-intake-step">
-                <div className="pp-intake-label">YOUR PROJECT</div>
-                <h3>TELL US ABOUT YOUR BOAT.</h3>
-
-                <div className="pp-form-grid">
-                  <label>
-                    Year
-                    <input
-                      value={form.year}
-                      onChange={(event) => updateForm("year", event.target.value)}
-                      placeholder="2012"
-                    />
-                  </label>
-
-                  <label>
-                    Make / Model
-                    <input
-                      value={form.makeModel}
-                      onChange={(event) => updateForm("makeModel", event.target.value)}
-                      placeholder="SeaCraft"
-                    />
-                  </label>
-
-                  <label>
-                    Length
-                    <input
-                      value={form.length}
-                      onChange={(event) => updateForm("length", event.target.value)}
-                      placeholder="25 ft"
-                    />
-                  </label>
-
-                  <label>
-                    Engines
-                    <input
-                      value={form.engines}
-                      onChange={(event) => updateForm("engines", event.target.value)}
-                      placeholder="Twin Yamaha"
-                    />
-                  </label>
-
-                  <label className="pp-full">
-                    Boat Location
-                    <input
-                      value={form.location}
-                      onChange={(event) => updateForm("location", event.target.value)}
-                      placeholder="Stuart, FL"
-                    />
-                  </label>
-
-                  <label className="pp-full">
-                    What are you looking to have done?
-                    <textarea
-                      rows={5}
-                      value={form.description}
-                      onChange={(event) => updateForm("description", event.target.value)}
-                      placeholder="Tell us what you're working on..."
-                    />
-                  </label>
-                </div>
-
-                <button
-                  className="pp-submit"
-                  type="button"
-                  onClick={() => setIntakeStep("contact")}
-                >
-                  CONTINUE
-                </button>
-              </div>
-            )}
-
-            {intakeStep === "contact" && (
-              <div className="pp-intake-step">
-                <div className="pp-intake-label">HOW SHOULD WE REACH YOU?</div>
-                <h3>LET'S GET THIS IN FRONT OF MAX.</h3>
-
-                <p className="pp-intake-intro">
-                  Send the request now. Photos, measurements and other project details can be added to the same work order later.
-                </p>
-
-                <div className="pp-form-grid">
-                  <label>
-                    Name *
-                    <input
-                      value={form.name}
-                      onChange={(event) => updateForm("name", event.target.value)}
-                      placeholder="Your name"
-                    />
-                  </label>
-
-                  <label>
-                    Phone *
-                    <input
-                      value={form.phone}
-                      onChange={(event) => updateForm("phone", event.target.value)}
-                      placeholder="Your phone"
-                      inputMode="tel"
-                    />
-                  </label>
-
-                  <label className="pp-full">
-                    Email
-                    <input
-                      value={form.email}
-                      onChange={(event) => updateForm("email", event.target.value)}
-                      placeholder="Your email"
-                      inputMode="email"
-                    />
-                  </label>
-                </div>
-
-                <button
-                  className="pp-submit"
-                  type="button"
-                  disabled={!form.name.trim() || !form.phone.trim()}
-                  onClick={finishRequest}
-                >
-                  SEND TO PERFORMANCE POWERBOATS
-                </button>
-              </div>
-            )}
-
-            {intakeStep === "done" && (
-              <div className="pp-confirmation">
-                <div className="pp-confirmation-check">✓</div>
-                <div className="pp-kicker">REQUEST RECEIVED</div>
-                <h3>GOT IT.</h3>
-
-                <p>
-                  Your project is now with Performance Powerboats.
-                  Max's team can review it, contact you and keep the work organized from here.
-                </p>
-              </div>
-            )}
-          </div>
-        )}
-      </section>
-
       <section className="pp-story">
         <div className="pp-story-inner">
           <div className="pp-kicker">THE STORY</div>
@@ -500,7 +622,7 @@ export default function PerformancePowerboatsLandingPage() {
             <div className="pp-footer-kicker">PERFORMANCE POWERBOATS</div>
             <h2>BUILT HERE. MADE FOR THE WATER.</h2>
             <p>
-              Indiantown, Florida · New build · Boat repair · Restoration & refit · Marine service
+              Indiantown, Florida · Build a Performance · Service & repair · Custom metal fabrication
             </p>
           </div>
 
@@ -516,6 +638,14 @@ export default function PerformancePowerboatsLandingPage() {
     </main>
   );
 }
+
+
+
+
+
+
+
+
 
 
 

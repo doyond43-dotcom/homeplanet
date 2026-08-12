@@ -1,0 +1,777 @@
+﻿/* ============================================================
+   BUILD YOUR PERFORMANCE
+   CLEAN VISUAL SYSTEM
+   Same Performance Powerboats world as landing page
+   ============================================================ */
+
+:root {
+  --ppb-navy: #062b3d;
+  --ppb-deep: #041c29;
+  --ppb-water: #0d6787;
+  --ppb-gold: #eebc4d;
+  --ppb-gold-deep: #dca731;
+  --ppb-ink: #082c3d;
+  --ppb-text: #365664;
+  --ppb-muted: #69808a;
+  --ppb-mist: #edf6f7;
+  --ppb-sky: #dcecef;
+  --ppb-white: #ffffff;
+  --ppb-line: rgba(7, 54, 74, 0.13);
+}
+
+.ppb-page {
+  min-height: 100vh;
+  overflow-x: hidden;
+  background: #fff;
+  color: var(--ppb-ink);
+}
+
+.ppb-page * {
+  box-sizing: border-box;
+}
+
+.ppb-page button {
+  font-family: inherit;
+}
+
+/* ============================================================
+   TOP BAR
+   ============================================================ */
+
+.ppb-topbar {
+  position: absolute;
+  z-index: 10;
+  top: 0;
+  left: 50%;
+  width: min(1180px, calc(100% - 48px));
+  min-height: 70px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.ppb-brand,
+.ppb-back {
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+  text-shadow: 0 2px 9px rgba(0, 28, 40, 0.55);
+}
+
+.ppb-brand {
+  font-size: 12px;
+  letter-spacing: 0.07em;
+}
+
+.ppb-back {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  opacity: 0.92;
+}
+
+/* ============================================================
+   HERO
+   Bright. Sunny. No blanket overlay.
+   ============================================================ */
+
+.ppb-hero {
+  min-height: 580px;
+  padding:
+    120px max(24px, calc((100vw - 1180px) / 2))
+    58px;
+  display: flex;
+  align-items: flex-end;
+
+  background:
+    url("/images/performance-powerboats/speeding_white_powerboat_at_the_marina.png")
+    center center / cover no-repeat;
+}
+
+.ppb-hero-inner {
+  width: min(610px, 100%);
+}
+
+.ppb-kicker {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--ppb-gold-deep);
+  font-size: 10px;
+  line-height: 1.2;
+  font-weight: 950;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.ppb-hero .ppb-kicker {
+  color: var(--ppb-gold);
+  text-shadow: 0 2px 8px rgba(0, 26, 38, 0.5);
+}
+
+.ppb-hero h1 {
+  margin: 0;
+  max-width: 600px;
+  color: #fff;
+  font-size: clamp(55px, 5.4vw, 72px);
+  line-height: 0.91;
+  letter-spacing: -0.045em;
+  font-weight: 950;
+  text-transform: uppercase;
+
+  text-shadow:
+    0 3px 8px rgba(0, 28, 40, 0.72),
+    0 8px 28px rgba(0, 24, 38, 0.28);
+}
+
+.ppb-hero p {
+  max-width: 520px;
+  margin: 18px 0 0;
+  color: #fff;
+  font-size: 16px;
+  line-height: 1.52;
+  font-weight: 600;
+
+  text-shadow:
+    0 2px 7px rgba(0, 24, 36, 0.72),
+    0 6px 18px rgba(0, 24, 36, 0.22);
+}
+
+.ppb-primary {
+  min-height: 44px;
+  margin-top: 23px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 5px;
+  background: var(--ppb-gold);
+  color: var(--ppb-deep);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
+/* ============================================================
+   SHARED SECTION SYSTEM
+   ============================================================ */
+
+.ppb-section {
+  padding: 70px max(24px, calc((100vw - 1180px) / 2));
+  background: #fff;
+}
+
+.ppb-heading {
+  width: min(760px, 100%);
+  margin-bottom: 32px;
+}
+
+.ppb-heading h2 {
+  margin: 0;
+  color: var(--ppb-navy);
+  font-size: clamp(46px, 4.6vw, 60px);
+  line-height: 0.95;
+  letter-spacing: -0.043em;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.ppb-heading p {
+  max-width: 610px;
+  margin: 13px 0 0;
+  color: var(--ppb-text);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+/* ============================================================
+   STEP 01 — CHOOSE YOUR PERFORMANCE
+   ============================================================ */
+
+.ppb-model-grid {
+  width: min(1120px, 100%);
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.ppb-model-card {
+  grid-column: span 2;
+  min-height: 190px;
+  padding: 20px;
+  border: 1px solid var(--ppb-line);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  background:
+    linear-gradient(180deg, #fff 0%, #f5fafb 100%);
+  color: var(--ppb-ink);
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 10px 28px rgba(10, 58, 76, 0.045);
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.ppb-model-card:nth-child(4),
+.ppb-model-card:nth-child(5) {
+  grid-column: span 3;
+}
+
+.ppb-model-card:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: rgba(13, 103, 135, 0.35);
+  box-shadow: 0 15px 34px rgba(10, 58, 76, 0.08);
+}
+
+.ppb-model-card.is-active {
+  border-color: var(--ppb-gold-deep);
+  box-shadow: inset 0 0 0 1px var(--ppb-gold-deep);
+}
+
+.ppb-model-card.is-coming {
+  opacity: 0.48;
+  cursor: default;
+}
+
+.ppb-model-eyebrow {
+  color: var(--ppb-gold-deep);
+  font-size: 9px;
+  font-weight: 950;
+  letter-spacing: 0.14em;
+}
+
+.ppb-model-card strong {
+  margin-top: auto;
+  color: var(--ppb-navy);
+  font-size: clamp(36px, 3.4vw, 48px);
+  line-height: 0.94;
+  letter-spacing: -0.045em;
+}
+
+.ppb-model-card p {
+  max-width: 245px;
+  margin: 11px 0 15px;
+  color: var(--ppb-text);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.ppb-model-action {
+  color: var(--ppb-water);
+  font-size: 9px;
+  font-weight: 950;
+  letter-spacing: 0.1em;
+}
+
+/* ============================================================
+   STEP 02 — USE
+   Soft daylight break
+   ============================================================ */
+
+.ppb-section-alt {
+  background:
+    linear-gradient(
+      180deg,
+      #e4f2f5 0%,
+      #f5fafb 52%,
+      #ffffff 100%
+    );
+}
+
+.ppb-choice-grid {
+  width: min(1120px, 100%);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.ppb-choice {
+  min-height: 118px;
+  padding: 19px;
+  border: 1px solid rgba(7, 54, 74, 0.14);
+  border-radius: 11px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--ppb-ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.ppb-choice strong {
+  font-size: 17px;
+  line-height: 1.08;
+}
+
+.ppb-choice span {
+  color: var(--ppb-water);
+  font-size: 9px;
+  font-weight: 950;
+  letter-spacing: 0.1em;
+}
+
+.ppb-choice.is-active {
+  border-color: var(--ppb-gold-deep);
+  box-shadow: inset 0 0 0 1px var(--ppb-gold-deep);
+  background: #fff;
+}
+
+/* ============================================================
+   STEP 03 — SHAPE THE BUILD
+   Boat option sheet, not software settings
+   ============================================================ */
+
+#build-setup {
+  background: #fff;
+}
+
+.ppb-setup {
+  width: min(1060px, 100%);
+  border-top: 1px solid var(--ppb-line);
+}
+
+.ppb-setup-row {
+  padding: 23px 0;
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 28px;
+  border-bottom: 1px solid var(--ppb-line);
+}
+
+.ppb-setup-label {
+  padding-top: 9px;
+  color: var(--ppb-gold-deep);
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: 0.13em;
+}
+
+.ppb-option-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.ppb-option-list button {
+  min-height: 38px;
+  padding: 0 15px;
+  border: 1px solid rgba(7, 54, 74, 0.16);
+  border-radius: 999px;
+  background: #f7fafb;
+  color: var(--ppb-ink);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.ppb-option-list button:hover {
+  border-color: rgba(13, 103, 135, 0.35);
+}
+
+.ppb-option-list button.is-active {
+  border-color: var(--ppb-gold);
+  background: var(--ppb-gold);
+  color: var(--ppb-deep);
+}
+
+/* ============================================================
+   SUMMARY
+   Clean finish — light, not giant
+   ============================================================ */
+
+.ppb-summary-section {
+  padding:
+    72px max(24px, calc((100vw - 1180px) / 2))
+    78px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #ddecf0 0%,
+      #f4f9fa 48%,
+      #ffffff 100%
+    );
+
+  color: var(--ppb-ink);
+}
+
+.ppb-summary {
+  width: min(1080px, 100%);
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(380px, 1.1fr);
+  gap: clamp(48px, 6vw, 78px);
+  align-items: start;
+}
+
+.ppb-summary h2 {
+  margin: 0;
+  max-width: 500px;
+  color: var(--ppb-navy);
+  font-size: clamp(45px, 4.6vw, 59px);
+  line-height: 0.94;
+  letter-spacing: -0.043em;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.ppb-summary-copy > p {
+  max-width: 490px;
+  margin: 17px 0 0;
+  color: var(--ppb-text);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.ppb-price-note {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--ppb-line);
+}
+
+.ppb-price-note span {
+  display: block;
+  color: var(--ppb-muted);
+  font-size: 9px;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+}
+
+.ppb-price-note strong {
+  display: block;
+  margin-top: 6px;
+  color: var(--ppb-navy);
+  font-size: 23px;
+}
+
+.ppb-price-note p {
+  max-width: 440px;
+  margin: 7px 0 0;
+  color: var(--ppb-muted);
+  font-size: 12px;
+  line-height: 1.48;
+}
+
+.ppb-summary-card {
+  padding: 24px;
+  border: 1px solid rgba(7, 54, 74, 0.12);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.93);
+  box-shadow: 0 20px 52px rgba(9, 55, 72, 0.09);
+}
+
+.ppb-summary-line {
+  padding: 15px 0;
+  display: grid;
+  grid-template-columns: 125px 1fr;
+  gap: 20px;
+  border-bottom: 1px solid var(--ppb-line);
+}
+
+.ppb-summary-line span {
+  color: var(--ppb-muted);
+  font-size: 9px;
+  font-weight: 950;
+  letter-spacing: 0.11em;
+}
+
+.ppb-summary-line strong {
+  color: var(--ppb-navy);
+  text-align: right;
+  font-size: 14px;
+}
+
+.ppb-send {
+  width: 100%;
+  min-height: 46px;
+  margin-top: 21px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--ppb-gold);
+  color: var(--ppb-deep);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: 0.07em;
+}
+
+.ppb-send:disabled {
+  opacity: 0.4;
+}
+
+.ppb-summary-card small {
+  display: block;
+  margin-top: 10px;
+  color: var(--ppb-muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+/* ============================================================
+   TABLET
+   ============================================================ */
+
+@media (max-width: 980px) {
+  .ppb-model-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .ppb-model-card,
+  .ppb-model-card:nth-child(4),
+  .ppb-model-card:nth-child(5) {
+    grid-column: auto;
+  }
+
+  .ppb-model-card:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .ppb-choice-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .ppb-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .ppb-summary-card {
+    max-width: 650px;
+  }
+}
+
+/* ============================================================
+   PHONE
+   ============================================================ */
+
+@media (max-width: 640px) {
+  .ppb-topbar {
+    width: calc(100% - 36px);
+    min-height: 60px;
+  }
+
+  .ppb-brand {
+    font-size: 9px;
+  }
+
+  .ppb-back {
+    font-size: 7px;
+  }
+
+  .ppb-hero {
+    min-height: 590px;
+    padding: 100px 18px 44px;
+    background-position: 62% center;
+  }
+
+  .ppb-hero h1 {
+    font-size: clamp(44px, 12vw, 58px);
+  }
+
+  .ppb-hero p {
+    font-size: 15px;
+  }
+
+  .ppb-section,
+  .ppb-summary-section {
+    padding: 54px 18px 58px;
+  }
+
+  .ppb-heading {
+    margin-bottom: 27px;
+  }
+
+  .ppb-heading h2,
+  .ppb-summary h2 {
+    font-size: clamp(38px, 10.5vw, 48px);
+  }
+
+  .ppb-heading p,
+  .ppb-summary-copy > p {
+    font-size: 14px;
+  }
+
+  .ppb-model-grid,
+  .ppb-choice-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ppb-model-card,
+  .ppb-model-card:nth-child(4),
+  .ppb-model-card:nth-child(5),
+  .ppb-model-card:last-child {
+    grid-column: auto;
+    min-height: 165px;
+  }
+
+  .ppb-choice {
+    min-height: 96px;
+  }
+
+  .ppb-setup-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 19px 0;
+  }
+
+  .ppb-setup-label {
+    padding-top: 0;
+  }
+
+  .ppb-summary {
+    gap: 30px;
+  }
+
+  .ppb-summary-card {
+    padding: 19px;
+  }
+
+  .ppb-summary-line {
+    grid-template-columns: 100px 1fr;
+  }
+}
+
+/* ============================================================
+   BUILD SUBMISSION — CUSTOMER CONTACT
+   ============================================================ */
+
+.ppb-contact {
+  margin-top: 22px;
+  padding-top: 22px;
+  border-top: 1px solid var(--ppb-line);
+}
+
+.ppb-contact-heading {
+  margin-bottom: 16px;
+}
+
+.ppb-contact-heading span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--ppb-gold-deep);
+  font-size: 9px;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+}
+
+.ppb-contact-heading strong {
+  color: var(--ppb-navy);
+  font-size: 16px;
+}
+
+.ppb-contact-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 11px;
+}
+
+.ppb-contact-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ppb-contact-grid label > span {
+  color: var(--ppb-muted);
+  font-size: 8px;
+  font-weight: 950;
+  letter-spacing: 0.11em;
+}
+
+.ppb-contact-grid em {
+  font-style: normal;
+  font-weight: 700;
+  opacity: 0.65;
+}
+
+.ppb-contact-full {
+  grid-column: 1 / -1;
+}
+
+.ppb-contact-grid input {
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 1px solid rgba(7, 54, 74, 0.15);
+  border-radius: 7px;
+  outline: none;
+  background: #f8fbfb;
+  color: var(--ppb-ink);
+  font: inherit;
+  font-size: 13px;
+}
+
+.ppb-contact-grid input:focus {
+  border-color: var(--ppb-water);
+  box-shadow: 0 0 0 3px rgba(13, 103, 135, 0.08);
+}
+
+.ppb-submit-error {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 7px;
+  background: #fff1ef;
+  color: #a73d2f;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.ppb-build-sent {
+  padding: 26px 10px 8px;
+  text-align: center;
+}
+
+.ppb-build-sent-check {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 13px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--ppb-gold);
+  color: var(--ppb-deep);
+  font-size: 23px;
+  font-weight: 950;
+}
+
+.ppb-build-sent > span {
+  display: block;
+  color: var(--ppb-gold-deep);
+  font-size: 9px;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+}
+
+.ppb-build-sent > strong {
+  display: block;
+  margin-top: 6px;
+  color: var(--ppb-navy);
+  font-size: 20px;
+  line-height: 1.08;
+}
+
+.ppb-build-sent p {
+  max-width: 440px;
+  margin: 10px auto 0;
+  color: var(--ppb-text);
+  font-size: 13px;
+  line-height: 1.48;
+}
+
+@media (max-width: 640px) {
+  .ppb-contact-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ppb-contact-full {
+    grid-column: auto;
+  }
+}
