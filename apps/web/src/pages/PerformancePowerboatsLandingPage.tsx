@@ -175,17 +175,11 @@ export default function PerformancePowerboatsLandingPage() {
           <div className="pp-kicker">BUILT HERE. SERVICED HERE.</div>
 
           <h2>THE WORK DOESN'T STOP WHEN THE BOAT LEAVES THE SHOP.</h2>
-
-          <p>
-            From routine service and rigging to repowers, electrical work and repairs,
-            the same hands-on marine experience stays behind the boat.
+          <p className="pp-service-bridge-copy">
+            From routine service and rigging to repowers, electrical work and repairs.
           </p>
 
-          <div className="pp-service-bridge-points">
-            <span>BUILD</span>
-            <span>SERVICE</span>
-            <span>REPOWER</span>
-          </div>
+
         </div>
       </section>
       <section className="pp-section pp-start" id="start-project">
@@ -718,6 +712,10 @@ export default function PerformancePowerboatsLandingPage() {
     </main>
   );
 }
+
+
+
+
 
 
 
