@@ -2063,3 +2063,714 @@
     font-size: 12px;
   }
 }
+
+/* =========================================================
+   PERFORMANCE POWERBOATS — FINAL MOBILE PASS
+   Mobile only. Desktop stays untouched.
+   ========================================================= */
+
+@media (max-width: 760px) {
+
+  /* ---------- TOP BAR / NAV ---------- */
+
+  .pp-topbar {
+    padding: 14px 18px 8px;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .pp-location-top {
+    font-size: 10px;
+    line-height: 1.35;
+    letter-spacing: 0.14em;
+    max-width: 110px;
+  }
+
+  .pp-nav {
+    gap: 5px;
+    flex-wrap: nowrap;
+  }
+
+  .pp-nav a {
+    font-size: 8px;
+    line-height: 1.15;
+    letter-spacing: 0.08em;
+    padding: 7px 8px;
+    white-space: normal;
+    text-align: center;
+  }
+
+
+  /* ---------- HERO ---------- */
+
+  .pp-hero-content {
+    width: 100%;
+    max-width: none;
+    padding-left: 18px;
+    padding-right: 18px;
+    transform: none;
+  }
+
+  .pp-brand-hero {
+    margin-bottom: 18px;
+  }
+
+  .pp-brand-hero .pp-brand-main {
+    font-size: 16px;
+  }
+
+  .pp-brand-hero .pp-brand-sub {
+    font-size: 9px;
+  }
+
+  .pp-hero-headline {
+    font-size: clamp(43px, 11.6vw, 58px) !important;
+    line-height: 0.94 !important;
+    letter-spacing: -0.045em;
+  }
+
+  .pp-hero-headline span {
+    display: block;
+  }
+
+  .pp-hero-middle {
+    margin: 22px 0 24px;
+  }
+
+  .pp-hero-middle p {
+    max-width: 100%;
+    margin-bottom: 20px;
+    font-size: 17px;
+    line-height: 1.45;
+  }
+
+  .pp-actions {
+    display: grid;
+    grid-template-columns: 1fr 0.72fr;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .pp-actions .pp-btn {
+    min-height: 54px;
+    padding: 10px 12px;
+    font-size: 10px;
+    line-height: 1.2;
+  }
+
+  .pp-hero-headline-bottom {
+    margin-top: 4px;
+    font-size: clamp(43px, 11.3vw, 56px) !important;
+  }
+
+
+  /* ---------- HERO BRIDGE ---------- */
+
+  .pp-service-bridge {
+    padding: 24px 18px 26px;
+  }
+
+  .pp-service-bridge .pp-kicker {
+    margin-bottom: 10px;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+  }
+
+  .pp-service-bridge h2 {
+    max-width: 560px;
+    padding: 0;
+    font-size: 25px;
+    line-height: 1.04;
+  }
+
+  .pp-service-bridge-copy {
+    max-width: 520px;
+    margin-top: 10px;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+
+  /* ---------- GENERAL SECTION HEADINGS ---------- */
+
+  .pp-center-heading {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .pp-center-heading .pp-kicker,
+  .pp-production-engine-copy .pp-kicker,
+  .pp-story .pp-kicker,
+  .pp-build-cta .pp-kicker {
+    font-size: 11px;
+    letter-spacing: 0.16em;
+  }
+
+  .pp-center-heading h2 {
+    font-size: clamp(38px, 10vw, 50px);
+    line-height: 0.98;
+    letter-spacing: -0.04em;
+  }
+
+  .pp-center-heading p {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+
+  /* ---------- SERVICE SECTION ---------- */
+
+  .pp-service-direct-call {
+    margin-top: 22px;
+  }
+
+  .pp-service-grid {
+    gap: 12px;
+  }
+
+  .pp-service-choice {
+    min-height: 0;
+    padding: 22px 20px;
+  }
+
+  .pp-service-choice .pp-door-title {
+    font-size: 21px;
+  }
+
+  .pp-service-choice .pp-door-copy {
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+
+  /* ---------- PRODUCTION ENGINE ---------- */
+
+  .pp-production-engine-grid {
+    gap: 32px;
+  }
+
+  .pp-production-engine-copy h2 {
+    font-size: clamp(43px, 11vw, 56px);
+    line-height: 0.96;
+    letter-spacing: -0.045em;
+  }
+
+  .pp-production-engine-copy > p {
+    font-size: 17px;
+    line-height: 1.55;
+  }
+
+  .pp-production-engine-copy h3 {
+    font-size: 17px;
+    line-height: 1.2;
+  }
+
+  .pp-production-engine-copy li,
+  .pp-production-engine-copy span {
+    line-height: 1.5;
+  }
+
+
+  /* ---------- NEW FACILITY ---------- */
+
+  .pp-next-chapter h2,
+  .pp-facility h2 {
+    font-size: clamp(42px, 10.8vw, 55px);
+    line-height: 0.96;
+    letter-spacing: -0.045em;
+  }
+
+  .pp-next-chapter p,
+  .pp-facility p {
+    font-size: 17px;
+    line-height: 1.5;
+  }
+
+
+  /* ---------- FROM HULL TO WATER ---------- */
+
+  .pp-build-story {
+    gap: 16px;
+  }
+
+  .pp-build-feature-copy {
+    padding: 24px 20px 26px;
+    gap: 16px;
+  }
+
+  .pp-build-step {
+    flex: 0 0 auto;
+    width: 52px;
+    height: 52px;
+    font-size: 17px;
+  }
+
+  .pp-build-feature-copy .pp-kicker {
+    font-size: 11px;
+    letter-spacing: 0.16em;
+  }
+
+  .pp-build-feature-copy h3 {
+    font-size: clamp(31px, 8.2vw, 40px);
+    line-height: 0.98;
+  }
+
+  .pp-build-feature-copy p {
+    font-size: 15px;
+    line-height: 1.45;
+  }
+
+
+  /* ---------- STORY ---------- */
+
+  .pp-story-inner {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .pp-story h2 {
+    font-size: clamp(42px, 10.7vw, 54px);
+    line-height: 0.95;
+    letter-spacing: -0.045em;
+  }
+
+  .pp-story-inner > p {
+    max-width: 560px;
+    margin-left: auto;
+    margin-right: auto;
+    font-size: 17px;
+    line-height: 1.5;
+  }
+
+  .pp-story-gallery {
+    margin-top: 28px;
+    margin-bottom: 28px;
+    gap: 8px;
+  }
+
+  .pp-story .pp-now {
+    margin-bottom: 12px;
+    line-height: 0.96;
+  }
+
+  .pp-story .pp-now span,
+  .pp-story .pp-now strong {
+    font-size: clamp(34px, 8.8vw, 44px);
+    letter-spacing: -0.04em;
+  }
+
+  .pp-story-support {
+    max-width: 560px;
+    margin-bottom: 24px;
+    padding: 0 6px;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+
+  /* ---------- FINAL BUILD CTA ---------- */
+
+  .pp-final-build-cta-section {
+    padding-top: 42px;
+    padding-bottom: 42px;
+  }
+
+  .pp-build-cta {
+    padding: 34px 24px;
+    border-radius: 24px;
+  }
+
+  .pp-build-cta-copy h2 {
+    font-size: clamp(38px, 9.5vw, 48px);
+    line-height: 0.98;
+    letter-spacing: -0.04em;
+  }
+
+  .pp-build-cta-copy p {
+    margin-top: 18px;
+    font-size: 17px;
+    line-height: 1.5;
+  }
+
+  .pp-build-cta-actions {
+    margin-top: 28px;
+    gap: 16px;
+  }
+
+  .pp-build-cta-actions .pp-btn {
+    min-height: 56px;
+  }
+
+
+  /* ---------- FOOTER ---------- */
+
+  .pp-footer-defined {
+    padding-top: 42px;
+  }
+
+  .pp-footer-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px 24px;
+    padding-bottom: 36px;
+  }
+
+  .pp-footer-about {
+    grid-column: 1 / -1;
+    max-width: 100%;
+  }
+
+  .pp-footer-about .pp-footer-kicker {
+    margin-bottom: 12px;
+    font-size: 10px;
+  }
+
+  .pp-footer-about h2 {
+    max-width: 580px;
+    font-size: clamp(31px, 8.2vw, 40px);
+    line-height: 1.02;
+  }
+
+  .pp-footer-about p {
+    margin-top: 16px;
+    font-size: 13px;
+  }
+
+  .pp-footer-column {
+    gap: 9px;
+  }
+
+  .pp-footer-column:nth-of-type(4) {
+    grid-column: 1 / -1;
+  }
+
+  .pp-footer-heading {
+    margin-bottom: 5px;
+    font-size: 10px;
+    letter-spacing: 0.16em;
+  }
+
+  .pp-footer-column a {
+    font-size: 14px;
+    line-height: 1.35;
+  }
+
+  .pp-footer-contact {
+    padding-top: 4px;
+  }
+
+  .pp-footer-call {
+    margin-top: 7px;
+  }
+
+  .pp-footer-defined-bottom {
+    padding: 16px 18px 18px;
+    gap: 5px;
+    font-size: 8px;
+    line-height: 1.45;
+  }
+}
+
+
+/* Extra-tight phones */
+@media (max-width: 430px) {
+
+  .pp-topbar {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .pp-nav a {
+    font-size: 7.5px;
+    padding: 7px 6px;
+  }
+
+  .pp-hero-content {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .pp-hero-headline,
+  .pp-hero-headline-bottom {
+    font-size: 43px !important;
+  }
+
+  .pp-actions {
+    grid-template-columns: 1fr 0.72fr;
+  }
+
+  .pp-actions .pp-btn {
+    font-size: 9px;
+  }
+
+  .pp-center-heading h2 {
+    font-size: 39px;
+  }
+
+  .pp-production-engine-copy h2 {
+    font-size: 42px;
+  }
+
+  .pp-story h2 {
+    font-size: 41px;
+  }
+
+  .pp-story .pp-now span,
+  .pp-story .pp-now strong {
+    font-size: 33px;
+  }
+
+  .pp-build-cta-copy h2 {
+    font-size: 38px;
+  }
+
+  .pp-footer-grid {
+    gap: 28px 18px;
+  }
+}
+
+/* =========================================================
+   PERFORMANCE POWERBOATS — MOBILE TYPOGRAPHY CORRECTION
+   Typography only. No desktop/layout/image changes.
+   ========================================================= */
+
+@media (max-width: 760px) {
+
+  /* Hero */
+  .pp-hero-headline {
+    font-size: 40px !important;
+    line-height: 0.96 !important;
+    letter-spacing: -0.035em !important;
+  }
+
+  .pp-hero-headline-bottom {
+    font-size: 40px !important;
+    line-height: 0.96 !important;
+  }
+
+  .pp-hero-middle p {
+    font-size: 15px;
+    line-height: 1.42;
+  }
+
+  /* Top nav */
+  .pp-nav a {
+    font-size: 7.5px;
+    line-height: 1.15;
+    letter-spacing: 0.06em;
+  }
+
+  /* Bridge */
+  .pp-service-bridge h2 {
+    font-size: 22px;
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+  }
+
+  .pp-service-bridge-copy {
+    font-size: 13px;
+  }
+
+  /* General centered headings */
+  .pp-center-heading h2 {
+    font-size: 36px;
+    line-height: 0.98;
+    letter-spacing: -0.035em;
+  }
+
+  /* Production Engine */
+  .pp-production-engine-copy h2 {
+    font-size: 38px;
+    line-height: 0.98;
+    letter-spacing: -0.035em;
+  }
+
+  .pp-production-engine-copy > p {
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  /* Facility / Next Chapter */
+  .pp-next-chapter h2,
+  .pp-facility h2 {
+    font-size: 38px;
+    line-height: 0.98;
+    letter-spacing: -0.035em;
+  }
+
+  /* Build section */
+  .pp-build-feature-copy h3 {
+    font-size: 29px;
+    line-height: 1.0;
+    letter-spacing: -0.025em;
+  }
+
+  /* Story */
+  .pp-story h2 {
+    font-size: 38px;
+    line-height: 0.98;
+    letter-spacing: -0.035em;
+  }
+
+  .pp-story .pp-now {
+    line-height: 1;
+  }
+
+  .pp-story .pp-now span,
+  .pp-story .pp-now strong {
+    display: inline;
+    font-size: 30px;
+    line-height: 1.08;
+    letter-spacing: -0.025em;
+  }
+
+  .pp-story-support {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* Final CTA */
+  .pp-build-cta-copy h2 {
+    font-size: 34px;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+
+  /* Footer */
+  .pp-footer-about h2 {
+    font-size: 30px;
+    line-height: 1.04;
+    letter-spacing: -0.025em;
+  }
+}
+
+@media (max-width: 430px) {
+
+  .pp-hero-headline,
+  .pp-hero-headline-bottom {
+    font-size: 38px !important;
+  }
+
+  .pp-center-heading h2 {
+    font-size: 34px;
+  }
+
+  .pp-production-engine-copy h2,
+  .pp-next-chapter h2,
+  .pp-facility h2,
+  .pp-story h2 {
+    font-size: 36px;
+  }
+
+  .pp-story .pp-now span,
+  .pp-story .pp-now strong {
+    font-size: 28px;
+  }
+}
+
+/* Mobile build cards — keep step number clear of text */
+@media (max-width: 760px) {
+  .pp-build-feature-copy {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr);
+    column-gap: 16px;
+    align-items: start;
+    padding: 22px 18px 24px;
+  }
+
+  .pp-build-step {
+    width: 52px;
+    height: 52px;
+    margin: 0;
+    align-self: start;
+  }
+
+  .pp-build-feature-copy > div {
+    min-width: 0;
+  }
+
+  .pp-build-feature-copy h3 {
+    margin: 4px 0 10px;
+  }
+
+  .pp-build-feature-copy p {
+    margin: 0;
+  }
+}
+
+@media (max-width: 430px) {
+  .pp-build-feature-copy {
+    grid-template-columns: 46px minmax(0, 1fr);
+    column-gap: 14px;
+  }
+
+  .pp-build-step {
+    width: 46px;
+    height: 46px;
+    font-size: 15px;
+  }
+
+  .pp-build-feature-copy h3 {
+    font-size: 27px;
+  }
+}
+
+/* =========================================================
+   MOBILE BUILD CARD FIX — FULL WIDTH STACK
+   Overrides previous mobile grid experiment
+   ========================================================= */
+
+@media (max-width: 760px) {
+
+  .pp-build-feature-copy {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0 !important;
+    padding: 22px 20px 26px !important;
+  }
+
+  .pp-build-step {
+    position: static !important;
+    width: 48px !important;
+    height: 48px !important;
+    margin: 0 0 14px 0 !important;
+    flex: none !important;
+  }
+
+  .pp-build-feature-copy > div {
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    flex: none !important;
+  }
+
+  .pp-build-feature-copy .pp-kicker {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 0 7px !important;
+    font-size: 10px !important;
+    line-height: 1.2 !important;
+  }
+
+  .pp-build-feature-copy h3 {
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 0 12px !important;
+    font-size: 28px !important;
+    line-height: 1 !important;
+    letter-spacing: -0.025em !important;
+  }
+
+  .pp-build-feature-copy p {
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+  }
+}
+
