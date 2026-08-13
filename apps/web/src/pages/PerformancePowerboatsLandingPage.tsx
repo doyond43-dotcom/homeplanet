@@ -126,9 +126,9 @@ export default function PerformancePowerboatsLandingPage() {
           <div className="pp-location pp-location-top">INDIANTOWN, FL</div>
 
           <nav className="pp-nav" aria-label="Performance navigation">
-            <a href="#showroom">SHOWROOM</a>
-            <a href="#custom-builds">CUSTOM BUILDS</a>
-            <a href="#start-project" className="pp-nav-cta">START A PROJECT</a>
+            <a href="/planet/performance-powerboats/showroom">SHOWROOM</a>
+            <a href="/planet/performance-powerboats/customer-builds">CUSTOMER BUILDS</a>
+            <a href="/planet/performance-powerboats/start-project" className="pp-nav-cta">START A PROJECT</a>
           </nav>
         </div>
 
@@ -152,13 +152,16 @@ export default function PerformancePowerboatsLandingPage() {
             <div className="pp-actions">
               <button
                 className="pp-btn pp-btn-gold"
-                onClick={openPerformanceModels}
+                onClick={() => window.location.href = "/planet/performance-powerboats/models"}
               >
                 VIEW PERFORMANCE MODELS
               </button>
 
-              <button className="pp-btn pp-btn-dark" onClick={scrollToStart}>
-                START A PROJECT
+              <button
+                className="pp-btn pp-btn-dark"
+                onClick={() => window.location.href = "/planet/performance-powerboats/contact"}
+              >
+                CONTACT PERFORMANCE
               </button>
             </div>
           </div>
@@ -454,9 +457,9 @@ export default function PerformancePowerboatsLandingPage() {
             <button
               type="button"
               className="pp-production-cta"
-              onClick={openPerformanceModels}
+              onClick={() => window.location.href = "/planet/performance-powerboats/molds-tooling"}
             >
-              VIEW PERFORMANCE MODELS →
+              EXPLORE MOLDS &amp; TOOLING →
             </button>
           </div>
 
@@ -712,6 +715,12 @@ export default function PerformancePowerboatsLandingPage() {
     </main>
   );
 }
+
+
+
+
+
+
 
 
 

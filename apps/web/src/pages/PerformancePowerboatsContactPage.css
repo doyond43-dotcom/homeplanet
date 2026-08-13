@@ -1,0 +1,246 @@
+﻿.pp-contact-page {
+  min-height: 100vh;
+  padding: 72px 24px 90px;
+  background: #f3f2ee;
+  color: #062535;
+}
+
+.pp-contact-shell {
+  width: min(100%, 1120px);
+  margin: 0 auto;
+}
+
+.pp-contact-back {
+  display: inline-block;
+  margin-bottom: 58px;
+  color: #526a75;
+  text-decoration: none;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+}
+
+.pp-contact-header {
+  max-width: 900px;
+}
+
+.pp-contact-kicker {
+  color: #c99425;
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: 0.18em;
+}
+
+.pp-contact-header h1 {
+  margin: 12px 0 0;
+  font-size: clamp(54px, 6.5vw, 88px);
+  line-height: 0.92;
+  letter-spacing: -0.05em;
+}
+
+.pp-contact-header > p {
+  max-width: 700px;
+  margin: 24px 0 0;
+  color: #607179;
+  font-size: 18px;
+  line-height: 1.55;
+}
+
+.pp-contact-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 44px;
+}
+
+.pp-contact-action {
+  display: flex;
+  flex-direction: column;
+  min-height: 190px;
+  padding: 28px;
+  border-radius: 12px;
+  background: #062535;
+  color: #fff;
+  text-decoration: none;
+}
+
+.pp-contact-action > span {
+  color: #d8a52f;
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: 0.18em;
+}
+
+.pp-contact-action strong {
+  margin-top: auto;
+  font-size: 28px;
+  line-height: 1;
+}
+
+.pp-contact-action small {
+  margin-top: 10px;
+  color: rgba(255,255,255,0.62);
+  font-size: 14px;
+}
+
+.pp-contact-question {
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr;
+  gap: 54px;
+  margin-top: 18px;
+  padding: 44px;
+  border: 1px solid rgba(6,37,53,0.10);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.pp-contact-question h2,
+.pp-contact-location h2 {
+  margin: 10px 0 0;
+  font-size: 38px;
+  line-height: 0.98;
+  letter-spacing: -0.035em;
+}
+
+.pp-contact-question-copy p {
+  margin: 18px 0 0;
+  color: #64747b;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.pp-contact-question form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.pp-contact-question label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: #536770;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+.pp-contact-question input,
+.pp-contact-question textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid rgba(6,37,53,0.16);
+  border-radius: 5px;
+  background: #f8f8f6;
+  color: #062535;
+  padding: 14px;
+  font: inherit;
+  font-size: 15px;
+  letter-spacing: 0;
+}
+
+.pp-contact-full {
+  grid-column: 1 / -1;
+}
+
+.pp-contact-question button {
+  grid-column: 1 / -1;
+  min-height: 52px;
+  border: 0;
+  border-radius: 4px;
+  background: #d8a52f;
+  color: #062535;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+}
+
+.pp-contact-location {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 30px;
+  margin-top: 18px;
+  padding: 36px 40px;
+  border-radius: 12px;
+  background: #062535;
+  color: #fff;
+}
+
+.pp-contact-location p {
+  margin: 13px 0 0;
+  color: rgba(255,255,255,0.68);
+  font-size: 15px;
+}
+
+.pp-contact-location a {
+  flex: none;
+  padding: 15px 18px;
+  border: 1px solid rgba(216,165,47,0.75);
+  border-radius: 4px;
+  color: #d8a52f;
+  text-decoration: none;
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+}
+
+@media (max-width: 760px) {
+  .pp-contact-page {
+    padding: 42px 18px 60px;
+  }
+
+  .pp-contact-back {
+    margin-bottom: 44px;
+  }
+
+  .pp-contact-header h1 {
+    font-size: 44px;
+    line-height: 0.95;
+  }
+
+  .pp-contact-header > p {
+    font-size: 16px;
+  }
+
+  .pp-contact-actions {
+    grid-template-columns: 1fr;
+    margin-top: 34px;
+  }
+
+  .pp-contact-action {
+    min-height: 150px;
+    padding: 22px;
+  }
+
+  .pp-contact-action strong {
+    font-size: 25px;
+  }
+
+  .pp-contact-question {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding: 26px 20px;
+  }
+
+  .pp-contact-question form {
+    grid-template-columns: 1fr;
+  }
+
+  .pp-contact-full,
+  .pp-contact-question button {
+    grid-column: auto;
+  }
+
+  .pp-contact-question h2,
+  .pp-contact-location h2 {
+    font-size: 32px;
+  }
+
+  .pp-contact-location {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 28px 22px;
+  }
+}

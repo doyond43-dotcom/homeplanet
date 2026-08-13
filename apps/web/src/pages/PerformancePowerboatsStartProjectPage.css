@@ -1,0 +1,169 @@
+﻿.pp-start-page {
+  min-height: 100vh;
+  padding: 72px 24px 90px;
+  background: #f3f2ee;
+  color: #062535;
+}
+
+.pp-start-shell {
+  width: min(100%, 1120px);
+  margin: 0 auto;
+}
+
+.pp-start-back {
+  display: inline-block;
+  margin-bottom: 58px;
+  color: #526a75;
+  text-decoration: none;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+}
+
+.pp-start-kicker,
+.pp-start-label {
+  color: #c99425;
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: 0.18em;
+}
+
+.pp-start-header {
+  max-width: 850px;
+}
+
+.pp-start-header h1 {
+  margin: 12px 0 0;
+  font-size: clamp(54px, 6.5vw, 88px);
+  line-height: 0.92;
+  letter-spacing: -0.05em;
+}
+
+.pp-start-header > p {
+  max-width: 680px;
+  margin: 24px 0 0;
+  color: #607179;
+  font-size: 18px;
+  line-height: 1.55;
+}
+
+.pp-start-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 46px;
+}
+
+.pp-start-card {
+  min-height: 390px;
+  display: flex;
+  flex-direction: column;
+  padding: 28px;
+  border: 1px solid rgba(6,37,53,0.10);
+  border-radius: 12px;
+  background: #fff;
+  color: #062535;
+  text-decoration: none;
+}
+
+.pp-start-card > span {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 52px;
+  border-radius: 6px;
+  background: #d8a52f;
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.pp-start-card h2 {
+  margin: 9px 0 0;
+  font-size: 31px;
+  line-height: 0.98;
+  letter-spacing: -0.035em;
+}
+
+.pp-start-card p {
+  margin: 17px 0 24px;
+  color: #65757c;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.pp-start-card strong {
+  display: block;
+  margin-top: auto;
+  font-size: 10px;
+  letter-spacing: 0.11em;
+}
+
+.pp-start-contact {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  margin-top: 18px;
+  padding: 24px 28px;
+  border-radius: 10px;
+  background: #062535;
+}
+
+.pp-start-contact span {
+  color: rgba(255,255,255,0.65);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.13em;
+}
+
+.pp-start-contact a {
+  color: #d8a52f;
+  text-decoration: none;
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+}
+
+@media (max-width: 760px) {
+  .pp-start-page {
+    padding: 42px 18px 60px;
+  }
+
+  .pp-start-back {
+    margin-bottom: 44px;
+  }
+
+  .pp-start-header h1 {
+    font-size: 44px;
+    line-height: 0.95;
+  }
+
+  .pp-start-header > p {
+    font-size: 16px;
+  }
+
+  .pp-start-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-top: 34px;
+  }
+
+  .pp-start-card {
+    min-height: 0;
+    padding: 22px;
+  }
+
+  .pp-start-card > span {
+    margin-bottom: 28px;
+  }
+
+  .pp-start-card h2 {
+    font-size: 29px;
+  }
+
+  .pp-start-contact {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
