@@ -1,4 +1,5 @@
-﻿import { useState } from "react";
+﻿import { useEffect } from "react";
+import { useState } from "react";
 import { supabase } from "../lib/supabase";
 import "./PerformancePowerboatsLandingPage.css";
 
@@ -26,7 +27,74 @@ const PROJECT_COPY = {
   },
 } as const;
 
+const PERFORMANCE_SEO_TITLE =
+  "Performance Powerboats | Custom Boats, Service & Marine Fabrication";
+const PERFORMANCE_SEO_DESCRIPTION =
+  "Performance Powerboats in Indiantown, Florida. Explore Performance models, custom builds, service, repair, repowers, rigging and marine fabrication.";
+const PERFORMANCE_SEO_URL =
+  "https://www.homeplanet.city/planet/performance-powerboats";
+const PERFORMANCE_SEO_IMAGE =
+  "https://www.homeplanet.city/images/performance-powerboats/performance-hero-boat.webp";
 export default function PerformancePowerboatsLandingPage() {
+  useEffect(() => {
+    document.title = PERFORMANCE_SEO_TITLE;
+
+    const setMeta = (
+      selector: string,
+      attrName: "property" | "name",
+      attrValue: string,
+      value: string
+    ) => {
+      let tag = document.head.querySelector(selector) as HTMLMetaElement | null;
+
+      if (!tag) {
+        tag = document.createElement("meta");
+        tag.setAttribute(attrName, attrValue);
+        document.head.appendChild(tag);
+      }
+
+      tag.setAttribute("content", value);
+    };
+
+    setMeta(
+      "meta[name='description']",
+      "name",
+      "description",
+      PERFORMANCE_SEO_DESCRIPTION
+    );
+
+    setMeta("meta[property='og:title']", "property", "og:title", PERFORMANCE_SEO_TITLE);
+    setMeta(
+      "meta[property='og:description']",
+      "property",
+      "og:description",
+      PERFORMANCE_SEO_DESCRIPTION
+    );
+    setMeta("meta[property='og:url']", "property", "og:url", PERFORMANCE_SEO_URL);
+    setMeta("meta[property='og:image']", "property", "og:image", PERFORMANCE_SEO_IMAGE);
+    setMeta("meta[property='og:type']", "property", "og:type", "website");
+
+    setMeta("meta[name='twitter:title']", "name", "twitter:title", PERFORMANCE_SEO_TITLE);
+    setMeta(
+      "meta[name='twitter:description']",
+      "name",
+      "twitter:description",
+      PERFORMANCE_SEO_DESCRIPTION
+    );
+    setMeta("meta[name='twitter:image']", "name", "twitter:image", PERFORMANCE_SEO_IMAGE);
+
+    let canonical = document.head.querySelector(
+      "link[rel='canonical']"
+    ) as HTMLLinkElement | null;
+
+    if (!canonical) {
+      canonical = document.createElement("link");
+      canonical.rel = "canonical";
+      document.head.appendChild(canonical);
+    }
+
+    canonical.href = PERFORMANCE_SEO_URL;
+  }, []);
   const [projectType, setProjectType] = useState<ProjectType>(null);
   const [openDoor, setOpenDoor] = useState<ProjectType>(null);
   const [intakeStep, setIntakeStep] = useState<"details" | "contact" | "done">("details");
@@ -119,7 +187,7 @@ export default function PerformancePowerboatsLandingPage() {
 
   return (
     <main className="pp-page">
-      <section className="pp-hero" style={{ backgroundImage: 'url("/images/performance-powerboats/performance-hero-boat.png")' }}>
+      <section className="pp-hero" style={{ backgroundImage: 'url("/images/performance-powerboats/performance-hero-boat.webp")' }}>
         <div className="pp-hero-shade" />
 
         <div className="pp-topbar">
@@ -465,7 +533,7 @@ export default function PerformancePowerboatsLandingPage() {
 
           <div className="pp-real-image pp-production-engine-image">
             <img
-              src="/images/performance-powerboats/10-large-hull-inside-shop.jpg"
+              src="/images/performance-powerboats/performance-hull-inside-shop.webp"
               alt="Performance Powerboats production work inside the shop"
             />
           </div>
@@ -489,7 +557,7 @@ export default function PerformancePowerboatsLandingPage() {
 
         <div className="pp-real-image pp-facility-image">
           <img
-            src="/images/performance-powerboats/17-performance-powerboats-new-facility.jpg"
+            src="/images/performance-powerboats/performance-new-facility.webp"
             alt="Performance Powerboats new facility in Indiantown, Florida"
           />
         </div>
@@ -510,7 +578,7 @@ export default function PerformancePowerboatsLandingPage() {
           <article className="pp-build-feature">
             <div className="pp-real-image pp-build-feature-image">
               <img
-                src="/images/performance-powerboats/10-large-hull-inside-shop.jpg"
+                src="/images/performance-powerboats/performance-hull-inside-shop.webp"
                 alt="Performance Powerboats hull being built inside the shop"
               />
             </div>
@@ -532,7 +600,7 @@ export default function PerformancePowerboatsLandingPage() {
             <article className="pp-build-feature">
               <div className="pp-real-image pp-build-feature-image">
                 <img
-                  src="/images/performance-powerboats/06-rigging-triple-yamaha.jpg"
+                  src="/images/performance-powerboats/performance-rigging-triple-yamaha.webp"
                   alt="Performance Powerboats engine rigging"
                 />
               </div>
@@ -553,7 +621,7 @@ export default function PerformancePowerboatsLandingPage() {
             <article className="pp-build-feature">
               <div className="pp-real-image pp-build-feature-image">
                 <img
-                  src="/images/performance-powerboats/08-performance-43-on-water.jpg"
+                  src="/images/performance-powerboats/performance-43-on-water.webp"
                   alt="Performance Powerboats finished boat on the water"
                 />
               </div>
@@ -622,7 +690,7 @@ export default function PerformancePowerboatsLandingPage() {
 
           <div className="pp-real-image pp-story-payoff">
             <img
-              src="/images/performance-powerboats/mntdataluxury_yacht_cruising_a_palm_lined_marina.png"
+              src="/images/performance-powerboats/performance-finished-boat.webp"
               alt="Performance Powerboats finished boat cruising through a palm-lined marina"
             />
           </div>
@@ -668,7 +736,7 @@ export default function PerformancePowerboatsLandingPage() {
 
           <div className="pp-footer-column">
             <div className="pp-footer-heading">EXPLORE</div>
-            <a href="#showroom">Showroom</a>
+            <a href="/planet/performance-powerboats/showroom">Showroom</a>
             <a href="#showroom">Gallery</a>
             <a href="/planet/performance-powerboats/build">Performance Models</a>
             <a href="#custom-builds">Custom Builds</a>
@@ -715,6 +783,10 @@ export default function PerformancePowerboatsLandingPage() {
     </main>
   );
 }
+
+
+
+
 
 
 

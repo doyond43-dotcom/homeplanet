@@ -2774,3 +2774,16 @@
   }
 }
 
+
+/* Lighthouse accessibility cleanup */
+.pp-build-cta .pp-kicker {
+  color: #f0c55b;
+}
+
+.pp-footer-defined-bottom {
+  color: rgba(255,255,255,0.62);
+}
+
+.pp-footer-defined-bottom span {
+  color: rgba(255,255,255,0.62);
+}

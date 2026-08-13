@@ -558,7 +558,51 @@ const publicSeoRegistry = [
         url: `${SITE_URL}/`
       }
     }
-  }];
+  },
+  {
+    route: "/planet/performance-powerboats",
+    title: "Performance Powerboats | Custom Boats, Service & Marine Fabrication",
+    description:
+      "Performance Powerboats in Indiantown, Florida. Explore Performance models, custom builds, service, repair, repowers, rigging and marine fabrication.",
+    image: `${SITE_URL}/images/performance-powerboats/performance-hero-boat.webp`,
+    heading: "Performance Powerboats in Indiantown, Florida",
+    body: `
+      <section>
+        <h2>Custom boats, service, repair and marine fabrication</h2>
+        <p>Performance Powerboats brings decades of hands-on marine experience to custom builds, restorations, repowers, rigging, repairs and fabrication in Indiantown, Florida.</p>
+      </section>
+
+      <section>
+        <h2>Explore Performance Powerboats</h2>
+        <ul>
+          <li><a href="/planet/performance-powerboats/models">Performance Models</a></li>
+          <li><a href="/planet/performance-powerboats/showroom">Showroom</a></li>
+          <li><a href="/planet/performance-powerboats/customer-builds">Customer Builds</a></li>
+          <li><a href="/planet/performance-powerboats/molds-tooling">Molds &amp; Tooling</a></li>
+          <li><a href="/planet/performance-powerboats/start-project">Start a Project</a></li>
+          <li><a href="/planet/performance-powerboats/contact">Contact Performance</a></li>
+        </ul>
+      </section>
+    `,
+    schema: {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      name: "Performance Powerboats",
+      url: `${SITE_URL}/planet/performance-powerboats`,
+      description:
+        "Custom boat building, marine service, repair, repowers, rigging and fabrication in Indiantown, Florida.",
+      address: {
+        "@type": "PostalAddress",
+        streetAddress: "12633 Southwest Impact Drive",
+        addressLocality: "Indiantown",
+        addressRegion: "FL",
+        addressCountry: "US"
+      }
+    }
+  }
+];
+
+
 
 function escapeHtml(value) {
   return String(value)
@@ -698,6 +742,7 @@ fs.writeFileSync(path.join(distDir, "sitemap.xml"), sitemapXml, "utf8");
 console.log(
   `Generated sitemap from public SEO registry: ${publicSeoRegistry.length} URLs`
 );
+
 
 
 
