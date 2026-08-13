@@ -119,45 +119,54 @@ export default function PerformancePowerboatsLandingPage() {
 
   return (
     <main className="pp-page">
-      <section className="pp-hero" style={{ backgroundImage: 'url("/images/performance-powerboats/speeding_white_powerboat_at_the_marina.png")' }}>
+      <section className="pp-hero" style={{ backgroundImage: 'url("/images/performance-powerboats/performance-hero-boat.png")' }}>
         <div className="pp-hero-shade" />
 
         <div className="pp-topbar">
-          <div className="pp-brand">
+          <div className="pp-location pp-location-top">INDIANTOWN, FL</div>
+
+          <nav className="pp-nav" aria-label="Performance navigation">
+            <a href="#showroom">SHOWROOM</a>
+            <a href="#custom-builds">CUSTOM BUILDS</a>
+            <a href="#start-project" className="pp-nav-cta">START A PROJECT</a>
+          </nav>
+        </div>
+
+        <div className="pp-hero-content">
+          <div className="pp-brand pp-brand-hero">
             <span className="pp-brand-main">PERFORMANCE</span>
             <span className="pp-brand-sub">POWERBOATS</span>
           </div>
 
-          <div className="pp-location">INDIANTOWN, FL</div>
-        </div>
-
-        <div className="pp-hero-content">
-          <div className="pp-eyebrow">PERFORMANCE POWERBOATS</div>
-
-          <h1>
-            <span>BUILT <strong>HERE.</strong></span>
-            <span>RUN HARD.</span>
-            <span>MADE FOR THE</span>
-            <span><strong>WATER.</strong></span>
+          <h1 className="pp-hero-headline pp-hero-headline-top">
+            <span>DECADES OF</span>
+            <span><strong>PERFORMANCE.</strong></span>
           </h1>
 
-          <p>
-            Custom powerboats backed by real marine experience,
-            craftsmanship and years of hands-on work on the water.
-          </p>
+          <div className="pp-hero-middle">
+            <p>
+              Built on decades of hands-on marine experience, craftsmanship,
+              restoration, rigging and real performance on the water.
+            </p>
 
-          <div className="pp-actions">
-            <button
-              className="pp-btn pp-btn-gold"
-              onClick={openPerformanceModels}
-            >
-              VIEW PERFORMANCE MODELS
-            </button>
+            <div className="pp-actions">
+              <button
+                className="pp-btn pp-btn-gold"
+                onClick={openPerformanceModels}
+              >
+                VIEW PERFORMANCE MODELS
+              </button>
 
-            <button className="pp-btn pp-btn-dark" onClick={scrollToStart}>
-              START A PROJECT
-            </button>
+              <button className="pp-btn pp-btn-dark" onClick={scrollToStart}>
+                START A PROJECT
+              </button>
+            </div>
           </div>
+
+          <h1 className="pp-hero-headline pp-hero-headline-bottom">
+            <span>BUILT STRONG</span>
+            <span>SINCE THE <strong>'80s.</strong></span>
+          </h1>
         </div>
       </section>
 
@@ -408,7 +417,7 @@ export default function PerformancePowerboatsLandingPage() {
         )}
       </section>
 
-      <section className="pp-section pp-production-engine">
+      <section className="pp-section pp-production-engine" id="custom-builds">
         <div className="pp-production-engine-grid">
           <div className="pp-production-engine-copy">
             <div className="pp-kicker">THE PRODUCTION ENGINE</div>
@@ -496,7 +505,7 @@ export default function PerformancePowerboatsLandingPage() {
             FROM <span>HULL TO WATER.</span>
           </h2>
           <p>
-            The page should show the work, not just talk about it.
+            Built in stages. Finished with purpose.
           </p>
         </div>
 
@@ -512,8 +521,8 @@ export default function PerformancePowerboatsLandingPage() {
             <div className="pp-build-feature-copy">
               <span className="pp-build-step">01</span>
               <div>
-                <div className="pp-kicker">BUILDING IT</div>
-                <h3>IT STARTS WITH THE HULL.</h3>
+                <div className="pp-kicker">THE HULL</div>
+                <h3>WHERE PERFORMANCE TAKES SHAPE.</h3>
                 <p>
                   The structure comes first. This is where the boat begins
                   taking shape.
@@ -534,8 +543,8 @@ export default function PerformancePowerboatsLandingPage() {
               <div className="pp-build-feature-copy">
                 <span className="pp-build-step">02</span>
                 <div>
-                  <div className="pp-kicker">RIGGING IT</div>
-                  <h3>POWER. SYSTEMS. SETUP.</h3>
+                  <div className="pp-kicker">RIGGING & SYSTEMS</div>
+                  <h3>POWERED. RIGGED. DIALED IN.</h3>
                   <p>
                     Engines, controls and systems come together before the
                     boat ever touches the water.
@@ -555,8 +564,8 @@ export default function PerformancePowerboatsLandingPage() {
               <div className="pp-build-feature-copy">
                 <span className="pp-build-step">03</span>
                 <div>
-                  <div className="pp-kicker">PUTTING IT ON THE WATER</div>
-                  <h3>THIS IS WHAT ALL THE WORK BECOMES.</h3>
+                  <div className="pp-kicker">THE WATER</div>
+                  <h3>BUILT TO DO WHAT IT WAS MADE TO DO.</h3>
                   <p>
                     Finished, rigged and ready to be used for what it was built
                     to do.
@@ -566,9 +575,11 @@ export default function PerformancePowerboatsLandingPage() {
             </article>
           </div>
         </div>
+
+
       </section>
 
-      <section className="pp-story">
+      <section className="pp-story" id="showroom">
         <div className="pp-story-inner">
           <div className="pp-kicker">THE STORY</div>
 
@@ -576,7 +587,7 @@ export default function PerformancePowerboatsLandingPage() {
 
           <p>
             It started with boats, tools, repairs, rebuilds and years of
-            figuring out what works on the water.
+            learning what holds up on the water.
           </p>
 
           <div className="pp-story-gallery">
@@ -603,9 +614,14 @@ export default function PerformancePowerboatsLandingPage() {
           </div>
 
           <div className="pp-now">
-            <span>NOW</span>
-            <strong>WE BUILD THEM.</strong>
+            <span>BUILT. RESTORED. RIGGED.</span>
+            <strong>CUSTOMIZED.</strong>
           </div>
+
+          <p className="pp-story-support">
+            From service and repair to full custom builds, Performance has spent
+            decades doing the work — not just selling the idea.
+          </p>
 
           <div className="pp-real-image pp-story-payoff">
             <img
@@ -616,28 +632,103 @@ export default function PerformancePowerboatsLandingPage() {
         </div>
       </section>
 
-      <footer className="pp-footer">
-        <div className="pp-shell pp-footer-inner">
-          <div className="pp-footer-brand">
-            <div className="pp-footer-kicker">PERFORMANCE POWERBOATS</div>
-            <h2>BUILT HERE. MADE FOR THE WATER.</h2>
+      <section className="pp-final-build-cta-section">
+        <div className="pp-shell">        <div className="pp-build-cta">
+          <div className="pp-build-cta-copy">
+            <div className="pp-kicker">READY TO BUILD?</div>
+            <h2>START YOUR PERFORMANCE BUILD.</h2>
             <p>
-              Indiantown, Florida · Build a Performance · Service & repair · Custom metal fabrication
+              Tell us what you’re looking to build, how you’ll use it and where
+              you want to start. We’ll take it from there.
             </p>
           </div>
 
-          <div className="pp-footer-cta">
-            <a className="pp-footer-button" href="#start-project">START A PROJECT</a>
+          <div className="pp-build-cta-actions">
+            <a className="pp-btn pp-btn-gold" href="/planet/performance-powerboats/build">
+              START YOUR BUILD
+            </a>
+            <a className="pp-build-cta-link" href="/planet/performance-powerboats/build">
+              EXPLORE PERFORMANCE MODELS →
+            </a>
+          </div>
+        </div>        </div>
+      </section>
+
+      <footer className="pp-footer pp-footer-defined">
+        <div className="pp-shell pp-footer-grid">
+          <div className="pp-footer-about">
+            <div className="pp-footer-kicker">PERFORMANCE POWERBOATS</div>
+
+            <h2>
+              DECADES OF PERFORMANCE.
+              <span> BUILT FOR WHAT'S NEXT.</span>
+            </h2>
+
+            <p>
+              Indiantown, Florida · Since the 1980s
+            </p>
+          </div>
+
+          <div className="pp-footer-column">
+            <div className="pp-footer-heading">EXPLORE</div>
+            <a href="#showroom">Showroom</a>
+            <a href="#showroom">Gallery</a>
+            <a href="/planet/performance-powerboats/build">Performance Models</a>
+            <a href="#custom-builds">Custom Builds</a>
+          </div>
+
+          <div className="pp-footer-column">
+            <div className="pp-footer-heading">WORK WITH US</div>
+            <a href="#start-project">Service &amp; Repair</a>
+            <a href="#start-project">Start a Project</a>
+            <a href="sms:+19548019524">Ask Us a Question</a>
+          </div>
+
+          <div className="pp-footer-column pp-footer-contact">
+            <div className="pp-footer-heading">CONTACT</div>
+
+            <a
+              href="https://www.google.com/maps/search/?api=1&query=12633%20Southwest%20Impact%20Drive%2C%20Indiantown%2C%20Florida"
+              target="_blank"
+              rel="noreferrer"
+            >
+              12633 Southwest Impact Drive<br />
+              Indiantown, Florida
+            </a>
+
+            <a className="pp-footer-call" href="tel:+19548019524">
+              CALL PERFORMANCE
+            </a>
+
+            <a
+              href="https://www.google.com/maps/search/?api=1&query=12633%20Southwest%20Impact%20Drive%2C%20Indiantown%2C%20Florida"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Get Directions →
+            </a>
           </div>
         </div>
 
-        <div className="pp-footer-bottom">
-          <span>Powered by HomePlanet</span>
+        <div className="pp-footer-bottom pp-footer-defined-bottom">
+          <span>PERFORMANCE POWERBOATS · INDIANTOWN, FLORIDA</span>
+          <span>Built by HomePlanet</span>
         </div>
       </footer>
     </main>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
 
 
 
