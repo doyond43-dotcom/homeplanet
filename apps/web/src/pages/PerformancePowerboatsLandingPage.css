@@ -2787,3 +2787,8 @@
 .pp-footer-defined-bottom span {
   color: rgba(255,255,255,0.62);
 }
+
+/* Final Lighthouse accessibility cleanup */
+.pp-final-build-cta-section .pp-build-cta .pp-kicker {
+  color: #76530f;
+}

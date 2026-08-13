@@ -712,7 +712,7 @@ export default function PerformancePowerboatsLandingPage() {
             <a className="pp-btn pp-btn-gold" href="/planet/performance-powerboats/build">
               START YOUR BUILD
             </a>
-            <a className="pp-build-cta-link" href="/planet/performance-powerboats/build">
+            <a className="pp-build-cta-link" href="/planet/performance-powerboats/models">
               EXPLORE PERFORMANCE MODELS →
             </a>
           </div>
@@ -738,7 +738,7 @@ export default function PerformancePowerboatsLandingPage() {
             <div className="pp-footer-heading">EXPLORE</div>
             <a href="/planet/performance-powerboats/showroom">Showroom</a>
             <a href="#showroom">Gallery</a>
-            <a href="/planet/performance-powerboats/build">Performance Models</a>
+            <a href="/planet/performance-powerboats/models">Performance Models</a>
             <a href="#custom-builds">Custom Builds</a>
           </div>
 
@@ -783,6 +783,7 @@ export default function PerformancePowerboatsLandingPage() {
     </main>
   );
 }
+
 
 
 
