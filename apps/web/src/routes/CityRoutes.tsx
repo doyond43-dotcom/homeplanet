@@ -1,4 +1,5 @@
 import { Fragment } from "react";
+import HomePlanetFrontDoorV2 from "../pages/HomePlanetFrontDoorV2";
 import { Routes, Route, Link, Navigate, useLocation } from "react-router-dom";
 import type { CSSProperties } from "react";
 import CreatorCity from "../pages/CreatorCity";
@@ -5054,7 +5055,8 @@ function CityPlaceholder() {
 export default function CityRoutes() {
   return (
     <Routes>
-      <Route index element={<AtlasIndex />} />
+      <Route index element={<HomePlanetFrontDoorV2 />} />
+      <Route path="v2" element={<HomePlanetFrontDoorV2 />} />
       <Route path="atlas" element={<Navigate to="/city" replace />} />
 
       <Route path="creator" element={<CreatorCity />} />

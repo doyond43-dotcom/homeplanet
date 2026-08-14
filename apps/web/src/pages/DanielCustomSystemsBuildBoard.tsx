@@ -1995,8 +1995,8 @@ export default function DanielCustomSystemsBuildBoard() {
                         Their Original Words
                       </p>
 
-                      <blockquote className="mt-3 border-l-2 border-[#80df00]/45 pl-4 text-base leading-7 text-white/78">
-                        {activeBuild.whatWeAreSolving}
+                      <blockquote className="mt-3 whitespace-pre-line border-l-2 border-[#80df00]/45 pl-4 text-base leading-7 text-white/78">
+                        {activeBuild.originalRequest}
                       </blockquote>
                     </section>
 
