@@ -70,6 +70,7 @@ const VZProfessionalLawncareLiveActivity = lazy(() =>
   import("./pages/VZProfessionalLawncareLiveActivity")
 );
 const LateNightHotelsLandingPage = lazy(() => import("./pages/LateNightHotelsLandingPage"));
+const MarshallRosenbachCaseReviewPage = lazy(() => import("./pages/MarshallRosenbachCaseReviewPage"));
 const MarshallRosenbachLiveBoard = lazy(() => import("./pages/MarshallRosenbachLiveBoard"));
 const MarshallRosenbachDocumentUploadPage = lazy(() =>
   import("./pages/MarshallRosenbachDocumentUploadPage")
@@ -225,6 +226,7 @@ export default function App() {
           <Route path="/show-me-more" element={<ShowMeMorePage />} />
           <Route path="/planet/best-of-the-lake" element={<BestOfLakeVotingPage />} />
           <Route path="/planet/late-night-hotels" element={<LateNightHotelsLandingPage />} />
+          <Route path="/planet/marshall-rosenbach/case-review" element={<MarshallRosenbachCaseReviewPage />} />
           <Route path="/planet/marshall-rosenbach/board" element={<RequireAuth><MarshallRosenbachLiveBoard /></RequireAuth>} />
           <Route path="/planet/marshall-rosenbach/document-upload" element={<MarshallRosenbachDocumentUploadPage />} />
           <Route path="/planet/late-night-hotels/board" element={<LateNightHotelsOperatorBoard />} />

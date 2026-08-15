@@ -114,7 +114,9 @@ export default function OnlyTheEssentialsCustomerLanding() {
     setQuoteError("");
 
     try {
+      const requestId = crypto.randomUUID();
       const { error } = await supabase.from("cleaning_requests").insert({
+        id: requestId,
         business_slug: "only-the-essentials",
         request_type: "quote",
         customer_name: name,
@@ -166,30 +168,22 @@ export default function OnlyTheEssentialsCustomerLanding() {
       }
 
       try {
-      const { error: emailError } = await supabase.functions.invoke(
-        "send-only-the-essentials-request-email",
-        {
-          body: {
-            name,
-            phone: phoneNumber,
-            address: streetAddress,
-            preferredTime,
-            serviceType,
-            bedrooms,
-            bathrooms,
-            pets,
-            condition,
-            notes: quoteDetails,
-          },
-        }
-      );
+        const emailResponse = await fetch("/api/homeplanet-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            project: "only-the-essentials-request",
+            requestId,
+          }),
+        });
+        const emailResult = await emailResponse.json().catch(() => null);
 
-      if (emailError) {
-        console.error("Kaitlin email notification failed:", emailError);
+        if (!emailResponse.ok || !emailResult?.ok || !emailResult?.accepted) {
+          console.error("Kaitlin email notification failed:", emailResult);
+        }
+      } catch (emailError) {
+        console.error("Kaitlin email notification request failed:", emailError);
       }
-    } catch (emailError) {
-      console.error("Kaitlin email notification request failed:", emailError);
-    }
 
     setQuoteSubmitted(true);
     } catch (error) {
