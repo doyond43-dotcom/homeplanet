@@ -67,6 +67,10 @@ const VZProfessionalLawncareLiveActivity = lazy(() =>
   import("./pages/VZProfessionalLawncareLiveActivity")
 );
 const LateNightHotelsLandingPage = lazy(() => import("./pages/LateNightHotelsLandingPage"));
+const MarshallRosenbachLiveBoard = lazy(() => import("./pages/MarshallRosenbachLiveBoard"));
+const MarshallRosenbachDocumentUploadPage = lazy(() =>
+  import("./pages/MarshallRosenbachDocumentUploadPage")
+);
 const LateNightHotelsOperatorBoard = lazy(() => import("./pages/LateNightHotelsOperatorBoard"));
 const ElectricianLandingPage = lazy(() => import("./pages/ElectricianLandingPage"));
 const PerformancePowerboatsLandingPage = lazy(() => import("./pages/PerformancePowerboatsLandingPage"));
@@ -215,6 +219,8 @@ export default function App() {
           <Route path="/show-me-more" element={<ShowMeMorePage />} />
           <Route path="/planet/best-of-the-lake" element={<BestOfLakeVotingPage />} />
           <Route path="/planet/late-night-hotels" element={<LateNightHotelsLandingPage />} />
+          <Route path="/planet/marshall-rosenbach/board" element={<RequireAuth><MarshallRosenbachLiveBoard /></RequireAuth>} />
+          <Route path="/planet/marshall-rosenbach/document-upload" element={<MarshallRosenbachDocumentUploadPage />} />
           <Route path="/planet/late-night-hotels/board" element={<LateNightHotelsOperatorBoard />} />
           <Route path="/planet/echols-water-testing" element={<EcholsWaterTestingLandingPage />} />
           <Route path="/planet/jones-equipment-rental-repair" element={<JonesEquipmentRentalRepairLandingPage />} />

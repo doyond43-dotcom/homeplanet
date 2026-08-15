@@ -1,4 +1,9 @@
-﻿type NotifyBody = {
+import {
+  HomePlanetSmsError,
+  sendHomePlanetSms,
+} from "./_lib/homeplanet-sms";
+
+type NotifyBody = {
   name?: string;
   phone?: string;
   address?: string;
@@ -33,7 +38,7 @@ function buildMessage(body: NotifyBody) {
     `Notes: ${clean(body.notes) || "No extra notes added."}`,
     "",
     "Open HomePlanet dashboard:",
-    "https://www.homeplanet.city/planet/only-the-essentials/intelligence"
+    "https://www.homeplanet.city/planet/only-the-essentials/intelligence",
   ].join("\n");
 }
 
@@ -42,47 +47,55 @@ export default async function handler(req: any, res: any) {
     return res.status(405).json({ ok: false, error: "Method not allowed" });
   }
 
-  const accountSid = process.env.TWILIO_ACCOUNT_SID;
-  const authToken = process.env.TWILIO_AUTH_TOKEN;
-  const fromNumber = process.env.TWILIO_FROM_NUMBER;
   const toNumber = process.env.KAITLIN_NOTIFY_NUMBER || "+18638013179";
+  const body = (req.body || {}) as NotifyBody;
 
-  if (!accountSid || !authToken || !fromNumber) {
-    console.warn("Kaitlin SMS skipped: Twilio env vars are missing.");
+  try {
+    const result = await sendHomePlanetSms({
+      recipientPhone: toNumber,
+      messageBody: buildMessage(body),
+      project: "only-the-essentials-cleaning-request",
+    });
+
     return res.status(200).json({
+      ok: true,
+      accepted: result.accepted,
+      sid: result.sid,
+      status: result.status,
+    });
+  } catch (error) {
+    if (error instanceof HomePlanetSmsError && error.httpStatus === 503) {
+      console.warn("Kaitlin SMS skipped: Twilio env vars are missing.");
+      return res.status(200).json({
+        ok: false,
+        skipped: true,
+        reason: "SMS not configured yet",
+      });
+    }
+
+    console.error("Kaitlin SMS failed", {
+      providerStatus:
+        error instanceof HomePlanetSmsError
+          ? error.providerStatus || null
+          : null,
+      providerCode:
+        error instanceof HomePlanetSmsError
+          ? error.providerCode || null
+          : null,
+    });
+
+    return res.status(
+      error instanceof HomePlanetSmsError ? error.httpStatus : 500
+    ).json({
       ok: false,
-      skipped: true,
-      reason: "SMS not configured yet",
+      accepted: false,
+      error: "SMS failed",
+      ...(error instanceof HomePlanetSmsError
+        ? {
+            providerStatus: error.providerStatus || null,
+            providerCode: error.providerCode || null,
+          }
+        : {}),
     });
   }
-
-  const body = (req.body || {}) as NotifyBody;
-  const message = buildMessage(body);
-
-  const params = new URLSearchParams();
-  params.append("To", toNumber);
-  params.append("From", fromNumber);
-  params.append("Body", message);
-
-  const twilioResponse = await fetch(
-    `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
-    {
-      method: "POST",
-      headers: {
-        Authorization:
-          "Basic " + Buffer.from(`${accountSid}:${authToken}`).toString("base64"),
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: params.toString(),
-    }
-  );
-
-  const result = await twilioResponse.json();
-
-  if (!twilioResponse.ok) {
-    console.error("Kaitlin SMS failed:", result);
-    return res.status(500).json({ ok: false, error: "SMS failed", details: result });
-  }
-
-  return res.status(200).json({ ok: true, sid: result.sid });
 }
