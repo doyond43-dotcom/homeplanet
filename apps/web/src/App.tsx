@@ -42,6 +42,8 @@ const Login = lazy(() => import("./pages/Login"));
 const Signup = lazy(() => import("./pages/Signup"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const SmsConsentPage = lazy(() => import("./pages/SmsConsentPage"));
+const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
+const TermsPage = lazy(() => import("./pages/TermsPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const BeamScreen = lazy(() => import("./routes/BeamScreen"));
 const BeamReceive = lazy(() => import("./routes/BeamReceive"));
@@ -178,6 +180,8 @@ export default function App() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/sms-consent" element={<SmsConsentPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/terms" element={<TermsPage />} />
           {/* Slap-A-Bug system intentionally offline */}
           <Route path="/planet/slap-a-bug" element={<Navigate to="/" replace />} />
           <Route path="/planet/slap-a-bug/*" element={<Navigate to="/" replace />} />

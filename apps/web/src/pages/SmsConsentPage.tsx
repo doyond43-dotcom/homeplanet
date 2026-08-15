@@ -44,6 +44,24 @@ export default function SmsConsentPage() {
             />
             <span>I agree to receive text messages related to my request.</span>
           </label>
+          <p className="mt-3 text-xs leading-5 text-white/50">
+            This optional checkbox is unchecked by default. By opting in, you
+            acknowledge the HomePlanet{" "}
+            <a
+              href="/privacy"
+              className="font-semibold text-[#d6a84f] underline underline-offset-4"
+            >
+              Privacy Policy
+            </a>{" "}
+            and{" "}
+            <a
+              href="/terms"
+              className="font-semibold text-[#d6a84f] underline underline-offset-4"
+            >
+              Terms of Use
+            </a>
+            .
+          </p>
         </div>
 
         <div className="mt-7 space-y-2 text-sm leading-6 text-white/65">
