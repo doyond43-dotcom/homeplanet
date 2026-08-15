@@ -1,7 +1,7 @@
 import {
   HomePlanetSmsError,
   sendHomePlanetSms,
-} from "./_lib/homeplanet-sms";
+} from "./_lib/homeplanet-sms.js";
 
 type NotifyBody = {
   name?: string;

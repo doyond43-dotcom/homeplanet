@@ -843,7 +843,28 @@ export default function MarshallRosenbachLiveBoard() {
         }
       );
 
-      const smsData = await smsResponse.json();
+      const smsResponseText = await smsResponse.text();
+      let smsData: {
+        ok?: boolean;
+        accepted?: boolean;
+        error?: string;
+      } | null = null;
+
+      if (smsResponseText) {
+        try {
+          smsData = JSON.parse(smsResponseText);
+        } catch {
+          if (!smsResponse.ok) {
+            throw new Error(
+              `Text message service returned an unexpected error (${smsResponse.status}).`
+            );
+          }
+
+          throw new Error(
+            "Text message service returned an invalid response."
+          );
+        }
+      }
 
       if (!smsResponse.ok || !smsData?.ok || !smsData?.accepted) {
         throw new Error(
