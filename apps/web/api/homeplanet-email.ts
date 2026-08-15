@@ -8,6 +8,15 @@ import {
 
 type SavedRecord = Record<string, unknown>;
 
+function safeDiagnosticText(value: unknown, maxLength: number) {
+  return String(value ?? "")
+    .replace(/https?:\/\/\S+/gi, "[redacted URL]")
+    .replace(/\bBearer\s+\S+/gi, "Bearer [redacted]")
+    .replace(/\b(?:re|sbp|sb_secret)_[A-Za-z0-9_-]+\b/g, "[redacted token]")
+    .replace(/\b[^\s@]+@[^\s@]+\.[^\s@]+\b/g, "[redacted email]")
+    .slice(0, maxLength);
+}
+
 function serverConfiguration() {
   const supabaseUrl = String(
     process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || ""
@@ -28,24 +37,60 @@ async function loadSavedRecord(
   table: string,
   column: string,
   value: string,
-  select: string
+  select: string,
+  project: string,
+  lookupType: string
 ) {
   const { supabaseUrl, serviceRoleKey } = serverConfiguration();
+  let parsedSupabaseUrl: URL;
+  try {
+    parsedSupabaseUrl = new URL(supabaseUrl);
+    if (parsedSupabaseUrl.protocol !== "https:") {
+      throw new Error("Supabase URL must use HTTPS.");
+    }
+  } catch {
+    console.error("HomePlanet email Supabase URL is invalid", {
+      project,
+      lookupType,
+    });
+    throw new HomePlanetEmailError(
+      "Supabase record service URL is invalid.",
+      { httpStatus: 503 }
+    );
+  }
   const query = new URLSearchParams({
     select,
     [column]: `eq.${value}`,
     limit: "1",
   });
-  const response = await fetch(
-    `${supabaseUrl}/rest/v1/${table}?${query.toString()}`,
-    {
+  const lookupUrl = new URL(`/rest/v1/${table}`, parsedSupabaseUrl);
+  lookupUrl.search = query.toString();
+  let response: Response;
+  try {
+    response = await fetch(lookupUrl, {
       headers: {
         apikey: serviceRoleKey,
         Accept: "application/json",
         "User-Agent": "HomePlanet-Vercel-Email/1.0",
       },
-    }
-  );
+    });
+  } catch (error) {
+    const thrown = error instanceof Error ? error : null;
+    console.error("HomePlanet email Supabase fetch threw", {
+      project,
+      lookupType,
+      supabaseHostname: parsedSupabaseUrl.hostname,
+      exceptionName: safeDiagnosticText(thrown?.name || typeof error, 120),
+      exceptionMessage: safeDiagnosticText(thrown?.message || error, 500),
+      stackPreview: thrown?.stack
+        ? safeDiagnosticText(
+            thrown.stack.split("\n").slice(0, 6).join("\n"),
+            1200
+          )
+        : null,
+    });
+    throw error;
+  }
   if (!response.ok) {
     console.error("HomePlanet email saved record lookup failed", {
       table,
@@ -83,7 +128,9 @@ async function sendMarshall(caseReference: string) {
     "marshall_cases",
     "case_number",
     caseReference,
-    "case_number,case_type,client_first_name,client_last_name,client_phone,client_email,incident_date,incident_location,incident_details,injured,treatment,preferred_contact,best_contact_time"
+    "case_number,case_type,client_first_name,client_last_name,client_phone,client_email,incident_date,incident_location,incident_details,injured,treatment,preferred_contact,best_contact_time",
+    "marshall-case-review",
+    "Marshall case"
   );
   const customerName = [savedCase.client_first_name, savedCase.client_last_name]
     .filter(Boolean)
@@ -127,7 +174,9 @@ async function sendOnlyTheEssentials(requestId: string) {
     "cleaning_requests",
     "id",
     requestId,
-    "id,business_slug,request_type,customer_name,customer_phone,customer_address,preferred_time,notes"
+    "id,business_slug,request_type,customer_name,customer_phone,customer_address,preferred_time,notes",
+    "only-the-essentials-request",
+    "Only The Essentials request"
   );
   if (
     savedRequest.business_slug !== "only-the-essentials" ||
