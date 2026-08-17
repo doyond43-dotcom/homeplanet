@@ -554,8 +554,8 @@ export default function PlanetRoutes() {
       <Route path="okeechobee/event/:slug" element={<OkeechobeeEventPage />} />
       <Route path="okeechobee" element={<OkeechobeeTogetherPage />} />
       <Route path="okeechobee/admin" element={<OkeechobeeCommunityAdminPage />} />
-<Route path="okeechobee/project/:slug" element={<OkeechobeeProjectWorkspace />} />
-      <Route path="okeechobee/command" element={<OkeechobeeCommandCenter />} />
+<Route path="okeechobee/project/:slug" element={<RequireAuth><OkeechobeeProjectWorkspace /></RequireAuth>} />
+      <Route path="okeechobee/command" element={<RequireAuth><OkeechobeeCommandCenter /></RequireAuth>} />
       {/* BRAHMA BULL RESTAURANT SYSTEM */}
       <Route path="brahma-bull" element={<BrahmaBullFrontDoor />} />
       <Route path="demo/brahma-bull/live" element={<BrahmaBullLiveBoard />} />
@@ -884,6 +884,7 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
 
 
 

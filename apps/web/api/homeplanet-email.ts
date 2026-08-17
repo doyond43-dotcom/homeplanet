@@ -186,6 +186,15 @@ async function sendOkeechobeeTogether(slug: string) {
     );
   }
 
+  const savedOwner = await loadSavedRecord(
+    "okeechobee_project_owners",
+    "project_slug",
+    slug,
+    "project_slug,resident_name,resident_email,resident_phone,private_notes",
+    "okeechobee-together-request",
+    "Okeechobee Together project owner"
+  );
+
   const result = await sendHomePlanetEmail({
     recipient: requiredEmailRecipient("OKEECHOBEE_TOGETHER_ADMIN_EMAIL"),
     project: "okeechobee-together-request",
@@ -199,7 +208,10 @@ async function sendOkeechobeeTogether(slug: string) {
         <div style="padding:16px;border:1px solid #d9d9d9;border-radius:12px;margin-bottom:18px;">
           <div style="margin-bottom:8px;"><strong>Title:</strong> ${shown(savedRequest.title)}</div>
           <div style="margin-bottom:8px;"><strong>Location:</strong> ${shown(savedRequest.location)}</div>
-          <div style="margin-bottom:8px;"><strong>Contact:</strong> ${shown(savedRequest.contact)}</div>
+          <div style="margin-bottom:8px;"><strong>Resident:</strong> ${shown(savedOwner.resident_name)}</div>
+          <div style="margin-bottom:8px;"><strong>Email:</strong> ${shown(savedOwner.resident_email)}</div>
+          <div style="margin-bottom:8px;"><strong>Phone:</strong> ${shown(savedOwner.resident_phone)}</div>
+          <div style="margin-bottom:8px;"><strong>Private notes:</strong> ${shown(savedOwner.private_notes)}</div>
           <div><strong>Status:</strong> ${shown(savedRequest.status)}</div>
         </div>
 
@@ -336,4 +348,5 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
   }
 }
+
 

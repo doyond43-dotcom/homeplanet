@@ -602,7 +602,7 @@ export default function OkeechobeeEventPage() {
         <div style={styles.infoBox}>
           <p><strong>Status:</strong> {event.status}</p>
           <p><strong>Location:</strong> {event.location || "Not listed"}</p>
-          <p><strong>Contact:</strong> {event.contact || "Not listed"}</p>
+
           <p><strong>Helpers:</strong> {helperCount}</p>
         </div>
 
@@ -908,6 +908,7 @@ const styles: Record<string, React.CSSProperties> = {
     marginTop: 18,
   },
 };
+
 
 
 

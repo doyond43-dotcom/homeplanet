@@ -1,6 +1,5 @@
 ﻿import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { supabase } from "../lib/supabase";
 
 type HelpCategory =
   | "Yard / Outdoor"
@@ -77,6 +76,9 @@ export default function OkeechobeeCreateEventPageV2() {
   const [title, setTitle] = useState("");
   const [story, setStory] = useState("");
   const [location, setLocation] = useState("Okeechobee, FL");
+  const [residentName, setResidentName] = useState("");
+  const [residentEmail, setResidentEmail] = useState("");
+  const [residentPhone, setResidentPhone] = useState("");
   const [contact, setContact] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -95,6 +97,16 @@ export default function OkeechobeeCreateEventPageV2() {
       return;
     }
 
+    if (!residentName.trim()) {
+      alert("Please add your name.");
+      return;
+    }
+
+    if (!residentEmail.trim()) {
+      alert("Please add your email address so we can send your project management link after approval.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     const slug = `${slugify(title)}-${Date.now().toString().slice(-5)}`;
@@ -110,26 +122,51 @@ export default function OkeechobeeCreateEventPageV2() {
       story.trim(),
     ].filter(Boolean).join("\n");
 
-    const event = {
-      slug,
-      type: "Need",
-      title: title.trim(),
-      description: guidedDetails,
-      location: location.trim(),
-      contact: contact.trim(),
-      status: "Pending Review",
-      timeline: [{ label: "Request submitted for review", time: new Date().toISOString() }],
-    };
+    let requestResult: any = null;
 
-    const { error } = await supabase.from("okeechobee_events").insert(event);
+    try {
+      const response = await fetch("/api/okeechobee-request", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          slug,
+          title: title.trim(),
+          story: story.trim(),
+          location: location.trim(),
+          category,
+          yardCondition,
+          yardHelpTypesSelected,
+          urgency,
+          whoFor,
+          residentName: residentName.trim(),
+          residentEmail: residentEmail.trim(),
+          residentPhone: residentPhone.trim(),
+          privateNotes: contact.trim(),
+        }),
+      });
 
-    setIsSubmitting(false);
+      requestResult = await response.json().catch(() => null);
 
-    if (error) {
-      console.error(error);
-      alert("Something went wrong submitting this request.");
+      if (!response.ok || requestResult?.ok !== true) {
+        throw new Error(
+          requestResult?.error ||
+          "Something went wrong submitting this request."
+        );
+      }
+    } catch (requestError) {
+      console.error(requestError);
+      setIsSubmitting(false);
+      alert(
+        requestError instanceof Error
+          ? requestError.message
+          : "Something went wrong submitting this request."
+      );
       return;
     }
+
+    setIsSubmitting(false);
 
     try {
       const notifyResponse = await fetch("/api/homeplanet-email", {
@@ -344,13 +381,51 @@ export default function OkeechobeeCreateEventPageV2() {
             </label>
 
             <label style={styles.label}>
-              Contact / private instructions
+              Your name *
+              <input
+                className="okeechobee-create-input"
+                style={styles.input}
+                value={residentName}
+                onChange={(e) => setResidentName(e.target.value)}
+                placeholder="Your name"
+                autoComplete="name"
+              />
+            </label>
+
+            <label style={styles.label}>
+              Email *
+              <input
+                className="okeechobee-create-input"
+                style={styles.input}
+                type="email"
+                value={residentEmail}
+                onChange={(e) => setResidentEmail(e.target.value)}
+                placeholder="you@example.com"
+                autoComplete="email"
+              />
+            </label>
+
+            <label style={styles.label}>
+              Phone
+              <input
+                className="okeechobee-create-input"
+                style={styles.input}
+                type="tel"
+                value={residentPhone}
+                onChange={(e) => setResidentPhone(e.target.value)}
+                placeholder="863-555-1234"
+                autoComplete="tel"
+              />
+            </label>
+
+            <label style={styles.label}>
+              Private notes / instructions
               <input
                 className="okeechobee-create-input"
                 style={styles.input}
                 value={contact}
                 onChange={(e) => setContact(e.target.value)}
-                placeholder="Message Daniel, phone number, Messenger, or private instructions"
+                placeholder="Gate code, best contact time, or anything we should keep private"
               />
             </label>
           </section>
@@ -491,6 +566,7 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: "pointer",
   },
 };
+
 
 
 
