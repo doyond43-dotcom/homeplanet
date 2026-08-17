@@ -245,7 +245,7 @@ export default function OkeechobeeCreateEventPageV2() {
       </style>
       <section className="okeechobee-create-card" style={styles.card}>
         <Link to="/planet/okeechobee" style={styles.backLink}>
-          â† Back to Okeechobee Together
+          ← Back to Okeechobee Together
         </Link>
         <p style={styles.kicker}>Okeechobee Together</p>
         <h1 style={styles.title}>What kind of help is needed?</h1>
@@ -566,6 +566,7 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: "pointer",
   },
 };
+
 
 
 

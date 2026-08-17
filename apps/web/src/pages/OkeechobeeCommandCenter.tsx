@@ -45,7 +45,86 @@ export default function OkeechobeeCommandCenter() {
     setLoading(false);
   }
 
+  async function approveProject(
+    event: any,
+    publicTitle: string,
+    publicDescription: string
+  ) {
+    setWorkingSlug(event.slug);
+    setNotice("");
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.access_token) {
+        setNotice("Your admin session has expired. Please sign in again.");
+        setWorkingSlug(null);
+        return false;
+      }
+
+      const response = await fetch("/api/okeechobee-approve", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          slug: event.slug,
+          publicTitle,
+          publicDescription,
+        }),
+      });
+
+      const result = await response.json().catch(() => null);
+
+      if (!response.ok || result?.ok !== true) {
+        throw new Error(
+          result?.error || "The project could not be activated."
+        );
+      }
+
+      await loadEvents();
+
+      if (result.ownerEmailSent) {
+        setNotice(
+          `"${publicTitle}" is active. The resident received their private Manage My Project link.`
+        );
+      } else if (result.legacy) {
+        setNotice(
+          `"${publicTitle}" is active. This older request does not have a resident management record.`
+        );
+      } else {
+        setNotice(`"${publicTitle}" is now active.`);
+      }
+
+      setWorkingSlug(null);
+      return true;
+    } catch (approvalError) {
+      console.error(approvalError);
+
+      setNotice(
+        approvalError instanceof Error
+          ? approvalError.message
+          : "The project could not be activated."
+      );
+
+      setWorkingSlug(null);
+      return false;
+    }
+  }
+
   async function changeStatus(event: any, status: string) {
+    if (status === "Active") {
+      await approveProject(
+        event,
+        event.public_title || event.title || "",
+        event.public_description || event.description || ""
+      );
+
+      return;
+    }
     if (status === "Archived Test") {
       const confirmed = window.confirm(
         `Archive "${event.public_title || event.title}" as a test or unused request?`
@@ -783,3 +862,5 @@ const styles: Record<string, React.CSSProperties> = {
     boxSizing: "border-box",
   },
 };
+
+

@@ -403,6 +403,7 @@ import OkeechobeeEventPage from "../pages/OkeechobeeEventPage";
 
 import OkeechobeeCommunityAdminPage from "../pages/OkeechobeeCommunityAdminPage";
 import OkeechobeeProjectWorkspace from "../pages/OkeechobeeProjectWorkspace";
+import OkeechobeeResidentProjectPage from "../pages/OkeechobeeResidentProjectPage";
 import HomePlanetBuildDirectory from "../pages/HomePlanetBuildDirectory";
 import HomePlanetFlowRegistry from "../pages/HomePlanetFlowRegistry";
 import OkeechobeeCommandCenter from "../pages/OkeechobeeCommandCenter";
@@ -555,6 +556,7 @@ export default function PlanetRoutes() {
       <Route path="okeechobee" element={<OkeechobeeTogetherPage />} />
       <Route path="okeechobee/admin" element={<OkeechobeeCommunityAdminPage />} />
 <Route path="okeechobee/project/:slug" element={<RequireAuth><OkeechobeeProjectWorkspace /></RequireAuth>} />
+      <Route path="okeechobee/manage/:slug" element={<OkeechobeeResidentProjectPage />} />
       <Route path="okeechobee/command" element={<RequireAuth><OkeechobeeCommandCenter /></RequireAuth>} />
       {/* BRAHMA BULL RESTAURANT SYSTEM */}
       <Route path="brahma-bull" element={<BrahmaBullFrontDoor />} />
@@ -884,6 +886,7 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
 
 
 
