@@ -93,6 +93,11 @@ const sections: AtlasSection[] = [
             route: "/planet/only-the-essentials/impulse",
             access: "working",
           },
+          {
+            label: "Events",
+            route: "/planet/demo/events?board=only-the-essentials",
+            access: "working",
+          },
         ],
       },
       {
@@ -132,6 +137,11 @@ const sections: AtlasSection[] = [
             route: "/planet/vz-professional-lawncare",
             access: "public",
           },
+          {
+            label: "Events",
+            route: "/planet/demo/events?board=vz-professional-lawncare",
+            access: "working",
+          },
         ],
       },
       {
@@ -158,6 +168,23 @@ const sections: AtlasSection[] = [
             label: "Rental Setup",
             route: "/jme/rental-setup",
             access: "working",
+          },
+        ],
+      },
+      {
+        id: "performance-powerboats",
+        name: "Performance Powerboats",
+        contact: "Max Soto",
+        status: "Active HomePlanet business",
+        description:
+          "Custom boat builds, repowers, rigging, repairs, and the operating system being built underneath the work.",
+        quickReply:
+          "Here is the Performance Powerboats page where you can see the work and start a project.",
+        doorways: [
+          {
+            label: "Live Page",
+            route: "/planet/performance-powerboats",
+            access: "public",
           },
         ],
       },
@@ -404,6 +431,20 @@ const sections: AtlasSection[] = [
         ],
       },
       {
+        id: "captain-jacks",
+        name: "Captain Jack's Putt & Play",
+        status: "Working demo",
+        description:
+          "A guest-facing entertainment experience and operating-system demonstration for Captain Jack's Putt & Play.",
+        doorways: [
+          {
+            label: "Live Demo",
+            route: "/planet/demo/captain-jacks",
+            access: "public",
+          },
+        ],
+      },
+      {
         id: "restaurant-awareness",
         name: "Restaurant Awareness",
         description:
@@ -584,7 +625,7 @@ export default function EcosystemAtlasV2Page() {
               </p>
             </div>
 
-            <div className="grid shrink-0 grid-cols-2 gap-2">
+            <div className="grid shrink-0 grid-cols-2 gap-2 sm:grid-cols-3">
               <button
                 type="button"
                 onClick={() => openLocal("/city")}
@@ -599,6 +640,14 @@ export default function EcosystemAtlasV2Page() {
                 className="rounded-xl border border-lime-400/30 bg-lime-400/10 px-4 py-3 text-sm font-black text-lime-300"
               >
                 Open Live
+              </button>
+
+              <button
+                type="button"
+                onClick={() => openLocal("/planet/demo/events")}
+                className="col-span-2 rounded-xl border border-sky-400/25 bg-sky-400/10 px-4 py-3 text-sm font-black text-sky-200 sm:col-span-1"
+              >
+                Global Events
               </button>
             </div>
           </div>

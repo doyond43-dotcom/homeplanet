@@ -19,19 +19,37 @@ function formatTime(value: string) {
   });
 }
 
+const boardNames: Record<string, string> = {
+  "only-the-essentials": "Only The Essentials Cleaning",
+  "vz-professional-lawncare": "V&Z Professional Lawncare",
+  "homeplanet-live-pages": "HomePlanet Live Pages",
+  "creator-city": "Creator City",
+};
+
+function boardName(board: string | null) {
+  if (!board) return "Global HomePlanet";
+  return boardNames[board] ?? board;
+}
+
 export default function HomePlanetEventsBoard() {
   const [events, setEvents] = useState<HpEventRow[]>([]);
   const [loading, setLoading] = useState(true);
+
   const boardFilter = new URLSearchParams(window.location.search).get("board");
 
   async function loadEvents() {
     setLoading(true);
 
-    const { data, error } = await supabase
+    let query = supabase
       .from("hp_events")
       .select("id,event,board,entity_id,meta,created_at")
-      .order("created_at", { ascending: false })
-      .limit(100);
+      .order("created_at", { ascending: false });
+
+    if (boardFilter) {
+      query = query.eq("board", boardFilter);
+    }
+
+    const { data, error } = await query.limit(100);
 
     if (error) {
       console.error("HomePlanet events load error:", error);
@@ -45,11 +63,11 @@ export default function HomePlanetEventsBoard() {
 
   useEffect(() => {
     loadEvents();
-  }, []);
+  }, [boardFilter]);
 
   const visibleEvents = useMemo(() => {
-    return boardFilter ? events.filter((item) => item.board === boardFilter) : events;
-  }, [events, boardFilter]);
+    return events;
+  }, [events]);
 
   const counts = useMemo(() => {
     return visibleEvents.reduce<Record<string, number>>((acc, item) => {
@@ -58,12 +76,25 @@ export default function HomePlanetEventsBoard() {
     }, {});
   }, [visibleEvents]);
 
-  const requestOpened = counts.request_page_opened || 0;
-  const requestSubmitted = counts.request_submitted || 0;
-  const requestRate = requestOpened > 0 ? Math.round((requestSubmitted / requestOpened) * 100) : 0;
+  const pageOpened =
+    counts.landing_page_opened ||
+    counts.request_page_opened ||
+    0;
 
-const messagesOpened = counts.messages_page_opened || 0;
-const followUpRate = requestSubmitted > 0 ? Math.round((messagesOpened / requestSubmitted) * 100) : 0;
+  const requestStarted =
+    counts.quote_started ||
+    counts.estimate_started ||
+    0;
+
+  const requestSubmitted =
+    counts.quote_request_submitted ||
+    counts.request_submitted ||
+    0;
+
+  const actionRate =
+    pageOpened > 0
+      ? Math.round((requestSubmitted / pageOpened) * 100)
+      : 0;
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_15%_10%,rgba(56,189,248,0.16),transparent_30%),radial-gradient(circle_at_88%_12%,rgba(244,114,182,0.10),transparent_28%),#050509] px-4 py-6 text-white sm:px-6 lg:px-8">
@@ -76,27 +107,66 @@ const followUpRate = requestSubmitted > 0 ? Math.round((messagesOpened / request
           <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <h1 className="text-4xl font-black tracking-tight sm:text-6xl">
-                Real work happening.
+                {boardFilter
+                  ? boardName(boardFilter)
+                  : "Real work happening."}
               </h1>
+
               <p className="mt-3 max-w-3xl text-sm leading-6 text-white/65 sm:text-base">
-                This board shows actual HomePlanet moments: request page opens, submitted requests, opened messages, and other live system actions.
-                {boardFilter ? ` Filtered view: ${boardFilter}` : ""}
+                {boardFilter
+                  ? `Viewing live activity for ${boardName(boardFilter)}.`
+                  : "This board shows actual HomePlanet moments across connected systems: page opens, request starts, submitted requests, calls, texts, videos, messages, and other live actions."}
               </p>
+
+              {boardFilter ? (
+                <div className="mt-3 inline-flex rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-2 text-xs font-bold text-cyan-100">
+                  Filtered system: {boardName(boardFilter)}
+                </div>
+              ) : (
+                <div className="mt-3 inline-flex rounded-full border border-white/10 bg-black/30 px-3 py-2 text-xs font-bold text-white/55">
+                  Global HomePlanet activity
+                </div>
+              )}
             </div>
 
-            <button
-              type="button"
-              onClick={loadEvents}
-              className="rounded-2xl border border-white/15 bg-white/90 px-5 py-3 text-sm font-bold text-black hover:bg-white"
-            >
-              Refresh Events
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => window.location.assign("/planet/atlas")}
+                className="rounded-2xl border border-white/15 bg-black/30 px-5 py-3 text-sm font-bold text-white hover:bg-white/10"
+              >
+                Back to Atlas
+              </button>
+
+              {boardFilter ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    window.location.assign("/planet/demo/events")
+                  }
+                  className="rounded-2xl border border-cyan-300/25 bg-cyan-400/10 px-5 py-3 text-sm font-bold text-cyan-100 hover:bg-cyan-400/15"
+                >
+                  View Global Events
+                </button>
+              ) : null}
+
+              <button
+                type="button"
+                onClick={loadEvents}
+                className="rounded-2xl border border-white/15 bg-white/90 px-5 py-3 text-sm font-bold text-black hover:bg-white"
+              >
+                Refresh Events
+              </button>
+            </div>
           </div>
         </header>
 
         <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {Object.entries(counts).map(([event, count]) => (
-            <div key={event} className="rounded-[26px] border border-white/12 bg-black/35 p-5">
+            <div
+              key={event}
+              className="rounded-[26px] border border-white/12 bg-black/35 p-5"
+            >
               <div className="text-3xl font-black">{count}</div>
               <div className="mt-2 text-xs font-bold uppercase tracking-[0.18em] text-white/45">
                 {event}
@@ -115,9 +185,16 @@ const followUpRate = requestSubmitted > 0 ? Math.round((messagesOpened / request
 
           <div className="grid gap-3 md:grid-cols-4">
             <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-              <div className="text-3xl font-black">{requestOpened}</div>
+              <div className="text-3xl font-black">{pageOpened}</div>
               <div className="mt-1 text-xs font-bold uppercase tracking-[0.18em] text-white/45">
                 Page opened
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+              <div className="text-3xl font-black">{requestStarted}</div>
+              <div className="mt-1 text-xs font-bold uppercase tracking-[0.18em] text-white/45">
+                Request started
               </div>
             </div>
 
@@ -129,16 +206,9 @@ const followUpRate = requestSubmitted > 0 ? Math.round((messagesOpened / request
             </div>
 
             <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-              <div className="text-3xl font-black">{requestRate}%</div>
+              <div className="text-3xl font-black">{actionRate}%</div>
               <div className="mt-1 text-xs font-bold uppercase tracking-[0.18em] text-white/45">
                 Action rate
-              </div>
-            </div>
-          
-            <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-              <div className="text-3xl font-black">{messagesOpened}</div>
-              <div className="mt-1 text-xs font-bold uppercase tracking-[0.18em] text-white/45">
-                Follow-up opened
               </div>
             </div>
           </div>
@@ -146,7 +216,7 @@ const followUpRate = requestSubmitted > 0 ? Math.round((messagesOpened / request
           <div className="mt-4 h-3 overflow-hidden rounded-full bg-white/10">
             <div
               className="h-full rounded-full bg-cyan-300"
-              style={{ width: `${Math.min(requestRate, 100)}%` }}
+              style={{ width: `${Math.min(actionRate, 100)}%` }}
             />
           </div>
         </section>
@@ -154,7 +224,9 @@ const followUpRate = requestSubmitted > 0 ? Math.round((messagesOpened / request
         <section className="mt-6 rounded-[30px] border border-white/12 bg-black/35 p-5">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-2xl font-black">Latest events</h2>
-            <span className="text-xs text-white/40">{visibleEvents.length} loaded</span>
+            <span className="text-xs text-white/40">
+              {visibleEvents.length} loaded
+            </span>
           </div>
 
           {loading ? (
@@ -169,43 +241,58 @@ const followUpRate = requestSubmitted > 0 ? Math.round((messagesOpened / request
                   className="grid gap-3 rounded-2xl border border-white/10 bg-white/[0.035] p-4 text-sm md:grid-cols-[1.2fr_1fr_1fr_1fr]"
                 >
                   <div>
-                    <div className="text-xs uppercase tracking-[0.18em] text-white/35">Event</div>
-                    <div className="mt-1 font-bold text-cyan-100">{item.event}</div>
+                    <div className="text-xs uppercase tracking-[0.18em] text-white/35">
+                      Event
+                    </div>
+                    <div className="mt-1 font-bold text-cyan-100">
+                      {item.event}
+                    </div>
                   </div>
 
                   <div>
-                    <div className="text-xs uppercase tracking-[0.18em] text-white/35">Board</div>
-                    <div className="mt-1 font-bold text-white">{item.board || "unknown"}</div>
+                    <div className="text-xs uppercase tracking-[0.18em] text-white/35">
+                      Board
+                    </div>
+                    <div className="mt-1 font-bold text-white">
+                      {boardName(item.board)}
+                    </div>
                   </div>
 
                   <div>
-                    <div className="text-xs uppercase tracking-[0.18em] text-white/35">Entity</div>
-                    <div className="mt-1 text-white/65">{item.entity_id || "none"}</div>
+                    <div className="text-xs uppercase tracking-[0.18em] text-white/35">
+                      Entity
+                    </div>
+                    <div className="mt-1 text-white/65">
+                      {item.entity_id || "none"}
+                    </div>
                   </div>
 
                   <div>
-                    <div className="text-xs uppercase tracking-[0.18em] text-white/35">Time</div>
-                    <div className="mt-1 text-white/65">{formatTime(item.created_at)}</div>
+                    <div className="text-xs uppercase tracking-[0.18em] text-white/35">
+                      Time
+                    </div>
+                    <div className="mt-1 text-white/65">
+                      {formatTime(item.created_at)}
+                    </div>
                   </div>
                 </div>
               ))}
 
-              {!events.length && (
+              {!visibleEvents.length ? (
                 <div className="rounded-2xl border border-dashed border-white/10 p-5 text-sm text-white/45">
-                  No events yet.
+                  {boardFilter
+                    ? `No events found yet for ${boardName(boardFilter)}.`
+                    : "No events yet."}
                 </div>
-              )}
+              ) : null}
             </div>
           )}
         </section>
 
         <footer className="mt-8 text-center text-xs text-white/40">
-          HomePlanet © 2026 — track real work, not people.
+          HomePlanet {"\u00A9"} 2026 - track real work, not people.
         </footer>
       </div>
     </main>
   );
 }
-
-
-
