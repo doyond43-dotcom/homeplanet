@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
@@ -131,6 +131,27 @@ export default function OkeechobeeCreateEventPageV2() {
       return;
     }
 
+    try {
+      const notifyResponse = await fetch("/api/homeplanet-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          project: "okeechobee-together-request",
+          slug,
+        }),
+      });
+
+      const notifyResult = await notifyResponse.json().catch(() => null);
+
+      if (!notifyResponse.ok || notifyResult?.ok === false) {
+        console.warn("Okeechobee Together email notification did not send:", notifyResult);
+      }
+    } catch (notifyError) {
+      console.warn("Okeechobee Together email notification request failed:", notifyError);
+    }
+
     alert("Request submitted for review. It will not go public until approved.");
     navigate("/planet/okeechobee");
   }
@@ -187,7 +208,7 @@ export default function OkeechobeeCreateEventPageV2() {
       </style>
       <section className="okeechobee-create-card" style={styles.card}>
         <Link to="/planet/okeechobee" style={styles.backLink}>
-          ← Back to Okeechobee Together
+          â† Back to Okeechobee Together
         </Link>
         <p style={styles.kicker}>Okeechobee Together</p>
         <h1 style={styles.title}>What kind of help is needed?</h1>
@@ -470,6 +491,7 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: "pointer",
   },
 };
+
 
 
 

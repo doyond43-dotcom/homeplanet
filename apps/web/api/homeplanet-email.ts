@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+﻿import type { VercelRequest, VercelResponse } from "@vercel/node";
 import {
   escapeEmailHtml,
   HomePlanetEmailError,
@@ -169,6 +169,59 @@ async function sendMarshall(caseReference: string) {
   return { ...result, recordReference: String(savedCase.case_number) };
 }
 
+async function sendOkeechobeeTogether(slug: string) {
+  const savedRequest = await loadSavedRecord(
+    "okeechobee_events",
+    "slug",
+    slug,
+    "slug,type,title,description,location,contact,status",
+    "okeechobee-together-request",
+    "Okeechobee Together request"
+  );
+
+  if (savedRequest.type !== "Need" || savedRequest.status !== "Pending Review") {
+    throw new HomePlanetEmailError(
+      "Saved request is not eligible for this notification.",
+      { httpStatus: 400 }
+    );
+  }
+
+  const result = await sendHomePlanetEmail({
+    recipient: requiredEmailRecipient("OKEECHOBEE_TOGETHER_ADMIN_EMAIL"),
+    project: "okeechobee-together-request",
+    idempotencyKey: `okeechobee-together-request-${slug}`,
+    subject: `NEW Okeechobee Together Request - ${String(savedRequest.title || "Resident Request").trim()}`,
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:720px;margin:0 auto;padding:24px;">
+        <h2 style="margin:0 0 8px;">New Okeechobee Together Request</h2>
+        <p style="margin:0 0 20px;color:#666;">A resident request is waiting for review.</p>
+
+        <div style="padding:16px;border:1px solid #d9d9d9;border-radius:12px;margin-bottom:18px;">
+          <div style="margin-bottom:8px;"><strong>Title:</strong> ${shown(savedRequest.title)}</div>
+          <div style="margin-bottom:8px;"><strong>Location:</strong> ${shown(savedRequest.location)}</div>
+          <div style="margin-bottom:8px;"><strong>Contact:</strong> ${shown(savedRequest.contact)}</div>
+          <div><strong>Status:</strong> ${shown(savedRequest.status)}</div>
+        </div>
+
+        <div style="padding:16px;border:1px solid #d9d9d9;border-radius:12px;">
+          <strong>Request Details:</strong>
+          <div style="margin-top:10px;white-space:pre-wrap;line-height:1.6;">${shown(savedRequest.description)}</div>
+        </div>
+
+        <p style="margin-top:22px;">
+          <a href="https://okeechobeetogether.org/planet/okeechobee/command">
+            Open Okeechobee Together Command Center
+          </a>
+        </p>
+      </div>
+    `,
+  });
+
+  return {
+    ...result,
+    recordReference: String(savedRequest.slug),
+  };
+}
 async function sendOnlyTheEssentials(requestId: string) {
   const savedRequest = await loadSavedRecord(
     "cleaning_requests",
@@ -226,7 +279,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const project = String(body.project || "").trim();
     const allowedKeys = project === "marshall-case-review"
       ? ["project", "caseReference"]
-      : ["project", "requestId"];
+      : project === "okeechobee-together-request"
+        ? ["project", "slug"]
+        : ["project", "requestId"];
     if (Object.keys(body).some((key) => !allowedKeys.includes(key))) {
       return res.status(400).json({ ok: false, error: "Unexpected request fields." });
     }
@@ -244,6 +299,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ ok: false, error: "Invalid request ID." });
       }
       result = await sendOnlyTheEssentials(requestId);
+    } else if (project === "okeechobee-together-request") {
+      const slug = String(body.slug || "").trim();
+      if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+        return res.status(400).json({ ok: false, error: "Invalid Okeechobee request slug." });
+      }
+      result = await sendOkeechobeeTogether(slug);
     } else {
       return res.status(400).json({ ok: false, error: "Unknown email project." });
     }
@@ -275,3 +336,4 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
   }
 }
+
