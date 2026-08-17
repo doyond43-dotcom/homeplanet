@@ -136,6 +136,9 @@ import CreatorStudio from "../pages/CreatorStudio";
 import LiveStudio from "../pages/LiveStudio";
 import CreatorQuickBuildPage from "../pages/CreatorQuickBuildPage";
 import HollerboyzLandingPage from "../pages/HollerboyzLandingPage";
+import WrenchBoysLandingPage from "../pages/WrenchBoysLandingPage";
+import WrenchBoysDemoStaffBoard from "../pages/WrenchBoysDemoStaffBoard";
+import WrenchBoysDemoOwnerBoard from "../pages/WrenchBoysDemoOwnerBoard";
 import PresenceLaunchSequencePage from "../pages/PresenceLaunchSequencePage";
 import ActivationPage from "../pages/ActivationPage";
 import HomePlanetHomePage from "../pages/HomePlanetHomePage";
@@ -854,6 +857,9 @@ export default function PlanetRoutes() {
 
 
       <Route path="hollerboyz" element={<HollerboyzLandingPage />} />
+      <Route path="wrench-boys" element={<WrenchBoysLandingPage />} />
+      <Route path="wrench-boys/staff" element={<WrenchBoysDemoStaffBoard />} />
+        <Route path="wrench-boys/owner" element={<WrenchBoysDemoOwnerBoard />} />
       <Route path="victor-pineda" element={<VictorPinedaLandingPage />} />
       <Route path="smith-property-care" element={<SmithPropertyCareLandingPage />} />
       <Route path="smith-property-care/command-center" element={<SmithPropertyCareCommandCenter />} />
@@ -878,6 +884,8 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
+
 
 
 

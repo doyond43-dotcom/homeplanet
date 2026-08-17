@@ -1,4 +1,4 @@
-// apps/web/src/routes/WorkOrderDrawer.tsx
+﻿// apps/web/src/routes/WorkOrderDrawer.tsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent, Dispatch, KeyboardEvent, SetStateAction } from "react";
 import { useNavigate } from "react-router-dom";
@@ -1139,14 +1139,25 @@ export default function WorkOrderDrawer({
   const checkinMode = row.payload?.checkin_mode || "-";
   const photoUrl = row.payload?.photo?.data_url || row.payload?.photo_url || "";
 
+  const isWrenchBoys = row.slug === "wrench-boys";
+
+  const panelTone = isWrenchBoys
+    ? "border-orange-500/15 bg-zinc-900/55"
+    : "border-slate-800 bg-slate-900/40";
+
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/60" onClick={close}>
       <div
-        className="h-full w-[620px] overflow-y-auto bg-slate-950 p-6 text-white space-y-6"
+        className={`h-full w-[620px] overflow-y-auto p-6 text-white space-y-6 ${isWrenchBoys ? "bg-zinc-950 border-l border-orange-500/20 shadow-[-12px_0_40px_rgba(249,115,22,0.08)]" : "bg-slate-950"}`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-between items-start gap-4">
+        <div className={`flex justify-between items-start gap-4 ${isWrenchBoys ? "border-b border-orange-500/15 pb-5" : ""}`}>
           <div className="min-w-0">
+             {isWrenchBoys ? (
+               <div className="mb-1 text-[10px] font-black uppercase tracking-[0.22em] text-orange-500">
+                 Wrench Boys Auto & Diesel
+               </div>
+             ) : null}
             <div className="text-2xl font-bold truncate">{vehicleLabel}</div>
             <div className="text-sm text-slate-300 truncate">{customerName}</div>
             <div className="text-xs text-slate-500 mt-1">
@@ -1181,13 +1192,13 @@ export default function WorkOrderDrawer({
           <button
             type="button"
             onClick={close}
-            className="rounded-lg border border-slate-700 px-3 py-2 hover:border-slate-400"
+            className={`rounded-lg border px-3 py-2 transition ${isWrenchBoys ? "border-zinc-700 hover:border-orange-500/70" : "border-slate-700 hover:border-slate-400"}`}
           >
             Close
           </button>
         </div>
 
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4 space-y-4">
+        <div className={`rounded-2xl border p-4 space-y-4 ${panelTone}`}>
           <div className="text-lg font-semibold">Intake</div>
 
           <div className="grid grid-cols-2 gap-3 text-sm">
@@ -1272,10 +1283,12 @@ export default function WorkOrderDrawer({
           </div>
         ) : null}
 
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4 space-y-4">
+        <div className={`rounded-2xl border p-4 space-y-4 ${panelTone}`}>
           <div className="text-lg font-semibold">Service Story</div>
 
           <StoryField
+            step="01"
+            branded={isWrenchBoys}
             label="Customer Reported"
             value={serviceStory.customerReported}
             onChange={(v) => updateStoryField("customerReported", v)}
@@ -1283,6 +1296,8 @@ export default function WorkOrderDrawer({
           />
 
           <StoryField
+            step="02"
+            branded={isWrenchBoys}
             label="Advisor Observed"
             value={serviceStory.advisorObserved}
             onChange={(v) => updateStoryField("advisorObserved", v)}
@@ -1290,6 +1305,9 @@ export default function WorkOrderDrawer({
           />
 
           <StoryField
+            step="03"
+            branded={isWrenchBoys}
+            emphasis
             label="Tech Found"
             value={serviceStory.techFound}
             onChange={(v) => updateStoryField("techFound", v)}
@@ -1297,6 +1315,8 @@ export default function WorkOrderDrawer({
           />
 
           <StoryField
+            step="04"
+            branded={isWrenchBoys}
             label="Recommended Service"
             value={serviceStory.recommendedService}
             onChange={(v) => updateStoryField("recommendedService", v)}
@@ -1304,6 +1324,8 @@ export default function WorkOrderDrawer({
           />
 
           <StoryField
+            step="05"
+            branded={isWrenchBoys}
             label="Work Performed"
             value={serviceStory.workPerformed}
             onChange={(v) => updateStoryField("workPerformed", v)}
@@ -1320,7 +1342,7 @@ export default function WorkOrderDrawer({
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4 space-y-4">
+        <div className={`rounded-2xl border p-4 space-y-4 ${panelTone}`}>
           <div className="text-lg font-semibold">Proof Photos</div>
 
           <div className="grid grid-cols-[180px_1fr] gap-2">
@@ -1430,7 +1452,7 @@ export default function WorkOrderDrawer({
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4 space-y-4">
+        <div className={`rounded-2xl border p-4 space-y-4 ${panelTone}`}>
           <div className="text-lg font-semibold">Assignment</div>
 
           <div>
@@ -1622,7 +1644,7 @@ export default function WorkOrderDrawer({
           Grand Total: ${grand.toFixed(2)}
         </div>
 
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4 space-y-4">
+        <div className={`rounded-2xl border p-4 space-y-4 ${panelTone}`}>
           <div className="text-lg font-semibold">Completion</div>
 
           <div>
@@ -1683,21 +1705,66 @@ function StoryField({
   value,
   onChange,
   placeholder,
+  step,
+  branded = false,
+  emphasis = false,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   placeholder: string;
+  step?: string;
+  branded?: boolean;
+  emphasis?: boolean;
 }) {
   return (
-    <div>
-      <div className="text-sm text-slate-400 mb-1">{label}</div>
+    <div
+      className={
+        branded && emphasis
+          ? "rounded-xl border border-orange-500/20 bg-orange-500/[0.03] p-3"
+          : ""
+      }
+    >
+      {branded ? (
+        <div className="mb-2 flex items-center gap-2">
+          {step ? (
+            <span
+              className={`text-[10px] font-black tracking-[0.16em] ${
+                emphasis ? "text-orange-400" : "text-orange-500/75"
+              }`}
+            >
+              {step}
+            </span>
+          ) : null}
+
+          <div
+            className={`text-xs font-black uppercase tracking-[0.12em] ${
+              emphasis ? "text-orange-100" : "text-zinc-300"
+            }`}
+          >
+            {label}
+          </div>
+
+          {emphasis ? <div className="h-px flex-1 bg-orange-500/20" /> : null}
+        </div>
+      ) : (
+        <div className="text-sm text-slate-400 mb-1">{label}</div>
+      )}
+
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full h-24 bg-slate-900 border border-slate-700 rounded-xl p-3"
+        className={`w-full h-24 rounded-xl border p-3 outline-none transition ${
+          branded
+            ? emphasis
+              ? "bg-zinc-950 border-orange-500/30 focus:border-orange-500"
+              : "bg-zinc-950 border-zinc-700 focus:border-orange-500/60"
+            : "bg-slate-900 border-slate-700"
+        }`}
         placeholder={placeholder}
       />
     </div>
   );
 }
+
+
