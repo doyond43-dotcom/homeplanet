@@ -600,6 +600,39 @@ const publicSeoRegistry = [
       }
     }
   }
+  ,
+  {
+    route: "/planet/wrench-boys",
+    title: "Wrench Boys Auto & Diesel | Mobile Auto & Diesel Repair Demo",
+    description:
+      "Explore the Wrench Boys Auto & Diesel HomePlanet demo: customer service intake, owner board, technician workflow, repair stages and connected work orders.",
+    image: `${SITE_URL}/images/wrench_boys_tow_truck_at_sunset.webp`,
+    heading: "Wrench Boys Auto & Diesel",
+    body: `
+      <section>
+        <h2>A connected mechanic shop workflow</h2>
+        <p>This HomePlanet mechanic demo shows how a customer request can move directly into a shop board, technician workflow and connected work order without requiring the customer to download an app.</p>
+      </section>
+
+      <section>
+        <h2>From customer intake to completed repair</h2>
+        <p>The system demonstrates service requests, vehicle information, owner awareness, technician assignments, repair stages, service history and proof in one connected workflow.</p>
+      </section>
+    `,
+    schema: {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      name: "Wrench Boys Auto & Diesel Mechanic System Demo",
+      url: `${SITE_URL}/planet/wrench-boys`,
+      description:
+        "A HomePlanet mechanic shop demo showing connected customer intake, owner board, technician workflow and repair work orders.",
+      isPartOf: {
+        "@type": "WebSite",
+        name: "HomePlanet",
+        url: `${SITE_URL}/`
+      }
+    }
+  }
 ];
 
 

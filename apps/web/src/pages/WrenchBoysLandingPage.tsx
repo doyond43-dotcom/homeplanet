@@ -125,7 +125,7 @@ export default function WrenchBoysLandingPage() {
         className="relative min-h-[70vh] flex items-center justify-center text-center px-6"
         style={{
           backgroundImage:
-            "url('/images/wrench_boys_tow_truck_at_sunset.png')",
+            "url('/images/wrench_boys_tow_truck_at_sunset.webp')",
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
@@ -607,7 +607,7 @@ export default function WrenchBoysLandingPage() {
       <footer className="py-10 px-6 border-t border-zinc-800">
         <div className="max-w-4xl mx-auto text-center">
           <img
-            src="/images/glossy_orange_wb_racing_badge.png"
+            src="/images/glossy_orange_wb_racing_badge.webp"
             alt="Wrench Boys WB badge"
             className="w-16 h-16 mx-auto mb-4"
           />
@@ -624,3 +624,4 @@ export default function WrenchBoysLandingPage() {
     </div>
   );
 }
+
