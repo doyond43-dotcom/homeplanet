@@ -54,6 +54,11 @@ export default function OnlyTheEssentialsLanding() {
   }, []);
 
   function go(type: "book" | "question" | "reschedule" | "notes") {
+    if (type === "book") {
+      navigate("/onlytheessentials");
+      return;
+    }
+
     navigate(`/planet/only-the-essentials/request?type=${type}`);
   }
 
@@ -124,3 +129,4 @@ export default function OnlyTheEssentialsLanding() {
     </div>
   );
 }
+
