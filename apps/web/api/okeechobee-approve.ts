@@ -143,7 +143,7 @@ export default async function handler(
     const { data: event, error: eventLoadError } =
       await supabase
         .from("okeechobee_events")
-        .select("slug,title,status,type,location")
+        .select("slug,title,status,type,category,location")
         .eq("slug", slug)
         .single();
 
@@ -355,13 +355,13 @@ export default async function handler(
           helpersError.message
         );
       } else {
-        const projectType = String(event.type || "").trim();
+        const projectCategory = String(event.category || "").trim();
 
         const matchedHelpers = (helpers || []).filter(
           (helper: any) =>
             Array.isArray(helper.categories) &&
             (
-              helper.categories.includes(projectType) ||
+              helper.categories.includes(projectCategory) ||
               helper.categories.includes("Other") ||
               helper.categories.includes("Community / Volunteers")
             )
@@ -493,4 +493,5 @@ export default async function handler(
     });
   }
 }
+
 

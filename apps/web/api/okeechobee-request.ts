@@ -138,6 +138,7 @@ export default async function handler(
     const event = {
       slug,
       type: "Need",
+      category,
       title,
       description: guidedDetails,
       location: location || "Okeechobee, FL",
@@ -218,3 +219,4 @@ export default async function handler(
     });
   }
 }
+
