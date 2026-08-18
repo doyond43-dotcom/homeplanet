@@ -50,9 +50,14 @@ export default function OkeechobeeHelperJoinPage() {
           );
         }
 
+        window.localStorage.setItem(
+          `okeechobee-helper-joined:${slug}`,
+          "true"
+        );
+
         setState("success");
         setMessage(
-          `Thank you${result.helperName ? `, ${result.helperName}` : ""}. You're now listed as a helper on this project.`
+          `Thank you${result.helperName ? `, ${result.helperName}` : ""}. You're officially helping this project. No need to join again.`
         );
       } catch (error) {
         setState("error");
@@ -154,3 +159,4 @@ const styles: Record<string, any> = {
     textDecoration: "none",
   },
 };
+

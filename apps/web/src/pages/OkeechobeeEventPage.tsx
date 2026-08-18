@@ -16,6 +16,7 @@ export default function OkeechobeeEventPage() {
   const [coordinatorWhyHelp, setCoordinatorWhyHelp] = useState("");
   const [coordinatorAvailability, setCoordinatorAvailability] = useState("");
   const [savingHelper, setSavingHelper] = useState(false);
+  const [alreadyHelping, setAlreadyHelping] = useState(false);
 
   async function loadEvent() {
     if (!slug) return;
@@ -81,6 +82,14 @@ export default function OkeechobeeEventPage() {
 
   useEffect(() => {
     loadEvent();
+
+    if (slug) {
+      setAlreadyHelping(
+        window.localStorage.getItem(
+          `okeechobee-helper-joined:${slug}`
+        ) === "true"
+      );
+    }
   }, [slug]);
 
   async function joinEvent(e: React.FormEvent) {
@@ -154,6 +163,13 @@ export default function OkeechobeeEventPage() {
     }
 
     setEvent({ ...event, timeline: updatedTimeline });
+
+    window.localStorage.setItem(
+      `okeechobee-helper-joined:${event.slug}`,
+      "true"
+    );
+
+    setAlreadyHelping(true);
     setHelperName("");
     setHelperPhone("");
     setHelperEmail("");
@@ -161,7 +177,7 @@ export default function OkeechobeeEventPage() {
     setHelperNotes("");
     setShowHelperForm(false);
     setSavingHelper(false);
-    alert("Thank you. Your information was saved.");
+    alert("Thank you. You're now helping this project.");
   }
 
   function formatLookingForItem(item: any) {
@@ -610,14 +626,24 @@ export default function OkeechobeeEventPage() {
         <div style={styles.actions}>
           {event.status === "Resolved" ? (
             <div style={styles.resolvedButton}>? Need Met</div>
+          ) : alreadyHelping ? (
+            <div
+              style={{
+                ...styles.resolvedButton,
+                color: "#8cff87",
+                borderColor: "#315c32",
+                background: "#142315",
+              }}
+            >
+              ✓ You&apos;re Already Helping
+            </div>
           ) : (
-            <>
-              <button onClick={() => setShowHelperForm(true)} style={styles.primaryButton}>
-                I&apos;ll Help
-              </button>
-
-
-            </>
+            <button
+              onClick={() => setShowHelperForm(true)}
+              style={styles.primaryButton}
+            >
+              I&apos;ll Help
+            </button>
           )}
 
           <button onClick={shareEvent} style={styles.secondaryButton}>
@@ -908,6 +934,9 @@ const styles: Record<string, React.CSSProperties> = {
     marginTop: 18,
   },
 };
+
+
+
 
 
 
