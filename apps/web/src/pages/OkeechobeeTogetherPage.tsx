@@ -128,9 +128,9 @@ export default function OkeechobeeTogetherPage() {
             I Need Help
           </Link>
 
-          <a href="#projects" style={styles.secondaryButton}>
+          <Link to="/planet/okeechobee/help" style={styles.secondaryButton}>
             I Want To Help
-          </a>
+          </Link>
         </div>
 
         <div
@@ -664,6 +664,7 @@ const styles: Record<string, React.CSSProperties> = {
     boxShadow: "none",
   },
 };
+
 
 
 

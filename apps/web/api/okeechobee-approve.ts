@@ -143,7 +143,7 @@ export default async function handler(
     const { data: event, error: eventLoadError } =
       await supabase
         .from("okeechobee_events")
-        .select("slug,title,status")
+        .select("slug,title,status,type,location")
         .eq("slug", slug)
         .single();
 
@@ -339,12 +339,142 @@ export default async function handler(
       );
     }
 
+    let helperNotificationsSent = 0;
+
+    try {
+      const { data: helpers, error: helpersError } =
+        await supabase
+          .from("okeechobee_helpers")
+          .select("id,name,email,categories")
+          .eq("active", true)
+          .eq("notifications_enabled", true);
+
+      if (helpersError) {
+        console.error(
+          "Okeechobee helper matching failed:",
+          helpersError.message
+        );
+      } else {
+        const projectType = String(event.type || "").trim();
+
+        const matchedHelpers = (helpers || []).filter(
+          (helper: any) =>
+            Array.isArray(helper.categories) &&
+            (
+              helper.categories.includes(projectType) ||
+              helper.categories.includes("Other") ||
+              helper.categories.includes("Community / Volunteers")
+            )
+        );
+
+        for (const helper of matchedHelpers) {
+          const rawJoinToken =
+            randomBytes(32).toString("base64url");
+
+          const joinTokenHash =
+            hashToken(rawJoinToken);
+
+          const { error: matchError } = await supabase
+            .from("okeechobee_helper_matches")
+            .upsert(
+              {
+                helper_id: helper.id,
+                project_slug: slug,
+                join_token_hash: joinTokenHash,
+                notified_at: new Date().toISOString(),
+              },
+              {
+                onConflict: "helper_id,project_slug",
+              }
+            );
+
+          if (matchError) {
+            console.error(
+              "Okeechobee helper match save failed:",
+              matchError.message
+            );
+            continue;
+          }
+
+          const joinUrl =
+            `https://okeechobeetogether.org/planet/okeechobee/help/${slug}#${rawJoinToken}`;
+
+          try {
+            await sendHomePlanetEmail({
+              recipient: helper.email,
+              project: "okeechobee-helper-match",
+              idempotencyKey:
+                `okeechobee-helper-match-${slug}-${helper.id}`,
+              subject:
+                `Okeechobee Together: A local project may match your help`,
+              html: `
+                <div style="font-family:Arial,sans-serif;max-width:720px;margin:0 auto;padding:24px;">
+                  <h2 style="margin:0 0 12px;">
+                    A local project may be a match
+                  </h2>
+
+                  <p style="line-height:1.6;">
+                    Hi ${escapeEmailHtml(String(helper.name || "there"))},
+                  </p>
+
+                  <p style="line-height:1.6;">
+                    A new Okeechobee Together project was approved
+                    that matches the kinds of help you selected.
+                  </p>
+
+                  <div style="margin:22px 0;padding:18px;border:1px solid #ddd;border-radius:12px;">
+                    <strong>${escapeEmailHtml(publicTitle)}</strong>
+                    <div style="margin-top:8px;color:#666;">
+                      ${escapeEmailHtml(String(event.location || "Okeechobee"))}
+                    </div>
+                  </div>
+
+                  <p style="line-height:1.6;">
+                    ${escapeEmailHtml(publicDescription)}
+                  </p>
+
+                  <p style="margin:24px 0;">
+                    <a href="${joinUrl}" style="display:inline-block;padding:14px 20px;background:#39ff14;color:#071006;text-decoration:none;border-radius:10px;font-weight:bold;">
+                      I'll Help
+                    </a>
+                  </p>
+
+                  <p style="line-height:1.6;color:#666;">
+                    Tap I'll Help only if you want to join this project.
+                    Your saved helper information will be shared with
+                    the resident for project coordination.
+                  </p>
+                </div>
+              `,
+            });
+
+            helperNotificationsSent += 1;
+          } catch (helperEmailError) {
+            console.error(
+              "Okeechobee helper email failed:",
+              helperEmailError instanceof Error
+                ? helperEmailError.message
+                : "Unknown error"
+            );
+          }
+        }
+      }
+    } catch (helperMatchError) {
+      console.error(
+        "Okeechobee helper notification loop failed:",
+        helperMatchError instanceof Error
+          ? helperMatchError.message
+          : "Unknown error"
+      );
+    }
+
     return res.status(200).json({
       ok: true,
       slug,
       status: "Active",
       legacy: false,
       ownerEmailSent: true,
+      helperNotificationsSent,
     });
   } catch (error) {
     console.error(
@@ -363,3 +493,4 @@ export default async function handler(
     });
   }
 }
+
