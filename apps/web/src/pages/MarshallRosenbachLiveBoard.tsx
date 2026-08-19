@@ -19,6 +19,7 @@ type CaseRecord = {
   email: string;
   caseType: string;
   status: string;
+  dateReceived?: string;
   nextAction: string;
   incidentDate: string;
   location: string;
@@ -28,6 +29,9 @@ type CaseRecord = {
   preferredContact?: string;
   bestContactTime?: string;
   internalNotes?: string;
+  followUpDate?: string;
+  followUpTime?: string;
+  followUpReason?: string;
   documents: {
     id?: string;
     name: string;
@@ -38,7 +42,33 @@ type CaseRecord = {
     fileSize?: number;
     uploadedAt?: string;
   }[];
-  timeline: { label: string; time: string }[];
+  timeline: { type?: string; label: string; detail?: string; time: string }[];
+};
+
+const caseStatuses = [
+  "New",
+  "Reviewing",
+  "Need Documents",
+  "Contacted",
+  "Consultation Scheduled",
+  "Accepted",
+  "Declined",
+  "Closed",
+] as const;
+
+const caseStatusLabels: Record<string, (typeof caseStatuses)[number]> = {
+  new: "New",
+  new_review: "New",
+  reviewing: "Reviewing",
+  needs_follow_up: "Reviewing",
+  need_documents: "Need Documents",
+  contacted: "Contacted",
+  consultation: "Consultation Scheduled",
+  consultation_scheduled: "Consultation Scheduled",
+  accepted: "Accepted",
+  active_case: "Accepted",
+  declined: "Declined",
+  closed: "Closed",
 };
 
 const sampleCases: CaseRecord[] = [
@@ -123,6 +153,9 @@ export default function MarshallRosenbachLiveBoard() {
   const [statusDraft, setStatusDraft] = useState("");
   const [nextActionDraft, setNextActionDraft] = useState("");
   const [notesDraft, setNotesDraft] = useState("");
+  const [followUpDateDraft, setFollowUpDateDraft] = useState("");
+  const [followUpTimeDraft, setFollowUpTimeDraft] = useState("");
+  const [followUpReasonDraft, setFollowUpReasonDraft] = useState("");
   const [savingField, setSavingField] = useState("");
 
   useEffect(() => {
@@ -157,7 +190,7 @@ export default function MarshallRosenbachLiveBoard() {
           ] = await Promise.all([
             supabase
               .from("marshall_case_truth_events")
-              .select("case_id, event_label, created_at")
+              .select("case_id, event_type, event_label, event_detail, created_at")
               .in("case_id", caseIds)
               .order("created_at", { ascending: true }),
 
@@ -209,17 +242,10 @@ export default function MarshallRosenbachLiveBoard() {
             phone: row.client_phone || "",
             email: row.client_email || "",
             caseType: row.case_type || "Personal Injury",
-            status:
-              row.status === "new_review"
-                ? "New Review"
-                : String(row.status || "Open")
-                    .replace(/_/g, " ")
-                    .replace(
-                      /\b\w/g,
-                      (letter: string) => letter.toUpperCase()
-                    ),
+            status: caseStatusLabels[String(row.status)] || "Reviewing",
             nextAction:
               row.next_action || "Review case and contact client",
+            dateReceived: new Date(row.created_at).toLocaleString(),
             incidentDate: row.incident_date
               ? new Date(
                   `${row.incident_date}T00:00:00`
@@ -238,6 +264,9 @@ export default function MarshallRosenbachLiveBoard() {
             bestContactTime:
               row.best_contact_time || "Not provided",
             internalNotes: row.internal_notes || "",
+            followUpDate: row.next_follow_up_date || "",
+            followUpTime: row.next_follow_up_time || "",
+            followUpReason: row.next_follow_up_reason || "",
 
             documents: caseDocuments.map((document: any) => ({
               id: document.id,
@@ -255,7 +284,9 @@ export default function MarshallRosenbachLiveBoard() {
             })),
 
             timeline: caseTruth.map((event: any) => ({
+              type: event.event_type,
               label: event.event_label,
+              detail: event.event_detail || "",
               time: new Date(
                 event.created_at
               ).toLocaleString(),
@@ -264,7 +295,7 @@ export default function MarshallRosenbachLiveBoard() {
         });
 
         setCases(mapped);
-        setActiveCaseId(mapped[0]?.id || "");
+        setActiveCaseId("");
       } catch (error) {
         console.error("Could not load Marshall cases:", error);
 
@@ -315,12 +346,18 @@ export default function MarshallRosenbachLiveBoard() {
       setStatusDraft("");
       setNextActionDraft("");
       setNotesDraft("");
+      setFollowUpDateDraft("");
+      setFollowUpTimeDraft("");
+      setFollowUpReasonDraft("");
       return;
     }
 
     setStatusDraft(activeCase.status);
     setNextActionDraft(activeCase.nextAction);
-    setNotesDraft(activeCase.internalNotes || "");
+    setNotesDraft("");
+    setFollowUpDateDraft(activeCase.followUpDate || "");
+    setFollowUpTimeDraft(activeCase.followUpTime?.slice(0, 5) || "");
+    setFollowUpReasonDraft(activeCase.followUpReason || "");
   }, [activeCase?.id]);
 
   const addTruthEvent = async (
@@ -350,7 +387,7 @@ export default function MarshallRosenbachLiveBoard() {
   };
 
   const saveCaseField = async (
-    field: "status" | "next_action" | "internal_notes",
+    field: "next_action",
     value: string,
     eventType: string,
     eventLabel: string
@@ -359,10 +396,7 @@ export default function MarshallRosenbachLiveBoard() {
 
     setSavingField(field);
 
-    const databaseValue =
-      field === "status"
-        ? value.toLowerCase().replace(/[^a-z0-9]+/g, "_")
-        : value.trim();
+    const databaseValue = value.trim();
 
     const { error } = await supabase
       .from("marshall_cases")
@@ -392,12 +426,8 @@ export default function MarshallRosenbachLiveBoard() {
 
         return {
           ...item,
-          ...(field === "status" ? { status: value } : {}),
           ...(field === "next_action"
             ? { nextAction: value.trim() }
-            : {}),
-          ...(field === "internal_notes"
-            ? { internalNotes: value.trim() }
             : {}),
           ...(truth
             ? {
@@ -415,6 +445,164 @@ export default function MarshallRosenbachLiveBoard() {
     );
 
     setSavingField("");
+  };
+
+  const saveStatus = async (value: string) => {
+    if (!activeCase || savingField) return;
+
+    const previousStatus = activeCase.status;
+    const databaseValue = value.toLowerCase().replace(/[^a-z0-9]+/g, "_");
+    setSavingField("status");
+
+    const { error } = await supabase
+      .from("marshall_cases")
+      .update({
+        status: databaseValue,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", activeCase.id);
+
+    if (error) {
+      console.error("Could not save status:", error);
+      setStatusDraft(previousStatus);
+      window.alert("Could not save this status change.");
+      setSavingField("");
+      return;
+    }
+
+    const { data: truth } = await supabase
+      .from("marshall_case_truth_events")
+      .select("event_type, event_label, event_detail, created_at")
+      .eq("case_id", activeCase.id)
+      .eq("event_type", "status_changed")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    setCases((current) =>
+      current.map((item) =>
+        item.id !== activeCase.id
+          ? item
+          : {
+              ...item,
+              status: value,
+              ...(truth
+                ? {
+                    timeline: [
+                      ...item.timeline,
+                      {
+                        type: truth.event_type,
+                        label: truth.event_label,
+                        detail: truth.event_detail || "",
+                        time: new Date(truth.created_at).toLocaleString(),
+                      },
+                    ],
+                  }
+                : {}),
+            }
+      )
+    );
+    setSavingField("");
+  };
+
+  const addInternalNote = async () => {
+    if (!activeCase || savingField || !notesDraft.trim()) return;
+
+    setSavingField("internal_note");
+    const note = notesDraft.trim();
+    const { data, error } = await supabase.rpc("marshall_add_internal_note", {
+      p_case_id: activeCase.id,
+      p_note: note,
+    });
+
+    if (error) {
+      console.error("Could not add internal note:", error);
+      window.alert("Could not add this internal note.");
+      setSavingField("");
+      return;
+    }
+
+    const event = Array.isArray(data) ? data[0] : data;
+    setCases((current) =>
+      current.map((item) =>
+        item.id !== activeCase.id
+          ? item
+          : {
+              ...item,
+              internalNotes: [item.internalNotes, note].filter(Boolean).join("\n\n"),
+              ...(event
+                ? {
+                    timeline: [
+                      ...item.timeline,
+                      {
+                        type: event.event_type,
+                        label: event.event_label,
+                        detail: event.event_detail || note,
+                        time: new Date(event.created_at).toLocaleString(),
+                      },
+                    ],
+                  }
+                : {}),
+            }
+      )
+    );
+    setNotesDraft("");
+    setSavingField("");
+  };
+
+  const scheduleFollowUp = async () => {
+    if (!activeCase || savingField || !followUpDateDraft) return;
+
+    setSavingField("follow_up");
+    const reason = followUpReasonDraft.trim();
+    const { data, error } = await supabase.rpc("marshall_schedule_follow_up", {
+      p_case_id: activeCase.id,
+      p_follow_up_date: followUpDateDraft,
+      p_follow_up_time: followUpTimeDraft || null,
+      p_reason: reason || null,
+    });
+
+    if (error) {
+      console.error("Could not schedule follow-up:", error);
+      window.alert("Could not schedule this follow-up.");
+      setSavingField("");
+      return;
+    }
+
+    const event = Array.isArray(data) ? data[0] : data;
+    setCases((current) =>
+      current.map((item) =>
+        item.id !== activeCase.id
+          ? item
+          : {
+              ...item,
+              followUpDate: followUpDateDraft,
+              followUpTime: followUpTimeDraft,
+              followUpReason: reason,
+              ...(event
+                ? {
+                    timeline: [
+                      ...item.timeline,
+                      {
+                        type: event.event_type,
+                        label: event.event_label,
+                        detail: event.event_detail || "",
+                        time: new Date(event.created_at).toLocaleString(),
+                      },
+                    ],
+                  }
+                : {}),
+            }
+      )
+    );
+    setSavingField("");
+  };
+
+  const scrollToWorkspaceControl = (id: string) => {
+    window.document.getElementById(id)?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
   };
 
   const toggleDocumentStatus = async (
@@ -1097,7 +1285,7 @@ export default function MarshallRosenbachLiveBoard() {
       </header>
 
       <div className="mx-auto grid min-h-[calc(100vh-82px)] max-w-[1600px] lg:grid-cols-[350px_minmax(0,1fr)]">
-        <aside className="border-r border-white/10 bg-[#101113]">
+        <aside className={`${activeCase ? "hidden lg:block" : "block"} border-r border-white/10 bg-[#101113]`}>
           <div className="sticky top-0 p-4 lg:p-5">
             <div className="relative">
               <Search
@@ -1191,7 +1379,7 @@ export default function MarshallRosenbachLiveBoard() {
           </div>
         </aside>
 
-        <section className="min-w-0 bg-[#0b0c0e]">
+        <section className={`${activeCase ? "block" : "hidden lg:block"} min-w-0 bg-[#0b0c0e]`}>
           {activeCase ? (
             <div className="mx-auto max-w-[1180px] px-5 py-6 lg:px-8 lg:py-8">
               <div className="rounded-3xl border border-white/10 bg-[#151618] shadow-2xl shadow-black/20">
@@ -1230,33 +1418,24 @@ export default function MarshallRosenbachLiveBoard() {
                             const value = event.target.value;
                             setStatusDraft(value);
 
-                            saveCaseField(
-                              "status",
-                              value,
-                              "status_changed",
-                              `Status changed to ${value}`
-                            );
+                            saveStatus(value);
                           }}
                           className="rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-sm text-white/70 outline-none focus:border-[#c99a45]"
                         >
-                          <option>New Review</option>
-                          <option>Needs Follow-Up</option>
-                          <option>Contacted</option>
-                          <option>Consultation</option>
-                          <option>Case Decision</option>
-                          <option>Active Case</option>
-                          <option>Closed</option>
+                          {caseStatuses.map((status) => (
+                            <option key={status}>{status}</option>
+                          ))}
                         </select>
                       </div>
                     </div>
 
-                    <div className="grid gap-2 sm:grid-cols-2 xl:min-w-[340px]">
+                    <div className="grid gap-2 sm:grid-cols-2 xl:min-w-[420px]">
                       <a
                         href={`tel:${activeCase.phone}`}
                         className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#c99a45] px-4 text-sm font-black text-black"
                       >
                         <Phone size={17} />
-                        Call
+                        Call Client
                       </a>
 
                       <a
@@ -1264,8 +1443,42 @@ export default function MarshallRosenbachLiveBoard() {
                         className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/12 bg-white/[0.04] px-4 text-sm font-black text-white"
                       >
                         <Mail size={17} />
-                        Email
+                        Email Client
                       </a>
+
+                      <button
+                        type="button"
+                        disabled={!activeCase.documents.some((item) => item.id)}
+                        onClick={() => {
+                          const document =
+                            activeCase.documents.find(
+                              (item) => item.id && item.status === "Needed"
+                            ) || activeCase.documents.find((item) => item.id);
+                          if (document) requestDocumentFromClient(document);
+                        }}
+                        className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/12 bg-white/[0.04] px-4 text-sm font-black text-white disabled:opacity-40"
+                      >
+                        <FileText size={17} />
+                        Request Documents
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => scrollToWorkspaceControl("marshall-add-note")}
+                        className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/12 bg-white/[0.04] px-4 text-sm font-black text-white"
+                      >
+                        <UserRound size={17} />
+                        Add Note
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => scrollToWorkspaceControl("marshall-follow-up")}
+                        className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/12 bg-white/[0.04] px-4 text-sm font-black text-white sm:col-span-2"
+                      >
+                        <CalendarDays size={17} />
+                        Schedule Follow-Up
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -1308,6 +1521,74 @@ export default function MarshallRosenbachLiveBoard() {
                     </div>
                   </div>
 
+                  <div id="marshall-follow-up" className="scroll-mt-4 lg:col-span-2 rounded-2xl border border-white/10 bg-black/15 p-5">
+                    <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.15em] text-white/35">
+                      <CalendarDays size={16} />
+                      Next Follow-Up
+                    </div>
+
+                    {activeCase.followUpDate && (
+                      <div className="mt-4 rounded-xl border border-[#c99a45]/25 bg-[#c99a45]/10 p-4">
+                        <div className="font-black text-[#e4bf7a]">
+                          {new Date(`${activeCase.followUpDate}T00:00:00`).toLocaleDateString(undefined, {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          })}
+                          {activeCase.followUpTime
+                            ? ` at ${new Date(`2000-01-01T${activeCase.followUpTime}`).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`
+                            : ""}
+                        </div>
+                        {activeCase.followUpReason && (
+                          <div className="mt-2 text-sm leading-6 text-white/65">
+                            {activeCase.followUpReason}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                      <label>
+                        <span className="text-xs text-white/35">Follow-up date</span>
+                        <input
+                          type="date"
+                          value={followUpDateDraft}
+                          onChange={(event) => setFollowUpDateDraft(event.target.value)}
+                          className="mt-1 min-h-12 w-full rounded-xl border border-white/10 bg-black/25 px-4 text-sm text-white outline-none focus:border-[#c99a45]"
+                        />
+                      </label>
+                      <label>
+                        <span className="text-xs text-white/35">Time (optional)</span>
+                        <input
+                          type="time"
+                          value={followUpTimeDraft}
+                          onChange={(event) => setFollowUpTimeDraft(event.target.value)}
+                          className="mt-1 min-h-12 w-full rounded-xl border border-white/10 bg-black/25 px-4 text-sm text-white outline-none focus:border-[#c99a45]"
+                        />
+                      </label>
+                      <label className="sm:col-span-2">
+                        <span className="text-xs text-white/35">Reason or note</span>
+                        <input
+                          value={followUpReasonDraft}
+                          onChange={(event) => setFollowUpReasonDraft(event.target.value)}
+                          placeholder="Short reason for the follow-up"
+                          className="mt-1 min-h-12 w-full rounded-xl border border-white/10 bg-black/25 px-4 text-sm text-white outline-none placeholder:text-white/25 focus:border-[#c99a45]"
+                        />
+                      </label>
+                    </div>
+
+                    <div className="mt-3 flex justify-end">
+                      <button
+                        type="button"
+                        disabled={savingField === "follow_up" || !followUpDateDraft}
+                        onClick={scheduleFollowUp}
+                        className="min-h-11 rounded-xl bg-[#c99a45] px-5 text-sm font-black text-black disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        {savingField === "follow_up" ? "Saving..." : "Schedule Follow-Up"}
+                      </button>
+                    </div>
+                  </div>
+
                   <div className="rounded-2xl border border-white/10 bg-black/15 p-5">
                     <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.15em] text-white/35">
                       <UserRound size={16} />
@@ -1315,6 +1596,13 @@ export default function MarshallRosenbachLiveBoard() {
                     </div>
 
                     <div className="mt-5 space-y-4">
+                      <div>
+                        <div className="text-xs text-white/35">Date Received</div>
+                        <div className="mt-1 font-bold">
+                          {activeCase.dateReceived || "Not provided"}
+                        </div>
+                      </div>
+
                       <div>
                         <div className="text-xs text-white/35">Phone</div>
                         <div className="mt-1 font-bold">
@@ -1580,23 +1868,33 @@ export default function MarshallRosenbachLiveBoard() {
                             <div className="mt-1 text-xs text-white/35">
                               {event.time}
                             </div>
+                            {event.detail && (
+                              <div className="mt-2 whitespace-pre-wrap text-sm leading-6 text-white/55">
+                                {event.detail}
+                              </div>
+                            )}
                           </div>
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  <div className="lg:col-span-2 rounded-2xl border border-dashed border-white/10 bg-black/10 p-5">
+                  <div id="marshall-add-note" className="scroll-mt-4 lg:col-span-2 rounded-2xl border border-dashed border-white/10 bg-black/10 p-5">
                     <div className="text-xs font-black uppercase tracking-[0.15em] text-white/35">
                       Notes
                     </div>
+                    {activeCase.internalNotes && (
+                      <div className="mt-4 whitespace-pre-wrap rounded-xl border border-white/8 bg-black/20 p-4 text-sm leading-6 text-white/60">
+                        {activeCase.internalNotes}
+                      </div>
+                    )}
                     <textarea
                       rows={5}
                       value={notesDraft}
                       onChange={(event) =>
                         setNotesDraft(event.target.value)
                       }
-                      placeholder="Case notes, follow-up details, reminders..."
+                      placeholder="Add a private internal note..."
                       className="mt-4 w-full resize-none rounded-xl border border-white/10 bg-black/25 px-4 py-4 text-sm leading-6 text-white outline-none placeholder:text-white/25 focus:border-[#c99a45]"
                     />
 
@@ -1604,23 +1902,15 @@ export default function MarshallRosenbachLiveBoard() {
                       <button
                         type="button"
                         disabled={
-                          savingField === "internal_notes" ||
-                          notesDraft.trim() ===
-                            (activeCase.internalNotes || "")
+                          savingField === "internal_note" ||
+                          !notesDraft.trim()
                         }
-                        onClick={() =>
-                          saveCaseField(
-                            "internal_notes",
-                            notesDraft,
-                            "notes_updated",
-                            "Case notes updated"
-                          )
-                        }
+                        onClick={addInternalNote}
                         className="min-h-11 rounded-xl bg-[#c99a45] px-5 text-sm font-black text-black disabled:cursor-not-allowed disabled:opacity-40"
                       >
-                        {savingField === "internal_notes"
+                        {savingField === "internal_note"
                           ? "Saving..."
-                          : "Save Notes"}
+                          : "Add Note"}
                       </button>
                     </div>
                   </div>
