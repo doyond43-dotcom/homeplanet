@@ -1719,10 +1719,10 @@ export default function MarshallRosenbachLiveBoard() {
                     </div>
                   </div>
 
-                  <div className="lg:col-span-2 rounded-2xl border border-white/10 bg-black/15 p-5">
-                    <div className="text-xs font-black uppercase tracking-[0.15em] text-white/35">
-                      Case Progression
-                    </div>
+                  <details className="lg:col-span-2 rounded-2xl border border-white/10 bg-black/15 p-5">
+                    <summary className="cursor-pointer select-none text-xs font-black uppercase tracking-[0.15em] text-white/45">
+                      Optional Case Progression
+                    </summary>
                     <div className="mt-3 text-sm font-bold leading-6 text-white/55">
                       New / Reviewing → Consultation Scheduled → Consultation Completed → Accepted or Declined → Closed
                     </div>
@@ -1858,7 +1858,7 @@ export default function MarshallRosenbachLiveBoard() {
                         </button>
                       </div>
                     </div>
-                  </div>
+                  </details>
 
                   <div id="marshall-follow-up" className="scroll-mt-4 lg:col-span-2 rounded-2xl border border-white/10 bg-black/15 p-5">
                     <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.15em] text-white/35">
