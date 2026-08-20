@@ -7,6 +7,7 @@ export default function OkeechobeeCommandCenter() {
   const [loading, setLoading] = useState(true);
   const [workingSlug, setWorkingSlug] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
+  const [showTests, setShowTests] = useState(false);
 
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
   const [draftTitle, setDraftTitle] = useState("");
@@ -222,13 +223,45 @@ export default function OkeechobeeCommandCenter() {
     ).length;
   }
 
+  function isTestEvent(event: any) {
+    const title = String(
+      event.public_title || event.title || ""
+    ).toLowerCase();
+
+    const resident = String(
+      event.resident_name || ""
+    ).toLowerCase();
+
+    return (
+      title.startsWith("test ") ||
+      title === "test" ||
+      title.includes("helper match") ||
+      title.includes("test project") ||
+      title.includes("resident ownership") ||
+      resident.includes("test")
+    );
+  }
+
+  const hiddenTestCount = useMemo(
+    () =>
+      events.filter(
+        (event) =>
+          String(event.status || "").toLowerCase() ===
+            "pending review" &&
+          isTestEvent(event)
+      ).length,
+    [events]
+  );
+
   const pendingEvents = useMemo(
     () =>
       events.filter(
         (event) =>
-          String(event.status || "").toLowerCase() === "pending review"
+          String(event.status || "").toLowerCase() ===
+            "pending review" &&
+          (showTests || !isTestEvent(event))
       ),
-    [events]
+    [events, showTests]
   );
 
   const activeEvents = useMemo(
@@ -293,7 +326,39 @@ export default function OkeechobeeCommandCenter() {
               </p>
             </div>
 
-            <div style={styles.countBadge}>{pendingEvents.length}</div>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                flexWrap: "wrap",
+                justifyContent: "flex-end",
+              }}
+            >
+              {hiddenTestCount > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => setShowTests((current) => !current)}
+                  style={{
+                    border: "1px solid #333333",
+                    background: showTests ? "#242424" : "#111111",
+                    color: "#ffffff",
+                    borderRadius: 999,
+                    padding: "9px 13px",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  {showTests
+                    ? "Hide Tests"
+                    : `Show Tests (${hiddenTestCount})`}
+                </button>
+              ) : null}
+
+              <div style={styles.countBadge}>
+                {pendingEvents.length}
+              </div>
+            </div>
           </div>
 
           {pendingEvents.length === 0 ? (
@@ -506,10 +571,40 @@ export default function OkeechobeeCommandCenter() {
           )}
         </section>
         {selectedEvent && (
-          <div style={styles.drawerBackdrop} onClick={closeReview}>
+          <div
+            onClick={closeReview}
+            style={{
+              position: "fixed",
+              top: 0,
+              right: 0,
+              bottom: 0,
+              left: 0,
+              width: "100vw",
+              height: "100vh",
+              zIndex: 1000,
+              background: "rgba(0, 0, 0, 0.72)",
+              display: "flex",
+              justifyContent: "flex-end",
+              alignItems: "stretch",
+              overflow: "hidden",
+            }}
+          >
             <aside
-              style={styles.drawer}
               onClick={(e) => e.stopPropagation()}
+              style={{
+                width: "100vw",
+                maxWidth: 680,
+                height: "100vh",
+                minHeight: "100vh",
+                flexShrink: 0,
+                overflowY: "auto",
+                overflowX: "hidden",
+                boxSizing: "border-box",
+                background: "#101010",
+                borderLeft: "1px solid #2c2c2c",
+                padding: "24px",
+                boxShadow: "-20px 0 60px rgba(0,0,0,0.45)",
+              }}
             >
               <h2 style={{ marginTop: 0 }}>Review Request</h2>
 
@@ -580,26 +675,60 @@ export default function OkeechobeeCommandCenter() {
                 </div>
               </div>
 
-              <div style={styles.drawerSection}>
-                <div style={styles.detailLabel}>What They Need</div>
+              <details
+                style={{
+                  marginBottom: 20,
+                  border: "1px solid #292929",
+                  borderRadius: 14,
+                  background: "#0b0b0b",
+                  overflow: "hidden",
+                }}
+              >
+                <summary
+                  style={{
+                    cursor: "pointer",
+                    padding: "14px 16px",
+                    fontWeight: 800,
+                    color: "#bdbdbd",
+                  }}
+                >
+                  View Original Resident Request
+                </summary>
 
-                <div style={styles.readOnlyBox}>
+                <div
+                  style={{
+                    padding: "0 16px 16px",
+                    whiteSpace: "pre-wrap",
+                    lineHeight: 1.55,
+                  }}
+                >
                   <strong>{selectedEvent.title}</strong>
 
-                  <div
-                    style={{
-                      marginTop: 8,
-                      whiteSpace: "pre-wrap",
-                      lineHeight: 1.55,
-                    }}
-                  >
+                  <div style={{ marginTop: 8 }}>
                     {selectedEvent.description ||
                       "No description provided."}
                   </div>
                 </div>
-              </div>
+              </details>
 
               <div style={styles.drawerSection}>
+                <div style={styles.detailLabel}>
+                  What The Community Will See
+                </div>
+
+                <div
+                  style={{
+                    marginTop: 6,
+                    marginBottom: 14,
+                    color: "#a7a7a7",
+                    fontSize: 13,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  Edit this only if the public wording needs to be cleaned up
+                  before publishing.
+                </div>
+
                 <div style={styles.detailLabel}>Project Title</div>
 
                 <input
@@ -610,7 +739,7 @@ export default function OkeechobeeCommandCenter() {
 
                 <div style={{ height: 16 }} />
 
-                <div style={styles.detailLabel}>Project Description</div>
+                <div style={styles.detailLabel}>Public Description</div>
 
                 <textarea
                   value={draftDescription}
