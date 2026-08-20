@@ -32,6 +32,10 @@ type CaseRecord = {
   followUpDate?: string;
   followUpTime?: string;
   followUpReason?: string;
+  consultationDate?: string;
+  consultationTime?: string;
+  consultationNote?: string;
+  consultationCompletedAt?: string;
   documents: {
     id?: string;
     name: string;
@@ -161,6 +165,11 @@ export default function MarshallRosenbachLiveBoard() {
   const [followUpDateDraft, setFollowUpDateDraft] = useState("");
   const [followUpTimeDraft, setFollowUpTimeDraft] = useState("");
   const [followUpReasonDraft, setFollowUpReasonDraft] = useState("");
+  const [consultationDateDraft, setConsultationDateDraft] = useState("");
+  const [consultationTimeDraft, setConsultationTimeDraft] = useState("");
+  const [consultationNoteDraft, setConsultationNoteDraft] = useState("");
+  const [acceptNextStepDraft, setAcceptNextStepDraft] = useState("");
+  const [declineReasonDraft, setDeclineReasonDraft] = useState("");
   const [savingField, setSavingField] = useState("");
 
   useEffect(() => {
@@ -272,6 +281,10 @@ export default function MarshallRosenbachLiveBoard() {
             followUpDate: row.next_follow_up_date || "",
             followUpTime: row.next_follow_up_time || "",
             followUpReason: row.next_follow_up_reason || "",
+            consultationDate: row.consultation_date || "",
+            consultationTime: row.consultation_time || "",
+            consultationNote: row.consultation_note || "",
+            consultationCompletedAt: row.consultation_completed_at || "",
 
             documents: caseDocuments.map((document: any) => ({
               id: document.id,
@@ -357,6 +370,11 @@ export default function MarshallRosenbachLiveBoard() {
       setFollowUpDateDraft("");
       setFollowUpTimeDraft("");
       setFollowUpReasonDraft("");
+      setConsultationDateDraft("");
+      setConsultationTimeDraft("");
+      setConsultationNoteDraft("");
+      setAcceptNextStepDraft("");
+      setDeclineReasonDraft("");
       return;
     }
 
@@ -366,6 +384,11 @@ export default function MarshallRosenbachLiveBoard() {
     setFollowUpDateDraft(activeCase.followUpDate || "");
     setFollowUpTimeDraft(activeCase.followUpTime?.slice(0, 5) || "");
     setFollowUpReasonDraft(activeCase.followUpReason || "");
+    setConsultationDateDraft(activeCase.consultationDate || "");
+    setConsultationTimeDraft(activeCase.consultationTime?.slice(0, 5) || "");
+    setConsultationNoteDraft(activeCase.consultationNote || "");
+    setAcceptNextStepDraft(activeCase.nextAction || "");
+    setDeclineReasonDraft("");
   }, [activeCase?.id]);
 
   const addTruthEvent = async (
@@ -606,6 +629,170 @@ export default function MarshallRosenbachLiveBoard() {
             }
       )
     );
+    setSavingField("");
+  };
+
+  const progressionEvents = (data: any) =>
+    (Array.isArray(data) ? data : data ? [data] : []).map((event: any) => ({
+      type: event.event_type,
+      label: event.event_label,
+      detail: normalizeTruthDetail(
+        event.event_type,
+        event.event_detail || ""
+      ),
+      time: new Date(event.created_at).toLocaleString(),
+    }));
+
+  const scheduleConsultation = async () => {
+    if (!activeCase || savingField || !consultationDateDraft) return;
+
+    setSavingField("consultation_schedule");
+    const note = consultationNoteDraft.trim();
+    const { data, error } = await supabase.rpc(
+      "marshall_schedule_consultation",
+      {
+        p_case_id: activeCase.id,
+        p_consultation_date: consultationDateDraft,
+        p_consultation_time: consultationTimeDraft || null,
+        p_note: note || null,
+      }
+    );
+
+    if (error) {
+      console.error("Could not schedule consultation:", error);
+      window.alert("Could not schedule this consultation.");
+      setSavingField("");
+      return;
+    }
+
+    const events = progressionEvents(data);
+    setCases((current) =>
+      current.map((item) =>
+        item.id !== activeCase.id
+          ? item
+          : {
+              ...item,
+              status: "Consultation Scheduled",
+              consultationDate: consultationDateDraft,
+              consultationTime: consultationTimeDraft,
+              consultationNote: note,
+              consultationCompletedAt: "",
+              timeline: [...item.timeline, ...events],
+            }
+      )
+    );
+    setStatusDraft("Consultation Scheduled");
+    setSavingField("");
+  };
+
+  const completeConsultation = async () => {
+    if (!activeCase || savingField || !activeCase.consultationDate) return;
+
+    setSavingField("consultation_complete");
+    const { data, error } = await supabase.rpc(
+      "marshall_complete_consultation",
+      { p_case_id: activeCase.id }
+    );
+
+    if (error) {
+      console.error("Could not complete consultation:", error);
+      window.alert("Could not mark this consultation complete.");
+      setSavingField("");
+      return;
+    }
+
+    const completedAt = new Date().toISOString();
+    const events = progressionEvents(data);
+    setCases((current) =>
+      current.map((item) =>
+        item.id !== activeCase.id
+          ? item
+          : {
+              ...item,
+              consultationCompletedAt: completedAt,
+              timeline: [...item.timeline, ...events],
+            }
+      )
+    );
+    setSavingField("");
+  };
+
+  const acceptCase = async () => {
+    if (
+      !activeCase ||
+      activeCase.status === "Accepted" ||
+      savingField ||
+      !acceptNextStepDraft.trim()
+    ) return;
+
+    setSavingField("case_accept");
+    const nextStep = acceptNextStepDraft.trim();
+    const { data, error } = await supabase.rpc("marshall_accept_case", {
+      p_case_id: activeCase.id,
+      p_next_step: nextStep,
+    });
+
+    if (error) {
+      console.error("Could not accept case:", error);
+      window.alert("Could not accept this case.");
+      setSavingField("");
+      return;
+    }
+
+    const events = progressionEvents(data);
+    setCases((current) =>
+      current.map((item) =>
+        item.id !== activeCase.id
+          ? item
+          : {
+              ...item,
+              status: "Accepted",
+              nextAction: nextStep,
+              timeline: [...item.timeline, ...events],
+            }
+      )
+    );
+    setStatusDraft("Accepted");
+    setNextActionDraft(nextStep);
+    setSavingField("");
+  };
+
+  const declineCase = async () => {
+    if (!activeCase || activeCase.status === "Declined" || savingField) return;
+
+    setSavingField("case_decline");
+    const reason = declineReasonDraft.trim();
+    const { data, error } = await supabase.rpc("marshall_decline_case", {
+      p_case_id: activeCase.id,
+      p_reason: reason || null,
+    });
+
+    if (error) {
+      console.error("Could not decline case:", error);
+      window.alert("Could not decline this case.");
+      setSavingField("");
+      return;
+    }
+
+    const events = progressionEvents(data);
+    setCases((current) =>
+      current.map((item) =>
+        item.id !== activeCase.id
+          ? item
+          : {
+              ...item,
+              status: "Declined",
+              internalNotes: reason
+                ? [item.internalNotes, `Declined: ${reason}`]
+                    .filter(Boolean)
+                    .join("\n\n")
+                : item.internalNotes,
+              timeline: [...item.timeline, ...events],
+            }
+      )
+    );
+    setStatusDraft("Declined");
+    setDeclineReasonDraft("");
     setSavingField("");
   };
 
@@ -1529,6 +1716,147 @@ export default function MarshallRosenbachLiveBoard() {
                           ? "Saving..."
                           : "Save"}
                       </button>
+                    </div>
+                  </div>
+
+                  <div className="lg:col-span-2 rounded-2xl border border-white/10 bg-black/15 p-5">
+                    <div className="text-xs font-black uppercase tracking-[0.15em] text-white/35">
+                      Case Progression
+                    </div>
+                    <div className="mt-3 text-sm font-bold leading-6 text-white/55">
+                      New / Reviewing → Consultation Scheduled → Consultation Completed → Accepted or Declined → Closed
+                    </div>
+
+                    <div className="mt-5 grid gap-4 xl:grid-cols-2">
+                      <div className="rounded-xl border border-white/8 bg-white/[0.025] p-4">
+                        <div className="text-sm font-black">Consultation</div>
+
+                        {activeCase.consultationDate && (
+                          <div className="mt-3 rounded-lg border border-[#c99a45]/20 bg-[#c99a45]/10 p-3 text-sm text-white/65">
+                            <div className="font-black text-[#e4bf7a]">
+                              {new Date(`${activeCase.consultationDate}T00:00:00`).toLocaleDateString(undefined, {
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                              })}
+                              {activeCase.consultationTime
+                                ? ` at ${new Date(`2000-01-01T${activeCase.consultationTime}`).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`
+                                : ""}
+                            </div>
+                            {activeCase.consultationNote && (
+                              <div className="mt-1">{activeCase.consultationNote}</div>
+                            )}
+                            {activeCase.consultationCompletedAt && (
+                              <div className="mt-2 font-bold text-emerald-300">
+                                Completed {new Date(activeCase.consultationCompletedAt).toLocaleString()}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                          <label>
+                            <span className="text-xs text-white/35">Date</span>
+                            <input
+                              type="date"
+                              value={consultationDateDraft}
+                              onChange={(event) => setConsultationDateDraft(event.target.value)}
+                              className="mt-1 min-h-12 w-full rounded-xl border border-white/10 bg-black/25 px-4 text-sm text-white outline-none focus:border-[#c99a45]"
+                            />
+                          </label>
+                          <label>
+                            <span className="text-xs text-white/35">Time (optional)</span>
+                            <input
+                              type="time"
+                              value={consultationTimeDraft}
+                              onChange={(event) => setConsultationTimeDraft(event.target.value)}
+                              className="mt-1 min-h-12 w-full rounded-xl border border-white/10 bg-black/25 px-4 text-sm text-white outline-none focus:border-[#c99a45]"
+                            />
+                          </label>
+                          <label className="sm:col-span-2">
+                            <span className="text-xs text-white/35">Short note</span>
+                            <input
+                              value={consultationNoteDraft}
+                              onChange={(event) => setConsultationNoteDraft(event.target.value)}
+                              placeholder="Consultation details"
+                              className="mt-1 min-h-12 w-full rounded-xl border border-white/10 bg-black/25 px-4 text-sm text-white outline-none placeholder:text-white/25 focus:border-[#c99a45]"
+                            />
+                          </label>
+                        </div>
+
+                        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                          <button
+                            type="button"
+                            disabled={savingField === "consultation_schedule" || !consultationDateDraft}
+                            onClick={scheduleConsultation}
+                            className="min-h-11 rounded-xl bg-[#c99a45] px-4 text-sm font-black text-black disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            {savingField === "consultation_schedule" ? "Saving..." : "Schedule Consultation"}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={
+                              savingField === "consultation_complete" ||
+                              !activeCase.consultationDate ||
+                              Boolean(activeCase.consultationCompletedAt)
+                            }
+                            onClick={completeConsultation}
+                            className="min-h-11 rounded-xl border border-white/12 bg-white/[0.04] px-4 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            {savingField === "consultation_complete" ? "Saving..." : "Consultation Completed"}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="rounded-xl border border-white/8 bg-white/[0.025] p-4">
+                        <div className="text-sm font-black">Case Decision</div>
+
+                        <label className="mt-4 block">
+                          <span className="text-xs text-white/35">Next Step if Accepted</span>
+                          <input
+                            value={acceptNextStepDraft}
+                            onChange={(event) => setAcceptNextStepDraft(event.target.value)}
+                            placeholder="Next step"
+                            className="mt-1 min-h-12 w-full rounded-xl border border-white/10 bg-black/25 px-4 text-sm text-white outline-none placeholder:text-white/25 focus:border-[#c99a45]"
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          disabled={
+                            savingField === "case_accept" ||
+                            activeCase.status === "Accepted" ||
+                            !acceptNextStepDraft.trim()
+                          }
+                          onClick={acceptCase}
+                          className="mt-3 min-h-11 w-full rounded-xl bg-[#c99a45] px-4 text-sm font-black text-black disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          {savingField === "case_accept" ? "Saving..." : "Accept Case"}
+                        </button>
+
+                        <div className="my-4 border-t border-white/8" />
+
+                        <label className="block">
+                          <span className="text-xs text-white/35">Private reason if Declined (optional)</span>
+                          <textarea
+                            rows={3}
+                            value={declineReasonDraft}
+                            onChange={(event) => setDeclineReasonDraft(event.target.value)}
+                            placeholder="Internal reason only"
+                            className="mt-1 w-full resize-none rounded-xl border border-white/10 bg-black/25 p-4 text-sm leading-6 text-white outline-none placeholder:text-white/25 focus:border-[#c99a45]"
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          disabled={
+                            savingField === "case_decline" ||
+                            activeCase.status === "Declined"
+                          }
+                          onClick={declineCase}
+                          className="mt-3 min-h-11 w-full rounded-xl border border-white/12 bg-white/[0.04] px-4 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          {savingField === "case_decline" ? "Saving..." : "Decline Case"}
+                        </button>
+                      </div>
                     </div>
                   </div>
 
