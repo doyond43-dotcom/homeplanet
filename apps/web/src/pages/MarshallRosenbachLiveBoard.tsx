@@ -71,6 +71,11 @@ const caseStatusLabels: Record<string, (typeof caseStatuses)[number]> = {
   closed: "Closed",
 };
 
+const normalizeTruthDetail = (eventType: string, detail: string) =>
+  eventType === "status_changed" && detail === "Previous status: New Review"
+    ? "Previous status: New"
+    : detail;
+
 const sampleCases: CaseRecord[] = [
   {
     id: "case-001",
@@ -286,7 +291,10 @@ export default function MarshallRosenbachLiveBoard() {
             timeline: caseTruth.map((event: any) => ({
               type: event.event_type,
               label: event.event_label,
-              detail: event.event_detail || "",
+              detail: normalizeTruthDetail(
+                event.event_type,
+                event.event_detail || ""
+              ),
               time: new Date(
                 event.created_at
               ).toLocaleString(),
@@ -493,7 +501,10 @@ export default function MarshallRosenbachLiveBoard() {
                       {
                         type: truth.event_type,
                         label: truth.event_label,
-                        detail: truth.event_detail || "",
+                        detail: normalizeTruthDetail(
+                          truth.event_type,
+                          truth.event_detail || ""
+                        ),
                         time: new Date(truth.created_at).toLocaleString(),
                       },
                     ],
