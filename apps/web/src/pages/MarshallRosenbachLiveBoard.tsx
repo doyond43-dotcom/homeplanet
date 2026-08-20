@@ -170,6 +170,13 @@ export default function MarshallRosenbachLiveBoard() {
   const [consultationNoteDraft, setConsultationNoteDraft] = useState("");
   const [acceptNextStepDraft, setAcceptNextStepDraft] = useState("");
   const [declineReasonDraft, setDeclineReasonDraft] = useState("");
+  const [editingCaseDetails, setEditingCaseDetails] = useState(false);
+  const [locationDraft, setLocationDraft] = useState("");
+  const [injuredDraft, setInjuredDraft] = useState("");
+  const [treatmentDraft, setTreatmentDraft] = useState("");
+  const [preferredContactDraft, setPreferredContactDraft] = useState("");
+  const [bestContactTimeDraft, setBestContactTimeDraft] = useState("");
+  const [summaryDraft, setSummaryDraft] = useState("");
   const [savingField, setSavingField] = useState("");
 
   useEffect(() => {
@@ -269,14 +276,12 @@ export default function MarshallRosenbachLiveBoard() {
                   day: "numeric",
                 })
               : "Not provided",
-            location: row.incident_location || "Not provided",
+            location: row.incident_location || "",
             summary: row.incident_details || "",
-            injured: row.injured || "Not provided",
-            treatment: row.treatment || "Not provided",
-            preferredContact:
-              row.preferred_contact || "Not provided",
-            bestContactTime:
-              row.best_contact_time || "Not provided",
+            injured: row.injured || "",
+            treatment: row.treatment || "",
+            preferredContact: row.preferred_contact || "",
+            bestContactTime: row.best_contact_time || "",
             internalNotes: row.internal_notes || "",
             followUpDate: row.next_follow_up_date || "",
             followUpTime: row.next_follow_up_time || "",
@@ -375,6 +380,13 @@ export default function MarshallRosenbachLiveBoard() {
       setConsultationNoteDraft("");
       setAcceptNextStepDraft("");
       setDeclineReasonDraft("");
+      setEditingCaseDetails(false);
+      setLocationDraft("");
+      setInjuredDraft("");
+      setTreatmentDraft("");
+      setPreferredContactDraft("");
+      setBestContactTimeDraft("");
+      setSummaryDraft("");
       return;
     }
 
@@ -389,6 +401,13 @@ export default function MarshallRosenbachLiveBoard() {
     setConsultationNoteDraft(activeCase.consultationNote || "");
     setAcceptNextStepDraft(activeCase.nextAction || "");
     setDeclineReasonDraft("");
+    setEditingCaseDetails(false);
+    setLocationDraft(activeCase.location || "");
+    setInjuredDraft(activeCase.injured || "");
+    setTreatmentDraft(activeCase.treatment || "");
+    setPreferredContactDraft(activeCase.preferredContact || "");
+    setBestContactTimeDraft(activeCase.bestContactTime || "");
+    setSummaryDraft(activeCase.summary || "");
   }, [activeCase?.id]);
 
   const addTruthEvent = async (
@@ -536,6 +555,71 @@ export default function MarshallRosenbachLiveBoard() {
             }
       )
     );
+    setSavingField("");
+  };
+
+  const saveCaseDetails = async () => {
+    if (!activeCase || savingField) return;
+
+    setSavingField("case_details");
+    const details = {
+      location: locationDraft.trim(),
+      injured: injuredDraft.trim(),
+      treatment: treatmentDraft.trim(),
+      preferredContact: preferredContactDraft.trim(),
+      bestContactTime: bestContactTimeDraft.trim(),
+      summary: summaryDraft.trim(),
+    };
+
+    const { error } = await supabase
+      .from("marshall_cases")
+      .update({
+        incident_location: details.location || null,
+        injured: details.injured || null,
+        treatment: details.treatment || null,
+        preferred_contact: details.preferredContact || null,
+        best_contact_time: details.bestContactTime || null,
+        incident_details: details.summary,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", activeCase.id);
+
+    if (error) {
+      console.error("Could not save case details:", error);
+      window.alert("Could not save case details.");
+      setSavingField("");
+      return;
+    }
+
+    const truth = await addTruthEvent(
+      activeCase.id,
+      "case_details_updated",
+      "Case details updated"
+    );
+
+    setCases((current) =>
+      current.map((item) =>
+        item.id !== activeCase.id
+          ? item
+          : {
+              ...item,
+              ...details,
+              ...(truth
+                ? {
+                    timeline: [
+                      ...item.timeline,
+                      {
+                        type: "case_details_updated",
+                        label: truth.event_label,
+                        time: new Date(truth.created_at).toLocaleString(),
+                      },
+                    ],
+                  }
+                : {}),
+            }
+      )
+    );
+    setEditingCaseDetails(false);
     setSavingField("");
   };
 
@@ -1959,9 +2043,20 @@ export default function MarshallRosenbachLiveBoard() {
                   </div>
 
                   <div className="rounded-2xl border border-white/10 bg-black/15 p-5">
-                    <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.15em] text-white/35">
-                      <CalendarDays size={16} />
-                      Case Facts
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.15em] text-white/35">
+                        <CalendarDays size={16} />
+                        Case Facts
+                      </div>
+                      {!editingCaseDetails && (
+                        <button
+                          type="button"
+                          onClick={() => setEditingCaseDetails(true)}
+                          className="min-h-10 rounded-xl border border-white/12 bg-white/[0.04] px-4 text-xs font-black text-white"
+                        >
+                          Edit Details
+                        </button>
+                      )}
                     </div>
 
                     <div className="mt-5 space-y-4">
@@ -1976,9 +2071,18 @@ export default function MarshallRosenbachLiveBoard() {
 
                       <div>
                         <div className="text-xs text-white/35">Location</div>
-                        <div className="mt-1 font-bold">
-                          {activeCase.location}
-                        </div>
+                        {editingCaseDetails ? (
+                          <input
+                            value={locationDraft}
+                            onChange={(event) => setLocationDraft(event.target.value)}
+                            placeholder="Add location"
+                            className="mt-1 min-h-11 w-full rounded-xl border border-white/10 bg-black/25 px-3 text-sm text-white outline-none placeholder:text-white/25 focus:border-[#c99a45]"
+                          />
+                        ) : (
+                          <div className={`mt-1 font-bold ${activeCase.location ? "" : "text-[#d9ad5d]"}`}>
+                            {activeCase.location || "Add location"}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1988,9 +2092,19 @@ export default function MarshallRosenbachLiveBoard() {
                       What Happened
                     </div>
 
-                    <p className="mt-4 max-w-4xl text-base leading-7 text-white/68">
-                      {activeCase.summary}
-                    </p>
+                    {editingCaseDetails ? (
+                      <textarea
+                        rows={4}
+                        value={summaryDraft}
+                        onChange={(event) => setSummaryDraft(event.target.value)}
+                        placeholder="Add what happened"
+                        className="mt-4 w-full resize-none rounded-xl border border-white/10 bg-black/25 p-4 text-sm leading-6 text-white outline-none placeholder:text-white/25 focus:border-[#c99a45]"
+                      />
+                    ) : (
+                      <p className={`mt-4 max-w-4xl text-base leading-7 ${activeCase.summary ? "text-white/68" : "font-bold text-[#d9ad5d]"}`}>
+                        {activeCase.summary || "Add what happened"}
+                      </p>
+                    )}
                   </div>
 
                   <div className="lg:col-span-2 rounded-2xl border border-white/10 bg-black/15 p-5">
@@ -2003,38 +2117,104 @@ export default function MarshallRosenbachLiveBoard() {
                         <div className="text-xs text-white/35">
                           Injured?
                         </div>
-                        <div className="mt-1 font-bold">
-                          {activeCase.injured || "Not provided"}
-                        </div>
+                        {editingCaseDetails ? (
+                          <input
+                            value={injuredDraft}
+                            onChange={(event) => setInjuredDraft(event.target.value)}
+                            placeholder="Add injury details"
+                            className="mt-1 min-h-11 w-full rounded-xl border border-white/10 bg-black/25 px-3 text-sm text-white outline-none placeholder:text-white/25 focus:border-[#c99a45]"
+                          />
+                        ) : (
+                          <div className={`mt-1 font-bold ${activeCase.injured ? "" : "text-[#d9ad5d]"}`}>
+                            {activeCase.injured || "Add injury details"}
+                          </div>
+                        )}
                       </div>
 
                       <div className="rounded-xl border border-white/8 bg-white/[0.025] p-4">
                         <div className="text-xs text-white/35">
                           Preferred Contact
                         </div>
-                        <div className="mt-1 font-bold">
-                          {activeCase.preferredContact || "Not provided"}
-                        </div>
+                        {editingCaseDetails ? (
+                          <input
+                            value={preferredContactDraft}
+                            onChange={(event) => setPreferredContactDraft(event.target.value)}
+                            placeholder="Add contact preference"
+                            className="mt-1 min-h-11 w-full rounded-xl border border-white/10 bg-black/25 px-3 text-sm text-white outline-none placeholder:text-white/25 focus:border-[#c99a45]"
+                          />
+                        ) : (
+                          <div className={`mt-1 font-bold ${activeCase.preferredContact ? "" : "text-[#d9ad5d]"}`}>
+                            {activeCase.preferredContact || "Add contact preference"}
+                          </div>
+                        )}
                       </div>
 
                       <div className="rounded-xl border border-white/8 bg-white/[0.025] p-4">
                         <div className="text-xs text-white/35">
                           Treatment
                         </div>
-                        <div className="mt-1 font-bold leading-6">
-                          {activeCase.treatment || "Not provided"}
-                        </div>
+                        {editingCaseDetails ? (
+                          <textarea
+                            rows={2}
+                            value={treatmentDraft}
+                            onChange={(event) => setTreatmentDraft(event.target.value)}
+                            placeholder="Add treatment"
+                            className="mt-1 w-full resize-none rounded-xl border border-white/10 bg-black/25 p-3 text-sm leading-6 text-white outline-none placeholder:text-white/25 focus:border-[#c99a45]"
+                          />
+                        ) : (
+                          <div className={`mt-1 font-bold leading-6 ${activeCase.treatment ? "" : "text-[#d9ad5d]"}`}>
+                            {activeCase.treatment || "Add treatment"}
+                          </div>
+                        )}
                       </div>
 
                       <div className="rounded-xl border border-white/8 bg-white/[0.025] p-4">
                         <div className="text-xs text-white/35">
                           Best Contact Time
                         </div>
-                        <div className="mt-1 font-bold">
-                          {activeCase.bestContactTime || "Not provided"}
-                        </div>
+                        {editingCaseDetails ? (
+                          <input
+                            value={bestContactTimeDraft}
+                            onChange={(event) => setBestContactTimeDraft(event.target.value)}
+                            placeholder="Add best contact time"
+                            className="mt-1 min-h-11 w-full rounded-xl border border-white/10 bg-black/25 px-3 text-sm text-white outline-none placeholder:text-white/25 focus:border-[#c99a45]"
+                          />
+                        ) : (
+                          <div className={`mt-1 font-bold ${activeCase.bestContactTime ? "" : "text-[#d9ad5d]"}`}>
+                            {activeCase.bestContactTime || "Add best contact time"}
+                          </div>
+                        )}
                       </div>
                     </div>
+
+                    {editingCaseDetails && (
+                      <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                        <button
+                          type="button"
+                          disabled={savingField === "case_details"}
+                          onClick={() => {
+                            setLocationDraft(activeCase.location || "");
+                            setInjuredDraft(activeCase.injured || "");
+                            setTreatmentDraft(activeCase.treatment || "");
+                            setPreferredContactDraft(activeCase.preferredContact || "");
+                            setBestContactTimeDraft(activeCase.bestContactTime || "");
+                            setSummaryDraft(activeCase.summary || "");
+                            setEditingCaseDetails(false);
+                          }}
+                          className="min-h-11 rounded-xl border border-white/12 bg-white/[0.04] px-5 text-sm font-black text-white disabled:opacity-40"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          disabled={savingField === "case_details"}
+                          onClick={saveCaseDetails}
+                          className="min-h-11 rounded-xl bg-[#c99a45] px-5 text-sm font-black text-black disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          {savingField === "case_details" ? "Saving..." : "Save Case Details"}
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <div className="rounded-2xl border border-white/10 bg-black/15 p-5">
