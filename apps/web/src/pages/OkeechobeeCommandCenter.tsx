@@ -30,19 +30,54 @@ export default function OkeechobeeCommandCenter() {
   async function loadEvents() {
     setLoading(true);
 
-    const { data, error } = await supabase
-      .from("okeechobee_events")
-      .select("*")
-      .order("created_at", { ascending: false });
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-    if (error) {
+      if (!session?.access_token) {
+        setNotice(
+          "Your admin session has expired. Please sign in again."
+        );
+        setEvents([]);
+        return;
+      }
+
+      const response = await fetch(
+        "/api/okeechobee-command-center",
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        }
+      );
+
+      const result = await response
+        .json()
+        .catch(() => null);
+
+      if (!response.ok || result?.ok !== true) {
+        throw new Error(
+          result?.error ||
+          "Could not load the projects."
+        );
+      }
+
+      setEvents(result.events || []);
+    } catch (error) {
       console.error(error);
-      setNotice("Could not load the projects.");
-    } else {
-      setEvents(data || []);
-    }
 
-    setLoading(false);
+      setNotice(
+        error instanceof Error
+          ? error.message
+          : "Could not load the projects."
+      );
+
+      setEvents([]);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function approveProject(
@@ -178,6 +213,10 @@ export default function OkeechobeeCommandCenter() {
   }
 
   function helperCount(event: any) {
+    if (typeof event.helper_count === "number") {
+      return event.helper_count;
+    }
+
     return (event.timeline || []).filter((item: any) =>
       String(item.label || "").toLowerCase().includes(" joined as ")
     ).length;
@@ -274,14 +313,56 @@ export default function OkeechobeeCommandCenter() {
 
                   <div style={styles.detailsGrid}>
                     <div style={styles.detailBox}>
-                      <span style={styles.detailLabel}>Location</span>
-                      <span>{event.location || "Not listed"}</span>
+                      <span style={styles.detailLabel}>Resident</span>
+                      <strong>
+                        {event.resident_name || "Legacy / Not available"}
+                      </strong>
+
+                      {event.resident_phone ? (
+                        <a
+                          href={`tel:${event.resident_phone}`}
+                          style={{ color: "#ffffff" }}
+                        >
+                          {event.resident_phone}
+                        </a>
+                      ) : null}
+
+                      {event.resident_email ? (
+                        <a
+                          href={`mailto:${event.resident_email}`}
+                          style={{
+                            color: "#b7ffb0",
+                            wordBreak: "break-word",
+                          }}
+                        >
+                          {event.resident_email}
+                        </a>
+                      ) : null}
                     </div>
 
                     <div style={styles.detailBox}>
-                      <span style={styles.detailLabel}>Contact</span>
-                      <span>{event.contact || "Not listed"}</span>
+                      <span style={styles.detailLabel}>Request</span>
+                      <span>
+                        {event.category || event.type || "Other"}
+                      </span>
+                      <span>
+                        {event.location || "Location not listed"}
+                      </span>
                     </div>
+                  </div>
+
+                  <div
+                    style={{
+                      marginTop: 14,
+                      padding: 16,
+                      borderRadius: 14,
+                      background: "#111111",
+                      border: "1px solid #2b2b2b",
+                      lineHeight: 1.55,
+                      whiteSpace: "pre-wrap",
+                    }}
+                  >
+                    {event.description || "No request details provided."}
                   </div>
 
                   <div style={styles.actions}>
@@ -433,11 +514,87 @@ export default function OkeechobeeCommandCenter() {
               <h2 style={{ marginTop: 0 }}>Review Request</h2>
 
               <div style={styles.drawerSection}>
-                <div style={styles.detailLabel}>Resident Request</div>
+                <div style={styles.detailLabel}>Who Submitted This</div>
+
+                <div style={styles.readOnlyBox}>
+                  <div
+                    style={{
+                      fontSize: 22,
+                      fontWeight: 800,
+                      marginBottom: 12,
+                    }}
+                  >
+                    {selectedEvent.resident_name ||
+                      "Legacy / Resident not available"}
+                  </div>
+
+                  <div style={{ display: "grid", gap: 8 }}>
+                    {selectedEvent.resident_phone ? (
+                      <a
+                        href={`tel:${selectedEvent.resident_phone}`}
+                        style={{ color: "#ffffff" }}
+                      >
+                        Phone: {selectedEvent.resident_phone}
+                      </a>
+                    ) : (
+                      <span>Phone: Not provided</span>
+                    )}
+
+                    {selectedEvent.resident_email ? (
+                      <a
+                        href={`mailto:${selectedEvent.resident_email}`}
+                        style={{
+                          color: "#b7ffb0",
+                          wordBreak: "break-word",
+                        }}
+                      >
+                        Email: {selectedEvent.resident_email}
+                      </a>
+                    ) : (
+                      <span>Email: Not provided</span>
+                    )}
+                  </div>
+
+                  {selectedEvent.private_notes ? (
+                    <div
+                      style={{
+                        marginTop: 16,
+                        paddingTop: 16,
+                        borderTop: "1px solid #333333",
+                      }}
+                    >
+                      <div style={styles.detailLabel}>
+                        Private Notes
+                      </div>
+
+                      <div
+                        style={{
+                          marginTop: 8,
+                          whiteSpace: "pre-wrap",
+                        }}
+                      >
+                        {selectedEvent.private_notes}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+
+              <div style={styles.drawerSection}>
+                <div style={styles.detailLabel}>What They Need</div>
+
                 <div style={styles.readOnlyBox}>
                   <strong>{selectedEvent.title}</strong>
-                  <div style={{ marginTop: 8 }}>
-                    {selectedEvent.description || "No description provided."}
+
+                  <div
+                    style={{
+                      marginTop: 8,
+                      whiteSpace: "pre-wrap",
+                      lineHeight: 1.55,
+                    }}
+                  >
+                    {selectedEvent.description ||
+                      "No description provided."}
                   </div>
                 </div>
               </div>
@@ -490,28 +647,27 @@ export default function OkeechobeeCommandCenter() {
 
                 <button
                   style={styles.primaryButton}
+                  disabled={
+                    !selectedEvent ||
+                    workingSlug === selectedEvent.slug
+                  }
                   onClick={async () => {
                     if (!selectedEvent) return;
 
-                    const { error } = await supabase
-                      .from("okeechobee_events")
-                      .update({
-                        public_title: draftTitle,
-                        public_description: draftDescription,
-                        status: "Active",
-                      })
-                      .eq("id", selectedEvent.id);
+                    const approved = await approveProject(
+                      selectedEvent,
+                      draftTitle,
+                      draftDescription
+                    );
 
-                    if (error) {
-                      alert(error.message);
-                      return;
+                    if (approved) {
+                      closeReview();
                     }
-
-                    await loadEvents();
-                    closeReview();
                   }}
                 >
-                  Publish Project
+                  {workingSlug === selectedEvent?.slug
+                    ? "Publishing..."
+                    : "Publish Project"}
                 </button>
 
                 <button
