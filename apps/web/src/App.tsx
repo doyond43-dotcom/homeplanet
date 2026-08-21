@@ -247,11 +247,19 @@ export default function App() {
 <Route path="/planet/vz-professional-lawncare" element={<VZProfessionalLawncareLanding />} />
 <Route
   path="/planet/vz-professional-lawncare/intelligence"
-  element={<VZProfessionalLawncareIntelligenceDashboard />}
+  element={
+    <RequireAuth>
+      <VZProfessionalLawncareIntelligenceDashboard />
+    </RequireAuth>
+  }
 />
 <Route
   path="/planet/vz-professional-lawncare/live-activity"
-  element={<VZProfessionalLawncareLiveActivity />}
+  element={
+    <RequireAuth>
+      <VZProfessionalLawncareLiveActivity />
+    </RequireAuth>
+  }
 />                    <Route path="/planet/transportation/request" element={<HomePlanetTransportationRequestPage />} />
           <Route path="/planet/transportation" element={<HomePlanetTransportationPage />} />
 <Route path="/planet/demo/brightside-flow" element={<BrightSideFlowDemo />} />
