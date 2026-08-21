@@ -208,12 +208,25 @@ export default function VZProfessionalLawncareLanding() {
     <main className="min-h-screen bg-[#090b09] text-white">
       <section className="relative overflow-hidden border-b border-white/10 bg-[#0D0D0D]">
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <img
-            src="/images/vz-eric-trimming-hero.png"
-            alt=""
-            aria-hidden="true"
-            className="absolute inset-0 h-full w-full object-cover object-[72%_center] sm:object-[68%_center] lg:object-center"
-          />
+          <picture>
+            <source
+              media="(max-width: 767px)"
+              srcSet="/images/vz-eric-trimming-hero-mobile.webp"
+              type="image/webp"
+            />
+            <source
+              srcSet="/images/vz-eric-trimming-hero.webp"
+              type="image/webp"
+            />
+            <img
+              src="/images/vz-eric-trimming-hero.png"
+              alt=""
+              aria-hidden="true"
+              fetchPriority="high"
+              decoding="async"
+              className="absolute inset-0 h-full w-full object-cover object-[72%_center] sm:object-[68%_center] lg:object-center"
+            />
+          </picture>
 
           <div className="absolute inset-0 bg-[linear-gradient(90deg,#0D0D0D_0%,#0D0D0D_28%,rgba(13,13,13,0.96)_40%,rgba(13,13,13,0.58)_56%,rgba(13,13,13,0.12)_78%,rgba(13,13,13,0.04)_100%)]" />
 
@@ -222,8 +235,11 @@ export default function VZProfessionalLawncareLanding() {
         <div className="relative mx-auto grid min-h-[620px] max-w-[1380px] items-center px-5 py-12 sm:min-h-[660px] sm:px-8 sm:py-16 lg:min-h-[700px] lg:grid-cols-[1.08fr_0.92fr] lg:px-10 lg:py-24">
           <div className="max-w-[820px]">
             <img
-              src="/images/vz-logo-yellow-monogram-clean.png"
+              src="/images/vz-logo-yellow-monogram-clean.webp"
               alt="V&Z Professional Lawncare"
+              width="272"
+              height="184"
+              decoding="async"
               className="mb-4 mt-2 h-auto w-[114px] object-contain sm:mb-5 sm:w-[126px] lg:w-[136px]"
             />
 
@@ -344,12 +360,25 @@ export default function VZProfessionalLawncareLanding() {
         className="relative scroll-mt-6 overflow-hidden border-b border-white/10 bg-[#090b09]"
       >
         <div className="pointer-events-none absolute inset-0">
-          <img
-            src="/images/vz-estimate-grass-background.png"
-            alt=""
-            aria-hidden="true"
-            className="h-full w-full object-cover object-center"
-          />
+          <picture className="block h-full w-full">
+            <source
+              media="(max-width: 767px)"
+              srcSet="/images/vz-estimate-grass-background-mobile.webp"
+              type="image/webp"
+            />
+            <source
+              srcSet="/images/vz-estimate-grass-background.webp"
+              type="image/webp"
+            />
+            <img
+              src="/images/vz-estimate-grass-background.png"
+              alt=""
+              aria-hidden="true"
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-cover object-center"
+            />
+          </picture>
 
           <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(9,11,9,0.72)_0%,rgba(9,11,9,0.52)_32%,rgba(9,11,9,0.20)_56%,rgba(9,11,9,0.04)_100%)]" />
 
