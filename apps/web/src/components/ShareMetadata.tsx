@@ -33,6 +33,7 @@ export default function ShareMetadata({
       tag.setAttribute("content", content);
     };
 
+    setMeta("meta[name='description']", "name", "description", description);
     setMeta("meta[property='og:title']", "property", "og:title", title);
     setMeta("meta[property='og:description']", "property", "og:description", description);
     setMeta("meta[property='og:image']", "property", "og:image", image);

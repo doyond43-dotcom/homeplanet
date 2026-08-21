@@ -71,6 +71,7 @@ const VZProfessionalLawncareLiveActivity = lazy(() =>
 );
 const LateNightHotelsLandingPage = lazy(() => import("./pages/LateNightHotelsLandingPage"));
 const MarshallRosenbachLandingPage = lazy(() => import("./pages/MarshallRosenbachLandingPage"));
+const MarshallRosenbachLegalPage = lazy(() => import("./pages/MarshallRosenbachLegalPage"));
 const MarshallRosenbachCaseReviewPage = lazy(() => import("./pages/MarshallRosenbachCaseReviewPage"));
 const MarshallRosenbachLiveBoard = lazy(() => import("./pages/MarshallRosenbachLiveBoard"));
 const MarshallRosenbachDocumentUploadPage = lazy(() =>
@@ -228,6 +229,9 @@ export default function App() {
           <Route path="/planet/best-of-the-lake" element={<BestOfLakeVotingPage />} />
           <Route path="/planet/late-night-hotels" element={<LateNightHotelsLandingPage />} />
           <Route path="/planet/marshall-rosenbach" element={<MarshallRosenbachLandingPage />} />
+          <Route path="/planet/marshall-rosenbach/privacy" element={<MarshallRosenbachLegalPage />} />
+          <Route path="/planet/marshall-rosenbach/terms" element={<MarshallRosenbachLegalPage />} />
+          <Route path="/planet/marshall-rosenbach/disclaimer" element={<MarshallRosenbachLegalPage />} />
           <Route path="/planet/marshall-rosenbach/case-review" element={<MarshallRosenbachCaseReviewPage />} />
           <Route path="/planet/marshall-rosenbach/board" element={<RequireAuth><MarshallRosenbachLiveBoard /></RequireAuth>} />
           <Route path="/planet/marshall-rosenbach/document-upload" element={<MarshallRosenbachDocumentUploadPage />} />

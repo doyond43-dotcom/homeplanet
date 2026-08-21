@@ -9,6 +9,13 @@ import {
   Truck,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import MarshallRosenbachFooter from "../components/MarshallRosenbachFooter";
+import ShareMetadata from "../components/ShareMetadata";
+
+const PAGE_TITLE =
+  "Marshall E. Rosenbach | Personal Injury Attorney | North Palm Beach, FL";
+const PAGE_DESCRIPTION =
+  "Speak directly with personal injury attorney Marshall E. Rosenbach. Serving clients in Florida and California with free initial case reviews.";
 
 const caseTypes = [
   { label: "Car Accident", slug: "car-accident", icon: Car },
@@ -24,6 +31,12 @@ export default function MarshallRosenbachLandingPage() {
 
   return (
     <main className="min-h-screen bg-[#0c0d0f] text-white">
+      <ShareMetadata
+        title={PAGE_TITLE}
+        description={PAGE_DESCRIPTION}
+        image="https://www.homeplanet.city/homeplanet-favicon.svg"
+        url="https://www.homeplanet.city/planet/marshall-rosenbach"
+      />
       <section className="relative overflow-hidden border-b border-white/10">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(190,143,61,0.18),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(255,255,255,0.06),transparent_30%)]" />
 
@@ -284,40 +297,7 @@ export default function MarshallRosenbachLandingPage() {
         </div>
       </section>
 
-      <footer className="bg-[#090a0c] px-5 py-10 sm:px-8">
-        <div className="mx-auto max-w-6xl">
-          <div className="grid gap-8 border-b border-white/10 pb-8 md:grid-cols-2 md:items-end">
-            <div>
-              <div className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#c99a45]">
-                Law Offices of
-              </div>
-
-              <div className="mt-2 text-xl font-black tracking-[0.06em]">
-                MARSHALL E. ROSENBACH
-              </div>
-
-              <div className="mt-3 text-sm text-white/45">
-                Personal Injury · Florida + California
-              </div>
-            </div>
-
-            <div className="md:text-right">
-              <div className="text-xs font-black uppercase tracking-[0.16em] text-white/35">
-                Offices
-              </div>
-
-              <div className="mt-3 text-sm font-semibold leading-6 text-white/65">
-                North Palm Beach, Florida · Belle Glade, Florida · Beverly Hills, California
-              </div>
-            </div>
-          </div>
-
-          <div className="pt-6 text-xs leading-5 text-white/30">
-            Information provided through this page is for initial case review
-            purposes and does not by itself create an attorney-client relationship.
-          </div>
-        </div>
-      </footer>
+      <MarshallRosenbachFooter />
     </main>
   );
 }

@@ -2,6 +2,8 @@ import { FormEvent, useMemo, useState } from "react";
 import { ArrowLeft, ArrowRight, Check, Phone, ShieldCheck } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import MarshallRosenbachFooter from "../components/MarshallRosenbachFooter";
+import ShareMetadata from "../components/ShareMetadata";
 
 const caseLabels: Record<string, string> = {
   "car-accident": "Car Accident",
@@ -130,6 +132,12 @@ export default function MarshallRosenbachCaseReviewPage() {
 
   return (
     <main className="min-h-screen bg-[#0c0d0f] text-white">
+      <ShareMetadata
+        title="Free Case Review | Marshall E. Rosenbach"
+        description="Send a short, private case review to the Law Offices of Marshall E. Rosenbach in North Palm Beach, Florida."
+        image="https://www.homeplanet.city/homeplanet-favicon.svg"
+        url="https://www.homeplanet.city/planet/marshall-rosenbach/case-review"
+      />
       <header className="border-b border-white/10">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-5 sm:px-8">
           <button
@@ -292,6 +300,7 @@ export default function MarshallRosenbachCaseReviewPage() {
           </div>
         </div>
       </section>
+      <MarshallRosenbachFooter />
     </main>
   );
 }
