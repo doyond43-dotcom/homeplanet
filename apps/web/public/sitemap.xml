@@ -1,6 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
+    <loc>https://www.homeplanet.city/planet/marshall-rosenbach</loc>
+  </url>
+  <url>
+    <loc>https://www.homeplanet.city/planet/marshall-rosenbach/car-accident</loc>
+  </url>
+  <url>
+    <loc>https://www.homeplanet.city/planet/marshall-rosenbach/truck-accident</loc>
+  </url>
+  <url>
+    <loc>https://www.homeplanet.city/planet/marshall-rosenbach/motorcycle-accident</loc>
+  </url>
+  <url>
+    <loc>https://www.homeplanet.city/planet/marshall-rosenbach/train-collision</loc>
+  </url>
+  <url>
+    <loc>https://www.homeplanet.city/planet/marshall-rosenbach/bicycle-accident</loc>
+  </url>
+  <url>
+    <loc>https://www.homeplanet.city/planet/marshall-rosenbach/pedestrian-accident</loc>
+  </url>
+  <url>
     <loc>https://www.homeplanet.city/</loc>
   </url>
   <url>
@@ -35,5 +56,11 @@
   </url>
   <url>
     <loc>https://www.homeplanet.city/planet/best-of-the-lake</loc>
+  </url>
+  <url>
+    <loc>https://www.homeplanet.city/planet/performance-powerboats</loc>
+  </url>
+  <url>
+    <loc>https://www.homeplanet.city/planet/wrench-boys</loc>
   </url>
 </urlset>

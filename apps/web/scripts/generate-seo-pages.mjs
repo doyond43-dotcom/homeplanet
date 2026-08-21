@@ -12,7 +12,197 @@ const baseHtmlPath = path.join(distDir, "index.html");
 
 const SITE_URL = "https://www.homeplanet.city";
 
+const MARSHALL_BASE_ROUTE = "/planet/marshall-rosenbach";
+const MARSHALL_IMAGE = `${SITE_URL}/homeplanet-favicon.svg`;
+
+const marshallPracticeAreas = [
+  {
+    slug: "car-accident",
+    title: "Car Accident Attorney | Marshall E. Rosenbach",
+    description:
+      "Talk directly with personal injury attorney Marshall E. Rosenbach about a car accident injury and your available next steps.",
+    heading: "Car accident injury review with Marshall E. Rosenbach",
+    intro:
+      "If you were hurt in a vehicle collision, Marshall can review what happened, the available information, and the insurance questions that may affect your next steps.",
+    topics: "vehicle collisions, roadway crashes, injury concerns, and insurance claim questions"
+  },
+  {
+    slug: "truck-accident",
+    title: "Truck Accident Attorney | Marshall E. Rosenbach",
+    description:
+      "Request a direct review with personal injury attorney Marshall E. Rosenbach after a commercial truck accident.",
+    heading: "Truck accident injury review with Marshall E. Rosenbach",
+    intro:
+      "Commercial truck crashes can involve multiple parties, insurance policies, and important evidence. A direct review starts with the facts of the collision and the injuries involved.",
+    topics: "commercial truck collisions, serious injuries, insurance coverage, and responsibility questions"
+  },
+  {
+    slug: "motorcycle-accident",
+    title: "Motorcycle Accident Attorney | Marshall E. Rosenbach",
+    description:
+      "Speak with personal injury attorney Marshall E. Rosenbach about injuries and insurance questions after a motorcycle accident.",
+    heading: "Motorcycle accident injury review with Marshall E. Rosenbach",
+    intro:
+      "Motorcycle crashes can cause serious injuries and complicated insurance questions. Marshall can review the circumstances and discuss the available next steps.",
+    topics: "motorcycle collisions, driver-fault questions, injuries, and insurance claims"
+  },
+  {
+    slug: "train-collision",
+    title: "Train Collision Attorney | Marshall E. Rosenbach",
+    description:
+      "Ask personal injury attorney Marshall E. Rosenbach to review the facts surrounding a train or rail collision injury.",
+    heading: "Train collision injury review with Marshall E. Rosenbach",
+    intro:
+      "Train and rail injury matters can involve unique facts and more than one potentially responsible party. A case review begins with what happened and the available information.",
+    topics: "train and rail collisions, crossing incidents, and serious injury evaluation"
+  },
+  {
+    slug: "bicycle-accident",
+    title: "Bicycle Accident Attorney | Marshall E. Rosenbach",
+    description:
+      "Talk with personal injury attorney Marshall E. Rosenbach about a bicycle collision, roadway injury, or insurance question.",
+    heading: "Bicycle accident injury review with Marshall E. Rosenbach",
+    intro:
+      "If a driver or roadway incident caused a bicycle injury, Marshall can review the circumstances and help identify the questions that matter next.",
+    topics: "vehicle-versus-bicycle collisions, roadway injuries, and insurance questions"
+  },
+  {
+    slug: "pedestrian-accident",
+    title: "Pedestrian Accident Attorney | Marshall E. Rosenbach",
+    description:
+      "Request a direct case review with personal injury attorney Marshall E. Rosenbach after a pedestrian accident injury.",
+    heading: "Pedestrian accident injury review with Marshall E. Rosenbach",
+    intro:
+      "Pedestrian crashes often involve serious injuries. Marshall can review what happened and the facts surrounding the roadway or crosswalk incident.",
+    topics: "vehicle-versus-pedestrian crashes, crosswalk incidents, roadway injuries, and serious injury claims"
+  }
+];
+
+const marshallSeoPages = [
+  {
+    route: MARSHALL_BASE_ROUTE,
+    title: "Marshall E. Rosenbach | Personal Injury Attorney | North Palm Beach, FL",
+    description:
+      "Speak directly with personal injury attorney Marshall E. Rosenbach. Serving clients in Florida and California with free initial case reviews.",
+    image: MARSHALL_IMAGE,
+    twitterCard: "summary",
+    robots: "index,follow",
+    heading: "Personal injury attorney Marshall E. Rosenbach",
+    body: `
+      <section>
+        <h2>Direct personal injury case reviews from North Palm Beach, Florida</h2>
+        <p>Personal injury attorney Marshall E. Rosenbach serves clients from North Palm Beach, Florida. The Law Offices of Marshall E. Rosenbach provides direct attorney access and free initial case reviews for people seeking to understand their options after an injury.</p>
+      </section>
+      <section>
+        <h2>Personal injury matters Marshall reviews</h2>
+        <p>The firm reviews car accidents, truck accidents, motorcycle accidents, train collisions, bicycle accidents, and pedestrian accidents for clients in Florida and California.</p>
+        <nav aria-label="Marshall E. Rosenbach practice areas">
+          <ul>
+            ${marshallPracticeAreas
+              .map(
+                (area) => `<li><a href="${MARSHALL_BASE_ROUTE}/${area.slug}">${escapeHtml(area.heading)}</a></li>`
+              )
+              .join("\n")}
+          </ul>
+        </nav>
+      </section>
+    `,
+    schema: {
+      "@context": "https://schema.org",
+      "@type": "LegalService",
+      "@id": `${SITE_URL}${MARSHALL_BASE_ROUTE}#legal-service`,
+      name: "Law Offices of Marshall E. Rosenbach",
+      url: `${SITE_URL}${MARSHALL_BASE_ROUTE}`,
+      telephone: "+1-561-627-8990",
+      description:
+        "Personal injury law firm offering direct attorney access and free initial case reviews.",
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: "North Palm Beach",
+        addressRegion: "FL",
+        addressCountry: "US"
+      },
+      areaServed: [
+        { "@type": "State", name: "Florida" },
+        { "@type": "State", name: "California" }
+      ]
+    }
+  },
+  ...marshallPracticeAreas.map((area) => ({
+    route: `${MARSHALL_BASE_ROUTE}/${area.slug}`,
+    title: area.title,
+    description: area.description,
+    image: MARSHALL_IMAGE,
+    twitterCard: "summary",
+    robots: "index,follow",
+    heading: area.heading,
+    body: `
+      <section>
+        <h2>Start with the facts</h2>
+        <p>${escapeHtml(area.intro)}</p>
+        <p>Topics may include ${escapeHtml(area.topics)}. Every matter depends on its individual facts and applicable law.</p>
+        <p><a href="${MARSHALL_BASE_ROUTE}/case-review?type=${area.slug}">Request a free case review</a> or return to the <a href="${MARSHALL_BASE_ROUTE}">Law Offices of Marshall E. Rosenbach</a>.</p>
+      </section>
+    `,
+    schema: {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      name: area.title,
+      url: `${SITE_URL}${MARSHALL_BASE_ROUTE}/${area.slug}`,
+      description: area.description,
+      about: { "@id": `${SITE_URL}${MARSHALL_BASE_ROUTE}#legal-service` }
+    }
+  })),
+  ...[
+    {
+      slug: "privacy",
+      title: "Privacy Policy | Law Offices of Marshall E. Rosenbach",
+      description:
+        "Privacy information for the Law Offices of Marshall E. Rosenbach website and Free Case Review.",
+      heading: "Privacy Policy"
+    },
+    {
+      slug: "terms",
+      title: "Terms of Use | Law Offices of Marshall E. Rosenbach",
+      description:
+        "Terms governing use of the Law Offices of Marshall E. Rosenbach website and Free Case Review.",
+      heading: "Terms of Use"
+    },
+    {
+      slug: "disclaimer",
+      title: "Legal Disclaimer | Law Offices of Marshall E. Rosenbach",
+      description:
+        "Important legal disclaimer for the Law Offices of Marshall E. Rosenbach website and Free Case Review.",
+      heading: "Legal Disclaimer"
+    },
+    {
+      slug: "case-review",
+      title: "Free Case Review | Marshall E. Rosenbach",
+      description:
+        "Send a short, private case review to the Law Offices of Marshall E. Rosenbach in North Palm Beach, Florida.",
+      heading: "Free Case Review"
+    }
+  ].map((page) => ({
+    route: `${MARSHALL_BASE_ROUTE}/${page.slug}`,
+    title: page.title,
+    description: page.description,
+    image: MARSHALL_IMAGE,
+    twitterCard: "summary",
+    robots: "noindex,follow",
+    sitemap: false,
+    heading: page.heading,
+    body: `<p>This page is provided by the Law Offices of Marshall E. Rosenbach. Return to the <a href="${MARSHALL_BASE_ROUTE}">Marshall E. Rosenbach personal injury website</a>.</p>`,
+    schema: {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      name: page.title,
+      url: `${SITE_URL}${MARSHALL_BASE_ROUTE}/${page.slug}`
+    }
+  }))
+];
+
 const publicSeoRegistry = [
+  ...marshallSeoPages,
   {
     route: "/",
     title: "HomePlanet | Custom Systems for Local Service Businesses",
@@ -662,6 +852,10 @@ function buildSeoHtml(baseHtml, page) {
   const escapedDescription = escapeHtml(page.description);
   const escapedCanonical = escapeHtml(`${SITE_URL}${page.route}`);
   const escapedImage = escapeHtml(page.image);
+  const escapedRobots = escapeHtml(page.robots || "index,follow");
+  const escapedTwitterCard = escapeHtml(
+    page.twitterCard || "summary_large_image"
+  );
 
   let html = baseHtml;
 
@@ -701,6 +895,11 @@ function buildSeoHtml(baseHtml, page) {
   );
 
   html = html.replace(
+    /<meta\s+name=["']twitter:card["'][^>]*>/i,
+    `<meta name="twitter:card" content="${escapedTwitterCard}" />`
+  );
+
+  html = html.replace(
     /<meta\s+name=["']twitter:description["'][^>]*>/i,
     `<meta name="twitter:description" content="${escapedDescription}" />`
   );
@@ -716,12 +915,18 @@ function buildSeoHtml(baseHtml, page) {
   );
 
   html = html.replace(
+    /\s*<meta\s+name=["']robots["'][^>]*>/gi,
+    ""
+  );
+
+  html = html.replace(
     /\s*<script\s+type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi,
     ""
   );
 
   const seoHead = `
     <link rel="canonical" href="${escapedCanonical}" />
+    <meta name="robots" content="${escapedRobots}" />
     <script type="application/ld+json">${JSON.stringify(page.schema)}</script>`;
 
   html = html.replace("</head>", `${seoHead}\n  </head>`);
@@ -760,6 +965,7 @@ for (const page of publicSeoRegistry) {
 const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${publicSeoRegistry
+  .filter((page) => page.sitemap !== false)
   .map(
     (page) => `  <url>
     <loc>${SITE_URL}${page.route}</loc>
@@ -773,7 +979,9 @@ fs.writeFileSync(path.join(publicDir, "sitemap.xml"), sitemapXml, "utf8");
 fs.writeFileSync(path.join(distDir, "sitemap.xml"), sitemapXml, "utf8");
 
 console.log(
-  `Generated sitemap from public SEO registry: ${publicSeoRegistry.length} URLs`
+  `Generated sitemap from public SEO registry: ${
+    publicSeoRegistry.filter((page) => page.sitemap !== false).length
+  } URLs`
 );
 
 

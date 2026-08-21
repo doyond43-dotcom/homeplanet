@@ -12,4 +12,8 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   </React.StrictMode>
 );
 
+requestAnimationFrame(() => {
+  document.getElementById("seo-content")?.remove();
+});
+
 

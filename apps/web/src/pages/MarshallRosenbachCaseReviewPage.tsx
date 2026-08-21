@@ -137,6 +137,9 @@ export default function MarshallRosenbachCaseReviewPage() {
         description="Send a short, private case review to the Law Offices of Marshall E. Rosenbach in North Palm Beach, Florida."
         image="https://www.homeplanet.city/homeplanet-favicon.svg"
         url="https://www.homeplanet.city/planet/marshall-rosenbach/case-review"
+        canonical="https://www.homeplanet.city/planet/marshall-rosenbach/case-review"
+        robots="noindex,follow"
+        twitterCard="summary"
       />
       <header className="border-b border-white/10">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-5 sm:px-8">
@@ -149,7 +152,7 @@ export default function MarshallRosenbachCaseReviewPage() {
             Back
           </button>
           <a
-            href="tel:+18886799090"
+            href="tel:+15616278990"
             className="inline-flex items-center gap-2 text-sm font-bold text-[#ddb15f]"
           >
             <Phone size={17} />

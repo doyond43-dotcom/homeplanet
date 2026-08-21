@@ -8,7 +8,7 @@ import {
   TrainFront,
   Truck,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import MarshallRosenbachFooter from "../components/MarshallRosenbachFooter";
 import ShareMetadata from "../components/ShareMetadata";
 
@@ -36,6 +36,9 @@ export default function MarshallRosenbachLandingPage() {
         description={PAGE_DESCRIPTION}
         image="https://www.homeplanet.city/homeplanet-favicon.svg"
         url="https://www.homeplanet.city/planet/marshall-rosenbach"
+        canonical="https://www.homeplanet.city/planet/marshall-rosenbach"
+        robots="index,follow"
+        twitterCard="summary"
       />
       <section className="relative overflow-hidden border-b border-white/10">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(190,143,61,0.18),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(255,255,255,0.06),transparent_30%)]" />
@@ -76,6 +79,10 @@ export default function MarshallRosenbachLandingPage() {
                 Get answers, understand your options, and speak directly with
                 the attorney handling your case.
               </p>
+              <p className="mt-3 max-w-2xl text-base leading-7 text-white/60">
+                Personal injury attorney Marshall E. Rosenbach serves clients
+                from North Palm Beach, Florida.
+              </p>
 
               <div className="mt-9 flex flex-col gap-3 sm:flex-row">
                 <button
@@ -88,7 +95,7 @@ export default function MarshallRosenbachLandingPage() {
                 </button>
 
                 <a
-                  href="tel:+18886799090"
+                  href="tel:+15616278990"
                   className="inline-flex min-h-14 items-center justify-center gap-2 rounded-xl border border-white/18 bg-white/[0.04] px-7 py-4 text-sm font-black uppercase tracking-[0.12em] text-white transition hover:bg-white/[0.08]"
                 >
                   <Phone size={18} />
@@ -126,12 +133,9 @@ export default function MarshallRosenbachLandingPage() {
 
           <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {caseTypes.map(({ label, slug, icon: Icon }) => (
-              <button
+              <Link
                 key={slug}
-                type="button"
-                onClick={() =>
-                  navigate(`/planet/marshall-rosenbach/${slug}`)
-                }
+                to={`/planet/marshall-rosenbach/${slug}`}
                 className="group flex min-h-28 items-center justify-between rounded-2xl border border-black/10 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-[#b98530]/50 hover:shadow-md"
               >
                 <div className="flex items-center gap-4">
@@ -146,7 +150,7 @@ export default function MarshallRosenbachLandingPage() {
                   size={19}
                   className="text-black/30 transition group-hover:translate-x-1 group-hover:text-[#9a6d24]"
                 />
-              </button>
+              </Link>
             ))}
           </div>
         </div>
@@ -287,7 +291,7 @@ export default function MarshallRosenbachLandingPage() {
             </button>
 
             <a
-              href="tel:+18886799090"
+              href="tel:+15616278990"
               className="inline-flex min-h-14 items-center justify-center gap-2 rounded-xl border border-white/18 bg-white/[0.04] px-7 py-4 text-sm font-black uppercase tracking-[0.12em] text-white transition hover:bg-white/[0.08]"
             >
               <Phone size={18} />

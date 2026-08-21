@@ -53,7 +53,7 @@ const pages: Record<string, LegalPage> = {
       {
         heading: "Privacy questions",
         paragraphs: [
-          "For questions about privacy or information submitted through this site, contact the Law Offices of Marshall E. Rosenbach by calling 1-888-679-9090.",
+          "For questions about privacy or information submitted through this site, contact the Law Offices of Marshall E. Rosenbach by calling (561) 627-8990.",
         ],
       },
     ],
@@ -149,6 +149,9 @@ export default function MarshallRosenbachLegalPage() {
         description={page.description}
         image={META_IMAGE}
         url={`${BASE_URL}/${pageKey}`}
+        canonical={`${BASE_URL}/${pageKey}`}
+        robots="noindex,follow"
+        twitterCard="summary"
       />
 
       <article className="mx-auto max-w-3xl px-5 py-12 sm:px-8 sm:py-16">
