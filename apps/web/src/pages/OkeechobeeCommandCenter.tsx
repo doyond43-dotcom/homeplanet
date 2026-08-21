@@ -531,6 +531,46 @@ export default function OkeechobeeCommandCenter() {
                     <span>{event.shares || 0} shares</span>
                   </div>
 
+                  <div style={{ ...styles.detailBox, marginTop: 14 }}>
+                    <span style={styles.detailLabel}>Resident Contact</span>
+
+                    <strong>
+                      {event.resident_name || "Legacy / Not available"}
+                    </strong>
+
+                    {event.resident_phone ? (
+                      <a
+                        href={`tel:${event.resident_phone}`}
+                        style={{ color: "#ffffff", fontWeight: 700 }}
+                      >
+                        {event.resident_phone}
+                      </a>
+                    ) : (
+                      <span>Phone: Not available</span>
+                    )}
+
+                    {event.resident_email ? (
+                      <a
+                        href={`mailto:${event.resident_email}`}
+                        style={{
+                          color: "#b7ffb0",
+                          wordBreak: "break-word",
+                        }}
+                      >
+                        {event.resident_email}
+                      </a>
+                    ) : (
+                      <span>Email: Not available</span>
+                    )}
+
+                    {event.private_notes ? (
+                      <div style={{ marginTop: 6 }}>
+                        <span style={styles.detailLabel}>Private Notes</span>
+                        <div>{event.private_notes}</div>
+                      </div>
+                    ) : null}
+                  </div>
+
                   <div style={styles.actions}>
                     <Link
                       to={`/planet/okeechobee/project/${event.slug}`}
@@ -1147,5 +1187,6 @@ const styles: Record<string, React.CSSProperties> = {
     boxSizing: "border-box",
   },
 };
+
 
 
