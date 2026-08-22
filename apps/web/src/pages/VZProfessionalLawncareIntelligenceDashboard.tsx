@@ -30,6 +30,7 @@ type VZRequest = {
   property_location: string | null;
   property_type: string | null;
   yard_condition: string | null;
+  service_frequency: string | null;
   access_notes: string | null;
   preferred_timing: string | null;
   customer_notes: string | null;
@@ -700,7 +701,15 @@ export default function VZProfessionalLawncareIntelligenceDashboard() {
     if (!saved) return;
 
     const message = encodeURIComponent(
-      `Hi ${selectedRequest.customer_name}, your V&Z Professional Lawncare service is complete. The amount due is ${amount}. Thank you for choosing V&Z Professional Lawncare.`,
+      `Hi ${selectedRequest.customer_name}, your V&Z Professional Lawncare service is complete.
+
+Amount due: ${amount}
+
+Pay with Zelle:
+(863) 447-7915
+Eric Villalobos
+
+Thank you for choosing V&Z Professional Lawncare.`,
     );
 
     window.location.href =
@@ -728,8 +737,23 @@ export default function VZProfessionalLawncareIntelligenceDashboard() {
 
     if (!saved) return;
 
+    const beforePhotoCount = photos.filter(
+      (photo) => photo.photo_type === "before",
+    ).length;
+
+    const afterPhotoCount = photos.filter(
+      (photo) => photo.photo_type === "after",
+    ).length;
+
+    const photoNote =
+      beforePhotoCount > 0 && afterPhotoCount > 0
+        ? " We took before and after photos so you can see the finished work."
+        : afterPhotoCount > 0
+          ? " We took photos of the finished work for you."
+          : "";
+
     const message = encodeURIComponent(
-      `Hi ${selectedRequest.customer_name}, your V&Z Professional Lawncare service is complete. We documented the property before and after the work. Thank you for trusting us with your property.`,
+      `Hi ${selectedRequest.customer_name}, your V&Z Professional Lawncare service is complete.${photoNote} Thank you for choosing V&Z Professional Lawncare.`,
     );
 
     window.location.href =
@@ -1335,14 +1359,6 @@ The record will remain visible until you archive it.`,
     const afterPhotoCount = photos.filter(
       (photo) => photo.photo_type === "after",
     ).length;
-
-    if (afterPhotoCount === 0) {
-      setCompletionError(
-        "Add at least one after photo before completing the work.",
-      );
-      return;
-    }
-
     setCompletionError("");
     setCompletingWork(true);
 
@@ -2212,9 +2228,122 @@ The record will remain visible until you archive it.`,
                 </a>
               </section>
 
+              <section className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-[#7CFC00]">
+                    Request Details
+                  </p>
+
+                  <span className="rounded-full border border-white/10 bg-black/40 px-3 py-2 text-[10px] font-black uppercase tracking-[0.12em] text-white/60">
+                    {humanizeStatus(selectedRequest.request_status)}
+                  </span>
+                </div>
+
+                <div className="mt-4 space-y-4 text-sm">
+                  <div>
+                    <p className="text-white/35">Property</p>
+                    <p className="mt-1 font-black leading-6 text-white">
+                      {selectedRequest.property_location ||
+                        "No property address provided"}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-white/35">Yard condition</p>
+                      <p className="mt-1 font-bold leading-6 text-white">
+                        {selectedRequest.yard_condition || "Not provided"}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-white/35">Preferred timing</p>
+                      <p className="mt-1 font-bold leading-6 text-white">
+                        {selectedRequest.preferred_timing || "Flexible"}
+                      </p>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-white/35">Service frequency</p>
+                    <p className="mt-1 font-bold leading-6 text-white">
+                      {selectedRequest.service_frequency || "One-Time"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-white/35">Customer notes</p>
+                    <p className="mt-1 whitespace-pre-wrap font-bold leading-6 text-white">
+                      {selectedRequest.customer_notes ||
+                        "No additional details provided"}
+                    </p>
+                  </div>
+
+                  {selectedRequest.access_notes ? (
+                    <div>
+                      <p className="text-white/35">Access notes</p>
+                      <p className="mt-1 whitespace-pre-wrap font-bold leading-6 text-white">
+                        {selectedRequest.access_notes}
+                      </p>
+                    </div>
+                  ) : null}
+
+                  <div className="border-t border-white/10 pt-4">
+                    <p className="text-white/35">Customer</p>
+                    <p className="mt-1 font-bold text-white">
+                      {formatPhone(selectedRequest.phone)}
+                    </p>
+
+                    {selectedRequest.email ? (
+                      <p className="mt-1 break-all font-bold text-white/60">
+                        {selectedRequest.email}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+
+                {selectedRequest.property_location ? (
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                      selectedRequest.property_location,
+                    )}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-4 inline-flex min-h-[48px] w-full items-center justify-center rounded-xl border border-[#7CFC00]/30 bg-[#7CFC00]/10 px-4 text-xs font-black uppercase tracking-[0.14em] text-[#C8FF98]"
+                  >
+                    Navigate To Property
+                  </a>
+                ) : null}
+              </section>
+
+              <section className="rounded-2xl border border-[#FFD000]/30 bg-[#FFD000]/[0.07] p-4">
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#FFD000]">
+                  Next Move
+                </p>
+
+                <p className="mt-2 text-base font-black leading-6 text-white">
+                  {selectedRequest.request_status === "new"
+                    ? "Review this request, mark it as reviewing, then prepare the estimate."
+                    : selectedRequest.request_status === "reviewing"
+                      ? "Prepare the estimate and send it to the customer."
+                      : selectedRequest.request_status === "estimate_sent"
+                        ? "Wait for the customer to approve the estimate, then record the approval."
+                        : selectedRequest.request_status === "approved"
+                          ? "Choose the service date and schedule the job."
+                          : selectedRequest.request_status === "scheduled"
+                            ? "Start the job when you arrive. Add a before photo if useful."
+                            : selectedRequest.request_status === "in_progress"
+                              ? "Finish the work, add job photos if useful, then complete the job."
+                              : selectedRequest.request_status === "completed"
+                                ? "Collect payment, send proof, request the review, then close the outcome."
+                                : selectedRequest.request_status === "archived"
+                                  ? "This record is archived. Restore it if more work is needed."
+                                  : "Continue the next unfinished step for this customer."}
+                </p>
+              </section>
+
               <details
                 open={openDrawerSection === "contact"}
-                className="group rounded-2xl border border-white/10 bg-white/[0.035]"
+                className="hidden"
               >
                 <summary
                   onClick={(event) => {
@@ -2271,7 +2400,7 @@ The record will remain visible until you archive it.`,
 
               <details
                 open={openDrawerSection === "property"}
-                className="group rounded-2xl border border-white/10 bg-white/[0.035]"
+                className="hidden"
               >
                 <summary
                   onClick={(event) => {
@@ -2358,8 +2487,8 @@ The record will remain visible until you archive it.`,
               </details>
 
               <details
-                open={openDrawerSection === "estimate"}
-                className="group rounded-2xl border border-white/10 bg-white/[0.035]"
+                open
+                className={`${["new", "reviewing", "estimate_sent"].includes(selectedRequest.request_status) ? "block" : "hidden"} rounded-2xl border border-white/10 bg-white/[0.035] [&>summary]:hidden`}
               >
                 <summary
                   onClick={(event) => {
@@ -2372,7 +2501,7 @@ The record will remain visible until you archive it.`,
                 >
                   <div className="min-w-0">
                     <p className="text-xs font-black uppercase tracking-[0.16em] text-[#7CFC00]">
-                      Customer Estimate
+                      Estimate
                     </p>
                   </div>
 
@@ -2396,7 +2525,7 @@ The record will remain visible until you archive it.`,
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="sr-only">
-                      Customer Estimate
+                      Estimate
                     </p>
 
                     <p className="mt-2 text-sm leading-6 text-white/45">
@@ -2438,7 +2567,7 @@ The record will remain visible until you archive it.`,
                     Estimate notes
                   </span>
 
-                  <textarea
+                  <textarea spellCheck={true} autoCorrect="on" autoCapitalize="sentences"
                     rows={4}
                     value={estimateNotes}
                     onChange={(event) => setEstimateNotes(event.target.value)}
@@ -2476,8 +2605,8 @@ The record will remain visible until you archive it.`,
               </details>
 
               <details
-                open={openDrawerSection === "approval"}
-                className="group rounded-2xl border border-white/10 bg-white/[0.035]"
+                open
+                className={`${["estimate_sent", "approved"].includes(selectedRequest.request_status) ? "block" : "hidden"} rounded-2xl border border-white/10 bg-white/[0.035] [&>summary]:hidden`}
               >
                 <summary
                   onClick={(event) => {
@@ -2566,8 +2695,8 @@ The record will remain visible until you archive it.`,
               </details>
 
               <details
-                open={openDrawerSection === "scheduling"}
-                className="group rounded-2xl border border-white/10 bg-white/[0.035]"
+                open
+                className={`${["approved", "scheduled"].includes(selectedRequest.request_status) ? "block" : "hidden"} rounded-2xl border border-white/10 bg-white/[0.035] [&>summary]:hidden`}
               >
                 <summary
                   onClick={(event) => {
@@ -2638,7 +2767,7 @@ The record will remain visible until you archive it.`,
                     Scheduling notes
                   </span>
 
-                  <textarea
+                  <textarea spellCheck={true} autoCorrect="on" autoCapitalize="sentences"
                     rows={4}
                     value={schedulingNotes}
                     onChange={(event) => setSchedulingNotes(event.target.value)}
@@ -2689,8 +2818,8 @@ The record will remain visible until you archive it.`,
               </details>
 
               <details
-                open={openDrawerSection === "active"}
-                className="group rounded-2xl border border-white/10 bg-white/[0.035]"
+                open
+                className={`${["scheduled", "in_progress", "completed"].includes(selectedRequest.request_status) ? "block" : "hidden"} rounded-2xl border border-white/10 bg-white/[0.035] [&>summary]:hidden`}
               >
                 <summary
                   onClick={(event) => {
@@ -2730,8 +2859,8 @@ The record will remain visible until you archive it.`,
 
                     <p className="mt-2 text-sm leading-6 text-white/45">
                       {selectedRequest.request_status === "completed"
-                        ? "Review the completed work and the saved before-and-after proof."
-                        : "Start the job and keep the property condition documented before the work begins."}
+                        ? "Review the completed work and any saved job photos."
+                        : "Start the job and add a before photo if you want a record of the starting condition."}
                     </p>
                   </div>
 
@@ -2759,13 +2888,11 @@ The record will remain visible until you archive it.`,
                   </button>
                 ) : selectedRequest.request_status === "in_progress" ? (
                   <div className="mt-4 rounded-xl border border-[#7CFC00]/20 bg-black/35 px-4 py-4 text-sm font-bold leading-6 text-[#D8FFB5]">
-                    The job is active. Add the before photos before completing
-                    the work.
+                    The job is active. Add job photos if useful, then complete the work when the service is finished.
                   </div>
                 ) : selectedRequest.request_status === "completed" ? (
                   <div className="mt-4 rounded-xl border border-[#7CFC00]/20 bg-[#7CFC00]/[0.07] px-4 py-4 text-sm font-bold leading-6 text-[#D8FFB5]">
-                    Work is complete. The before photos, after photos, and
-                    completed outcome are saved with this customer.
+                    Work is complete. The completed outcome is saved with this customer. Any job photos you added are saved with the record.
                   </div>
                 ) : (
                   <div className="mt-4 rounded-xl border border-white/10 bg-black/30 px-4 py-4 text-sm font-bold leading-6 text-white/40">
@@ -2781,8 +2908,7 @@ The record will remain visible until you archive it.`,
                       </p>
 
                       <p className="mt-1 text-sm leading-6 text-white/40">
-                        Document the property before mowing, trimming, cleanup,
-                        or other work begins.
+                        Before-job photos are optional and can show the starting condition.
                       </p>
                     </div>
 
@@ -2921,7 +3047,7 @@ The record will remain visible until you archive it.`,
                       </p>
 
                       <p className="mt-1 text-sm leading-6 text-white/40">
-                        Record the finished property before closing the work.
+                        Finished-job photos are recommended for proof, but not required.
                       </p>
                     </div>
 
@@ -3071,14 +3197,16 @@ The record will remain visible until you archive it.`,
                     </button>
                   ) : selectedRequest.request_status === "completed" ? (
                     <div className="mt-4 rounded-xl border border-[#7CFC00]/20 bg-[#7CFC00]/[0.07] px-4 py-4 text-sm font-bold leading-6 text-[#D8FFB5]">
-                      Work completed. The before photos, after photos, and
-                      completed outcome are saved with this customer.
+                      Work completed. The completed outcome is saved with this customer. Any job photos you added are saved with the record.
                     </div>
                   ) : null}
                 </div>
               </section>
                 </div>
-              </details>              <details className="group rounded-2xl border border-white/10 bg-white/[0.025]">
+              </details>              <details
+                open
+                className={`${selectedRequest.request_status === "completed" ? "block" : "hidden"} rounded-2xl border border-white/10 bg-white/[0.025] [&>summary]:hidden`}
+              >
                 <summary className="flex min-h-[68px] cursor-pointer list-none items-center justify-between gap-4 px-4 py-4">
                   <div>
                     <p className="text-xs font-black uppercase tracking-[0.16em] text-white/45">
@@ -3284,7 +3412,7 @@ The record will remain visible until you archive it.`,
                 </div>
               </details>
 
-              <section className="rounded-2xl border border-white/10 bg-white/[0.025] p-4">
+              <section className={`${["completed", "archived"].includes(selectedRequest.request_status) ? "block" : "hidden"} rounded-2xl border border-white/10 bg-white/[0.025] p-4`}>
                 <p className="text-xs font-black uppercase tracking-[0.16em] text-white/45">
                   Record Actions
                 </p>

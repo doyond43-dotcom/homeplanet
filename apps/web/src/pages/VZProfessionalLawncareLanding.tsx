@@ -12,8 +12,8 @@ import {
 import { supabase } from "../lib/supabaseClient";
 import { hpEvent } from "../lib/hpEvent";
 
-const phone = "+18634477915";
-const formattedPhone = "(863) 447-7915";
+const phone = "+18635328123";
+const formattedPhone = "(863) 532-8123";
 
 const services = [
   {
@@ -151,6 +151,7 @@ export default function VZProfessionalLawncareLanding() {
     const customerPhone = String(form.get("phone") || "").trim();
     const service = String(form.get("service") || "").trim();
     const condition = String(form.get("condition") || "").trim();
+    const frequency = String(form.get("frequency") || "").trim();
     const address = String(form.get("address") || "").trim();
     const timing = String(form.get("timing") || "").trim();
     const details = String(form.get("details") || "").trim();
@@ -165,6 +166,7 @@ export default function VZProfessionalLawncareLanding() {
       service_needed: service,
       property_location: address,
       yard_condition: condition,
+      service_frequency: frequency,
       preferred_timing: timing,
       customer_notes: details || null,
       request_status: "new",
@@ -182,6 +184,7 @@ export default function VZProfessionalLawncareLanding() {
     trackLandingEvent("estimate_request_submitted", {
       service,
       condition,
+      frequency,
       timing,
     });
 
@@ -191,6 +194,7 @@ export default function VZProfessionalLawncareLanding() {
       `Name: ${name}`,
       `Phone: ${customerPhone}`,
       `Service: ${service}`,
+      `Service frequency: ${frequency}`,
       `Property condition: ${condition}`,
       `Address: ${address}`,
       `Preferred timing: ${timing}`,
@@ -482,6 +486,29 @@ export default function VZProfessionalLawncareLanding() {
                 <option>Additional Property Care</option>
               </select>
             </label>
+            <label className="block">
+              <span className="mb-2 block text-[11px] font-black uppercase tracking-[0.16em] text-white">
+                Service frequency
+              </span>
+
+              <select
+                name="frequency"
+                required
+                defaultValue=""
+                className="min-h-14 w-full rounded-xl border border-black/15 bg-white px-4 text-base font-medium text-[#0D0D0D] outline-none transition focus:border-[#7CFC00] focus:ring-2 focus:ring-[#7CFC00]/30"
+              >
+                <option value="" disabled>
+                  Choose frequency
+                </option>
+                <option>One-Time</option>
+                <option>Weekly</option>
+                <option>Every 2 Weeks</option>
+              </select>
+
+              <p className="mt-2 text-xs font-medium leading-5 text-white/65">
+                Weekly and biweekly maintenance may qualify for better recurring pricing. Long-growth or heavily overgrown properties may require a higher cleanup rate.
+              </p>
+            </label>
 
             <label className="block">
               <span className="mb-2 block text-[11px] font-black uppercase tracking-[0.16em] text-white">
@@ -632,37 +659,13 @@ export default function VZProfessionalLawncareLanding() {
                 aria-label="Five-star customer recommendation"
                 className="text-xl tracking-[0.1em] text-[#FFD000] sm:text-2xl sm:tracking-[0.12em]"
               >
-                ★★★★★
+                &#9733;&#9733;&#9733;&#9733;&#9733;
               </p>
 
               <blockquote className="mt-4 flex-1 text-base font-bold leading-6 text-white sm:mt-5 sm:text-xl sm:leading-8">
-                “Hard working, very dedicated to the job, has good prices, and
-                he gets the job done the first time the right way. Highly
-                recommend him for anything yard work related.”
-              </blockquote>
-
-              <div className="mt-6 border-t border-[#087F23]/35 pt-4">
-                <p className="font-black text-[#7CFC00]">
-                  Lucas Mahoney
-                </p>
-                <p className="mt-1 text-xs font-bold uppercase tracking-[0.2em] text-white/42">
-                  Customer Recommendation
-                </p>
-              </div>
-            </article>
-
-            <article className="flex h-full flex-col rounded-[1.4rem] border border-[#087F23]/35 bg-[#0D0D0D]/80 p-4 shadow-2xl shadow-black/30 ring-1 ring-[#7CFC00]/[0.06] transition duration-300 hover:-translate-y-1 hover:border-[#FFD000]/35 sm:rounded-[1.75rem] sm:p-6">
-              <p
-                aria-label="Five-star customer recommendation"
-                className="text-xl tracking-[0.1em] text-[#FFD000] sm:text-2xl sm:tracking-[0.12em]"
-              >
-                ★★★★★
-              </p>
-
-              <blockquote className="mt-4 flex-1 text-base font-bold leading-6 text-white sm:mt-5 sm:text-xl sm:leading-8">
-                “These young gentlemen came to clean my yard up and brought my
-                garden back to life and did a phenomenal job. I’d definitely
-                give these guys my money ☺️”
+                &ldquo;These young gentlemen came to clean my yard up and brought my
+                garden back to life and did a phenomenal job. I&rsquo;d definitely
+                give these guys my money &#9786;&#65039;&rdquo;
               </blockquote>
 
               <div className="mt-6 border-t border-[#087F23]/35 pt-4">
@@ -744,7 +747,7 @@ export default function VZProfessionalLawncareLanding() {
           <div className="mx-auto mt-6 h-px max-w-xs bg-[linear-gradient(90deg,transparent,#FFD000,#7CFC00,transparent)] opacity-45" />
 
           <p className="mt-6 text-xs text-white/35">
-            © 2026 V&amp;Z Professional Lawncare
+            &copy; 2026 V&amp;Z Professional Lawncare
           </p>
 
           <p className="mt-2 text-xs text-white/30">
