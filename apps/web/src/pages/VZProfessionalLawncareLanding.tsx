@@ -197,6 +197,8 @@ export default function VZProfessionalLawncareLanding() {
       `Details: ${details || "No additional details provided."}`,
     ].join("\n");
 
+    formElement.reset();
+
     window.location.href = `sms:${phone}?body=${encodeURIComponent(message)}`;
 
     window.setTimeout(() => {
