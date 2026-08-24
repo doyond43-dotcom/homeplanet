@@ -6,6 +6,7 @@ export default function OkeechobeeCommandCenter() {
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [workingSlug, setWorkingSlug] = useState<string | null>(null);
+  const [workingHelperId, setWorkingHelperId] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
   const [showTests, setShowTests] = useState(false);
 
@@ -78,6 +79,81 @@ export default function OkeechobeeCommandCenter() {
       setEvents([]);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function updateHelperStatus(
+    helper: any,
+    status: string
+  ) {
+    setWorkingHelperId(helper.id);
+    setNotice("");
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.access_token) {
+        throw new Error(
+          "Your admin session has expired. Please sign in again."
+        );
+      }
+
+      const response = await fetch(
+        "/api/okeechobee-command-center",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            helperId: helper.id,
+            status,
+          }),
+        }
+      );
+
+      const result = await response.json().catch(() => null);
+
+      if (!response.ok || result?.ok !== true) {
+        throw new Error(
+          result?.error || "Could not update helper status."
+        );
+      }
+
+      setEvents((currentEvents) =>
+        currentEvents.map((event) => ({
+          ...event,
+          helpers: Array.isArray(event.helpers)
+            ? event.helpers.map((item: any) =>
+                item.id === helper.id
+                  ? { ...item, status }
+                  : item
+              )
+            : [],
+        }))
+      );
+
+      const label =
+        status === "couldnt_help"
+          ? "Couldn't Help"
+          : status.charAt(0).toUpperCase() + status.slice(1);
+
+      setNotice(
+        `${helper.name || "Helper"} is now marked ${label}.`
+      );
+    } catch (error) {
+      console.error(error);
+
+      setNotice(
+        error instanceof Error
+          ? error.message
+          : "Could not update helper status."
+      );
+    } finally {
+      setWorkingHelperId(null);
     }
   }
 
@@ -639,6 +715,80 @@ export default function OkeechobeeCommandCenter() {
                             {helper.notes ? (
                               <div>{helper.notes}</div>
                             ) : null}
+
+                            <div
+                              style={{
+                                marginTop: 8,
+                                display: "grid",
+                                gap: 8,
+                              }}
+                            >
+                              <span style={styles.detailLabel}>
+                                Helper Status
+                              </span>
+
+                              <div
+                                style={{
+                                  display: "flex",
+                                  flexWrap: "wrap",
+                                  gap: 6,
+                                }}
+                              >
+                                {[
+                                  ["new", "New"],
+                                  ["contacted", "Contacted"],
+                                  ["confirmed", "Confirmed"],
+                                  ["scheduled", "Scheduled"],
+                                  ["completed", "Completed"],
+                                  ["couldnt_help", "Couldn't Help"],
+                                ].map(([value, label]) => {
+                                  const selected =
+                                    (helper.status || "new") === value;
+
+                                  return (
+                                    <button
+                                      key={value}
+                                      type="button"
+                                      disabled={
+                                        workingHelperId === helper.id
+                                      }
+                                      onClick={() =>
+                                        updateHelperStatus(
+                                          helper,
+                                          value
+                                        )
+                                      }
+                                      style={{
+                                        border: selected
+                                          ? "1px solid #7cff4f"
+                                          : "1px solid #3a3a3a",
+                                        background: selected
+                                          ? "rgba(124,255,79,0.16)"
+                                          : "#181818",
+                                        color: selected
+                                          ? "#b7ffb0"
+                                          : "#ffffff",
+                                        borderRadius: 999,
+                                        padding: "7px 10px",
+                                        fontSize: 12,
+                                        fontWeight: 800,
+                                        cursor:
+                                          workingHelperId === helper.id
+                                            ? "default"
+                                            : "pointer",
+                                        opacity:
+                                          workingHelperId === helper.id
+                                            ? 0.6
+                                            : 1,
+                                      }}
+                                    >
+                                      {selected ? "✓ " : ""}
+                                      {label}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -1261,8 +1411,4 @@ const styles: Record<string, React.CSSProperties> = {
     boxSizing: "border-box",
   },
 };
-
-
-
-
 

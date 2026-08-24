@@ -5,7 +5,7 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ) {
-  if (req.method !== "GET") {
+  if (req.method !== "GET" && req.method !== "POST") {
     return res.status(405).json({
       ok: false,
       error: "Method not allowed.",
@@ -97,6 +97,61 @@ export default async function handler(
       }
     );
 
+    if (req.method === "POST") {
+      const helperId = String(req.body?.helperId || "").trim();
+      const status = String(req.body?.status || "").trim();
+
+      const allowedStatuses = new Set([
+        "new",
+        "contacted",
+        "confirmed",
+        "scheduled",
+        "completed",
+        "couldnt_help",
+      ]);
+
+      if (!helperId || !allowedStatuses.has(status)) {
+        return res.status(400).json({
+          ok: false,
+          error: "A valid helper and status are required.",
+        });
+      }
+
+      const { data: helper, error: helperUpdateError } =
+        await supabase
+          .from("okeechobee_project_helpers")
+          .update({ status })
+          .eq("id", helperId)
+          .select(
+            "id,event_slug,name,phone,email,help_type,notes,created_at,status"
+          )
+          .maybeSingle();
+
+      if (helperUpdateError) {
+        console.error(
+          "Command Center helper status update failed:",
+          helperUpdateError.message
+        );
+
+        return res.status(500).json({
+          ok: false,
+          error: "Could not update helper status.",
+        });
+      }
+
+      if (!helper) {
+        return res.status(404).json({
+          ok: false,
+          error: "Helper was not found.",
+        });
+      }
+
+      return res.status(200).json({
+        ok: true,
+        helper,
+      });
+    }
+
     const [
       eventsResult,
       ownersResult,
@@ -115,7 +170,7 @@ export default async function handler(
 
       supabase
         .from("okeechobee_project_helpers")
-        .select("event_slug,id,name,phone,email,help_type,notes,created_at"),
+        .select("event_slug,id,name,phone,email,help_type,notes,created_at,status"),
     ]);
 
     if (eventsResult.error) {
