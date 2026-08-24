@@ -115,7 +115,7 @@ export default async function handler(
 
       supabase
         .from("okeechobee_project_helpers")
-        .select("event_slug,id"),
+        .select("event_slug,id,name,phone,email,help_type,notes,created_at"),
     ]);
 
     if (eventsResult.error) {
@@ -162,6 +162,7 @@ export default async function handler(
     );
 
     const helperCountBySlug = new Map<string, number>();
+    const helpersBySlug = new Map<string, any[]>();
 
     for (const helper of helpersResult.data || []) {
       const slug = String((helper as any).event_slug || "");
@@ -171,6 +172,10 @@ export default async function handler(
         slug,
         (helperCountBySlug.get(slug) || 0) + 1
       );
+
+      const existingHelpers = helpersBySlug.get(slug) || [];
+      existingHelpers.push(helper);
+      helpersBySlug.set(slug, existingHelpers);
     }
 
     const events = (eventsResult.data || []).map((event: any) => {
@@ -199,6 +204,9 @@ export default async function handler(
 
         helper_count:
           helperCountBySlug.get(event.slug) || 0,
+
+        helpers:
+          helpersBySlug.get(event.slug) || [],
       };
     });
 
@@ -215,3 +223,4 @@ export default async function handler(
     });
   }
 }
+

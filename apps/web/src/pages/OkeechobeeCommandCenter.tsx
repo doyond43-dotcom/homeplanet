@@ -571,6 +571,80 @@ export default function OkeechobeeCommandCenter() {
                     ) : null}
                   </div>
 
+                  {Array.isArray(event.helpers) && event.helpers.length > 0 ? (
+                    <div style={{ ...styles.detailBox, marginTop: 14 }}>
+                      <span style={styles.detailLabel}>Helpers</span>
+
+                      <div style={{ display: "grid", gap: 12 }}>
+                        {event.helpers.map((helper: any) => (
+                          <div
+                            key={helper.id}
+                            style={{
+                              borderTop: "1px solid #2d2d2d",
+                              paddingTop: 10,
+                              display: "grid",
+                              gap: 6,
+                            }}
+                          >
+                            <strong>{helper.name || "Helper"}</strong>
+
+                            {helper.help_type ? (
+                              <span>{helper.help_type}</span>
+                            ) : null}
+
+                            {helper.phone ? (
+                              <div
+                                style={{
+                                  display: "flex",
+                                  gap: 12,
+                                  flexWrap: "wrap",
+                                }}
+                              >
+                                <a
+                                  href={`tel:${helper.phone}`}
+                                  style={{
+                                    color: "#ffffff",
+                                    fontWeight: 700,
+                                  }}
+                                >
+                                  Call {helper.phone}
+                                </a>
+
+                                <a
+                                  href={`sms:${helper.phone}`}
+                                  style={{
+                                    color: "#b7ffb0",
+                                    fontWeight: 700,
+                                  }}
+                                >
+                                  Text
+                                </a>
+                              </div>
+                            ) : (
+                              <span>Phone: Not available</span>
+                            )}
+
+                            {helper.email ? (
+                              <a
+                                href={`mailto:${helper.email}`}
+                                style={{
+                                  color: "#b7ffb0",
+                                  wordBreak: "break-word",
+                                }}
+                              >
+                                {helper.email}
+                              </a>
+                            ) : null}
+
+                            {helper.notes ? (
+                              <div>{helper.notes}</div>
+                            ) : null}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+
                   <div style={styles.actions}>
                     <Link
                       to={`/planet/okeechobee/project/${event.slug}`}
@@ -1187,6 +1261,8 @@ const styles: Record<string, React.CSSProperties> = {
     boxSizing: "border-box",
   },
 };
+
+
 
 
 
