@@ -51,6 +51,7 @@ import OnlyTheEssentialsLanding from "../pages/OnlyTheEssentialsLanding";
 
 import OnlyTheEssentialsCustomerLanding from "../pages/OnlyTheEssentialsCustomerLanding";
 import OnlyTheEssentialsLandingV2 from "../pages/OnlyTheEssentialsLandingV2";
+import OnlyTheEssentialsLegalPage from "../pages/OnlyTheEssentialsLegalPage";
 
 import OnlyTheEssentialsPublicLanding from "../pages/OnlyTheEssentialsPublicLanding";
 
@@ -396,6 +397,8 @@ import RestaurantAwarenessKitchenBoard from "../pages/RestaurantAwarenessKitchen
 import RestaurantAwarenessDrinkBoard from "../pages/RestaurantAwarenessDrinkBoard";
 
 import OkeechobeeTogetherPage from "../pages/OkeechobeeTogetherPage";
+import OkeechobeeLiveMeatMarketPage from "../pages/OkeechobeeLiveMeatMarketPage";
+import OkeechobeeMeatMarketSellerPage from "../pages/OkeechobeeMeatMarketSellerPage";
 import OkeechobeeCreateEventPage from "../pages/OkeechobeeCreateEventPage";
 import OkeechobeeCreateEventPageV2 from "../pages/OkeechobeeCreateEventPageV2";
 import OkeechobeeReachOutPage from "../pages/OkeechobeeReachOutPage";
@@ -409,6 +412,7 @@ import OkeechobeeHelperJoinPage from "../pages/OkeechobeeHelperJoinPage";
 import HomePlanetBuildDirectory from "../pages/HomePlanetBuildDirectory";
 import HomePlanetFlowRegistry from "../pages/HomePlanetFlowRegistry";
 import OkeechobeeCommandCenter from "../pages/OkeechobeeCommandCenter";
+import OkeechobeeOperationsPreview from "../pages/OkeechobeeOperationsPreview";
 
 import StarterLivePageCreatorPage from "../pages/StarterLivePageCreatorPage";
 
@@ -556,11 +560,14 @@ export default function PlanetRoutes() {
       <Route path="okeechobee/create" element={<OkeechobeeCreateEventPage />} />
       <Route path="okeechobee/event/:slug" element={<OkeechobeeEventPage />} />
       <Route path="okeechobee" element={<OkeechobeeTogetherPage />} />
+      <Route path="okeechobee/meat-market" element={<OkeechobeeLiveMeatMarketPage />} />
+      <Route path="okeechobee/meat-market/sell" element={<OkeechobeeMeatMarketSellerPage />} />
       <Route path="okeechobee/admin" element={<OkeechobeeCommunityAdminPage />} />
 <Route path="okeechobee/project/:slug" element={<RequireAuth><OkeechobeeProjectWorkspace /></RequireAuth>} />
       <Route path="okeechobee/manage/:slug" element={<OkeechobeeResidentProjectPage />} />
       <Route path="okeechobee/help" element={<OkeechobeeHelperRegistrationPage />} />
       <Route path="okeechobee/help/:slug" element={<OkeechobeeHelperJoinPage />} />
+      <Route path="okeechobee/operations-preview" element={<OkeechobeeOperationsPreview />} />
       <Route path="okeechobee/command" element={<RequireAuth><OkeechobeeCommandCenter /></RequireAuth>} />
       {/* BRAHMA BULL RESTAURANT SYSTEM */}
       <Route path="brahma-bull" element={<BrahmaBullFrontDoor />} />
@@ -593,6 +600,8 @@ export default function PlanetRoutes() {
       <Route path="only-the-essentials" element={<OnlyTheEssentialsLanding />} />
       <Route path="only-the-essentials-cleaning" element={<OnlyTheEssentialsCustomerLanding />} />
       <Route path="only-the-essentials/v2" element={<OnlyTheEssentialsLandingV2 />} />
+      <Route path="only-the-essentials/privacy" element={<OnlyTheEssentialsLegalPage />} />
+      <Route path="only-the-essentials/terms" element={<OnlyTheEssentialsLegalPage />} />
       <Route path="only-the-essentials/request" element={<OnlyTheEssentialsRequest />} />
       <Route path="only-the-essentials/request-v2" element={<OnlyTheEssentialsRequestV2 />} />
       <Route path="only-the-essentials/intelligence" element={<OnlyTheEssentialsIntelligenceDashboard />} />
@@ -890,6 +899,9 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
+
+
 
 
 

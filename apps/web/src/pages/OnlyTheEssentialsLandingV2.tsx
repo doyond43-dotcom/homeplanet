@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+﻿import { useEffect, useRef, useState } from "react";
 import {
   CalendarCheck,
   Heart,
@@ -382,19 +382,19 @@ export default function OnlyTheEssentialsCustomerLanding() {
           </p>
         </div>
 
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        <div className="mt-10 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-6">
           {services.map((service) => {
             const Icon = service.icon;
             return (
               <article
                 key={service.title}
-                className="rounded-[1.75rem] border border-white/10 bg-white/[0.045] p-6 text-center shadow-xl shadow-black/20"
+                className="rounded-[1.4rem] border border-white/10 bg-white/[0.045] p-4 text-center shadow-xl shadow-black/20 sm:rounded-[1.75rem] sm:p-6"
               >
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-pink-300/25 bg-pink-400/15 text-pink-200">
+                <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl border border-pink-300/25 bg-pink-400/15 text-pink-200 sm:h-12 sm:w-12 sm:rounded-2xl">
                   <Icon size={22} />
                 </div>
-                <h3 className="mt-5 text-xl font-black leading-tight">{service.title}</h3>
-                <p className="mt-4 text-sm leading-6 text-zinc-300">{service.text}</p>
+                <h3 className="mt-3 text-base font-black leading-tight sm:mt-5 sm:text-xl">{service.title}</h3>
+                <p className="mt-3 text-xs leading-5 text-zinc-300 sm:mt-4 sm:text-sm sm:leading-6">{service.text}</p>
               </article>
             );
           })}
@@ -417,8 +417,8 @@ export default function OnlyTheEssentialsCustomerLanding() {
             The more details you share, the better we can tailor your quote.
           </p>
 
-          <div className="mt-6 grid gap-3 lg:grid-cols-3">
-            <select id="cleaning-service" name="cleaningService" aria-label="Cleaning service" className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-sm text-white outline-none [color-scheme:dark]">
+          <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-3">
+            <select id="cleaning-service" name="cleaningService" aria-label="Cleaning service" className="col-span-2 w-full lg:col-span-1 rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-sm text-white outline-none [color-scheme:dark]">
               <option className="bg-[#120813] text-white">Deep Cleaning</option>
               <option className="bg-[#120813] text-white">Standard Cleaning</option>
               <option className="bg-[#120813] text-white">Move-In / Move-Out</option>
@@ -458,7 +458,7 @@ export default function OnlyTheEssentialsCustomerLanding() {
               <option className="bg-[#120813] text-white">Heavy Deep Clean</option>
             </select>
 
-            <select id="preferred-time" name="preferredTime" aria-label="Preferred cleaning time" className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-sm text-white outline-none [color-scheme:dark]">
+            <select id="preferred-time" name="preferredTime" aria-label="Preferred cleaning time" className="col-span-2 w-full lg:col-span-1 rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-sm text-white outline-none [color-scheme:dark]">
               <option className="bg-[#120813] text-white">Preferred Time</option>
               <option className="bg-[#120813] text-white">Mornings</option>
               <option className="bg-[#120813] text-white">Afternoons</option>
@@ -466,16 +466,20 @@ export default function OnlyTheEssentialsCustomerLanding() {
               <option className="bg-[#120813] text-white">Flexible</option>
             </select>
 
-            <input id="customer-name" name="customerName" type="text" autoComplete="name" aria-label="Your name" className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-sm text-white outline-none [color-scheme:dark] lg:col-span-1" placeholder="Your Name" />
+            <input id="customer-name" name="customerName" type="text" autoComplete="name" aria-label="Your name" className="col-span-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-sm text-white outline-none [color-scheme:dark] lg:col-span-1" placeholder="Your Name" />
 
-            <input id="customer-phone" name="customerPhone" type="tel" inputMode="tel" autoComplete="tel" aria-label="Phone number" className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-sm text-white outline-none [color-scheme:dark] lg:col-span-2" placeholder="Phone Number" />
+            <input id="customer-phone" name="customerPhone" type="tel" inputMode="tel" autoComplete="tel" aria-label="Phone number" className="col-span-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-4 text-sm text-white outline-none [color-scheme:dark] lg:col-span-2" placeholder="Phone Number" />
 
-            <div className="grid gap-3 rounded-2xl border border-dashed border-pink-300/30 bg-black/30 p-4 text-sm text-zinc-300 lg:col-span-3 lg:grid-cols-3">
-              <label className="block">
-                <span className="mb-2 block text-xs font-black uppercase tracking-[0.2em] text-pink-200">Upload Photos</span>
-                <p className="mb-3 text-xs leading-5 text-zinc-400">Optional — show problem areas, rooms, pets, or mess level.</p>
-                <input type="file" multiple className="block w-full text-xs text-zinc-400" />
-              </label>
+            <div className="col-span-2 grid gap-3 rounded-2xl border border-dashed border-pink-300/30 bg-black/30 p-4 text-sm text-zinc-300 lg:col-span-3 lg:grid-cols-3">
+              <details className="rounded-xl border border-white/10 bg-white/[0.025] p-3 lg:col-span-1">
+                  <summary className="cursor-pointer list-none text-xs font-black uppercase tracking-[0.2em] text-pink-200">
+                    + Add photos (optional)
+                  </summary>
+                  <p className="mt-3 text-xs leading-5 text-zinc-400">
+                    Show problem areas, rooms, pets, or mess level.
+                  </p>
+                  <input type="file" multiple className="mt-3 block w-full text-xs text-zinc-400" />
+                </details>
 
               <label className="block lg:col-span-2">
                 <span className="mb-2 block text-xs font-black uppercase tracking-[0.2em] text-pink-200">Street Address</span>
@@ -483,18 +487,18 @@ export default function OnlyTheEssentialsCustomerLanding() {
               </label>
             </div>
 
-            <label className="flex gap-3 rounded-2xl border border-white/10 bg-black/30 p-4 text-xs leading-5 text-zinc-300 lg:col-span-3">
+            <label className="col-span-2 flex gap-3 rounded-2xl border border-white/10 bg-black/30 p-4 text-xs leading-5 text-zinc-300 lg:col-span-3">
               <input type="checkbox" className="mt-1" />
               I understand final pricing depends on home size, condition, pets, and requested services.
             </label>
 
             {quoteError && (
-              <p className="rounded-2xl border border-pink-300/25 bg-black/30 px-4 py-3 text-sm font-semibold text-pink-100 lg:col-span-3">
+              <p className="col-span-2 rounded-2xl border border-pink-300/25 bg-black/30 px-4 py-3 text-sm font-semibold text-pink-100 lg:col-span-3">
                 {quoteError}
               </p>
             )}
 
-            <button type="button" onClick={handleQuoteSubmit} disabled={quoteSubmitting} className="rounded-2xl bg-pink-400 py-4 text-sm font-black uppercase tracking-[0.22em] text-black lg:col-span-3 disabled:cursor-not-allowed disabled:opacity-70">
+            <button type="button" onClick={handleQuoteSubmit} disabled={quoteSubmitting} className="col-span-2 rounded-2xl bg-pink-400 py-4 text-sm font-black uppercase tracking-[0.22em] text-black lg:col-span-3 disabled:cursor-not-allowed disabled:opacity-70">
               {quoteSubmitting ? "Sending..." : "Request My Quote"}
             </button>
           </div>
@@ -594,7 +598,7 @@ export default function OnlyTheEssentialsCustomerLanding() {
             </article>
           </div>
 
-          <div className="mt-5 grid gap-4 sm:grid-cols-3">
+          <div className="mt-5 grid gap-2.5 sm:grid-cols-3 sm:gap-4">
             {[
               {
                 title: "Clear Expectations",
@@ -611,13 +615,13 @@ export default function OnlyTheEssentialsCustomerLanding() {
             ].map((item) => (
               <article
                 key={item.title}
-                className="rounded-[1.5rem] border border-white/10 bg-white/[0.035] p-5 transition hover:border-pink-300/35 hover:bg-pink-400/[0.045]"
+                className="rounded-[1.2rem] border border-white/10 bg-white/[0.035] px-4 py-3.5 transition hover:border-pink-300/35 hover:bg-pink-400/[0.045] sm:rounded-[1.5rem] sm:p-5"
               >
-                <h3 className="text-xl font-black text-white">
+                <h3 className="text-base font-black text-white sm:text-xl">
                   {item.title}
                 </h3>
 
-                <p className="mt-2 text-sm leading-6 text-zinc-300">
+                <p className="mt-1.5 text-xs leading-5 text-zinc-300 sm:mt-2 sm:text-sm sm:leading-6">
                   {item.copy}
                 </p>
               </article>
@@ -678,13 +682,13 @@ export default function OnlyTheEssentialsCustomerLanding() {
                   aria-label="Five-star customer recommendation"
                   className="text-3xl font-black leading-none tracking-[0.14em] text-yellow-400 drop-shadow-[0_0_12px_rgba(250,204,21,0.22)] sm:text-4xl"
                 >
-                  ★★★★★
+                  {"\u2605\u2605\u2605\u2605\u2605"}
                 </p>
 
                 <blockquote className="mt-6 flex-1 font-serif text-2xl italic leading-9 text-white sm:text-[1.7rem]">
-                  “Highly recommend! Kaitlyn did a great job helping us get back on
-                  track. From the ceiling to the floor she knocked it out of the
-                  park!”
+                    &ldquo;Highly recommend! Kaitlyn did a great job helping us get back on
+                    track. From the ceiling to the floor she knocked it out of the
+                    park!&rdquo;
                 </blockquote>
 
                 <div className="mt-8 border-t border-white/10 pt-5">
@@ -700,12 +704,12 @@ export default function OnlyTheEssentialsCustomerLanding() {
                   aria-label="Five-star customer recommendation"
                   className="text-3xl font-black leading-none tracking-[0.14em] text-yellow-400 drop-shadow-[0_0_12px_rgba(250,204,21,0.22)] sm:text-4xl"
                 >
-                  ★★★★★
+                  {"\u2605\u2605\u2605\u2605\u2605"}
                 </p>
 
                 <blockquote className="mt-6 flex-1 font-serif text-2xl italic leading-9 text-white sm:text-[1.7rem]">
-                  “I came home to super clean floors, sparkling bathrooms, beds made,
-                  sinks cleaned... Everything back in order! Highly recommend.”
+                    &ldquo;I came home to super clean floors, sparkling bathrooms, beds made,
+                    sinks cleaned... Everything back in order! Highly recommend.&rdquo;
                 </blockquote>
 
                 <div className="mt-8 border-t border-white/10 pt-5">
@@ -778,7 +782,28 @@ export default function OnlyTheEssentialsCustomerLanding() {
   <p className="mt-3 text-sm font-semibold text-zinc-300">
     House cleaning in Okeechobee, Florida
   </p>
-  <p className="mt-6 text-xs text-zinc-400">
+  <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs font-semibold text-zinc-300">
+      <a
+        href="/planet/only-the-essentials/privacy"
+        className="transition hover:text-pink-300"
+      >
+        Privacy Policy
+      </a>
+      <a
+        href="/planet/only-the-essentials/terms"
+        className="transition hover:text-pink-300"
+      >
+        Terms & Conditions
+      </a>
+      <a
+        href="mailto:Kaitlinlee863@gmail.com"
+        className="transition hover:text-pink-300"
+      >
+        Contact
+      </a>
+    </div>
+
+    <p className="mt-6 text-xs text-zinc-400">
     &copy; 2026 Only The Essentials Cleaning
   </p>
   <p className="mt-2 text-[11px] text-zinc-400">
@@ -847,5 +872,10 @@ export default function OnlyTheEssentialsCustomerLanding() {
     </main>
   );
 }
+
+
+
+
+
 
 
