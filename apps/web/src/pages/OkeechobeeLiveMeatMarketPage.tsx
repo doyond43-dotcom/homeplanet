@@ -457,9 +457,9 @@ export default function OkeechobeeLiveMeatMarketPage() {
           </p>
 
           <div className="field-line">
-            The livestock market moves the cattle.
+            The livestock market moves cattle.
             <br />
-            The Live Meat Market moves the beef.
+            The Live Meat Market helps local beef reach local tables.
           </div>
         </section>
 
