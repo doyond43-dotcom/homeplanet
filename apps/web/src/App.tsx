@@ -18,6 +18,11 @@ const OkeechobeeLawnIntelligenceDashboard = lazy(() => import("./pages/Okeechobe
 const TaylorCreekRealDemoBoard = lazy(() => import("./pages/TaylorCreekRealDemoBoard"));
 const TaylorCreekRealDemoStaffBoard = lazy(() => import("./pages/TaylorCreekRealDemoStaffBoard"));
 const HomeServicesLiveSystemStaffBoard = lazy(() => import("./pages/HomeServicesLiveSystemStaffBoard"));
+const PremierWindowDoorBoard = lazy(() => import("./pages/PremierWindowDoorBoard"));
+const PremierInstallerTechBoard = lazy(() => import("./pages/PremierInstallerTechBoard"));
+const PremierFieldOperationsBoard = lazy(() => import("./pages/PremierFieldOperationsBoard"));
+const PremierSalesBoard = lazy(() => import("./pages/PremierSalesBoard"));
+const PremierWindowDoorLivePage = lazy(() => import("./pages/PremierWindowDoorLivePage"));
 const PublicPage = lazy(() => import("./routes/PublicPage"));
 const TenantPublicPage = lazy(() => import("./routes/TenantPublicPage"));
 const LiveShopTV = lazy(() => import("./routes/LiveShopTV"));
@@ -296,6 +301,11 @@ export default function App() {
         <Route path="/live/taylor-creek-demo/board" element={<TaylorCreekRealDemoBoard />} />
         <Route path="/live/taylor-creek-demo/staff" element={<TaylorCreekRealDemoStaffBoard />} />
         <Route path="/planet/demo/home-services-staff" element={<HomeServicesLiveSystemStaffBoard />} />
+        <Route path="/planet/premier-window-door" element={<PremierWindowDoorLivePage />} />
+        <Route path="/planet/premier-window-door/board" element={<PremierWindowDoorBoard />} />
+        <Route path="/planet/premier-window-door/tech" element={<PremierInstallerTechBoard />} />
+        <Route path="/planet/premier-window-door/field" element={<PremierFieldOperationsBoard />} />
+        <Route path="/planet/premier-window-door/sales" element={<PremierSalesBoard />} />
 
         {/* FORCE REAL TAYLOR CREEK PUBLIC LINKS TO SAFE DEMO */}
         <Route path="/live/taylor-creek" element={<Navigate to="/live/taylor-creek-demo/board" replace />} />
