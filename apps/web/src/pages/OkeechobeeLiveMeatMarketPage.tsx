@@ -11,7 +11,10 @@ type MarketItem = {
   location: string;
   fulfillment: string;
   badge?: string;
+  phone?: string;
   orderHref?: string;
+  sellerHref?: string;
+  sellerImage?: string;
 };
 
 const categories = [
@@ -161,7 +164,7 @@ function sellerImage(seller: string) {
   const value = String(seller || "").trim().toLowerCase();
 
   if (value.includes("farm folks")) {
-    return "/images/farm-folks-ranch-hero.png";
+    return "/images/farm-folks-beef-patties.jpg";
   }
 
   return "";
@@ -183,6 +186,21 @@ function phoneHref(value: string, mode: "call" | "text") {
   return mode === "text"
     ? `sms:${digits}`
     : `tel:${digits}`;
+}
+
+function sellerStorefrontHref(seller: string) {
+  const normalizedSeller = String(seller || "").trim().toLowerCase();
+
+  if (normalizedSeller === "farm folks llc") {
+    return "/planet/okeechobee/meat-market/seller/farm-folks";
+  }
+
+  const slug = normalizedSeller
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  return `/planet/okeechobee/meat-market/seller/${slug}`;
 }
 
 function usableOrderHref(value: string) {
@@ -268,6 +286,12 @@ export default function OkeechobeeLiveMeatMarketPage() {
               "Website / Facebook / Order Link"
             );
 
+          const submittedPhoto =
+            listingDetail(
+              listing.description,
+              "Listing Photo"
+            );
+
           const seller =
             String(listing.title || "")
               .replace(/^Live Meat Market Seller:\s*/i, "")
@@ -320,7 +344,8 @@ export default function OkeechobeeLiveMeatMarketPage() {
                     fulfillment: productFulfillment,
                   }
                 ).toString()}`,
-                sellerHref: usableOrderHref(submittedLink),
+                sellerHref: sellerStorefrontHref(seller),
+                sellerImage: usableOrderHref(submittedPhoto),
               };
             });
           }
@@ -347,7 +372,8 @@ export default function OkeechobeeLiveMeatMarketPage() {
                   fulfillment: sellerFulfillment,
                 }
               ).toString()}`,
-              sellerHref: usableOrderHref(submittedLink),
+              sellerHref: sellerStorefrontHref(seller),
+              sellerImage: usableOrderHref(submittedPhoto),
             },
           ];
         }
@@ -411,7 +437,7 @@ export default function OkeechobeeLiveMeatMarketPage() {
         fulfillment: item.fulfillment,
         phone: item.phone,
         sellerHref: item.sellerHref,
-        image: sellerImage(item.seller),
+        image: item.sellerImage || sellerImage(item.seller),
         items: [item],
       });
     });
@@ -1264,10 +1290,8 @@ export default function OkeechobeeLiveMeatMarketPage() {
                       <a
                         className="seller-market-action"
                         href={
-                          seller.seller.trim().toLowerCase() === "farm folks llc"
-                            ? "/planet/okeechobee/meat-market/seller/farm-folks"
-                            : seller.items[0]?.orderHref ||
-                              "/planet/okeechobee/meat-market/contact?mode=buy"
+                          seller.sellerHref ||
+                          sellerStorefrontHref(seller.seller)
                         }
                       >
                         View Seller
@@ -1535,6 +1559,14 @@ export default function OkeechobeeLiveMeatMarketPage() {
     </main>
   );
 }
+
+
+
+
+
+
+
+
 
 
 

@@ -24,12 +24,15 @@ const sellerConfigs: Record<string, SellerConfig> = {
   "farm-folks": {
     slug: "farm-folks",
     sellerName: "Farm Folks LLC",
-    heroImage: "/images/farm-folks-ranch-hero.png",
+    heroImage: "/images/farm-folks-beef-patties.jpg",
     ownerImage: "/images/farm-folks-owner.jpg",
     tagline: "From their farm to your table.",
     productImages: {
       ancestral: "/images/farm-folks-ancestral-blend.jpg",
-      "ground beef": "/images/farm-folks-ground-beef.jpg",
+      "beef patties": "/images/farm-folks-beef-patties.jpg",
+      patties: "/images/farm-folks-beef-patties.jpg",
+      patty: "/images/farm-folks-beef-patties.jpg",
+      "ground beef": "/images/farm-folks-beef-patties.jpg",
       hamburger: "/images/farm-folks-ground-beef.jpg",
       kefir: "/images/farm-folks-kefir.jpg",
       "raw milk": "/images/farm-folks-raw-milk.jpg",
@@ -121,6 +124,7 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
     "Contact seller for pickup details"
   );
   const [sellerLink, setSellerLink] = useState("");
+  const [listingPhoto, setListingPhoto] = useState("");
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -209,6 +213,15 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
         )
       );
 
+      setListingPhoto(
+        usableExternalLink(
+          listingDetail(
+            seller.description,
+            "Listing Photo"
+          )
+        )
+      );
+
       const { data: productData, error: productError } =
         await supabase
           .from("okeechobee_meat_market_products")
@@ -226,8 +239,8 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
         );
       }
 
-      setProducts(
-        (productData || []).map((product: any) => ({
+      const mappedProducts = (productData || []).map(
+        (product: any) => ({
           id: product.id,
           name:
             String(product.name || "").trim() ||
@@ -243,8 +256,31 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
           availability:
             String(product.availability || "").trim() ||
             "Available now",
-        }))
+        })
       );
+
+      if (mappedProducts.length > 0) {
+        setProducts(mappedProducts);
+      } else {
+        const submittedSelling =
+          listingDetail(seller.description, "Selling") ||
+          "Local food available";
+
+        const submittedPrice =
+          listingDetail(seller.description, "Price / Package") ||
+          "Contact seller";
+
+        setProducts([
+          {
+            id: `${seller.id}-listing`,
+            name: submittedSelling,
+            price: submittedPrice,
+            package: "",
+            fulfillment: sellerFulfillment,
+            availability: "Available now",
+          },
+        ]);
+      }
 
       setLoading(false);
     }
@@ -648,10 +684,10 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
 
         <section className="store-hero">
           <div className="hero-image">
-            {config?.heroImage ? (
+            {listingPhoto || config?.heroImage ? (
               <>
                 <img
-                  src={config.heroImage}
+                  src={listingPhoto || config?.heroImage}
                   alt={`${sellerName} ranch or farm`}
                 />
 
@@ -786,6 +822,12 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
     </main>
   );
 }
+
+
+
+
+
+
 
 
 

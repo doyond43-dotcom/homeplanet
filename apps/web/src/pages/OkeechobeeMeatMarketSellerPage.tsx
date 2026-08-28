@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
@@ -21,6 +21,7 @@ export default function OkeechobeeMeatMarketSellerPage() {
   const [location, setLocation] = useState("Okeechobee");
   const [link, setLink] = useState("");
   const [notes, setNotes] = useState("");
+  const [listingPhoto, setListingPhoto] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -52,6 +53,64 @@ export default function OkeechobeeMeatMarketSellerPage() {
 
     const title = `Live Meat Market Seller: ${cleanBusinessName}`;
 
+    let listingPhotoUrl = "";
+    let uploadedPhotoPath = "";
+
+    if (listingPhoto) {
+      const allowedTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+      ];
+
+      if (!allowedTypes.includes(listingPhoto.type)) {
+        alert("Please use a JPG, PNG, or WEBP photo.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      const maxBytes = 8 * 1024 * 1024;
+
+      if (listingPhoto.size > maxBytes) {
+        alert("Please use a photo smaller than 8 MB.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      const extension =
+        listingPhoto.name.split(".").pop()?.toLowerCase() || "jpg";
+
+      const safeBusiness =
+        slugify(cleanBusinessName) || "seller";
+
+      uploadedPhotoPath =
+        `${safeBusiness}/${Date.now()}-listing.${extension}`;
+
+      const { error: photoUploadError } = await supabase.storage
+        .from("okeechobee-meat-market-seller-images")
+        .upload(uploadedPhotoPath, listingPhoto, {
+          cacheControl: "3600",
+          upsert: false,
+          contentType: listingPhoto.type || undefined,
+        });
+
+      if (photoUploadError) {
+        console.error(
+          "Could not upload seller listing photo:",
+          photoUploadError
+        );
+        alert("Your listing photo could not be uploaded. Please try again.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      const { data: publicPhoto } = supabase.storage
+        .from("okeechobee-meat-market-seller-images")
+        .getPublicUrl(uploadedPhotoPath);
+
+      listingPhotoUrl = publicPhoto.publicUrl || "";
+    }
+
     const description = [
       `Ranch / Business: ${cleanBusinessName}`,
       `Contact Name: ${cleanContactName}`,
@@ -62,6 +121,7 @@ export default function OkeechobeeMeatMarketSellerPage() {
       `Pickup / Delivery: ${fulfillment}`,
       `Location: ${cleanLocation}`,
       `Website / Facebook / Order Link: ${cleanLink || "Not provided"}`,
+      `Listing Photo: ${listingPhotoUrl || "Not provided"}`,
       `Notes: ${cleanNotes || "None"}`,
     ].join("\n");
 
@@ -92,6 +152,13 @@ export default function OkeechobeeMeatMarketSellerPage() {
 
     if (error) {
       console.error(error);
+
+      if (uploadedPhotoPath) {
+        await supabase.storage
+          .from("okeechobee-meat-market-seller-images")
+          .remove([uploadedPhotoPath]);
+      }
+
       alert("Something went wrong sending your listing.");
       return;
     }
@@ -241,6 +308,30 @@ export default function OkeechobeeMeatMarketSellerPage() {
               onChange={(event) => setLink(event.target.value)}
               placeholder="Optional"
             />
+          </label>
+
+          <label style={styles.label}>
+            Listing photo
+            <input
+              style={styles.input}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={(event) =>
+                setListingPhoto(event.target.files?.[0] || null)
+              }
+            />
+            <span
+              style={{
+                color: "#667068",
+                fontSize: 12,
+                lineHeight: 1.45,
+                fontWeight: 600,
+              }}
+            >
+              Optional. Choose one photo that represents your farm, ranch,
+              animals, products, storefront, or business. JPG, PNG, or WEBP
+              up to 8 MB.
+            </span>
           </label>
 
           <label style={styles.label}>
@@ -413,4 +504,5 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: "pointer",
   },
 };
+
 

@@ -66,7 +66,12 @@ export default function OkeechobeeCommandCenter() {
         );
       }
 
-      setEvents(result.events || []);
+      setEvents(
+        (result.events || []).filter(
+          (event: any) =>
+            String(event.type || "").trim() !== "Live Meat Market Seller"
+        )
+      );
     } catch (error) {
       console.error(error);
 
@@ -335,6 +340,7 @@ export default function OkeechobeeCommandCenter() {
         (event) =>
           String(event.status || "").toLowerCase() ===
             "pending review" &&
+          String(event.type || "") !== "Live Meat Market Seller" &&
           (showTests || !isTestEvent(event))
       ),
     [events, showTests]
@@ -343,7 +349,9 @@ export default function OkeechobeeCommandCenter() {
   const activeEvents = useMemo(
     () =>
       events.filter(
-        (event) => String(event.status || "").toLowerCase() === "active"
+        (event) =>
+          String(event.type || "") !== "Live Meat Market Seller" &&
+          String(event.status || "").toLowerCase() === "active"
       ),
     [events]
   );
