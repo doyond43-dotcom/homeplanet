@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
@@ -38,6 +38,103 @@ function statusKey(status: string): FilterMode {
   if (value === "archived") return "archived";
 
   return "all";
+}
+
+function isVerifiedSeller(listing: any) {
+  return (
+    descriptionLine(listing?.description, "Verification")
+      .toLowerCase() === "verified local seller"
+  );
+}
+
+function visibleListingDescription(listing: any) {
+  return String(listing?.description || "")
+    .split(/\r?\n/)
+    .filter(
+      (line) =>
+        !line.trim().toLowerCase().startsWith("verification:")
+    )
+    .join("\n");
+}
+
+const MARKET_MATCH_TERMS: Record<string, string[]> = {
+  Beef: [
+    "beef",
+    "steak",
+    "steaks",
+    "ribeye",
+    "sirloin",
+    "filet",
+    "roast",
+    "ground beef",
+    "hamburger",
+    "quarter beef",
+    "half beef",
+    "whole beef",
+    "beef share",
+    "beef shares",
+  ],
+  Chicken: [
+    "chicken",
+    "whole chicken",
+    "whole chickens",
+    "chicken breast",
+    "chicken breasts",
+    "thigh",
+    "thighs",
+    "wing",
+    "wings",
+    "poultry",
+  ],
+  Pork: [
+    "pork",
+    "bacon",
+    "sausage",
+    "ham",
+    "pork chop",
+    "pork chops",
+  ],
+  Eggs: [
+    "egg",
+    "eggs",
+    "dozen",
+  ],
+  Dairy: [
+    "dairy",
+    "milk",
+    "raw milk",
+    "kefir",
+    "cream",
+    "cheese",
+  ],
+  Honey: [
+    "honey",
+  ],
+};
+
+function matchingCategories(text: string) {
+  const value = String(text || "").toLowerCase();
+
+  return Object.entries(MARKET_MATCH_TERMS)
+    .filter(([, terms]) =>
+      terms.some((term) => value.includes(term))
+    )
+    .map(([category]) => category);
+}
+
+function sellerStorefrontHref(listing: any) {
+  const name = sellerName(listing);
+
+  if (name.toLowerCase() === "farm folks llc") {
+    return "/planet/okeechobee/meat-market/seller/farm-folks";
+  }
+
+  const slug = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  return `/planet/okeechobee/meat-market/seller/${slug}`;
 }
 
 function contactHref(contact: string) {
@@ -82,29 +179,49 @@ export default function OkeechobeeMeatMarketCommandCenter() {
     setLoading(true);
     setNotice("");
 
-    const [listingResult, questionResult] = await Promise.all([
-      supabase
-        .from("okeechobee_events")
-        .select("*")
-        .eq("type", SELLER_TYPE)
-        .order("created_at", { ascending: false }),
-
-      supabase
-        .from("homeplanet_leads")
-        .select(
-          "id,name,contact,message,business_name,board_slug,selected_operation,created_at"
-        )
-        .eq("board_slug", QUESTION_BOARD)
-        .order("created_at", { ascending: false }),
-    ]);
+    const listingResult = await supabase
+      .from("okeechobee_events")
+      .select("*")
+      .eq("type", SELLER_TYPE)
+      .order("created_at", { ascending: false });
 
     if (listingResult.error) {
       console.error(listingResult.error);
       setNotice("Could not load Meat Market listings.");
     }
 
-    if (questionResult.error) {
-      console.error(questionResult.error);
+    let secureQuestions: any[] = [];
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.access_token) {
+        throw new Error("Admin session not available.");
+      }
+
+      const response = await fetch("/api/okeechobee-command-center", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      const result = await response.json().catch(() => null);
+
+      if (!response.ok || !result?.ok) {
+        throw new Error(
+          result?.error || "Could not load Meat Market buyer requests."
+        );
+      }
+
+      secureQuestions = Array.isArray(result.meatMarketBuyers)
+        ? result.meatMarketBuyers
+        : [];
+    } catch (error) {
+      console.error("Secure Meat Market buyer load failed:", error);
+
       setNotice((current) =>
         current
           ? `${current} Could not load Meat Market buyer requests.`
@@ -113,7 +230,7 @@ export default function OkeechobeeMeatMarketCommandCenter() {
     }
 
     setListings(listingResult.data || []);
-    setQuestions(questionResult.data || []);
+    setQuestions(secureQuestions);
     setLoading(false);
   }
 
@@ -127,6 +244,7 @@ export default function OkeechobeeMeatMarketCommandCenter() {
       live: listings.filter((item) => statusKey(item.status) === "live").length,
       paused: listings.filter((item) => statusKey(item.status) === "paused").length,
       archived: listings.filter((item) => statusKey(item.status) === "archived").length,
+      verified: listings.filter((item) => isVerifiedSeller(item)).length,
     };
   }, [listings]);
 
@@ -175,6 +293,48 @@ export default function OkeechobeeMeatMarketCommandCenter() {
     });
   }, [questions, search]);
 
+  const selectedQuestionMatches = useMemo(() => {
+    if (!selectedQuestion) return [];
+
+    const requestedCategories = matchingCategories(
+      String(selectedQuestion.message || "")
+    );
+
+    if (requestedCategories.length === 0) return [];
+
+    return listings
+      .filter(
+        (listing) =>
+          statusKey(listing.status) === "live" &&
+          isVerifiedSeller(listing)
+      )
+      .map((listing) => {
+        const sellerText = [
+          descriptionLine(listing.description, "Selling"),
+          listing.description,
+        ]
+          .filter(Boolean)
+          .join(" ");
+
+        const sellerCategories = matchingCategories(sellerText);
+
+        const matches = requestedCategories.filter((category) =>
+          sellerCategories.includes(category)
+        );
+
+        return {
+          listing,
+          matches,
+          fulfillment:
+            descriptionLine(
+              listing.description,
+              "Pickup / Delivery"
+            ) || "Contact seller",
+        };
+      })
+      .filter((match) => match.matches.length > 0);
+  }, [selectedQuestion, listings]);
+
   async function changeListingStatus(listing: any, status: string) {
     setWorkingId(listing.id);
     setNotice("");
@@ -214,6 +374,52 @@ export default function OkeechobeeMeatMarketCommandCenter() {
             : "pending review";
 
     setNotice(`"${sellerName(listing)}" is now ${label}.`);
+    setWorkingId(null);
+  }
+
+  async function markListingVerified(listing: any) {
+    setWorkingId(listing.id);
+    setNotice("");
+
+    const currentDescription = String(listing.description || "");
+    const lines = currentDescription
+      .split(/\r?\n/)
+      .filter(
+        (line) =>
+          !line.trim().toLowerCase().startsWith("verification:")
+      );
+
+    const description = [
+      ...lines,
+      "Verification: Verified Local Seller",
+    ].join("\n");
+
+    const { error } = await supabase
+      .from("okeechobee_events")
+      .update({ description })
+      .eq("id", listing.id)
+      .eq("type", SELLER_TYPE);
+
+    if (error) {
+      console.error(error);
+      setNotice("Could not verify the seller.");
+      setWorkingId(null);
+      return;
+    }
+
+    const updated = { ...listing, description };
+
+    setListings((current) =>
+      current.map((item) =>
+        item.id === listing.id ? updated : item
+      )
+    );
+
+    setSelectedListing((current: any) =>
+      current?.id === listing.id ? updated : current
+    );
+
+    setNotice(`"${sellerName(listing)}" is now a Verified Local Seller.`);
     setWorkingId(null);
   }
 
@@ -297,6 +503,9 @@ export default function OkeechobeeMeatMarketCommandCenter() {
       `Location: ${location}`,
       `Website / Facebook / Order Link: ${sellerLink}`,
       `Notes: ${notes}`,
+      ...(isVerifiedSeller(selectedListing)
+        ? ["Verification: Verified Local Seller"]
+        : []),
     ].join("\n");
 
     const title = `Live Meat Market Seller: ${businessName}`;
@@ -383,6 +592,7 @@ export default function OkeechobeeMeatMarketCommandCenter() {
           <div style={stat}><span>Buyer Requests</span><strong>{questions.length}</strong></div>
           <div style={stat}><span>Pending</span><strong>{counts.pending}</strong></div>
           <div style={stat}><span>Live</span><strong>{counts.live}</strong></div>
+          <div style={stat}><span>Verified</span><strong>{counts.verified}</strong></div>
           <div style={stat}><span>Paused / Sold Out</span><strong>{counts.paused}</strong></div>
           <div style={stat}><span>Total Listings</span><strong>{listings.length}</strong></div>
         </section>
@@ -484,6 +694,18 @@ export default function OkeechobeeMeatMarketCommandCenter() {
                         </div>
 
                         <div style={rowRight}>
+                          {isVerifiedSeller(listing) ? (
+                            <span
+                              style={{
+                                fontSize: "11px",
+                                fontWeight: 800,
+                                color: "#17653a",
+                              }}
+                            >
+                              ✓ VERIFIED
+                            </span>
+                          ) : null}
+
                           <span style={statusBadge}>
                             {listing.status || "Pending Review"}
                           </span>
@@ -819,12 +1041,86 @@ export default function OkeechobeeMeatMarketCommandCenter() {
                 <div style={detailBlock}>
                   <strong>Listing Details</strong>
                   <div style={preWrap}>
-                    {selectedListing.description ||
+                    {visibleListingDescription(selectedListing) ||
                       "No listing details provided."}
                   </div>
                 </div>
               </>
             )}
+
+            {!editingListing ? (
+              <div
+                style={{
+                  marginTop: "22px",
+                  padding: "16px",
+                  border: "1px solid #ded8c8",
+                  borderRadius: "14px",
+                  background: "#faf8f1",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "12px",
+                    fontWeight: 800,
+                    letterSpacing: ".08em",
+                    textTransform: "uppercase",
+                    color: "#6b665a",
+                    marginBottom: "8px",
+                  }}
+                >
+                  Seller Verification
+                </div>
+
+                <div
+                  style={{
+                    fontSize: "17px",
+                    fontWeight: 800,
+                    color: isVerifiedSeller(selectedListing)
+                      ? "#17653a"
+                      : "#25241f",
+                  }}
+                >
+                  {isVerifiedSeller(selectedListing)
+                    ? "✓ Verified Local Seller"
+                    : "Not Verified"}
+                </div>
+
+                {!isVerifiedSeller(selectedListing) ? (
+                  <>
+                    <div
+                      style={{
+                        display: "grid",
+                        gap: "5px",
+                        marginTop: "12px",
+                        fontSize: "13px",
+                        color: "#625f55",
+                      }}
+                    >
+                      <span>□ Contact confirmed</span>
+                      <span>□ Local seller / ranch confirmed</span>
+                      <span>□ Business or seller presence checked</span>
+                      <span>□ Products / source reasonably confirmed</span>
+                    </div>
+
+                    <button
+                      type="button"
+                      style={{
+                        ...primaryButton,
+                        marginTop: "14px",
+                      }}
+                      disabled={workingId === selectedListing.id}
+                      onClick={() =>
+                        markListingVerified(selectedListing)
+                      }
+                    >
+                      {workingId === selectedListing.id
+                        ? "Verifying..."
+                        : "Mark Verified Local Seller"}
+                    </button>
+                  </>
+                ) : null}
+              </div>
+            ) : null}
 
             <div style={drawerActions}>
               {!editingListing &&
@@ -840,7 +1136,8 @@ export default function OkeechobeeMeatMarketCommandCenter() {
               ) : null}
 
               {!editingListing &&
-              statusKey(selectedListing.status) !== "live" ? (
+              statusKey(selectedListing.status) !== "live" &&
+              isVerifiedSeller(selectedListing) ? (
                 <button
                   type="button"
                   style={primaryButton}
@@ -849,6 +1146,24 @@ export default function OkeechobeeMeatMarketCommandCenter() {
                 >
                   {workingId === selectedListing.id ? "Updating..." : "Make Live"}
                 </button>
+              ) : null}
+
+              {!editingListing &&
+              statusKey(selectedListing.status) !== "live" &&
+              !isVerifiedSeller(selectedListing) ? (
+                <div
+                  style={{
+                    width: "100%",
+                    padding: "11px 13px",
+                    borderRadius: "12px",
+                    background: "#f3eee1",
+                    fontSize: "13px",
+                    fontWeight: 700,
+                    color: "#6b5f43",
+                  }}
+                >
+                  Verify this seller before making the listing live.
+                </div>
               ) : null}
 
               {!editingListing && statusKey(selectedListing.status) === "live" ? (
@@ -905,6 +1220,142 @@ export default function OkeechobeeMeatMarketCommandCenter() {
               <div style={preWrap}>
                 {selectedQuestion.message || "No request provided."}
               </div>
+            </div>
+
+            <div
+              style={{
+                marginTop: "22px",
+                padding: "16px",
+                borderRadius: "14px",
+                border: "1px solid rgba(217,183,111,.28)",
+                background: "#101713",
+              }}
+            >
+              <div style={eyebrow}>Local Supply Match</div>
+
+              <h3
+                style={{
+                  margin: "5px 0 4px",
+                  fontSize: "19px",
+                }}
+              >
+                Potential Seller Matches
+              </h3>
+
+              <p
+                style={{
+                  margin: "0 0 14px",
+                  color: "#9fa9a2",
+                  fontSize: "13px",
+                  lineHeight: 1.5,
+                }}
+              >
+                Active verified sellers that appear to match what this buyer
+                is looking for.
+              </p>
+
+              {selectedQuestionMatches.length > 0 ? (
+                <div
+                  style={{
+                    display: "grid",
+                    gap: "10px",
+                  }}
+                >
+                  {selectedQuestionMatches.map(
+                    ({ listing, matches, fulfillment }) => (
+                      <div
+                        key={listing.id}
+                        style={{
+                          padding: "14px",
+                          borderRadius: "12px",
+                          background: "#171d19",
+                          border: "1px solid rgba(255,255,255,.08)",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "flex-start",
+                            gap: "12px",
+                            flexWrap: "wrap",
+                          }}
+                        >
+                          <div>
+                            <strong
+                              style={{
+                                display: "block",
+                                fontSize: "16px",
+                                color: "#fff",
+                              }}
+                            >
+                              {sellerName(listing)}
+                            </strong>
+
+                            <span
+                              style={{
+                                display: "block",
+                                marginTop: "4px",
+                                color: "#d9b76f",
+                                fontSize: "13px",
+                                fontWeight: 800,
+                              }}
+                            >
+                              {matches.join(" + ")} match
+                            </span>
+
+                            <span
+                              style={{
+                                display: "block",
+                                marginTop: "5px",
+                                color: "#9fa9a2",
+                                fontSize: "12px",
+                              }}
+                            >
+                              {fulfillment}
+                            </span>
+                          </div>
+
+                          <a
+                            href={sellerStorefrontHref(listing)}
+                            target="_blank"
+                            rel="noreferrer"
+                            style={{
+                              display: "inline-flex",
+                              minHeight: "38px",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              padding: "8px 12px",
+                              borderRadius: "9px",
+                              background: "#d9b76f",
+                              color: "#142018",
+                              textDecoration: "none",
+                              fontSize: "12px",
+                              fontWeight: 900,
+                            }}
+                          >
+                            View Seller
+                          </a>
+                        </div>
+                      </div>
+                    )
+                  )}
+                </div>
+              ) : (
+                <div
+                  style={{
+                    padding: "13px",
+                    borderRadius: "11px",
+                    background: "#171d19",
+                    color: "#9fa9a2",
+                    fontSize: "13px",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  No active verified seller matches yet. Keep this request open
+                  as new local sellers are added.
+                </div>
+              )}
             </div>
 
             {selectedQuestion.contact ? (
@@ -1310,3 +1761,5 @@ const primaryLink: React.CSSProperties = {
   textDecoration: "none",
   fontWeight: 900,
 };
+
+

@@ -156,6 +156,7 @@ export default async function handler(
       eventsResult,
       ownersResult,
       helpersResult,
+      meatMarketBuyerResult,
     ] = await Promise.all([
       supabase
         .from("okeechobee_events")
@@ -171,6 +172,18 @@ export default async function handler(
       supabase
         .from("okeechobee_project_helpers")
         .select("event_slug,id,name,phone,email,help_type,notes,created_at,status"),
+
+      supabase
+        .from("homeplanet_leads")
+        .select(
+          "id,name,contact,message,business_name,board_slug,selected_operation,created_at"
+        )
+        .eq("board_slug", "okeechobee-live-meat-market")
+        .eq(
+          "selected_operation",
+          "Okeechobee Live Meat Market Buyer Request"
+        )
+        .order("created_at", { ascending: false }),
     ]);
 
     if (eventsResult.error) {
@@ -206,6 +219,18 @@ export default async function handler(
       return res.status(500).json({
         ok: false,
         error: "Could not load helper information.",
+      });
+    }
+
+    if (meatMarketBuyerResult.error) {
+      console.error(
+        "Command Center Meat Market buyer load failed:",
+        meatMarketBuyerResult.error.message
+      );
+
+      return res.status(500).json({
+        ok: false,
+        error: "Could not load Meat Market buyer requests.",
       });
     }
 
@@ -268,6 +293,7 @@ export default async function handler(
     return res.status(200).json({
       ok: true,
       events,
+      meatMarketBuyers: meatMarketBuyerResult.data || [],
     });
   } catch (error) {
     console.error("Command Center API error:", error);
@@ -278,4 +304,7 @@ export default async function handler(
     });
   }
 }
+
+
+
 
