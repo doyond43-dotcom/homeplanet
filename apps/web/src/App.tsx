@@ -92,7 +92,9 @@ const PerformancePowerboatsModelsPage = lazy(() => import("./pages/PerformancePo
 const PerformancePowerboatsContactPage = lazy(() => import("./pages/PerformancePowerboatsContactPage"));
 const PerformancePowerboatsStartProjectPage = lazy(() => import("./pages/PerformancePowerboatsStartProjectPage"));
 const PerformancePowerboatsServicePage = lazy(() => import("./pages/PerformancePowerboatsServicePage"));
-const PerformancePowerboatsFabricationPage = lazy(() => import("./pages/PerformancePowerboatsFabricationPage"));
+const PerformancePowerboatsFabricationPage = lazy(() => import("./pages/PerformancePowerboatsFabricationMetalworkPage"));
+const PerformancePowerboatsFabricationRequestPage = lazy(() => import("./pages/PerformancePowerboatsFabricationPage"));
+
 const PerformancePowerboatsCustomerBuildsPage = lazy(() => import("./pages/PerformancePowerboatsCustomerBuildsPage"));
 const PerformancePowerboatsLiveBoard = lazy(() => import("./pages/PerformancePowerboatsLiveBoard"));
 const PerformancePowerboatsCustomerProjectPage = lazy(() => import("./pages/PerformancePowerboatsCustomerProjectPage"));
@@ -218,6 +220,8 @@ export default function App() {
           <Route path="/planet/performance-powerboats/start-project" element={<PerformancePowerboatsStartProjectPage />} />
           <Route path="/planet/performance-powerboats/service" element={<PerformancePowerboatsServicePage />} />
           <Route path="/planet/performance-powerboats/fabrication" element={<PerformancePowerboatsFabricationPage />} />
+          <Route path="/planet/performance-powerboats/fabrication/request" element={<PerformancePowerboatsFabricationRequestPage />} />
+
           <Route path="/planet/performance-powerboats/customer-builds" element={<PerformancePowerboatsCustomerBuildsPage />} />
           <Route path="/planet/performance-powerboats/estimate/:id" element={<PerformancePowerboatsEstimatePage />} />
           <Route path="/planet/performance-powerboats/board" element={<RequireAuth><PerformancePowerboatsLiveBoard /></RequireAuth>} />

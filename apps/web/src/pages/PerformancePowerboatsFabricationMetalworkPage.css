@@ -1,0 +1,255 @@
+﻿.pp-fab-page {
+  background: #f3f1eb;
+  color: #08263a;
+}
+
+.pp-fab-shell {
+  width: min(100%, 1180px);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.pp-fab-hero {
+  background:
+    radial-gradient(circle at 82% 18%, rgba(226, 171, 49, 0.14), transparent 28%),
+    linear-gradient(135deg, #021622 0%, #04293d 58%, #021622 100%);
+  color: #fff;
+  padding: 34px 0 82px;
+}
+
+.pp-fab-back,
+.pp-fab-footer-back {
+  display: inline-block;
+  text-decoration: none;
+  letter-spacing: 0.14em;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.pp-fab-back {
+  color: rgba(255,255,255,0.72);
+  margin-bottom: 44px;
+}
+
+.pp-fab-footer-back {
+  color: rgba(8, 38, 58, 0.72);
+  margin-top: 22px;
+}
+
+.pp-fab-kicker,
+.pp-fab-copy span,
+.pp-fab-cta span {
+  display: inline-block;
+  color: #e2ab31;
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: 0.18em;
+  margin-bottom: 14px;
+}
+
+.pp-fab-hero h1,
+.pp-fab-copy h2,
+.pp-fab-cta h2 {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: -0.05em;
+  line-height: 0.92;
+  font-weight: 900;
+}
+
+.pp-fab-hero h1 {
+  max-width: 860px;
+  font-size: clamp(58px, 8vw, 102px);
+}
+
+.pp-fab-lead,
+.pp-fab-copy p,
+.pp-fab-cta p {
+  margin: 22px 0 0;
+  max-width: 700px;
+  line-height: 1.6;
+  font-size: 18px;
+}
+
+.pp-fab-lead {
+  color: rgba(255,255,255,0.78);
+  max-width: 620px;
+}
+
+.pp-fab-feature,
+.pp-fab-light,
+.pp-fab-cta-wrap {
+  padding: 64px 0;
+}
+
+.pp-fab-feature-image-wrap {
+  background: #fff;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.10);
+}
+
+.pp-fab-feature-image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+.pp-fab-copy {
+  margin-top: 22px;
+}
+
+.pp-fab-copy h2,
+.pp-fab-cta h2 {
+  max-width: 760px;
+  font-size: clamp(38px, 5vw, 68px);
+  color: #08263a;
+}
+
+.pp-fab-copy p,
+.pp-fab-cta p {
+  color: rgba(8, 38, 58, 0.70);
+  max-width: 640px;
+}
+
+.pp-fab-dark {
+  background:
+    radial-gradient(circle at 15% 18%, rgba(226, 171, 49, 0.10), transparent 25%),
+    #03263a;
+  color: #fff;
+  padding: 68px 0;
+}
+
+.pp-fab-copy--dark h2 {
+  color: #fff;
+}
+
+.pp-fab-copy--dark p {
+  color: rgba(255,255,255,0.72);
+}
+
+.pp-fab-weld-grid {
+  margin-top: 28px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.pp-fab-three-grid {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: 1.3fr 1fr 1fr;
+  gap: 18px;
+}
+
+.pp-fab-four-grid {
+  margin-top: 26px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.pp-fab-weld-grid img,
+.pp-fab-three-grid img,
+.pp-fab-four-grid img {
+  width: 100%;
+  height: 100%;
+  min-height: 220px;
+  object-fit: cover;
+  display: block;
+  border-radius: 18px;
+  box-shadow: 0 14px 32px rgba(0,0,0,0.10);
+}
+
+.pp-fab-cta {
+  background: #fff;
+  border-radius: 24px;
+  padding: 36px;
+  box-shadow: 0 14px 34px rgba(0,0,0,0.08);
+  display: flex;
+  justify-content: space-between;
+  gap: 28px;
+  align-items: center;
+}
+
+.pp-fab-cta-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 220px;
+}
+
+.pp-fab-button {
+  text-decoration: none;
+  text-align: center;
+  padding: 14px 18px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: 0.14em;
+}
+
+.pp-fab-button--gold {
+  background: #e2ab31;
+  color: #08263a;
+}
+
+.pp-fab-button--ghost {
+  background: transparent;
+  color: #08263a;
+  border: 1px solid rgba(8, 38, 58, 0.14);
+}
+
+@media (max-width: 900px) {
+  .pp-fab-feature,
+  .pp-fab-light,
+  .pp-fab-cta-wrap,
+  .pp-fab-dark {
+    padding: 48px 0;
+  }
+
+  .pp-fab-weld-grid,
+  .pp-fab-three-grid,
+  .pp-fab-four-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pp-fab-cta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .pp-fab-cta-actions {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .pp-fab-button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .pp-fab-shell {
+    padding: 0 18px;
+  }
+
+  .pp-fab-hero {
+    padding: 28px 0 58px;
+  }
+
+  .pp-fab-back {
+    margin-bottom: 34px;
+  }
+
+  .pp-fab-lead,
+  .pp-fab-copy p,
+  .pp-fab-cta p {
+    font-size: 16px;
+  }
+
+  .pp-fab-cta {
+    padding: 24px;
+  }
+}

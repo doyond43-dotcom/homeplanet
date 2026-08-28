@@ -59,7 +59,7 @@ export default function PerformancePowerboatsStartProjectPage() {
 
           <a
             className="pp-start-card"
-            href="/planet/performance-powerboats/fabrication"
+            href="/planet/performance-powerboats/fabrication/request"
           >
             <span>03</span>
             <div>
@@ -84,6 +84,8 @@ export default function PerformancePowerboatsStartProjectPage() {
     </main>
   );
 }
+
+
 
 
 
