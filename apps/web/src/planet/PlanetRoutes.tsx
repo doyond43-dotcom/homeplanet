@@ -399,6 +399,7 @@ import RestaurantAwarenessDrinkBoard from "../pages/RestaurantAwarenessDrinkBoar
 import OkeechobeeTogetherPage from "../pages/OkeechobeeTogetherPage";
 import OkeechobeeLiveMeatMarketPage from "../pages/OkeechobeeLiveMeatMarketPage";
 import OkeechobeeMeatMarketSellerPage from "../pages/OkeechobeeMeatMarketSellerPage";
+import OkeechobeeMeatMarketSellerStorefrontPage from "../pages/OkeechobeeMeatMarketSellerStorefrontPage";
 import OkeechobeeCreateEventPage from "../pages/OkeechobeeCreateEventPage";
 import OkeechobeeCreateEventPageV2 from "../pages/OkeechobeeCreateEventPageV2";
 import OkeechobeeReachOutPage from "../pages/OkeechobeeReachOutPage";
@@ -412,6 +413,8 @@ import OkeechobeeHelperJoinPage from "../pages/OkeechobeeHelperJoinPage";
 import HomePlanetBuildDirectory from "../pages/HomePlanetBuildDirectory";
 import HomePlanetFlowRegistry from "../pages/HomePlanetFlowRegistry";
 import OkeechobeeCommandCenter from "../pages/OkeechobeeCommandCenter";
+import OkeechobeeMeatMarketCommandCenter from "../pages/OkeechobeeMeatMarketCommandCenter";
+import OkeechobeeMeatMarketContactPage from "../pages/OkeechobeeMeatMarketContactPage";
 import OkeechobeeOperationsPreview from "../pages/OkeechobeeOperationsPreview";
 
 import StarterLivePageCreatorPage from "../pages/StarterLivePageCreatorPage";
@@ -562,6 +565,10 @@ export default function PlanetRoutes() {
       <Route path="okeechobee" element={<OkeechobeeTogetherPage />} />
       <Route path="okeechobee/meat-market" element={<OkeechobeeLiveMeatMarketPage />} />
       <Route path="okeechobee/meat-market/sell" element={<OkeechobeeMeatMarketSellerPage />} />
+      <Route path="okeechobee/meat-market/seller/:slug" element={<OkeechobeeMeatMarketSellerStorefrontPage />} />
+      <Route path="okeechobee/meat-market/farm-folks" element={<OkeechobeeMeatMarketSellerStorefrontPage />} />
+      <Route path="okeechobee/meat-market/contact" element={<OkeechobeeMeatMarketContactPage />} />
+      <Route path="okeechobee/meat-market/command" element={<RequireAuth><OkeechobeeMeatMarketCommandCenter /></RequireAuth>} />
       <Route path="okeechobee/admin" element={<OkeechobeeCommunityAdminPage />} />
 <Route path="okeechobee/project/:slug" element={<RequireAuth><OkeechobeeProjectWorkspace /></RequireAuth>} />
       <Route path="okeechobee/manage/:slug" element={<OkeechobeeResidentProjectPage />} />
@@ -899,6 +906,8 @@ export default function PlanetRoutes() {
 </Routes>
   );
 }
+
+
 
 
 

@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
+import { supabase } from "../lib/supabase";
 
 type MarketItem = {
-  id: number;
+  id: number | string;
   category: string;
   title: string;
   price: string;
@@ -10,15 +11,16 @@ type MarketItem = {
   location: string;
   fulfillment: string;
   badge?: string;
+  orderHref?: string;
 };
 
 const categories = [
   "Everything",
-  "Ground Beef",
-  "Steaks",
-  "Roasts",
-  "Bulk Beef",
-  "Half / Quarter / Whole",
+  "Beef",
+  "Pork",
+  "Chicken",
+  "Eggs",
+  "More",
 ];
 
 const previewItems: MarketItem[] = [
@@ -57,13 +59,365 @@ const previewItems: MarketItem[] = [
   },
 ];
 
+
+function listingDetail(description: string, label: string) {
+  const lines = String(description || "").split(/\r?\n/);
+  const prefix = `${label}:`.toLowerCase();
+
+  const match = lines.find((line) =>
+    line.trim().toLowerCase().startsWith(prefix)
+  );
+
+  return match
+    ? match.slice(match.indexOf(":") + 1).trim()
+    : "";
+}
+
+function marketCategory(selling: string) {
+  const value = selling.toLowerCase();
+
+  if (
+    value.includes("processor") ||
+    value.includes("processing") ||
+    value.includes("butcher") ||
+    value.includes("cut and wrap") ||
+    value.includes("custom cuts")
+  ) {
+    return "Processors";
+  }
+
+  if (
+    value.includes("raw milk") ||
+    value.includes("raw dairy") ||
+    value.includes("kefir") ||
+    value.includes("cream") ||
+    value.includes("butter")
+  ) {
+    return "Raw Dairy";
+  }
+
+  if (value.includes("honey")) {
+    return "Honey";
+  }
+
+  if (value.includes("egg")) {
+    return "Eggs";
+  }
+
+  if (
+    value.includes("chicken") ||
+    value.includes("poultry")
+  ) {
+    return "Chicken";
+  }
+
+  if (
+    value.includes("pork") ||
+    value.includes("hog") ||
+    value.includes("sausage") ||
+    value.includes("bacon")
+  ) {
+    return "Pork";
+  }
+
+  if (
+    value.includes("beef share") ||
+    value.includes("quarter beef") ||
+    value.includes("half beef") ||
+    value.includes("whole beef")
+  ) {
+    return "Beef Shares";
+  }
+
+  if (
+    value.includes("ribeye") ||
+    value.includes("steak") ||
+    value.includes("sirloin") ||
+    value.includes("filet")
+  ) {
+    return "Steaks";
+  }
+
+  if (value.includes("roast")) {
+    return "Roasts";
+  }
+
+  if (
+    value.includes("ground beef") ||
+    value.includes("hamburger")
+  ) {
+    return "Ground Beef";
+  }
+
+  if (value.includes("beef")) {
+    return "Beef";
+  }
+
+  return "Everything";
+}
+
+
+function sellerImage(seller: string) {
+  const value = String(seller || "").trim().toLowerCase();
+
+  if (value.includes("farm folks")) {
+    return "/images/farm-folks-ranch-hero.png";
+  }
+
+  return "";
+}
+
+function usablePhone(value: string) {
+  const clean = String(value || "").trim();
+
+  if (!clean || clean.includes("@")) return "";
+
+  const digits = clean.replace(/\D/g, "");
+
+  return digits.length >= 7 ? clean : "";
+}
+
+function phoneHref(value: string, mode: "call" | "text") {
+  const digits = String(value || "").replace(/[^\d+]/g, "");
+
+  return mode === "text"
+    ? `sms:${digits}`
+    : `tel:${digits}`;
+}
+
+function usableOrderHref(value: string) {
+  const clean = String(value || "").trim();
+
+  if (!clean || clean.toLowerCase() === "not provided") {
+    return "";
+  }
+
+  if (/^https?:\/\//i.test(clean)) {
+    return clean;
+  }
+
+  if (clean.includes(".") && !clean.includes(" ")) {
+    return `https://${clean}`;
+  }
+
+  return "";
+}
 export default function OkeechobeeLiveMeatMarketPage() {
   const [activeCategory, setActiveCategory] = useState("Everything");
+  const [liveItems, setLiveItems] = useState<MarketItem[]>([]);
+  const [marketLoading, setMarketLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadLiveMarket() {
+      const [
+        { data: sellerData, error: sellerError },
+        { data: productData, error: productError },
+      ] = await Promise.all([
+        supabase
+          .from("okeechobee_events")
+          .select("id,title,description,location,contact,status,created_at")
+          .eq("type", "Live Meat Market Seller")
+          .eq("status", "Active")
+          .order("created_at", { ascending: false }),
+
+        supabase
+          .from("okeechobee_meat_market_products")
+          .select(
+            "id,seller_listing_id,seller_name,name,price,package,fulfillment,availability,status,sort_order"
+          )
+          .eq("status", "Active")
+          .order("sort_order", { ascending: true }),
+      ]);
+
+      if (sellerError) {
+        console.error(
+          "Could not load live Meat Market sellers:",
+          sellerError
+        );
+        setLiveItems([]);
+        setMarketLoading(false);
+        return;
+      }
+
+      if (productError) {
+        console.error(
+          "Could not load Meat Market products:",
+          productError
+        );
+      }
+
+      const products = productError ? [] : productData || [];
+
+      const mapped: MarketItem[] = (sellerData || []).flatMap(
+        (listing: any) => {
+          const selling =
+            listingDetail(listing.description, "Selling") ||
+            "Local food available";
+
+          const sellerPrice =
+            listingDetail(listing.description, "Price / Package") ||
+            "Contact seller";
+
+          const sellerFulfillment =
+            listingDetail(listing.description, "Pickup / Delivery") ||
+            "Contact seller for pickup or delivery";
+
+          const submittedLink =
+            listingDetail(
+              listing.description,
+              "Website / Facebook / Order Link"
+            );
+
+          const seller =
+            String(listing.title || "")
+              .replace(/^Live Meat Market Seller:\s*/i, "")
+              .trim() || "Local Seller";
+
+          const sellerProducts = products.filter(
+            (product: any) =>
+              String(product.seller_name || "")
+                .trim()
+                .toLowerCase() === seller.toLowerCase()
+          );
+
+          if (sellerProducts.length > 0) {
+            return sellerProducts.map((product: any) => {
+              const productName =
+                String(product.name || "").trim() ||
+                "Local food available";
+
+              const productPrice =
+                String(product.price || "").trim() ||
+                "Contact seller";
+
+              const productFulfillment =
+                String(product.fulfillment || "").trim() ||
+                sellerFulfillment;
+
+              const productAmount =
+                String(product.package || "").trim() ||
+                String(product.availability || "").trim() ||
+                "Available now";
+
+              return {
+                id: product.id,
+                category: marketCategory(productName),
+                title: productName,
+                price: productPrice,
+                amount: productAmount,
+                seller,
+                location: listing.location || "Okeechobee area",
+                fulfillment: productFulfillment,
+                badge: "AVAILABLE NOW",
+                phone: usablePhone(String(listing.contact || "")),
+                orderHref: `/planet/okeechobee/meat-market/contact?${new URLSearchParams(
+                  {
+                    mode: "order",
+                    listingId: String(listing.id),
+                    seller,
+                    product: productName,
+                    price: productPrice,
+                    fulfillment: productFulfillment,
+                  }
+                ).toString()}`,
+                sellerHref: usableOrderHref(submittedLink),
+              };
+            });
+          }
+
+          return [
+            {
+              id: listing.id,
+              category: marketCategory(selling),
+              title: selling,
+              price: sellerPrice,
+              amount: "Available now",
+              seller,
+              location: listing.location || "Okeechobee area",
+              fulfillment: sellerFulfillment,
+              badge: "AVAILABLE NOW",
+              phone: usablePhone(String(listing.contact || "")),
+              orderHref: `/planet/okeechobee/meat-market/contact?${new URLSearchParams(
+                {
+                  mode: "order",
+                  listingId: String(listing.id),
+                  seller,
+                  product: selling,
+                  price: sellerPrice,
+                  fulfillment: sellerFulfillment,
+                }
+              ).toString()}`,
+              sellerHref: usableOrderHref(submittedLink),
+            },
+          ];
+        }
+      );
+
+      setLiveItems(mapped);
+      setMarketLoading(false);
+    }
+
+    loadLiveMarket();
+  }, []);
+
+  const marketItems = liveItems;
 
   const visibleItems = useMemo(() => {
-    if (activeCategory === "Everything") return previewItems;
-    return previewItems.filter((item) => item.category === activeCategory);
-  }, [activeCategory]);
+    if (activeCategory === "Everything") return marketItems;
+
+    if (activeCategory === "Beef") {
+      return marketItems.filter((item) =>
+        [
+          "Beef",
+          "Ground Beef",
+          "Steaks",
+          "Roasts",
+          "Beef Shares",
+        ].includes(item.category)
+      );
+    }
+
+    if (activeCategory === "More") {
+      return marketItems.filter((item) =>
+        [
+          "Raw Dairy",
+          "Honey",
+          "Processors",
+        ].includes(item.category)
+      );
+    }
+
+    return marketItems.filter(
+      (item) => item.category === activeCategory
+    );
+  }, [activeCategory, marketItems]);
+
+  const visibleSellers = useMemo(() => {
+    const groups = new Map<string, SellerGroup>();
+
+    visibleItems.forEach((item) => {
+      const key = item.seller.trim().toLowerCase();
+
+      const existing = groups.get(key);
+
+      if (existing) {
+        existing.items.push(item);
+        return;
+      }
+
+      groups.set(key, {
+        seller: item.seller,
+        location: item.location,
+        fulfillment: item.fulfillment,
+        phone: item.phone,
+        sellerHref: item.sellerHref,
+        image: sellerImage(item.seller),
+        items: [item],
+      });
+    });
+
+    return Array.from(groups.values());
+  }, [visibleItems]);
 
   return (
     <main className="meat-market-page">
@@ -108,6 +462,29 @@ export default function OkeechobeeLiveMeatMarketPage() {
           font-weight: 950;
           letter-spacing: 0.08em;
           text-transform: uppercase;
+          color: #17231b;
+          text-decoration: none;
+          white-space: nowrap;
+        }
+
+        .market-nav {
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          gap: 18px;
+          margin-left: auto;
+        }
+
+        .market-nav-link {
+          color: #526057;
+          text-decoration: none;
+          font-size: 13px;
+          font-weight: 800;
+          white-space: nowrap;
+        }
+
+        .market-nav-link:hover {
+          color: #193c2b;
         }
 
         .sell-link {
@@ -165,6 +542,68 @@ export default function OkeechobeeLiveMeatMarketPage() {
           font-weight: 850;
         }
 
+
+        .market-doorways {
+          padding: 22px 0 8px;
+        }
+
+        .doorway-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 14px;
+        }
+
+        .doorway {
+          display: flex;
+          min-height: 150px;
+          padding: 24px;
+          border-radius: 24px;
+          text-decoration: none;
+          flex-direction: column;
+          justify-content: space-between;
+          transition: transform 140ms ease, box-shadow 140ms ease;
+        }
+
+        .doorway:hover {
+          transform: translateY(-2px);
+        }
+
+        .doorway-buy {
+          background: #193c2b;
+          color: #ffffff;
+          box-shadow: 0 16px 38px rgba(25,60,43,0.16);
+        }
+
+        .doorway-sell {
+          background: #eadcc1;
+          color: #17231b;
+          border: 1px solid rgba(85,64,34,0.10);
+          box-shadow: 0 16px 38px rgba(73,55,28,0.08);
+        }
+
+        .doorway-label {
+          font-size: clamp(24px, 4vw, 34px);
+          line-height: 1;
+          font-weight: 950;
+          letter-spacing: -0.04em;
+        }
+
+        .doorway-copy {
+          margin-top: 14px;
+          font-size: 14px;
+          line-height: 1.45;
+          font-weight: 700;
+          opacity: 0.78;
+        }
+
+        .doorway-action {
+          margin-top: 22px;
+          font-size: 13px;
+          font-weight: 950;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+        }
+
         .section {
           padding: 24px 0 34px;
         }
@@ -215,6 +654,194 @@ export default function OkeechobeeLiveMeatMarketPage() {
           background: #193c2b;
           color: white;
           border-color: #193c2b;
+        }
+
+
+        .seller-market-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 18px;
+          margin-top: 18px;
+        }
+
+        .seller-market-card {
+          min-width: 0;
+          overflow: hidden;
+          border-radius: 26px;
+          background: rgba(255,255,255,0.88);
+          border: 1px solid rgba(23,35,27,0.11);
+          box-shadow: 0 18px 50px rgba(48,39,24,0.07);
+        }
+
+        .seller-market-image {
+          width: 100%;
+          height: 245px;
+          display: block;
+          object-fit: cover;
+        }
+
+        .seller-market-image-fallback {
+          height: 190px;
+          padding: 26px;
+          display: flex;
+          align-items: flex-end;
+          background:
+            radial-gradient(circle at top right, rgba(232,215,181,0.16), transparent 18rem),
+            #193c2b;
+          color: white;
+        }
+
+        .seller-market-image-fallback span {
+          font-size: clamp(28px, 5vw, 40px);
+          font-weight: 950;
+          line-height: 1;
+          letter-spacing: -0.04em;
+        }
+
+        .seller-market-body {
+          padding: 22px;
+        }
+
+        .seller-market-name {
+          margin: 0;
+          font-size: clamp(27px, 4vw, 36px);
+          line-height: 1;
+          font-weight: 950;
+          letter-spacing: -0.045em;
+        }
+
+        .seller-market-meta {
+          margin-top: 9px;
+          color: #657068;
+          font-size: 14px;
+          line-height: 1.45;
+          font-weight: 700;
+        }
+
+        .seller-products-label {
+          margin-top: 22px;
+          font-size: 11px;
+          font-weight: 950;
+          letter-spacing: 0.09em;
+          text-transform: uppercase;
+          color: #8a6a38;
+        }
+
+        .seller-product-preview {
+          margin-top: 9px;
+          display: grid;
+          gap: 0;
+          border-top: 1px solid rgba(23,35,27,0.09);
+        }
+
+        .seller-product-row {
+          display: flex;
+          align-items: baseline;
+          justify-content: space-between;
+          gap: 16px;
+          padding: 11px 0;
+          border-bottom: 1px solid rgba(23,35,27,0.09);
+        }
+
+        .seller-product-title {
+          min-width: 0;
+          font-size: 14px;
+          line-height: 1.35;
+          font-weight: 850;
+        }
+
+        .seller-product-price {
+          flex: 0 0 auto;
+          color: #526057;
+          font-size: 13px;
+          font-weight: 800;
+          text-align: right;
+        }
+
+        .seller-more {
+          margin-top: 10px;
+          color: #657068;
+          font-size: 13px;
+          font-weight: 800;
+        }
+
+        .seller-market-action {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+          min-height: 50px;
+          margin-top: 19px;
+          padding: 0 18px;
+          border-radius: 14px;
+          background: #193c2b;
+          color: white;
+          text-decoration: none;
+          text-align: center;
+          font-size: 14px;
+          font-weight: 950;
+        }
+
+        .seller-cta-card {
+          min-width: 0;
+          min-height: 100%;
+          padding: 28px;
+          border-radius: 26px;
+          background: #eadcc1;
+          border: 1px dashed rgba(76, 56, 28, 0.28);
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          box-shadow: 0 18px 50px rgba(48,39,24,0.05);
+        }
+
+        .seller-cta-kicker {
+          font-size: 11px;
+          font-weight: 950;
+          letter-spacing: 0.09em;
+          text-transform: uppercase;
+          color: #8a6a38;
+        }
+
+        .seller-cta-title {
+          margin: 14px 0 0;
+          font-size: clamp(30px, 5vw, 42px);
+          line-height: 0.98;
+          letter-spacing: -0.045em;
+          font-weight: 950;
+          color: #17231b;
+        }
+
+        .seller-cta-copy {
+          margin-top: 16px;
+          color: #5f594d;
+          font-size: 15px;
+          line-height: 1.55;
+          font-weight: 700;
+        }
+
+        .seller-cta-products {
+          margin-top: 22px;
+          color: #17231b;
+          font-size: 14px;
+          line-height: 1.6;
+          font-weight: 850;
+        }
+
+        .seller-cta-action {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 50px;
+          margin-top: 28px;
+          padding: 0 18px;
+          border-radius: 14px;
+          background: #193c2b;
+          color: white;
+          text-decoration: none;
+          text-align: center;
+          font-size: 14px;
+          font-weight: 950;
         }
 
         .market-grid {
@@ -409,6 +1036,22 @@ export default function OkeechobeeLiveMeatMarketPage() {
         }
 
         @media (max-width: 820px) {
+          .seller-market-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .seller-market-image {
+            height: 220px;
+          }
+
+          .doorway-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .doorway {
+            min-height: 132px;
+          }
+
           .market-grid {
             grid-template-columns: 1fr;
           }
@@ -431,15 +1074,43 @@ export default function OkeechobeeLiveMeatMarketPage() {
 
           .market-topbar {
             padding-top: 14px;
+            flex-wrap: wrap;
+          }
+
+          .market-nav {
+            order: 3;
+            width: 100%;
+            justify-content: flex-start;
+            gap: 16px;
+            overflow-x: auto;
+            padding: 4px 0 2px;
+            scrollbar-width: none;
+          }
+
+          .market-nav::-webkit-scrollbar {
+            display: none;
           }
         }
       `}</style>
 
       <div className="market-shell">
         <header className="market-topbar">
-          <div className="market-brand">Okeechobee Together</div>
+          <a className="market-brand" href="/planet/okeechobee">
+            Okeechobee Together
+          </a>
+
+          <nav className="market-nav" aria-label="Meat Market navigation">
+            <a className="market-nav-link" href="#market">
+              Market
+            </a>
+
+            <a className="market-nav-link" href="#how-it-works">
+              How It Works
+            </a>
+          </nav>
+
           <a className="sell-link" href="/planet/okeechobee/meat-market/sell">
-            Sell Local Meat
+            Sell What I Have
           </a>
         </header>
 
@@ -463,10 +1134,43 @@ export default function OkeechobeeLiveMeatMarketPage() {
           </div>
         </section>
 
-        <section className="section">
+        <section className="market-doorways" aria-label="Choose what you want to do">
+          <div className="doorway-grid">
+            <a className="doorway doorway-buy" href="#market">
+              <div>
+                <div className="doorway-label">Buy Local Meat</div>
+                <div className="doorway-copy">
+                  See what local ranchers and sellers have available right now.
+                </div>
+              </div>
+
+              <div className="doorway-action">
+                See What&apos;s Available &rarr;
+              </div>
+            </a>
+
+            <a
+              className="doorway doorway-sell"
+              href="/planet/okeechobee/meat-market/sell"
+            >
+              <div>
+                <div className="doorway-label">Sell What I Have</div>
+                <div className="doorway-copy">
+                  Ranchers, farms, processors, butchers, and local meat sellers.
+                </div>
+              </div>
+
+              <div className="doorway-action">
+                Add My Listing &rarr;
+              </div>
+            </a>
+          </div>
+        </section>
+
+        <section className="section" id="market">
           <div className="section-head">
-            <h2>What are you looking for?</h2>
-            <p>See what local ranchers, butchers, and meat sellers have available.</p>
+            <h2>What&apos;s Available Right Now</h2>
+            <p>Choose what you&apos;re looking for and buy directly from a local seller.</p>
           </div>
 
           <div className="category-row">
@@ -487,40 +1191,156 @@ export default function OkeechobeeLiveMeatMarketPage() {
           <div className="section-head">
             <h2>Available Now</h2>
             <p>
-              This first version is showing preview listings while we bring local sellers into the market.
+              {liveItems.length
+                ? "Available now from local sellers."
+                : marketLoading
+                  ? "Checking what local sellers have available..."
+                  : "Preview listings are shown until local sellers are live."}
             </p>
           </div>
 
-          <div className="market-grid">
-            {visibleItems.length ? (
-              visibleItems.map((item) => (
-                <article className="market-card" key={item.id}>
-                  <div className="card-top">
-                    <div className="card-badge">{item.badge}</div>
-                    <div className="card-title">{item.title}</div>
-                  </div>
+          <div className="seller-market-grid">
+            {visibleSellers.length ? (
+              <>
+                {visibleSellers.map((seller) => {
+                  const preview = seller.items.slice(0, 4);
+                  const remaining = seller.items.length - preview.length;
 
-                  <div className="card-body">
-                    <div className="price">{item.price}</div>
-                    <div className="amount">{item.amount}</div>
+                  return (
+                    <article
+                      className="seller-market-card"
+                      key={seller.seller}
+                    >
+                    {seller.image ? (
+                      <img
+                        className="seller-market-image"
+                        src={seller.image}
+                        alt={`${seller.seller} ranch or farm`}
+                      />
+                    ) : (
+                      <div className="seller-market-image-fallback">
+                        <span>{seller.seller}</span>
+                      </div>
+                    )}
 
-                    <div className="seller">
-                      <div className="seller-name">{item.seller}</div>
-                      <div className="seller-meta">{item.location}</div>
-                      <div className="fulfillment">{item.fulfillment}</div>
+                    <div className="seller-market-body">
+                      <h3 className="seller-market-name">
+                        {seller.seller}
+                      </h3>
+
+                      <div className="seller-market-meta">
+                        {seller.location}
+                        <br />
+                        {seller.fulfillment}
+                      </div>
+
+                      <div className="seller-products-label">
+                        Available now
+                      </div>
+
+                      <div className="seller-product-preview">
+                        {preview.map((item) => (
+                          <div
+                            className="seller-product-row"
+                            key={item.id}
+                          >
+                            <div className="seller-product-title">
+                              {item.title}
+                            </div>
+
+                            <div className="seller-product-price">
+                              {item.price}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {remaining > 0 ? (
+                        <div className="seller-more">
+                          +{remaining} more available
+                        </div>
+                      ) : null}
+
+                      <a
+                        className="seller-market-action"
+                        href={
+                          seller.seller.trim().toLowerCase() === "farm folks llc"
+                            ? "/planet/okeechobee/meat-market/seller/farm-folks"
+                            : seller.items[0]?.orderHref ||
+                              "/planet/okeechobee/meat-market/contact?mode=buy"
+                        }
+                      >
+                        View Seller
+                      </a>
+                    </div>
+                  </article>
+                  );
+                })}
+
+                {activeCategory === "Everything" ? (
+                  <article className="seller-cta-card">
+                    <div>
+                      <div className="seller-cta-kicker">
+                        Local sellers wanted
+                      </div>
+
+                      <h3 className="seller-cta-title">
+                        Add Your Farm or Ranch
+                      </h3>
+
+                      <div className="seller-cta-copy">
+                        Raise it, process it, or sell it locally? Put your available products in front of Okeechobee buyers.
+                      </div>
+
+                      <div className="seller-cta-products">
+                        Beef • Pork • Chicken • Eggs • Bulk meat • Processors • Butchers
+                      </div>
                     </div>
 
-                    <a className="order-button" href="#request">
-                      View / Order
+                    <a
+                      className="seller-cta-action"
+                      href="/planet/okeechobee/meat-market/sell"
+                    >
+                      Add What I Have
                     </a>
-                  </div>
-                </article>
-              ))
+                  </article>
+                ) : null}
+              </>
             ) : (
               <div className="empty-state">
                 Nothing posted in this category yet. Tell local sellers what you are looking for below.
               </div>
             )}
+          </div>
+        </section>
+
+        <section className="section" id="how-it-works">
+          <div className="section-head">
+            <h2>How it works</h2>
+            <p>Keep it simple. Local sellers post what they have. Local buyers find it.</p>
+          </div>
+
+          <div className="market-columns">
+            <div className="simple-panel">
+              <h3>1. Add what you have</h3>
+              <p>
+                Ranchers and local sellers send what they have available, the price, and pickup or delivery details.
+              </p>
+            </div>
+
+            <div className="simple-panel">
+              <h3>2. We review it</h3>
+              <p>
+                We check the listing before it goes live so the market stays clean and useful.
+              </p>
+            </div>
+          </div>
+
+          <div className="simple-panel" style={{ marginTop: "16px" }}>
+            <h3>3. Local buyers find you</h3>
+            <p>
+              Buyers see what is available and connect directly with the ranch or seller.
+            </p>
           </div>
         </section>
 
@@ -533,9 +1353,7 @@ export default function OkeechobeeLiveMeatMarketPage() {
               </p>
             </div>
 
-            <a className="request-button" href="/planet/okeechobee/reach-out">
-              Tell Us What You Need
-            </a>
+            <a className="request-button" href="/planet/okeechobee/meat-market/contact?mode=buy">Find Local Food</a>
           </div>
         </section>
 
@@ -547,10 +1365,10 @@ export default function OkeechobeeLiveMeatMarketPage() {
                 Find the people raising, cutting, packaging, and selling meat right here in our community.
               </p>
               <a className="text-link" href="/planet/okeechobee/meat-market/sell">
-                Join the local market &rarr;</a>
+                Add What I Have &rarr;</a>
             </div>
 
-            <div className="simple-panel">
+            <div className="simple-panel" id="processors">
               <h3>Butchers &amp; Processors</h3>
               <p>
                 Local processing, custom cuts, availability, and direct connections in one simple place.
@@ -571,7 +1389,7 @@ export default function OkeechobeeLiveMeatMarketPage() {
             </div>
 
             <a className="request-button" href="/planet/okeechobee/meat-market/sell">
-              Get Listed
+              Add What I Have
             </a>
           </div>
         </section>
@@ -616,10 +1434,10 @@ export default function OkeechobeeLiveMeatMarketPage() {
 
               <a
                 className="request-button"
-                href="/planet/okeechobee/reach-out"
+                href="/planet/okeechobee/meat-market/contact?mode=question"
                 style={{ minHeight: "46px", padding: "0 20px" }}
               >
-                Ask a Question
+                Ask About the Market
               </a>
             </div>
           </div>
@@ -679,9 +1497,9 @@ export default function OkeechobeeLiveMeatMarketPage() {
 
               <a
                 className="text-link"
-                href="/planet/okeechobee/reach-out"
+                href="/planet/okeechobee/meat-market/contact?mode=question"
               >
-                Ask a Question
+                Ask About the Market
               </a>
 
               <a
@@ -689,6 +1507,14 @@ export default function OkeechobeeLiveMeatMarketPage() {
                 href="/planet/okeechobee"
               >
                 Okeechobee Together
+              </a>
+
+              <a className="text-link" href="/privacy">
+                Privacy Policy
+              </a>
+
+              <a className="text-link" href="/terms">
+                Terms of Use
               </a>
             </div>
 
@@ -709,5 +1535,12 @@ export default function OkeechobeeLiveMeatMarketPage() {
     </main>
   );
 }
+
+
+
+
+
+
+
 
 

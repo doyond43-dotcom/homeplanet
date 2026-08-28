@@ -72,6 +72,29 @@ export default defineConfig(({ mode }) => {
       },
     },
   ],
+  server: {
+    proxy: {
+
+      "/api/homeplanet-email": {
+        target: "https://www.homeplanet.city",
+        changeOrigin: true,
+      },
+
+      "/api/okeechobee-command-center": {
+        target: "https://www.homeplanet.city",
+        changeOrigin: true,
+      },
+
+      "/api/okeechobee-approve": {
+        target: "https://www.homeplanet.city",
+        changeOrigin: true,
+      },
+
+      "/api/marshall-document-request": {
+        target: "https://www.homeplanet.city",
+        changeOrigin: true,
+      },
+    },
+  },
   };
 });
-

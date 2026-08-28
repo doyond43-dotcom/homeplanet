@@ -14,6 +14,7 @@ export default function OkeechobeeMeatMarketSellerPage() {
   const [businessName, setBusinessName] = useState("");
   const [contactName, setContactName] = useState("");
   const [contact, setContact] = useState("");
+  const [email, setEmail] = useState("");
   const [products, setProducts] = useState("");
   const [price, setPrice] = useState("");
   const [fulfillment, setFulfillment] = useState("Pickup");
@@ -28,19 +29,20 @@ export default function OkeechobeeMeatMarketSellerPage() {
 
     if (
       !businessName.trim() ||
-      !contactName.trim() ||
       !contact.trim() ||
+      !email.trim() ||
       !products.trim()
     ) {
-      alert("Please add your ranch or business name, your name, contact info, and what you sell.");
+      alert("Please add your ranch or business name, phone number, email, and what you have available.");
       return;
     }
 
     setIsSubmitting(true);
 
     const cleanBusinessName = businessName.trim();
-    const cleanContactName = contactName.trim();
+    const cleanContactName = contactName.trim() || "Not provided";
     const cleanContact = contact.trim();
+    const cleanEmail = email.trim();
     const cleanProducts = products.trim();
     const cleanPrice = price.trim();
     const cleanLocation = location.trim() || "Okeechobee";
@@ -54,6 +56,7 @@ export default function OkeechobeeMeatMarketSellerPage() {
       `Ranch / Business: ${cleanBusinessName}`,
       `Contact Name: ${cleanContactName}`,
       `Best Contact: ${cleanContact}`,
+      `Email: ${cleanEmail}`,
       `Selling: ${cleanProducts}`,
       `Price / Package: ${cleanPrice || "Not provided"}`,
       `Pickup / Delivery: ${fulfillment}`,
@@ -121,9 +124,9 @@ export default function OkeechobeeMeatMarketSellerPage() {
       <main style={styles.page}>
         <section style={styles.card}>
           <p style={styles.kicker}>Okeechobee Live Meat Market</p>
-          <h1 style={styles.title}>Listing received.</h1>
+          <h1 style={styles.title}>Got it.</h1>
           <p style={styles.text}>
-            Thank you. We’ll review your information before anything is added to the public market.
+            We'll review it and get it added to the local market.
           </p>
 
           <Link
@@ -142,9 +145,9 @@ export default function OkeechobeeMeatMarketSellerPage() {
       <section style={styles.shell}>
         <div style={styles.header}>
           <p style={styles.kicker}>Okeechobee Live Meat Market</p>
-          <h1 style={styles.title}>Sell local meat.</h1>
+          <h1 style={styles.title}>Add what I have.</h1>
           <p style={styles.text}>
-            Ranchers, butchers, processors, and local meat shops can send us what they have available.
+            Tell us what you have available. We will review it and help get it in front of local buyers.
           </p>
         </div>
 
@@ -159,40 +162,45 @@ export default function OkeechobeeMeatMarketSellerPage() {
             />
           </label>
 
-          <label style={styles.label}>
-            Your name
-            <input
-              style={styles.input}
-              value={contactName}
-              onChange={(event) => setContactName(event.target.value)}
-              placeholder="Your name"
-              autoComplete="name"
-            />
-          </label>
 
           <label style={styles.label}>
-            Phone or best contact
+            Phone number
             <input
               style={styles.input}
+              type="tel"
               value={contact}
               onChange={(event) => setContact(event.target.value)}
-              placeholder="Phone, text, email, or Messenger"
+              placeholder="Example: 863-555-1234"
+              required
             />
           </label>
 
           <label style={styles.label}>
-            What do you sell?
+            Email
+            <input
+              style={styles.input}
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="you@example.com"
+            
+              required
+            />
+          </label>
+
+          <label style={styles.label}>
+            What do you have available?
             <textarea
               style={styles.textarea}
               value={products}
               onChange={(event) => setProducts(event.target.value)}
-              placeholder="Ground beef, steaks, quarter beef, whole beef, pork, custom cuts..."
+              placeholder="Ground beef, steaks, quarter beef, beef boxes, whole beef..."
               rows={3}
             />
           </label>
 
           <label style={styles.label}>
-            Current price or package
+            Price or package
             <input
               style={styles.input}
               value={price}
@@ -236,7 +244,7 @@ export default function OkeechobeeMeatMarketSellerPage() {
           </label>
 
           <label style={styles.label}>
-            Anything else we should know?
+            Anything else?
             <textarea
               style={styles.textarea}
               value={notes}
@@ -246,13 +254,48 @@ export default function OkeechobeeMeatMarketSellerPage() {
             />
           </label>
 
+                    <p
+            style={{
+              margin: "2px 0 4px",
+              fontSize: 13,
+              lineHeight: 1.5,
+              color: "#667068",
+            }}
+          >
+            We do not sell or give your information to third parties.
+          </p>
           <button
             type="submit"
             style={styles.primaryButton}
             disabled={isSubmitting}
           >
-            {isSubmitting ? "Sending..." : "Send Listing"}
+            {isSubmitting ? "Adding..." : "Add What I Have"}
           </button>
+
+          <div
+            style={{
+              display: "flex",
+              gap: 14,
+              flexWrap: "wrap",
+              justifyContent: "center",
+              marginTop: 16,
+              fontSize: 13,
+            }}
+          >
+            <Link
+              to="/privacy"
+              style={{ color: "#755a2f", fontWeight: 800 }}
+            >
+              Privacy Policy
+            </Link>
+
+            <Link
+              to="/terms"
+              style={{ color: "#755a2f", fontWeight: 800 }}
+            >
+              Terms of Use
+            </Link>
+          </div>
         </form>
       </section>
     </main>

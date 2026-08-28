@@ -1,4 +1,4 @@
-﻿import type { VercelRequest, VercelResponse } from "@vercel/node";
+import type { VercelRequest, VercelResponse } from "@vercel/node";
 import {
   escapeEmailHtml,
   HomePlanetEmailError,
@@ -282,6 +282,342 @@ async function sendOnlyTheEssentials(requestId: string) {
   return { ...result, recordReference: String(savedRequest.id) };
 }
 
+async function sendHomePlanetContact(requestId: string) {
+  const savedLead = await loadSavedRecord(
+    "homeplanet_leads",
+    "id",
+    requestId,
+    "id,name,contact,message,selected_operation,business_name,board_slug,created_at",
+    "homeplanet-contact",
+    "HomePlanet contact question"
+  );
+
+  const isMeatMarket =
+    savedLead.board_slug === "okeechobee-live-meat-market";
+
+  const isHomePlanetContact =
+    savedLead.board_slug === "homeplanet-contact";
+
+  if (!isHomePlanetContact && !isMeatMarket) {
+    throw new HomePlanetEmailError(
+      "Saved lead is not eligible for this notification.",
+      { httpStatus: 400 }
+    );
+  }
+
+  const result = await sendHomePlanetEmail({
+    recipient: requiredEmailRecipient(
+      isMeatMarket ? "MARKET_NOTIFY_EMAIL" : "HOMEPLANET_ADMIN_EMAIL"
+    ),
+    project: isMeatMarket
+      ? "okeechobee-meat-market-contact"
+      : "homeplanet-contact",
+    idempotencyKey: `${
+      isMeatMarket
+        ? "okeechobee-meat-market-contact"
+        : "homeplanet-contact"
+    }-${requestId}`,
+    subject: isMeatMarket
+      ? `New Live Meat Market ${String(savedLead.selected_operation || "").includes("Buyer Request") ? "Buyer Request" : "Question"} - ${String(savedLead.name || "Local Visitor").trim()}`
+      : `New HomePlanet Question - ${String(savedLead.name || "Website Visitor").trim()}`,
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:720px;margin:0 auto;padding:24px;">
+        <h2 style="margin:0 0 8px;">New HomePlanet Question</h2>
+
+        <p style="margin:0 0 20px;color:#666;">
+          Someone used the HomePlanet contact page.
+        </p>
+
+        <div style="padding:16px;border:1px solid #d9d9d9;border-radius:12px;margin-bottom:18px;">
+          <div style="margin-bottom:8px;">
+            <strong>Name:</strong> ${shown(savedLead.name)}
+          </div>
+
+          <div style="margin-bottom:8px;">
+            <strong>Email / Phone:</strong> ${shown(savedLead.contact)}
+          </div>
+
+          <div style="margin-bottom:8px;">
+            <strong>Business / Organization:</strong> ${shown(savedLead.business_name)}
+          </div>
+
+          <div>
+            <strong>Submitted:</strong> ${shown(savedLead.created_at)}
+          </div>
+        </div>
+
+        <div style="padding:16px;border:1px solid #d9d9d9;border-radius:12px;">
+          <strong>Question:</strong>
+
+          <div style="margin-top:10px;white-space:pre-wrap;line-height:1.6;">
+            ${shown(savedLead.message)}
+          </div>
+        </div>
+
+        <p style="margin-top:20px;color:#666;">
+          Saved in HomePlanet as ${shown(savedLead.id)}.
+        </p>
+      </div>
+    `,
+    text: [
+      "New HomePlanet Question",
+      "",
+      `Name: ${String(savedLead.name || "Not provided")}`,
+      `Email / Phone: ${String(savedLead.contact || "Not provided")}`,
+      `Business / Organization: ${String(savedLead.business_name || "Not provided")}`,
+      "",
+      "Question:",
+      String(savedLead.message || "Not provided"),
+      "",
+      `Lead ID: ${requestId}`,
+    ].join("\n"),
+  });
+
+  return {
+    ...result,
+    recordReference: requestId,
+  };
+}
+
+async function sendOkeechobeeMeatMarketOrder(requestId: string) {
+  const savedLead = await loadSavedRecord(
+    "homeplanet_leads",
+    "id",
+    requestId,
+    "id,name,contact,message,selected_operation,business_name,board_slug,created_at",
+    "okeechobee-meat-market-order",
+    "Okeechobee Live Meat Market order"
+  );
+
+  if (
+    savedLead.board_slug !== "okeechobee-live-meat-market" ||
+    savedLead.selected_operation !== "Okeechobee Live Meat Market Order"
+  ) {
+    throw new HomePlanetEmailError(
+      "Saved order is not eligible for seller delivery.",
+      { httpStatus: 400 }
+    );
+  }
+
+  const orderMessage = String(savedLead.message || "");
+
+  const listingId = quoteDetail(orderMessage, "Listing ID");
+  const item = quoteDetail(orderMessage, "Item");
+  const price = quoteDetail(orderMessage, "Price shown");
+  const quantity = quoteDetail(orderMessage, "Quantity / Amount");
+  const fulfillment = quoteDetail(orderMessage, "Pickup / Delivery");
+
+  if (!listingId || listingId === "Not provided") {
+    throw new HomePlanetEmailError(
+      "Seller listing could not be identified.",
+      { httpStatus: 400 }
+    );
+  }
+
+  const savedListing = await loadSavedRecord(
+    "okeechobee_events",
+    "id",
+    listingId,
+    "id,type,title,description,location,contact,status",
+    "okeechobee-meat-market-order",
+    "Okeechobee Live Meat Market seller"
+  );
+
+  if (
+    savedListing.type !== "Live Meat Market Seller" ||
+    savedListing.status !== "Active"
+  ) {
+    throw new HomePlanetEmailError(
+      "Seller listing is not currently active.",
+      { httpStatus: 400 }
+    );
+  }
+
+  const description = String(savedListing.description || "");
+
+  const descriptionEmail = quoteDetail(description, "Email").trim();
+  const legacyContact = String(savedListing.contact || "").trim();
+
+  const sellerEmail =
+    descriptionEmail && descriptionEmail.toLowerCase() !== "not provided"
+      ? descriptionEmail
+      : legacyContact.includes("@")
+        ? legacyContact
+        : "";
+
+  if (
+    !sellerEmail ||
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sellerEmail)
+  ) {
+    throw new HomePlanetEmailError(
+      "Seller email is missing or invalid.",
+      { httpStatus: 400 }
+    );
+  }
+
+  const sellerName =
+    String(savedListing.title || "")
+      .replace(/^Live Meat Market Seller:\s*/i, "")
+      .trim() ||
+    String(savedLead.business_name || "").trim() ||
+    "Local Seller";
+
+  const buyerName =
+    String(savedLead.name || "").trim() || "Local Buyer";
+
+  const buyerPhone =
+    String(savedLead.contact || "").trim() || "Not provided";
+
+  const result = await sendHomePlanetEmail({
+    recipient: sellerEmail,
+    project: "okeechobee-meat-market-order",
+    idempotencyKey: `okeechobee-meat-market-order-${requestId}`,
+    subject: `New Live Meat Market Order - ${item || "Market Order"}`,
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:720px;margin:0 auto;padding:24px;color:#17231b;">
+        <h2 style="margin:0 0 8px;">New Live Meat Market Order</h2>
+
+        <p style="margin:0 0 20px;color:#666;">
+          A buyer placed an order through the Okeechobee Live Meat Market.
+        </p>
+
+        <div style="padding:18px;border:1px solid #d9d9d9;border-radius:12px;margin-bottom:18px;">
+          <div style="margin-bottom:10px;"><strong>Seller:</strong> ${shown(sellerName)}</div>
+          <div style="margin-bottom:10px;"><strong>Item:</strong> ${shown(item)}</div>
+          <div style="margin-bottom:10px;"><strong>Price shown:</strong> ${shown(price)}</div>
+          <div style="margin-bottom:10px;"><strong>Quantity / Amount:</strong> ${shown(quantity)}</div>
+          <div><strong>Pickup / Delivery:</strong> ${shown(fulfillment)}</div>
+        </div>
+
+        <div style="padding:18px;border:1px solid #d9d9d9;border-radius:12px;">
+          <div style="margin-bottom:10px;"><strong>Buyer:</strong> ${shown(buyerName)}</div>
+          <div><strong>Phone:</strong> ${shown(buyerPhone)}</div>
+        </div>
+
+        <p style="margin-top:20px;color:#666;">
+          Please contact the buyer directly to confirm availability and pickup or delivery details.
+        </p>
+      </div>
+    `,
+    text: [
+      "New Okeechobee Live Meat Market Order",
+      "",
+      `Seller: ${sellerName}`,
+      `Item: ${item || "Not provided"}`,
+      `Price shown: ${price || "Not provided"}`,
+      `Quantity / Amount: ${quantity || "Not provided"}`,
+      `Pickup / Delivery: ${fulfillment || "Not provided"}`,
+      "",
+      `Buyer: ${buyerName}`,
+      `Phone: ${buyerPhone}`,
+      "",
+      `Order ID: ${requestId}`,
+    ].join("\n"),
+  });
+
+  return {
+    ...result,
+    recordReference: requestId,
+  };
+}
+async function sendOkeechobeeMeatMarket(slug: string) {
+  const savedListing = await loadSavedRecord(
+    "okeechobee_events",
+    "slug",
+    slug,
+    "slug,type,title,description,location,contact,status",
+    "okeechobee-meat-market-seller",
+    "Okeechobee Live Meat Market seller"
+  );
+
+  if (
+    savedListing.type !== "Live Meat Market Seller" ||
+    savedListing.status !== "Pending Review"
+  ) {
+    throw new HomePlanetEmailError(
+      "Saved Meat Market listing is not eligible for this notification.",
+      { httpStatus: 400 }
+    );
+  }
+
+  const sellerName = String(savedListing.title || "")
+    .replace(/^Live Meat Market Seller:\s*/i, "")
+    .trim();
+
+  const descriptionLines = String(savedListing.description || "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  function detail(label: string) {
+    const prefix = `${label}:`;
+    const line = descriptionLines.find((item) =>
+      item.toLowerCase().startsWith(prefix.toLowerCase())
+    );
+
+    return line ? line.slice(prefix.length).trim() : "";
+  }
+
+  const contactName = detail("Contact Name");
+  const bestContact = detail("Best Contact") || String(savedListing.contact || "");
+  const selling = detail("Selling");
+  const pricePackage = detail("Price / Package");
+  const fulfillment = detail("Pickup / Delivery");
+  const location = detail("Location") || String(savedListing.location || "");
+  const sellerLink = detail("Website / Facebook / Order Link");
+  const notes = detail("Notes");
+
+  const result = await sendHomePlanetEmail({
+    recipient: requiredEmailRecipient("MARKET_NOTIFY_EMAIL"),
+    project: "okeechobee-meat-market-seller",
+    idempotencyKey: `okeechobee-meat-market-seller-${slug}`,
+    subject: `New Live Meat Market Seller - ${sellerName || "Seller Submission"}`,
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:720px;margin:0 auto;padding:24px;color:#17231b;">
+        <h2 style="margin:0 0 8px;">New Okeechobee Live Meat Market Seller</h2>
+
+        <p style="margin:0 0 20px;color:#666;">
+          A local seller submitted information and is waiting for review.
+        </p>
+
+        <div style="padding:18px;border:1px solid #d9d9d9;border-radius:12px;">
+          <div style="margin-bottom:10px;"><strong>Ranch / Business:</strong> ${shown(sellerName)}</div>
+          <div style="margin-bottom:10px;"><strong>Contact Name:</strong> ${shown(contactName)}</div>
+          <div style="margin-bottom:10px;"><strong>Best Contact:</strong> ${shown(bestContact)}</div>
+          <div style="margin-bottom:10px;"><strong>Selling:</strong> ${shown(selling)}</div>
+          <div style="margin-bottom:10px;"><strong>Price / Package:</strong> ${shown(pricePackage)}</div>
+          <div style="margin-bottom:10px;"><strong>Pickup / Delivery:</strong> ${shown(fulfillment)}</div>
+          <div style="margin-bottom:10px;"><strong>Location:</strong> ${shown(location)}</div>
+          <div style="margin-bottom:10px;"><strong>Website / Facebook / Order Link:</strong> ${shown(sellerLink || "Not provided")}</div>
+          <div style="margin-bottom:10px;"><strong>Notes:</strong> ${shown(notes || "None")}</div>
+          <div><strong>Status:</strong> ${shown(savedListing.status)}</div>
+        </div>
+      </div>
+    `,
+    text: [
+      "New Okeechobee Live Meat Market Seller",
+      "",
+      `Ranch / Business: ${sellerName}`,
+      `Contact Name: ${contactName}`,
+      `Best Contact: ${bestContact}`,
+      `Selling: ${selling}`,
+      `Price / Package: ${pricePackage}`,
+      `Pickup / Delivery: ${fulfillment}`,
+      `Location: ${location}`,
+      `Website / Facebook / Order Link: ${sellerLink || "Not provided"}`,
+      `Notes: ${notes || "None"}`,
+      `Status: ${String(savedListing.status || "")}`,
+      "",
+      `Listing slug: ${slug}`,
+    ].join("\n"),
+  });
+
+  return {
+    ...result,
+    recordReference: slug,
+  };
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {
     return res.status(405).json({ ok: false, error: "Method not allowed." });
@@ -291,7 +627,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const project = String(body.project || "").trim();
     const allowedKeys = project === "marshall-case-review"
       ? ["project", "caseReference"]
-      : project === "okeechobee-together-request"
+      : project === "okeechobee-together-request" ||
+          project === "okeechobee-meat-market-seller"
         ? ["project", "slug"]
         : ["project", "requestId"];
     if (Object.keys(body).some((key) => !allowedKeys.includes(key))) {
@@ -317,6 +654,47 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ ok: false, error: "Invalid Okeechobee request slug." });
       }
       result = await sendOkeechobeeTogether(slug);
+    } else if (project === "okeechobee-meat-market-seller") {
+      const slug = String(body.slug || "").trim();
+
+      if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+        return res.status(400).json({
+          ok: false,
+          error: "Invalid Meat Market seller slug.",
+        });
+      }
+
+      result = await sendOkeechobeeMeatMarket(slug);
+    } else if (project === "okeechobee-meat-market-order") {
+      const requestId = String(body.requestId || "").trim();
+
+      if (
+        !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+          requestId
+        )
+      ) {
+        return res.status(400).json({
+          ok: false,
+          error: "Invalid Meat Market order ID.",
+        });
+      }
+
+      result = await sendOkeechobeeMeatMarketOrder(requestId);
+    } else if (project === "homeplanet-contact") {
+      const requestId = String(body.requestId || "").trim();
+
+      if (
+        !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+          requestId
+        )
+      ) {
+        return res.status(400).json({
+          ok: false,
+          error: "Invalid HomePlanet contact request ID.",
+        });
+      }
+
+      result = await sendHomePlanetContact(requestId);
     } else {
       return res.status(400).json({ ok: false, error: "Unknown email project." });
     }

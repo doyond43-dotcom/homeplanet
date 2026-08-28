@@ -5,6 +5,18 @@
     "outputDirectory": "apps/web/dist",
     "rewrites":  [
                      {
+                         "source":  "/planet/performance-powerboats",
+                         "destination":  "/index.html"
+                     },
+                     {
+                         "source":  "/planet/performance-powerboats/board",
+                         "destination":  "/index.html"
+                     },
+                     {
+                         "source":  "/planet/performance-powerboats/tech/:id",
+                         "destination":  "/index.html"
+                     },
+                     {
                          "source":  "/planet/performance-powerboats/project/:id",
                          "destination":  "/index.html"
                      },
@@ -29,8 +41,10 @@
                          "destination":  "/onlytheessentials/index.html"
                      },
                      {
-                         "source":  "/(.*)",
+                         "source":  "/((?!api/).*)",
                          "destination":  "/index.html"
                      }
                  ]
 }
+
+
