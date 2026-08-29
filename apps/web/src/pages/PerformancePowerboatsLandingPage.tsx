@@ -651,49 +651,74 @@ export default function PerformancePowerboatsLandingPage() {
           <h2>THIS DIDN'T START IN A SHOWROOM.</h2>
 
           <p>
-            It started with boats, tools, repairs, rebuilds and years of
-            learning what holds up on the water.
+            From old hulls and raw fiberglass to in-house fabrication and
+            finished boats on the water, Performance Powerboats is built on
+            real work.
           </p>
 
-          <div className="pp-story-gallery">
-            <div className="pp-real-image pp-story-photo">
-              <img
-                src="/images/performance-powerboats/02-restoration-top-removal.jpg"
-                alt="Early boat restoration work"
-              />
-            </div>
+          <div className="pp-story-gallery pp-story-gallery-four">
+            <figure className="pp-story-step">
+              <div className="pp-real-image pp-story-photo">
+                <img
+                  src="/images/performance-powerboats/story-01-before.webp"
+                  alt="Boat before restoration and rebuild work"
+                />
+              </div>
+              <figcaption>
+                <span>01</span>
+                <strong>THE START</strong>
+              </figcaption>
+            </figure>
 
-            <div className="pp-real-image pp-story-photo">
-              <img
-                src="/images/performance-powerboats/03-restoration-gutted-boat.jpg"
-                alt="Boat restoration stripped for rebuild"
-              />
-            </div>
+            <figure className="pp-story-step">
+              <div className="pp-real-image pp-story-photo">
+                <img
+                  src="/images/performance-powerboats/story-02-structure.webp"
+                  alt="Raw hull structure during hands-on boat work"
+                />
+              </div>
+              <figcaption>
+                <span>02</span>
+                <strong>THE STRUCTURE</strong>
+              </figcaption>
+            </figure>
 
-            <div className="pp-real-image pp-story-photo">
-              <img
-                src="/images/performance-powerboats/05-restoration-refinished-hull.jpg"
-                alt="Restored hull after refinishing"
-              />
-            </div>
+            <figure className="pp-story-step">
+              <div className="pp-real-image pp-story-photo">
+                <img
+                  src="/images/performance-powerboats/story-03-fabrication.webp"
+                  alt="Custom metal fabrication inside the Performance Powerboats shop"
+                />
+              </div>
+              <figcaption>
+                <span>03</span>
+                <strong>THE CRAFT</strong>
+              </figcaption>
+            </figure>
+
+            <figure className="pp-story-step">
+              <div className="pp-real-image pp-story-photo">
+                <img
+                  src="/images/performance-powerboats/story-04-finished.webp"
+                  alt="Finished Performance boat on the water"
+                />
+              </div>
+              <figcaption>
+                <span>04</span>
+                <strong>THE RESULT</strong>
+              </figcaption>
+            </figure>
           </div>
 
-          <div className="pp-now">
-            <span>BUILT. RESTORED. RIGGED.</span>
-            <strong>CUSTOMIZED.</strong>
+          <div className="pp-now pp-story-finish-line">
+            <span>FROM THE SHOP FLOOR</span>
+            <strong>TO THE WATER.</strong>
           </div>
 
           <p className="pp-story-support">
-            From service and repair to full custom builds, Performance has spent
-            decades doing the work — not just selling the idea.
+            Every finished boat has a starting point. The work in between is
+            what makes the difference.
           </p>
-
-          <div className="pp-real-image pp-story-payoff">
-            <img
-              src="/images/performance-powerboats/performance-finished-boat.webp"
-              alt="Performance Powerboats finished boat cruising through a palm-lined marina"
-            />
-          </div>
         </div>
       </section>
 
@@ -736,17 +761,46 @@ export default function PerformancePowerboatsLandingPage() {
 
           <div className="pp-footer-column">
             <div className="pp-footer-heading">EXPLORE</div>
-            <a href="/planet/performance-powerboats/showroom">Showroom</a>
-            <a href="#showroom">Gallery</a>
-            <a href="/planet/performance-powerboats/models">Performance Models</a>
-            <a href="#custom-builds">Custom Builds</a>
+
+            <a href="/planet/performance-powerboats/showroom">
+              Showroom
+            </a>
+
+            <a href="/planet/performance-powerboats/gallery">
+              Gallery
+            </a>
+
+            <a href="/planet/performance-powerboats/customer-builds">
+              Customer Builds
+            </a>
+
+            <a href="/planet/performance-powerboats/models">
+              Performance Models
+            </a>
+
+            <a href="/planet/performance-powerboats/molds-tooling">
+              Molds &amp; Tooling
+            </a>
           </div>
 
           <div className="pp-footer-column">
             <div className="pp-footer-heading">WORK WITH US</div>
-            <a href="#start-project">Service &amp; Repair</a>
-            <a href="#start-project">Start a Project</a>
-            <a href="sms:+19548019524">Ask Us a Question</a>
+
+            <a href="/planet/performance-powerboats/service">
+              Service &amp; Repair
+            </a>
+
+            <a href="/planet/performance-powerboats/fabrication">
+              Custom Fabrication
+            </a>
+
+            <a href="/planet/performance-powerboats/start-project">
+              Start a Project
+            </a>
+
+            <a href="/planet/performance-powerboats/contact">
+              Contact Performance
+            </a>
           </div>
 
           <div className="pp-footer-column pp-footer-contact">
@@ -757,12 +811,17 @@ export default function PerformancePowerboatsLandingPage() {
               target="_blank"
               rel="noreferrer"
             >
-              12633 Southwest Impact Drive<br />
+              12633 Southwest Impact Drive
+              <br />
               Indiantown, Florida
             </a>
 
             <a className="pp-footer-call" href="tel:+19548019524">
               CALL PERFORMANCE
+            </a>
+
+            <a href="sms:+19548019524">
+              TEXT PERFORMANCE
             </a>
 
             <a
@@ -776,13 +835,30 @@ export default function PerformancePowerboatsLandingPage() {
         </div>
 
         <div className="pp-footer-bottom pp-footer-defined-bottom">
-          <span>PERFORMANCE POWERBOATS · INDIANTOWN, FLORIDA</span>
-          <span>Built by HomePlanet</span>
+          <div className="pp-footer-legal">
+            <span>© 2026 PERFORMANCE POWERBOATS</span>
+
+            <a href="/planet/performance-powerboats/privacy">
+              Privacy Policy
+            </a>
+
+            <a href="/planet/performance-powerboats/terms">
+              Terms &amp; Conditions
+            </a>
+          </div>
+
+          <a className="pp-footer-homeplanet" href="/">
+            Built by HomePlanet
+          </a>
         </div>
       </footer>
     </main>
   );
 }
+
+
+
+
 
 
 

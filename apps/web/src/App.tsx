@@ -88,6 +88,7 @@ const PerformancePowerboatsLandingPage = lazy(() => import("./pages/PerformanceP
 const PerformancePowerboatsBuildPage = lazy(() => import("./pages/PerformancePowerboatsBuildPage"));
 const PerformancePowerboatsMoldsToolingPage = lazy(() => import("./pages/PerformancePowerboatsMoldsToolingPage"));
 const PerformancePowerboatsShowroomPage = lazy(() => import("./pages/PerformancePowerboatsShowroomPage"));
+const PerformancePowerboatsGalleryPage = lazy(() => import("./pages/PerformancePowerboatsGalleryPage"));
 const PerformancePowerboatsModelsPage = lazy(() => import("./pages/PerformancePowerboatsModelsPage"));
 const PerformancePowerboatsContactPage = lazy(() => import("./pages/PerformancePowerboatsContactPage"));
 const PerformancePowerboatsStartProjectPage = lazy(() => import("./pages/PerformancePowerboatsStartProjectPage"));
@@ -100,6 +101,8 @@ const PerformancePowerboatsLiveBoard = lazy(() => import("./pages/PerformancePow
 const PerformancePowerboatsCustomerProjectPage = lazy(() => import("./pages/PerformancePowerboatsCustomerProjectPage"));
 const PerformancePowerboatsEstimatePage = lazy(() => import("./pages/PerformancePowerboatsEstimatePage"));
 const PerformancePowerboatsTechPad = lazy(() => import("./pages/PerformancePowerboatsTechPad"));
+const PerformancePowerboatsPrivacyPage = lazy(() => import("./pages/PerformancePowerboatsPrivacyPage"));
+const PerformancePowerboatsTermsPage = lazy(() => import("./pages/PerformancePowerboatsTermsPage"));
 const ElectricianRequestPage = lazy(() => import("./pages/ElectricianRequestPage"));
 const ElectricianIntelligenceDashboard = lazy(() =>
   import("./pages/ElectricianIntelligenceDashboard")
@@ -215,6 +218,7 @@ export default function App() {
           <Route path="/planet/performance-powerboats/build" element={<PerformancePowerboatsBuildPage />} />
           <Route path="/planet/performance-powerboats/molds-tooling" element={<PerformancePowerboatsMoldsToolingPage />} />
           <Route path="/planet/performance-powerboats/showroom" element={<PerformancePowerboatsShowroomPage />} />
+          <Route path="/planet/performance-powerboats/gallery" element={<PerformancePowerboatsGalleryPage />} />
           <Route path="/planet/performance-powerboats/models" element={<PerformancePowerboatsModelsPage />} />
           <Route path="/planet/performance-powerboats/contact" element={<PerformancePowerboatsContactPage />} />
           <Route path="/planet/performance-powerboats/start-project" element={<PerformancePowerboatsStartProjectPage />} />
@@ -223,6 +227,8 @@ export default function App() {
           <Route path="/planet/performance-powerboats/fabrication/request" element={<PerformancePowerboatsFabricationRequestPage />} />
 
           <Route path="/planet/performance-powerboats/customer-builds" element={<PerformancePowerboatsCustomerBuildsPage />} />
+          <Route path="/planet/performance-powerboats/privacy" element={<PerformancePowerboatsPrivacyPage />} />
+          <Route path="/planet/performance-powerboats/terms" element={<PerformancePowerboatsTermsPage />} />
           <Route path="/planet/performance-powerboats/estimate/:id" element={<PerformancePowerboatsEstimatePage />} />
           <Route path="/planet/performance-powerboats/board" element={<RequireAuth><PerformancePowerboatsLiveBoard /></RequireAuth>} />
           <Route path="/planet/performance-powerboats/project/:id" element={<PerformancePowerboatsCustomerProjectPage />} />
