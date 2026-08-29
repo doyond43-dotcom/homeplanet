@@ -124,6 +124,8 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
     "Contact seller for pickup details"
   );
   const [sellerLink, setSellerLink] = useState("");
+  const [orderMethod, setOrderMethod] = useState("");
+  const [orderDestination, setOrderDestination] = useState("");
   const [listingPhoto, setListingPhoto] = useState("");
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -204,14 +206,53 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
 
       setFulfillment(sellerFulfillment);
 
-      setSellerLink(
-        usableExternalLink(
-          listingDetail(
-            seller.description,
-            "Website / Facebook / Order Link"
-          )
+      const submittedSellerLink = usableExternalLink(
+        listingDetail(
+          seller.description,
+          "Website / Facebook / Order Link"
         )
       );
+
+      setSellerLink(submittedSellerLink);
+
+      try {
+        const sellerPublicResponse = await fetch(
+          `/api/okeechobee-meat-market-seller-manage?slug=${encodeURIComponent(
+            requestedSlug
+          )}`
+        );
+
+        const sellerPublicResult =
+          await sellerPublicResponse.json().catch(() => null);
+
+        if (
+          sellerPublicResponse.ok &&
+          sellerPublicResult?.ok === true &&
+          sellerPublicResult?.seller
+        ) {
+          const publicSeller = sellerPublicResult.seller;
+
+          setOrderMethod(
+            String(publicSeller.orderMethod || "").trim()
+          );
+
+          setOrderDestination(
+            String(publicSeller.orderDestination || "").trim()
+          );
+
+          const managedFulfillment =
+            String(publicSeller.fulfillment || "").trim();
+
+          if (managedFulfillment) {
+            setFulfillment(managedFulfillment);
+          }
+        }
+      } catch (sellerPublicError) {
+        console.warn(
+          "Could not load seller ordering preferences:",
+          sellerPublicError
+        );
+      }
 
       setListingPhoto(
         usableExternalLink(
@@ -288,7 +329,7 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
     loadStorefront();
   }, [configuredSeller?.sellerName, requestedSlug]);
 
-  function orderHref(product: Product) {
+  function meatMarketOrderHref(product: Product) {
     return `/planet/okeechobee/meat-market/contact?${new URLSearchParams({
       mode: "order",
       listingId,
@@ -297,6 +338,49 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
       price: product.price,
       fulfillment: product.fulfillment || fulfillment,
     }).toString()}`;
+  }
+
+  function orderHref(product: Product) {
+    const method = orderMethod.trim().toLowerCase();
+    const destination = orderDestination.trim();
+
+    if (
+      (method === "website" || method === "facebook") &&
+      destination
+    ) {
+      return (
+        usableExternalLink(destination) ||
+        meatMarketOrderHref(product)
+      );
+    }
+
+    if (method === "phone / text" && destination) {
+      const phone = destination.replace(/[^\d+]/g, "");
+
+      if (phone) {
+        return `sms:${phone}`;
+      }
+    }
+
+    return meatMarketOrderHref(product);
+  }
+
+  function orderLabel() {
+    const method = orderMethod.trim().toLowerCase();
+
+    if (method === "website") {
+      return "Shop / Order From Seller";
+    }
+
+    if (method === "facebook") {
+      return "Order Through Facebook";
+    }
+
+    if (method === "phone / text") {
+      return "Text Seller";
+    }
+
+    return "Order This";
   }
 
   if (notFound) {
@@ -800,7 +884,7 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
                         className="order-button"
                         href={orderHref(product)}
                       >
-                        Order This
+                        {orderLabel()}
                       </a>
                     </div>
                   </article>
@@ -822,6 +906,8 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
     </main>
   );
 }
+
+
 
 
 

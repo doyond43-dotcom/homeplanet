@@ -1,4 +1,4 @@
-﻿import type { VercelRequest, VercelResponse } from "@vercel/node";
+import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createClient } from "@supabase/supabase-js";
 
 export default async function handler(
@@ -98,6 +98,71 @@ export default async function handler(
     );
 
     if (req.method === "POST") {
+      const buyerRequestId = String(
+        req.body?.buyerRequestId || ""
+      ).trim();
+
+      if (buyerRequestId) {
+        const status = String(req.body?.status || "").trim();
+
+        const allowedBuyerStatuses = new Set([
+          "buyer_waiting",
+          "seller_found",
+          "buyer_contacted",
+          "complete",
+        ]);
+
+        if (!allowedBuyerStatuses.has(status)) {
+          return res.status(400).json({
+            ok: false,
+            error: "A valid buyer request status is required.",
+          });
+        }
+
+        const matchedSellerListingId =
+          String(req.body?.matchedSellerListingId || "").trim() || null;
+
+        const matchedSellerName =
+          String(req.body?.matchedSellerName || "").trim() || null;
+
+        const { data: buyerWorkflow, error: buyerWorkflowError } =
+          await supabase
+            .from("okeechobee_meat_market_buyer_workflow")
+            .upsert(
+              {
+                buyer_request_id: buyerRequestId,
+                status,
+                matched_seller_listing_id: matchedSellerListingId,
+                matched_seller_name: matchedSellerName,
+                updated_at: new Date().toISOString(),
+              },
+              {
+                onConflict: "buyer_request_id",
+              }
+            )
+            .select(
+              "buyer_request_id,status,matched_seller_listing_id,matched_seller_name,notes,created_at,updated_at"
+            )
+            .maybeSingle();
+
+        if (buyerWorkflowError) {
+          console.error(
+            "Meat Market buyer workflow update failed:",
+            buyerWorkflowError.message
+          );
+
+          return res.status(500).json({
+            ok: false,
+            error: "Could not update buyer request.",
+          });
+        }
+
+        return res.status(200).json({
+          ok: true,
+          buyerWorkflow,
+        });
+      }
+
       const helperId = String(req.body?.helperId || "").trim();
       const status = String(req.body?.status || "").trim();
 
@@ -157,6 +222,7 @@ export default async function handler(
       ownersResult,
       helpersResult,
       meatMarketBuyerResult,
+      meatMarketBuyerWorkflowResult,
     ] = await Promise.all([
       supabase
         .from("okeechobee_events")
@@ -184,6 +250,12 @@ export default async function handler(
           "Okeechobee Live Meat Market Buyer Request"
         )
         .order("created_at", { ascending: false }),
+
+      supabase
+        .from("okeechobee_meat_market_buyer_workflow")
+        .select(
+          "buyer_request_id,status,matched_seller_listing_id,matched_seller_name,notes,created_at,updated_at"
+        ),
     ]);
 
     if (eventsResult.error) {
@@ -233,6 +305,44 @@ export default async function handler(
         error: "Could not load Meat Market buyer requests.",
       });
     }
+
+    if (meatMarketBuyerWorkflowResult.error) {
+      console.error(
+        "Command Center Meat Market buyer workflow load failed:",
+        meatMarketBuyerWorkflowResult.error.message
+      );
+
+      return res.status(500).json({
+        ok: false,
+        error: "Could not load Meat Market buyer workflow.",
+      });
+    }
+
+    const buyerWorkflowByRequestId = new Map(
+      (meatMarketBuyerWorkflowResult.data || []).map((workflow: any) => [
+        workflow.buyer_request_id,
+        workflow,
+      ])
+    );
+
+    const meatMarketBuyers = (meatMarketBuyerResult.data || []).map(
+      (buyer: any) => {
+        const workflow = buyerWorkflowByRequestId.get(buyer.id) as any;
+
+        return {
+          ...buyer,
+          workflow_status: workflow?.status || "buyer_waiting",
+          matched_seller_listing_id:
+            workflow?.matched_seller_listing_id || null,
+          matched_seller_name:
+            workflow?.matched_seller_name || null,
+          workflow_notes:
+            workflow?.notes || null,
+          workflow_updated_at:
+            workflow?.updated_at || null,
+        };
+      }
+    );
 
     const ownersBySlug = new Map(
       (ownersResult.data || []).map((owner: any) => [
@@ -293,7 +403,7 @@ export default async function handler(
     return res.status(200).json({
       ok: true,
       events,
-      meatMarketBuyers: meatMarketBuyerResult.data || [],
+      meatMarketBuyers,
     });
   } catch (error) {
     console.error("Command Center API error:", error);

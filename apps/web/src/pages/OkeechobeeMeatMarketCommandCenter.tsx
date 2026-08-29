@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
@@ -144,6 +144,25 @@ function contactHref(contact: string) {
   if (value.includes("@")) return `mailto:${value}`;
 
   return `tel:${value.replace(/[^\d+]/g, "")}`;
+}
+
+function buyerStatusLabel(status: string) {
+  if (status === "seller_found") return "Seller Found";
+  if (status === "buyer_contacted") return "Buyer Contacted";
+  if (status === "complete") return "Complete";
+  return "Buyer Waiting";
+}
+
+function buyerRequestTitle(message: string) {
+  const value = String(message || "").trim();
+
+  const match = value.match(/Looking for:\s*(.+?)(?:\r?\n|Pickup \/ Delivery:|$)/i);
+
+  if (match?.[1]?.trim()) {
+    return match[1].trim();
+  }
+
+  return value || "Local food request";
 }
 
 export default function OkeechobeeMeatMarketCommandCenter() {
@@ -334,6 +353,90 @@ export default function OkeechobeeMeatMarketCommandCenter() {
       })
       .filter((match) => match.matches.length > 0);
   }, [selectedQuestion, listings]);
+
+  async function updateBuyerWorkflow(
+    question: any,
+    status: string,
+    matchedSeller?: any
+  ) {
+    if (!question?.id) return;
+
+    setWorkingId(question.id);
+    setNotice("");
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.access_token) {
+        throw new Error("Admin session not available.");
+      }
+
+      const response = await fetch("/api/okeechobee-command-center", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          buyerRequestId: question.id,
+          status,
+          matchedSellerListingId:
+            matchedSeller?.slug ||
+            matchedSeller?.id ||
+            question.matched_seller_listing_id ||
+            "",
+          matchedSellerName:
+            matchedSeller
+              ? sellerName(matchedSeller)
+              : question.matched_seller_name || "",
+        }),
+      });
+
+      const result = await response.json().catch(() => null);
+
+      if (!response.ok || !result?.ok) {
+        throw new Error(
+          result?.error || "Could not update buyer request."
+        );
+      }
+
+      const workflow = result.buyerWorkflow || {};
+
+      const updated = {
+        ...question,
+        workflow_status: workflow.status || status,
+        matched_seller_listing_id:
+          workflow.matched_seller_listing_id || null,
+        matched_seller_name:
+          workflow.matched_seller_name || null,
+        workflow_notes:
+          workflow.notes || null,
+        workflow_updated_at:
+          workflow.updated_at || new Date().toISOString(),
+      };
+
+      setQuestions((current) =>
+        current.map((item) =>
+          item.id === question.id ? updated : item
+        )
+      );
+
+      setSelectedQuestion(updated);
+
+      setNotice(
+        `"${question.name || "Buyer"}" is now ${buyerStatusLabel(
+          updated.workflow_status
+        )}.`
+      );
+    } catch (error) {
+      console.error("Buyer workflow update failed:", error);
+      setNotice("Could not update the buyer request.");
+    } finally {
+      setWorkingId(null);
+    }
+  }
 
   async function changeListingStatus(listing: any, status: string) {
     setWorkingId(listing.id);
@@ -742,11 +845,17 @@ export default function OkeechobeeMeatMarketCommandCenter() {
                     onClick={() => setSelectedQuestion(question)}
                   >
                     <div style={rowMain}>
-                      <strong style={rowTitle}>
-                        {question.name || "Local Buyer"}
+                      <strong
+                        style={{
+                          ...rowTitle,
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        {buyerRequestTitle(question.message)}
                       </strong>
+
                       <span style={rowProduct}>
-                        {question.message || "No request provided."}
+                        {question.name || "Local Buyer"}
                       </span>
                     </div>
 
@@ -756,7 +865,11 @@ export default function OkeechobeeMeatMarketCommandCenter() {
 
                     <div style={rowRight}>
                       <span style={buyerBadge}>Buyer</span>
-                      <span style={openText}>Open</span>
+                      <span style={openText}>
+                        {buyerStatusLabel(
+                          question.workflow_status || "buyer_waiting"
+                        )}
+                      </span>
                     </div>
                   </button>
                 ))}
@@ -1199,10 +1312,26 @@ export default function OkeechobeeMeatMarketCommandCenter() {
           <aside style={drawer} onClick={(event) => event.stopPropagation()}>
             <div style={drawerHeader}>
               <div>
-                <div style={eyebrow}>Buyer Request</div>
-                <h2 style={drawerTitle}>
-                  {selectedQuestion.name || "Local Buyer"}
+                <div style={eyebrow}>Buyer Demand</div>
+                <h2
+                  style={{
+                    ...drawerTitle,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {buyerRequestTitle(selectedQuestion.message)}
                 </h2>
+
+                <div
+                  style={{
+                    marginTop: "5px",
+                    color: "#c7cec9",
+                    fontSize: "14px",
+                    fontWeight: 800,
+                  }}
+                >
+                  {selectedQuestion.name || "Local Buyer"}
+                </div>
               </div>
 
               <button type="button" style={closeButton} onClick={closeDrawer}>
@@ -1224,6 +1353,59 @@ export default function OkeechobeeMeatMarketCommandCenter() {
 
             <div
               style={{
+                marginTop: "18px",
+                padding: "16px",
+                borderRadius: "14px",
+                background: "#171d19",
+                border: "1px solid rgba(255,255,255,.08)",
+              }}
+            >
+              <div style={eyebrow}>Current Status</div>
+
+              <strong
+                style={{
+                  display: "block",
+                  marginTop: "5px",
+                  fontSize: "20px",
+                  color:
+                    selectedQuestion.workflow_status === "complete"
+                      ? "#82d49d"
+                      : "#fff",
+                }}
+              >
+                {buyerStatusLabel(
+                  selectedQuestion.workflow_status || "buyer_waiting"
+                )}
+              </strong>
+
+              {selectedQuestion.matched_seller_name ? (
+                <span
+                  style={{
+                    display: "block",
+                    marginTop: "7px",
+                    color: "#d9b76f",
+                    fontSize: "13px",
+                    fontWeight: 800,
+                  }}
+                >
+                  Confirmed seller: {selectedQuestion.matched_seller_name}
+                </span>
+              ) : (
+                <span
+                  style={{
+                    display: "block",
+                    marginTop: "7px",
+                    color: "#9fa9a2",
+                    fontSize: "13px",
+                  }}
+                >
+                  No confirmed seller yet.
+                </span>
+              )}
+            </div>
+
+            <div
+              style={{
                 marginTop: "22px",
                 padding: "16px",
                 borderRadius: "14px",
@@ -1231,7 +1413,7 @@ export default function OkeechobeeMeatMarketCommandCenter() {
                 background: "#101713",
               }}
             >
-              <div style={eyebrow}>Local Supply Match</div>
+              <div style={eyebrow}>Possible Local Supply</div>
 
               <h3
                 style={{
@@ -1239,7 +1421,7 @@ export default function OkeechobeeMeatMarketCommandCenter() {
                   fontSize: "19px",
                 }}
               >
-                Potential Seller Matches
+                Possible Seller Matches
               </h3>
 
               <p
@@ -1250,8 +1432,9 @@ export default function OkeechobeeMeatMarketCommandCenter() {
                   lineHeight: 1.5,
                 }}
               >
-                Active verified sellers that appear to match what this buyer
-                is looking for.
+                These sellers may carry what the buyer needs based on their
+                listings. Confirm availability with the seller before marking
+                the request matched.
               </p>
 
               {selectedQuestionMatches.length > 0 ? (
@@ -1316,26 +1499,61 @@ export default function OkeechobeeMeatMarketCommandCenter() {
                             </span>
                           </div>
 
-                          <a
-                            href={sellerStorefrontHref(listing)}
-                            target="_blank"
-                            rel="noreferrer"
+                          <div
                             style={{
-                              display: "inline-flex",
-                              minHeight: "38px",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              padding: "8px 12px",
-                              borderRadius: "9px",
-                              background: "#d9b76f",
-                              color: "#142018",
-                              textDecoration: "none",
-                              fontSize: "12px",
-                              fontWeight: 900,
+                              display: "flex",
+                              gap: "8px",
+                              flexWrap: "wrap",
                             }}
                           >
-                            View Seller
-                          </a>
+                            <a
+                              href={sellerStorefrontHref(listing)}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{
+                                display: "inline-flex",
+                                minHeight: "38px",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                padding: "8px 12px",
+                                borderRadius: "9px",
+                                background: "#d9b76f",
+                                color: "#142018",
+                                textDecoration: "none",
+                                fontSize: "12px",
+                                fontWeight: 900,
+                              }}
+                            >
+                              View Seller
+                            </a>
+
+                            <button
+                              type="button"
+                              disabled={workingId === selectedQuestion.id}
+                              onClick={() =>
+                                updateBuyerWorkflow(
+                                  selectedQuestion,
+                                  "seller_found",
+                                  listing
+                                )
+                              }
+                              style={{
+                                minHeight: "38px",
+                                padding: "8px 12px",
+                                borderRadius: "9px",
+                                border: "1px solid rgba(217,183,111,.45)",
+                                background: "transparent",
+                                color: "#d9b76f",
+                                fontSize: "12px",
+                                fontWeight: 900,
+                                cursor: "pointer",
+                              }}
+                            >
+                              {workingId === selectedQuestion.id
+                                ? "Saving..."
+                                : "Confirm Seller Match"}
+                            </button>
+                          </div>
                         </div>
                       </div>
                     )
@@ -1352,16 +1570,67 @@ export default function OkeechobeeMeatMarketCommandCenter() {
                     lineHeight: 1.5,
                   }}
                 >
-                  No active verified seller matches yet. Keep this request open
-                  as new local sellers are added.
+                  No possible local seller found yet. This is active buyer
+                  demand we can use to recruit the right local seller.
                 </div>
               )}
+            </div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+                gap: "9px",
+                marginTop: "18px",
+              }}
+            >
+              {[
+                ["buyer_waiting", "Buyer Waiting"],
+                ["seller_found", "Seller Found"],
+                ["buyer_contacted", "Buyer Contacted"],
+                ["complete", "Complete"],
+              ].map(([status, label]) => {
+                const active =
+                  (selectedQuestion.workflow_status || "buyer_waiting") ===
+                  status;
+
+                return (
+                  <button
+                    key={status}
+                    type="button"
+                    disabled={workingId === selectedQuestion.id}
+                    onClick={() =>
+                      updateBuyerWorkflow(selectedQuestion, status)
+                    }
+                    style={{
+                      minHeight: "44px",
+                      padding: "10px 12px",
+                      borderRadius: "10px",
+                      border: active
+                        ? "1px solid #d9b76f"
+                        : "1px solid rgba(255,255,255,.10)",
+                      background: active ? "#d9b76f" : "#171d19",
+                      color: active ? "#142018" : "#fff",
+                      fontSize: "12px",
+                      fontWeight: 900,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {workingId === selectedQuestion.id
+                      ? "Saving..."
+                      : label}
+                  </button>
+                );
+              })}
             </div>
 
             {selectedQuestion.contact ? (
               <a
                 href={contactHref(selectedQuestion.contact)}
-                style={primaryLink}
+                style={{
+                  ...primaryLink,
+                  marginTop: "12px",
+                }}
               >
                 Contact Buyer
               </a>
