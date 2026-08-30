@@ -1,4 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
+import {
+  ChartNoAxesColumnIncreasing,
+  CircleUserRound,
+  ClipboardList,
+  Handshake,
+} from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { trackMeatMarketEvent } from "../lib/meatMarketAnalytics";
 
@@ -229,12 +235,42 @@ export default function OkeechobeeLiveMeatMarketPage() {
   const [activeCategory, setActiveCategory] = useState("Everything");
   const [liveItems, setLiveItems] = useState<MarketItem[]>([]);
   const [marketLoading, setMarketLoading] = useState(true);
+  const [marketActivity, setMarketActivity] = useState({
+    marketViews: 34,
+    uniqueShoppers: 9,
+    buyerRequests: 5,
+    sellerMatches: 1,
+  });
 
   useEffect(() => {
-    void trackMeatMarketEvent({
-      eventType: "market_view",
-      source: "Live Meat Market",
-    });
+    async function loadMarketActivity() {
+      await trackMeatMarketEvent({
+        eventType: "market_view",
+        source: "Live Meat Market",
+      });
+
+      const { data, error } = await supabase.rpc(
+        "okeechobee_meat_market_public_stats"
+      );
+
+      if (error) {
+        console.error("Could not load public Meat Market activity:", error);
+        return;
+      }
+
+      const stats = Array.isArray(data) ? data[0] : data;
+
+      if (!stats) return;
+
+      setMarketActivity({
+        marketViews: Number(stats.market_views || 0),
+        uniqueShoppers: Number(stats.unique_shoppers || 0),
+        buyerRequests: Number(stats.buyer_requests || 0),
+        sellerMatches: Number(stats.seller_matches || 0),
+      });
+    }
+
+    void loadMarketActivity();
   }, []);
 
   useEffect(() => {
@@ -604,6 +640,105 @@ export default function OkeechobeeLiveMeatMarketPage() {
           font-size: 15px;
           line-height: 1.5;
           font-weight: 850;
+        }
+
+        .market-activity {
+          width: min(100%, 760px);
+          margin-top: 26px;
+          padding: 20px 26px 19px;
+          border: 2px solid #193c2b;
+          border-radius: 24px;
+          background: #fbf7ee;
+          box-shadow: 0 12px 26px rgba(48, 39, 24, 0.11);
+        }
+
+        .market-activity-label {
+          margin-bottom: 17px;
+          color: #b88941;
+          font-size: 12px;
+          font-weight: 950;
+          letter-spacing: 0.11em;
+          text-transform: uppercase;
+        }
+
+        .market-activity-grid {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .market-activity-stat {
+          padding: 0 16px;
+          text-align: center;
+          border-right: 1px solid rgba(25, 60, 43, 0.16);
+        }
+
+        .market-activity-stat:first-child {
+          padding-left: 0;
+        }
+
+        .market-activity-stat:last-child {
+          padding-right: 0;
+          border-right: 0;
+        }
+
+        .market-activity-icon {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          height: 26px;
+          margin-bottom: 7px;
+          color: #c49447;
+        }
+
+        .market-activity-icon svg {
+          width: 26px;
+          height: 26px;
+          fill: none;
+          stroke: currentColor;
+          stroke-width: 1.8;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+        }
+
+        .market-activity-number {
+          color: #193c2b;
+          font-size: clamp(32px, 4.5vw, 40px);
+          line-height: 1;
+          font-weight: 950;
+          letter-spacing: -0.045em;
+        }
+
+        .market-activity-name {
+          margin-top: 6px;
+          color: #253d31;
+          font-size: 12px;
+          line-height: 1.2;
+          font-weight: 800;
+        }
+
+        @media (max-width: 620px) {
+          .market-activity {
+            padding: 22px 20px 20px;
+          }
+
+          .market-activity-label {
+            margin-bottom: 20px;
+          }
+
+          .market-activity-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            row-gap: 20px;
+          }
+
+          .market-activity-stat:nth-child(2) {
+            border-right: 0;
+          }
+
+          .market-activity-stat:nth-child(3),
+          .market-activity-stat:nth-child(4) {
+            padding-top: 20px;
+            border-top: 1px solid rgba(25, 60, 43, 0.16);
+          }
         }
 
 
@@ -1195,6 +1330,44 @@ export default function OkeechobeeLiveMeatMarketPage() {
             The livestock market moves cattle.
             <br />
             The Live Meat Market helps local beef reach local tables.
+          </div>
+
+          <div className="market-activity" aria-label="Market activity">
+            <div className="market-activity-label">Market Activity</div>
+
+            <div className="market-activity-grid">
+              <div className="market-activity-stat">
+                <div className="market-activity-icon" aria-hidden="true">
+                  <ChartNoAxesColumnIncreasing />
+                </div>
+                <div className="market-activity-number">{marketActivity.marketViews}</div>
+                <div className="market-activity-name">Visits</div>
+              </div>
+
+              <div className="market-activity-stat">
+                <div className="market-activity-icon" aria-hidden="true">
+                  <CircleUserRound />
+                </div>
+                <div className="market-activity-number">{marketActivity.uniqueShoppers}</div>
+                <div className="market-activity-name">Shoppers</div>
+              </div>
+
+              <div className="market-activity-stat">
+                <div className="market-activity-icon" aria-hidden="true">
+                  <ClipboardList />
+                </div>
+                <div className="market-activity-number">{marketActivity.buyerRequests}</div>
+                <div className="market-activity-name">Buyer Requests</div>
+              </div>
+
+              <div className="market-activity-stat">
+                <div className="market-activity-icon" aria-hidden="true">
+                  <Handshake />
+                </div>
+                <div className="market-activity-number">{marketActivity.sellerMatches}</div>
+                <div className="market-activity-name">Match</div>
+              </div>
+            </div>
           </div>
         </section>
 
