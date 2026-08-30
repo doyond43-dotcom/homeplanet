@@ -132,6 +132,16 @@ function productImage(
   return config?.heroImage || "";
 }
 
+function validStorefrontImage(value?: string) {
+  const source = String(value || "").trim();
+
+  if (!source) return "";
+
+  return /^(https?:\/\/|data:image\/|\/)/i.test(source)
+    ? source
+    : "";
+}
+
 export default function OkeechobeeMeatMarketSellerStorefrontPage() {
   const params = useParams();
   const requestedSlug = String(params.slug || "farm-folks");
@@ -955,10 +965,10 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
 
         <section className="store-hero">
           <div className="hero-image">
-            {listingPhoto || config?.heroImage ? (
+            {validStorefrontImage(listingPhoto) || validStorefrontImage(config?.heroImage) ? (
               <>
                 <img
-                  src={listingPhoto || config?.heroImage}
+                  src={validStorefrontImage(listingPhoto) || validStorefrontImage(config?.heroImage)}
                   alt={`${sellerName} ranch or farm`}
                 />
 

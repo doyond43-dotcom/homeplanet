@@ -22,6 +22,7 @@ type Seller = {
   slug: string;
   name: string;
   email: string;
+  heroImage: string;
   orderMethod: string;
   orderDestination: string;
   fulfillment: string;
@@ -106,6 +107,41 @@ async function fileToJpegDataUrl(
   }
 }
 
+async function compressStorefrontPhoto(file: File) {
+  const source = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(new Error("Could not read photo."));
+    reader.readAsDataURL(file);
+  });
+
+  const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("Could not open photo."));
+    img.src = source;
+  });
+
+  const maxWidth = 1400;
+  const maxHeight = 900;
+  const scale = Math.min(
+    1,
+    maxWidth / image.width,
+    maxHeight / image.height
+  );
+
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(image.width * scale);
+  canvas.height = Math.round(image.height * scale);
+
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("Could not prepare photo.");
+
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+  return canvas.toDataURL("image/jpeg", 0.78);
+}
+
 export default function OkeechobeeMeatMarketSellerSetupPage() {
   const { slug } = useParams();
 
@@ -182,7 +218,10 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
         "load"
       );
 
-      setSeller(result.seller);
+      setSeller({
+        ...result.seller,
+        heroImage: String(result.seller?.heroImage || ""),
+      });
 
       setProducts(
         (result.products || []).length
@@ -327,6 +366,7 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
         token,
         "save",
         {
+          heroImage: seller.heroImage,
           orderMethod: seller.orderMethod,
           orderDestination:
             seller.orderDestination,
@@ -434,6 +474,83 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
             your public seller page.
           </p>
         </header>
+
+        <section style={styles.section}>
+          <h2 style={styles.sectionTitle}>Storefront Photo</h2>
+
+          <p style={styles.help}>
+            This is the large photo at the top of your public seller page.
+          </p>
+
+          {seller.heroImage ? (
+            <img
+              src={seller.heroImage}
+              alt={`${seller.name} storefront`}
+              style={{
+                width: "100%",
+                height: 220,
+                objectFit: "cover",
+                borderRadius: 16,
+                marginBottom: 12,
+              }}
+            />
+          ) : null}
+
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <label style={styles.choice}>
+              {seller.heroImage ? "Change Storefront Photo" : "Add Storefront Photo"}
+
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                style={{ display: "none" }}
+                onChange={async (event) => {
+                  const file = event.target.files?.[0];
+
+                  if (!file) return;
+
+                  try {
+                    const heroImage = await compressStorefrontPhoto(file);
+
+                    setSeller({
+                      ...seller,
+                      heroImage,
+                    });
+
+                    setSaved(false);
+                    setError("");
+                  } catch (photoError) {
+                    setError(
+                      photoError instanceof Error
+                        ? photoError.message
+                        : "Could not use that photo."
+                    );
+                  } finally {
+                    event.target.value = "";
+                  }
+                }}
+              />
+            </label>
+
+            {seller.heroImage ? (
+              <button
+                type="button"
+                style={styles.choice}
+                onClick={() => {
+                  setSeller({
+                    ...seller,
+                    heroImage: "",
+                  });
+
+                  setSaved(false);
+                }}
+              >
+                Remove Photo
+              </button>
+            ) : null}
+          </div>
+        </section>
 
         <section style={styles.section}>
           <div style={styles.sectionHead}>

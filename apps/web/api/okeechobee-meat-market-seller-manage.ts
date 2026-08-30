@@ -152,11 +152,25 @@ export default async function handler(
   }
 
   if (action === "load") {
+    const { data: sellerProfile, error: sellerProfileError } =
+      await supabase
+        .from("okeechobee_meat_market_sellers")
+        .select("hero_image")
+        .eq("slug", slug)
+        .maybeSingle();
+
+    if (sellerProfileError) {
+      return res.status(500).json({
+        ok: false,
+        error: "Could not load seller storefront photo.",
+      });
+    }
+
     const { data: products, error: productError } =
       await supabase
         .from("okeechobee_meat_market_products")
         .select(
-          "id,name,price,package,fulfillment,availability,status,sort_order,external_order_url"
+          "id,name,category,price,package,fulfillment,availability,status,sort_order,description,image_url,external_order_url,featured"
         )
         .eq("seller_listing_id", slug)
         .order("sort_order", { ascending: true });
@@ -174,6 +188,7 @@ export default async function handler(
         slug,
         name: access.seller_name,
         email: access.seller_email || "",
+        heroImage: sellerProfile?.hero_image || "",
         orderMethod: access.order_method || "Website",
         orderDestination: access.order_destination || "",
         fulfillment: access.fulfillment || "Pickup",
@@ -184,6 +199,8 @@ export default async function handler(
   }
 
   if (action === "save") {
+    const heroImage = clean(req.body?.heroImage, 1500000);
+
     const orderMethod = clean(req.body?.orderMethod, 80) || "Website";
     const orderDestination = clean(req.body?.orderDestination, 1000);
     const fulfillment = clean(req.body?.fulfillment, 80) || "Pickup";
@@ -193,42 +210,29 @@ export default async function handler(
       ? req.body.products
       : [];
 
-    const { data: existingProducts, error: existingProductsError } =
-      await supabase
-        .from("okeechobee_meat_market_products")
-        .select("name,external_order_url")
-        .eq("seller_listing_id", slug);
-
-    if (existingProductsError) {
-      return res.status(500).json({
-        ok: false,
-        error: "Could not preserve existing product links.",
-      });
-    }
-
-    const existingOrderLinks = new Map(
-      (existingProducts || []).map((product: any) => [
-        String(product.name || "").trim().toLowerCase(),
-        clean(product.external_order_url, 2000) || null,
-      ])
-    );
-
     const products = incomingProducts
       .map((product: any, index: number) => ({
+        id: clean(product?.id, 100) || null,
         seller_listing_id: slug,
         seller_name: access.seller_name,
         name: clean(product?.name, 200),
+        category: clean(product?.category, 100) || null,
         price: clean(product?.price, 160) || null,
         package: clean(product?.package, 200) || null,
         fulfillment,
         availability:
-          clean(product?.availability, 80) || "Available now",
+          clean(product?.availability, 80) ||
+          "Available now",
+        description:
+          clean(product?.description, 2000) || null,
+        image_url:
+          clean(product?.imageUrl, 1500000) || null,
+        external_order_url:
+          clean(product?.externalOrderUrl, 2000) ||
+          null,
+        featured: Boolean(product?.featured),
         status: "Active",
         sort_order: index + 1,
-        external_order_url:
-          existingOrderLinks.get(
-            clean(product?.name, 200).toLowerCase()
-          ) || null,
       }))
       .filter((product: any) => product.name);
 
@@ -236,6 +240,22 @@ export default async function handler(
       return res.status(400).json({
         ok: false,
         error: "Please keep at least one product on your page.",
+      });
+    }
+
+    const { error: sellerProfileUpdateError } =
+      await supabase
+        .from("okeechobee_meat_market_sellers")
+        .update({
+          hero_image: heroImage || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("slug", slug);
+
+    if (sellerProfileUpdateError) {
+      return res.status(500).json({
+        ok: false,
+        error: "Could not save storefront photo.",
       });
     }
 
@@ -258,34 +278,118 @@ export default async function handler(
       });
     }
 
-    const { error: deleteError } =
+    const { data: existingProducts, error: existingError } =
       await supabase
         .from("okeechobee_meat_market_products")
-        .delete()
+        .select("id")
         .eq("seller_listing_id", slug);
 
-    if (deleteError) {
+    if (existingError) {
       return res.status(500).json({
         ok: false,
-        error: "Could not update products.",
+        error: "Could not load existing products.",
       });
     }
 
-    const { error: insertError } =
+    const existingIds = new Set(
+      (existingProducts || []).map((product: any) =>
+        String(product.id)
+      )
+    );
+
+    const incomingExistingIds = new Set(
+      products
+        .map((product: any) => String(product.id || ""))
+        .filter((id: string) => existingIds.has(id))
+    );
+
+    for (const product of products) {
+      const productId = String(product.id || "");
+      const payload = {
+        seller_listing_id: product.seller_listing_id,
+        seller_name: product.seller_name,
+        name: product.name,
+        category: product.category,
+        price: product.price,
+        package: product.package,
+        fulfillment: product.fulfillment,
+        availability: product.availability,
+        description: product.description,
+        image_url: product.image_url,
+        external_order_url: product.external_order_url,
+        featured: product.featured,
+        status: product.status,
+        sort_order: product.sort_order,
+      };
+
+      if (productId && existingIds.has(productId)) {
+        const { error: updateError } =
+          await supabase
+            .from("okeechobee_meat_market_products")
+            .update(payload)
+            .eq("id", productId)
+            .eq("seller_listing_id", slug);
+
+        if (updateError) {
+          return res.status(500).json({
+            ok: false,
+            error: `Could not update ${product.name}.`,
+          });
+        }
+      } else {
+        const { error: insertError } =
+          await supabase
+            .from("okeechobee_meat_market_products")
+            .insert(payload);
+
+        if (insertError) {
+          return res.status(500).json({
+            ok: false,
+            error: `Could not add ${product.name}.`,
+          });
+        }
+      }
+    }
+
+    const deletedIds = [...existingIds].filter(
+      (id) => !incomingExistingIds.has(id)
+    );
+
+    if (deletedIds.length) {
+      const { error: deleteError } =
+        await supabase
+          .from("okeechobee_meat_market_products")
+          .delete()
+          .eq("seller_listing_id", slug)
+          .in("id", deletedIds);
+
+      if (deleteError) {
+        return res.status(500).json({
+          ok: false,
+          error: "Could not remove deleted products.",
+        });
+      }
+    }
+
+    const { data: savedProducts, error: savedProductsError } =
       await supabase
         .from("okeechobee_meat_market_products")
-        .insert(products);
+        .select(
+          "id,name,category,price,package,fulfillment,availability,status,sort_order,description,image_url,external_order_url,featured"
+        )
+        .eq("seller_listing_id", slug)
+        .order("sort_order", { ascending: true });
 
-    if (insertError) {
+    if (savedProductsError) {
       return res.status(500).json({
         ok: false,
-        error: "Could not save products.",
+        error: "Products saved, but could not reload them.",
       });
     }
-
     return res.status(200).json({
       ok: true,
       message: "Your seller page has been updated.",
+      products: savedProducts || [],
     });
   }
 
