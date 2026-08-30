@@ -171,6 +171,15 @@ export default function OkeechobeeMeatMarketCommandCenter() {
   const [loading, setLoading] = useState(true);
   const [workingId, setWorkingId] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
+  const [sellerAccessLinks, setSellerAccessLinks] = useState<
+    Record<
+      string,
+      {
+        setupUrl: string;
+        publicUrl: string;
+      }
+    >
+  >({});
 
   const [view, setView] = useState<ViewMode>("sellers");
   const [filter, setFilter] = useState<FilterMode>("all");
@@ -438,6 +447,87 @@ export default function OkeechobeeMeatMarketCommandCenter() {
     }
   }
 
+  async function approveSellerAccess(listing: any) {
+    if (!listing?.id) return;
+
+    setWorkingId(listing.id);
+    setNotice("");
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.access_token) {
+        throw new Error("Admin session not available.");
+      }
+
+      const response = await fetch(
+        "/api/okeechobee-command-center",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            action: "approve_meat_market_seller",
+            eventId: listing.id,
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result?.ok) {
+        throw new Error(
+          result?.error || "Could not approve seller."
+        );
+      }
+
+      const setupUrl =
+        `${window.location.origin}${result.setupPath}` +
+        `#${result.privateToken}`;
+
+      const publicUrl =
+        `${window.location.origin}${result.publicPath}`;
+
+      setSellerAccessLinks((current) => ({
+        ...current,
+        [listing.id]: {
+          setupUrl,
+          publicUrl,
+        },
+      }));
+
+      const updated = {
+        ...listing,
+        status: "Active",
+      };
+
+      setListings((current) =>
+        current.map((item) =>
+          item.id === listing.id ? updated : item
+        )
+      );
+
+      setSelectedListing(updated);
+
+      setNotice(
+        `"${sellerName(listing)}" is approved. Private seller access is ready.`
+      );
+    } catch (error) {
+      console.error("Seller approval failed:", error);
+
+      setNotice(
+        error instanceof Error
+          ? error.message
+          : "Could not approve the seller."
+      );
+    } finally {
+      setWorkingId(null);
+    }
+  }
   async function changeListingStatus(listing: any, status: string) {
     setWorkingId(listing.id);
     setNotice("");
@@ -1235,6 +1325,79 @@ export default function OkeechobeeMeatMarketCommandCenter() {
               </div>
             ) : null}
 
+            {sellerAccessLinks[selectedListing.id] ? (
+              <div
+                style={{
+                  marginTop: "18px",
+                  padding: "16px",
+                  borderRadius: "16px",
+                  border: "1px solid #c9b987",
+                  background: "#fbf5df",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "12px",
+                    fontWeight: 900,
+                    letterSpacing: ".08em",
+                    textTransform: "uppercase",
+                    color: "#7b6328",
+                    marginBottom: "8px",
+                  }}
+                >
+                  Private Seller Access Ready
+                </div>
+
+                <div
+                  style={{
+                    display: "grid",
+                    gap: "8px",
+                  }}
+                >
+                  <button
+                    type="button"
+                    style={primaryButton}
+                    onClick={() =>
+                      navigator.clipboard.writeText(
+                        sellerAccessLinks[selectedListing.id].setupUrl
+                      )
+                    }
+                  >
+                    Copy Private Setup Link
+                  </button>
+
+                  <a
+                    href={
+                      sellerAccessLinks[selectedListing.id].setupUrl
+                    }
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      ...secondaryButton,
+                      textDecoration: "none",
+                      textAlign: "center",
+                    }}
+                  >
+                    Open Seller Setup
+                  </a>
+
+                  <a
+                    href={
+                      sellerAccessLinks[selectedListing.id].publicUrl
+                    }
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      ...secondaryButton,
+                      textDecoration: "none",
+                      textAlign: "center",
+                    }}
+                  >
+                    View Public Seller Page
+                  </a>
+                </div>
+              </div>
+            ) : null}
             <div style={drawerActions}>
               {!editingListing &&
               statusKey(selectedListing.status) !== "archived" ? (
@@ -1249,15 +1412,37 @@ export default function OkeechobeeMeatMarketCommandCenter() {
               ) : null}
 
               {!editingListing &&
-              statusKey(selectedListing.status) !== "live" &&
+              statusKey(selectedListing.status) === "pending" &&
               isVerifiedSeller(selectedListing) ? (
                 <button
                   type="button"
                   style={primaryButton}
                   disabled={workingId === selectedListing.id}
-                  onClick={() => changeListingStatus(selectedListing, "Active")}
+                  onClick={() =>
+                    approveSellerAccess(selectedListing)
+                  }
                 >
-                  {workingId === selectedListing.id ? "Updating..." : "Make Live"}
+                  {workingId === selectedListing.id
+                    ? "Creating Seller Access..."
+                    : "Approve & Create Seller Access"}
+                </button>
+              ) : null}
+
+              {!editingListing &&
+              statusKey(selectedListing.status) !== "live" &&
+              statusKey(selectedListing.status) !== "pending" &&
+              isVerifiedSeller(selectedListing) ? (
+                <button
+                  type="button"
+                  style={primaryButton}
+                  disabled={workingId === selectedListing.id}
+                  onClick={() =>
+                    changeListingStatus(selectedListing, "Active")
+                  }
+                >
+                  {workingId === selectedListing.id
+                    ? "Updating..."
+                    : "Make Live"}
                 </button>
               ) : null}
 

@@ -1,12 +1,21 @@
-﻿import { useEffect, useState } from "react";
+import {
+  ChangeEvent,
+  useEffect,
+  useState,
+} from "react";
 import { useParams } from "react-router-dom";
 
 type ProductRow = {
   id?: string;
   name: string;
+  category: string;
   price: string;
   package: string;
   availability: string;
+  description: string;
+  imageUrl: string;
+  externalOrderUrl: string;
+  featured: boolean;
 };
 
 type Seller = {
@@ -21,17 +30,92 @@ type Seller = {
 
 const emptyProduct = (): ProductRow => ({
   name: "",
+  category: "",
   price: "",
   package: "",
   availability: "Available now",
+  description: "",
+  imageUrl: "",
+  externalOrderUrl: "",
+  featured: false,
 });
+
+async function fileToJpegDataUrl(
+  file: File,
+  maxW = 1000,
+  maxH = 1000,
+  quality = 0.78
+) {
+  if (!/^image\//i.test(file.type)) {
+    throw new Error("Please choose an image file.");
+  }
+
+  const url = URL.createObjectURL(file);
+
+  try {
+    const img = await new Promise<HTMLImageElement>(
+      (resolve, reject) => {
+        const image = new Image();
+
+        image.onload = () => resolve(image);
+        image.onerror = () =>
+          reject(new Error("Could not load that image."));
+
+        image.src = url;
+      }
+    );
+
+    const width = img.naturalWidth || img.width;
+    const height = img.naturalHeight || img.height;
+
+    const widthRatio = maxW / Math.max(1, width);
+    const heightRatio = maxH / Math.max(1, height);
+    const ratio = Math.min(1, widthRatio, heightRatio);
+
+    const nextWidth = Math.max(
+      1,
+      Math.round(width * ratio)
+    );
+
+    const nextHeight = Math.max(
+      1,
+      Math.round(height * ratio)
+    );
+
+    const canvas = document.createElement("canvas");
+    canvas.width = nextWidth;
+    canvas.height = nextHeight;
+
+    const context = canvas.getContext("2d");
+
+    if (!context) {
+      throw new Error("Photo processing is unavailable.");
+    }
+
+    context.drawImage(
+      img,
+      0,
+      0,
+      nextWidth,
+      nextHeight
+    );
+
+    return canvas.toDataURL("image/jpeg", quality);
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
 
 export default function OkeechobeeMeatMarketSellerSetupPage() {
   const { slug } = useParams();
 
   const [token, setToken] = useState("");
-  const [seller, setSeller] = useState<Seller | null>(null);
-  const [products, setProducts] = useState<ProductRow[]>([]);
+  const [seller, setSeller] =
+    useState<Seller | null>(null);
+
+  const [products, setProducts] =
+    useState<ProductRow[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -50,7 +134,7 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
       return;
     }
 
-    loadSeller(rawToken);
+    void loadSeller(rawToken);
   }, [slug]);
 
   async function callSellerManage(
@@ -74,11 +158,14 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
       }
     );
 
-    const result = await response.json().catch(() => null);
+    const result = await response
+      .json()
+      .catch(() => null);
 
     if (!response.ok || result?.ok !== true) {
       throw new Error(
-        result?.error || "Could not update your seller page."
+        result?.error ||
+          "Could not update your seller page."
       );
     }
 
@@ -100,13 +187,25 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
       setProducts(
         (result.products || []).length
           ? result.products.map((product: any) => ({
-              id: product.id,
+              id: String(product.id || ""),
               name: String(product.name || ""),
+              category: String(product.category || ""),
               price: String(product.price || ""),
               package: String(product.package || ""),
               availability: String(
-                product.availability || "Available now"
+                product.availability ||
+                  "Available now"
               ),
+              description: String(
+                product.description || ""
+              ),
+              imageUrl: String(
+                product.image_url || ""
+              ),
+              externalOrderUrl: String(
+                product.external_order_url || ""
+              ),
+              featured: Boolean(product.featured),
             }))
           : [emptyProduct()]
       );
@@ -121,15 +220,18 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
     }
   }
 
-  function updateProduct(
+  function updateProduct<K extends keyof ProductRow>(
     index: number,
-    field: keyof ProductRow,
-    value: string
+    field: K,
+    value: ProductRow[K]
   ) {
     setProducts((current) =>
       current.map((product, productIndex) =>
         productIndex === index
-          ? { ...product, [field]: value }
+          ? {
+              ...product,
+              [field]: value,
+            }
           : product
       )
     );
@@ -147,13 +249,59 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
   }
 
   function removeProduct(index: number) {
-    setProducts((current) =>
-      current.filter((_, productIndex) =>
-        productIndex !== index
+    if (
+      products.length === 1 &&
+      !products[0].name.trim()
+    ) {
+      return;
+    }
+
+    const product = products[index];
+
+    if (
+      product?.name.trim() &&
+      !window.confirm(
+        `Remove ${product.name} from your products?`
       )
-    );
+    ) {
+      return;
+    }
+
+    setProducts((current) => {
+      const next = current.filter(
+        (_, productIndex) => productIndex !== index
+      );
+
+      return next.length ? next : [emptyProduct()];
+    });
 
     setSaved(false);
+  }
+
+  async function chooseProductPhoto(
+    index: number,
+    event: ChangeEvent<HTMLInputElement>
+  ) {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    try {
+      setError("");
+
+      const imageUrl =
+        await fileToJpegDataUrl(file);
+
+      updateProduct(index, "imageUrl", imageUrl);
+    } catch (photoError) {
+      setError(
+        photoError instanceof Error
+          ? photoError.message
+          : "Could not use that photo."
+      );
+    } finally {
+      event.target.value = "";
+    }
   }
 
   async function save() {
@@ -164,7 +312,9 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
     );
 
     if (!cleanProducts.length) {
-      setError("Please keep at least one product on your page.");
+      setError(
+        "Please keep at least one product on your page."
+      );
       return;
     }
 
@@ -173,13 +323,46 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
       setSaved(false);
       setError("");
 
-      await callSellerManage(token, "save", {
-        orderMethod: seller.orderMethod,
-        orderDestination: seller.orderDestination,
-        fulfillment: seller.fulfillment,
-        pickupNote: seller.pickupNote,
-        products: cleanProducts,
-      });
+      const result = await callSellerManage(
+        token,
+        "save",
+        {
+          orderMethod: seller.orderMethod,
+          orderDestination:
+            seller.orderDestination,
+          fulfillment: seller.fulfillment,
+          pickupNote: seller.pickupNote,
+          products: cleanProducts,
+        }
+      );
+
+      if (Array.isArray(result.products)) {
+        setProducts(
+          result.products.map((product: any) => ({
+            id: String(product.id || ""),
+            name: String(product.name || ""),
+            category: String(
+              product.category || ""
+            ),
+            price: String(product.price || ""),
+            package: String(product.package || ""),
+            availability: String(
+              product.availability ||
+                "Available now"
+            ),
+            description: String(
+              product.description || ""
+            ),
+            imageUrl: String(
+              product.image_url || ""
+            ),
+            externalOrderUrl: String(
+              product.external_order_url || ""
+            ),
+            featured: Boolean(product.featured),
+          }))
+        );
+      }
 
       setSaved(true);
     } catch (saveError) {
@@ -198,7 +381,9 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
       <main style={styles.page}>
         <section style={styles.shell}>
           <div style={styles.card}>
-            <strong>Loading your farm page...</strong>
+            <strong>
+              Loading your seller page...
+            </strong>
           </div>
         </section>
       </main>
@@ -240,12 +425,13 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
           </h1>
 
           <p style={styles.subtitle}>
-            Update what you have available.
+            Manage what you have.
           </p>
 
           <p style={styles.help}>
-            Add your current products, prices and package sizes.
-            This is what buyers will see on your seller page.
+            Add products, change prices, update
+            availability and choose what buyers see on
+            your public seller page.
           </p>
         </header>
 
@@ -253,32 +439,105 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
           <div style={styles.sectionHead}>
             <div>
               <div style={styles.step}>1</div>
+
               <h2 style={styles.sectionTitle}>
-                What do you have?
+                Your Products
               </h2>
             </div>
+
+            <div style={styles.productCount}>
+              {products.filter((product) =>
+                product.name.trim()
+              ).length}{" "}
+              listed
+            </div>
           </div>
+
+          <p style={styles.help}>
+            Keep everything here. Mark your best or
+            current products as Featured for the public
+            storefront.
+          </p>
 
           <div style={styles.productList}>
             {products.map((product, index) => (
               <article
-                key={product.id || index}
+                key={product.id || `new-${index}`}
                 style={styles.productCard}
               >
                 <div style={styles.productTop}>
                   <strong style={styles.productNumber}>
-                    Product {index + 1}
+                    {product.name.trim() ||
+                      `Product ${index + 1}`}
                   </strong>
 
-                  {products.length > 1 ? (
-                    <button
-                      type="button"
-                      onClick={() => removeProduct(index)}
-                      style={styles.removeButton}
-                    >
-                      Remove
-                    </button>
-                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      removeProduct(index)
+                    }
+                    style={styles.removeButton}
+                  >
+                    Remove
+                  </button>
+                </div>
+
+                <div style={styles.photoRow}>
+                  <div style={styles.photoPreview}>
+                    {product.imageUrl ? (
+                      <img
+                        src={product.imageUrl}
+                        alt={
+                          product.name ||
+                          "Product preview"
+                        }
+                        style={styles.photoImage}
+                      />
+                    ) : (
+                      <div
+                        style={styles.photoPlaceholder}
+                      >
+                        Product photo
+                      </div>
+                    )}
+                  </div>
+
+                  <div style={styles.photoActions}>
+                    <label style={styles.photoButton}>
+                      {product.imageUrl
+                        ? "Change Photo"
+                        : "Add Photo"}
+
+                      <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        onChange={(event) =>
+                          void chooseProductPhoto(
+                            index,
+                            event
+                          )
+                        }
+                        style={styles.hiddenInput}
+                      />
+                    </label>
+
+                    {product.imageUrl ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateProduct(
+                            index,
+                            "imageUrl",
+                            ""
+                          )
+                        }
+                        style={styles.smallRemove}
+                      >
+                        Remove photo
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
 
                 <label style={styles.label}>
@@ -297,6 +556,36 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
                   />
                 </label>
 
+                <label style={styles.label}>
+                  Category
+                  <select
+                    value={product.category}
+                    onChange={(event) =>
+                      updateProduct(
+                        index,
+                        "category",
+                        event.target.value
+                      )
+                    }
+                    style={styles.input}
+                  >
+                    <option value="">
+                      Choose category
+                    </option>
+                    <option value="Beef">Beef</option>
+                    <option value="Pork">Pork</option>
+                    <option value="Chicken">
+                      Chicken
+                    </option>
+                    <option value="Eggs">Eggs</option>
+                    <option value="Lamb">Lamb</option>
+                    <option value="Goat">Goat</option>
+                    <option value="Dairy">Dairy</option>
+                    <option value="Honey">Honey</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </label>
+
                 <div style={styles.twoColumn}>
                   <label style={styles.label}>
                     Price
@@ -309,7 +598,7 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
                           event.target.value
                         )
                       }
-                      placeholder="Example: $9.00/lb"
+                      placeholder="Example: $34/lb"
                       style={styles.input}
                     />
                   </label>
@@ -345,11 +634,74 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
                     style={styles.input}
                   >
                     <option>Available now</option>
-                    <option>Limited availability</option>
+                    <option>
+                      Limited availability
+                    </option>
                     <option>Coming soon</option>
                     <option>Sold out</option>
                   </select>
                 </label>
+
+                <label style={styles.label}>
+                  Details
+                  <textarea
+                    value={product.description}
+                    onChange={(event) =>
+                      updateProduct(
+                        index,
+                        "description",
+                        event.target.value
+                      )
+                    }
+                    placeholder="Anything buyers should know about this product."
+                    style={styles.textarea}
+                  />
+                </label>
+
+                <label style={styles.label}>
+                  Direct product or order link
+                  <input
+                    value={product.externalOrderUrl}
+                    onChange={(event) =>
+                      updateProduct(
+                        index,
+                        "externalOrderUrl",
+                        event.target.value
+                      )
+                    }
+                    placeholder="https://..."
+                    inputMode="url"
+                    style={styles.input}
+                  />
+                </label>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    updateProduct(
+                      index,
+                      "featured",
+                      !product.featured
+                    )
+                  }
+                  style={
+                    product.featured
+                      ? styles.featuredActive
+                      : styles.featuredButton
+                  }
+                >
+                  <span>
+                    {product.featured
+                      ? "★ Featured on storefront"
+                      : "☆ Feature on storefront"}
+                  </span>
+
+                  <span style={styles.featuredHint}>
+                    {product.featured
+                      ? "Shown first"
+                      : "Tap to feature"}
+                  </span>
+                </button>
               </article>
             ))}
           </div>
@@ -371,28 +723,30 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
           </h2>
 
           <div style={styles.choiceRow}>
-            {["Pickup", "Delivery", "Pickup & Delivery"].map(
-              (choice) => (
-                <button
-                  key={choice}
-                  type="button"
-                  onClick={() => {
-                    setSeller({
-                      ...seller,
-                      fulfillment: choice,
-                    });
-                    setSaved(false);
-                  }}
-                  style={
-                    seller.fulfillment === choice
-                      ? styles.choiceActive
-                      : styles.choice
-                  }
-                >
-                  {choice}
-                </button>
-              )
-            )}
+            {[
+              "Pickup",
+              "Delivery",
+              "Pickup & Delivery",
+            ].map((choice) => (
+              <button
+                key={choice}
+                type="button"
+                onClick={() => {
+                  setSeller({
+                    ...seller,
+                    fulfillment: choice,
+                  });
+                  setSaved(false);
+                }}
+                style={
+                  seller.fulfillment === choice
+                    ? styles.choiceActive
+                    : styles.choice
+                }
+              >
+                {choice}
+              </button>
+            ))}
           </div>
 
           <label style={styles.label}>
@@ -406,7 +760,7 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
                 });
                 setSaved(false);
               }}
-              placeholder="Example: Open Farm Saturday 10-12"
+              placeholder="Example: Saturday 10-12"
               style={styles.input}
             />
           </label>
@@ -420,33 +774,36 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
           </h2>
 
           <p style={styles.help}>
-            We send the customer to you. You keep the customer
-            and the sale.
+            This is the seller-wide fallback. A product
+            can also have its own direct order link above.
           </p>
 
           <div style={styles.choiceRow}>
-            {["Website", "Email", "Phone / Text", "Facebook"].map(
-              (choice) => (
-                <button
-                  key={choice}
-                  type="button"
-                  onClick={() => {
-                    setSeller({
-                      ...seller,
-                      orderMethod: choice,
-                    });
-                    setSaved(false);
-                  }}
-                  style={
-                    seller.orderMethod === choice
-                      ? styles.choiceActive
-                      : styles.choice
-                  }
-                >
-                  {choice}
-                </button>
-              )
-            )}
+            {[
+              "Website",
+              "Email",
+              "Phone / Text",
+              "Facebook",
+            ].map((choice) => (
+              <button
+                key={choice}
+                type="button"
+                onClick={() => {
+                  setSeller({
+                    ...seller,
+                    orderMethod: choice,
+                  });
+                  setSaved(false);
+                }}
+                style={
+                  seller.orderMethod === choice
+                    ? styles.choiceActive
+                    : styles.choice
+                }
+              >
+                {choice}
+              </button>
+            ))}
           </div>
 
           <label style={styles.label}>
@@ -454,7 +811,8 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
               ? "Website or order link"
               : seller.orderMethod === "Email"
                 ? "Order email"
-                : seller.orderMethod === "Phone / Text"
+                : seller.orderMethod ===
+                    "Phone / Text"
                   ? "Phone number"
                   : "Facebook page"}
 
@@ -463,7 +821,8 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
               onChange={(event) => {
                 setSeller({
                   ...seller,
-                  orderDestination: event.target.value,
+                  orderDestination:
+                    event.target.value,
                 });
                 setSaved(false);
               }}
@@ -486,7 +845,10 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
           type="button"
           onClick={save}
           disabled={saving}
-          style={styles.saveButton}
+          style={{
+            ...styles.saveButton,
+            opacity: saving ? 0.7 : 1,
+          }}
         >
           {saving
             ? "Saving..."
@@ -495,13 +857,16 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
 
         <a
           href={`/planet/okeechobee/meat-market/seller/${seller.slug}`}
+          target="_blank"
+          rel="noreferrer"
           style={styles.viewLink}
         >
           View My Public Seller Page
         </a>
 
         <div style={styles.footerNote}>
-          Need help? Email support and we can update it with you.
+          Your private update link controls this seller
+          page. Keep it somewhere safe.
         </div>
       </section>
     </main>
@@ -520,7 +885,7 @@ const styles: Record<string, React.CSSProperties> = {
 
   shell: {
     width: "100%",
-    maxWidth: 720,
+    maxWidth: 760,
     margin: "0 auto",
   },
 
@@ -569,6 +934,17 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "flex-start",
+    gap: 12,
+  },
+
+  productCount: {
+    flexShrink: 0,
+    borderRadius: 999,
+    background: "#efe7d9",
+    color: "#5f5037",
+    padding: "7px 10px",
+    fontSize: 12,
+    fontWeight: 900,
   },
 
   step: {
@@ -585,20 +961,21 @@ const styles: Record<string, React.CSSProperties> = {
   },
 
   sectionTitle: {
-    margin: "0 0 16px",
+    margin: "0 0 12px",
     fontSize: 25,
     letterSpacing: "-.025em",
   },
 
   productList: {
     display: "grid",
-    gap: 14,
+    gap: 16,
+    marginTop: 18,
   },
 
   productCard: {
     border: "1px solid #e3d8c7",
-    borderRadius: 18,
-    padding: 16,
+    borderRadius: 20,
+    padding: 17,
     background: "#faf6ee",
   },
 
@@ -606,11 +983,12 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
+    gap: 12,
     marginBottom: 14,
   },
 
   productNumber: {
-    fontSize: 14,
+    fontSize: 15,
   },
 
   removeButton: {
@@ -618,6 +996,80 @@ const styles: Record<string, React.CSSProperties> = {
     background: "transparent",
     color: "#a14b3c",
     fontWeight: 850,
+    cursor: "pointer",
+  },
+
+  photoRow: {
+    display: "flex",
+    gap: 14,
+    alignItems: "center",
+    padding: 12,
+    borderRadius: 16,
+    background: "#fffdf8",
+    border: "1px solid #e3d8c7",
+  },
+
+  photoPreview: {
+    width: 88,
+    height: 88,
+    flexShrink: 0,
+    borderRadius: 14,
+    overflow: "hidden",
+    background: "#eee5d6",
+  },
+
+  photoImage: {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    display: "block",
+  },
+
+  photoPlaceholder: {
+    width: "100%",
+    height: "100%",
+    display: "grid",
+    placeItems: "center",
+    padding: 8,
+    boxSizing: "border-box",
+    textAlign: "center",
+    color: "#7b725f",
+    fontSize: 12,
+    fontWeight: 800,
+  },
+
+  photoActions: {
+    display: "grid",
+    gap: 7,
+  },
+
+  photoButton: {
+    display: "inline-flex",
+    minHeight: 44,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "0 15px",
+    borderRadius: 12,
+    border: "1px solid #9b7b42",
+    background: "#fffaf0",
+    color: "#604a25",
+    fontSize: 14,
+    fontWeight: 950,
+    cursor: "pointer",
+  },
+
+  hiddenInput: {
+    display: "none",
+  },
+
+  smallRemove: {
+    border: 0,
+    padding: 0,
+    background: "transparent",
+    color: "#9c5247",
+    textAlign: "left",
+    fontSize: 12,
+    fontWeight: 800,
     cursor: "pointer",
   },
 
@@ -642,6 +1094,21 @@ const styles: Record<string, React.CSSProperties> = {
     fontFamily: "inherit",
   },
 
+  textarea: {
+    width: "100%",
+    minHeight: 96,
+    resize: "vertical",
+    boxSizing: "border-box",
+    borderRadius: 12,
+    border: "1px solid #d6c9b6",
+    padding: 13,
+    background: "#fff",
+    color: "#17231b",
+    fontSize: 16,
+    lineHeight: 1.45,
+    fontFamily: "inherit",
+  },
+
   twoColumn: {
     display: "grid",
     gridTemplateColumns:
@@ -649,11 +1116,50 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 10,
   },
 
+  featuredButton: {
+    width: "100%",
+    minHeight: 54,
+    marginTop: 14,
+    padding: "10px 14px",
+    borderRadius: 13,
+    border: "1px solid #d7c9ae",
+    background: "#fffdf8",
+    color: "#60543f",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    fontWeight: 900,
+    cursor: "pointer",
+  },
+
+  featuredActive: {
+    width: "100%",
+    minHeight: 54,
+    marginTop: 14,
+    padding: "10px 14px",
+    borderRadius: 13,
+    border: "1px solid #9b7639",
+    background: "#f5e8c8",
+    color: "#5c431d",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    fontWeight: 950,
+    cursor: "pointer",
+  },
+
+  featuredHint: {
+    fontSize: 11,
+    opacity: 0.72,
+  },
+
   addButton: {
     width: "100%",
-    minHeight: 50,
-    marginTop: 14,
-    borderRadius: 12,
+    minHeight: 54,
+    marginTop: 16,
+    borderRadius: 13,
     border: "1px dashed #92743d",
     background: "#fffaf0",
     color: "#644e28",
@@ -693,7 +1199,7 @@ const styles: Record<string, React.CSSProperties> = {
 
   saveButton: {
     width: "100%",
-    minHeight: 58,
+    minHeight: 60,
     border: 0,
     borderRadius: 14,
     background: "#17231b",

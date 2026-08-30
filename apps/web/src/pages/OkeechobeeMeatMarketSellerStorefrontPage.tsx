@@ -6,11 +6,15 @@ import { trackMeatMarketEvent } from "../lib/meatMarketAnalytics";
 type Product = {
   id: number | string;
   name: string;
+  category: string;
   price: string;
   package: string;
   fulfillment: string;
   availability: string;
+  description: string;
+  imageUrl: string;
   externalOrderUrl?: string;
+  featured: boolean;
 };
 
 type SellerConfig = {
@@ -395,10 +399,10 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
         await supabase
           .from("okeechobee_meat_market_products")
           .select(
-            "id,seller_listing_id,seller_name,name,price,package,fulfillment,availability,status,sort_order,external_order_url"
+            "id,seller_listing_id,seller_name,name,category,price,package,fulfillment,availability,status,sort_order,description,image_url,external_order_url,featured"
           )
           .eq("status", "Active")
-          .ilike("seller_name", resolvedSellerName)
+          .eq("seller_listing_id", requestedSlug)
           .order("sort_order", { ascending: true });
 
       if (productError) {
@@ -414,6 +418,8 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
           name:
             String(product.name || "").trim() ||
             "Local product",
+          category:
+            String(product.category || "").trim(),
           price:
             String(product.price || "").trim() ||
             "Contact seller",
@@ -425,14 +431,29 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
           availability:
             String(product.availability || "").trim() ||
             "Available now",
+          description:
+            String(product.description || "").trim(),
+          imageUrl:
+            String(product.image_url || "").trim(),
           externalOrderUrl: usableExternalLink(
             String(product.external_order_url || "").trim()
           ),
+          featured: Boolean(product.featured),
         })
       );
 
-      if (mappedProducts.length > 0) {
-        setProducts(mappedProducts);
+      const featuredProducts = mappedProducts.filter(
+        (product) => product.featured
+      );
+
+      const visibleProducts = (
+        featuredProducts.length
+          ? featuredProducts
+          : mappedProducts
+      ).slice(0, 10);
+
+      if (visibleProducts.length > 0) {
+        setProducts(visibleProducts);
       } else {
         const submittedSelling =
           listingDetail(seller.description, "Selling") ||
@@ -1008,7 +1029,9 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
               </div>
             ) : products.length ? (
               products.map((product) => {
-                const image = productImage(product.name, config);
+                const image =
+                  product.imageUrl ||
+                  productImage(product.name, config);
 
                 return (
                   <article
@@ -1029,7 +1052,9 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
 
                     <div className="product-body">
                       <div className="available">
-                        {product.availability || "Available now"}
+                        {product.category
+                          ? `${product.category} · ${product.availability || "Available now"}`
+                          : product.availability || "Available now"}
                       </div>
 
                       <div className="product-name">
@@ -1045,6 +1070,12 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
                           product.fulfillment ||
                           fulfillment}
                       </div>
+
+                      {product.description ? (
+                        <div className="product-detail">
+                          {product.description}
+                        </div>
+                      ) : null}
 
                       <a
                         className="order-button"

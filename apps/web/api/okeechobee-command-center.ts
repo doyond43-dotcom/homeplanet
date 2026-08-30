@@ -1,6 +1,39 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createClient } from "@supabase/supabase-js";
+import { createHash, randomBytes } from "node:crypto";
 
+function meatMarketDescriptionLine(description: unknown, label: string) {
+  const lines = String(description || "").split(/\r?\n/);
+  const prefix = \\:\;
+
+  const line = lines.find((item) =>
+    item.trim().toLowerCase().startsWith(prefix.toLowerCase())
+  );
+
+  if (!line) return "";
+
+  return line.slice(line.indexOf(":") + 1).trim();
+}
+
+function meatMarketSellerName(listing: any) {
+  return (
+    meatMarketDescriptionLine(listing?.description, "Ranch / Business") ||
+    String(listing?.title || "")
+      .replace(/^Live Meat Market Seller:\s*/i, "")
+      .trim() ||
+    "Local Seller"
+  );
+}
+
+function meatMarketSlugify(value: unknown) {
+  return (
+    String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "local-seller"
+  );
+}
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse
@@ -98,6 +131,263 @@ export default async function handler(
     );
 
     if (req.method === "POST") {
+      const action = String(req.body?.action || "").trim();
+
+      if (action === "approve_meat_market_seller") {
+        const eventId = String(req.body?.eventId || "").trim();
+
+        if (!eventId) {
+          return res.status(400).json({
+            ok: false,
+            error: "Seller submission is required.",
+          });
+        }
+
+        const { data: listing, error: listingError } =
+          await supabase
+            .from("okeechobee_events")
+            .select("*")
+            .eq("id", eventId)
+            .eq("type", "Live Meat Market Seller")
+            .maybeSingle();
+
+        if (listingError || !listing) {
+          return res.status(404).json({
+            ok: false,
+            error: "Seller submission was not found.",
+          });
+        }
+
+        const verification = meatMarketDescriptionLine(
+          listing.description,
+          "Verification"
+        ).toLowerCase();
+
+        if (verification !== "verified local seller") {
+          return res.status(400).json({
+            ok: false,
+            error: "Verify this seller before approving access.",
+          });
+        }
+
+        const sellerName = meatMarketSellerName(listing);
+
+        const sellerEmail =
+          meatMarketDescriptionLine(
+            listing.description,
+            "Email"
+          ) || null;
+
+        const selling =
+          meatMarketDescriptionLine(
+            listing.description,
+            "Selling"
+          ) || "Local products available";
+
+        const pricePackage =
+          meatMarketDescriptionLine(
+            listing.description,
+            "Price / Package"
+          ) || "Contact seller";
+
+        const fulfillment =
+          meatMarketDescriptionLine(
+            listing.description,
+            "Pickup / Delivery"
+          ) || "Pickup";
+
+        const location =
+          meatMarketDescriptionLine(
+            listing.description,
+            "Location"
+          ) ||
+          String(listing.location || "").trim() ||
+          "Okeechobee";
+
+        const sellerLink =
+          meatMarketDescriptionLine(
+            listing.description,
+            "Website / Facebook / Order Link"
+          ) || null;
+
+        const listingPhoto =
+          meatMarketDescriptionLine(
+            listing.description,
+            "Listing Photo"
+          ) || null;
+
+        const { data: existingSeller } =
+          await supabase
+            .from("okeechobee_meat_market_sellers")
+            .select("id,slug")
+            .eq("source_event_id", listing.id)
+            .maybeSingle();
+
+        let sellerSlug =
+          existingSeller?.slug ||
+          meatMarketSlugify(sellerName);
+
+        if (!existingSeller) {
+          const { data: slugOwner } =
+            await supabase
+              .from("okeechobee_meat_market_sellers")
+              .select("id,source_event_id")
+              .eq("slug", sellerSlug)
+              .maybeSingle();
+
+          if (
+            slugOwner &&
+            slugOwner.source_event_id !== listing.id
+          ) {
+            sellerSlug =
+              sellerSlug +
+              "-" +
+              String(listing.id)
+                .replace(/-/g, "")
+                .slice(0, 6);
+          }
+        }
+
+        const sellerPayload = {
+          slug: sellerSlug,
+          seller_name: sellerName,
+          source_event_id: listing.id,
+          location,
+          status: "Active",
+          verified: true,
+          hero_image: listingPhoto,
+          website: sellerLink,
+          fulfillment,
+          updated_at: new Date().toISOString(),
+        };
+
+        if (existingSeller?.id) {
+          const { error } =
+            await supabase
+              .from("okeechobee_meat_market_sellers")
+              .update(sellerPayload)
+              .eq("id", existingSeller.id);
+
+          if (error) {
+            throw error;
+          }
+        } else {
+          const { error } =
+            await supabase
+              .from("okeechobee_meat_market_sellers")
+              .insert(sellerPayload);
+
+          if (error) {
+            throw error;
+          }
+        }
+
+        const { data: existingProducts } =
+          await supabase
+            .from("okeechobee_meat_market_products")
+            .select("id")
+            .eq("seller_listing_id", sellerSlug)
+            .limit(1);
+
+        if (!existingProducts?.length) {
+          const { error: productError } =
+            await supabase
+              .from("okeechobee_meat_market_products")
+              .insert({
+                seller_listing_id: sellerSlug,
+                seller_name: sellerName,
+                name: selling,
+                category: "Other",
+                price: pricePackage,
+                package: "",
+                fulfillment,
+                availability: "Available now",
+                description: "",
+                image_url: listingPhoto,
+                external_order_url: sellerLink,
+                featured: true,
+                status: "Active",
+                sort_order: 0,
+              });
+
+          if (productError) {
+            throw productError;
+          }
+        }
+
+        const privateToken =
+          randomBytes(32).toString("base64url");
+
+        const manageTokenHash =
+          createHash("sha256")
+            .update(privateToken)
+            .digest("hex");
+
+        const { data: existingAccess } =
+          await supabase
+            .from("okeechobee_meat_market_seller_access")
+            .select("id")
+            .eq("seller_listing_id", sellerSlug)
+            .maybeSingle();
+
+        const accessPayload = {
+          seller_listing_id: sellerSlug,
+          seller_name: sellerName,
+          seller_email: sellerEmail,
+          manage_token_hash: manageTokenHash,
+          order_method: sellerLink ? "Website" : "Contact",
+          order_destination: sellerLink,
+          fulfillment,
+          pickup_note: null,
+          updated_at: new Date().toISOString(),
+        };
+
+        if (existingAccess?.id) {
+          const { error } =
+            await supabase
+              .from("okeechobee_meat_market_seller_access")
+              .update(accessPayload)
+              .eq("id", existingAccess.id);
+
+          if (error) {
+            throw error;
+          }
+        } else {
+          const { error } =
+            await supabase
+              .from("okeechobee_meat_market_seller_access")
+              .insert(accessPayload);
+
+          if (error) {
+            throw error;
+          }
+        }
+
+        const { error: statusError } =
+          await supabase
+            .from("okeechobee_events")
+            .update({ status: "Active" })
+            .eq("id", listing.id)
+            .eq("type", "Live Meat Market Seller");
+
+        if (statusError) {
+          throw statusError;
+        }
+
+        return res.status(200).json({
+          ok: true,
+          seller: {
+            slug: sellerSlug,
+            sellerName,
+          },
+          privateToken,
+          setupPath:
+            `/planet/okeechobee/meat-market/seller/setup/${sellerSlug}`,
+          publicPath:
+            `/planet/okeechobee/meat-market/seller/${sellerSlug}`,
+        });
+      }
+
       const buyerRequestId = String(
         req.body?.buyerRequestId || ""
       ).trim();
