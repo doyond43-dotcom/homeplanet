@@ -125,6 +125,53 @@ export default async function handler(
         const matchedSellerName =
           String(req.body?.matchedSellerName || "").trim() || null;
 
+        let canonicalMatchedSellerSlug = matchedSellerListingId;
+
+        if (matchedSellerListingId) {
+          const uuidPattern =
+            /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+          let sourceEventId = uuidPattern.test(matchedSellerListingId)
+            ? matchedSellerListingId
+            : null;
+
+          if (!sourceEventId) {
+            const { data: sourceEvent } = await supabase
+              .from("okeechobee_events")
+              .select("id")
+              .eq("slug", matchedSellerListingId)
+              .maybeSingle();
+
+            sourceEventId = sourceEvent?.id || null;
+          }
+
+          let canonicalSeller: any = null;
+
+          if (sourceEventId) {
+            const { data } = await supabase
+              .from("okeechobee_meat_market_sellers")
+              .select("slug")
+              .eq("source_event_id", sourceEventId)
+              .maybeSingle();
+
+            canonicalSeller = data;
+          }
+
+          if (!canonicalSeller) {
+            const { data } = await supabase
+              .from("okeechobee_meat_market_sellers")
+              .select("slug")
+              .eq("slug", matchedSellerListingId)
+              .maybeSingle();
+
+            canonicalSeller = data;
+          }
+
+          if (canonicalSeller?.slug) {
+            canonicalMatchedSellerSlug = canonicalSeller.slug;
+          }
+        }
+
         const { data: buyerWorkflow, error: buyerWorkflowError } =
           await supabase
             .from("okeechobee_meat_market_buyer_workflow")
@@ -132,7 +179,7 @@ export default async function handler(
               {
                 buyer_request_id: buyerRequestId,
                 status,
-                matched_seller_listing_id: matchedSellerListingId,
+                matched_seller_listing_id: canonicalMatchedSellerSlug,
                 matched_seller_name: matchedSellerName,
                 updated_at: new Date().toISOString(),
               },

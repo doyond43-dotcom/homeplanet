@@ -1,4 +1,4 @@
-﻿import GuardianPetPrivacyPage from "../pages/GuardianPetPrivacyPage";
+import GuardianPetPrivacyPage from "../pages/GuardianPetPrivacyPage";
 
 import { Routes, Route, Navigate } from "react-router-dom";
 
@@ -415,6 +415,7 @@ import HomePlanetBuildDirectory from "../pages/HomePlanetBuildDirectory";
 import HomePlanetFlowRegistry from "../pages/HomePlanetFlowRegistry";
 import OkeechobeeCommandCenter from "../pages/OkeechobeeCommandCenter";
 import OkeechobeeMeatMarketCommandCenter from "../pages/OkeechobeeMeatMarketCommandCenter";
+import OkeechobeeMeatMarketIntelligenceDashboard from "../pages/OkeechobeeMeatMarketIntelligenceDashboard";
 import OkeechobeeMeatMarketContactPage from "../pages/OkeechobeeMeatMarketContactPage";
 import OkeechobeeOperationsPreview from "../pages/OkeechobeeOperationsPreview";
 
@@ -570,6 +571,7 @@ export default function PlanetRoutes() {
       <Route path="okeechobee/meat-market/seller/:slug" element={<OkeechobeeMeatMarketSellerStorefrontPage />} />
       <Route path="okeechobee/meat-market/farm-folks" element={<OkeechobeeMeatMarketSellerStorefrontPage />} />
       <Route path="okeechobee/meat-market/contact" element={<OkeechobeeMeatMarketContactPage />} />
+      <Route path="okeechobee/meat-market/intelligence" element={<RequireAuth><OkeechobeeMeatMarketIntelligenceDashboard /></RequireAuth>} />
       <Route path="okeechobee/meat-market/command" element={<RequireAuth><OkeechobeeMeatMarketCommandCenter /></RequireAuth>} />
       <Route path="okeechobee/admin" element={<OkeechobeeCommunityAdminPage />} />
 <Route path="okeechobee/project/:slug" element={<RequireAuth><OkeechobeeProjectWorkspace /></RequireAuth>} />

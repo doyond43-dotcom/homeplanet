@@ -1,4 +1,4 @@
-﻿import type { VercelRequest, VercelResponse } from "@vercel/node";
+import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createHash, timingSafeEqual } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 
@@ -156,7 +156,7 @@ export default async function handler(
       await supabase
         .from("okeechobee_meat_market_products")
         .select(
-          "id,name,price,package,fulfillment,availability,status,sort_order"
+          "id,name,price,package,fulfillment,availability,status,sort_order,external_order_url"
         )
         .eq("seller_listing_id", slug)
         .order("sort_order", { ascending: true });
@@ -193,6 +193,26 @@ export default async function handler(
       ? req.body.products
       : [];
 
+    const { data: existingProducts, error: existingProductsError } =
+      await supabase
+        .from("okeechobee_meat_market_products")
+        .select("name,external_order_url")
+        .eq("seller_listing_id", slug);
+
+    if (existingProductsError) {
+      return res.status(500).json({
+        ok: false,
+        error: "Could not preserve existing product links.",
+      });
+    }
+
+    const existingOrderLinks = new Map(
+      (existingProducts || []).map((product: any) => [
+        String(product.name || "").trim().toLowerCase(),
+        clean(product.external_order_url, 2000) || null,
+      ])
+    );
+
     const products = incomingProducts
       .map((product: any, index: number) => ({
         seller_listing_id: slug,
@@ -205,6 +225,10 @@ export default async function handler(
           clean(product?.availability, 80) || "Available now",
         status: "Active",
         sort_order: index + 1,
+        external_order_url:
+          existingOrderLinks.get(
+            clean(product?.name, 200).toLowerCase()
+          ) || null,
       }))
       .filter((product: any) => product.name);
 

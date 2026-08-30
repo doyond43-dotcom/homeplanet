@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import { trackMeatMarketEvent } from "../lib/meatMarketAnalytics";
 
 type Product = {
   id: number | string;
@@ -9,6 +10,7 @@ type Product = {
   package: string;
   fulfillment: string;
   availability: string;
+  externalOrderUrl?: string;
 };
 
 type SellerConfig = {
@@ -115,9 +117,9 @@ function productImage(
 
   const mappings = config?.productImages || {};
 
-  const matchedKey = Object.keys(mappings).find((key) =>
-    value.includes(key)
-  );
+  const matchedKey = Object.keys(mappings)
+    .filter((key) => value.includes(key))
+    .sort((a, b) => b.length - a.length)[0];
 
   if (matchedKey) {
     return mappings[matchedKey];
@@ -145,10 +147,22 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
   const [orderMethod, setOrderMethod] = useState("");
   const [orderDestination, setOrderDestination] = useState("");
   const [listingPhoto, setListingPhoto] = useState("");
+  const [canonicalConfig, setCanonicalConfig] =
+    useState<SellerConfig | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
+  useEffect(() => {
+    void trackMeatMarketEvent({
+      eventType: "seller_view",
+      sellerSlug: requestedSlug,
+      source: "Seller Storefront",
+    });
+  }, [requestedSlug]);
+
   const config = useMemo(() => {
+    if (canonicalConfig) return canonicalConfig;
+
     if (configuredSeller) return configuredSeller;
 
     if (!sellerName) return undefined;
@@ -158,12 +172,91 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
       sellerName,
       tagline: "Local food from a local seller.",
     } satisfies SellerConfig;
-  }, [configuredSeller, requestedSlug, sellerName]);
+  }, [
+    canonicalConfig,
+    configuredSeller,
+    requestedSlug,
+    sellerName,
+  ]);
 
   useEffect(() => {
     async function loadStorefront() {
       setLoading(true);
       setNotFound(false);
+
+      let databaseConfig: SellerConfig | undefined;
+      let canonicalSourceEventId = "";
+      let canonicalFulfillment = "";
+      let canonicalWebsite = "";
+
+      const {
+        data: canonicalSeller,
+        error: canonicalSellerError,
+      } = await supabase
+        .from("okeechobee_meat_market_sellers")
+        .select(
+          "slug,seller_name,source_event_id,hero_image,owner_image,tagline,website,catalog_url,catalog_label,fulfillment,product_image_map,status"
+        )
+        .eq("slug", requestedSlug)
+        .eq("status", "Active")
+        .maybeSingle();
+
+      if (canonicalSellerError) {
+        console.warn(
+          "Could not load canonical Meat Market seller profile:",
+          canonicalSellerError
+        );
+      }
+
+      if (canonicalSeller) {
+        const productImageMap =
+          canonicalSeller.product_image_map &&
+          typeof canonicalSeller.product_image_map === "object"
+            ? (canonicalSeller.product_image_map as Record<
+                string,
+                string
+              >)
+            : {};
+
+        databaseConfig = {
+          slug: String(canonicalSeller.slug || requestedSlug),
+          sellerName: String(
+            canonicalSeller.seller_name || ""
+          ).trim(),
+          heroImage: String(
+            canonicalSeller.hero_image || ""
+          ).trim(),
+          ownerImage: String(
+            canonicalSeller.owner_image || ""
+          ).trim(),
+          tagline: String(
+            canonicalSeller.tagline || ""
+          ).trim(),
+          productImages: productImageMap,
+          catalogHref: String(
+            canonicalSeller.catalog_url || ""
+          ).trim(),
+          catalogLabel: String(
+            canonicalSeller.catalog_label || ""
+          ).trim(),
+        };
+
+        canonicalSourceEventId = String(
+          canonicalSeller.source_event_id || ""
+        ).trim();
+
+        canonicalFulfillment = String(
+          canonicalSeller.fulfillment || ""
+        ).trim();
+
+        canonicalWebsite = String(
+          canonicalSeller.website || ""
+        ).trim();
+
+        setCanonicalConfig(databaseConfig);
+      } else {
+        setCanonicalConfig(undefined);
+      }
 
       const { data: sellers, error: sellerError } = await supabase
         .from("okeechobee_events")
@@ -187,9 +280,21 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
           .trim();
 
         if (
-          configuredSeller?.sellerName &&
+          canonicalSourceEventId &&
+          String(item.id || "") === canonicalSourceEventId
+        ) {
+          return true;
+        }
+
+        const expectedSellerName =
+          databaseConfig?.sellerName ||
+          configuredSeller?.sellerName ||
+          "";
+
+        if (
+          expectedSellerName &&
           name.toLowerCase() ===
-            configuredSeller.sellerName.toLowerCase()
+            expectedSellerName.toLowerCase()
         ) {
           return true;
         }
@@ -198,6 +303,7 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
       });
 
       const resolvedSellerName =
+        databaseConfig?.sellerName ||
         configuredSeller?.sellerName ||
         (seller
           ? String(seller.title || "")
@@ -219,6 +325,7 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
       );
 
       const sellerFulfillment =
+        canonicalFulfillment ||
         listingDetail(seller.description, "Pickup / Delivery") ||
         "Contact seller for pickup details";
 
@@ -231,7 +338,10 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
         )
       );
 
-      setSellerLink(submittedSellerLink);
+      setSellerLink(
+        usableExternalLink(canonicalWebsite) ||
+          submittedSellerLink
+      );
 
       try {
         const sellerPublicResponse = await fetch(
@@ -285,7 +395,7 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
         await supabase
           .from("okeechobee_meat_market_products")
           .select(
-            "id,seller_listing_id,seller_name,name,price,package,fulfillment,availability,status,sort_order"
+            "id,seller_listing_id,seller_name,name,price,package,fulfillment,availability,status,sort_order,external_order_url"
           )
           .eq("status", "Active")
           .ilike("seller_name", resolvedSellerName)
@@ -315,6 +425,9 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
           availability:
             String(product.availability || "").trim() ||
             "Available now",
+          externalOrderUrl: usableExternalLink(
+            String(product.external_order_url || "").trim()
+          ),
         })
       );
 
@@ -362,6 +475,10 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
     const method = orderMethod.trim().toLowerCase();
     const destination = orderDestination.trim();
 
+    if (product.externalOrderUrl) {
+      return product.externalOrderUrl;
+    }
+
     if (config?.catalogHref && !destination) {
       return config.catalogHref;
     }
@@ -385,6 +502,28 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
     }
 
     return meatMarketOrderHref(product);
+  }
+
+  function trackProductOrderClick(product: Product) {
+    const destination = orderHref(product);
+
+    void trackMeatMarketEvent({
+      eventType: "product_order_click",
+      sellerSlug: requestedSlug,
+      productId: product.id,
+      productName: product.name,
+      source: "Seller Product Card",
+      destination,
+    });
+  }
+
+  function trackSellerLinkClick() {
+    void trackMeatMarketEvent({
+      eventType: "seller_link_click",
+      sellerSlug: requestedSlug,
+      source: "Seller Storefront Header",
+      destination: sellerLink,
+    });
   }
 
   function orderLabel() {
@@ -784,6 +923,7 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
             <a
               className="seller-link"
               href={sellerLink}
+              onClick={trackSellerLinkClick}
               target="_blank"
               rel="noreferrer"
             >
@@ -909,6 +1049,7 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
                       <a
                         className="order-button"
                         href={orderHref(product)}
+                        onClick={() => trackProductOrderClick(product)}
                       >
                         {orderLabel()}
                       </a>

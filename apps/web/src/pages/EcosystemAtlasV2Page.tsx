@@ -285,6 +285,32 @@ const sections: AtlasSection[] = [
         ],
       },
       {
+        id: "okeechobee-live-meat-market",
+        name: "Okeechobee Live Meat Market",
+        status: "Local market system",
+        description:
+          "Local meat sellers, current products, buyer demand, seller matching, and market intelligence.",
+        quickReply:
+          "The Okeechobee Live Meat Market helps local buyers find local ranchers, meat sellers, processors, and current products in one place.",
+        doorways: [
+          {
+            label: "Live Market",
+            route: "/planet/okeechobee/meat-market",
+            access: "public",
+          },
+          {
+            label: "Command Center",
+            route: "/planet/okeechobee/meat-market/command",
+            access: "working",
+          },
+          {
+            label: "Intelligence",
+            route: "/planet/okeechobee/meat-market/intelligence",
+            access: "working",
+          },
+        ],
+      },
+      {
         id: "guardian-pet",
         name: "HomePlanet Guardian Pet Tags",
         status: "Product system",

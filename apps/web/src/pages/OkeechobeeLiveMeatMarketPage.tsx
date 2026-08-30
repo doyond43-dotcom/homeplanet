@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { trackMeatMarketEvent } from "../lib/meatMarketAnalytics";
 
 type MarketItem = {
   id: number | string;
@@ -228,6 +229,13 @@ export default function OkeechobeeLiveMeatMarketPage() {
   const [activeCategory, setActiveCategory] = useState("Everything");
   const [liveItems, setLiveItems] = useState<MarketItem[]>([]);
   const [marketLoading, setMarketLoading] = useState(true);
+
+  useEffect(() => {
+    void trackMeatMarketEvent({
+      eventType: "market_view",
+      source: "Live Meat Market",
+    });
+  }, []);
 
   useEffect(() => {
     async function loadLiveMarket() {

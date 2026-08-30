@@ -1,4 +1,4 @@
-﻿import { lazy, Suspense } from "react";
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useSearchParams } from "react-router-dom";
 import { RequireAuth } from "./auth/RequireAuth";
 
@@ -6,6 +6,9 @@ const DemoPestControlLandingPage = lazy(() => import("./pages/DemoPestControlLan
 const DemoPestControlBoardPage = lazy(() => import("./pages/DemoPestControlBoardPage"));
 const DemoHomeServicesLandingPage = lazy(() => import("./pages/DemoHomeServicesLandingPage"));
 const DanielCustomSystemsLandingPage = lazy(() => import("./pages/DanielCustomSystemsLandingPage"));
+const HomePlanetCustomWebsitesPage = lazy(() => import("./pages/HomePlanetCustomWebsitesPage"));
+const HomePlanetCustomSystemsExamplesPage = lazy(() => import("./pages/HomePlanetCustomSystemsExamplesPage"));
+const HomePlanetContactPage = lazy(() => import("./pages/HomePlanetContactPage"));
 const ShowMeMorePage = lazy(() => import("./pages/ShowMeMorePage"));
 const BestOfLakeVotingPage = lazy(() => import("./pages/BestOfLakeVotingPage"));
 const DanielCustomSystemsBuildBoard = lazy(() => import("./pages/DanielCustomSystemsBuildBoard"));
@@ -76,6 +79,7 @@ const VZProfessionalLawncareLiveActivity = lazy(() =>
 );
 const LateNightHotelsLandingPage = lazy(() => import("./pages/LateNightHotelsLandingPage"));
 const MarshallRosenbachLandingPage = lazy(() => import("./pages/MarshallRosenbachLandingPage"));
+const MarshallRosenbachPracticeAreaPage = lazy(() => import("./pages/MarshallRosenbachPracticeAreaPage"));
 const MarshallRosenbachLegalPage = lazy(() => import("./pages/MarshallRosenbachLegalPage"));
 const MarshallRosenbachCaseReviewPage = lazy(() => import("./pages/MarshallRosenbachCaseReviewPage"));
 const MarshallRosenbachLiveBoard = lazy(() => import("./pages/MarshallRosenbachLiveBoard"));
@@ -155,7 +159,7 @@ function OkeechobeeDomainHomeRedirect() {
     return <Navigate to="/planet/okeechobee" replace />;
   }
 
-  return <Navigate to="/city" replace />;
+  return <Navigate to="/planet/home" replace />;
 }
 
 function OkeechobeeDomainCityRedirect() {
@@ -239,6 +243,9 @@ export default function App() {
           <Route path="/planet/demo/home-services" element={<DemoHomeServicesLandingPage />} />
           <Route path="/planet/custom-systems/board" element={<RequireAuth><DanielCustomSystemsBuildBoard /></RequireAuth>} />
           <Route path="/planet/custom-systems/activity" element={<RequireAuth><DanielCustomSystemsLiveActivity /></RequireAuth>} />
+          <Route path="/contact" element={<HomePlanetContactPage />} />
+          <Route path="/planet/custom-websites" element={<HomePlanetCustomWebsitesPage />} />
+          <Route path="/planet/custom-systems/examples" element={<HomePlanetCustomSystemsExamplesPage />} />
           <Route path="/planet/custom-systems" element={<DanielCustomSystemsLandingPage />} />
           <Route path="/show-me-more" element={<ShowMeMorePage />} />
           <Route path="/planet/best-of-the-lake" element={<BestOfLakeVotingPage />} />
@@ -250,6 +257,12 @@ export default function App() {
           <Route path="/planet/marshall-rosenbach/case-review" element={<MarshallRosenbachCaseReviewPage />} />
           <Route path="/planet/marshall-rosenbach/board" element={<RequireAuth><MarshallRosenbachLiveBoard /></RequireAuth>} />
           <Route path="/planet/marshall-rosenbach/document-upload" element={<MarshallRosenbachDocumentUploadPage />} />
+          <Route path="/planet/marshall-rosenbach/car-accident" element={<MarshallRosenbachPracticeAreaPage />} />
+          <Route path="/planet/marshall-rosenbach/truck-accident" element={<MarshallRosenbachPracticeAreaPage />} />
+          <Route path="/planet/marshall-rosenbach/motorcycle-accident" element={<MarshallRosenbachPracticeAreaPage />} />
+          <Route path="/planet/marshall-rosenbach/train-collision" element={<MarshallRosenbachPracticeAreaPage />} />
+          <Route path="/planet/marshall-rosenbach/bicycle-accident" element={<MarshallRosenbachPracticeAreaPage />} />
+          <Route path="/planet/marshall-rosenbach/pedestrian-accident" element={<MarshallRosenbachPracticeAreaPage />} />
           <Route path="/planet/late-night-hotels/board" element={<LateNightHotelsOperatorBoard />} />
           <Route path="/planet/echols-water-testing" element={<EcholsWaterTestingLandingPage />} />
           <Route path="/planet/jones-equipment-rental-repair" element={<JonesEquipmentRentalRepairLandingPage />} />
@@ -283,6 +296,7 @@ export default function App() {
           <Route path="/planet/build-your-live-system" element={<HomePlanetMarketAwarenessFunnelV1 />} />        <Route path="/service/*" element={<ServiceRoutes />} />
         <Route path="/yard-sale/start" element={<YardSaleStartPage />} />
         <Route path="/yard-sale/:slug" element={<YardSalePublicPage />} />
+        <Route path="/city" element={<Navigate to="/planet/home" replace />} />
         <Route path="/city/*" element={<OkeechobeeDomainCityRedirect />} />
 
         <Route path="/legal-demo" element={<LegalDemoBoard />} />
@@ -361,6 +375,17 @@ export default function App() {
     </BrowserRouter>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
 
 
 

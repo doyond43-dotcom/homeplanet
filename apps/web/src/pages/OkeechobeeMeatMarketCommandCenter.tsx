@@ -383,8 +383,8 @@ export default function OkeechobeeMeatMarketCommandCenter() {
           buyerRequestId: question.id,
           status,
           matchedSellerListingId:
-            matchedSeller?.slug ||
             matchedSeller?.id ||
+            matchedSeller?.slug ||
             question.matched_seller_listing_id ||
             "",
           matchedSellerName:
