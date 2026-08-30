@@ -4,7 +4,7 @@ import { createHash, randomBytes } from "node:crypto";
 
 function meatMarketDescriptionLine(description: unknown, label: string) {
   const lines = String(description || "").split(/\r?\n/);
-  const prefix = \\:\;
+  const prefix = `${label}:`;
 
   const line = lines.find((item) =>
     item.trim().toLowerCase().startsWith(prefix.toLowerCase())
