@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
@@ -18,6 +18,8 @@ type SellerConfig = {
   ownerImage?: string;
   tagline?: string;
   productImages?: Record<string, string>;
+  catalogHref?: string;
+  catalogLabel?: string;
 };
 
 const sellerConfigs: Record<string, SellerConfig> = {
@@ -45,6 +47,22 @@ const sellerConfigs: Record<string, SellerConfig> = {
       sirloin: "/images/farm-folks-steaks.jpg",
       filet: "/images/farm-folks-steaks.jpg",
       beef: "/images/farm-folks-beef-cuts.jpg",
+    },
+  },
+
+  "lollis-beef": {
+    slug: "lollis-beef",
+    sellerName: "Lollis Beef",
+    heroImage: "/images/lollis-beef-main.jpg",
+    tagline: "Local beef, pork, and more from Lollis Beef.",
+    catalogHref: "https://lollisbeef.com/collections",
+    catalogLabel: "Shop Current Products",
+    productImages: {
+      steak: "/images/lollis-beef-main.jpg",
+      beef: "/images/lollis-beef-main.jpg",
+      rib: "/images/lollis-beef-main.jpg",
+      ground: "/images/lollis-beef-main.jpg",
+      pork: "/images/lollis-beef-main.jpg",
     },
   },
 };
@@ -344,6 +362,10 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
     const method = orderMethod.trim().toLowerCase();
     const destination = orderDestination.trim();
 
+    if (config?.catalogHref && !destination) {
+      return config.catalogHref;
+    }
+
     if (
       (method === "website" || method === "facebook") &&
       destination
@@ -367,6 +389,10 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
 
   function orderLabel() {
     const method = orderMethod.trim().toLowerCase();
+
+    if (config?.catalogLabel && !orderDestination.trim()) {
+      return config.catalogLabel;
+    }
 
     if (method === "website") {
       return "Shop / Order From Seller";

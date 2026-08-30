@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 type MarketItem = {
@@ -165,6 +165,10 @@ function sellerImage(seller: string) {
 
   if (value.includes("farm folks")) {
     return "/images/farm-folks-beef-patties.jpg";
+  }
+
+  if (value.includes("lollis")) {
+    return "/images/lollis-beef-main.jpg";
   }
 
   return "";
@@ -348,6 +352,32 @@ export default function OkeechobeeLiveMeatMarketPage() {
                 sellerImage: usableOrderHref(submittedPhoto),
               };
             });
+          }
+
+          if (seller.toLowerCase().includes("lollis")) {
+            const lollisPreviewProducts = [
+              "Steaks",
+              "Ground Beef",
+              "Ribs",
+              "Pork",
+              "Roasts",
+            ];
+
+            return lollisPreviewProducts.map((productName, index) => ({
+              id: `${listing.id}-preview-${index}`,
+              category: marketCategory(productName),
+              title: productName,
+              price: "See website for pricing",
+              amount: "Available now",
+              seller,
+              location: listing.location || "Okeechobee area",
+              fulfillment: sellerFulfillment,
+              badge: "AVAILABLE NOW",
+              phone: usablePhone(String(listing.contact || "")),
+              orderHref: "https://lollisbeef.com/collections",
+              sellerHref: sellerStorefrontHref(seller),
+              sellerImage: usableOrderHref(submittedPhoto),
+            }));
           }
 
           return [
