@@ -1,6 +1,11 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createClient } from "@supabase/supabase-js";
 import { createHash, randomBytes } from "node:crypto";
+import {
+  escapeEmailHtml,
+  sendHomePlanetEmail,
+} from "./_lib/homeplanet-email.js";
+import { sendHomePlanetSms } from "./_lib/homeplanet-sms.js";
 
 function meatMarketDescriptionLine(description: unknown, label: string) {
   const lines = String(description || "").split(/\r?\n/);
@@ -176,6 +181,12 @@ export default async function handler(
           meatMarketDescriptionLine(
             listing.description,
             "Email"
+          ) || null;
+
+        const sellerPhone =
+          meatMarketDescriptionLine(
+            listing.description,
+            "Best Contact"
           ) || null;
 
         const selling =
@@ -374,8 +385,59 @@ export default async function handler(
           throw statusError;
         }
 
+        const setupPath =
+          `/planet/okeechobee/meat-market/seller/setup/${sellerSlug}`;
+
+        const publicPath =
+          `/planet/okeechobee/meat-market/seller/${sellerSlug}`;
+
+        const privateSetupUrl =
+          `https://www.homeplanet.city${setupPath}#${privateToken}`;
+
+        const publicSellerUrl =
+          `https://www.homeplanet.city${publicPath}`;
+
+        const notifications = {
+          email: sellerEmail ? "pending" : "skipped",
+          sms: sellerPhone ? "pending" : "skipped",
+        };
+
+        if (sellerEmail) {
+          try {
+            await sendHomePlanetEmail({
+              recipient: sellerEmail,
+              project: "okeechobee-meat-market-seller-access",
+              idempotencyKey:
+                `okeechobee-meat-market-seller-access-${eventId}-${manageTokenHash.slice(0, 12)}`,
+              subject: `Your ${sellerName} Live Meat Market Page Is Ready`,
+              html: `<div style="font-family:Arial,sans-serif;max-width:720px;margin:0 auto;padding:24px;color:#17231b;"><h2>Your Live Meat Market seller page is ready</h2><p>${escapeEmailHtml(sellerName)} has been approved for the Okeechobee Live Meat Market.</p><p>Use your private seller link to update products, prices, availability, photos, pickup or delivery details, and how buyers should contact you.</p><p><a href="${escapeEmailHtml(privateSetupUrl)}" style="display:inline-block;padding:12px 18px;background:#173f2a;color:#fff;text-decoration:none;border-radius:10px;font-weight:700;">Open My Seller Page</a></p><p><strong>Keep this private link somewhere safe because it controls your seller page.</strong></p><p>Public seller page: <a href="${escapeEmailHtml(publicSellerUrl)}">${escapeEmailHtml(publicSellerUrl)}</a></p><p>Thank you for joining the Okeechobee Live Meat Market!</p></div>`,
+            });
+            notifications.email = "sent";
+          } catch (error) {
+            notifications.email = "failed";
+            console.error("Meat Market seller approval email failed:", error);
+          }
+        }
+
+        if (sellerPhone) {
+          try {
+            await sendHomePlanetSms({
+              recipientPhone: sellerPhone,
+              project: "okeechobee-meat-market-seller-access",
+              messageBody:
+                `${sellerName} is approved for the Okeechobee Live Meat Market. Your private seller page is ready. Use this link to update your products, photos, prices and availability.`,
+              secureLink: privateSetupUrl,
+            });
+            notifications.sms = "sent";
+          } catch (error) {
+            notifications.sms = "failed";
+            console.error("Meat Market seller approval SMS failed:", error);
+          }
+        }
+
         return res.status(200).json({
           ok: true,
+          notifications,
           seller: {
             slug: sellerSlug,
             sellerName,

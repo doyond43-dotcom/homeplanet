@@ -177,9 +177,14 @@ export default function OkeechobeeMeatMarketCommandCenter() {
       {
         setupUrl: string;
         publicUrl: string;
+        emailStatus: string;
+        smsStatus: string;
       }
     >
   >({});
+
+  const [copiedSellerId, setCopiedSellerId] =
+    useState<string | null>(null);
 
   const [view, setView] = useState<ViewMode>("sellers");
   const [filter, setFilter] = useState<FilterMode>("all");
@@ -485,18 +490,26 @@ export default function OkeechobeeMeatMarketCommandCenter() {
         );
       }
 
+      const sellerBaseUrl = "https://www.homeplanet.city";
+
       const setupUrl =
-        `${window.location.origin}${result.setupPath}` +
+        `${sellerBaseUrl}${result.setupPath}` +
         `#${result.privateToken}`;
 
       const publicUrl =
-        `${window.location.origin}${result.publicPath}`;
+        `${sellerBaseUrl}${result.publicPath}`;
 
       setSellerAccessLinks((current) => ({
         ...current,
         [listing.id]: {
           setupUrl,
           publicUrl,
+          emailStatus: String(
+            result?.notifications?.email || "skipped"
+          ),
+          smsStatus: String(
+            result?.notifications?.sms || "skipped"
+          ),
         },
       }));
 
@@ -1351,19 +1364,64 @@ export default function OkeechobeeMeatMarketCommandCenter() {
                 <div
                   style={{
                     display: "grid",
+                    gap: "4px",
+                    marginBottom: "12px",
+                    fontSize: "14px",
+                    fontWeight: 800,
+                    color: "#173f2a",
+                  }}
+                >
+                  <div>
+                    Email:{" "}
+                    {sellerAccessLinks[selectedListing.id].emailStatus ===
+                    "sent"
+                      ? "Sent ✓"
+                      : sellerAccessLinks[selectedListing.id].emailStatus ===
+                        "failed"
+                        ? "Failed"
+                        : "Not available"}
+                  </div>
+
+                  <div>
+                    Text:{" "}
+                    {sellerAccessLinks[selectedListing.id].smsStatus ===
+                    "sent"
+                      ? "Sent ✓"
+                      : sellerAccessLinks[selectedListing.id].smsStatus ===
+                        "failed"
+                        ? "Failed"
+                        : "Not available"}
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    display: "grid",
                     gap: "8px",
                   }}
                 >
                   <button
                     type="button"
                     style={primaryButton}
-                    onClick={() =>
-                      navigator.clipboard.writeText(
+                    onClick={async () => {
+                      await navigator.clipboard.writeText(
                         sellerAccessLinks[selectedListing.id].setupUrl
-                      )
-                    }
+                      );
+
+                      setCopiedSellerId(selectedListing.id);
+
+                      window.setTimeout(() => {
+                        setCopiedSellerId((current) =>
+                          current === selectedListing.id
+                            ? null
+                            : current
+                        );
+                      }, 2500);
+                    }}
                   >
-                    Copy Private Setup Link
+                    {copiedSellerId === selectedListing.id
+                      ? "Copied ✓"
+                      : "Copy Private Setup Link"}
                   </button>
 
                   <a
