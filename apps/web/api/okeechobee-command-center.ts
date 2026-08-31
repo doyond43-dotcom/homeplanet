@@ -388,6 +388,82 @@ export default async function handler(
         });
       }
 
+      if (action === "reissue_resident_access") {
+        const projectSlug = String(
+          req.body?.projectSlug || ""
+        ).trim();
+
+        if (!projectSlug) {
+          return res.status(400).json({
+            ok: false,
+            error: "Project is required.",
+          });
+        }
+
+        const { data: owner, error: ownerError } =
+          await supabase
+            .from("okeechobee_project_owners")
+            .select("project_slug,resident_name")
+            .eq("project_slug", projectSlug)
+            .maybeSingle();
+
+        if (ownerError) {
+          console.error(
+            "Resident access owner lookup failed:",
+            ownerError.message
+          );
+
+          return res.status(500).json({
+            ok: false,
+            error: "Could not load resident access.",
+          });
+        }
+
+        if (!owner) {
+          return res.status(404).json({
+            ok: false,
+            error:
+              "This project does not have a resident ownership record.",
+          });
+        }
+
+        const rawToken =
+          randomBytes(32).toString("base64url");
+
+        const manageTokenHash =
+          createHash("sha256")
+            .update(rawToken)
+            .digest("hex");
+
+        const { error: tokenUpdateError } =
+          await supabase
+            .from("okeechobee_project_owners")
+            .update({
+              manage_token_hash: manageTokenHash,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("project_slug", projectSlug);
+
+        if (tokenUpdateError) {
+          console.error(
+            "Resident access reissue failed:",
+            tokenUpdateError.message
+          );
+
+          return res.status(500).json({
+            ok: false,
+            error: "Could not reissue resident access.",
+          });
+        }
+
+        return res.status(200).json({
+          ok: true,
+          residentName: owner.resident_name || "Resident",
+          privateToken: rawToken,
+          managePath:
+            `/planet/okeechobee/manage/${projectSlug}`,
+        });
+      }
       const buyerRequestId = String(
         req.body?.buyerRequestId || ""
       ).trim();
@@ -751,7 +827,3 @@ export default async function handler(
     });
   }
 }
-
-
-
-

@@ -7,6 +7,7 @@ export default function OkeechobeeCommandCenter() {
   const [loading, setLoading] = useState(true);
   const [workingSlug, setWorkingSlug] = useState<string | null>(null);
   const [workingHelperId, setWorkingHelperId] = useState<string | null>(null);
+  const [workingResidentSlug, setWorkingResidentSlug] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
   const [showTests, setShowTests] = useState(false);
 
@@ -280,6 +281,74 @@ export default function OkeechobeeCommandCenter() {
     }
 
     setWorkingSlug(null);
+  }
+
+  async function reissueResidentAccess(event: any) {
+    setWorkingResidentSlug(event.slug);
+    setNotice("");
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.access_token) {
+        throw new Error(
+          "Your admin session has expired. Please sign in again."
+        );
+      }
+
+      const response = await fetch(
+        "/api/okeechobee-command-center",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            action: "reissue_resident_access",
+            projectSlug: event.slug,
+          }),
+        }
+      );
+
+      const result = await response.json().catch(() => null);
+
+      if (!response.ok || result?.ok !== true) {
+        throw new Error(
+          result?.error || "Could not reissue resident access."
+        );
+      }
+
+      const manageUrl =
+        `${window.location.origin}${result.managePath}#${result.privateToken}`;
+
+      try {
+        await navigator.clipboard.writeText(manageUrl);
+      } catch (clipboardError) {
+        console.error(clipboardError);
+      }
+
+      window.prompt(
+        "COPY THIS PRIVATE RESIDENT ACCESS LINK:",
+        manageUrl
+      );
+
+      setNotice(
+        `New resident access link created for "${event.resident_name || event.public_title || event.title}".`
+      );
+    } catch (error) {
+      console.error(error);
+
+      setNotice(
+        error instanceof Error
+          ? error.message
+          : "Could not reissue resident access."
+      );
+    } finally {
+      setWorkingResidentSlug(null);
+    }
   }
 
   async function copyPublicLink(event: any) {
@@ -817,6 +886,19 @@ export default function OkeechobeeCommandCenter() {
                     >
                       Open Public Page
                     </Link>
+
+                    {event.resident_name ? (
+                      <button
+                        type="button"
+                        style={styles.secondaryButton}
+                        disabled={workingResidentSlug === event.slug}
+                        onClick={() => reissueResidentAccess(event)}
+                      >
+                        {workingResidentSlug === event.slug
+                          ? "Reissuing..."
+                          : "Reissue Resident Access"}
+                      </button>
+                    ) : null}
 
                     <button
                       type="button"
