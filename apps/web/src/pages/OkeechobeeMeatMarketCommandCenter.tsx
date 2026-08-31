@@ -296,8 +296,8 @@ export default function OkeechobeeMeatMarketCommandCenter() {
             `#${access.privateToken}`,
           publicUrl:
             `https://www.homeplanet.city${access.publicPath}`,
-          emailStatus: "skipped",
-          smsStatus: "skipped",
+          emailStatus: "restored",
+          smsStatus: "restored",
         };
       }
 
@@ -1468,38 +1468,43 @@ export default function OkeechobeeMeatMarketCommandCenter() {
                   Private Seller Access Ready
                 </div>
 
-                <div
-                  style={{
-                    display: "grid",
-                    gap: "4px",
-                    marginBottom: "12px",
-                    fontSize: "14px",
-                    fontWeight: 800,
-                    color: "#173f2a",
-                  }}
-                >
-                  <div>
-                    Email:{" "}
-                    {sellerAccessLinks[selectedListing.id].emailStatus ===
-                    "sent"
-                      ? "Sent ✓"
-                      : sellerAccessLinks[selectedListing.id].emailStatus ===
-                        "failed"
-                        ? "Failed"
-                        : "Not available"}
-                  </div>
+                {sellerAccessLinks[selectedListing.id].emailStatus !==
+                  "restored" ||
+                sellerAccessLinks[selectedListing.id].smsStatus !==
+                  "restored" ? (
+                  <div
+                    style={{
+                      display: "grid",
+                      gap: "4px",
+                      marginBottom: "12px",
+                      fontSize: "14px",
+                      fontWeight: 800,
+                      color: "#173f2a",
+                    }}
+                  >
+                    <div>
+                      Email:{" "}
+                      {sellerAccessLinks[selectedListing.id].emailStatus ===
+                      "sent"
+                        ? "Sent ✓"
+                        : sellerAccessLinks[selectedListing.id].emailStatus ===
+                          "failed"
+                          ? "Failed"
+                          : "Not available"}
+                    </div>
 
-                  <div>
-                    Text:{" "}
-                    {sellerAccessLinks[selectedListing.id].smsStatus ===
-                    "sent"
-                      ? "Sent ✓"
-                      : sellerAccessLinks[selectedListing.id].smsStatus ===
-                        "failed"
-                        ? "Failed"
-                        : "Not available"}
+                    <div>
+                      Text:{" "}
+                      {sellerAccessLinks[selectedListing.id].smsStatus ===
+                      "sent"
+                        ? "Sent ✓"
+                        : sellerAccessLinks[selectedListing.id].smsStatus ===
+                          "failed"
+                          ? "Failed"
+                          : "Not available"}
+                    </div>
                   </div>
-                </div>
+                ) : null}
 
                 <div
                   style={{
