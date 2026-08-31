@@ -346,6 +346,7 @@ export default async function handler(
           seller_name: sellerName,
           seller_email: sellerEmail,
           manage_token_hash: manageTokenHash,
+          manage_token_admin: privateToken,
           order_method: sellerLink ? "Website" : "Contact",
           order_destination: sellerLink,
           fulfillment,
@@ -874,9 +875,30 @@ export default async function handler(
           helpersBySlug.get(event.slug) || [],
       };
     });
+    const { data: meatMarketSellerAccess, error: sellerAccessError } =
+      await supabase
+        .from("okeechobee_meat_market_seller_access")
+        .select(
+          "seller_listing_id,seller_name,seller_email,manage_token_admin"
+        );
+
+    if (sellerAccessError) {
+      console.error(
+        "Meat Market seller access load failed:",
+        sellerAccessError.message
+      );
+    }
 
     return res.status(200).json({
       ok: true,
+      meatMarketSellerAccess: (meatMarketSellerAccess || []).map((access) => ({
+        sellerListingId: access.seller_listing_id,
+        sellerName: access.seller_name || "",
+        sellerEmail: access.seller_email || "",
+        privateToken: access.manage_token_admin || "",
+        setupPath: `/planet/okeechobee/meat-market/seller/setup/${access.seller_listing_id}`,
+        publicPath: `/planet/okeechobee/meat-market/seller/${access.seller_listing_id}`,
+      })),
       events,
       meatMarketBuyers,
     });

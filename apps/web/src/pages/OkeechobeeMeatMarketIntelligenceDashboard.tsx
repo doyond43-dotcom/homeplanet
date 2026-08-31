@@ -355,6 +355,8 @@ export default function OkeechobeeMeatMarketIntelligenceDashboard() {
           <div className="flex flex-wrap gap-2">
             <Link
               to="/planet/okeechobee/meat-market"
+              target="_blank"
+              rel="noreferrer"
               className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-black text-white/80"
             >
               Live Market

@@ -165,6 +165,8 @@ function buyerRequestTitle(message: string) {
   return value || "Local food request";
 }
 
+const SELLER_ACCESS_STORAGE_KEY = "homeplanet:okeechobee-meat-market:seller-access";
+
 export default function OkeechobeeMeatMarketCommandCenter() {
   const [listings, setListings] = useState<any[]>([]);
   const [questions, setQuestions] = useState<any[]>([]);
@@ -252,6 +254,75 @@ export default function OkeechobeeMeatMarketCommandCenter() {
       secureQuestions = Array.isArray(result.meatMarketBuyers)
         ? result.meatMarketBuyers
         : [];
+
+      const serverSellerAccess = Array.isArray(result.meatMarketSellerAccess)
+        ? result.meatMarketSellerAccess
+        : [];
+
+      const sellerRows = Array.isArray(listingResult.data)
+        ? listingResult.data
+        : [];
+
+      const restoredServerLinks: Record<
+        string,
+        {
+          setupUrl: string;
+          publicUrl: string;
+          emailStatus: string;
+          smsStatus: string;
+        }
+      > = {};
+
+      for (const listing of sellerRows) {
+        const name = sellerName(listing);
+
+        const slug =
+          name.toLowerCase() === "farm folks llc"
+            ? "farm-folks"
+            : name
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-+|-+$/g, "");
+
+        const access = serverSellerAccess.find(
+          (item: any) => item?.sellerListingId === slug
+        );
+
+        if (!access?.privateToken) continue;
+
+        restoredServerLinks[listing.id] = {
+          setupUrl:
+            `https://www.homeplanet.city${access.setupPath}` +
+            `#${access.privateToken}`,
+          publicUrl:
+            `https://www.homeplanet.city${access.publicPath}`,
+          emailStatus: "skipped",
+          smsStatus: "skipped",
+        };
+      }
+
+      if (Object.keys(restoredServerLinks).length > 0) {
+        setSellerAccessLinks((current) => {
+          const next = {
+            ...current,
+            ...restoredServerLinks,
+          };
+
+          try {
+            window.localStorage.setItem(
+              SELLER_ACCESS_STORAGE_KEY,
+              JSON.stringify(next)
+            );
+          } catch (error) {
+            console.error(
+              "Could not cache permanent Meat Market seller access:",
+              error
+            );
+          }
+
+          return next;
+        });
+      }
     } catch (error) {
       console.error("Secure Meat Market buyer load failed:", error);
 
@@ -268,6 +339,20 @@ export default function OkeechobeeMeatMarketCommandCenter() {
   }
 
   useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(SELLER_ACCESS_STORAGE_KEY);
+
+      if (stored) {
+        const parsed = JSON.parse(stored);
+
+        if (parsed && typeof parsed === "object") {
+          setSellerAccessLinks(parsed);
+        }
+      }
+    } catch (error) {
+      console.error("Could not restore saved Meat Market seller access:", error);
+    }
+
     loadMarket();
   }, []);
 
@@ -499,19 +584,32 @@ export default function OkeechobeeMeatMarketCommandCenter() {
       const publicUrl =
         `${sellerBaseUrl}${result.publicPath}`;
 
-      setSellerAccessLinks((current) => ({
-        ...current,
-        [listing.id]: {
-          setupUrl,
-          publicUrl,
-          emailStatus: String(
-            result?.notifications?.email || "skipped"
-          ),
-          smsStatus: String(
-            result?.notifications?.sms || "skipped"
-          ),
-        },
-      }));
+      setSellerAccessLinks((current) => {
+        const next = {
+          ...current,
+          [listing.id]: {
+            setupUrl,
+            publicUrl,
+            emailStatus: String(
+              result?.notifications?.email || "skipped"
+            ),
+            smsStatus: String(
+              result?.notifications?.sms || "skipped"
+            ),
+          },
+        };
+
+        try {
+          window.localStorage.setItem(
+            SELLER_ACCESS_STORAGE_KEY,
+            JSON.stringify(next)
+          );
+        } catch (error) {
+          console.error("Could not save Meat Market seller access:", error);
+        }
+
+        return next;
+      });
 
       const updated = {
         ...listing,
@@ -782,7 +880,8 @@ export default function OkeechobeeMeatMarketCommandCenter() {
             </p>
           </div>
 
-          <a
+          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+            <a
             href="/planet/okeechobee/meat-market"
             target="_blank"
             rel="noreferrer"
@@ -790,6 +889,14 @@ export default function OkeechobeeMeatMarketCommandCenter() {
           >
             Open Public Market
           </a>
+
+            <Link
+              to="/planet/okeechobee/meat-market/intelligence"
+              style={marketButton}
+            >
+              Open Intelligence
+            </Link>
+          </div>
         </header>
 
         {notice ? <div style={noticeStyle}>{notice}</div> : null}
