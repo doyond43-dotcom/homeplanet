@@ -2,6 +2,20 @@
 import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
+function normalizeUsPhone(phone: string) {
+  const digits = String(phone || "").replace(/\D/g, "");
+
+  if (digits.length === 10) {
+    return `+1${digits}`;
+  }
+
+  if (digits.length === 11 && digits.startsWith("1")) {
+    return `+${digits}`;
+  }
+
+  return phone;
+}
+
 export default function OkeechobeeCommandCenter() {
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -538,7 +552,7 @@ export default function OkeechobeeCommandCenter() {
 
                       {event.resident_phone ? (
                         <a
-                          href={`tel:${event.resident_phone}`}
+                          href={`tel:${normalizeUsPhone(event.resident_phone)}`}
                           style={{ color: "#ffffff" }}
                         >
                           {event.resident_phone}
@@ -693,7 +707,7 @@ export default function OkeechobeeCommandCenter() {
 
                     {event.resident_phone ? (
                       <a
-                        href={`tel:${event.resident_phone}`}
+                        href={`tel:${normalizeUsPhone(event.resident_phone)}`}
                         style={{ color: "#ffffff", fontWeight: 700 }}
                       >
                         {event.resident_phone}
@@ -754,7 +768,7 @@ export default function OkeechobeeCommandCenter() {
                                 }}
                               >
                                 <a
-                                  href={`tel:${helper.phone}`}
+                                  href={`tel:${normalizeUsPhone(helper.phone)}`}
                                   style={{
                                     color: "#ffffff",
                                     fontWeight: 700,
@@ -764,7 +778,7 @@ export default function OkeechobeeCommandCenter() {
                                 </a>
 
                                 <a
-                                  href={`sms:${helper.phone}`}
+                                  href={`sms:${normalizeUsPhone(helper.phone)}`}
                                   style={{
                                     color: "#b7ffb0",
                                     fontWeight: 700,
@@ -980,7 +994,7 @@ export default function OkeechobeeCommandCenter() {
                   <div style={{ display: "grid", gap: 8 }}>
                     {selectedEvent.resident_phone ? (
                       <a
-                        href={`tel:${selectedEvent.resident_phone}`}
+                        href={`tel:${normalizeUsPhone(selectedEvent.resident_phone)}`}
                         style={{ color: "#ffffff" }}
                       >
                         Phone: {selectedEvent.resident_phone}
