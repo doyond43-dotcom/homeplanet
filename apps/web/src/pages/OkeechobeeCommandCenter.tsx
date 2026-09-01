@@ -143,18 +143,7 @@ export default function OkeechobeeCommandCenter() {
         );
       }
 
-      setEvents((currentEvents) =>
-        currentEvents.map((event) => ({
-          ...event,
-          helpers: Array.isArray(event.helpers)
-            ? event.helpers.map((item: any) =>
-                item.id === helper.id
-                  ? { ...item, status }
-                  : item
-              )
-            : [],
-        }))
-      );
+      await loadEvents();
 
       const label =
         status === "couldnt_help"
@@ -483,6 +472,7 @@ export default function OkeechobeeCommandCenter() {
 
         {notice ? <div style={styles.notice}>{notice}</div> : null}
 
+
         <section style={styles.section}>
           <div style={styles.sectionHeading}>
             <div>
@@ -805,6 +795,45 @@ export default function OkeechobeeCommandCenter() {
 
                             {helper.notes ? (
                               <div>{helper.notes}</div>
+                            ) : null}
+
+                            {helper.helper_id ? (
+                              <div
+                                style={{
+                                  marginTop: 6,
+                                  padding: "10px 12px",
+                                  border: helper.earned_stripes
+                                    ? "1px solid #7cff4f"
+                                    : "1px solid #3a3a3a",
+                                  borderRadius: 10,
+                                  background: helper.earned_stripes
+                                    ? "rgba(124,255,79,0.10)"
+                                    : "rgba(255,255,255,0.03)",
+                                  display: "grid",
+                                  gap: 4,
+                                }}
+                              >
+                                {helper.earned_stripes ? (
+                                  <>
+                                    <strong>🏁 EARNED YOUR STRIPES</strong>
+                                    <span>
+                                      {helper.completed_help_count} verified helps completed
+                                    </span>
+                                    <span>Free Okeechobee Together shirt earned</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <strong>Earn Your Stripes</strong>
+                                    <span>
+                                      {helper.completed_help_count} verified{" "}
+                                      {helper.completed_help_count === 1 ? "help" : "helps"} completed
+                                    </span>
+                                    <span>
+                                      {helper.helps_until_stripes} more to Earn Your Stripes
+                                    </span>
+                                  </>
+                                )}
+                              </div>
                             ) : null}
 
                             <div

@@ -664,7 +664,7 @@ export default async function handler(
           .update({ status })
           .eq("id", helperId)
           .select(
-            "id,event_slug,name,phone,email,help_type,notes,created_at,status"
+            "id,event_slug,helper_id,name,phone,email,help_type,notes,created_at,status"
           )
           .maybeSingle();
 
@@ -713,7 +713,7 @@ export default async function handler(
 
       supabase
         .from("okeechobee_project_helpers")
-        .select("event_slug,id,name,phone,email,help_type,notes,created_at,status"),
+        .select("event_slug,id,helper_id,name,phone,email,help_type,notes,created_at,status"),
 
       supabase
         .from("homeplanet_leads")
@@ -829,10 +829,40 @@ export default async function handler(
 
     const helperCountBySlug = new Map<string, number>();
     const helpersBySlug = new Map<string, any[]>();
+    const completedProjectsByHelperId = new Map<string, Set<string>>();
+
+    for (const helper of helpersResult.data || []) {
+      const helperId = String((helper as any).helper_id || "");
+      const slug = String((helper as any).event_slug || "");
+
+      if (
+        helperId &&
+        slug &&
+        String((helper as any).status || "") === "completed"
+      ) {
+        const completedProjects =
+          completedProjectsByHelperId.get(helperId) || new Set<string>();
+
+        completedProjects.add(slug);
+        completedProjectsByHelperId.set(helperId, completedProjects);
+      }
+    }
 
     for (const helper of helpersResult.data || []) {
       const slug = String((helper as any).event_slug || "");
       if (!slug) continue;
+
+      const helperId = String((helper as any).helper_id || "");
+      const completedHelpCount = helperId
+        ? completedProjectsByHelperId.get(helperId)?.size || 0
+        : 0;
+
+      const helperWithRecognition = {
+        ...helper,
+        completed_help_count: completedHelpCount,
+        earned_stripes: completedHelpCount >= 3,
+        helps_until_stripes: Math.max(0, 3 - completedHelpCount),
+      };
 
       helperCountBySlug.set(
         slug,
@@ -840,10 +870,9 @@ export default async function handler(
       );
 
       const existingHelpers = helpersBySlug.get(slug) || [];
-      existingHelpers.push(helper);
+      existingHelpers.push(helperWithRecognition);
       helpersBySlug.set(slug, existingHelpers);
     }
-
     const events = (eventsResult.data || []).map((event: any) => {
       const owner = ownersBySlug.get(event.slug) as any;
 
