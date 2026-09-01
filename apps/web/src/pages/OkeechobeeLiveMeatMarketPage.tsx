@@ -289,7 +289,7 @@ export default function OkeechobeeLiveMeatMarketPage() {
         supabase
           .from("okeechobee_meat_market_products")
           .select(
-            "id,seller_listing_id,seller_name,name,price,package,fulfillment,availability,status,sort_order"
+            "id,seller_listing_id,seller_name,name,price,package,fulfillment,availability,status,sort_order,image_url"
           )
           .eq("status", "Active")
           .order("sort_order", { ascending: true }),
@@ -393,7 +393,7 @@ export default function OkeechobeeLiveMeatMarketPage() {
                   }
                 ).toString()}`,
                 sellerHref: sellerStorefrontHref(seller),
-                sellerImage: usableOrderHref(submittedPhoto),
+                sellerImage: usableOrderHref(String(product.image_url || "")) || usableOrderHref(submittedPhoto),
               };
             });
           }

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import { markMeatMarketBrowserInternal } from "../lib/meatMarketAnalytics";
 
 const SELLER_TYPE = "Live Meat Market Seller";
 const QUESTION_BOARD = "okeechobee-live-meat-market";
@@ -339,6 +340,8 @@ export default function OkeechobeeMeatMarketCommandCenter() {
   }
 
   useEffect(() => {
+    markMeatMarketBrowserInternal();
+
     try {
       const stored = window.localStorage.getItem(SELLER_ACCESS_STORAGE_KEY);
 

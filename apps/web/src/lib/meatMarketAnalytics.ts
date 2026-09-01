@@ -1,6 +1,39 @@
 import { supabase } from "./supabase";
 
 const SESSION_KEY = "homeplanet_meat_market_session";
+const INTERNAL_BROWSER_KEY = "homeplanet_meat_market_internal";
+
+export function markMeatMarketBrowserInternal() {
+  if (typeof window === "undefined") return;
+
+  try {
+    window.localStorage.setItem(INTERNAL_BROWSER_KEY, "true");
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+function shouldSkipMeatMarketTracking() {
+  if (typeof window === "undefined") return true;
+
+  const hostname = window.location.hostname.toLowerCase();
+
+  if (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "::1"
+  ) {
+    return true;
+  }
+
+  try {
+    return (
+      window.localStorage.getItem(INTERNAL_BROWSER_KEY) === "true"
+    );
+  } catch {
+    return false;
+  }
+}
 
 function createSessionId() {
   if (
@@ -45,6 +78,7 @@ export async function trackMeatMarketEvent(
   input: MeatMarketEventInput
 ) {
   if (typeof window === "undefined") return;
+  if (shouldSkipMeatMarketTracking()) return;
 
   if (
     input.eventType === "market_view" ||

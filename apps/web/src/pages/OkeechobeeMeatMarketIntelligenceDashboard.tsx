@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import { markMeatMarketBrowserInternal } from "../lib/meatMarketAnalytics";
 
 type MeatMarketEvent = {
   id: string;
@@ -181,6 +182,8 @@ export default function OkeechobeeMeatMarketIntelligenceDashboard() {
   }
 
   useEffect(() => {
+    markMeatMarketBrowserInternal();
+
     void loadIntelligence();
 
     const channel = supabase
