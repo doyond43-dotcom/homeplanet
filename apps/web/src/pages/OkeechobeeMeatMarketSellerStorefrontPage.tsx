@@ -965,10 +965,10 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
 
         <section className="store-hero">
           <div className="hero-image">
-            {validStorefrontImage(listingPhoto) || validStorefrontImage(config?.heroImage) ? (
+            {validStorefrontImage(products.find((product) => validStorefrontImage(product.imageUrl))?.imageUrl) || validStorefrontImage(config?.heroImage) || validStorefrontImage(listingPhoto) ? (
               <>
                 <img
-                  src={validStorefrontImage(listingPhoto) || validStorefrontImage(config?.heroImage)}
+                  src={validStorefrontImage(products.find((product) => validStorefrontImage(product.imageUrl))?.imageUrl) || validStorefrontImage(config?.heroImage) || validStorefrontImage(listingPhoto)}
                   alt={`${sellerName} ranch or farm`}
                 />
 
