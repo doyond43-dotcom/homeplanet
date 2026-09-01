@@ -132,6 +132,7 @@ export default async function handler(
       const { error: insertError } = await supabase
         .from("okeechobee_project_helpers")
         .insert({
+          helper_id: helper.id,
           event_slug: slug,
           name: helper.name,
           phone: helper.phone,
