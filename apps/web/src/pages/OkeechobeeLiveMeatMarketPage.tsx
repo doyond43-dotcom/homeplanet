@@ -534,7 +534,32 @@ export default function OkeechobeeLiveMeatMarketPage() {
       });
     });
 
-    return Array.from(groups.values());
+    const sellerPriority = [
+      "Trinity Ranch Beef",
+      "Lollis Beef",
+      "Farm Folks LLC",
+      "Barnstable Acres, LLC",
+      "Circle Bar C Goat Dairy",
+      "Yme Apiary LLC",
+    ];
+
+    return Array.from(groups.values()).sort((a, b) => {
+      const aIndex = sellerPriority.findIndex(
+        (seller) => seller.toLowerCase() === a.seller.toLowerCase()
+      );
+      const bIndex = sellerPriority.findIndex(
+        (seller) => seller.toLowerCase() === b.seller.toLowerCase()
+      );
+
+      if (aIndex === -1 && bIndex === -1) {
+        return a.seller.localeCompare(b.seller);
+      }
+
+      if (aIndex === -1) return 1;
+      if (bIndex === -1) return -1;
+
+      return aIndex - bIndex;
+    });
   }, [visibleItems]);
 
   return (
