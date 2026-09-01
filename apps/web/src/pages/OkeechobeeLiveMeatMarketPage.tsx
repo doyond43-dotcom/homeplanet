@@ -181,6 +181,24 @@ function sellerImage(seller: string) {
   return "";
 }
 
+function usableImageSrc(value: string) {
+  const clean = String(value || "").trim();
+
+  if (!clean || clean.toLowerCase() === "not provided") {
+    return "";
+  }
+
+  if (/^data:image\//i.test(clean)) {
+    return clean;
+  }
+
+  if (/^https?:\/\//i.test(clean)) {
+    return clean;
+  }
+
+  return "";
+}
+
 function usablePhone(value: string) {
   const clean = String(value || "").trim();
 
@@ -393,7 +411,7 @@ export default function OkeechobeeLiveMeatMarketPage() {
                   }
                 ).toString()}`,
                 sellerHref: sellerStorefrontHref(seller),
-                sellerImage: usableOrderHref(String(product.image_url || "")) || usableOrderHref(submittedPhoto),
+                sellerImage: usableImageSrc(String(product.image_url || "")) || usableOrderHref(submittedPhoto),
               };
             });
           }
