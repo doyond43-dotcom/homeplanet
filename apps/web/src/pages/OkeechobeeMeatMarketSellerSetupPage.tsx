@@ -527,7 +527,6 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
               <input
                 type="file"
                 accept="image/*"
-                capture="environment"
                 style={{ display: "none" }}
                 onChange={async (event) => {
                   const file = event.target.files?.[0];
@@ -652,7 +651,6 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
                       <input
                         type="file"
                         accept="image/*"
-                        capture="environment"
                         onChange={(event) =>
                           void chooseProductPhoto(
                             index,
