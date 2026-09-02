@@ -566,6 +566,7 @@ export default function PlanetRoutes() {
       <Route path="okeechobee/event/:slug" element={<OkeechobeeEventPage />} />
       <Route path="okeechobee" element={<OkeechobeeTogetherPage />} />
       <Route path="okeechobee/meat-market" element={<OkeechobeeLiveMeatMarketPage />} />
+      <Route path="okeechobee/meat-market/sellers" element={<OkeechobeeLiveMeatMarketPage sellerDirectoryOnly />} />
       <Route path="okeechobee/meat-market/sell" element={<OkeechobeeMeatMarketSellerPage />} />
       <Route path="okeechobee/meat-market/seller/setup/:slug" element={<OkeechobeeMeatMarketSellerSetupPage />} />
       <Route path="okeechobee/meat-market/seller/:slug" element={<OkeechobeeMeatMarketSellerStorefrontPage />} />

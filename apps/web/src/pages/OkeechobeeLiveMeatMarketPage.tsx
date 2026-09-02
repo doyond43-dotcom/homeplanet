@@ -249,7 +249,11 @@ function usableOrderHref(value: string) {
 
   return "";
 }
-export default function OkeechobeeLiveMeatMarketPage() {
+export default function OkeechobeeLiveMeatMarketPage({
+  sellerDirectoryOnly = false,
+}: {
+  sellerDirectoryOnly?: boolean;
+} = {}) {
   const [activeCategory, setActiveCategory] = useState("Everything");
   const [liveItems, setLiveItems] = useState<MarketItem[]>([]);
   const [marketLoading, setMarketLoading] = useState(true);
@@ -1482,7 +1486,7 @@ export default function OkeechobeeLiveMeatMarketPage() {
           <div className="seller-market-grid">
             {visibleSellers.length ? (
               <>
-                {visibleSellers.map((seller) => {
+                {visibleSellers.slice(0, sellerDirectoryOnly ? visibleSellers.length : 4).map((seller) => {
                   const preview = seller.items.slice(0, 4);
                   const remaining = seller.items.length - preview.length;
 
@@ -1555,6 +1559,24 @@ export default function OkeechobeeLiveMeatMarketPage() {
                   );
                 })}
 
+                {!sellerDirectoryOnly && activeCategory === "Everything" && visibleSellers.length > 4 ? (
+                  <div
+                    style={{
+                      gridColumn: "1 / -1",
+                      display: "flex",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <a
+                      className="seller-market-action"
+                      href="/planet/okeechobee/meat-market/sellers"
+                      style={{ width: "min(100%, 360px)" }}
+                    >
+                      View All Local Sellers
+                    </a>
+                  </div>
+                ) : null}
+
                 {activeCategory === "Everything" ? (
                   <article className="seller-cta-card">
                     <div>
@@ -1592,6 +1614,8 @@ export default function OkeechobeeLiveMeatMarketPage() {
           </div>
         </section>
 
+        {!sellerDirectoryOnly ? (
+          <>
         <section className="section" id="how-it-works">
           <div className="section-head">
             <h2>How it works</h2>
@@ -1720,6 +1744,8 @@ export default function OkeechobeeLiveMeatMarketPage() {
             </div>
           </div>
         </section>
+          </>
+        ) : null}
 
         <footer className="market-footer">
           <div
