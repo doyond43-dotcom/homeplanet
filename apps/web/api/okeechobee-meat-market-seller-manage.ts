@@ -170,7 +170,7 @@ export default async function handler(
       await supabase
         .from("okeechobee_meat_market_products")
         .select(
-          "id,name,category,price,package,fulfillment,availability,status,sort_order,description,image_url,external_order_url,featured"
+          "id,name,category,price,package,market_marker,quantity_available,pickup_timing,fulfillment,availability,status,sort_order,description,image_url,external_order_url,featured"
         )
         .eq("seller_listing_id", slug)
         .order("sort_order", { ascending: true });
@@ -219,6 +219,12 @@ export default async function handler(
         category: clean(product?.category, 100) || null,
         price: clean(product?.price, 160) || null,
         package: clean(product?.package, 200) || null,
+        market_marker:
+          clean(product?.marketMarker, 100) || null,
+        quantity_available:
+          clean(product?.quantityAvailable, 160) || null,
+        pickup_timing:
+          clean(product?.pickupTiming, 200) || null,
         fulfillment,
         availability:
           clean(product?.availability, 80) ||
@@ -312,6 +318,9 @@ export default async function handler(
         category: product.category,
         price: product.price,
         package: product.package,
+        market_marker: product.market_marker,
+        quantity_available: product.quantity_available,
+        pickup_timing: product.pickup_timing,
         fulfillment: product.fulfillment,
         availability: product.availability,
         description: product.description,
@@ -375,7 +384,7 @@ export default async function handler(
       await supabase
         .from("okeechobee_meat_market_products")
         .select(
-          "id,name,category,price,package,fulfillment,availability,status,sort_order,description,image_url,external_order_url,featured"
+          "id,name,category,price,package,market_marker,quantity_available,pickup_timing,fulfillment,availability,status,sort_order,description,image_url,external_order_url,featured"
         )
         .eq("seller_listing_id", slug)
         .order("sort_order", { ascending: true });

@@ -11,6 +11,9 @@ type ProductRow = {
   category: string;
   price: string;
   package: string;
+  marketMarker: string;
+  quantityAvailable: string;
+  pickupTiming: string;
   availability: string;
   description: string;
   imageUrl: string;
@@ -34,6 +37,9 @@ const emptyProduct = (): ProductRow => ({
   category: "",
   price: "",
   package: "",
+  marketMarker: "",
+  quantityAvailable: "",
+  pickupTiming: "",
   availability: "Available now",
   description: "",
   imageUrl: "",
@@ -231,6 +237,15 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
               category: String(product.category || ""),
               price: String(product.price || ""),
               package: String(product.package || ""),
+              marketMarker: String(
+                product.market_marker || ""
+              ),
+              quantityAvailable: String(
+                product.quantity_available || ""
+              ),
+              pickupTiming: String(
+                product.pickup_timing || ""
+              ),
               availability: String(
                 product.availability ||
                   "Available now"
@@ -386,6 +401,15 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
             ),
             price: String(product.price || ""),
             package: String(product.package || ""),
+            marketMarker: String(
+              product.market_marker || ""
+            ),
+            quantityAvailable: String(
+              product.quantity_available || ""
+            ),
+            pickupTiming: String(
+              product.pickup_timing || ""
+            ),
             availability: String(
               product.availability ||
                 "Available now"
@@ -732,6 +756,72 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
                         )
                       }
                       placeholder="Example: 1 lb package"
+                      style={styles.input}
+                    />
+                  </label>
+                </div>
+
+                <label style={styles.label}>
+                  Market marker
+                  <select
+                    value={product.marketMarker}
+                    onChange={(event) =>
+                      updateProduct(
+                        index,
+                        "marketMarker",
+                        event.target.value
+                      )
+                    }
+                    style={styles.input}
+                  >
+                    <option value="">No marker</option>
+                    <option value="Fresh Restock">
+                      Fresh Restock
+                    </option>
+                    <option value="Seller Special">
+                      Seller Special
+                    </option>
+                    <option value="Only a Few Left">
+                      Only a Few Left
+                    </option>
+                    <option value="Taking Orders">
+                      Taking Orders
+                    </option>
+                    <option value="Pickup This Week">
+                      Pickup This Week
+                    </option>
+                  </select>
+                </label>
+
+                <div style={styles.twoColumn}>
+                  <label style={styles.label}>
+                    Quantity available
+                    <input
+                      value={product.quantityAvailable}
+                      onChange={(event) =>
+                        updateProduct(
+                          index,
+                          "quantityAvailable",
+                          event.target.value
+                        )
+                      }
+                      placeholder="Example: 6 packs left"
+                      style={styles.input}
+                    />
+                  </label>
+
+                  <label style={styles.label}>
+                    Pickup timing
+                    <input
+                      value={product.pickupTiming}
+                      onChange={(event) =>
+                        updateProduct(
+                          index,
+                          "pickupTiming",
+                          event.target.value
+                        )
+                      }
+                      placeholder="Example: Saturday 10-1"
                       style={styles.input}
                     />
                   </label>

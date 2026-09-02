@@ -9,6 +9,9 @@ type Product = {
   category: string;
   price: string;
   package: string;
+  marketMarker: string;
+  quantityAvailable: string;
+  pickupTiming: string;
   fulfillment: string;
   availability: string;
   description: string;
@@ -409,7 +412,7 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
         await supabase
           .from("okeechobee_meat_market_products")
           .select(
-            "id,seller_listing_id,seller_name,name,category,price,package,fulfillment,availability,status,sort_order,description,image_url,external_order_url,featured"
+            "id,seller_listing_id,seller_name,name,category,price,package,market_marker,quantity_available,pickup_timing,fulfillment,availability,status,sort_order,description,image_url,external_order_url,featured"
           )
           .eq("status", "Active")
           .eq("seller_listing_id", requestedSlug)
@@ -435,6 +438,12 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
             "Contact seller",
           package:
             String(product.package || "").trim(),
+          marketMarker:
+            String(product.market_marker || "").trim(),
+          quantityAvailable:
+            String(product.quantity_available || "").trim(),
+          pickupTiming:
+            String(product.pickup_timing || "").trim(),
           fulfillment:
             String(product.fulfillment || "").trim() ||
             sellerFulfillment,
@@ -476,6 +485,9 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
             name: submittedSelling,
             price: submittedPrice,
             package: "",
+            marketMarker: "",
+            quantityAvailable: "",
+            pickupTiming: "",
             fulfillment: sellerFulfillment,
             availability: "Available now",
           },
@@ -865,6 +877,41 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
           text-transform: uppercase;
         }
 
+        .market-marker {
+          display: inline-flex;
+          margin-top: 12px;
+          padding: 7px 10px;
+          border-radius: 8px;
+          background: #193c2b;
+          color: #ffffff;
+          font-size: 10px;
+          line-height: 1;
+          font-weight: 950;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+
+        .product-pulse {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 7px;
+          margin-top: 10px;
+        }
+
+        .product-pulse-item {
+          display: inline-flex;
+          align-items: center;
+          min-height: 30px;
+          padding: 6px 9px;
+          border-radius: 9px;
+          background: #f2eadb;
+          border: 1px solid rgba(138,106,56,0.2);
+          color: #55462f;
+          font-size: 11px;
+          line-height: 1.2;
+          font-weight: 900;
+        }
+
         .product-name {
           margin: 15px 0 0;
           font-size: 24px;
@@ -875,8 +922,11 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
 
         .product-price {
           margin-top: 10px;
-          font-size: 20px;
+          color: #193c2b;
+          font-size: 26px;
+          line-height: 1;
           font-weight: 950;
+          letter-spacing: -0.03em;
         }
 
         .product-detail {
@@ -1067,14 +1117,35 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
                           ? `${product.category} · ${product.availability || "Available now"}`
                           : product.availability || "Available now"}
                       </div>
+                      {product.marketMarker ? (
+                        <div className="market-marker">
+                          {product.marketMarker}
+                        </div>
+                      ) : null}
 
                       <div className="product-name">
                         {product.name}
                       </div>
-
                       <div className="product-price">
                         {product.price}
                       </div>
+
+                      {product.quantityAvailable ||
+                      product.pickupTiming ? (
+                        <div className="product-pulse">
+                          {product.quantityAvailable ? (
+                            <div className="product-pulse-item">
+                              {product.quantityAvailable}
+                            </div>
+                          ) : null}
+
+                          {product.pickupTiming ? (
+                            <div className="product-pulse-item">
+                              {product.pickupTiming}
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : null}
 
                       <div className="product-detail">
                         {product.package ||
