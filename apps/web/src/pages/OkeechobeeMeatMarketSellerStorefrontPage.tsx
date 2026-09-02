@@ -452,15 +452,12 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
         })
       );
 
-      const featuredProducts = mappedProducts.filter(
-        (product) => product.featured
-      );
-
-      const visibleProducts = (
-        featuredProducts.length
-          ? featuredProducts
-          : mappedProducts
-      ).slice(0, 10);
+      const visibleProducts = [...mappedProducts]
+        .sort(
+          (a, b) =>
+            Number(b.featured) - Number(a.featured)
+        )
+        .slice(0, 10);
 
       if (visibleProducts.length > 0) {
         setProducts(visibleProducts);

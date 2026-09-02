@@ -265,6 +265,8 @@ export default function OkeechobeeLiveMeatMarketPage({
   });
 
   useEffect(() => {
+    if (sellerDirectoryOnly) return;
+
     async function loadMarketActivity() {
       await trackMeatMarketEvent({
         eventType: "market_view",
@@ -293,7 +295,7 @@ export default function OkeechobeeLiveMeatMarketPage({
     }
 
     void loadMarketActivity();
-  }, []);
+  }, [sellerDirectoryOnly]);
 
   useEffect(() => {
     async function loadLiveMarket() {
@@ -539,12 +541,12 @@ export default function OkeechobeeLiveMeatMarketPage({
     });
 
     const sellerPriority = [
-      "Trinity Ranch Beef",
-      "Lollis Beef",
-      "Farm Folks LLC",
-      "Barnstable Acres, LLC",
-      "Circle Bar C Goat Dairy",
       "Yme Apiary LLC",
+      "Trinity Ranch Beef",
+      "Circle Bar C Goat Dairy",
+      "Lollis Beef",
+      "Barnstable Acres, LLC",
+      "Farm Folks LLC",
     ];
 
     return Array.from(groups.values()).sort((a, b) => {
@@ -1379,7 +1381,8 @@ export default function OkeechobeeLiveMeatMarketPage({
             The Live Meat Market helps local beef reach local tables.
           </div>
 
-          <div className="market-activity" aria-label="Market activity">
+          {!sellerDirectoryOnly ? (
+            <div className="market-activity" aria-label="Market activity">
             <div className="market-activity-label">Market Activity</div>
 
             <div className="market-activity-grid">
@@ -1416,6 +1419,7 @@ export default function OkeechobeeLiveMeatMarketPage({
               </div>
             </div>
           </div>
+          ) : null}
         </section>
 
         <section className="market-doorways" aria-label="Choose what you want to do">
@@ -1570,7 +1574,13 @@ export default function OkeechobeeLiveMeatMarketPage({
                     <a
                       className="seller-market-action"
                       href="/planet/okeechobee/meat-market/sellers"
-                      style={{ width: "min(100%, 360px)" }}
+                      style={{
+                        width: "min(100%, 360px)",
+                        background: "#e8d7b5",
+                        color: "#173c2b",
+                        border: "2px solid #173c2b",
+                        boxShadow: "none",
+                      }}
                     >
                       View All Local Sellers
                     </a>
@@ -1602,6 +1612,34 @@ export default function OkeechobeeLiveMeatMarketPage({
                       href="/planet/okeechobee/meat-market/sell"
                     >
                       Add What I Have
+                    </a>
+                  </article>
+                ) : null}
+                {activeCategory === "Everything" ? (
+                  <article className="seller-cta-card">
+                    <div>
+                      <div className="seller-cta-kicker">
+                        Looking for local food?
+                      </div>
+
+                      <h3 className="seller-cta-title">
+                        Looking for Something Specific?
+                      </h3>
+
+                      <div className="seller-cta-copy">
+                        Can&apos;t find the cut, quantity, or local product you need? Tell local sellers what you&apos;re looking for.
+                      </div>
+
+                      <div className="seller-cta-products">
+                        Beef • Pork • Chicken • Eggs • Dairy • Other local animal products
+                      </div>
+                    </div>
+
+                    <a
+                      className="seller-cta-action"
+                      href="/planet/okeechobee/meat-market/contact?mode=buy"
+                    >
+                      Request Local Food
                     </a>
                   </article>
                 ) : null}
