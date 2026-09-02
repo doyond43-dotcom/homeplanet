@@ -528,7 +528,11 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
       const phone = destination.replace(/[^\d+]/g, "");
 
       if (phone) {
-        return `sms:${phone}`;
+        const message = encodeURIComponent(
+          `Hi, I found ${sellerName} through the Okeechobee Live Meat Market. I'm interested in ${product.name}. Is this available?`
+        );
+
+        return `sms:${phone}?body=${message}`;
       }
     }
 
@@ -965,10 +969,10 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
 
         <section className="store-hero">
           <div className="hero-image">
-            {validStorefrontImage(products.find((product) => validStorefrontImage(product.imageUrl))?.imageUrl) || validStorefrontImage(config?.heroImage) || validStorefrontImage(listingPhoto) ? (
+            {validStorefrontImage(config?.heroImage) || validStorefrontImage(products.find((product) => validStorefrontImage(product.imageUrl))?.imageUrl) || validStorefrontImage(listingPhoto) ? (
               <>
                 <img
-                  src={validStorefrontImage(products.find((product) => validStorefrontImage(product.imageUrl))?.imageUrl) || validStorefrontImage(config?.heroImage) || validStorefrontImage(listingPhoto)}
+                  src={validStorefrontImage(config?.heroImage) || validStorefrontImage(products.find((product) => validStorefrontImage(product.imageUrl))?.imageUrl) || validStorefrontImage(listingPhoto)}
                   alt={`${sellerName} ranch or farm`}
                 />
 
