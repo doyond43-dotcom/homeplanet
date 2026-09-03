@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import {
   HomePlanetSmsError,
   sendHomePlanetSms,
-} from "./_lib/homeplanet-sms.js";
+} from "../server/lib/homeplanet-sms.js";
 
 export default async function handler(
   req: VercelRequest,

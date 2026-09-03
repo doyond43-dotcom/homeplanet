@@ -4,8 +4,8 @@ import { createHash, randomBytes } from "node:crypto";
 import {
   escapeEmailHtml,
   sendHomePlanetEmail,
-} from "./_lib/homeplanet-email.js";
-import { sendHomePlanetSms } from "./_lib/homeplanet-sms.js";
+} from "../server/lib/homeplanet-email.js";
+import { sendHomePlanetSms } from "../server/lib/homeplanet-sms.js";
 
 function meatMarketDescriptionLine(description: unknown, label: string) {
   const lines = String(description || "").split(/\r?\n/);

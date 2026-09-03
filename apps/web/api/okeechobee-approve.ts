@@ -1,10 +1,10 @@
-﻿import type { VercelRequest, VercelResponse } from "@vercel/node";
+import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createHash, randomBytes } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import {
   escapeEmailHtml,
   sendHomePlanetEmail,
-} from "./_lib/homeplanet-email.js";
+} from "../server/lib/homeplanet-email.js";
 
 function cleanString(value: unknown, maxLength = 5000) {
   return typeof value === "string"

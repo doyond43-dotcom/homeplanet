@@ -4,7 +4,7 @@ import {
   HomePlanetEmailError,
   requiredEmailRecipient,
   sendHomePlanetEmail,
-} from "./_lib/homeplanet-email.js";
+} from "../server/lib/homeplanet-email.js";
 
 type SavedRecord = Record<string, unknown>;
 
@@ -298,7 +298,11 @@ async function sendHomePlanetContact(requestId: string) {
   const isHomePlanetContact =
     savedLead.board_slug === "homeplanet-contact";
 
-  if (!isHomePlanetContact && !isMeatMarket) {
+  const isOkeeDokeySoftwash =
+    savedLead.board_slug === "okee-dokey-softwash" &&
+    savedLead.selected_operation === "Okee Dokey Softwash Estimate";
+
+  if (!isHomePlanetContact && !isMeatMarket && !isOkeeDokeySoftwash) {
     throw new HomePlanetEmailError(
       "Saved lead is not eligible for this notification.",
       { httpStatus: 400 }
@@ -311,21 +315,27 @@ async function sendHomePlanetContact(requestId: string) {
     ),
     project: isMeatMarket
       ? "okeechobee-meat-market-contact"
-      : "homeplanet-contact",
+      : isOkeeDokeySoftwash
+        ? "okee-dokey-softwash-estimate"
+        : "homeplanet-contact",
     idempotencyKey: `${
       isMeatMarket
         ? "okeechobee-meat-market-contact"
-        : "homeplanet-contact"
+        : isOkeeDokeySoftwash
+          ? "okee-dokey-softwash-estimate"
+          : "homeplanet-contact"
     }-${requestId}`,
     subject: isMeatMarket
       ? `New Live Meat Market ${String(savedLead.selected_operation || "").includes("Buyer Request") ? "Buyer Request" : "Question"} - ${String(savedLead.name || "Local Visitor").trim()}`
-      : `New HomePlanet Question - ${String(savedLead.name || "Website Visitor").trim()}`,
+      : isOkeeDokeySoftwash
+        ? `New Okee Dokey Softwash Estimate - ${String(savedLead.name || "Local Customer").trim()}`
+        : `New HomePlanet Question - ${String(savedLead.name || "Website Visitor").trim()}`,
     html: `
       <div style="font-family:Arial,sans-serif;max-width:720px;margin:0 auto;padding:24px;">
-        <h2 style="margin:0 0 8px;">New HomePlanet Question</h2>
+        <h2 style="margin:0 0 8px;">${isOkeeDokeySoftwash ? "New Okee Dokey Softwash Estimate" : isMeatMarket ? "New Live Meat Market Message" : "New HomePlanet Question"}</h2>
 
         <p style="margin:0 0 20px;color:#666;">
-          Someone used the HomePlanet contact page.
+          ${isOkeeDokeySoftwash ? "A customer requested an exterior cleaning estimate." : isMeatMarket ? "Someone contacted the Okeechobee Live Meat Market." : "Someone used the HomePlanet contact page."}
         </p>
 
         <div style="padding:16px;border:1px solid #d9d9d9;border-radius:12px;margin-bottom:18px;">
@@ -347,7 +357,7 @@ async function sendHomePlanetContact(requestId: string) {
         </div>
 
         <div style="padding:16px;border:1px solid #d9d9d9;border-radius:12px;">
-          <strong>Question:</strong>
+          <strong>${isOkeeDokeySoftwash ? "Estimate Details:" : "Question:"}</strong>
 
           <div style="margin-top:10px;white-space:pre-wrap;line-height:1.6;">
             ${shown(savedLead.message)}
@@ -360,13 +370,13 @@ async function sendHomePlanetContact(requestId: string) {
       </div>
     `,
     text: [
-      "New HomePlanet Question",
+      isOkeeDokeySoftwash ? "New Okee Dokey Softwash Estimate" : isMeatMarket ? "New Live Meat Market Message" : "New HomePlanet Question",
       "",
       `Name: ${String(savedLead.name || "Not provided")}`,
       `Email / Phone: ${String(savedLead.contact || "Not provided")}`,
       `Business / Organization: ${String(savedLead.business_name || "Not provided")}`,
       "",
-      "Question:",
+      isOkeeDokeySoftwash ? "Estimate Details:" : "Question:",
       String(savedLead.message || "Not provided"),
       "",
       `Lead ID: ${requestId}`,
