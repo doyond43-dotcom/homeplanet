@@ -801,16 +801,39 @@ export default function OkeechobeeLiveMeatMarketPage({
 
         @media (max-width: 620px) {
           .market-activity {
-            padding: 22px 20px 20px;
+            padding: 12px 14px 11px;
           }
 
           .market-activity-label {
-            margin-bottom: 20px;
+            margin-bottom: 10px;
           }
 
           .market-activity-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr));
-            row-gap: 20px;
+            row-gap: 10px;
+          }
+
+          .market-activity-stat {
+            padding: 0 10px;
+          }
+
+          .market-activity-icon {
+            height: 20px;
+            margin-bottom: 4px;
+          }
+
+          .market-activity-icon svg {
+            width: 20px;
+            height: 20px;
+          }
+
+          .market-activity-number {
+            font-size: 28px;
+          }
+
+          .market-activity-name {
+            margin-top: 4px;
+            font-size: 11px;
           }
 
           .market-activity-stat:nth-child(2) {
@@ -819,7 +842,7 @@ export default function OkeechobeeLiveMeatMarketPage({
 
           .market-activity-stat:nth-child(3),
           .market-activity-stat:nth-child(4) {
-            padding-top: 20px;
+            padding-top: 10px;
             border-top: 1px solid rgba(25, 60, 43, 0.16);
           }
         }
@@ -1326,6 +1349,81 @@ export default function OkeechobeeLiveMeatMarketPage({
             height: 220px;
           }
 
+          .seller-market-grid.seller-directory-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+          }
+
+          .seller-directory-grid .seller-market-card {
+            border-radius: 16px;
+            box-shadow: 0 8px 22px rgba(48,39,24,0.06);
+          }
+
+          .seller-directory-grid .seller-market-image {
+            height: 98px;
+          }
+
+          .seller-directory-grid .seller-market-image-fallback {
+            height: 98px;
+            padding: 12px;
+          }
+
+          .seller-directory-grid .seller-market-image-fallback span {
+            font-size: 18px;
+          }
+
+          .seller-directory-grid .seller-market-body {
+            padding: 8px;
+          }
+
+          .seller-directory-grid .seller-market-name {
+            font-size: 18px;
+            line-height: 1.05;
+          }
+
+          .seller-directory-grid .seller-market-meta {
+            margin-top: 4px;
+            font-size: 11px;
+            line-height: 1.25;
+          }
+
+          .seller-directory-grid .seller-products-label {
+            margin-top: 8px;
+            font-size: 9px;
+          }
+
+          .seller-directory-grid .seller-product-row {
+            padding: 5px 0;
+            gap: 6px;
+          }
+
+          .seller-directory-grid .seller-product-title,
+          .seller-directory-grid .seller-product-price {
+            font-size: 10px;
+            line-height: 1.2;
+          }
+
+          .seller-directory-grid .seller-product-price {
+            text-align: right;
+          }
+
+          .seller-directory-grid .seller-more {
+            margin-top: 4px;
+            font-size: 9px;
+          }
+
+          .seller-directory-grid .seller-market-action {
+            min-height: 30px;
+            margin-top: 7px;
+            padding: 6px 6px;
+            border-radius: 9px;
+            font-size: 10px;
+          }
+
+          .seller-directory-grid .seller-cta-card {
+            grid-column: 1 / -1;
+          }
+
           .doorway-grid {
             grid-template-columns: 1fr;
           }
@@ -1543,11 +1641,11 @@ export default function OkeechobeeLiveMeatMarketPage({
             </p>
           </div>
 
-          <div className="seller-market-grid">
+          <div className={`seller-market-grid${sellerDirectoryOnly ? " seller-directory-grid" : ""}`}>
             {visibleSellers.length ? (
               <>
                 {visibleSellers.slice(0, sellerDirectoryOnly ? visibleSellers.length : 4).map((seller) => {
-                  const preview = seller.items.slice(0, 4);
+                  const preview = seller.items.slice(0, sellerDirectoryOnly ? 2 : 4);
                   const remaining = seller.items.length - preview.length;
 
                   return (
