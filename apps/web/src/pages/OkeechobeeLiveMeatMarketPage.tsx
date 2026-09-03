@@ -647,7 +647,41 @@ export default function OkeechobeeLiveMeatMarketPage({
         }
 
         .hero {
+          position: relative;
+          min-height: 500px;
           padding: 54px 0 34px;
+          overflow: hidden;
+        }
+
+        .hero-content {
+          position: relative;
+          z-index: 2;
+        }
+
+        .hero-cows {
+          position: absolute;
+          top: 18px;
+          right: -30px;
+          width: min(52vw, 760px);
+          height: 470px;
+          object-fit: cover;
+          object-position: center;
+          pointer-events: none;
+          z-index: 1;
+          -webkit-mask-image: linear-gradient(
+            to right,
+            transparent 0%,
+            rgba(0, 0, 0, 0.42) 10%,
+            rgba(0, 0, 0, 0.82) 20%,
+            #000 26%
+          );
+          mask-image: linear-gradient(
+            to right,
+            transparent 0%,
+            rgba(0, 0, 0, 0.42) 10%,
+            rgba(0, 0, 0, 0.82) 20%,
+            #000 26%
+          );
         }
 
         .eyebrow {
@@ -692,17 +726,17 @@ export default function OkeechobeeLiveMeatMarketPage({
         }
 
         .market-activity {
-          width: min(100%, 760px);
-          margin-top: 26px;
-          padding: 20px 26px 19px;
+          width: min(100%, 620px);
+          margin: 16px 0 18px;
+          padding: 9px 16px 8px;
           border: 2px solid #193c2b;
-          border-radius: 24px;
+          border-radius: 18px;
           background: #fbf7ee;
-          box-shadow: 0 12px 26px rgba(48, 39, 24, 0.11);
+          box-shadow: 0 7px 16px rgba(48, 39, 24, 0.08);
         }
 
         .market-activity-label {
-          margin-bottom: 17px;
+          margin-bottom: 8px;
           color: #b88941;
           font-size: 12px;
           font-weight: 950;
@@ -1320,6 +1354,18 @@ export default function OkeechobeeLiveMeatMarketPage({
             padding-top: 40px;
           }
 
+          .hero-cows {
+            position: relative;
+            top: auto;
+            right: auto;
+            width: 100%;
+            height: auto;
+            margin: 26px 0 0;
+            border-radius: 22px;
+            -webkit-mask-image: none;
+            mask-image: none;
+          }
+
           .market-topbar {
             padding-top: 14px;
             flex-wrap: wrap;
@@ -1363,6 +1409,7 @@ export default function OkeechobeeLiveMeatMarketPage({
         </header>
 
         <section className="hero">
+          <div className="hero-content">
           <div className="eyebrow">Okeechobee County &bull; Local Food</div>
 
           <h1>
@@ -1380,6 +1427,16 @@ export default function OkeechobeeLiveMeatMarketPage({
             <br />
             The Live Meat Market helps local beef reach local tables.
           </div>
+
+          </div>
+
+          <img
+            className="hero-cows"
+            src="/images/okeechobee-meat-market-cows.png"
+            alt=""
+            aria-hidden="true"
+          />
+        </section>
 
           {!sellerDirectoryOnly ? (
             <div className="market-activity" aria-label="Market activity">
@@ -1420,7 +1477,6 @@ export default function OkeechobeeLiveMeatMarketPage({
             </div>
           </div>
           ) : null}
-        </section>
 
         <section className="market-doorways" aria-label="Choose what you want to do">
           <div className="doorway-grid">
