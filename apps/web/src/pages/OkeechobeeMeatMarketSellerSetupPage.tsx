@@ -1,4 +1,4 @@
-import {
+﻿import {
   ChangeEvent,
   useEffect,
   useState,
@@ -11,6 +11,7 @@ type ProductRow = {
   category: string;
   price: string;
   package: string;
+  checkoutPrice: string;
   marketMarker: string;
   quantityAvailable: string;
   pickupTiming: string;
@@ -28,6 +29,9 @@ type Seller = {
   heroImage: string;
   orderMethod: string;
   orderDestination: string;
+  paymentProvider: string;
+  paymentDestination: string;
+  checkoutEnabled: boolean;
   fulfillment: string;
   pickupNote: string;
 };
@@ -37,6 +41,7 @@ const emptyProduct = (): ProductRow => ({
   category: "",
   price: "",
   package: "",
+  checkoutPrice: "",
   marketMarker: "",
   quantityAvailable: "",
   pickupTiming: "",
@@ -148,6 +153,20 @@ async function compressStorefrontPhoto(file: File) {
   return canvas.toDataURL("image/jpeg", 0.78);
 }
 
+type SellerAnalyticsSummary = {
+  storefrontViews: number;
+  productClicks: number;
+  buyerHandoffs: number;
+  topProducts: Array<{
+    name: string;
+    clicks: number;
+  }>;
+};
+
+type SellerAnalytics = {
+  sevenDays: SellerAnalyticsSummary;
+  allTime: SellerAnalyticsSummary;
+};
 export default function OkeechobeeMeatMarketSellerSetupPage() {
   const { slug } = useParams();
 
@@ -162,6 +181,12 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
+  const [analytics, setAnalytics] =
+    useState<SellerAnalytics | null>(null);
+
+  const [analyticsWindow, setAnalyticsWindow] =
+    useState<"sevenDays" | "allTime">("sevenDays");
+
 
   useEffect(() => {
     const rawToken = window.location.hash
@@ -169,6 +194,13 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
       .trim();
 
     setToken(rawToken);
+
+    console.log("[seller-setup-token]", {
+      slug,
+      length: rawToken.length,
+      first4: rawToken.slice(0, 4),
+      last4: rawToken.slice(-4),
+    });
 
     if (!rawToken || !slug) {
       setError("This seller update link is incomplete.");
@@ -185,7 +217,7 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
     extra: Record<string, unknown> = {}
   ) {
     const response = await fetch(
-      "/api/okeechobee-meat-market-seller-manage",
+      "/api/okeechobee-meat-market?route=seller-manage",
       {
         method: "POST",
         headers: {
@@ -227,7 +259,22 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
       setSeller({
         ...result.seller,
         heroImage: String(result.seller?.heroImage || ""),
+        paymentProvider: String(
+          result.seller?.paymentProvider || ""
+        ),
+        paymentDestination: String(
+          result.seller?.paymentDestination || ""
+        ),
+        checkoutEnabled: Boolean(
+          result.seller?.checkoutEnabled
+        ),
       });
+
+      setAnalytics(
+        result.analytics && typeof result.analytics === "object"
+          ? result.analytics
+          : null
+      );
 
       setProducts(
         (result.products || []).length
@@ -237,6 +284,7 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
               category: String(product.category || ""),
               price: String(product.price || ""),
               package: String(product.package || ""),
+              checkoutPrice: String(product.checkout_price || ""),
               marketMarker: String(
                 product.market_marker || ""
               ),
@@ -385,6 +433,12 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
           orderMethod: seller.orderMethod,
           orderDestination:
             seller.orderDestination,
+          paymentProvider:
+            seller.paymentProvider,
+          paymentDestination:
+            seller.paymentDestination,
+          checkoutEnabled:
+            seller.checkoutEnabled,
           fulfillment: seller.fulfillment,
           pickupNote: seller.pickupNote,
           products: cleanProducts,
@@ -401,6 +455,7 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
             ),
             price: String(product.price || ""),
             package: String(product.package || ""),
+              checkoutPrice: String(product.checkout_price || ""),
             marketMarker: String(
               product.market_marker || ""
             ),
@@ -437,6 +492,70 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
       );
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function connectSquare() {
+    if (!seller || !token || !slug) return;
+
+    const squareWindow = window.open(
+      "",
+      "_blank",
+      "noopener,noreferrer"
+    );
+
+    if (!squareWindow) {
+      setError(
+        "Please allow pop-ups so Square can open."
+      );
+      return;
+    }
+
+    try {
+      setError("");
+
+      squareWindow.document.title =
+        "Connecting Square...";
+
+      const response = await fetch(
+        "/api/okeechobee-meat-market?route=square-connect",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            slug,
+            token,
+          }),
+        }
+      );
+
+      const result = await response
+        .json()
+        .catch(() => null);
+
+      if (
+        !response.ok ||
+        result?.ok !== true ||
+        !result?.authorizationUrl
+      ) {
+        throw new Error(
+          result?.error ||
+            "Could not connect Square."
+        );
+      }
+
+      squareWindow.location.href =
+        result.authorizationUrl;
+    } catch (connectError) {
+      squareWindow.close();
+
+      setError(
+        connectError instanceof Error
+          ? connectError.message
+          : "Could not connect Square."
+      );
     }
   }
 
@@ -498,6 +617,274 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
             your public seller page.
           </p>
         </header>
+
+        {analytics ? (
+          <section
+            style={{
+              ...styles.section,
+              background:
+                "linear-gradient(145deg, #17231b 0%, #203529 100%)",
+              color: "#fff",
+              border: "1px solid rgba(255,255,255,.08)",
+              boxShadow: "0 18px 42px rgba(23,35,27,.16)",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "flex-start",
+                gap: 14,
+                flexWrap: "wrap",
+              }}
+            >
+              <div>
+                <div
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 900,
+                    letterSpacing: ".12em",
+                    textTransform: "uppercase",
+                    color: "#d8b75f",
+                    marginBottom: 6,
+                  }}
+                >
+                  Live Seller Activity
+                </div>
+
+                <h2
+                  style={{
+                    ...styles.sectionTitle,
+                    color: "#fff",
+                    marginBottom: 4,
+                  }}
+                >
+                  Your Seller Activity
+                </h2>
+
+                <p
+                  style={{
+                    margin: 0,
+                    color: "rgba(255,255,255,.68)",
+                    fontSize: 14,
+                    lineHeight: 1.45,
+                  }}
+                >
+                  See how local shoppers are interacting
+                  with your page.
+                </p>
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  padding: 4,
+                  borderRadius: 12,
+                  background: "rgba(255,255,255,.07)",
+                  gap: 4,
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() =>
+                    setAnalyticsWindow("sevenDays")
+                  }
+                  style={{
+                    border: 0,
+                    borderRadius: 9,
+                    padding: "8px 11px",
+                    fontWeight: 900,
+                    fontSize: 12,
+                    cursor: "pointer",
+                    background:
+                      analyticsWindow === "sevenDays"
+                        ? "#d8b75f"
+                        : "transparent",
+                    color:
+                      analyticsWindow === "sevenDays"
+                        ? "#17231b"
+                        : "#fff",
+                  }}
+                >
+                  Last 7 Days
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setAnalyticsWindow("allTime")
+                  }
+                  style={{
+                    border: 0,
+                    borderRadius: 9,
+                    padding: "8px 11px",
+                    fontWeight: 900,
+                    fontSize: 12,
+                    cursor: "pointer",
+                    background:
+                      analyticsWindow === "allTime"
+                        ? "#d8b75f"
+                        : "transparent",
+                    color:
+                      analyticsWindow === "allTime"
+                        ? "#17231b"
+                        : "#fff",
+                  }}
+                >
+                  All Time
+                </button>
+              </div>
+            </div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns:
+                  "repeat(auto-fit,minmax(120px,1fr))",
+                gap: 10,
+                marginTop: 20,
+              }}
+            >
+              {[
+                {
+                  value:
+                    analytics[analyticsWindow]
+                      .storefrontViews,
+                  label: "Storefront Views",
+                },
+                {
+                  value:
+                    analytics[analyticsWindow]
+                      .productClicks,
+                  label: "Product Clicks",
+                },
+                {
+                  value:
+                    analytics[analyticsWindow]
+                      .buyerHandoffs,
+                  label: "Buyer Handoffs",
+                },
+              ].map((stat) => (
+                <div
+                  key={stat.label}
+                  style={{
+                    padding: "15px 14px",
+                    borderRadius: 14,
+                    background: "rgba(255,255,255,.065)",
+                    border:
+                      "1px solid rgba(255,255,255,.07)",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: 32,
+                      lineHeight: 1,
+                      fontWeight: 950,
+                      color: "#fff",
+                    }}
+                  >
+                    {stat.value.toLocaleString()}
+                  </div>
+
+                  <div
+                    style={{
+                      marginTop: 7,
+                      color: "rgba(255,255,255,.62)",
+                      fontSize: 12,
+                      fontWeight: 800,
+                    }}
+                  >
+                    {stat.label}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {analytics[analyticsWindow].topProducts
+              .length ? (
+              <div style={{ marginTop: 20 }}>
+                <div
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 900,
+                    color: "#fff",
+                    marginBottom: 9,
+                  }}
+                >
+                  Products Getting Attention
+                </div>
+
+                <div
+                  style={{
+                    display: "grid",
+                    gap: 7,
+                  }}
+                >
+                  {analytics[
+                    analyticsWindow
+                  ].topProducts.map((product, index) => (
+                    <div
+                      key={`${product.name}-${index}`}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        gap: 12,
+                        padding: "9px 11px",
+                        borderRadius: 10,
+                        background:
+                          "rgba(255,255,255,.045)",
+                      }}
+                    >
+                      <span
+                        style={{
+                          color: "rgba(255,255,255,.86)",
+                          fontSize: 13,
+                          fontWeight: 800,
+                        }}
+                      >
+                        {index + 1}. {product.name}
+                      </span>
+
+                      <span
+                        style={{
+                          color: "#d8b75f",
+                          fontSize: 12,
+                          fontWeight: 950,
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {product.clicks}{" "}
+                        {product.clicks === 1
+                          ? "click"
+                          : "clicks"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            <div
+              style={{
+                marginTop: 18,
+                padding: "12px 13px",
+                borderRadius: 12,
+                background: "rgba(216,183,95,.10)",
+                border: "1px solid rgba(216,183,95,.22)",
+                color: "rgba(255,255,255,.78)",
+                fontSize: 13,
+                lineHeight: 1.5,
+              }}
+            >
+              <strong style={{ color: "#fff" }}>
+                Keep the momentum going.
+              </strong>{" "}
+              Current products, photos, prices and
+              availability make it easier for shoppers to
+              act while they are looking.
+            </div>
+          </section>
+        ) : null}
 
         <section style={styles.section}>
           <h2 style={styles.sectionTitle}>Storefront Photo</h2>
@@ -757,6 +1144,28 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
                       style={styles.input}
                     />
                   </label>
+
+                  <label style={styles.label}>
+                    Checkout price
+                    <input
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      value={product.checkoutPrice}
+                      onChange={(event) =>
+                        updateProduct(
+                          index,
+                          "checkoutPrice",
+                          event.target.value
+                        )
+                      }
+                      placeholder="Example: 33.00"
+                      style={styles.input}
+                    />
+                    <span style={styles.help}>
+                      Exact amount charged for one package.
+                    </span>
+                  </label>
                 </div>
 
                 <label style={styles.label}>
@@ -975,65 +1384,161 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
           <div style={styles.step}>3</div>
 
           <h2 style={styles.sectionTitle}>
-            Where should buyers order?
+            Get Paid
           </h2>
 
           <p style={styles.help}>
-            This is the seller-wide fallback. A product
-            can also have its own direct order link above.
+            Buyers pay through your payment account.
+            HomePlanet organizes the order. Your money
+            goes directly to you.
+          </p>
+
+          <p style={styles.help}>
+            Checkout On lets customers order and pay online through your connected payment account.
+            Checkout Off keeps things simple: customers can still see your products and contact you to order,
+            and you collect payment however you normally do.
           </p>
 
           <div style={styles.choiceRow}>
-            {[
-              "Website",
-              "Email",
-              "Phone / Text",
-              "Facebook",
-            ].map((choice) => (
-              <button
-                key={choice}
-                type="button"
-                onClick={() => {
-                  setSeller({
-                    ...seller,
-                    orderMethod: choice,
-                  });
-                  setSaved(false);
-                }}
-                style={
-                  seller.orderMethod === choice
-                    ? styles.choiceActive
-                    : styles.choice
-                }
-              >
-                {choice}
-              </button>
-            ))}
-          </div>
-
-          <label style={styles.label}>
-            {seller.orderMethod === "Website"
-              ? "Website or order link"
-              : seller.orderMethod === "Email"
-                ? "Order email"
-                : seller.orderMethod ===
-                    "Phone / Text"
-                  ? "Phone number"
-                  : "Facebook page"}
-
-            <input
-              value={seller.orderDestination}
-              onChange={(event) => {
+            <button
+              type="button"
+              onClick={() => {
                 setSeller({
                   ...seller,
-                  orderDestination:
-                    event.target.value,
+                  checkoutEnabled: true,
                 });
                 setSaved(false);
               }}
-              style={styles.input}
-            />
-          </label>
+              style={
+                seller.checkoutEnabled
+                  ? styles.choiceActive
+                  : styles.choice
+              }
+            >
+              Checkout On
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setSeller({
+                  ...seller,
+                  checkoutEnabled: false,
+                });
+                setSaved(false);
+              }}
+              style={
+                !seller.checkoutEnabled
+                  ? styles.choiceActive
+                  : styles.choice
+              }
+            >
+              Checkout Off
+            </button>
+          </div>
+
+          {seller.checkoutEnabled ? (
+            <>
+              <label style={styles.label}>
+                How do you get paid?
+
+                <select
+                  value={seller.paymentProvider}
+                  onChange={(event) => {
+                    setSeller({
+                      ...seller,
+                      paymentProvider:
+                        event.target.value,
+                    });
+                    setSaved(false);
+                  }}
+                  style={styles.input}
+                >
+                  <option value="">
+                    Choose payment provider
+                  </option>
+                  <option value="PayPal">
+                    PayPal
+                  </option>
+                  <option value="Square">
+                    Square
+                  </option>
+                  <option value="Stripe">
+                    Stripe
+                  </option>
+                  <option value="Cash App">
+                    Cash App
+                  </option>
+                  <option value="Zelle">
+                    Zelle
+                  </option>
+                  <option value="Other">
+                    Other
+                  </option>
+                </select>
+              </label>
+
+              {seller.paymentProvider === "Square" ? (
+                <div style={styles.label}>
+                  <span>Square account</span>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void connectSquare();
+                    }}
+                    style={styles.choiceActive}
+                  >
+                    Connect Square
+                  </button>
+
+                  <span style={styles.help}>
+                    Connect your Square account so buyers can
+                    pay you directly through Square checkout.
+                  </span>
+                </div>
+              ) : (
+                <label style={styles.label}>
+                  Payment link or destination
+
+                  <input
+                    value={seller.paymentDestination}
+                    onChange={(event) => {
+                      setSeller({
+                        ...seller,
+                        paymentDestination:
+                          event.target.value,
+                      });
+                      setSaved(false);
+                    }}
+                    placeholder={
+                      seller.paymentProvider === "PayPal"
+                        ? "PayPal checkout or payment link"
+                        : seller.paymentProvider === "Stripe"
+                          ? "Stripe payment link"
+                          : seller.paymentProvider === "Cash App"
+                            ? "Cash App payment link"
+                            : seller.paymentProvider === "Zelle"
+                              ? "Zelle payment destination"
+                              : "Payment link"
+                    }
+                    style={styles.input}
+                  />
+                </label>
+              )}
+
+              <div style={styles.help}>
+                Products marked available can use this
+                checkout instead of making buyers message,
+                call, or wait for confirmation.
+              </div>
+            </>
+          ) : (
+            <div style={styles.help}>
+              Checkout is currently off. Buyers cannot
+              complete payment through HomePlanet yet.
+            </div>
+          )}
         </section>
 
         {error ? (
@@ -1458,3 +1963,5 @@ const styles: Record<string, React.CSSProperties> = {
     border: "1px solid #dfd5c4",
   },
 };
+
+
