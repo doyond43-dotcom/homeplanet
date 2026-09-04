@@ -623,7 +623,7 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
             style={{
               ...styles.section,
               background:
-                "linear-gradient(145deg, #17231b 0%, #203529 100%)",
+                "linear-gradient(145deg, #253029 0%, #303d34 100%)",
               color: "#fff",
               border: "1px solid rgba(255,255,255,.08)",
               boxShadow: "0 18px 42px rgba(23,35,27,.16)",
@@ -770,9 +770,9 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
                   style={{
                     padding: "15px 14px",
                     borderRadius: 14,
-                    background: "rgba(255,255,255,.065)",
+                    background: "rgba(255,255,255,.085)",
                     border:
-                      "1px solid rgba(255,255,255,.07)",
+                      "1px solid rgba(255,255,255,.14)",
                   }}
                 >
                   <div
