@@ -398,6 +398,7 @@ import RestaurantAwarenessDrinkBoard from "../pages/RestaurantAwarenessDrinkBoar
 
 import OkeechobeeTogetherPage from "../pages/OkeechobeeTogetherPage";
 import OkeechobeeLiveMeatMarketPage from "../pages/OkeechobeeLiveMeatMarketPage";
+import OkeechobeeMeatMarketRanchResourcesPage from "../pages/OkeechobeeMeatMarketRanchResourcesPage";
 import OkeechobeeMeatMarketSellerPage from "../pages/OkeechobeeMeatMarketSellerPage";
 import OkeechobeeMeatMarketSellerStorefrontPage from "../pages/OkeechobeeMeatMarketSellerStorefrontPage";
 import OkeechobeeMeatMarketSellerSetupPage from "../pages/OkeechobeeMeatMarketSellerSetupPage";
@@ -566,6 +567,7 @@ export default function PlanetRoutes() {
       <Route path="okeechobee/event/:slug" element={<OkeechobeeEventPage />} />
       <Route path="okeechobee" element={<OkeechobeeTogetherPage />} />
       <Route path="okeechobee/meat-market" element={<OkeechobeeLiveMeatMarketPage />} />
+      <Route path="okeechobee/meat-market/ranch-resources" element={<OkeechobeeMeatMarketRanchResourcesPage />} />
       <Route path="okeechobee/meat-market/sellers" element={<OkeechobeeLiveMeatMarketPage sellerDirectoryOnly />} />
       <Route path="okeechobee/meat-market/sell" element={<OkeechobeeMeatMarketSellerPage />} />
       <Route path="okeechobee/meat-market/seller/setup/:slug" element={<OkeechobeeMeatMarketSellerSetupPage />} />

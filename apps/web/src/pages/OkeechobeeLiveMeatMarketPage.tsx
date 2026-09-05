@@ -1773,27 +1773,27 @@ export default function OkeechobeeLiveMeatMarketPage({
                   <article className="seller-cta-card">
                     <div>
                       <div className="seller-cta-kicker">
-                        Looking for local food?
+                        For local ranchers
                       </div>
 
                       <h3 className="seller-cta-title">
-                        Looking for Something Specific?
+                        Ranch Resources
                       </h3>
 
                       <div className="seller-cta-copy">
-                        Can&apos;t find the cut, quantity, or local product you need? Tell local sellers what you&apos;re looking for.
+                        Find feed, grain, hay, bulk commodities, and ranch supply sources around Okeechobee.
                       </div>
 
                       <div className="seller-cta-products">
-                        Beef • Pork • Chicken • Eggs • Dairy • Other local animal products
+                        Feed • Grain • Hay • Bulk commodities • Ranch supplies
                       </div>
                     </div>
 
                     <a
                       className="seller-cta-action"
-                      href="/planet/okeechobee/meat-market/contact?mode=buy"
+                      href="/planet/okeechobee/meat-market/ranch-resources"
                     >
-                      Request Local Food
+                      Find Feed &amp; Supplies
                     </a>
                   </article>
                 ) : null}
