@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+﻿import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useSearchParams } from "react-router-dom";
 import { RequireAuth } from "./auth/RequireAuth";
 
@@ -38,6 +38,7 @@ const PressPage = lazy(() => import("./routes/PressPage"));
 const PressKitTaylorCreek = lazy(() => import("./routes/PressKitTaylorCreek"));
 const PlanetRoutes = lazy(() => import("./planet/PlanetRoutes"));
 const OnlyTheEssentialsLandingV2 = lazy(() => import("./pages/OnlyTheEssentialsLandingV2"));
+const YardSaleLandingPage = lazy(() => import("./pages/YardSaleLandingPage"));
 const YardSaleStartPage = lazy(() => import("./pages/YardSaleStartPage"));
 const YardSalePublicPage = lazy(() => import("./pages/YardSalePublicPage"));
 const CreatorRoutes = lazy(() => import("./routes/CreatorRoutes"));
@@ -294,7 +295,8 @@ export default function App() {
           <Route path="/planet/demo/after-the-click" element={<HomePlanetAfterTheClickDemo />} />
           <Route path="/planet/build-your-live-system/dashboard" element={<HomePlanetMarketAwarenessDashboardV1 />} />
           <Route path="/planet/build-your-live-system" element={<HomePlanetMarketAwarenessFunnelV1 />} />        <Route path="/service/*" element={<ServiceRoutes />} />
-        <Route path="/yard-sale/start" element={<YardSaleStartPage />} />
+        <Route path="/yard-sale" element={<YardSaleLandingPage />} />
+          <Route path="/yard-sale/start" element={<YardSaleStartPage />} />
         <Route path="/yard-sale/:slug" element={<YardSalePublicPage />} />
         <Route path="/city" element={<Navigate to="/planet/home" replace />} />
         <Route path="/city/*" element={<OkeechobeeDomainCityRedirect />} />
@@ -375,6 +377,7 @@ export default function App() {
     </BrowserRouter>
   );
 }
+
 
 
 
