@@ -416,10 +416,10 @@ export default function CowTownOrderPage() {
               >
                 <img
                   src="/images/cow-town-tag-retrofit.png"
-                  alt="Cow Town sticker upgrade"
+                  alt="Cow Town recovery overlay"
                 />
-                <strong>Sticker Upgrades</strong>
-                <span>A durable weather-resistant QR sticker for an existing numbered cattle ear tag. It adds the Cow Town recovery system without replacing the ranch's current tag.</span>
+                <strong>Recovery Overlays</strong>
+                <span>A durable recovery overlay for an existing numbered cattle ear tag. It keeps the ranch's current number and adds FOUND? SCAN ME, a Cow Town QR, and the live recovery system without replacing the tag.</span>
               </button>
 
               <button
@@ -442,7 +442,7 @@ export default function CowTownOrderPage() {
                   />
                 </div>
                 <strong>Both</strong>
-                <span>Order full Cow Town tags for some animals and serialized sticker upgrades for the cattle tags already in use.</span>
+                <span>Order full Cow Town tags for some animals and serialized recovery overlays for the cattle tags already in use.</span>
               </button>
             </div>
 
@@ -473,7 +473,7 @@ export default function CowTownOrderPage() {
 
               {productChoice !== "full-tag" ? (
                 <label>
-                  <span>Sticker upgrades</span>
+                  <span>Recovery overlays</span>
                   <div>
                     <strong>
                       {formatCowTownMoney(sticker.unitPrice)} each
@@ -888,7 +888,7 @@ export default function CowTownOrderPage() {
                     ? " + "
                     : ""}
                   {effectiveStickerQuantity > 0
-                    ? `${effectiveStickerQuantity} sticker upgrades`
+                    ? `${effectiveStickerQuantity} recovery overlays`
                     : ""}
                 </small>
                 <b>

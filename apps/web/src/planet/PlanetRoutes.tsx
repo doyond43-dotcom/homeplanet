@@ -310,6 +310,7 @@ import CowTownTagsLandingPage from "../pages/CowTownTagsLandingPage";
 import CowTownPublicTagPage from "../pages/CowTownPublicTagPage";
 import CowTownOrderPage from "../pages/CowTownOrderPage";
 import CowTownOrderReceiptPage from "../pages/CowTownOrderReceiptPage";
+import CowTownAnimalSetupPage from "../pages/CowTownAnimalSetupPage";
 import CowTownOwnershipTransferPage from "../pages/CowTownOwnershipTransferPage";
 import CowTownOwnershipAcceptPage from "../pages/CowTownOwnershipAcceptPage";
 import GuardianPetTagDemo from "../pages/GuardianPetTagDemo";
@@ -402,6 +403,7 @@ import OkeechobeeMeatMarketRanchResourcesPage from "../pages/OkeechobeeMeatMarke
 import OkeechobeeMeatMarketSellerPage from "../pages/OkeechobeeMeatMarketSellerPage";
 import OkeechobeeMeatMarketSellerStorefrontPage from "../pages/OkeechobeeMeatMarketSellerStorefrontPage";
 import OkeechobeeMeatMarketSellerSetupPage from "../pages/OkeechobeeMeatMarketSellerSetupPage";
+import OkeechobeeMeatMarketCheckoutPage from "../pages/OkeechobeeMeatMarketCheckoutPage";
 import OkeechobeeCreateEventPage from "../pages/OkeechobeeCreateEventPage";
 import OkeechobeeCreateEventPageV2 from "../pages/OkeechobeeCreateEventPageV2";
 import OkeechobeeReachOutPage from "../pages/OkeechobeeReachOutPage";
@@ -573,6 +575,7 @@ export default function PlanetRoutes() {
       <Route path="okeechobee/meat-market/seller/setup/:slug" element={<OkeechobeeMeatMarketSellerSetupPage />} />
       <Route path="okeechobee/meat-market/seller/:slug" element={<OkeechobeeMeatMarketSellerStorefrontPage />} />
       <Route path="okeechobee/meat-market/farm-folks" element={<OkeechobeeMeatMarketSellerStorefrontPage />} />
+      <Route path="okeechobee/meat-market/checkout" element={<OkeechobeeMeatMarketCheckoutPage />} />
       <Route path="okeechobee/meat-market/contact" element={<OkeechobeeMeatMarketContactPage />} />
       <Route path="okeechobee/meat-market/intelligence" element={<RequireAuth><OkeechobeeMeatMarketIntelligenceDashboard /></RequireAuth>} />
       <Route path="okeechobee/meat-market/command" element={<RequireAuth><OkeechobeeMeatMarketCommandCenter /></RequireAuth>} />
@@ -647,8 +650,9 @@ export default function PlanetRoutes() {
       <Route path="demo/stay-showcase-fishing" element={<StayExperienceFishingAddonPage />} />
       <Route path="demo/stay-showcase-request-active" element={<StayExperienceRequestActivePage />} />
 
-      {/* OKIE DOKIE SOFTWASH */}
-      <Route path="okie-dokie-softwash" element={<OkieDokieSoftwashPage />} />
+      {/* OKEE DOKEY SOFTWASH */}
+      <Route path="okee-dokey-softwash" element={<OkieDokieSoftwashPage />} />
+      <Route path="okie-dokie-softwash" element={<Navigate to="/planet/okee-dokey-softwash" replace />} />
       {/* CAPTAIN D CHARTERS */}
       <Route path="demo/lake-experience-preview" element={<CaptainDChartersPage />} />
       <Route path="demo/trip-memory-preview" element={<CaptainDTripMemoryPage />} />
@@ -706,6 +710,7 @@ export default function PlanetRoutes() {
 
       <Route path="cow-town-tags" element={<CowTownTagsLandingPage />} />
       <Route path="cow-town-tags/order" element={<CowTownOrderPage />} />
+      <Route path="cow-town-tags/animal/setup/:accessToken" element={<CowTownAnimalSetupPage />} />
       <Route
         path="cow-town-tags/receipt/:accessToken"
         element={<CowTownOrderReceiptPage />}

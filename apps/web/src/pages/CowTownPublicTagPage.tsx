@@ -24,6 +24,7 @@ type PublicCowTownTag = {
   sex: string | null;
   color: string | null;
   birth_year: number | null;
+  photo_url: string | null;
   animal_status: string;
   activation_status: string;
   recovery_phone: string | null;
@@ -117,9 +118,10 @@ export default function CowTownPublicTagPage() {
     : undefined;
 
   const animalImage =
-    normalizedTagId === "CT-0056"
+    publicTag?.photo_url ||
+    (normalizedTagId === "CT-0056"
       ? "/images/princess-black-angus.png"
-      : "/images/cow-town-tags-animal.jpg";
+      : "/images/cow-town-tags-animal.jpg");
 
 
   function submitReport(event: FormEvent<HTMLFormElement>) {

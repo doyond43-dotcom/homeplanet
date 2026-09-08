@@ -80,7 +80,7 @@ export const cowTownProducts: CowTownProduct[] = [
   },
   {
     id: "sticker-upgrade",
-    name: "Cow Town Sticker Upgrade",
+    name: "Cow Town Recovery Overlay",
     unitPrice: 7.99,
     description:
       "Durable serialized QR upgrade for an existing numbered livestock ear tag.",

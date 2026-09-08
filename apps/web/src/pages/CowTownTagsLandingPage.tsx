@@ -596,7 +596,7 @@ export default function CowTownTagsLandingPage() {
             <div className="ctv2-products-photo">
               <img
                 src="/images/cow-town-tags-two-ways-real-world.png"
-                alt="A rancher holding the complete Cow Town livestock ear tag beside cattle wearing an existing numbered tag upgraded with a Scan for Ranch QR sticker"
+                alt="A rancher holding the complete Cow Town livestock ear tag beside cattle wearing an existing numbered tag upgraded with a FOUND? SCAN ME recovery overlay"
               />
             </div>
 
@@ -650,20 +650,20 @@ export default function CowTownTagsLandingPage() {
                 <div className="ctv2-product-visual ctv2-product-image-wrap">
                   <img
                     src="/images/cow-town-tag-main.png"
-                    alt="Existing livestock ear tag upgraded with a Cow Town QR sticker labeled Scan for Ranch"
+                    alt="Existing livestock ear tag upgraded with a Cow Town recovery overlay labeled FOUND? SCAN ME"
                   />
                 </div>
 
                 <div className="ctv2-product-copy">
                   <span>Keep the tag. Add the recovery system.</span>
-                  <h3>Cow Town Sticker Upgrade</h3>
+                  <h3>Cow Town Recovery Overlay</h3>
 
                   <p>
-                    A durable QR sticker applied directly to the livestock ear
+                    A durable recovery overlay applied directly to the livestock ear
                     tag the animal already wears. The ranch keeps its existing
-                    animal number and numbering system, while the sticker adds a
-                    unique Cow Town recovery ID and the clear instruction
-                    “SCAN FOR RANCH.”
+                    animal number and numbering system, while the overlay adds a
+                    unique Cow Town recovery ID, a scannable QR, and the clear instruction
+                    “FOUND? SCAN ME.”
                   </p>
 
                   <ul>
@@ -677,15 +677,15 @@ export default function CowTownTagsLandingPage() {
                     </li>
                     <li>
                       <Check size={16} />
-                      Clearly labeled “SCAN FOR RANCH”
+                      Clearly labeled “FOUND? SCAN ME”
                     </li>
                     <li>
                       <Check size={16} />
-                      Waterproof and UV-resistant QR sticker
+                      Waterproof and UV-resistant recovery overlay
                     </li>
                     <li>
                       <Check size={16} />
-                      Each sticker opens that animal’s live recovery page
+                      Each overlay opens that animal’s live recovery page
                     </li>
                     <li>
                       <Check size={16} />

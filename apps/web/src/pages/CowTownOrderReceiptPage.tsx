@@ -532,7 +532,7 @@ export default function CowTownOrderReceiptPage() {
               {receipt.full_tag_quantity} full tags
             </strong>
             <small>
-              {receipt.sticker_quantity} sticker upgrades
+              {receipt.sticker_quantity} recovery overlays
             </small>
             <b>
               Batch {receipt.batch.batch_number}
@@ -646,15 +646,27 @@ export default function CowTownOrderReceiptPage() {
           </div>
 
           <div className="ct-payment-actions">
-            {receipt.status === "payment_verified" ||
-            receipt.status === "batch_setup" ||
-            receipt.status === "in_production" ||
-            receipt.status === "qr_verification" ||
-            receipt.status === "activated" ||
-            receipt.status === "ready_to_ship" ||
-            receipt.status === "shipped" ||
-            receipt.status === "delivered" ||
-            receipt.status === "completed" ? (
+            {receipt.status === "payment_verified" ? (
+              <>
+                <Link
+                  to={`/planet/cow-town-tags/animal/setup/${accessToken}`}
+                  className="ct-paypal-button"
+                >
+                  Add Your Animals
+                </Link>
+
+                <button type="button" onClick={loadReceipt}>
+                  Refresh Order Status
+                </button>
+              </>
+            ) : receipt.status === "batch_setup" ||
+              receipt.status === "in_production" ||
+              receipt.status === "qr_verification" ||
+              receipt.status === "activated" ||
+              receipt.status === "ready_to_ship" ||
+              receipt.status === "shipped" ||
+              receipt.status === "delivered" ||
+              receipt.status === "completed" ? (
               <button type="button" onClick={loadReceipt}>
                 Refresh Order Status
               </button>
