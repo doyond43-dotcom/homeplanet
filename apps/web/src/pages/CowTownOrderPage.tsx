@@ -497,7 +497,7 @@ export default function CowTownOrderPage() {
 
               <div className="ct-simple-total">
                 <span>First batch</span>
-                <strong>{totalQuantity} assignments</strong>
+                <strong>{totalQuantity} {totalQuantity === 1 ? "assignment" : "assignments"}</strong>
               </div>
             </div>
 
@@ -604,7 +604,7 @@ export default function CowTownOrderPage() {
                       ? `${startingNumber} through ${endingNumber}`
                       : "Add a starting number"}
                   </strong>
-                  <small>{totalQuantity} assignments</small>
+                  <small>{totalQuantity} {totalQuantity === 1 ? "assignment" : "assignments"}</small>
                 </div>
               </div>
             ) : null}
@@ -878,24 +878,24 @@ export default function CowTownOrderPage() {
 
               <article>
                 <span>First batch</span>
-                <strong>{totalQuantity} assignments</strong>
+                <strong>{totalQuantity} {totalQuantity === 1 ? "assignment" : "assignments"}</strong>
                 <small>
                   {effectiveFullTagQuantity > 0
-                    ? `${effectiveFullTagQuantity} full tags`
+                    ? `${effectiveFullTagQuantity} ${effectiveFullTagQuantity === 1 ? "full tag" : "full tags"}`
                     : ""}
                   {effectiveFullTagQuantity > 0 &&
                   effectiveStickerQuantity > 0
                     ? " + "
                     : ""}
                   {effectiveStickerQuantity > 0
-                    ? `${effectiveStickerQuantity} recovery overlays`
+                    ? `${effectiveStickerQuantity} ${effectiveStickerQuantity === 1 ? "recovery overlay" : "recovery overlays"}`
                     : ""}
                 </small>
                 <b>
                   {batchMethod === "sequence"
                     ? `${startingNumber} through ${endingNumber}`
                     : batchMethod === "enter-now"
-                      ? `${enteredNumberCount} numbers entered`
+                      ? `${enteredNumberCount} ${enteredNumberCount === 1 ? "number entered" : "numbers entered"}`
                       : "Animal list submitted later"}
                 </b>
               </article>
@@ -940,18 +940,18 @@ export default function CowTownOrderPage() {
               </div>
 
               <div className="ct-total-emphasis">
-                <span>One-time order</span>
+                <span>Due for this order</span>
                 <strong>
                   {formatCowTownMoney(oneTimeTotal)}
                 </strong>
               </div>
 
               <div className="ct-total-emphasis">
-                <span>Monthly ranch plan</span>
+                <span>Ranch plan</span>
                 <strong>
                   {selectedPlan.monthlyPrice === null
                     ? "Custom"
-                    : formatCowTownMoney(monthlyTotal)}
+                    : `${formatCowTownMoney(monthlyTotal)}/month`}
                 </strong>
               </div>
             </div>
@@ -973,7 +973,7 @@ export default function CowTownOrderPage() {
               >
                 {isSubmitting
                   ? "Creating Your Cow Town Order..."
-                  : "Place Cow Town Order"}
+                  : "Create Order & Continue"}
               </button>
             </div>
 
@@ -989,9 +989,8 @@ export default function CowTownOrderPage() {
             ) : null}
 
             <p className="ct-final-note">
-              Your secure order record, first batch, and living
-              receipt are created together. Payment will connect
-              from the receipt in the next phase.
+              Your order and ranch record will be created first.
+              You'll review your receipt and complete secure payment next.
             </p>
           </section>
         ) : null}
