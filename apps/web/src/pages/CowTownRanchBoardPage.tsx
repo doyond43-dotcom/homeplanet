@@ -2,6 +2,7 @@ import {
   AlertTriangle,
   ArrowRight,
   Clock3,
+  ChevronRight,
   MapPin,
   Phone,
   ShieldCheck,
@@ -254,7 +255,7 @@ export default function CowTownRanchBoardPage() {
                       <h3 style={{ marginTop: 6, marginBottom: 6 }}>
                         {sighting.cow_town_id || "Cow Town animal"}
                         {sighting.visible_tag_number
-                          ? ` ? Tag ${sighting.visible_tag_number}`
+                          ? ` \u00b7 Tag ${sighting.visible_tag_number}`
                           : ""}
                       </h3>
                     </div>
@@ -334,8 +335,9 @@ export default function CowTownRanchBoardPage() {
 
           <div style={{ display: "grid", gap: 14 }}>
             {animals.map((animal) => (
-              <article
+              <Link
                 key={animal.id}
+                to={`/planet/cow-town-tags/tag/${animal.cow_town_id}`}
                 style={{
                   border: "1px solid rgba(255,255,255,.12)",
                   borderRadius: 18,
@@ -344,7 +346,8 @@ export default function CowTownRanchBoardPage() {
                   justifyContent: "space-between",
                   gap: 16,
                   alignItems: "center",
-                  flexWrap: "wrap",
+                  textDecoration: "none",
+                  color: "inherit",
                 }}
               >
                 <div>
@@ -352,23 +355,17 @@ export default function CowTownRanchBoardPage() {
                     {animal.name || animal.cow_town_id}
                   </strong>
                   <div style={{ marginTop: 4, opacity: 0.8 }}>
-                    {animal.cow_town_id} ? Tag {animal.visible_tag_number}
+                    {animal.cow_town_id}{" \u00b7 "}Tag {animal.visible_tag_number}
                   </div>
                   <div style={{ marginTop: 4, opacity: 0.7 }}>
                     {[animal.breed, animal.sex, animal.color]
                       .filter(Boolean)
-                      .join(" ? ")}
+                      .join(" \u00b7 ")}
                   </div>
                 </div>
 
-                <Link
-                  className="cowtown-button cowtown-button-secondary"
-                  to={`/planet/cow-town-tags/tag/${animal.cow_town_id}`}
-                >
-                  View Animal
-                  <ArrowRight size={17} />
-                </Link>
-              </article>
+                <ChevronRight size={20} style={{ opacity: 0.72, flexShrink: 0 }} />
+              </Link>
             ))}
           </div>
         </section>
