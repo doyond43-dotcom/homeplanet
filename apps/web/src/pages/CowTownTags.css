@@ -901,3 +901,88 @@
     grid-column: auto;
   }
 }
+
+
+/* ============================================================
+   COW TOWN PUBLIC RECOVERY FOOTER
+   ============================================================ */
+
+.cowtown-footer {
+  padding: 34px 0 40px;
+}
+
+.cowtown-footer-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 24px 36px;
+}
+
+.cowtown-footer-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cowtown-footer-brand strong {
+  color: #f5f7f5;
+  font-size: 14px;
+}
+
+.cowtown-footer-brand span {
+  color: #8ea096;
+}
+
+.cowtown-footer-herd {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cowtown-footer-herd > span {
+  color: #8ea096;
+}
+
+.cowtown-footer-herd a {
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid rgba(250, 204, 21, 0.28);
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(250, 204, 21, 0.07);
+  color: #fde047;
+  font-weight: 850;
+  text-decoration: none;
+}
+
+.cowtown-footer-copy {
+  grid-column: 1 / -1;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  color: #66786e;
+  font-size: 11px;
+}
+
+@media (max-width: 620px) {
+  .cowtown-footer-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 20px;
+  }
+
+  .cowtown-footer-herd {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .cowtown-footer-herd a {
+    width: 100%;
+  }
+
+  .cowtown-footer-copy {
+    width: 100%;
+  }
+}

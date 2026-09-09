@@ -481,8 +481,21 @@ export default function CowTownPublicTagPage() {
 
       <footer className="cowtown-footer">
         <div className="cowtown-shell cowtown-footer-inner">
-          <span>Cow Town Tags</span>
-          <span>Public access requires no app or account.</span>
+          <div className="cowtown-footer-brand">
+            <strong>Cow Town Tags</strong>
+            <span>Public access requires no app or account.</span>
+          </div>
+
+          <div className="cowtown-footer-herd">
+            <span>Own livestock?</span>
+            <Link to="/planet/cow-town-tags">
+              Protect Your Herd ?
+            </Link>
+          </div>
+
+          <div className="cowtown-footer-copy">
+            &copy; 2026 HomePlanet. Cow Town Tags. All rights reserved.
+          </div>
         </div>
       </footer>
     </div>

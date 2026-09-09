@@ -2767,3 +2767,119 @@
     white-space: nowrap;
   }
 }
+
+
+/* ============================================================
+   COW TOWN PROFESSIONAL FOOTER
+   ============================================================ */
+
+.ctv2-footer {
+  padding: 42px 0 34px;
+  text-align: left;
+}
+
+.ctv2-footer > div::before {
+  content: none;
+}
+
+.ctv2-footer .ctv2-footer-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 28px 40px;
+}
+
+.ctv2-footer-brand {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 13px;
+}
+
+.ctv2-footer-mark {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  border: 2px solid #eab308;
+  border-radius: 12px 12px 16px 16px;
+  display: grid;
+  place-items: center;
+  background: rgba(250, 204, 21, 0.07);
+  color: #fde047;
+  font-size: 13px;
+  font-weight: 1000;
+}
+
+.ctv2-footer-brand > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ctv2-footer-brand strong {
+  color: #f4f7f5;
+  font-size: 15px;
+  font-weight: 950;
+}
+
+.ctv2-footer-brand small {
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 12px;
+}
+
+.ctv2-footer-links {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+}
+
+.ctv2-footer-links a,
+.ctv2-footer-links button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.72);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.ctv2-footer-links a:hover,
+.ctv2-footer-links button:hover {
+  color: #fde047;
+}
+
+.ctv2-footer-bottom {
+  grid-column: 1 / -1;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  display: flex;
+  justify-content: space-between;
+  gap: 16px 30px;
+  color: rgba(255, 255, 255, 0.43);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+@media (max-width: 620px) {
+  .ctv2-footer .ctv2-footer-shell {
+    display: flex;
+    align-items: stretch;
+    gap: 24px;
+  }
+
+  .ctv2-footer-links {
+    justify-content: flex-start;
+  }
+
+  .ctv2-footer-bottom {
+    width: 100%;
+    flex-direction: column;
+    gap: 5px;
+  }
+}

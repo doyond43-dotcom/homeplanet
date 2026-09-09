@@ -737,23 +737,32 @@ export default function CowTownTagsLandingPage() {
       </main>
 
       <footer className="ctv2-footer">
-        <div className="ctv2-shell">
+        <div className="ctv2-shell ctv2-footer-shell">
           <div className="ctv2-footer-brand">
-            <span>Cow Town Tags</span>
-            <small>Built on HomePlanet for real livestock recovery.</small>
+            <span className="ctv2-footer-mark">CT</span>
+
+            <div>
+              <strong>Cow Town Tags</strong>
+              <small>Built on HomePlanet for real livestock recovery.</small>
+            </div>
           </div>
 
-          <div className="ctv2-footer-contact">
-            <span>Questions about Cow Town Tags?</span>
+          <nav className="ctv2-footer-links" aria-label="Cow Town footer">
+            <Link to="/planet/cow-town-tags">Home</Link>
+            <a href="#tag-options">Tag Options</a>
+            <Link to="/planet/cow-town-tags/order">Start My Order</Link>
 
             <button
               type="button"
-              className="ctv2-footer-contact-button"
               onClick={() => setContactOpen(true)}
             >
-              <MessageCircle size={17} />
-              Contact Us
+              Contact
             </button>
+          </nav>
+
+          <div className="ctv2-footer-bottom">
+            <span>&copy; 2026 HomePlanet. Cow Town Tags. All rights reserved.</span>
+            <span>No app required for public livestock recovery.</span>
           </div>
         </div>
       </footer>
