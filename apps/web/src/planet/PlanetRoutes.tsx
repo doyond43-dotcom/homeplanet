@@ -313,6 +313,7 @@ import CowTownOrderReceiptPage from "../pages/CowTownOrderReceiptPage";
 import CowTownAnimalSetupPage from "../pages/CowTownAnimalSetupPage";
 import CowTownOwnershipTransferPage from "../pages/CowTownOwnershipTransferPage";
 import CowTownOwnershipAcceptPage from "../pages/CowTownOwnershipAcceptPage";
+import CowTownRanchBoardPage from "../pages/CowTownRanchBoardPage";
 import GuardianPetTagDemo from "../pages/GuardianPetTagDemo";
 import GuardianPetLivePage from "../pages/GuardianPetLivePage";
 import GuardianPetManagePage from "../pages/GuardianPetManagePage";
@@ -716,6 +717,10 @@ export default function PlanetRoutes() {
         element={<CowTownOrderReceiptPage />}
       />
       <Route path="cow-town-tags/tag/:tagId" element={<CowTownPublicTagPage />} />
+      <Route
+        path="cow-town-tags/ranch/:managementToken"
+        element={<CowTownRanchBoardPage />}
+      />
       <Route
         path="cow-town-tags/transfer/start/:managementToken"
         element={<CowTownOwnershipTransferPage />}
