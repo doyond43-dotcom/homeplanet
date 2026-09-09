@@ -38,6 +38,8 @@ export default function CowTownPublicTagPage() {
   const [notes, setNotes] = useState("");
   const [phone, setPhone] = useState("");
   const [publicTag, setPublicTag] = useState<PublicCowTownTag | null>(null);
+  const [reportSubmitting, setReportSubmitting] = useState(false);
+  const [reportError, setReportError] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -124,8 +126,36 @@ export default function CowTownPublicTagPage() {
       : "/images/cow-town-tags-animal.jpg");
 
 
-  function submitReport(event: FormEvent<HTMLFormElement>) {
+  async function submitReport(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (reportSubmitting) {
+      return;
+    }
+
+    setReportSubmitting(true);
+    setReportError("");
+
+    const { data, error } = await supabase.rpc(
+      "submit_cow_town_sighting",
+      {
+        requested_cow_town_id: normalizedTagId,
+        requested_location: location,
+        requested_condition: condition,
+        requested_notes: notes || null,
+        requested_finder_phone: phone || null,
+      }
+    );
+
+    if (error || !data?.success) {
+      setReportError(
+        error?.message || "We could not send the report. Please try again."
+      );
+      setReportSubmitting(false);
+      return;
+    }
+
+    setReportSubmitting(false);
     setMode("success");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -437,11 +467,20 @@ export default function CowTownPublicTagPage() {
                       />
                     </div>
 
+                    {reportError && (
+                      <p role="alert" style={{ marginTop: 4 }}>
+                        {reportError}
+                      </p>
+                    )}
+
                     <button
                       className="cowtown-button cowtown-button-primary"
                       type="submit"
+                      disabled={reportSubmitting}
                     >
-                      Send Report to Ranch
+                      {reportSubmitting
+                        ? "Sending Report..."
+                        : "Send Report to Ranch"}
                       <ArrowRight size={18} />
                     </button>
                   </form>
