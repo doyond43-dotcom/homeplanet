@@ -751,6 +751,8 @@ export default function CowTownTagsLandingPage() {
             <Link to="/planet/cow-town-tags">Home</Link>
             <a href="#tag-options">Tag Options</a>
             <Link to="/planet/cow-town-tags/order">Start My Order</Link>
+            <Link to="/privacy">Privacy</Link>
+            <Link to="/terms">Terms</Link>
 
             <button
               type="button"
