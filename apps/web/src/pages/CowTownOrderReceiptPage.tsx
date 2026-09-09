@@ -47,6 +47,7 @@ type CowTownReceipt = {
     name: string;
     contact_name: string;
     email: string;
+    management_access_token: string;
   };
   batch: {
     id: string;
@@ -455,6 +456,23 @@ export default function CowTownOrderReceiptPage() {
             <small>Order {receipt.order_number}</small>
           </div>
         </header>
+
+        <section className="ct-receipt-ranch-board">
+          <div>
+            <span>Private ranch access</span>
+            <strong>Your Ranch Board is ready.</strong>
+            <p>
+              Manage your animals and review incoming recovery reports
+              from your private Cow Town dashboard.
+            </p>
+          </div>
+
+          <Link
+            to={`/planet/cow-town-tags/ranch/${receipt.ranch.management_access_token}`}
+          >
+            Open Your Ranch Board
+          </Link>
+        </section>
 
         <section className="ct-receipt-progress">
           <article className="is-current">

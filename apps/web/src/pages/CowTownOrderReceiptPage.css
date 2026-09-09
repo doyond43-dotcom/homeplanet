@@ -97,6 +97,59 @@
   opacity: 0.74;
 }
 
+
+.ct-receipt-ranch-board {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-top: 24px;
+  padding: 24px;
+  border: 1px solid rgba(242, 211, 126, 0.2);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.065);
+  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.2);
+}
+
+.ct-receipt-ranch-board > div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ct-receipt-ranch-board span {
+  color: #f1c85c;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.ct-receipt-ranch-board strong {
+  font-size: 1.35rem;
+}
+
+.ct-receipt-ranch-board p {
+  margin: 0;
+  max-width: 680px;
+  color: rgba(248, 242, 223, 0.7);
+  line-height: 1.5;
+}
+
+.ct-receipt-ranch-board a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  padding: 0 22px;
+  border-radius: 14px;
+  background: #f1c85c;
+  color: #102b20;
+  font-weight: 900;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
 .ct-receipt-progress {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
