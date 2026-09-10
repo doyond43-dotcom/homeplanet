@@ -7,7 +7,7 @@ const models = [
     description:
       "The larger Performance platform built for serious capability, customization and time on the water.",
     available: true,
-    image: "/images/performance-powerboats/07-performance-43-docked.jpg",
+    image: "/images/performance-powerboats/luxury_quad_engine_center_console_marina.png",
     imageAlt: "Performance 43 finished and docked on the water",
   },
   {
@@ -99,5 +99,6 @@ export default function PerformancePowerboatsModelsPage() {
     </main>
   );
 }
+
 
 
