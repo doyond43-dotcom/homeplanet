@@ -12,6 +12,7 @@ export default function OkeechobeeTogetherPage() {
       const { data, error } = await supabase
         .from("okeechobee_events")
         .select("*")
+        .eq("type", "Need")
         .order("created_at", { ascending: false });
 
       if (error) {
