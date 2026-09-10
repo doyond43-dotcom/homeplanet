@@ -3030,3 +3030,72 @@
     gap: 8px 16px;
   }
 }
+
+/* =========================================================
+   PERFORMANCE POWERBOATS — TOP NAV VISIBILITY PASS
+   Stronger pills without changing brand direction
+   ========================================================= */
+
+.pp-topbar .pp-nav {
+  gap: 9px;
+}
+
+.pp-topbar .pp-nav a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 8px 13px;
+  border: 1px solid rgba(255, 255, 255, 0.58);
+  border-radius: 999px;
+  background: rgba(3, 25, 38, 0.62);
+  color: #ffffff;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  box-shadow:
+    0 3px 12px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.pp-topbar .pp-nav a:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.9);
+  transform: translateY(-1px);
+}
+
+.pp-topbar .pp-nav .pp-nav-cta {
+  background: #c99425;
+  border-color: #d9ad4b;
+  color: #061f2e;
+  text-shadow: none;
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.pp-topbar .pp-nav .pp-nav-cta:hover {
+  background: #dfad3d;
+  border-color: #efd080;
+  color: #061f2e;
+}
+
+@media (max-width: 760px) {
+  .pp-topbar .pp-nav {
+    gap: 6px;
+  }
+
+  .pp-topbar .pp-nav a {
+    min-height: 32px;
+    padding: 7px 9px;
+    font-size: 9px;
+    letter-spacing: 0.055em;
+  }
+}

@@ -1,193 +1,242 @@
-﻿import { Link } from "react-router-dom";
-import "./PerformancePowerboatsShowroomPage.css";
+﻿import "./PerformancePowerboatsShowroomPage.css";
 
-const SHOP = "/images/performance-powerboats";
-const IMAGES = "/images/performance-powerboats";
+const showroomImages = [
+
+  {
+    src: "/images/performance-powerboats/showroom-performance-wide-running.jpeg",
+    alt: "Performance Powerboats finished boat running on the water",
+    layout: "wide",
+  },
+  {
+    src: "/images/performance-powerboats/07-performance-43-docked.jpg",
+    alt: "Performance 43 finished and docked",
+    layout: "standard",
+  },
+  {
+    src: "/images/performance-powerboats/08-performance-43-on-water.jpg",
+    alt: "Performance 43 on the water",
+    layout: "standard",
+  },
+
+  {
+    src: "/images/performance-powerboats/performance-finished-boat-side-dock.webp",
+    alt: "Finished Performance Powerboats boat dockside",
+    layout: "standard",
+  },
+  {
+    src: "/images/performance-powerboats/performance-finished-boat-dock-sunset.webp",
+    alt: "Finished Performance Powerboats boat at sunset",
+    layout: "standard",
+  },
+  {
+    src: "/images/performance-powerboats/finished-white-boat-dock-front-angle.jpg",
+    alt: "Finished white Performance boat at the dock",
+    layout: "wide",
+  },
+  {
+    src: "/images/performance-powerboats/showroom-finished-running-boat-screenshot.jpeg",
+    alt: "Finished boat running on the water",
+    layout: "standard",
+  },
+  {
+    src: "/images/performance-powerboats/01-hero-running-boat.jpg",
+    alt: "Performance Powerboats boat running offshore",
+    layout: "wide",
+  },
+  {
+    src: "/images/performance-powerboats/performance-43-on-water.webp",
+    alt: "Performance boat on the water",
+    layout: "standard",
+  },
+  {
+    src: "/images/performance-powerboats/performance-finished-boat.webp",
+    alt: "Finished Performance Powerboats build",
+    layout: "standard",
+  },
+  {
+    src: "/images/performance-powerboats/showroom-performance-43-docked-vertical.jpeg",
+    alt: "Finished Performance 43 dockside",
+    layout: "tall",
+  },
+  {
+    src: "/images/performance-powerboats/showroom-performance-43-docked-blackbars.jpeg",
+    alt: "Performance 43 with triple outboards",
+    layout: "tall",
+  },
+  {
+    src: "/images/performance-powerboats/11-finished-powerboat-on-trailer.jpg",
+    alt: "Finished Performance Powerboats boat on trailer",
+    layout: "wide",
+  },
+  {
+    src: "/images/performance-powerboats/boat_shed_maintenance_with_twin_yamaha_150s.png",
+    alt: "Finished boat with twin Yamaha outboards",
+    layout: "standard",
+  },
+  {
+    src: "/images/performance-powerboats/sunny_seacraft_marina_escape.png",
+    alt: "Finished center console boat at the marina",
+    layout: "standard",
+  },
+
+  {
+    src: "/images/performance-powerboats/mntdataluxury_yacht_cruising_a_palm_lined_marina.png",
+    alt: "Finished boat cruising through the marina",
+    layout: "wide",
+  },
+
+  {
+    src: "/images/performance-powerboats/showroom-finished-deck.jpeg",
+    alt: "Finished custom deck, seating and helm layout",
+    layout: "tall",
+  },
+  {
+    src: "/images/performance-powerboats/finished-boat-deck-interior-garmin.jpg",
+    alt: "Finished custom boat deck and Garmin electronics",
+    layout: "tall",
+  },
+
+  {
+    src: "/images/performance-powerboats/finished-boat-helm-simrad-controls.jpg",
+    alt: "Finished Performance Powerboats helm and controls",
+    layout: "standard",
+  },
+];
 
 export default function PerformancePowerboatsShowroomPage() {
   return (
-    <main className="pp-showroom-page">
-      <section className="pp-showroom-hero">
-        <div className="pp-showroom-shell">
-          <Link className="pp-showroom-back" to="/planet/performance-powerboats">
-            ← PERFORMANCE POWERBOATS
-          </Link>
+    <main className="pps-page">
+      <section className="pps-hero">
+        <div className="pps-hero-image">
+          <img
+            src="/images/performance-powerboats/showroom-finished-black-tower-waterfront.jpeg"
+            alt="Finished Performance Powerboats custom boat on the water"
+          />
+          <div className="pps-hero-shade" />
+        </div>
 
-          <div className="pp-showroom-kicker">SHOWROOM</div>
+        <div className="pps-shell pps-hero-content">
+          <a
+            className="pps-back"
+            href="/planet/performance-powerboats"
+          >
+            ← PERFORMANCE POWERBOATS
+          </a>
+
+          <span className="pps-kicker">SHOWROOM</span>
 
           <h1>
-            SEE WHAT
+            FINISHED BOATS.
             <br />
-            PERFORMANCE BUILDS.
+            REAL PERFORMANCE.
           </h1>
 
-          <p className="pp-showroom-lead">
-            Finished boats, real builds and the details that bring a Performance
-            together on the water.
+          <p>
+            Completed boats, custom details and finished Performance work
+            where it belongs: on the water.
+          </p>
+
+          <div className="pps-actions">
+            <a
+              className="pps-button pps-button-gold"
+              href="/planet/performance-powerboats/start-project"
+            >
+              START A PROJECT
+            </a>
+
+            <a
+              className="pps-button pps-button-ghost"
+              href="/planet/performance-powerboats/models"
+            >
+              VIEW MODELS
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section className="pps-intro">
+        <div className="pps-shell">
+          <span className="pps-kicker">THE FINISHED PRODUCT</span>
+
+          <h2>
+            BUILT TO BE SEEN.
+            <br />
+            BUILT TO BE USED.
+          </h2>
+
+          <p>
+            This is the finished side of Performance Powerboats: completed
+            boats, custom layouts, rigging, towers, electronics and the final
+            result of the work that happens inside the shop.
           </p>
         </div>
       </section>
 
-      <section className="pp-showroom-feature">
-        <div className="pp-showroom-shell">
-          <div className="pp-showroom-feature-image">
-            <img
-              src={`${IMAGES}/performance-43-on-water.webp`}
-              alt="Performance Powerboats boat on the water"
-            />
-          </div>
-
-          <div className="pp-showroom-copy">
-            <div className="pp-showroom-kicker">BUILT FOR THE WATER</div>
-            <h2>THE FINISHED PRODUCT SPEAKS FOR ITSELF.</h2>
-            <p>
-              The tooling, fabrication, rigging and finish work all lead here:
-              a completed boat ready to leave the shop and do what it was built to do.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section className="pp-showroom-dark">
-        <div className="pp-showroom-shell">
-          <div className="pp-showroom-copy pp-showroom-copy-dark">
-            <div className="pp-showroom-kicker">REAL PERFORMANCE BOATS</div>
-            <h2>FROM THE SHOP TO THE WATER.</h2>
-            <p>
-              A look at finished and near-finished Performance builds without
-              turning the showroom into a catalog.
-            </p>
-          </div>
-
-          <div className="pp-showroom-gallery-main">
-            <figure className="pp-showroom-photo pp-showroom-photo-large">
-              <img
-                src={`${IMAGES}/07-performance-43-docked.jpg`}
-                alt="Performance Powerboats boat docked"
-              />
-            </figure>
-
-            <figure className="pp-showroom-photo">
-              <img
-                src={`${SHOP}/100_0276.JPG`}
-                alt="Finished Performance Powerboats hull outside the shop"
-              />
-            </figure>
-
-            <figure className="pp-showroom-photo">
-              <img
-                src={`${SHOP}/100_0277.JPG`}
-                alt="Performance Powerboats finished hull on trailer"
-              />
-            </figure>
-          </div>
-        </div>
-      </section>
-
-      <section className="pp-showroom-details">
-        <div className="pp-showroom-shell">
-          <div className="pp-showroom-copy">
-            <div className="pp-showroom-kicker">FINISHED DETAILS</div>
-            <h2>BUILT AS A COMPLETE BOAT.</h2>
-            <p>
-              Hull shape, deck layout, consoles, rigging and finishing details
-              come together as one finished build.
-            </p>
-          </div>
-
-          <div className="pp-showroom-detail-grid">
-            <figure className="pp-showroom-photo">
-              <img
-                src={`${SHOP}/100_0278.JPG`}
-                alt="Performance Powerboats bow and deck layout"
-              />
-            </figure>
-
-            <figure className="pp-showroom-photo">
-              <img
-                src={`${SHOP}/100_0280.JPG`}
-                alt="Finished Performance Powerboats deck detail"
-              />
-            </figure>
-
-            <figure className="pp-showroom-photo">
-              <img
-                src={`${SHOP}/100_0282.JPG`}
-                alt="Finished Performance Powerboats hull and deck"
-              />
-            </figure>
-
-            <figure className="pp-showroom-photo">
-              <img
-                src={`${SHOP}/100_0284.JPG`}
-                alt="Performance Powerboats finished bow detail"
-              />
-            </figure>
-          </div>
-        </div>
-      </section>
-
-      <section className="pp-showroom-finished">
-        <div className="pp-showroom-shell">
-          <div className="pp-showroom-finished-card">
-            <div className="pp-showroom-finished-image">
-              <img
-                src={`${IMAGES}/performance-finished-boat.webp`}
-                alt="Finished custom powerboat"
-              />
-            </div>
-
-            <div className="pp-showroom-finished-copy">
-              <div className="pp-showroom-kicker">BUILT AROUND THE BOAT</div>
-              <h2>NO TWO PROJECTS HAVE TO END THE SAME WAY.</h2>
-              <p>
-                Performance builds around how the boat will actually be used,
-                with the final setup shaped by the project, equipment and owner.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="pp-showroom-cta-section">
-        <div className="pp-showroom-shell">
-          <div className="pp-showroom-cta">
-            <div>
-              <div className="pp-showroom-kicker">FIND YOUR PERFORMANCE</div>
-              <h2>START WITH THE BOAT. BUILD FROM THERE.</h2>
-              <p>
-                Explore the Performance lineup or tell the shop what you are
-                looking to build.
-              </p>
-            </div>
-
-            <div className="pp-showroom-actions">
-              <Link
-                className="pp-showroom-btn pp-showroom-btn-gold"
-                to="/planet/performance-powerboats/models"
+      <section className="pps-gallery-section">
+        <div className="pps-shell">
+          <div className="pps-gallery">
+            {showroomImages.map((image, index) => (
+              <figure
+                className={`pps-card pps-card-${image.layout}`}
+                key={`${image.src}-${index}`}
               >
-                PERFORMANCE MODELS
-              </Link>
+                <img
+                  src={image.src}
+                  alt={image.alt}
+                  loading={index < 4 ? "eager" : "lazy"}
+                />
+              </figure>
+            ))}
+          </div>
+        </div>
+      </section>
 
-              <Link
-                className="pp-showroom-btn pp-showroom-btn-outline"
-                to="/planet/performance-powerboats/start-project"
+      <section className="pps-close">
+        <div className="pps-shell">
+          <div className="pps-close-card">
+            <div>
+              <span className="pps-kicker">YOUR BOAT STARTS HERE</span>
+
+              <h2>
+                SEE SOMETHING
+                <br />
+                THAT STARTS AN IDEA?
+              </h2>
+
+              <p>
+                Start with the boat, the work or the idea. Performance can take
+                it from there.
+              </p>
+            </div>
+
+            <div className="pps-close-actions">
+              <a
+                className="pps-button pps-button-gold"
+                href="/planet/performance-powerboats/start-project"
               >
                 START A PROJECT
-              </Link>
+              </a>
+
+              <a
+                className="pps-button pps-button-dark"
+                href="/planet/performance-powerboats/contact"
+              >
+                CONTACT PERFORMANCE
+              </a>
             </div>
           </div>
 
-          <Link
-            className="pp-showroom-home"
-            to="/planet/performance-powerboats"
+          <a
+            className="pps-footer-back"
+            href="/planet/performance-powerboats"
           >
             ← BACK TO PERFORMANCE POWERBOATS
-          </Link>
+          </a>
         </div>
       </section>
     </main>
   );
 }
+
 
 

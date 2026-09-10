@@ -195,7 +195,7 @@ export default function PerformancePowerboatsLandingPage() {
 
           <nav className="pp-nav" aria-label="Performance navigation">
             <a href="/planet/performance-powerboats/showroom">SHOWROOM</a>
-            <a href="/planet/performance-powerboats/customer-builds">CUSTOMER BUILDS</a>
+            <a href="/planet/performance-powerboats/customer-builds">CUSTOM BUILDS</a>
             <a href="/planet/performance-powerboats/start-project" className="pp-nav-cta">START A PROJECT</a>
           </nav>
         </div>
@@ -855,6 +855,7 @@ export default function PerformancePowerboatsLandingPage() {
     </main>
   );
 }
+
 
 
 

@@ -7,17 +7,27 @@ const weldDetailImages = [
   "/images/performance-powerboats/100_0301.JPG",
 ];
 
-const fabricationImages = [
-  "/images/performance-powerboats/100_0302.JPG",
-  "/images/performance-powerboats/100_0303.JPG",
-  "/images/performance-powerboats/100_0304.JPG",
-];
-
 const topWorkImages = [
-  "/images/performance-powerboats/100_0320.JPG",
-  "/images/performance-powerboats/100_0321.JPG",
-  "/images/performance-powerboats/100_0322.JPG",
-  "/images/performance-powerboats/100_0339.JPG",
+  {
+    src: "/images/performance-powerboats/performance-fabrication-frame-before.webp",
+    alt: "Raw custom aluminum fabrication frame",
+    label: "RAW FABRICATION",
+  },
+  {
+    src: "/images/performance-powerboats/performance-fabrication-installed-shop.webp",
+    alt: "Finished white fabricated top installed on the boat",
+    label: "INSTALLED TOP & FINISH",
+  },
+  {
+    src: "/images/performance-powerboats/performance-finished-boat-side-dock.webp",
+    alt: "Finished Performance Powerboats boat on the water",
+    label: "ON THE WATER",
+  },
+  {
+    src: "/images/performance-powerboats/performance-finished-boat-ramp.webp",
+    alt: "Finished boat ready to head back onto the water",
+    label: "READY FOR MORE",
+  },
 ];
 
 export default function PerformancePowerboatsFabricationMetalworkPage() {
@@ -50,7 +60,7 @@ export default function PerformancePowerboatsFabricationMetalworkPage() {
         <div className="pp-fab-shell">
           <div className="pp-fab-feature-image-wrap">
             <img
-              src="/images/performance-powerboats/100_0302.JPG"
+              src="/images/performance-powerboats/performance-finished-boat-side-dock.webp"
               alt="Performance Powerboats metal fabrication inside the shop"
               className="pp-fab-feature-image"
             />
@@ -92,11 +102,19 @@ export default function PerformancePowerboatsFabricationMetalworkPage() {
               <img key={src} src={src} alt="Performance Powerboats welded tubing detail" />
             ))}
           </div>
-
           <div className="pp-fab-three-grid">
-            {fabricationImages.map((src) => (
-              <img key={src} src={src} alt="Performance Powerboats fabrication work in shop" />
-            ))}
+            <img
+              src="/images/performance-powerboats/100_0297.JPG"
+              alt="Full custom polished tower fabrication inside the Performance Powerboats shop"
+            />
+            <img
+              src="/images/performance-powerboats/100_0302.JPG"
+              alt="Custom fabricated tower and rod-holder structure"
+            />
+            <img
+              src="/images/performance-powerboats/100_0320.JPG"
+              alt="Finished white T-top and rod holder structure installed on a Performance Powerboats build"
+            />
           </div>
         </div>
       </section>
@@ -117,8 +135,14 @@ export default function PerformancePowerboatsFabricationMetalworkPage() {
           </div>
 
           <div className="pp-fab-four-grid">
-            {topWorkImages.map((src) => (
-              <img key={src} src={src} alt="Performance Powerboats top and frame fabrication" />
+            {topWorkImages.map((image) => (
+              <figure className="pp-fab-finish-card" key={image.src}>
+                <img
+                  src={image.src}
+                  alt={image.alt}
+                />
+                <figcaption>{image.label}</figcaption>
+              </figure>
             ))}
           </div>
         </div>
@@ -158,6 +182,24 @@ export default function PerformancePowerboatsFabricationMetalworkPage() {
     </main>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
