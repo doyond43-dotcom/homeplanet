@@ -15,23 +15,24 @@ const models = [
     description:
       "A new Performance model joining the lineup. More details are coming.",
     available: false,
-    image: null,
+    image: "/images/performance-powerboats/luxury_center_console_boat_at_marina_dock.png",
+    imageAlt: "Finished white Performance center console boat at a marina dock",
   },
   {
     name: "PERFORMANCE 19",
     description:
       "A smaller Performance platform built around the same hands-on approach to setup and use.",
     available: true,
-    image: "/images/performance-powerboats/100_0278.JPG",
-    imageAlt: "Finished Performance Powerboats shallow-water build",
+    image: "/images/performance-powerboats/sunlit_white_skiff_at_the_marina.png",
+    imageAlt: "Finished white Performance 19 style skiff at a marina",
   },
   {
     name: "FLATS BOAT",
     description:
       "A shallow-water Performance platform. Official model details and photography are coming.",
     available: true,
-    image: "/images/performance-powerboats/100_0282.JPG",
-    imageAlt: "Finished Performance Powerboats shallow-water boat",
+    image: "/images/performance-powerboats/white_flats_skiff_at_tropical_marina.png",
+    imageAlt: "Finished white flats skiff at a tropical marina",
   },
 ];
 
@@ -98,4 +99,5 @@ export default function PerformancePowerboatsModelsPage() {
     </main>
   );
 }
+
 
