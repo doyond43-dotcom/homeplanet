@@ -533,8 +533,8 @@ export default function PerformancePowerboatsLandingPage() {
 
           <div className="pp-real-image pp-production-engine-image">
             <img
-              src="/images/performance-powerboats/performance-hull-inside-shop.webp"
-              alt="Performance Powerboats production work inside the shop"
+              src="/images/performance-powerboats/09-large-hull-outside-shop.jpg"
+              alt="Large Performance Powerboats hull beside production tooling"
             />
           </div>
         </div>
@@ -855,6 +855,7 @@ export default function PerformancePowerboatsLandingPage() {
     </main>
   );
 }
+
 
 
 
