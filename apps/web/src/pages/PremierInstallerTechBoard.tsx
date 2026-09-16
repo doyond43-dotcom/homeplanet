@@ -1,4 +1,5 @@
-﻿import { useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
+import { supabase } from "../lib/supabase";
 
 type TechJob = {
   id: string;
@@ -172,6 +173,53 @@ export default function PremierInstallerTechBoard() {
     }[]
   >([]);
 
+  const [liveInstallerJobs, setLiveInstallerJobs] = useState<any[]>([]);
+  const [liveInstallerJobsLoading, setLiveInstallerJobsLoading] =
+    useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadInstallerJobs = async () => {
+      const accessToken =
+        new URLSearchParams(window.location.search).get("access");
+
+      if (!accessToken) {
+        if (active) {
+          setLiveInstallerJobs([]);
+          setLiveInstallerJobsLoading(false);
+        }
+        return;
+      }
+
+      setLiveInstallerJobsLoading(true);
+
+      const { data, error } = await supabase.rpc(
+        "get_premier_installer_jobs",
+        {
+          p_access_token: accessToken,
+        }
+      );
+
+      if (!active) return;
+
+      if (error) {
+        console.error("Premier installer jobs failed:", error);
+        setLiveInstallerJobs([]);
+      } else {
+        setLiveInstallerJobs(data ?? []);
+      }
+
+      setLiveInstallerJobsLoading(false);
+    };
+
+    void loadInstallerJobs();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const activeJob = useMemo(
     () => jobs.find((job) => job.id === activeJobId) ?? jobs[0],
     [activeJobId]
@@ -331,6 +379,253 @@ export default function PremierInstallerTechBoard() {
             </span>
           </div>
         </header>
+
+        <section
+          style={{
+            border: "1px solid #31495a",
+            borderRadius: 16,
+            background: "#10151a",
+            padding: 14,
+            marginBottom: 16,
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: 10,
+              marginBottom: 10,
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  color: "#9db7ca",
+                  fontSize: 10,
+                  fontWeight: 900,
+                  letterSpacing: 1,
+                  textTransform: "uppercase",
+                  marginBottom: 3,
+                }}
+              >
+                Live Relay
+              </div>
+
+              <strong style={{ fontSize: 16 }}>
+                Live Installer Jobs
+              </strong>
+            </div>
+
+            <span
+              style={{
+                fontSize: 12,
+                fontWeight: 900,
+                color: "#d9e5ee",
+              }}
+            >
+              {liveInstallerJobs.length}
+            </span>
+          </div>
+
+          {liveInstallerJobsLoading ? (
+            <div style={{ color: "#8fa0ad", fontSize: 12 }}>
+              Loading installer jobs...
+            </div>
+          ) : liveInstallerJobs.length === 0 ? (
+            <div style={{ color: "#78858e", fontSize: 12 }}>
+              No jobs currently ready for Installer Tech.
+            </div>
+          ) : (
+            <div style={{ display: "grid", gap: 9 }}>
+              {liveInstallerJobs.map((job) => (
+                <div
+                  key={job.id}
+                  style={{
+                    border: "1px solid #557c64",
+                    borderRadius: 13,
+                    background: "#111820",
+                    padding: 12,
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      gap: 10,
+                      marginBottom: 6,
+                    }}
+                  >
+                    <strong>
+                      {job.first_name} {job.last_name}
+                    </strong>
+
+                    <span
+                      style={{
+                        color: "#b7dec4",
+                        fontSize: 10,
+                        fontWeight: 900,
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      Installation Ready
+                    </span>
+                  </div>
+
+                  <div
+                    style={{
+                      color: "#9ca8b2",
+                      fontSize: 12,
+                      marginBottom: 8,
+                    }}
+                  >
+                    {job.project_address}
+                  </div>
+
+                  <div
+                    style={{
+                      display: "grid",
+                      gap: 4,
+                      fontSize: 12,
+                      color: "#d7dde2",
+                    }}
+                  >
+                    <div>
+                      <strong>Crew:</strong>{" "}
+                      {job.crew || "Not assigned"}
+                    </div>
+
+                    <div>
+                      <strong>Install:</strong>{" "}
+                      {job.scheduled_for
+                        ? new Date(job.scheduled_for).toLocaleString()
+                        : "Not scheduled"}
+                    </div>
+
+                    <div>
+                      <strong>Material:</strong>{" "}
+                      {job.material_status || "Unknown"}
+                    </div>
+
+                    <div>
+                      <strong>Permit:</strong>{" "}
+                      {job.permit_status || "Unknown"}
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      borderTop: "1px solid #26323a",
+                      marginTop: 9,
+                      paddingTop: 9,
+                      color: "#d9e5ee",
+                      fontSize: 12,
+                    }}
+                  >
+                    <span style={{ color: "#8fa9bc" }}>Next:</span>{" "}
+                    {job.next_action ||
+                      "Installer to begin installation and upload required proof."}
+                  </div>
+
+                  {job.current_stage === "installation_ready" ? (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const accessToken =
+                          new URLSearchParams(window.location.search).get("access");
+
+                        if (!accessToken) return;
+
+                        const { data, error } = await supabase.rpc(
+                          "start_premier_installation",
+                          {
+                            p_access_token: accessToken,
+                            p_job_id: job.id,
+                          }
+                        );
+
+                        if (error) {
+                          console.error("Start Installation failed:", error);
+                          return;
+                        }
+
+                        if (data === true) {
+                          setLiveInstallerJobs((current) =>
+                            current.map((item) =>
+                              item.id === job.id
+                                ? {
+                                    ...item,
+                                    current_stage: "installation_in_progress",
+                                    next_action:
+                                      "Installer to complete installation and upload required proof.",
+                                  }
+                                : item
+                            )
+                          );
+                        }
+                      }}
+                      style={{
+                        width: "100%",
+                        minHeight: 46,
+                        marginTop: 10,
+                        borderRadius: 10,
+                        border: "1px solid #557c64",
+                        background: "#16232d",
+                        color: "#d9e5ee",
+                        fontWeight: 900,
+                        cursor: "pointer",
+                      }}
+                    >
+                      Start Installation
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const accessToken =
+                          new URLSearchParams(window.location.search).get("access");
+
+                        if (!accessToken) return;
+
+                        const { data, error } = await supabase.rpc(
+                          "complete_premier_installation",
+                          {
+                            p_access_token: accessToken,
+                            p_job_id: job.id,
+                          }
+                        );
+
+                        if (error) {
+                          console.error("Complete Installation failed:", error);
+                          return;
+                        }
+
+                        if (data === true) {
+                          setLiveInstallerJobs((current) =>
+                            current.filter((item) => item.id !== job.id)
+                          );
+                        }
+                      }}
+                      style={{
+                        width: "100%",
+                        minHeight: 46,
+                        marginTop: 10,
+                        borderRadius: 10,
+                        border: "1px solid #557c64",
+                        background: "#16232d",
+                        color: "#d9e5ee",
+                        fontWeight: 900,
+                        cursor: "pointer",
+                      }}
+                    >
+                      Complete Installation
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
 
         <div
           style={{

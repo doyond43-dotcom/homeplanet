@@ -1,4 +1,5 @@
-﻿import { useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
+import { supabase } from "../lib/supabase";
 
 type FieldJob = {
   id: string;
@@ -290,6 +291,18 @@ export default function PremierFieldOperationsBoard() {
     { jobId: string; time: string; text: string }[]
   >([]);
 
+  const [liveFinalMeasurements, setLiveFinalMeasurements] = useState<any[]>([]);
+  const [liveFinalMeasurementsLoading, setLiveFinalMeasurementsLoading] =
+    useState(false);
+
+  const [liveInstallations, setLiveInstallations] = useState<any[]>([]);
+  const [liveInstallationsLoading, setLiveInstallationsLoading] =
+    useState(false);
+
+  const [liveInspections, setLiveInspections] = useState<any[]>([]);
+  const [liveInspectionsLoading, setLiveInspectionsLoading] =
+    useState(false);
+
   const [punchOuts, setPunchOuts] = useState<
     {
       id: string;
@@ -324,6 +337,139 @@ export default function PremierFieldOperationsBoard() {
     | "Permit Proof"
     | null
   >(null);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadFinalMeasurements = async () => {
+      const accessToken =
+        new URLSearchParams(window.location.search).get("access");
+
+      if (!accessToken) {
+        if (active) {
+          setLiveFinalMeasurements([]);
+          setLiveFinalMeasurementsLoading(false);
+        }
+        return;
+      }
+
+      setLiveFinalMeasurementsLoading(true);
+
+      const { data, error } = await supabase.rpc(
+        "get_premier_final_measurement_assignments",
+        {
+          p_access_token: accessToken,
+          p_destination: "field",
+        }
+      );
+
+      if (!active) return;
+
+      if (error) {
+        console.error(
+          "Premier field final measurement assignments failed:",
+          error
+        );
+        setLiveFinalMeasurements([]);
+      } else {
+        setLiveFinalMeasurements(data ?? []);
+      }
+
+      setLiveFinalMeasurementsLoading(false);
+    };
+
+    void loadFinalMeasurements();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadInstallations = async () => {
+      const accessToken =
+        new URLSearchParams(window.location.search).get("access");
+
+      if (!accessToken) {
+        if (active) {
+          setLiveInstallations([]);
+          setLiveInstallationsLoading(false);
+        }
+        return;
+      }
+
+      setLiveInstallationsLoading(true);
+
+      const { data, error } = await supabase.rpc(
+        "get_premier_field_installations",
+        {
+          p_access_token: accessToken,
+        }
+      );
+
+      if (!active) return;
+
+      if (error) {
+        console.error("Premier field installations failed:", error);
+        setLiveInstallations([]);
+      } else {
+        setLiveInstallations(data ?? []);
+      }
+
+      setLiveInstallationsLoading(false);
+    };
+
+    void loadInstallations();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadInspections = async () => {
+      const accessToken =
+        new URLSearchParams(window.location.search).get("access");
+
+      if (!accessToken) {
+        if (active) {
+          setLiveInspections([]);
+          setLiveInspectionsLoading(false);
+        }
+        return;
+      }
+
+      setLiveInspectionsLoading(true);
+
+      const { data, error } = await supabase.rpc(
+        "get_premier_field_inspections",
+        {
+          p_access_token: accessToken,
+        }
+      );
+
+      if (!active) return;
+
+      if (error) {
+        console.error("Premier field inspections failed:", error);
+        setLiveInspections([]);
+      } else {
+        setLiveInspections(data ?? []);
+      }
+
+      setLiveInspectionsLoading(false);
+    };
+
+    void loadInspections();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const activeJob = useMemo(
     () => jobs.find((job) => job.id === activeJobId) ?? jobs[0],
@@ -408,6 +554,415 @@ export default function PremierFieldOperationsBoard() {
             What is ready, where the crews are, what is delayed, and what needs to happen next.
           </p>
         </header>
+
+        <section
+          style={{
+            border: "1px solid #31495a",
+            borderRadius: 16,
+            background: "#0f151b",
+            padding: 14,
+            marginBottom: 16,
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 10,
+              marginBottom: 10,
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  color: "#9db7ca",
+                  fontSize: 10,
+                  fontWeight: 900,
+                  letterSpacing: 1,
+                  textTransform: "uppercase",
+                  marginBottom: 3,
+                }}
+              >
+                Live Relay
+              </div>
+
+              <strong style={{ fontSize: 16 }}>
+                Final Measurements
+              </strong>
+            </div>
+
+            <span
+              style={{
+                minWidth: 28,
+                height: 28,
+                borderRadius: 999,
+                display: "grid",
+                placeItems: "center",
+                background: "#16232d",
+                border: "1px solid #31495a",
+                color: "#d9e5ee",
+                fontSize: 12,
+                fontWeight: 900,
+              }}
+            >
+              {liveFinalMeasurements.length}
+            </span>
+          </div>
+
+          {liveFinalMeasurementsLoading ? (
+            <div
+              style={{
+                color: "#8fa0ad",
+                fontSize: 12,
+                padding: "8px 0",
+              }}
+            >
+              Loading final measurements...
+            </div>
+          ) : liveFinalMeasurements.length === 0 ? (
+            <div
+              style={{
+                color: "#78858e",
+                fontSize: 12,
+                padding: "8px 0",
+              }}
+            >
+              No final measurements assigned to Gio right now.
+            </div>
+          ) : (
+            <div style={{ display: "grid", gap: 9 }}>
+              {liveFinalMeasurements.map((job) => (
+                <div
+                  key={job.id}
+                  style={{
+                    border: "1px solid #31495a",
+                    borderRadius: 13,
+                    background: "#111820",
+                    padding: 12,
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      gap: 10,
+                      marginBottom: 6,
+                    }}
+                  >
+                    <strong>
+                      {job.first_name} {job.last_name}
+                    </strong>
+
+                    <span
+                      style={{
+                        color: "#d8b267",
+                        fontSize: 10,
+                        fontWeight: 900,
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      Final Measurement
+                    </span>
+                  </div>
+
+                  <div
+                    style={{
+                      color: "#9ca8b2",
+                      fontSize: 12,
+                      marginBottom: 8,
+                    }}
+                  >
+                    {job.project_address}
+                  </div>
+
+                  <div
+                    style={{
+                      fontSize: 12,
+                      lineHeight: 1.5,
+                      color: "#d7dde2",
+                    }}
+                  >
+                    <div>
+                      <strong>Assigned To:</strong> {job.assigned_to}
+                    </div>
+
+                    <div>
+                      <strong>Scheduled:</strong>{" "}
+                      {job.scheduled_for
+                        ? new Date(job.scheduled_for).toLocaleString([], {
+                            month: "short",
+                            day: "numeric",
+                            hour: "numeric",
+                            minute: "2-digit",
+                          })
+                        : "Not scheduled"}
+                    </div>
+
+                    {job.note ? (
+                      <div>
+                        <strong>Note:</strong> {job.note}
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div
+                    style={{
+                      borderTop: "1px solid #26323a",
+                      marginTop: 9,
+                      paddingTop: 9,
+                      color: "#d9e5ee",
+                      fontSize: 12,
+                    }}
+                  >
+                    <span style={{ color: "#8fa9bc" }}>Next:</span>{" "}
+                    {job.next_action ||
+                      "Complete final detailed measurement."}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div style={{ borderTop: "1px solid #26323a", marginTop: 14, paddingTop: 14 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+              <strong style={{ fontSize: 16 }}>Scheduled Installations</strong>
+              <span style={{ fontSize: 12, fontWeight: 900, color: "#d9e5ee" }}>
+                {liveInstallations.length}
+              </span>
+            </div>
+
+            {liveInstallationsLoading ? (
+              <div style={{ color: "#8fa0ad", fontSize: 12 }}>Loading scheduled installations...</div>
+            ) : liveInstallations.length === 0 ? (
+              <div style={{ color: "#78858e", fontSize: 12 }}>No scheduled installations right now.</div>
+            ) : (
+              <div style={{ display: "grid", gap: 9 }}>
+                {liveInstallations.map((job) => (
+                  <div key={job.id} style={{ border: "1px solid #557c64", borderRadius: 13, background: "#111820", padding: 12 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginBottom: 6 }}>
+                      <strong>{job.first_name} {job.last_name}</strong>
+                      <span style={{ color: "#b7dec4", fontSize: 10, fontWeight: 900, textTransform: "uppercase" }}>Scheduled</span>
+                    </div>
+                    <div style={{ color: "#9ca8b2", fontSize: 12, marginBottom: 8 }}>{job.project_address}</div>
+                    <div style={{ display: "grid", gap: 4, fontSize: 12, color: "#d7dde2" }}>
+                      <div><strong>Crew:</strong> {job.crew || "Not assigned"}</div>
+                      <div><strong>Install:</strong> {job.scheduled_for ? new Date(job.scheduled_for).toLocaleString() : "Not scheduled"}</div>
+                      <div><strong>Material:</strong> {job.material_status || "Unknown"}</div>
+                      <div><strong>Permit:</strong> {job.permit_status || "Unknown"}</div>
+                    </div>
+                    <div style={{ borderTop: "1px solid #26323a", marginTop: 9, paddingTop: 9, fontSize: 12, color: "#d9e5ee" }}>
+                      <span style={{ color: "#8fa9bc" }}>Next:</span>{" "}
+                      {job.next_action || "Field Operations to prepare crew for installation."}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const accessToken =
+                          new URLSearchParams(window.location.search).get("access");
+
+                        if (!accessToken) return;
+
+                        const { data, error } = await supabase.rpc(
+                          "relay_premier_installation_ready",
+                          {
+                            p_access_token: accessToken,
+                            p_job_id: job.id,
+                          }
+                        );
+
+                        if (error) {
+                          console.error("Installation Ready relay failed:", error);
+                          return;
+                        }
+
+                        if (data === true) {
+                          setLiveInstallations((current) =>
+                            current.filter((item) => item.id !== job.id)
+                          );
+                        }
+                      }}
+                      style={{
+                        width: "100%",
+                        minHeight: 46,
+                        marginTop: 10,
+                        borderRadius: 10,
+                        border: "1px solid #557c64",
+                        background: "#16232d",
+                        color: "#d9e5ee",
+                        fontWeight: 900,
+                        cursor: "pointer",
+                      }}
+                    >
+                      Installation Ready
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div style={{ borderTop: "1px solid #26323a", marginTop: 14, paddingTop: 14 }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 10,
+              }}
+            >
+              <strong style={{ fontSize: 16 }}>Scheduled Inspections</strong>
+              <span
+                style={{
+                  fontSize: 12,
+                  fontWeight: 900,
+                  color: "#d9e5ee",
+                }}
+              >
+                {liveInspections.length}
+              </span>
+            </div>
+
+            {liveInspectionsLoading ? (
+              <div style={{ color: "#8fa0ad", fontSize: 12 }}>
+                Loading scheduled inspections...
+              </div>
+            ) : liveInspections.length === 0 ? (
+              <div style={{ color: "#78858e", fontSize: 12 }}>
+                No scheduled inspections right now.
+              </div>
+            ) : (
+              <div style={{ display: "grid", gap: 9 }}>
+                {liveInspections.map((job) => (
+                  <div
+                    key={job.id}
+                    style={{
+                      border: "1px solid #80682f",
+                      borderRadius: 13,
+                      background: "#111820",
+                      padding: 12,
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        gap: 10,
+                        marginBottom: 6,
+                      }}
+                    >
+                      <strong>
+                        {job.first_name} {job.last_name}
+                      </strong>
+
+                      <span
+                        style={{
+                          color: "#e1c477",
+                          fontSize: 10,
+                          fontWeight: 900,
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        {job.inspection_status || "Scheduled"}
+                      </span>
+                    </div>
+
+                    <div
+                      style={{
+                        color: "#9ca8b2",
+                        fontSize: 12,
+                        marginBottom: 8,
+                      }}
+                    >
+                      {job.project_address}
+                    </div>
+
+                    <div
+                      style={{
+                        display: "grid",
+                        gap: 4,
+                        fontSize: 12,
+                        color: "#d7dde2",
+                      }}
+                    >
+                      <div>
+                        <strong>Type:</strong>{" "}
+                        {job.inspection_type || "Inspection"}
+                      </div>
+                      <div>
+                        <strong>Assigned:</strong>{" "}
+                        {job.inspection_assigned_to || "Not assigned"}
+                      </div>
+                      <div>
+                        <strong>Inspection:</strong>{" "}
+                        {job.inspection_scheduled_for
+                          ? new Date(job.inspection_scheduled_for).toLocaleString()
+                          : "Not scheduled"}
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        borderTop: "1px solid #26323a",
+                        marginTop: 9,
+                        paddingTop: 9,
+                        fontSize: 12,
+                        color: "#d9e5ee",
+                      }}
+                    >
+                      <span style={{ color: "#8fa9bc" }}>Next:</span>{" "}
+                      {job.next_action ||
+                        "Field Operations to complete inspection."}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const accessToken =
+                          new URLSearchParams(window.location.search).get("access");
+
+                        if (!accessToken) return;
+
+                        const { data, error } = await supabase.rpc(
+                          "complete_premier_inspection",
+                          {
+                            p_access_token: accessToken,
+                            p_job_id: job.id,
+                          }
+                        );
+
+                        if (error) {
+                          console.error("Complete Inspection failed:", error);
+                          return;
+                        }
+
+                        if (data === true) {
+                          setLiveInspections((current) =>
+                            current.filter((item) => item.id !== job.id)
+                          );
+                        }
+                      }}
+                      style={{
+                        width: "100%",
+                        minHeight: 46,
+                        marginTop: 10,
+                        borderRadius: 10,
+                        border: "1px solid #557c64",
+                        background: "#16232d",
+                        color: "#d9e5ee",
+                        fontWeight: 900,
+                        cursor: "pointer",
+                      }}
+                    >
+                      Complete Inspection
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
 
         <div
           style={{
