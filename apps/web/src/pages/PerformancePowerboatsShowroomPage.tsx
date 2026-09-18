@@ -63,11 +63,7 @@ const showroomImages = [
     alt: "Performance 43 with triple outboards",
     layout: "tall",
   },
-  {
-    src: "/images/performance-powerboats/11-finished-powerboat-on-trailer.jpg",
-    alt: "Finished Performance Powerboats boat on trailer",
-    layout: "wide",
-  },
+
   {
     src: "/images/performance-powerboats/boat_shed_maintenance_with_twin_yamaha_150s.png",
     alt: "Finished boat with twin Yamaha outboards",
@@ -237,6 +233,7 @@ export default function PerformancePowerboatsShowroomPage() {
     </main>
   );
 }
+
 
 
 
