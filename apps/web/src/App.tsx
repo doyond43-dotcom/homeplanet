@@ -1,4 +1,4 @@
-﻿import { lazy, Suspense } from "react";
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useSearchParams } from "react-router-dom";
 import { RequireAuth } from "./auth/RequireAuth";
 
@@ -26,6 +26,7 @@ const PremierInstallerTechBoard = lazy(() => import("./pages/PremierInstallerTec
 const PremierFieldOperationsBoard = lazy(() => import("./pages/PremierFieldOperationsBoard"));
 const PremierSalesBoard = lazy(() => import("./pages/PremierSalesBoard"));
 const PremierWindowDoorLivePage = lazy(() => import("./pages/PremierWindowDoorLivePage"));
+const PremierQuickIntakePage = lazy(() => import("./pages/PremierQuickIntakePage"));
 const PublicPage = lazy(() => import("./routes/PublicPage"));
 const TenantPublicPage = lazy(() => import("./routes/TenantPublicPage"));
 const LiveShopTV = lazy(() => import("./routes/LiveShopTV"));
@@ -311,6 +312,7 @@ export default function App() {
           element={<Navigate to="/planet/guardian-pet" replace />}
         />
 
+        <Route path="/planet/home" element={<Navigate to="/planet/custom-systems" replace />} />
         <Route path="/planet/*" element={<PlanetRoutes />} />
         <Route path="/creator/*" element={<CreatorRoutes />} />
         <Route path="/app/*" element={<WorkspaceRoutes />} />
@@ -328,6 +330,7 @@ export default function App() {
         <Route path="/live/taylor-creek-demo/staff" element={<TaylorCreekRealDemoStaffBoard />} />
         <Route path="/planet/demo/home-services-staff" element={<HomeServicesLiveSystemStaffBoard />} />
         <Route path="/planet/premier-window-door" element={<PremierWindowDoorLivePage />} />
+        <Route path="/planet/premier-window-door/intake" element={<PremierQuickIntakePage />} />
         <Route path="/planet/premier-window-door/board" element={<PremierWindowDoorBoard />} />
         <Route path="/planet/premier-window-door/tech" element={<PremierInstallerTechBoard />} />
         <Route path="/planet/premier-window-door/field" element={<PremierFieldOperationsBoard />} />
@@ -377,6 +380,7 @@ export default function App() {
     </BrowserRouter>
   );
 }
+
 
 
 
