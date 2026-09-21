@@ -1,4 +1,4 @@
-﻿import {
+import {
   ArrowLeft,
   ArrowRight,
   Camera,
@@ -197,6 +197,7 @@ export default function CowTownPublicTagPage() {
 
           <div className="cowtown-recovery-grid">
             <aside className="cowtown-card cowtown-animal-card">
+              <div className="cowtown-card cowtown-identity-card">
               <div className="cowtown-animal-photo">
                 <img
                   src={animalImage}
@@ -246,6 +247,8 @@ export default function CowTownPublicTagPage() {
                   </div>
                 </div>
 
+              </div>
+              </div>
                 <section
                   className="cowtown-animal-record"
                   aria-labelledby="cowtown-animal-record-title"
@@ -295,7 +298,6 @@ export default function CowTownPublicTagPage() {
                     available only to authorized users.
                   </p>
                 </section>
-              </div>
             </aside>
 
             <section className="cowtown-recovery-panel">

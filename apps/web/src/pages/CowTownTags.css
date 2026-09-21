@@ -1,4 +1,4 @@
-﻿:root {
+:root {
   color-scheme: dark;
 }
 
@@ -984,5 +984,30 @@
 
   .cowtown-footer-copy {
     width: 100%;
+  }
+}
+
+
+/* Cow Town mobile identification > recovery > record */
+.cowtown-identity-card {
+  display: contents;
+}
+
+@media (max-width: 920px) {
+  .cowtown-animal-card {
+    display: contents;
+  }
+
+  .cowtown-identity-card {
+    display: block;
+    order: 0;
+  }
+
+  .cowtown-recovery-panel {
+    order: 1;
+  }
+
+  .cowtown-animal-record {
+    order: 2;
   }
 }
