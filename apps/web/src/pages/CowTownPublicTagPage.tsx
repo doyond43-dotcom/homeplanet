@@ -328,18 +328,6 @@ export default function CowTownPublicTagPage() {
                       <ChevronRight size={20} />
                     </button>
 
-                    <button
-                      className="cowtown-action-button"
-                      type="button"
-                      onClick={() => setMode("report")}
-                    >
-                      <span>
-                        <Camera size={20} />
-                        I Saw This Animal Earlier
-                      </span>
-
-                      <ChevronRight size={20} />
-                    </button>
 
                     <a
                       className="cowtown-action-button"
