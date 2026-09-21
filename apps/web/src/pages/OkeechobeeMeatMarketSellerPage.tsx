@@ -28,13 +28,20 @@ export default function OkeechobeeMeatMarketSellerPage() {
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
 
-    if (
-      !businessName.trim() ||
-      !contact.trim() ||
-      !email.trim() ||
-      !products.trim()
-    ) {
-      alert("Please add your ranch or business name, phone number, email, and what you have available.");
+    if (!businessName.trim()) {
+      alert("Please enter your ranch or business name.");
+      return;
+    }
+    if (!contact.trim()) {
+      alert("Please enter your phone number.");
+      return;
+    }
+    if (!email.trim()) {
+      alert("Please enter your email.");
+      return;
+    }
+    if (!products.trim()) {
+      alert("Please briefly describe what you sell. You can add individual products later.");
       return;
     }
 
