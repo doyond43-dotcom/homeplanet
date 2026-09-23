@@ -49,6 +49,7 @@ const jobs: TechJob[] = [
     requiredPhotos: [
       "Before condition",
       "Fasteners / screws",
+      "Bucking / buck inspection",
       "Concrete / block opening",
       "Stucco condition",
       "Product label",
@@ -86,6 +87,7 @@ const jobs: TechJob[] = [
     ],
     requiredPhotos: [
       "Fasteners / screws",
+      "Bucking / buck inspection",
       "Installed window",
       "Installed entry door",
       "Product labels",
@@ -177,6 +179,13 @@ export default function PremierInstallerTechBoard() {
   const [liveInstallerJobsLoading, setLiveInstallerJobsLoading] =
     useState(false);
 
+  const [installerProofPhotos, setInstallerProofPhotos] = useState<
+    Record<string, any[]>
+  >({});
+
+  const [uploadingInstallerProofJobId, setUploadingInstallerProofJobId] =
+    useState<string | null>(null);
+
   useEffect(() => {
     let active = true;
 
@@ -207,7 +216,39 @@ export default function PremierInstallerTechBoard() {
         console.error("Premier installer jobs failed:", error);
         setLiveInstallerJobs([]);
       } else {
-        setLiveInstallerJobs(data ?? []);
+        const jobsData = data ?? [];
+        setLiveInstallerJobs(jobsData);
+
+        const proofEntries = await Promise.all(
+          jobsData.map(async (job: any) => {
+            const { data: proofData, error: proofError } =
+              await supabase.functions.invoke(
+                "premier-installer-proof-photo",
+                {
+                  body: {
+                    action: "list",
+                    accessToken,
+                    jobId: job.id,
+                  },
+                }
+              );
+
+            if (proofError) {
+              console.error(
+                `Premier installer proof load failed for ${job.id}:`,
+                proofError
+              );
+
+              return [job.id, []] as const;
+            }
+
+            return [job.id, proofData?.photos ?? []] as const;
+          })
+        );
+
+        if (active) {
+          setInstallerProofPhotos(Object.fromEntries(proofEntries));
+        }
       }
 
       setLiveInstallerJobsLoading(false);
@@ -525,6 +566,232 @@ export default function PremierInstallerTechBoard() {
                     <span style={{ color: "#8fa9bc" }}>Next:</span>{" "}
                     {job.next_action ||
                       "Installer to begin installation and upload required proof."}
+                  </div>
+
+
+                  <div
+                    style={{
+                      borderTop: "1px solid #26323a",
+                      marginTop: 10,
+                      paddingTop: 10,
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 900,
+                        color: "#8fa9bc",
+                        textTransform: "uppercase",
+                        marginBottom: 7,
+                      }}
+                    >
+                      Required Proof
+                    </div>
+
+                    {installerProofPhotos[job.id]?.some(
+                      (photo) =>
+                        photo.proof_type === "Bucking / buck inspection"
+                    ) ? (
+                      <div
+                        style={{
+                          border: "1px solid #557c64",
+                          borderRadius: 10,
+                          background: "#16232d",
+                          padding: "10px 12px",
+                        }}
+                      >
+                        <div
+                          style={{
+                            minHeight: 28,
+                            color: "#b7dec4",
+                            display: "flex",
+                            alignItems: "center",
+                            fontWeight: 900,
+                            fontSize: 12,
+                          }}
+                        >
+                          ✓ Bucking / buck inspection proof saved
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const photo = installerProofPhotos[job.id]?.find(
+                              (item) =>
+                                item.proof_type ===
+                                "Bucking / buck inspection"
+                            );
+
+                            if (!photo?.url) {
+                              window.alert("Saved proof photo is unavailable.");
+                              return;
+                            }
+
+                            window.open(photo.url, "_blank", "noopener,noreferrer");
+                          }}
+                          style={{
+                            width: "100%",
+                            minHeight: 40,
+                            marginTop: 8,
+                            borderRadius: 9,
+                            border: "1px solid #557c64",
+                            background: "#111820",
+                            color: "#d9e5ee",
+                            fontWeight: 900,
+                            cursor: "pointer",
+                          }}
+                        >
+                          View Photo
+                        </button>
+                      </div>
+                    ) : (
+                      <label
+                        style={{
+                          minHeight: 46,
+                          border: "1px solid #8a6b32",
+                          borderRadius: 10,
+                          background: "#1b1a16",
+                          color: "#e6c77b",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          padding: "10px 12px",
+                          fontWeight: 900,
+                          fontSize: 12,
+                          cursor:
+                            uploadingInstallerProofJobId === job.id
+                              ? "wait"
+                              : "pointer",
+                        }}
+                      >
+                        {uploadingInstallerProofJobId === job.id
+                          ? "Uploading Bucking Proof..."
+                          : "○ Bucking / buck inspection · Take / Upload Photo"}
+
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          capture="environment"
+                          hidden
+                          disabled={uploadingInstallerProofJobId === job.id}
+                          onChange={async (event) => {
+                            const file = event.target.files?.[0] ?? null;
+                            event.currentTarget.value = "";
+
+                            if (!file) return;
+
+                            const accessToken =
+                              new URLSearchParams(
+                                window.location.search
+                              ).get("access");
+
+                            if (!accessToken) {
+                              window.alert("Premier installer access is missing.");
+                              return;
+                            }
+
+                            if (
+                              !["image/jpeg", "image/png", "image/webp"].includes(
+                                file.type
+                              )
+                            ) {
+                              window.alert("Please use a JPG, PNG, or WEBP photo.");
+                              return;
+                            }
+
+                            setUploadingInstallerProofJobId(job.id);
+
+                            try {
+                              const proofType = "Bucking / buck inspection";
+
+                              const { data: uploadAccess, error: accessError } =
+                                await supabase.functions.invoke(
+                                  "premier-installer-proof-photo",
+                                  {
+                                    body: {
+                                      action: "create-upload",
+                                      accessToken,
+                                      jobId: job.id,
+                                      proofType,
+                                      fileName: file.name || "bucking-proof.jpg",
+                                      mimeType: file.type || "image/jpeg",
+                                    },
+                                  }
+                                );
+
+                              if (
+                                accessError ||
+                                !uploadAccess?.path ||
+                                !uploadAccess?.token
+                              ) {
+                                throw new Error(
+                                  accessError?.message ||
+                                    "Could not prepare bucking proof upload."
+                                );
+                              }
+
+                              const { error: uploadError } =
+                                await supabase.storage
+                                  .from("premier-installer-proof-photos")
+                                  .uploadToSignedUrl(
+                                    uploadAccess.path,
+                                    uploadAccess.token,
+                                    file,
+                                    {
+                                      contentType: file.type || "image/jpeg",
+                                    }
+                                  );
+
+                              if (uploadError) throw uploadError;
+
+                              const { data: finalizeData, error: finalizeError } =
+                                await supabase.functions.invoke(
+                                  "premier-installer-proof-photo",
+                                  {
+                                    body: {
+                                      action: "finalize",
+                                      accessToken,
+                                      jobId: job.id,
+                                      proofType,
+                                      path: uploadAccess.path,
+                                      fileName: file.name || "bucking-proof.jpg",
+                                      mimeType: file.type || "image/jpeg",
+                                    },
+                                  }
+                                );
+
+                              if (finalizeError || !finalizeData?.photo) {
+                                throw new Error(
+                                  finalizeError?.message ||
+                                    "Could not save bucking proof."
+                                );
+                              }
+
+                              setInstallerProofPhotos((current) => ({
+                                ...current,
+                                [job.id]: [
+                                  ...(current[job.id] ?? []),
+                                  finalizeData.photo,
+                                ],
+                              }));
+                            } catch (error) {
+                              console.error(
+                                "Premier bucking proof upload failed:",
+                                error
+                              );
+
+                              window.alert(
+                                error instanceof Error
+                                  ? error.message
+                                  : "Could not upload bucking proof."
+                              );
+                            } finally {
+                              setUploadingInstallerProofJobId(null);
+                            }
+                          }}
+                        />
+                      </label>
+                    )}
                   </div>
 
                   {job.current_stage === "installation_ready" ? (
