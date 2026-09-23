@@ -555,7 +555,10 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
       );
     }
 
-    if (method === "phone / text" && destination) {
+    if (
+      (method === "text" || method === "phone / text") &&
+      destination
+    ) {
       const phone = destination.replace(/[^\d+]/g, "");
 
       if (phone) {
@@ -607,7 +610,7 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
       return "Order Through Facebook";
     }
 
-    if (method === "phone / text") {
+    if (method === "text" || method === "phone / text") {
       return "Text Seller";
     }
 
