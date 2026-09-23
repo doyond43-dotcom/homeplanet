@@ -146,6 +146,28 @@ function validStorefrontImage(value?: string) {
 }
 
 export default function OkeechobeeMeatMarketSellerStorefrontPage() {
+  const [selectedProduct, setSelectedProduct] =
+    useState<Product | null>(null);
+
+  useEffect(() => {
+    if (!selectedProduct) return;
+
+    const previousOverflow = document.body.style.overflow;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setSelectedProduct(null);
+      }
+    };
+
+    document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [selectedProduct]);
   const params = useParams();
   const requestedSlug = String(params.slug || "farm-folks");
 
@@ -851,6 +873,21 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
           background: #e9dfca;
         }
 
+        .product-image-button {
+          width: 100%;
+          display: block;
+          padding: 0;
+          border: 0;
+          background: transparent;
+          cursor: zoom-in;
+          text-align: inherit;
+        }
+
+        .product-image-button:focus-visible {
+          outline: 3px solid #7d5a2f;
+          outline-offset: -3px;
+        }
+
         .product-image-fallback {
           display: flex;
           align-items: flex-end;
@@ -861,6 +898,90 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
           font-weight: 900;
         }
 
+        .product-viewer-backdrop {
+          position: fixed;
+          inset: 0;
+          z-index: 9999;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 18px;
+          background: rgba(14, 11, 7, 0.88);
+          backdrop-filter: blur(8px);
+        }
+
+        .product-viewer-panel {
+          position: relative;
+          width: min(940px, 100%);
+          max-height: 92vh;
+          overflow-y: auto;
+          border-radius: 26px;
+          border: 1px solid rgba(255,255,255,0.13);
+          background: #f7f0df;
+          color: #211b13;
+          box-shadow: 0 28px 90px rgba(0,0,0,0.55);
+        }
+
+        .product-viewer-close {
+          position: absolute;
+          top: 14px;
+          right: 14px;
+          z-index: 2;
+          width: 44px;
+          height: 44px;
+          border: 1px solid rgba(255,255,255,0.18);
+          border-radius: 999px;
+          background: rgba(12,10,7,0.78);
+          color: #fff;
+          font-size: 26px;
+          line-height: 1;
+          cursor: pointer;
+        }
+
+        .product-viewer-image {
+          width: 100%;
+          max-height: 68vh;
+          display: block;
+          object-fit: contain;
+          background: #0f0d0a;
+        }
+
+        .product-viewer-body {
+          padding: 22px;
+        }
+
+        .product-viewer-kicker {
+          margin-bottom: 8px;
+          color: #6f644f;
+          font-size: 12px;
+          font-weight: 900;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+
+        .product-viewer-name {
+          margin: 0;
+          font-size: clamp(26px, 5vw, 42px);
+          line-height: 1;
+        }
+
+        .product-viewer-price {
+          margin-top: 10px;
+          color: #96651f;
+          font-size: 24px;
+          font-weight: 950;
+        }
+
+        .product-viewer-detail {
+          margin-top: 10px;
+          color: #645945;
+          font-size: 14px;
+          line-height: 1.55;
+        }
+
+        .product-viewer-panel .order-button {
+          margin-top: 18px;
+        }
         .product-body {
           padding: 20px;
         }
@@ -989,6 +1110,23 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
           .product-image-fallback {
             height: 270px;
           }
+
+          .product-viewer-backdrop {
+            padding: 10px;
+          }
+
+          .product-viewer-panel {
+            max-height: 94vh;
+            border-radius: 20px;
+          }
+
+          .product-viewer-image {
+            max-height: 60vh;
+          }
+
+          .product-viewer-body {
+            padding: 18px;
+          }
         }
       `}</style>
 
@@ -1100,11 +1238,18 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
                     key={product.id}
                   >
                     {image ? (
-                      <img
-                        className="product-image"
-                        src={image}
-                        alt={product.name}
-                      />
+                      <button
+                        type="button"
+                        className="product-image-button"
+                        onClick={() => setSelectedProduct(product)}
+                        aria-label={`Open larger view of ${product.name}`}
+                      >
+                        <img
+                          className="product-image"
+                          src={image}
+                          alt={product.name}
+                        />
+                      </button>
                     ) : (
                       <div className="product-image-fallback">
                         {product.name}
@@ -1179,6 +1324,84 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
           </div>
         </section>
 
+        {selectedProduct ? (
+          <div
+            className="product-viewer-backdrop"
+            onClick={() => setSelectedProduct(null)}
+          >
+            <div
+              className="product-viewer-panel"
+              role="dialog"
+              aria-modal="true"
+              aria-label={`${selectedProduct.name} product details`}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <button
+                type="button"
+                className="product-viewer-close"
+                onClick={() => setSelectedProduct(null)}
+                aria-label="Close product view"
+              >
+                ×
+              </button>
+
+              <img
+                className="product-viewer-image"
+                src={
+                  selectedProduct.imageUrl ||
+                  productImage(selectedProduct.name, config)
+                }
+                alt={selectedProduct.name}
+              />
+
+              <div className="product-viewer-body">
+                <div className="product-viewer-kicker">
+                  {selectedProduct.category
+                    ? `${selectedProduct.category} | ${
+                        selectedProduct.availability || "Available now"
+                      }`
+                    : selectedProduct.availability || "Available now"}
+                </div>
+
+                <h2 className="product-viewer-name">
+                  {selectedProduct.name}
+                </h2>
+
+                <div className="product-viewer-price">
+                  {selectedProduct.price}
+                </div>
+
+                {selectedProduct.package ? (
+                  <div className="product-viewer-detail">
+                    {selectedProduct.package}
+                  </div>
+                ) : null}
+
+                {selectedProduct.pickupTiming ? (
+                  <div className="product-viewer-detail">
+                    {selectedProduct.pickupTiming}
+                  </div>
+                ) : null}
+
+                {selectedProduct.description ? (
+                  <div className="product-viewer-detail">
+                    {selectedProduct.description}
+                  </div>
+                ) : null}
+
+                <a
+                  className="order-button"
+                  href={orderHref(selectedProduct)}
+                  onClick={() =>
+                    trackProductOrderClick(selectedProduct)
+                  }
+                >
+                  {orderLabel(selectedProduct)}
+                </a>
+              </div>
+            </div>
+          </div>
+        ) : null}
         <footer className="store-footer">
           {sellerName} • Listed through the Okeechobee Live Meat Market
         </footer>
