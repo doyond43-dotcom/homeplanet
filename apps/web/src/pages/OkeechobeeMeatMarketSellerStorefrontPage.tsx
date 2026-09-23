@@ -879,7 +879,7 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
           padding: 0;
           border: 0;
           background: transparent;
-          cursor: zoom-in;
+          cursor: pointer;
           text-align: inherit;
         }
 
