@@ -1781,9 +1781,9 @@ export default function PremierWindowDoorBoard() {
                             }}
                           >
                             <option value="">Choose salesperson</option>
-                            <option value="Gino">Gino</option>
-                            <option value="Gio">Gio</option>
-                            <option value="Dennis">Dennis</option>
+                            <option value="Dennis Dillon">Dennis Dillon</option>
+                            <option value="Gio Richardson">Gio Richardson</option>
+                            <option value="Gino Marquez">Gino Marquez</option>
                           </select>
                         </label>
 
@@ -2021,7 +2021,7 @@ export default function PremierWindowDoorBoard() {
                         marginTop: 12,
                       }}
                     >
-                      {["Gino", "Gio", "Dennis"].map((salesperson) => (
+                      {["Dennis Dillon", "Gio Richardson", "Gino Marquez"].map((salesperson) => (
                         <button
                           key={salesperson}
                           type="button"
