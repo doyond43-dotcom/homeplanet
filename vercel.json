@@ -1,8 +1,8 @@
-{
-    "framework": "vite",
-    "installCommand": "npm install",
-    "buildCommand": "npm run build --workspace web",
-    "outputDirectory": "apps/web/dist",
+﻿{
+    "framework":  "vite",
+    "installCommand":  "npm install",
+    "buildCommand":  "npm run build --workspace web",
+    "outputDirectory":  "apps/web/dist",
     "rewrites":  [
                      {
                          "source":  "/planet/performance-powerboats",
@@ -44,7 +44,49 @@
                          "source":  "/((?!api/).*)",
                          "destination":  "/index.html"
                      }
-                 ]
+                 ],
+    "redirects":  [
+                      {
+                          "source":  "/",
+                          "has":  [
+                                      {
+                                          "type":  "host",
+                                          "value":  "performancepowerboatsfl.com"
+                                      }
+                                  ],
+                          "destination":  "/planet/performance-powerboats",
+                          "permanent":  false
+                      },
+                      {
+                          "source":  "/",
+                          "has":  [
+                                      {
+                                          "type":  "host",
+                                          "value":  "www.performancepowerboatsfl.com"
+                                      }
+                                  ],
+                          "destination":  "/planet/performance-powerboats",
+                          "permanent":  false
+                      },
+                      {
+                          "source":  "/api/okeechobee-meat-market-order",
+                          "destination":  "/api/okeechobee-meat-market?route=order",
+                          "permanent":  false
+                      },
+                      {
+                          "source":  "/api/okeechobee-meat-market-seller-manage",
+                          "destination":  "/api/okeechobee-meat-market?route=seller-manage",
+                          "permanent":  false
+                      },
+                      {
+                          "source":  "/api/okeechobee-meat-market-square-connect",
+                          "destination":  "/api/okeechobee-meat-market?route=square-connect",
+                          "permanent":  false
+                      },
+                      {
+                          "source":  "/api/okeechobee-meat-market-square-callback",
+                          "destination":  "/api/okeechobee-meat-market?route=square-callback",
+                          "permanent":  false
+                      }
+                  ]
 }
-
-
