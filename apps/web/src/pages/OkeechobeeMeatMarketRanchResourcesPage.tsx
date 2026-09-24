@@ -1,4 +1,7 @@
-﻿const localSuppliers = [
+import { useEffect } from "react";
+import { trackMeatMarketEvent } from "../lib/meatMarketAnalytics";
+
+const localSuppliers = [
   {
     badge: "LOCAL • OKEECHOBEE",
     name: "LSL",
@@ -161,6 +164,14 @@ function SupplierCard({ supplier }: { supplier: Supplier }) {
         <a
           className="rr-phone"
           href={`tel:${supplier.phone.replace(/\D/g, "")}`}
+          onClick={() =>
+            void trackMeatMarketEvent({
+              eventType: "ranch_resource_phone_click",
+              productName: supplier.name,
+              source: "Ranch Resources",
+              destination: `tel:${supplier.phone.replace(/\D/g, "")}`,
+            })
+          }
         >
           {supplier.phone}
         </a>
@@ -174,6 +185,16 @@ function SupplierCard({ supplier }: { supplier: Supplier }) {
         <a
           className="rr-action"
           href={supplier.href}
+          onClick={() =>
+            void trackMeatMarketEvent({
+              eventType: supplier.href.startsWith("tel:")
+                ? "ranch_resource_phone_click"
+                : "ranch_resource_site_click",
+              productName: supplier.name,
+              source: "Ranch Resources",
+              destination: supplier.href,
+            })
+          }
         >
           {supplier.action}
         </a>
@@ -183,6 +204,14 @@ function SupplierCard({ supplier }: { supplier: Supplier }) {
 }
 
 export default function OkeechobeeMeatMarketRanchResourcesPage() {
+  useEffect(() => {
+    void trackMeatMarketEvent({
+      eventType: "ranch_resource_view",
+      source: "Ranch Resources",
+      destination: window.location.pathname,
+    });
+  }, []);
+
   return (
     <div className="ranch-resources-page">
       <style>{`
@@ -590,4 +619,3 @@ export default function OkeechobeeMeatMarketRanchResourcesPage() {
     </div>
   );
 }
-

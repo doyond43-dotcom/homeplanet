@@ -55,7 +55,8 @@ function dedupePassiveViews(events: MeatMarketEvent[]) {
   return sorted.filter((event) => {
     if (
       event.event_type !== "market_view" &&
-      event.event_type !== "seller_view"
+      event.event_type !== "seller_view" &&
+      event.event_type !== "ranch_resource_view"
     ) {
       return true;
     }
@@ -116,6 +117,12 @@ function eventLabel(event: MeatMarketEvent) {
       return `Clicked ${event.product_name || "product"}`;
     case "seller_link_click":
       return `Opened ${sellerLabel(event.seller_slug || "seller")} website`;
+    case "ranch_resource_view":
+      return "Viewed Ranch Resources";
+    case "ranch_resource_phone_click":
+      return `Called ${event.product_name ?? "ranch resource"}`;
+    case "ranch_resource_site_click":
+      return `Opened ${event.product_name ?? "ranch resource"}`;
     case "buyer_request":
       return "Buyer request received";
     case "seller_match":
@@ -214,6 +221,22 @@ export default function OkeechobeeMeatMarketIntelligenceDashboard() {
     [events]
   );
 
+  const ranchResourceEvents = useMemo(
+    () =>
+      cleanEvents.filter((event) =>
+        event.event_type.startsWith("ranch_resource_")
+      ),
+    [cleanEvents]
+  );
+
+  const meatMarketEvents = useMemo(
+    () =>
+      cleanEvents.filter(
+        (event) => !event.event_type.startsWith("ranch_resource_")
+      ),
+    [cleanEvents]
+  );
+
   const marketViews = useMemo(
     () =>
       cleanEvents.filter((event) => event.event_type === "market_view")
@@ -247,11 +270,11 @@ export default function OkeechobeeMeatMarketIntelligenceDashboard() {
   const uniqueShoppers = useMemo(
     () =>
       new Set(
-        cleanEvents
+        meatMarketEvents
           .map((event) => event.session_id)
           .filter(Boolean)
       ).size,
-    [cleanEvents]
+    [meatMarketEvents]
   );
 
   const buyerRequests = useMemo(
@@ -279,6 +302,55 @@ export default function OkeechobeeMeatMarketIntelligenceDashboard() {
           event.verified === true
       ).length,
     [cleanEvents]
+  );
+
+  const ranchResourceViews = useMemo(
+    () =>
+      ranchResourceEvents.filter(
+        (event) => event.event_type === "ranch_resource_view"
+      ).length,
+    [ranchResourceEvents]
+  );
+
+  const ranchResourcePhoneClicks = useMemo(
+    () =>
+      ranchResourceEvents.filter(
+        (event) => event.event_type === "ranch_resource_phone_click"
+      ).length,
+    [ranchResourceEvents]
+  );
+
+  const ranchResourceSiteClicks = useMemo(
+    () =>
+      ranchResourceEvents.filter(
+        (event) => event.event_type === "ranch_resource_site_click"
+      ).length,
+    [ranchResourceEvents]
+  );
+
+  const topRanchResources = useMemo(
+    () =>
+      rankValues(
+        ranchResourceEvents.filter(
+          (event) =>
+            event.event_type === "ranch_resource_phone_click" ||
+            event.event_type === "ranch_resource_site_click"
+        ),
+        (event) => event.product_name
+      ),
+    [ranchResourceEvents]
+  );
+
+  const recentRanchResourceActivity = useMemo(
+    () =>
+      [...ranchResourceEvents]
+        .sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() -
+            new Date(a.created_at).getTime()
+        )
+        .slice(0, 12),
+    [ranchResourceEvents]
   );
 
   const topSellers = useMemo(
@@ -309,22 +381,22 @@ export default function OkeechobeeMeatMarketIntelligenceDashboard() {
   const topSources = useMemo(
     () =>
       rankValues(
-        cleanEvents,
+        meatMarketEvents,
         (event) => event.source
       ),
-    [cleanEvents]
+    [meatMarketEvents]
   );
 
   const recentActivity = useMemo(
     () =>
-      [...cleanEvents]
+      [...meatMarketEvents]
         .sort(
           (a, b) =>
             new Date(b.created_at).getTime() -
             new Date(a.created_at).getTime()
         )
         .slice(0, 18),
-    [cleanEvents]
+    [meatMarketEvents]
   );
 
   const conversionToSeller = marketViews
@@ -447,6 +519,93 @@ export default function OkeechobeeMeatMarketIntelligenceDashboard() {
             rows={topSources}
             empty="No source data yet."
           />
+        </section>
+
+        <section className="mt-9 border-t border-white/10 pt-8">
+          <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+            <div>
+              <div className="text-xs font-black uppercase tracking-[0.18em] text-amber-300">
+                Ranch Resources
+              </div>
+              <h2 className="mt-2 text-2xl font-black">
+                Ranch Resource Activity
+              </h2>
+              <p className="mt-1 max-w-3xl text-sm font-semibold text-white/50">
+                Resource traffic stays separate from Meat Market seller and product activity.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+            <MetricCard
+              label="Resource Views"
+              value={ranchResourceViews}
+              note="Deduped Ranch Resources page visits"
+            />
+            <MetricCard
+              label="Phone Clicks"
+              value={ranchResourcePhoneClicks}
+              note="Calls started from resource listings"
+            />
+            <MetricCard
+              label="Website Clicks"
+              value={ranchResourceSiteClicks}
+              note="External resource handoffs"
+            />
+          </div>
+
+          <div className="mt-5 grid gap-4 lg:grid-cols-2">
+            <RankPanel
+              title="Top Ranch Resources"
+              subtitle="Resources receiving calls or website clicks"
+              rows={topRanchResources}
+              empty="No Ranch Resource clicks yet."
+            />
+
+            <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/[0.035]">
+              <div className="border-b border-white/10 px-5 py-5">
+                <div className="text-xl font-black">
+                  Recent Ranch Resource Activity
+                </div>
+                <div className="mt-1 text-xs font-semibold text-white/45">
+                  Views, calls, and website clicks
+                </div>
+              </div>
+
+              <div className="divide-y divide-white/10">
+                {recentRanchResourceActivity.map((event) => (
+                  <div
+                    key={event.id}
+                    className="px-5 py-4"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <div className="text-sm font-black text-white">
+                          {eventLabel(event)}
+                        </div>
+
+                        <div className="mt-1 text-xs font-semibold text-white/45">
+                          {event.session_id
+                            ? `Session ${event.session_id.slice(0, 8)}`
+                            : "No session"}
+                        </div>
+                      </div>
+
+                      <div className="shrink-0 text-xs font-black text-white/40">
+                        {timeAgo(event.created_at)}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {!loading && recentRanchResourceActivity.length === 0 && (
+                  <div className="px-5 py-8 text-sm font-semibold text-white/50">
+                    No Ranch Resource activity has been recorded yet.
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </section>
 
         <section className="mt-7 overflow-hidden rounded-3xl border border-white/10 bg-white/[0.035]">

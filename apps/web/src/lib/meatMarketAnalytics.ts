@@ -64,7 +64,10 @@ type MeatMarketEventInput = {
     | "market_view"
     | "seller_view"
     | "product_order_click"
-    | "seller_link_click";
+    | "seller_link_click"
+    | "ranch_resource_view"
+    | "ranch_resource_phone_click"
+    | "ranch_resource_site_click";
   sellerId?: string;
   sellerSlug?: string;
   productId?: string | number;
@@ -82,7 +85,8 @@ export async function trackMeatMarketEvent(
 
   if (
     input.eventType === "market_view" ||
-    input.eventType === "seller_view"
+    input.eventType === "seller_view" ||
+    input.eventType === "ranch_resource_view"
   ) {
     const viewKey = [
       "homeplanet_meat_market_view",
