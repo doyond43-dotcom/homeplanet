@@ -157,7 +157,20 @@ function isOkeechobeeTogetherDomain() {
   return window.location.hostname.toLowerCase().includes("okeechobeetogether.");
 }
 
+function isPerformancePowerboatsDomain() {
+  const hostname = window.location.hostname.toLowerCase();
+
+  return (
+    hostname === "performancepowerboatsfl.com" ||
+    hostname === "www.performancepowerboatsfl.com"
+  );
+}
+
 function OkeechobeeDomainHomeRedirect() {
+  if (isPerformancePowerboatsDomain()) {
+    return <Navigate to="/planet/performance-powerboats" replace />;
+  }
+
   if (isOkeechobeeTogetherDomain()) {
     return <Navigate to="/planet/okeechobee" replace />;
   }
