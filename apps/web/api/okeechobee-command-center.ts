@@ -138,6 +138,174 @@ export default async function handler(
     if (req.method === "POST") {
       const action = String(req.body?.action || "").trim();
 
+      if (action === "create_meat_market_seller_access") {
+        const eventId = String(req.body?.eventId || "").trim();
+
+        if (!eventId) {
+          return res.status(400).json({
+            ok: false,
+            error: "Seller submission is required.",
+          });
+        }
+
+        const { data: listing, error: listingError } =
+          await supabase
+            .from("okeechobee_events")
+            .select("*")
+            .eq("id", eventId)
+            .eq("type", "Live Meat Market Seller")
+            .maybeSingle();
+
+        if (listingError || !listing) {
+          return res.status(404).json({
+            ok: false,
+            error: "Seller submission was not found.",
+          });
+        }
+
+        const verification = meatMarketDescriptionLine(
+          listing.description,
+          "Verification"
+        ).toLowerCase();
+
+        if (verification !== "verified local seller") {
+          return res.status(400).json({
+            ok: false,
+            error: "Verify this seller before creating access.",
+          });
+        }
+
+        const sellerName = meatMarketSellerName(listing);
+
+        const sellerEmail =
+          meatMarketDescriptionLine(
+            listing.description,
+            "Email"
+          ) || null;
+
+        const sellerLink =
+          meatMarketDescriptionLine(
+            listing.description,
+            "Website / Facebook / Order Link"
+          ) || null;
+
+        const listingFulfillment =
+          meatMarketDescriptionLine(
+            listing.description,
+            "Pickup / Delivery"
+          ) || "Pickup";
+
+        const { data: sellerByEvent } =
+          await supabase
+            .from("okeechobee_meat_market_sellers")
+            .select("id,slug,seller_name,website,fulfillment")
+            .eq("source_event_id", listing.id)
+            .maybeSingle();
+
+        let sellerRecord = sellerByEvent;
+
+        if (!sellerRecord) {
+          const fallbackSlug =
+            sellerName.toLowerCase() === "farm folks llc"
+              ? "farm-folks"
+              : meatMarketSlugify(sellerName);
+
+          const { data: sellerBySlug } =
+            await supabase
+              .from("okeechobee_meat_market_sellers")
+              .select("id,slug,seller_name,website,fulfillment")
+              .eq("slug", fallbackSlug)
+              .maybeSingle();
+
+          sellerRecord = sellerBySlug;
+        }
+
+        if (!sellerRecord?.slug) {
+          return res.status(404).json({
+            ok: false,
+            error: "Existing seller storefront was not found.",
+          });
+        }
+
+        const sellerSlug = String(sellerRecord.slug).trim();
+
+        const privateToken =
+          randomBytes(32).toString("base64url");
+
+        const manageTokenHash =
+          createHash("sha256")
+            .update(privateToken)
+            .digest("hex");
+
+        const { data: existingAccess } =
+          await supabase
+            .from("okeechobee_meat_market_seller_access")
+            .select("id")
+            .eq("seller_listing_id", sellerSlug)
+            .maybeSingle();
+
+        if (existingAccess?.id) {
+          const { error } =
+            await supabase
+              .from("okeechobee_meat_market_seller_access")
+              .update({
+                manage_token_hash: manageTokenHash,
+                manage_token_admin: privateToken,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", existingAccess.id);
+
+          if (error) {
+            throw error;
+          }
+        } else {
+          const destination =
+            sellerRecord.website || sellerLink || null;
+
+          const { error } =
+            await supabase
+              .from("okeechobee_meat_market_seller_access")
+              .insert({
+                seller_listing_id: sellerSlug,
+                seller_name: sellerName,
+                seller_email: sellerEmail,
+                manage_token_hash: manageTokenHash,
+                manage_token_admin: privateToken,
+                order_method: destination ? "Website" : "Contact",
+                order_destination: destination,
+                fulfillment:
+                  sellerRecord.fulfillment ||
+                  listingFulfillment,
+                pickup_note: null,
+                updated_at: new Date().toISOString(),
+              });
+
+          if (error) {
+            throw error;
+          }
+        }
+
+        const setupPath =
+          `/planet/okeechobee/meat-market/seller/setup/${sellerSlug}`;
+
+        const publicPath =
+          `/planet/okeechobee/meat-market/seller/${sellerSlug}`;
+
+        return res.status(200).json({
+          ok: true,
+          notifications: {
+            email: "skipped",
+            sms: "skipped",
+          },
+          seller: {
+            slug: sellerSlug,
+            sellerName,
+          },
+          privateToken,
+          setupPath,
+          publicPath,
+        });
+      }
       if (action === "approve_meat_market_seller") {
         const eventId = String(req.body?.eventId || "").trim();
 

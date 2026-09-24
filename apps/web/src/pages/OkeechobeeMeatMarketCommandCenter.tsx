@@ -540,6 +540,94 @@ export default function OkeechobeeMeatMarketCommandCenter() {
     }
   }
 
+  async function createSellerAccess(listing: any) {
+    if (!listing?.id) return;
+
+    setWorkingId(listing.id);
+    setNotice("");
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.access_token) {
+        throw new Error("Admin session not available.");
+      }
+
+      const response = await fetch(
+        "/api/okeechobee-command-center",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            action: "create_meat_market_seller_access",
+            eventId: listing.id,
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result?.ok) {
+        throw new Error(
+          result?.error || "Could not create seller access."
+        );
+      }
+
+      const sellerBaseUrl = "https://www.homeplanet.city";
+
+      const setupUrl =
+        `${sellerBaseUrl}${result.setupPath}` +
+        `#${result.privateToken}`;
+
+      const publicUrl =
+        `${sellerBaseUrl}${result.publicPath}`;
+
+      setSellerAccessLinks((current) => {
+        const next = {
+          ...current,
+          [listing.id]: {
+            setupUrl,
+            publicUrl,
+            emailStatus: "restored",
+            smsStatus: "restored",
+          },
+        };
+
+        try {
+          window.localStorage.setItem(
+            SELLER_ACCESS_STORAGE_KEY,
+            JSON.stringify(next)
+          );
+        } catch (error) {
+          console.error(
+            "Could not save Meat Market seller access:",
+            error
+          );
+        }
+
+        return next;
+      });
+
+      setNotice(
+        `"${sellerName(listing)}" private seller access is ready.`
+      );
+    } catch (error) {
+      console.error("Seller access creation failed:", error);
+
+      setNotice(
+        error instanceof Error
+          ? error.message
+          : "Could not create seller access."
+      );
+    } finally {
+      setWorkingId(null);
+    }
+  }
   async function approveSellerAccess(listing: any) {
     if (!listing?.id) return;
 
@@ -1584,6 +1672,23 @@ export default function OkeechobeeMeatMarketCommandCenter() {
                 </button>
               ) : null}
 
+              {!editingListing &&
+              statusKey(selectedListing.status) === "live" &&
+              isVerifiedSeller(selectedListing) &&
+              !sellerAccessLinks[selectedListing.id] ? (
+                <button
+                  type="button"
+                  style={primaryButton}
+                  disabled={workingId === selectedListing.id}
+                  onClick={() =>
+                    createSellerAccess(selectedListing)
+                  }
+                >
+                  {workingId === selectedListing.id
+                    ? "Creating Seller Access..."
+                    : "Create Seller Access"}
+                </button>
+              ) : null}
               {!editingListing &&
               statusKey(selectedListing.status) === "pending" &&
               isVerifiedSeller(selectedListing) ? (
