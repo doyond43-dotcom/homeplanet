@@ -1,6 +1,18 @@
 ﻿const localSuppliers = [
   {
     badge: "LOCAL • OKEECHOBEE",
+    name: "LSL",
+    title: "Hay Ring",
+    description:
+      "Local Okeechobee ranch resource offering a hay ring for livestock feeding.",
+    detail: "Okeechobee",
+    phone: "863-532-0383",
+    status: "$300 • Pickup",
+    action: "Contact LSL",
+    href: "tel:8635320383",
+  },
+  {
+    badge: "LOCAL • OKEECHOBEE",
     name: "Okeechobee Feed",
     title: "Feed + Farm Supply",
     description:
