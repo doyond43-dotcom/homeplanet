@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 type FieldJob = {
@@ -282,6 +282,7 @@ const lanes = [
 
 export default function PremierFieldOperationsBoard() {
   const [activeJobId, setActiveJobId] = useState("PW-1037");
+  const [staffGreeting, setStaffGreeting] = useState<{ headline: string; detail: string } | null>(null);
   const [crewChanges, setCrewChanges] = useState<Record<string, string>>({});
   const [scheduleChanges, setScheduleChanges] = useState<Record<string, string>>({});
   const [scheduleDrawerOpen, setScheduleDrawerOpen] = useState(false);
@@ -501,6 +502,49 @@ export default function PremierFieldOperationsBoard() {
     ]);
   };
 
+  useEffect(() => {
+    let timer: number | undefined;
+
+    try {
+      const rawSession = window.sessionStorage.getItem("premier_staff_session");
+      if (!rawSession) return;
+
+      const session = JSON.parse(rawSession);
+      const displayName = String(session?.displayName || "").trim();
+      if (!displayName) return;
+
+      const firstName = displayName.split(" ")[0];
+      const now = new Date();
+      const hour = now.getHours();
+
+      const period = hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening";
+      const periodLabel = period.charAt(0).toUpperCase() + period.slice(1);
+
+      const localDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+      const identityKey = String(session?.accessToken || session?.staffId || firstName);
+      const greetingKey = `premier_field_greeting_${identityKey}_${localDate}_${period}`;
+
+      if (window.sessionStorage.getItem(greetingKey)) return;
+
+      window.sessionStorage.setItem(greetingKey, "1");
+
+      setStaffGreeting({
+        headline: `Good ${periodLabel}, ${firstName}.`,
+        detail: "Here's what still needs your attention today.",
+      });
+
+      timer = window.setTimeout(() => {
+        setStaffGreeting(null);
+      }, 7000);
+    } catch (error) {
+      console.error("Premier staff greeting failed:", error);
+    }
+
+    return () => {
+      if (timer) window.clearTimeout(timer);
+    };
+  }, []);
+
   return (
     <div
       style={{
@@ -542,6 +586,32 @@ export default function PremierFieldOperationsBoard() {
           >
             Field Operations
           </h1>
+
+          {staffGreeting ? (
+            <div
+              style={{
+                marginTop: 14,
+                borderLeft: "3px solid #9db7ca",
+                padding: "9px 12px",
+                background: "rgba(157, 183, 202, 0.06)",
+                borderRadius: "0 10px 10px 0",
+                maxWidth: 760,
+              }}
+            >
+              <div style={{ fontSize: 18, fontWeight: 900 }}>
+                {staffGreeting.headline}
+              </div>
+              <div
+                style={{
+                  marginTop: 3,
+                  color: "#c0c7cd",
+                  fontSize: 14,
+                }}
+              >
+                {staffGreeting.detail}
+              </div>
+            </div>
+          ) : null}
 
           <p
             style={{
@@ -2687,19 +2757,3 @@ export default function PremierFieldOperationsBoard() {
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

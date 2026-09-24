@@ -27,6 +27,7 @@ const PremierFieldOperationsBoard = lazy(() => import("./pages/PremierFieldOpera
 const PremierSalesBoard = lazy(() => import("./pages/PremierSalesBoard"));
 const PremierWindowDoorLivePage = lazy(() => import("./pages/PremierWindowDoorLivePage"));
 const PremierQuickIntakePage = lazy(() => import("./pages/PremierQuickIntakePage"));
+const PremierStaffLoginPage = lazy(() => import("./pages/PremierStaffLoginPage"));
 const PublicPage = lazy(() => import("./routes/PublicPage"));
 const TenantPublicPage = lazy(() => import("./routes/TenantPublicPage"));
 const LiveShopTV = lazy(() => import("./routes/LiveShopTV"));
@@ -331,6 +332,7 @@ export default function App() {
         <Route path="/planet/demo/home-services-staff" element={<HomeServicesLiveSystemStaffBoard />} />
         <Route path="/planet/premier-window-door" element={<PremierWindowDoorLivePage />} />
         <Route path="/planet/premier-window-door/intake" element={<PremierQuickIntakePage />} />
+        <Route path="/planet/premier-window-door/staff" element={<PremierStaffLoginPage />} />
         <Route path="/planet/premier-window-door/board" element={<PremierWindowDoorBoard />} />
         <Route path="/planet/premier-window-door/tech" element={<PremierInstallerTechBoard />} />
         <Route path="/planet/premier-window-door/field" element={<PremierFieldOperationsBoard />} />
@@ -380,24 +382,3 @@ export default function App() {
     </BrowserRouter>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
