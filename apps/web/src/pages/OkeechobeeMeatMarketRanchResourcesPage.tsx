@@ -8,7 +8,7 @@
     detail: "Okeechobee",
     phone: "863-532-0383",
     status: "$300 • Pickup",
-    action: "Contact LSL",
+    action: "Call 863-532-0383",
     href: "tel:8635320383",
   },
   {
@@ -590,3 +590,4 @@ export default function OkeechobeeMeatMarketRanchResourcesPage() {
     </div>
   );
 }
+
