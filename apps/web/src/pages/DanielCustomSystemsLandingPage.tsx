@@ -1,279 +1,160 @@
-import { useMemo, useState } from "react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
+  BriefcaseBusiness,
   Check,
-  ClipboardList,
-  FileCheck2,
-  GitBranch,
-  Layers3,
-  MessageCircle,
-  MonitorSmartphone,
-  Search,
-  ShieldCheck,
-  Sparkles,
-  Workflow,
+  ChefHat,
+  Hammer,
+  Scissors,
+  ShoppingBasket,
+  Store,
   Wrench,
+  Workflow,
 } from "lucide-react";
 import { trackCustomSystemsActivity } from "../lib/customSystemsActivity";
 import { supabase } from "../lib/supabase";
 
-type SystemRequest = {
-  problem: string;
-  businessName: string;
-  whatYouDo: string;
-  currentFlow: string;
-  breakdowns: string[];
-  existingLink: string;
-  name: string;
-  phone: string;
-  email: string;
-  contactPreference: string;
-  notes: string;
-  createdAt: string;
-  status: string;
-};
-
-type ProblemOption = {
-  name: string;
-  summary: string;
-  detail: string;
-  canConnect: string[];
-};
-
-const problemOptions: ProblemOption[] = [
+const businessTypes = [
   {
-    name: "Customer Requests",
-    summary:
-      "Calls, texts, Facebook messages, referrals, and inquiries are getting scattered.",
-    detail:
-      "Give every customer a clearer front door, ask only the questions that matter, and turn the request into organized work instead of another loose message.",
-    canConnect: [
-      "Where the customer came from",
-      "What they actually need",
-      "Photos, details, and contact information",
-      "Who needs to follow up",
-      "What happens next",
-    ],
+    name: "Home Services",
+    detail: "Cleaning / Lawn Care / HVAC / Handyman",
+    flow: "Request -> Estimate -> Schedule",
+    icon: Hammer,
   },
   {
-    name: "Jobs & Work Tracking",
-    summary:
-      "It is hard to see what is active, waiting, completed, or supposed to happen next.",
-    detail:
-      "Turn each real customer or job into a working record with a clear state, history, proof, and next action.",
-    canConnect: [
-      "New work",
-      "Active jobs",
-      "Waiting on customer",
-      "Next actions",
-      "Completion and history",
-    ],
+    name: "Salon & Barber",
+    detail: "Bookings / Clients / Payments / Follow-up",
+    flow: "Book -> Service -> Pay",
+    icon: Scissors,
   },
   {
-    name: "Customer Updates",
-    summary:
-      "Customers keep asking what is happening, what changed, or what they need to do.",
-    detail:
-      "Give customers a simple view of progress without scattering the relationship across texts, Messenger, calls, and email.",
-    canConnect: [
-      "Progress updates",
-      "Photos and screenshots",
-      "Review requests",
-      "Looks Good approvals",
-      "Change requests",
-    ],
+    name: "Restaurant & Food",
+    detail: "Orders / Pickup / Inventory / Customers",
+    flow: "Order -> Prep -> Pickup",
+    icon: ChefHat,
   },
   {
-    name: "Quotes & Approvals",
-    summary:
-      "Pricing, decisions, changes, and approvals take too much back-and-forth.",
-    detail:
-      "Keep the quote, customer decision, requested changes, approval, and next action connected to the same work.",
-    canConnect: [
-      "Estimate or quote",
-      "Customer approval",
-      "Requested changes",
-      "Scope history",
-      "Approved next step",
-    ],
+    name: "Auto & Repair",
+    detail: "Jobs / Parts / Techs / Work Status",
+    flow: "Check-in -> Work -> Done",
+    icon: Wrench,
   },
   {
-    name: "Scheduling & Follow-Up",
-    summary:
-      "Appointments, reminders, callbacks, and next steps are easy to lose.",
-    detail:
-      "Make the next action visible so a real customer does not disappear just because the conversation moved to another app.",
-    canConnect: [
-      "Scheduling",
-      "Reminders",
-      "Waiting states",
-      "Follow-up ownership",
-      "Completion",
-    ],
+    name: "Finance & Professional Services",
+    detail: "Mortgage / Insurance / Real Estate / Documents",
+    flow: "Lead -> Documents -> Close",
+    icon: BriefcaseBusiness,
   },
   {
-    name: "Something Custom",
-    summary:
-      "Your process does not fit neatly inside an off-the-shelf tool.",
-    detail:
-      "Start with how the operation actually works today. Then build the public entrance and working system around the real human flow instead of forcing the business into generic software.",
-    canConnect: [
-      "Your real workflow",
-      "Custom customer entrances",
-      "Operator workspaces",
-      "Approvals and communication",
-      "Proof and outcomes",
-    ],
+    name: "Local Sellers",
+    detail: "Inventory / Orders / Pickup / Delivery",
+    flow: "Browse -> Order -> Fulfill",
+    icon: ShoppingBasket,
   },
 ];
 
-const breakdownOptions = [
-  "Information gets lost",
-  "Too many messages",
-  "Hard to track active work",
-  "Customers do not know what happens next",
-  "Approvals take too much back-and-forth",
-  "Follow-up gets forgotten",
-  "Payments or completion become disconnected",
-  "Something else",
-];
-
-const buildExamples = [
-  {
-    name: "Jones Equipment Rental & Repair",
-    flow: "Rental or Repair → Request → Review → Schedule → Work → Payment",
-    note:
-      "A public front door can separate rental and repair needs before the request ever reaches the operator.",
-  },
-  {
-    name: "Only The Essentials Cleaning",
-    flow: "Request → Quote → Approval → Schedule → Work → Complete",
-    note:
-      "Customers answer the relevant cleaning questions first, then the work can move forward as one connected relationship.",
-  },
-  {
-    name: "Okeechobee Together",
-    flow: "Need → People → Work → Proof → Outcome",
-    note:
-      "Community needs, helpers, projects, updates, and proof can stay connected instead of disappearing into separate posts and messages.",
-  },
+const flowSteps = [
+  "Customer Request",
+  "Estimate",
+  "Schedule",
+  "Work",
+  "Payment",
+  "Follow-up",
 ];
 
 export default function DanielCustomSystemsLandingPage() {
+  const [liveTime, setLiveTime] = useState(() =>
+    new Date().toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+    })
+  )
+
+  useEffect(() => {
+    const updateLiveTime = () => {
+      setLiveTime(
+        new Date().toLocaleTimeString([], {
+          hour: "numeric",
+          minute: "2-digit",
+        })
+      )
+    }
+
+    updateLiveTime()
+    const timer = window.setInterval(updateLiveTime, 30000)
+
+    return () => window.clearInterval(timer)
+  }, [])
+
   const pageViewTrackedRef = useRef(false);
   const requestStartedRef = useRef(false);
 
-  useEffect(() => {
-    if (pageViewTrackedRef.current) {
-      return;
-    }
-
-    pageViewTrackedRef.current = true;
-
-    void trackCustomSystemsActivity("page_view");
-  }, []);
-
-  function markRequestStarted() {
-    if (requestStartedRef.current) {
-      return;
-    }
-
-    requestStartedRef.current = true;
-
-    void trackCustomSystemsActivity("request_started", {
-      label: selectedProblem,
-    });
-  }
-  const [selectedProblem, setSelectedProblem] = useState("Customer Requests");
-  const [requestOpen, setRequestOpen] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [businessType, setBusinessType] = useState("Home Services");
   const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
-  const [requestForm, setRequestForm] = useState({
+  const [form, setForm] = useState({
     businessName: "",
-    whatYouDo: "",
-    currentFlow: "",
-    breakdowns: [] as string[],
-    existingLink: "",
+    need: "",
     name: "",
     phone: "",
     email: "",
-    contactPreference: "",
-    notes: "",
   });
 
-  const activeProblem = useMemo(() => {
-    return (
-      problemOptions.find((problem) => problem.name === selectedProblem) ||
-      problemOptions[0]
-    );
-  }, [selectedProblem]);
+  useEffect(() => {
+    if (pageViewTrackedRef.current) return;
+    pageViewTrackedRef.current = true;
+    void trackCustomSystemsActivity("page_view");
+  }, []);
 
-  function chooseProblem(problem: string) {
-    setSelectedProblem(problem);
-    setSubmitted(false);
-  }
+  function markStarted() {
+    if (requestStartedRef.current) return;
+    requestStartedRef.current = true;
 
-  function scrollToProblems() {
-    document
-      .getElementById("custom-systems-start")
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-
-  function scrollToHowItWorks() {
-    void trackCustomSystemsActivity("how_it_works_click");
-
-    document
-      .getElementById("how-it-works")
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-
-  function openRequest() {
-    void trackCustomSystemsActivity("request_opened", {
-      label: selectedProblem,
+    void trackCustomSystemsActivity("request_started", {
+      label: businessType,
     });
-
-    setRequestOpen(true);
-    setSubmitted(false);
-
-    window.setTimeout(() => {
-      document
-        .getElementById("custom-system-request")
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 50);
   }
 
-  function updateField(
-    field: Exclude<keyof typeof requestForm, "breakdowns">,
-    value: string,
-  ) {
-    markRequestStarted();
+  function updateField(field: keyof typeof form, value: string) {
+    markStarted();
 
-    setRequestForm((current) => ({
+    setForm((current) => ({
       ...current,
       [field]: value,
     }));
   }
 
-  function toggleBreakdown(value: string) {
-    markRequestStarted();
+  function chooseBusiness(type: string) {
+    setBusinessType(type);
+    setSubmitted(false);
 
-    setRequestForm((current) => ({
-      ...current,
-      breakdowns: current.breakdowns.includes(value)
-        ? current.breakdowns.filter((item) => item !== value)
-        : [...current.breakdowns, value],
-    }));
+    void trackCustomSystemsActivity("problem_selected", {
+      label: type,
+    });
+  }
+
+  function startRequest(type?: string) {
+    if (type) {
+      chooseBusiness(type);
+    }
+
+    void trackCustomSystemsActivity("request_opened", {
+      label: type || businessType,
+    });
+
+    window.setTimeout(() => {
+      document
+        .getElementById("start-my-system")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 40);
   }
 
   async function submitRequest(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (submitting) {
-      return;
-    }
+    if (submitting) return;
 
     setSubmitting(true);
     setSubmitError("");
@@ -282,31 +163,29 @@ export default function DanielCustomSystemsLandingPage() {
     const { error } = await supabase
       .from("custom_systems_public_requests")
       .insert({
-        problem: selectedProblem,
-        business_name: requestForm.businessName.trim(),
-        what_you_do: requestForm.whatYouDo.trim(),
-        current_flow: requestForm.currentFlow.trim(),
-        breakdowns: requestForm.breakdowns,
-        existing_link: requestForm.existingLink.trim() || null,
-        name: requestForm.name.trim() || null,
-        phone: requestForm.phone.trim() || null,
-        email: requestForm.email.trim() || null,
-        contact_preference: requestForm.contactPreference || null,
-        notes: requestForm.notes.trim() || null,
+        problem: "Custom Business System",
+        business_name: form.businessName.trim(),
+        what_you_do: businessType,
+        current_flow: form.need.trim(),
+        breakdowns: [],
+        existing_link: null,
+        name: form.name.trim() || null,
+        phone: form.phone.trim() || null,
+        email: form.email.trim() || null,
+        contact_preference: "Text or call",
+        notes: null,
         status: "New Lead",
       });
 
     if (error) {
       console.error("Custom Systems request submission error", error);
-      setSubmitError(
-        "Your request could not be sent. Please try again in a moment.",
-      );
+      setSubmitError("Your request could not be sent. Please try again.");
       setSubmitting(false);
       return;
     }
 
     await trackCustomSystemsActivity("request_submitted", {
-      label: selectedProblem,
+      label: businessType,
     });
 
     setSubmitted(true);
@@ -314,29 +193,21 @@ export default function DanielCustomSystemsLandingPage() {
   }
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#020706] text-white">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(126,224,0,0.055),transparent_34%)]" />
-
-      <div className="relative mx-auto w-full max-w-[1120px] px-5 pb-20 pt-6 sm:px-8 lg:px-10 lg:pt-8">
-        {/* HEADER */}
-        <header className="flex items-center justify-between gap-4 border-b border-[rgba(128,223,0,0.12)] pb-5">
+    <main className="min-h-screen bg-white text-black">
+      <header className="border-b border-black/10 bg-white">
+        <div className="mx-auto flex max-w-[1180px] items-center justify-between px-5 py-3 sm:px-8">
           <a
             href="/planet/custom-systems"
-            aria-label="Daniel Custom Systems home"
-            className="flex min-w-0 items-center gap-3"
+            className="flex items-center gap-3"
           >
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#80df00]/55 bg-[#80df00]/10 shadow-[0_0_26px_rgba(126,224,0,0.10)]">
-              <Workflow
-                className="h-6 w-6 text-[#80df00]"
-                aria-hidden="true"
-              />
-            </div>
+            <img
+              src="/images/homeplanet-brand-logo-header.png"
+              alt="HomePlanet"
+              className="h-[52px] w-auto object-contain sm:h-[58px]"
+            />
 
-            <div className="min-w-0">
-              <div className="truncate text-lg font-black tracking-[-0.025em] sm:text-xl">
-                DANIEL
-              </div>
-              <div className="truncate text-[10px] font-black uppercase tracking-[0.22em] text-[#80df00] sm:text-xs">
+            <div className="hidden border-l border-black/10 pl-3 sm:block">
+              <div className="text-[10px] font-black uppercase tracking-[0.22em] text-[#1597F3]">
                 Custom Systems
               </div>
             </div>
@@ -344,777 +215,550 @@ export default function DanielCustomSystemsLandingPage() {
 
           <button
             type="button"
-            aria-label="Start my system request"
-            onClick={() => {
-              void trackCustomSystemsActivity("start_here_click");
-              scrollToProblems();
-            }}
-            className="flex min-h-[48px] shrink-0 items-center justify-center gap-2 rounded-xl border border-[#80df00]/40 bg-[#80df00]/10 px-4 text-sm font-black transition hover:border-[#80df00]/80 hover:bg-[#80df00]/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#80df00]"
+            onClick={() => startRequest()}
+            className="rounded-xl bg-black px-3 py-2.5 text-xs font-black text-white transition hover:bg-black/80 sm:px-4 sm:py-3 sm:text-sm"
           >
-            <Sparkles
-              className="h-4 w-4 text-[#80df00]"
-              aria-hidden="true"
-            />
-            <span className="hidden sm:inline">Start Here</span>
+            Start My System
           </button>
-        </header>
+        </div>
+      </header>
+      {/* HERO */}
+      <section className="relative overflow-hidden bg-[#e7e8e4]">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_42%,rgba(123,224,0,0.17),transparent_24%),radial-gradient(circle_at_16%_12%,rgba(255,255,255,0.94),transparent_28%),radial-gradient(circle_at_84%_18%,rgba(255,255,255,0.72),transparent_26%),radial-gradient(circle_at_78%_88%,rgba(0,0,0,0.05),transparent_34%)]" />
 
-        {/* HERO */}
-        <section className="pt-12 text-center sm:pt-16 lg:pt-20">
-          <p className="text-[11px] font-black uppercase tracking-[0.32em] text-[#80df00]">
-            Custom Systems Built On HomePlanet
+        <div className="relative mx-auto max-w-[1440px] px-5 py-6 text-center sm:px-8 lg:py-7">
+
+          <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[#4d9d00]">
+            Built Around How You Already Work
           </p>
 
-          <h1 className="mx-auto mt-5 max-w-[980px] text-[clamp(3.15rem,9.6vw,6.7rem)] font-black leading-[0.9] tracking-[-0.065em]">
-            A system built around
-            <span className="mt-2 block text-[#80df00]">
-              how you actually work.
-            </span>
+          <h1 className="mx-auto mt-3 text-[clamp(2.35rem,11vw,5.2rem)] font-black leading-[0.92] tracking-[-0.055em] text-black lg:whitespace-nowrap">
+            Stop bouncing between texts,
           </h1>
 
-          <p className="mx-auto mt-7 max-w-[760px] text-base leading-7 text-white/68 sm:text-lg sm:leading-8">
-            Customer requests, jobs, approvals, scheduling, payments, updates,
-            and follow-up should not become six disconnected conversations.
-            Show me where the process gets messy, and we can build the flow
-            around the way your business really works.
-          </p>
-
-          <div className="mx-auto mt-8 grid max-w-[720px] gap-3 sm:grid-cols-2">
-            <button
-              type="button"
-              onClick={() => {
-              void trackCustomSystemsActivity("show_need_click");
-              scrollToProblems();
-            }}
-              className="flex min-h-[62px] items-center justify-center gap-3 rounded-2xl bg-[#80df00] px-6 font-black text-black transition hover:-translate-y-0.5 hover:bg-[#9cff19] hover:shadow-[0_0_36px_rgba(126,224,0,0.28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b7ff59] focus-visible:ring-offset-2 focus-visible:ring-offset-[#020706]"
-            >
-              <ClipboardList className="h-5 w-5" aria-hidden="true" />
-              Show Me What You Need
-            </button>
-
-            <button
-              type="button"
-              onClick={scrollToHowItWorks}
-              className="flex min-h-[62px] items-center justify-center gap-3 rounded-2xl border border-[#80df00]/35 bg-black/70 px-6 font-black text-white transition hover:-translate-y-0.5 hover:border-[#80df00]/75 hover:bg-[#80df00]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#80df00]"
-            >
-              <GitBranch
-                className="h-5 w-5 text-[#80df00]"
-                aria-hidden="true"
-              />
-              See How It Works
-            </button>
+          <div className="mx-auto -mt-1 w-full max-w-[1220px]">
+            <img
+              src="/images/homeplanet_app_dashboard_mockup.png"
+              alt="HomePlanet live activity and business board"
+              className="mx-auto block w-full object-contain drop-shadow-[0_24px_48px_rgba(0,0,0,0.16)]"
+            />
           </div>
 
-          <div className="mx-auto mt-5 flex max-w-[900px] flex-wrap justify-center gap-2">
-            {[
-              {
-                label: "Built Around Your Workflow",
-                icon: Workflow,
-              },
-              {
-                label: "Real Working Systems",
-                icon: Layers3,
-              },
-              {
-                label: "Clear Customer Follow-Up",
-                icon: MessageCircle,
-              },
-            ].map(({ label, icon: Icon }) => (
+          <h2 className="mx-auto -mt-2 text-[clamp(2.4rem,11vw,5.3rem)] font-black leading-[0.92] tracking-[-0.055em] text-black sm:-mt-5 lg:-mt-7">
+            apps, and notes.
+          </h2>
+
+          <p className="mx-auto mt-5 max-w-[660px] text-base leading-7 text-black/60">
+            Keep requests, scheduling, payments, and follow-up easier to manage.
+          </p>
+
+          <button
+            type="button"
+            onClick={() => startRequest()}
+            className="mt-4 inline-flex min-h-[52px] w-full items-center justify-center gap-3 rounded-2xl bg-[#7be000] px-8 font-black text-black transition hover:-translate-y-0.5 hover:bg-[#8bf011] sm:w-auto"
+          >
+            Start My System
+            <ArrowRight className="h-5 w-5" />
+          </button>
+
+          <div className="mt-4 flex flex-wrap justify-center gap-x-7 gap-y-2">
+            {["Less mess", "Save time", "Keep work moving"].map((item) => (
               <div
-                key={label}
-                className="flex min-h-[42px] items-center gap-2 rounded-full border border-white/16 bg-white/[0.025] px-4 text-[10px] font-black uppercase tracking-[0.13em] text-white/78"
+                key={item}
+                className="flex items-center gap-2 text-sm font-bold text-black/60"
               >
-                <Icon
-                  className="h-4 w-4 text-[#80df00]"
-                  aria-hidden="true"
-                />
-                {label}
+                <span className="h-4 w-4 rounded-full bg-[#7be000]" />
+                {item}
               </div>
             ))}
           </div>
 
-          {/* VISUAL SYSTEM PREVIEW */}
-          <div className="relative mx-auto mt-10 max-w-[1040px] overflow-hidden rounded-[2rem] border border-[#80df00]/25 bg-[radial-gradient(circle_at_50%_0%,rgba(126,224,0,0.09),transparent_42%),#06100a] p-5 text-left shadow-[0_24px_90px_rgba(0,0,0,0.55),0_0_50px_rgba(126,224,0,0.06)] sm:mt-12 sm:p-7">
-            <div className="grid gap-4 lg:grid-cols-[0.8fr_auto_1.2fr] lg:items-center">
-              <div className="rounded-[1.5rem] border border-white/10 bg-black/40 p-5">
-                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/65">
-                  Real Starting Point
-                </p>
+        </div>
+      </section>
 
-                <p className="mt-3 text-2xl font-black leading-tight tracking-[-0.035em]">
-                  “Everything is coming through calls, texts, Facebook, and
-                  memory.”
-                </p>
 
-                <p className="mt-4 text-sm leading-6 text-white/56">
-                  Start with the actual problem, not a software feature list.
-                </p>
-              </div>
 
-              <div className="hidden text-center text-[#80df00] lg:block">
-                <ArrowRight className="h-7 w-7" aria-hidden="true" />
-              </div>
 
-              <div className="rounded-[1.5rem] border border-[#80df00]/25 bg-[#80df00]/[0.045] p-5">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#80df00]">
-                      Connected Working System
-                    </p>
 
-                    <h2 className="mt-2 text-2xl font-black tracking-[-0.035em]">
-                      One request. One history. One next action.
-                    </h2>
-                  </div>
 
-                  <div className="rounded-full border border-[#80df00]/30 bg-[#80df00]/10 px-3 py-2 text-[9px] font-black uppercase tracking-[0.14em] text-[#80df00]">
-                    Live
-                  </div>
+
+      {/* DARK SYSTEM VISUAL */}
+      <section className="bg-[#0b0f0b] text-white">
+        <div className="mx-auto max-w-[1240px] px-5 py-14 sm:px-8 sm:py-16 lg:py-18">
+          <div className="mx-auto max-w-[1080px] text-center">
+            <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[#1597F3]">
+              One Connected System
+            </p>
+
+            <h2 className="mx-auto mt-4 max-w-[1050px] text-5xl font-black leading-[0.94] tracking-[-0.055em] sm:text-6xl lg:text-7xl">
+              Stop running your business through
+              <span className="block text-[#1597F3]">
+                scattered conversations.
+              </span>
+            </h2>
+
+            <p className="mx-auto mt-5 max-w-[820px] text-lg leading-8 text-white/72">
+              Calls, texts, Facebook messages, notes and spreadsheets can all
+              become one clear flow.
+            </p>
+          </div>
+
+          <div className="mx-auto mt-9 max-w-[1120px] rounded-[1.65rem] border border-white/10 bg-[#141914] p-3 sm:p-4">
+            <div className="rounded-[1.25rem] bg-white p-5 text-black sm:p-6">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#438c00]">
+                    Live Workflow
+                  </p>
+
+                  <h3 className="mt-1 text-2xl font-black tracking-[-0.035em] sm:text-3xl">
+                    Everything stays connected.
+                  </h3>
                 </div>
 
-                <div className="mt-5 grid gap-2 sm:grid-cols-3">
-                  {[
-                    "Request",
-                    "Active Work",
-                    "Customer Review",
-                    "Approval",
-                    "Payment",
-                    "Proof",
-                  ].map((item) => (
-                    <div
-                      key={item}
-                      className="rounded-xl border border-white/10 bg-black/30 px-3 py-4 text-xs font-black text-white/76"
-                    >
-                      {item}
+                <div className="w-fit rounded-full bg-[#dcffb5] px-3 py-2 text-[10px] font-black uppercase tracking-[0.12em] text-[#325c00]">
+                  Active
+                </div>
+              </div>
+
+              <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+                {flowSteps.map((step, index) => (
+                  <div
+                    key={step}
+                    className="rounded-xl border border-black/10 bg-[#f5f6f2] px-4 py-4"
+                  >
+                    <div className="text-[10px] font-black text-[#4f9f00]">
+                      0{index + 1}
                     </div>
-                  ))}
+
+                    <div className="mt-1 text-sm font-black">{step}</div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-3 rounded-xl bg-black px-5 py-4 text-white">
+                <div className="text-[10px] font-black uppercase tracking-[0.16em] text-[#78dc12]">
+                  Next Action
+                </div>
+
+                <div className="mt-1 text-sm font-bold">
+                  Customer approved -&gt; schedule the work
                 </div>
               </div>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* PROBLEM DOORWAY */}
-        <section id="custom-systems-start" className="pt-16 sm:pt-20">
-          <div className="text-center">
-            <p className="text-[11px] font-black uppercase tracking-[0.32em] text-[#80df00]">
-              Start With The Problem
+
+      {/* BUSINESS TYPES */}
+      <section className="bg-white">
+        <div className="mx-auto max-w-[1180px] px-5 py-16 sm:px-8 sm:py-20">
+          <div className="max-w-[780px]">
+            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#4d9d00]">
+              Built For Real Businesses
             </p>
 
-            <h2 className="mx-auto mt-4 max-w-[760px] text-3xl font-black tracking-[-0.04em] sm:text-4xl lg:text-5xl">
-              What are you trying to fix?
+            <h2 className="mt-4 text-4xl font-black tracking-[-0.05em] sm:text-5xl">
+              What kind of business do you run?
             </h2>
 
-            <p className="mx-auto mt-4 max-w-[680px] text-base leading-7 text-white/60">
-              You do not need to know what software you need. Choose the
-              closest problem and start with what is happening today.
+            <p className="mt-4 text-base leading-7 text-black/55">
+              Pick the closest fit. We build around the way your operation
+              already works.
             </p>
           </div>
 
-          <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {problemOptions.map((problem) => {
-              const active = selectedProblem === problem.name;
+          <div className="mt-9 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {businessTypes.map(({ name, detail, flow, icon: Icon }) => {
+              const active = businessType === name;
 
               return (
                 <button
-                  key={problem.name}
+                  key={name}
                   type="button"
-                  onClick={() => {
-                    void trackCustomSystemsActivity("problem_selected", {
-                      label: problem.name,
-                    });
-                    chooseProblem(problem.name);
-                  }}
-                  className={`rounded-[1.5rem] border p-6 text-left transition ${
+                  onClick={() => chooseBusiness(name)}
+                  className={`min-h-0 rounded-[1.5rem] border p-5 text-left transition sm:min-h-[190px] sm:p-6 ${
                     active
-                      ? "border-[#80df00]/65 bg-[#80df00]/[0.07] shadow-[0_0_36px_rgba(126,224,0,0.08)]"
-                      : "border-white/10 bg-white/[0.03] hover:-translate-y-1 hover:border-[#80df00]/45 hover:bg-[#80df00]/[0.045]"
+                      ? "border-[#7be000] bg-[#f3ffe5]"
+                      : "border-black/10 bg-white hover:-translate-y-1 hover:border-black/25"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <div className="text-[11px] font-black uppercase tracking-[0.22em] text-[#80df00]">
-                        Business Problem
-                      </div>
-
-                      <h3 className="mt-3 text-2xl font-black tracking-[-0.03em]">
-                        {problem.name}
-                      </h3>
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#f1f5ec]">
+                      <Icon className="h-5 w-5 text-[#4d9d00]" />
                     </div>
 
-                    <div
-                      className={`mt-1 h-3.5 w-3.5 rounded-full border ${
-                        active
-                          ? "border-[#80df00] bg-[#80df00]"
-                          : "border-white/25"
-                      }`}
-                    />
+                    {active && (
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#7be000]">
+                        <Check className="h-4 w-4" />
+                      </div>
+                    )}
                   </div>
 
-                  <p className="mt-4 text-sm leading-6 text-white/66">
-                    {problem.summary}
-                  </p>
+                  <h3 className="mt-4 text-xl font-black tracking-[-0.03em] sm:mt-6">
+                    {name}
+                  </h3>
 
-                  <span className="mt-5 inline-block text-[11px] font-black uppercase tracking-[0.16em] text-white/42">
-                    {active ? "Selected" : "Tap to select"}
-                  </span>
+                  <p className="mt-2 text-sm leading-6 text-black/50">
+                    {detail}
+                  </p>
+                  <div className="mt-4 border-t border-black/10 pt-3">
+                    <div className="text-[10px] font-black uppercase tracking-[0.14em] text-[#438c00]">
+                      Example Flow
+                    </div>
+
+                    <div className="mt-1 text-sm font-black text-black/80">
+                      {flow}
+                    </div>
+                  </div>
                 </button>
               );
             })}
           </div>
 
-          {/* SELECTED PROBLEM */}
-          <div className="mt-6 rounded-[2rem] border border-[#80df00]/25 bg-[linear-gradient(135deg,rgba(6,14,10,0.96),rgba(1,5,4,0.96))] p-6 shadow-[0_0_40px_rgba(126,224,0,0.04)] sm:p-8">
-            <div className="grid gap-7 lg:grid-cols-[1fr_0.95fr]">
+          <div className="mt-4 flex flex-col gap-5 rounded-[1.5rem] bg-black p-6 text-white sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#7be000] text-black">
+                <Store className="h-5 w-5" />
+              </div>
+
               <div>
-                <p className="text-[11px] font-black uppercase tracking-[0.28em] text-[#80df00]">
-                  Selected Problem
-                </p>
-
-                <h3 className="mt-3 text-3xl font-black tracking-[-0.04em] sm:text-4xl">
-                  {activeProblem.name}
+                <h3 className="text-xl font-black">
+                  Don't see your business?
                 </h3>
 
-                <p className="mt-4 max-w-[680px] text-base leading-7 text-white/68">
-                  {activeProblem.detail}
+                <p className="mt-1 text-sm leading-6 text-white/55">
+                  Tell us what you do. We'll build around your workflow.
                 </p>
-
-                <div className="mt-6 rounded-[1.25rem] border border-white/10 bg-black/25 p-4">
-                  <p className="text-lg font-black text-white">
-                    Ready to start your system request?
-                  </p>
-
-                  <p className="mt-2 text-sm leading-6 text-white/58">
-                    Answer a few guided questions about how your business works today,
-                    where things get scattered, and what you want to improve.
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={openRequest}
-                  className="mt-4 flex min-h-[56px] w-full items-center justify-center gap-3 rounded-2xl bg-[#80df00] px-6 font-black text-black transition hover:-translate-y-0.5 hover:bg-[#9cff19] hover:shadow-[0_0_32px_rgba(126,224,0,0.22)] sm:w-fit"
-                >
-                  <ClipboardList className="h-5 w-5" aria-hidden="true" />
-                  Start My System Request
-                </button>
-
-                <p className="mt-3 text-sm leading-6 text-white/42">
-                  Your guided request opens below and becomes the starting point for the build.
-                </p>
-              </div>
-
-              <div className="rounded-[1.5rem] border border-white/10 bg-black/35 p-5">
-                <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#80df00]">
-                  What This Could Connect
-                </p>
-
-                <div className="mt-4 space-y-3">
-                  {activeProblem.canConnect.map((item) => (
-                    <div
-                      key={item}
-                      className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.025] px-4 py-4"
-                    >
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#80df00] text-black">
-                        <Check className="h-4 w-4" aria-hidden="true" />
-                      </div>
-
-                      <p className="text-sm font-bold text-white/74">
-                        {item}
-                      </p>
-                    </div>
-                  ))}
-                </div>
               </div>
             </div>
-          </div>
-        </section>
-
-        {/* GUIDED REQUEST */}
-        {requestOpen && (
-          <section id="custom-system-request" className="pt-16 sm:pt-20">
-            <div className="overflow-hidden rounded-[2rem] border border-[#80df00]/30 bg-[linear-gradient(135deg,rgba(6,14,9,0.98),rgba(0,5,3,0.98))] shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
-              <div className="flex items-center justify-between gap-4 border-b border-[#80df00]/20 bg-[#80df00]/[0.035] px-5 py-4 sm:px-7">
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#80df00]">
-                    System Request
-                  </p>
-
-                  <p className="mt-1 text-sm font-bold text-white/72">
-                    Starting with: {selectedProblem}
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setRequestOpen(false)}
-                  className="min-h-[44px] rounded-xl border border-white/14 bg-black/35 px-4 text-xs font-black uppercase tracking-[0.12em] text-white/68 transition hover:border-[#80df00]/45 hover:text-white"
-                >
-                  Close
-                </button>
-              </div>
-
-              <div className="grid lg:grid-cols-[0.76fr_1.24fr]">
-                <div className="border-b border-[rgba(128,223,0,0.12)] p-6 sm:p-8 lg:border-b-0 lg:border-r lg:border-[rgba(128,223,0,0.12)]">
-                  <p className="text-[11px] font-black uppercase tracking-[0.3em] text-[#80df00]">
-                    Tell Me What Is Happening
-                  </p>
-
-                  <h2 className="mt-4 text-4xl font-black leading-[0.95] tracking-[-0.05em] sm:text-5xl">
-                    Start with the real workflow.
-                  </h2>
-
-                  <p className="mt-5 text-base leading-7 text-white/66">
-                    You do not need to design the system first. Show me what
-                    happens now, where it breaks down, and what you are trying
-                    to make easier.
-                  </p>
-
-                  <div className="mt-7 rounded-[1.5rem] border border-[#80df00]/25 bg-[#80df00]/[0.045] p-5">
-                    <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#80df00]">
-                      Starting Problem
-                    </p>
-
-                    <p className="mt-2 text-2xl font-black">
-                      {selectedProblem}
-                    </p>
-                  </div>
-
-                  <div className="mt-6 space-y-3">
-                    {[
-                      "Show me how it works today",
-                      "Tell me where it gets messy",
-                      "Share anything useful",
-                      "Your request becomes the starting record",
-                    ].map((step, index) => (
-                      <div
-                        key={step}
-                        className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/30 px-4 py-4"
-                      >
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#80df00] text-sm font-black text-black">
-                          {index + 1}
-                        </div>
-
-                        <span className="text-sm font-bold text-white/78">
-                          {step}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <form onSubmit={submitRequest} className="p-6 sm:p-8">
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <label className="block">
-                      <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.2em] text-white/48">
-                        Business Or Project
-                      </span>
-
-                      <input
-                        value={requestForm.businessName}
-                        onChange={(event) =>
-                          updateField("businessName", event.target.value)
-                        }
-                        placeholder="Business or project name"
-                        required
-                        className="min-h-[56px] w-full rounded-2xl border border-[rgba(128,223,0,0.22)] bg-black/50 hover:border-[rgba(128,223,0,0.36)] focus:border-[rgba(128,223,0,0.60)] px-4 text-white outline-none placeholder:text-white/32 focus:border-[#80df00]"
-                      />
-                    </label>
-
-                    <label className="block">
-                      <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.2em] text-white/48">
-                        What Do You Do?
-                      </span>
-
-                      <input
-                        value={requestForm.whatYouDo}
-                        onChange={(event) =>
-                          updateField("whatYouDo", event.target.value)
-                        }
-                        placeholder="What does the business do?"
-                        required
-                        className="min-h-[56px] w-full rounded-2xl border border-[rgba(128,223,0,0.22)] bg-black/50 hover:border-[rgba(128,223,0,0.36)] focus:border-[rgba(128,223,0,0.60)] px-4 text-white outline-none placeholder:text-white/32 focus:border-[#80df00]"
-                      />
-                    </label>
-                  </div>
-
-                  <label className="mt-4 block">
-                    <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.2em] text-white/48">
-                      Walk Me Through What Happens Today
-                    </span>
-
-                    <textarea
-                      value={requestForm.currentFlow}
-                      onChange={(event) =>
-                        updateField("currentFlow", event.target.value)
-                      }
-                      required
-                      placeholder="Example: Customer messages me → I ask questions → I give a price → we schedule → I do the work → I collect payment."
-                      className="min-h-[150px] w-full resize-y rounded-2xl border border-[rgba(128,223,0,0.22)] bg-black/50 hover:border-[rgba(128,223,0,0.36)] focus:border-[rgba(128,223,0,0.60)] px-4 py-4 text-white outline-none placeholder:text-white/32 focus:border-[#80df00]"
-                    />
-                  </label>
-
-                  <fieldset className="mt-5">
-                    <legend className="text-[10px] font-black uppercase tracking-[0.2em] text-white/48">
-                      Where Does It Get Messy?
-                    </legend>
-
-                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                      {breakdownOptions.map((option) => {
-                        const active =
-                          requestForm.breakdowns.includes(option);
-
-                        return (
-                          <button
-                            key={option}
-                            type="button"
-                            aria-label={option}
-                            onClick={() => toggleBreakdown(option)}
-                            className={`min-h-[54px] rounded-2xl border px-4 py-3 text-left text-sm font-black transition ${
-                              active
-                                ? "border-[#80df00]/70 bg-[#80df00]/10 text-white"
-                                : "border-[rgba(128,223,0,0.16)] bg-black/35 text-white/72 hover:border-[rgba(128,223,0,0.36)] hover:bg-[rgba(128,223,0,0.025)]"
-                            }`}
-                          >
-                            <span className="flex items-center justify-between gap-3">
-                              {option}
-
-                              {active && (
-                                <Check
-                                  className="h-4 w-4 text-[#80df00]"
-                                  aria-hidden="true"
-                                />
-                              )}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </fieldset>
-
-                  <label className="mt-4 block">
-                    <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.2em] text-white/48">
-                      Existing Website, Facebook Page, Or Useful Link
-                    </span>
-
-                    <input
-                      value={requestForm.existingLink}
-                      onChange={(event) =>
-                        updateField("existingLink", event.target.value)
-                      }
-                      placeholder="Optional link"
-                      inputMode="url"
-                      className="min-h-[56px] w-full rounded-2xl border border-[rgba(128,223,0,0.22)] bg-black/50 hover:border-[rgba(128,223,0,0.36)] focus:border-[rgba(128,223,0,0.60)] px-4 text-white outline-none placeholder:text-white/32 focus:border-[#80df00]"
-                    />
-                  </label>
-
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    <label className="block">
-                      <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.2em] text-white/48">
-                        Your Name
-                      </span>
-
-                      <input
-                        value={requestForm.name}
-                        onChange={(event) =>
-                          updateField("name", event.target.value)
-                        }
-                        required
-                        autoComplete="name"
-                        placeholder="Name"
-                        className="min-h-[56px] w-full rounded-2xl border border-[rgba(128,223,0,0.22)] bg-black/50 hover:border-[rgba(128,223,0,0.36)] focus:border-[rgba(128,223,0,0.60)] px-4 text-white outline-none placeholder:text-white/32 focus:border-[#80df00]"
-                      />
-                    </label>
-
-                    <label className="block">
-                      <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.2em] text-white/48">
-                        Phone
-                      </span>
-
-                      <input
-                        value={requestForm.phone}
-                        onChange={(event) =>
-                          updateField("phone", event.target.value)
-                        }
-                        required
-                        inputMode="tel"
-                        autoComplete="tel"
-                        placeholder="Phone"
-                        className="min-h-[56px] w-full rounded-2xl border border-[rgba(128,223,0,0.22)] bg-black/50 hover:border-[rgba(128,223,0,0.36)] focus:border-[rgba(128,223,0,0.60)] px-4 text-white outline-none placeholder:text-white/32 focus:border-[#80df00]"
-                      />
-                    </label>
-                  </div>
-
-                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                    <label className="block">
-                      <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.2em] text-white/48">
-                        Email Optional
-                      </span>
-
-                      <input
-                        value={requestForm.email}
-                        onChange={(event) =>
-                          updateField("email", event.target.value)
-                        }
-                        type="email"
-                        autoComplete="email"
-                        placeholder="Email"
-                        className="min-h-[56px] w-full rounded-2xl border border-[rgba(128,223,0,0.22)] bg-black/50 hover:border-[rgba(128,223,0,0.36)] focus:border-[rgba(128,223,0,0.60)] px-4 text-white outline-none placeholder:text-white/32 focus:border-[#80df00]"
-                      />
-                    </label>
-
-                    <label className="block">
-                      <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.2em] text-white/48">
-                        Best Way To Reach You
-                      </span>
-
-                      <select
-                        value={requestForm.contactPreference}
-                        onChange={(event) =>
-                          updateField(
-                            "contactPreference",
-                            event.target.value,
-                          )
-                        }
-                        required
-                        className="min-h-[56px] w-full cursor-pointer rounded-2xl border border-[rgba(128,223,0,0.22)] bg-black/50 hover:border-[rgba(128,223,0,0.36)] focus:border-[rgba(128,223,0,0.60)] px-4 text-white outline-none focus:border-[#80df00]"
-                      >
-                        <option value="">Choose one</option>
-                        <option>Text</option>
-                        <option>Call</option>
-                        <option>Email</option>
-                        <option>Messenger</option>
-                      </select>
-                    </label>
-                  </div>
-
-                  <label className="mt-3 block">
-                    <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.2em] text-white/48">
-                      Anything Else Daniel Should Know?
-                    </span>
-
-                    <textarea
-                      value={requestForm.notes}
-                      onChange={(event) =>
-                        updateField("notes", event.target.value)
-                      }
-                      placeholder="Anything important about the problem, customers, staff, current process, or what you want to improve."
-                      className="min-h-[120px] w-full resize-y rounded-2xl border border-[rgba(128,223,0,0.22)] bg-black/50 hover:border-[rgba(128,223,0,0.36)] focus:border-[rgba(128,223,0,0.60)] px-4 py-4 text-white outline-none placeholder:text-white/32 focus:border-[#80df00]"
-                    />
-                  </label>
-
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="mt-5 min-h-[62px] w-full rounded-2xl bg-[#80df00] px-6 text-lg font-black text-black transition hover:-translate-y-0.5 hover:bg-[#9cff19] hover:shadow-[0_0_36px_rgba(126,224,0,0.24)] disabled:cursor-wait disabled:opacity-60"
-                  >
-                    {submitting ? "Sending..." : "Send My System Request"}
-                  </button>
-
-                  {submitError && (
-                    <div
-                      role="alert"
-                      className="mt-4 rounded-2xl border border-red-400/35 bg-red-500/10 p-4 text-sm font-bold text-red-100"
-                    >
-                      {submitError}
-                    </div>
-                  )}
-
-                  {submitted && (
-                    <div
-                      role="status"
-                      className="mt-4 rounded-2xl border border-[#80df00]/40 bg-[#80df00]/10 p-5"
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#80df00] text-black">
-                          <Check className="h-5 w-5" aria-hidden="true" />
-                        </div>
-
-                        <div>
-                          <p className="font-black text-[#b7ff59]">
-                            Your starting request is organized.
-                          </p>
-
-                          <p className="mt-1 text-sm leading-6 text-white/68">
-                            The problem, current workflow, breakdown points,
-                            business information, and contact details are now
-                            grouped into one starting record.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="mt-4 flex items-center gap-2 text-xs text-white/38">
-                    <ShieldCheck
-                      className="h-4 w-4 text-[#80df00]"
-                      aria-hidden="true"
-                    />
-                    Your request is securely sent to Daniel's Custom Systems intake.
-                  </div>
-                </form>
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* HOW IT WORKS */}
-        <section id="how-it-works" className="pt-16 sm:pt-20">
-          <div className="text-center">
-            <p className="text-[11px] font-black uppercase tracking-[0.32em] text-[#80df00]">
-              How A Build Moves
-            </p>
-
-            <h2 className="mx-auto mt-4 max-w-[760px] text-4xl font-black leading-[0.95] tracking-[-0.05em] sm:text-5xl">
-              The front door is only
-              <span className="mt-1 block text-[#80df00]">
-                the beginning.
-              </span>
-            </h2>
-
-            <p className="mx-auto mt-5 max-w-[720px] text-base leading-7 text-white/62">
-              The public page collects the signal. Underneath, the same
-              customer and problem can stay connected through the build,
-              progress, review, approval, launch, and ongoing relationship.
-            </p>
-          </div>
-
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[
-              {
-                icon: Search,
-                title: "1. Understand The Problem",
-                copy:
-                  "Start with what happens today and where the real process breaks down.",
-              },
-              {
-                icon: GitBranch,
-                title: "2. Map The Workflow",
-                copy:
-                  "Connect the people, decisions, information, and next actions that already exist.",
-              },
-              {
-                icon: Wrench,
-                title: "3. Build The Working Version",
-                copy:
-                  "Create the public entrance and the working system underneath it.",
-              },
-              {
-                icon: MonitorSmartphone,
-                title: "4. Show Progress",
-                copy:
-                  "Screenshots, working previews, changes, and current state stay visible.",
-              },
-              {
-                icon: FileCheck2,
-                title: "5. Review & Approve",
-                copy:
-                  "The customer can say Looks Good or Request A Change without losing the history.",
-              },
-              {
-                icon: Sparkles,
-                title: "6. Launch & Keep Improving",
-                copy:
-                  "The system goes live, then future improvements stay attached to the same relationship.",
-              },
-            ].map(({ icon: Icon, title, copy }) => (
-              <article
-                key={title}
-                className="rounded-[1.5rem] border border-white/10 bg-white/[0.028] p-5"
-              >
-                <Icon className="h-7 w-7 text-[#80df00]" aria-hidden="true" />
-
-                <h3 className="mt-4 text-xl font-black">{title}</h3>
-
-                <p className="mt-2 text-sm leading-6 text-white/60">
-                  {copy}
-                </p>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        {/* REAL BUILDS */}
-        <section className="pt-16 sm:pt-20">
-          <div className="text-center">
-            <p className="text-[11px] font-black uppercase tracking-[0.32em] text-[#80df00]">
-              Real Build Patterns
-            </p>
-
-            <h2 className="mx-auto mt-4 max-w-[760px] text-3xl font-black tracking-[-0.04em] sm:text-4xl lg:text-5xl">
-              Different operations. Same connected DNA.
-            </h2>
-
-            <p className="mx-auto mt-4 max-w-[690px] text-base leading-7 text-white/60">
-              The system changes around the operation. The underlying pattern
-              stays human: signal, action, proof, next step, outcome.
-            </p>
-          </div>
-
-          <div className="mt-8 grid gap-4 lg:grid-cols-3">
-            {buildExamples.map((build) => (
-              <article
-                key={build.name}
-                className="rounded-[1.75rem] border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.035),rgba(255,255,255,0.012))] p-6"
-              >
-                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#80df00]">
-                  Working Example
-                </p>
-
-                <h3 className="mt-3 min-h-[58px] text-2xl font-black tracking-[-0.035em]">
-                  {build.name}
-                </h3>
-
-                <div className="mt-5 rounded-2xl border border-[#80df00]/20 bg-[#80df00]/[0.045] p-4 text-sm font-black leading-6 text-[#c7ff85]">
-                  {build.flow}
-                </div>
-
-                <p className="mt-4 text-sm leading-6 text-white/58">
-                  {build.note}
-                </p>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        {/* FINAL CTA */}
-        <section className="pt-16 sm:pt-20">
-          <div className="rounded-[2rem] border border-[#80df00]/25 bg-[radial-gradient(circle_at_50%_0%,rgba(126,224,0,0.10),transparent_50%),#06100a] p-7 text-center sm:p-10">
-            <p className="text-[11px] font-black uppercase tracking-[0.28em] text-[#80df00]">
-              Start With What Is Real
-            </p>
-
-            <h2 className="mx-auto mt-4 max-w-[760px] text-4xl font-black leading-[0.96] tracking-[-0.05em] sm:text-5xl">
-              Show me the process before we talk about the software.
-            </h2>
-
-            <p className="mx-auto mt-5 max-w-[670px] text-base leading-7 text-white/62">
-              Tell me what customers do, what you do next, where things get
-              scattered, and what you wish worked better.
-            </p>
 
             <button
               type="button"
               onClick={() => {
-                scrollToProblems();
+                chooseBusiness("Custom Business");
+                startRequest("Custom Business");
               }}
-              className="mt-7 inline-flex min-h-[58px] items-center justify-center gap-3 rounded-2xl bg-[#80df00] px-7 font-black text-black transition hover:-translate-y-0.5 hover:bg-[#9cff19]"
+              className="inline-flex min-h-[50px] w-full items-center justify-center gap-2 rounded-xl bg-white px-5 font-black text-black sm:w-auto"
             >
-              <ClipboardList className="h-5 w-5" aria-hidden="true" />
-              Show Me What You Need
+              Custom Business
+              <ArrowRight className="h-4 w-4" />
             </button>
+          </div>
+        </div>
+      </section>
+      {/* DARK PROCESS */}
+      <section className="bg-black text-white">
+        <div className="mx-auto max-w-[1240px] px-5 py-14 sm:px-8 sm:py-16 lg:py-18">
+          <div className="mx-auto max-w-[1060px] text-center">
+            <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[#1597F3]">
+              Built Around Your Workflow
+            </p>
 
-            <p className="mt-5 text-xs font-bold uppercase tracking-[0.15em] text-white/34">
-              Daniel / Custom Systems · Powered by HomePlanet
+            <h2 className="mx-auto mt-4 max-w-[1000px] text-4xl font-black leading-[0.95] tracking-[-0.055em] sm:text-6xl lg:text-7xl">
+              Your business already has a process.
+            </h2>
+
+            <p className="mx-auto mt-5 max-w-[820px] text-base leading-7 text-white/70 sm:text-lg sm:leading-8">
+              We connect the parts that are already there instead of forcing you
+              into somebody else's software.
             </p>
           </div>
-        </section>
-      </div>
+
+          <div className="mx-auto mt-10 max-w-[1160px]">
+            <div className="relative">
+              <div className="absolute left-[5%] right-[5%] top-[50%] hidden h-[2px] -translate-y-1/2 bg-white/10 lg:block" />
+              <div className="absolute left-[5%] top-[50%] hidden h-[2px] w-[52%] -translate-y-1/2 bg-[#69c900] lg:block" />
+
+              <div className="relative grid grid-cols-2 gap-3 lg:grid-cols-6">
+                {flowSteps.map((step, index) => {
+                  const active = step === "Work";
+
+                  return (
+                    <div
+                      key={step}
+                      className={`relative rounded-[1.15rem] border px-4 py-5 transition ${
+                        active
+                          ? "border-[#69c900] bg-[#14200f] shadow-[0_0_0_1px_rgba(105,201,0,0.18),0_16px_35px_rgba(0,0,0,0.28)]"
+                          : "border-white/12 bg-[#0b0b0b]"
+                      }`}
+                    >
+                      <div
+                        className={`flex h-8 w-8 items-center justify-center rounded-full text-[10px] font-black ${
+                          active
+                            ? "bg-[#69c900] text-black"
+                            : "bg-white/[0.06] text-[#78dc12]"
+                        }`}
+                      >
+                        0{index + 1}
+                      </div>
+
+                      <div className="mt-4 text-base font-black">
+                        {step}
+                      </div>
+
+                      {active && (
+                        <div className="mt-3 w-fit rounded-full bg-[#69c900] px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-black">
+                          Active
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="mt-4 flex flex-col gap-3 rounded-[1.15rem] border border-white/10 bg-[#111111] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="text-[10px] font-black uppercase tracking-[0.16em] text-[#78dc12]">
+                  Live Activity
+                </div>
+
+                <div className="mt-1 text-sm font-bold text-white">
+                  Estimate approved -&gt; scheduling opened
+                </div>
+              </div>
+
+              <div className="flex items-baseline gap-0.5 whitespace-nowrap text-[15px] font-bold tracking-[-0.01em] text-white/80 sm:text-base">
+                <span>{liveTime.split(":")[0]}</span>
+                <span className="text-[#78dc12]">:</span>
+                <span>{liveTime.split(":")[1]}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FORM */}
+      <section
+        id="start-my-system"
+        className="relative scroll-mt-24 overflow-hidden bg-[#e7e8e4]"
+      >
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_34%,rgba(123,224,0,0.11),transparent_26%),radial-gradient(circle_at_12%_16%,rgba(255,255,255,0.95),transparent_30%),radial-gradient(circle_at_88%_20%,rgba(255,255,255,0.78),transparent_28%),radial-gradient(circle_at_75%_85%,rgba(0,0,0,0.055),transparent_34%)]" />
+
+
+
+        <div className="relative mx-auto max-w-[1240px] px-5 py-10 sm:px-8 sm:py-12 lg:py-14">
+          <div className="relative z-10 mx-auto max-w-[820px] text-center">
+            <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[#438c00]">
+              Start My System
+            </p>
+
+            <h2 className="mt-3 text-4xl font-black leading-[0.95] tracking-[-0.055em] sm:text-5xl lg:text-[3.5rem]">
+              Tell us what you need.
+            </h2>
+
+            <p className="mx-auto mt-3 max-w-[720px] text-base leading-7 text-black/65">
+              Tell us what your business does, what gets messy, and what you want
+              working better.
+            </p>
+          </div>
+
+          <div className="relative z-10 mx-auto mt-7 max-w-[1180px] rounded-[1.7rem] border border-white/70 bg-white/95 p-5 shadow-[0_24px_70px_rgba(0,0,0,0.12)] ring-1 ring-black/[0.06] backdrop-blur-sm sm:p-6 lg:p-7">
+
+            <form onSubmit={submitRequest}>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label>
+                  <span className="mb-2 block text-xs font-black uppercase tracking-[0.14em] text-black/65">
+                    Business Name
+                  </span>
+
+                  <input
+                    required
+                    value={form.businessName}
+                    onChange={(event) =>
+                      updateField("businessName", event.target.value)
+                    }
+                    placeholder="Your business"
+                    className="min-h-[56px] w-full rounded-xl border border-black/15 bg-[#f5f6f2] px-4 text-base font-medium shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] outline-none transition focus:border-[#69c900] focus:ring-2 focus:ring-[#69c900]/15"
+                  />
+                </label>
+
+                <label>
+                  <span className="mb-2 block text-xs font-black uppercase tracking-[0.14em] text-black/65">
+                    Business Type
+                  </span>
+
+                  <select
+                    value={businessType}
+                    onChange={(event) => chooseBusiness(event.target.value)}
+                    className="min-h-[56px] w-full rounded-xl border border-black/15 bg-[#f5f6f2] px-4 text-base font-medium shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] outline-none transition focus:border-[#69c900] focus:ring-2 focus:ring-[#69c900]/15"
+                  >
+                    {businessTypes.map((item) => (
+                      <option key={item.name}>{item.name}</option>
+                    ))}
+                    <option>Custom Business</option>
+                  </select>
+                </label>
+              </div>
+
+              <label className="mt-4 block">
+                <span className="mb-2 block text-xs font-black uppercase tracking-[0.14em] text-black/65">
+                  What do you need help organizing?
+                </span>
+
+                <textarea
+                  required
+                  value={form.need}
+                  onChange={(event) =>
+                    updateField("need", event.target.value)
+                  }
+                  placeholder="Example: Customers message me everywhere, estimates get lost, scheduling gets messy, and I need one place to keep everything moving."
+                  className="min-h-[110px] w-full resize-y rounded-xl border border-black/15 bg-[#f5f6f2] px-4 py-4 text-base font-medium shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] leading-7 outline-none transition focus:border-[#69c900] focus:ring-2 focus:ring-[#69c900]/15"
+                />
+              </label>
+
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <label>
+                  <span className="mb-2 block text-xs font-black uppercase tracking-[0.14em] text-black/65">
+                    Your Name
+                  </span>
+
+                  <input
+                    required
+                    autoComplete="name"
+                    value={form.name}
+                    onChange={(event) =>
+                      updateField("name", event.target.value)
+                    }
+                    placeholder="Your name"
+                    className="min-h-[56px] w-full rounded-xl border border-black/15 bg-[#f5f6f2] px-4 text-base font-medium shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] outline-none transition focus:border-[#69c900] focus:ring-2 focus:ring-[#69c900]/15"
+                  />
+                </label>
+
+                <label>
+                  <span className="mb-2 block text-xs font-black uppercase tracking-[0.14em] text-black/65">
+                    Phone
+                  </span>
+
+                  <input
+                    required
+                    inputMode="tel"
+                    autoComplete="tel"
+                    value={form.phone}
+                    onChange={(event) =>
+                      updateField("phone", event.target.value)
+                    }
+                    placeholder="Phone number"
+                    className="min-h-[56px] w-full rounded-xl border border-black/15 bg-[#f5f6f2] px-4 text-base font-medium shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] outline-none transition focus:border-[#69c900] focus:ring-2 focus:ring-[#69c900]/15"
+                  />
+                </label>
+              </div>
+
+              <label className="mt-4 block">
+                <span className="mb-2 block text-xs font-black uppercase tracking-[0.14em] text-black/65">
+                  Email - Optional
+                </span>
+
+                <input
+                  type="email"
+                  autoComplete="email"
+                  value={form.email}
+                  onChange={(event) =>
+                    updateField("email", event.target.value)
+                  }
+                  placeholder="Email"
+                  className="min-h-[56px] w-full rounded-xl border border-black/15 bg-[#f5f6f2] px-4 text-base font-medium shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] outline-none transition focus:border-[#69c900] focus:ring-2 focus:ring-[#69c900]/15"
+                />
+              </label>
+
+              <button
+                type="submit"
+                disabled={submitting}
+                className="mt-5 flex min-h-[58px] w-full items-center justify-center gap-3 rounded-xl bg-[#69c900] px-6 text-base font-black text-black transition hover:bg-[#78dc12] disabled:cursor-wait disabled:opacity-60"
+              >
+                {submitting ? "Sending..." : "Send My Request"}
+                {!submitting && <ArrowRight className="h-5 w-5" />}
+              </button>
+
+              {submitError && (
+                <div className="mt-4 rounded-xl bg-red-50 p-4 text-sm font-bold text-red-700">
+                  {submitError}
+                </div>
+              )}
+
+              {submitted && (
+                <div className="mt-4 rounded-xl border border-[#69c900]/40 bg-[#f3ffe5] p-5">
+                  <div className="flex gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#69c900]">
+                      <Check className="h-5 w-5" />
+                    </div>
+
+                    <div>
+                      <p className="font-black">We got it.</p>
+
+                      <p className="mt-1 text-sm leading-6 text-black/65">
+                        Your request has been sent to HomePlanet.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </form>
+          </div>
+        </div>
+      </section>
+
+
+      <footer className="border-t border-white/10 bg-black text-white">
+        <div className="mx-auto max-w-[1180px] px-5 py-12 sm:px-8 lg:py-14">
+
+          <div className="grid gap-8 lg:grid-cols-[1.25fr_0.75fr] lg:items-end lg:gap-10">
+
+            <div>
+              <img
+                src="/images/homeplanet-brand-logo.png"
+                alt="HomePlanet"
+                className="h-[72px] w-auto object-contain sm:h-[92px]"
+              />
+
+              <div className="mt-5 text-xl font-black tracking-[-0.03em]">
+                HomePlanet Custom Systems
+              </div>
+
+              <p className="mt-2 max-w-[540px] text-sm leading-6 text-white/60">
+                Keep requests, scheduling, payments, customers, and follow-up moving through one clearer workflow.
+              </p>
+
+              <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] font-black uppercase tracking-[0.16em]">
+                <span className="text-[#1597F3]">Systems</span>
+                <span className="text-white/20">/</span>
+                <span className="text-[#7be000]">Workflows</span>
+                <span className="text-white/20">/</span>
+                <span className="text-[#1597F3]">Intelligence</span>
+              </div>
+            </div>
+
+            <div className="lg:text-right">
+              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#1597F3]">
+                Ready when you are
+              </p>
+
+              <button
+                type="button"
+                onClick={() => startRequest()}
+                className="mt-4 inline-flex min-h-[52px] w-full items-center justify-center gap-3 rounded-xl bg-[#7be000] px-6 font-black text-black transition hover:bg-[#8bf011] sm:w-auto"
+              >
+                Start My System
+                <ArrowRight className="h-5 w-5" />
+              </button>
+
+              <div className="mt-5 text-sm font-bold text-white/55">
+                homeplanet.city
+              </div>
+            </div>
+
+          </div>
+
+          <div className="mt-10 flex flex-col gap-2 border-t border-white/10 pt-5 text-xs text-white/35 sm:flex-row sm:items-center sm:justify-between">
+            <span>HomePlanet Systems LLC</span>
+            <span>Your business. Your workflow. Your system.</span>
+          </div>
+
+        </div>
+      </footer>
     </main>
   );
 }
-
-
-
-
 
