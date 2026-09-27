@@ -135,6 +135,7 @@ import CreatorProjects from "../pages/CreatorProjects";
 
 import CreatorStudio from "../pages/CreatorStudio";
 import LiveStudio from "../pages/LiveStudio";
+import HomePlanetBuildSequencePage from "../pages/HomePlanetBuildSequencePage";
 import CreatorQuickBuildPage from "../pages/CreatorQuickBuildPage";
 import HollerboyzLandingPage from "../pages/HollerboyzLandingPage";
 import WrenchBoysLandingPage from "../pages/WrenchBoysLandingPage";
@@ -695,6 +696,7 @@ export default function PlanetRoutes() {
       <Route path="creator/hayley-live" element={<HayleyLiveBoard />} />
       <Route path="creator/big-dave-eats" element={<BigDaveEatsLive />} />
       <Route path="creator/building" element={<CreatorLaunchSequencePage />} />
+      <Route path="system/:slug/building" element={<HomePlanetBuildSequencePage />} />
       <Route path="system/:slug" element={<SystemHomePage />} />
       <Route path="creator/*" element={<Navigate to="/planet/creator" replace />} />
 

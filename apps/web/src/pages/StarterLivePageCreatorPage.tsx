@@ -1,8 +1,9 @@
-import { useMemo, useState } from "react";
+ï»¿import { useEffect, useMemo, useState } from "react";
 import { getSupabase } from "../lib/supabase";
 
 type VibeKey = "blue" | "emerald" | "sunset" | "midnight";
-type BlockType = "whoWeAre" | "contactInfo" | "pricingNote" | "servicePills" | "livePhotoWall" | "localNote" | "paymentBlock" | "bookNow";
+type BackgroundKey = "black" | "charcoal" | "white" | "gray" | "cream";
+type BlockType = "whoWeAre" | "contactInfo" | "pricingNote" | "servicePills" | "requestForm" | "livePhotoWall" | "localNote" | "paymentBlock" | "bookNow";
 
 type LiveBlock = {
   id: string;
@@ -49,6 +50,34 @@ const vibes = {
   },
 };
 
+const backgroundChoices: Record<BackgroundKey, { name: string; preview: string; sample: string }> = {
+  black: {
+    name: "Black",
+    preview: "bg-[#05070d] border-white/15",
+    sample: "text-white",
+  },
+  charcoal: {
+    name: "Charcoal",
+    preview: "bg-[#15171c] border-white/15",
+    sample: "text-white",
+  },
+  white: {
+    name: "White",
+    preview: "bg-white border-slate-200",
+    sample: "text-slate-950",
+  },
+  gray: {
+    name: "Soft Gray",
+    preview: "bg-[#f1f3f5] border-slate-300",
+    sample: "text-slate-950",
+  },
+  cream: {
+    name: "Warm Cream",
+    preview: "bg-[#f4eddf] border-stone-300",
+    sample: "text-stone-900",
+  },
+};
+
 const defaultPhotos = [
   "/images/sebastian-softwash-hero.jpg",
   "/images/sebastian-softwash-action-1.jpg",
@@ -59,49 +88,191 @@ const availableBlocks: LiveBlock[] = [
   { id: "whoWeAre", type: "whoWeAre", label: "Who We Are" },
   { id: "contactInfo", type: "contactInfo", label: "Contact Info" },
   { id: "pricingNote", type: "pricingNote", label: "Pricing Note" },
-  { id: "servicePills", type: "servicePills", label: "Service Pills" },
-  { id: "livePhotoWall", type: "livePhotoWall", label: "Live Photo Wall" },
+  { id: "servicePills", type: "servicePills", label: "Services" },
+  { id: "requestForm", type: "requestForm", label: "Request Form" },
+  { id: "livePhotoWall", type: "livePhotoWall", label: "Photo Gallery" },
   { id: "localNote", type: "localNote", label: "Local Note" },
   { id: "paymentBlock", type: "paymentBlock", label: "Payment Link" },
 ];
 
 export default function StarterLivePageCreatorPage() {
+  const sourceSystemSlug =
+    new URLSearchParams(window.location.search).get("system")?.trim() || "";
+
+  const sourceSystem = useMemo(() => {
+    if (!sourceSystemSlug) return null;
+
+    try {
+      const raw = localStorage.getItem(`hp-system:${sourceSystemSlug}`);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  }, [sourceSystemSlug]);
+
+  const cameFromBuildMySystem = Boolean(sourceSystemSlug && sourceSystem);
   const [vibe, setVibe] = useState<VibeKey>("blue");
+  const [pageBackground, setPageBackground] = useState<BackgroundKey>("black");
   const [activeBlockId, setActiveBlockId] = useState("whoWeAre");
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
 
-  const [name, setName] = useState("Sebastian Softwash");
-  const [city, setCity] = useState("Okeechobee, Florida");
-  const [service, setService] = useState("Summer pressure washing jobs");
-  const [phone, setPhone] = useState("863-532-0683");
-
-  const [slug, setSlug] = useState("sebastian-softwash");
-
-  const [whoWeAre, setWhoWeAre] = useState(
-    "Helping local families with driveways, sidewalks, patios, and outdoor cleanup."
+  const [name, setName] = useState(
+    sourceSystem?.businessName?.trim() || "Sebastian Softwash"
+  );
+  const [city, setCity] = useState(
+    cameFromBuildMySystem ? "" : "Okeechobee, Florida"
+  );
+  const [service, setService] = useState(
+    sourceSystem?.businessType?.trim() || "Summer pressure washing jobs"
+  );
+  const [phone, setPhone] = useState(
+    cameFromBuildMySystem ? "" : "863-532-0683"
   );
 
-  const [pricingTitle, setPricingTitle] = useState("No square footage headaches.");
+  const [notificationEmail, setNotificationEmail] = useState("");
+  const [notificationPhone, setNotificationPhone] = useState("");
+  const [emailAlertsEnabled, setEmailAlertsEnabled] = useState(true);
+  const [smsAlertsEnabled, setSmsAlertsEnabled] = useState(false);
+
+  const [slug, setSlug] = useState(
+    sourceSystemSlug || "sebastian-softwash"
+  );
+
+  const [whoWeAre, setWhoWeAre] = useState(
+    cameFromBuildMySystem
+      ? `${sourceSystem?.businessName?.trim() || "This business"} helps customers with ${sourceSystem?.businessType?.trim() || "the work they need"}.`
+      : "Helping local families with driveways, sidewalks, patios, and outdoor cleanup."
+  );
+
+  const [pricingTitle, setPricingTitle] = useState(cameFromBuildMySystem ? "Simple estimates." : "No square footage headaches.");
   const [pricingText, setPricingText] = useState(
-    "Just send a photo of what you need cleaned up and I’ll give you a fair price."
+    cameFromBuildMySystem
+      ? "Tell us what you need and we will help you with the next step."
+      : "Just send a photo of what you need cleaned up and I'll give you a fair price."
   );
 
   const [servicesText, setServicesText] = useState(
-    "Driveways, Patios, Sidewalks, Outdoor Cleanup"
+    cameFromBuildMySystem ? (sourceSystem?.businessType?.trim() || "") : "Driveways, Patios, Sidewalks, Outdoor Cleanup"
   );
 
-  const [localNoteTitle, setLocalNoteTitle] = useState("Local Note");
+  const [localNoteTitle, setLocalNoteTitle] = useState(cameFromBuildMySystem ? "About Us" : "Local Note");
   const [localNoteText, setLocalNoteText] = useState(
-    "Trying to stay productive this summer, work hard, save money, and help local families out at the same time."
+    cameFromBuildMySystem
+      ? ""
+      : "Trying to stay productive this summer, work hard, save money, and help local families out at the same time."
   );
 
   const [paymentTitle, setPaymentTitle] = useState("Payment Link");
-  const [paymentPrice, setPaymentPrice] = useState("$0");
-  const [paymentNote, setPaymentNote] = useState("After we agree on the price, you can pay here.");
+  const [paymentPrice, setPaymentPrice] = useState(cameFromBuildMySystem ? "" : "$0");
+  const [paymentNote, setPaymentNote] = useState(cameFromBuildMySystem ? "" : "After we agree on the price, you can pay here.");
   const [paymentUrl, setPaymentUrl] = useState("");
 
   const [blocks, setBlocks] = useState<LiveBlock[]>(availableBlocks);
-  const [heroPhoto, setHeroPhoto] = useState(defaultPhotos[0]);
-  const [wallPhotos, setWallPhotos] = useState<string[]>(defaultPhotos);
+  const [heroPhoto, setHeroPhoto] = useState(cameFromBuildMySystem ? "" : defaultPhotos[0]);
+  const [wallPhotos, setWallPhotos] = useState<string[]>(cameFromBuildMySystem ? [] : defaultPhotos);
+  const [whoWeAreImage, setWhoWeAreImage] = useState("");
+  const [servicesImage, setServicesImage] = useState("");
+  const [logoImage, setLogoImage] = useState("");
+  const [footerLogoImage, setFooterLogoImage] = useState("");
+  const [tagline, setTagline] = useState("");
+  const [headerButtonText, setHeaderButtonText] = useState("Get a Quote");
+  const [footerMessage, setFooterMessage] = useState("");
+  const [whoWeAreLabel, setWhoWeAreLabel] = useState("Who We Are");
+  const [whoWeAreHeadline, setWhoWeAreHeadline] = useState("Dirty driveway? Green siding? We know the drill.");
+  const [servicesLabel, setServicesLabel] = useState("What Are We Cleaning?");
+  const [servicesHeadline, setServicesHeadline] = useState("Point us at the mess.");
+  const [servicesIntro, setServicesIntro] = useState("House, driveway, walkway, pool deck - pick what needs attention and let's get it cleaned up.");
+  const [galleryLabel, setGalleryLabel] = useState("The Payoff");
+  const [galleryHeadline, setGalleryHeadline] = useState("Nothing beats seeing it clean again.");
+  const [galleryText, setGalleryText] = useState("Here's the kind of difference a proper exterior cleaning can make around the house.");
+  const [whyLabel, setWhyLabel] = useState("Why Okey Dokie?");
+  const [whyHeadline, setWhyHeadline] = useState("Because you shouldn't have to chase down the person you hired.");
+  const [ctaLabel, setCtaLabel] = useState("Got Something Dirty?");
+  const [ctaHeadline, setCtaHeadline] = useState("Send us a photo. We'll tell you what it needs.");
+  const [ctaText, setCtaText] = useState("No long forms. No guessing. Send it over and let's get it cleaned up.");
+  const [ctaButtonText, setCtaButtonText] = useState("Text for a Quote");
+
+  useEffect(() => {
+    const livePageSlug = sourceSystem?.livePageSlug?.trim();
+    if (!livePageSlug) return;
+
+    let cancelled = false;
+
+    async function restoreLivePage() {
+      const supabase = getSupabase();
+      const { data, error } = await supabase
+        .from("starter_live_pages")
+        .select("page_data")
+        .eq("slug", livePageSlug)
+        .maybeSingle();
+
+      if (cancelled || error || !data?.page_data) return;
+
+      const saved = data.page_data as Record<string, any>;
+
+      if (typeof saved.name === "string") setName(saved.name);
+      if (typeof saved.city === "string") setCity(saved.city);
+      if (typeof saved.service === "string") setService(saved.service);
+      if (typeof saved.phone === "string") setPhone(saved.phone);
+      if (typeof saved.whoWeAre === "string") setWhoWeAre(saved.whoWeAre);
+      if (typeof saved.pricingTitle === "string") setPricingTitle(saved.pricingTitle);
+      if (typeof saved.pricingText === "string") setPricingText(saved.pricingText);
+      if (typeof saved.localNoteTitle === "string") setLocalNoteTitle(saved.localNoteTitle);
+      if (typeof saved.localNoteText === "string") setLocalNoteText(saved.localNoteText);
+      if (typeof saved.paymentTitle === "string") setPaymentTitle(saved.paymentTitle);
+      if (typeof saved.paymentPrice === "string") setPaymentPrice(saved.paymentPrice);
+      if (typeof saved.paymentNote === "string") setPaymentNote(saved.paymentNote);
+      if (typeof saved.paymentUrl === "string") setPaymentUrl(saved.paymentUrl);
+      if (Array.isArray(saved.services)) setServicesText(saved.services.join(", "));
+      if (typeof saved.heroPhoto === "string") setHeroPhoto(saved.heroPhoto);
+      if (Array.isArray(saved.wallPhotos)) setWallPhotos(saved.wallPhotos);
+      if (typeof saved.whoWeAreImage === "string") setWhoWeAreImage(saved.whoWeAreImage);
+      if (typeof saved.servicesImage === "string") setServicesImage(saved.servicesImage);
+      if (typeof saved.logoImage === "string") setLogoImage(saved.logoImage);
+      if (typeof saved.footerLogoImage === "string") setFooterLogoImage(saved.footerLogoImage);
+      if (typeof saved.tagline === "string") setTagline(saved.tagline);
+      if (typeof saved.headerButtonText === "string") setHeaderButtonText(saved.headerButtonText);
+      if (typeof saved.footerMessage === "string") setFooterMessage(saved.footerMessage);
+      if (typeof saved.whoWeAreLabel === "string") setWhoWeAreLabel(saved.whoWeAreLabel);
+      if (typeof saved.whoWeAreHeadline === "string") setWhoWeAreHeadline(saved.whoWeAreHeadline);
+      if (typeof saved.servicesLabel === "string") setServicesLabel(saved.servicesLabel);
+      if (typeof saved.servicesHeadline === "string") setServicesHeadline(saved.servicesHeadline);
+      if (typeof saved.servicesIntro === "string") setServicesIntro(saved.servicesIntro);
+      if (typeof saved.galleryLabel === "string") setGalleryLabel(saved.galleryLabel);
+      if (typeof saved.galleryHeadline === "string") setGalleryHeadline(saved.galleryHeadline);
+      if (typeof saved.galleryText === "string") setGalleryText(saved.galleryText);
+      if (typeof saved.whyLabel === "string") setWhyLabel(saved.whyLabel);
+      if (typeof saved.whyHeadline === "string") setWhyHeadline(saved.whyHeadline);
+      if (typeof saved.ctaLabel === "string") setCtaLabel(saved.ctaLabel);
+      if (typeof saved.ctaHeadline === "string") setCtaHeadline(saved.ctaHeadline);
+      if (typeof saved.ctaText === "string") setCtaText(saved.ctaText);
+      if (typeof saved.ctaButtonText === "string") setCtaButtonText(saved.ctaButtonText);
+      if (Array.isArray(saved.blocks)) {
+        setBlocks(
+          saved.blocks.map((block: LiveBlock) => {
+            if (block.type === "servicePills") {
+              return { ...block, label: "Services" };
+            }
+
+            if (block.type === "livePhotoWall") {
+              return { ...block, label: "Photo Gallery" };
+            }
+
+            return block;
+          })
+        );
+      }
+      if (typeof saved.vibe === "string" && saved.vibe in vibes) setVibe(saved.vibe as VibeKey);
+      if (typeof saved.pageBackground === "string" && saved.pageBackground in backgroundChoices) setPageBackground(saved.pageBackground as BackgroundKey);
+      setSlug(livePageSlug);
+    }
+
+    restoreLivePage();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [sourceSystem?.livePageSlug]);
 
   const active = vibes[vibe];
 
@@ -130,6 +301,36 @@ async function handleHeroUpload(event: React.ChangeEvent<HTMLInputElement>) {
 
   event.target.value = "";
 }
+
+  async function handleWhoWeAreImageUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setWhoWeAreImage(await fileToDataUrl(file));
+    event.target.value = "";
+  }
+
+  async function handleServicesImageUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setServicesImage(await fileToDataUrl(file));
+    event.target.value = "";
+  }
+
+  async function handleLogoUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setLogoImage(await fileToDataUrl(file));
+    event.target.value = "";
+  }
+
+  async function handleFooterLogoUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setFooterLogoImage(await fileToDataUrl(file));
+    event.target.value = "";
+  }
 
   async function handleWallUpload(event: React.ChangeEvent<HTMLInputElement>) {
   const files = Array.from(event.target.files || []);
@@ -229,7 +430,7 @@ const servicePills = useMemo(
     if (block.type === "servicePills") {
       return previewWrap(
         block,
-        <div className="rounded-[1.5rem] p-3">          <p className="mb-3 text-xs font-black uppercase tracking-[0.2em] text-slate-500">            Service Pills
+        <div className="rounded-[1.5rem] p-3">          <p className="mb-3 text-xs font-black uppercase tracking-[0.2em] text-slate-500">            Services
           </p>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {servicePills.map((item) => (
@@ -245,7 +446,30 @@ const servicePills = useMemo(
       );
     }
 
+    if (block.type === "requestForm") {
+      return previewWrap(
+        block,
+        <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.05] p-4">
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+            Request Form
+          </p>
+
+          <p className="mt-2 text-lg font-black text-white">
+            Tell us what you need.
+          </p>
+
+          <p className="mt-2 text-sm leading-relaxed text-slate-400">
+            Customers can send their name, phone, service, location, and project details directly from the Live Page.
+          </p>
+
+          <div className={`mt-4 flex h-12 items-center justify-center rounded-2xl ${active.primary} text-sm font-black text-white`}>
+            Send Request
+          </div>
+        </div>
+      );
+    }
     if (block.type === "paymentBlock") {
+      if (!paymentPrice.trim() && !paymentNote.trim() && !paymentUrl.trim()) return null;
       return previewWrap(
         block,
         <div className={`rounded-[1.5rem] border ${active.soft} p-4`}>
@@ -274,11 +498,12 @@ const servicePills = useMemo(
     }
 
     if (block.type === "livePhotoWall") {
+      if (wallPhotos.length === 0) return null;
       return previewWrap(
         block,
         <div className="rounded-[1.5rem]">
           <p className="mb-3 text-xs font-black uppercase tracking-[0.2em] text-slate-500">
-            Live Photo Wall
+            Photo Gallery
           </p>
           <div className="grid grid-cols-2 gap-3">
             {wallPhotos.map((image) => (
@@ -306,7 +531,144 @@ const servicePills = useMemo(
       </a>
     );
   }
+  async function saveNotificationSettings(livePageSlug: string) {
+    const cleanNotificationEmail = notificationEmail.trim();
+    const cleanNotificationPhone = notificationPhone.trim();
+
+    if (!emailAlertsEnabled && !smsAlertsEnabled) {
+      throw new Error("Turn on at least one request notification method.");
+    }
+
+    if (emailAlertsEnabled && !cleanNotificationEmail) {
+      throw new Error("Add the email address that should receive new requests.");
+    }
+
+    if (smsAlertsEnabled && !cleanNotificationPhone) {
+      throw new Error("Add the mobile number that should receive text alerts.");
+    }
+
+    const supabase = getSupabase();
+
+    const accessStorageKey = `hp-starter-admin:${livePageSlug}`;
+    let adminAccessToken = "";
+
+    try {
+      adminAccessToken =
+        window.localStorage.getItem(accessStorageKey)?.trim() || "";
+
+      if (!adminAccessToken) {
+        adminAccessToken = crypto.randomUUID();
+        window.localStorage.setItem(accessStorageKey, adminAccessToken);
+      }
+    } catch {
+      adminAccessToken = crypto.randomUUID();
+    }
+
+    const { error } = await supabase.rpc(
+      "save_starter_notification_settings_v2",
+      {
+        p_live_page_slug: livePageSlug,
+        p_notification_email: cleanNotificationEmail,
+        p_notification_phone: cleanNotificationPhone,
+        p_email_enabled: emailAlertsEnabled,
+        p_sms_enabled: smsAlertsEnabled,
+        p_admin_access_token: adminAccessToken,
+      }
+    );
+
+    if (error) {
+      console.error("[starter_notification_settings] save error:", error);
+      throw new Error(error.message);
+    }
+  }
+
+  async function saveLivePageChanges() {
+    const livePageSlug = sourceSystem?.livePageSlug?.trim();
+    if (!livePageSlug) {
+      alert("Launch this Live Page once before saving changes.");
+      return;
+    }
+
+    setSaveStatus("saving");
+
+    const pagePatch = {
+      name,
+      city,
+      service,
+      phone,
+      whoWeAre,
+      pricingTitle,
+      pricingText,
+      localNoteTitle,
+      localNoteText,
+      paymentTitle,
+      paymentPrice,
+      paymentNote,
+      paymentUrl,
+      services: servicePills,
+      tagline,
+      headerButtonText,
+      footerMessage,
+      whoWeAreLabel,
+      whoWeAreHeadline,
+      servicesLabel,
+      servicesHeadline,
+      servicesIntro,
+      galleryLabel,
+      galleryHeadline,
+      galleryText,
+      whyLabel,
+      whyHeadline,
+      ctaLabel,
+      ctaHeadline,
+      ctaText,
+      ctaButtonText,
+      vibe,
+      pageBackground,
+      blocks: blocks.filter((block) => block.type !== "bookNow"),
+    };
+
+    const supabase = getSupabase();
+    const { error } = await supabase.rpc("patch_starter_live_page", {
+      p_slug: livePageSlug,
+      p_patch: pagePatch,
+    });
+    if (error) {
+      console.error("[starter_live_pages] save changes error:", error);
+      setSaveStatus("idle");
+      alert(`Could not save changes: ${error.message}`);
+      return;
+    }
+
+    try {
+      await saveNotificationSettings(livePageSlug);
+    } catch (notificationError) {
+      console.error(
+        "[starter_notification_settings] save changes error:",
+        notificationError
+      );
+
+      setSaveStatus("idle");
+
+      alert(
+        notificationError instanceof Error
+          ? notificationError.message
+          : "Could not save request notification settings."
+      );
+
+      return;
+    }
+
+    setSaveStatus("saved");
+    window.setTimeout(() => setSaveStatus("idle"), 1800);
+  }
+
   async function launchLivePage() {
+    if (cameFromBuildMySystem) {
+      if (!city.trim()) { alert("Add your city or service area before launching."); return; }
+      if (!phone.trim()) { alert("Add a phone number before launching."); return; }
+      if (!heroPhoto) { alert("Add a real hero photo before launching your Live Page."); return; }
+    }
     const cleanSlug =
       slug
         .toLowerCase()
@@ -331,7 +693,29 @@ const servicePills = useMemo(
       services: servicePills,
       heroPhoto,
       wallPhotos,
+      whoWeAreImage,
+      servicesImage,
+      logoImage,
+      footerLogoImage,
+      tagline,
+      headerButtonText,
+      footerMessage,
+      whoWeAreLabel,
+      whoWeAreHeadline,
+      servicesLabel,
+      servicesHeadline,
+      servicesIntro,
+      galleryLabel,
+      galleryHeadline,
+      galleryText,
+      whyLabel,
+      whyHeadline,
+      ctaLabel,
+      ctaHeadline,
+      ctaText,
+      ctaButtonText,
       vibe,
+      pageBackground,
       blocks: blocks.filter((block) => block.type !== "bookNow"),
     };
 
@@ -350,6 +734,48 @@ const servicePills = useMemo(
       console.error("[starter_live_pages] save error:", error);
       alert(`Could not launch live page: ${error.message}`);
       return;
+    }
+
+    try {
+      await saveNotificationSettings(cleanSlug);
+    } catch (notificationError) {
+      console.error(
+        "[starter_notification_settings] launch save error:",
+        notificationError
+      );
+
+      alert(
+        notificationError instanceof Error
+          ? notificationError.message
+          : "Live Page was created, but request notification settings could not be saved."
+      );
+
+      return;
+    }
+
+    if (sourceSystemSlug) {
+      try {
+        const currentRaw = localStorage.getItem(
+          `hp-system:${sourceSystemSlug}`
+        );
+
+        const currentSystem = currentRaw
+          ? JSON.parse(currentRaw)
+          : {};
+
+        localStorage.setItem(
+          `hp-system:${sourceSystemSlug}`,
+          JSON.stringify({
+            ...currentSystem,
+            livePageSlug: cleanSlug,
+          })
+        );
+      } catch (error) {
+        console.error(
+          "[Build My System] Could not link Live Page:",
+          error
+        );
+      }
     }
 
     window.location.href = `/planet/starter/${cleanSlug}`;
@@ -462,8 +888,25 @@ const servicePills = useMemo(
       return (
         <div className="space-y-3">
           <p className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm leading-relaxed text-slate-400">
-            Add photos to the Live Photo Wall. The hero photo is controlled from the Photos card above.
+            Add photos to the Photo Gallery. The hero photo is controlled from Photos & Media above.
           </p>
+
+          {wallPhotos.length > 0 && (
+            <div className="grid grid-cols-2 gap-3">
+              {wallPhotos.map((photo, index) => (
+                <div key={`${photo}-${index}`} className="overflow-hidden rounded-2xl border border-white/10 bg-black/40">
+                  <img src={photo} alt={`Photo wall ${index + 1}`} className="h-32 w-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setWallPhotos((current) => current.filter((_, photoIndex) => photoIndex !== index))}
+                    className="w-full border-t border-white/10 px-3 py-2 text-xs font-bold text-rose-300 transition hover:bg-rose-500/10"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
 
           <label className="flex h-12 w-full cursor-pointer items-center justify-center rounded-2xl border border-dashed border-white/20 bg-black/30 text-sm font-semibold text-slate-300">
             Add Photos to Photo Wall
@@ -493,11 +936,11 @@ const servicePills = useMemo(
                 HomePlanet Creator
               </p>
               <h1 className="mt-4 text-4xl font-black leading-tight sm:text-5xl">
-                Launch your live page.
+                Build your live page.
               </h1>
               <p className="mt-5 max-w-xl text-base leading-relaxed text-slate-300">
-                Click a Live Block on the left or directly inside the preview.
-                Edit the words. HomePlanet protects the design.
+                Choose the look, add your business details, photos, and services.
+                HomePlanet handles the design while you control what customers see.
               </p>
             </div>
 
@@ -507,8 +950,8 @@ const servicePills = useMemo(
                   1
                 </div>
                 <div>
-                  <p className="font-semibold">Choose your vibe</p>
-                  <p className="text-sm text-slate-400">Pick the feel. The Live Blocks stay clean.</p>
+                  <p className="font-semibold">Page Style</p>
+                  <p className="text-sm text-slate-400">Choose your accent colors and page background.</p>
                 </div>
               </div>
 
@@ -529,16 +972,350 @@ const servicePills = useMemo(
                   </button>
                 ))}
               </div>
+              <div className="border-t border-white/10 pt-5">
+                <div className="mb-3">
+                  <p className="font-semibold">Page Background</p>
+                  <p className="mt-1 text-sm text-slate-400">
+                    Choose the page surface. Your theme colors stay the same.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {(Object.keys(backgroundChoices) as BackgroundKey[]).map((key) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setPageBackground(key)}
+                      className={`rounded-[1.25rem] border p-3 text-left transition ${
+                        pageBackground === key
+                          ? "border-white/40 bg-white/10 ring-1 ring-white/20"
+                          : "border-white/10 bg-black/30 hover:border-white/20"
+                      }`}
+                    >
+                      <div
+                        className={`flex h-16 items-end rounded-xl border p-3 ${backgroundChoices[key].preview}`}
+                      >
+                        <span className={`text-xs font-black ${backgroundChoices[key].sample}`}>
+                          Aa
+                        </span>
+                      </div>
+                      <p className="mt-2 text-sm font-semibold">
+                        {backgroundChoices[key].name}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4 rounded-[2rem] border border-white/10 bg-white/[0.04] p-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-lime-500 font-black text-black">
+                  2
+                </div>
+                <div>
+                  <p className="font-semibold">Business & Brand</p>
+                  <p className="text-sm text-slate-400">Add the core details customers need to know.</p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+
+                <div className="space-y-3 pb-2">
+                  <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+                    Business Details
+                  </p>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <input
+                      value={name}
+                      onChange={(event) => setName(event.target.value)}
+                      placeholder="Business name"
+                      className="h-12 w-full rounded-2xl border border-white/10 bg-black/40 px-4 text-sm outline-none"
+                    />
+
+                    <input
+                      value={city}
+                      onChange={(event) => setCity(event.target.value)}
+                      placeholder="City / service area"
+                      className="h-12 w-full rounded-2xl border border-white/10 bg-black/40 px-4 text-sm outline-none"
+                    />
+                  </div>
+
+                  <input
+                    value={service}
+                    onChange={(event) => setService(event.target.value)}
+                    placeholder="What does your business do?"
+                    className="h-12 w-full rounded-2xl border border-white/10 bg-black/40 px-4 text-sm outline-none"
+                  />
+
+                  <input
+                    value={phone}
+                    onChange={(event) => setPhone(event.target.value)}
+                    placeholder="Business phone"
+                    className="h-12 w-full rounded-2xl border border-white/10 bg-black/40 px-4 text-sm outline-none"
+                  />
+
+                  <div className="space-y-3 rounded-2xl border border-white/10 bg-black/25 p-4">
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+                        Request Notifications
+                      </p>
+
+                      <p className="mt-2 text-sm leading-6 text-slate-400">
+                        Choose where HomePlanet should send new customer requests.
+                      </p>
+                    </div>
+
+                    <input
+                      type="email"
+                      value={notificationEmail}
+                      onChange={(event) => setNotificationEmail(event.target.value)}
+                      placeholder="Notification email"
+                      className="h-12 w-full rounded-2xl border border-white/10 bg-black/40 px-4 text-sm outline-none"
+                    />
+
+                    <input
+                      value={notificationPhone}
+                      onChange={(event) => setNotificationPhone(event.target.value)}
+                      placeholder="Notification mobile number"
+                      className="h-12 w-full rounded-2xl border border-white/10 bg-black/40 px-4 text-sm outline-none"
+                    />
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                        <input
+                          type="checkbox"
+                          checked={emailAlertsEnabled}
+                          onChange={(event) =>
+                            setEmailAlertsEnabled(event.target.checked)
+                          }
+                        />
+                        <span className="text-sm font-bold text-white">
+                          Email alerts
+                        </span>
+                      </label>
+
+                      <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                        <input
+                          type="checkbox"
+                          checked={smsAlertsEnabled}
+                          onChange={(event) =>
+                            setSmsAlertsEnabled(event.target.checked)
+                          }
+                        />
+                        <span className="text-sm font-bold text-white">
+                          Text alerts
+                        </span>
+                      </label>
+                    </div>
+
+                    <p className="text-xs leading-5 text-slate-500">
+                      At least one notification method is required before launch.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+                      Live Page Address
+                    </p>
+
+                    <div className="flex items-center rounded-2xl border border-white/10 bg-black/40 px-4">
+                      <span className="shrink-0 text-xs text-slate-500">
+                        /planet/starter/
+                      </span>
+
+                      <input
+                        value={slug}
+                        onChange={(event) => setSlug(event.target.value)}
+                        placeholder="your-business-name"
+                        className="h-12 min-w-0 flex-1 bg-transparent px-2 text-sm outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-white/10 pt-4">
+                  <p className="mb-3 text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+                    Logo & Navigation
+                  </p>
+                </div>
+                {logoImage && (
+                  <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/30 p-3">
+                    <img src={logoImage} alt="Business logo preview" className="h-12 max-w-[180px] object-contain object-left" />
+                    <button type="button" onClick={() => setLogoImage("")} className="rounded-xl border border-red-400/20 px-3 py-2 text-xs font-bold text-red-200">
+                      Remove
+                    </button>
+                  </div>
+                )}
+
+                <label className="flex h-12 w-full cursor-pointer items-center justify-center rounded-2xl border border-dashed border-white/20 bg-black/30 text-sm font-semibold text-slate-300">
+                  Upload Business Logo
+                  <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
+                </label>
+
+                {footerLogoImage && (
+                  <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/30 p-3">
+                    <img src={footerLogoImage} alt="Footer logo preview" className="h-12 max-w-[180px] object-contain object-left" />
+                    <button type="button" onClick={() => setFooterLogoImage("")} className="rounded-xl border border-red-400/20 px-3 py-2 text-xs font-bold text-red-200">
+                      Remove
+                    </button>
+                  </div>
+                )}
+
+                <label className="flex h-12 w-full cursor-pointer items-center justify-center rounded-2xl border border-dashed border-white/20 bg-black/30 text-sm font-semibold text-slate-300">
+                  Upload Footer Logo
+                  <input type="file" accept="image/*" onChange={handleFooterLogoUpload} className="hidden" />
+                </label>
+
+                <input
+                  value={tagline}
+                  onChange={(event) => setTagline(event.target.value)}
+                  placeholder="Business tagline"
+                  className="h-12 w-full rounded-2xl border border-white/10 bg-black/40 px-4 text-sm outline-none"
+                />
+
+                <input
+                  value={headerButtonText}
+                  onChange={(event) => setHeaderButtonText(event.target.value)}
+                  placeholder="Header button text"
+                  className="h-12 w-full rounded-2xl border border-white/10 bg-black/40 px-4 text-sm outline-none"
+                />
+
+                <textarea
+                  value={footerMessage}
+                  onChange={(event) => setFooterMessage(event.target.value)}
+                  placeholder="Short footer message"
+                  className="min-h-[90px] w-full rounded-2xl border border-white/10 bg-black/40 p-4 text-sm outline-none"
+                />
+              </div>
+            </div>
+            <div className="space-y-5 rounded-[2rem] border border-white/10 bg-white/[0.04] p-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-500 text-sm font-black">
+                  3
+                </div>
+                <div>
+                  <p className="font-black text-white">Section Copy</p>
+                  <p className="text-xs text-slate-400">Control the words people see as they move down the page.</p>
+                </div>
+              </div>
+
+              <div className="space-y-3 border-t border-white/10 pt-5">
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Who We Are</p>
+                <input value={whoWeAreLabel} onChange={(event) => setWhoWeAreLabel(event.target.value)} placeholder="Small label" className="h-11 w-full rounded-xl border border-white/10 bg-black/40 px-4 text-sm outline-none" />
+                <input value={whoWeAreHeadline} onChange={(event) => setWhoWeAreHeadline(event.target.value)} placeholder="Headline" className="h-11 w-full rounded-xl border border-white/10 bg-black/40 px-4 text-sm outline-none" />
+                <textarea value={whoWeAre} onChange={(event) => setWhoWeAre(event.target.value)} placeholder="Supporting text" className="min-h-[100px] w-full rounded-xl border border-white/10 bg-black/40 p-4 text-sm outline-none" />
+              </div>
+
+              <div className="space-y-3 border-t border-white/10 pt-5">
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Services</p>
+                <input value={servicesLabel} onChange={(event) => setServicesLabel(event.target.value)} placeholder="Small label" className="h-11 w-full rounded-xl border border-white/10 bg-black/40 px-4 text-sm outline-none" />
+                <input value={servicesHeadline} onChange={(event) => setServicesHeadline(event.target.value)} placeholder="Headline" className="h-11 w-full rounded-xl border border-white/10 bg-black/40 px-4 text-sm outline-none" />
+                <textarea value={servicesIntro} onChange={(event) => setServicesIntro(event.target.value)} placeholder="Supporting text" className="min-h-[90px] w-full rounded-xl border border-white/10 bg-black/40 p-4 text-sm outline-none" />
+              </div>
+
+              <div className="space-y-3 border-t border-white/10 pt-5">
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Photo Gallery</p>
+                <input value={galleryLabel} onChange={(event) => setGalleryLabel(event.target.value)} placeholder="Small label" className="h-11 w-full rounded-xl border border-white/10 bg-black/40 px-4 text-sm outline-none" />
+                <input value={galleryHeadline} onChange={(event) => setGalleryHeadline(event.target.value)} placeholder="Headline" className="h-11 w-full rounded-xl border border-white/10 bg-black/40 px-4 text-sm outline-none" />
+                <textarea value={galleryText} onChange={(event) => setGalleryText(event.target.value)} placeholder="Supporting text" className="min-h-[90px] w-full rounded-xl border border-white/10 bg-black/40 p-4 text-sm outline-none" />
+              </div>
+
+              <div className="space-y-3 border-t border-white/10 pt-5">
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Why Us</p>
+                <input value={whyLabel} onChange={(event) => setWhyLabel(event.target.value)} placeholder="Small label" className="h-11 w-full rounded-xl border border-white/10 bg-black/40 px-4 text-sm outline-none" />
+                <textarea value={whyHeadline} onChange={(event) => setWhyHeadline(event.target.value)} placeholder="Headline" className="min-h-[80px] w-full rounded-xl border border-white/10 bg-black/40 p-4 text-sm outline-none" />
+              </div>
+
+              <div className="space-y-3 border-t border-white/10 pt-5">
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Final Call to Action</p>
+                <input value={ctaLabel} onChange={(event) => setCtaLabel(event.target.value)} placeholder="Small label" className="h-11 w-full rounded-xl border border-white/10 bg-black/40 px-4 text-sm outline-none" />
+                <textarea value={ctaHeadline} onChange={(event) => setCtaHeadline(event.target.value)} placeholder="Headline" className="min-h-[80px] w-full rounded-xl border border-white/10 bg-black/40 p-4 text-sm outline-none" />
+                <textarea value={ctaText} onChange={(event) => setCtaText(event.target.value)} placeholder="Supporting text" className="min-h-[80px] w-full rounded-xl border border-white/10 bg-black/40 p-4 text-sm outline-none" />
+                <input value={ctaButtonText} onChange={(event) => setCtaButtonText(event.target.value)} placeholder="Button text" className="h-11 w-full rounded-xl border border-white/10 bg-black/40 px-4 text-sm outline-none" />
+              </div>
+            </div>
+            <div className="space-y-3 rounded-[2rem] border border-white/10 bg-white/[0.04] p-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-500 font-black">
+                  4
+                </div>
+                <div>
+                  <p className="font-semibold">Photos & Media</p>
+                  <p className="text-sm text-slate-400">Add the images that tell the story of your business.</p>
+                </div>
+              </div>
+
+              <label className="flex h-12 w-full cursor-pointer items-center justify-center rounded-2xl border border-dashed border-white/20 bg-black/30 text-sm font-semibold text-slate-300">
+                Upload Hero Photo
+                <input type="file" accept="image/*" onChange={handleHeroUpload} className="hidden" />
+              </label>
+
+              <label className="flex h-12 w-full cursor-pointer items-center justify-center rounded-2xl border border-dashed border-white/20 bg-black/30 text-sm font-semibold text-slate-300">
+                Upload Who We Are Image
+                <input type="file" accept="image/*" onChange={handleWhoWeAreImageUpload} className="hidden" />
+              </label>
+
+              <label className="flex h-12 w-full cursor-pointer items-center justify-center rounded-2xl border border-dashed border-white/20 bg-black/30 text-sm font-semibold text-slate-300">
+                Upload Services Image
+                <input type="file" accept="image/*" onChange={handleServicesImageUpload} className="hidden" />
+              </label>
+
+              <label className="flex h-12 w-full cursor-pointer items-center justify-center rounded-2xl border border-dashed border-white/20 bg-black/30 text-sm font-semibold text-slate-300">
+                Upload Photo Wall
+                <input type="file" accept="image/*" multiple onChange={handleWallUpload} className="hidden" />
+              </label>
+            </div>
+
+            <div className="space-y-4 rounded-[2rem] border border-white/10 bg-white/[0.04] p-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-500 font-black text-black">
+                  5
+                </div>
+
+                <div>
+                  <p className="font-semibold">Services</p>
+                  <p className="text-sm text-slate-400">
+                    Add up to 6 featured services for the main page.
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <textarea
+                  value={servicesText}
+                  onChange={(event) => setServicesText(event.target.value)}
+                  rows={5}
+                  placeholder="Soft Washing, House Washing, Driveways, Patios"
+                  className="w-full rounded-2xl border border-white/10 bg-black/40 p-4 text-sm outline-none"
+                />
+
+                <p className="text-xs leading-relaxed text-slate-400">
+                  Separate each service with a comma. HomePlanet displays the first 6 and keeps the layout clean.
+                </p>
+
+                <div className="flex flex-wrap gap-2">
+                  {servicePills.map((item) => (
+                    <span
+                      key={item}
+                      className={`rounded-full border px-3 py-1.5 text-xs font-bold ${active.soft}`}
+                    >
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              </div>
             </div>
 
             <div className="space-y-4 rounded-[2rem] border border-white/10 bg-white/[0.04] p-5">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500 font-black">
-                  2
+                  6
                 </div>
                 <div>
-                  <p className="font-semibold">Live Blocks</p>
-                  <p className="text-sm text-slate-400">Click a block to edit it. Reorder anytime.</p>
+                  <p className="font-semibold">Page Sections</p>
+                  <p className="text-sm text-slate-400">Choose what appears on the page. Add, remove, or reorder sections.</p>
                 </div>
               </div>
 
@@ -582,47 +1359,57 @@ const servicePills = useMemo(
                   </button>
                 ))}
               </div>
+
+              {selectedBlock &&
+                ["pricingNote", "localNote", "paymentBlock", "livePhotoWall"].includes(selectedBlock.type) && (
+                  <div className="mt-5 border-t border-white/10 pt-5">
+                    <div className="mb-3">
+                      <p className="text-sm font-black text-white">
+                        {selectedBlock.label} Details
+                      </p>
+                      <p className="mt-1 text-xs leading-relaxed text-slate-400">
+                        These controls only apply to this section.
+                      </p>
+                    </div>
+
+                    {renderSettings()}
+                  </div>
+                )}
             </div>
-            <div className="space-y-3 rounded-[2rem] border border-white/10 bg-white/[0.04] p-5">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-500 font-black">
-                  P
-                </div>
-                <div>
-                  <p className="font-semibold">Photos</p>
-                  <p className="text-sm text-slate-400">Upload the hero photo and live photo wall.</p>
-                </div>
+
+
+
+            {sourceSystem?.livePageSlug ? (
+              <div className="space-y-3">
+                <button
+                  onClick={saveLivePageChanges}
+                  disabled={saveStatus === "saving"}
+                  className="flex h-14 w-full items-center justify-center rounded-[1.6rem] border border-white/15 bg-white/10 text-base font-black text-white disabled:cursor-wait disabled:opacity-70"
+                >
+                  {saveStatus === "saving"
+                    ? "Saving..."
+                    : saveStatus === "saved"
+                      ? "Saved"
+                      : "Save Changes"}
+                </button>
+
+                <a
+                  href={`/planet/starter/${sourceSystem.livePageSlug}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex h-14 w-full items-center justify-center rounded-[1.6rem] bg-white text-base font-black text-black"
+                >
+                  View Live Page
+                </a>
               </div>
-
-              <label className="flex h-12 w-full cursor-pointer items-center justify-center rounded-2xl border border-dashed border-white/20 bg-black/30 text-sm font-semibold text-slate-300">
-                Upload Hero Photo
-                <input type="file" accept="image/*" onChange={handleHeroUpload} className="hidden" />
-              </label>
-
-              <label className="flex h-12 w-full cursor-pointer items-center justify-center rounded-2xl border border-dashed border-white/20 bg-black/30 text-sm font-semibold text-slate-300">
-                Upload Photo Wall
-                <input type="file" accept="image/*" multiple onChange={handleWallUpload} className="hidden" />
-              </label>
-            </div>
-
-
-            <div className="space-y-4 rounded-[2rem] border border-white/10 bg-white/[0.04] p-5">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-500 font-black">
-                  3
-                </div>
-                <div>
-                  <p className="font-semibold">
-                    {selectedBlock ? `${selectedBlock.label} Settings` : "Live Block Settings"}
-                  </p>
-                  <p className="text-sm text-slate-400">Focused controls for the selected block.</p>
-                </div>
-              </div>
-
-              {renderSettings()}
-            </div>
-
-            <button onClick={launchLivePage} className="flex h-16 w-full items-center justify-center rounded-[1.6rem] bg-white text-lg font-black text-black">Launch Live Page</button>
+            ) : (
+              <button
+                onClick={launchLivePage}
+                className="flex h-16 w-full items-center justify-center rounded-[1.6rem] bg-white text-lg font-black text-black"
+              >
+                Launch Live Page
+              </button>
+            )}
           </div>
         </div>
 
@@ -635,7 +1422,7 @@ const servicePills = useMemo(
             <div className="p-4 sm:p-6">
               <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-[#07101d]">
                 <div className="relative overflow-hidden">
-                  <img src={heroPhoto} alt="Hero" className="h-[360px] w-full object-cover" />
+                  {heroPhoto ? (<img src={heroPhoto} alt="Hero" className="h-[360px] w-full object-cover" />) : (<div className="flex h-[360px] items-center justify-center bg-slate-950 px-6 text-center"><div><p className="text-xs font-black uppercase tracking-[0.24em] text-slate-500">Hero Photo</p><p className="mt-3 text-xl font-black text-white">Add a real photo of your business or work.</p></div></div>)}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-6">
                     <p className={`text-sm uppercase tracking-[0.3em] ${active.location}`}>{city}</p>
@@ -654,7 +1441,61 @@ const servicePills = useMemo(
                     </a>
                   </div>
 
-                  {blocks.map((block) => renderPreviewBlock(block))}
+                  <section className="rounded-[1.5rem] border border-white/10 bg-white/[0.05] p-5">
+                    <p className="text-xs font-black uppercase tracking-[0.25em] text-slate-500">Who We Are</p>
+                    {whoWeAreImage && (<img src={whoWeAreImage} alt="About the business" className="mt-4 h-48 w-full rounded-2xl object-cover" />)}
+                    <p className="mt-3 text-sm leading-relaxed text-slate-300">{whoWeAre}</p>
+                  </section>
+
+                  <section className="space-y-3">
+                    <div>
+                      <p className={`text-xs font-black uppercase tracking-[0.25em] ${active.location}`}>Services</p>
+                      <p className="mt-2 text-xl font-black text-white">How we can help</p>
+                      {servicesImage && (<img src={servicesImage} alt="Services" className="mt-4 h-48 w-full rounded-2xl object-cover" />)}
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {servicePills.map((item) => (
+                        <div key={item} className={`rounded-[1.4rem] border p-4 ${active.soft}`}>
+                          <p className={`font-black ${active.text}`}>{item}</p>
+                          <p className="mt-2 text-xs text-slate-400">Tap to ask about this service.</p>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+
+                  <section className={`rounded-[1.8rem] border p-5 ${active.soft}`}>
+                    <p className={`text-xs font-black uppercase tracking-[0.25em] ${active.location}`}>Ready to get started?</p>
+                    <p className="mt-3 text-2xl font-black text-white">Tell us what you need.</p>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-300">Send a quick message and we can take it from there.</p>
+                    <a href={`sms:${smsPhone}?&body=${requestBody}`} className="mt-5 flex h-14 w-full items-center justify-center rounded-2xl bg-white text-sm font-black text-black">
+                      Get a Quote
+                    </a>
+                  </section>
+
+                  {wallPhotos.length > 0 && (
+                    <section className="space-y-3">
+                      <div>
+                        <p className={`text-xs font-black uppercase tracking-[0.25em] ${active.location}`}>Our Work</p>
+                        <p className="mt-2 text-xl font-black text-white">Recent work</p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        {wallPhotos.map((image, index) => (
+                          <div key={`${image}-${index}`} className="overflow-hidden rounded-[1.4rem] border border-white/10 bg-black">
+                            <img src={image} alt="Recent work" className="h-44 w-full object-cover" />
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                  )}
+
+                  {localNoteText.trim() && (
+                    <section className="rounded-[1.5rem] border border-white/10 bg-white/[0.05] p-5">
+                      <p className="text-xs font-black uppercase tracking-[0.25em] text-slate-500">{localNoteTitle || "About Us"}</p>
+                      <p className="mt-3 text-sm leading-relaxed text-slate-300">{localNoteText}</p>
+                    </section>
+                  )}
 
                   <div className="mt-10 border-t border-white/10 pt-6 text-center">
                     <p className="text-xs uppercase tracking-[0.35em] text-slate-500">
@@ -677,6 +1518,7 @@ const servicePills = useMemo(
     </div>
   );
 }
+
 
 
 
