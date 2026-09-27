@@ -21,6 +21,13 @@ type StoredSystem = {
   livePageSlug?: string;
 };
 
+type StarterPageIdentity = {
+  name?: string;
+  service?: string;
+  city?: string;
+  phone?: string;
+};
+
 type StarterRequest = {
   id: string;
   created_at: string;
@@ -66,14 +73,21 @@ export default function SystemHomePage() {
     }
   }, [slug]);
 
-  const businessName =
-    system.businessName?.trim() || "Your HomePlanet System";
-
-  const businessType =
-    system.businessType?.trim() || "Business";
-
   const selectedIds = system.selectedModules ?? [];
   const livePageSlug = system.livePageSlug?.trim() || "";
+
+  const [starterIdentity, setStarterIdentity] =
+    useState<StarterPageIdentity | null>(null);
+
+  const businessName =
+    starterIdentity?.name?.trim() ||
+    system.businessName?.trim() ||
+    "Your HomePlanet System";
+
+  const businessType =
+    starterIdentity?.service?.trim() ||
+    system.businessType?.trim() ||
+    "Business";
 
   const [searchParams] = useSearchParams();
   const requestSlug = livePageSlug || slug;
@@ -119,6 +133,45 @@ export default function SystemHomePage() {
     groups[category].push(module);
     return groups;
   }, {});
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadStarterIdentity() {
+      if (!requestSlug) {
+        setStarterIdentity(null);
+        return;
+      }
+
+      const supabase = getSupabase();
+
+      const { data, error } = await supabase
+        .from("starter_live_pages")
+        .select("page_data")
+        .eq("slug", requestSlug)
+        .maybeSingle();
+
+      if (cancelled) return;
+
+      if (error) {
+        console.error("[starter_live_pages] identity load error:", error);
+        return;
+      }
+
+      const pageData =
+        data?.page_data && typeof data.page_data === "object"
+          ? (data.page_data as StarterPageIdentity)
+          : null;
+
+      setStarterIdentity(pageData);
+    }
+
+    void loadStarterIdentity();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [requestSlug]);
 
   const selectedRequest = useMemo(
     () =>
@@ -296,8 +349,11 @@ export default function SystemHomePage() {
             <div className="mt-6 flex flex-wrap gap-3">
               <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/20 px-4 py-2 text-sm font-black text-white/75">
                 <Layers3 size={15} className="text-emerald-300" />
-                {selectedModules.length} connected piece
-                {selectedModules.length === 1 ? "" : "s"}
+                {starterIdentity
+                  ? "Live Page connected"
+                  : `${selectedModules.length} connected piece${
+                      selectedModules.length === 1 ? "" : "s"
+                    }`}
               </div>
 
               <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/20 px-4 py-2 text-sm font-black text-white/75">
@@ -561,6 +617,8 @@ export default function SystemHomePage() {
           </section>
         ) : null}
 
+        {!starterIdentity ? (
+          <>
         <div className="mt-10">
           <p className="text-xs font-black uppercase tracking-[0.22em] text-emerald-300">
             Your System
@@ -664,6 +722,9 @@ export default function SystemHomePage() {
           </section>
         )}
 
+          </>
+        ) : null}
+
         <section className="mt-10 rounded-[2rem] border border-white/10 bg-white/[0.025] p-6 sm:p-7">
           <p className="text-xs font-black uppercase tracking-[0.2em] text-white/35">
             Built to grow
@@ -689,3 +750,4 @@ export default function SystemHomePage() {
     </main>
   );
 }
+
