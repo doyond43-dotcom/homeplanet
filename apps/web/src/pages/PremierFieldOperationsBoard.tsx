@@ -228,7 +228,7 @@ const jobs: FieldJob[] = [
     phase: "Service Call",
     materialEta: "Not needed yet",
     permit: "Not required",
-    scheduled: "Today · 3:30 PM",
+    scheduled: "Today ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· 3:30 PM",
     nextAction: "Diagnose leaking sliding door",
     customerTruth:
       "Customer reports water entering near the bottom track during heavy rain. Original installation was completed by Premier. Customer asked that Gio call before arrival.",
@@ -264,7 +264,7 @@ const jobs: FieldJob[] = [
     workType: "Service Call",
     serviceIssue:
       "Water entering near bottom track of rear sliding door during heavy rain.",
-    serviceAppointment: "Today · 3:30 PM",
+    serviceAppointment: "Today ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· 3:30 PM",
     status: "Service Calls",
   },
 ];
@@ -280,9 +280,257 @@ const lanes = [
   "Upcoming",
 ] as const;
 
+function FieldBeamComposer({ job }: { job: any }) {
+  const [recipient, setRecipient] = useState<string>("Angel");
+  const [body, setBody] = useState("");
+  const [sending, setSending] = useState(false);
+  const [listening, setListening] = useState(false);
+  const [error, setError] = useState("");
+
+  const startVoiceInput = () => {
+    if (listening) return;
+
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      setError("Speech-to-text is not supported in this browser.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onstart = () => {
+      setListening(true);
+      setError("");
+    };
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results?.[0]?.[0]?.transcript?.trim() || "";
+      if (!transcript) return;
+
+      setBody((current) =>
+        current.trim() ? `${current.trim()} ${transcript}` : transcript
+      );
+    };
+
+    recognition.onerror = () => {
+      setError("Could not capture voice message.");
+    };
+
+    recognition.onend = () => {
+      setListening(false);
+    };
+
+    recognition.start();
+  };
+
+  const sendBeam = async () => {
+    if (sending) return;
+
+    const message = body.trim();
+    if (!message || !job?.id) return;
+
+    const accessToken =
+      new URLSearchParams(window.location.search).get("access");
+
+    if (!accessToken) {
+      setError("Premier staff access token missing.");
+      return;
+    }
+
+    setSending(true);
+    setError("");
+
+    const { error: sendError } = await supabase.rpc(
+      "send_premier_beam_message",
+      {
+        p_access_token: accessToken,
+        p_job_id: job.id,
+        p_sender_role: "Field Ops",
+        p_recipient_role: recipient,
+        p_body: message,
+      }
+    );
+
+    if (sendError) {
+      console.error("Field Ops Beam send failed:", sendError);
+      setError(sendError.message || "Could not send Beam message.");
+      setSending(false);
+      return;
+    }
+
+    setBody("");
+    setSending(false);
+  };
+
+  return (
+    <div
+      style={{
+        border: "1px solid #78aa88",
+        borderRadius: 12,
+        background: "linear-gradient(135deg, #173225 0%, #101b16 100%)",
+        padding: 10,
+        marginBottom: 10,
+        boxShadow:
+          "0 0 0 1px rgba(139,184,154,0.08), 0 8px 24px rgba(0,0,0,0.18)",
+      }}
+    >
+      <div
+        style={{
+          color: "#9fd3ae",
+          fontSize: 10,
+          fontWeight: 900,
+          letterSpacing: 1,
+          textTransform: "uppercase",
+          marginBottom: 3,
+        }}
+      >
+        Beam Quick Message
+      </div>
+
+      <div
+        style={{
+          color: "#d9e5ee",
+          fontSize: 10,
+          fontWeight: 800,
+          marginBottom: 8,
+        }}
+      >
+        Fast job communication
+      </div>
+
+      <select
+        value={recipient}
+        onChange={(event) => setRecipient(event.target.value)}
+        style={{
+          width: "100%",
+          minHeight: 38,
+          border: "1px solid #477057",
+          borderRadius: 9,
+          background: "#0d1711",
+          color: "#e5eee8",
+          padding: "0 9px",
+          fontSize: 11,
+          fontWeight: 800,
+          marginBottom: 8,
+        }}
+      >
+        <option value="Darcy">Darcy</option>
+        <option value="Karolina">Karolina</option>
+        <option value="Gio Richardson">Gio Richardson</option>
+        <option value="Gino Marquez">Gino Marquez</option>
+        <option value="Dennis Dillon">Dennis Dillon</option>
+        <option value="RJ">RJ</option>
+        <option value="Angel">Angel</option>
+        <option value="Jose">Jose</option>
+        <option value="Obelio">Obelio</option>
+        <option value="Joseph">Joseph</option>
+      </select>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1fr) 46px",
+          gap: 8,
+        }}
+      >
+        <textarea
+          value={body}
+          onChange={(event) => setBody(event.target.value)}
+          placeholder={
+            listening
+              ? "Listening..."
+              : "Type or tap the mic and talk..."
+          }
+          rows={2}
+          style={{
+            width: "100%",
+            minHeight: 52,
+            boxSizing: "border-box",
+            resize: "vertical",
+            border: "1px solid #477057",
+            borderRadius: 9,
+            background: "#0d1711",
+            color: "#e5eee8",
+            padding: "9px 10px",
+            fontSize: 12,
+          }}
+        />
+
+        <button
+          type="button"
+          onClick={startVoiceInput}
+          disabled={listening}
+          title={listening ? "Listening..." : "Talk message"}
+          style={{
+            border: listening
+              ? "1px solid #d98778"
+              : "1px solid #8fbea0",
+            borderRadius: 9,
+            background: listening ? "#7a2d24" : "#2f6842",
+            color: "#ffffff",
+            fontSize: 20,
+            cursor: listening ? "wait" : "pointer",
+            boxShadow: listening
+              ? "0 0 0 2px rgba(217,135,120,0.18), 0 0 18px rgba(217,135,120,0.22)"
+              : "none",
+          }}
+        >
+          🎤
+        </button>
+      </div>
+
+      {error ? (
+        <div
+          style={{
+            color: "#d8b267",
+            fontSize: 10,
+            marginTop: 7,
+          }}
+        >
+          {error}
+        </div>
+      ) : null}
+
+      <button
+        type="button"
+        disabled={sending || !body.trim()}
+        onClick={() => void sendBeam()}
+        style={{
+          width: "100%",
+          minHeight: 38,
+          marginTop: 8,
+          border: "1px solid #8fbea0",
+          borderRadius: 9,
+          background: "#2f6842",
+          color: "#ffffff",
+          fontWeight: 900,
+          cursor: sending || !body.trim() ? "not-allowed" : "pointer",
+          opacity: sending || !body.trim() ? 0.55 : 1,
+        }}
+      >
+        {sending ? "Sending..." : `Send to ${recipient}`}
+      </button>
+    </div>
+  );
+}
+
 export default function PremierFieldOperationsBoard() {
   const [activeJobId, setActiveJobId] = useState("PW-1037");
   const [staffGreeting, setStaffGreeting] = useState<{ headline: string; detail: string } | null>(null);
+  const [fieldBeamMessages, setFieldBeamMessages] = useState<any[]>([]);
+  const [fieldBeamLoading, setFieldBeamLoading] = useState(false);
+  const [fieldBeamError, setFieldBeamError] = useState("");
+  const [fieldBeamReplyOpenId, setFieldBeamReplyOpenId] = useState<string | null>(null);
+  const [fieldBeamReplyBody, setFieldBeamReplyBody] = useState("");
+  const [fieldBeamReplySending, setFieldBeamReplySending] = useState(false);
+  const [fieldBeamReplyListening, setFieldBeamReplyListening] = useState(false);
+  const [fieldBeamReplyError, setFieldBeamReplyError] = useState("");
   const [crewChanges, setCrewChanges] = useState<Record<string, string>>({});
   const [scheduleChanges, setScheduleChanges] = useState<Record<string, string>>({});
   const [scheduleDrawerOpen, setScheduleDrawerOpen] = useState(false);
@@ -296,9 +544,24 @@ export default function PremierFieldOperationsBoard() {
   const [liveFinalMeasurementsLoading, setLiveFinalMeasurementsLoading] =
     useState(false);
 
+  const [activeFinalMeasureJobId, setActiveFinalMeasureJobId] =
+    useState<string | null>(null);
+  const [finalMeasureOpenings, setFinalMeasureOpenings] = useState<any[]>([]);
+  const [finalMeasureOpeningsLoading, setFinalMeasureOpeningsLoading] =
+    useState(false);
+  const [finalOpeningType, setFinalOpeningType] = useState("Window");
+  const [finalOpeningLocation, setFinalOpeningLocation] = useState("");
+  const [finalOpeningWidth, setFinalOpeningWidth] = useState("");
+  const [finalOpeningHeight, setFinalOpeningHeight] = useState("");
+  const [finalOpeningNotes, setFinalOpeningNotes] = useState("");
+  const [savingFinalOpening, setSavingFinalOpening] = useState(false);
+
   const [liveInstallations, setLiveInstallations] = useState<any[]>([]);
   const [liveInstallationsLoading, setLiveInstallationsLoading] =
     useState(false);
+  const [crewDrafts, setCrewDrafts] = useState<Record<string, string>>({});
+  const [crewSavingJobId, setCrewSavingJobId] = useState<string | null>(null);
+  const [crewSaveErrors, setCrewSaveErrors] = useState<Record<string, string>>({});
 
   const [liveInspections, setLiveInspections] = useState<any[]>([]);
   const [liveInspectionsLoading, setLiveInspectionsLoading] =
@@ -324,7 +587,7 @@ export default function PremierFieldOperationsBoard() {
       type: "Damage / Scratch",
       issue: "Remove scratches before final walkthrough.",
       reportedBy: "Installer",
-      reportedAt: "Aug 26 · 5:16 PM",
+      reportedAt: "Aug 26 ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· 5:16 PM",
       owner: null,
       status: "Reported",
     },
@@ -338,6 +601,92 @@ export default function PremierFieldOperationsBoard() {
     | "Permit Proof"
     | null
   >(null);
+
+  const loadFinalMeasureOpenings = async (jobId: string) => {
+    const accessToken = new URLSearchParams(window.location.search).get("access");
+
+    if (!accessToken) {
+      window.alert("Premier field access is missing.");
+      return;
+    }
+
+    setFinalMeasureOpeningsLoading(true);
+
+    const { data, error } = await supabase.rpc(
+      "get_premier_final_measurement_openings",
+      {
+        p_access_token: accessToken,
+        p_job_id: jobId,
+      }
+    );
+
+    if (error) {
+      console.error("Premier final measurement openings failed:", error);
+      window.alert("Could not load final measurements.");
+      setFinalMeasureOpenings([]);
+    } else {
+      setFinalMeasureOpenings(data ?? []);
+    }
+
+    setFinalMeasureOpeningsLoading(false);
+  };
+
+  const saveFinalMeasureOpening = async (jobId: string) => {
+    if (
+      !finalOpeningType ||
+      !finalOpeningLocation.trim() ||
+      !finalOpeningWidth.trim() ||
+      !finalOpeningHeight.trim()
+    ) {
+      window.alert("Enter type, location, width, and height.");
+      return;
+    }
+
+    const accessToken = new URLSearchParams(window.location.search).get("access");
+
+    if (!accessToken) {
+      window.alert("Premier field access is missing.");
+      return;
+    }
+
+    const nextOpeningNumber =
+      finalMeasureOpenings.reduce(
+        (highest, opening) =>
+          Math.max(highest, Number(opening.opening_number) || 0),
+        0
+      ) + 1;
+
+    setSavingFinalOpening(true);
+
+    const { error } = await supabase.rpc(
+      "save_premier_final_measurement_opening",
+      {
+        p_access_token: accessToken,
+        p_job_id: jobId,
+        p_opening_id: null,
+        p_opening_number: nextOpeningNumber,
+        p_opening_type: finalOpeningType,
+        p_location: finalOpeningLocation.trim(),
+        p_width_text: finalOpeningWidth.trim(),
+        p_height_text: finalOpeningHeight.trim(),
+        p_notes: finalOpeningNotes.trim(),
+      }
+    );
+
+    if (error) {
+      console.error("Premier final measurement opening save failed:", error);
+      window.alert("Could not save this final measurement opening.");
+      setSavingFinalOpening(false);
+      return;
+    }
+
+    setFinalOpeningWidth("");
+    setFinalOpeningHeight("");
+    setFinalOpeningNotes("");
+
+    await loadFinalMeasureOpenings(jobId);
+    setSavingFinalOpening(false);
+  };
 
   useEffect(() => {
     let active = true;
@@ -545,6 +894,176 @@ export default function PremierFieldOperationsBoard() {
     };
   }, []);
 
+  const loadFieldBeamInbox = async () => {
+    const accessToken =
+      new URLSearchParams(window.location.search).get("access");
+
+    if (!accessToken) {
+      setFieldBeamMessages([]);
+      return;
+    }
+
+    setFieldBeamLoading(true);
+    setFieldBeamError("");
+
+    const { data, error } = await supabase.rpc(
+      "get_premier_beam_inbox",
+      {
+        p_access_token: accessToken,
+      }
+    );
+
+    if (error) {
+      console.error("Premier Field Ops Beam inbox failed:", error);
+      setFieldBeamMessages([]);
+      setFieldBeamError("Could not load Beam.");
+    } else {
+      setFieldBeamMessages(data ?? []);
+    }
+
+    setFieldBeamLoading(false);
+  };
+
+  const markFieldBeamRead = async (messageId: string) => {
+    const accessToken =
+      new URLSearchParams(window.location.search).get("access");
+
+    if (!accessToken) return;
+
+    const { data, error } = await supabase.rpc(
+      "mark_my_premier_beam_read",
+      {
+        p_access_token: accessToken,
+        p_message_id: messageId,
+      }
+    );
+
+    if (error || data !== true) {
+      console.error("Field Ops Beam mark read failed:", error);
+      return;
+    }
+
+    setFieldBeamMessages((current) =>
+      current.filter((message) => message.id !== messageId)
+    );
+  };
+
+  const startFieldBeamReplyVoiceInput = () => {
+    if (fieldBeamReplyListening) return;
+
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      setFieldBeamReplyError(
+        "Speech-to-text is not supported in this browser."
+      );
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onstart = () => {
+      setFieldBeamReplyListening(true);
+      setFieldBeamReplyError("");
+    };
+
+    recognition.onresult = (event: any) => {
+      const transcript =
+        event.results?.[0]?.[0]?.transcript?.trim() || "";
+
+      if (!transcript) return;
+
+      setFieldBeamReplyBody((current) =>
+        current.trim()
+          ? `${current.trim()} ${transcript}`
+          : transcript
+      );
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("Field Ops Beam speech recognition failed:", event);
+      setFieldBeamReplyError("Could not capture voice message.");
+    };
+
+    recognition.onend = () => {
+      setFieldBeamReplyListening(false);
+    };
+
+    recognition.start();
+  };
+
+  const sendFieldBeamReply = async (message: any) => {
+    if (fieldBeamReplySending) return;
+
+    const body = fieldBeamReplyBody.trim();
+    if (!body) return;
+
+    const recipient = String(message?.sender_label || "").trim();
+    const allowedRecipients = [
+      "Darcy",
+      "Karolina",
+      "Gio Richardson",
+      "Gino Marquez",
+      "Dennis Dillon",
+      "RJ",
+      "Angel",
+      "Jose",
+      "Obelio",
+      "Joseph",
+    ];
+
+    if (!allowedRecipients.includes(recipient)) {
+      setFieldBeamReplyError(
+        "This Beam does not contain a replyable staff identity."
+      );
+      return;
+    }
+
+    const accessToken =
+      new URLSearchParams(window.location.search).get("access");
+
+    if (!accessToken) {
+      setFieldBeamReplyError("Premier staff access token missing.");
+      return;
+    }
+
+    setFieldBeamReplySending(true);
+    setFieldBeamReplyError("");
+
+    const { error } = await supabase.rpc(
+      "send_premier_beam_message",
+      {
+        p_access_token: accessToken,
+        p_job_id: message.job_id,
+        p_sender_role: "Field Ops",
+        p_recipient_role: recipient,
+        p_body: body,
+      }
+    );
+
+    if (error) {
+      console.error("Field Ops Beam reply failed:", error);
+      setFieldBeamReplyError(
+        error.message || "Could not send Beam reply."
+      );
+      setFieldBeamReplySending(false);
+      return;
+    }
+
+    setFieldBeamReplyBody("");
+    setFieldBeamReplyOpenId(null);
+    setFieldBeamReplySending(false);
+  };
+
+  useEffect(() => {
+    void loadFieldBeamInbox();
+  }, []);
+
   return (
     <div
       style={{
@@ -625,6 +1144,376 @@ export default function PremierFieldOperationsBoard() {
           </p>
         </header>
 
+        {fieldBeamMessages.some((message) => !message.read_at) ? (
+          <section
+            style={{
+              border: "1px solid #78aa88",
+              borderRadius: 16,
+              background:
+                "linear-gradient(135deg, #173225 0%, #101b16 100%)",
+              padding: 12,
+              marginBottom: 14,
+              boxShadow:
+                "0 0 0 1px rgba(139,184,154,0.08), 0 8px 24px rgba(0,0,0,0.18)",
+            }}
+          >
+            {(() => {
+              const message =
+                fieldBeamMessages.find((item) => !item.read_at) ?? null;
+
+              if (!message) return null;
+
+              return (
+                <>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      gap: 10,
+                      alignItems: "flex-start",
+                    }}
+                  >
+                    <div>
+                      <div
+                        style={{
+                          color: "#9fd3ae",
+                          fontSize: 10,
+                          fontWeight: 900,
+                          letterSpacing: 1,
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        Beam • New Message
+                      </div>
+
+                      <div
+                        style={{
+                          color: "#ffffff",
+                          fontSize: 14,
+                          fontWeight: 900,
+                          marginTop: 4,
+                        }}
+                      >
+                        {message.first_name} {message.last_name}
+                      </div>
+
+                      <div
+                        style={{
+                          color: "#91a59a",
+                          fontSize: 10,
+                          marginTop: 2,
+                        }}
+                      >
+                        {message.project_address}
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        color: "#9fd3ae",
+                        fontSize: 10,
+                        fontWeight: 800,
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      For you
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      marginTop: 8,
+                      color: "#8fb49b",
+                      fontSize: 10,
+                      fontWeight: 800,
+                    }}
+                  >
+                    From {message.sender_label}
+                  </div>
+
+                  <div
+                    style={{
+                      marginTop: 8,
+                      border: "1px solid #294a36",
+                      borderRadius: 10,
+                      background: "#0d1711",
+                      padding: 10,
+                      color: "#e5eee8",
+                      fontSize: 12,
+                      lineHeight: 1.45,
+                    }}
+                  >
+                    {message.body}
+                  </div>
+
+                  {fieldBeamReplyOpenId === message.id ? (
+                    <div
+                      style={{
+                        marginTop: 10,
+                        border: "1px solid #31533c",
+                        borderRadius: 10,
+                        background: "#101a13",
+                        padding: 10,
+                      }}
+                    >
+                      <div
+                        style={{
+                          color: "#9fd3ae",
+                          fontSize: 9,
+                          fontWeight: 900,
+                          letterSpacing: 0.8,
+                          textTransform: "uppercase",
+                          marginBottom: 7,
+                        }}
+                      >
+                        Reply to {message.sender_label}
+                      </div>
+
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "minmax(0, 1fr) 46px",
+                          gap: 8,
+                        }}
+                      >
+                        <textarea
+                          value={fieldBeamReplyBody}
+                          onChange={(event) =>
+                            setFieldBeamReplyBody(event.target.value)
+                          }
+                          placeholder={
+                            fieldBeamReplyListening
+                              ? "Listening..."
+                              : "Type or tap the mic and talk..."
+                          }
+                          rows={2}
+                          style={{
+                            width: "100%",
+                            minHeight: 54,
+                            boxSizing: "border-box",
+                            resize: "vertical",
+                            border: "1px solid #477057",
+                            borderRadius: 9,
+                            background: "#0d1711",
+                            color: "#e5eee8",
+                            padding: "9px 10px",
+                            fontSize: 12,
+                          }}
+                        />
+
+                        <button
+                          type="button"
+                          onClick={startFieldBeamReplyVoiceInput}
+                          disabled={fieldBeamReplyListening}
+                          title={
+                            fieldBeamReplyListening
+                              ? "Listening..."
+                              : "Talk message"
+                          }
+                          aria-label={
+                            fieldBeamReplyListening
+                              ? "Listening..."
+                              : "Talk message"
+                          }
+                          style={{
+                            minHeight: 54,
+                            border: fieldBeamReplyListening
+                              ? "1px solid #d98778"
+                              : "1px solid #8fbea0",
+                            borderRadius: 9,
+                            background: fieldBeamReplyListening
+                              ? "#7a2d24"
+                              : "#2f6842",
+                            color: "#ffffff",
+                            fontSize: 20,
+                            cursor: fieldBeamReplyListening
+                              ? "wait"
+                              : "pointer",
+                            boxShadow: fieldBeamReplyListening
+                              ? "0 0 0 2px rgba(217,135,120,0.18), 0 0 18px rgba(217,135,120,0.22)"
+                              : "none",
+                            transition: "all 160ms ease",
+                          }}
+                        >
+                          🎤
+                        </button>
+                      </div>
+
+                      {fieldBeamReplyError ? (
+                        <div
+                          style={{
+                            color: "#d8b267",
+                            fontSize: 10,
+                            marginTop: 7,
+                          }}
+                        >
+                          {fieldBeamReplyError}
+                        </div>
+                      ) : null}
+
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1fr auto",
+                          gap: 8,
+                          marginTop: 8,
+                        }}
+                      >
+                        <button
+                          type="button"
+                          disabled={
+                            fieldBeamReplySending ||
+                            !fieldBeamReplyBody.trim()
+                          }
+                          onClick={() => void sendFieldBeamReply(message)}
+                          style={{
+                            minHeight: 38,
+                            border: "1px solid #8fbea0",
+                            borderRadius: 9,
+                            background: "#2f6842",
+                            color: "#ffffff",
+                            fontWeight: 900,
+                            cursor:
+                              fieldBeamReplySending ||
+                              !fieldBeamReplyBody.trim()
+                                ? "not-allowed"
+                                : "pointer",
+                            opacity:
+                              fieldBeamReplySending ||
+                              !fieldBeamReplyBody.trim()
+                                ? 0.55
+                                : 1,
+                          }}
+                        >
+                          {fieldBeamReplySending
+                            ? "Sending..."
+                            : `Send to ${message.sender_label}`}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFieldBeamReplyOpenId(null);
+                            setFieldBeamReplyBody("");
+                            setFieldBeamReplyError("");
+                          }}
+                          style={{
+                            minHeight: 38,
+                            border: "1px solid #477057",
+                            borderRadius: 9,
+                            background: "#102018",
+                            color: "#cce8d4",
+                            padding: "0 12px",
+                            fontWeight: 800,
+                            cursor: "pointer",
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      gap: 8,
+                      alignItems: "center",
+                      marginTop: 9,
+                    }}
+                  >
+                    <div
+                      style={{
+                        color: "#71887a",
+                        fontSize: 9,
+                      }}
+                    >
+                      {new Date(message.created_at).toLocaleString()}
+                    </div>
+
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: 6,
+                        alignItems: "center",
+                      }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const nextOpen =
+                            fieldBeamReplyOpenId === message.id
+                              ? null
+                              : message.id;
+
+                          setFieldBeamReplyOpenId(nextOpen);
+                          setFieldBeamReplyBody("");
+                          setFieldBeamReplyError("");
+                        }}
+                        style={{
+                          minHeight: 34,
+                          border: "1px solid #78aa88",
+                          borderRadius: 9,
+                          background: "#173225",
+                          color: "#cce8d4",
+                          padding: "0 12px",
+                          fontSize: 10,
+                          fontWeight: 900,
+                          cursor: "pointer",
+                        }}
+                      >
+                        {fieldBeamReplyOpenId === message.id
+                          ? "Close Reply"
+                          : "Reply"}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => void markFieldBeamRead(message.id)}
+                        style={{
+                          minHeight: 34,
+                          border: "1px solid #78aa88",
+                          borderRadius: 9,
+                          background: "#2f6842",
+                          color: "#ffffff",
+                          padding: "0 12px",
+                          fontSize: 10,
+                          fontWeight: 900,
+                          cursor: "pointer",
+                        }}
+                      >
+                        Mark Read
+                      </button>
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
+          </section>
+        ) : fieldBeamLoading ? (
+          <div
+            style={{
+              color: "#71887a",
+              fontSize: 10,
+              marginBottom: 10,
+            }}
+          >
+            Loading Beam...
+          </div>
+        ) : fieldBeamError ? (
+          <div
+            style={{
+              color: "#d8b267",
+              fontSize: 10,
+              marginBottom: 10,
+            }}
+          >
+            {fieldBeamError}
+          </div>
+        ) : null}
+
+
         <section
           style={{
             border: "1px solid #31495a",
@@ -698,7 +1587,7 @@ export default function PremierFieldOperationsBoard() {
                 padding: "8px 0",
               }}
             >
-              No final measurements assigned to Gio right now.
+              No final measurements assigned to Field Operations right now.
             </div>
           ) : (
             <div style={{ display: "grid", gap: 9 }}>
@@ -712,6 +1601,8 @@ export default function PremierFieldOperationsBoard() {
                     padding: 12,
                   }}
                 >
+                    <FieldBeamComposer job={job} />
+
                   <div
                     style={{
                       display: "flex",
@@ -789,6 +1680,314 @@ export default function PremierFieldOperationsBoard() {
                     {job.next_action ||
                       "Complete final detailed measurement."}
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (activeFinalMeasureJobId === job.id) {
+                        setActiveFinalMeasureJobId(null);
+                        return;
+                      }
+
+                      setActiveFinalMeasureJobId(job.id);
+                      setFinalOpeningLocation("");
+                      setFinalOpeningWidth("");
+                      setFinalOpeningHeight("");
+                      setFinalOpeningNotes("");
+                      await loadFinalMeasureOpenings(job.id);
+                    }}
+                    style={{
+                      width: "100%",
+                      minHeight: 46,
+                      marginTop: 10,
+                      borderRadius: 10,
+                      border: "1px solid #58788e",
+                      background: "#1a2a36",
+                      color: "#ffffff",
+                      fontWeight: 900,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {activeFinalMeasureJobId === job.id
+                      ? "Close Final Measurement"
+                      : "Open Final Measurement"}
+                  </button>
+
+                  {activeFinalMeasureJobId === job.id ? (
+                    <div
+                      style={{
+                        marginTop: 10,
+                        padding: 12,
+                        border: "1px solid #31495a",
+                        borderRadius: 12,
+                        background: "#0d1318",
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 900,
+                          color: "#9db7ca",
+                          textTransform: "uppercase",
+                          letterSpacing: 0.8,
+                          marginBottom: 8,
+                        }}
+                      >
+                        Final Detailed Measurements
+                      </div>
+
+                      {finalMeasureOpeningsLoading ? (
+                        <div style={{ color: "#8fa0ad", fontSize: 12 }}>
+                          Loading saved openings...
+                        </div>
+                      ) : finalMeasureOpenings.length > 0 ? (
+                        <div style={{ display: "grid", gap: 7, marginBottom: 12 }}>
+                          {finalMeasureOpenings.map((opening) => (
+                            <div
+                              key={opening.id}
+                              style={{
+                                border: "1px solid #26323a",
+                                borderRadius: 9,
+                                padding: 9,
+                                background: "#111820",
+                              }}
+                            >
+                              <strong style={{ fontSize: 12 }}>
+                                Opening {opening.opening_number} Â·{" "}
+                                {opening.opening_type}
+                              </strong>
+
+                              <div
+                                style={{
+                                  color: "#9ca8b2",
+                                  fontSize: 11,
+                                  marginTop: 3,
+                                }}
+                              >
+                                {opening.location}
+                              </div>
+
+                              <div
+                                style={{
+                                  color: "#d9e5ee",
+                                  fontSize: 13,
+                                  fontWeight: 800,
+                                  marginTop: 4,
+                                }}
+                              >
+                                {opening.width_text} Ã— {opening.height_text}
+                              </div>
+
+                              {opening.notes ? (
+                                <div
+                                  style={{
+                                    color: "#8fa0ad",
+                                    fontSize: 11,
+                                    marginTop: 4,
+                                  }}
+                                >
+                                  {opening.notes}
+                                </div>
+                              ) : null}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div
+                          style={{
+                            color: "#8fa0ad",
+                            fontSize: 11,
+                            marginBottom: 10,
+                          }}
+                        >
+                          No final openings saved yet.
+                        </div>
+                      )}
+
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                          gap: 8,
+                        }}
+                      >
+                        <select
+                          value={finalOpeningType}
+                          onChange={(event) => setFinalOpeningType(event.target.value)}
+                          style={{
+                            minHeight: 42,
+                            borderRadius: 9,
+                            border: "1px solid #31495a",
+                            background: "#101820",
+                            color: "#d9e5ee",
+                            padding: "0 9px",
+                          }}
+                        >
+                          <option>Window</option>
+                          <option>Door</option>
+                          <option>Sliding Door</option>
+                          <option>Other</option>
+                        </select>
+
+                        <input
+                          value={finalOpeningLocation}
+                          onChange={(event) =>
+                            setFinalOpeningLocation(event.target.value)
+                          }
+                          placeholder="Location"
+                          style={{
+                            minHeight: 42,
+                            borderRadius: 9,
+                            border: "1px solid #31495a",
+                            background: "#101820",
+                            color: "#d9e5ee",
+                            padding: "0 9px",
+                          }}
+                        />
+
+                        <input
+                          value={finalOpeningWidth}
+                          onChange={(event) => setFinalOpeningWidth(event.target.value)}
+                          placeholder="Width"
+                          style={{
+                            minHeight: 42,
+                            borderRadius: 9,
+                            border: "1px solid #31495a",
+                            background: "#101820",
+                            color: "#d9e5ee",
+                            padding: "0 9px",
+                          }}
+                        />
+
+                        <input
+                          value={finalOpeningHeight}
+                          onChange={(event) => setFinalOpeningHeight(event.target.value)}
+                          placeholder="Height"
+                          style={{
+                            minHeight: 42,
+                            borderRadius: 9,
+                            border: "1px solid #31495a",
+                            background: "#101820",
+                            color: "#d9e5ee",
+                            padding: "0 9px",
+                          }}
+                        />
+                      </div>
+
+                      <textarea
+                        value={finalOpeningNotes}
+                        onChange={(event) => setFinalOpeningNotes(event.target.value)}
+                        placeholder="Notes"
+                        rows={3}
+                        style={{
+                          width: "100%",
+                          marginTop: 8,
+                          borderRadius: 9,
+                          border: "1px solid #31495a",
+                          background: "#101820",
+                          color: "#d9e5ee",
+                          padding: 9,
+                          resize: "vertical",
+                          boxSizing: "border-box",
+                        }}
+                      />
+
+                      <button
+                        type="button"
+                        disabled={savingFinalOpening}
+                        onClick={() => void saveFinalMeasureOpening(job.id)}
+                        style={{
+                          width: "100%",
+                          minHeight: 46,
+                          marginTop: 8,
+                          borderRadius: 10,
+                          border: "1px solid #6f91a7",
+                          background: "#213543",
+                          color: "#ffffff",
+                          fontWeight: 900,
+                          cursor: savingFinalOpening ? "wait" : "pointer",
+                        }}
+                      >
+                        {savingFinalOpening
+                          ? "Saving..."
+                          : `Save Opening ${
+                              finalMeasureOpenings.reduce(
+                                (highest, opening) =>
+                                  Math.max(
+                                    highest,
+                                    Number(opening.opening_number) || 0
+                                  ),
+                                0
+                              ) + 1
+                            }`}
+                      </button>
+                    </div>
+                  ) : null}
+
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const accessToken = new URLSearchParams(
+                        window.location.search
+                      ).get("access");
+
+                      if (!accessToken) {
+                        window.alert("Premier field access is missing.");
+                        return;
+                      }
+
+                      if (
+                        activeFinalMeasureJobId !== job.id ||
+                        finalMeasureOpenings.length === 0
+                      ) {
+                        window.alert(
+                          "Save at least one final measurement opening before completing this step."
+                        );
+                        return;
+                      }
+
+                      const { data, error } = await supabase.rpc(
+                        "save_premier_final_measurement",
+                        {
+                          p_access_token: accessToken,
+                          p_job_id: job.id,
+                          p_status: "complete",
+                          p_scheduled_for: job.scheduled_for || null,
+                          p_assigned_to: job.assigned_to || null,
+                          p_completed_at: new Date().toISOString(),
+                          p_note: job.note || "Final detailed measurement completed.",
+                        }
+                      );
+
+                      if (error || data !== true) {
+                        console.error(
+                          "Premier field final measurement completion failed:",
+                          error
+                        );
+                        window.alert(
+                          "Could not complete the final measurement. Please try again."
+                        );
+                        return;
+                      }
+
+                      setLiveFinalMeasurements((current) =>
+                        current.filter((item) => item.id !== job.id)
+                      );
+                    }}
+                    style={{
+                      width: "100%",
+                      minHeight: 46,
+                      marginTop: 10,
+                      borderRadius: 10,
+                      border: "1px solid #557c64",
+                      background: "#16232d",
+                      color: "#d9e5ee",
+                      fontWeight: 900,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Complete Final Measurement
+                  </button>
                 </div>
               ))}
             </div>
@@ -810,13 +2009,122 @@ export default function PremierFieldOperationsBoard() {
               <div style={{ display: "grid", gap: 9 }}>
                 {liveInstallations.map((job) => (
                   <div key={job.id} style={{ border: "1px solid #557c64", borderRadius: 13, background: "#111820", padding: 12 }}>
+                    <FieldBeamComposer job={job} />
+
                     <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginBottom: 6 }}>
                       <strong>{job.first_name} {job.last_name}</strong>
                       <span style={{ color: "#b7dec4", fontSize: 10, fontWeight: 900, textTransform: "uppercase" }}>Scheduled</span>
                     </div>
                     <div style={{ color: "#9ca8b2", fontSize: 12, marginBottom: 8 }}>{job.project_address}</div>
                     <div style={{ display: "grid", gap: 4, fontSize: 12, color: "#d7dde2" }}>
-                      <div><strong>Crew:</strong> {job.crew || "Not assigned"}</div>
+                      <div style={{ display: "grid", gap: 6 }}>
+                        <strong>Crew:</strong>
+                        <select
+                          value={crewDrafts[job.id] ?? job.crew ?? ""}
+                          disabled={crewSavingJobId === job.id}
+                          onChange={async (event) => {
+                            const nextCrew = event.target.value;
+                            if (!nextCrew || nextCrew === job.crew) return;
+
+                            const previousCrew = job.crew || "";
+                            const accessToken =
+                              new URLSearchParams(window.location.search).get("access");
+
+                            setCrewDrafts((current) => ({
+                              ...current,
+                              [job.id]: nextCrew,
+                            }));
+
+                            setCrewSaveErrors((current) => ({
+                              ...current,
+                              [job.id]: "",
+                            }));
+
+                            if (!accessToken) {
+                              setCrewDrafts((current) => ({
+                                ...current,
+                                [job.id]: previousCrew,
+                              }));
+                              setCrewSaveErrors((current) => ({
+                                ...current,
+                                [job.id]: "Premier staff access is missing.",
+                              }));
+                              return;
+                            }
+
+                            setCrewSavingJobId(job.id);
+
+                            const { data, error } = await supabase.rpc(
+                              "reassign_premier_install_crew",
+                              {
+                                p_access_token: accessToken,
+                                p_job_id: job.id,
+                                p_crew: nextCrew,
+                              }
+                            );
+
+                            if (error || data !== true) {
+                              console.error("Premier field crew reassignment failed:", error);
+
+                              setCrewDrafts((current) => ({
+                                ...current,
+                                [job.id]: previousCrew,
+                              }));
+
+                              setCrewSaveErrors((current) => ({
+                                ...current,
+                                [job.id]: "Could not reassign crew.",
+                              }));
+
+                              setCrewSavingJobId(null);
+                              return;
+                            }
+
+                            setLiveInstallations((current) =>
+                              current.map((item) =>
+                                item.id === job.id
+                                  ? { ...item, crew: nextCrew }
+                                  : item
+                              )
+                            );
+
+                            setCrewDrafts((current) => {
+                              const next = { ...current };
+                              delete next[job.id];
+                              return next;
+                            });
+
+                            setCrewSavingJobId(null);
+                          }}
+                          style={{
+                            width: "100%",
+                            minHeight: 42,
+                            border: "1px solid #31495a",
+                            borderRadius: 9,
+                            background: "#0c1116",
+                            color: "#f3f6f8",
+                            padding: "0 10px",
+                            fontWeight: 700,
+                          }}
+                        >
+                          <option value="">Choose crew</option>
+                          <option value="RJ">RJ</option>
+                          <option value="Exquisite Windows & Doors — Angel">Exquisite Windows & Doors — Angel</option>
+                          <option value="Riveras Impact Windows and Doors — Jose">Riveras Impact Windows and Doors — Jose</option>
+                          <option value="OGR Windows and Doors — Obelio">OGR Windows and Doors — Obelio</option>
+                          <option value="Elite Impact Solutions — Joseph">Elite Impact Solutions — Joseph</option>
+                        </select>
+
+                        {crewSavingJobId === job.id ? (
+                          <span style={{ color: "#8fa9bc", fontSize: 11 }}>
+                            Saving crew assignment...
+                          </span>
+                        ) : crewSaveErrors[job.id] ? (
+                          <span style={{ color: "#d8a0a0", fontSize: 11 }}>
+                            {crewSaveErrors[job.id]}
+                          </span>
+                        ) : null}
+                      </div>
                       <div><strong>Install:</strong> {job.scheduled_for ? new Date(job.scheduled_for).toLocaleString() : "Not scheduled"}</div>
                       <div><strong>Material:</strong> {job.material_status || "Unknown"}</div>
                       <div><strong>Permit:</strong> {job.permit_status || "Unknown"}</div>
@@ -914,6 +2222,8 @@ export default function PremierFieldOperationsBoard() {
                       padding: 12,
                     }}
                   >
+                    <FieldBeamComposer job={job} />
+
                     <div
                       style={{
                         display: "flex",
@@ -1034,1700 +2344,6 @@ export default function PremierFieldOperationsBoard() {
           </div>
         </section>
 
-        <div
-          style={{
-            display: "flex",
-            gap: 9,
-            overflowX: "auto",
-            paddingBottom: 10,
-            marginBottom: 16,
-          }}
-        >
-          {lanes.map((lane) => {
-            const count =
-              lane === "Punch-Out / Needs Attention"
-                ? punchOuts.filter((item) => item.status !== "Resolved").length
-                : jobs.filter((job) => job.status === lane).length;
-
-            return (
-              <div
-                key={lane}
-                style={{
-                  minWidth: 150,
-                  border: "1px solid #26323a",
-                  borderRadius: 13,
-                  background: "#101419",
-                  padding: "11px 13px",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: 11,
-                    color: "#969fa6",
-                    marginBottom: 4,
-                  }}
-                >
-                  {lane}
-                </div>
-                <strong style={{ fontSize: 21 }}>{count}</strong>
-              </div>
-            );
-          })}
-        </div>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "minmax(0, 420px) minmax(0, 1fr)",
-            gap: 16,
-            alignItems: "start",
-          }}
-          className="field-layout"
-        >
-          <div style={{ display: "grid", gap: 10 }}>
-            {jobs.map((job) => {
-              const crew = crewChanges[job.id] ?? job.crew;
-              const schedule = scheduleChanges[job.id] ?? job.scheduled;
-              const openPunchOutCount = punchOuts.filter(
-                (item) => item.jobId === job.id && item.status !== "Resolved"
-              ).length;
-
-              return (
-                <button
-                  key={job.id}
-                  type="button"
-                  onClick={() => setActiveJobId(job.id)}
-                  style={{
-                    width: "100%",
-                    textAlign: "left",
-                    border:
-                      activeJobId === job.id
-                        ? "1px solid #87a9c0"
-                        : "1px solid #252f36",
-                    borderRadius: 16,
-                    background:
-                      activeJobId === job.id ? "#111820" : "#101419",
-                    color: "#fff",
-                    padding: 15,
-                    cursor: "pointer",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      gap: 10,
-                      marginBottom: 7,
-                    }}
-                  >
-                    <strong>{job.customer}</strong>
-                    <span
-                      style={{
-                        fontSize: 11,
-                        color: "#a9bfce",
-                        fontWeight: 800,
-                      }}
-                    >
-                      {openPunchOutCount > 0 ? "Needs Attention" : job.status}
-                    </span>
-                  </div>
-
-                  <div
-                    style={{
-                      color: "#9fa8af",
-                      fontSize: 12,
-                      marginBottom: 10,
-                    }}
-                  >
-                    {job.address}
-                  </div>
-
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr",
-                      gap: 7,
-                      fontSize: 12,
-                    }}
-                  >
-                    <div>
-                      <strong>Crew:</strong> {crew}
-                    </div>
-                    <div>
-                      <strong>Phase:</strong> {job.phase}
-                    </div>
-                    <div>
-                      <strong>ETA:</strong> {job.materialEta}
-                    </div>
-                    <div>
-                      <strong>Schedule:</strong> {schedule}
-                    </div>
-                  </div>
-
-                  <div
-                    style={{
-                      borderTop: "1px solid #29323a",
-                      marginTop: 11,
-                      paddingTop: 10,
-                      color: "#d7dde2",
-                      fontSize: 12,
-                    }}
-                  >
-                    <span style={{ color: "#8fa9bc" }}>Next:</span>{" "}
-                    {openPunchOutCount > 0
-                      ? `Clear ${openPunchOutCount} punch-out item${
-                          openPunchOutCount === 1 ? "" : "s"
-                        }`
-                      : job.nextAction}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-
-          <div
-            style={{
-              border: "1px solid #28343d",
-              borderRadius: 20,
-              background: "#0d1115",
-              padding: 17,
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                gap: 14,
-                alignItems: "flex-start",
-                marginBottom: 16,
-              }}
-            >
-              <div>
-                <div
-                  style={{
-                    color: "#8fa9bc",
-                    fontSize: 11,
-                    fontWeight: 900,
-                    marginBottom: 5,
-                  }}
-                >
-                  {activeJob.id}
-                </div>
-
-                <h2
-                  style={{
-                    margin: 0,
-                    fontSize: 28,
-                    lineHeight: 1.05,
-                  }}
-                >
-                  {activeJob.customer}
-                </h2>
-
-                <div
-                  style={{
-                    color: "#a5aeb5",
-                    fontSize: 13,
-                    marginTop: 5,
-                  }}
-                >
-                  {activeJob.address}
-                </div>
-              </div>
-
-              <span
-                style={{
-                  border: "1px solid #31495a",
-                  background: "#16232d",
-                  borderRadius: 999,
-                  padding: "6px 10px",
-                  color: "#d9e5ee",
-                  fontSize: 12,
-                  fontWeight: 800,
-                }}
-              >
-                {activeJob.phase}
-              </span>
-            </div>
-
-            {hasOpenPunchOut ? (
-              <section
-                style={{
-                  border: "1px solid #5b432b",
-                  background: "#1d160f",
-                  borderRadius: 14,
-                  padding: 14,
-                  marginBottom: 12,
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    gap: 10,
-                    alignItems: "center",
-                    marginBottom: 10,
-                  }}
-                >
-                  <div>
-                    <div
-                      style={{
-                        color: "#d7b37c",
-                        fontSize: 11,
-                        fontWeight: 900,
-                        textTransform: "uppercase",
-                        letterSpacing: 0.8,
-                      }}
-                    >
-                      Punch-Out · Needs Attention
-                    </div>
-
-                    <div
-                      style={{
-                        color: "#a99d90",
-                        fontSize: 11,
-                        marginTop: 3,
-                      }}
-                    >
-                      {activePunchOuts.length} unresolved item
-                      {activePunchOuts.length === 1 ? "" : "s"}
-                    </div>
-                  </div>
-
-                  <span
-                    style={{
-                      border: "1px solid #684c30",
-                      borderRadius: 999,
-                      padding: "5px 8px",
-                      color: "#e6c99f",
-                      fontSize: 10,
-                      fontWeight: 900,
-                    }}
-                  >
-                    STAYS OPEN
-                  </span>
-                </div>
-
-                <div style={{ display: "grid", gap: 8 }}>
-                  {activePunchOuts.map((item) => (
-                    <div
-                      key={item.id}
-                      style={{
-                        border: "1px solid #443528",
-                        borderRadius: 11,
-                        background: "#15110d",
-                        padding: 11,
-                      }}
-                    >
-                      <strong style={{ fontSize: 13 }}>
-                        {item.opening} · {item.type}
-                      </strong>
-
-                      <div
-                        style={{
-                          marginTop: 5,
-                          color: "#e2ddd7",
-                          fontSize: 13,
-                        }}
-                      >
-                        {item.issue}
-                      </div>
-
-                      <div
-                        style={{
-                          marginTop: 6,
-                          color: "#968b80",
-                          fontSize: 10,
-                        }}
-                      >
-                        Reported by {item.reportedBy} · {item.reportedAt}
-                      </div>
-
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          gap: 8,
-                          alignItems: "center",
-                          marginTop: 10,
-                        }}
-                      >
-                        <div
-                          style={{
-                            color: item.owner ? "#9fb9cb" : "#d7b37c",
-                            fontSize: 11,
-                            fontWeight: 900,
-                          }}
-                        >
-                          {item.owner
-                            ? `Owned by ${item.owner} · Still unresolved`
-                            : "Needs ownership"}
-                        </div>
-
-                        {!item.owner ? (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setPunchOuts((current) =>
-                                current.map((punchOut) =>
-                                  punchOut.id === item.id
-                                    ? {
-                                        ...punchOut,
-                                        owner: "Gio",
-                                        status: "Owned",
-                                      }
-                                    : punchOut
-                                )
-                              );
-
-                              addUpdate(
-                                `Gio took ownership of punch-out: ${item.type} · ${item.opening}.`
-                              );
-                            }}
-                            style={{
-                              border: "1px solid #536c58",
-                              borderRadius: 9,
-                              background: "#1a2a36",
-                              color: "#fff",
-                              padding: "8px 10px",
-                              fontSize: 11,
-                              fontWeight: 900,
-                              cursor: "pointer",
-                            }}
-                          >
-                            Take Ownership
-                          </button>
-                        ) : null}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            ) : null}
-            <div
-              style={{
-                border: "1px solid #2d3d47",
-                background: "#14202a",
-                borderRadius: 14,
-                padding: 14,
-                marginBottom: 12,
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 11,
-                  color: "#8fa9bc",
-                  fontWeight: 900,
-                  textTransform: "uppercase",
-                  letterSpacing: 1,
-                  marginBottom: 5,
-                }}
-              >
-                Next Action
-              </div>
-              <strong>{activeJob.nextAction}</strong>
-            </div>
-
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-                gap: 8,
-                marginBottom: 12,
-              }}
-              className="field-summary-grid"
-            >
-              {[
-                ["Crew", effectiveCrew],
-                ["Material ETA", activeJob.materialEta],
-                ["Permit", activeJob.permit],
-                ["Schedule", effectiveSchedule],
-              ].map(([label, value]) => (
-                <div
-                  key={label}
-                  style={{
-                    border: "1px solid #28323a",
-                    borderRadius: 12,
-                    padding: 11,
-                    background: "#101419",
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: 10,
-                      color: "#929ba2",
-                      marginBottom: 4,
-                    }}
-                  >
-                    {label}
-                  </div>
-                  <strong style={{ fontSize: 12 }}>{value}</strong>
-                </div>
-              ))}
-            </div>
-
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-                gap: 8,
-                marginBottom: 12,
-              }}
-              className="field-action-grid"
-            >
-              <button
-                type="button"
-                onClick={() => {
-                  const crew = window.prompt(
-                    "Assign crew: Crew 1, Crew 2, Crew 3, or Not assigned",
-                    effectiveCrew
-                  );
-
-                  if (!crew?.trim()) return;
-
-                  setCrewChanges((current) => ({
-                    ...current,
-                    [activeJob.id]: crew.trim(),
-                  }));
-
-                  addUpdate(`Crew changed to ${crew.trim()}.`);
-                }}
-                style={{
-                  minHeight: 44,
-                  border: "1px solid #344958",
-                  borderRadius: 11,
-                  background: "#111820",
-                  color: "#fff",
-                  fontWeight: 800,
-                  cursor: "pointer",
-                }}
-              >
-                Assign Crew
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setScheduleDraftDate("");
-                  setScheduleDraftTime("");
-                  setScheduleDrawerOpen((open) => !open);
-                }}
-                style={{
-                  minHeight: 44,
-                  border: "1px solid #344958",
-                  borderRadius: 11,
-                  background: "#111820",
-                  color: "#fff",
-                  fontWeight: 800,
-                  cursor: "pointer",
-                }}
-              >
-                Schedule
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  window.open(
-                    "/planet/premier-window-door/board",
-                    "_blank",
-                    "noopener,noreferrer"
-                  );
-                }}
-                style={{
-                  minHeight: 44,
-                  border: "1px solid #344958",
-                  borderRadius: 11,
-                  background: "#111820",
-                  color: "#fff",
-                  fontWeight: 800,
-                  cursor: "pointer",
-                }}
-              >
-                Open Full Job
-              </button>
-            </div>
-
-            
-            {scheduleDrawerOpen ? (
-  
-            <section
-                style={{
-                  border: "1px solid #344958",
-                  borderRadius: 14,
-                  background: "#10161b",
-                  padding: 14,
-                  marginBottom: 12,
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: 12,
-                    marginBottom: 12,
-                  }}
-                >
-                  <div>
-                    <strong style={{ fontSize: 17 }}>Schedule Job</strong>
-
-                    <div
-                      style={{
-                        color: "#d6dde2",
-                        fontSize: 13,
-                        fontWeight: 700,
-                        marginTop: 5,
-                      }}
-                    >
-                      {activeJob.customer} · {effectiveCrew}
-                    </div>
-
-                    <div
-                      style={{
-                        color: "#89969f",
-                        fontSize: 12,
-                        marginTop: 4,
-                      }}
-                    >
-                      Currently scheduled:{" "}
-                      <strong style={{ color: "#cbd5dc" }}>
-                        {effectiveSchedule}
-                      </strong>
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setScheduleDrawerOpen(false)}
-                    style={{
-                      border: "1px solid #2e3b44",
-                      borderRadius: 8,
-                      background: "#151b20",
-                      color: "#aab5bd",
-                      minWidth: 34,
-                      minHeight: 34,
-                      cursor: "pointer",
-                      fontWeight: 900,
-                    }}
-                    aria-label="Close schedule"
-                  >
-                    ×
-                  </button>
-                </div>
-
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr",
-                    gap: 10,
-                  }}
-                  className="schedule-drawer-grid"
-                >
-                  <label
-                    style={{
-                      display: "grid",
-                      gap: 6,
-                      color: "#9baab4",
-                      fontSize: 11,
-                      fontWeight: 800,
-                    }}
-                  >
-                    Date
-
-                    <input
-                      type="text"
-                      value={scheduleDraftDate}
-                      onChange={(event) => {
-                        const digits = event.target.value
-                          .replace(/\D/g, "")
-                          .slice(0, 8);
-
-                        let formatted = digits;
-
-                        if (digits.length > 4) {
-                          formatted = `${digits.slice(0, 2)}/${digits.slice(
-                            2,
-                            4
-                          )}/${digits.slice(4)}`;
-                        } else if (digits.length > 2) {
-                          formatted = `${digits.slice(0, 2)}/${digits.slice(2)}`;
-                        }
-
-                        setScheduleDraftDate(formatted);
-                      }}
-                      placeholder=""
-                      style={{
-                        width: "100%",
-                        minHeight: 44,
-                        boxSizing: "border-box",
-                        border: "1px solid #344650",
-                        borderRadius: 10,
-                        background: "#0c1116",
-                        color: "#fff",
-                        padding: "0 12px",
-                        fontSize: 14,
-                        outline: "none",
-                      }}
-                    />
-                    <div
-                      style={{
-                        color: "#78858e",
-                        fontSize: 11,
-                        fontWeight: 600,
-                      }}
-                    >
-                      Type 08282026 → 08/28/2026
-                    </div>
-                  </label>
-
-                  <label
-                    style={{
-                      display: "grid",
-                      gap: 6,
-                      color: "#9baab4",
-                      fontSize: 11,
-                      fontWeight: 800,
-                    }}
-                  >
-                    Time
-
-                    <input
-                      type="text"
-                      value={scheduleDraftTime}
-                      onChange={(event) => {
-                        const raw = event.target.value
-                          .toUpperCase()
-                          .replace(/\s/g, "");
-
-                        const meridiem = raw.includes("P")
-                          ? "PM"
-                          : raw.includes("A")
-                            ? "AM"
-                            : "";
-
-                        const digits = raw.replace(/\D/g, "").slice(0, 4);
-
-                        let formatted = digits;
-
-                        if (digits.length === 3) {
-                          formatted = `${digits.slice(0, 1)}:${digits.slice(1)}`;
-                        } else if (digits.length === 4) {
-                          formatted = `${digits.slice(0, 2)}:${digits.slice(2)}`;
-                        }
-
-                        if (meridiem && digits.length >= 3) {
-                          formatted = `${formatted} ${meridiem}`;
-                        }
-
-                        setScheduleDraftTime(formatted);
-                      }}
-                      placeholder=""
-                      style={{
-                        width: "100%",
-                        minHeight: 44,
-                        boxSizing: "border-box",
-                        border: "1px solid #344650",
-                        borderRadius: 10,
-                        background: "#0c1116",
-                        color: "#fff",
-                        padding: "0 12px",
-                        fontSize: 14,
-                        outline: "none",
-                      }}
-                    />
-                    <div
-                      style={{
-                        color: "#78858e",
-                        fontSize: 11,
-                        fontWeight: 600,
-                      }}
-                    >
-                      Type 900a → 9:00 AM
-                    </div>
-                  </label>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    const date = scheduleDraftDate.trim();
-                    const time = scheduleDraftTime.trim();
-
-                    if (!date) return;
-
-                    const isAlreadyScheduled =
-                      effectiveSchedule !== "Pending material" &&
-                      effectiveSchedule !== "Not scheduled";
-
-                    const nextSchedule = time
-                      ? `${date} · ${time}`
-                      : date;
-
-                    setScheduleChanges((current) => ({
-                      ...current,
-                      [activeJob.id]: nextSchedule,
-                    }));
-
-                    addUpdate(
-                      isAlreadyScheduled
-                        ? `Schedule moved to ${nextSchedule}.`
-                        : `Job scheduled for ${nextSchedule}.`
-                    );
-
-                    setScheduleDrawerOpen(false);
-                  }}
-                  style={{
-                    width: "100%",
-                    minHeight: 44,
-                    marginTop: 12,
-                    border: "1px solid #405c6d",
-                    borderRadius: 10,
-                    background: "#1a2a36",
-                    color: "#fff",
-                    fontWeight: 900,
-                    cursor: "pointer",
-                  }}
-                >
-                  Save Schedule
-                </button>
-
-                {effectiveSchedule !== "Pending material" &&
-                effectiveSchedule !== "Not scheduled" ? (
-                  <div
-                    style={{
-                      textAlign: "center",
-                      color: "#84919a",
-                      fontSize: 11,
-                      marginTop: 8,
-                    }}
-                  >
-                    Saving a new date will reschedule the current job.
-                  </div>
-                ) : null}
-              </section>
-            ) : null}
-            {activeJob.workType === "Service Call" ? (
-              <section
-                style={{
-                  border: "1px solid #3b5260",
-                  borderRadius: 15,
-                  background: "#11191f",
-                  padding: 14,
-                  marginBottom: 12,
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "flex-start",
-                    gap: 12,
-                    marginBottom: 12,
-                  }}
-                >
-                  <div>
-                    <strong style={{ fontSize: 17 }}>Service Call</strong>
-
-                    <div
-                      style={{
-                        color: "#8f9da7",
-                        fontSize: 12,
-                        marginTop: 4,
-                      }}
-                    >
-                      {activeJob.serviceAppointment}
-                    </div>
-                  </div>
-
-                  <span
-                    style={{
-                      border: "1px solid #405c6d",
-                      borderRadius: 999,
-                      background: "#1a2a36",
-                      color: "#dce7ee",
-                      padding: "5px 9px",
-                      fontSize: 10,
-                      fontWeight: 900,
-                    }}
-                  >
-                    GIO SERVICE
-                  </span>
-                </div>
-
-                <div
-                  style={{
-                    border: "1px solid #283740",
-                    borderRadius: 11,
-                    background: "#0d1318",
-                    padding: 12,
-                    marginBottom: 10,
-                  }}
-                >
-                  <div
-                    style={{
-                      color: "#91a2ad",
-                      fontSize: 10,
-                      fontWeight: 900,
-                      textTransform: "uppercase",
-                      letterSpacing: 0.7,
-                      marginBottom: 5,
-                    }}
-                  >
-                    Customer Reported
-                  </div>
-
-                  <div style={{ fontSize: 14, lineHeight: 1.5 }}>
-                    {activeJob.serviceIssue}
-                  </div>
-                </div>
-
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                    gap: 8,
-                  }}
-                  className="service-action-grid"
-                >
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const finding = window.prompt("What did you find?");
-
-                      if (!finding?.trim()) return;
-
-                      addUpdate(`Service finding: ${finding.trim()}`);
-                    }}
-                    style={{
-                      minHeight: 44,
-                      border: "1px solid #405c6d",
-                      borderRadius: 10,
-                      background: "#182630",
-                      color: "#fff",
-                      fontWeight: 800,
-                      cursor: "pointer",
-                    }}
-                  >
-                    What I Found
-                  </button>
-
-                  <label
-                    style={{
-                      minHeight: 44,
-                      border: "1px solid #405c6d",
-                      borderRadius: 10,
-                      background: "#182630",
-                      color: "#fff",
-                      fontWeight: 800,
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    Add Photo
-
-                    <input
-                      type="file"
-                      accept="image/*"
-                      style={{ display: "none" }}
-                      onChange={(event) => {
-                        const file = event.target.files?.[0];
-
-                        if (!file) return;
-
-                        addUpdate(`Service photo added: ${file.name}.`);
-                        event.currentTarget.value = "";
-                      }}
-                    />
-                  </label>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const work = window.prompt(
-                        "What work did you perform?"
-                      );
-
-                      if (!work?.trim()) return;
-
-                      addUpdate(`Service work performed: ${work.trim()}`);
-                    }}
-                    style={{
-                      minHeight: 44,
-                      border: "1px solid #405c6d",
-                      borderRadius: 10,
-                      background: "#182630",
-                      color: "#fff",
-                      fontWeight: 800,
-                      cursor: "pointer",
-                    }}
-                  >
-                    Work Performed
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const parts = window.prompt(
-                        "Parts or material needed? Leave blank if none."
-                      );
-
-                      if (parts === null) return;
-
-                      addUpdate(
-                        parts.trim()
-                          ? `Parts needed: ${parts.trim()}`
-                          : "No additional parts needed."
-                      );
-                    }}
-                    style={{
-                      minHeight: 44,
-                      border: "1px solid #405c6d",
-                      borderRadius: 10,
-                      background: "#182630",
-                      color: "#fff",
-                      fontWeight: 800,
-                      cursor: "pointer",
-                    }}
-                  >
-                    Parts Needed
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const followUp = window.prompt(
-                        "What follow-up is needed?"
-                      );
-
-                      if (!followUp?.trim()) return;
-
-                      addUpdate(`Service follow-up: ${followUp.trim()}`);
-                    }}
-                    style={{
-                      minHeight: 44,
-                      border: "1px solid #5a4e36",
-                      borderRadius: 10,
-                      background: "#241f16",
-                      color: "#fff",
-                      fontWeight: 800,
-                      cursor: "pointer",
-                    }}
-                  >
-                    Follow-up
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const confirmed = window.confirm(
-                        "Complete this service call?"
-                      );
-
-                      if (!confirmed) return;
-
-                      addUpdate("Service call completed.");
-                    }}
-                    style={{
-                      minHeight: 44,
-                      border: "1px solid #486578",
-                      borderRadius: 10,
-                      background: "#1a2a36",
-                      color: "#fff",
-                      fontWeight: 900,
-                      cursor: "pointer",
-                    }}
-                  >
-                    Complete Service
-                  </button>
-                </div>
-              </section>
-            ) : null}
-
-
-            {activeJob.workType === "Service Call" ? (
-              <div
-                style={{
-                  display: "grid",
-                  gap: 8,
-                  marginBottom: 12,
-                }}
-              >
-                <details
-                  style={{
-                    border: "1px solid #293740",
-                    borderRadius: 12,
-                    background: "#10161b",
-                    padding: 12,
-                  }}
-                >
-                  <summary
-                    style={{
-                      cursor: "pointer",
-                      fontWeight: 850,
-                      color: "#f1f4f6",
-                    }}
-                  >
-                    Agreement / Job Truth
-                  </summary>
-
-                  <div
-                    style={{
-                      marginTop: 12,
-                      display: "grid",
-                      gap: 10,
-                      fontSize: 13,
-                      lineHeight: 1.5,
-                      color: "#d4dbe0",
-                    }}
-                  >
-                    <div>
-                      <strong>Approved:</strong> {activeJob.approvedScope}
-                    </div>
-
-                    <div>
-                      <strong>Customer:</strong> {activeJob.customerTruth}
-                    </div>
-
-                    <div>
-                      <strong>Agreement:</strong> {activeJob.signedAgreement}
-                    </div>
-                  </div>
-                </details>
-
-                <details
-                  style={{
-                    border: "1px solid #293740",
-                    borderRadius: 12,
-                    background: "#10161b",
-                    padding: 12,
-                  }}
-                >
-                  <summary
-                    style={{
-                      cursor: "pointer",
-                      fontWeight: 850,
-                      color: "#f1f4f6",
-                    }}
-                  >
-                    Measurements / Product Info
-                  </summary>
-
-                  <div
-                    style={{
-                      marginTop: 12,
-                      display: "grid",
-                      gap: 8,
-                    }}
-                  >
-                    {activeJob.measurements.map((item) => (
-                      <div
-                        key={`${item.name}-${item.location}`}
-                        style={{
-                          border: "1px solid #26323a",
-                          borderRadius: 9,
-                          padding: 10,
-                          fontSize: 13,
-                        }}
-                      >
-                        <strong>{item.name}</strong>
-
-                        <div
-                          style={{
-                            color: "#aeb8bf",
-                            marginTop: 3,
-                          }}
-                        >
-                          {item.location} · {item.measurement}
-                        </div>
-                      </div>
-                    ))}
-
-                    <div
-                      style={{
-                        color: "#9ba6ad",
-                        fontSize: 12,
-                      }}
-                    >
-                      {activeJob.manufacturerPo}
-                    </div>
-                  </div>
-                </details>
-
-                <details
-                  style={{
-                    border: "1px solid #293740",
-                    borderRadius: 12,
-                    background: "#10161b",
-                    padding: 12,
-                  }}
-                >
-                  <summary
-                    style={{
-                      cursor: "pointer",
-                      fontWeight: 850,
-                      color: "#f1f4f6",
-                    }}
-                  >
-                    History
-                  </summary>
-
-                  <div
-                    style={{
-                      marginTop: 12,
-                      display: "grid",
-                      gap: 9,
-                    }}
-                  >
-                    {updates
-                      .filter((item) => item.jobId === activeJob.id)
-                      .map((item, index) => (
-                        <div
-                          key={`${item.time}-${index}`}
-                          style={{
-                            borderLeft: "2px solid #6f93aa",
-                            paddingLeft: 9,
-                          }}
-                        >
-                          <div
-                            style={{
-                              color: "#8fa9bc",
-                              fontSize: 10,
-                              fontWeight: 800,
-                            }}
-                          >
-                            {item.time}
-                          </div>
-
-                          <div
-                            style={{
-                              color: "#dce2e6",
-                              fontSize: 13,
-                              marginTop: 2,
-                            }}
-                          >
-                            {item.text}
-                          </div>
-                        </div>
-                      ))}
-
-                    {updates.filter(
-                      (item) => item.jobId === activeJob.id
-                    ).length === 0 ? (
-                      <div
-                        style={{
-                          color: "#7f8c95",
-                          fontSize: 12,
-                        }}
-                      >
-                        No service activity recorded yet.
-                      </div>
-                    ) : null}
-                  </div>
-                </details>
-              </div>
-            ) : null}
-<section
-              style={{
-                display:
-                  activeJob.workType === "Service Call" ? "none" : "block",
-                border: "1px solid #31434d",
-                borderRadius: 15,
-                background: "#11181e",
-                padding: 14,
-                marginBottom: 12,
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 10,
-                  marginBottom: 10,
-                }}
-              >
-                <strong>Agreement Truth</strong>
-
-                <span
-                  style={{
-                    color: "#8fa9bc",
-                    fontSize: 11,
-                    fontWeight: 800,
-                  }}
-                >
-                  Same truth for office + field
-                </span>
-              </div>
-
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                  gap: 10,
-                }}
-                className="agreement-grid"
-              >
-                <div
-                  style={{
-                    border: "1px solid #29353e",
-                    borderRadius: 11,
-                    padding: 11,
-                  }}
-                >
-                  <div
-                    style={{
-                      color: "#91a2ad",
-                      fontSize: 10,
-                      fontWeight: 900,
-                      textTransform: "uppercase",
-                      letterSpacing: 0.8,
-                      marginBottom: 5,
-                    }}
-                  >
-                    Approved Scope
-                  </div>
-
-                  <strong style={{ fontSize: 13 }}>
-                    {activeJob.approvedScope}
-                  </strong>
-                </div>
-
-                <div
-                  style={{
-                    border: "1px solid #29353e",
-                    borderRadius: 11,
-                    padding: 11,
-                  }}
-                >
-                  <div
-                    style={{
-                      color: "#91a2ad",
-                      fontSize: 10,
-                      fontWeight: 900,
-                      textTransform: "uppercase",
-                      letterSpacing: 0.8,
-                      marginBottom: 5,
-                    }}
-                  >
-                    Signed Agreement
-                  </div>
-
-                  <strong style={{ fontSize: 13 }}>
-                    {activeJob.signedAgreement}
-                  </strong>
-                </div>
-              </div>
-
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: 10,
-                  marginTop: 10,
-                }}
-                className="agreement-grid"
-              >
-                <div>
-                  <div
-                    style={{
-                      color: "#9fb9cb",
-                      fontSize: 11,
-                      fontWeight: 900,
-                      marginBottom: 6,
-                    }}
-                  >
-                    Promised / Included
-                  </div>
-
-                  <div style={{ display: "grid", gap: 4, fontSize: 13 }}>
-                    {activeJob.promisedIncluded.map((item) => (
-                      <div key={item}>✓ {item}</div>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <div
-                    style={{
-                      color: "#d9b982",
-                      fontSize: 11,
-                      fontWeight: 900,
-                      marginBottom: 6,
-                    }}
-                  >
-                    Not Included
-                  </div>
-
-                  <div style={{ display: "grid", gap: 4, fontSize: 13 }}>
-                    {activeJob.notIncluded.map((item) => (
-                      <div key={item}>— {item}</div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {activeJob.approvedChanges.length > 0 ? (
-                <div
-                  style={{
-                    borderTop: "1px solid #29353e",
-                    marginTop: 11,
-                    paddingTop: 10,
-                  }}
-                >
-                  <div
-                    style={{
-                      color: "#8fa9bc",
-                      fontSize: 11,
-                      fontWeight: 900,
-                      marginBottom: 6,
-                    }}
-                  >
-                    Approved Changes
-                  </div>
-
-                  <div style={{ display: "grid", gap: 4, fontSize: 13 }}>
-                    {activeJob.approvedChanges.map((item) => (
-                      <div key={item}>✓ {item}</div>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-
-              <div
-                style={{
-                  borderTop: "1px solid #29353e",
-                  marginTop: 11,
-                  paddingTop: 10,
-                  color: "#aeb8bf",
-                  fontSize: 12,
-                }}
-              >
-                <strong style={{ color: "#dfe5e9" }}>Last confirmed:</strong>{" "}
-                {activeJob.lastConfirmed}
-              </div>
-            </section>
-
-            <div
-              style={{
-                display:
-                  activeJob.workType === "Service Call" ? "none" : "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: 10,
-                marginBottom: 12,
-              }}
-              className="field-main-grid"
-            >
-              <section
-                style={{
-                  border: "1px solid #27333b",
-                  borderRadius: 15,
-                  background: "#10151a",
-                  padding: 14,
-                }}
-              >
-                <strong>Customer / Job Truth</strong>
-
-                <div
-                  style={{
-                    marginTop: 10,
-                    color: "#d3d9de",
-                    fontSize: 13,
-                    lineHeight: 1.6,
-                  }}
-                >
-                  {activeJob.customerTruth}
-                </div>
-              </section>
-
-              <section
-                style={{
-                  border: "1px solid #27333b",
-                  borderRadius: 15,
-                  background: "#10151a",
-                  padding: 14,
-                }}
-              >
-                <strong>Current Field Position</strong>
-
-                <div
-                  style={{
-                    marginTop: 10,
-                    display: "grid",
-                    gap: 7,
-                    fontSize: 13,
-                  }}
-                >
-                  <div>
-                    <strong>Phase:</strong> {activeJob.phase}
-                  </div>
-                  <div>
-                    <strong>Crew:</strong> {effectiveCrew}
-                  </div>
-                  <div>
-                    <strong>Material:</strong> {activeJob.materialEta}
-                  </div>
-                  <div>
-                    <strong>Permit:</strong> {activeJob.permit}
-                  </div>
-                </div>
-              </section>
-            </div>
-
-            <section
-              style={{
-                display:
-                  activeJob.workType === "Service Call" ? "none" : "block",
-                border: "1px solid #27333b",
-                borderRadius: 15,
-                background: "#10151a",
-                padding: 14,
-                marginBottom: 12,
-              }}
-            >
-              <strong>Field Updates</strong>
-
-              <div style={{ display: "grid", gap: 9, marginTop: 10 }}>
-                {updates
-                  .filter((item) => item.jobId === activeJob.id)
-                  .map((item, index) => (
-                    <div
-                      key={`${item.time}-${index}`}
-                      style={{
-                        borderLeft: "2px solid #6f93aa",
-                        paddingLeft: 10,
-                      }}
-                    >
-                      <div
-                        style={{
-                          color: "#9fb9cb",
-                          fontSize: 10,
-                          fontWeight: 800,
-                        }}
-                      >
-                        {item.time}
-                      </div>
-                      <div
-                        style={{
-                          marginTop: 3,
-                          color: "#f0f4f7",
-                          fontSize: 13,
-                        }}
-                      >
-                        {item.text}
-                      </div>
-                    </div>
-                  ))}
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    const text = window.prompt(
-                      "Add update for the office and crew"
-                    );
-
-                    if (!text?.trim()) return;
-                    addUpdate(text.trim());
-                  }}
-                  style={{
-                    minHeight: 42,
-                    border: "1px solid #486578",
-                    borderRadius: 10,
-                    background: "#1a2a36",
-                    color: "#fff",
-                    fontWeight: 800,
-                    cursor: "pointer",
-                  }}
-                >
-                  Add Update
-                </button>
-              </div>
-            </section>
-
-            <section
-              style={{
-                display:
-                  activeJob.workType === "Service Call" ? "none" : "block",
-                border: "1px solid #27333b",
-                borderRadius: 15,
-                background: "#10151a",
-                padding: 14,
-              }}
-            >
-              <strong>Quick Access</strong>
-
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-                  gap: 8,
-                  marginTop: 10,
-                }}
-                className="field-quick-grid"
-              >
-                {[
-                  "Customer Notes",
-                  "Measurements",
-                  "Manufacturer PO",
-                  "Required Photos",
-                  "Permit Proof",
-                  "Installer Board",
-                ].map((label) => (
-                  <button
-                    key={label}
-                    type="button"
-                    onClick={() => {
-                      if (label === "Installer Board") {
-                        window.open(
-                          "/planet/premier-window-door/tech",
-                          "_blank",
-                          "noopener,noreferrer"
-                        );
-                        return;
-                      }
-
-                      setQuickAccess(
-                        label as
-                          | "Customer Notes"
-                          | "Measurements"
-                          | "Manufacturer PO"
-                          | "Required Photos"
-                          | "Permit Proof"
-                      );
-                    }}
-                    style={{
-                      minHeight: 42,
-                      border: "1px solid #303d46",
-                      borderRadius: 10,
-                      background: "#0d1115",
-                      color: "#d8dee3",
-                      fontWeight: 700,
-                      cursor: "pointer",
-                      padding: 8,
-                    }}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-
-              {quickAccess ? (
-                <div
-                  style={{
-                    marginTop: 10,
-                    border: "1px solid #31434d",
-                    borderRadius: 13,
-                    background: "#0b1015",
-                    padding: 13,
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      gap: 10,
-                      marginBottom: 10,
-                    }}
-                  >
-                    <strong>{quickAccess}</strong>
-
-                    <button
-                      type="button"
-                      onClick={() => setQuickAccess(null)}
-                      style={{
-                        border: 0,
-                        background: "transparent",
-                        color: "#9fb0ba",
-                        cursor: "pointer",
-                        fontSize: 18,
-                      }}
-                    >
-                      ×
-                    </button>
-                  </div>
-
-                  {quickAccess === "Customer Notes" ? (
-                    <div
-                      style={{
-                        color: "#d6dde2",
-                        fontSize: 13,
-                        lineHeight: 1.6,
-                      }}
-                    >
-                      {activeJob.customerTruth}
-                    </div>
-                  ) : null}
-
-                  {quickAccess === "Measurements" ? (
-                    <div style={{ display: "grid", gap: 8 }}>
-                      {activeJob.measurements.map((item) => (
-                        <div
-                          key={item.name}
-                          style={{
-                            border: "1px solid #29343d",
-                            borderRadius: 10,
-                            padding: 10,
-                          }}
-                        >
-                          <strong>{item.name}</strong>
-                          <div
-                            style={{
-                              color: "#9ea7ae",
-                              fontSize: 11,
-                              marginTop: 3,
-                            }}
-                          >
-                            {item.location}
-                          </div>
-                          <div style={{ marginTop: 6, fontSize: 13 }}>
-                            {item.measurement}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : null}
-
-                  {quickAccess === "Manufacturer PO" ? (
-                    <div
-                      style={{
-                        color: "#d6dde2",
-                        fontSize: 13,
-                        lineHeight: 1.7,
-                      }}
-                    >
-                      <div>
-                        <strong>{activeJob.manufacturerPo}</strong>
-                      </div>
-                      <div>Material ETA: {activeJob.materialEta}</div>
-                      <div style={{ color: "#93adc0", marginTop: 6 }}>
-                        Manufacturer document will open here when the real PO is connected.
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {quickAccess === "Required Photos" ? (
-                    <div style={{ display: "grid", gap: 6, fontSize: 13 }}>
-                      {activeJob.requiredPhotos.map((item) => (
-                        <div key={item}>○ {item}</div>
-                      ))}
-                    </div>
-                  ) : null}
-
-                  {quickAccess === "Permit Proof" ? (
-                    <div style={{ display: "grid", gap: 6, fontSize: 13 }}>
-                      {activeJob.permitProof.map((item) => (
-                        <div key={item}>○ {item}</div>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
-              ) : null}
-            </section>
-          </div>
-        </div>
       </div>
 
       <style>{`

@@ -37,6 +37,27 @@ function destinationForRoles(roles: string[]) {
   return "/planet/premier-window-door/tech";
 }
 
+const nativePasswordRevealStyle = `
+  .premier-pin-input {
+    -webkit-text-security: disc;
+  }
+
+  .premier-pin-input.pin-visible {
+    -webkit-text-security: none;
+  }
+
+  input[type="password"]::-ms-reveal,
+  input[type="password"]::-ms-clear {
+    display: none;
+  }
+
+  input[type="password"]::-webkit-credentials-auto-fill-button,
+  input[type="password"]::-webkit-textfield-decoration-container {
+    visibility: hidden;
+    display: none !important;
+    pointer-events: none;
+  }
+`;
 export default function PremierStaffLoginPage() {
   const [staff, setStaff] = useState<StaffOption[]>([]);
   const [staffId, setStaffId] = useState("");
@@ -138,6 +159,8 @@ export default function PremierStaffLoginPage() {
   };
 
   return (
+    <>
+      <style>{nativePasswordRevealStyle}</style>
     <main
       style={{
         minHeight: "100vh",
@@ -257,7 +280,8 @@ export default function PremierStaffLoginPage() {
 
             <div style={{ position: "relative" }}>
             <input
-              type={showPin ? "text" : "password"}
+              type="text"
+              className={showPin ? "premier-pin-input pin-visible" : "premier-pin-input"}
               inputMode="numeric"
               autoComplete="one-time-code"
               maxLength={4}
@@ -358,5 +382,6 @@ export default function PremierStaffLoginPage() {
         </div>
       </div>
     </main>
+    </>
   );
 }

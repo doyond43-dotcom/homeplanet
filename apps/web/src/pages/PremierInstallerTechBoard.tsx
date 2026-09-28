@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 type TechJob = {
@@ -137,7 +137,7 @@ function Section({
       >
         <strong>{title}</strong>
         <span style={{ color: "#8fa9bc", fontSize: 18 }}>
-          {open ? "−" : "+"}
+          {open ? "-" : "+"}
         </span>
       </button>
 
@@ -145,6 +145,371 @@ function Section({
         <div style={{ padding: "0 16px 16px" }}>{children}</div>
       ) : null}
     </section>
+  );
+}
+
+function InstallerBeamCard({ jobId }: { jobId: string }) {
+  const [messages, setMessages] = useState<any[]>([]);
+  const [recipient, setRecipient] =
+    useState<string>("Gino Marquez");
+  const [body, setBody] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
+  const [listening, setListening] = useState(false);
+
+  const loadMessages = async () => {
+    const accessToken =
+      new URLSearchParams(window.location.search).get("access");
+
+    if (!accessToken) {
+      setError("Premier staff access is missing.");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    const { data, error: loadError } = await supabase.rpc(
+      "get_premier_beam_messages",
+      {
+        p_access_token: accessToken,
+        p_job_id: jobId,
+      }
+    );
+
+    if (loadError) {
+      console.error("Installer Beam load failed:", loadError);
+      setError("Could not load Beam messages.");
+      setMessages([]);
+    } else {
+      setMessages(data ?? []);
+    }
+
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    void loadMessages();
+  }, [jobId]);
+
+  const sendMessage = async () => {
+    const message = body.trim();
+
+    if (!message || sending) return;
+
+    const accessToken =
+      new URLSearchParams(window.location.search).get("access");
+
+    if (!accessToken) {
+      setError("Premier staff access is missing.");
+      return;
+    }
+
+    setSending(true);
+    setError("");
+
+    const { error: sendError } = await supabase.rpc(
+      "send_premier_beam_message",
+      {
+        p_access_token: accessToken,
+        p_job_id: jobId,
+        p_sender_role: "Installer/Tech",
+        p_recipient_role: recipient,
+        p_body: message,
+      }
+    );
+
+    if (sendError) {
+      console.error("Installer Beam send failed:", sendError);
+      setError("Could not send Beam message.");
+      setSending(false);
+      return;
+    }
+
+    setBody("");
+    await loadMessages();
+    setSending(false);
+  };
+
+  const startVoiceInput = () => {
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      setError("Voice typing is not supported in this browser.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+
+    recognition.lang = "en-US";
+    recognition.interimResults = false;
+    recognition.continuous = false;
+
+    recognition.onstart = () => {
+      setError("");
+      setListening(true);
+    };
+
+    recognition.onend = () => {
+      setListening(false);
+    };
+
+    recognition.onerror = () => {
+      setListening(false);
+      setError("Could not hear that. Please try again.");
+    };
+
+    recognition.onresult = (event: any) => {
+      const transcript =
+        event.results?.[0]?.[0]?.transcript?.trim() ?? "";
+
+      if (!transcript) return;
+
+      setBody((current) =>
+        current
+          ? `${current}${current.endsWith(" ") ? "" : " "}${transcript}`
+          : transcript
+      );
+    };
+
+    recognition.start();
+  };
+
+  const quickActions = [
+    "Material needed: ",
+    "Need office call: ",
+    "Job issue: ",
+    "Running behind: ",
+    "Ready for inspection: ",
+  ];
+
+  return (
+    <div
+      style={{
+        border: "1px solid #78aa88",
+        borderRadius: 14,
+        background:
+          "linear-gradient(135deg, #173225 0%, #101b16 100%)",
+        boxShadow:
+          "0 0 0 1px rgba(139,184,154,0.08), 0 8px 24px rgba(0,0,0,0.18)",
+        marginTop: 12,
+        padding: 12,
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 8,
+          marginBottom: 8,
+        }}
+      >
+        <div>
+          <div style={{ color: "#d9e5ee", fontSize: 12, fontWeight: 900 }}>
+            Beam Quick Message
+          </div>
+          <div style={{ color: "#7f94a3", fontSize: 10, marginTop: 2 }}>
+            Fast job communication
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => void loadMessages()}
+          disabled={loading}
+          style={{
+            border: "1px solid #31495a",
+            borderRadius: 8,
+            background: "#101820",
+            color: "#a9bac6",
+            padding: "6px 9px",
+            fontSize: 10,
+            fontWeight: 800,
+          }}
+        >
+          {loading ? "Loading..." : "Refresh"}
+        </button>
+      </div>
+
+      <div
+        style={{
+          maxHeight: 170,
+          overflowY: "auto",
+          display: "grid",
+          gap: 6,
+          marginBottom: 9,
+          border: "1px solid #294a36",
+          borderRadius: 10,
+          background: "#0d1711",
+          padding: 8,
+        }}
+      >
+        {messages.length === 0 ? (
+          <div style={{ color: "#78858e", fontSize: 11 }}>
+            No Beam messages yet.
+          </div>
+        ) : (
+          messages.map((message) => (
+            <div
+              key={message.id}
+              style={{
+                border: "1px solid #273944",
+                borderRadius: 8,
+                background: "#0d141a",
+                padding: 8,
+              }}
+            >
+              <div style={{ color: "#8fa9bc", fontSize: 9, marginBottom: 4 }}>
+                {message.sender_label} → {message.recipient_role}
+              </div>
+
+              <div style={{ color: "#d9e5ee", fontSize: 11 }}>
+                {message.body}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      <select
+        value={recipient}
+        onChange={(event) => setRecipient(event.target.value)}
+        style={{
+          width: "100%",
+          minHeight: 40,
+          border: "1px solid #31495a",
+          borderRadius: 9,
+          background: "#101820",
+          color: "#d9e5ee",
+          padding: "0 9px",
+          fontSize: 11,
+          fontWeight: 800,
+          marginBottom: 8,
+        }}
+      >
+        <option value="Darcy">Darcy</option>
+        <option value="Karolina">Karolina</option>
+        <option value="Gio Richardson">Gio Richardson</option>
+        <option value="Gino Marquez">Gino Marquez</option>
+        <option value="Dennis Dillon">Dennis Dillon</option>
+        <option value="RJ">RJ</option>
+        <option value="Angel">Angel</option>
+        <option value="Jose">Jose</option>
+        <option value="Obelio">Obelio</option>
+        <option value="Joseph">Joseph</option>
+      </select>
+
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 6,
+          marginBottom: 8,
+        }}
+      >
+        {quickActions.map((action) => (
+          <button
+            key={action}
+            type="button"
+            onClick={() => setBody(action)}
+            style={{
+              border: "1px solid #31495a",
+              borderRadius: 999,
+              background: "#101820",
+              color: "#b8c8d3",
+              padding: "6px 8px",
+              fontSize: 9,
+              fontWeight: 800,
+            }}
+          >
+            {action.replace(": ", "")}
+          </button>
+        ))}
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1fr) 46px",
+          gap: 8,
+          alignItems: "stretch",
+        }}
+      >
+        <textarea
+          value={body}
+          onChange={(event) => setBody(event.target.value)}
+          placeholder={
+            listening
+              ? "Listening..."
+              : "Type or tap the mic and talk..."
+          }
+          rows={3}
+          style={{
+            width: "100%",
+            boxSizing: "border-box",
+            border: "1px solid #31495a",
+            borderRadius: 9,
+            background: "#0d141a",
+            color: "#d9e5ee",
+            padding: 9,
+            fontSize: 11,
+            resize: "vertical",
+          }}
+        />
+
+        <button
+          type="button"
+          onClick={startVoiceInput}
+          disabled={listening}
+          title="Talk message"
+          aria-label="Talk message"
+          style={{
+            border: listening
+              ? "1px solid #d98778"
+              : "1px solid #31495a",
+            borderRadius: 9,
+            background: listening ? "#7a2d24" : "#2f6842",
+            boxShadow: listening
+              ? "0 0 0 2px rgba(217,135,120,0.18), 0 0 18px rgba(217,135,120,0.22)"
+              : "none",
+            color: "#d9e5ee",
+            fontSize: 20,
+            cursor: listening ? "wait" : "pointer",
+          }}
+        >
+          🎤
+        </button>
+      </div>
+
+      {error ? (
+        <div style={{ color: "#d8b267", fontSize: 10, marginTop: 6 }}>
+          {error}
+        </div>
+      ) : null}
+
+      <button
+        type="button"
+        onClick={() => void sendMessage()}
+        disabled={sending || !body.trim()}
+        style={{
+          width: "100%",
+          minHeight: 40,
+          marginTop: 8,
+          border: "1px solid #8fbea0",
+          borderRadius: 9,
+          background: "#2f6842",
+          color: "#d9e5ee",
+          fontWeight: 900,
+          opacity: sending || !body.trim() ? 0.6 : 1,
+        }}
+      >
+        {sending ? "Sending..." : `Send to ${recipient}`}
+      </button>
+    </div>
   );
 }
 
@@ -184,6 +549,22 @@ export default function PremierInstallerTechBoard() {
   >({});
 
   const [uploadingInstallerProofJobId, setUploadingInstallerProofJobId] =
+    useState<string | null>(null);
+
+  const [buckingDrafts, setBuckingDrafts] = useState<
+    Record<
+      string,
+      {
+        buckingNotes: string;
+        measurementNotes: string;
+        materialIssueNotes: string;
+        needsAttention: boolean;
+        saved: boolean;
+      }
+    >
+  >({});
+
+  const [savingBuckingJobId, setSavingBuckingJobId] =
     useState<string | null>(null);
 
   useEffect(() => {
@@ -247,7 +628,45 @@ export default function PremierInstallerTechBoard() {
         );
 
         if (active) {
-          setInstallerProofPhotos(Object.fromEntries(proofEntries));
+          const proofMap = Object.fromEntries(proofEntries);
+
+          setInstallerProofPhotos(proofMap);
+
+          const nextBuckingDrafts: Record<
+            string,
+            {
+              buckingNotes: string;
+              measurementNotes: string;
+              materialIssueNotes: string;
+              needsAttention: boolean;
+              saved: boolean;
+            }
+          > = {};
+
+          for (const job of jobsData) {
+            const buckingPhoto = (proofMap[job.id] ?? []).find(
+              (photo: any) =>
+                photo.proof_type === "Bucking / buck inspection"
+            );
+
+            if (buckingPhoto) {
+              nextBuckingDrafts[job.id] = {
+                buckingNotes: buckingPhoto.bucking_notes ?? "",
+                measurementNotes: buckingPhoto.measurement_notes ?? "",
+                materialIssueNotes:
+                  buckingPhoto.material_issue_notes ?? "",
+                needsAttention: Boolean(buckingPhoto.needs_attention),
+                saved: Boolean(
+                  buckingPhoto.bucking_notes ||
+                    buckingPhoto.measurement_notes ||
+                    buckingPhoto.material_issue_notes ||
+                    buckingPhoto.needs_attention
+                ),
+              };
+            }
+          }
+
+          setBuckingDrafts(nextBuckingDrafts);
         }
       }
 
@@ -408,16 +827,6 @@ export default function PremierInstallerTechBoard() {
               Installer
             </span>
 
-            <span
-              style={{
-                marginLeft: "auto",
-                color: "#77828a",
-                fontSize: 10,
-                fontWeight: 800,
-              }}
-            >
-              Prototype · Demo Data
-            </span>
           </div>
         </header>
 
@@ -509,7 +918,7 @@ export default function PremierInstallerTechBoard() {
                         textTransform: "uppercase",
                       }}
                     >
-                      Installation Ready
+                      {job.current_stage === "installation_in_progress" ? "Installation In Progress" : "Installation Ready"}
                     </span>
                   </div>
 
@@ -569,6 +978,7 @@ export default function PremierInstallerTechBoard() {
                   </div>
 
 
+                  <InstallerBeamCard jobId={job.id} />
                   <div
                     style={{
                       borderTop: "1px solid #26323a",
@@ -610,7 +1020,7 @@ export default function PremierInstallerTechBoard() {
                             fontSize: 12,
                           }}
                         >
-                          ✓ Bucking / buck inspection proof saved
+                          Bucking / buck inspection proof saved
                         </div>
 
                         <button
@@ -643,6 +1053,252 @@ export default function PremierInstallerTechBoard() {
                         >
                           View Photo
                         </button>
+                        <div
+                          style={{
+                            marginTop: 12,
+                            paddingTop: 12,
+                            borderTop: "1px solid #334753",
+                            display: "grid",
+                            gap: 10,
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontSize: 11,
+                              fontWeight: 900,
+                              color: "#8fa9bc",
+                              textTransform: "uppercase",
+                            }}
+                          >
+                            Bucking Record
+                          </div>
+
+                          <textarea
+                            value={buckingDrafts[job.id]?.buckingNotes ?? ""}
+                            onChange={(event) => {
+                              const current = buckingDrafts[job.id];
+
+                              setBuckingDrafts((drafts) => ({
+                                ...drafts,
+                                [job.id]: {
+                                  buckingNotes: event.target.value,
+                                  measurementNotes:
+                                    current?.measurementNotes ?? "",
+                                  materialIssueNotes:
+                                    current?.materialIssueNotes ?? "",
+                                  needsAttention:
+                                    current?.needsAttention ?? false,
+                                  saved: false,
+                                },
+                              }));
+                            }}
+                            placeholder="Bucking / buck inspection notes"
+                            rows={3}
+                            style={{
+                              width: "100%",
+                              boxSizing: "border-box",
+                              borderRadius: 9,
+                              border: "1px solid #405565",
+                              background: "#111820",
+                              color: "#d9e5ee",
+                              padding: "10px 11px",
+                              fontSize: 12,
+                              resize: "vertical",
+                            }}
+                          />
+
+                          <textarea
+                            value={
+                              buckingDrafts[job.id]?.measurementNotes ?? ""
+                            }
+                            onChange={(event) => {
+                              const current = buckingDrafts[job.id];
+
+                              setBuckingDrafts((drafts) => ({
+                                ...drafts,
+                                [job.id]: {
+                                  buckingNotes: current?.buckingNotes ?? "",
+                                  measurementNotes: event.target.value,
+                                  materialIssueNotes:
+                                    current?.materialIssueNotes ?? "",
+                                  needsAttention:
+                                    current?.needsAttention ?? false,
+                                  saved: false,
+                                },
+                              }));
+                            }}
+                            placeholder="Measurement notes"
+                            rows={3}
+                            style={{
+                              width: "100%",
+                              boxSizing: "border-box",
+                              borderRadius: 9,
+                              border: "1px solid #405565",
+                              background: "#111820",
+                              color: "#d9e5ee",
+                              padding: "10px 11px",
+                              fontSize: 12,
+                              resize: "vertical",
+                            }}
+                          />
+
+                          <textarea
+                            value={
+                              buckingDrafts[job.id]?.materialIssueNotes ?? ""
+                            }
+                            onChange={(event) => {
+                              const current = buckingDrafts[job.id];
+
+                              setBuckingDrafts((drafts) => ({
+                                ...drafts,
+                                [job.id]: {
+                                  buckingNotes: current?.buckingNotes ?? "",
+                                  measurementNotes:
+                                    current?.measurementNotes ?? "",
+                                  materialIssueNotes: event.target.value,
+                                  needsAttention:
+                                    current?.needsAttention ?? false,
+                                  saved: false,
+                                },
+                              }));
+                            }}
+                            placeholder="Material issue notes"
+                            rows={3}
+                            style={{
+                              width: "100%",
+                              boxSizing: "border-box",
+                              borderRadius: 9,
+                              border: "1px solid #405565",
+                              background: "#111820",
+                              color: "#d9e5ee",
+                              padding: "10px 11px",
+                              fontSize: 12,
+                              resize: "vertical",
+                            }}
+                          />
+
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 8,
+                              minHeight: 38,
+                              color: "#d9e5ee",
+                              fontSize: 12,
+                              fontWeight: 800,
+                              cursor: "pointer",
+                            }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={
+                                buckingDrafts[job.id]?.needsAttention ?? false
+                              }
+                              onChange={(event) => {
+                                const current = buckingDrafts[job.id];
+
+                                setBuckingDrafts((drafts) => ({
+                                  ...drafts,
+                                  [job.id]: {
+                                    buckingNotes:
+                                      current?.buckingNotes ?? "",
+                                    measurementNotes:
+                                      current?.measurementNotes ?? "",
+                                    materialIssueNotes:
+                                      current?.materialIssueNotes ?? "",
+                                    needsAttention: event.target.checked,
+                                    saved: false,
+                                  },
+                                }));
+                              }}
+                            />
+                            Needs attention
+                          </label>
+
+                          <button
+                            type="button"
+                            disabled={savingBuckingJobId === job.id}
+                            onClick={async () => {
+                              const accessToken =
+                                new URLSearchParams(
+                                  window.location.search
+                                ).get("access");
+
+                              if (!accessToken) return;
+
+                              const draft = buckingDrafts[job.id] ?? {
+                                buckingNotes: "",
+                                measurementNotes: "",
+                                materialIssueNotes: "",
+                                needsAttention: false,
+                                saved: false,
+                              };
+
+                              setSavingBuckingJobId(job.id);
+
+                              try {
+                                const { data, error } = await supabase.rpc(
+                                  "save_premier_installer_bucking_details",
+                                  {
+                                    p_access_token: accessToken,
+                                    p_job_id: job.id,
+                                    p_bucking_notes: draft.buckingNotes,
+                                    p_measurement_notes:
+                                      draft.measurementNotes,
+                                    p_material_issue_notes:
+                                      draft.materialIssueNotes,
+                                    p_needs_attention:
+                                      draft.needsAttention,
+                                  }
+                                );
+
+                                if (error) {
+                                  console.error(
+                                    "Save Bucking details failed:",
+                                    error
+                                  );
+                                  window.alert(
+                                    "Could not save Bucking details."
+                                  );
+                                  return;
+                                }
+
+                                if (data === true) {
+                                  setBuckingDrafts((drafts) => ({
+                                    ...drafts,
+                                    [job.id]: {
+                                      ...draft,
+                                      saved: true,
+                                    },
+                                  }));
+                                }
+                              } finally {
+                                setSavingBuckingJobId(null);
+                              }
+                            }}
+                            style={{
+                              width: "100%",
+                              minHeight: 42,
+                              borderRadius: 9,
+                              border: "1px solid #557c64",
+                              background: "#16232d",
+                              color: "#d9e5ee",
+                              fontWeight: 900,
+                              cursor:
+                                savingBuckingJobId === job.id
+                                  ? "wait"
+                                  : "pointer",
+                              opacity:
+                                savingBuckingJobId === job.id ? 0.7 : 1,
+                            }}
+                          >
+                            {savingBuckingJobId === job.id
+                              ? "Saving Bucking Record..."
+                              : buckingDrafts[job.id]?.saved
+                                ? "Bucking Record Saved"
+                                : "Save Bucking Record"}
+                          </button>
+                        </div>
                       </div>
                     ) : (
                       <label
@@ -849,6 +1505,12 @@ export default function PremierInstallerTechBoard() {
                     <button
                       type="button"
                       onClick={async () => {
+                        const confirmed = window.confirm(
+                          "Finish this installation? Make sure all required proof, photos, notes, and missing or damaged items have been handled before marking the job complete."
+                        );
+
+                        if (!confirmed) return;
+
                         const accessToken =
                           new URLSearchParams(window.location.search).get("access");
 
@@ -864,6 +1526,10 @@ export default function PremierInstallerTechBoard() {
 
                         if (error) {
                           console.error("Complete Installation failed:", error);
+                          window.alert(
+                            error.message ||
+                              "Installation could not be finished. Check required proof and Bucking details."
+                          );
                           return;
                         }
 
@@ -885,7 +1551,7 @@ export default function PremierInstallerTechBoard() {
                         cursor: "pointer",
                       }}
                     >
-                      Complete Installation
+                      Finish Installation
                     </button>
                   )}
                 </div>
@@ -894,835 +1560,8 @@ export default function PremierInstallerTechBoard() {
           )}
         </section>
 
-        <div
-          style={{
-            display: "flex",
-            gap: 10,
-            overflowX: "auto",
-            marginBottom: 16,
-            paddingBottom: 4,
-          }}
-        >
-          {jobs.map((job) => (
-            <button
-              key={job.id}
-              type="button"
-              onClick={() => {
-                setActiveJobId(job.id);
-                setCompleted(false);
-                setCompletionOpen(false);
-                setCompletionMode(null);
-                setPunchOutOpening("");
-                setPunchOutIssue("");
-              }}
-              style={{
-                minWidth: 240,
-                textAlign: "left",
-                border:
-                  activeJobId === job.id
-                    ? "1px solid #87a9c0"
-                    : "1px solid #27333b",
-                borderRadius: 15,
-                background:
-                  activeJobId === job.id ? "#111820" : "#101419",
-                color: "#fff",
-                padding: 14,
-                cursor: "pointer",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 11,
-                  color: "#8fa9bc",
-                  fontWeight: 800,
-                  marginBottom: 5,
-                }}
-              >
-                {job.arrival}
-              </div>
 
-              <strong style={{ fontSize: 16 }}>{job.customer}</strong>
-
-              <div
-                style={{
-                  marginTop: 5,
-                  color: "#9ea7ae",
-                  fontSize: 12,
-                }}
-              >
-                {job.address}
-              </div>
-
-              <div
-                style={{
-                  marginTop: 9,
-                  fontSize: 13,
-                }}
-              >
-                {job.scope}
-              </div>
-            </button>
-          ))}
-        </div>
-
-        <div
-          style={{
-            border: "1px solid #28343d",
-            borderRadius: 20,
-            background: "#0d1115",
-            padding: 16,
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              gap: 12,
-              alignItems: "flex-start",
-              marginBottom: 14,
-            }}
-          >
-            <div>
-              <div
-                style={{
-                  color: "#8fa9bc",
-                  fontSize: 11,
-                  fontWeight: 900,
-                  marginBottom: 5,
-                }}
-              >
-                {activeJob.id}
-              </div>
-
-              <h2
-                style={{
-                  margin: 0,
-                  fontSize: 26,
-                  lineHeight: 1.05,
-                }}
-              >
-                {activeJob.customer}
-              </h2>
-
-              <div
-                style={{
-                  color: "#a5aeb5",
-                  fontSize: 13,
-                  marginTop: 5,
-                }}
-              >
-                {activeJob.address}
-              </div>
-            </div>
-
-            <span
-              style={{
-                border: "1px solid #31495a",
-                background: "#16232d",
-                borderRadius: 999,
-                padding: "6px 10px",
-                color: "#d9e5ee",
-                fontSize: 12,
-                fontWeight: 800,
-              }}
-            >
-              {completed
-                ? hasOpenPunchOut
-                  ? "Needs Attention"
-                  : "Installer Complete"
-                : activeJob.status}
-            </span>
-          </div>
-
-          <div
-            style={{
-              border: "1px solid #2d3d47",
-              borderRadius: 14,
-              background: "#14202a",
-              padding: 14,
-              marginBottom: 12,
-            }}
-          >
-            <div
-              style={{
-                fontSize: 11,
-                color: "#8fa9bc",
-                fontWeight: 900,
-                textTransform: "uppercase",
-                letterSpacing: 1,
-                marginBottom: 5,
-              }}
-            >
-              Today’s Work
-            </div>
-
-            <strong>{activeJob.scope}</strong>
-          </div>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 9,
-              marginBottom: 12,
-            }}
-            className="tech-quick-grid"
-          >
-            <div
-              style={{
-                border: "1px solid #28323a",
-                borderRadius: 12,
-                padding: 12,
-                background: "#101419",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 11,
-                  color: "#929ba2",
-                  marginBottom: 4,
-                }}
-              >
-                Arrival
-              </div>
-              <strong>{activeJob.arrival}</strong>
-            </div>
-
-            <div
-              style={{
-                border: "1px solid #28323a",
-                borderRadius: 12,
-                padding: 12,
-                background: "#101419",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 11,
-                  color: "#929ba2",
-                  marginBottom: 4,
-                }}
-              >
-                Crew
-              </div>
-              <strong>{activeJob.crew}</strong>
-            </div>
-          </div>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 9,
-              marginBottom: 12,
-            }}
-            className="tech-action-grid"
-          >
-            <label
-              style={{
-                minHeight: 46,
-                border: "1px solid #344958",
-                borderRadius: 12,
-                background: "#111820",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontWeight: 800,
-                cursor: "pointer",
-                padding: "10px 12px",
-              }}
-            >
-              Upload Photo
-              <input
-                type="file"
-                accept="image/*"
-                hidden
-                onChange={(event) => {
-                  const count = event.target.files?.length ?? 0;
-                  if (!count) return;
-
-                  setPhotoCount((current) => current + count);
-                  addUpdate(
-                    `${count} field photo${count === 1 ? "" : "s"} added.`
-                  );
-                }}
-              />
-            </label>
-
-            <button
-              type="button"
-              onClick={() => {
-                const text = window.prompt(
-                  "What problem did you find on the job?"
-                );
-
-                if (!text?.trim()) return;
-                addUpdate(`Problem reported: ${text.trim()}`);
-              }}
-              style={{
-                minHeight: 46,
-                border: "1px solid #5b432b",
-                borderRadius: 12,
-                background: "#21180f",
-                color: "#f5f0e8",
-                fontWeight: 800,
-                cursor: "pointer",
-                padding: "10px 12px",
-              }}
-            >
-              Report Problem
-            </button>
-          </div>
-
-          <div style={{ display: "grid", gap: 10 }}>
-            <Section title="Agreement Truth" defaultOpen>
-              <div style={{ display: "grid", gap: 12 }}>
-                <div>
-                  <div
-                    style={{
-                      color: "#91a2ad",
-                      fontSize: 10,
-                      fontWeight: 900,
-                      textTransform: "uppercase",
-                      letterSpacing: 0.8,
-                      marginBottom: 5,
-                    }}
-                  >
-                    Approved Scope
-                  </div>
-
-                  <strong style={{ fontSize: 14 }}>
-                    {activeJob.approvedScope}
-                  </strong>
-                </div>
-
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: 12,
-                  }}
-                  className="tech-agreement-grid"
-                >
-                  <div>
-                    <div
-                      style={{
-                        color: "#9fb9cb",
-                        fontSize: 11,
-                        fontWeight: 900,
-                        marginBottom: 5,
-                      }}
-                    >
-                      Promised / Included
-                    </div>
-
-                    <div
-                      style={{
-                        display: "grid",
-                        gap: 4,
-                        fontSize: 13,
-                      }}
-                    >
-                      {activeJob.promisedIncluded.map((item) => (
-                        <div key={item}>✓ {item}</div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div
-                      style={{
-                        color: "#d9b982",
-                        fontSize: 11,
-                        fontWeight: 900,
-                        marginBottom: 5,
-                      }}
-                    >
-                      Not Included
-                    </div>
-
-                    <div
-                      style={{
-                        display: "grid",
-                        gap: 4,
-                        fontSize: 13,
-                      }}
-                    >
-                      {activeJob.notIncluded.map((item) => (
-                        <div key={item}>— {item}</div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div
-                  style={{
-                    borderTop: "1px solid #29343d",
-                    paddingTop: 10,
-                    color: "#cfd6dc",
-                    fontSize: 13,
-                    lineHeight: 1.55,
-                  }}
-                >
-                  {activeJob.customerTruth}
-                </div>
-              </div>
-            </Section>
-
-            <Section title="Measurements / Beam Cards">
-              <div
-                style={{
-                  display: "grid",
-                  gap: 9,
-                }}
-              >
-                {activeJob.measurements.map(({ name, location, measurement }) => (
-                  <div
-                    key={name}
-                    style={{
-                      border: "1px solid #29343d",
-                      borderRadius: 12,
-                      padding: 12,
-                    }}
-                  >
-                    <strong>{name}</strong>
-                    <div
-                      style={{
-                        color: "#9fa8af",
-                        fontSize: 12,
-                        marginTop: 4,
-                      }}
-                    >
-                      {location}
-                    </div>
-                    <div style={{ marginTop: 7 }}>{measurement}</div>
-                  </div>
-                ))}
-              </div>
-            </Section>
-
-            <Section title="Required Photos" defaultOpen>
-              <div
-                style={{
-                  display: "grid",
-                  gap: 7,
-                  color: "#d6dce1",
-                  fontSize: 14,
-                }}
-              >
-                {activeJob.requiredPhotos.map((item) => (
-                  <div key={item}>○ {item}</div>
-                ))}
-
-                <div
-                  style={{
-                    marginTop: 5,
-                    color: "#8fa9bc",
-                    fontWeight: 800,
-                  }}
-                >
-                  {photoCount} new field photo{photoCount === 1 ? "" : "s"} added
-                </div>
-              </div>
-            </Section>
-
-            <Section title="Materials / PO">
-              <div
-                style={{
-                  display: "grid",
-                  gap: 8,
-                  fontSize: 14,
-                }}
-              >
-                <div>
-                  <strong>Supplier:</strong> {activeJob.supplier}
-                </div>
-                <div>
-                  <strong>PO:</strong> {activeJob.manufacturerPo}
-                </div>
-                <div>
-                  <strong>Material:</strong> {activeJob.materialStatus}
-                </div>
-                <div
-                  style={{
-                    color: "#93adc0",
-                    fontWeight: 800,
-                    marginTop: 3,
-                  }}
-                >
-                  View Manufacturer PO
-                </div>
-              </div>
-            </Section>
-
-            <Section title="Field Notes / Truth Chain">
-              <div style={{ display: "grid", gap: 10 }}>
-                {updates.map((item, index) => (
-                  <div
-                    key={`${item.time}-${index}`}
-                    style={{
-                      borderLeft: "2px solid #6f93aa",
-                      paddingLeft: 10,
-                    }}
-                  >
-                    <div
-                      style={{
-                        color: "#9fb9cb",
-                        fontSize: 11,
-                        fontWeight: 800,
-                      }}
-                    >
-                      {item.time}
-                    </div>
-                    <div
-                      style={{
-                        marginTop: 3,
-                        color: "#f0f4f7",
-                        fontSize: 13,
-                      }}
-                    >
-                      {item.text}
-                    </div>
-                  </div>
-                ))}
-
-                <textarea
-                  value={note}
-                  onChange={(event) => setNote(event.target.value)}
-                  placeholder="Add a field note..."
-                  rows={3}
-                  style={{
-                    width: "100%",
-                    boxSizing: "border-box",
-                    resize: "vertical",
-                    border: "1px solid #34434d",
-                    borderRadius: 10,
-                    background: "#0b0f13",
-                    color: "#f5f7f5",
-                    padding: 11,
-                    font: "inherit",
-                  }}
-                />
-
-                <button
-                  type="button"
-                  disabled={!note.trim()}
-                  onClick={() => {
-                    if (!note.trim()) return;
-                    addUpdate(note.trim());
-                    setNote("");
-                  }}
-                  style={{
-                    minHeight: 42,
-                    border: "1px solid #486578",
-                    borderRadius: 10,
-                    background: "#1a2a36",
-                    color: "#fff",
-                    fontWeight: 800,
-                    cursor: "pointer",
-                  }}
-                >
-                  Save Field Note
-                </button>
-              </div>
-            </Section>
-          </div>
-
-          <div
-            style={{
-              marginTop: 14,
-              border: "1px solid #33434d",
-              borderRadius: 14,
-              background: "#10151a",
-              overflow: "hidden",
-            }}
-          >
-            <button
-              type="button"
-              onClick={() => {
-                setCompletionOpen((current) => !current);
-                setCompletionMode(null);
-              }}
-              style={{
-                width: "100%",
-                minHeight: 52,
-                border: 0,
-                background: completed ? "#1a2934" : "#1c2c38",
-                color: "#fff",
-                fontWeight: 900,
-                fontSize: 15,
-                cursor: "pointer",
-              }}
-            >
-              {completed
-                ? hasOpenPunchOut
-                  ? "Installation Complete · Needs Attention"
-                  : "Installation Complete"
-                : "Complete Installation"}
-            </button>
-
-            {completionOpen ? (
-              <div
-                style={{
-                  padding: 14,
-                  borderTop: "1px solid #33434d",
-                  display: "grid",
-                  gap: 12,
-                }}
-              >
-                <div>
-                  <strong style={{ fontSize: 15 }}>
-                    Any remaining issues?
-                  </strong>
-
-                  <div
-                    style={{
-                      color: "#9da7ae",
-                      fontSize: 12,
-                      marginTop: 4,
-                    }}
-                  >
-                    Record anything missing, damaged, unfinished, or needing a
-                    return visit before this job moves toward final walkthrough.
-                  </div>
-                </div>
-
-                <div
-                  className="tech-completion-grid"
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: 8,
-                  }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCompletionMode("clean");
-                      setCompleted(true);
-                      addUpdate(
-                        "Installation complete. Installer reported no outstanding punch-out items."
-                      );
-                    }}
-                    style={{
-                      minHeight: 44,
-                      border: "1px solid #486578",
-                      borderRadius: 10,
-                      background:
-                        completionMode === "clean" ? "#243b4a" : "#111820",
-                      color: "#fff",
-                      fontWeight: 800,
-                      cursor: "pointer",
-                    }}
-                  >
-                    No — Job is clean
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setCompletionMode("issue")}
-                    style={{
-                      minHeight: 44,
-                      border: "1px solid #60452d",
-                      borderRadius: 10,
-                      background:
-                        completionMode === "issue" ? "#342314" : "#21180f",
-                      color: "#fff",
-                      fontWeight: 800,
-                      cursor: "pointer",
-                    }}
-                  >
-                    Yes — Add Punch-Out Item
-                  </button>
-                </div>
-
-                {completionMode === "issue" ? (
-                  <div
-                    style={{
-                      display: "grid",
-                      gap: 9,
-                      paddingTop: 4,
-                    }}
-                  >
-                    <input
-                      value={punchOutOpening}
-                      onChange={(event) =>
-                        setPunchOutOpening(event.target.value)
-                      }
-                      placeholder="Opening / location — e.g. Window 07"
-                      style={{
-                        width: "100%",
-                        boxSizing: "border-box",
-                        border: "1px solid #34434d",
-                        borderRadius: 10,
-                        background: "#0b0f13",
-                        color: "#fff",
-                        padding: 11,
-                        font: "inherit",
-                      }}
-                    />
-
-                    <select
-                      value={punchOutType}
-                      onChange={(event) =>
-                        setPunchOutType(event.target.value)
-                      }
-                      style={{
-                        width: "100%",
-                        border: "1px solid #34434d",
-                        borderRadius: 10,
-                        background: "#0b0f13",
-                        color: "#fff",
-                        padding: 11,
-                        font: "inherit",
-                      }}
-                    >
-                      <option>Missing Part</option>
-                      <option>Damage / Scratch</option>
-                      <option>Touch-Up</option>
-                      <option>Adjustment</option>
-                      <option>Return Visit</option>
-                      <option>Other</option>
-                    </select>
-
-                    <textarea
-                      value={punchOutIssue}
-                      onChange={(event) =>
-                        setPunchOutIssue(event.target.value)
-                      }
-                      placeholder="What still needs attention?"
-                      rows={3}
-                      style={{
-                        width: "100%",
-                        boxSizing: "border-box",
-                        resize: "vertical",
-                        border: "1px solid #34434d",
-                        borderRadius: 10,
-                        background: "#0b0f13",
-                        color: "#fff",
-                        padding: 11,
-                        font: "inherit",
-                      }}
-                    />
-
-                    <button
-                      type="button"
-                      disabled={!punchOutIssue.trim()}
-                      onClick={() => {
-                        if (!punchOutIssue.trim()) return;
-
-                        const time = new Date().toLocaleString([], {
-                          month: "short",
-                          day: "numeric",
-                          hour: "numeric",
-                          minute: "2-digit",
-                        });
-
-                        setPunchOuts((current) => [
-                          {
-                            id: `${activeJob.id}-${Date.now()}`,
-                            jobId: activeJob.id,
-                            opening:
-                              punchOutOpening.trim() || "General / Unknown",
-                            type: punchOutType,
-                            issue: punchOutIssue.trim(),
-                            time,
-                            resolved: false,
-                          },
-                          ...current,
-                        ]);
-
-                        setCompleted(true);
-
-                        addUpdate(
-                          `Punch-out reported · ${punchOutType} · ${
-                            punchOutOpening.trim() || "General / Unknown"
-                          } · ${punchOutIssue.trim()}`
-                        );
-
-                        setPunchOutOpening("");
-                        setPunchOutIssue("");
-                        setCompletionMode(null);
-                      }}
-                      style={{
-                        minHeight: 44,
-                        border: "1px solid #725033",
-                        borderRadius: 10,
-                        background: "#2b1d12",
-                        color: "#fff",
-                        fontWeight: 900,
-                        cursor: "pointer",
-                      }}
-                    >
-                      Submit Punch-Out
-                    </button>
-                  </div>
-                ) : null}
-
-                {activePunchOuts.length > 0 ? (
-                  <div
-                    style={{
-                      borderTop: "1px solid #313d46",
-                      paddingTop: 11,
-                      display: "grid",
-                      gap: 8,
-                    }}
-                  >
-                    <div
-                      style={{
-                        color: "#d7b37c",
-                        fontSize: 11,
-                        fontWeight: 900,
-                        textTransform: "uppercase",
-                        letterSpacing: 0.8,
-                      }}
-                    >
-                      Needs Attention
-                    </div>
-
-                    {activePunchOuts.map((item) => (
-                      <div
-                        key={item.id}
-                        style={{
-                          border: "1px solid #503b28",
-                          borderRadius: 10,
-                          background: "#1d160f",
-                          padding: 10,
-                        }}
-                      >
-                        <strong>
-                          {item.opening} · {item.type}
-                        </strong>
-
-                        <div
-                          style={{
-                            marginTop: 4,
-                            fontSize: 13,
-                            color: "#e4ded6",
-                          }}
-                        >
-                          {item.issue}
-                        </div>
-
-                        <div
-                          style={{
-                            marginTop: 5,
-                            fontSize: 10,
-                            color: "#9f958a",
-                          }}
-                        >
-                          Reported {item.time} · Recorded by signed-in installer
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
-          </div>
-        </div>
       </div>
-
       <style>{`
         @media (max-width: 560px) {
           .tech-quick-grid,

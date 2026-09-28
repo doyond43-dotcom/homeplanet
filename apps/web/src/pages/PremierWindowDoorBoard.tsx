@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 type JobStatus =
@@ -25,47 +25,7 @@ type Job = {
   scheduledDate: string;
 };
 
-const jobs: Job[] = [
-  {
-    id: "PW-1048",
-    customer: "Michael & Sarah Carter",
-    address: "1842 Palm Ridge Dr, Wellington",
-    scope: "8 impact windows + rear French door",
-    salesperson: "Gio",
-    status: "Ready to Schedule",
-    nextAction: "Assign crew after material arrival confirmation",
-    materialEta: "Sept 14",
-    permitStatus: "Approved",
-    crew: "Not assigned",
-    scheduledDate: "Not scheduled",
-  },
-  {
-    id: "PW-1042",
-    customer: "Harbor Point Builders",
-    address: "Jupiter Island - New Construction",
-    scope: "Commercial window + door package",
-    salesperson: "Gino",
-    status: "Waiting on Material",
-    nextAction: "Monitor manufacturer ETA",
-    materialEta: "Oct 3",
-    permitStatus: "Builder handling permit",
-    crew: "Not assigned",
-    scheduledDate: "Pending material",
-  },
-  {
-    id: "PW-1037",
-    customer: "Robert Ellis",
-    address: "Palm Beach Gardens",
-    scope: "4 windows + front entry door",
-    salesperson: "Dennis",
-    status: "Inspection",
-    nextAction: "Upload in-progress inspection photos",
-    materialEta: "Received",
-    permitStatus: "In-progress inspection",
-    crew: "Crew 2",
-    scheduledDate: "Installed Aug 24",
-  },
-];
+const jobs: Job[] = [];
 
 const lanes: JobStatus[] = [
   "Needs Attention",
@@ -156,6 +116,37 @@ export default function PremierWindowDoorBoard() {
   const liveLeadsScrollRef = useRef<HTMLDivElement | null>(null);
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
   const [officeWorkLeadId, setOfficeWorkLeadId] = useState<string | null>(null);
+  const [customerEditOpen, setCustomerEditOpen] = useState(false);
+  const [customerEditDraft, setCustomerEditDraft] = useState({
+    firstName: "",
+    lastName: "",
+    phone: "",
+    email: "",
+    projectAddress: "",
+  });
+  const [savingCustomerEdit, setSavingCustomerEdit] = useState(false);
+  const [workHistoryOpen, setWorkHistoryOpen] = useState(false);
+  const [workHistorySearch, setWorkHistorySearch] = useState("");
+  const [workHistoryRows, setWorkHistoryRows] = useState<any[]>([]);
+  const [workHistoryLoading, setWorkHistoryLoading] = useState(false);
+  const [workHistoryError, setWorkHistoryError] = useState("");
+  const [restoringJobId, setRestoringJobId] = useState<string | null>(null);
+  const [officeBeamMessages, setOfficeBeamMessages] = useState<any[]>([]);
+  const [officeBeamLoading, setOfficeBeamLoading] = useState(false);
+  const [officeBeamError, setOfficeBeamError] = useState("");
+  const [officeBeamBody, setOfficeBeamBody] = useState("");
+  const [officeBeamRecipient, setOfficeBeamRecipient] =
+    useState<string>("Gio Richardson");
+  const [officeBeamSending, setOfficeBeamSending] = useState(false);
+  const [officeBeamListening, setOfficeBeamListening] = useState(false);
+  const [officePersonalBeamMessages, setOfficePersonalBeamMessages] = useState<any[]>([]);
+  const [officePersonalBeamLoading, setOfficePersonalBeamLoading] = useState(false);
+  const [officePersonalBeamError, setOfficePersonalBeamError] = useState("");
+  const [officePersonalBeamReplyOpenId, setOfficePersonalBeamReplyOpenId] = useState<string | null>(null);
+  const [officePersonalBeamReplyBody, setOfficePersonalBeamReplyBody] = useState("");
+  const [officePersonalBeamReplySending, setOfficePersonalBeamReplySending] = useState(false);
+  const [officePersonalBeamReplyListening, setOfficePersonalBeamReplyListening] = useState(false);
+  const [officePersonalBeamReplyError, setOfficePersonalBeamReplyError] = useState("");
   const [officeWorkView, setOfficeWorkView] = useState<
     | "measurements"
     | "photos"
@@ -272,13 +263,369 @@ export default function PremierWindowDoorBoard() {
       ]
     : [];
 
-  const previewOfficeLeads = [...liveLeads, ...sampleOfficeLeads];
+  const previewOfficeLeads = liveLeads;
 
   const officeWorkLead =
     previewOfficeLeads.find((lead) => lead.id === officeWorkLeadId) ?? null;
+
+  const loadOfficeBeam = async (jobId: string) => {
+    const accessToken = new URLSearchParams(window.location.search).get("access");
+
+    if (!accessToken || !jobId) {
+      setOfficeBeamMessages([]);
+      return;
+    }
+
+    setOfficeBeamLoading(true);
+    setOfficeBeamError("");
+
+    const { data, error } = await supabase.rpc("get_premier_beam_messages", {
+      p_access_token: accessToken,
+      p_job_id: jobId,
+    });
+
+    if (error) {
+      console.error("Premier Office Beam load failed:", error);
+      setOfficeBeamMessages([]);
+      setOfficeBeamError("Could not load Beam messages.");
+      setOfficeBeamLoading(false);
+      return;
+    }
+
+    const rows = data ?? [];
+    setOfficeBeamMessages(rows);
+    setOfficeBeamLoading(false);
+
+    const hasUnreadOfficeMessages = rows.some(
+      (message: any) =>
+        message.recipient_role === "Office" && !message.read_at
+    );
+
+    if (hasUnreadOfficeMessages) {
+      const { error: readError } = await supabase.rpc(
+        "mark_premier_beam_read",
+        {
+          p_access_token: accessToken,
+          p_job_id: jobId,
+          p_recipient_role: "Office",
+        }
+      );
+
+      if (readError) {
+        console.error("Premier Office Beam read update failed:", readError);
+        return;
+      }
+
+      setOfficeBeamMessages((current) =>
+        current.map((message) =>
+          message.recipient_role === "Office" && !message.read_at
+            ? { ...message, read_at: new Date().toISOString() }
+            : message
+        )
+      );
+    }
+  };
+
+  const loadOfficePersonalBeamInbox = async () => {
+    const accessToken = new URLSearchParams(window.location.search).get("access");
+
+    if (!accessToken) {
+      setOfficePersonalBeamMessages([]);
+      return;
+    }
+
+    setOfficePersonalBeamLoading(true);
+    setOfficePersonalBeamError("");
+
+    const { data, error } = await supabase.rpc("get_premier_beam_inbox", {
+      p_access_token: accessToken,
+    });
+
+    if (error) {
+      console.error("Premier Office personal Beam inbox failed:", error);
+      setOfficePersonalBeamMessages([]);
+      setOfficePersonalBeamError("Could not load Beam.");
+    } else {
+      setOfficePersonalBeamMessages(data ?? []);
+    }
+
+    setOfficePersonalBeamLoading(false);
+  };
+
+  const markOfficePersonalBeamRead = async (messageId: string) => {
+    const accessToken = new URLSearchParams(window.location.search).get("access");
+    if (!accessToken) return;
+
+    const { data, error } = await supabase.rpc("mark_my_premier_beam_read", {
+      p_access_token: accessToken,
+      p_message_id: messageId,
+    });
+
+    if (error || data !== true) {
+      console.error("Office Beam mark read failed:", error);
+      return;
+    }
+
+    setOfficePersonalBeamMessages((current) =>
+      current.filter((message) => message.id !== messageId)
+    );
+  };
+
+  const startOfficePersonalBeamReplyVoiceInput = () => {
+    if (officePersonalBeamReplyListening) return;
+
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      setOfficePersonalBeamReplyError("Speech-to-text is not supported in this browser.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onstart = () => {
+      setOfficePersonalBeamReplyListening(true);
+      setOfficePersonalBeamReplyError("");
+    };
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results?.[0]?.[0]?.transcript?.trim() || "";
+      if (!transcript) return;
+
+      setOfficePersonalBeamReplyBody((current) =>
+        current.trim() ? `${current.trim()} ${transcript}` : transcript
+      );
+    };
+
+    recognition.onerror = () => {
+      setOfficePersonalBeamReplyError("Could not capture voice message.");
+    };
+
+    recognition.onend = () => {
+      setOfficePersonalBeamReplyListening(false);
+    };
+
+    recognition.start();
+  };
+
+  const sendOfficePersonalBeamReply = async (message: any) => {
+    if (officePersonalBeamReplySending) return;
+
+    const body = officePersonalBeamReplyBody.trim();
+    if (!body) return;
+
+    const recipient = String(message?.sender_label || "").trim();
+    const allowedRecipients = [
+      "Darcy",
+      "Karolina",
+      "Gio Richardson",
+      "Gino Marquez",
+      "Dennis Dillon",
+      "RJ",
+      "Angel",
+      "Jose",
+      "Obelio",
+      "Joseph",
+    ];
+
+    if (!allowedRecipients.includes(recipient)) {
+      setOfficePersonalBeamReplyError("This Beam does not contain a replyable staff identity.");
+      return;
+    }
+
+    const accessToken = new URLSearchParams(window.location.search).get("access");
+
+    if (!accessToken) {
+      setOfficePersonalBeamReplyError("Premier staff access token missing.");
+      return;
+    }
+
+    setOfficePersonalBeamReplySending(true);
+    setOfficePersonalBeamReplyError("");
+
+    const { error } = await supabase.rpc("send_premier_beam_message", {
+      p_access_token: accessToken,
+      p_job_id: message.job_id,
+      p_sender_role: "Office",
+      p_recipient_role: recipient,
+      p_body: body,
+    });
+
+    if (error) {
+      console.error("Office Beam reply failed:", error);
+      setOfficePersonalBeamReplyError(error.message || "Could not send Beam reply.");
+      setOfficePersonalBeamReplySending(false);
+      return;
+    }
+
+    setOfficePersonalBeamReplyBody("");
+    setOfficePersonalBeamReplyOpenId(null);
+    setOfficePersonalBeamReplySending(false);
+  };
+
+  useEffect(() => {
+    void loadOfficePersonalBeamInbox();
+  }, []);
+
+  const startOfficeBeamVoiceInput = () => {
+    if (officeBeamListening) return;
+
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      setOfficeBeamError("Speech-to-text is not supported in this browser.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+
+    recognition.lang = "en-US";
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onstart = () => {
+      setOfficeBeamListening(true);
+      setOfficeBeamError("");
+    };
+
+    recognition.onresult = (event: any) => {
+      const transcript =
+        event.results?.[0]?.[0]?.transcript?.trim() || "";
+
+      if (!transcript) return;
+
+      setOfficeBeamBody((current) =>
+        current.trim() ? `${current.trim()} ${transcript}` : transcript
+      );
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("Office Beam speech recognition failed:", event);
+      setOfficeBeamError("Could not capture voice message.");
+    };
+
+    recognition.onend = () => {
+      setOfficeBeamListening(false);
+    };
+
+    recognition.start();
+  };
+
+  const sendOfficeBeamMessage = async () => {
+    if (!officeWorkLead || officeBeamSending) return;
+
+    const body = officeBeamBody.trim();
+
+    if (!body) return;
+
+    const accessToken = new URLSearchParams(window.location.search).get("access");
+
+    if (!accessToken) {
+      setOfficeBeamError("Premier staff access token missing.");
+      return;
+    }
+
+    setOfficeBeamSending(true);
+    setOfficeBeamError("");
+
+    const { error } = await supabase.rpc("send_premier_beam_message", {
+      p_access_token: accessToken,
+      p_job_id: officeWorkLead.id,
+      p_sender_role: "Office",
+      p_recipient_role: officeBeamRecipient,
+      p_body: body,
+    });
+
+    if (error) {
+      console.error("Premier Office Beam send failed:", error);
+      setOfficeBeamError(error.message || "Could not send Beam message.");
+      setOfficeBeamSending(false);
+      return;
+    }
+
+    setOfficeBeamBody("");
+    setOfficeBeamSending(false);
+
+    await loadOfficeBeam(officeWorkLead.id);
+  };
+
+  useEffect(() => {
+    if (!officeWorkLead?.id) {
+      setOfficeBeamMessages([]);
+      setOfficeBeamBody("");
+      setOfficeBeamError("");
+      return;
+    }
+
+    void loadOfficeBeam(officeWorkLead.id);
+  }, [officeWorkLead?.id]);
+
+  const saveCustomerEdit = async (lead: any) => {
+    if (!lead || lead._sample || savingCustomerEdit) return;
+
+    const accessToken = new URLSearchParams(window.location.search).get("access");
+
+    if (!accessToken) {
+      window.alert("Premier staff access token missing.");
+      return;
+    }
+
+    setSavingCustomerEdit(true);
+
+    const { data, error } = await supabase.rpc(
+      "save_premier_customer_contact",
+      {
+        p_access_token: accessToken,
+        p_job_id: lead.id,
+        p_first_name: customerEditDraft.firstName,
+        p_last_name: customerEditDraft.lastName,
+        p_phone: customerEditDraft.phone,
+        p_email: customerEditDraft.email,
+        p_project_address: customerEditDraft.projectAddress,
+      }
+    );
+
+    setSavingCustomerEdit(false);
+
+    if (error) {
+      console.error("Customer contact save failed:", error);
+      window.alert(error.message || "Customer information could not be saved.");
+      return;
+    }
+
+    if (data !== true) {
+      window.alert("Customer information could not be saved.");
+      return;
+    }
+
+    setLiveLeads((current) =>
+      current.map((item) =>
+        item.id === lead.id
+          ? {
+              ...item,
+              first_name: customerEditDraft.firstName.trim(),
+              last_name: customerEditDraft.lastName.trim(),
+              phone: customerEditDraft.phone.trim(),
+              email: customerEditDraft.email.trim() || null,
+              project_address: customerEditDraft.projectAddress.trim(),
+            }
+          : item
+      )
+    );
+
+    setCustomerEditOpen(false);
+  };
   const [assigningLeadId, setAssigningLeadId] = useState<string | null>(null);
   const [savingAssignmentId, setSavingAssignmentId] = useState<string | null>(null);
   const [savingLeadDecisionId, setSavingLeadDecisionId] = useState<string | null>(null);
+  const [archivingJobId, setArchivingJobId] = useState<string | null>(null);
   const [leadDrafts, setLeadDrafts] = useState<Record<string, {
     salesperson?: string;
     contactStatus?: string;
@@ -1207,6 +1554,93 @@ export default function PremierWindowDoorBoard() {
     setOpenLeadId(null);
     setSavingLeadDecisionId(null);
   };
+  const loadWorkHistory = async (searchValue = workHistorySearch) => {
+    const accessToken = new URLSearchParams(window.location.search).get("access");
+
+    if (!accessToken) {
+      setWorkHistoryRows([]);
+      setWorkHistoryError("Premier staff access token missing.");
+      return;
+    }
+
+    setWorkHistoryLoading(true);
+    setWorkHistoryError("");
+
+    const { data, error } = await supabase.rpc("get_premier_work_history", {
+      p_access_token: accessToken,
+      p_search: searchValue.trim() || null,
+    });
+
+    if (error) {
+      console.error("Premier Work History load failed:", error);
+      setWorkHistoryRows([]);
+      setWorkHistoryError("Could not load Work History.");
+      setWorkHistoryLoading(false);
+      return;
+    }
+
+    setWorkHistoryRows(data ?? []);
+    setWorkHistoryLoading(false);
+  };
+
+  const openWorkHistory = async () => {
+    setWorkHistoryOpen(true);
+    await loadWorkHistory("");
+  };
+
+  const restoreArchivedJob = async (job: any) => {
+    if (!job || restoringJobId) return;
+
+    const confirmed = window.confirm(
+      `Restore ${job.first_name} ${job.last_name} to the active Office board?`
+    );
+
+    if (!confirmed) return;
+
+    const accessToken = new URLSearchParams(window.location.search).get("access");
+
+    if (!accessToken) {
+      window.alert("Premier staff access token missing.");
+      return;
+    }
+
+    setRestoringJobId(job.id);
+
+    const { data, error } = await supabase.rpc("restore_premier_job", {
+      p_access_token: accessToken,
+      p_job_id: job.id,
+    });
+
+    setRestoringJobId(null);
+
+    if (error) {
+      console.error("Premier job restore failed:", error);
+      window.alert(error.message || "This job could not be restored.");
+      return;
+    }
+
+    if (data !== true) {
+      window.alert("This job could not be restored.");
+      return;
+    }
+
+    setWorkHistoryRows((current) =>
+      current.filter((item) => item.id !== job.id)
+    );
+
+    setLiveLeads((current) => {
+      if (current.some((item) => item.id === job.id)) return current;
+
+      return [
+        {
+          ...job,
+          is_archived: false,
+          archived_at: null,
+        },
+        ...current,
+      ];
+    });
+  };
   useEffect(() => {
     let active = true;
 
@@ -1369,6 +1803,203 @@ export default function PremierWindowDoorBoard() {
           </p>
         </header>
 
+        {officePersonalBeamMessages.some((message) => !message.read_at) ? (
+          <section
+            style={{
+              border: "1px solid #78aa88",
+              borderRadius: 16,
+              background: "linear-gradient(135deg, #173225 0%, #101b16 100%)",
+              padding: 12,
+              marginBottom: 14,
+              boxShadow: "0 0 0 1px rgba(139,184,154,0.08), 0 8px 24px rgba(0,0,0,0.18)",
+            }}
+          >
+            {(() => {
+              const message =
+                officePersonalBeamMessages.find((item) => !item.read_at) ?? null;
+
+              if (!message) return null;
+
+              return (
+                <>
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
+                    <div>
+                      <div style={{ color: "#9fd3ae", fontSize: 10, fontWeight: 900, letterSpacing: 1, textTransform: "uppercase" }}>
+                        Beam • New Message
+                      </div>
+
+                      <div style={{ color: "#ffffff", fontSize: 14, fontWeight: 900, marginTop: 4 }}>
+                        {message.first_name} {message.last_name}
+                      </div>
+
+                      <div style={{ color: "#91a59a", fontSize: 10, marginTop: 2 }}>
+                        {message.project_address}
+                      </div>
+                    </div>
+
+                    <div style={{ color: "#9fd3ae", fontSize: 10, fontWeight: 800 }}>
+                      For you
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: 8, color: "#8fb49b", fontSize: 10, fontWeight: 800 }}>
+                    From {message.sender_label}
+                  </div>
+
+                  <div style={{ marginTop: 8, border: "1px solid #294a36", borderRadius: 10, background: "#0d1711", padding: 10, color: "#e5eee8", fontSize: 12, lineHeight: 1.45 }}>
+                    {message.body}
+                  </div>
+
+                  {officePersonalBeamReplyOpenId === message.id ? (
+                    <div style={{ marginTop: 10, border: "1px solid #31533c", borderRadius: 10, background: "#101a13", padding: 10 }}>
+                      <div style={{ color: "#9fd3ae", fontSize: 9, fontWeight: 900, marginBottom: 7 }}>
+                        Reply to {message.sender_label}
+                      </div>
+
+                      <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 46px", gap: 8 }}>
+                        <textarea
+                          value={officePersonalBeamReplyBody}
+                          onChange={(event) => setOfficePersonalBeamReplyBody(event.target.value)}
+                          placeholder={officePersonalBeamReplyListening ? "Listening..." : "Type or tap the mic and talk..."}
+                          rows={2}
+                          style={{
+                            width: "100%",
+                            minHeight: 54,
+                            boxSizing: "border-box",
+                            resize: "vertical",
+                            border: "1px solid #477057",
+                            borderRadius: 9,
+                            background: "#0d1711",
+                            color: "#e5eee8",
+                            padding: "9px 10px",
+                            fontSize: 12,
+                          }}
+                        />
+
+                        <button
+                          type="button"
+                          onClick={startOfficePersonalBeamReplyVoiceInput}
+                          disabled={officePersonalBeamReplyListening}
+                          style={{
+                            border: officePersonalBeamReplyListening
+                              ? "1px solid #d98778"
+                              : "1px solid #8fbea0",
+                            borderRadius: 9,
+                            background: officePersonalBeamReplyListening
+                              ? "#7a2d24"
+                              : "#2f6842",
+                            color: "#ffffff",
+                            fontSize: 20,
+                            cursor: officePersonalBeamReplyListening
+                              ? "wait"
+                              : "pointer",
+                            boxShadow: officePersonalBeamReplyListening
+                              ? "0 0 0 2px rgba(217,135,120,0.18), 0 0 18px rgba(217,135,120,0.22)"
+                              : "none",
+                          }}
+                        >
+                          🎤
+                        </button>
+                      </div>
+
+                      {officePersonalBeamReplyError ? (
+                        <div style={{ color: "#d8b267", fontSize: 10, marginTop: 7 }}>
+                          {officePersonalBeamReplyError}
+                        </div>
+                      ) : null}
+
+                      <button
+                        type="button"
+                        disabled={
+                          officePersonalBeamReplySending ||
+                          !officePersonalBeamReplyBody.trim()
+                        }
+                        onClick={() => void sendOfficePersonalBeamReply(message)}
+                        style={{
+                          width: "100%",
+                          minHeight: 38,
+                          marginTop: 8,
+                          border: "1px solid #8fbea0",
+                          borderRadius: 9,
+                          background: "#2f6842",
+                          color: "#ffffff",
+                          fontWeight: 900,
+                        }}
+                      >
+                        {officePersonalBeamReplySending
+                          ? "Sending..."
+                          : `Send to ${message.sender_label}`}
+                      </button>
+                    </div>
+                  ) : null}
+
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center", marginTop: 9 }}>
+                    <div style={{ color: "#71887a", fontSize: 9 }}>
+                      {new Date(message.created_at).toLocaleString()}
+                    </div>
+
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const nextOpen =
+                            officePersonalBeamReplyOpenId === message.id
+                              ? null
+                              : message.id;
+
+                          setOfficePersonalBeamReplyOpenId(nextOpen);
+                          setOfficePersonalBeamReplyBody("");
+                          setOfficePersonalBeamReplyError("");
+                        }}
+                        style={{
+                          minHeight: 34,
+                          border: "1px solid #78aa88",
+                          borderRadius: 9,
+                          background: "#173225",
+                          color: "#cce8d4",
+                          padding: "0 12px",
+                          fontSize: 10,
+                          fontWeight: 900,
+                        }}
+                      >
+                        {officePersonalBeamReplyOpenId === message.id
+                          ? "Close Reply"
+                          : "Reply"}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => void markOfficePersonalBeamRead(message.id)}
+                        style={{
+                          minHeight: 34,
+                          border: "1px solid #78aa88",
+                          borderRadius: 9,
+                          background: "#2f6842",
+                          color: "#ffffff",
+                          padding: "0 12px",
+                          fontSize: 10,
+                          fontWeight: 900,
+                        }}
+                      >
+                        Mark Read
+                      </button>
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
+          </section>
+        ) : officePersonalBeamLoading ? (
+          <div style={{ color: "#71887a", fontSize: 10, marginBottom: 10 }}>
+            Loading Beam...
+          </div>
+        ) : officePersonalBeamError ? (
+          <div style={{ color: "#d8b267", fontSize: 10, marginBottom: 10 }}>
+            {officePersonalBeamError}
+          </div>
+        ) : null}
+
+
         <section style={{ marginBottom: 22 }}>
           <div
             style={{
@@ -1485,6 +2116,31 @@ export default function PremierWindowDoorBoard() {
                 gap: 8,
               }}
             >
+              <button
+                type="button"
+                onClick={() => {
+                  if (workHistoryOpen) {
+                    setWorkHistoryOpen(false);
+                  } else {
+                    void openWorkHistory();
+                  }
+                }}
+                style={{
+                  minHeight: 40,
+                  border: "1px solid #486578",
+                  borderRadius: 10,
+                  background: workHistoryOpen ? "#1b2c38" : "#101419",
+                  color: "#d9e5ee",
+                  padding: "0 13px",
+                  fontSize: 12,
+                  fontWeight: 900,
+                  cursor: "pointer",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {workHistoryOpen ? "Close History" : "Work History"}
+              </button>
+
               <div
                 style={{
                   minWidth: 40,
@@ -1543,6 +2199,186 @@ export default function PremierWindowDoorBoard() {
               ) : null}
             </div>
           </div>
+
+          {workHistoryOpen ? (
+            <div
+              style={{
+                border: "1px solid #31495a",
+                borderRadius: 12,
+                background: "#0d141a",
+                padding: 14,
+                marginBottom: 16,
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  gap: 8,
+                  flexWrap: "wrap",
+                  marginBottom: 12,
+                }}
+              >
+                <input
+                  type="text"
+                  value={workHistorySearch}
+                  onChange={(event) => setWorkHistorySearch(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      void loadWorkHistory(workHistorySearch);
+                    }
+                  }}
+                  placeholder="Search name, phone, email, or address"
+                  style={{
+                    flex: "1 1 260px",
+                    minHeight: 42,
+                    border: "1px solid #31495a",
+                    borderRadius: 9,
+                    background: "#101820",
+                    color: "#f3f6f8",
+                    padding: "0 12px",
+                  }}
+                />
+
+                <button
+                  type="button"
+                  disabled={workHistoryLoading}
+                  onClick={() => void loadWorkHistory(workHistorySearch)}
+                  style={{
+                    minHeight: 42,
+                    border: "1px solid #486578",
+                    borderRadius: 9,
+                    background: "#16232d",
+                    color: "#d9e5ee",
+                    padding: "0 14px",
+                    fontWeight: 900,
+                    cursor: workHistoryLoading ? "wait" : "pointer",
+                    opacity: workHistoryLoading ? 0.65 : 1,
+                  }}
+                >
+                  {workHistoryLoading ? "Searching..." : "Search"}
+                </button>
+
+                {workHistorySearch ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setWorkHistorySearch("");
+                      void loadWorkHistory("");
+                    }}
+                    style={{
+                      minHeight: 42,
+                      border: "1px solid #31495a",
+                      borderRadius: 9,
+                      background: "#101419",
+                      color: "#aebbc5",
+                      padding: "0 12px",
+                      fontWeight: 800,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Clear
+                  </button>
+                ) : null}
+              </div>
+
+              {workHistoryError ? (
+                <div style={{ color: "#e1a3a3", fontSize: 12, marginBottom: 10 }}>
+                  {workHistoryError}
+                </div>
+              ) : null}
+
+              {workHistoryLoading ? (
+                <div style={{ color: "#9ca8b2", fontSize: 13 }}>
+                  Loading Work History...
+                </div>
+              ) : workHistoryRows.length === 0 ? (
+                <div
+                  style={{
+                    border: "1px dashed #263945",
+                    borderRadius: 10,
+                    padding: 14,
+                    color: "#7f8b95",
+                    fontSize: 13,
+                  }}
+                >
+                  No archived jobs found.
+                </div>
+              ) : (
+                <div style={{ display: "grid", gap: 10 }}>
+                  {workHistoryRows.map((job) => (
+                    <div
+                      key={job.id}
+                      style={{
+                        border: "1px solid #263945",
+                        borderRadius: 11,
+                        background: "#101419",
+                        padding: 13,
+                      }}
+                    >
+                      <div style={{ color: "#f3f6f8", fontSize: 15, fontWeight: 900 }}>
+                        {job.first_name} {job.last_name}
+                      </div>
+
+                      <div style={{ color: "#9ca8b2", fontSize: 12, marginTop: 4 }}>
+                        {job.phone || "No phone"}
+                        {job.email ? ` • ${job.email}` : ""}
+                      </div>
+
+                      <div style={{ color: "#b8c4cc", fontSize: 12, marginTop: 4 }}>
+                        {job.project_address || "No project address"}
+                      </div>
+
+                      <div
+                        style={{
+                          color: "#9db7ca",
+                          fontSize: 10,
+                          fontWeight: 800,
+                          textTransform: "uppercase",
+                          marginTop: 8,
+                        }}
+                      >
+                        {(job.current_stage || "Archived").replaceAll("_", " ")}
+                      </div>
+
+                      <div style={{ color: "#667680", fontSize: 10, marginTop: 7 }}>
+                        {job.archived_at
+                          ? `Archived ${new Date(job.archived_at).toLocaleString()}`
+                          : job.current_stage === "completed"
+                          ? `Completed ${
+                              job.updated_at
+                                ? new Date(job.updated_at).toLocaleString()
+                                : "date unavailable"
+                            }`
+                          : "History date unavailable"}
+                      </div>
+
+                      <button
+                        type="button"
+                        disabled={restoringJobId === job.id}
+                        onClick={() => void restoreArchivedJob(job)}
+                        style={{
+                          width: "100%",
+                          minHeight: 40,
+                          marginTop: 11,
+                  border: "1px solid #8fbea0",
+                          borderRadius: 9,
+                  background: "#2f6842",
+                  color: "#ffffff",
+                          fontWeight: 900,
+                          cursor: restoringJobId === job.id ? "wait" : "pointer",
+                          opacity: restoringJobId === job.id ? 0.65 : 1,
+                        }}
+                      >
+                        {restoringJobId === job.id
+                          ? "Restoring..."
+                          : "Restore to Active"}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : null}
 
           {liveLeadsLoading ? (
             <div style={{ color: "#9ca8b2", fontSize: 14 }}>
@@ -2165,6 +3001,187 @@ export default function PremierWindowDoorBoard() {
                 >
                   {officeWorkLead.project_address}
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!customerEditOpen) {
+                      setCustomerEditDraft({
+                        firstName: officeWorkLead.first_name || "",
+                        lastName: officeWorkLead.last_name || "",
+                        phone: officeWorkLead.phone || "",
+                        email: officeWorkLead.email || "",
+                        projectAddress: officeWorkLead.project_address || "",
+                      });
+                    }
+
+                    setCustomerEditOpen((current) => !current);
+                  }}
+                  style={{
+                    marginTop: 8,
+                    border: "1px solid #31495a",
+                    borderRadius: 8,
+                    background: "#101820",
+                    color: "#d9e5ee",
+                    padding: "6px 9px",
+                    fontSize: 10,
+                    fontWeight: 900,
+                    cursor: "pointer",
+                  }}
+                >
+                  {customerEditOpen ? "Close Customer Edit" : "Edit Customer"}
+                </button>
+
+                {customerEditOpen ? (
+                  <div
+                    style={{
+                      marginTop: 10,
+                      border: "1px solid #263846",
+                      borderRadius: 10,
+                      background: "#0b1116",
+                      padding: 10,
+                      display: "grid",
+                      gap: 8,
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+                        gap: 8,
+                      }}
+                    >
+                      <input
+                        value={customerEditDraft.firstName}
+                        onChange={(event) =>
+                          setCustomerEditDraft((current) => ({
+                            ...current,
+                            firstName: event.target.value,
+                          }))
+                        }
+                        placeholder="First name"
+                        style={{
+                          background: "#0f1720",
+                          color: "#e8f0f7",
+                          border: "1px solid #31495a",
+                          borderRadius: 8,
+                          padding: "10px 12px",
+                        }}
+                      />
+
+                      <input
+                        value={customerEditDraft.lastName}
+                        onChange={(event) =>
+                          setCustomerEditDraft((current) => ({
+                            ...current,
+                            lastName: event.target.value,
+                          }))
+                        }
+                        placeholder="Last name"
+                        style={{
+                          background: "#0f1720",
+                          color: "#e8f0f7",
+                          border: "1px solid #31495a",
+                          borderRadius: 8,
+                          padding: "10px 12px",
+                        }}
+                      />
+
+                      <input
+                        value={customerEditDraft.phone}
+                        onChange={(event) =>
+                          setCustomerEditDraft((current) => ({
+                            ...current,
+                            phone: event.target.value,
+                          }))
+                        }
+                        placeholder="Phone"
+                        style={{
+                          background: "#0f1720",
+                          color: "#e8f0f7",
+                          border: "1px solid #31495a",
+                          borderRadius: 8,
+                          padding: "10px 12px",
+                        }}
+                      />
+
+                      <input
+                        value={customerEditDraft.email}
+                        onChange={(event) =>
+                          setCustomerEditDraft((current) => ({
+                            ...current,
+                            email: event.target.value,
+                          }))
+                        }
+                        placeholder="Email"
+                        style={{
+                          background: "#0f1720",
+                          color: "#e8f0f7",
+                          border: "1px solid #31495a",
+                          borderRadius: 8,
+                          padding: "10px 12px",
+                        }}
+                      />
+                    </div>
+
+                    <input
+                      value={customerEditDraft.projectAddress}
+                      onChange={(event) =>
+                        setCustomerEditDraft((current) => ({
+                          ...current,
+                          projectAddress: event.target.value,
+                        }))
+                      }
+                      placeholder="Project address"
+                        style={{
+                          background: "#0f1720",
+                          color: "#e8f0f7",
+                          border: "1px solid #31495a",
+                          borderRadius: 8,
+                          padding: "10px 12px",
+                        }}
+                    />
+
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <button
+                        type="button"
+                        disabled={savingCustomerEdit || officeWorkLead._sample}
+                        onClick={() => void saveCustomerEdit(officeWorkLead)}
+                        style={{
+                          border: "1px solid #3f7654",
+                          borderRadius: 8,
+                          background: "#13261a",
+                          color: "#c8f0d2",
+                          padding: "7px 10px",
+                          fontSize: 10,
+                          fontWeight: 900,
+                          cursor: "pointer",
+                          opacity:
+                            savingCustomerEdit || officeWorkLead._sample ? 0.6 : 1,
+                        }}
+                      >
+                        {savingCustomerEdit ? "Saving..." : "Save Changes"}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setCustomerEditOpen(false)}
+                        style={{
+                          border: "1px solid #31495a",
+                          borderRadius: 8,
+                          background: "#101419",
+                          color: "#d9e5ee",
+                          padding: "7px 10px",
+                          fontSize: 10,
+                          fontWeight: 900,
+                          cursor: "pointer",
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
               </div>
 
               <span
@@ -2195,6 +3212,309 @@ export default function PremierWindowDoorBoard() {
               }}
             >
               <strong>Next:</strong>{" "}               {officeWorkLead.current_stage === "proposal_revision"                 ? `Review requested changes, revise the proposal, and return it to ${                     officeWorkLead.assigned_salesperson || "Sales"                   }.`                 : officeWorkLead.current_stage === "proposal_approved"                 ? (officeWorkLead.next_action || "Collect deposit and schedule the final detailed measurement.")                 : officeWorkLead.current_stage === "production_setup"                 ? (officeWorkLead.next_action || "Office to start ordering/materials and permit setup.")                 : officeWorkLead.current_stage === "installation_complete"                 ? (officeWorkLead.next_action || "Office to schedule required inspection and final walkthrough.")                 : officeWorkLead.current_stage === "inspection_complete"                 ? (officeWorkLead.next_action || "Office to complete final walkthrough and close out the job.")                 : `Prepare proposal and return it to ${                     officeWorkLead.assigned_salesperson || "Sales"                   }.`}
+            </div>
+
+            <div
+              style={{
+                marginBottom: 12,
+                  border: "1px solid #78aa88",
+                  borderRadius: 14,
+                  background:
+                    "linear-gradient(135deg, #173225 0%, #101b16 100%)",
+                  boxShadow:
+                    "0 0 0 1px rgba(139,184,154,0.08), 0 8px 24px rgba(0,0,0,0.18)",
+                  padding: 12,
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: 10,
+                  marginBottom: 10,
+                }}
+              >
+                <div>
+                  <div
+                    style={{
+                      color: "#8fa9bc",
+                      fontSize: 9,
+                      fontWeight: 900,
+                      letterSpacing: 0.8,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Beam Quick Message
+                  </div>
+
+                  <div
+                    style={{
+                      color: "#d9e5ee",
+                      fontSize: 13,
+                      fontWeight: 800,
+                      marginTop: 3,
+                    }}
+                  >
+                    Fast job communication
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  disabled={officeBeamLoading}
+                  onClick={() => void loadOfficeBeam(officeWorkLead.id)}
+                  style={{
+                    minHeight: 34,
+                    border: "1px solid #31495a",
+                    borderRadius: 8,
+                    background: "#101820",
+                    color: "#aebbc5",
+                    padding: "0 10px",
+                    fontSize: 10,
+                    fontWeight: 800,
+                    cursor: officeBeamLoading ? "wait" : "pointer",
+                    opacity: officeBeamLoading ? 0.65 : 1,
+                  }}
+                >
+                  {officeBeamLoading ? "Loading..." : "Refresh"}
+                </button>
+              </div>
+
+              <div
+                style={{
+                  border: "1px solid #294a36",
+                  borderRadius: 10,
+                  background: "#0d1711",
+                  padding: 9,
+                  maxHeight: 220,
+                  overflowY: "auto",
+                  marginBottom: 10,
+                }}
+              >
+                {officeBeamLoading && officeBeamMessages.length === 0 ? (
+                  <div style={{ color: "#7f8b95", fontSize: 11 }}>
+                    Loading Beam...
+                  </div>
+                ) : officeBeamMessages.length === 0 ? (
+                  <div style={{ color: "#7f8b95", fontSize: 11 }}>
+                    No Beam messages yet.
+                  </div>
+                ) : (
+                  <div style={{ display: "grid", gap: 8 }}>
+                    {officeBeamMessages.map((message) => (
+                      <div
+                        key={message.id}
+                        style={{
+                          border:
+                            message.recipient_role === "Office" && !message.read_at
+                              ? "1px solid #5d7d91"
+                              : "1px solid #26343e",
+                          borderRadius: 9,
+                          background:
+                            message.sender_role === "Office"
+                              ? "#111d25"
+                              : "#101419",
+                          padding: "9px 10px",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            gap: 8,
+                            flexWrap: "wrap",
+                            marginBottom: 5,
+                          }}
+                        >
+                          <strong style={{ color: "#d9e5ee", fontSize: 11 }}>
+                            {message.sender_label || message.sender_role}
+                          </strong>
+
+                          <span style={{ color: "#667680", fontSize: 9 }}>
+                            {message.created_at
+                              ? new Date(message.created_at).toLocaleString()
+                              : ""}
+                          </span>
+                        </div>
+
+                        <div style={{ color: "#9db7ca", fontSize: 9, marginBottom: 5 }}>
+                          {message.sender_role} → {message.recipient_role}
+                        </div>
+
+                        <div
+                          style={{
+                            color: "#c8d2d8",
+                            fontSize: 12,
+                            lineHeight: 1.45,
+                            whiteSpace: "pre-wrap",
+                          }}
+                        >
+                          {message.body}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {officeBeamError ? (
+                <div
+                  style={{
+                    color: "#e1a3a3",
+                    fontSize: 10,
+                    marginBottom: 8,
+                  }}
+                >
+                  {officeBeamError}
+                </div>
+              ) : null}
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "minmax(120px, 160px) minmax(0, 1fr) 46px",
+                  gap: 8,
+                  marginBottom: 8,
+                }}
+              >
+                <select
+                  value={officeBeamRecipient}
+                  onChange={(event) =>
+                    setOfficeBeamRecipient(
+                      event.target.value as
+                        | "Gio Richardson"
+                        | "Gino Marquez"
+                        | "Dennis Dillon"
+                        | "RJ"
+                        | "Angel"
+                    )
+                  }
+                  style={{
+                    minHeight: 40,
+                    border: "1px solid #31495a",
+                    borderRadius: 9,
+                    background: "#101820",
+                    color: "#d9e5ee",
+                    padding: "0 9px",
+                    fontSize: 11,
+                    fontWeight: 800,
+                  }}
+                >
+                  <option value="Gio Richardson">Gio Richardson</option>
+                  <option value="Gino Marquez">Gino Marquez</option>
+                  <option value="Dennis Dillon">Dennis Dillon</option>
+                  <option value="RJ">RJ</option>
+                  <option value="Angel">Angel</option>
+                </select>
+
+                <textarea
+                  value={officeBeamBody}
+                  onChange={(event) => setOfficeBeamBody(event.target.value)}
+                  placeholder="Send a quick job message..."
+                  rows={2}
+                  style={{
+                    width: "100%",
+                    minHeight: 54,
+                    resize: "vertical",
+                    border: "1px solid #31495a",
+                    borderRadius: 9,
+                    background: "#101820",
+                    color: "#f3f6f8",
+                    padding: "9px 10px",
+                    fontSize: 12,
+                    lineHeight: 1.4,
+                    boxSizing: "border-box",
+                  }}
+                />
+
+                <button
+                  type="button"
+                  onClick={startOfficeBeamVoiceInput}
+                  disabled={officeBeamListening}
+                  title={officeBeamListening ? "Listening..." : "Talk message"}
+                  aria-label={officeBeamListening ? "Listening..." : "Talk message"}
+                  style={{
+                    minHeight: 54,
+                    border: officeBeamListening
+                      ? "1px solid #d98778"
+                      : "1px solid #8fbea0",
+                    borderRadius: 9,
+                    background: officeBeamListening
+                      ? "#7a2d24"
+                      : "#2f6842",
+                    color: "#ffffff",
+                    fontSize: 20,
+                    cursor: officeBeamListening ? "wait" : "pointer",
+                    boxShadow: officeBeamListening
+                      ? "0 0 0 2px rgba(217,135,120,0.18), 0 0 18px rgba(217,135,120,0.22)"
+                      : "none",
+                    transition: "all 160ms ease",
+                  }}
+                >
+                  🎤
+                </button>
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  gap: 6,
+                  flexWrap: "wrap",
+                  marginBottom: 8,
+                }}
+              >
+                {[
+                  "Please review.",
+                  "Call Office when available.",
+                  "Need an update.",
+                  "Issue needs attention.",
+                ].map((reply) => (
+                  <button
+                    key={reply}
+                    type="button"
+                    onClick={() => setOfficeBeamBody(reply)}
+                    style={{
+                      minHeight: 30,
+                      border: "1px solid #477057",
+                      borderRadius: 999,
+                      background: "#173225",
+                      color: "#cce8d4",
+                      padding: "0 9px",
+                      fontSize: 9,
+                      fontWeight: 800,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {reply}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                disabled={officeBeamSending || !officeBeamBody.trim()}
+                onClick={() => void sendOfficeBeamMessage()}
+                style={{
+                  width: "100%",
+                  minHeight: 40,
+                  border: "1px solid #557c64",
+                  borderRadius: 9,
+                  background: "#14271c",
+                  color: "#b7dec4",
+                  fontWeight: 900,
+                  cursor:
+                    officeBeamSending || !officeBeamBody.trim()
+                      ? "not-allowed"
+                      : "pointer",
+                  opacity:
+                    officeBeamSending || !officeBeamBody.trim() ? 0.55 : 1,
+                }}
+              >
+                {officeBeamSending
+                  ? "Sending..."
+                  : `Send to ${officeBeamRecipient}`}
+              </button>
             </div>
 
             <div
@@ -3154,6 +4474,7 @@ export default function PremierWindowDoorBoard() {
                             </select>
                           </label>
 
+                          {officeFinalMeasureDraft.status === "complete" ? (
                           <label
                             style={{
                               display: "grid",
@@ -3193,6 +4514,7 @@ export default function PremierWindowDoorBoard() {
                               }}
                             />
                           </label>
+                          ) : null}
                         </div>
 
                         <label
@@ -4231,6 +5553,83 @@ export default function PremierWindowDoorBoard() {
               </div>
             ) : null}
 
+            {!officeWorkLead._sample ? (
+              <button
+                type="button"
+                disabled={archivingJobId === officeWorkLead.id}
+                onClick={async () => {
+                  const confirmed = window.confirm(
+                    "Archive this job? It will leave the active Office board, but the customer record and job history will be preserved."
+                  );
+
+                  if (!confirmed) return;
+
+                  const accessToken = new URLSearchParams(
+                    window.location.search
+                  ).get("access");
+
+                  if (!accessToken) {
+                    window.alert("Premier staff access token missing.");
+                    return;
+                  }
+
+                  setArchivingJobId(officeWorkLead.id);
+
+                  const { data, error } = await supabase.rpc(
+                    "archive_premier_job",
+                    {
+                      p_access_token: accessToken,
+                      p_job_id: officeWorkLead.id,
+                    }
+                  );
+
+                  setArchivingJobId(null);
+
+                  if (error) {
+                    console.error("Archive Premier job failed:", error);
+                    window.alert(
+                      error.message || "This job could not be archived."
+                    );
+                    return;
+                  }
+
+                  if (data !== true) {
+                    window.alert("This job could not be archived.");
+                    return;
+                  }
+
+                  setLiveLeads((current) =>
+                    current.filter((item) => item.id !== officeWorkLead.id)
+                  );
+
+                  setCustomerEditOpen(false);
+                  setOfficeWorkView(null);
+                  setOfficeWorkLeadId(null);
+                }}
+                style={{
+                  width: "100%",
+                  display: "block",
+                  minHeight: 42,
+                  marginTop: 10,
+                  border: "1px solid #744548",
+                  borderRadius: 10,
+                  background: "#241416",
+                  color: "#e8b6b9",
+                  fontWeight: 900,
+                  cursor:
+                    archivingJobId === officeWorkLead.id
+                      ? "wait"
+                      : "pointer",
+                  opacity:
+                    archivingJobId === officeWorkLead.id ? 0.65 : 1,
+                }}
+              >
+                {archivingJobId === officeWorkLead.id
+                  ? "Archiving..."
+                  : "Archive Job"}
+              </button>
+            ) : null}
+
             <button
               type="button"
               onClick={() => {
@@ -4239,6 +5638,7 @@ export default function PremierWindowDoorBoard() {
               }}
               style={{
                 width: "100%",
+                display: "block",
                 minHeight: 42,
                 marginTop: 10,
                 border: "1px solid #31495a",

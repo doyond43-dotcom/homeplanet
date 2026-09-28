@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 type SalesStage =
@@ -202,6 +202,19 @@ const jobs: SalesJob[] = [
 
 export default function PremierSalesBoard() {
   const [liveSalesLeads, setLiveSalesLeads] = useState<any[]>([]);
+  const [personalBeamMessages, setPersonalBeamMessages] = useState<any[]>([]);
+  const [personalBeamLoading, setPersonalBeamLoading] = useState(false);
+  const [personalBeamError, setPersonalBeamError] = useState("");
+  const [personalBeamReplyOpenId, setPersonalBeamReplyOpenId] = useState<string | null>(null);
+  const [personalBeamReplyBody, setPersonalBeamReplyBody] = useState("");
+  const [personalBeamReplySending, setPersonalBeamReplySending] = useState(false);
+  const [personalBeamReplyListening, setPersonalBeamReplyListening] = useState(false);
+  const [personalBeamReplyError, setPersonalBeamReplyError] = useState("");
+  const [salesBeamRecipient, setSalesBeamRecipient] = useState<string>("Gino Marquez");
+  const [salesBeamBody, setSalesBeamBody] = useState("");
+  const [salesBeamSending, setSalesBeamSending] = useState(false);
+  const [salesBeamListening, setSalesBeamListening] = useState(false);
+  const [salesBeamError, setSalesBeamError] = useState("");
   const [liveSalesLoading, setLiveSalesLoading] = useState(true);
   const [selectedLiveLeadId, setSelectedLiveLeadId] = useState<string | null>(
     null
@@ -383,6 +396,245 @@ export default function PremierSalesBoard() {
     return () => {
       active = false;
     };
+  }, []);
+
+  const loadPersonalBeamInbox = async () => {
+    const accessToken =
+      new URLSearchParams(window.location.search).get("access");
+
+    if (!accessToken) {
+      setPersonalBeamMessages([]);
+      return;
+    }
+
+    setPersonalBeamLoading(true);
+    setPersonalBeamError("");
+
+    const { data, error } = await supabase.rpc(
+      "get_premier_beam_inbox",
+      {
+        p_access_token: accessToken,
+      }
+    );
+
+    if (error) {
+      console.error("Premier personal Beam inbox failed:", error);
+      setPersonalBeamMessages([]);
+      setPersonalBeamError("Could not load Beam.");
+    } else {
+      setPersonalBeamMessages(data ?? []);
+    }
+
+    setPersonalBeamLoading(false);
+  };
+
+  const startPersonalBeamReplyVoiceInput = () => {
+    if (personalBeamReplyListening) return;
+
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      setPersonalBeamReplyError("Speech-to-text is not supported in this browser.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onstart = () => {
+      setPersonalBeamReplyListening(true);
+      setPersonalBeamReplyError("");
+    };
+
+    recognition.onresult = (event: any) => {
+      const transcript =
+        event.results?.[0]?.[0]?.transcript?.trim() || "";
+
+      if (!transcript) return;
+
+      setPersonalBeamReplyBody((current) =>
+        current.trim() ? `${current.trim()} ${transcript}` : transcript
+      );
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("Sales Beam speech recognition failed:", event);
+      setPersonalBeamReplyError("Could not capture voice message.");
+    };
+
+    recognition.onend = () => {
+      setPersonalBeamReplyListening(false);
+    };
+
+    recognition.start();
+  };
+
+  const sendPersonalBeamReply = async (message: any) => {
+    if (personalBeamReplySending) return;
+
+    const body = personalBeamReplyBody.trim();
+    if (!body) return;
+
+    const recipient = String(message?.sender_label || "").trim();
+    const allowedRecipients = [
+      "Darcy",
+      "Karolina",
+      "Gio Richardson",
+      "Gino Marquez",
+      "Dennis Dillon",
+      "RJ",
+      "Angel",
+      "Jose",
+      "Obelio",
+      "Joseph",
+    ];
+
+    if (!allowedRecipients.includes(recipient)) {
+      setPersonalBeamReplyError(
+        "This older Beam does not contain a replyable staff identity."
+      );
+      return;
+    }
+
+    const accessToken =
+      new URLSearchParams(window.location.search).get("access");
+
+    if (!accessToken) {
+      setPersonalBeamReplyError("Premier staff access token missing.");
+      return;
+    }
+
+    setPersonalBeamReplySending(true);
+    setPersonalBeamReplyError("");
+
+    const { error } = await supabase.rpc("send_premier_beam_message", {
+      p_access_token: accessToken,
+      p_job_id: message.job_id,
+      p_sender_role: "Sales",
+      p_recipient_role: recipient,
+      p_body: body,
+    });
+
+    if (error) {
+      console.error("Sales Beam reply failed:", error);
+      setPersonalBeamReplyError(error.message || "Could not send Beam reply.");
+      setPersonalBeamReplySending(false);
+      return;
+    }
+
+    setPersonalBeamReplyBody("");
+    setPersonalBeamReplyOpenId(null);
+    setPersonalBeamReplySending(false);
+  };
+
+  const startSalesBeamVoiceInput = () => {
+    if (salesBeamListening) return;
+
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      setSalesBeamError("Speech-to-text is not supported in this browser.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onstart = () => {
+      setSalesBeamListening(true);
+      setSalesBeamError("");
+    };
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results?.[0]?.[0]?.transcript?.trim() || "";
+      if (!transcript) return;
+
+      setSalesBeamBody((current) =>
+        current.trim() ? `${current.trim()} ${transcript}` : transcript
+      );
+    };
+
+    recognition.onerror = () => {
+      setSalesBeamError("Could not capture voice message.");
+    };
+
+    recognition.onend = () => {
+      setSalesBeamListening(false);
+    };
+
+    recognition.start();
+  };
+
+  const sendSalesBeamMessage = async () => {
+    if (!selectedLiveLead || salesBeamSending) return;
+
+    const body = salesBeamBody.trim();
+    if (!body) return;
+
+    const accessToken =
+      new URLSearchParams(window.location.search).get("access");
+
+    if (!accessToken) {
+      setSalesBeamError("Premier staff access token missing.");
+      return;
+    }
+
+    setSalesBeamSending(true);
+    setSalesBeamError("");
+
+    const { error } = await supabase.rpc("send_premier_beam_message", {
+      p_access_token: accessToken,
+      p_job_id: selectedLiveLead.id,
+      p_sender_role: "Sales",
+      p_recipient_role: salesBeamRecipient,
+      p_body: body,
+    });
+
+    if (error) {
+      console.error("Sales Beam send failed:", error);
+      setSalesBeamError(error.message || "Could not send Beam message.");
+      setSalesBeamSending(false);
+      return;
+    }
+
+    setSalesBeamBody("");
+    setSalesBeamSending(false);
+  };
+
+  const markPersonalBeamRead = async (messageId: string) => {
+    const accessToken =
+      new URLSearchParams(window.location.search).get("access");
+
+    if (!accessToken) return;
+
+    const { data, error } = await supabase.rpc(
+      "mark_my_premier_beam_read",
+      {
+        p_access_token: accessToken,
+        p_message_id: messageId,
+      }
+    );
+
+    if (error || data !== true) {
+      console.error("Premier Beam mark read failed:", error);
+      return;
+    }
+
+    setPersonalBeamMessages((current) =>
+      current.filter((message) => message.id !== messageId)
+    );
+  };
+
+  useEffect(() => {
+    void loadPersonalBeamInbox();
   }, []);
 
   const liveSalesStages = [
@@ -1210,6 +1462,357 @@ export default function PremierSalesBoard() {
           </div>
         </header>
 
+        {personalBeamMessages.some((message) => !message.read_at) ? (
+          <section
+            style={{
+              border: "1px solid #78aa88",
+              borderRadius: 16,
+              background:
+                "linear-gradient(135deg, #173225 0%, #101b16 100%)",
+              padding: 12,
+              marginBottom: 14,
+              boxShadow: "0 0 0 1px rgba(139,184,154,0.08), 0 8px 24px rgba(0,0,0,0.18)",
+            }}
+          >
+            {(() => {
+              const message =
+                personalBeamMessages.find((item) => !item.read_at) ?? null;
+
+              if (!message) return null;
+
+              return (
+                <>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      gap: 10,
+                      alignItems: "flex-start",
+                    }}
+                  >
+                    <div>
+                      <div
+                        style={{
+                          color: "#9fd3ae",
+                          fontSize: 10,
+                          fontWeight: 900,
+                          letterSpacing: 1,
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        Beam • New Message
+                      </div>
+
+                      <div
+                        style={{
+                          color: "#ffffff",
+                          fontSize: 14,
+                          fontWeight: 900,
+                          marginTop: 4,
+                        }}
+                      >
+                        {message.first_name} {message.last_name}
+                      </div>
+
+                      <div
+                        style={{
+                          color: "#91a59a",
+                          fontSize: 10,
+                          marginTop: 2,
+                        }}
+                      >
+                        {message.project_address}
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        color: "#9fd3ae",
+                        fontSize: 10,
+                        fontWeight: 800,
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      For you
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      marginTop: 10,
+                      border: "1px solid #294a36",
+                      borderRadius: 10,
+                      background: "#0d1711",
+                      padding: 10,
+                      color: "#e5eee8",
+                      fontSize: 12,
+                      lineHeight: 1.45,
+                    }}
+                  >
+                    {message.body}
+                  </div>
+
+                  {personalBeamReplyOpenId === message.id ? (
+                    <div
+                      style={{
+                        marginTop: 10,
+                        border: "1px solid #31533c",
+                        borderRadius: 10,
+                        background: "#101a13",
+                        padding: 10,
+                      }}
+                    >
+                      <div
+                        style={{
+                          color: "#9fd3ae",
+                          fontSize: 9,
+                          fontWeight: 900,
+                          letterSpacing: 0.8,
+                          textTransform: "uppercase",
+                          marginBottom: 7,
+                        }}
+                      >
+                        Reply to {message.sender_label}
+                      </div>
+
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "minmax(0, 1fr) 46px",
+                          gap: 8,
+                          alignItems: "stretch",
+                        }}
+                      >
+                        <textarea
+                          value={personalBeamReplyBody}
+                          onChange={(event) =>
+                            setPersonalBeamReplyBody(event.target.value)
+                          }
+                          placeholder={
+                            personalBeamReplyListening
+                              ? "Listening..."
+                              : "Type or tap the mic and talk..."
+                          }
+                          rows={2}
+                          style={{
+                            width: "100%",
+                            minHeight: 54,
+                            boxSizing: "border-box",
+                            resize: "vertical",
+                            border: "1px solid #477057",
+                            borderRadius: 9,
+                            background: "#0d1711",
+                            color: "#e5eee8",
+                            padding: "9px 10px",
+                            fontSize: 12,
+                            lineHeight: 1.4,
+                          }}
+                        />
+
+                        <button
+                          type="button"
+                          onClick={startPersonalBeamReplyVoiceInput}
+                          disabled={personalBeamReplyListening}
+                          title={
+                            personalBeamReplyListening
+                              ? "Listening..."
+                              : "Talk message"
+                          }
+                          aria-label={
+                            personalBeamReplyListening
+                              ? "Listening..."
+                              : "Talk message"
+                          }
+                          style={{
+                            border: personalBeamReplyListening
+                              ? "1px solid #d98778"
+                              : "1px solid #8fbea0",
+                            borderRadius: 9,
+                            background: personalBeamReplyListening
+                              ? "#7a2d24"
+                              : "#2f6842",
+                            color: "#ffffff",
+                            fontSize: 20,
+                            cursor: personalBeamReplyListening
+                              ? "wait"
+                              : "pointer",
+                            boxShadow: personalBeamReplyListening
+                              ? "0 0 0 2px rgba(217,135,120,0.18), 0 0 18px rgba(217,135,120,0.22)"
+                              : "none",
+                            transition: "all 160ms ease",
+                          }}
+                        >
+                          🎤
+                        </button>
+                      </div>
+
+                      {personalBeamReplyError ? (
+                        <div
+                          style={{
+                            color: "#d8b267",
+                            fontSize: 10,
+                            marginTop: 7,
+                          }}
+                        >
+                          {personalBeamReplyError}
+                        </div>
+                      ) : null}
+
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1fr auto",
+                          gap: 8,
+                          marginTop: 8,
+                        }}
+                      >
+                        <button
+                          type="button"
+                          disabled={
+                            personalBeamReplySending ||
+                            !personalBeamReplyBody.trim()
+                          }
+                          onClick={() => void sendPersonalBeamReply(message)}
+                          style={{
+                            minHeight: 38,
+                            border: "1px solid #8fbea0",
+                            borderRadius: 9,
+                            background: "#2f6842",
+                            color: "#ffffff",
+                            fontWeight: 900,
+                            cursor:
+                              personalBeamReplySending ||
+                              !personalBeamReplyBody.trim()
+                                ? "not-allowed"
+                                : "pointer",
+                            opacity:
+                              personalBeamReplySending ||
+                              !personalBeamReplyBody.trim()
+                                ? 0.55
+                                : 1,
+                          }}
+                        >
+                          {personalBeamReplySending
+                            ? "Sending..."
+                            : `Send to ${message.sender_label}`}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPersonalBeamReplyOpenId(null);
+                            setPersonalBeamReplyBody("");
+                            setPersonalBeamReplyError("");
+                          }}
+                          style={{
+                            minHeight: 38,
+                            border: "1px solid #477057",
+                            borderRadius: 9,
+                            background: "#102018",
+                            color: "#cce8d4",
+                            padding: "0 12px",
+                            fontWeight: 800,
+                            cursor: "pointer",
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      gap: 8,
+                      alignItems: "center",
+                      marginTop: 9,
+                    }}
+                  >
+                    <div
+                      style={{
+                        color: "#71887a",
+                        fontSize: 9,
+                      }}
+                    >
+                      {new Date(message.created_at).toLocaleString()}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const nextOpen =
+                          personalBeamReplyOpenId === message.id
+                            ? null
+                            : message.id;
+
+                        setPersonalBeamReplyOpenId(nextOpen);
+                        setPersonalBeamReplyBody("");
+                        setPersonalBeamReplyError("");
+                      }}
+                      style={{
+                        minHeight: 34,
+                        border: "1px solid #78aa88",
+                        borderRadius: 9,
+                        background: "#173225",
+                        color: "#cce8d4",
+                        padding: "0 12px",
+                        fontSize: 10,
+                        fontWeight: 900,
+                        cursor: "pointer",
+                        marginLeft: "auto",
+                        marginRight: 6,
+                      }}
+                    >
+                      {personalBeamReplyOpenId === message.id
+                        ? "Close Reply"
+                        : "Reply"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void markPersonalBeamRead(message.id)}
+                      style={{
+                        minHeight: 34,
+                        border: "1px solid #78aa88",
+                        borderRadius: 9,
+                        background: "#2f6842",
+                        color: "#ffffff",
+                        padding: "0 12px",
+                        fontSize: 10,
+                        fontWeight: 900,
+                        cursor: "pointer",
+                      }}
+                    >
+                      Mark Read
+                    </button>
+                  </div>
+                </>
+              );
+            })()}
+          </section>
+        ) : personalBeamLoading ? (
+          <div
+            style={{
+              color: "#71887a",
+              fontSize: 10,
+              marginBottom: 10,
+            }}
+          >
+            Checking Beam...
+          </div>
+        ) : personalBeamError ? (
+          <div
+            style={{
+              color: "#b98f62",
+              fontSize: 10,
+              marginBottom: 10,
+            }}
+          >
+            {personalBeamError}
+          </div>
+        ) : null}
+
         <section
           style={{
             border: "1px solid #31495a",
@@ -1943,6 +2546,46 @@ export default function PremierSalesBoard() {
             );
           })()}
         </section>
+
+        <div
+          style={{
+            margin: "-4px 0 18px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 10,
+            flexWrap: "wrap",
+            color: "#7f8d96",
+            fontSize: 11,
+          }}
+        >
+          <span>Want this kind of system for your business?</span>
+
+          <button
+            type="button"
+            onClick={() =>
+              window.open(
+                "/planet/custom-systems",
+                "_blank",
+                "noopener,noreferrer"
+              )
+            }
+            style={{
+              minHeight: 36,
+              border: "1px solid #405c6d",
+              borderRadius: 999,
+              background: "#16232d",
+              color: "#d9e5ee",
+              padding: "0 14px",
+              fontSize: 11,
+              fontWeight: 900,
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Build Your Own System
+          </button>
+        </div>
 
         {selectedSampleLead ? (
           <section
@@ -3869,6 +4512,147 @@ export default function PremierSalesBoard() {
                     )?.label ?? selectedLiveLead.current_stage}
               </span>
             </div>
+
+            <div
+              style={{
+                border: "1px solid #78aa88",
+                borderRadius: 14,
+                background: "linear-gradient(135deg, #173225 0%, #101b16 100%)",
+                padding: 12,
+                marginBottom: 12,
+                boxShadow: "0 0 0 1px rgba(139,184,154,0.08), 0 8px 24px rgba(0,0,0,0.18)",
+              }}
+            >
+              <div style={{ marginBottom: 9 }}>
+                <div
+                  style={{
+                    color: "#9fd3ae",
+                    fontSize: 10,
+                    fontWeight: 900,
+                    letterSpacing: 1,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Beam Quick Message
+                </div>
+
+                <div style={{ color: "#d9e5ee", fontSize: 11, fontWeight: 800, marginTop: 3 }}>
+                  Fast job communication
+                </div>
+              </div>
+
+              <select
+                value={salesBeamRecipient}
+                onChange={(event) => setSalesBeamRecipient(event.target.value)}
+                style={{
+                  width: "100%",
+                  minHeight: 40,
+                  border: "1px solid #477057",
+                  borderRadius: 9,
+                  background: "#0d1711",
+                  color: "#e5eee8",
+                  padding: "0 9px",
+                  fontSize: 11,
+                  fontWeight: 800,
+                  marginBottom: 8,
+                }}
+              >
+                <option value="Darcy">Darcy</option>
+                <option value="Karolina">Karolina</option>
+                <option value="Gio Richardson">Gio Richardson</option>
+                <option value="Gino Marquez">Gino Marquez</option>
+                <option value="Dennis Dillon">Dennis Dillon</option>
+                <option value="RJ">RJ</option>
+                <option value="Angel">Angel</option>
+                <option value="Jose">Jose</option>
+                <option value="Obelio">Obelio</option>
+                <option value="Joseph">Joseph</option>
+              </select>
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "minmax(0, 1fr) 48px",
+                  gap: 8,
+                }}
+              >
+                <textarea
+                  value={salesBeamBody}
+                  onChange={(event) => setSalesBeamBody(event.target.value)}
+                  placeholder={salesBeamListening ? "Listening..." : "Type or tap the mic and talk..."}
+                  rows={2}
+                  style={{
+                    width: "100%",
+                    minHeight: 54,
+                    boxSizing: "border-box",
+                    resize: "vertical",
+                    border: "1px solid #477057",
+                    borderRadius: 9,
+                    background: "#0d1711",
+                    color: "#e5eee8",
+                    padding: "9px 10px",
+                    fontSize: 12,
+                  }}
+                />
+
+                <button
+                  type="button"
+                  onClick={startSalesBeamVoiceInput}
+                  disabled={salesBeamListening}
+                  title={salesBeamListening ? "Listening..." : "Talk message"}
+                  style={{
+                    border: salesBeamListening
+                      ? "1px solid #d98778"
+                      : "1px solid #8fbea0",
+                    borderRadius: 9,
+                    background: salesBeamListening
+                      ? "#7a2d24"
+                      : "#2f6842",
+                    color: "#ffffff",
+                    fontSize: 20,
+                    cursor: salesBeamListening ? "wait" : "pointer",
+                    boxShadow: salesBeamListening
+                      ? "0 0 0 2px rgba(217,135,120,0.18), 0 0 18px rgba(217,135,120,0.22)"
+                      : "none",
+                  }}
+                >
+                  🎤
+                </button>
+              </div>
+
+              {salesBeamError ? (
+                <div style={{ color: "#d8b267", fontSize: 10, marginTop: 7 }}>
+                  {salesBeamError}
+                </div>
+              ) : null}
+
+              <button
+                type="button"
+                disabled={salesBeamSending || !salesBeamBody.trim()}
+                onClick={() => void sendSalesBeamMessage()}
+                style={{
+                  width: "100%",
+                  minHeight: 40,
+                  marginTop: 8,
+                  border: "1px solid #8fbea0",
+                  borderRadius: 9,
+                  background: "#2f6842",
+                  color: "#ffffff",
+                  fontWeight: 900,
+                  cursor:
+                    salesBeamSending || !salesBeamBody.trim()
+                      ? "not-allowed"
+                      : "pointer",
+                  opacity:
+                    salesBeamSending || !salesBeamBody.trim() ? 0.55 : 1,
+                }}
+              >
+                {salesBeamSending
+                  ? "Sending..."
+                  : `Send to ${salesBeamRecipient}`}
+              </button>
+            </div>
+
 
             <div
               style={{
