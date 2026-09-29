@@ -110,6 +110,19 @@ export default function SystemHomePage() {
     }
   });
 
+  useEffect(() => {
+    if (!accessFromUrl) return;
+
+    const cleanUrl = new URL(window.location.href);
+    cleanUrl.searchParams.delete("access");
+
+    window.history.replaceState(
+      {},
+      "",
+      `${cleanUrl.pathname}${cleanUrl.search}${cleanUrl.hash}`
+    );
+  }, [accessFromUrl]);
+
   const [starterRequests, setStarterRequests] = useState<StarterRequest[]>([]);
   const [selectedRequestId, setSelectedRequestId] = useState("");
   const [requestsLoading, setRequestsLoading] = useState(false);
@@ -321,11 +334,10 @@ export default function SystemHomePage() {
           </Link>
 
           <Link
-            to="/planet/build-your-live-system"
+            to={`/planet/creator/starter?system=${encodeURIComponent(slug)}`}
             className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-xs font-black text-white/70 transition hover:bg-white/[0.09] hover:text-white"
           >
-            <ArrowLeft size={14} />
-            Build My System
+            Edit Live Page
           </Link>
         </header>
 
@@ -404,16 +416,66 @@ export default function SystemHomePage() {
                 <div className="space-y-2">
                   {starterRequests.map((request) => {
                     const active = request.id === selectedRequest?.id;
+                    const statusKey = request.status || "new";
+
+                    const statusLabel =
+                      statusKey === "contacted"
+                        ? "Contacted"
+                        : statusKey === "scheduled"
+                          ? "Scheduled"
+                          : statusKey === "in_progress"
+                            ? "In Progress"
+                            : statusKey === "done"
+                              ? "Done"
+                              : "New";
+
+                    const statusStyle =
+                      statusKey === "contacted"
+                        ? {
+                            borderColor: "rgba(56, 189, 248, 0.60)",
+                            backgroundColor: "rgba(56, 189, 248, 0.14)",
+                          }
+                        : statusKey === "scheduled"
+                          ? {
+                              borderColor: "rgba(251, 191, 36, 0.65)",
+                              backgroundColor: "rgba(251, 191, 36, 0.14)",
+                            }
+                          : statusKey === "in_progress"
+                            ? {
+                                borderColor: "rgba(52, 211, 153, 0.65)",
+                                backgroundColor: "rgba(52, 211, 153, 0.15)",
+                              }
+                            : statusKey === "done"
+                              ? {
+                                  borderColor: "rgba(255, 255, 255, 0.16)",
+                                  backgroundColor: "rgba(255, 255, 255, 0.05)",
+                                }
+                              : {
+                                  borderColor: "rgba(167, 139, 250, 0.65)",
+                                  backgroundColor: "rgba(167, 139, 250, 0.14)",
+                                };
+
+                    const badgeClasses =
+                      statusKey === "contacted"
+                        ? "bg-sky-400/15 text-sky-200"
+                        : statusKey === "scheduled"
+                          ? "bg-amber-300/15 text-amber-200"
+                          : statusKey === "in_progress"
+                            ? "bg-emerald-300/15 text-emerald-200"
+                            : statusKey === "done"
+                              ? "bg-white/[0.07] text-white/45"
+                              : "bg-violet-400/15 text-violet-200";
 
                     return (
                       <button
                         key={request.id}
                         type="button"
                         onClick={() => setSelectedRequestId(request.id)}
+                        style={statusStyle}
                         className={`w-full rounded-[1.4rem] border p-4 text-left transition ${
                           active
-                            ? "border-emerald-300/35 bg-emerald-300/[0.08]"
-                            : "border-white/10 bg-white/[0.035] hover:bg-white/[0.055]"
+                            ? "ring-1 ring-white/15"
+                            : "hover:brightness-110"
                         }`}
                       >
                         <div className="flex items-start justify-between gap-3">
@@ -421,13 +483,16 @@ export default function SystemHomePage() {
                             <p className="truncate text-base font-black">
                               {request.customer_name || "Customer"}
                             </p>
-                            <p className="mt-1 truncate text-sm text-white/50">
-                              {request.service || "General request"}
+
+                            <p className="mt-1 truncate text-sm text-white/55">
+                              {request.service || "General request"} · {statusLabel}
                             </p>
                           </div>
 
-                          <span className="shrink-0 rounded-full bg-white/[0.06] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-white/55">
-                            {request.status || "new"}
+                          <span
+                            className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] ${badgeClasses}`}
+                          >
+                            {statusLabel}
                           </span>
                         </div>
                       </button>
@@ -724,30 +789,28 @@ export default function SystemHomePage() {
 
           </>
         ) : null}
+        {livePageSlug ? (
+          <div className="mt-8 flex flex-wrap items-center gap-3 border-t border-white/10 pt-6">
+            <Link
+              to={`/planet/starter/${livePageSlug}`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center rounded-xl bg-emerald-300 px-4 py-2.5 text-sm font-black text-black transition hover:bg-emerald-200"
+            >
+              Open Live Page
+            </Link>
 
-        <section className="mt-10 rounded-[2rem] border border-white/10 bg-white/[0.025] p-6 sm:p-7">
-          <p className="text-xs font-black uppercase tracking-[0.2em] text-white/35">
-            Built to grow
-          </p>
-
-          <h2 className="mt-2 text-2xl font-black">
-            Your system does not have to stay this size.
-          </h2>
-
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-white/50">
-            Add more pieces when the business needs them without rebuilding
-            everything from scratch.
-          </p>
-
-          <Link
-            to="/planet/build-your-live-system"
-            className="mt-5 inline-flex items-center rounded-2xl border border-white/10 bg-white/[0.05] px-5 py-3 text-sm font-black text-white transition hover:bg-white/[0.09]"
-          >
-            Change My System
-          </Link>
-        </section>
+            <Link
+              to={`/planet/creator/starter?system=${encodeURIComponent(slug)}`}
+              className="inline-flex items-center rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2.5 text-sm font-black text-white/75 transition hover:bg-white/[0.09] hover:text-white"
+            >
+              Edit Live Page
+            </Link>
+          </div>
+        ) : null}
       </section>
     </main>
   );
 }
+
 

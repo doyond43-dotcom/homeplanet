@@ -104,9 +104,24 @@ export default function StarterLivePageCreatorPage() {
 
     try {
       const raw = localStorage.getItem(`hp-system:${sourceSystemSlug}`);
-      return raw ? JSON.parse(raw) : null;
+
+      if (raw) {
+        const savedSystem = JSON.parse(raw);
+
+        return {
+          ...savedSystem,
+          livePageSlug:
+            savedSystem?.livePageSlug?.trim() || sourceSystemSlug,
+        };
+      }
+
+      return {
+        livePageSlug: sourceSystemSlug,
+      };
     } catch {
-      return null;
+      return {
+        livePageSlug: sourceSystemSlug,
+      };
     }
   }, [sourceSystemSlug]);
 
@@ -119,6 +134,12 @@ export default function StarterLivePageCreatorPage() {
   const [pageBackground, setPageBackground] = useState<BackgroundKey>("black");
   const [activeBlockId, setActiveBlockId] = useState("whoWeAre");
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+
+  const [launchResult, setLaunchResult] = useState<{
+    slug: string;
+    adminAccessToken: string;
+  } | null>(null);
+  const [isLaunching, setIsLaunching] = useState(false);
 
   const [name, setName] = useState(
     sourceSystem?.businessName?.trim() || ""
@@ -815,6 +836,8 @@ const servicePills = useMemo(
       console.error("[starter_notification_settings] save error:", error);
       throw new Error(error.message);
     }
+
+    return adminAccessToken;
   }
 
   async function saveLivePageChanges() {
@@ -864,9 +887,20 @@ const servicePills = useMemo(
     };
 
     const supabase = getSupabase();
+    const accessStorageKey = `hp-starter-admin:${livePageSlug}`;
+    const adminAccessToken =
+      window.localStorage.getItem(accessStorageKey)?.trim() || "";
+
+    if (!adminAccessToken) {
+      setSaveStatus("idle");
+      alert("Owner access is required before saving changes.");
+      return;
+    }
+
     const { error } = await supabase.rpc("patch_starter_live_page", {
       p_slug: livePageSlug,
       p_patch: pagePatch,
+      p_admin_access_token: adminAccessToken,
     });
     if (error) {
       console.error("[starter_live_pages] save changes error:", error);
@@ -904,6 +938,8 @@ const servicePills = useMemo(
       if (!phone.trim()) { alert("Add a phone number before launching."); return; }
       if (!heroPhoto) { alert("Add a real hero photo before launching your Live Page."); return; }
     }
+    setIsLaunching(true);
+
     const cleanSlug =
       slug
         .toLowerCase()
@@ -968,11 +1004,14 @@ const servicePills = useMemo(
     if (error) {
       console.error("[starter_live_pages] save error:", error);
       alert(`Could not launch live page: ${error.message}`);
+      setIsLaunching(false);
       return;
     }
 
+    let adminAccessToken = "";
+
     try {
-      await saveNotificationSettings(cleanSlug);
+      adminAccessToken = await saveNotificationSettings(cleanSlug);
     } catch (notificationError) {
       console.error(
         "[starter_notification_settings] launch save error:",
@@ -985,6 +1024,7 @@ const servicePills = useMemo(
           : "Live Page was created, but request notification settings could not be saved."
       );
 
+      setIsLaunching(false);
       return;
     }
 
@@ -1013,7 +1053,11 @@ const servicePills = useMemo(
       }
     }
 
-    window.location.href = `/planet/starter/${cleanSlug}`;
+    setLaunchResult({
+      slug: cleanSlug,
+      adminAccessToken,
+    });
+    setIsLaunching(false);
   }
 
 
@@ -1655,12 +1699,52 @@ const servicePills = useMemo(
                   View Live Page
                 </a>
               </div>
+            ) : launchResult ? (
+              <div className="space-y-4 rounded-[2rem] border border-emerald-400/20 bg-emerald-400/[0.06] p-5">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-400">
+                    Launch Complete
+                  </p>
+
+                  <h3 className="mt-2 text-2xl font-black text-white">
+                    Your system is ready.
+                  </h3>
+
+                  <p className="mt-2 text-sm leading-6 text-slate-400">
+                    Your customer page and business system are ready to use.
+                  </p>
+                </div>
+
+                <a
+                  href={`/planet/starter/${launchResult.slug}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex h-14 w-full items-center justify-center rounded-[1.4rem] bg-white text-base font-black text-black"
+                >
+                  View My Live Page
+                </a>
+
+                <a
+                  href={`/planet/system/${launchResult.slug}?access=${encodeURIComponent(launchResult.adminAccessToken)}`}
+                  className="flex h-14 w-full items-center justify-center rounded-[1.4rem] bg-emerald-400 text-base font-black text-black"
+                >
+                  Open My System
+                </a>
+
+                <a
+                  href={`/planet/creator/starter?system=${encodeURIComponent(launchResult.slug)}`}
+                  className="flex h-14 w-full items-center justify-center rounded-[1.4rem] border border-white/15 bg-white/[0.06] text-base font-black text-white"
+                >
+                  Edit My Page
+                </a>
+              </div>
             ) : (
               <button
                 onClick={launchLivePage}
+                disabled={isLaunching}
                 className="flex h-16 w-full items-center justify-center rounded-[1.6rem] bg-white text-lg font-black text-black"
               >
-                Launch Live Page
+                {isLaunching ? "Launching Your System..." : "Launch Live Page"}
               </button>
             )}
           </div>
@@ -1771,6 +1855,11 @@ const servicePills = useMemo(
     </div>
   );
 }
+
+
+
+
+
 
 
 
