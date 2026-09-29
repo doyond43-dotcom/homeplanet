@@ -142,6 +142,8 @@ export default function StarterLivePageCreatorPage() {
     sourceSystemSlug || ""
   );
 
+  const [pageAddressCustomized, setPageAddressCustomized] = useState(false);
+
   const [whoWeAre, setWhoWeAre] = useState(
     cameFromBuildMySystem
       ? `${sourceSystem?.businessName?.trim() || "This business"} helps customers with ${sourceSystem?.businessType?.trim() || "the work they need"}.`
@@ -195,6 +197,18 @@ export default function StarterLivePageCreatorPage() {
   const [ctaHeadline, setCtaHeadline] = useState("");
   const [ctaText, setCtaText] = useState("");
   const [ctaButtonText, setCtaButtonText] = useState("Get Started");
+
+  useEffect(() => {
+    if (sourceSystemSlug || pageAddressCustomized) return;
+
+    const generatedAddress = name
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+
+    setSlug(generatedAddress);
+  }, [name, sourceSystemSlug, pageAddressCustomized]);
   useEffect(() => {
     if (sourceSystemSlug || freshDraftRestoredRef.current) return;
 
@@ -224,6 +238,8 @@ export default function StarterLivePageCreatorPage() {
         setSmsAlertsEnabled(draft.smsAlertsEnabled);
 
       if (typeof draft.slug === "string") setSlug(draft.slug);
+      if (typeof draft.pageAddressCustomized === "boolean")
+        setPageAddressCustomized(draft.pageAddressCustomized);
 
       if (typeof draft.whoWeAre === "string") setWhoWeAre(draft.whoWeAre);
       if (typeof draft.pricingTitle === "string") setPricingTitle(draft.pricingTitle);
@@ -307,6 +323,7 @@ export default function StarterLivePageCreatorPage() {
           emailAlertsEnabled,
           smsAlertsEnabled,
           slug,
+          pageAddressCustomized,
           whoWeAre,
           pricingTitle,
           pricingText,
@@ -370,6 +387,7 @@ export default function StarterLivePageCreatorPage() {
     emailAlertsEnabled,
     smsAlertsEnabled,
     slug,
+    pageAddressCustomized,
     whoWeAre,
     pricingTitle,
     pricingText,
@@ -1017,18 +1035,27 @@ const servicePills = useMemo(
 
           <div className="space-y-2">
             <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
-              Live Page Slug
+              Your Page Address
             </p>
 
             <div className="flex items-center rounded-2xl border border-white/10 bg-black/40 px-4">
               <span className="text-xs text-slate-500">
-                /planet/starter/
+                homeplanet.city/planet/starter/
               </span>
 
               <input
                 value={slug}
-                onChange={(event) => setSlug(event.target.value)}
-                placeholder="your-business-name"
+                onChange={(event) => {
+                  setPageAddressCustomized(true);
+                  setSlug(
+                    event.target.value
+                      .toLowerCase()
+                      .replace(/[^a-z0-9-]+/g, "-")
+                      .replace(/-+/g, "-")
+                      .replace(/^-+|-+$/g, "")
+                  );
+                }}
+                placeholder="created automatically"
                 className="h-12 flex-1 bg-transparent px-2 text-sm outline-none"
               />
             </div>
@@ -1334,18 +1361,27 @@ const servicePills = useMemo(
 
                   <div className="space-y-2">
                     <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
-                      Live Page Address
+                      Your Page Address
                     </p>
 
                     <div className="flex items-center rounded-2xl border border-white/10 bg-black/40 px-4">
                       <span className="shrink-0 text-xs text-slate-500">
-                        /planet/starter/
+                        homeplanet.city/planet/starter/
                       </span>
 
                       <input
                         value={slug}
-                        onChange={(event) => setSlug(event.target.value)}
-                        placeholder="your-business-name"
+                        onChange={(event) => {
+                  setPageAddressCustomized(true);
+                  setSlug(
+                    event.target.value
+                      .toLowerCase()
+                      .replace(/[^a-z0-9-]+/g, "-")
+                      .replace(/-+/g, "-")
+                      .replace(/^-+|-+$/g, "")
+                  );
+                }}
+                        placeholder="created automatically"
                         className="h-12 min-w-0 flex-1 bg-transparent px-2 text-sm outline-none"
                       />
                     </div>
@@ -1735,6 +1771,7 @@ const servicePills = useMemo(
     </div>
   );
 }
+
 
 
 
