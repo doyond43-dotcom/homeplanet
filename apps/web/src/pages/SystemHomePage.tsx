@@ -79,6 +79,8 @@ export default function SystemHomePage() {
   const [starterIdentity, setStarterIdentity] =
     useState<StarterPageIdentity | null>(null);
 
+  const [identityLoading, setIdentityLoading] = useState(true);
+
   const businessName =
     starterIdentity?.name?.trim() ||
     system.businessName?.trim() ||
@@ -151,8 +153,11 @@ export default function SystemHomePage() {
     let cancelled = false;
 
     async function loadStarterIdentity() {
+      setIdentityLoading(true);
+
       if (!requestSlug) {
         setStarterIdentity(null);
+        setIdentityLoading(false);
         return;
       }
 
@@ -168,6 +173,7 @@ export default function SystemHomePage() {
 
       if (error) {
         console.error("[starter_live_pages] identity load error:", error);
+        setIdentityLoading(false);
         return;
       }
 
@@ -177,6 +183,7 @@ export default function SystemHomePage() {
           : null;
 
       setStarterIdentity(pageData);
+      setIdentityLoading(false);
     }
 
     void loadStarterIdentity();
@@ -310,6 +317,23 @@ export default function SystemHomePage() {
       )}`
     : undefined;
 
+  if (identityLoading) {
+    return (
+      <main className="min-h-screen bg-[#050607] text-white">
+        <div className="flex min-h-screen items-center justify-center px-6">
+          <div className="text-center">
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-emerald-300">
+              HomePlanet System
+            </p>
+            <h1 className="mt-3 text-2xl font-black">
+              Loading your system...
+            </h1>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-[#050607] text-white">
       <section className="mx-auto max-w-6xl px-5 py-6 sm:px-7">
@@ -334,7 +358,7 @@ export default function SystemHomePage() {
           </Link>
 
           <Link
-            to={`/planet/creator/starter?system=${encodeURIComponent(slug)}`}
+            to={`/planet/creator/starter?system=${encodeURIComponent(slug)}&access=${encodeURIComponent(adminAccessToken)}`}
             className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-xs font-black text-white/70 transition hover:bg-white/[0.09] hover:text-white"
           >
             Edit Live Page
@@ -801,7 +825,7 @@ export default function SystemHomePage() {
             </Link>
 
             <Link
-              to={`/planet/creator/starter?system=${encodeURIComponent(slug)}`}
+              to={`/planet/creator/starter?system=${encodeURIComponent(slug)}&access=${encodeURIComponent(adminAccessToken)}`}
               className="inline-flex items-center rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2.5 text-sm font-black text-white/75 transition hover:bg-white/[0.09] hover:text-white"
             >
               Edit Live Page
@@ -812,5 +836,6 @@ export default function SystemHomePage() {
     </main>
   );
 }
+
 
 

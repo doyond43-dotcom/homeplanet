@@ -99,6 +99,31 @@ export default function StarterLivePageCreatorPage() {
   const sourceSystemSlug =
     new URLSearchParams(window.location.search).get("system")?.trim() || "";
 
+  const sourceAccessToken =
+    new URLSearchParams(window.location.search).get("access")?.trim() || "";
+
+  useEffect(() => {
+    if (!sourceSystemSlug || !sourceAccessToken) return;
+
+    try {
+      window.localStorage.setItem(
+        `hp-starter-admin:${sourceSystemSlug}`,
+        sourceAccessToken
+      );
+    } catch {
+      // Continue without storage if unavailable.
+    }
+
+    const cleanUrl = new URL(window.location.href);
+    cleanUrl.searchParams.delete("access");
+
+    window.history.replaceState(
+      {},
+      "",
+      `${cleanUrl.pathname}${cleanUrl.search}${cleanUrl.hash}`
+    );
+  }, [sourceSystemSlug, sourceAccessToken]);
+
   const sourceSystem = useMemo(() => {
     if (!sourceSystemSlug) return null;
 
@@ -1697,6 +1722,13 @@ const servicePills = useMemo(
                   className="flex h-14 w-full items-center justify-center rounded-[1.6rem] bg-white text-base font-black text-black"
                 >
                   View Live Page
+                </a>
+
+                <a
+                  href={`/planet/system/${encodeURIComponent(sourceSystemSlug)}`}
+                  className="flex h-14 w-full items-center justify-center rounded-[1.6rem] border border-white/15 bg-white/[0.06] text-base font-black text-white"
+                >
+                  Back to My System
                 </a>
               </div>
             ) : launchResult ? (
