@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+﻿import { useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
   BriefcaseBusiness,
@@ -10,6 +10,8 @@ import {
   Store,
   Wrench,
   Workflow,
+  MessageCircle,
+  X,
 } from "lucide-react";
 import { trackCustomSystemsActivity } from "../lib/customSystemsActivity";
 import { supabase } from "../lib/supabase";
@@ -93,6 +95,18 @@ export default function DanielCustomSystemsLandingPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [questionOpen, setQuestionOpen] = useState(false);
+  const [questionSubmitting, setQuestionSubmitting] = useState(false);
+  const [questionSubmitted, setQuestionSubmitted] = useState(false);
+  const [questionError, setQuestionError] = useState("");
+
+  const [questionForm, setQuestionForm] = useState({
+    name: "",
+    phone: "",
+    email: "",
+    question: "",
+  });
+
 
   const [form, setForm] = useState({
     businessName: "",
@@ -151,6 +165,58 @@ export default function DanielCustomSystemsLandingPage() {
     }, 40);
   }
 
+  function openQuestionDrawer() {
+    setQuestionError("");
+    setQuestionSubmitted(false);
+    setQuestionOpen(true);
+  }
+
+  function updateQuestionField(
+    field: keyof typeof questionForm,
+    value: string
+  ) {
+    setQuestionForm((current) => ({
+      ...current,
+      [field]: value,
+    }));
+  }
+
+  async function submitQuestion(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (questionSubmitting) return;
+
+    setQuestionSubmitting(true);
+    setQuestionError("");
+    setQuestionSubmitted(false);
+
+    const { error } = await supabase
+      .from("custom_systems_public_requests")
+      .insert({
+        problem: "Customer Question",
+        business_name: "Question",
+        what_you_do: "Question",
+        current_flow: questionForm.question.trim(),
+        breakdowns: [],
+        existing_link: null,
+        name: questionForm.name.trim() || null,
+        phone: questionForm.phone.trim() || null,
+        email: questionForm.email.trim() || null,
+        contact_preference: "Text or call",
+        notes: "Submitted through Ask Us a Question",
+        status: "New Lead",
+      });
+
+    if (error) {
+      console.error("Custom Systems question submission error", error);
+      setQuestionError("Your question could not be sent. Please try again.");
+      setQuestionSubmitting(false);
+      return;
+    }
+
+    setQuestionSubmitted(true);
+    setQuestionSubmitting(false);
+  }
   async function submitRequest(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -213,13 +279,24 @@ export default function DanielCustomSystemsLandingPage() {
             </div>
           </a>
 
-          <button
-            type="button"
-            onClick={() => startRequest()}
-            className="rounded-xl bg-black px-3 py-2.5 text-xs font-black text-white transition hover:bg-black/80 sm:px-4 sm:py-3 sm:text-sm"
-          >
-            Start My System
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={openQuestionDrawer}
+              className="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-xl border border-[#1597F3]/35 bg-[#1597F3]/5 px-3 text-xs font-black text-[#087fd0] transition hover:bg-[#1597F3]/10 sm:px-4 sm:text-sm"
+            >
+              <MessageCircle className="h-4 w-4" />
+              Ask Us a Question
+            </button>
+
+            <button
+              type="button"
+              onClick={() => startRequest()}
+              className="hidden rounded-xl bg-black px-4 py-3 text-sm font-black text-white transition hover:bg-black/80 sm:inline-flex"
+            >
+              Start My System
+            </button>
+          </div>
         </div>
       </header>
       {/* HERO */}
@@ -529,6 +606,171 @@ export default function DanielCustomSystemsLandingPage() {
           </div>
         </div>
       </section>
+      {/* BUILD YOUR SYSTEM EXPLAINER */}
+      <section className="relative overflow-hidden bg-[#eef3df] text-black">
+
+        {/* soft product-reveal atmosphere */}
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_18%,rgba(123,224,0,0.22),transparent_28%),radial-gradient(circle_at_88%_22%,rgba(21,151,243,0.12),transparent_26%),linear-gradient(180deg,#f7f8ef_0%,#e9f0d8_100%)]" />
+
+        <div className="relative mx-auto max-w-[1240px] px-5 py-14 sm:px-8 sm:py-18 lg:py-24">
+
+          {/* FEATURED PRODUCT FRAME */}
+          <div className="relative overflow-hidden rounded-[2.3rem] border border-black/[0.08] bg-white/88 px-5 py-8 shadow-[0_30px_90px_rgba(30,55,0,0.14)] ring-1 ring-white/80 backdrop-blur-sm sm:px-8 sm:py-10 lg:px-12 lg:py-14">
+
+            <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#7be000]/15 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-32 -left-24 h-80 w-80 rounded-full bg-[#1597F3]/10 blur-3xl" />
+
+            {/* HEADER */}
+            <div className="relative mx-auto max-w-[820px] text-center">
+
+              <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-[#69c900]/25 bg-[#7be000]/10 px-4 py-2">
+                <span className="h-2 w-2 rounded-full bg-[#69c900]" />
+                <span className="text-[10px] font-black uppercase tracking-[0.22em] text-[#438c00]">
+                  Build Your System
+                </span>
+              </div>
+
+              <h2 className="mt-5 text-4xl font-black leading-[0.94] tracking-[-0.055em] sm:text-5xl lg:text-[4rem]">
+                Build your business setup
+                <span className="block text-[#59ad00]">
+                  in minutes.
+                </span>
+              </h2>
+
+              <p className="mx-auto mt-5 max-w-[720px] text-base leading-7 text-black/60 sm:text-lg">
+                Add your business name, logo, services, photos, contact info,
+                and the tools you need.
+              </p>
+
+            </div>
+
+            {/* 3 BUILD STEPS */}
+            <div className="relative mt-10 grid gap-4 lg:grid-cols-3">
+
+              <div className="group rounded-[1.6rem] border border-black/[0.08] bg-[#f8f9f5] p-6 shadow-[0_10px_30px_rgba(0,0,0,0.045)]">
+                <div className="flex items-center justify-between">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1597F3]/10 text-sm font-black text-[#087fd0]">
+                    01
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-[0.16em] text-black/30">
+                    Add It
+                  </span>
+                </div>
+
+                <h3 className="mt-5 text-xl font-black tracking-[-0.025em]">
+                  Add your business
+                </h3>
+
+                <p className="mt-2 text-sm font-bold leading-6 text-black/50">
+                  Name · Logo · Services · Photos
+                </p>
+              </div>
+
+              <div className="group rounded-[1.6rem] border border-black/[0.08] bg-[#f8f9f5] p-6 shadow-[0_10px_30px_rgba(0,0,0,0.045)]">
+                <div className="flex items-center justify-between">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1597F3]/10 text-sm font-black text-[#087fd0]">
+                    02
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-[0.16em] text-black/30">
+                    Choose It
+                  </span>
+                </div>
+
+                <h3 className="mt-5 text-xl font-black tracking-[-0.025em]">
+                  Choose how you work
+                </h3>
+
+                <p className="mt-2 text-sm font-bold leading-6 text-black/50">
+                  Requests · Estimates · Scheduling · Payments
+                </p>
+              </div>
+
+              <div className="group relative overflow-hidden rounded-[1.6rem] border border-[#69c900]/30 bg-[#11170d] p-6 text-white shadow-[0_18px_45px_rgba(72,120,0,0.18)]">
+                <div className="pointer-events-none absolute right-0 top-0 h-32 w-32 rounded-full bg-[#7be000]/20 blur-3xl" />
+
+                <div className="relative flex items-center justify-between">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#7be000] text-sm font-black text-black">
+                    03
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-[0.16em] text-[#7be000]">
+                    Build It
+                  </span>
+                </div>
+
+                <h3 className="relative mt-5 text-xl font-black tracking-[-0.025em]">
+                  HomePlanet builds the system
+                </h3>
+
+                <p className="relative mt-2 text-sm font-bold leading-6 text-white/55">
+                  Landing Page · Customer Flow · Work Drawer
+                </p>
+              </div>
+
+            </div>
+
+            {/* WHAT GETS BUILT */}
+            <div className="relative mt-5 grid gap-4 md:grid-cols-3">
+
+              <div className="rounded-[1.4rem] border border-black/[0.07] bg-white p-6">
+                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-[#087fd0]">
+                  Your Landing Page
+                </div>
+                <h4 className="mt-3 text-lg font-black">
+                  Ready for customers.
+                </h4>
+                <p className="mt-2 text-sm leading-6 text-black/55">
+                  Business info, services, photos, contact options, and customer requests.
+                </p>
+              </div>
+
+              <div className="rounded-[1.4rem] border border-black/[0.07] bg-white p-6">
+                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-[#087fd0]">
+                  Your Customer Experience
+                </div>
+                <h4 className="mt-3 text-lg font-black">
+                  Easy from the first tap.
+                </h4>
+                <p className="mt-2 text-sm leading-6 text-black/55">
+                  Requests, messages, scheduling, payments, and notifications.
+                </p>
+              </div>
+
+              <div className="rounded-[1.4rem] border border-[#69c900]/20 bg-[#f7fbeF] p-6">
+                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-[#438c00]">
+                  Your Work Drawer
+                </div>
+                <h4 className="mt-3 text-lg font-black">
+                  Run the job from one place.
+                </h4>
+                <p className="mt-2 text-sm leading-6 text-black/55">
+                  Call, text, navigate, estimate, track progress, add photos, and complete the job.
+                </p>
+              </div>
+
+            </div>
+
+            {/* CTA */}
+            <div className="relative mt-9 flex flex-col items-center border-t border-black/[0.07] pt-8 text-center">
+
+              <p className="text-sm font-black text-black/65 sm:text-base">
+                No coding. No website builder. No software setup.
+              </p>
+
+              <button
+                type="button"
+                onClick={() => window.location.href = "/planet/creator/starter"}
+                className="mt-5 inline-flex min-h-[54px] items-center justify-center rounded-xl bg-[#70d400] px-8 font-black text-black shadow-[0_12px_32px_rgba(91,173,0,0.24)] transition hover:-translate-y-0.5 hover:bg-[#7be000]"
+              >
+                Start Building →
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
 
       {/* FORM */}
       <section
@@ -555,7 +797,18 @@ export default function DanielCustomSystemsLandingPage() {
             </p>
           </div>
 
-          <div className="relative z-10 mx-auto mt-7 max-w-[1180px] rounded-[1.7rem] border border-white/70 bg-white/95 p-5 shadow-[0_24px_70px_rgba(0,0,0,0.12)] ring-1 ring-black/[0.06] backdrop-blur-sm sm:p-6 lg:p-7">
+          <div className="relative z-10 mx-auto mt-5 flex items-center justify-center gap-2 text-sm text-black/55">
+            <span>Not ready to start?</span>
+            <button
+              type="button"
+              onClick={openQuestionDrawer}
+              className="font-black text-[#087fd0] underline decoration-[#1597F3]/30 underline-offset-4"
+            >
+              Ask us a question.
+            </button>
+          </div>
+
+          <div className="relative z-10 mx-auto mt-5 max-w-[1180px] rounded-[1.7rem] border border-white/70 bg-white/95 p-5 shadow-[0_24px_70px_rgba(0,0,0,0.12)] ring-1 ring-black/[0.06] backdrop-blur-sm sm:p-6 lg:p-7">
 
             <form onSubmit={submitRequest}>
               <div className="grid gap-4 sm:grid-cols-2">
@@ -701,6 +954,149 @@ export default function DanielCustomSystemsLandingPage() {
       </section>
 
 
+      {questionOpen && (
+        <div className="fixed inset-0 z-50">
+          <button
+            type="button"
+            aria-label="Close question form"
+            onClick={() => setQuestionOpen(false)}
+            className="absolute inset-0 bg-black/55 backdrop-blur-[2px]"
+          />
+
+          <div className="absolute inset-y-0 right-0 flex w-full max-w-[480px] flex-col bg-white shadow-[-24px_0_70px_rgba(0,0,0,0.22)]">
+            <div className="flex items-start justify-between border-b border-black/10 px-5 py-5 sm:px-6">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#1597F3]">
+                  HomePlanet
+                </p>
+
+                <h2 className="mt-1 text-2xl font-black tracking-[-0.04em]">
+                  Ask us a question.
+                </h2>
+
+                <p className="mt-2 max-w-[360px] text-sm leading-6 text-black/55">
+                  Send us what you are wondering about and we will get back to you.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setQuestionOpen(false)}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-black/5 text-black transition hover:bg-black/10"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-5 py-5 sm:px-6">
+              <form onSubmit={submitQuestion}>
+                <label className="block">
+                  <span className="mb-2 block text-xs font-black uppercase tracking-[0.14em] text-black/60">
+                    Your Name
+                  </span>
+
+                  <input
+                    required
+                    autoComplete="name"
+                    value={questionForm.name}
+                    onChange={(event) =>
+                      updateQuestionField("name", event.target.value)
+                    }
+                    placeholder="Your name"
+                    className="min-h-[54px] w-full rounded-xl border border-black/15 bg-[#f5f6f2] px-4 text-base outline-none transition focus:border-[#1597F3] focus:ring-2 focus:ring-[#1597F3]/15"
+                  />
+                </label>
+
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  <label>
+                    <span className="mb-2 block text-xs font-black uppercase tracking-[0.14em] text-black/60">
+                      Phone
+                    </span>
+
+                    <input
+                      required
+                      inputMode="tel"
+                      autoComplete="tel"
+                      value={questionForm.phone}
+                      onChange={(event) =>
+                        updateQuestionField("phone", event.target.value)
+                      }
+                      placeholder="Phone number"
+                      className="min-h-[54px] w-full rounded-xl border border-black/15 bg-[#f5f6f2] px-4 text-base outline-none transition focus:border-[#1597F3] focus:ring-2 focus:ring-[#1597F3]/15"
+                    />
+                  </label>
+
+                  <label>
+                    <span className="mb-2 block text-xs font-black uppercase tracking-[0.14em] text-black/60">
+                      Email - Optional
+                    </span>
+
+                    <input
+                      type="email"
+                      autoComplete="email"
+                      value={questionForm.email}
+                      onChange={(event) =>
+                        updateQuestionField("email", event.target.value)
+                      }
+                      placeholder="Email"
+                      className="min-h-[54px] w-full rounded-xl border border-black/15 bg-[#f5f6f2] px-4 text-base outline-none transition focus:border-[#1597F3] focus:ring-2 focus:ring-[#1597F3]/15"
+                    />
+                  </label>
+                </div>
+
+                <label className="mt-4 block">
+                  <span className="mb-2 block text-xs font-black uppercase tracking-[0.14em] text-black/60">
+                    Your Question
+                  </span>
+
+                  <textarea
+                    required
+                    value={questionForm.question}
+                    onChange={(event) =>
+                      updateQuestionField("question", event.target.value)
+                    }
+                    placeholder="What would you like to know?"
+                    className="min-h-[150px] w-full resize-y rounded-xl border border-black/15 bg-[#f5f6f2] px-4 py-4 text-base leading-7 outline-none transition focus:border-[#1597F3] focus:ring-2 focus:ring-[#1597F3]/15"
+                  />
+                </label>
+
+                <button
+                  type="submit"
+                  disabled={questionSubmitting}
+                  className="mt-5 flex min-h-[56px] w-full items-center justify-center gap-3 rounded-xl bg-[#1597F3] px-6 text-base font-black text-white transition hover:bg-[#087fd0] disabled:cursor-wait disabled:opacity-60"
+                >
+                  {questionSubmitting ? "Sending..." : "Send My Question"}
+                  {!questionSubmitting && <ArrowRight className="h-5 w-5" />}
+                </button>
+
+                {questionError && (
+                  <div className="mt-4 rounded-xl bg-red-50 p-4 text-sm font-bold text-red-700">
+                    {questionError}
+                  </div>
+                )}
+
+                {questionSubmitted && (
+                  <div className="mt-4 rounded-xl border border-[#1597F3]/25 bg-[#eef8ff] p-4">
+                    <div className="flex gap-3">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#1597F3] text-white">
+                        <Check className="h-5 w-5" />
+                      </div>
+
+                      <div>
+                        <p className="font-black">Question sent.</p>
+                        <p className="mt-1 text-sm leading-6 text-black/60">
+                          We received it and will get back to you.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
       <footer className="border-t border-white/10 bg-black text-white">
         <div className="mx-auto max-w-[1180px] px-5 py-12 sm:px-8 lg:py-14">
 
@@ -761,4 +1157,8 @@ export default function DanielCustomSystemsLandingPage() {
     </main>
   );
 }
+
+
+
+
 

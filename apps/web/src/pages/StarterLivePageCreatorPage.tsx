@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { getSupabase } from "../lib/supabase";
 
 type VibeKey = "blue" | "emerald" | "sunset" | "midnight";
@@ -111,22 +111,26 @@ export default function StarterLivePageCreatorPage() {
   }, [sourceSystemSlug]);
 
   const cameFromBuildMySystem = Boolean(sourceSystemSlug && sourceSystem);
+
+  const freshDraftStorageKey = "hp-starter-creator-draft:v1";
+  const freshDraftRestoredRef = useRef(false);
+  const skipFirstDraftSaveRef = useRef(true);
   const [vibe, setVibe] = useState<VibeKey>("blue");
   const [pageBackground, setPageBackground] = useState<BackgroundKey>("black");
   const [activeBlockId, setActiveBlockId] = useState("whoWeAre");
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
 
   const [name, setName] = useState(
-    sourceSystem?.businessName?.trim() || "Sebastian Softwash"
+    sourceSystem?.businessName?.trim() || ""
   );
   const [city, setCity] = useState(
-    cameFromBuildMySystem ? "" : "Okeechobee, Florida"
+    ""
   );
   const [service, setService] = useState(
-    sourceSystem?.businessType?.trim() || "Summer pressure washing jobs"
+    sourceSystem?.businessType?.trim() || ""
   );
   const [phone, setPhone] = useState(
-    cameFromBuildMySystem ? "" : "863-532-0683"
+    ""
   );
 
   const [notificationEmail, setNotificationEmail] = useState("");
@@ -135,41 +139,41 @@ export default function StarterLivePageCreatorPage() {
   const [smsAlertsEnabled, setSmsAlertsEnabled] = useState(false);
 
   const [slug, setSlug] = useState(
-    sourceSystemSlug || "sebastian-softwash"
+    sourceSystemSlug || ""
   );
 
   const [whoWeAre, setWhoWeAre] = useState(
     cameFromBuildMySystem
       ? `${sourceSystem?.businessName?.trim() || "This business"} helps customers with ${sourceSystem?.businessType?.trim() || "the work they need"}.`
-      : "Helping local families with driveways, sidewalks, patios, and outdoor cleanup."
+      : ""
   );
 
-  const [pricingTitle, setPricingTitle] = useState(cameFromBuildMySystem ? "Simple estimates." : "No square footage headaches.");
+  const [pricingTitle, setPricingTitle] = useState(cameFromBuildMySystem ? "Simple estimates." : "");
   const [pricingText, setPricingText] = useState(
     cameFromBuildMySystem
       ? "Tell us what you need and we will help you with the next step."
-      : "Just send a photo of what you need cleaned up and I'll give you a fair price."
+      : ""
   );
 
   const [servicesText, setServicesText] = useState(
-    cameFromBuildMySystem ? (sourceSystem?.businessType?.trim() || "") : "Driveways, Patios, Sidewalks, Outdoor Cleanup"
+    cameFromBuildMySystem ? (sourceSystem?.businessType?.trim() || "") : ""
   );
 
-  const [localNoteTitle, setLocalNoteTitle] = useState(cameFromBuildMySystem ? "About Us" : "Local Note");
+  const [localNoteTitle, setLocalNoteTitle] = useState(cameFromBuildMySystem ? "About Us" : "");
   const [localNoteText, setLocalNoteText] = useState(
     cameFromBuildMySystem
       ? ""
-      : "Trying to stay productive this summer, work hard, save money, and help local families out at the same time."
+      : ""
   );
 
   const [paymentTitle, setPaymentTitle] = useState("Payment Link");
-  const [paymentPrice, setPaymentPrice] = useState(cameFromBuildMySystem ? "" : "$0");
-  const [paymentNote, setPaymentNote] = useState(cameFromBuildMySystem ? "" : "After we agree on the price, you can pay here.");
+  const [paymentPrice, setPaymentPrice] = useState("");
+  const [paymentNote, setPaymentNote] = useState("");
   const [paymentUrl, setPaymentUrl] = useState("");
 
   const [blocks, setBlocks] = useState<LiveBlock[]>(availableBlocks);
-  const [heroPhoto, setHeroPhoto] = useState(cameFromBuildMySystem ? "" : defaultPhotos[0]);
-  const [wallPhotos, setWallPhotos] = useState<string[]>(cameFromBuildMySystem ? [] : defaultPhotos);
+  const [heroPhoto, setHeroPhoto] = useState("");
+  const [wallPhotos, setWallPhotos] = useState<string[]>([]);
   const [whoWeAreImage, setWhoWeAreImage] = useState("");
   const [servicesImage, setServicesImage] = useState("");
   const [logoImage, setLogoImage] = useState("");
@@ -178,19 +182,232 @@ export default function StarterLivePageCreatorPage() {
   const [headerButtonText, setHeaderButtonText] = useState("Get a Quote");
   const [footerMessage, setFooterMessage] = useState("");
   const [whoWeAreLabel, setWhoWeAreLabel] = useState("Who We Are");
-  const [whoWeAreHeadline, setWhoWeAreHeadline] = useState("Dirty driveway? Green siding? We know the drill.");
-  const [servicesLabel, setServicesLabel] = useState("What Are We Cleaning?");
-  const [servicesHeadline, setServicesHeadline] = useState("Point us at the mess.");
-  const [servicesIntro, setServicesIntro] = useState("House, driveway, walkway, pool deck - pick what needs attention and let's get it cleaned up.");
-  const [galleryLabel, setGalleryLabel] = useState("The Payoff");
-  const [galleryHeadline, setGalleryHeadline] = useState("Nothing beats seeing it clean again.");
-  const [galleryText, setGalleryText] = useState("Here's the kind of difference a proper exterior cleaning can make around the house.");
-  const [whyLabel, setWhyLabel] = useState("Why Okey Dokie?");
-  const [whyHeadline, setWhyHeadline] = useState("Because you shouldn't have to chase down the person you hired.");
-  const [ctaLabel, setCtaLabel] = useState("Got Something Dirty?");
-  const [ctaHeadline, setCtaHeadline] = useState("Send us a photo. We'll tell you what it needs.");
-  const [ctaText, setCtaText] = useState("No long forms. No guessing. Send it over and let's get it cleaned up.");
-  const [ctaButtonText, setCtaButtonText] = useState("Text for a Quote");
+  const [whoWeAreHeadline, setWhoWeAreHeadline] = useState("");
+  const [servicesLabel, setServicesLabel] = useState("Services");
+  const [servicesHeadline, setServicesHeadline] = useState("");
+  const [servicesIntro, setServicesIntro] = useState("");
+  const [galleryLabel, setGalleryLabel] = useState("Photo Gallery");
+  const [galleryHeadline, setGalleryHeadline] = useState("");
+  const [galleryText, setGalleryText] = useState("");
+  const [whyLabel, setWhyLabel] = useState("Why Choose Us");
+  const [whyHeadline, setWhyHeadline] = useState("");
+  const [ctaLabel, setCtaLabel] = useState("Ready to Get Started?");
+  const [ctaHeadline, setCtaHeadline] = useState("");
+  const [ctaText, setCtaText] = useState("");
+  const [ctaButtonText, setCtaButtonText] = useState("Get Started");
+  useEffect(() => {
+    if (sourceSystemSlug || freshDraftRestoredRef.current) return;
+
+    freshDraftRestoredRef.current = true;
+
+    try {
+      const raw = window.localStorage.getItem(freshDraftStorageKey);
+      if (!raw) return;
+
+      const draft = JSON.parse(raw) as Record<string, any>;
+
+      if (typeof draft.name === "string") setName(draft.name);
+      if (typeof draft.city === "string") setCity(draft.city);
+      if (typeof draft.service === "string") setService(draft.service);
+      if (typeof draft.phone === "string") setPhone(draft.phone);
+
+      if (typeof draft.notificationEmail === "string")
+        setNotificationEmail(draft.notificationEmail);
+
+      if (typeof draft.notificationPhone === "string")
+        setNotificationPhone(draft.notificationPhone);
+
+      if (typeof draft.emailAlertsEnabled === "boolean")
+        setEmailAlertsEnabled(draft.emailAlertsEnabled);
+
+      if (typeof draft.smsAlertsEnabled === "boolean")
+        setSmsAlertsEnabled(draft.smsAlertsEnabled);
+
+      if (typeof draft.slug === "string") setSlug(draft.slug);
+
+      if (typeof draft.whoWeAre === "string") setWhoWeAre(draft.whoWeAre);
+      if (typeof draft.pricingTitle === "string") setPricingTitle(draft.pricingTitle);
+      if (typeof draft.pricingText === "string") setPricingText(draft.pricingText);
+      if (typeof draft.localNoteTitle === "string") setLocalNoteTitle(draft.localNoteTitle);
+      if (typeof draft.localNoteText === "string") setLocalNoteText(draft.localNoteText);
+
+      if (typeof draft.paymentTitle === "string") setPaymentTitle(draft.paymentTitle);
+      if (typeof draft.paymentPrice === "string") setPaymentPrice(draft.paymentPrice);
+      if (typeof draft.paymentNote === "string") setPaymentNote(draft.paymentNote);
+      if (typeof draft.paymentUrl === "string") setPaymentUrl(draft.paymentUrl);
+
+      if (typeof draft.servicesText === "string") setServicesText(draft.servicesText);
+
+      if (typeof draft.heroPhoto === "string") setHeroPhoto(draft.heroPhoto);
+      if (Array.isArray(draft.wallPhotos)) setWallPhotos(draft.wallPhotos);
+      if (typeof draft.whoWeAreImage === "string") setWhoWeAreImage(draft.whoWeAreImage);
+      if (typeof draft.servicesImage === "string") setServicesImage(draft.servicesImage);
+      if (typeof draft.logoImage === "string") setLogoImage(draft.logoImage);
+      if (typeof draft.footerLogoImage === "string") setFooterLogoImage(draft.footerLogoImage);
+
+      if (typeof draft.tagline === "string") setTagline(draft.tagline);
+      if (typeof draft.headerButtonText === "string") setHeaderButtonText(draft.headerButtonText);
+      if (typeof draft.footerMessage === "string") setFooterMessage(draft.footerMessage);
+
+      if (typeof draft.whoWeAreLabel === "string") setWhoWeAreLabel(draft.whoWeAreLabel);
+      if (typeof draft.whoWeAreHeadline === "string") setWhoWeAreHeadline(draft.whoWeAreHeadline);
+
+      if (typeof draft.servicesLabel === "string") setServicesLabel(draft.servicesLabel);
+      if (typeof draft.servicesHeadline === "string") setServicesHeadline(draft.servicesHeadline);
+      if (typeof draft.servicesIntro === "string") setServicesIntro(draft.servicesIntro);
+
+      if (typeof draft.galleryLabel === "string") setGalleryLabel(draft.galleryLabel);
+      if (typeof draft.galleryHeadline === "string") setGalleryHeadline(draft.galleryHeadline);
+      if (typeof draft.galleryText === "string") setGalleryText(draft.galleryText);
+
+      if (typeof draft.whyLabel === "string") setWhyLabel(draft.whyLabel);
+      if (typeof draft.whyHeadline === "string") setWhyHeadline(draft.whyHeadline);
+
+      if (typeof draft.ctaLabel === "string") setCtaLabel(draft.ctaLabel);
+      if (typeof draft.ctaHeadline === "string") setCtaHeadline(draft.ctaHeadline);
+      if (typeof draft.ctaText === "string") setCtaText(draft.ctaText);
+      if (typeof draft.ctaButtonText === "string") setCtaButtonText(draft.ctaButtonText);
+
+      if (typeof draft.vibe === "string" && draft.vibe in vibes)
+        setVibe(draft.vibe as VibeKey);
+
+      if (
+        typeof draft.pageBackground === "string" &&
+        draft.pageBackground in backgroundChoices
+      ) {
+        setPageBackground(draft.pageBackground as BackgroundKey);
+      }
+
+      if (Array.isArray(draft.blocks)) setBlocks(draft.blocks);
+
+      setSaveStatus("saved");
+      window.setTimeout(() => setSaveStatus("idle"), 1800);
+    } catch (error) {
+      console.error("[starter_creator_draft] restore error:", error);
+    }
+  }, [sourceSystemSlug]);
+
+  useEffect(() => {
+    if (sourceSystemSlug) return;
+
+    if (skipFirstDraftSaveRef.current) {
+      skipFirstDraftSaveRef.current = false;
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      try {
+        const draft = {
+          name,
+          city,
+          service,
+          phone,
+          notificationEmail,
+          notificationPhone,
+          emailAlertsEnabled,
+          smsAlertsEnabled,
+          slug,
+          whoWeAre,
+          pricingTitle,
+          pricingText,
+          localNoteTitle,
+          localNoteText,
+          paymentTitle,
+          paymentPrice,
+          paymentNote,
+          paymentUrl,
+          servicesText,
+          heroPhoto,
+          wallPhotos,
+          whoWeAreImage,
+          servicesImage,
+          logoImage,
+          footerLogoImage,
+          tagline,
+          headerButtonText,
+          footerMessage,
+          whoWeAreLabel,
+          whoWeAreHeadline,
+          servicesLabel,
+          servicesHeadline,
+          servicesIntro,
+          galleryLabel,
+          galleryHeadline,
+          galleryText,
+          whyLabel,
+          whyHeadline,
+          ctaLabel,
+          ctaHeadline,
+          ctaText,
+          ctaButtonText,
+          vibe,
+          pageBackground,
+          blocks,
+          savedAt: new Date().toISOString(),
+        };
+
+        window.localStorage.setItem(
+          freshDraftStorageKey,
+          JSON.stringify(draft)
+        );
+
+        setSaveStatus("saved");
+        window.setTimeout(() => setSaveStatus("idle"), 1400);
+      } catch (error) {
+        console.error("[starter_creator_draft] autosave error:", error);
+      }
+    }, 500);
+
+    return () => window.clearTimeout(timer);
+  }, [
+    sourceSystemSlug,
+    name,
+    city,
+    service,
+    phone,
+    notificationEmail,
+    notificationPhone,
+    emailAlertsEnabled,
+    smsAlertsEnabled,
+    slug,
+    whoWeAre,
+    pricingTitle,
+    pricingText,
+    localNoteTitle,
+    localNoteText,
+    paymentTitle,
+    paymentPrice,
+    paymentNote,
+    paymentUrl,
+    servicesText,
+    heroPhoto,
+    wallPhotos,
+    whoWeAreImage,
+    servicesImage,
+    logoImage,
+    footerLogoImage,
+    tagline,
+    headerButtonText,
+    footerMessage,
+    whoWeAreLabel,
+    whoWeAreHeadline,
+    servicesLabel,
+    servicesHeadline,
+    servicesIntro,
+    galleryLabel,
+    galleryHeadline,
+    galleryText,
+    whyLabel,
+    whyHeadline,
+    ctaLabel,
+    ctaHeadline,
+    ctaText,
+    ctaButtonText,
+    vibe,
+    pageBackground,
+    blocks,
+  ]);
+
 
   useEffect(() => {
     const livePageSlug = sourceSystem?.livePageSlug?.trim();
@@ -1518,6 +1735,9 @@ const servicePills = useMemo(
     </div>
   );
 }
+
+
+
 
 
 
