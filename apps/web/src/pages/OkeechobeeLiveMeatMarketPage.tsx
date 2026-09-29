@@ -26,11 +26,12 @@ type MarketItem = {
 
 const categories = [
   "Everything",
-  "Beef",
-  "Pork",
-  "Chicken",
+  "Meat",
+  "Produce",
   "Eggs",
-  "More",
+  "Dairy",
+  "Honey",
+  "Farm Goods",
 ];
 
 const previewItems: MarketItem[] = [
@@ -106,6 +107,35 @@ function marketCategory(selling: string) {
     return "Raw Dairy";
   }
 
+  if (
+    value.includes("produce") ||
+    value.includes("vegetable") ||
+    value.includes("tomato") ||
+    value.includes("pepper") ||
+    value.includes("corn") ||
+    value.includes("lettuce") ||
+    value.includes("greens") ||
+    value.includes("fruit") ||
+    value.includes("melon") ||
+    value.includes("berry")
+  ) {
+    return "Produce";
+  }
+
+  if (
+    value.includes("farm goods") ||
+    value.includes("jam") ||
+    value.includes("jelly") ||
+    value.includes("soap") ||
+    value.includes("feed") ||
+    value.includes("grain") ||
+    value.includes("hay") ||
+    value.includes("ranch supplies") ||
+    value.includes("farm supplies")
+  ) {
+    return "Farm Goods";
+  }
+
   if (value.includes("honey")) {
     return "Honey";
   }
@@ -119,6 +149,14 @@ function marketCategory(selling: string) {
     value.includes("poultry")
   ) {
     return "Chicken";
+  }
+
+  if (value.includes("lamb")) {
+    return "Lamb";
+  }
+
+  if (value.includes("goat")) {
+    return "Goat";
   }
 
   if (
@@ -313,7 +351,7 @@ export default function OkeechobeeLiveMeatMarketPage({
         supabase
           .from("okeechobee_meat_market_products")
           .select(
-            "id,seller_listing_id,seller_name,name,price,package,fulfillment,availability,status,sort_order,image_url"
+            "id,seller_listing_id,seller_name,name,category,price,package,fulfillment,availability,status,sort_order,image_url"
           )
           .eq("status", "Active")
           .order("sort_order", { ascending: true }),
@@ -397,7 +435,7 @@ export default function OkeechobeeLiveMeatMarketPage({
 
               return {
                 id: product.id,
-                category: marketCategory(productName),
+                category: String(product.category || "").trim() || marketCategory(productName),
                 title: productName,
                 price: productPrice,
                 amount: productAmount,
@@ -489,7 +527,7 @@ export default function OkeechobeeLiveMeatMarketPage({
   const visibleItems = useMemo(() => {
     if (activeCategory === "Everything") return marketItems;
 
-    if (activeCategory === "Beef") {
+    if (activeCategory === "Meat") {
       return marketItems.filter((item) =>
         [
           "Beef",
@@ -497,17 +535,18 @@ export default function OkeechobeeLiveMeatMarketPage({
           "Steaks",
           "Roasts",
           "Beef Shares",
+          "Pork",
+          "Chicken",
+          "Lamb",
+          "Goat",
+          "Processors",
         ].includes(item.category)
       );
     }
 
-    if (activeCategory === "More") {
+    if (activeCategory === "Dairy") {
       return marketItems.filter((item) =>
-        [
-          "Raw Dairy",
-          "Honey",
-          "Processors",
-        ].includes(item.category)
+        ["Dairy", "Raw Dairy"].includes(item.category)
       );
     }
 
@@ -1491,7 +1530,7 @@ export default function OkeechobeeLiveMeatMarketPage({
             Okeechobee Together
           </a>
 
-          <nav className="market-nav" aria-label="Meat Market navigation">
+          <nav className="market-nav" aria-label="Live Market navigation">
             <a className="market-nav-link" href="#market">
               Market
             </a>
@@ -1513,17 +1552,17 @@ export default function OkeechobeeLiveMeatMarketPage({
           <h1>
             Okeechobee
             <br />
-            Live Meat Market
+            Live Market
           </h1>
 
           <p className="hero-sub">
-            Local ranchers. Local beef. Local pickup &amp; delivery.
+            Local farms. Local food. Local pickup &amp; delivery.
           </p>
 
           <div className="field-line">
-            The livestock market moves cattle.
+            Okeechobee grows more than one kind of local food.
             <br />
-            The Live Meat Market helps local beef reach local tables.
+            The Live Market helps local food reach local tables.
           </div>
 
           </div>
@@ -1580,9 +1619,9 @@ export default function OkeechobeeLiveMeatMarketPage({
           <div className="doorway-grid">
             <a className="doorway doorway-buy" href="#market">
               <div>
-                <div className="doorway-label">Buy Local Meat</div>
+                <div className="doorway-label">Buy Local Food</div>
                 <div className="doorway-copy">
-                  See what local ranchers and sellers have available right now.
+                  See what local farms and sellers have available right now.
                 </div>
               </div>
 
@@ -1598,7 +1637,7 @@ export default function OkeechobeeLiveMeatMarketPage({
               <div>
                 <div className="doorway-label">Sell What I Have</div>
                 <div className="doorway-copy">
-                  Ranchers, farms, processors, butchers, and local meat sellers.
+                  Farms, ranches, growers, beekeepers, dairies, processors, and local food sellers.
                 </div>
               </div>
 
@@ -1753,7 +1792,7 @@ export default function OkeechobeeLiveMeatMarketPage({
                       </h3>
 
                       <div className="seller-cta-copy">
-                        Raise it, process it, or sell it locally? Put your available products in front of Okeechobee buyers.
+                        Grow it, raise it, make it, or sell it locally? Put your available products in front of Okeechobee buyers.
                       </div>
 
                       <div className="seller-cta-products">
@@ -1843,7 +1882,7 @@ export default function OkeechobeeLiveMeatMarketPage({
             <div>
               <h3>Looking for something specific?</h3>
               <p>
-                Tell local ranchers and meat sellers what you need, how much you need, and when you need it.
+                Tell local farms and sellers what you need, how much you need, and when you need it.
               </p>
             </div>
 
@@ -1854,9 +1893,9 @@ export default function OkeechobeeLiveMeatMarketPage({
         <section className="section">
           <div className="market-columns">
             <div className="simple-panel">
-              <h3>Local Ranchers &amp; Meat Shops</h3>
+              <h3>Local Farms &amp; Sellers</h3>
               <p>
-                Find the people raising, cutting, packaging, and selling meat right here in our community.
+                Find the people growing, raising, making, packaging, and selling food right here in our community.
               </p>
               <a className="text-link" href="/planet/okeechobee/meat-market/sell">
                 Add What I Have &rarr;</a>
@@ -1876,9 +1915,9 @@ export default function OkeechobeeLiveMeatMarketPage({
         <section className="section" id="sell">
           <div className="request-box">
             <div>
-              <h3>Raise it, process it, or sell it locally?</h3>
+              <h3>Grow it, raise it, make it, or sell it locally?</h3>
               <p>
-                Ranchers, butchers, processors, and local meat shops can be part of the Okeechobee Live Meat Market.
+                Farms, ranches, growers, dairies, beekeepers, processors, and local food sellers can be part of the Okeechobee Live Market.
               </p>
             </div>
 
@@ -1922,7 +1961,7 @@ export default function OkeechobeeLiveMeatMarketPage({
                     color: "#667068"
                   }}
                 >
-                  Ask about local beef, pickup, delivery, sellers, or getting listed.
+                  Ask about local food, pickup, delivery, sellers, or getting listed.
                 </div>
               </div>
 
@@ -1957,7 +1996,7 @@ export default function OkeechobeeLiveMeatMarketPage({
                   letterSpacing: "-0.03em"
                 }}
               >
-                Okeechobee Live Meat Market
+                Okeechobee Live Market
               </div>
 
               <div
@@ -1968,7 +2007,7 @@ export default function OkeechobeeLiveMeatMarketPage({
                   color: "#667068"
                 }}
               >
-                Local ranchers. Local beef. Local connections.
+                Local farms. Local food. Local connections.
               </div>
             </div>
 
@@ -1988,7 +2027,7 @@ export default function OkeechobeeLiveMeatMarketPage({
                 className="text-link"
                 href="/planet/okeechobee/meat-market/sell"
               >
-                Sell Local Meat
+                Sell Local Food
               </a>
 
               <a

@@ -197,7 +197,7 @@ export default function OkeechobeeMeatMarketSellerPage() {
     return (
       <main style={styles.page}>
         <section style={styles.card}>
-          <p style={styles.kicker}>Okeechobee Live Meat Market</p>
+          <p style={styles.kicker}>Okeechobee Live Market</p>
           <h1 style={styles.title}>Got it.</h1>
           <p style={styles.text}>
             We'll review it and get it added to the local market.
@@ -218,7 +218,7 @@ export default function OkeechobeeMeatMarketSellerPage() {
     <main style={styles.page}>
       <section style={styles.shell}>
         <div style={styles.header}>
-          <p style={styles.kicker}>Okeechobee Live Meat Market</p>
+          <p style={styles.kicker}>Okeechobee Live Market</p>
           <h1 style={styles.title}>Add what I have.</h1>
           <p style={styles.text}>
             Tell us what you have available. We will review it and help get it in front of local buyers.
@@ -227,7 +227,7 @@ export default function OkeechobeeMeatMarketSellerPage() {
 
         <form onSubmit={handleSubmit} style={styles.form}>
           <label style={styles.label}>
-            Ranch or business name
+            Farm, ranch, or business name
             <input
               style={styles.input}
               value={businessName}
@@ -268,7 +268,7 @@ export default function OkeechobeeMeatMarketSellerPage() {
               style={styles.textarea}
               value={products}
               onChange={(event) => setProducts(event.target.value)}
-              placeholder="Ground beef, steaks, quarter beef, beef boxes, whole beef..."
+              placeholder="Beef, tomatoes, eggs, milk, honey, produce, farm goods..."
               rows={3}
             />
           </label>
@@ -279,7 +279,7 @@ export default function OkeechobeeMeatMarketSellerPage() {
               style={styles.input}
               value={price}
               onChange={(event) => setPrice(event.target.value)}
-              placeholder="$6.50/lb, 10-lb box $60, taking deposits..."
+              placeholder="$6.50/lb, dozen $5, basket $20, taking deposits..."
             />
           </label>
 

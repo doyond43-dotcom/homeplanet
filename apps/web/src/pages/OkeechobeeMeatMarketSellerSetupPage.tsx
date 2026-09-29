@@ -579,7 +579,7 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
         <section style={styles.shell}>
           <div style={styles.card}>
             <div style={styles.kicker}>
-              Okeechobee Live Meat Market
+              Okeechobee Live Market
             </div>
 
             <h1 style={styles.title}>
@@ -600,7 +600,7 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
       <section style={styles.shell}>
         <header style={styles.header}>
           <div style={styles.kicker}>
-            Okeechobee Live Meat Market
+            Okeechobee Live Market
           </div>
 
           <h1 style={styles.title}>
@@ -1067,7 +1067,7 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
                 </div>
 
                 <label style={styles.label}>
-                  Product or cut
+                  Product
                   <input
                     value={product.name}
                     onChange={(event) =>
@@ -1077,7 +1077,7 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
                         event.target.value
                       )
                     }
-                    placeholder="Example: Ribeye"
+                    placeholder="Example: Ribeye, tomatoes, eggs, honey..."
                     style={styles.input}
                   />
                 </label>
@@ -1104,10 +1104,12 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
                       Chicken
                     </option>
                     <option value="Eggs">Eggs</option>
+                    <option value="Produce">Produce</option>
                     <option value="Lamb">Lamb</option>
                     <option value="Goat">Goat</option>
                     <option value="Dairy">Dairy</option>
                     <option value="Honey">Honey</option>
+                    <option value="Farm Goods">Farm Goods</option>
                     <option value="Other">Other</option>
                   </select>
                 </label>
