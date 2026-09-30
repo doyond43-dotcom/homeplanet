@@ -102,6 +102,9 @@ export default function StarterLivePageCreatorPage() {
   const sourceAccessToken =
     new URLSearchParams(window.location.search).get("access")?.trim() || "";
 
+  const paypalTrialCancelled =
+    new URLSearchParams(window.location.search).get("paypal") === "cancel";
+
   useEffect(() => {
     if (!sourceSystemSlug || !sourceAccessToken) return;
 
@@ -163,7 +166,25 @@ export default function StarterLivePageCreatorPage() {
   const [launchResult, setLaunchResult] = useState<{
     slug: string;
     adminAccessToken: string;
-  } | null>(null);
+  } | null>(() => {
+    if (!paypalTrialCancelled || !sourceSystemSlug) return null;
+
+    try {
+      const storedAccessToken =
+        window.localStorage.getItem(
+          `hp-starter-admin:${sourceSystemSlug}`
+        )?.trim() || "";
+
+      if (!storedAccessToken) return null;
+
+      return {
+        slug: sourceSystemSlug,
+        adminAccessToken: storedAccessToken,
+      };
+    } catch {
+      return null;
+    }
+  });
   const [isLaunching, setIsLaunching] = useState(false);
 
   const [name, setName] = useState(
@@ -1701,7 +1722,7 @@ const servicePills = useMemo(
 
 
 
-            {sourceSystem?.livePageSlug ? (
+            {sourceSystem?.livePageSlug && !paypalTrialCancelled ? (
               <div className="space-y-3">
                 <button
                   onClick={saveLivePageChanges}
@@ -1739,11 +1760,13 @@ const servicePills = useMemo(
                   </p>
 
                   <h3 className="mt-2 text-2xl font-black text-white">
-                    Your system is ready.
+                    Your Live Page is ready.
                   </h3>
 
                   <p className="mt-2 text-sm leading-6 text-slate-400">
-                    Your customer page and business system are ready to use.
+                    {paypalTrialCancelled
+                      ? "Trial setup canceled. Your Live Page is still ready. Start your free trial whenever you're ready."
+                      : "Take a look at what you just built. When you're ready, start your 30-day free trial to unlock your HomePlanet System and Work Drawer."}
                   </p>
                 </div>
 
@@ -1756,19 +1779,90 @@ const servicePills = useMemo(
                   View My Live Page
                 </a>
 
-                <a
-                  href={`/planet/system/${launchResult.slug}?access=${encodeURIComponent(launchResult.adminAccessToken)}`}
-                  className="flex h-14 w-full items-center justify-center rounded-[1.4rem] bg-emerald-400 text-base font-black text-black"
-                >
-                  Open My System
-                </a>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      setIsLaunching(true);
 
-                <a
-                  href={`/planet/creator/starter?system=${encodeURIComponent(launchResult.slug)}`}
-                  className="flex h-14 w-full items-center justify-center rounded-[1.4rem] border border-white/15 bg-white/[0.06] text-base font-black text-white"
+                      window.localStorage.setItem(
+                        `hp-starter-admin:${launchResult.slug}`,
+                        launchResult.adminAccessToken
+                      );
+
+                      const returnUrl = new URL(
+                        `/planet/system/${encodeURIComponent(launchResult.slug)}`,
+                        window.location.origin
+                      );
+                      returnUrl.searchParams.set("paypal", "return");
+
+                      const cancelUrl = new URL(
+                        `/planet/creator/starter`,
+                        window.location.origin
+                      );
+                      cancelUrl.searchParams.set(
+                        "system",
+                        launchResult.slug
+                      );
+                      cancelUrl.searchParams.set("paypal", "cancel");
+
+                      const supabase = getSupabase();
+
+                      const { data, error } = await supabase.functions.invoke(
+                        "paypal-create-starter-subscription",
+                        {
+                          body: {
+                            live_page_slug: launchResult.slug,
+                            admin_access_token:
+                              launchResult.adminAccessToken,
+                            return_url: returnUrl.toString(),
+                            cancel_url: cancelUrl.toString(),
+                          },
+                        }
+                      );
+
+                      if (error) throw error;
+
+                      if (!data?.ok || !data?.approval_url) {
+                        throw new Error(
+                          data?.error ||
+                            "PayPal did not return a subscription approval link."
+                        );
+                      }
+
+                      window.location.assign(data.approval_url);
+                    } catch (error) {
+                      console.error(
+                        "[starter subscription] Could not start PayPal:",
+                        error
+                      );
+
+                      alert(
+                        error instanceof Error && error.message
+                          ? error.message
+                          : "Could not start your free trial."
+                      );
+
+                      setIsLaunching(false);
+                    }
+                  }}
+                  disabled={isLaunching}
+                  className="flex min-h-16 w-full flex-col items-center justify-center rounded-[1.4rem] bg-emerald-400 px-4 py-3 text-black disabled:opacity-60"
                 >
-                  Edit My Page
-                </a>
+                  <span className="text-base font-black">
+                    {isLaunching
+                      ? "Opening PayPal..."
+                      : "Start My 30-Day Free Trial"}
+                  </span>
+
+                  <span className="mt-1 text-xs font-black text-black/65">
+                    $0 today · then $29.99/month · cancel anytime
+                  </span>
+                </button>
+
+                <p className="text-center text-xs font-bold leading-5 text-slate-500">
+                  Your secure owner access, HomePlanet System, Work Drawer, and business tools unlock after your trial is activated.
+                </p>
               </div>
             ) : (
               <button
@@ -1887,38 +1981,4 @@ const servicePills = useMemo(
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

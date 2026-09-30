@@ -43,6 +43,16 @@ type StarterRequest = {
   internal_notes: string;
   updated_at: string;
 };
+type StarterSystemSubscription = {
+  live_page_slug: string;
+  status: string;
+  paypal_status?: string | null;
+  trial_started_at?: string | null;
+  trial_ends_at?: string | null;
+  current_period_end?: string | null;
+  monthly_price?: number | string | null;
+  currency?: string | null;
+};
 
 const categoryLabels: Record<string, string> = {
   "front-door": "Front Door",
@@ -132,6 +142,152 @@ export default function SystemHomePage() {
   const [requestSaving, setRequestSaving] = useState(false);
   const [requestSaveNote, setRequestSaveNote] = useState("");
 
+  const [starterSubscription, setStarterSubscription] =
+    useState<StarterSystemSubscription | null>(null);
+
+  const [subscriptionLoading, setSubscriptionLoading] = useState(false);
+  const [subscriptionMessage, setSubscriptionMessage] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadStarterSubscription() {
+      if (!requestSlug || !adminAccessToken) {
+        setStarterSubscription(null);
+        return;
+      }
+
+      setSubscriptionLoading(true);
+      setSubscriptionMessage("");
+
+      const supabase = getSupabase();
+
+      const paypalResult = searchParams.get("paypal")?.trim() || "";
+      const paypalSubscriptionId =
+        searchParams.get("subscription_id")?.trim() || "";
+
+      try {
+        if (paypalResult === "return") {
+          const { data, error } = await supabase.functions.invoke(
+            "paypal-confirm-starter-subscription",
+            {
+              body: {
+                live_page_slug: requestSlug,
+                admin_access_token: adminAccessToken,
+                paypal_subscription_id:
+                  paypalSubscriptionId || undefined,
+              },
+            }
+          );
+
+          if (error) throw error;
+
+          if (!data?.ok) {
+            throw new Error(
+              data?.error ||
+                "Could not confirm your PayPal subscription."
+            );
+          }
+
+          if (String(data?.status || "").toLowerCase() === "active") {
+            try {
+              window.localStorage.removeItem(
+                "hp-starter-creator-draft:v1"
+              );
+            } catch {
+              // Continue if browser storage is unavailable.
+            }
+
+            setSubscriptionMessage(
+              "Subscription approved. Your 30-day free trial is active."
+            );
+          } else {
+            setSubscriptionMessage(
+              "PayPal returned successfully. HomePlanet is confirming your subscription."
+            );
+          }
+        } else if (paypalResult === "cancel") {
+          setSubscriptionMessage(
+            "Subscription setup was canceled."
+          );
+        }
+
+        const { data, error } = await supabase.rpc(
+          "get_starter_system_subscription",
+          {
+            p_live_page_slug: requestSlug,
+            p_admin_access_token: adminAccessToken,
+          }
+        );
+
+        if (error) throw error;
+        if (cancelled) return;
+
+        const subscription = Array.isArray(data)
+          ? data[0]
+          : data;
+
+        setStarterSubscription(
+          subscription && subscription.live_page_slug
+            ? (subscription as StarterSystemSubscription)
+            : null
+        );
+      } catch (error) {
+        if (cancelled) return;
+
+        console.error(
+          "[starter_system_subscriptions] load error:",
+          error
+        );
+
+        setSubscriptionMessage(
+          error instanceof Error && error.message
+            ? error.message
+            : "Could not load subscription status."
+        );
+      } finally {
+        if (!cancelled) {
+          setSubscriptionLoading(false);
+        }
+
+        if (paypalResult) {
+          const cleanUrl = new URL(window.location.href);
+
+          cleanUrl.searchParams.delete("paypal");
+          cleanUrl.searchParams.delete("subscription_id");
+          cleanUrl.searchParams.delete("ba_token");
+          cleanUrl.searchParams.delete("token");
+
+          window.history.replaceState(
+            {},
+            "",
+            `${cleanUrl.pathname}${cleanUrl.search}${cleanUrl.hash}`
+          );
+        }
+      }
+    }
+
+    void loadStarterSubscription();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [requestSlug, adminAccessToken, searchParams]);
+
+  const trialDaysRemaining = useMemo(() => {
+    if (!starterSubscription?.trial_ends_at) return null;
+
+    const trialEnd = new Date(
+      starterSubscription.trial_ends_at
+    ).getTime();
+
+    if (!Number.isFinite(trialEnd)) return null;
+
+    return Math.max(
+      0,
+      Math.ceil((trialEnd - Date.now()) / 86400000)
+    );
+  }, [starterSubscription?.trial_ends_at]);
   const selectedModules = buildMySystemModules.filter((module) =>
     selectedIds.includes(module.id)
   );
@@ -365,6 +521,52 @@ export default function SystemHomePage() {
           </Link>
         </header>
 
+        {starterSubscription && (
+          <section className="mt-4 rounded-[1.7rem] border border-emerald-300/20 bg-emerald-300/[0.07] px-5 py-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-300">
+                  {starterSubscription.status === "active" &&
+                  starterSubscription.trial_ends_at
+                    ? "30-Day Free Trial"
+                    : "HomePlanet Subscription"}
+                </p>
+
+                <p className="mt-1 text-lg font-black text-white">
+                  {starterSubscription.status === "active" &&
+                  trialDaysRemaining !== null
+                    ? `${trialDaysRemaining} day${
+                        trialDaysRemaining === 1 ? "" : "s"
+                      } remaining`
+                    : starterSubscription.status === "approval_pending"
+                    ? "Waiting for PayPal approval"
+                    : starterSubscription.status}
+                </p>
+
+                <p className="mt-1 text-sm font-bold text-white/55">
+                  $29.99/month after trial · Cancel anytime
+                </p>
+              </div>
+
+              <div className="rounded-full border border-white/10 bg-black/20 px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-white/70">
+                {starterSubscription.paypal_status ||
+                  starterSubscription.status}
+              </div>
+            </div>
+
+            {subscriptionMessage && (
+              <p className="mt-3 border-t border-white/10 pt-3 text-sm font-bold text-white/65">
+                {subscriptionMessage}
+              </p>
+            )}
+          </section>
+        )}
+
+        {subscriptionLoading && !starterSubscription && (
+          <div className="mt-4 rounded-[1.5rem] border border-white/10 bg-white/[0.035] px-5 py-4 text-sm font-bold text-white/55">
+            Checking subscription...
+          </div>
+        )}
         <section className="relative mt-6 overflow-hidden rounded-[2rem] border border-emerald-300/20 bg-gradient-to-br from-emerald-300/[0.09] via-white/[0.035] to-transparent p-6 sm:p-8">
           <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-emerald-400/10 blur-[90px]" />
 
@@ -836,6 +1038,4 @@ export default function SystemHomePage() {
     </main>
   );
 }
-
-
 
