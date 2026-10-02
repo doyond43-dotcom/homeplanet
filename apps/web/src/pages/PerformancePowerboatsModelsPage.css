@@ -1,4 +1,4 @@
-﻿.pp-models-page {
+.pp-models-page {
   min-height: 100vh;
   padding: 72px 24px 90px;
   background: #f3f2ee;
@@ -180,5 +180,92 @@
 @media (max-width: 760px) {
   .pp-model-image {
     height: 210px;
+  }
+}
+
+/* === STACKED PERFORMANCE MODELS LAYOUT === */
+.pp-models-page .pp-models-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.pp-models-page .pp-model-card {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.8fr) minmax(0, 1.2fr);
+  gap: 24px;
+  align-items: stretch;
+}
+
+.pp-models-page .pp-model-card + .pp-model-card {
+  margin-top: 4px;
+}
+
+.pp-models-page .pp-model-card > :first-child {
+  min-height: 340px;
+}
+
+.pp-models-page .pp-model-card img,
+.pp-models-page .pp-model-image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  border-radius: 22px;
+}
+
+.pp-models-page .pp-model-card-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.pp-models-page .pp-model-card-copy p {
+  max-width: 58ch;
+}
+
+.pp-models-page .pp-model-card > :first-child {
+  order: 2;
+}
+
+.pp-models-page .pp-model-card .pp-model-card-copy {
+  order: 1;
+}
+
+@media (max-width: 900px) {
+  .pp-models-page .pp-model-card {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .pp-models-page .pp-model-card:nth-child(even) > :first-child,
+  .pp-models-page .pp-model-card:nth-child(even) .pp-model-card-copy {
+    order: initial;
+  }
+
+  .pp-models-page .pp-model-card > :first-child {
+    min-height: 250px;
+  }
+}
+
+/* === FINAL MODELS POLISH === */
+.pp-models-page .pp-model-card-copy {
+  justify-content: center;
+}
+
+.pp-models-page .pp-model-card-copy .pp-model-button,
+.pp-models-page .pp-model-card-copy a {
+  width: fit-content;
+  min-width: 170px;
+  max-width: 190px;
+  justify-content: center;
+}
+
+@media (max-width: 900px) {
+  .pp-models-page .pp-model-card-copy .pp-model-button,
+  .pp-models-page .pp-model-card-copy a {
+    width: fit-content;
+    min-width: 160px;
+    max-width: 190px;
   }
 }

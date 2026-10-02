@@ -1,39 +1,32 @@
-﻿import { Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import "./PerformancePowerboatsModelsPage.css";
 
 const models = [
   {
     name: "PERFORMANCE 43",
     description:
-      "The larger Performance platform built for serious capability, customization and time on the water.",
+      "The flagship Performance platform, built for serious offshore capability and custom configuration. Set it up for private performance use, fishing, island running, or a purpose-built multi-passenger tour operation.",
     available: true,
-    image: "/images/performance-powerboats/luxury_quad_engine_center_console_marina.png",
+    image: "/images/performance-powerboats/performance-43-blue-water.jpeg",
     imageAlt: "Performance 43 finished and docked on the water",
   },
   {
     name: "PERFORMANCE 34",
     description:
-      "A new Performance model joining the lineup. More details are coming.",
-    available: false,
-    image: "/images/performance-powerboats/luxury_center_console_boat_at_marina_dock.png",
-    imageAlt: "Finished white Performance center console boat at a marina dock",
+      "A versatile Performance platform shown here in concept-rendering form. Built around the same custom approach as the larger models, with layout, power and final configuration tailored around how the boat will actually be used.",
+    available: true,
+    image: "/images/performance-powerboats/minimalist_performance_boat_rendering.png",
+    imageAlt: "Minimal performance powerboat pencil sketch rendering",
   },
   {
     name: "PERFORMANCE 19",
     description:
-      "A smaller Performance platform built around the same hands-on approach to setup and use.",
+      "A smaller, more nimble Performance platform built for shallow water, coastal running and everyday use. Compact, simple and customizable without giving up the hands-on Performance build approach.",
     available: true,
-    image: "/images/performance-powerboats/sunlit_white_skiff_at_the_marina.png",
-    imageAlt: "Finished white Performance 19 style skiff at a marina",
+    image: "/images/performance-powerboats/tropical_skiff_in_crystal_waters.png",
+    imageAlt: "Finished white Performance 19 skiff in tropical coastal water",
   },
-  {
-    name: "FLATS BOAT",
-    description:
-      "A shallow-water Performance platform. Official model details and photography are coming.",
-    available: true,
-    image: "/images/performance-powerboats/white_flats_skiff_at_tropical_marina.png",
-    imageAlt: "Finished white flats skiff at a tropical marina",
-  },
+
 ];
 
 export default function PerformancePowerboatsModelsPage() {
@@ -41,7 +34,7 @@ export default function PerformancePowerboatsModelsPage() {
     <main className="pp-models-page">
       <div className="pp-models-shell">
         <Link className="pp-models-back" to="/planet/performance-powerboats">
-          ← PERFORMANCE POWERBOATS
+          BACK TO PERFORMANCE POWERBOATS
         </Link>
 
         <header className="pp-models-header">
@@ -70,7 +63,7 @@ export default function PerformancePowerboatsModelsPage() {
                 <div className="pp-model-image-placeholder">
                   <span>
                     {model.name === "PERFORMANCE 34"
-                      ? "NEW MODEL • DETAILS COMING"
+                      ? "CONCEPT RENDERING - DETAILS COMING"
                       : "MODEL PHOTOGRAPHY COMING SOON"}
                   </span>
                 </div>
@@ -86,7 +79,7 @@ export default function PerformancePowerboatsModelsPage() {
                     className="pp-model-action"
                     to="/planet/performance-powerboats/build"
                   >
-                    START A BUILD →
+                    START A BUILD
                   </Link>
                 ) : (
                   <span className="pp-model-coming">COMING LATER</span>

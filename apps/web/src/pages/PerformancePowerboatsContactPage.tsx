@@ -1,8 +1,8 @@
-﻿import { FormEvent, useState } from "react";
+import { FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
 import "./PerformancePowerboatsContactPage.css";
 
-const PERFORMANCE_PHONE = "+19548019524";
+const PERFORMANCE_PHONE = "+19548309975";
 const PERFORMANCE_ADDRESS =
   "12633 Southwest Impact Drive, Indiantown, Florida";
 
@@ -56,13 +56,13 @@ export default function PerformancePowerboatsContactPage() {
           <a className="pp-contact-action" href={`tel:${PERFORMANCE_PHONE}`}>
             <span>CALL</span>
             <strong>CALL PERFORMANCE</strong>
-            <small>Talk directly with Performance.</small>
+            <small>(954) 830-9975</small>
           </a>
 
           <a className="pp-contact-action" href={`sms:${PERFORMANCE_PHONE}`}>
             <span>TEXT</span>
             <strong>TEXT PERFORMANCE</strong>
-            <small>Send a quick message from your phone.</small>
+            <small>(954) 830-9975</small>
           </a>
         </section>
 
