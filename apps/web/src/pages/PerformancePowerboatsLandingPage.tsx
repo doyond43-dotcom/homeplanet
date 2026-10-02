@@ -310,7 +310,7 @@ export default function PerformancePowerboatsLandingPage() {
               >
                 <span className="pp-door-title">{service.title}</span>
                 <span className="pp-door-copy">{service.copy}</span>
-                <span className="pp-door-arrow">Ã¢â€ â€™</span>
+                <span className="pp-door-arrow">&rarr;</span>
               </button>
             ))}
           </div>
@@ -328,7 +328,7 @@ export default function PerformancePowerboatsLandingPage() {
                     }
                   }}
                 >
-                  Ã¢â€ Â BACK
+                  &larr; BACK
                 </button>
 
                 <span className="pp-selected">{projectType}</span>
@@ -468,7 +468,7 @@ export default function PerformancePowerboatsLandingPage() {
 
             {intakeStep === "done" && (
               <div className="pp-confirmation">
-                <div className="pp-confirmation-check">Ã¢Å“â€œ</div>
+                <div className="pp-confirmation-check">&#10003;</div>
                 <div className="pp-kicker">REQUEST RECEIVED</div>
                 <h3>GOT IT.</h3>
 
@@ -527,7 +527,7 @@ export default function PerformancePowerboatsLandingPage() {
               className="pp-production-cta"
               onClick={() => window.location.href = "/planet/performance-powerboats/molds-tooling"}
             >
-              EXPLORE MOLDS &amp; TOOLING Ã¢â€ â€™
+              EXPLORE MOLDS &amp; TOOLING &rarr;
             </button>
           </div>
 
@@ -728,8 +728,8 @@ export default function PerformancePowerboatsLandingPage() {
             <div className="pp-kicker">READY TO BUILD?</div>
             <h2>START YOUR PERFORMANCE BUILD.</h2>
             <p>
-              Tell us what youÃ¢â‚¬â„¢re looking to build, how youÃ¢â‚¬â„¢ll use it and where
-              you want to start. WeÃ¢â‚¬â„¢ll take it from there.
+              Tell us what you&apos;re looking to build, how you&apos;ll use it and where
+              you want to start. We&apos;ll take it from there.
             </p>
           </div>
 
@@ -738,7 +738,7 @@ export default function PerformancePowerboatsLandingPage() {
               START YOUR BUILD
             </a>
             <a className="pp-build-cta-link" href="/planet/performance-powerboats/models">
-              EXPLORE PERFORMANCE MODELS Ã¢â€ â€™
+              EXPLORE PERFORMANCE MODELS &rarr;
             </a>
           </div>
         </div>        </div>
@@ -755,7 +755,7 @@ export default function PerformancePowerboatsLandingPage() {
             </h2>
 
             <p>
-              Indiantown, Florida Ã‚Â· Since the 1980s
+              Indiantown, Florida &middot; Since the 1980s
             </p>
           </div>
 
@@ -831,14 +831,14 @@ export default function PerformancePowerboatsLandingPage() {
               target="_blank"
               rel="noreferrer"
             >
-              Get Directions Ã¢â€ â€™
+              Get Directions &rarr;
             </a>
           </div>
         </div>
 
         <div className="pp-footer-bottom pp-footer-defined-bottom">
           <div className="pp-footer-legal">
-            <span>Ã‚Â© 2026 PERFORMANCE POWERBOATS</span>
+            <span>&copy; 2026 PERFORMANCE POWERBOATS</span>
 
             <a href="/planet/performance-powerboats/privacy">
               Privacy Policy
