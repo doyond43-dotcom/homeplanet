@@ -285,6 +285,30 @@ serve(async (req) => {
       ownerSettings?.notification_email
     ) {
       try {
+        const { data: livePageRecord } = await supabaseAdmin
+          .from("starter_live_pages")
+          .select("page_data")
+          .eq("slug", livePageSlug)
+          .maybeSingle();
+
+        const pageData =
+          livePageRecord?.page_data &&
+          typeof livePageRecord.page_data === "object"
+            ? livePageRecord.page_data as Record<string, unknown>
+            : {};
+
+        const businessName =
+          String(
+            pageData.businessName ||
+              pageData.business_name ||
+              pageData.name ||
+              livePageSlug
+                .split("-")
+                .filter(Boolean)
+                .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+                .join(" ")
+          ).trim() || "Your business";
+
         const livePageUrl =
           `https://www.homeplanet.city/planet/starter/${encodeURIComponent(livePageSlug)}`;
 
@@ -297,7 +321,7 @@ serve(async (req) => {
         const emailResult = await sendHomePlanetEmail({
           recipient: String(ownerSettings.notification_email).trim(),
           project: "starter-system-activation",
-          subject: "Your HomePlanet System is active",
+          subject: `${businessName} is active — Your HomePlanet System`,
           html: `
             <div style="font-family:Arial,sans-serif;max-width:680px;margin:0 auto;padding:28px;">
               <div style="font-size:13px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#16a34a;margin-bottom:10px;">
@@ -305,7 +329,7 @@ serve(async (req) => {
               </div>
 
               <h1 style="font-size:28px;line-height:1.2;margin:0 0 14px;">
-                Your system is active.
+                ${escapeEmailHtml(businessName)} is active.
               </h1>
 
               <p style="font-size:16px;line-height:1.6;color:#444;margin:0 0 24px;">
@@ -322,42 +346,55 @@ serve(async (req) => {
                 </div>
               </div>
 
-              <p style="margin:0 0 12px;">
-                <a href="${escapeEmailHtml(livePageUrl)}" style="display:inline-block;padding:14px 18px;background:#111;color:#fff;text-decoration:none;border-radius:10px;font-weight:700;">
-                  View My Live Page
+              <div style="margin-bottom:20px;">
+                <div style="font-weight:800;margin-bottom:6px;">Your Live Page</div>
+                <a href="${escapeEmailHtml(livePageUrl)}" style="color:#166534;word-break:break-all;">
+                  ${escapeEmailHtml(livePageUrl)}
                 </a>
-              </p>
+              </div>
 
-              <p style="margin:0 0 12px;">
-                <a href="${escapeEmailHtml(systemUrl)}" style="display:inline-block;padding:14px 18px;background:#16a34a;color:#000;text-decoration:none;border-radius:10px;font-weight:700;">
-                  Open My System
+              <div style="margin-bottom:20px;">
+                <div style="font-weight:800;margin-bottom:6px;">Your HomePlanet System</div>
+                <a href="${escapeEmailHtml(systemUrl)}" style="color:#166534;word-break:break-all;">
+                  ${escapeEmailHtml(systemUrl)}
                 </a>
-              </p>
+              </div>
 
-              <p style="margin:0 0 24px;">
-                <a href="${escapeEmailHtml(editUrl)}" style="display:inline-block;padding:14px 18px;border:1px solid #ccc;color:#111;text-decoration:none;border-radius:10px;font-weight:700;">
-                  Edit My Page
+              <div style="margin-bottom:24px;">
+                <div style="font-weight:800;margin-bottom:6px;">Edit Your Page</div>
+                <a href="${escapeEmailHtml(editUrl)}" style="color:#166534;word-break:break-all;">
+                  ${escapeEmailHtml(editUrl)}
                 </a>
-              </p>
+              </div>
 
               <p style="font-size:13px;line-height:1.6;color:#777;">
-                Keep this email private. Your owner links provide secure access to your HomePlanet system.
+                Keep this email private. These owner links provide secure access to your HomePlanet system.
               </p>
             </div>
           `,
           text: [
-            "Your HomePlanet System is active.",
+            "HomePlanet",
             "",
-            "Your 30-day free trial is active.",
+            `${businessName} is active.`,
+            "",
+            "Your 30-day free trial is active. Your Live Page, HomePlanet System, Work Drawer, and owner tools are ready.",
+            "",
+            "Trial details",
             "$0 today",
+            "30-day free trial",
             "$29.99/month after the trial",
             "Cancel anytime",
             "",
-            `View My Live Page: ${livePageUrl}`,
-            `Open My System: ${systemUrl}`,
-            `Edit My Page: ${editUrl}`,
+            "Your Live Page",
+            livePageUrl,
             "",
-            "Keep this email private. Your owner links provide secure access to your HomePlanet system.",
+            "Your HomePlanet System",
+            systemUrl,
+            "",
+            "Edit Your Page",
+            editUrl,
+            "",
+            "Keep this email private. These owner links provide secure access to your HomePlanet system.",
           ].join("\n"),
         });
 
