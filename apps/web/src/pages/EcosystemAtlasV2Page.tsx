@@ -778,6 +778,11 @@ const sections: AtlasSection[] = [
             route: "/planet/demo/captain-jacks",
             access: "public",
           },
+          {
+            label: "Live Board",
+            route: "/planet/demo/captain-jacks/board",
+            access: "working",
+          },
         ],
       },
       {
