@@ -175,8 +175,16 @@ export default function CowTownRanchBoardPage() {
           <div className="cowtown-kicker">Ranch recovery command center</div>
           <h1 style={{ marginBottom: 8 }}>{ranch.ranch_name}</h1>
           <p style={{ marginTop: 0 }}>
-            {ranch.primary_contact_name} ? {ranch.primary_phone}
+            {ranch.primary_contact_name} · {ranch.primary_phone}
           </p>
+
+          <Link
+            className="cowtown-button cowtown-button-secondary"
+            to={`/planet/cow-town-tags/ranch/${managementToken}/manage`}
+          >
+            Manage Ranch Info
+            <ChevronRight size={17} />
+          </Link>
         </section>
 
         <section
@@ -337,7 +345,7 @@ export default function CowTownRanchBoardPage() {
             {animals.map((animal) => (
               <Link
                 key={animal.id}
-                to={`/planet/cow-town-tags/tag/${animal.cow_town_id}`}
+                to={`/planet/cow-town-tags/ranch/${managementToken}/animal/${animal.cow_town_id}`}
                 style={{
                   border: "1px solid rgba(255,255,255,.12)",
                   borderRadius: 18,
@@ -364,7 +372,10 @@ export default function CowTownRanchBoardPage() {
                   </div>
                 </div>
 
-                <ChevronRight size={20} style={{ opacity: 0.72, flexShrink: 0 }} />
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                  <span style={{ fontSize: 13, fontWeight: 800 }}>Manage Animal</span>
+                  <ChevronRight size={20} style={{ opacity: 0.72, flexShrink: 0 }} />
+                </div>
               </Link>
             ))}
           </div>
