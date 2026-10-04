@@ -138,6 +138,16 @@ const sections: AtlasSection[] = [
             access: "public",
           },
           {
+            label: "Intelligence",
+            route: "/planet/vz-professional-lawncare/intelligence",
+            access: "working",
+          },
+          {
+            label: "Live Activity",
+            route: "/planet/vz-professional-lawncare/live-activity",
+            access: "working",
+          },
+          {
             label: "Events",
             route: "/planet/demo/events?board=vz-professional-lawncare",
             access: "working",
@@ -186,6 +196,191 @@ const sections: AtlasSection[] = [
             route: "/planet/performance-powerboats",
             access: "public",
           },
+          {
+            label: "Live Board",
+            route: "/planet/performance-powerboats/board",
+            access: "working",
+          },
+          {
+            label: "Build System",
+            route: "/planet/performance-powerboats/build",
+            access: "working",
+          },
+          {
+            label: "Customer Builds",
+            route: "/planet/performance-powerboats/customer-builds",
+            access: "working",
+          },
+          {
+            label: "Fabrication",
+            route: "/planet/performance-powerboats/fabrication",
+            access: "working",
+          },
+          {
+            label: "Gallery",
+            route: "/planet/performance-powerboats/gallery",
+            access: "public",
+          },
+          {
+            label: "Models",
+            route: "/planet/performance-powerboats/models",
+            access: "public",
+          },
+          {
+            label: "Molds & Tooling",
+            route: "/planet/performance-powerboats/molds-tooling",
+            access: "public",
+          },
+          {
+            label: "Service",
+            route: "/planet/performance-powerboats/service",
+            access: "public",
+          },
+          {
+            label: "Showroom",
+            route: "/planet/performance-powerboats/showroom",
+            access: "public",
+          },
+          {
+            label: "Start Project",
+            route: "/planet/performance-powerboats/start-project",
+            access: "public",
+          },
+          {
+            label: "Contact",
+            route: "/planet/performance-powerboats/contact",
+            access: "public",
+          },
+        ],
+      },
+      {
+        id: "marshall-rosenbach",
+        name: "Marshall Rosenbach",
+        status: "Active HomePlanet business",
+        description:
+          "Legal client system with public practice-area pages, case review, document intake, and a connected working board.",
+        doorways: [
+          {
+            label: "Live Page",
+            route: "/planet/marshall-rosenbach",
+            access: "public",
+          },
+          {
+            label: "Live Board",
+            route: "/planet/marshall-rosenbach/board",
+            access: "working",
+          },
+          {
+            label: "Case Review",
+            route: "/planet/marshall-rosenbach/case-review",
+            access: "working",
+          },
+          {
+            label: "Document Upload",
+            route: "/planet/marshall-rosenbach/document-upload",
+            access: "working",
+          },
+        ],
+      },
+      {
+        id: "premier-window-door",
+        name: "Premier Window & Door",
+        status: "Active HomePlanet business",
+        description:
+          "Sold-job operations system connecting the office, sales, field, staff, and installation workflow.",
+        doorways: [
+          {
+            label: "Live Page",
+            route: "/planet/premier-window-door",
+            access: "public",
+          },
+          {
+            label: "Live Board",
+            route: "/planet/premier-window-door/board",
+            access: "working",
+          },
+          {
+            label: "Sales",
+            route: "/planet/premier-window-door/sales",
+            access: "working",
+          },
+          {
+            label: "Field",
+            route: "/planet/premier-window-door/field",
+            access: "working",
+          },
+          {
+            label: "Intake",
+            route: "/planet/premier-window-door/intake",
+            access: "working",
+          },
+          {
+            label: "Staff",
+            route: "/planet/premier-window-door/staff",
+            access: "working",
+          },
+          {
+            label: "Tech",
+            route: "/planet/premier-window-door/tech",
+            access: "working",
+          },
+        ],
+      },
+      {
+        id: "smith-property-care",
+        name: "Smith Property Care",
+        status: "Working system",
+        description:
+          "Property-care customer page with connected command-center and job workflow.",
+        doorways: [
+          {
+            label: "Live Page",
+            route: "/planet/smith-property-care",
+            access: "public",
+          },
+          {
+            label: "Command Center",
+            route: "/planet/smith-property-care/command-center",
+            access: "working",
+          },
+          {
+            label: "Job",
+            route: "/planet/smith-property-care/job",
+            access: "working",
+          },
+        ],
+      },
+      {
+        id: "all-clean-cuts",
+        name: "All Clean Cuts",
+        status: "Working system",
+        description:
+          "Customer-facing lawn and property-service system.",
+        doorways: [
+          {
+            label: "Live Page",
+            route: "/planet/all-clean-cuts",
+            access: "public",
+          },
+        ],
+      },
+      {
+        id: "late-night-hotels",
+        name: "Late Night Hotels",
+        status: "Working system",
+        description:
+          "Late-night hotel request and availability workflow with a connected operating board.",
+        doorways: [
+          {
+            label: "Live Page",
+            route: "/planet/late-night-hotels",
+            access: "public",
+          },
+          {
+            label: "Live Board",
+            route: "/planet/late-night-hotels/board",
+            access: "working",
+          },
         ],
       },
       {
@@ -228,15 +423,25 @@ const sections: AtlasSection[] = [
       },
       {
         id: "daniel",
-        name: "Daniel — Building HomePlanet",
+        name: "HomePlanet Custom Systems",
         status: "Founder page",
         description:
-          "Daniel's founder story, system-building approach, and working proof.",
+          "The main customer doorway for turning a business problem into a working HomePlanet system.",
         doorways: [
           {
-            label: "Founder Page",
+            label: "Custom Systems Landing",
             route: "/planet/custom-systems",
             access: "public",
+          },
+          {
+            label: "Build Board",
+            route: "/planet/custom-systems/board",
+            access: "protected",
+          },
+          {
+            label: "Examples",
+            route: "/planet/custom-systems/examples",
+            access: "working",
           },
           {
             label: "Live Activity",
@@ -246,8 +451,59 @@ const sections: AtlasSection[] = [
         ],
       },
       {
+        id: "creator-city",
+        name: "Creator City",
+        status: "HomePlanet system",
+        description:
+          "The main place where businesses, creators, sellers, service providers, and communities turn what they do into working systems.",
+        doorways: [
+          {
+            label: "Creator City",
+            route: "/planet/creator",
+            access: "public",
+          },
+          {
+            label: "Start",
+            route: "/planet/creator/start",
+            access: "public",
+          },
+          {
+            label: "Build",
+            route: "/planet/creator/build",
+            access: "working",
+          },
+          {
+            label: "Systems",
+            route: "/planet/creator/systems",
+            access: "working",
+          },
+          {
+            label: "Projects",
+            route: "/planet/creator/projects",
+            access: "working",
+          },
+          {
+            label: "Studio Board",
+            route: "/planet/creator/studio-board",
+            access: "working",
+          },
+        ],
+      },      {
+        id: "predator-shield",
+        name: "Predator Shield",
+        status: "Personal custom system",
+        description:
+          "A custom HomePlanet system built as a working personal protection and awareness concept.",
+        doorways: [
+          {
+            label: "System",
+            route: "/planet/predator-shield",
+            access: "working",
+          },
+        ],
+      },      {
         id: "build-system",
-        name: "Build Your Live System",
+        name: "Build My System / Build-A-Bear",
         description:
           "A guided doorway for identifying the business problem and the system needed underneath it.",
         doorways: [
@@ -255,6 +511,11 @@ const sections: AtlasSection[] = [
             label: "Start Here",
             route: "/planet/build-your-live-system",
             access: "public",
+          },
+          {
+            label: "Build Dashboard",
+            route: "/planet/build-your-live-system/dashboard",
+            access: "working",
           },
         ],
       },
@@ -278,9 +539,19 @@ const sections: AtlasSection[] = [
             access: "working",
           },
           {
+            label: "Operations Preview",
+            route: "/planet/okeechobee/operations-preview",
+            access: "working",
+          },
+          {
             label: "Lawn Program",
             route: "/planet/okeechobee/lawn-program",
             access: "public",
+          },
+          {
+            label: "Lawn Intelligence",
+            route: "/planet/okeechobee/lawn-program/intelligence",
+            access: "working",
           },
         ],
       },
@@ -296,6 +567,26 @@ const sections: AtlasSection[] = [
           {
             label: "Live Market",
             route: "/planet/okeechobee/meat-market",
+            access: "public",
+          },
+          {
+            label: "Add What I Have",
+            route: "/planet/okeechobee/meat-market/sell",
+            access: "public",
+          },
+          {
+            label: "Seller Directory",
+            route: "/planet/okeechobee/meat-market/sellers",
+            access: "public",
+          },
+          {
+            label: "Find Local Food",
+            route: "/planet/okeechobee/meat-market/contact?mode=buy",
+            access: "public",
+          },
+          {
+            label: "Ranch Resources",
+            route: "/planet/okeechobee/meat-market/ranch-resources",
             access: "public",
           },
           {
@@ -372,6 +663,25 @@ const sections: AtlasSection[] = [
           {
             label: "Request Transportation",
             route: "/planet/transportation/request",
+            access: "public",
+          },
+        ],
+      },
+      {
+        id: "yard-sales",
+        name: "HomePlanet Yard Sales",
+        status: "Working system",
+        description:
+          "Turn a physical yard sale into a live, shareable sale page people can view before they ever reach the yard.",
+        doorways: [
+          {
+            label: "Yard Sale Home",
+            route: "/yard-sale",
+            access: "public",
+          },
+          {
+            label: "Create Yard Sale",
+            route: "/yard-sale/start",
             access: "public",
           },
         ],
@@ -467,6 +777,35 @@ const sections: AtlasSection[] = [
             label: "Live Demo",
             route: "/planet/demo/captain-jacks",
             access: "public",
+          },
+        ],
+      },
+      {
+        id: "slap-a-bug",
+        name: "Slap A Bug",
+        status: "Working demo",
+        description:
+          "Pest-control customer experience with live, board, and impulse-system views.",
+        doorways: [
+          {
+            label: "Live Page",
+            route: "/planet/slap-a-bug",
+            access: "public",
+          },
+          {
+            label: "Live",
+            route: "/planet/slap-a-bug/live",
+            access: "public",
+          },
+          {
+            label: "Live Board",
+            route: "/planet/slap-a-bug/board",
+            access: "working",
+          },
+          {
+            label: "Impulse",
+            route: "/planet/slap-a-bug/impulse-v2",
+            access: "working",
           },
         ],
       },
