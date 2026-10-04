@@ -31,6 +31,8 @@ const demoTagUrl =
 
 export default function CowTownTagsLandingPage() {
   const pageRef = useRef<HTMLDivElement>(null);
+  const contactTriggerRef = useRef<HTMLButtonElement>(null);
+  const contactDrawerRef = useRef<HTMLElement>(null);
   const [language, setLanguage] = useState<CowTownLanguage>(() => {
     const saved = window.localStorage.getItem("cow-town-language");
 
@@ -52,6 +54,8 @@ export default function CowTownTagsLandingPage() {
       return;
     }
 
+    const previousDocumentLanguage = document.documentElement.lang;
+
     window.localStorage.setItem("cow-town-language", language);
     document.documentElement.lang =
       language === "es" ? "es" : language === "fr" ? "fr-CA" : "en";
@@ -72,8 +76,73 @@ export default function CowTownTagsLandingPage() {
       characterData: true,
     });
 
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      document.documentElement.lang = previousDocumentLanguage || "en";
+    };
   }, [language, contactOpen, contactSent, contactSending]);
+
+  useEffect(() => {
+    if (!contactOpen) {
+      return;
+    }
+
+    const drawer = contactDrawerRef.current;
+    const trigger = contactTriggerRef.current;
+    const previousBodyOverflow = document.body.style.overflow;
+
+    document.body.style.overflow = "hidden";
+
+    window.requestAnimationFrame(() => {
+      const firstFocusable = drawer?.querySelector<HTMLElement>(
+        'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+
+      firstFocusable?.focus();
+    });
+
+    function handleDialogKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeContact();
+        return;
+      }
+
+      if (event.key !== "Tab" || !drawer) {
+        return;
+      }
+
+      const focusable = Array.from(
+        drawer.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+      );
+
+      if (focusable.length === 0) {
+        event.preventDefault();
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    document.addEventListener("keydown", handleDialogKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleDialogKeyDown);
+      document.body.style.overflow = previousBodyOverflow;
+      trigger?.focus();
+    };
+  }, [contactOpen]);
 
   async function submitContact(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -180,7 +249,7 @@ export default function CowTownTagsLandingPage() {
           <div className="ctv2-shell">
             <div className="ctv2-hero-copy">
               <div className="ctv2-eyebrow">
-                <ShieldCheck size={15} />
+                <ShieldCheck size={15} aria-hidden="true" />
                 Livestock identification connected to real recovery
               </div>
 
@@ -199,7 +268,7 @@ export default function CowTownTagsLandingPage() {
                   className="ctv2-button ctv2-button-primary"
                   to="/planet/cow-town-tags/tag/CT-0847"
                 >
-                  <QrCode size={19} />
+                  <QrCode size={19} aria-hidden="true" />
                   See CT-0847 Live
                 </Link>
 
@@ -207,24 +276,24 @@ export default function CowTownTagsLandingPage() {
                   className="ctv2-button ctv2-button-secondary"
                   href="/planet/cow-town-tags/order"
                 >
-                  <Tags size={19} />
+                  <Tags size={19} aria-hidden="true" />
                   Buy Tags / Create Animal Pages
                 </a>
               </div>
 
               <div className="ctv2-trust">
                 <span>
-                  <BadgeCheck size={14} />
+                  <BadgeCheck size={14} aria-hidden="true" />
                   No public app needed
                 </span>
 
                 <span>
-                  <BadgeCheck size={14} />
+                  <BadgeCheck size={14} aria-hidden="true" />
                   Scan and report
                 </span>
 
                 <span>
-                  <BadgeCheck size={14} />
+                  <BadgeCheck size={14} aria-hidden="true" />
                   Reach the ranch fast
                 </span>
               </div>
@@ -295,7 +364,7 @@ export default function CowTownTagsLandingPage() {
                   />
 
                   <div className="ctv2-step-photo-label">
-                    <ScanLine size={16} />
+                    <ScanLine size={16} aria-hidden="true" />
                     Scan the visible tag
                   </div>
                 </div>
@@ -332,7 +401,7 @@ export default function CowTownTagsLandingPage() {
                   to="/planet/cow-town-tags/tag/CT-0847"
                 >
                   Try the live tag
-                  <ArrowRight size={17} />
+                  <ArrowRight size={17} aria-hidden="true" />
                 </Link>
               </div>
             </div>
@@ -350,7 +419,7 @@ export default function CowTownTagsLandingPage() {
 
               <div className="ctv2-story-status">
                 <span>
-                  <Radio size={15} />
+                  <Radio size={15} aria-hidden="true" />
                   Active and ready
                 </span>
 
@@ -441,23 +510,23 @@ export default function CowTownTagsLandingPage() {
 
                 <ul className="ctv2-check-list">
                   <li>
-                    <Check size={17} />
+                    <Check size={17} aria-hidden="true" />
                     No app to download
                   </li>
                   <li>
-                    <Check size={17} />
+                    <Check size={17} aria-hidden="true" />
                     No finder account or login
                   </li>
                   <li>
-                    <Check size={17} />
+                    <Check size={17} aria-hidden="true" />
                     Call or text the ranch
                   </li>
                   <li>
-                    <Check size={17} />
+                    <Check size={17} aria-hidden="true" />
                     Report a current or earlier sighting
                   </li>
                   <li>
-                    <Check size={17} />
+                    <Check size={17} aria-hidden="true" />
                     Add movement, condition and safety details
                   </li>
                 </ul>
@@ -471,7 +540,7 @@ export default function CowTownTagsLandingPage() {
 
                 <div className="ctv2-roadside-overlay">
                   <span>
-                    <MapPin size={15} />
+                    <MapPin size={15} aria-hidden="true" />
                     Location reported
                   </span>
 
@@ -503,7 +572,7 @@ export default function CowTownTagsLandingPage() {
               </p>
 
               <div className="ctv2-proof-line">
-                <Activity size={20} />
+                <Activity size={20} aria-hidden="true" />
                 Origin → action → recovery → outcome
               </div>
             </div>
@@ -623,23 +692,23 @@ export default function CowTownTagsLandingPage() {
 
                   <ul>
                     <li>
-                      <Check size={16} />
+                      <Check size={16} aria-hidden="true" />
                       Large animal number that can be read quickly
                     </li>
                     <li>
-                      <Check size={16} />
+                      <Check size={16} aria-hidden="true" />
                       Built-in QR code, not an added sticker
                     </li>
                     <li>
-                      <Check size={16} />
+                      <Check size={16} aria-hidden="true" />
                       Clear “FOUND? SCAN ME” instructions
                     </li>
                     <li>
-                      <Check size={16} />
+                      <Check size={16} aria-hidden="true" />
                       Permanent Cow Town recovery ID
                     </li>
                     <li>
-                      <Check size={16} />
+                      <Check size={16} aria-hidden="true" />
                       Designed for future RFID expansion
                     </li>
                   </ul>
@@ -668,27 +737,27 @@ export default function CowTownTagsLandingPage() {
 
                   <ul>
                     <li>
-                      <Check size={16} />
+                      <Check size={16} aria-hidden="true" />
                       Attaches directly to the existing ear tag
                     </li>
                     <li>
-                      <Check size={16} />
+                      <Check size={16} aria-hidden="true" />
                       Keeps the original animal number in place
                     </li>
                     <li>
-                      <Check size={16} />
+                      <Check size={16} aria-hidden="true" />
                       Clearly labeled “FOUND? SCAN ME”
                     </li>
                     <li>
-                      <Check size={16} />
+                      <Check size={16} aria-hidden="true" />
                       Waterproof and UV-resistant recovery overlay
                     </li>
                     <li>
-                      <Check size={16} />
+                      <Check size={16} aria-hidden="true" />
                       Each overlay opens that animal’s live recovery page
                     </li>
                     <li>
-                      <Check size={16} />
+                      <Check size={16} aria-hidden="true" />
                       Lower-cost way to activate an existing herd
                     </li>
                   </ul>
@@ -719,7 +788,7 @@ export default function CowTownTagsLandingPage() {
                   className="ctv2-button ctv2-button-primary"
                   to="/planet/cow-town-tags/tag/CT-0847"
                 >
-                  <Radio size={19} />
+                  <Radio size={19} aria-hidden="true" />
                   See CT-0847 Live
                 </Link>
 
@@ -727,7 +796,7 @@ export default function CowTownTagsLandingPage() {
                   className="ctv2-button ctv2-button-secondary"
                   href="/planet/cow-town-tags/order"
                 >
-                  <Fence size={19} />
+                  <Fence size={19} aria-hidden="true" />
                   Start My Order
                 </a>
               </div>
@@ -755,6 +824,7 @@ export default function CowTownTagsLandingPage() {
             <Link to="/terms">Terms</Link>
 
             <button
+              ref={contactTriggerRef}
               type="button"
               onClick={() => setContactOpen(true)}
             >
@@ -780,6 +850,7 @@ export default function CowTownTagsLandingPage() {
           }}
         >
           <section
+            ref={contactDrawerRef}
             className="ctv2-contact-drawer"
             role="dialog"
             aria-modal="true"
@@ -795,8 +866,12 @@ export default function CowTownTagsLandingPage() {
             </button>
 
             {contactSent ? (
-              <div className="ctv2-contact-success">
-                <BadgeCheck size={38} />
+              <div
+                className="ctv2-contact-success"
+                role="status"
+                aria-live="polite"
+              >
+                <BadgeCheck size={38} aria-hidden="true" />
                 <span>Message received</span>
 
                 <h2 id="cow-town-contact-title">
@@ -879,7 +954,7 @@ export default function CowTownTagsLandingPage() {
                     className="ctv2-button ctv2-button-primary ctv2-contact-submit"
                     disabled={contactSending}
                   >
-                    <MessageCircle size={18} />
+                    <MessageCircle size={18} aria-hidden="true" />
                     {contactSending ? "Sending..." : "Send Message"}
                   </button>
                 </form>
@@ -891,6 +966,10 @@ export default function CowTownTagsLandingPage() {
     </div>
   );
 }
+
+
+
+
 
 
 

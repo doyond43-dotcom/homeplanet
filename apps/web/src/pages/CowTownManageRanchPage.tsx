@@ -1,4 +1,4 @@
-import {
+﻿import {
   ArrowLeft,
   Loader2,
   Save,
@@ -145,7 +145,7 @@ export default function CowTownManageRanchPage() {
             className="cowtown-button cowtown-button-secondary"
             to={`/planet/cow-town-tags/ranch/${managementToken}`}
           >
-            <ArrowLeft size={17} />
+            <ArrowLeft size={17} aria-hidden="true" />
             Back to Ranch Board
           </Link>
         </main>
@@ -169,7 +169,7 @@ export default function CowTownManageRanchPage() {
           </Link>
 
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <ShieldCheck size={17} />
+            <ShieldCheck size={17} aria-hidden="true" />
             <span>Private Access</span>
           </div>
         </div>
@@ -189,7 +189,7 @@ export default function CowTownManageRanchPage() {
             marginBottom: 26,
           }}
         >
-          <ArrowLeft size={17} />
+          <ArrowLeft size={17} aria-hidden="true" />
           Ranch Board
         </Link>
 
@@ -207,6 +207,7 @@ export default function CowTownManageRanchPage() {
               Ranch Name
               <input
                 style={fieldStyle}
+                autoComplete="organization"
                 value={ranchName}
                 onChange={(event) => setRanchName(event.target.value)}
                 required
@@ -217,6 +218,7 @@ export default function CowTownManageRanchPage() {
               Contact Name
               <input
                 style={fieldStyle}
+                autoComplete="name"
                 value={contactName}
                 onChange={(event) => setContactName(event.target.value)}
                 required
@@ -227,6 +229,8 @@ export default function CowTownManageRanchPage() {
               Phone
               <input
                 style={fieldStyle}
+                type="tel"
+                autoComplete="tel"
                 value={phone}
                 onChange={(event) => setPhone(event.target.value)}
                 required
@@ -238,6 +242,7 @@ export default function CowTownManageRanchPage() {
               <input
                 style={fieldStyle}
                 type="email"
+                autoComplete="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 required
@@ -248,6 +253,8 @@ export default function CowTownManageRanchPage() {
               Recovery Phone
               <input
                 style={fieldStyle}
+                type="tel"
+                autoComplete="tel"
                 value={recoveryPhone}
                 onChange={(event) => setRecoveryPhone(event.target.value)}
               />
@@ -255,13 +262,13 @@ export default function CowTownManageRanchPage() {
           </div>
 
           {saveError && (
-            <div style={{ marginTop: 18 }}>
+            <div role="alert" style={{ marginTop: 18 }}>
               {saveError}
             </div>
           )}
 
           {saved && (
-            <div style={{ marginTop: 18 }}>
+            <div role="status" aria-live="polite" style={{ marginTop: 18 }}>
               Ranch information saved.
             </div>
           )}
@@ -272,7 +279,7 @@ export default function CowTownManageRanchPage() {
             disabled={saving}
             style={{ marginTop: 24 }}
           >
-            {saving ? <Loader2 size={18} /> : <Save size={18} />}
+            {saving ? <Loader2 size={18} aria-hidden="true" /> : <Save size={18} aria-hidden="true" />}
             {saving ? "Saving..." : "Save Ranch Info"}
           </button>
         </form>
@@ -280,3 +287,6 @@ export default function CowTownManageRanchPage() {
     </div>
   );
 }
+
+
+

@@ -1,5 +1,5 @@
-import { lazy, Suspense } from "react";
-import { BrowserRouter, Routes, Route, Navigate, Outlet, useSearchParams } from "react-router-dom";
+﻿import { lazy, Suspense, useEffect } from "react";
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation, useSearchParams } from "react-router-dom";
 import { RequireAuth } from "./auth/RequireAuth";
 
 const DemoPestControlLandingPage = lazy(() => import("./pages/DemoPestControlLandingPage"));
@@ -204,9 +204,52 @@ function OkeechobeeDomainCreateRedirect() {
 
   return <Navigate to="/planet/okeechobee/create" replace />;
 }
+function AccessibilityDocumentManager() {
+  const location = useLocation();
+
+  useEffect(() => {
+    const path = location.pathname;
+
+    let title = "HomePlanet";
+
+    if (path === "/planet/cow-town-tags") {
+      title = "Cow Town Tags | HomePlanet";
+    } else if (path === "/planet/cow-town-tags/order") {
+      title = "Order Cow Town Tags | HomePlanet";
+    } else if (path.startsWith("/planet/cow-town-tags/receipt/")) {
+      title = "Cow Town Order Receipt | HomePlanet";
+    } else if (path.startsWith("/planet/cow-town-tags/tag/")) {
+      title = "Livestock Recovery | Cow Town Tags";
+    } else if (path.startsWith("/planet/cow-town-tags/animal/setup/")) {
+      title = "Set Up Animal | Cow Town Tags";
+    } else if (
+      path.includes("/planet/cow-town-tags/ranch/") &&
+      path.includes("/animal/")
+    ) {
+      title = "Manage Animal | Cow Town Tags";
+    } else if (
+      path.startsWith("/planet/cow-town-tags/ranch/") &&
+      path.endsWith("/manage")
+    ) {
+      title = "Manage Ranch | Cow Town Tags";
+    } else if (path.startsWith("/planet/cow-town-tags/ranch/")) {
+      title = "Ranch Board | Cow Town Tags";
+    } else if (path.startsWith("/planet/cow-town-tags/transfer/start/")) {
+      title = "Transfer Animal Ownership | Cow Town Tags";
+    } else if (path.startsWith("/planet/cow-town-tags/transfer/accept/")) {
+      title = "Accept Animal Ownership | Cow Town Tags";
+    }
+
+    document.title = title;
+  }, [location.pathname]);
+
+  return null;
+}
+
 export default function App() {
   return (
     <BrowserRouter>
+      <AccessibilityDocumentManager />
       <Suspense fallback={null}>
         <Routes>
                     <Route path="/login" element={<Login />} />
@@ -309,7 +352,6 @@ export default function App() {
 <Route path="/planet/demo/brightside-flow" element={<BrightSideFlowDemo />} />
           <Route path="/planet/demo/after-the-click" element={<HomePlanetAfterTheClickDemo />} />
           <Route path="/planet/build-your-live-system/dashboard" element={<HomePlanetMarketAwarenessDashboardV1 />} />
-          <Route path="/planet/build-your-live-system" element={<HomePlanetMarketAwarenessFunnelV1 />} />        <Route path="/service/*" element={<ServiceRoutes />} />
         <Route path="/yard-sale" element={<YardSaleLandingPage />} />
           <Route path="/yard-sale/start" element={<YardSaleStartPage />} />
         <Route path="/yard-sale/:slug" element={<YardSalePublicPage />} />
@@ -395,3 +437,5 @@ export default function App() {
     </BrowserRouter>
   );
 }
+
+

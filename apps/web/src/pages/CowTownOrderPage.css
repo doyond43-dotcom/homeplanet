@@ -1,4 +1,4 @@
-.ct-wizard-page {
+﻿.ct-wizard-page {
   min-height: 100vh;
   background:
     radial-gradient(circle at 50% 0%, rgba(217, 170, 54, 0.09), transparent 30rem),
@@ -99,7 +99,7 @@
 }
 
 .ct-progress-labels span {
-  color: rgba(247, 241, 223, 0.28);
+  color: rgba(247, 241, 223, 0.68);
   font-size: 0.67rem;
   font-weight: 800;
   text-align: center;

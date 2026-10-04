@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import {
@@ -73,6 +73,21 @@ export default function CowTownOrderPage() {
     useState<ShippingDetails>(emptyShippingDetails);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      const heading = document.querySelector<HTMLElement>(
+        ".ct-step-card h1",
+      );
+
+      if (heading) {
+        heading.setAttribute("tabindex", "-1");
+        heading.focus({ preventScroll: true });
+      }
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [step]);
 
   const selectedPlan = cowTownPlans.find((plan) => plan.id === planId)!;
   const fullTag = cowTownProducts.find(
@@ -287,7 +302,7 @@ export default function CowTownOrderPage() {
     <main className="ct-wizard-page">
       <header className="ct-wizard-header">
         <a href="/planet/cow-town-tags" className="ct-wizard-back">
-          ← Back to Cow Town Tags
+          ← Back to Cow Town Tags
         </a>
 
         <div className="ct-wizard-brand">
@@ -302,7 +317,15 @@ export default function CowTownOrderPage() {
           <strong>{stepLabels[step - 1]}</strong>
         </div>
 
-        <div className="ct-progress-track">
+        <div
+          className="ct-progress-track"
+          role="progressbar"
+          aria-label="Cow Town order progress"
+          aria-valuemin={1}
+          aria-valuemax={6}
+          aria-valuenow={step}
+          aria-valuetext={`Step ${step} of 6: ${stepLabels[step - 1]}`}
+        >
           <div
             className="ct-progress-fill"
             style={{ width: `${(step / 6) * 100}%` }}
@@ -314,6 +337,7 @@ export default function CowTownOrderPage() {
             <span
               key={label}
               className={index + 1 <= step ? "is-active" : ""}
+              aria-current={index + 1 === step ? "step" : undefined}
             >
               {label}
             </span>
@@ -343,6 +367,7 @@ export default function CowTownOrderPage() {
                     plan.id === planId ? "is-selected" : ""
                   }
                   onClick={() => setPlanId(plan.id)}
+                  aria-pressed={plan.id === planId}
                 >
                   <div>
                     <strong>
@@ -394,6 +419,7 @@ export default function CowTownOrderPage() {
                     : ""
                 }
                 onClick={() => chooseProduct("full-tag")}
+                aria-pressed={productChoice === "full-tag"}
               >
                 <img
                   src="/images/cow-town-tag-main.png"
@@ -413,6 +439,7 @@ export default function CowTownOrderPage() {
                 onClick={() =>
                   chooseProduct("sticker-upgrade")
                 }
+                aria-pressed={productChoice === "sticker-upgrade"}
               >
                 <img
                   src="/images/cow-town-tag-retrofit.png"
@@ -430,6 +457,7 @@ export default function CowTownOrderPage() {
                     : ""
                 }
                 onClick={() => chooseProduct("both")}
+                aria-pressed={productChoice === "both"}
               >
                 <div className="ct-both-visual">
                   <img
@@ -543,6 +571,7 @@ export default function CowTownOrderPage() {
                     : ""
                 }
                 onClick={() => setBatchMethod("sequence")}
+                aria-pressed={batchMethod === "sequence"}
               >
                 <div>
                   <strong>Generate numbers in order</strong>
@@ -558,6 +587,7 @@ export default function CowTownOrderPage() {
                     : ""
                 }
                 onClick={() => setBatchMethod("enter-now")}
+                aria-pressed={batchMethod === "enter-now"}
               >
                 <div>
                   <strong>Enter existing numbers now</strong>
@@ -575,6 +605,7 @@ export default function CowTownOrderPage() {
                 onClick={() =>
                   setBatchMethod("upload-later")
                 }
+                aria-pressed={batchMethod === "upload-later"}
               >
                 <div>
                   <strong>Upload or send the list later</strong>
@@ -678,33 +709,40 @@ export default function CowTownOrderPage() {
               <label className="ct-simple-field ct-wide">
                 <span>Ranch or operation name</span>
                 <input
+                  autoComplete="organization"
                   value={ranch.ranchName}
                   onChange={(event) =>
                     updateRanch("ranchName", event.target.value)
                   }
                   placeholder="Miller Ranch"
+                  required
                 />
               </label>
 
               <label className="ct-simple-field">
                 <span>Primary contact</span>
                 <input
+                  autoComplete="name"
                   value={ranch.contactName}
                   onChange={(event) =>
                     updateRanch("contactName", event.target.value)
                   }
                   placeholder="Full name"
+                  required
                 />
               </label>
 
               <label className="ct-simple-field">
                 <span>Phone</span>
                 <input
+                  type="tel"
+                  autoComplete="tel"
                   value={ranch.phone}
                   onChange={(event) =>
                     updateRanch("phone", event.target.value)
                   }
                   placeholder="Best number"
+                  required
                 />
               </label>
 
@@ -712,17 +750,21 @@ export default function CowTownOrderPage() {
                 <span>Email</span>
                 <input
                   type="email"
+                  autoComplete="email"
                   value={ranch.email}
                   onChange={(event) =>
                     updateRanch("email", event.target.value)
                   }
                   placeholder="Order and ranch updates"
+                  required
                 />
               </label>
 
               <label className="ct-simple-field">
                 <span>Recovery contact phone</span>
                 <input
+                  type="tel"
+                  autoComplete="tel"
                   value={ranch.recoveryPhone}
                   onChange={(event) =>
                     updateRanch(
@@ -771,6 +813,7 @@ export default function CowTownOrderPage() {
               <label className="ct-simple-field ct-wide">
                 <span>Shipping address</span>
                 <input
+                  autoComplete="street-address"
                   value={shippingDetails.address}
                   onChange={(event) =>
                     updateShipping(
@@ -779,38 +822,45 @@ export default function CowTownOrderPage() {
                     )
                   }
                   placeholder="Street address"
+                  required
                 />
               </label>
 
               <label className="ct-simple-field">
                 <span>City</span>
                 <input
+                  autoComplete="address-level2"
                   value={shippingDetails.city}
                   onChange={(event) =>
                     updateShipping("city", event.target.value)
                   }
+                  required
                 />
               </label>
 
               <label className="ct-simple-field">
                 <span>State</span>
                 <input
+                  autoComplete="address-level1"
                   value={shippingDetails.state}
                   onChange={(event) =>
                     updateShipping("state", event.target.value)
                   }
                   maxLength={2}
+                  required
                 />
               </label>
 
               <label className="ct-simple-field">
                 <span>ZIP code</span>
                 <input
+                  autoComplete="postal-code"
                   value={shippingDetails.zip}
                   onChange={(event) =>
                     updateShipping("zip", event.target.value)
                   }
                   inputMode="numeric"
+                  required
                 />
               </label>
 
@@ -998,4 +1048,11 @@ export default function CowTownOrderPage() {
     </main>
   );
 }
+
+
+
+
+
+
+
 

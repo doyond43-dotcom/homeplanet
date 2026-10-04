@@ -1,4 +1,4 @@
-import {
+﻿import {
   AlertTriangle,
   ArrowRight,
   Clock3,
@@ -164,7 +164,7 @@ export default function CowTownRanchBoardPage() {
           </Link>
 
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <ShieldCheck size={17} />
+            <ShieldCheck size={17} aria-hidden="true" />
             <span>Private Access</span>
           </div>
         </div>
@@ -183,7 +183,7 @@ export default function CowTownRanchBoardPage() {
             to={`/planet/cow-town-tags/ranch/${managementToken}/manage`}
           >
             Manage Ranch Info
-            <ChevronRight size={17} />
+            <ChevronRight size={17} aria-hidden="true" />
           </Link>
         </section>
 
@@ -202,7 +202,7 @@ export default function CowTownRanchBoardPage() {
               padding: 20,
             }}
           >
-            <Users size={22} />
+            <Users size={22} aria-hidden="true" />
             <div style={{ fontSize: 30, fontWeight: 800, marginTop: 12 }}>
               {board.summary?.animal_count || 0}
             </div>
@@ -216,7 +216,7 @@ export default function CowTownRanchBoardPage() {
               padding: 20,
             }}
           >
-            <AlertTriangle size={22} />
+            <AlertTriangle size={22} aria-hidden="true" />
             <div style={{ fontSize: 30, fontWeight: 800, marginTop: 12 }}>
               {board.summary?.sighting_count || 0}
             </div>
@@ -277,14 +277,14 @@ export default function CowTownRanchBoardPage() {
                         opacity: 0.8,
                       }}
                     >
-                      <Clock3 size={16} />
+                      <Clock3 size={16} aria-hidden="true" />
                       {formatDate(sighting.created_at)}
                     </div>
                   </div>
 
                   {sighting.location && (
                     <p style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
-                      <MapPin size={18} style={{ marginTop: 2, flexShrink: 0 }} />
+                      <MapPin size={18} aria-hidden="true" style={{ marginTop: 2, flexShrink: 0 }} />
                       <span>
                         <strong>Location:</strong> {sighting.location}
                       </span>
@@ -316,7 +316,7 @@ export default function CowTownRanchBoardPage() {
                         className="cowtown-button cowtown-button-primary"
                         href={`tel:${sighting.finder_phone}`}
                       >
-                        <Phone size={17} />
+                        <Phone size={17} aria-hidden="true" />
                         Call Finder
                       </a>
                     )}
@@ -327,7 +327,7 @@ export default function CowTownRanchBoardPage() {
                         to={`/planet/cow-town-tags/tag/${sighting.cow_town_id}`}
                       >
                         Open Animal
-                        <ArrowRight size={17} />
+                        <ArrowRight size={17} aria-hidden="true" />
                       </Link>
                     )}
                   </div>
@@ -374,7 +374,7 @@ export default function CowTownRanchBoardPage() {
 
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
                   <span style={{ fontSize: 13, fontWeight: 800 }}>Manage Animal</span>
-                  <ChevronRight size={20} style={{ opacity: 0.72, flexShrink: 0 }} />
+                  <ChevronRight size={20} aria-hidden="true" style={{ opacity: 0.72, flexShrink: 0 }} />
                 </div>
               </Link>
             ))}
@@ -384,3 +384,5 @@ export default function CowTownRanchBoardPage() {
     </div>
   );
 }
+
+

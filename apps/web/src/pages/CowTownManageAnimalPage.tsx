@@ -1,4 +1,4 @@
-import {
+﻿import {
   ArrowLeft,
   ExternalLink,
   Loader2,
@@ -190,7 +190,7 @@ export default function CowTownManageAnimalPage() {
             className="cowtown-button cowtown-button-secondary"
             to={`/planet/cow-town-tags/ranch/${managementToken}`}
           >
-            <ArrowLeft size={17} />
+            <ArrowLeft size={17} aria-hidden="true" />
             Back to Ranch Board
           </Link>
         </main>
@@ -216,7 +216,7 @@ export default function CowTownManageAnimalPage() {
           </Link>
 
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <ShieldCheck size={17} />
+            <ShieldCheck size={17} aria-hidden="true" />
             <span>Private Access</span>
           </div>
         </div>
@@ -236,7 +236,7 @@ export default function CowTownManageAnimalPage() {
             marginBottom: 26,
           }}
         >
-          <ArrowLeft size={17} />
+          <ArrowLeft size={17} aria-hidden="true" />
           Ranch Board
         </Link>
 
@@ -402,6 +402,7 @@ export default function CowTownManageAnimalPage() {
 
           {saveError && (
             <div
+              role="alert"
               style={{
                 marginTop: 18,
                 padding: 14,
@@ -415,6 +416,8 @@ export default function CowTownManageAnimalPage() {
 
           {saved && (
             <div
+              role="status"
+              aria-live="polite"
               style={{
                 marginTop: 18,
                 padding: 14,
@@ -440,9 +443,9 @@ export default function CowTownManageAnimalPage() {
               disabled={saving}
             >
               {saving ? (
-                <Loader2 size={18} className="cowtown-spin" />
+                <Loader2 size={18} aria-hidden="true" className="cowtown-spin" />
               ) : (
-                <Save size={18} />
+                <Save size={18} aria-hidden="true" />
               )}
               {saving ? "Saving..." : "Save Animal"}
             </button>
@@ -454,7 +457,7 @@ export default function CowTownManageAnimalPage() {
               rel="noreferrer"
             >
               View Public Page
-              <ExternalLink size={17} />
+              <ExternalLink size={17} aria-hidden="true" />
             </Link>
           </div>
         </form>
@@ -462,3 +465,5 @@ export default function CowTownManageAnimalPage() {
     </div>
   );
 }
+
+

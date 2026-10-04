@@ -1,4 +1,4 @@
-import {
+﻿import {
   ArrowLeft,
   ArrowRight,
   Camera,
@@ -177,7 +177,7 @@ export default function CowTownPublicTagPage() {
             className="cowtown-header-action"
             to="/planet/cow-town-tags"
           >
-            <ArrowLeft size={15} />
+            <ArrowLeft size={15} aria-hidden="true" />
             Cow Town Home
           </Link>
         </div>
@@ -186,7 +186,7 @@ export default function CowTownPublicTagPage() {
       <main className="cowtown-recovery-main">
         <div className="cowtown-shell">
           <div className="cowtown-alert">
-            <ShieldAlert size={20} />
+            <ShieldAlert size={20} aria-hidden="true" />
 
             <div>
               <strong>Approach livestock carefully.</strong>{" "}
@@ -215,11 +215,11 @@ export default function CowTownPublicTagPage() {
 
               <div className="cowtown-animal-meta">
                 <span className="cowtown-status">
-                  <CheckCircle2 size={15} />
+                  <CheckCircle2 size={15} aria-hidden="true" />
                   Active Cow Town Tag
                 </span>
 
-                <h2 className="cowtown-animal-name">{animalName}</h2>
+                <div className="cowtown-animal-name">{animalName}</div>
 
                 <div className="cowtown-animal-description">
                   {animalColor} livestock wearing visible tag {visibleTagNumber}.
@@ -321,37 +321,41 @@ export default function CowTownPublicTagPage() {
                       onClick={() => setMode("report")}
                     >
                       <span>
-                        <MapPin size={20} />
+                        <MapPin size={20} aria-hidden="true" />
                         Report Current Location
                       </span>
 
-                      <ChevronRight size={20} />
+                      <ChevronRight size={20} aria-hidden="true" />
                     </button>
 
 
-                    <a
-                      className="cowtown-action-button"
-                      href={telephoneHref}
-                    >
-                      <span>
-                        <Phone size={20} />
-                        Call the Ranch
-                      </span>
+                    {telephoneHref ? (
+                      <a
+                        className="cowtown-action-button"
+                        href={telephoneHref}
+                      >
+                        <span>
+                          <Phone size={20} aria-hidden="true" />
+                          Call the Ranch
+                        </span>
 
-                      <ChevronRight size={20} />
-                    </a>
+                        <ChevronRight size={20} aria-hidden="true" />
+                      </a>
+                    ) : null}
 
-                    <a
-                      className="cowtown-action-button"
-                      href={smsHref}
-                    >
-                      <span>
-                        <MessageCircle size={20} />
-                        Text the Ranch
-                      </span>
+                    {smsHref ? (
+                      <a
+                        className="cowtown-action-button"
+                        href={smsHref}
+                      >
+                        <span>
+                          <MessageCircle size={20} aria-hidden="true" />
+                          Text the Ranch
+                        </span>
 
-                      <ChevronRight size={20} />
-                    </a>
+                        <ChevronRight size={20} aria-hidden="true" />
+                      </a>
+                    ) : null}
                   </div>
 
                   <div className="cowtown-safety-box">
@@ -373,7 +377,7 @@ export default function CowTownPublicTagPage() {
                     type="button"
                     onClick={() => setMode("actions")}
                   >
-                    <ArrowLeft size={17} />
+                    <ArrowLeft size={17} aria-hidden="true" />
                     Back
                   </button>
 
@@ -471,15 +475,19 @@ export default function CowTownPublicTagPage() {
                       {reportSubmitting
                         ? "Sending Report..."
                         : "Send Report to Ranch"}
-                      <ArrowRight size={18} />
+                      <ArrowRight size={18} aria-hidden="true" />
                     </button>
                   </form>
                 </>
               )}
 
               {mode === "success" && (
-                <div className="cowtown-success">
-                  <CheckCircle2 size={36} />
+                <div
+                  className="cowtown-success"
+                  role="status"
+                  aria-live="polite"
+                >
+                  <CheckCircle2 size={36} aria-hidden="true" />
 
                   <h2>Report received.</h2>
 
@@ -530,4 +538,8 @@ export default function CowTownPublicTagPage() {
     </div>
   );
 }
+
+
+
+
 

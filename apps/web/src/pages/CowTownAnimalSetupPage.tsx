@@ -1,4 +1,4 @@
-import {
+﻿import {
   ArrowLeft,
   Camera,
   CheckCircle2,
@@ -310,7 +310,7 @@ export default function CowTownAnimalSetupPage() {
           <div className="cowtown-shell">
             <div className="cowtown-card" style={{ padding: 28 }}>
               <Loader2
-                size={24}
+                size={24} aria-hidden="true"
                 className="cowtown-spin"
               />
               <p>Loading your Cow Town order...</p>
@@ -334,7 +334,7 @@ export default function CowTownAnimalSetupPage() {
                 className="cowtown-header-action"
                 to="/planet/cow-town-tags"
               >
-                <ArrowLeft size={15} />
+                <ArrowLeft size={15} aria-hidden="true" />
                 Cow Town Home
               </Link>
             </div>
@@ -363,7 +363,7 @@ export default function CowTownAnimalSetupPage() {
           <div className="cowtown-shell">
             <div className="cowtown-card" style={{ padding: 28 }}>
               <span className="cowtown-status">
-                <CheckCircle2 size={16} />
+                <CheckCircle2 size={16} aria-hidden="true" />
                 Animal created
               </span>
 
@@ -458,7 +458,7 @@ export default function CowTownAnimalSetupPage() {
             className="cowtown-header-action"
             to={`/planet/cow-town-tags/receipt/${accessToken}`}
           >
-            <ArrowLeft size={15} />
+            <ArrowLeft size={15} aria-hidden="true" />
             Order Receipt
           </Link>
         </div>
@@ -467,7 +467,7 @@ export default function CowTownAnimalSetupPage() {
       <main className="cowtown-recovery-main">
         <div className="cowtown-shell">
           <div className="cowtown-alert">
-            <ShieldCheck size={20} />
+            <ShieldCheck size={20} aria-hidden="true" />
 
             <div>
               <strong>Private setup link.</strong>{" "}
@@ -482,15 +482,21 @@ export default function CowTownAnimalSetupPage() {
           >
             <aside className="cowtown-card" style={{ padding: 24 }}>
               <span className="cowtown-status">
-                <CheckCircle2 size={15} />
+                <CheckCircle2 size={15} aria-hidden="true" />
                 {receipt.status === "payment_verified"
                   ? "Payment verified"
                   : receipt.status}
               </span>
 
-              <h2 style={{ marginTop: 14 }}>
+              <div
+                style={{
+                  marginTop: 14,
+                  fontSize: "1.5em",
+                  fontWeight: 700,
+                }}
+              >
                 {receipt.ranch.name}
-              </h2>
+              </div>
 
               <div className="cowtown-detail-grid">
                 <div className="cowtown-detail">
@@ -696,7 +702,7 @@ export default function CowTownAnimalSetupPage() {
                           marginTop: 10,
                         }}
                       >
-                        <Camera size={17} />
+                        <Camera size={17} aria-hidden="true" />
                         <span>
                           Take a clear side or head photo if possible.
                         </span>
@@ -747,12 +753,12 @@ export default function CowTownAnimalSetupPage() {
                   >
                     {isSubmitting ? (
                       <>
-                        <Loader2 size={18} />
+                        <Loader2 size={18} aria-hidden="true" />
                         Creating Animal...
                       </>
                     ) : (
                       <>
-                        <CheckCircle2 size={18} />
+                        <CheckCircle2 size={18} aria-hidden="true" />
                         Create Animal Page
                       </>
                     )}
@@ -766,3 +772,5 @@ export default function CowTownAnimalSetupPage() {
     </div>
   );
 }
+
+
