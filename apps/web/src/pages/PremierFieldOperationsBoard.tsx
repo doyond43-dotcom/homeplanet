@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 type FieldJob = {
@@ -228,7 +228,7 @@ const jobs: FieldJob[] = [
     phase: "Service Call",
     materialEta: "Not needed yet",
     permit: "Not required",
-    scheduled: "Today ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· 3:30 PM",
+    scheduled: "Today - 3:30 PM",
     nextAction: "Diagnose leaking sliding door",
     customerTruth:
       "Customer reports water entering near the bottom track during heavy rain. Original installation was completed by Premier. Customer asked that Gio call before arrival.",
@@ -264,7 +264,7 @@ const jobs: FieldJob[] = [
     workType: "Service Call",
     serviceIssue:
       "Water entering near bottom track of rear sliding door during heavy rain.",
-    serviceAppointment: "Today ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· 3:30 PM",
+    serviceAppointment: "Today - 3:30 PM",
     status: "Service Calls",
   },
 ];
@@ -336,7 +336,7 @@ function FieldBeamComposer({ job }: { job: any }) {
     if (!message || !job?.id) return;
 
     const accessToken =
-      new URLSearchParams(window.location.search).get("access");
+      getPremierFieldAccessToken();
 
     if (!accessToken) {
       setError("Premier staff access token missing.");
@@ -481,7 +481,7 @@ function FieldBeamComposer({ job }: { job: any }) {
               : "none",
           }}
         >
-          🎤
+          Mic
         </button>
       </div>
 
@@ -520,8 +520,44 @@ function FieldBeamComposer({ job }: { job: any }) {
   );
 }
 
+function getPremierFieldAccessToken() {
+  try {
+    const stored = window.sessionStorage.getItem("premier_staff_session");
+    const session = stored ? JSON.parse(stored) : null;
+
+    if (
+      session?.expiresAt &&
+      Date.now() >= new Date(session.expiresAt).getTime()
+    ) {
+      window.sessionStorage.removeItem("premier_staff_session");
+      window.location.replace("/planet/premier-window-door/staff");
+      return null;
+    }
+
+    const queryToken =
+      new URLSearchParams(window.location.search).get("access");
+
+    if (queryToken && session?.accessToken === queryToken) {
+      return queryToken;
+    }
+
+    if (session?.accessToken) {
+      return session.accessToken;
+    }
+
+    if (queryToken) {
+      return queryToken;
+    }
+
+    return null;
+  } catch (error) {
+    console.error("Premier field session read failed:", error);
+    return null;
+  }
+}
 export default function PremierFieldOperationsBoard() {
   const [activeJobId, setActiveJobId] = useState("PW-1037");
+  const [selectedFieldJobId, setSelectedFieldJobId] = useState<string | null>(null);
   const [staffGreeting, setStaffGreeting] = useState<{ headline: string; detail: string } | null>(null);
   const [fieldBeamMessages, setFieldBeamMessages] = useState<any[]>([]);
   const [fieldBeamLoading, setFieldBeamLoading] = useState(false);
@@ -563,9 +599,27 @@ export default function PremierFieldOperationsBoard() {
   const [crewSavingJobId, setCrewSavingJobId] = useState<string | null>(null);
   const [crewSaveErrors, setCrewSaveErrors] = useState<Record<string, string>>({});
 
+  const [fieldJobDocuments, setFieldJobDocuments] =
+    useState<Record<string, any[]>>({});
+  const [fieldJobDocumentsLoading, setFieldJobDocumentsLoading] =
+    useState<Record<string, boolean>>({});
+  const [fieldJobDocumentsErrors, setFieldJobDocumentsErrors] =
+    useState<Record<string, string>>({});
+  const [fieldJobFileOpenId, setFieldJobFileOpenId] =
+    useState<string | null>(null);
+
   const [liveInspections, setLiveInspections] = useState<any[]>([]);
   const [liveInspectionsLoading, setLiveInspectionsLoading] =
     useState(false);
+
+  const [inspectionPunchItems, setInspectionPunchItems] =
+    useState<Record<string, any[]>>({});
+  const [inspectionPunchDrafts, setInspectionPunchDrafts] =
+    useState<Record<string, string>>({});
+  const [inspectionPunchSaving, setInspectionPunchSaving] =
+    useState<Record<string, boolean>>({});
+  const [inspectionPunchErrors, setInspectionPunchErrors] =
+    useState<Record<string, string>>({});
 
   const [punchOuts, setPunchOuts] = useState<
     {
@@ -587,7 +641,7 @@ export default function PremierFieldOperationsBoard() {
       type: "Damage / Scratch",
       issue: "Remove scratches before final walkthrough.",
       reportedBy: "Installer",
-      reportedAt: "Aug 26 ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· 5:16 PM",
+      reportedAt: "Aug 26 - 5:16 PM",
       owner: null,
       status: "Reported",
     },
@@ -602,8 +656,71 @@ export default function PremierFieldOperationsBoard() {
     | null
   >(null);
 
+  const loadFieldJobDocuments = async (jobId: string) => {
+    const accessToken =
+      getPremierFieldAccessToken();
+
+    if (!accessToken) {
+      setFieldJobDocuments((current) => ({ ...current, [jobId]: [] }));
+      setFieldJobDocumentsErrors((current) => ({
+        ...current,
+        [jobId]: "Premier staff access is missing.",
+      }));
+      return;
+    }
+
+    setFieldJobDocumentsLoading((current) => ({
+      ...current,
+      [jobId]: true,
+    }));
+    setFieldJobDocumentsErrors((current) => ({
+      ...current,
+      [jobId]: "",
+    }));
+
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        "premier-job-document",
+        {
+          body: {
+            action: "list",
+            accessToken,
+            jobId,
+          },
+        }
+      );
+
+      if (error || data?.error) {
+        throw new Error(
+          data?.error || error?.message || "Could not load job documents."
+        );
+      }
+
+      setFieldJobDocuments((current) => ({
+        ...current,
+        [jobId]: data?.documents ?? [],
+      }));
+    } catch (error) {
+      console.error("Premier Field Ops job document list failed:", error);
+
+      setFieldJobDocuments((current) => ({ ...current, [jobId]: [] }));
+      setFieldJobDocumentsErrors((current) => ({
+        ...current,
+        [jobId]:
+          error instanceof Error
+            ? error.message
+            : "Could not load job documents.",
+      }));
+    } finally {
+      setFieldJobDocumentsLoading((current) => ({
+        ...current,
+        [jobId]: false,
+      }));
+    }
+  };
+
   const loadFinalMeasureOpenings = async (jobId: string) => {
-    const accessToken = new URLSearchParams(window.location.search).get("access");
+    const accessToken = getPremierFieldAccessToken();
 
     if (!accessToken) {
       window.alert("Premier field access is missing.");
@@ -642,7 +759,7 @@ export default function PremierFieldOperationsBoard() {
       return;
     }
 
-    const accessToken = new URLSearchParams(window.location.search).get("access");
+    const accessToken = getPremierFieldAccessToken();
 
     if (!accessToken) {
       window.alert("Premier field access is missing.");
@@ -693,7 +810,7 @@ export default function PremierFieldOperationsBoard() {
 
     const loadFinalMeasurements = async () => {
       const accessToken =
-        new URLSearchParams(window.location.search).get("access");
+        getPremierFieldAccessToken();
 
       if (!accessToken) {
         if (active) {
@@ -730,7 +847,24 @@ export default function PremierFieldOperationsBoard() {
 
     void loadFinalMeasurements();
 
-    return () => {
+    const selectedFieldJob =
+    liveFinalMeasurements.find((job) => job.id === selectedFieldJobId) ??
+    liveInstallations.find((job) => job.id === selectedFieldJobId) ??
+    liveInspections.find((job) => job.id === selectedFieldJobId) ??
+    null;
+
+  const selectedFieldStage =
+    liveFinalMeasurements.some((job) => job.id === selectedFieldJobId)
+      ? "Final Measurement"
+      : liveInstallations.some((job) => job.id === selectedFieldJobId)
+        ? liveInstallations.find((job) => job.id === selectedFieldJobId)?.current_stage ===
+          "installation_complete"
+          ? "Installation Complete"
+          : "Scheduled Installation"
+        : liveInspections.some((job) => job.id === selectedFieldJobId)
+          ? "Inspection"
+          : "";
+  return () => {
       active = false;
     };
   }, []);
@@ -740,7 +874,7 @@ export default function PremierFieldOperationsBoard() {
 
     const loadInstallations = async () => {
       const accessToken =
-        new URLSearchParams(window.location.search).get("access");
+        getPremierFieldAccessToken();
 
       if (!accessToken) {
         if (active) {
@@ -783,7 +917,7 @@ export default function PremierFieldOperationsBoard() {
 
     const loadInspections = async () => {
       const accessToken =
-        new URLSearchParams(window.location.search).get("access");
+        getPremierFieldAccessToken();
 
       if (!accessToken) {
         if (active) {
@@ -821,6 +955,102 @@ export default function PremierFieldOperationsBoard() {
     };
   }, []);
 
+  const loadInspectionPunchItems = async (jobId: string) => {
+    const accessToken = getPremierFieldAccessToken();
+
+    if (!accessToken) return;
+
+    setInspectionPunchErrors((current) => ({
+      ...current,
+      [jobId]: "",
+    }));
+
+    const { data, error } = await supabase.rpc(
+      "get_premier_punch_items",
+      {
+        p_access_token: accessToken,
+        p_job_id: jobId,
+      }
+    );
+
+    if (error) {
+      console.error("Premier punch items failed:", error);
+      setInspectionPunchErrors((current) => ({
+        ...current,
+        [jobId]: "Could not load finish items.",
+      }));
+      return;
+    }
+
+    setInspectionPunchItems((current) => ({
+      ...current,
+      [jobId]: data ?? [],
+    }));
+  };
+
+  const saveInspectionPunchItem = async (job: any) => {
+    const issue = (inspectionPunchDrafts[job.id] || "").trim();
+
+    if (!issue) {
+      setInspectionPunchErrors((current) => ({
+        ...current,
+        [job.id]: "Enter what needs attention.",
+      }));
+      return;
+    }
+
+    const accessToken = getPremierFieldAccessToken();
+
+    if (!accessToken) return;
+
+    setInspectionPunchSaving((current) => ({
+      ...current,
+      [job.id]: true,
+    }));
+
+    setInspectionPunchErrors((current) => ({
+      ...current,
+      [job.id]: "",
+    }));
+
+    const { data, error } = await supabase.rpc(
+      "create_premier_punch_item",
+      {
+        p_access_token: accessToken,
+        p_job_id: job.id,
+        p_opening: "General / Unknown",
+        p_item_type: "Final Inspection",
+        p_issue: issue,
+        p_owner: null,
+      }
+    );
+
+    if (error || !data) {
+      console.error("Create Premier punch item failed:", error);
+      setInspectionPunchErrors((current) => ({
+        ...current,
+        [job.id]: "Could not save finish item.",
+      }));
+      setInspectionPunchSaving((current) => ({
+        ...current,
+        [job.id]: false,
+      }));
+      return;
+    }
+
+    setInspectionPunchDrafts((current) => ({
+      ...current,
+      [job.id]: "",
+    }));
+
+    await loadInspectionPunchItems(job.id);
+
+    setInspectionPunchSaving((current) => ({
+      ...current,
+      [job.id]: false,
+    }));
+  };
+
   const activeJob = useMemo(
     () => jobs.find((job) => job.id === activeJobId) ?? jobs[0],
     [activeJobId]
@@ -852,8 +1082,6 @@ export default function PremierFieldOperationsBoard() {
   };
 
   useEffect(() => {
-    let timer: number | undefined;
-
     try {
       const rawSession = window.sessionStorage.getItem("premier_staff_session");
       if (!rawSession) return;
@@ -863,40 +1091,22 @@ export default function PremierFieldOperationsBoard() {
       if (!displayName) return;
 
       const firstName = displayName.split(" ")[0];
-      const now = new Date();
-      const hour = now.getHours();
-
-      const period = hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening";
-      const periodLabel = period.charAt(0).toUpperCase() + period.slice(1);
-
-      const localDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-      const identityKey = String(session?.accessToken || session?.staffId || firstName);
-      const greetingKey = `premier_field_greeting_${identityKey}_${localDate}_${period}`;
-
-      if (window.sessionStorage.getItem(greetingKey)) return;
-
-      window.sessionStorage.setItem(greetingKey, "1");
+      const hour = new Date().getHours();
+      const period =
+        hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening";
 
       setStaffGreeting({
-        headline: `Good ${periodLabel}, ${firstName}.`,
+        headline: `Good ${period}, ${firstName}.`,
         detail: "Here's what still needs your attention today.",
       });
-
-      timer = window.setTimeout(() => {
-        setStaffGreeting(null);
-      }, 7000);
     } catch (error) {
       console.error("Premier staff greeting failed:", error);
     }
-
-    return () => {
-      if (timer) window.clearTimeout(timer);
-    };
   }, []);
 
   const loadFieldBeamInbox = async () => {
     const accessToken =
-      new URLSearchParams(window.location.search).get("access");
+      getPremierFieldAccessToken();
 
     if (!accessToken) {
       setFieldBeamMessages([]);
@@ -926,7 +1136,7 @@ export default function PremierFieldOperationsBoard() {
 
   const markFieldBeamRead = async (messageId: string) => {
     const accessToken =
-      new URLSearchParams(window.location.search).get("access");
+      getPremierFieldAccessToken();
 
     if (!accessToken) return;
 
@@ -1025,7 +1235,7 @@ export default function PremierFieldOperationsBoard() {
     }
 
     const accessToken =
-      new URLSearchParams(window.location.search).get("access");
+      getPremierFieldAccessToken();
 
     if (!accessToken) {
       setFieldBeamReplyError("Premier staff access token missing.");
@@ -1077,12 +1287,12 @@ export default function PremierFieldOperationsBoard() {
     >
       <div
         style={{
-          maxWidth: 1450,
+          maxWidth: 980,
           margin: "0 auto",
-          padding: "26px 16px 70px",
+          padding: "20px 14px 56px",
         }}
       >
-        <header style={{ marginBottom: 22 }}>
+        <header style={{ marginBottom: 16 }}>
           <div
             style={{
               color: "#9db7ca",
@@ -1099,7 +1309,7 @@ export default function PremierFieldOperationsBoard() {
           <h1
             style={{
               margin: 0,
-              fontSize: "clamp(30px, 5vw, 48px)",
+              fontSize: "clamp(26px, 4vw, 38px)",
               lineHeight: 1,
             }}
           >
@@ -1144,6 +1354,123 @@ export default function PremierFieldOperationsBoard() {
           </p>
         </header>
 
+        <section
+          style={{
+            marginBottom: 12,
+          }}
+        >
+          <div
+            style={{
+              color: "#9db7ca",
+              fontSize: 10,
+              fontWeight: 900,
+              letterSpacing: 1,
+              textTransform: "uppercase",
+              marginBottom: 7,
+            }}
+          >
+            Field Status
+          </div>
+
+          <div
+            className="field-status-strip"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+              gap: 8,
+            }}
+          >
+            <div
+              style={{
+                border: "1px solid #4c4330",
+                borderRadius: 11,
+                background: "#121518",
+                padding: "9px 11px",
+              }}
+            >
+              <div
+                style={{
+                  color: "#d4b569",
+                  fontSize: 9,
+                  fontWeight: 900,
+                  textTransform: "uppercase",
+                }}
+              >
+                Final Measurements
+              </div>
+
+              <div
+                style={{
+                  fontSize: 20,
+                  fontWeight: 900,
+                  marginTop: 3,
+                }}
+              >
+                {liveFinalMeasurements.length}
+              </div>
+            </div>
+
+            <div
+              style={{
+                border: "1px solid #345140",
+                borderRadius: 11,
+                background: "#101713",
+                padding: "9px 11px",
+              }}
+            >
+              <div
+                style={{
+                  color: "#8fc59f",
+                  fontSize: 9,
+                  fontWeight: 900,
+                  textTransform: "uppercase",
+                }}
+              >
+                Scheduled Installs
+              </div>
+
+              <div
+                style={{
+                  fontSize: 20,
+                  fontWeight: 900,
+                  marginTop: 3,
+                }}
+              >
+                {liveInstallations.filter((job) => job.current_stage === "scheduled").length}
+              </div>
+            </div>
+
+            <div
+              style={{
+                border: "1px solid #4b4652",
+                borderRadius: 11,
+                background: "#151318",
+                padding: "9px 11px",
+              }}
+            >
+              <div
+                style={{
+                  color: "#b6a9c4",
+                  fontSize: 9,
+                  fontWeight: 900,
+                  textTransform: "uppercase",
+                }}
+              >
+                Scheduled Inspections
+              </div>
+
+              <div
+                style={{
+                  fontSize: 20,
+                  fontWeight: 900,
+                  marginTop: 3,
+                }}
+              >
+                {liveInspections.length}
+              </div>
+            </div>
+          </div>
+        </section>
         {fieldBeamMessages.some((message) => !message.read_at) ? (
           <section
             style={{
@@ -1183,7 +1510,7 @@ export default function PremierFieldOperationsBoard() {
                           textTransform: "uppercase",
                         }}
                       >
-                        Beam • New Message
+                        Beam {"\u2022"} New Message
                       </div>
 
                       <div
@@ -1335,7 +1662,7 @@ export default function PremierFieldOperationsBoard() {
                             transition: "all 160ms ease",
                           }}
                         >
-                          🎤
+                          Mic
                         </button>
                       </div>
 
@@ -1514,8 +1841,352 @@ export default function PremierFieldOperationsBoard() {
         ) : null}
 
 
+        <style>{`
+          .field-ops-workspace {
+            display: grid;
+            grid-template-columns: minmax(230px, 285px) minmax(0, 1fr);
+            gap: 12px;
+            align-items: start;
+          }
+
+          .field-job-rail {
+            max-height: calc(100vh - 210px);
+            overflow-y: auto;
+            scrollbar-width: thin;
+          }
+
+          @media (max-width: 760px) {
+            .field-status-strip {
+              grid-template-columns: 1fr !important;
+            }
+
+            .field-ops-workspace {
+              grid-template-columns: 1fr;
+            }
+
+            .field-job-rail {
+              max-height: 320px;
+            }
+          }
+        `}</style>
+
+        <div className="field-ops-workspace">
+          <aside
+            style={{
+              border: "1px solid #29343c",
+              borderRadius: 14,
+              background: "#0d1217",
+              overflow: "hidden",
+            }}
+          >
+            <div
+              style={{
+                padding: "11px 12px",
+                borderBottom: "1px solid #26323a",
+              }}
+            >
+              <div
+                style={{
+                  color: "#9db7ca",
+                  fontSize: 10,
+                  fontWeight: 900,
+                  letterSpacing: 1,
+                  textTransform: "uppercase",
+                }}
+              >
+                {selectedFieldJobId ? "Field Job Workspace" : "Field Job"}s
+              </div>
+
+              <div
+                style={{
+                  fontSize: 15,
+                  fontWeight: 900,
+                  marginTop: 2,
+                }}
+              >
+                Active Work
+              </div>
+            </div>
+
+            <div
+              className="field-job-rail"
+              style={{
+                display: "grid",
+                gap: 8,
+                padding: 8,
+              }}
+            >
+              {liveFinalMeasurements.map((job) => (
+                <button
+                  key={`rail-final-${job.id}`}
+                  type="button"
+                  onClick={() => setSelectedFieldJobId(job.id)}
+                  style={{
+                    width: "100%",
+                    textAlign: "left",
+                    border:
+                      selectedFieldJobId === job.id
+                        ? "1px solid #d4b569"
+                        : "1px solid #4c4330",
+                    borderLeft: "4px solid #d4b569",
+                    borderRadius: 10,
+                    background:
+                      selectedFieldJobId === job.id
+                        ? "#211e16"
+                        : "#121518",
+                    color: "#f5f7f5",
+                    padding: 17,
+                    cursor: "pointer",
+                    minHeight: 118,
+                  }}
+                >
+                  <div
+                    style={{
+                      color: "#d4b569",
+                      fontSize: 10,
+                      fontWeight: 900,
+                      textTransform: "uppercase",
+                      marginBottom: 4,
+                    }}
+                  >
+                    Final Measurement
+                  </div>
+
+                  <strong style={{ fontSize: 16, lineHeight: 1.2 }}>
+                    {job.first_name} {job.last_name}
+                  </strong>
+
+                  <div
+                    style={{
+                      color: "#87949e",
+                      fontSize: 12,
+                      marginTop: 4,
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    {job.project_address}
+                  </div>
+                </button>
+              ))}
+
+              {liveInstallations.map((job) => (
+                <button
+                  key={`rail-install-${job.id}`}
+                  type="button"
+                  onClick={() => setSelectedFieldJobId(job.id)}
+                  style={{
+                    width: "100%",
+                    textAlign: "left",
+                    border:
+                      selectedFieldJobId === job.id
+                        ? "1px solid #8fc59f"
+                        : "1px solid #345140",
+                    borderLeft: "4px solid #78aa88",
+                    borderRadius: 10,
+                    background:
+                      selectedFieldJobId === job.id
+                        ? "#17231b"
+                        : "#101713",
+                    color: "#f5f7f5",
+                    padding: 17,
+                    cursor: "pointer",
+                    minHeight: 118,
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      gap: 8,
+                      alignItems: "flex-start",
+                    }}
+                  >
+                    <div
+                      style={{
+                        color: "#8fc59f",
+                        fontSize: 10,
+                        fontWeight: 900,
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      {job.current_stage === "installation_complete"
+                        ? "Installation Complete"
+                        : job.current_stage === "installation_ready"
+                          ? "Installation Ready"
+                          : "Scheduled Install"}
+                    </div>
+
+                    <span
+                      style={{
+                        color: "#9fd3ae",
+                        fontSize: 10,
+                        fontWeight: 900,
+                      }}
+                    >
+                      {job.current_stage === "installation_complete"
+                        ? "INSPECTION PREP"
+                        : job.current_stage === "installation_ready"
+                          ? "WITH INSTALLER"
+                          : "SCHEDULED"}
+                    </span>
+                  </div>
+
+                  <strong
+                    style={{
+                      display: "block",
+                      fontSize: 12,
+                      marginTop: 4,
+                    }}
+                  >
+                    {job.first_name} {job.last_name}
+                  </strong>
+
+                  <div
+                    style={{
+                      color: "#87949e",
+                      fontSize: 12,
+                      marginTop: 4,
+                      lineHeight: 1.35,
+                    }}
+                  >
+                    {job.project_address}
+                  </div>
+
+                  <div
+                    style={{
+                      color: "#aeb9c1",
+                      fontSize: 10,
+                      marginTop: 6,
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    <div>{job.crew || "Crew not assigned"}</div>
+
+                    <div>
+                      {job.scheduled_for
+                        ? new Date(job.scheduled_for).toLocaleString([], {
+                            month: "short",
+                            day: "numeric",
+                            hour: "numeric",
+                            minute: "2-digit",
+                          })
+                        : "Install date not set"}
+                    </div>
+                  </div>
+                </button>
+              ))}
+
+              {liveInspections.map((job) => (
+                <button
+                  key={`rail-inspection-${job.id}`}
+                  type="button"
+                  onClick={() => setSelectedFieldJobId(job.id)}
+                  style={{
+                    width: "100%",
+                    textAlign: "left",
+                    border:
+                      selectedFieldJobId === job.id
+                        ? "1px solid #b6a9c4"
+                        : "1px solid #4b4652",
+                    borderLeft: "4px solid #9f8fb0",
+                    borderRadius: 10,
+                    background:
+                      selectedFieldJobId === job.id
+                        ? "#201b24"
+                        : "#151318",
+                    color: "#f5f7f5",
+                    padding: 17,
+                    cursor: "pointer",
+                    minHeight: 118,
+                  }}
+                >
+                  <div
+                    style={{
+                      color: "#b6a9c4",
+                      fontSize: 10,
+                      fontWeight: 900,
+                      textTransform: "uppercase",
+                      marginBottom: 4,
+                    }}
+                  >
+                    Inspection
+                  </div>
+
+                  <strong style={{ fontSize: 16, lineHeight: 1.2 }}>
+                    {job.first_name} {job.last_name}
+                  </strong>
+
+                  <div
+                    style={{
+                      color: "#87949e",
+                      fontSize: 12,
+                      marginTop: 4,
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    {job.project_address}
+                  </div>
+                </button>
+              ))}
+
+              {liveFinalMeasurements.length === 0 &&
+              liveInstallations.length === 0 &&
+              liveInspections.length === 0 ? (
+                <div
+                  style={{
+                    color: "#69757e",
+                    fontSize: 12,
+                    padding: 17,
+                  }}
+                >
+                  No active field jobs.
+                </div>
+              ) : null}
+            </div>
+          </aside>
+
+
+
+          <div style={{ minWidth: 0 }}>
+            {!selectedFieldJobId ? (
+              <div
+                style={{
+                  minHeight: 250,
+                  border: "1px dashed #31404a",
+                  borderRadius: 14,
+                  background: "#0d1217",
+                  display: "grid",
+                  placeItems: "center",
+                  padding: 24,
+                  textAlign: "center",
+                }}
+              >
+                <div>
+                  <div
+                    style={{
+                      color: "#dbe2e7",
+                      fontSize: 16,
+                      fontWeight: 900,
+                    }}
+                  >
+                    Select a field job
+                  </div>
+
+                  <div
+                    style={{
+                      color: "#798792",
+                      fontSize: 11,
+                      marginTop: 5,
+                    }}
+                  >
+                    Choose a card from the left to open the workspace.
+                  </div>
+                </div>
+              </div>
+            ) : null}
         <section
           style={{
+            display: selectedFieldJobId ? "block" : "none",
             border: "1px solid #31495a",
             borderRadius: 16,
             background: "#0f151b",
@@ -1526,6 +2197,60 @@ export default function PremierFieldOperationsBoard() {
           <div
             style={{
               display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: 10,
+              marginBottom: 12,
+              paddingBottom: 10,
+              borderBottom: "1px solid #26323a",
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  color: "#9db7ca",
+                  fontSize: 10,
+                  fontWeight: 900,
+                  letterSpacing: 1,
+                  textTransform: "uppercase",
+                }}
+              >
+                Field Workspace
+              </div>
+
+              <div
+                style={{
+                  color: "#f5f7f5",
+                  fontSize: 16,
+                  fontWeight: 900,
+                  marginTop: 2,
+                }}
+              >
+                {selectedFieldJobId ? "Field Job Workspace" : "Field Job"}
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setSelectedFieldJobId(null)}
+              style={{
+                minHeight: 36,
+                border: "1px solid #46545e",
+                borderRadius: 9,
+                background: "#151c22",
+                color: "#d9e5ee",
+                padding: "0 12px",
+                fontSize: 11,
+                fontWeight: 900,
+                cursor: "pointer",
+              }}
+            >
+              Close Job
+            </button>
+          </div>
+          <div
+            style={{
+              display: liveFinalMeasurements.some((job) => job.id === selectedFieldJobId) ? "flex" : "none",
               alignItems: "center",
               justifyContent: "space-between",
               gap: 10,
@@ -1569,7 +2294,7 @@ export default function PremierFieldOperationsBoard() {
             </span>
           </div>
 
-          {liveFinalMeasurementsLoading ? (
+          {!liveFinalMeasurements.some((job) => job.id === selectedFieldJobId) ? null : liveFinalMeasurementsLoading ? (
             <div
               style={{
                 color: "#8fa0ad",
@@ -1591,7 +2316,7 @@ export default function PremierFieldOperationsBoard() {
             </div>
           ) : (
             <div style={{ display: "grid", gap: 9 }}>
-              {liveFinalMeasurements.map((job) => (
+              {liveFinalMeasurements.filter((job) => job.id === selectedFieldJobId).map((job) => (
                 <div
                   key={job.id}
                   style={{
@@ -1753,7 +2478,7 @@ export default function PremierFieldOperationsBoard() {
                               }}
                             >
                               <strong style={{ fontSize: 12 }}>
-                                Opening {opening.opening_number} Â·{" "}
+                                Opening {opening.opening_number} {"\u00b7"}{" "}
                                 {opening.opening_type}
                               </strong>
 
@@ -1775,7 +2500,7 @@ export default function PremierFieldOperationsBoard() {
                                   marginTop: 4,
                                 }}
                               >
-                                {opening.width_text} Ã— {opening.height_text}
+                                {opening.width_text} {"\u00d7"} {opening.height_text}
                               </div>
 
                               {opening.notes ? (
@@ -1993,27 +2718,57 @@ export default function PremierFieldOperationsBoard() {
             </div>
           )}
 
-          <div style={{ borderTop: "1px solid #26323a", marginTop: 14, paddingTop: 14 }}>
+          <div
+            style={{
+              display: liveInstallations.some((job) => job.id === selectedFieldJobId)
+                ? "block"
+                : "none",
+              borderTop: "1px solid #26323a",
+              marginTop: 14,
+              paddingTop: 14,
+            }}
+          >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-              <strong style={{ fontSize: 16 }}>Scheduled Installations</strong>
+              <strong style={{ fontSize: 16 }}>
+                {liveInstallations.find((job) => job.id === selectedFieldJobId)?.current_stage ===
+                "installation_complete"
+                  ? "Installation Complete"
+                  : liveInstallations.find((job) => job.id === selectedFieldJobId)?.current_stage ===
+                      "installation_ready"
+                    ? "Installation Ready"
+                    : "Scheduled Installation"}
+              </strong>
               <span style={{ fontSize: 12, fontWeight: 900, color: "#d9e5ee" }}>
-                {liveInstallations.length}
+                {liveInstallations.some((job) => job.id === selectedFieldJobId) ? 1 : 0}
               </span>
             </div>
 
             {liveInstallationsLoading ? (
               <div style={{ color: "#8fa0ad", fontSize: 12 }}>Loading scheduled installations...</div>
-            ) : liveInstallations.length === 0 ? (
+            ) : !liveInstallations.some((job) => job.id === selectedFieldJobId) ? (
               <div style={{ color: "#78858e", fontSize: 12 }}>No scheduled installations right now.</div>
             ) : (
               <div style={{ display: "grid", gap: 9 }}>
-                {liveInstallations.map((job) => (
+                {liveInstallations.filter((job) => job.id === selectedFieldJobId).map((job) => (
                   <div key={job.id} style={{ border: "1px solid #557c64", borderRadius: 13, background: "#111820", padding: 12 }}>
                     <FieldBeamComposer job={job} />
 
                     <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginBottom: 6 }}>
                       <strong>{job.first_name} {job.last_name}</strong>
-                      <span style={{ color: "#b7dec4", fontSize: 10, fontWeight: 900, textTransform: "uppercase" }}>Scheduled</span>
+                      <span
+                        style={{
+                          color: "#b7dec4",
+                          fontSize: 10,
+                          fontWeight: 900,
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        {job.current_stage === "installation_complete"
+                          ? "Inspection Prep"
+                          : job.current_stage === "installation_ready"
+                            ? "Installation Ready"
+                            : "Scheduled"}
+                      </span>
                     </div>
                     <div style={{ color: "#9ca8b2", fontSize: 12, marginBottom: 8 }}>{job.project_address}</div>
                     <div style={{ display: "grid", gap: 4, fontSize: 12, color: "#d7dde2" }}>
@@ -2028,7 +2783,7 @@ export default function PremierFieldOperationsBoard() {
 
                             const previousCrew = job.crew || "";
                             const accessToken =
-                              new URLSearchParams(window.location.search).get("access");
+                              getPremierFieldAccessToken();
 
                             setCrewDrafts((current) => ({
                               ...current,
@@ -2109,10 +2864,10 @@ export default function PremierFieldOperationsBoard() {
                         >
                           <option value="">Choose crew</option>
                           <option value="RJ">RJ</option>
-                          <option value="Exquisite Windows & Doors — Angel">Exquisite Windows & Doors — Angel</option>
-                          <option value="Riveras Impact Windows and Doors — Jose">Riveras Impact Windows and Doors — Jose</option>
-                          <option value="OGR Windows and Doors — Obelio">OGR Windows and Doors — Obelio</option>
-                          <option value="Elite Impact Solutions — Joseph">Elite Impact Solutions — Joseph</option>
+                          <option value={"Exquisite Windows & Doors \u2014 Angel"}>{"Exquisite Windows & Doors \u2014 Angel"}</option>
+                          <option value={"Riveras Impact Windows and Doors \u2014 Jose"}>{"Riveras Impact Windows and Doors \u2014 Jose"}</option>
+                          <option value={"OGR Windows and Doors \u2014 Obelio"}>{"OGR Windows and Doors \u2014 Obelio"}</option>
+                          <option value={"Elite Impact Solutions \u2014 Joseph"}>{"Elite Impact Solutions \u2014 Joseph"}</option>
                         </select>
 
                         {crewSavingJobId === job.id ? (
@@ -2134,11 +2889,300 @@ export default function PremierFieldOperationsBoard() {
                       {job.next_action || "Field Operations to prepare crew for installation."}
                     </div>
 
+                    <div
+                      style={{
+                        border: "1px solid #31495a",
+                        borderRadius: 12,
+                        background: "#0d1318",
+                        padding: 12,
+                        marginTop: 12,
+                      }}
+                    >
+                      <div
+                        style={{
+                          color: "#f3f6f8",
+                          fontSize: 13,
+                          fontWeight: 900,
+                          marginBottom: 4,
+                        }}
+                      >
+                        Job File
+                      </div>
+
+                      <div
+                        style={{
+                          color: "#8fa9bc",
+                          fontSize: 11,
+                          lineHeight: 1.45,
+                          marginBottom: 10,
+                        }}
+                      >
+                        Office paperwork for this sold job.
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (fieldJobFileOpenId === job.id) {
+                            setFieldJobFileOpenId(null);
+                            return;
+                          }
+
+                          setFieldJobFileOpenId(job.id);
+                          await loadFieldJobDocuments(job.id);
+                        }}
+                        style={{
+                          width: "100%",
+                          minHeight: 42,
+                          borderRadius: 9,
+                          border: "1px solid #58788e",
+                          background: "#1a2a36",
+                          color: "#ffffff",
+                          fontWeight: 900,
+                          cursor: "pointer",
+                        }}
+                      >
+                        {fieldJobFileOpenId === job.id
+                          ? "Close Job File"
+                          : "Open Job File"}
+                      </button>
+
+                      {fieldJobFileOpenId === job.id ? (
+                        <div style={{ display: "grid", gap: 8, marginTop: 10 }}>
+                          {fieldJobDocumentsLoading[job.id] ? (
+                            <div style={{ color: "#8fa9bc", fontSize: 11 }}>
+                              Loading job documents...
+                            </div>
+                          ) : fieldJobDocumentsErrors[job.id] ? (
+                            <div style={{ color: "#d8a0a0", fontSize: 11 }}>
+                              {fieldJobDocumentsErrors[job.id]}
+                            </div>
+                          ) : (fieldJobDocuments[job.id] ?? []).length === 0 ? (
+                            <div style={{ color: "#8fa9bc", fontSize: 11 }}>
+                              No job documents have been added yet.
+                            </div>
+                          ) : (
+                            (fieldJobDocuments[job.id] ?? []).map((document) => (
+                              <div
+                                key={document.id}
+                                style={{
+                                  border: "1px solid #26323a",
+                                  borderRadius: 9,
+                                  background: "#111820",
+                                  padding: 10,
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    color: "#f3f6f8",
+                                    fontSize: 12,
+                                    fontWeight: 900,
+                                  }}
+                                >
+                                  {document.document_type || "Document"}
+                                </div>
+
+                                <div
+                                  style={{
+                                    color: "#9ca8b2",
+                                    fontSize: 11,
+                                    marginTop: 3,
+                                    overflowWrap: "anywhere",
+                                  }}
+                                >
+                                  {document.file_name || "Attached file"}
+                                </div>
+
+                                {document.note ? (
+                                  <div
+                                    style={{
+                                      color: "#8fa9bc",
+                                      fontSize: 11,
+                                      marginTop: 4,
+                                    }}
+                                  >
+                                    {document.note}
+                                  </div>
+                                ) : null}
+
+                                {document.url ? (
+                                  <a
+                                    href={document.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    style={{
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      minHeight: 36,
+                                      marginTop: 8,
+                                      padding: "0 14px",
+                                      borderRadius: 8,
+                                      border: "1px solid #557c64",
+                                      color: "#b7dec4",
+                                      fontSize: 11,
+                                      fontWeight: 900,
+                                      textDecoration: "none",
+                                    }}
+                                  >
+                                    Open
+                                  </a>
+                                ) : (
+                                  <div
+                                    style={{
+                                      color: "#8fa9bc",
+                                      fontSize: 11,
+                                      marginTop: 6,
+                                    }}
+                                  >
+                                    File link unavailable.
+                                  </div>
+                                )}
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      ) : null}
+                    </div>
+
+                    {job.current_stage === "installation_ready" ? (
+                      <div
+                        style={{
+                          border: "1px solid #557c64",
+                          borderRadius: 12,
+                          background: "#111c18",
+                          padding: 12,
+                          marginTop: 12,
+                          marginBottom: 10,
+                        }}
+                      >
+                        <div
+                          style={{
+                            color: "#b7dec4",
+                            fontSize: 11,
+                            fontWeight: 900,
+                            letterSpacing: 0.8,
+                            textTransform: "uppercase",
+                            marginBottom: 8,
+                          }}
+                        >
+                          {job.current_stage === "installation_complete"
+                            ? "Inspection Prep"
+                            : "Field Monitoring"}
+                        </div>
+
+                        <div
+                          style={{
+                            color: "#f3f6f8",
+                            fontSize: 13,
+                            fontWeight: 800,
+                            marginBottom: 8,
+                          }}
+                        >
+                          {job.current_stage === "installation_complete"
+                            ? "Installation is complete."
+                            : "Installer has this job."}
+                        </div>
+
+                        <div
+                          style={{
+                            color: "#d7dde2",
+                            fontSize: 12,
+                            lineHeight: 1.5,
+                          }}
+                        >
+                          {job.current_stage === "installation_complete" ? (
+                            <>
+                              Installer work is complete. Review proof, job notes,
+                              and the job file, then prepare the required inspection
+                              and final walkthrough.
+                            </>
+                          ) : (
+                            <>
+                              Monitor installer photos, notes, material issues,
+                              Needs Attention items, and field progress here.
+                              Keep the job file and Beam available while work moves forward.
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    <div
+                      style={{
+                        display: job.current_stage === "scheduled" ? "block" : "none",
+                        border: "1px solid #557c64",
+                        borderRadius: 12,
+                        background: "#111c18",
+                        padding: 12,
+                        marginTop: 12,
+                        marginBottom: 10,
+                      }}
+                    >
+                      <div
+                        style={{
+                          color: "#b7dec4",
+                          fontSize: 11,
+                          fontWeight: 900,
+                          letterSpacing: 0.8,
+                          textTransform: "uppercase",
+                          marginBottom: 8,
+                        }}
+                      >
+                        Your Assignment
+                      </div>
+
+                      <div
+                        style={{
+                          color: "#f3f6f8",
+                          fontSize: 13,
+                          fontWeight: 800,
+                          marginBottom: 10,
+                        }}
+                      >
+                        Prepare this sold job for the installer.
+                      </div>
+
+                      <div
+                        style={{
+                          display: "grid",
+                          gap: 10,
+                          color: "#d7dde2",
+                          fontSize: 12,
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        <div>
+                          <strong style={{ color: "#f3f6f8" }}>
+                            Before sending:
+                          </strong>{" "}
+                          Confirm the installer, install date, material status,
+                          permit status, and that the job information is ready.
+                        </div>
+
+                        <div>
+                          <strong style={{ color: "#f3f6f8" }}>
+                            Then:
+                          </strong>{" "}
+                          Mark the job Installation Ready to send it to the installer.
+                        </div>
+
+                        <div>
+                          <strong style={{ color: "#f3f6f8" }}>
+                            After handoff:
+                          </strong>{" "}
+                          Installer photos, notes, material issues, and anything
+                          needing attention stay connected to this job for Field
+                          Operations to review.
+                        </div>
+                      </div>
+                    </div>
+
                     <button
                       type="button"
                       onClick={async () => {
                         const accessToken =
-                          new URLSearchParams(window.location.search).get("access");
+                          getPremierFieldAccessToken();
 
                         if (!accessToken) return;
 
@@ -2157,11 +3201,21 @@ export default function PremierFieldOperationsBoard() {
 
                         if (data === true) {
                           setLiveInstallations((current) =>
-                            current.filter((item) => item.id !== job.id)
+                            current.map((item) =>
+                              item.id === job.id
+                                ? {
+                                    ...item,
+                                    current_stage: "installation_ready",
+                                    next_action:
+                                      "Installer to begin installation and upload required proof.",
+                                  }
+                                : item
+                            )
                           );
                         }
                       }}
                       style={{
+                        display: job.current_stage === "scheduled" ? "block" : "none",
                         width: "100%",
                         minHeight: 46,
                         marginTop: 10,
@@ -2173,7 +3227,7 @@ export default function PremierFieldOperationsBoard() {
                         cursor: "pointer",
                       }}
                     >
-                      Installation Ready
+                      Mark Installation Ready
                     </button>
                   </div>
                 ))}
@@ -2181,7 +3235,16 @@ export default function PremierFieldOperationsBoard() {
             )}
           </div>
 
-          <div style={{ borderTop: "1px solid #26323a", marginTop: 14, paddingTop: 14 }}>
+          <div
+            style={{
+              display: liveInspections.some((job) => job.id === selectedFieldJobId)
+                ? "block"
+                : "none",
+              borderTop: "1px solid #26323a",
+              marginTop: 14,
+              paddingTop: 14,
+            }}
+          >
             <div
               style={{
                 display: "flex",
@@ -2212,7 +3275,7 @@ export default function PremierFieldOperationsBoard() {
               </div>
             ) : (
               <div style={{ display: "grid", gap: 9 }}>
-                {liveInspections.map((job) => (
+                {liveInspections.filter((job) => job.id === selectedFieldJobId).map((job) => (
                   <div
                     key={job.id}
                     style={{
@@ -2275,10 +3338,18 @@ export default function PremierFieldOperationsBoard() {
                         {job.inspection_assigned_to || "Not assigned"}
                       </div>
                       <div>
-                        <strong>Inspection:</strong>{" "}
-                        {job.inspection_scheduled_for
-                          ? new Date(job.inspection_scheduled_for).toLocaleString()
-                          : "Not scheduled"}
+                        <strong>Final Inspection:</strong>{" "}
+                        {job.inspection_scheduled_date
+                          ? `${new Date(
+                              `${job.inspection_scheduled_date}T12:00:00`
+                            ).toLocaleDateString()} — ${
+                              job.inspection_window || "Time TBD"
+                            }`
+                          : job.inspection_scheduled_for
+                            ? new Date(
+                                job.inspection_scheduled_for
+                              ).toLocaleString()
+                            : "Not scheduled"}
                       </div>
                     </div>
 
@@ -2295,12 +3366,143 @@ export default function PremierFieldOperationsBoard() {
                       {job.next_action ||
                         "Field Operations to complete inspection."}
                     </div>
+                    <div
+                      style={{
+                        border: "1px solid #3f5564",
+                        borderRadius: 12,
+                        background: "#0d1318",
+                        padding: 12,
+                        marginTop: 12,
+                      }}
+                    >
+                      <div
+                        style={{
+                          color: "#f3f6f8",
+                          fontSize: 12,
+                          fontWeight: 900,
+                          marginBottom: 6,
+                        }}
+                      >
+                        What needs attention?
+                      </div>
+
+                      <textarea
+                        value={inspectionPunchDrafts[job.id] || ""}
+                        onFocus={() => {
+                          if (!inspectionPunchItems[job.id]) {
+                            void loadInspectionPunchItems(job.id);
+                          }
+                        }}
+                        onChange={(event) =>
+                          setInspectionPunchDrafts((current) => ({
+                            ...current,
+                            [job.id]: event.target.value,
+                          }))
+                        }
+                        placeholder="Example: Rear bedroom window needs interior caulking finished."
+                        style={{
+                          width: "100%",
+                          minHeight: 86,
+                          resize: "vertical",
+                          border: "1px solid #31495a",
+                          borderRadius: 9,
+                          background: "#0a0f13",
+                          color: "#f3f6f8",
+                          padding: 10,
+                          fontSize: 12,
+                          fontFamily: "inherit",
+                          boxSizing: "border-box",
+                        }}
+                      />
+
+                      <button
+                        type="button"
+                        disabled={inspectionPunchSaving[job.id] === true}
+                        onClick={() => void saveInspectionPunchItem(job)}
+                        style={{
+                          width: "100%",
+                          minHeight: 42,
+                          marginTop: 8,
+                          borderRadius: 9,
+                          border: "1px solid #557c64",
+                          background: "#173225",
+                          color: "#eaf5ee",
+                          fontWeight: 900,
+                          cursor:
+                            inspectionPunchSaving[job.id] === true
+                              ? "wait"
+                              : "pointer",
+                          opacity:
+                            inspectionPunchSaving[job.id] === true ? 0.7 : 1,
+                        }}
+                      >
+                        {inspectionPunchSaving[job.id] === true
+                          ? "Saving..."
+                          : "Add Finish Item"}
+                      </button>
+
+                      {inspectionPunchErrors[job.id] ? (
+                        <div
+                          style={{
+                            color: "#e6a7a7",
+                            fontSize: 11,
+                            marginTop: 7,
+                          }}
+                        >
+                          {inspectionPunchErrors[job.id]}
+                        </div>
+                      ) : null}
+
+                      {(inspectionPunchItems[job.id] || []).length > 0 ? (
+                        <div
+                          style={{
+                            display: "grid",
+                            gap: 7,
+                            marginTop: 10,
+                          }}
+                        >
+                          {(inspectionPunchItems[job.id] || []).map(
+                            (item: any) => (
+                              <div
+                                key={item.id}
+                                style={{
+                                  border: "1px solid #263846",
+                                  borderRadius: 9,
+                                  background: "#101820",
+                                  padding: 9,
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    color: "#f3f6f8",
+                                    fontSize: 12,
+                                    lineHeight: 1.4,
+                                  }}
+                                >
+                                  {item.issue}
+                                </div>
+
+                                <div
+                                  style={{
+                                    color: "#8fa0ad",
+                                    fontSize: 10,
+                                    marginTop: 4,
+                                  }}
+                                >
+                                  {item.status || "Reported"}
+                                </div>
+                              </div>
+                            )
+                          )}
+                        </div>
+                      ) : null}
+                    </div>
 
                     <button
                       type="button"
                       onClick={async () => {
                         const accessToken =
-                          new URLSearchParams(window.location.search).get("access");
+                          getPremierFieldAccessToken();
 
                         if (!accessToken) return;
 
@@ -2343,6 +3545,8 @@ export default function PremierFieldOperationsBoard() {
             )}
           </div>
         </section>
+          </div>
+        </div>
 
       </div>
 
@@ -2373,3 +3577,8 @@ export default function PremierFieldOperationsBoard() {
     </div>
   );
 }
+
+
+
+
+

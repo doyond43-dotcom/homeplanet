@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 type JobStatus =
@@ -110,7 +110,45 @@ function Pill({ children }: { children: React.ReactNode }) {
   );
 }
 
+function getPremierOfficeAccessToken() {
+  const urlToken = new URLSearchParams(window.location.search).get("access");
+  if (urlToken) return urlToken;
+
+  try {
+    const rawSession = window.sessionStorage.getItem("premier_staff_session");
+    if (!rawSession) return null;
+
+    const session = JSON.parse(rawSession);
+    const sessionToken = String(session?.accessToken || "").trim();
+
+    return sessionToken || null;
+  } catch (error) {
+    console.error("Premier staff session read failed:", error);
+    return null;
+  }
+}
+function getPremierOfficeGreeting() {
+  try {
+    const rawSession = window.sessionStorage.getItem("premier_staff_session");
+    if (!rawSession) return "";
+
+    const session = JSON.parse(rawSession);
+    const displayName = String(session?.displayName || "").trim();
+    if (!displayName) return "";
+
+    const firstName = displayName.split(" ")[0];
+    const hour = new Date().getHours();
+    const period =
+      hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening";
+
+    return `Good ${period}, ${firstName}.`;
+  } catch {
+    return "";
+  }
+}
+
 export default function PremierWindowDoorBoard() {
+  const officeGreeting = getPremierOfficeGreeting();
   const [liveLeads, setLiveLeads] = useState<any[]>([]);
   const [liveLeadsLoading, setLiveLeadsLoading] = useState(true);
   const liveLeadsScrollRef = useRef<HTMLDivElement | null>(null);
@@ -158,6 +196,7 @@ export default function PremierWindowDoorBoard() {
     | "final_measurement"
     | "continue_job"
     | "production_setup"
+    | "job_documents"
     | "inspection_schedule"
     | "final_closeout"
     | null
@@ -170,6 +209,19 @@ export default function PremierWindowDoorBoard() {
     useState(false);
   const [officeMeasurementError, setOfficeMeasurementError] =
     useState("");
+
+  const [officeJobDocuments, setOfficeJobDocuments] = useState<any[]>([]);
+  const [officeJobDocumentsLoading, setOfficeJobDocumentsLoading] =
+    useState(false);
+  const [officeJobDocumentsError, setOfficeJobDocumentsError] =
+    useState("");
+  const [officeJobDocumentType, setOfficeJobDocumentType] =
+    useState("Warranty");
+  const [officeJobDocumentAddOpen, setOfficeJobDocumentAddOpen] = useState(false);
+  const [officeJobDocumentNote, setOfficeJobDocumentNote] =
+    useState("");
+  const [officeJobDocumentUploading, setOfficeJobDocumentUploading] =
+    useState(false);
 
   const [officeApprovedSetupLoading, setOfficeApprovedSetupLoading] =
     useState(false);
@@ -184,12 +236,59 @@ export default function PremierWindowDoorBoard() {
     receivedDate: "",
     note: "",
   });
+  const [officePaymentDrafts, setOfficePaymentDrafts] = useState<
+    Record<
+      string,
+      {
+        status: string;
+        amount: string;
+        method: string;
+        invoiceSentDate: string;
+        receivedDate: string;
+        note: string;
+      }
+    >
+  >({
+    deposit_50: {
+      status: "not_sent",
+      amount: "",
+      method: "",
+      invoiceSentDate: "",
+      receivedDate: "",
+      note: "",
+    },
+    delivery_40: {
+      status: "not_sent",
+      amount: "",
+      method: "",
+      invoiceSentDate: "",
+      receivedDate: "",
+      note: "",
+    },
+    final_10: {
+      status: "not_sent",
+      amount: "",
+      method: "",
+      invoiceSentDate: "",
+      receivedDate: "",
+      note: "",
+    },
+  });
+
+  const [officePaymentsLoading, setOfficePaymentsLoading] = useState(false);
+  const [officePaymentsError, setOfficePaymentsError] = useState("");
+  const [officePaymentSavingStage, setOfficePaymentSavingStage] =
+    useState<string | null>(null);
+  const [officePaymentSavedStage, setOfficePaymentSavedStage] =
+    useState<string | null>(null);
+
   const [officeInspectionSaving, setOfficeInspectionSaving] = useState(false);
   const [officeInspectionError, setOfficeInspectionError] = useState("");
   const [officeInspectionDraft, setOfficeInspectionDraft] = useState({
     type: "Final Inspection",
-    scheduledFor: "",
-    assignedTo: "Gio",
+    scheduledDate: "",
+    window: "Morning Window",
+    assignedTo: "RJ",
   });
 
   const [officeFinalMeasureSaving, setOfficeFinalMeasureSaving] =
@@ -269,7 +368,7 @@ export default function PremierWindowDoorBoard() {
     previewOfficeLeads.find((lead) => lead.id === officeWorkLeadId) ?? null;
 
   const loadOfficeBeam = async (jobId: string) => {
-    const accessToken = new URLSearchParams(window.location.search).get("access");
+    const accessToken = getPremierOfficeAccessToken();
 
     if (!accessToken || !jobId) {
       setOfficeBeamMessages([]);
@@ -327,7 +426,7 @@ export default function PremierWindowDoorBoard() {
   };
 
   const loadOfficePersonalBeamInbox = async () => {
-    const accessToken = new URLSearchParams(window.location.search).get("access");
+    const accessToken = getPremierOfficeAccessToken();
 
     if (!accessToken) {
       setOfficePersonalBeamMessages([]);
@@ -353,7 +452,7 @@ export default function PremierWindowDoorBoard() {
   };
 
   const markOfficePersonalBeamRead = async (messageId: string) => {
-    const accessToken = new URLSearchParams(window.location.search).get("access");
+    const accessToken = getPremierOfficeAccessToken();
     if (!accessToken) return;
 
     const { data, error } = await supabase.rpc("mark_my_premier_beam_read", {
@@ -438,7 +537,7 @@ export default function PremierWindowDoorBoard() {
       return;
     }
 
-    const accessToken = new URLSearchParams(window.location.search).get("access");
+    const accessToken = getPremierOfficeAccessToken();
 
     if (!accessToken) {
       setOfficePersonalBeamReplyError("Premier staff access token missing.");
@@ -525,7 +624,7 @@ export default function PremierWindowDoorBoard() {
 
     if (!body) return;
 
-    const accessToken = new URLSearchParams(window.location.search).get("access");
+    const accessToken = getPremierOfficeAccessToken();
 
     if (!accessToken) {
       setOfficeBeamError("Premier staff access token missing.");
@@ -570,7 +669,7 @@ export default function PremierWindowDoorBoard() {
   const saveCustomerEdit = async (lead: any) => {
     if (!lead || lead._sample || savingCustomerEdit) return;
 
-    const accessToken = new URLSearchParams(window.location.search).get("access");
+    const accessToken = getPremierOfficeAccessToken();
 
     if (!accessToken) {
       window.alert("Premier staff access token missing.");
@@ -696,6 +795,256 @@ export default function PremierWindowDoorBoard() {
   });
 
 
+  const loadOfficeJobDocuments = async (lead: any) => {
+    setOfficeJobDocumentsError("");
+    setOfficeJobDocumentsLoading(true);
+
+    const accessToken =
+      getPremierOfficeAccessToken();
+
+    if (!accessToken) {
+      setOfficeJobDocuments([]);
+      setOfficeJobDocumentsError("Premier staff access is missing.");
+      setOfficeJobDocumentsLoading(false);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        "premier-job-document",
+        {
+          body: {
+            action: "list",
+            accessToken,
+            jobId: lead.id,
+          },
+        }
+      );
+
+      if (error || data?.error) {
+        console.error("Premier job document list failed:", error || data?.error);
+        setOfficeJobDocuments([]);
+        setOfficeJobDocumentsError(
+          data?.error || "Could not load job documents."
+        );
+        setOfficeJobDocumentsLoading(false);
+        return;
+      }
+
+      setOfficeJobDocuments(data?.documents ?? []);
+    } catch (error) {
+      console.error("Premier job document list failed:", error);
+      setOfficeJobDocuments([]);
+      setOfficeJobDocumentsError("Could not load job documents.");
+    }
+
+    setOfficeJobDocumentsLoading(false);
+  };
+
+  const uploadOfficeJobDocument = async (lead: any, file: File, documentTypeOverride = "") => {
+    setOfficeJobDocumentsError("");
+    setOfficeJobDocumentUploading(true);
+
+    const accessToken =
+      getPremierOfficeAccessToken();
+
+    if (!accessToken) {
+      setOfficeJobDocumentsError("Premier staff access is missing.");
+      setOfficeJobDocumentUploading(false);
+      return;
+    }
+
+    try {
+      const mimeType =
+        file.type || "application/octet-stream";
+
+      const { data: uploadAccess, error: uploadAccessError } =
+        await supabase.functions.invoke("premier-job-document", {
+          body: {
+            action: "create-upload",
+            accessToken,
+            jobId: lead.id,
+            documentType: documentTypeOverride || officeJobDocumentType,
+            fileName: file.name,
+            mimeType,
+          },
+        });
+
+      if (uploadAccessError || uploadAccess?.error) {
+        throw new Error(
+          uploadAccess?.error ||
+            uploadAccessError?.message ||
+            "Could not prepare document upload."
+        );
+      }
+
+      const { error: storageError } = await supabase.storage
+        .from("premier-job-documents")
+        .uploadToSignedUrl(
+          uploadAccess.path,
+          uploadAccess.token,
+          file,
+          {
+            contentType: mimeType,
+          }
+        );
+
+      if (storageError) {
+        throw storageError;
+      }
+
+      const { data: finalized, error: finalizeError } =
+        await supabase.functions.invoke("premier-job-document", {
+          body: {
+            action: "finalize",
+            accessToken,
+            jobId: lead.id,
+            documentType: documentTypeOverride || officeJobDocumentType,
+            path: uploadAccess.path,
+            fileName: file.name,
+            mimeType,
+            note: officeJobDocumentNote,
+          },
+        });
+
+      if (finalizeError || finalized?.error) {
+        throw new Error(
+          finalized?.error ||
+            finalizeError?.message ||
+            "Could not save document record."
+        );
+      }
+
+      setOfficeJobDocumentNote("");
+      await loadOfficeJobDocuments(lead);
+    } catch (error) {
+      console.error("Premier job document upload failed:", error);
+      setOfficeJobDocumentsError(
+        error instanceof Error
+          ? error.message
+          : "Could not upload job document."
+      );
+    }
+
+    setOfficeJobDocumentUploading(false);
+  };
+
+  const removeOfficeJobDocument = async (lead: any, document: any) => {
+    if (!document?.id) return;
+
+    const confirmed = window.confirm(
+      `Remove "${document.file_name || "this invoice"}"? This cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    setOfficeJobDocumentsError("");
+    setOfficeJobDocumentUploading(true);
+
+    const accessToken = getPremierOfficeAccessToken();
+
+    if (!accessToken) {
+      setOfficeJobDocumentsError("Premier staff access is missing.");
+      setOfficeJobDocumentUploading(false);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        "premier-job-document",
+        {
+          body: {
+            action: "remove",
+            accessToken,
+            jobId: lead.id,
+            documentId: document.id,
+          },
+        }
+      );
+
+      if (error || data?.error || data?.removed !== true) {
+        throw new Error(
+          data?.error ||
+            error?.message ||
+            "Could not remove invoice."
+        );
+      }
+
+      await loadOfficeJobDocuments(lead);
+    } catch (error) {
+      console.error("Premier invoice remove failed:", error);
+      setOfficeJobDocumentsError(
+        error instanceof Error
+          ? error.message
+          : "Could not remove invoice."
+      );
+    }
+
+    setOfficeJobDocumentUploading(false);
+  };
+
+  const replaceOfficeJobDocument = async (
+    lead: any,
+    document: any,
+    file: File,
+    documentType: string
+  ) => {
+    if (!document?.id || !file) return;
+
+    const confirmed = window.confirm(
+      `Replace "${document.file_name || "this document"}" with "${file.name}"?`
+    );
+
+    if (!confirmed) return;
+
+    setOfficeJobDocumentsError("");
+    setOfficeJobDocumentUploading(true);
+
+    const accessToken = getPremierOfficeAccessToken();
+
+    if (!accessToken) {
+      setOfficeJobDocumentsError("Premier staff access is missing.");
+      setOfficeJobDocumentUploading(false);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        "premier-job-document",
+        {
+          body: {
+            action: "remove",
+            accessToken,
+            jobId: lead.id,
+            documentId: document.id,
+          },
+        }
+      );
+
+      if (error || data?.error || data?.removed !== true) {
+        throw new Error(
+          data?.error ||
+            error?.message ||
+            "Could not remove the previous document."
+        );
+      }
+
+      await uploadOfficeJobDocument(
+        lead,
+        file,
+        documentType
+      );
+    } catch (error) {
+      console.error("Premier document replace failed:", error);
+      setOfficeJobDocumentsError(
+        error instanceof Error
+          ? error.message
+          : "Could not replace this document."
+      );
+      setOfficeJobDocumentUploading(false);
+    }
+  };
+
   const loadOfficeApprovedSetup = async (lead: any) => {
     setOfficeApprovedSetupError("");
     setOfficeDepositSaved(false);
@@ -724,7 +1073,7 @@ export default function PremierWindowDoorBoard() {
     }
 
     const accessToken =
-      new URLSearchParams(window.location.search).get("access");
+      getPremierOfficeAccessToken();
 
     if (!accessToken) {
       setOfficeApprovedSetupError("Premier staff access is missing.");
@@ -781,6 +1130,158 @@ export default function PremierWindowDoorBoard() {
     setOfficeApprovedSetupLoading(false);
   };
 
+  const loadOfficePayments = async (lead: any) => {
+    setOfficePaymentsError("");
+    setOfficePaymentSavedStage(null);
+    setOfficePaymentsLoading(true);
+
+    const accessToken =
+      getPremierOfficeAccessToken();
+
+    if (!accessToken) {
+      setOfficePaymentsError("Premier staff access is missing.");
+      setOfficePaymentsLoading(false);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.rpc(
+        "get_premier_job_payments",
+        {
+          p_access_token: accessToken,
+          p_job_id: lead.id,
+        }
+      );
+
+      if (error) {
+        console.error("Premier payment schedule load failed:", error);
+        setOfficePaymentsError("Could not load the payment schedule.");
+        setOfficePaymentsLoading(false);
+        return;
+      }
+
+      const nextDrafts: Record<string, any> = {
+        deposit_50: {
+          status: "not_sent",
+          amount: "",
+          method: "",
+          invoiceSentDate: "",
+          receivedDate: "",
+          note: "",
+        },
+        delivery_40: {
+          status: "not_sent",
+          amount: "",
+          method: "",
+          invoiceSentDate: "",
+          receivedDate: "",
+          note: "",
+        },
+        final_10: {
+          status: "not_sent",
+          amount: "",
+          method: "",
+          invoiceSentDate: "",
+          receivedDate: "",
+          note: "",
+        },
+      };
+
+      (data ?? []).forEach((payment: any) => {
+        nextDrafts[payment.payment_stage] = {
+          status: payment.status || "not_sent",
+          amount: payment.amount_text || "",
+          method: payment.method || "",
+          invoiceSentDate: toOfficeDateInput(payment.invoice_sent_at),
+          receivedDate: toOfficeDateInput(payment.received_at),
+          receivedAt: payment.received_at || "",
+          updatedBy: payment.updated_by || "",
+          note: payment.note || "",
+        };
+      });
+
+      setOfficePaymentDrafts(nextDrafts);
+    } catch (error) {
+      console.error("Premier payment schedule load failed:", error);
+      setOfficePaymentsError("Could not load the payment schedule.");
+    }
+
+    setOfficePaymentsLoading(false);
+  };
+
+  const saveOfficePayment = async (
+    lead: any,
+    paymentStage: "deposit_50" | "delivery_40" | "final_10",
+    options?: { markReceived?: boolean }
+  ) => {
+    setOfficePaymentsError("");
+    setOfficePaymentSavedStage(null);
+
+    const accessToken =
+      getPremierOfficeAccessToken();
+
+    if (!accessToken) {
+      setOfficePaymentsError("Premier staff access is missing.");
+      return;
+    }
+
+    const draft = officePaymentDrafts[paymentStage];
+
+    const paymentStatus = options?.markReceived ? "received" : draft.status;
+
+    const invoiceSentAt =
+      paymentStatus !== "not_sent" && draft.invoiceSentDate
+        ? new Date(`${draft.invoiceSentDate}T12:00:00`).toISOString()
+        : null;
+
+    const receivedAt =
+      options?.markReceived
+        ? new Date().toISOString()
+        : paymentStatus === "received" && draft.receivedDate
+          ? new Date(`${draft.receivedDate}T12:00:00`).toISOString()
+          : null;
+
+    setOfficePaymentSavingStage(paymentStage);
+
+    try {
+      const { data, error } = await supabase.rpc(
+        "save_premier_job_payment",
+        {
+          p_access_token: accessToken,
+          p_job_id: lead.id,
+          p_payment_stage: paymentStage,
+          p_status: paymentStatus,
+          p_amount_text: draft.amount || null,
+          p_method: draft.method || null,
+          p_invoice_sent_at: invoiceSentAt,
+          p_received_at: receivedAt,
+          p_note: draft.note || null,
+        }
+      );
+
+      if (error || data !== true) {
+        console.error("Premier payment save failed:", error);
+        setOfficePaymentsError(error?.message || "Could not save this payment.");
+        setOfficePaymentSavingStage(null);
+        return;
+      }
+
+      setOfficePaymentSavedStage(paymentStage);
+
+      // Keep the existing 50% production gate UI synchronized.
+      if (paymentStage === "deposit_50") {
+        await loadOfficeApprovedSetup(lead);
+      }
+
+      await loadOfficePayments(lead);
+    } catch (error) {
+      console.error("Premier payment save failed:", error);
+      setOfficePaymentsError(error?.message || "Could not save this payment.");
+    }
+
+    setOfficePaymentSavingStage(null);
+  };
+
   const saveOfficeDeposit = async (lead: any) => {
     setOfficeApprovedSetupError("");
     setOfficeDepositSaved(false);
@@ -794,7 +1295,7 @@ export default function PremierWindowDoorBoard() {
     }
 
     const accessToken =
-      new URLSearchParams(window.location.search).get("access");
+      getPremierOfficeAccessToken();
 
     if (!accessToken) {
       setOfficeApprovedSetupError("Premier staff access is missing.");
@@ -849,7 +1350,7 @@ export default function PremierWindowDoorBoard() {
     }
 
     const accessToken =
-      new URLSearchParams(window.location.search).get("access");
+      getPremierOfficeAccessToken();
 
     if (!accessToken) {
       setOfficeProductionError("Premier staff access is missing.");
@@ -897,7 +1398,7 @@ export default function PremierWindowDoorBoard() {
     }
 
     const accessToken =
-      new URLSearchParams(window.location.search).get("access");
+      getPremierOfficeAccessToken();
 
     if (!accessToken) {
       setOfficeProductionError("Premier staff access is missing.");
@@ -971,7 +1472,7 @@ export default function PremierWindowDoorBoard() {
     }
 
     const accessToken =
-      new URLSearchParams(window.location.search).get("access");
+      getPremierOfficeAccessToken();
 
     if (!accessToken) {
       setOfficeInstallError("Premier staff access is missing.");
@@ -1020,7 +1521,7 @@ export default function PremierWindowDoorBoard() {
     }
 
     const accessToken =
-      new URLSearchParams(window.location.search).get("access");
+      getPremierOfficeAccessToken();
 
     if (!accessToken) {
       setOfficeApprovedSetupError("Premier staff access is missing.");
@@ -1070,18 +1571,18 @@ export default function PremierWindowDoorBoard() {
   const saveOfficeInspectionSchedule = async (lead: any) => {
     setOfficeInspectionError("");
 
-    if (!officeInspectionDraft.scheduledFor) {
-      setOfficeInspectionError("Choose the inspection date and time.");
+    if (!officeInspectionDraft.scheduledDate) {
+      setOfficeInspectionError("Choose the inspection date.");
       return;
     }
 
-    if (!officeInspectionDraft.assignedTo) {
-      setOfficeInspectionError("Choose who is assigned.");
+    if (!officeInspectionDraft.window) {
+      setOfficeInspectionError("Choose the inspection time window.");
       return;
     }
 
     const accessToken =
-      new URLSearchParams(window.location.search).get("access");
+      getPremierOfficeAccessToken();
 
     if (!accessToken) {
       setOfficeInspectionError("Premier staff access is missing.");
@@ -1095,11 +1596,11 @@ export default function PremierWindowDoorBoard() {
       {
         p_access_token: accessToken,
         p_job_id: lead.id,
-        p_inspection_type: officeInspectionDraft.type,
-        p_scheduled_for: new Date(
-          officeInspectionDraft.scheduledFor
-        ).toISOString(),
-        p_assigned_to: officeInspectionDraft.assignedTo,
+        p_inspection_type: "Final Inspection",
+        p_assigned_to: "RJ",
+        p_scheduled_for: null,
+        p_scheduled_date: officeInspectionDraft.scheduledDate,
+        p_inspection_window: officeInspectionDraft.window,
       }
     );
 
@@ -1116,8 +1617,9 @@ export default function PremierWindowDoorBoard() {
 
     setOfficeInspectionDraft({
       type: "Final Inspection",
-      scheduledFor: "",
-      assignedTo: "Gio",
+      scheduledDate: "",
+      window: "Morning Window",
+      assignedTo: "RJ",
     });
 
     setOfficeInspectionSaving(false);
@@ -1139,7 +1641,7 @@ export default function PremierWindowDoorBoard() {
     }
 
     const accessToken =
-      new URLSearchParams(window.location.search).get("access");
+      getPremierOfficeAccessToken();
 
     if (!accessToken) {
       setOfficeApprovedSetupError("Premier staff access is missing.");
@@ -1167,10 +1669,10 @@ export default function PremierWindowDoorBoard() {
       {
         p_access_token: accessToken,
         p_job_id: lead.id,
-        p_status: officeFinalMeasureDraft.status,
-        p_scheduled_for: scheduledFor,
+        p_status: "complete",
+        p_scheduled_for: null,
         p_assigned_to: officeFinalMeasureDraft.assignedTo || null,
-        p_completed_at: completedAt,
+        p_completed_at: new Date().toISOString(),
         p_note: officeFinalMeasureDraft.note || null,
       }
     );
@@ -1238,7 +1740,7 @@ export default function PremierWindowDoorBoard() {
     }
 
     const accessToken =
-      new URLSearchParams(window.location.search).get("access");
+      getPremierOfficeAccessToken();
 
     if (!accessToken) {
       setOfficeMeasurementOpenings([]);
@@ -1298,7 +1800,7 @@ export default function PremierWindowDoorBoard() {
   };
 
   const assignLead = async (leadId: string, salesperson: string) => {
-    const accessToken = new URLSearchParams(window.location.search).get("access");
+    const accessToken = getPremierOfficeAccessToken();
 
     if (!accessToken) {
       window.alert("Premier staff access is missing.");
@@ -1350,7 +1852,7 @@ export default function PremierWindowDoorBoard() {
   };
 
   const saveLeadDecision = async (lead: any) => {
-    const accessToken = new URLSearchParams(window.location.search).get("access");
+    const accessToken = getPremierOfficeAccessToken();
 
     if (!accessToken) {
       window.alert("Premier staff access is missing.");
@@ -1488,7 +1990,7 @@ export default function PremierWindowDoorBoard() {
     setSavingLeadDecisionId(null);
   };
   const relayRevisedProposalToSales = async (lead: any) => {
-    const accessToken = new URLSearchParams(window.location.search).get("access");
+    const accessToken = getPremierOfficeAccessToken();
 
     if (!accessToken) {
       window.alert("Premier staff access is missing.");
@@ -1523,7 +2025,7 @@ export default function PremierWindowDoorBoard() {
   };
 
   const relayProposalToSales = async (lead: any) => {
-    const accessToken = new URLSearchParams(window.location.search).get("access");
+    const accessToken = getPremierOfficeAccessToken();
 
     if (!accessToken) {
       window.alert("Premier staff access is missing.");
@@ -1555,7 +2057,7 @@ export default function PremierWindowDoorBoard() {
     setSavingLeadDecisionId(null);
   };
   const loadWorkHistory = async (searchValue = workHistorySearch) => {
-    const accessToken = new URLSearchParams(window.location.search).get("access");
+    const accessToken = getPremierOfficeAccessToken();
 
     if (!accessToken) {
       setWorkHistoryRows([]);
@@ -1597,7 +2099,7 @@ export default function PremierWindowDoorBoard() {
 
     if (!confirmed) return;
 
-    const accessToken = new URLSearchParams(window.location.search).get("access");
+    const accessToken = getPremierOfficeAccessToken();
 
     if (!accessToken) {
       window.alert("Premier staff access token missing.");
@@ -1647,7 +2149,8 @@ export default function PremierWindowDoorBoard() {
     const loadLiveLeads = async () => {
       setLiveLeadsLoading(true);
 
-      const accessToken = new URLSearchParams(window.location.search).get("access");
+      const accessToken = getPremierOfficeAccessToken();
+      console.log("Premier Office access token present:", Boolean(accessToken));
 
       if (!accessToken) {
         console.warn("Premier staff access token missing.");
@@ -1659,6 +2162,7 @@ export default function PremierWindowDoorBoard() {
       const { data, error } = await supabase.rpc("get_premier_office_inbox", {
         p_access_token: accessToken,
       });
+      console.log("Premier Office RPC result:", { data, error });
 
       if (!active) return;
 
@@ -1787,8 +2291,21 @@ export default function PremierWindowDoorBoard() {
               margin: 0,
             }}
           >
-            Live Board
+            Office Command Center
           </h1>
+
+          {officeGreeting ? (
+            <div
+              style={{
+                marginTop: 8,
+                color: "#b7dec4",
+                fontSize: 15,
+                fontWeight: 800,
+              }}
+            >
+              {officeGreeting}
+            </div>
+          ) : null}
 
           <p
             style={{
@@ -2382,7 +2899,7 @@ export default function PremierWindowDoorBoard() {
 
           {liveLeadsLoading ? (
             <div style={{ color: "#9ca8b2", fontSize: 14 }}>
-              Loading Office inbox...
+              Loading Office Command Center...
             </div>
           ) : previewOfficeLeads.length === 0 ? (
             <div
@@ -2394,27 +2911,23 @@ export default function PremierWindowDoorBoard() {
                 fontSize: 14,
               }}
             >
-              Office inbox is clear right now.
+              Office Command Center is clear right now.
             </div>
           ) : (
             <div
               ref={liveLeadsScrollRef}
               style={{
-                display: "flex",
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
                 gap: 10,
-                overflowX: "auto",
-                scrollBehavior: "smooth",
-                scrollSnapType: "x mandatory",
                 paddingBottom: 4,
-                scrollbarWidth: "none",
               }}
             >
               {previewOfficeLeads.map((lead) => (
                 <div
                   key={lead.id}
                   style={{
-                    flex: "0 0 min(390px, 82vw)",
-                    scrollSnapAlign: "start",
+                    width: "100%",
                     border:                       lead.current_stage === "proposal_revision"                         ? "1px solid #80682f"                         : lead.current_stage === "proposal_approved"                         ? "1px solid #3d7459"                         : lead.current_stage === "proposal"                         ? "1px solid #3d7459"                         : lead.current_stage === "production_setup"                         ? "1px solid #58788e"                         : lead.current_stage === "installation_complete"                         ? "1px solid #3d7459"                         : "1px solid #31495a",
                     borderRadius: 12,
                     background: "#101419",
@@ -2465,7 +2978,7 @@ export default function PremierWindowDoorBoard() {
                         whiteSpace: "nowrap",
                       }}
                     >
-                      {lead.current_stage === "proposal_revision"                         ? "Needs Revision"                         : lead.current_stage === "proposal_approved"                         ? "Approved"                         : lead.current_stage === "proposal"                         ? "Measurements Complete"                         : lead.current_stage === "production_setup"                         ? "Production Setup"                         : lead.current_stage === "installation_complete"                         ? "Installation Complete"                         : lead.current_stage === "inspection_complete"                         ? "Inspection Complete"                         : "New Lead"}
+                      {lead.current_stage === "proposal_revision"                         ? "Needs Revision"                         : lead.current_stage === "proposal_approved"                         ? "Approved"                         : lead.current_stage === "proposal"                         ? "Measurements Complete"                         : lead.current_stage === "production_setup"                         ? "Production Setup"                         : lead.current_stage === "installation_complete"                         ? "Installation Complete"                         : lead.current_stage === "inspection_complete"                         ? "Inspection Complete"                         : lead.current_stage === "hundred_percent_complete"                         ? "100% Complete"                         : "New Lead"}
                     </div>
                   </div>
 
@@ -2897,7 +3410,8 @@ export default function PremierWindowDoorBoard() {
                     <button
                       type="button"
                       onClick={() => {
-                        if (                           lead.current_stage === "proposal" ||                           lead.current_stage === "proposal_revision" ||                           lead.current_stage === "proposal_approved" ||                           lead.current_stage === "production_setup" ||                           lead.current_stage === "installation_complete" ||                           lead.current_stage === "inspection_complete"                         ) {
+                        if (                           lead.current_stage === "proposal" ||                           lead.current_stage === "proposal_revision" ||                           lead.current_stage === "proposal_approved" ||                           lead.current_stage === "production_setup" ||
+                          lead.current_stage === "installation_ready" ||                           lead.current_stage === "installation_complete" ||                           lead.current_stage === "inspection_complete" ||                           lead.current_stage === "hundred_percent_complete"                         ) {
                           setOfficeWorkLeadId((current) =>
                             current === lead.id ? null : lead.id
                           );
@@ -2923,7 +3437,8 @@ export default function PremierWindowDoorBoard() {
                         cursor: "pointer",
                       }}
                     >
-                      {lead.current_stage === "proposal" ||                       lead.current_stage === "proposal_revision" ||                       lead.current_stage === "proposal_approved" ||                       lead.current_stage === "production_setup" ||                       lead.current_stage === "installation_complete" ||                       lead.current_stage === "inspection_complete"
+                      {lead.current_stage === "proposal" ||                       lead.current_stage === "proposal_revision" ||                       lead.current_stage === "proposal_approved" ||                       lead.current_stage === "production_setup" ||
+                          lead.current_stage === "installation_ready" ||                       lead.current_stage === "installation_complete" ||                       lead.current_stage === "inspection_complete" ||                       lead.current_stage === "hundred_percent_complete"
                         ? officeWorkLeadId === lead.id
                           ? "Close Work"
                           : "Open Work"
@@ -3195,7 +3710,7 @@ export default function PremierWindowDoorBoard() {
                   whiteSpace: "nowrap",
                 }}
               >
-                {officeWorkLead.current_stage === "proposal_revision"                   ? "NEEDS REVISION"                   : officeWorkLead.current_stage === "proposal_approved"                   ? "APPROVED"                   : officeWorkLead.current_stage === "production_setup"                   ? "PRODUCTION SETUP"                   : officeWorkLead.current_stage === "installation_complete"                   ? "INSTALLATION COMPLETE"                   : officeWorkLead.current_stage === "inspection_complete"                   ? "INSPECTION COMPLETE"                   : "MEASUREMENTS COMPLETE"}
+                {officeWorkLead.current_stage === "proposal_revision"                   ? "NEEDS REVISION"                   : officeWorkLead.current_stage === "proposal_approved"                   ? "APPROVED"                   : officeWorkLead.current_stage === "production_setup"                   ? "PRODUCTION SETUP"                   : officeWorkLead.current_stage === "installation_complete"                   ? "INSTALLATION COMPLETE"                   : officeWorkLead.current_stage === "inspection_complete"                   ? "INSPECTION COMPLETE"                   : officeWorkLead.current_stage === "hundred_percent_complete"                   ? "100% COMPLETE"                   : "MEASUREMENTS COMPLETE"}
               </span>
             </div>
 
@@ -3211,7 +3726,7 @@ export default function PremierWindowDoorBoard() {
                 lineHeight: 1.4,
               }}
             >
-              <strong>Next:</strong>{" "}               {officeWorkLead.current_stage === "proposal_revision"                 ? `Review requested changes, revise the proposal, and return it to ${                     officeWorkLead.assigned_salesperson || "Sales"                   }.`                 : officeWorkLead.current_stage === "proposal_approved"                 ? (officeWorkLead.next_action || "Collect deposit and schedule the final detailed measurement.")                 : officeWorkLead.current_stage === "production_setup"                 ? (officeWorkLead.next_action || "Office to start ordering/materials and permit setup.")                 : officeWorkLead.current_stage === "installation_complete"                 ? (officeWorkLead.next_action || "Office to schedule required inspection and final walkthrough.")                 : officeWorkLead.current_stage === "inspection_complete"                 ? (officeWorkLead.next_action || "Office to complete final walkthrough and close out the job.")                 : `Prepare proposal and return it to ${                     officeWorkLead.assigned_salesperson || "Sales"                   }.`}
+              <strong>Next:</strong>{" "}               {officeWorkLead.current_stage === "proposal_revision"                 ? `Review requested changes, revise the proposal, and return it to ${                     officeWorkLead.assigned_salesperson || "Sales"                   }.`                 : officeWorkLead.current_stage === "proposal_approved"                 ? (officeWorkLead.next_action || "Collect deposit and schedule the final detailed measurement.")                 : officeWorkLead.current_stage === "production_setup"                 ? (officeWorkLead.next_action || "Office to start ordering/materials and permit setup.")                 : officeWorkLead.current_stage === "installation_complete"                 ? (officeWorkLead.next_action || "Office to schedule Final Inspection and relay it to RJ.")                 : officeWorkLead.current_stage === "inspection_complete"                 ? (officeWorkLead.next_action || "Office to complete final closeout.")                 : officeWorkLead.current_stage === "hundred_percent_complete"                 ? (officeWorkLead.next_action || "Office to handle final payment and administrative closeout.")                 : `Prepare proposal and return it to ${                     officeWorkLead.assigned_salesperson || "Sales"                   }.`}
             </div>
 
             <div
@@ -3517,6 +4032,125 @@ export default function PremierWindowDoorBoard() {
               </button>
             </div>
 
+            {officeWorkLead.current_stage === "proposal_approved" ? (
+            <div
+              style={{
+                marginBottom: 12,
+                border: "1px solid #557c64",
+                borderRadius: 14,
+                background: "#102018",
+                padding: 14,
+              }}
+            >
+              <div
+                style={{
+                  color: "#92c6a4",
+                  fontSize: 10,
+                  fontWeight: 900,
+                  letterSpacing: 0.9,
+                  textTransform: "uppercase",
+                  marginBottom: 5,
+                }}
+              >
+                START JOB
+              </div>
+
+              <div
+                style={{
+                  color: "#ffffff",
+                  fontSize: 14,
+                  fontWeight: 900,
+                  marginBottom: 7,
+                }}
+              >
+                The customer has chosen Premier. Office now starts the working job file.
+              </div>
+
+              <div
+                style={{
+                  color: "#b9c8c0",
+                  fontSize: 11,
+                  lineHeight: 1.55,
+                  marginBottom: 10,
+                }}
+              >
+                The salesperson stays connected with their customer. Office handles the
+                invoices and keeps the sold-job information moving through production.
+              </div>
+
+              <div
+                style={{
+                  display: "grid",
+                  gap: 7,
+                }}
+              >
+                <div
+                  style={{
+                    border: "1px solid #294a35",
+                    borderRadius: 9,
+                    background: "#0c1711",
+                    padding: "9px 10px",
+                    color: "#d8e7dd",
+                    fontSize: 11,
+                    lineHeight: 1.45,
+                  }}
+                >
+                  <strong>1. First Invoice — 50%</strong>
+                  <div style={{ color: "#9fb3a5", marginTop: 2 }}>
+                    Office sends the 50% deposit invoice. Once received, the material can be ordered.
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    border: "1px solid #294a35",
+                    borderRadius: 9,
+                    background: "#0c1711",
+                    padding: "9px 10px",
+                    color: "#d8e7dd",
+                    fontSize: 11,
+                    lineHeight: 1.45,
+                  }}
+                >
+                  <strong>2. Material Delivered — 40%</strong>
+                  <div style={{ color: "#9fb3a5", marginTop: 2 }}>
+                    When Premier receives the material, Office sends the second 40% invoice.
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    border: "1px solid #294a35",
+                    borderRadius: 9,
+                    background: "#0c1711",
+                    padding: "9px 10px",
+                    color: "#d8e7dd",
+                    fontSize: 11,
+                    lineHeight: 1.45,
+                  }}
+                >
+                  <strong>3. Job Complete — Final 10%</strong>
+                  <div style={{ color: "#9fb3a5", marginTop: 2 }}>
+                    Once the job is complete, Office sends the final 10% invoice for closeout.
+                  </div>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  marginTop: 10,
+                  color: "#8fa99a",
+                  fontSize: 10,
+                  lineHeight: 1.5,
+                }}
+              >
+                Build the shared job file below: confirm payment status, add the
+                Quote / Order Sheet, Floor Plan and other job documents, then keep
+                material, permit and installation information current.
+              </div>
+            </div>
+            ) : null}
+
             <div
               style={{
                 display: "grid",
@@ -3524,7 +4158,9 @@ export default function PremierWindowDoorBoard() {
                 gap: 8,
               }}
             >
-              {(officeWorkLead.current_stage === "proposal_revision"                 ? [                     ["Review Revision Request", "revision_request"],                     ["Proposal Workspace", "proposal"],                     ["Return to Sales", "relay"],                   ]                 : officeWorkLead.current_stage === "proposal_approved"                 ? [                     ["Approval Details", "approval_details"],                     ["Deposit", "deposit"],                     ["Final Measurement", "final_measurement"],                     ["Continue Job Setup", "continue_job"],                   ]                 : officeWorkLead.current_stage === "production_setup"                 ? [                     ["Production Setup", "production_setup"],                   ]                 : officeWorkLead.current_stage === "installation_complete"                 ? [["Schedule Inspection / Final Walkthrough", "inspection_schedule"]]                 : officeWorkLead.current_stage === "inspection_complete"                 ? [["Final Walkthrough / Closeout", "final_closeout"]]                 : [                     ["Review Measurements", "measurements"],                     ["Photos / Proof", "photos"],                     ["Proposal Workspace", "proposal"],                     ["Send Back to Sales", "relay"],                   ]               ).map(([label, view]) => (
+              {(officeWorkLead.current_stage === "proposal_revision"                 ? [                     ["Review Revision Request", "revision_request"],                     ["Proposal Workspace", "proposal"],                     ["Return to Sales", "relay"],                   ]                 : officeWorkLead.current_stage === "proposal_approved"                 ? [                     ["Payment", "deposit"],
+                    ["Final Measurement", "final_measurement"],
+                    ["Prepare Job", "continue_job"],                   ]                 : officeWorkLead.current_stage === "production_setup"                 ? [                     ["Production Setup", "production_setup"],                   ]                 : officeWorkLead.current_stage === "installation_complete"                 ? [["Schedule Final Inspection", "inspection_schedule"]]                 : officeWorkLead.current_stage === "inspection_complete"                 ? [["Final Closeout", "final_closeout"]]                 : officeWorkLead.current_stage === "hundred_percent_complete"                 ? [                     ["Payment", "deposit"],                     ["Final Closeout", "final_closeout"],                   ]                 : [                     ["Review Measurements", "measurements"],                     ["Photos / Proof", "photos"],                     ["Proposal Workspace", "proposal"],                     ["Send Back to Sales", "relay"],                   ]               ).map(([label, view]) => (
                 <button
                   key={label}
                   type="button"
@@ -3541,10 +4177,18 @@ export default function PremierWindowDoorBoard() {
                       view === "continue_job"
                     ) {
                       void loadOfficeApprovedSetup(officeWorkLead);
+                      if (view === "deposit") {
+                        void loadOfficePayments(officeWorkLead);
+                        void loadOfficeJobDocuments(officeWorkLead);
+                      }
                     }
 
                     if (view === "production_setup") {
                       void loadOfficeProductionSetup(officeWorkLead);
+                    }
+
+                    if (view === "final_measurement") {
+                      void loadOfficeJobDocuments(officeWorkLead);
                     }
                   }}
                   style={{
@@ -3576,6 +4220,49 @@ export default function PremierWindowDoorBoard() {
                   {label}
                 </button>
               ))}
+
+              {[
+                "proposal_approved",
+                "production_setup",
+                "installation_complete",
+                "inspection_complete",
+                "hundred_percent_complete",
+              ].includes(officeWorkLead.current_stage) ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOfficeWorkView("job_documents");
+                    void loadOfficeJobDocuments(officeWorkLead);
+                  }}
+                  style={{
+                    minHeight: 46,
+                    width: "100%",
+                    border:
+                      officeWorkView === "job_documents"
+                        ? "1px solid #6f91a7"
+                        : "1px solid #31495a",
+                    borderRadius: 10,
+                    background:
+                      officeWorkView === "job_documents"
+                        ? "#1a2a36"
+                        : "#111820",
+                    color:
+                      officeWorkView === "job_documents"
+                        ? "#ffffff"
+                        : "#d9e5ee",
+                    fontSize: 13,
+                    fontWeight: 900,
+                    padding: "10px 12px",
+                    cursor: "pointer",
+                    boxShadow:
+                      officeWorkView === "job_documents"
+                        ? "0 0 0 1px rgba(143,169,188,0.12)"
+                        : "none",
+                  }}
+                >
+                  Documents
+                </button>
+              ) : null}
             </div>
 
             {officeWorkView ? (
@@ -4007,6 +4694,439 @@ export default function PremierWindowDoorBoard() {
                   </>
                 ) : null}
 
+                {officeWorkView === "job_documents" ? (
+                  <>
+                    <div
+                      style={{
+                        color: "#9db7ca",
+                        fontSize: 9,
+                        fontWeight: 900,
+                        letterSpacing: 0.8,
+                        textTransform: "uppercase",
+                        marginBottom: 4,
+                      }}
+                    >
+                      Documents
+                    </div>
+
+                    <strong
+                      style={{
+                        display: "block",
+                        fontSize: 14,
+                        marginBottom: 6,
+                      }}
+                    >
+                      Job File
+                    </strong>
+
+                    <div
+                      style={{
+                        color: "#aebbc4",
+                        fontSize: 11,
+                        lineHeight: 1.5,
+                        marginBottom: 12,
+                      }}
+                    >
+                      Keep all paperwork for this job in one place. Office,
+                      Field Operations, and the installer are working from the
+                      same file.
+                    </div>
+
+                                        <div
+                      style={{
+                        color: "#92c6a4",
+                        fontSize: 10,
+                        fontWeight: 900,
+                        letterSpacing: "0.08em",
+                        textTransform: "uppercase",
+                        marginBottom: 8,
+                      }}
+                    >
+                      Job Documents
+                    </div>
+{officeJobDocumentsLoading ? (
+                        <div
+                          style={{
+                            color: "#9ca8b2",
+                            fontSize: 11,
+                          }}
+                        >
+                          Loading job documents...
+                        </div>
+                      ) : (
+                        <div style={{ display: "grid", gap: 8 }}>
+                          {[
+                            "Quote / Order Sheet",
+                            "Floor Plan",
+                            "Manufacturer PO",
+                            "Permit / Inspection",
+                          ].map((documentType) => {
+                            const document = officeJobDocuments.find(
+                              (item) => item.document_type === documentType
+                            );
+
+                            return (
+                              <div
+                                key={documentType}
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "space-between",
+                                  gap: 12,
+                                  border: "1px solid #31495a",
+                                  borderRadius: 10,
+                                  background: "#0d141a",
+                                  padding: "11px 12px",
+                                }}
+                              >
+                                <div style={{ minWidth: 0, flex: 1 }}>
+                                  <div
+                                    style={{
+                                      color: "#ffffff",
+                                      fontSize: 12,
+                                      fontWeight: 900,
+                                    }}
+                                  >
+                                    {documentType}
+                                  </div>
+
+                                  <div
+                                    style={{
+                                      color: document ? "#9fb4c2" : "#718796",
+                                      fontSize: 10,
+                                      marginTop: 3,
+                                      overflowWrap: "anywhere",
+                                    }}
+                                  >
+                                    {document
+                                      ? document.file_name
+                                      : "No document added yet"}
+                                  </div>
+                                </div>
+
+                                {document?.url ? (
+                                  <a
+                                    href={document.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    style={{
+                                      border: "1px solid #557c64",
+                                      borderRadius: 8,
+                                      background: "#14271c",
+                                      color: "#b7dec4",
+                                      textDecoration: "none",
+                                      fontSize: 11,
+                                      fontWeight: 900,
+                                      padding: "8px 12px",
+                                      whiteSpace: "nowrap",
+                                    }}
+                                  >
+                                    Open
+                                  </a>
+                                ) : (
+                                  <label
+                                    style={{
+                                      border: "1px solid #405c6d",
+                                      borderRadius: 8,
+                                      background: "#101a21",
+                                      color: "#ffffff",
+                                      fontSize: 11,
+                                      fontWeight: 900,
+                                      padding: "8px 12px",
+                                      cursor: officeJobDocumentUploading
+                                        ? "not-allowed"
+                                        : "pointer",
+                                      whiteSpace: "nowrap",
+                                      opacity: officeJobDocumentUploading ? 0.6 : 1,
+                                    }}
+                                  >
+                                    {officeJobDocumentUploading ? "Uploading..." : "Add"}
+
+                                    <input
+                                      type="file"
+                                      accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx"
+                                      disabled={officeJobDocumentUploading}
+                                      style={{ display: "none" }}
+                                      onChange={(event) => {
+                                        const file = event.target.files?.[0];
+                                        if (!file) return;
+
+                                        void uploadOfficeJobDocument(
+                                          officeWorkLead,
+                                          file,
+                                          documentType
+                                        );
+
+                                        event.currentTarget.value = "";
+                                      }}
+                                    />
+                                  </label>
+                                )}
+                              </div>
+                            );
+                          })}
+
+                          {officeJobDocuments
+                            .filter(
+                              (document) =>
+                                ![
+                                  "Quote / Order Sheet",
+                                  "Floor Plan",
+                                  "Manufacturer PO",
+                                  "Permit / Inspection",
+                                ].includes(document.document_type)
+                            )
+                            .map((document) => (
+                              <div
+                                key={document.id}
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "space-between",
+                                  gap: 12,
+                                  border: "1px solid #31495a",
+                                  borderRadius: 10,
+                                  background: "#0d141a",
+                                  padding: "11px 12px",
+                                }}
+                              >
+                                <div style={{ minWidth: 0, flex: 1 }}>
+                                  <div
+                                    style={{
+                                      color: "#ffffff",
+                                      fontSize: 12,
+                                      fontWeight: 900,
+                                    }}
+                                  >
+                                    {document.document_type || "Other Document"}
+                                  </div>
+                                  <div
+                                    style={{
+                                      color: "#9fb4c2",
+                                      fontSize: 10,
+                                      marginTop: 3,
+                                      overflowWrap: "anywhere",
+                                    }}
+                                  >
+                                    {document.file_name}
+                                  </div>
+                                </div>
+
+                                {document.url ? (
+                                  <a
+                                    href={document.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    style={{
+                                      border: "1px solid #557c64",
+                                      borderRadius: 8,
+                                      background: "#14271c",
+                                      color: "#b7dec4",
+                                      textDecoration: "none",
+                                      fontSize: 11,
+                                      fontWeight: 900,
+                                      padding: "8px 12px",
+                                      whiteSpace: "nowrap",
+                                    }}
+                                  >
+                                    Open
+                                  </a>
+                                ) : (
+                                  <span
+                                    style={{ color: "#8b99a3", fontSize: 10 }}
+                                  >
+                                    Link unavailable
+                                  </span>
+                                )}
+                              </div>
+                            ))}
+                        </div>
+                      )}
+
+                    <div
+                      style={{
+                        borderTop: "1px solid #263b49",
+                        marginTop: 14,
+                        paddingTop: 14,
+                      }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setOfficeJobDocumentAddOpen((current) => !current)
+                        }
+                        style={{
+                          width: "100%",
+                          minHeight: 42,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          border: "1px solid #405c6d",
+                          borderRadius: 9,
+                          background: "#101a21",
+                          color: "#ffffff",
+                          padding: "0 12px",
+                          fontSize: 12,
+                          fontWeight: 900,
+                          cursor: "pointer",
+                          marginBottom: officeJobDocumentAddOpen ? 10 : 0,
+                        }}
+                      >
+                        <span>
+                          {officeJobDocumentAddOpen ? "Close Add Document" : "+ Add Document"}
+                        </span>
+                        <span aria-hidden="true">
+                          {officeJobDocumentAddOpen ? "−" : "+"}
+                        </span>
+                      </button>
+<div
+                      style={{
+                        display: officeJobDocumentAddOpen ? "grid" : "none",
+                        gridTemplateColumns:
+                          "repeat(auto-fit, minmax(190px, 1fr))",
+                        gap: 10,
+                        marginBottom: 10,
+                      }}
+                    >
+                      <label
+                        style={{
+                          display: "grid",
+                          gap: 5,
+                          color: "#b9c6ce",
+                          fontSize: 11,
+                          fontWeight: 800,
+                        }}
+                      >
+                        What are you adding?
+
+                        <select
+                          value={officeJobDocumentType}
+                          onChange={(event) =>
+                            setOfficeJobDocumentType(event.target.value)
+                          }
+                          disabled={officeJobDocumentUploading}
+                          style={{
+                            minHeight: 42,
+                            border: "1px solid #405c6d",
+                            borderRadius: 9,
+                            background: "#0d141a",
+                            color: "#ffffff",
+                            padding: "0 10px",
+                          }}
+                        >
+                          <option>Warranty</option>
+                          <option>Change Order</option>
+                          <option>Product / Spec Sheet</option>
+                          <option>Customer Document</option>
+                          <option>Other</option>
+                        </select>
+                      </label>
+
+                      <label
+                        style={{
+                          display: "grid",
+                          gap: 5,
+                          color: "#b9c6ce",
+                          fontSize: 11,
+                          fontWeight: 800,
+                        }}
+                      >
+                        Choose the PDF, photo, or file
+
+                        <input
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx"
+                          disabled={officeJobDocumentUploading}
+                          onChange={(event) => {
+                            const file = event.target.files?.[0];
+
+                            if (!file) return;
+
+                            void uploadOfficeJobDocument(
+                              officeWorkLead,
+                              file
+                            );
+
+                            event.currentTarget.value = "";
+                          }}
+                          style={{
+                            minHeight: 42,
+                            border: "1px solid #405c6d",
+                            borderRadius: 9,
+                            background: "#0d141a",
+                            color: "#ffffff",
+                            padding: "9px 10px",
+                          }}
+                        />
+                      </label>
+                    </div>
+
+                    <label
+                      style={{
+                        display: officeJobDocumentAddOpen ? "grid" : "none",
+                        gap: 5,
+                        color: "#b9c6ce",
+                        fontSize: 11,
+                        fontWeight: 800,
+                        marginBottom: 10,
+                      }}
+                    >
+                      Optional Note
+
+                      <textarea
+                        value={officeJobDocumentNote}
+                        onChange={(event) =>
+                          setOfficeJobDocumentNote(event.target.value)
+                        }
+                        disabled={officeJobDocumentUploading}
+                        placeholder="Optional note about this document..."
+                        rows={2}
+                        style={{
+                          width: "100%",
+                          border: "1px solid #405c6d",
+                          borderRadius: 9,
+                          background: "#0d141a",
+                          color: "#ffffff",
+                          padding: 10,
+                          resize: "vertical",
+                          boxSizing: "border-box",
+                        }}
+                      />
+                    </label>
+
+                    {officeJobDocumentUploading ? (
+                      <div
+                        style={{
+                          color: "#b7dec4",
+                          fontSize: 11,
+                          fontWeight: 800,
+                          marginBottom: 10,
+                        }}
+                      >
+                        Uploading document...
+                      </div>
+                    ) : null}
+
+                    {officeJobDocumentsError ? (
+                      <div
+                        style={{
+                          border: "1px solid #744646",
+                          borderRadius: 9,
+                          background: "#241516",
+                          color: "#f0b7b7",
+                          padding: 9,
+                          fontSize: 11,
+                          marginBottom: 10,
+                        }}
+                      >
+                        {officeJobDocumentsError}
+                      </div>
+                    ) : null}
+
+                    </div>
+                  </>
+                ) : null}
+
                 {officeWorkView === "approval_details" ? (
                   <>
                     <div
@@ -4049,7 +5169,7 @@ export default function PremierWindowDoorBoard() {
                   <>
                     <div
                       style={{
-                        color: "#9db7ca",
+                        color: "#92c6a4",
                         fontSize: 9,
                         fontWeight: 900,
                         letterSpacing: 0.8,
@@ -4057,262 +5177,687 @@ export default function PremierWindowDoorBoard() {
                         marginBottom: 4,
                       }}
                     >
-                      Deposit
+                      Payments
                     </div>
 
                     <strong
                       style={{
                         display: "block",
-                        fontSize: 14,
-                        marginBottom: 10,
+                        fontSize: 15,
+                        marginBottom: 5,
                       }}
                     >
-                      Collect Customer Deposit
+                      Premier Payment Schedule
                     </strong>
 
-                    {officeApprovedSetupLoading ? (
+                    <div
+                      style={{
+                        color: "#aebbc4",
+                        fontSize: 11,
+                        lineHeight: 1.5,
+                        marginBottom: 12,
+                      }}
+                    >
+                      Office sends and records each invoice. Sales stays connected
+                      with the customer throughout the job.
+                    </div>
+
+                    {officePaymentsLoading ? (
                       <div
                         style={{
                           color: "#9ca8b2",
                           fontSize: 11,
-                          padding: "8px 0",
+                          padding: "10px 0",
                         }}
                       >
-                        Loading deposit details...
+                        Loading payment schedule...
                       </div>
                     ) : (
                       <>
-                        <div
-                          style={{
-                            display: "grid",
-                            gridTemplateColumns:
-                              "repeat(auto-fit, minmax(180px, 1fr))",
-                            gap: 9,
-                          }}
-                        >
-                          <label
+                        {officePaymentsError ? (
+                          <div
                             style={{
-                              display: "grid",
-                              gap: 5,
-                              color: "#9ca8b2",
-                              fontSize: 10,
-                              fontWeight: 800,
+                              border: "1px solid #744646",
+                              borderRadius: 9,
+                              background: "#241516",
+                              color: "#f0b7b7",
+                              padding: 9,
+                              fontSize: 11,
+                              marginBottom: 10,
                             }}
                           >
-                            Status
-                            <select
-                              value={officeDepositDraft.status}
-                              onChange={(event) => {
-                                setOfficeDepositSaved(false);
-                                setOfficeDepositDraft((current) => ({
-                                  ...current,
-                                  status: event.target.value,
-                                }));
-                              }}
-                              style={{
-                                minHeight: 42,
-                                border: "1px solid #405c6d",
-                                borderRadius: 9,
-                                background: "#0d141a",
-                                color: "#ffffff",
-                                padding: "0 10px",
-                              }}
-                            >
-                              <option value="pending">Pending</option>
-                              <option value="received">Received</option>
-                            </select>
-                          </label>
+                            {officePaymentsError}
+                          </div>
+                        ) : null}
 
-                          <label
-                            style={{
-                              display: "grid",
-                              gap: 5,
-                              color: "#9ca8b2",
-                              fontSize: 10,
-                              fontWeight: 800,
-                            }}
-                          >
-                            Amount
-                            <input
-                              value={officeDepositDraft.amount}
-                              onChange={(event) => {
-                                setOfficeDepositSaved(false);
-                                setOfficeDepositDraft((current) => ({
-                                  ...current,
-                                  amount: event.target.value,
-                                }));
-                              }}
-                              placeholder="$0.00"
-                              style={{
-                                minHeight: 42,
-                                border: "1px solid #405c6d",
-                                borderRadius: 9,
-                                background: "#0d141a",
-                                color: "#ffffff",
-                                padding: "0 10px",
-                              }}
-                            />
-                          </label>
+                        <div style={{ display: "grid", gap: 12 }}>
+                          {[
+                            {
+                              key: "deposit_50",
+                              number: "1",
+                              title: "50% Deposit",
+                              invoiceType: "50% Deposit Invoice",
+                              trigger: "Customer hires Premier",
+                              instruction:
+                                "Office sends the first invoice. Once the 50% deposit is received, material can be ordered.",
+                            },
+                            {
+                              key: "delivery_40",
+                              number: "2",
+                              title: "40% Material Delivery",
+                              invoiceType: "40% Delivery Invoice",
+                              trigger: "Material arrives at Premier",
+                              instruction:
+                                "When the material is delivered to Premier, Office sends the second 40% invoice.",
+                            },
+                            {
+                              key: "final_10",
+                              number: "3",
+                              title: "Final 10%",
+                              invoiceType: "Final 10% Invoice",
+                              trigger: "Job is complete",
+                              instruction:
+                                "Once the job is complete, Office sends the final 10% invoice for closeout.",
+                            },
+                          ].map((payment) => {
+                            const draft = officePaymentDrafts[payment.key];
+                            const isSaving =
+                              officePaymentSavingStage === payment.key;
+                            const isSaved =
+                              officePaymentSavedStage === payment.key;
+                            const paymentInvoice = officeJobDocuments.find(
+                              (document) =>
+                                document.document_type === payment.invoiceType
+                            );
 
-                          <label
-                            style={{
-                              display: "grid",
-                              gap: 5,
-                              color: "#9ca8b2",
-                              fontSize: 10,
-                              fontWeight: 800,
-                            }}
-                          >
-                            Method
-                            <select
-                              value={officeDepositDraft.method}
-                              onChange={(event) => {
-                                setOfficeDepositSaved(false);
-                                setOfficeDepositDraft((current) => ({
-                                  ...current,
-                                  method: event.target.value,
-                                }));
-                              }}
-                              style={{
-                                minHeight: 42,
-                                border: "1px solid #405c6d",
-                                borderRadius: 9,
-                                background: "#0d141a",
-                                color: "#ffffff",
-                                padding: "0 10px",
-                              }}
-                            >
-                              <option value="">Select method</option>
-                              <option value="Card">Card</option>
-                              <option value="Check">Check</option>
-                              <option value="Cash">Cash</option>
-                              <option value="ACH">ACH / Bank</option>
-                              <option value="Other">Other</option>
-                            </select>
-                          </label>
+                            return (
+                              <div
+                                key={payment.key}
+                                style={{
+                                  border:
+                                    draft.status === "received"
+                                      ? "1px solid #557c64"
+                                      : "1px solid #31495a",
+                                  borderRadius: 12,
+                                  background:
+                                    draft.status === "received"
+                                      ? "#102018"
+                                      : "#0d141a",
+                                  padding: 12,
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    alignItems: "flex-start",
+                                    gap: 10,
+                                    flexWrap: "wrap",
+                                    marginBottom: 8,
+                                  }}
+                                >
+                                  <div>
+                                    <div
+                                      style={{
+                                        color: "#8fa9bc",
+                                        fontSize: 9,
+                                        fontWeight: 900,
+                                        textTransform: "uppercase",
+                                        letterSpacing: 0.7,
+                                        marginBottom: 3,
+                                      }}
+                                    >
+                                      Payment {payment.number}
+                                    </div>
 
-                          <label
-                            style={{
-                              display: "grid",
-                              gap: 5,
-                              color: "#9ca8b2",
-                              fontSize: 10,
-                              fontWeight: 800,
-                            }}
-                          >
-                            Received Date
-                            <input
-                              type="date"
-                              disabled={
-                                officeDepositDraft.status !== "received"
-                              }
-                              value={officeDepositDraft.receivedDate}
-                              onChange={(event) => {
-                                setOfficeDepositSaved(false);
-                                setOfficeDepositDraft((current) => ({
-                                  ...current,
-                                  receivedDate: event.target.value,
-                                }));
-                              }}
-                              style={{
-                                minHeight: 42,
-                                border: "1px solid #405c6d",
-                                borderRadius: 9,
-                                background: "#0d141a",
-                                color: "#ffffff",
-                                padding: "0 10px",
-                                opacity:
-                                  officeDepositDraft.status === "received"
-                                    ? 1
-                                    : 0.55,
-                              }}
-                            />
-                          </label>
+                                    <strong
+                                      style={{
+                                        display: "block",
+                                        color: "#ffffff",
+                                        fontSize: 14,
+                                      }}
+                                    >
+                                      {payment.title}
+                                    </strong>
+                                  </div>
+
+                                  <span
+                                    style={{
+                                      border:
+                                        draft.status === "received"
+                                          ? "1px solid #557c64"
+                                          : draft.status === "sent"
+                                          ? "1px solid #7b693e"
+                                          : "1px solid #40505b",
+                                      borderRadius: 999,
+                                      padding: "5px 8px",
+                                      color:
+                                        draft.status === "received"
+                                          ? "#b7dec4"
+                                          : draft.status === "sent"
+                                          ? "#e1c878"
+                                          : "#aebbc4",
+                                      fontSize: 9,
+                                      fontWeight: 900,
+                                      whiteSpace: "nowrap",
+                                    }}
+                                  >
+                                    {draft.status === "received"
+                                      ? "RECEIVED ✓"
+                                      : draft.status === "sent"
+                                      ? "INVOICE SENT"
+                                      : "NOT SENT"}
+                                  </span>
+                                </div>
+
+                                <div
+                                  style={{
+                                    color: "#8fa0aa",
+                                    fontSize: 10,
+                                    lineHeight: 1.45,
+                                    marginBottom: 3,
+                                  }}
+                                >
+                                  <strong style={{ color: "#b9c6ce" }}>
+                                    Trigger:
+                                  </strong>{" "}
+                                  {payment.trigger}
+                                </div>
+
+                                <div
+                                  style={{
+                                    color: "#aebbc4",
+                                    fontSize: 10,
+                                    lineHeight: 1.45,
+                                    marginBottom: 10,
+                                  }}
+                                >
+                                  {payment.instruction}
+                                <div
+                                  style={{
+                                    marginTop: 10,
+                                    border: paymentInvoice
+                                      ? "1px solid #315c43"
+                                      : "1px solid #5c4d31",
+                                    borderRadius: 9,
+                                    background: paymentInvoice
+                                      ? "#0d1c14"
+                                      : "#1d1910",
+                                    padding: 10,
+                                  }}
+                                >
+                                  {paymentInvoice ? (
+                                    <>
+                                      <div
+                                        style={{
+                                          color: "#8fb99b",
+                                          fontSize: 9,
+                                          fontWeight: 900,
+                                          letterSpacing: "0.08em",
+                                          textTransform: "uppercase",
+                                          marginBottom: 4,
+                                        }}
+                                      >
+                                        Invoice Attached
+                                      </div>
+
+                                      <div
+                                        style={{
+                                          color: "#ffffff",
+                                          fontSize: 12,
+                                          fontWeight: 900,
+                                          overflowWrap: "anywhere",
+                                        }}
+                                      >
+                                        {paymentInvoice.file_name}
+                                      </div>
+
+                                      {paymentInvoice.url ? (
+                                        <a
+                                          href={paymentInvoice.url}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          style={{
+                                            display: "inline-flex",
+                                            marginTop: 8,
+                                            minHeight: 34,
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            border: "1px solid #47785a",
+                                            borderRadius: 8,
+                                            padding: "0 12px",
+                                            color: "#c9ead2",
+                                            fontSize: 10,
+                                            fontWeight: 900,
+                                            textDecoration: "none",
+                                          }}
+                                        >
+                                          View Invoice
+                                        </a>
+                                      ) : null}
+
+                                      <button
+                                        type="button"
+                                        disabled={officeJobDocumentUploading}
+                                        onClick={() =>
+                                          void removeOfficeJobDocument(
+                                            officeWorkLead,
+                                            paymentInvoice
+                                          )
+                                        }
+                                        style={{
+                                          display: "inline-flex",
+                                          minHeight: 34,
+                                          marginTop: 8,
+                                          marginLeft: 8,
+                                          alignItems: "center",
+                                          justifyContent: "center",
+                                          border: "1px solid #805050",
+                                          borderRadius: 8,
+                                          background: "#241516",
+                                          color: "#e5a5a5",
+                                          padding: "0 12px",
+                                          fontSize: 10,
+                                          fontWeight: 900,
+                                          cursor: officeJobDocumentUploading
+                                            ? "wait"
+                                            : "pointer",
+                                          opacity: officeJobDocumentUploading ? 0.65 : 1,
+                                        }}
+                                      >
+                                        {officeJobDocumentUploading
+                                          ? "Working..."
+                                          : "Remove Invoice"}
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <div
+                                        style={{
+                                          color: "#d5b66e",
+                                          fontSize: 10,
+                                          fontWeight: 900,
+                                          marginBottom: 3,
+                                        }}
+                                      >
+                                        No invoice attached yet
+                                      </div>
+
+                                      <label
+                                        style={{
+                                          display: "inline-flex",
+                                          marginTop: 8,
+                                          minHeight: 36,
+                                          alignItems: "center",
+                                          justifyContent: "center",
+                                          border: "1px solid #d5b66e",
+                                          borderRadius: 8,
+                                          padding: "0 14px",
+                                          color: "#f1d58c",
+                                          fontSize: 10,
+                                          fontWeight: 900,
+                                          cursor: officeJobDocumentUploading
+                                            ? "wait"
+                                            : "pointer",
+                                        }}
+                                      >
+                                        {officeJobDocumentUploading
+                                          ? "Uploading..."
+                                          : "Add Invoice"}
+
+                                        <input
+                                          type="file"
+                                          accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx"
+                                          disabled={officeJobDocumentUploading}
+                                          style={{ display: "none" }}
+                                          onChange={(event) => {
+                                            const file = event.target.files?.[0];
+
+                                            if (!file) return;
+
+                                            void uploadOfficeJobDocument(
+                                              officeWorkLead,
+                                              file,
+                                              payment.invoiceType
+                                            );
+
+                                            event.currentTarget.value = "";
+                                          }}
+                                        />
+                                      </label>
+                                    </>
+                                  )}
+                                </div>
+                                </div>
+
+                                {draft.status === "received" ? (
+                                  <div
+                                    style={{
+                                      border: "1px solid #557c64",
+                                      borderRadius: 10,
+                                      background: "#14271c",
+                                      padding: 11,
+                                      marginBottom: 10,
+                                    }}
+                                  >
+                                    <div
+                                      style={{
+                                        color: "#92c6a4",
+                                        fontSize: 10,
+                                        fontWeight: 900,
+                                        marginBottom: 8,
+                                        textTransform: "uppercase",
+                                        letterSpacing: 0.7,
+                                      }}
+                                    >
+                                      Payment Receipt
+                                    </div>
+
+                                    <div
+                                      style={{
+                                        display: "grid",
+                                        gap: 6,
+                                        color: "#d9e5ee",
+                                        fontSize: 11,
+                                        lineHeight: 1.45,
+                                      }}
+                                    >
+                                      <div>
+                                        <strong>Amount:</strong>{" "}
+                                        {new Intl.NumberFormat("en-US", {
+                                          style: "currency",
+                                          currency: "USD",
+                                        }).format(
+                                          Number(
+                                            String(draft.amount || "0").replace(/[^0-9.-]/g, "")
+                                          ) || 0
+                                        )}
+                                      </div>
+
+                                      <div>
+                                        <strong>Method:</strong>{" "}
+                                        {draft.method || "—"}
+                                      </div>
+
+                                      <div>
+                                        <strong>Received:</strong>{" "}
+                                        {(draft as any).receivedAt
+                                          ? new Intl.DateTimeFormat("en-US", {
+                                              dateStyle: "medium",
+                                              timeStyle: "short",
+                                            }).format(new Date((draft as any).receivedAt))
+                                          : "—"}
+                                      </div>
+
+                                      <div>
+                                        <strong>Recorded by:</strong>{" "}
+                                        {(draft as any).updatedBy || "—"}
+                                      </div>
+
+                                      {draft.note ? (
+                                        <div>
+                                          <strong>Note:</strong> {draft.note}
+                                        </div>
+                                      ) : null}
+                                    </div>
+                                  </div>
+                                ) : null}
+
+                                <div
+                                  style={{
+                                    display: draft.status === "received" ? "none" : "grid",
+                                    gridTemplateColumns:
+                                      "repeat(auto-fit, minmax(160px, 1fr))",
+                                    gap: 8,
+                                  }}
+                                >
+
+
+                                  <label
+                                    style={{
+                                      display: "grid",
+                                      gap: 4,
+                                      color: "#b9c6ce",
+                                      fontSize: 10,
+                                      fontWeight: 800,
+                                    }}
+                                  >
+                                    Amount
+
+                                    <input
+                                      value={draft.amount}
+                                      disabled={isSaving || draft.status === "received"}
+                                      onChange={(event) => {
+                                        setOfficePaymentSavedStage(null);
+
+                                        setOfficePaymentDrafts((current) => ({
+                                          ...current,
+                                          [payment.key]: {
+                                            ...current[payment.key],
+                                            amount: event.target.value,
+                                          },
+                                        }));
+                                      }}
+                                        onFocus={() => {
+                                          if (draft.status === "received") return;
+
+                                          setOfficePaymentDrafts((current) => ({
+                                            ...current,
+                                            [payment.key]: {
+                                              ...current[payment.key],
+                                              amount: current[payment.key].amount
+                                                .replace(/[$,]/g, ""),
+                                            },
+                                          }));
+                                        }}
+                                        onBlur={() => {
+                                          if (draft.status === "received") return;
+
+                                          const numericAmount = Number(
+                                            String(draft.amount)
+                                              .replace(/[^0-9.-]/g, "")
+                                          );
+
+                                          if (!Number.isFinite(numericAmount)) return;
+
+                                          const formattedAmount =
+                                            new Intl.NumberFormat("en-US", {
+                                              style: "currency",
+                                              currency: "USD",
+                                              minimumFractionDigits: 2,
+                                              maximumFractionDigits: 2,
+                                            }).format(numericAmount);
+
+                                          setOfficePaymentDrafts((current) => ({
+                                            ...current,
+                                            [payment.key]: {
+                                              ...current[payment.key],
+                                              amount: formattedAmount,
+                                            },
+                                          }));
+                                        }}
+                                      placeholder="$0.00"
+                                      style={{
+                                        minHeight: 40,
+                                        border: "1px solid #405c6d",
+                                        borderRadius: 8,
+                                        background: "#0a1015",
+                                        color: "#ffffff",
+                                        padding: "0 9px",
+                                      }}
+                                    />
+                                  </label>
+
+                                  <label
+                                    style={{
+                                      display: "grid",
+                                      gap: 4,
+                                      color: "#b9c6ce",
+                                      fontSize: 10,
+                                      fontWeight: 800,
+                                    }}
+                                  >
+                                    Method
+
+                                    <select
+                                      value={draft.method}
+                                      disabled={isSaving}
+                                      onChange={(event) => {
+                                        setOfficePaymentSavedStage(null);
+
+                                        setOfficePaymentDrafts((current) => ({
+                                          ...current,
+                                          [payment.key]: {
+                                            ...current[payment.key],
+                                            method: event.target.value,
+                                          },
+                                        }));
+                                      }}
+                                      style={{
+                                        minHeight: 40,
+                                        border: "1px solid #405c6d",
+                                        borderRadius: 8,
+                                        background: "#0a1015",
+                                        color: "#ffffff",
+                                        padding: "0 9px",
+                                      }}
+                                    >
+                                      <option value="">Select method</option>
+                                      <option value="Credit Card">
+                                        Credit Card
+                                      </option>
+                                      <option value="Check">Check</option>
+                                      <option value="ACH">ACH</option>
+                                      <option value="Cash">Cash</option>
+                                      <option value="Other">Other</option>
+                                    </select>
+                                  </label>
+
+
+                                </div>
+
+                                <label
+                                  style={{
+                                    display: draft.status === "received" ? "none" : "grid",
+                                    gap: 4,
+                                    color: "#b9c6ce",
+                                    fontSize: 10,
+                                    fontWeight: 800,
+                                    marginTop: 8,
+                                  }}
+                                >
+                                  Note
+
+                                  <textarea
+                                    value={draft.note}
+                                    disabled={isSaving}
+                                    onChange={(event) => {
+                                      setOfficePaymentSavedStage(null);
+
+                                      setOfficePaymentDrafts((current) => ({
+                                        ...current,
+                                        [payment.key]: {
+                                          ...current[payment.key],
+                                          note: event.target.value,
+                                        },
+                                      }));
+                                    }}
+                                    placeholder="Optional payment note..."
+                                    rows={2}
+                                    style={{
+                                      width: "100%",
+                                      border: "1px solid #405c6d",
+                                      borderRadius: 8,
+                                      background: "#0a1015",
+                                      color: "#ffffff",
+                                      padding: 9,
+                                      resize: "vertical",
+                                      boxSizing: "border-box",
+                                    }}
+                                  />
+                                </label>
+
+                                {isSaved ? (
+                                  <div
+                                    style={{
+                                      color: "#92c6a4",
+                                      fontSize: 10,
+                                      fontWeight: 900,
+                                      marginTop: 8,
+                                    }}
+                                  >
+                                    Payment received ✓
+                                  </div>
+                                ) : null}
+
+                                <button
+                                  type="button"
+                                  disabled={isSaving}
+                                  onClick={() => {
+                                    if (!draft.amount.trim()) {
+                                      setOfficePaymentsError("Enter the payment amount first.");
+                                      return;
+                                    }
+
+                                    if (!draft.method) {
+                                      setOfficePaymentsError("Choose the payment method first.");
+                                      return;
+                                    }
+
+                                    setOfficePaymentsError("");
+
+                                    void saveOfficePayment(
+                                      officeWorkLead,
+                                      payment.key as
+                                        | "deposit_50"
+                                        | "delivery_40"
+                                        | "final_10",
+                                      { markReceived: true }
+                                    );
+                                  }}
+                                  style={{
+                                    display: draft.status === "received" ? "none" : "block",
+                                    width: "100%",
+                                    minHeight: 42,
+                                    marginTop: 9,
+                                    border: "1px solid #557c64",
+                                    borderRadius: 8,
+                                    background: "#14271c",
+                                    color: "#b7dec4",
+                                    fontWeight: 900,
+                                    cursor: isSaving ? "wait" : "pointer",
+                                    opacity: isSaving ? 0.7 : 1,
+                                  }}
+                                >
+                                  {isSaving
+                                    ? "Recording Payment..."
+                                    : draft.status === "received"
+                                      ? "Payment Received ✓"
+                                      : `Mark ${payment.title} Payment Received`}
+                                </button>
+                              </div>
+                            );
+                          })}
                         </div>
 
-                        <label
+                        <div
                           style={{
-                            display: "grid",
-                            gap: 5,
-                            marginTop: 9,
-                            color: "#9ca8b2",
+                            marginTop: 12,
+                            border: "1px solid #31495a",
+                            borderRadius: 10,
+                            background: "#101820",
+                            padding: 10,
+                            color: "#8fa0aa",
                             fontSize: 10,
-                            fontWeight: 800,
+                            lineHeight: 1.5,
                           }}
                         >
-                          Note
-                          <textarea
-                            value={officeDepositDraft.note}
-                            onChange={(event) => {
-                              setOfficeDepositSaved(false);
-                              setOfficeDepositDraft((current) => ({
-                                ...current,
-                                note: event.target.value,
-                              }));
-                            }}
-                            placeholder="Optional payment note..."
-                            rows={3}
-                            style={{
-                              width: "100%",
-                              border: "1px solid #405c6d",
-                              borderRadius: 9,
-                              background: "#0d141a",
-                              color: "#ffffff",
-                              padding: 10,
-                              resize: "vertical",
-                              boxSizing: "border-box",
-                            }}
-                          />
-                        </label>
-
-                        {officeApprovedSetupError ? (
-                          <div
-                            style={{
-                              color: "#d8b267",
-                              fontSize: 10,
-                              marginTop: 8,
-                            }}
-                          >
-                            {officeApprovedSetupError}
-                          </div>
-                        ) : null}
-
-                        {officeDepositSaved ? (
-                          <div
-                            style={{
-                              color: "#92c6a4",
-                              fontSize: 10,
-                              fontWeight: 900,
-                              marginTop: 8,
-                            }}
-                          >
-                            Deposit saved.
-                          </div>
-                        ) : null}
-
-                        <button
-                          type="button"
-                          disabled={officeDepositSaving || officeDepositSaved}
-                          onClick={() =>
-                            void saveOfficeDeposit(officeWorkLead)
-                          }
-                          style={{
-                            width: "100%",
-                            minHeight: 44,
-                            marginTop: 10,
-                            border: "1px solid #557c64",
-                            borderRadius: 9,
-                            background: "#14271c",
-                            color: "#b7dec4",
-                            fontWeight: 900,
-                            cursor: officeDepositSaving
-                              ? "wait"
-                              : "pointer",
-                            opacity: officeDepositSaving || officeDepositSaved ? 0.72 : 1,
-                          }}
-                        >
-                          {officeDepositSaving                             ? "Saving..."                             : officeDepositSaved                             ? "Deposit Saved ✓"                             : "Save Deposit"}
-                        </button>
+                          {["deposit_50", "delivery_40", "final_10"].every(
+                            (key) => officePaymentDrafts[key]?.status === "received"
+                          )
+                            ? "All scheduled payments have been received. Office can proceed to Final Closeout."
+                            : "Scheduled payments are still outstanding. Complete the remaining payments before Final Closeout."}
+                        </div>
                       </>
                     )}
                   </>
@@ -4337,11 +5882,22 @@ export default function PremierWindowDoorBoard() {
                       style={{
                         display: "block",
                         fontSize: 14,
+                        marginBottom: 5,
+                      }}
+                    >
+                      Final Detailed Measurement
+                    </strong>
+
+                    <div
+                      style={{
+                        color: "#9ca8b2",
+                        fontSize: 10,
+                        lineHeight: 1.5,
                         marginBottom: 10,
                       }}
                     >
-                      Schedule Final Detailed Measure
-                    </strong>
+                      Upload the completed final measurement for this job.
+                    </div>
 
                     {officeApprovedSetupLoading ? (
                       <div
@@ -4355,167 +5911,199 @@ export default function PremierWindowDoorBoard() {
                       </div>
                     ) : (
                       <>
-                        <div
+                        <label
                           style={{
                             display: "grid",
-                            gridTemplateColumns:
-                              "repeat(auto-fit, minmax(180px, 1fr))",
-                            gap: 9,
+                            gap: 5,
+                            color: "#9ca8b2",
+                            fontSize: 10,
+                            fontWeight: 800,
                           }}
                         >
-                          <label
-                            style={{
-                              display: "grid",
-                              gap: 5,
-                              color: "#9ca8b2",
-                              fontSize: 10,
-                              fontWeight: 800,
+                          Final Measurement File
+                          <input
+                            type="file"
+                            accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx"
+                            disabled={officeJobDocumentUploading}
+                            onChange={async (event) => {
+                              const file = event.target.files?.[0];
+                              if (!file) return;
+
+                              await uploadOfficeJobDocument(
+                                officeWorkLead,
+                                file,
+                                "Final Measurement"
+                              );
+
+                              event.currentTarget.value = "";
                             }}
-                          >
-                            Status
-                            <select
-                              value={officeFinalMeasureDraft.status}
-                              onChange={(event) => {
-                                setOfficeFinalMeasureSaved(false);
-                                setOfficeFinalMeasureDraft((current) => ({
-                                  ...current,
-                                  status: event.target.value,
-                                }));
-                              }}
+                            style={{
+                              width: "100%",
+                              minHeight: 42,
+                              border: "1px solid #405c6d",
+                              borderRadius: 9,
+                              background: "#0d141a",
+                              color: "#ffffff",
+                              padding: 9,
+                              boxSizing: "border-box",
+                            }}
+                          />
+                        </label>
+
+                        {(() => {
+                          const finalMeasurementDocument =
+                            officeJobDocuments.find(
+                              (document) =>
+                                document.document_type === "Final Measurement"
+                            );
+
+                          if (!finalMeasurementDocument) return null;
+
+                          return (
+                            <div
                               style={{
-                                minHeight: 42,
-                                border: "1px solid #405c6d",
-                                borderRadius: 9,
+                                marginTop: 9,
+                                border: "1px solid #3f5b6b",
+                                borderRadius: 10,
                                 background: "#0d141a",
-                                color: "#ffffff",
-                                padding: "0 10px",
+                                padding: 11,
                               }}
                             >
-                              <option value="not_scheduled">
-                                Not Scheduled
-                              </option>
-                              <option value="scheduled">Scheduled</option>
-                              <option value="complete">Complete</option>
-                            </select>
-                          </label>
+                              <div
+                                style={{
+                                  color: "#9db7ca",
+                                  fontSize: 9,
+                                  fontWeight: 900,
+                                  textTransform: "uppercase",
+                                  letterSpacing: 0.7,
+                                }}
+                              >
+                                Final Measurement Attached
+                              </div>
 
-                          <label
-                            style={{
-                              display: "grid",
-                              gap: 5,
-                              color: "#9ca8b2",
-                              fontSize: 10,
-                              fontWeight: 800,
-                            }}
-                          >
-                            Scheduled Date / Time
-                            <input
-                              type="datetime-local"
-                              disabled={
-                                officeFinalMeasureDraft.status ===
-                                "not_scheduled"
-                              }
-                              value={officeFinalMeasureDraft.scheduledFor}
-                              onChange={(event) => {
-                                setOfficeFinalMeasureSaved(false);
-                                setOfficeFinalMeasureDraft((current) => ({
-                                  ...current,
-                                  scheduledFor: event.target.value,
-                                }));
-                              }}
-                              style={{
-                                minHeight: 42,
-                                border: "1px solid #405c6d",
-                                borderRadius: 9,
-                                background: "#0d141a",
-                                color: "#ffffff",
-                                padding: "0 10px",
-                                opacity:
-                                  officeFinalMeasureDraft.status ===
-                                  "not_scheduled"
-                                    ? 0.55
-                                    : 1,
-                              }}
-                            />
-                          </label>
+                              <div
+                                style={{
+                                  color: "#ffffff",
+                                  fontSize: 11,
+                                  fontWeight: 900,
+                                  marginTop: 4,
+                                  overflowWrap: "anywhere",
+                                }}
+                              >
+                                {finalMeasurementDocument.file_name}
+                              </div>
 
-                          <label
-                            style={{
-                              display: "grid",
-                              gap: 5,
-                              color: "#9ca8b2",
-                              fontSize: 10,
-                              fontWeight: 800,
-                            }}
-                          >
-                            Assigned To
-                            <select
-                              value={officeFinalMeasureDraft.assignedTo}
-                              onChange={(event) => {
-                                setOfficeFinalMeasureSaved(false);
-                                setOfficeFinalMeasureDraft((current) => ({
-                                  ...current,
-                                  assignedTo: event.target.value,
-                                }));
-                              }}
-                              style={{
-                                minHeight: 42,
-                                border: "1px solid #405c6d",
-                                borderRadius: 9,
-                                background: "#0d141a",
-                                color: "#ffffff",
-                                padding: "0 10px",
-                              }}
-                            >
-                              <option value="">Choose staff member</option>
-                              <option value="Gino">Gino</option>
-                              <option value="Dennis">Dennis</option>
-                              <option value="Gio">Gio</option>
-                            </select>
-                          </label>
+                              <div
+                                style={{
+                                  display: "flex",
+                                  flexWrap: "wrap",
+                                  gap: 8,
+                                  marginTop: 10,
+                                }}
+                              >
+                                {finalMeasurementDocument.url ? (
+                                  <a
+                                    href={finalMeasurementDocument.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    style={{
+                                      display: "inline-flex",
+                                      minHeight: 34,
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      border: "1px solid #47785a",
+                                      borderRadius: 8,
+                                      background: "#14271c",
+                                      color: "#c9ead2",
+                                      padding: "0 12px",
+                                      fontSize: 10,
+                                      fontWeight: 900,
+                                      textDecoration: "none",
+                                    }}
+                                  >
+                                    View
+                                  </a>
+                                ) : null}
 
-                          {officeFinalMeasureDraft.status === "complete" ? (
-                          <label
-                            style={{
-                              display: "grid",
-                              gap: 5,
-                              color: "#9ca8b2",
-                              fontSize: 10,
-                              fontWeight: 800,
-                            }}
-                          >
-                            Completed Date
-                            <input
-                              type="date"
-                              disabled={
-                                officeFinalMeasureDraft.status !==
-                                "complete"
-                              }
-                              value={officeFinalMeasureDraft.completedDate}
-                              onChange={(event) => {
-                                setOfficeFinalMeasureSaved(false);
-                                setOfficeFinalMeasureDraft((current) => ({
-                                  ...current,
-                                  completedDate: event.target.value,
-                                }));
-                              }}
-                              style={{
-                                minHeight: 42,
-                                border: "1px solid #405c6d",
-                                borderRadius: 9,
-                                background: "#0d141a",
-                                color: "#ffffff",
-                                padding: "0 10px",
-                                opacity:
-                                  officeFinalMeasureDraft.status ===
-                                  "complete"
-                                    ? 1
-                                    : 0.55,
-                              }}
-                            />
-                          </label>
-                          ) : null}
-                        </div>
+                                <label
+                                  style={{
+                                    display: "inline-flex",
+                                    minHeight: 34,
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    border: "1px solid #526f83",
+                                    borderRadius: 8,
+                                    background: "#15212a",
+                                    color: "#c5d8e5",
+                                    padding: "0 12px",
+                                    fontSize: 10,
+                                    fontWeight: 900,
+                                    cursor: officeJobDocumentUploading
+                                      ? "wait"
+                                      : "pointer",
+                                    opacity: officeJobDocumentUploading
+                                      ? 0.65
+                                      : 1,
+                                  }}
+                                >
+                                  Replace
+                                  <input
+                                    type="file"
+                                    accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx"
+                                    disabled={officeJobDocumentUploading}
+                                    onChange={async (event) => {
+                                      const file = event.target.files?.[0];
+                                      if (!file) return;
+
+                                      await replaceOfficeJobDocument(
+                                        officeWorkLead,
+                                        finalMeasurementDocument,
+                                        file,
+                                        "Final Measurement"
+                                      );
+
+                                      event.currentTarget.value = "";
+                                    }}
+                                    style={{ display: "none" }}
+                                  />
+                                </label>
+
+                                <button
+                                  type="button"
+                                  disabled={officeJobDocumentUploading}
+                                  onClick={() =>
+                                    void removeOfficeJobDocument(
+                                      officeWorkLead,
+                                      finalMeasurementDocument
+                                    )
+                                  }
+                                  style={{
+                                    display: "inline-flex",
+                                    minHeight: 34,
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    border: "1px solid #805050",
+                                    borderRadius: 8,
+                                    background: "#241516",
+                                    color: "#e5a5a5",
+                                    padding: "0 12px",
+                                    fontSize: 10,
+                                    fontWeight: 900,
+                                    cursor: officeJobDocumentUploading
+                                      ? "wait"
+                                      : "pointer",
+                                    opacity: officeJobDocumentUploading
+                                      ? 0.65
+                                      : 1,
+                                  }}
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })()}
+
 
                         <label
                           style={{
@@ -4552,18 +6140,6 @@ export default function PremierWindowDoorBoard() {
                           />
                         </label>
 
-                        <div
-                          style={{
-                            color: "#748694",
-                            fontSize: 10,
-                            lineHeight: 1.4,
-                            marginTop: 8,
-                          }}
-                        >
-                          The original rough measurements stay preserved.
-                          Final detailed measurements remain a separate record.
-                        </div>
-
                         {officeApprovedSetupError ? (
                           <div
                             style={{
@@ -4585,7 +6161,7 @@ export default function PremierWindowDoorBoard() {
                               marginTop: 8,
                             }}
                           >
-                            Final measurement saved.
+                            Final measurement complete.
                           </div>
                         ) : null}
 
@@ -4595,37 +6171,43 @@ export default function PremierWindowDoorBoard() {
                             officeFinalMeasureSaving ||
                             officeFinalMeasureSaved
                           }
-                          onClick={() =>
-                            void saveOfficeFinalMeasurement(
-                              officeWorkLead
-                            )
-                          }
+                          onClick={() => {
+                            setOfficeFinalMeasureDraft((current) => ({
+                              ...current,
+                              status: "complete",
+                              scheduledFor: "",
+                              assignedTo:
+                                current.assignedTo ||
+                                officeWorkLead?.assigned_salesperson ||
+                                "",
+                              completedDate: new Date()
+                                .toISOString()
+                                .slice(0, 10),
+                            }));
+
+                            setTimeout(() => {
+                              void saveOfficeFinalMeasurement(
+                                officeWorkLead
+                              );
+                            }, 0);
+                          }}
                           style={{
                             width: "100%",
                             minHeight: 44,
                             marginTop: 10,
-                            border: "1px solid #557c64",
-                            borderRadius: 9,
-                            background: "#14271c",
-                            color: "#b7dec4",
+                            border: officeFinalMeasureSaved ? "1px solid #6fa982" : "1px solid #557c64",
+                            borderRadius: 10,
+                            background: officeFinalMeasureSaved ? "#203f2b" : "#16271d",
+                            color: officeFinalMeasureSaved ? "#c9f2d3" : "#dff5e5",
                             fontWeight: 900,
-                            cursor:
-                              officeFinalMeasureSaving ||
-                              officeFinalMeasureSaved
-                                ? "default"
-                                : "pointer",
-                            opacity:
-                              officeFinalMeasureSaving ||
-                              officeFinalMeasureSaved
-                                ? 0.72
-                                : 1,
+                            cursor: officeFinalMeasureSaving || officeFinalMeasureSaved ? "default" : "pointer",
                           }}
                         >
                           {officeFinalMeasureSaving
-                            ? "Saving..."
+                            ? "Completing..."
                             : officeFinalMeasureSaved
-                            ? "Final Measurement Saved ✓"
-                            : "Save Final Measurement"}
+                              ? "FINAL MEASUREMENT COMPLETE ✓"
+                              : "Complete Final Measurement"}
                         </button>
                       </>
                     )}
@@ -4866,7 +6448,7 @@ export default function PremierWindowDoorBoard() {
                         marginBottom: 4,
                       }}
                     >
-                      Final Walkthrough / Closeout
+                      Final Payment / Administrative Closeout
                     </div>
 
                     <strong
@@ -4896,7 +6478,7 @@ export default function PremierWindowDoorBoard() {
                           fontSize: 12,
                         }}
                       >
-                        <strong>Inspection:</strong> Complete
+                        <strong>Installation:</strong> 100% Complete
                       </div>
 
                       <div
@@ -4924,7 +6506,11 @@ export default function PremierWindowDoorBoard() {
                           fontWeight: 800,
                         }}
                       >
-                        Status: Ready to close
+                        {["deposit_50", "delivery_40", "final_10"].every(
+                          (key) => officePaymentDrafts[key]?.status === "received"
+                        )
+                          ? "All payments received. Ready for administrative closeout."
+                          : "Payments are still outstanding. Record the remaining payments before completing closeout."}
                       </div>
                     </div>
 
@@ -4932,7 +6518,7 @@ export default function PremierWindowDoorBoard() {
                       type="button"
                       onClick={async () => {
                         const accessToken =
-                          new URLSearchParams(window.location.search).get("access");
+                          getPremierOfficeAccessToken();
 
                         if (!accessToken) return;
 
@@ -4994,7 +6580,7 @@ export default function PremierWindowDoorBoard() {
                         marginBottom: 4,
                       }}
                     >
-                      Inspection / Final Walkthrough
+                      Final Inspection
                     </div>
 
                     <strong
@@ -5004,47 +6590,22 @@ export default function PremierWindowDoorBoard() {
                         marginBottom: 10,
                       }}
                     >
-                      Office Inspection Scheduling
+                      Office Final Inspection Scheduling
                     </strong>
 
                     <div style={{ display: "grid", gap: 10 }}>
-                      <label style={{ display: "grid", gap: 5 }}>
-                        <span style={{ color: "#9ca8b2", fontSize: 10 }}>
-                          Inspection Type
-                        </span>
-                        <select
-                          value={officeInspectionDraft.type}
-                          onChange={(event) =>
-                            setOfficeInspectionDraft((current) => ({
-                              ...current,
-                              type: event.target.value,
-                            }))
-                          }
-                          style={{
-                            minHeight: 44,
-                            border: "1px solid #31495a",
-                            borderRadius: 9,
-                            background: "#0c1116",
-                            color: "#f3f6f8",
-                            padding: "0 10px",
-                          }}
-                        >
-                          <option>In-Progress Inspection</option>
-                          <option>Final Inspection</option>
-                        </select>
-                      </label>
 
                       <label style={{ display: "grid", gap: 5 }}>
                         <span style={{ color: "#9ca8b2", fontSize: 10 }}>
-                          Date / Time
+                          Inspection Date
                         </span>
                         <input
-                          type="datetime-local"
-                          value={officeInspectionDraft.scheduledFor}
+                          type="date"
+                          value={officeInspectionDraft.scheduledDate}
                           onChange={(event) =>
                             setOfficeInspectionDraft((current) => ({
                               ...current,
-                              scheduledFor: event.target.value,
+                              scheduledDate: event.target.value,
                             }))
                           }
                           style={{
@@ -5060,14 +6621,14 @@ export default function PremierWindowDoorBoard() {
 
                       <label style={{ display: "grid", gap: 5 }}>
                         <span style={{ color: "#9ca8b2", fontSize: 10 }}>
-                          Assigned To
+                          Time Window
                         </span>
                         <select
-                          value={officeInspectionDraft.assignedTo}
+                          value={officeInspectionDraft.window}
                           onChange={(event) =>
                             setOfficeInspectionDraft((current) => ({
                               ...current,
-                              assignedTo: event.target.value,
+                              window: event.target.value,
                             }))
                           }
                           style={{
@@ -5079,11 +6640,31 @@ export default function PremierWindowDoorBoard() {
                             padding: "0 10px",
                           }}
                         >
-                          <option>Gio</option>
-                          <option>Crew 1</option>
-                          <option>Crew 2</option>
-                          <option>Crew 3</option>
+                          <option>Morning Window</option>
+                          <option>Afternoon Window</option>
+                          <option>All Day / Time TBD</option>
                         </select>
+                      </label>
+
+                      <label style={{ display: "grid", gap: 5 }}>
+                        <span style={{ color: "#9ca8b2", fontSize: 10 }}>
+                          Assigned To
+                        </span>
+                        <div
+                          style={{
+                            minHeight: 44,
+                            border: "1px solid #31495a",
+                            borderRadius: 9,
+                            background: "#0c1116",
+                            color: "#f3f6f8",
+                            padding: "0 10px",
+                            display: "flex",
+                            alignItems: "center",
+                            fontWeight: 800,
+                          }}
+                        >
+                          RJ
+                        </div>
                       </label>
 
                       <button
@@ -6551,6 +8132,18 @@ export default function PremierWindowDoorBoard() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 type SalesStage =
@@ -54,7 +54,7 @@ const jobs: SalesJob[] = [
     salesperson: "Gino",
     stage: "Rough Measure",
     nextAction: "Complete rough measurements for pricing",
-    roughMeasure: "Scheduled for tomorrow · 10:00 AM",
+    roughMeasure: "Scheduled for tomorrow Â· 10:00 AM",
     proposal: "Not created yet",
     approval: "Waiting",
     finalMeasure: "Not started",
@@ -83,7 +83,7 @@ const jobs: SalesJob[] = [
     stage: "Proposal Sent",
     nextAction: "Follow up on proposal",
     roughMeasure: "Completed",
-    proposal: "$38,450 · Sent Aug 25",
+    proposal: "$38,450 Â· Sent Aug 25",
     approval: "Waiting on customer",
     finalMeasure: "Not started",
     deposit: "Not collected",
@@ -121,7 +121,7 @@ const jobs: SalesJob[] = [
     stage: "Approved / Final Measure",
     nextAction: "Complete final measurement and collect deposit",
     roughMeasure: "Completed",
-    proposal: "$61,800 · Approved",
+    proposal: "$61,800 Â· Approved",
     approval: "Customer approved",
     finalMeasure: "Scheduled Aug 28",
     deposit: "Due at final measure",
@@ -163,17 +163,17 @@ const jobs: SalesJob[] = [
   {
     id: "PW-1046",
     customer: "Palm Ridge Builders",
-    address: "West Palm Beach · New Construction",
+    address: "West Palm Beach Â· New Construction",
     project: "Full window + door package",
     salesperson: "Gino",
     stage: "Ready to Order",
     nextAction: "Submit sales order for boss review",
     roughMeasure: "Plans / takeoff complete",
-    proposal: "$126,400 · Approved",
+    proposal: "$126,400 Â· Approved",
     approval: "Builder approved",
     finalMeasure: "Final opening schedule complete",
     deposit: "Received",
-    salesOrder: "SO-1046 · Ready",
+    salesOrder: "SO-1046 Â· Ready",
     bossReview: "Needs review",
     beamCards: [
       {
@@ -210,11 +210,37 @@ export default function PremierSalesBoard() {
   const [personalBeamReplySending, setPersonalBeamReplySending] = useState(false);
   const [personalBeamReplyListening, setPersonalBeamReplyListening] = useState(false);
   const [personalBeamReplyError, setPersonalBeamReplyError] = useState("");
-  const [salesBeamRecipient, setSalesBeamRecipient] = useState<string>("Gino Marquez");
+  const [salesBeamRecipient, setSalesBeamRecipient] = useState<string>("");
   const [salesBeamBody, setSalesBeamBody] = useState("");
   const [salesBeamSending, setSalesBeamSending] = useState(false);
   const [salesBeamListening, setSalesBeamListening] = useState(false);
   const [salesBeamError, setSalesBeamError] = useState("");
+  const [currentSalesStaffName, setCurrentSalesStaffName] = useState("");
+
+  const premierBeamRecipients = [
+    "Darcy",
+    "Karolina",
+    "Gio Richardson",
+    "Gino Marquez",
+    "Dennis Dillon",
+    "RJ",
+    "Angel",
+    "Jose",
+    "Obelio",
+    "Joseph",
+  ];
+
+  const availableSalesBeamRecipients = premierBeamRecipients.filter(
+    (name) => name !== currentSalesStaffName
+  );
+
+  const [liveMeasurementSheetUploading, setLiveMeasurementSheetUploading] =
+    useState(false);
+  const [liveMeasurementSheetUploaded, setLiveMeasurementSheetUploaded] =
+    useState(false);
+  const [liveMeasurementSheetError, setLiveMeasurementSheetError] =
+    useState("");
+
   const [liveSalesLoading, setLiveSalesLoading] = useState(true);
   const [selectedLiveLeadId, setSelectedLiveLeadId] = useState<string | null>(
     null
@@ -573,11 +599,86 @@ export default function PremierSalesBoard() {
     recognition.start();
   };
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadCurrentSalesStaffIdentity = async () => {
+      let staffName = "";
+
+      try {
+        const rawSession = window.sessionStorage.getItem("premier_staff_session");
+
+        if (rawSession) {
+          const session = JSON.parse(rawSession);
+          staffName = String(session?.displayName || "").trim();
+        }
+      } catch (error) {
+        console.error("Premier sales session identity failed:", error);
+      }
+
+      if (!staffName) {
+        const accessToken =
+          new URLSearchParams(window.location.search).get("access");
+
+        if (accessToken) {
+          const { data, error } = await supabase.rpc(
+            "get_premier_staff_identity",
+            {
+              p_access_token: accessToken,
+            }
+          );
+
+          if (cancelled || error || !data) return;
+
+          const identity = Array.isArray(data) ? data[0] : data;
+
+          staffName = String(
+            identity?.display_name ||
+              identity?.staff_name ||
+              identity?.name ||
+              ""
+          ).trim();
+        }
+      }
+
+      if (cancelled || !staffName) return;
+
+      setCurrentSalesStaffName(staffName);
+
+      setSalesBeamRecipient((current) => {
+        if (current && current !== staffName) return current;
+
+        return (
+          premierBeamRecipients.find((name) => name !== staffName) || ""
+        );
+      });
+    };
+
+    void loadCurrentSalesStaffIdentity();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const sendSalesBeamMessage = async () => {
     if (!selectedLiveLead || salesBeamSending) return;
 
     const body = salesBeamBody.trim();
     if (!body) return;
+
+    if (!salesBeamRecipient) {
+      setSalesBeamError("Choose someone to message.");
+      return;
+    }
+
+    if (
+      currentSalesStaffName &&
+      salesBeamRecipient === currentSalesStaffName
+    ) {
+      setSalesBeamError("You cannot send a Beam message to yourself.");
+      return;
+    }
 
     const accessToken =
       new URLSearchParams(window.location.search).get("access");
@@ -917,7 +1018,7 @@ export default function PremierSalesBoard() {
       measurementAppointment:
         selectedLiveLead.measurement_appointment || null,
       latestSalesNote: "Rough measurement completed.",
-      nextAction: "Create and send proposal.",
+      nextAction: "Prepare customer proposal.",
       nextStage: "proposal",
     });
 
@@ -1172,6 +1273,107 @@ export default function PremierSalesBoard() {
     }, 50);
   };
 
+  const uploadLiveMeasurementSheet = async (file: File | null) => {
+    if (!file || !selectedLiveLead?.id) return;
+
+    setLiveMeasurementSheetError("");
+    setLiveMeasurementSheetUploaded(false);
+    setLiveMeasurementSheetUploading(true);
+
+    const accessToken =
+      new URLSearchParams(window.location.search).get("access");
+
+    if (!accessToken) {
+      setLiveMeasurementSheetError("Premier staff access is missing.");
+      setLiveMeasurementSheetUploading(false);
+      return;
+    }
+
+    const mimeType = file.type || "application/octet-stream";
+
+    try {
+      const { data: createData, error: createError } =
+        await supabase.functions.invoke("premier-job-document", {
+          body: {
+            action: "create-upload",
+            accessToken,
+            jobId: selectedLiveLead.id,
+            documentType: "Measurement Sheet",
+            fileName: file.name,
+            mimeType,
+          },
+        });
+
+      if (createError || !createData?.path || !createData?.token) {
+        console.error("Measurement sheet upload create failed:", createError);
+        setLiveMeasurementSheetError(
+          "Could not prepare the measurement sheet upload."
+        );
+        setLiveMeasurementSheetUploading(false);
+        return;
+      }
+
+      const { error: uploadError } = await supabase.storage
+        .from("premier-job-documents")
+        .uploadToSignedUrl(
+          createData.path,
+          createData.token,
+          file,
+          { contentType: mimeType }
+        );
+
+      if (uploadError) {
+        console.error("Measurement sheet storage upload failed:", uploadError);
+        setLiveMeasurementSheetError(
+          "Could not upload the measurement sheet."
+        );
+        setLiveMeasurementSheetUploading(false);
+        return;
+      }
+
+      const { error: finalizeError } =
+        await supabase.functions.invoke("premier-job-document", {
+          body: {
+            action: "finalize",
+            accessToken,
+            jobId: selectedLiveLead.id,
+            documentType: "Measurement Sheet",
+            storagePath: createData.path,
+            fileName: file.name,
+            mimeType,
+            note: "Sales measurement sheet",
+          },
+        });
+
+      if (finalizeError) {
+        console.error(
+          "Measurement sheet finalize failed:",
+          finalizeError
+        );
+        setLiveMeasurementSheetError(
+          "The file uploaded, but HomePlanet could not attach it to the job."
+        );
+        setLiveMeasurementSheetUploading(false);
+        return;
+      }
+
+      setLiveMeasurementSheetUploaded(true);
+
+      await saveLiveLeadUpdate({
+        latestSalesNote: `Measurement sheet uploaded: ${file.name}`,
+        nextAction:
+          "Review measurement sheet, then finish measurement and move to proposal.",
+      });
+    } catch (error) {
+      console.error("Measurement sheet upload failed:", error);
+      setLiveMeasurementSheetError(
+        "Could not upload the measurement sheet."
+      );
+    }
+
+    setLiveMeasurementSheetUploading(false);
+  };
+
   const saveLiveOpening = async () => {
     if (!selectedLiveLead) return;
 
@@ -1350,14 +1552,14 @@ export default function PremierSalesBoard() {
         .trim();
 
       const pair = cleaned.match(
-        /(\d+(?:\.\d+)?(?:\s+\d+\/\d+)?)\s*(?:by|buy|x|×|times)\s*(\d+(?:\.\d+)?(?:\s+\d+\/\d+)?)/i
+        /(\d+(?:\.\d+)?(?:\s+\d+\/\d+)?)\s*(?:by|buy|x|Ã—|times)\s*(\d+(?:\.\d+)?(?:\s+\d+\/\d+)?)/i
       );
 
       if (pair) {
         setLiveOpeningWidth(pair[1].trim());
         setLiveOpeningHeight(pair[2].trim());
         setLiveSpeechStatus(
-          `Width ${pair[1].trim()} · Height ${pair[2].trim()}`
+          `Width ${pair[1].trim()} Â· Height ${pair[2].trim()}`
         );
         return;
       }
@@ -1422,6 +1624,25 @@ export default function PremierSalesBoard() {
           >
             Sales Board
           </h1>
+
+          {currentSalesStaffName ? (
+            <div
+              style={{
+                marginTop: 8,
+                color: "#b7dec4",
+                fontSize: 15,
+                fontWeight: 800,
+              }}
+            >
+              {`Good ${
+                new Date().getHours() < 12
+                  ? "morning"
+                  : new Date().getHours() < 17
+                  ? "afternoon"
+                  : "evening"
+              }, ${currentSalesStaffName.split(" ")[0]}.`}
+            </div>
+          ) : null}
 
           <p
             style={{
@@ -1642,7 +1863,7 @@ export default function PremierSalesBoard() {
                             transition: "all 160ms ease",
                           }}
                         >
-                          🎤
+                          ðŸŽ¤
                         </button>
                       </div>
 
@@ -1982,6 +2203,7 @@ export default function PremierSalesBoard() {
 
             const getLane = (lead: any) => {
               if (
+                lead.current_stage === "proposal" ||
                 lead.current_stage === "proposal_ready" ||
                 lead.current_stage === "new_lead"
               ) {
@@ -2027,6 +2249,10 @@ export default function PremierSalesBoard() {
             );
 
             const getStageLabel = (lead: any) => {
+              if (lead.current_stage === "proposal") {
+                return "PREPARE PROPOSAL";
+              }
+
               if (lead.current_stage === "proposal_ready") {
                 return "PROPOSAL READY";
               }
@@ -3270,21 +3496,21 @@ export default function PremierSalesBoard() {
                             number: "01",
                             type: "Window",
                             location: "Living Room",
-                            size: '44" × 72 1/2"',
+                            size: '44" Ã— 72 1/2"',
                             proof: "Photo attached",
                           },
                           {
                             number: "02",
                             type: "Window",
                             location: "Dining Room",
-                            size: '43" × 72"',
+                            size: '43" Ã— 72"',
                             proof: "Photo attached",
                           },
                           {
                             number: "03",
                             type: "Sliding Door",
                             location: "Rear Patio",
-                            size: '72" × 80"',
+                            size: '72" Ã— 80"',
                             proof: "Needs photo",
                           },
                         ].map((opening) => (
@@ -3315,7 +3541,7 @@ export default function PremierSalesBoard() {
                                   fontSize: 11,
                                 }}
                               >
-                                {opening.type} · {opening.location}
+                                {opening.type} Â· {opening.location}
                               </strong>
 
                               <span
@@ -3463,9 +3689,9 @@ export default function PremierSalesBoard() {
                         </strong>
 
                         {[
-                          ["Opening 01 · Living Room", "1 photo"],
-                          ["Opening 02 · Dining Room", "1 photo"],
-                          ["Opening 03 · Rear Patio", "Add photo"],
+                          ["Opening 01 Â· Living Room", "1 photo"],
+                          ["Opening 02 Â· Dining Room", "1 photo"],
+                          ["Opening 03 Â· Rear Patio", "Add photo"],
                         ].map(([opening, status]) => (
                           <div
                             key={opening}
@@ -3725,7 +3951,7 @@ export default function PremierSalesBoard() {
 
                         <textarea
                           rows={3}
-                          defaultValue="Hi Carlos, this is Gino with Premier Window & Door. I’m reaching out to schedule a time to take a look at your project."
+                          defaultValue="Hi Carlos, this is Gino with Premier Window & Door. Iâ€™m reaching out to schedule a time to take a look at your project."
                           style={{
                             width: "100%",
                             boxSizing: "border-box",
@@ -4557,16 +4783,13 @@ export default function PremierSalesBoard() {
                   marginBottom: 8,
                 }}
               >
-                <option value="Darcy">Darcy</option>
-                <option value="Karolina">Karolina</option>
-                <option value="Gio Richardson">Gio Richardson</option>
-                <option value="Gino Marquez">Gino Marquez</option>
-                <option value="Dennis Dillon">Dennis Dillon</option>
-                <option value="RJ">RJ</option>
-                <option value="Angel">Angel</option>
-                <option value="Jose">Jose</option>
-                <option value="Obelio">Obelio</option>
-                <option value="Joseph">Joseph</option>
+                <option value="">Choose staff member</option>
+
+                {availableSalesBeamRecipients.map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
               </select>
 
               <div
@@ -4616,7 +4839,7 @@ export default function PremierSalesBoard() {
                       : "none",
                   }}
                 >
-                  🎤
+                  ðŸŽ¤
                 </button>
               </div>
 
@@ -4788,6 +5011,82 @@ export default function PremierSalesBoard() {
               ) : null}
             </div>
 
+            {selectedLiveLead.current_stage === "proposal" ? (
+              <div
+                style={{
+                  border: "1px solid #2d3d47",
+                  borderRadius: 13,
+                  background: "#101419",
+                  padding: 12,
+                  marginBottom: 12,
+                }}
+              >
+                <div
+                  style={{
+                    color: "#9ca8b2",
+                    fontSize: 10,
+                    fontWeight: 900,
+                    letterSpacing: 1,
+                    textTransform: "uppercase",
+                    marginBottom: 6,
+                  }}
+                >
+                  Prepare Proposal
+                </div>
+
+                <strong
+                  style={{
+                    display: "block",
+                    color: "#f3f6f8",
+                    fontSize: 14,
+                    marginBottom: 5,
+                  }}
+                >
+                  Build the customer proposal from the completed measurements.
+                </strong>
+
+                <div
+                  style={{
+                    color: "#9ca8b2",
+                    fontSize: 11,
+                    lineHeight: 1.5,
+                    marginBottom: 10,
+                  }}
+                >
+                  Use Premier&apos;s normal proposal process. When the proposal is
+                  finished and ready to present or send to the customer, mark it
+                  ready below.
+                </div>
+
+                <button
+                  type="button"
+                  disabled={savingLiveLeadAction}
+                  onClick={async () => {
+                    await saveLiveLeadUpdate({
+                      measurementAppointment:
+                        selectedLiveLead.measurement_appointment || null,
+                      latestSalesNote: "Proposal prepared and ready for customer.",
+                      nextAction:
+                        "Present or send proposal and record customer decision.",
+                      nextStage: "proposal_ready",
+                    });
+                  }}
+                  style={{
+                    width: "100%",
+                    minHeight: 44,
+                    border: "1px solid #b58b3a",
+                    borderRadius: 10,
+                    background: "#2a2112",
+                    color: "#f0cc7e",
+                    fontWeight: 900,
+                    fontSize: 13,
+                    cursor: savingLiveLeadAction ? "wait" : "pointer",
+                  }}
+                >
+                  {savingLiveLeadAction ? "Saving..." : "Mark Proposal Ready"}
+                </button>
+              </div>
+            ) : null}
             {selectedLiveLead.current_stage === "proposal_ready" ? (
               <div
                 style={{
@@ -4834,7 +5133,7 @@ export default function PremierSalesBoard() {
                       cursor: savingLiveLeadAction ? "wait" : "pointer",
                     }}
                   >
-                    Approved
+                    Customer Hired Premier
                   </button>
 
                   <button
@@ -5126,8 +5425,118 @@ export default function PremierSalesBoard() {
                         marginTop: 5,
                       }}
                     >
-                      Save each window or door as its own opening.
+                      Choose how you want to record measurements.
                     </div>
+
+                    <div
+                      style={{
+                        marginTop: 12,
+                        marginBottom: 14,
+                        border: "1px solid #344854",
+                        borderRadius: 12,
+                        background: "#0d151b",
+                        padding: 11,
+                      }}
+                    >
+                      <div
+                        style={{
+                          color: "#9db7ca",
+                          fontSize: 9,
+                          fontWeight: 900,
+                          letterSpacing: 0.8,
+                          textTransform: "uppercase",
+                          marginBottom: 4,
+                        }}
+                      >
+                        Measurement Options
+                      </div>
+
+                      <strong
+                        style={{
+                          display: "block",
+                          color: "#ffffff",
+                          fontSize: 13,
+                          marginBottom: 5,
+                        }}
+                      >
+                        Option 1 â€” Enter Openings Here
+                      </strong>
+
+                      <div
+                        style={{
+                          color: "#9ca8b2",
+                          fontSize: 10,
+                          lineHeight: 1.5,
+                          marginBottom: 9,
+                        }}
+                      >
+                        If you measured on paper or created a PDF afterward,
+                        attach it here instead of re-entering every opening.
+                      </div>
+
+                      <label
+                        style={{
+                          minHeight: 42,
+                          border: "1px solid #557c64",
+                          borderRadius: 9,
+                          background: "#14271c",
+                          color: "#b7dec4",
+                          fontSize: 11,
+                          fontWeight: 900,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          padding: "0 12px",
+                          cursor: liveMeasurementSheetUploading
+                            ? "wait"
+                            : "pointer",
+                          opacity: liveMeasurementSheetUploading ? 0.7 : 1,
+                        }}
+                      >
+                        {liveMeasurementSheetUploading
+                          ? "Uploading Measurement Sheet..."
+                          : "ðŸ“Ž Option 2 â€” Upload Measurement Sheet / PDF"}
+
+                        <input
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,application/pdf,image/jpeg,image/png,image/webp"
+                          disabled={liveMeasurementSheetUploading}
+                          onChange={(event) => {
+                            const file = event.target.files?.[0] ?? null;
+                            void uploadLiveMeasurementSheet(file);
+                            event.currentTarget.value = "";
+                          }}
+                          style={{ display: "none" }}
+                        />
+                      </label>
+
+                      {liveMeasurementSheetUploaded ? (
+                        <div
+                          style={{
+                            color: "#92c6a4",
+                            fontSize: 10,
+                            fontWeight: 900,
+                            marginTop: 7,
+                          }}
+                        >
+                          Measurement sheet attached to this job âœ“
+                        </div>
+                      ) : null}
+
+                      {liveMeasurementSheetError ? (
+                        <div
+                          style={{
+                            color: "#e4a7a7",
+                            fontSize: 10,
+                            lineHeight: 1.4,
+                            marginTop: 7,
+                          }}
+                        >
+                          {liveMeasurementSheetError}
+                        </div>
+                      ) : null}
+                    </div>
+
                   </div>
 
                   <span
@@ -5173,7 +5582,7 @@ export default function PremierSalesBoard() {
                         >
                           <div>
                             <strong style={{ fontSize: 13 }}>
-                              Opening {opening.opening_number} ·{" "}
+                              Opening {opening.opening_number} Â·{" "}
                               {opening.opening_type}
                             </strong>
 
@@ -5202,7 +5611,7 @@ export default function PremierSalesBoard() {
                                 whiteSpace: "nowrap",
                               }}
                             >
-                              {opening.width_text} × {opening.height_text}
+                              {opening.width_text} Ã— {opening.height_text}
                             </strong>
 
                             <button
@@ -5305,7 +5714,7 @@ export default function PremierSalesBoard() {
                         >
                           {uploadingLiveOpeningPhotoId === opening.id
                             ? "Uploading..."
-                            : "📷 Add Photo"}
+                            : "ðŸ“· Add Photo"}
 
                           <input
                             type="file"
@@ -5559,8 +5968,8 @@ export default function PremierSalesBoard() {
                     }}
                   >
                     {liveSpeechListening === "measurement"
-                      ? "🎤 Listening..."
-                      : "🎤 Speak Measurement"}
+                      ? "ðŸŽ¤ Listening..."
+                      : "ðŸŽ¤ Speak Measurement"}
                   </button>
 
                   {liveSpeechStatus ? (
@@ -5631,8 +6040,8 @@ export default function PremierSalesBoard() {
                     }}
                   >
                     {liveSpeechListening === "notes"
-                      ? "🎤 Listening... Tap to Stop"
-                      : "🎤 Speak Notes"}
+                      ? "ðŸŽ¤ Listening... Tap to Stop"
+                      : "ðŸŽ¤ Speak Notes"}
                   </button>
 
                   <button
@@ -5728,7 +6137,7 @@ export default function PremierSalesBoard() {
                   </button>
                 ) : null}
                 {selectedLiveLead.current_stage === "measurement" &&
-                liveOpenings.length > 0 &&
+                (liveOpenings.length > 0 || liveMeasurementSheetUploaded) &&
                 !liveOpeningFormOpen &&
                 !editingLiveOpeningId ? (
                   <button
@@ -5750,7 +6159,7 @@ export default function PremierSalesBoard() {
                   >
                     {savingLiveLeadAction
                       ? "Saving..."
-                      : "Finish Measurement & Move to Proposal"}
+                      : "Measurements Complete â†’ Move to Proposal"}
                   </button>
                 ) : null}
 
@@ -6200,7 +6609,7 @@ export default function PremierSalesBoard() {
                       >
                         <div>
                           <strong style={{ fontSize: 13 }}>
-                            {card.opening} · {card.location}
+                            {card.opening} Â· {card.location}
                           </strong>
 
                           <div
@@ -6242,7 +6651,7 @@ export default function PremierSalesBoard() {
                           fontWeight: 900,
                         }}
                       >
-                        {card.width} × {card.height}
+                        {card.width} Ã— {card.height}
                       </div>
 
                       {card.notes ? (
@@ -6288,13 +6697,13 @@ export default function PremierSalesBoard() {
                       <input
                         value={beamOpening}
                         onChange={(event) => setBeamOpening(event.target.value)}
-                        placeholder="Opening number — e.g. Window 03"
+                        placeholder="Opening number â€” e.g. Window 03"
                       />
 
                       <input
                         value={beamLocation}
                         onChange={(event) => setBeamLocation(event.target.value)}
-                        placeholder="Location — e.g. Master Bedroom"
+                        placeholder="Location â€” e.g. Master Bedroom"
                       />
 
                       <select
@@ -6430,7 +6839,7 @@ export default function PremierSalesBoard() {
                             }));
 
                             addUpdate(
-                              `Beam Card added: ${beamOpening.trim()} · ${beamLocation.trim()} · ${beamWidth.trim()} x ${beamHeight.trim()}.`
+                              `Beam Card added: ${beamOpening.trim()} Â· ${beamLocation.trim()} Â· ${beamWidth.trim()} x ${beamHeight.trim()}.`
                             );
 
                             setBeamFormOpen(false);
@@ -6640,6 +7049,10 @@ export default function PremierSalesBoard() {
     </div>
   );
 }
+
+
+
+
 
 
 
