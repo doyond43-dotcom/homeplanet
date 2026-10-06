@@ -524,24 +524,96 @@ export default function OkeechobeeProjectWorkspace() {
           >
             <h2>Volunteer Assignments ({displayHelpers.length})</h2>
 
-            {displayHelpers.map((helper: any) => (
-              <div
-                key={helper.id}
-                style={{
-                  padding: "12px 0",
-                  borderBottom: "1px solid #222",
-                }}
-              >
-                <p><strong>{helper.name}</strong></p>
-                <p>{helper.help_type}</p>
-                <p>{helper.phone}</p>
-                {helper.email && <p>{helper.email}</p>}
-                {helper.notes && (
-                  <p style={{ color: "#999" }}>{helper.notes}</p>
-                )}
+            {displayHelpers.map((helper: any) => {
+              const phoneDigits = String(helper.phone || "").replace(/\D/g, "");
+              const phoneHref =
+                phoneDigits.length === 10
+                  ? `+1${phoneDigits}`
+                  : phoneDigits.length === 11 && phoneDigits.startsWith("1")
+                    ? `+${phoneDigits}`
+                    : phoneDigits;
 
-              </div>
-            ))}
+              return (
+                <div
+                  key={helper.id}
+                  style={{
+                    padding: "14px 0",
+                    borderBottom: "1px solid #222",
+                  }}
+                >
+                  <p style={{ margin: "0 0 6px" }}>
+                    <strong>{helper.name}</strong>
+                  </p>
+
+                  <p style={{ margin: "0 0 10px", color: "#bbb" }}>
+                    {helper.help_type || "Volunteer"}
+                  </p>
+
+                  {helper.phone && (
+                    <div
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: 8,
+                        marginBottom: 10,
+                      }}
+                    >
+                      <a
+                        href={`tel:${phoneHref}`}
+                        style={{
+                          padding: "8px 12px",
+                          border: "1px solid #333",
+                          borderRadius: 10,
+                          color: "#fff",
+                          textDecoration: "none",
+                        }}
+                      >
+                        Call {helper.phone}
+                      </a>
+
+                      <a
+                        href={`sms:${phoneHref}`}
+                        style={{
+                          padding: "8px 12px",
+                          border: "1px solid #333",
+                          borderRadius: 10,
+                          color: "#fff",
+                          textDecoration: "none",
+                        }}
+                      >
+                        Text
+                      </a>
+                    </div>
+                  )}
+
+                  {helper.email && (
+                    <p style={{ margin: "0 0 10px" }}>
+                      <a
+                        href={`mailto:${helper.email}`}
+                        style={{ color: "#fff" }}
+                      >
+                        {helper.email}
+                      </a>
+                    </p>
+                  )}
+
+                  {helper.notes && (
+                    <p style={{ color: "#999", margin: "0 0 10px" }}>
+                      {helper.notes}
+                    </p>
+                  )}
+
+                  {helper.status && (
+                    <p style={{ margin: 0, color: "#aaa" }}>
+                      Status:{" "}
+                      <strong style={{ color: "#fff", textTransform: "capitalize" }}>
+                        {String(helper.status).replaceAll("_", " ")}
+                      </strong>
+                    </p>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           <div
