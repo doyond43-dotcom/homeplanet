@@ -6350,7 +6350,6 @@ export default function PremierSalesBoard() {
         <div
           className="sales-layout"
           style={{
-            display: "grid",
             gridTemplateColumns: "minmax(0, 390px) minmax(0, 1fr)",
             display: "none",
             gap: 16,
@@ -7049,6 +7048,7 @@ export default function PremierSalesBoard() {
     </div>
   );
 }
+
 
 
 
