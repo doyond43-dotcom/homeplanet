@@ -54,7 +54,7 @@ const jobs: SalesJob[] = [
     salesperson: "Gino",
     stage: "Rough Measure",
     nextAction: "Complete rough measurements for pricing",
-    roughMeasure: "Scheduled for tomorrow Â· 10:00 AM",
+    roughMeasure: "Scheduled for tomorrow - 10:00 AM",
     proposal: "Not created yet",
     approval: "Waiting",
     finalMeasure: "Not started",
@@ -83,7 +83,7 @@ const jobs: SalesJob[] = [
     stage: "Proposal Sent",
     nextAction: "Follow up on proposal",
     roughMeasure: "Completed",
-    proposal: "$38,450 Â· Sent Aug 25",
+    proposal: "$38,450 - Sent Aug 25",
     approval: "Waiting on customer",
     finalMeasure: "Not started",
     deposit: "Not collected",
@@ -121,7 +121,7 @@ const jobs: SalesJob[] = [
     stage: "Approved / Final Measure",
     nextAction: "Complete final measurement and collect deposit",
     roughMeasure: "Completed",
-    proposal: "$61,800 Â· Approved",
+    proposal: "$61,800 - Approved",
     approval: "Customer approved",
     finalMeasure: "Scheduled Aug 28",
     deposit: "Due at final measure",
@@ -163,17 +163,17 @@ const jobs: SalesJob[] = [
   {
     id: "PW-1046",
     customer: "Palm Ridge Builders",
-    address: "West Palm Beach Â· New Construction",
+    address: "West Palm Beach - New Construction",
     project: "Full window + door package",
     salesperson: "Gino",
     stage: "Ready to Order",
     nextAction: "Submit sales order for boss review",
     roughMeasure: "Plans / takeoff complete",
-    proposal: "$126,400 Â· Approved",
+    proposal: "$126,400 - Approved",
     approval: "Builder approved",
     finalMeasure: "Final opening schedule complete",
     deposit: "Received",
-    salesOrder: "SO-1046 Â· Ready",
+    salesOrder: "SO-1046 - Ready",
     bossReview: "Needs review",
     beamCards: [
       {
@@ -201,6 +201,35 @@ const jobs: SalesJob[] = [
 ];
 
 export default function PremierSalesBoard() {
+  const getPremierAccessToken = () => {
+    const readStoredToken = (storage: Storage) => {
+      try {
+        const raw = storage.getItem("premier_staff_session");
+        if (!raw) return null;
+
+        const session = JSON.parse(raw);
+
+        if (
+          session?.expiresAt &&
+          Date.now() >= new Date(session.expiresAt).getTime()
+        ) {
+          storage.removeItem("premier_staff_session");
+          return null;
+        }
+
+        const token = String(session?.accessToken || "").trim();
+        return token || null;
+      } catch {
+        return null;
+      }
+    };
+
+    return (
+      readStoredToken(window.localStorage) ||
+      readStoredToken(window.sessionStorage) ||
+      new URLSearchParams(window.location.search).get("access")
+    );
+  };
   const [liveSalesLeads, setLiveSalesLeads] = useState<any[]>([]);
   const [personalBeamMessages, setPersonalBeamMessages] = useState<any[]>([]);
   const [personalBeamLoading, setPersonalBeamLoading] = useState(false);
@@ -241,6 +270,30 @@ export default function PremierSalesBoard() {
   const [liveMeasurementSheetError, setLiveMeasurementSheetError] =
     useState("");
 
+
+  const [finalMeasurementDocuments, setFinalMeasurementDocuments] =
+    useState<any[]>([]);
+  const [
+    finalMeasurementDocumentsLoading,
+    setFinalMeasurementDocumentsLoading,
+  ] = useState(false);
+  const [
+    finalMeasurementDocumentUploading,
+    setFinalMeasurementDocumentUploading,
+  ] = useState<string | null>(null);
+  const [finalMeasurementPackageError, setFinalMeasurementPackageError] =
+    useState("");
+  const [finalMeasurementPackageNote, setFinalMeasurementPackageNote] =
+    useState("");
+  const [
+    finalMeasurementDocumentTitles,
+    setFinalMeasurementDocumentTitles,
+  ] = useState<Record<string, string>>({
+    "Final Measurement": "",
+    "Floor Plan": "",
+    "Site Photo": "",
+    "Final Measurement Document": "",
+  });
   const [liveSalesLoading, setLiveSalesLoading] = useState(true);
   const [selectedLiveLeadId, setSelectedLiveLeadId] = useState<string | null>(
     null
@@ -353,9 +406,7 @@ export default function PremierSalesBoard() {
     const loadLiveSalesPipeline = async () => {
       setLiveSalesLoading(true);
 
-      const accessToken = new URLSearchParams(window.location.search).get(
-        "access"
-      );
+      const accessToken = getPremierAccessToken();
 
       if (!accessToken) {
         console.warn("Premier sales access token missing.");
@@ -426,7 +477,7 @@ export default function PremierSalesBoard() {
 
   const loadPersonalBeamInbox = async () => {
     const accessToken =
-      new URLSearchParams(window.location.search).get("access");
+      getPremierAccessToken();
 
     if (!accessToken) {
       setPersonalBeamMessages([]);
@@ -527,7 +578,7 @@ export default function PremierSalesBoard() {
     }
 
     const accessToken =
-      new URLSearchParams(window.location.search).get("access");
+      getPremierAccessToken();
 
     if (!accessToken) {
       setPersonalBeamReplyError("Premier staff access token missing.");
@@ -606,7 +657,9 @@ export default function PremierSalesBoard() {
       let staffName = "";
 
       try {
-        const rawSession = window.sessionStorage.getItem("premier_staff_session");
+        const rawSession =
+          window.localStorage.getItem("premier_staff_session") ||
+          window.sessionStorage.getItem("premier_staff_session");
 
         if (rawSession) {
           const session = JSON.parse(rawSession);
@@ -618,7 +671,7 @@ export default function PremierSalesBoard() {
 
       if (!staffName) {
         const accessToken =
-          new URLSearchParams(window.location.search).get("access");
+          getPremierAccessToken();
 
         if (accessToken) {
           const { data, error } = await supabase.rpc(
@@ -681,7 +734,7 @@ export default function PremierSalesBoard() {
     }
 
     const accessToken =
-      new URLSearchParams(window.location.search).get("access");
+      getPremierAccessToken();
 
     if (!accessToken) {
       setSalesBeamError("Premier staff access token missing.");
@@ -712,7 +765,7 @@ export default function PremierSalesBoard() {
 
   const markPersonalBeamRead = async (messageId: string) => {
     const accessToken =
-      new URLSearchParams(window.location.search).get("access");
+      getPremierAccessToken();
 
     if (!accessToken) return;
 
@@ -773,9 +826,7 @@ export default function PremierSalesBoard() {
   }) => {
     if (!selectedLiveLead) return false;
 
-    const accessToken = new URLSearchParams(window.location.search).get(
-      "access"
-    );
+    const accessToken = getPremierAccessToken();
 
     if (!accessToken) {
       window.alert("Premier sales access is missing.");
@@ -840,9 +891,7 @@ export default function PremierSalesBoard() {
       note = revisionNote.trim();
     }
 
-    const accessToken = new URLSearchParams(
-      window.location.search
-    ).get("access");
+    const accessToken = getPremierAccessToken();
 
     if (!accessToken) {
       window.alert("Premier sales access is missing.");
@@ -901,9 +950,7 @@ export default function PremierSalesBoard() {
       return;
     }
 
-    const accessToken = new URLSearchParams(
-      window.location.search
-    ).get("access");
+    const accessToken = getPremierAccessToken();
 
     if (!accessToken) {
       window.alert("Premier sales access is missing.");
@@ -911,7 +958,7 @@ export default function PremierSalesBoard() {
     }
 
     const confirmed = window.confirm(
-      "Mark this final measurement complete and return it to Office?"
+      "Send this completed Final Measurement package to RJ?"
     );
 
     if (!confirmed) return;
@@ -929,7 +976,9 @@ export default function PremierSalesBoard() {
         p_assigned_to:
           selectedLiveLead.assigned_salesperson || null,
         p_completed_at: new Date().toISOString(),
-        p_note: "Final detailed measurement completed.",
+        p_note:
+          finalMeasurementPackageNote.trim() ||
+          "Final detailed measurement package completed for RJ.",
       }
     );
 
@@ -1045,9 +1094,245 @@ export default function PremierSalesBoard() {
       window.prompt("Copy customer phone number:", selectedLiveLead.phone);
     }
   };
-  const getPremierAccessToken = () =>
-    new URLSearchParams(window.location.search).get("access");
 
+  const loadFinalMeasurementDocuments = async (jobId: string) => {
+    const accessToken = getPremierAccessToken();
+
+    setFinalMeasurementPackageError("");
+    setFinalMeasurementDocumentsLoading(true);
+
+    if (!accessToken) {
+      setFinalMeasurementDocuments([]);
+      setFinalMeasurementPackageError("Premier sales access is missing.");
+      setFinalMeasurementDocumentsLoading(false);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        "premier-job-document",
+        {
+          body: {
+            action: "list",
+            accessToken,
+            jobId,
+          },
+        }
+      );
+
+      if (error) {
+        throw error;
+      }
+
+      setFinalMeasurementDocuments(data?.documents ?? []);
+    } catch (error) {
+      console.error(
+        "Premier Final Measurement document load failed:",
+        error
+      );
+      setFinalMeasurementDocuments([]);
+      setFinalMeasurementPackageError(
+        "Could not load the Final Measurement package."
+      );
+    } finally {
+      setFinalMeasurementDocumentsLoading(false);
+    }
+  };
+  const uploadFinalMeasurementDocument = async (
+    file: File | null,
+    documentType: string,
+    documentTitle: string,
+    replaceDocument?: any
+  ) => {
+    if (!file || !selectedLiveLead?.id) return;
+
+    const cleanTitle = documentTitle.trim();
+
+    if (!cleanTitle) {
+      setFinalMeasurementPackageError(
+        "Add a title or description before choosing the file."
+      );
+      return;
+    }
+
+    setFinalMeasurementPackageError("");
+    setFinalMeasurementDocumentUploading(documentType);
+
+    const accessToken = getPremierAccessToken();
+
+    if (!accessToken) {
+      setFinalMeasurementPackageError("Premier sales access is missing.");
+      setFinalMeasurementDocumentUploading(null);
+      return;
+    }
+
+    try {
+      const mimeType = file.type || "application/octet-stream";
+
+      const { data: uploadAccess, error: uploadAccessError } =
+        await supabase.functions.invoke("premier-job-document", {
+          body: {
+            action: "create-upload",
+            accessToken,
+            jobId: selectedLiveLead.id,
+            documentType,
+            fileName: file.name,
+            mimeType,
+          },
+        });
+
+      if (
+        uploadAccessError ||
+        uploadAccess?.error ||
+        !uploadAccess?.path ||
+        !uploadAccess?.token
+      ) {
+        throw new Error(
+          uploadAccess?.error ||
+            uploadAccessError?.message ||
+            "Could not prepare Final Measurement upload."
+        );
+      }
+
+      const { error: storageError } = await supabase.storage
+        .from("premier-job-documents")
+        .uploadToSignedUrl(
+          uploadAccess.path,
+          uploadAccess.token,
+          file,
+          {
+            contentType: mimeType,
+          }
+        );
+
+      if (storageError) {
+        throw storageError;
+      }
+
+      const { data: finalized, error: finalizeError } =
+        await supabase.functions.invoke("premier-job-document", {
+          body: {
+            action: "finalize",
+            accessToken,
+            jobId: selectedLiveLead.id,
+            documentType,
+            path: uploadAccess.path,
+            fileName: file.name,
+            mimeType,
+            note: cleanTitle,
+          },
+        });
+
+      if (finalizeError || finalized?.error) {
+        throw new Error(
+          finalized?.error ||
+            finalizeError?.message ||
+            "Could not attach the Final Measurement document."
+        );
+      }
+
+
+      if (replaceDocument?.id) {
+        const { data: removed, error: removeError } =
+          await supabase.functions.invoke("premier-job-document", {
+            body: {
+              action: "remove",
+              accessToken,
+              jobId: selectedLiveLead.id,
+              documentId: replaceDocument.id,
+            },
+          });
+
+        if (removeError || removed?.error || removed?.removed !== true) {
+          console.error(
+            "Premier replacement cleanup failed:",
+            removeError || removed?.error
+          );
+
+          setFinalMeasurementPackageError(
+            "The new file uploaded, but the old file could not be removed. Remove the old file manually."
+          );
+        }
+      }
+
+      setFinalMeasurementDocumentTitles((current) => ({
+        ...current,
+        [documentType]: "",
+      }));
+
+      await loadFinalMeasurementDocuments(selectedLiveLead.id);
+    } catch (error) {
+      console.error(
+        "Premier Final Measurement document upload failed:",
+        error
+      );
+
+      setFinalMeasurementPackageError(
+        error instanceof Error
+          ? error.message
+          : "Could not upload the Final Measurement document."
+      );
+    } finally {
+      setFinalMeasurementDocumentUploading(null);
+    }
+  };
+  const removeFinalMeasurementDocument = async (document: any) => {
+    if (!document?.id || !selectedLiveLead?.id) return;
+
+    const confirmed = window.confirm(
+      `Remove "${document.file_name || "this document"}"? This cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    setFinalMeasurementPackageError("");
+    setFinalMeasurementDocumentUploading("remove");
+
+    const accessToken = getPremierAccessToken();
+
+    if (!accessToken) {
+      setFinalMeasurementPackageError("Premier sales access is missing.");
+      setFinalMeasurementDocumentUploading(null);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        "premier-job-document",
+        {
+          body: {
+            action: "remove",
+            accessToken,
+            jobId: selectedLiveLead.id,
+            documentId: document.id,
+          },
+        }
+      );
+
+      if (error || data?.error || data?.removed !== true) {
+        throw new Error(
+          data?.error ||
+            error?.message ||
+            "Could not remove the Final Measurement document."
+        );
+      }
+
+      await loadFinalMeasurementDocuments(selectedLiveLead.id);
+    } catch (error) {
+      console.error(
+        "Premier Final Measurement document remove failed:",
+        error
+      );
+
+      setFinalMeasurementPackageError(
+        error instanceof Error
+          ? error.message
+          : "Could not remove the Final Measurement document."
+      );
+    } finally {
+      setFinalMeasurementDocumentUploading(null);
+    }
+  };
   const loadLiveMeasurementOpenings = async (jobId: string) => {
     const accessToken = getPremierAccessToken();
 
@@ -1079,10 +1364,21 @@ export default function PremierSalesBoard() {
     if (!selectedLiveLead?.id) {
       setLiveOpenings([]);
       setLiveMeasurementOpen(false);
+      setFinalMeasurementDocuments([]);
+      setFinalMeasurementPackageError("");
+      setFinalMeasurementPackageNote("");
       return;
     }
 
     loadLiveMeasurementOpenings(selectedLiveLead.id);
+
+    if (selectedLiveLead.current_stage === "final_measurement") {
+      void loadFinalMeasurementDocuments(selectedLiveLead.id);
+    } else {
+      setFinalMeasurementDocuments([]);
+      setFinalMeasurementPackageError("");
+      setFinalMeasurementPackageNote("");
+    }
 
     if (
       String(selectedLiveLead.next_action || "").includes(
@@ -1281,7 +1577,7 @@ export default function PremierSalesBoard() {
     setLiveMeasurementSheetUploading(true);
 
     const accessToken =
-      new URLSearchParams(window.location.search).get("access");
+      getPremierAccessToken();
 
     if (!accessToken) {
       setLiveMeasurementSheetError("Premier staff access is missing.");
@@ -1552,14 +1848,14 @@ export default function PremierSalesBoard() {
         .trim();
 
       const pair = cleaned.match(
-        /(\d+(?:\.\d+)?(?:\s+\d+\/\d+)?)\s*(?:by|buy|x|Ã—|times)\s*(\d+(?:\.\d+)?(?:\s+\d+\/\d+)?)/i
+        /(\d+(?:\.\d+)?(?:\s+\d+\/\d+)?)\s*(?:by|buy|x|times)\s*(\d+(?:\.\d+)?(?:\s+\d+\/\d+)?)/i
       );
 
       if (pair) {
         setLiveOpeningWidth(pair[1].trim());
         setLiveOpeningHeight(pair[2].trim());
         setLiveSpeechStatus(
-          `Width ${pair[1].trim()} Â· Height ${pair[2].trim()}`
+          `Width ${pair[1].trim()} - Height ${pair[2].trim()}`
         );
         return;
       }
@@ -1678,6 +1974,55 @@ export default function PremierSalesBoard() {
             >
               Sales
             </span>
+            {currentSalesStaffName === "Gino Marquez" ? (
+              <>
+                <span
+                  style={{
+                    border: "1px solid #52705c",
+                    borderRadius: 999,
+                    background: "#14251a",
+                    color: "#b7dec4",
+                    padding: "7px 11px",
+                    fontSize: 12,
+                    fontWeight: 900,
+                  }}
+                >
+                  Owner View
+                </span>
+
+                <a
+                  href="/planet/premier-window-door/board"
+                  style={{
+                    border: "1px solid #405c6d",
+                    borderRadius: 999,
+                    background: "#101820",
+                    color: "#e0e9ef",
+                    padding: "7px 11px",
+                    fontSize: 12,
+                    fontWeight: 900,
+                    textDecoration: "none",
+                  }}
+                >
+                  Office
+                </a>
+
+                <a
+                  href="/planet/premier-window-door/field"
+                  style={{
+                    border: "1px solid #405c6d",
+                    borderRadius: 999,
+                    background: "#101820",
+                    color: "#e0e9ef",
+                    padding: "7px 11px",
+                    fontSize: 12,
+                    fontWeight: 900,
+                    textDecoration: "none",
+                  }}
+                >
+                  Field Ops
+                </a>
+              </>
+            ) : null}
 
 
           </div>
@@ -1721,7 +2066,7 @@ export default function PremierSalesBoard() {
                           textTransform: "uppercase",
                         }}
                       >
-                        Beam • New Message
+                        Beam - New Message
                       </div>
 
                       <div
@@ -1863,7 +2208,7 @@ export default function PremierSalesBoard() {
                             transition: "all 160ms ease",
                           }}
                         >
-                          ðŸŽ¤
+                          Mic
                         </button>
                       </div>
 
@@ -2798,9 +3143,9 @@ export default function PremierSalesBoard() {
             }
             style={{
               minHeight: 36,
-              border: "1px solid #405c6d",
+              border: "1px solid #6f9fbd",
               borderRadius: 999,
-              background: "#16232d",
+              background: "#162630",
               color: "#d9e5ee",
               padding: "0 14px",
               fontSize: 11,
@@ -2973,7 +3318,7 @@ export default function PremierSalesBoard() {
                       }
                       style={{
                         minHeight: 44,
-                        border: "1px solid #405c6d",
+                        border: "1px solid #6f9fbd",
                         borderRadius: 10,
                         background:
                           selectedSampleLead._sampleProposalView === view
@@ -3138,7 +3483,7 @@ export default function PremierSalesBoard() {
                               }
                               style={{
                                 minHeight: 40,
-                                border: "1px solid #405c6d",
+                                border: "1px solid #6f9fbd",
                                 borderRadius: 9,
                                 background: "#0d1318",
                                 color: "#d9e5ee",
@@ -3212,7 +3557,7 @@ export default function PremierSalesBoard() {
                               }
                               style={{
                                 minHeight: 40,
-                                border: "1px solid #405c6d",
+                                border: "1px solid #6f9fbd",
                                 borderRadius: 9,
                                 background: "#0d1318",
                                 color: "#d9e5ee",
@@ -3415,7 +3760,7 @@ export default function PremierSalesBoard() {
                       }
                       style={{
                         minHeight: 44,
-                        border: "1px solid #405c6d",
+                        border: "1px solid #6f9fbd",
                         borderRadius: 10,
                         background:
                           selectedSampleLead._sampleMeasurementView === view
@@ -3496,21 +3841,21 @@ export default function PremierSalesBoard() {
                             number: "01",
                             type: "Window",
                             location: "Living Room",
-                            size: '44" Ã— 72 1/2"',
+                            size: '44" x 72 1/2"',
                             proof: "Photo attached",
                           },
                           {
                             number: "02",
                             type: "Window",
                             location: "Dining Room",
-                            size: '43" Ã— 72"',
+                            size: '43" x 72"',
                             proof: "Photo attached",
                           },
                           {
                             number: "03",
                             type: "Sliding Door",
                             location: "Rear Patio",
-                            size: '72" Ã— 80"',
+                            size: '72" x 80"',
                             proof: "Needs photo",
                           },
                         ].map((opening) => (
@@ -3541,7 +3886,7 @@ export default function PremierSalesBoard() {
                                   fontSize: 11,
                                 }}
                               >
-                                {opening.type} Â· {opening.location}
+                                {opening.type} - {opening.location}
                               </strong>
 
                               <span
@@ -3689,9 +4034,9 @@ export default function PremierSalesBoard() {
                         </strong>
 
                         {[
-                          ["Opening 01 Â· Living Room", "1 photo"],
-                          ["Opening 02 Â· Dining Room", "1 photo"],
-                          ["Opening 03 Â· Rear Patio", "Add photo"],
+                          ["Opening 01 - Living Room", "1 photo"],
+                          ["Opening 02 - Dining Room", "1 photo"],
+                          ["Opening 03 - Rear Patio", "Add photo"],
                         ].map(([opening, status]) => (
                           <div
                             key={opening}
@@ -3766,11 +4111,11 @@ export default function PremierSalesBoard() {
                             marginBottom: 10,
                           }}
                         >
-                          <span>✓ 3 openings recorded</span>
-                          <span>✓ Dimensions saved</span>
-                          <span>✓ Notes attached</span>
+                          <span>OK - 3 openings recorded</span>
+                          <span>OK - Dimensions saved</span>
+                          <span>OK - Notes attached</span>
                           <span style={{ color: "#d8b267" }}>
-                            • 1 opening still needs a photo
+                            - 1 opening still needs a photo
                           </span>
                         </div>
 
@@ -3830,7 +4175,7 @@ export default function PremierSalesBoard() {
                       }
                       style={{
                         minHeight: 44,
-                        border: "1px solid #405c6d",
+                        border: "1px solid #6f9fbd",
                         borderRadius: 10,
                         background:
                           selectedSampleLead._sampleLeadView === view
@@ -3908,7 +4253,7 @@ export default function PremierSalesBoard() {
                               }
                               style={{
                                 minHeight: 40,
-                                border: "1px solid #405c6d",
+                                border: "1px solid #6f9fbd",
                                 borderRadius: 9,
                                 background: "#0d1318",
                                 color: "#d9e5ee",
@@ -3951,7 +4296,7 @@ export default function PremierSalesBoard() {
 
                         <textarea
                           rows={3}
-                          defaultValue="Hi Carlos, this is Gino with Premier Window & Door. Iâ€™m reaching out to schedule a time to take a look at your project."
+                          defaultValue="Hi Carlos, this is Gino with Premier Window & Door. I'm reaching out to schedule a time to take a look at your project."
                           style={{
                             width: "100%",
                             boxSizing: "border-box",
@@ -4159,7 +4504,7 @@ export default function PremierSalesBoard() {
                       }
                       style={{
                         minHeight: 44,
-                        border: "1px solid #405c6d",
+                        border: "1px solid #6f9fbd",
                         borderRadius: 10,
                         background:
                           selectedSampleLead._sampleFollowUpView === view
@@ -4237,7 +4582,7 @@ export default function PremierSalesBoard() {
                               }
                               style={{
                                 minHeight: 40,
-                                border: "1px solid #405c6d",
+                                border: "1px solid #6f9fbd",
                                 borderRadius: 9,
                                 background: "#0d1318",
                                 color: "#d9e5ee",
@@ -4656,7 +5001,7 @@ export default function PremierSalesBoard() {
               top: "50%",
               left: "50%",
               transform: "translate(-50%, -50%)",
-              width: "min(760px, calc(100% - 28px))",
+              width: "min(980px, calc(100% - 28px))",
               maxHeight: "84vh",
               overflowY: "auto",
               overscrollBehavior: "contain",
@@ -4721,7 +5066,7 @@ export default function PremierSalesBoard() {
               <span
                 style={{
                   border: "1px solid #31495a",
-                  background: "#16232d",
+                  background: "#162630",
                   borderRadius: 999,
                   padding: "6px 10px",
                   color: "#d9e5ee",
@@ -4839,7 +5184,7 @@ export default function PremierSalesBoard() {
                       : "none",
                   }}
                 >
-                  ðŸŽ¤
+                  Mic
                 </button>
               </div>
 
@@ -4918,16 +5263,18 @@ export default function PremierSalesBoard() {
                 disabled={!selectedLiveLead.phone}
                 style={{
                   minHeight: 44,
-                  border: "1px solid #405c6d",
+                  border: "1px solid #6f9fbd",
                   borderRadius: 10,
-                  background: "#16232d",
-                  color: "#f5f7f8",
+                  background: "#162630",
+                  color: "#ffffff",
                   fontWeight: 900,
                   fontSize: 13,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   cursor: selectedLiveLead.phone ? "pointer" : "not-allowed",
+                  boxShadow:
+                    "0 0 0 1px rgba(111,159,189,0.10), 0 0 12px rgba(111,159,189,0.08)",
                 }}
               >
                 Call Customer
@@ -4948,16 +5295,18 @@ export default function PremierSalesBoard() {
                 }}
                 style={{
                   minHeight: 44,
-                  border: "1px solid #405c6d",
+                  border: "1px solid #6f9fbd",
                   borderRadius: 10,
-                  background: "#16232d",
-                  color: "#f5f7f8",
+                  background: "#162630",
+                  color: "#ffffff",
                   fontWeight: 900,
                   fontSize: 13,
                   cursor: "pointer",
+                  boxShadow:
+                    "0 0 0 1px rgba(111,159,189,0.10), 0 0 12px rgba(111,159,189,0.08)",
                 }}
               >
-                Directions
+                Navigation
               </button>
 
               {selectedLiveLead.current_stage === "measurement" ? (
@@ -5459,7 +5808,7 @@ export default function PremierSalesBoard() {
                           marginBottom: 5,
                         }}
                       >
-                        Option 1 â€” Enter Openings Here
+                        Option 1 - Enter Openings Here
                       </strong>
 
                       <div
@@ -5495,7 +5844,7 @@ export default function PremierSalesBoard() {
                       >
                         {liveMeasurementSheetUploading
                           ? "Uploading Measurement Sheet..."
-                          : "ðŸ“Ž Option 2 â€” Upload Measurement Sheet / PDF"}
+                          : "Option 2 - Upload Measurement Sheet / PDF"}
 
                         <input
                           type="file"
@@ -5519,7 +5868,7 @@ export default function PremierSalesBoard() {
                             marginTop: 7,
                           }}
                         >
-                          Measurement sheet attached to this job âœ“
+                          Measurement sheet attached to this job - OK
                         </div>
                       ) : null}
 
@@ -5582,7 +5931,7 @@ export default function PremierSalesBoard() {
                         >
                           <div>
                             <strong style={{ fontSize: 13 }}>
-                              Opening {opening.opening_number} Â·{" "}
+                              Opening {opening.opening_number} -{" "}
                               {opening.opening_type}
                             </strong>
 
@@ -5611,7 +5960,7 @@ export default function PremierSalesBoard() {
                                 whiteSpace: "nowrap",
                               }}
                             >
-                              {opening.width_text} Ã— {opening.height_text}
+                              {opening.width_text} x {opening.height_text}
                             </strong>
 
                             <button
@@ -5714,7 +6063,7 @@ export default function PremierSalesBoard() {
                         >
                           {uploadingLiveOpeningPhotoId === opening.id
                             ? "Uploading..."
-                            : "ðŸ“· Add Photo"}
+                            : "Add Photo"}
 
                           <input
                             type="file"
@@ -5968,8 +6317,8 @@ export default function PremierSalesBoard() {
                     }}
                   >
                     {liveSpeechListening === "measurement"
-                      ? "ðŸŽ¤ Listening..."
-                      : "ðŸŽ¤ Speak Measurement"}
+                      ? "Mic Listening..."
+                      : "Mic Speak Measurement"}
                   </button>
 
                   {liveSpeechStatus ? (
@@ -6040,8 +6389,8 @@ export default function PremierSalesBoard() {
                     }}
                   >
                     {liveSpeechListening === "notes"
-                      ? "ðŸŽ¤ Listening... Tap to Stop"
-                      : "ðŸŽ¤ Speak Notes"}
+                      ? "Mic Listening... Tap to Stop"
+                      : "Mic Speak Notes"}
                   </button>
 
                   <button
@@ -6159,7 +6508,7 @@ export default function PremierSalesBoard() {
                   >
                     {savingLiveLeadAction
                       ? "Saving..."
-                      : "Measurements Complete â†’ Move to Proposal"}
+                      : "Measurements Complete -> Move to Proposal"}
                   </button>
                 ) : null}
 
@@ -6252,27 +6601,919 @@ export default function PremierSalesBoard() {
             </div>
 
             {selectedLiveLead.current_stage === "final_measurement" ? (
-              <button
-                type="button"
-                disabled={savingLiveLeadAction}
-                onClick={completeLiveFinalMeasurement}
+              <div
                 style={{
-                  width: "100%",
-                  minHeight: 48,
-                  marginTop: 12,
-                  border: "1px solid #557c64",
-                  borderRadius: 10,
-                  background: "#14271c",
-                  color: "#b7dec4",
-                  fontWeight: 900,
-                  fontSize: 14,
-                  cursor: savingLiveLeadAction ? "wait" : "pointer",
+                  marginTop: 16,
+                  border: "1px solid #31495a",
+                  borderRadius: 14,
+                  background: "#0f171d",
+                  padding: 18,
                 }}
               >
-                {savingLiveLeadAction
-                  ? "Completing..."
-                  : "Complete Final Measurement"}
-              </button>
+                <div
+                  style={{
+                    color: "#9db7ca",
+                    fontSize: 12,
+                    fontWeight: 900,
+                    letterSpacing: 0.8,
+                    textTransform: "uppercase",
+                    marginBottom: 5,
+                  }}
+                >
+                  Final Measurement Package
+                </div>
+
+                <div
+                  style={{
+                    color: "#ffffff",
+                    fontSize: 20,
+                    fontWeight: 900,
+                    lineHeight: 1.25,
+                    marginBottom: 7,
+                  }}
+                >
+                  Before sending this job to RJ
+                </div>
+
+                <div
+                  style={{
+                    color: "#b6c1c8",
+                    fontSize: 14,
+                    lineHeight: 1.55,
+                    marginBottom: 16,
+                  }}
+                >
+                  Complete the two required items below. When both are attached,
+                  the package is ready for Field Operations.
+                </div>
+
+                <label
+                  style={{
+                    display: "grid",
+                    gap: 7,
+                    color: "#c3cdd3",
+                    fontSize: 13,
+                    fontWeight: 900,
+                    marginBottom: 18,
+                  }}
+                >
+                  Handoff Note for RJ
+                  <textarea
+                    value={finalMeasurementPackageNote}
+                    onChange={(event) =>
+                      setFinalMeasurementPackageNote(event.target.value)
+                    }
+                    placeholder="Anything RJ needs to know before installation planning..."
+                    rows={3}
+                    style={{
+                      width: "100%",
+                      minHeight: 82,
+                      border: "1px solid #405c6d",
+                      borderRadius: 10,
+                      background: "#0d141a",
+                      color: "#ffffff",
+                      padding: 12,
+                      fontSize: 14,
+                      lineHeight: 1.45,
+                      resize: "vertical",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </label>
+
+                <div
+                  style={{
+                    color: "#f3f6f8",
+                    fontSize: 14,
+                    fontWeight: 900,
+                    textTransform: "uppercase",
+                    letterSpacing: 0.7,
+                    marginBottom: 10,
+                  }}
+                >
+                  Required Before Handoff
+                </div>
+
+                {[
+                  {
+                    number: "1",
+                    label: "Final Measurement",
+                    type: "Final Measurement",
+                    instruction:
+                      "Attach the completed final measurement after every opening has been verified.",
+                    placeholder:
+                      "Example: Final measurements - all openings verified",
+                  },
+                  {
+                    number: "2",
+                    label: "Floor Plan",
+                    type: "Floor Plan",
+                    instruction:
+                      "Attach the floor plan or layout RJ will use for installation planning.",
+                    placeholder:
+                      "Example: Main floor plan - approved layout",
+                  },
+                ].map((item) => {
+                  const documentsForType = finalMeasurementDocuments.filter(
+                    (document: any) =>
+                      document.document_type === item.type
+                  );
+
+                  const attached = documentsForType.length > 0;
+
+                  return (
+                    <div
+                      key={item.type}
+                      style={{
+                        border: attached
+                          ? "1px solid #557c64"
+                          : "1px solid #53606a",
+                        borderRadius: 12,
+                        background: attached ? "#111c18" : "#111820",
+                        padding: 15,
+                        marginBottom: 12,
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          justifyContent: "space-between",
+                          gap: 14,
+                          marginBottom: 6,
+                        }}
+                      >
+                        <div>
+                          <div
+                            style={{
+                              color: "#ffffff",
+                              fontSize: 17,
+                              fontWeight: 900,
+                              lineHeight: 1.3,
+                            }}
+                          >
+                            {item.number}. {item.label}
+                          </div>
+
+                          <div
+                            style={{
+                              color: "#aeb9c0",
+                              fontSize: 13,
+                              lineHeight: 1.5,
+                              marginTop: 4,
+                            }}
+                          >
+                            {item.instruction}
+                          </div>
+                        </div>
+
+                        <div
+                          style={{
+                            color: attached ? "#b7dec4" : "#e0b96d",
+                            fontSize: 12,
+                            fontWeight: 900,
+                            textTransform: "uppercase",
+                            flexShrink: 0,
+                          }}
+                        >
+                          {attached ? "Attached" : "Required"}
+                        </div>
+                      </div>
+
+                      {attached ? (
+                        <div
+                          style={{
+                            display: "grid",
+                            gap: 10,
+                            marginTop: 12,
+                          }}
+                        >
+                          {documentsForType.map((document: any) => (
+                            <div
+                              key={document.id}
+                              style={{
+                                border: "1px solid #26323a",
+                                borderRadius: 10,
+                                background: "#111820",
+                                padding: 13,
+                                display: "grid",
+                                gridTemplateColumns:
+                                  document.url
+                                    ? "190px minmax(0, 1fr)"
+                                    : "1fr",
+                                gap: 16,
+                                alignItems: "center",
+                              }}
+                            >
+                              {document.url ? (
+                                <div>
+                                  <a
+                                    href={document.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    title={`Open ${document.file_name || item.label}`}
+                                    style={{
+                                      display: "block",
+                                      height: 150,
+                                      border: "1px solid #344650",
+                                      borderRadius: 9,
+                                      overflow: "hidden",
+                                      background: "#ffffff",
+                                      textDecoration: "none",
+                                    }}
+                                  >
+                                    <iframe
+                                      src={`${document.url}#page=1&view=FitH&toolbar=0&navpanes=0&scrollbar=0`}
+                                      title={`${item.label} preview`}
+                                      style={{
+                                        width: 220,
+                                        height: 180,
+                                        marginLeft: -8,
+                                        marginTop: -6,
+                                        border: 0,
+                                        display: "block",
+                                        pointerEvents: "none",
+                                        background: "#ffffff",
+                                      }}
+                                    />
+                                  </a>
+
+                                  <div
+                                    style={{
+                                      color: "#8fa9bc",
+                                      fontSize: 11,
+                                      fontWeight: 800,
+                                      textAlign: "center",
+                                      marginTop: 6,
+                                    }}
+                                  >
+                                    Click preview to open
+                                  </div>
+                                </div>
+                              ) : null}
+
+                              <div>
+                                <div
+                                  style={{
+                                    color: "#f3f6f8",
+                                    fontSize: 14,
+                                    fontWeight: 900,
+                                  }}
+                                >
+                                  {document.note || item.label}
+                                </div>
+
+                                <div
+                                  style={{
+                                    color: "#9ca8b2",
+                                    fontSize: 13,
+                                    marginTop: 4,
+                                    overflowWrap: "anywhere",
+                                  }}
+                                >
+                                  {document.file_name || "Attached file"}
+                                </div>
+
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    flexWrap: "wrap",
+                                    gap: 9,
+                                    marginTop: 13,
+                                  }}
+                                >
+                                  <label
+                                    style={{
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      minHeight: 40,
+                                      padding: "0 17px",
+                                      borderRadius: 8,
+                                      border: "1px solid #58788e",
+                                      background: "#1a2a36",
+                                      color: "#ffffff",
+                                      fontSize: 13,
+                                      fontWeight: 900,
+                                      cursor: finalMeasurementDocumentUploading
+                                        ? "wait"
+                                        : "pointer",
+                                    }}
+                                  >
+                                    {finalMeasurementDocumentUploading ===
+                                    item.type
+                                      ? "Replacing..."
+                                      : "Replace"}
+
+                                    <input
+                                      type="file"
+                                      accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,application/pdf,image/jpeg,image/png,image/webp"
+                                      disabled={Boolean(
+                                        finalMeasurementDocumentUploading
+                                      )}
+                                      onChange={(event) => {
+                                        const file =
+                                          event.target.files?.[0] ?? null;
+
+                                        void uploadFinalMeasurementDocument(
+                                          file,
+                                          item.type,
+                                          document.note || item.placeholder,
+                                          document
+                                        );
+
+                                        event.currentTarget.value = "";
+                                      }}
+                                      style={{ display: "none" }}
+                                    />
+                                  </label>
+
+                                  <button
+                                    type="button"
+                                    disabled={Boolean(
+                                      finalMeasurementDocumentUploading
+                                    )}
+                                    onClick={() =>
+                                      void removeFinalMeasurementDocument(document)
+                                    }
+                                    style={{
+                                      minHeight: 40,
+                                      padding: "0 17px",
+                                      borderRadius: 8,
+                                      border: "1px solid #704949",
+                                      background: "#211515",
+                                      color: "#e3aaaa",
+                                      fontSize: 13,
+                                      fontWeight: 900,
+                                      cursor: finalMeasurementDocumentUploading
+                                        ? "wait"
+                                        : "pointer",
+                                    }}
+                                  >
+                                    Remove
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div
+                          style={{
+                            borderTop: "1px solid #26323a",
+                            marginTop: 12,
+                            paddingTop: 12,
+                          }}
+                        >
+                          <input
+                            type="text"
+                            value={
+                              finalMeasurementDocumentTitles[item.type] || ""
+                            }
+                            onChange={(event) =>
+                              setFinalMeasurementDocumentTitles((current) => ({
+                                ...current,
+                                [item.type]: event.target.value,
+                              }))
+                            }
+                            placeholder={item.placeholder}
+                            style={{
+                              width: "100%",
+                              minHeight: 44,
+                              boxSizing: "border-box",
+                              border: "1px solid #405c6d",
+                              borderRadius: 9,
+                              background: "#0d141a",
+                              color: "#ffffff",
+                              padding: "10px 12px",
+                              fontSize: 14,
+                              marginBottom: 9,
+                            }}
+                          />
+
+                          <label
+                            style={{
+                              width: "100%",
+                              minHeight: 46,
+                              boxSizing: "border-box",
+                              borderRadius: 9,
+                              border: "1px solid #58788e",
+                              background: "#1a2a36",
+                              color: "#ffffff",
+                              fontSize: 14,
+                              fontWeight: 900,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              cursor: finalMeasurementDocumentUploading
+                                ? "wait"
+                                : "pointer",
+                            }}
+                          >
+                            {finalMeasurementDocumentUploading === item.type
+                              ? "Uploading..."
+                              : `Upload ${item.label}`}
+
+                            <input
+                              type="file"
+                              accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,application/pdf,image/jpeg,image/png,image/webp"
+                              disabled={Boolean(
+                                finalMeasurementDocumentUploading
+                              )}
+                              onChange={(event) => {
+                                const file =
+                                  event.target.files?.[0] ?? null;
+
+                                void uploadFinalMeasurementDocument(
+                                  file,
+                                  item.type,
+                                  finalMeasurementDocumentTitles[item.type] || ""
+                                );
+
+                                event.currentTarget.value = "";
+                              }}
+                              style={{ display: "none" }}
+                            />
+                          </label>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+
+                <div
+                  style={{
+                    color: "#f3f6f8",
+                    fontSize: 14,
+                    fontWeight: 900,
+                    textTransform: "uppercase",
+                    letterSpacing: 0.7,
+                    marginTop: 20,
+                    marginBottom: 6,
+                  }}
+                >
+                  Optional Supporting Files
+                </div>
+
+                <div
+                  style={{
+                    color: "#9ca8b2",
+                    fontSize: 13,
+                    lineHeight: 1.5,
+                    marginBottom: 10,
+                  }}
+                >
+                  Add these only when RJ needs more context for the job.
+                </div>
+
+                {[
+                  {
+                    label: "Site Photos",
+                    type: "Site Photo",
+                    placeholder: "Example: Kitchen opening - exterior view",
+                  },
+                  {
+                    label: "Other Documents",
+                    type: "Final Measurement Document",
+                    placeholder:
+                      "Example: HOA approval or manufacturer specification",
+                  },
+                ].map((item) => {
+                  const documentsForType = finalMeasurementDocuments.filter(
+                    (document: any) =>
+                      document.document_type === item.type
+                  );
+
+                  return (
+                    <div
+                      key={item.type}
+                      style={{
+                        border: "1px solid #26323a",
+                        borderRadius: 10,
+                        background: "#111820",
+                        padding: 13,
+                        marginBottom: 10,
+                      }}
+                    >
+                      <div
+                        style={{
+                          color: "#f3f6f8",
+                          fontSize: 14,
+                          fontWeight: 900,
+                          marginBottom: 8,
+                        }}
+                      >
+                        {item.label}
+                      </div>
+
+                      {documentsForType.length > 0 ? (
+                        <div
+                          style={{
+                            display: "grid",
+                            gap: 10,
+                            marginBottom: 10,
+                          }}
+                        >
+                          {documentsForType.map((document: any) => (
+                            <div
+                              key={document.id}
+                              style={{
+                                border: "1px solid #26323a",
+                                borderRadius: 9,
+                                background: "#0d141a",
+                                padding: 11,
+                                display: "grid",
+                                gridTemplateColumns: document.url
+                                  ? "190px minmax(0, 1fr)"
+                                  : "1fr",
+                                gap: 16,
+                                alignItems: "center",
+                              }}
+                            >
+                              {document.url ? (
+                                <div>
+                                  <a
+                                    href={document.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    title={`Open ${document.file_name || item.label}`}
+                                    style={{
+                                      display: "block",
+                                      height: 150,
+                                      border: "1px solid #344650",
+                                      borderRadius: 9,
+                                      overflow: "hidden",
+                                      background: "#ffffff",
+                                      textDecoration: "none",
+                                    }}
+                                  >
+                                    {item.type === "Site Photo" ? (
+                                      <img
+                                        src={document.url}
+                                        alt={
+                                          document.note ||
+                                          document.file_name ||
+                                          "Site photo"
+                                        }
+                                        style={{
+                                          display: "block",
+                                          width: "100%",
+                                          height: "100%",
+                                          objectFit: "cover",
+                                        }}
+                                      />
+                                    ) : (
+                                      <iframe
+                                        src={`${document.url}#page=1&view=FitH&toolbar=0&navpanes=0&scrollbar=0`}
+                                        title={`${item.label} preview`}
+                                        style={{
+                                          width: 220,
+                                          height: 180,
+                                          marginLeft: -8,
+                                          marginTop: -6,
+                                          border: 0,
+                                          display: "block",
+                                          pointerEvents: "none",
+                                          background: "#ffffff",
+                                        }}
+                                      />
+                                    )}
+                                  </a>
+
+                                  <div
+                                    style={{
+                                      color: "#8fa9bc",
+                                      fontSize: 11,
+                                      fontWeight: 800,
+                                      textAlign: "center",
+                                      marginTop: 6,
+                                    }}
+                                  >
+                                    Click preview to open
+                                  </div>
+                                </div>
+                              ) : null}
+
+                              <div>
+                                <div
+                                  style={{
+                                    color: "#f3f6f8",
+                                    fontSize: 13,
+                                    fontWeight: 900,
+                                  }}
+                                >
+                                  {document.note || item.label}
+                                </div>
+
+                                <div
+                                  style={{
+                                    color: "#9ca8b2",
+                                    fontSize: 12,
+                                    marginTop: 3,
+                                    overflowWrap: "anywhere",
+                                  }}
+                                >
+                                  {document.file_name || "Attached file"}
+                                </div>
+
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    flexWrap: "wrap",
+                                    gap: 9,
+                                    marginTop: 12,
+                                  }}
+                                >
+                                  <label
+                                    style={{
+                                      minHeight: 38,
+                                      padding: "0 14px",
+                                      borderRadius: 8,
+                                      border: "1px solid #58788e",
+                                      background: "#1a2a36",
+                                      color: "#ffffff",
+                                      fontSize: 12,
+                                      fontWeight: 900,
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      cursor: finalMeasurementDocumentUploading
+                                        ? "wait"
+                                        : "pointer",
+                                    }}
+                                  >
+                                    {finalMeasurementDocumentUploading ===
+                                    item.type
+                                      ? "Replacing..."
+                                      : "Replace"}
+
+                                    <input
+                                      type="file"
+                                      accept={
+                                        item.type === "Site Photo"
+                                          ? ".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                                          : ".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,application/pdf,image/jpeg,image/png,image/webp"
+                                      }
+                                      disabled={Boolean(
+                                        finalMeasurementDocumentUploading
+                                      )}
+                                      onChange={(event) => {
+                                        const file =
+                                          event.target.files?.[0] ?? null;
+
+                                        void uploadFinalMeasurementDocument(
+                                          file,
+                                          item.type,
+                                          document.note || item.placeholder,
+                                          document
+                                        );
+
+                                        event.currentTarget.value = "";
+                                      }}
+                                      style={{ display: "none" }}
+                                    />
+                                  </label>
+
+                                  <button
+                                    type="button"
+                                    disabled={Boolean(
+                                      finalMeasurementDocumentUploading
+                                    )}
+                                    onClick={() =>
+                                      void removeFinalMeasurementDocument(document)
+                                    }
+                                    style={{
+                                      minHeight: 38,
+                                      padding: "0 14px",
+                                      borderRadius: 8,
+                                      border: "1px solid #704949",
+                                      background: "#211515",
+                                      color: "#e3aaaa",
+                                      fontSize: 12,
+                                      fontWeight: 900,
+                                      cursor: finalMeasurementDocumentUploading
+                                        ? "wait"
+                                        : "pointer",
+                                    }}
+                                  >
+                                    Remove
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : null}
+
+                      <input
+                        type="text"
+                        value={
+                          finalMeasurementDocumentTitles[item.type] || ""
+                        }
+                        onChange={(event) =>
+                          setFinalMeasurementDocumentTitles((current) => ({
+                            ...current,
+                            [item.type]: event.target.value,
+                          }))
+                        }
+                        placeholder={item.placeholder}
+                        style={{
+                          width: "100%",
+                          minHeight: 42,
+                          boxSizing: "border-box",
+                          border: "1px solid #405c6d",
+                          borderRadius: 8,
+                          background: "#0d141a",
+                          color: "#ffffff",
+                          padding: "9px 11px",
+                          fontSize: 13,
+                          marginBottom: 8,
+                        }}
+                      />
+
+                      <label
+                        style={{
+                          width: "100%",
+                          minHeight: 42,
+                          boxSizing: "border-box",
+                          borderRadius: 8,
+                          border: "1px solid #58788e",
+                          background: "#1a2a36",
+                          color: "#ffffff",
+                          fontSize: 13,
+                          fontWeight: 900,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          cursor: finalMeasurementDocumentUploading
+                            ? "wait"
+                            : "pointer",
+                        }}
+                      >
+                        {finalMeasurementDocumentUploading === item.type
+                          ? "Uploading..."
+                          : `Add ${item.label}`}
+
+                        <input
+                          type="file"
+                          accept={
+                            item.type === "Site Photo"
+                              ? ".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                              : ".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,application/pdf,image/jpeg,image/png,image/webp"
+                          }
+                          disabled={Boolean(
+                            finalMeasurementDocumentUploading
+                          )}
+                          onChange={(event) => {
+                            const file =
+                              event.target.files?.[0] ?? null;
+
+                            void uploadFinalMeasurementDocument(
+                              file,
+                              item.type,
+                              finalMeasurementDocumentTitles[item.type] || ""
+                            );
+
+                            event.currentTarget.value = "";
+                          }}
+                          style={{ display: "none" }}
+                        />
+                      </label>
+                    </div>
+                  );
+                })}
+
+                {finalMeasurementDocumentsLoading ? (
+                  <div
+                    style={{
+                      color: "#9ca8b2",
+                      fontSize: 13,
+                      marginBottom: 12,
+                    }}
+                  >
+                    Loading package files...
+                  </div>
+                ) : null}
+
+                {finalMeasurementPackageError ? (
+                  <div
+                    style={{
+                      color: "#e4a7a7",
+                      fontSize: 13,
+                      lineHeight: 1.4,
+                      marginBottom: 12,
+                    }}
+                  >
+                    {finalMeasurementPackageError}
+                  </div>
+                ) : null}
+
+                <div
+                  style={{
+                    border: "1px solid #557c64",
+                    borderRadius: 12,
+                    background: "#111c18",
+                    padding: 14,
+                    marginTop: 18,
+                    marginBottom: 12,
+                  }}
+                >
+                  <div
+                    style={{
+                      color: "#b7dec4",
+                      fontSize: 14,
+                      fontWeight: 900,
+                      marginBottom: 8,
+                    }}
+                  >
+                    Ready for RJ
+                  </div>
+
+                  <div
+                    style={{
+                      display: "grid",
+                      gap: 6,
+                      color: "#d7dde2",
+                      fontSize: 13,
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    <div>
+                      {finalMeasurementDocuments.some(
+                        (document: any) =>
+                          document.document_type === "Final Measurement"
+                      )
+                        ? "OK - Final Measurement attached"
+                        : "Required - Final Measurement"}
+                    </div>
+
+                    <div>
+                      {finalMeasurementDocuments.some(
+                        (document: any) =>
+                          document.document_type === "Floor Plan"
+                      )
+                        ? "OK - Floor Plan attached"
+                        : "Required - Floor Plan"}
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  disabled={
+                    savingLiveLeadAction ||
+                    Boolean(finalMeasurementDocumentUploading) ||
+                    !finalMeasurementDocuments.some(
+                      (document: any) =>
+                        document.document_type === "Final Measurement"
+                    ) ||
+                    !finalMeasurementDocuments.some(
+                      (document: any) =>
+                        document.document_type === "Floor Plan"
+                    )
+                  }
+                  onClick={completeLiveFinalMeasurement}
+                  style={{
+                    width: "100%",
+                    minHeight: 52,
+                    border: "1px solid #557c64",
+                    borderRadius: 10,
+                    background:
+                      finalMeasurementDocuments.some(
+                        (document: any) =>
+                          document.document_type === "Final Measurement"
+                      ) &&
+                      finalMeasurementDocuments.some(
+                        (document: any) =>
+                          document.document_type === "Floor Plan"
+                      )
+                        ? "#183522"
+                        : "#172019",
+                    color:
+                      finalMeasurementDocuments.some(
+                        (document: any) =>
+                          document.document_type === "Final Measurement"
+                      ) &&
+                      finalMeasurementDocuments.some(
+                        (document: any) =>
+                          document.document_type === "Floor Plan"
+                      )
+                        ? "#d8f1df"
+                        : "#6d7f72",
+                    fontWeight: 900,
+                    fontSize: 15,
+                    cursor:
+                      savingLiveLeadAction ||
+                      finalMeasurementDocumentUploading
+                        ? "default"
+                        : "pointer",
+                  }}
+                >
+                  {savingLiveLeadAction
+                    ? "Sending to RJ..."
+                    : "Send Complete Package to RJ"}
+                </button>
+              </div>
             ) : null}
 
                         <button
@@ -6608,7 +7849,7 @@ export default function PremierSalesBoard() {
                       >
                         <div>
                           <strong style={{ fontSize: 13 }}>
-                            {card.opening} Â· {card.location}
+                            {card.opening} - {card.location}
                           </strong>
 
                           <div
@@ -6650,7 +7891,7 @@ export default function PremierSalesBoard() {
                           fontWeight: 900,
                         }}
                       >
-                        {card.width} Ã— {card.height}
+                        {card.width} x {card.height}
                       </div>
 
                       {card.notes ? (
@@ -6696,13 +7937,13 @@ export default function PremierSalesBoard() {
                       <input
                         value={beamOpening}
                         onChange={(event) => setBeamOpening(event.target.value)}
-                        placeholder="Opening number â€” e.g. Window 03"
+                        placeholder="Opening number - e.g. Window 03"
                       />
 
                       <input
                         value={beamLocation}
                         onChange={(event) => setBeamLocation(event.target.value)}
-                        placeholder="Location â€” e.g. Master Bedroom"
+                        placeholder="Location - e.g. Master Bedroom"
                       />
 
                       <select
@@ -6838,7 +8079,7 @@ export default function PremierSalesBoard() {
                             }));
 
                             addUpdate(
-                              `Beam Card added: ${beamOpening.trim()} Â· ${beamLocation.trim()} Â· ${beamWidth.trim()} x ${beamHeight.trim()}.`
+                              `Beam Card added: ${beamOpening.trim()} - ${beamLocation.trim()} - ${beamWidth.trim()} x ${beamHeight.trim()}.`
                             );
 
                             setBeamFormOpen(false);
@@ -7027,6 +8268,20 @@ export default function PremierSalesBoard() {
           font: inherit;
         }
 
+        input:focus,
+        input:focus-visible,
+        select:focus,
+        select:focus-visible,
+        textarea:focus,
+        textarea:focus-visible {
+          outline: none !important;
+          outline-color: transparent !important;
+          border-color: #6f9fbd !important;
+          box-shadow:
+            0 0 0 2px rgba(111, 159, 189, 0.22),
+            0 0 14px rgba(111, 159, 189, 0.12) !important;
+        }
+
         button:disabled {
           opacity: 0.45;
           cursor: not-allowed;
@@ -7048,20 +8303,6 @@ export default function PremierSalesBoard() {
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

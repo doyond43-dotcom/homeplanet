@@ -148,6 +148,35 @@ function Section({
   );
 }
 
+function getPremierInstallerAccessToken() {
+  const readStoredToken = (storage: Storage) => {
+    try {
+      const raw = storage.getItem("premier_staff_session");
+      if (!raw) return null;
+
+      const session = JSON.parse(raw);
+
+      if (
+        session?.expiresAt &&
+        Date.now() >= new Date(session.expiresAt).getTime()
+      ) {
+        storage.removeItem("premier_staff_session");
+        return null;
+      }
+
+      const token = String(session?.accessToken || "").trim();
+      return token || null;
+    } catch {
+      return null;
+    }
+  };
+
+  return (
+    readStoredToken(window.localStorage) ||
+    readStoredToken(window.sessionStorage)
+  );
+}
+
 function InstallerBeamCard({ jobId, defaultRecipient = "Gino Marquez" }: { jobId: string; defaultRecipient?: string }) {
   const [messages, setMessages] = useState<any[]>([]);
   const [recipient, setRecipient] =
@@ -163,7 +192,7 @@ function InstallerBeamCard({ jobId, defaultRecipient = "Gino Marquez" }: { jobId
 
   const loadMessages = async () => {
     const accessToken =
-      new URLSearchParams(window.location.search).get("access");
+      getPremierInstallerAccessToken();
 
     if (!accessToken) {
       setError("Premier staff access is missing.");
@@ -202,7 +231,7 @@ function InstallerBeamCard({ jobId, defaultRecipient = "Gino Marquez" }: { jobId
     if (!message || sending) return;
 
     const accessToken =
-      new URLSearchParams(window.location.search).get("access");
+      getPremierInstallerAccessToken();
 
     if (!accessToken) {
       setError("Premier staff access is missing.");
@@ -378,6 +407,7 @@ function InstallerBeamCard({ jobId, defaultRecipient = "Gino Marquez" }: { jobId
         )}
       </div>
 
+      
       <select
         value={recipient}
         onChange={(event) => setRecipient(event.target.value)}
@@ -518,7 +548,9 @@ function InstallerBeamCard({ jobId, defaultRecipient = "Gino Marquez" }: { jobId
 
 function getPremierInstallerGreeting() {
   try {
-    const rawSession = window.sessionStorage.getItem("premier_staff_session");
+    const rawSession =
+      window.localStorage.getItem("premier_staff_session") ||
+      window.sessionStorage.getItem("premier_staff_session");
     if (!rawSession) return "";
 
     const session = JSON.parse(rawSession);
@@ -536,8 +568,32 @@ function getPremierInstallerGreeting() {
   }
 }
 
+function hasPremierInstallerAccess() {
+  try {
+    const rawSession =
+      window.localStorage.getItem("premier_staff_session") ||
+      window.sessionStorage.getItem("premier_staff_session");
+
+    if (!rawSession) return false;
+
+    const session = JSON.parse(rawSession);
+    const roles = Array.isArray(session?.roles) ? session.roles : [];
+
+    return roles.includes("installer");
+  } catch {
+    return false;
+  }
+}
+
 export default function PremierInstallerTechBoard() {
   const installerGreeting = getPremierInstallerGreeting();
+  const installerAccessAllowed = hasPremierInstallerAccess();
+
+  useEffect(() => {
+    if (!installerAccessAllowed) {
+      window.location.replace("/planet/premier-window-door/staff");
+    }
+  }, [installerAccessAllowed]);
   const [activeJobId, setActiveJobId] = useState("PW-1048");
   const [note, setNote] = useState("");
   const [updates, setUpdates] = useState<
@@ -572,6 +628,9 @@ export default function PremierInstallerTechBoard() {
   const [installerJobDocumentsErrors, setInstallerJobDocumentsErrors] =
     useState<Record<string, string>>({});
   const [installerJobFileOpenId, setInstallerJobFileOpenId] =
+    useState<string | null>(null);
+
+  const [installerBuckingOpenId, setInstallerBuckingOpenId] =
     useState<string | null>(null);
 
   const [selectedInstallerJobId, setSelectedInstallerJobId] =
@@ -618,7 +677,7 @@ export default function PremierInstallerTechBoard() {
 
     const loadInstallerJobs = async () => {
       const accessToken =
-        new URLSearchParams(window.location.search).get("access");
+        getPremierInstallerAccessToken();
 
       if (!accessToken) {
         if (active) {
@@ -742,7 +801,7 @@ export default function PremierInstallerTechBoard() {
 
   const loadInstallerPunchItems = async (jobId: string) => {
     const accessToken =
-      new URLSearchParams(window.location.search).get("access") ||
+      getPremierInstallerAccessToken() ||
       (() => {
         try {
           const stored = sessionStorage.getItem("premier_staff_session");
@@ -807,7 +866,7 @@ export default function PremierInstallerTechBoard() {
     itemId: string
   ) => {
     const accessToken =
-      new URLSearchParams(window.location.search).get("access") ||
+      getPremierInstallerAccessToken() ||
       (() => {
         try {
           const stored = sessionStorage.getItem("premier_staff_session");
@@ -866,7 +925,7 @@ export default function PremierInstallerTechBoard() {
 
   const loadInstallerJobDocuments = async (jobId: string) => {
     const accessToken =
-      new URLSearchParams(window.location.search).get("access") ||
+      getPremierInstallerAccessToken() ||
       (() => {
         try {
           const stored = sessionStorage.getItem("premier_staff_session");
@@ -1032,7 +1091,7 @@ export default function PremierInstallerTechBoard() {
               fontSize: 14,
             }}
           >
-            Today’s jobs, what was promised, what to measure, what proof is needed, and what happens next.
+            Today's jobs, what was promised, what to measure, what proof is needed, and what happens next.
           </p>
 
           <div
@@ -1196,6 +1255,8 @@ export default function PremierInstallerTechBoard() {
                             ? "Final Finish Work"
                             : job.current_stage === "installation_in_progress"
                             ? "Installation In Progress"
+                            : job.current_stage === "scheduled"
+                            ? "Scheduled"
                             : "Installation Ready"}
                         </span>
 
@@ -1210,6 +1271,8 @@ export default function PremierInstallerTechBoard() {
                             ? "FINAL FINISH"
                             : job.current_stage === "installation_in_progress"
                             ? "WORKING"
+                            : job.current_stage === "scheduled"
+                            ? "SCHEDULED"
                             : "READY"}
                         </span>
                       </div>
@@ -1365,6 +1428,8 @@ export default function PremierInstallerTechBoard() {
                             ? "Final Finish Work"
                             : job.current_stage === "installation_in_progress"
                             ? "Installation In Progress"
+                            : job.current_stage === "scheduled"
+                            ? "Scheduled"
                             : "Installation Ready"}
                     </span>
                   </div>
@@ -1378,6 +1443,81 @@ export default function PremierInstallerTechBoard() {
                   >
                     {job.project_address}
                   </div>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                      gap: 8,
+                      marginBottom: 10,
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const phone = String((job as any).phone || "").trim();
+                        if (!phone) return;
+                        window.location.href = `tel:${phone}`;
+                      }}
+                      disabled={!String((job as any).phone || "").trim()}
+                      style={{
+                        minHeight: 44,
+                        border: "1px solid #6f9fbd",
+                        borderRadius: 10,
+                        background: "#162630",
+                        color: "#ffffff",
+                        fontWeight: 900,
+                        cursor: String((job as any).phone || "").trim()
+                          ? "pointer"
+                          : "not-allowed",
+                        opacity: String((job as any).phone || "").trim()
+                          ? 1
+                          : 0.55,
+                      }}
+                    >
+                      Call Customer
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!job.project_address) return;
+
+                        const destination = encodeURIComponent(
+                          job.project_address
+                        );
+
+                        window.open(
+                          `https://www.google.com/maps/search/?api=1&query=${destination}`,
+                          "_blank",
+                          "noopener,noreferrer"
+                        );
+                      }}
+                      disabled={!job.project_address}
+                      style={{
+                        minHeight: 44,
+                        border: "1px solid #6f9fbd",
+                        borderRadius: 10,
+                        background: "#162630",
+                        color: "#ffffff",
+                        fontWeight: 900,
+                        cursor: job.project_address
+                          ? "pointer"
+                          : "not-allowed",
+                        opacity: job.project_address ? 1 : 0.55,
+                      }}
+                    >
+                      Navigation
+                    </button>
+                  </div>
+
+                  <InstallerBeamCard
+                    jobId={job.id}
+                    defaultRecipient={
+                      job.current_stage === "installer_finish_back"
+                        ? "RJ"
+                        : "Gino Marquez"
+                    }
+                  />
 
                   <div
                     style={{
@@ -1420,8 +1560,10 @@ export default function PremierInstallerTechBoard() {
                     }}
                   >
                     <span style={{ color: "#8fa9bc" }}>Next:</span>{" "}
-                    {job.next_action ||
-                      "Installer to begin installation and upload required proof."}
+                    {job.current_stage === "scheduled"
+                      ? "Installer to begin the scheduled installation and upload required proof."
+                      : job.next_action ||
+                        "Installer to begin installation and upload required proof."}
                   </div>
 
 
@@ -1654,7 +1796,7 @@ export default function PremierInstallerTechBoard() {
                   </div>
 
                   ) : null}
-                  <InstallerBeamCard jobId={job.id} defaultRecipient={job.current_stage === "installer_finish_back" ? "RJ" : "Gino Marquez"} />
+                  
                   {job.current_stage !== "installer_finish_back" ? (
                   <div
                     style={{
@@ -1699,6 +1841,33 @@ export default function PremierInstallerTechBoard() {
                         >
                           Bucking / buck inspection proof saved
                         </div>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setInstallerBuckingOpenId((current) =>
+                              current === job.id ? null : job.id
+                            )
+                          }
+                          style={{
+                            width: "100%",
+                            minHeight: 42,
+                            marginTop: 8,
+                            borderRadius: 9,
+                            border: "1px solid #557c64",
+                            background: "#16232d",
+                            color: "#d9e5ee",
+                            fontWeight: 900,
+                            cursor: "pointer",
+                          }}
+                        >
+                          {installerBuckingOpenId === job.id
+                            ? "Close Bucking Records"
+                            : "Open Bucking Records"}
+                        </button>
+
+                        {installerBuckingOpenId === job.id ? (
+                          <>
 
                         <div
                           style={{
@@ -1846,10 +2015,7 @@ export default function PremierInstallerTechBoard() {
 
                             if (!file) return;
 
-                            const accessToken =
-                              new URLSearchParams(
-                                window.location.search
-                              ).get("access");
+                            const accessToken = getPremierInstallerAccessToken();
 
                             if (!accessToken) {
                               window.alert("Premier installer access is missing.");
@@ -2115,10 +2281,7 @@ export default function PremierInstallerTechBoard() {
                             type="button"
                             disabled={savingBuckingJobId === job.id}
                             onClick={async () => {
-                              const accessToken =
-                                new URLSearchParams(
-                                  window.location.search
-                                ).get("access");
+                              const accessToken = getPremierInstallerAccessToken();
 
                               if (!accessToken) return;
 
@@ -2195,6 +2358,9 @@ export default function PremierInstallerTechBoard() {
                                 : "Save Bucking Record"}
                           </button>
                         </div>
+                          </>
+                        ) : null}
+
                       </div>
                     ) : (
                       <label
@@ -2232,10 +2398,7 @@ export default function PremierInstallerTechBoard() {
 
                             if (!file) return;
 
-                            const accessToken =
-                              new URLSearchParams(
-                                window.location.search
-                              ).get("access");
+                            const accessToken = getPremierInstallerAccessToken();
 
                             if (!accessToken) {
                               window.alert("Premier installer access is missing.");
@@ -2347,12 +2510,14 @@ export default function PremierInstallerTechBoard() {
                   </div>
                   ) : null}
 
-                  {job.current_stage === "installation_ready" ? (
+                  {["installation_ready", "scheduled"].includes(
+                    job.current_stage
+                  ) ? (
                     <button
                       type="button"
                       onClick={async () => {
                         const accessToken =
-                          new URLSearchParams(window.location.search).get("access");
+                          getPremierInstallerAccessToken();
 
                         if (!accessToken) return;
 
@@ -2653,7 +2818,7 @@ export default function PremierInstallerTechBoard() {
                           if (!confirmed) return;
 
                           const accessToken =
-                            new URLSearchParams(window.location.search).get("access");
+                            getPremierInstallerAccessToken();
 
                           if (!accessToken) return;
 
@@ -2745,7 +2910,7 @@ export default function PremierInstallerTechBoard() {
                         if (!confirmed) return;
 
                         const accessToken =
-                          new URLSearchParams(window.location.search).get("access");
+                          getPremierInstallerAccessToken();
 
                         if (!accessToken) return;
 
@@ -2844,13 +3009,6 @@ export default function PremierInstallerTechBoard() {
     </div>
   );
 }
-
-
-
-
-
-
-
 
 
 

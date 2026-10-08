@@ -521,43 +521,52 @@ function FieldBeamComposer({ job }: { job: any }) {
 }
 
 function getPremierFieldAccessToken() {
-  try {
-    const stored = window.sessionStorage.getItem("premier_staff_session");
-    const session = stored ? JSON.parse(stored) : null;
+  const readStoredToken = (storage: Storage) => {
+    try {
+      const stored = storage.getItem("premier_staff_session");
+      if (!stored) return null;
 
-    if (
-      session?.expiresAt &&
-      Date.now() >= new Date(session.expiresAt).getTime()
-    ) {
-      window.sessionStorage.removeItem("premier_staff_session");
-      window.location.replace("/planet/premier-window-door/staff");
+      const session = JSON.parse(stored);
+
+      if (
+        session?.expiresAt &&
+        Date.now() >= new Date(session.expiresAt).getTime()
+      ) {
+        storage.removeItem("premier_staff_session");
+        return null;
+      }
+
+      const displayName = String(session?.displayName || "").trim();
+      const normalizedName = displayName.toLowerCase();
+
+      const canUseFieldOperations =
+        normalizedName === "rj" ||
+        normalizedName === "gino marquez";
+
+      if (!canUseFieldOperations) {
+        return null;
+      }
+
+      const token = String(session?.accessToken || "").trim();
+      return token || null;
+    } catch (error) {
+      console.error("Premier field session read failed:", error);
       return null;
     }
+  };
 
-    const queryToken =
-      new URLSearchParams(window.location.search).get("access");
-
-    if (queryToken && session?.accessToken === queryToken) {
-      return queryToken;
-    }
-
-    if (session?.accessToken) {
-      return session.accessToken;
-    }
-
-    if (queryToken) {
-      return queryToken;
-    }
-
-    return null;
-  } catch (error) {
-    console.error("Premier field session read failed:", error);
-    return null;
-  }
+  return (
+    readStoredToken(window.localStorage) ||
+    readStoredToken(window.sessionStorage)
+  );
 }
+
 export default function PremierFieldOperationsBoard() {
   const [activeJobId, setActiveJobId] = useState("PW-1037");
   const [selectedFieldJobId, setSelectedFieldJobId] = useState<string | null>(null);
+  const [fieldMonitoringOpen, setFieldMonitoringOpen] = useState(false);
+  const [fieldMonitoringJobId, setFieldMonitoringJobId] =
+    useState<string | null>(null);
   const [staffGreeting, setStaffGreeting] = useState<{ headline: string; detail: string } | null>(null);
   const [fieldBeamMessages, setFieldBeamMessages] = useState<any[]>([]);
   const [fieldBeamLoading, setFieldBeamLoading] = useState(false);
@@ -593,6 +602,241 @@ export default function PremierFieldOperationsBoard() {
   const [savingFinalOpening, setSavingFinalOpening] = useState(false);
 
   const [liveInstallations, setLiveInstallations] = useState<any[]>([]);
+  const [installScheduleDrafts, setInstallScheduleDrafts] = useState<
+    Record<string, string>
+  >({});
+  const [installScheduleSavingJobId, setInstallScheduleSavingJobId] =
+    useState<string | null>(null);
+  const [installScheduleErrors, setInstallScheduleErrors] = useState<
+    Record<string, string>
+  >({});
+
+  const [installDateTextDrafts, setInstallDateTextDrafts] = useState<
+    Record<string, string>
+  >({});
+
+  const [installTimeTextDrafts, setInstallTimeTextDrafts] = useState<
+    Record<string, string>
+  >({});
+
+  const formatInstallDateText = (draft: string) => {
+    const datePart = (draft || "").split("T")[0] || "";
+    const match = datePart.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+    if (!match) return "";
+
+    return `${match[2]}/${match[3]}/${match[1]}`;
+  };
+
+  const parseInstallDateText = (value: string) => {
+    const match = value
+      .trim()
+      .match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
+
+    if (!match) return null;
+
+    const month = Number(match[1]);
+    const day = Number(match[2]);
+    const year = Number(match[3]);
+
+    const testDate = new Date(year, month - 1, day);
+
+    if (
+      testDate.getFullYear() !== year ||
+      testDate.getMonth() !== month - 1 ||
+      testDate.getDate() !== day
+    ) {
+      return null;
+    }
+
+    return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(
+      2,
+      "0"
+    )}`;
+  };
+
+  const formatInstallTimeText = (draft: string) => {
+    const timePart = (draft || "").includes("T")
+      ? (draft || "").split("T")[1] || ""
+      : "";
+
+    const match = timePart.match(/^(\d{2}):(\d{2})$/);
+
+    if (!match) return "";
+
+    const hour24 = Number(match[1]);
+    const minute = match[2];
+
+    const period = hour24 >= 12 ? "PM" : "AM";
+    const hour12 =
+      hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
+
+    return `${hour12}:${minute} ${period}`;
+  };
+
+  const parseInstallTimeText = (value: string) => {
+    const cleaned = value.trim().toUpperCase();
+
+    const twelveHour = cleaned.match(
+      /^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)$/
+    );
+
+    if (twelveHour) {
+      let hour = Number(twelveHour[1]);
+      const minute = Number(twelveHour[2] ?? "00");
+      const period = twelveHour[3];
+
+      if (hour < 1 || hour > 12 || minute < 0 || minute > 59) {
+        return null;
+      }
+
+      if (period === "AM" && hour === 12) hour = 0;
+      if (period === "PM" && hour !== 12) hour += 12;
+
+      return `${String(hour).padStart(2, "0")}:${String(minute).padStart(
+        2,
+        "0"
+      )}`;
+    }
+
+    const twentyFourHour = cleaned.match(/^(\d{1,2}):(\d{2})$/);
+
+    if (twentyFourHour) {
+      const hour = Number(twentyFourHour[1]);
+      const minute = Number(twentyFourHour[2]);
+
+      if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+        return null;
+      }
+
+      return `${String(hour).padStart(2, "0")}:${String(minute).padStart(
+        2,
+        "0"
+      )}`;
+    }
+
+    return null;
+  };
+
+  const [fieldInstallerActivityJobId, setFieldInstallerActivityJobId] =
+    useState<string | null>(null);
+
+  const [fieldInstallerProofPhotos, setFieldInstallerProofPhotos] = useState<
+    Record<string, any[]>
+  >({});
+
+  const [fieldInstallerProofLoading, setFieldInstallerProofLoading] = useState<
+    Record<string, boolean>
+  >({});
+
+  const [fieldInstallerProofErrors, setFieldInstallerProofErrors] = useState<
+    Record<string, string>
+  >({});
+
+  const [fieldBuckingDrafts, setFieldBuckingDrafts] = useState<
+    Record<
+      string,
+      {
+        buckingNotes: string;
+        measurementNotes: string;
+        materialIssueNotes: string;
+        needsAttention: boolean;
+        saved: boolean;
+      }
+    >
+  >({});
+
+  const [fieldSavingBuckingJobId, setFieldSavingBuckingJobId] =
+    useState<string | null>(null);
+
+  const [fieldUploadingBuckingJobId, setFieldUploadingBuckingJobId] =
+    useState<string | null>(null);
+
+  const loadFieldInstallerActivity = async (jobId: string) => {
+    const accessToken = getPremierFieldAccessToken();
+
+    if (!accessToken) {
+      setFieldInstallerProofErrors((current) => ({
+        ...current,
+        [jobId]: "Premier staff access is missing.",
+      }));
+      return;
+    }
+
+    setFieldInstallerProofLoading((current) => ({
+      ...current,
+      [jobId]: true,
+    }));
+
+    setFieldInstallerProofErrors((current) => ({
+      ...current,
+      [jobId]: "",
+    }));
+
+    const { data, error } = await supabase.functions.invoke(
+      "premier-installer-proof-photo",
+      {
+        body: {
+          action: "list",
+          accessToken,
+          jobId,
+        },
+      }
+    );
+
+    if (error) {
+      console.error(
+        "Premier Field Ops installer activity load failed:",
+        error
+      );
+
+      setFieldInstallerProofErrors((current) => ({
+        ...current,
+        [jobId]: "Could not load installer activity.",
+      }));
+
+      setFieldInstallerProofLoading((current) => ({
+        ...current,
+        [jobId]: false,
+      }));
+
+      return;
+    }
+
+    const photos = data?.photos ?? [];
+
+    setFieldInstallerProofPhotos((current) => ({
+      ...current,
+      [jobId]: photos,
+    }));
+
+    const buckingPhoto = photos.find(
+      (photo: any) => photo.proof_type === "Bucking / buck inspection"
+    );
+
+    if (buckingPhoto) {
+      setFieldBuckingDrafts((current) => ({
+        ...current,
+        [jobId]: {
+          buckingNotes: buckingPhoto.bucking_notes ?? "",
+          measurementNotes: buckingPhoto.measurement_notes ?? "",
+          materialIssueNotes: buckingPhoto.material_issue_notes ?? "",
+          needsAttention: Boolean(buckingPhoto.needs_attention),
+          saved: Boolean(
+            buckingPhoto.bucking_notes ||
+              buckingPhoto.measurement_notes ||
+              buckingPhoto.material_issue_notes ||
+              buckingPhoto.needs_attention
+          ),
+        },
+      }));
+    }
+
+    setFieldInstallerProofLoading((current) => ({
+      ...current,
+      [jobId]: false,
+    }));
+  };
   const [liveInstallationsLoading, setLiveInstallationsLoading] =
     useState(false);
   const [crewDrafts, setCrewDrafts] = useState<Record<string, string>>({});
@@ -606,6 +850,9 @@ export default function PremierFieldOperationsBoard() {
   const [fieldJobDocumentsErrors, setFieldJobDocumentsErrors] =
     useState<Record<string, string>>({});
   const [fieldJobFileOpenId, setFieldJobFileOpenId] =
+    useState<string | null>(null);
+
+  const [fieldBuckingRecordsOpenId, setFieldBuckingRecordsOpenId] =
     useState<string | null>(null);
 
   const [liveInspections, setLiveInspections] = useState<any[]>([]);
@@ -1083,12 +1330,25 @@ export default function PremierFieldOperationsBoard() {
 
   useEffect(() => {
     try {
-      const rawSession = window.sessionStorage.getItem("premier_staff_session");
+      const rawSession =
+        window.localStorage.getItem("premier_staff_session") ||
+        window.sessionStorage.getItem("premier_staff_session");
       if (!rawSession) return;
 
       const session = JSON.parse(rawSession);
       const displayName = String(session?.displayName || "").trim();
       if (!displayName) return;
+
+      const normalizedName = displayName.toLowerCase();
+
+      const canUseFieldOperations =
+        normalizedName === "rj" ||
+        normalizedName === "gino marquez";
+
+      if (!canUseFieldOperations) {
+        window.location.replace("/planet/premier-window-door/staff");
+        return;
+      }
 
       const firstName = displayName.split(" ")[0];
       const hour = new Date().getHours();
@@ -1153,8 +1413,17 @@ export default function PremierFieldOperationsBoard() {
       return;
     }
 
+    const readAt = new Date().toISOString();
+
     setFieldBeamMessages((current) =>
-      current.filter((message) => message.id !== messageId)
+      current.map((message) =>
+        message.id === messageId
+          ? {
+              ...message,
+              read_at: message.read_at ?? readAt,
+            }
+          : message
+      )
     );
   };
 
@@ -1353,8 +1622,829 @@ export default function PremierFieldOperationsBoard() {
             What is ready, where the crews are, what is delayed, and what needs to happen next.
           </p>
         </header>
+        <div
+          style={{
+            display: "flex",
+            gap: 8,
+            flexWrap: "wrap",
+            marginBottom: 14,
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setFieldMonitoringOpen(false)}
+            style={{
+              minHeight: 38,
+              border: !fieldMonitoringOpen
+                ? "1px solid #6f9fbd"
+                : "1px solid #3b4b56",
+              borderRadius: 999,
+              background: !fieldMonitoringOpen ? "#162630" : "#111820",
+              color: "#ffffff",
+              padding: "0 14px",
+              fontSize: 11,
+              fontWeight: 900,
+              cursor: "pointer",
+            }}
+          >
+            Field Jobs
+          </button>
 
-        <section
+          <button
+            type="button"
+            onClick={async () => {
+              setFieldMonitoringOpen(true);
+
+              const activeFieldJobs = liveInstallations.filter(
+                (item: any) =>
+                  item?.crew &&
+                  String(item.crew).trim().toLowerCase() !== "rj" &&
+                  item?.current_stage !== "installation_complete"
+              );
+
+              await Promise.all(
+                activeFieldJobs.map((item: any) =>
+                  loadFieldInstallerActivity(item.id)
+                )
+              );
+            }}
+            style={{
+              minHeight: 38,
+              border: fieldMonitoringOpen
+                ? "1px solid #6f9fbd"
+                : "1px solid #3b4b56",
+              borderRadius: 999,
+              background: fieldMonitoringOpen ? "#162630" : "#111820",
+              color: "#ffffff",
+              padding: "0 14px",
+              fontSize: 11,
+              fontWeight: 900,
+              cursor: "pointer",
+            }}
+          >
+            Field Monitoring
+          </button>
+        </div>
+        {fieldMonitoringOpen ? (
+          <section
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 9500,
+              background: "#0b1014",
+              color: "#f3f6f8",
+              display: "grid",
+              gridTemplateRows: "auto minmax(0, 1fr)",
+              overflow: "hidden",
+            }}
+          >
+            <div
+              style={{
+                minHeight: 64,
+                borderBottom: "1px solid #31495a",
+                background: "#0f151b",
+                padding: "12px 16px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 12,
+              }}
+            >
+              <div>
+                <div
+                  style={{
+                    color: "#8fa9bc",
+                    fontSize: 10,
+                    fontWeight: 900,
+                    letterSpacing: 1,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Premier Window & Door
+                </div>
+
+                <div
+                  style={{
+                    color: "#ffffff",
+                    fontSize: 22,
+                    fontWeight: 900,
+                    marginTop: 2,
+                  }}
+                >
+                  Field Monitoring
+                </div>
+
+                <div
+                  style={{
+                    color: "#8fa0ad",
+                    fontSize: 11,
+                    marginTop: 2,
+                  }}
+                >
+                  Installer activity, proof, notes, issues, and field progress.
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setFieldMonitoringOpen(false)}
+                style={{
+                  minHeight: 40,
+                  border: "1px solid #46545e",
+                  borderRadius: 9,
+                  background: "#151c22",
+                  color: "#ffffff",
+                  padding: "0 14px",
+                  fontSize: 11,
+                  fontWeight: 900,
+                  cursor: "pointer",
+                }}
+              >
+                Close Monitoring
+              </button>
+            </div>
+
+            <div
+              style={{
+                minHeight: 0,
+                display: "grid",
+                gridTemplateColumns: "300px minmax(0, 1fr)",
+              }}
+            >
+              <aside
+                style={{
+                  minHeight: 0,
+                  overflowY: "auto",
+                  borderRight: "1px solid #31495a",
+                  background: "#0f151b",
+                  padding: 12,
+                }}
+              >
+                <div
+                  style={{
+                    color: "#9db7ca",
+                    fontSize: 10,
+                    fontWeight: 900,
+                    letterSpacing: 1,
+                    textTransform: "uppercase",
+                    marginBottom: 4,
+                  }}
+                >
+                  Active Installer Jobs
+                </div>
+
+                <div
+                  style={{
+                    color: "#8fa0ad",
+                    fontSize: 11,
+                    marginBottom: 10,
+                  }}
+                >
+                  Choose a job to monitor.
+                </div>
+
+                {liveInstallationsLoading ? (
+                  <div style={{ color: "#8fa0ad", fontSize: 12 }}>
+                    Loading active field jobs...
+                  </div>
+                ) : null}
+
+                <div style={{ display: "grid", gap: 8 }}>
+                  {liveInstallations
+                    .filter(
+                      (item: any) =>
+                        item?.crew &&
+                        String(item.crew).trim().toLowerCase() !== "rj" &&
+                        item?.current_stage !== "installation_complete"
+                    )
+                    .map((monitorJob: any) => {
+                      const customerName =
+                        `${monitorJob.first_name || ""} ${
+                          monitorJob.last_name || ""
+                        }`.trim() || "Field Job";
+
+                      const photos =
+                        fieldInstallerProofPhotos[monitorJob.id] ?? [];
+
+                      const needsAttention = photos.some(
+                        (photo: any) => photo.needs_attention
+                      );
+
+                      const buckReceived = photos.some(
+                        (photo: any) =>
+                          photo.proof_type ===
+                          "Bucking / buck inspection"
+                      );
+
+                      const attentionPhoto = photos.find(
+                        (photo: any) => photo.needs_attention
+                      );
+
+                      const fieldProgress =
+                        monitorJob.current_stage === "installation_complete"
+                          ? "Installation Complete"
+                          : needsAttention
+                            ? "Needs Attention"
+                            : buckReceived
+                              ? "Buck Inspection Received"
+                              : "Awaiting Field Activity";
+
+                      const isSelected =
+                        fieldMonitoringJobId === monitorJob.id;
+
+                      return (
+                        <button
+                          key={`monitor-${monitorJob.id}`}
+                          type="button"
+                          onClick={async () => {
+                            setFieldMonitoringJobId(monitorJob.id);
+                            setFieldInstallerActivityJobId(monitorJob.id);
+                            await loadFieldInstallerActivity(monitorJob.id);
+                          }}
+                          style={{
+                            width: "100%",
+                            textAlign: "left",
+                            border: needsAttention
+                              ? "1px solid #a86b62"
+                              : isSelected
+                                ? "1px solid #8fc59f"
+                                : "1px solid #31495a",
+                            borderLeft: needsAttention
+                              ? "4px solid #c17d6b"
+                              : "4px solid #78aa88",
+                            borderRadius: 10,
+                            background: isSelected
+                              ? "#17231b"
+                              : "#111820",
+                            color: "#f3f6f8",
+                            padding: 12,
+                            cursor: "pointer",
+                          }}
+                        >
+                          <div
+                            style={{
+                              color: "#b7dec4",
+                              fontSize: 9,
+                              fontWeight: 900,
+                              textTransform: "uppercase",
+                              marginBottom: 5,
+                            }}
+                          >
+                            {monitorJob.current_stage === "scheduled"
+                              ? "Scheduled"
+                              : "Installation Ready"}
+                          </div>
+
+                          <div
+                            style={{
+                              fontSize: 13,
+                              fontWeight: 900,
+                            }}
+                          >
+                            {customerName}
+                          </div>
+
+                          <div
+                            style={{
+                              color: "#aebac3",
+                              fontSize: 10,
+                              marginTop: 3,
+                            }}
+                          >
+                            {monitorJob.project_address ||
+                              "Address not available"}
+                          </div>
+
+                          <div
+                            style={{
+                              color: "#d7dde2",
+                              fontSize: 10,
+                              marginTop: 7,
+                            }}
+                          >
+                            {monitorJob.crew}
+                          </div>
+
+                          {monitorJob.scheduled_for ? (
+                            <div
+                              style={{
+                                color: "#8fa9bc",
+                                fontSize: 10,
+                                marginTop: 4,
+                              }}
+                            >
+                              {new Date(
+                                monitorJob.scheduled_for
+                              ).toLocaleString()}
+                            </div>
+                          ) : (
+                            <div
+                              style={{
+                                color: "#d7b47a",
+                                fontSize: 10,
+                                marginTop: 4,
+                              }}
+                            >
+                              Install date not set
+                            </div>
+                          )}
+
+                          <div
+                            style={{
+                              marginTop: 9,
+                              paddingTop: 8,
+                              borderTop: "1px solid #26323a",
+                            }}
+                          >
+                            <div
+                              style={{
+                                color: needsAttention
+                                  ? "#efb39a"
+                                  : buckReceived
+                                    ? "#b7dec4"
+                                    : "#d7b47a",
+                                fontSize: 10,
+                                fontWeight: 900,
+                              }}
+                            >
+                              {needsAttention
+                                ? `⚠ ${fieldProgress.toUpperCase()}`
+                                : `Progress: ${fieldProgress}`}
+                            </div>
+
+                            {needsAttention &&
+                            attentionPhoto?.material_issue_notes ? (
+                              <div
+                                style={{
+                                  color: "#efb39a",
+                                  fontSize: 9,
+                                  lineHeight: 1.4,
+                                  marginTop: 4,
+                                }}
+                              >
+                                {attentionPhoto.material_issue_notes}
+                              </div>
+                            ) : null}
+                          </div>
+                        </button>
+                      );
+                    })}
+                </div>
+              </aside>
+
+              <main
+                style={{
+                  minWidth: 0,
+                  minHeight: 0,
+                  overflowY: "auto",
+                  padding: 18,
+                  background: "#0b1014",
+                }}
+              >
+                {!fieldMonitoringJobId ? (
+                  <div
+                    style={{
+                      minHeight: "70vh",
+                      display: "grid",
+                      placeItems: "center",
+                      textAlign: "center",
+                    }}
+                  >
+                    <div>
+                      <div
+                        style={{
+                          color: "#ffffff",
+                          fontSize: 20,
+                          fontWeight: 900,
+                        }}
+                      >
+                        Select an Installer Job
+                      </div>
+
+                      <div
+                        style={{
+                          color: "#8fa0ad",
+                          fontSize: 12,
+                          marginTop: 5,
+                        }}
+                      >
+                        Choose a card on the left to open its field activity.
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  (() => {
+                    const monitorJob = liveInstallations.find(
+                      (item: any) => item.id === fieldMonitoringJobId
+                    );
+
+                    if (!monitorJob) {
+                      return (
+                        <div style={{ color: "#8fa0ad", fontSize: 12 }}>
+                          This field job is no longer active.
+                        </div>
+                      );
+                    }
+
+                    const photos =
+                      fieldInstallerProofPhotos[monitorJob.id] ?? [];
+
+                    const buckReceived = photos.some(
+                      (photo: any) =>
+                        photo.proof_type ===
+                        "Bucking / buck inspection"
+                    );
+
+                    const needsAttention = photos.some(
+                      (photo: any) => photo.needs_attention
+                    );
+
+                    const customerName =
+                      `${monitorJob.first_name || ""} ${
+                        monitorJob.last_name || ""
+                      }`.trim() || "Field Job";
+
+                    return (
+                      <div
+                        style={{
+                          width: "100%",
+                          maxWidth: 1100,
+                          margin: "0 auto",
+                          display: "grid",
+                          gap: 12,
+                        }}
+                      >
+                        <div
+                          style={{
+                            borderBottom: "1px solid #26323a",
+                            paddingBottom: 12,
+                          }}
+                        >
+                          <div
+                            style={{
+                              color: "#8fa9bc",
+                              fontSize: 10,
+                              fontWeight: 900,
+                              textTransform: "uppercase",
+                            }}
+                          >
+                            Installer Activity
+                          </div>
+
+                          <div
+                            style={{
+                              color: "#ffffff",
+                              fontSize: 22,
+                              fontWeight: 900,
+                              marginTop: 3,
+                            }}
+                          >
+                            {customerName}
+                          </div>
+
+                          <div
+                            style={{
+                              color: "#aebac3",
+                              fontSize: 12,
+                              marginTop: 3,
+                            }}
+                          >
+                            {monitorJob.project_address}
+                          </div>
+
+                          <div
+                            style={{
+                              color: "#b7dec4",
+                              fontSize: 12,
+                              fontWeight: 900,
+                              marginTop: 5,
+                            }}
+                          >
+                            {monitorJob.crew}
+                          </div>
+                        </div>
+
+                        {fieldInstallerProofLoading[monitorJob.id] ? (
+                          <div style={{ color: "#8fa9bc", fontSize: 12 }}>
+                            Loading installer activity...
+                          </div>
+                        ) : fieldInstallerProofErrors[monitorJob.id] ? (
+                          <div style={{ color: "#d8a0a0", fontSize: 12 }}>
+                            {fieldInstallerProofErrors[monitorJob.id]}
+                          </div>
+                        ) : (
+                          <>
+                            <div
+                              style={{
+                                display: "grid",
+                                gridTemplateColumns:
+                                  "repeat(3, minmax(0, 1fr))",
+                                gap: 10,
+                              }}
+                            >
+                              <div
+                                style={{
+                                  border: "1px solid #26323a",
+                                  borderRadius: 10,
+                                  background: "#111820",
+                                  padding: 12,
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    color: "#8fa9bc",
+                                    fontSize: 9,
+                                    fontWeight: 900,
+                                    textTransform: "uppercase",
+                                  }}
+                                >
+                                  Proof Photos
+                                </div>
+
+                                <div
+                                  style={{
+                                    color: "#ffffff",
+                                    fontSize: 22,
+                                    fontWeight: 900,
+                                    marginTop: 4,
+                                  }}
+                                >
+                                  {photos.length}
+                                </div>
+                              </div>
+
+                              <div
+                                style={{
+                                  border: "1px solid #26323a",
+                                  borderRadius: 10,
+                                  background: "#111820",
+                                  padding: 12,
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    color: "#8fa9bc",
+                                    fontSize: 9,
+                                    fontWeight: 900,
+                                    textTransform: "uppercase",
+                                  }}
+                                >
+                                  Buck Inspection
+                                </div>
+
+                                <div
+                                  style={{
+                                    color: buckReceived
+                                      ? "#b7dec4"
+                                      : "#d7b47a",
+                                    fontSize: 13,
+                                    fontWeight: 900,
+                                    marginTop: 6,
+                                  }}
+                                >
+                                  {buckReceived
+                                    ? "Received"
+                                    : "Not received"}
+                                </div>
+                              </div>
+
+                              <div
+                                style={{
+                                  border: needsAttention
+                                    ? "1px solid #8a5f4a"
+                                    : "1px solid #26323a",
+                                  borderRadius: 10,
+                                  background: needsAttention
+                                    ? "#211713"
+                                    : "#111820",
+                                  padding: 12,
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    color: "#8fa9bc",
+                                    fontSize: 9,
+                                    fontWeight: 900,
+                                    textTransform: "uppercase",
+                                  }}
+                                >
+                                  Field Status
+                                </div>
+
+                                <div
+                                  style={{
+                                    color: needsAttention
+                                      ? "#efb39a"
+                                      : "#b7dec4",
+                                    fontSize: 13,
+                                    fontWeight: 900,
+                                    marginTop: 6,
+                                  }}
+                                >
+                                  {needsAttention
+                                    ? "Needs Attention"
+                                    : "No issues flagged"}
+                                </div>
+                              </div>
+                            </div>
+
+                            {photos.length === 0 ? (
+                              <div
+                                style={{
+                                  border: "1px solid #26323a",
+                                  borderRadius: 10,
+                                  background: "#111820",
+                                  color: "#8fa9bc",
+                                  padding: 14,
+                                  fontSize: 12,
+                                }}
+                              >
+                                No installer proof has been submitted yet.
+                              </div>
+                            ) : (
+                              <div style={{ display: "grid", gap: 10 }}>
+                                {photos.map(
+                                  (photo: any, index: number) => (
+                                    <div
+                                      key={
+                                        photo.id ??
+                                        photo.storage_path ??
+                                        `${monitorJob.id}-monitor-${index}`
+                                      }
+                                      style={{
+                                        display: "grid",
+                                        gridTemplateColumns:
+                                          "150px minmax(0, 1fr)",
+                                        gap: 14,
+                                        border: "1px solid #26323a",
+                                        borderRadius: 10,
+                                        background: "#111820",
+                                        padding: 12,
+                                      }}
+                                    >
+                                      {photo.url ? (
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            window.open(
+                                              photo.url,
+                                              "_blank",
+                                              "noopener,noreferrer"
+                                            )
+                                          }
+                                          style={{
+                                            width: 150,
+                                            height: 110,
+                                            border:
+                                              "1px solid #31495a",
+                                            borderRadius: 8,
+                                            overflow: "hidden",
+                                            padding: 0,
+                                            background: "#0a0f13",
+                                            cursor: "pointer",
+                                          }}
+                                        >
+                                          <img
+                                            src={photo.url}
+                                            alt={
+                                              photo.file_name ||
+                                              "Installer proof"
+                                            }
+                                            style={{
+                                              width: "100%",
+                                              height: "100%",
+                                              objectFit: "cover",
+                                              display: "block",
+                                            }}
+                                          />
+                                        </button>
+                                      ) : (
+                                        <div
+                                          style={{
+                                            width: 150,
+                                            height: 110,
+                                            border:
+                                              "1px solid #31495a",
+                                            borderRadius: 8,
+                                            display: "grid",
+                                            placeItems: "center",
+                                            color: "#8fa9bc",
+                                            fontSize: 10,
+                                          }}
+                                        >
+                                          Photo unavailable
+                                        </div>
+                                      )}
+
+                                      <div style={{ minWidth: 0 }}>
+                                        <div
+                                          style={{
+                                            color: "#ffffff",
+                                            fontSize: 13,
+                                            fontWeight: 900,
+                                          }}
+                                        >
+                                          {photo.proof_type ||
+                                            "Installer Proof"}
+                                        </div>
+
+                                        <div
+                                          style={{
+                                            color: "#9ca8b2",
+                                            fontSize: 11,
+                                            marginTop: 3,
+                                          }}
+                                        >
+                                          {photo.file_name ||
+                                            `Photo ${index + 1}`}
+                                        </div>
+
+                                        {photo.uploaded_at ? (
+                                          <div
+                                            style={{
+                                              color: "#72838f",
+                                              fontSize: 10,
+                                              marginTop: 3,
+                                            }}
+                                          >
+                                            {new Date(
+                                              photo.uploaded_at
+                                            ).toLocaleString()}
+                                          </div>
+                                        ) : null}
+
+                                        {photo.bucking_notes ? (
+                                          <div
+                                            style={{
+                                              marginTop: 9,
+                                              color: "#d7dde2",
+                                              fontSize: 11,
+                                            }}
+                                          >
+                                            <strong>Bucking:</strong>{" "}
+                                            {photo.bucking_notes}
+                                          </div>
+                                        ) : null}
+
+                                        {photo.measurement_notes ? (
+                                          <div
+                                            style={{
+                                              marginTop: 5,
+                                              color: "#d7dde2",
+                                              fontSize: 11,
+                                            }}
+                                          >
+                                            <strong>
+                                              Measurements:
+                                            </strong>{" "}
+                                            {photo.measurement_notes}
+                                          </div>
+                                        ) : null}
+
+                                        {photo.material_issue_notes ? (
+                                          <div
+                                            style={{
+                                              marginTop: 5,
+                                              color: "#efb39a",
+                                              fontSize: 11,
+                                            }}
+                                          >
+                                            <strong>
+                                              Material Issue:
+                                            </strong>{" "}
+                                            {photo.material_issue_notes}
+                                          </div>
+                                        ) : null}
+
+                                        {photo.needs_attention ? (
+                                          <div
+                                            style={{
+                                              marginTop: 8,
+                                              color: "#efb39a",
+                                              fontSize: 10,
+                                              fontWeight: 900,
+                                            }}
+                                          >
+                                            NEEDS ATTENTION
+                                          </div>
+                                        ) : null}
+                                      </div>
+                                    </div>
+                                  )
+                                )}
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    );
+                  })()
+                )}
+              </main>
+            </div>
+          </section>
+        ) : null}
+<section
           style={{
             marginBottom: 12,
           }}
@@ -1471,7 +2561,7 @@ export default function PremierFieldOperationsBoard() {
             </div>
           </div>
         </section>
-        {fieldBeamMessages.some((message) => !message.read_at) ? (
+        {fieldBeamMessages.length > 0 ? (
           <section
             style={{
               border: "1px solid #78aa88",
@@ -1486,7 +2576,9 @@ export default function PremierFieldOperationsBoard() {
           >
             {(() => {
               const message =
-                fieldBeamMessages.find((item) => !item.read_at) ?? null;
+                fieldBeamMessages.find((item) => !item.read_at) ??
+                fieldBeamMessages[0] ??
+                null;
 
               if (!message) return null;
 
@@ -1510,7 +2602,9 @@ export default function PremierFieldOperationsBoard() {
                           textTransform: "uppercase",
                         }}
                       >
-                        Beam {"\u2022"} New Message
+                        {message.read_at
+                          ? <>Beam {"\u2022"} Read</>
+                          : <>Beam {"\u2022"} New Message</>}
                       </div>
 
                       <div
@@ -1756,7 +2850,24 @@ export default function PremierFieldOperationsBoard() {
                         fontSize: 9,
                       }}
                     >
-                      {new Date(message.created_at).toLocaleString()}
+                      <div>
+                        <div>
+                          {new Date(message.created_at).toLocaleString()}
+                        </div>
+
+                        {message.read_at ? (
+                          <div
+                            style={{
+                              marginTop: 3,
+                              color: "#9fd3ae",
+                              fontWeight: 800,
+                            }}
+                          >
+                            Read by {message.recipient_role || "recipient"} {"\u2022"}{" "}
+                            {new Date(message.read_at).toLocaleString()}
+                          </div>
+                        ) : null}
+                      </div>
                     </div>
 
                     <div
@@ -1795,7 +2906,8 @@ export default function PremierFieldOperationsBoard() {
                           : "Reply"}
                       </button>
 
-                      <button
+                      {!message.read_at ? (
+                        <button
                         type="button"
                         onClick={() => void markFieldBeamRead(message.id)}
                         style={{
@@ -1812,6 +2924,7 @@ export default function PremierFieldOperationsBoard() {
                       >
                         Mark Read
                       </button>
+                      ) : null}
                     </div>
                   </div>
                 </>
@@ -1969,7 +3082,17 @@ export default function PremierFieldOperationsBoard() {
                 </button>
               ))}
 
-              {liveInstallations.map((job) => (
+              {liveInstallations
+                .filter((job) => {
+                  const crew = String(job?.crew || "").trim().toLowerCase();
+                  const handedOffToExternalInstaller =
+                    job.current_stage === "scheduled" &&
+                    crew &&
+                    crew !== "rj";
+
+                  return !handedOffToExternalInstaller;
+                })
+                .map((job) => (
                 <button
                   key={`rail-install-${job.id}`}
                   type="button"
@@ -2652,9 +3775,7 @@ export default function PremierFieldOperationsBoard() {
                   <button
                     type="button"
                     onClick={async () => {
-                      const accessToken = new URLSearchParams(
-                        window.location.search
-                      ).get("access");
+                      const accessToken = getPremierFieldAccessToken();
 
                       if (!accessToken) {
                         window.alert("Premier field access is missing.");
@@ -2771,9 +3892,115 @@ export default function PremierFieldOperationsBoard() {
                       </span>
                     </div>
                     <div style={{ color: "#9ca8b2", fontSize: 12, marginBottom: 8 }}>{job.project_address}</div>
-                    <div style={{ display: "grid", gap: 4, fontSize: 12, color: "#d7dde2" }}>
+                                        <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr",
+                        gap: 8,
+                        marginBottom: 10,
+                      }}
+                    >
+                      <button
+                        type="button"
+                        disabled={!job.phone}
+                        onClick={() => {
+                          if (!job.phone) return;
+                          window.location.href = `tel:${job.phone}`;
+                        }}
+                        style={{
+                          minHeight: 44,
+                          border: "1px solid #6f9fbd",
+                          borderRadius: 10,
+                          background: "#162630",
+                          color: "#ffffff",
+                          fontWeight: 900,
+                          fontSize: 13,
+                          cursor: job.phone ? "pointer" : "not-allowed",
+                          boxShadow:
+                            "0 0 0 1px rgba(111,159,189,0.10), 0 0 12px rgba(111,159,189,0.08)",
+                        }}
+                      >
+                        Call Customer
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={!job.project_address}
+                        onClick={() => {
+                          if (!job.project_address) return;
+
+                          const destination = encodeURIComponent(
+                            job.project_address
+                          );
+
+                          window.open(
+                            `https://www.google.com/maps/search/?api=1&query=${destination}`,
+                            "_blank",
+                            "noopener,noreferrer"
+                          );
+                        }}
+                        style={{
+                          minHeight: 44,
+                          border: "1px solid #6f9fbd",
+                          borderRadius: 10,
+                          background: "#162630",
+                          color: "#ffffff",
+                          fontWeight: 900,
+                          fontSize: 13,
+                          cursor: job.project_address
+                            ? "pointer"
+                            : "not-allowed",
+                          boxShadow:
+                            "0 0 0 1px rgba(111,159,189,0.10), 0 0 12px rgba(111,159,189,0.08)",
+                        }}
+                      >
+                        Navigation
+                      </button>
+                    </div>
+<div style={{ display: "grid", gap: 4, fontSize: 12, color: "#d7dde2" }}>
                       <div style={{ display: "grid", gap: 6 }}>
-                        <strong>Crew:</strong>
+                        <strong>Assigned Installer / Crew:</strong>
+                        {job.crew ? (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              if (fieldInstallerActivityJobId === job.id) {
+                                setFieldInstallerActivityJobId(null);
+                                return;
+                              }
+
+                              setFieldInstallerActivityJobId(job.id);
+                              await loadFieldInstallerActivity(job.id);
+                            }}
+                            style={{
+                              justifySelf: "start",
+                              minHeight: 34,
+                              padding: "6px 12px",
+                              border: "1px solid #6f9fbd",
+                              borderRadius: 999,
+                              background: "#162630",
+                              color: "#ffffff",
+                              fontWeight: 900,
+                              fontSize: 11,
+                              cursor: "pointer",
+                              boxShadow:
+                                "0 0 0 1px rgba(111,159,189,0.10), 0 0 10px rgba(111,159,189,0.08)",
+                            }}
+                          >
+                            {fieldInstallerActivityJobId === job.id
+                              ? `Close ${job.crew} Activity`
+                              : `${job.crew} — View Activity`}
+                          </button>
+                        ) : (
+                          <div
+                            style={{
+                              color: "#8fa9bc",
+                              fontSize: 11,
+                            }}
+                          >
+                            No installer assigned yet.
+                          </div>
+                        )}
                         <select
                           value={crewDrafts[job.id] ?? job.crew ?? ""}
                           disabled={crewSavingJobId === job.id}
@@ -2880,7 +4107,899 @@ export default function PremierFieldOperationsBoard() {
                           </span>
                         ) : null}
                       </div>
-                      <div><strong>Install:</strong> {job.scheduled_for ? new Date(job.scheduled_for).toLocaleString() : "Not scheduled"}</div>
+
+                      {fieldInstallerActivityJobId === job.id ? (
+                        <div
+                          style={{
+                            border: "1px solid #31495a",
+                            borderRadius: 10,
+                            background: "#0d1318",
+                            padding: 10,
+                            marginTop: 8,
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              gap: 10,
+                              alignItems: "center",
+                              marginBottom: 8,
+                            }}
+                          >
+                            <div>
+                              <div
+                                style={{
+                                  color: "#f3f6f8",
+                                  fontSize: 12,
+                                  fontWeight: 900,
+                                }}
+                              >
+                                Installer Activity
+                              </div>
+
+                              <div
+                                style={{
+                                  color: "#8fa9bc",
+                                  fontSize: 10,
+                                  marginTop: 2,
+                                }}
+                              >
+                                {job.crew}
+                              </div>
+                            </div>
+
+                            <span
+                              style={{
+                                color: "#b7dec4",
+                                fontSize: 10,
+                                fontWeight: 900,
+                                textTransform: "uppercase",
+                              }}
+                            >
+                              {job.current_stage === "installation_complete"
+                                ? "Complete"
+                                : job.current_stage === "scheduled"
+                                  ? "Scheduled"
+                                  : "Installation Ready"}
+                            </span>
+                          </div>
+
+                          {fieldInstallerProofLoading[job.id] ? (
+                            <div style={{ color: "#8fa9bc", fontSize: 11 }}>
+                              Loading installer activity...
+                            </div>
+                          ) : fieldInstallerProofErrors[job.id] ? (
+                            <div style={{ color: "#d8a0a0", fontSize: 11 }}>
+                              {fieldInstallerProofErrors[job.id]}
+                            </div>
+                          ) : (
+                            <>
+                              
+
+                              <div
+                                style={{
+                                  display: "grid",
+                                  gridTemplateColumns:
+                                    "repeat(2, minmax(0, 1fr))",
+                                  gap: 8,
+                                  marginBottom: 10,
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    border: "1px solid #26323a",
+                                    borderRadius: 8,
+                                    background: "#111820",
+                                    padding: 9,
+                                  }}
+                                >
+                                  <div
+                                    style={{
+                                      color: "#8fa9bc",
+                                      fontSize: 9,
+                                      fontWeight: 900,
+                                      textTransform: "uppercase",
+                                    }}
+                                  >
+                                    Proof Photos
+                                  </div>
+
+                                  <div
+                                    style={{
+                                      color: "#f3f6f8",
+                                      fontSize: 18,
+                                      fontWeight: 900,
+                                      marginTop: 3,
+                                    }}
+                                  >
+                                    {(fieldInstallerProofPhotos[job.id] ?? []).length}
+                                  </div>
+                                </div>
+
+                                <div
+                                  style={{
+                                    border: "1px solid #26323a",
+                                    borderRadius: 8,
+                                    background: "#111820",
+                                    padding: 9,
+                                  }}
+                                >
+                                  <div
+                                    style={{
+                                      color: "#8fa9bc",
+                                      fontSize: 9,
+                                      fontWeight: 900,
+                                      textTransform: "uppercase",
+                                    }}
+                                  >
+                                    Buck Inspection
+                                  </div>
+
+                                  <div
+                                    style={{
+                                      color: (fieldInstallerProofPhotos[job.id] ?? []).some(
+                                        (photo: any) =>
+                                          photo.proof_type ===
+                                          "Bucking / buck inspection"
+                                      )
+                                        ? "#b7dec4"
+                                        : "#d7b47a",
+                                      fontSize: 12,
+                                      fontWeight: 900,
+                                      marginTop: 5,
+                                    }}
+                                  >
+                                    {(fieldInstallerProofPhotos[job.id] ?? []).some(
+                                      (photo: any) =>
+                                        photo.proof_type ===
+                                        "Bucking / buck inspection"
+                                    )
+                                      ? "Received"
+                                      : "Not received"}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {(fieldInstallerProofPhotos[job.id] ?? []).some(
+                                (photo: any) => photo.needs_attention
+                              ) ? (
+                                <div
+                                  style={{
+                                    border: "1px solid #8a5f4a",
+                                    borderRadius: 8,
+                                    background: "#211713",
+                                    color: "#efb39a",
+                                    padding: "9px 10px",
+                                    fontSize: 11,
+                                    fontWeight: 900,
+                                    marginBottom: 10,
+                                  }}
+                                >
+                                  NEEDS ATTENTION — installer flagged a field issue.
+                                </div>
+                              ) : null}
+
+                              {(fieldInstallerProofPhotos[job.id] ?? []).length === 0 ? (
+                                <div style={{ color: "#8fa9bc", fontSize: 11 }}>
+                                  No installer proof has been submitted yet.
+                                </div>
+                              ) : (
+                                <div style={{ display: "grid", gap: 8 }}>
+                                  {(fieldInstallerProofPhotos[job.id] ?? []).map(
+                                    (photo: any, index: number) => (
+                                      <div
+                                        key={
+                                          photo.id ??
+                                          photo.storage_path ??
+                                          `${job.id}-field-proof-${index}`
+                                        }
+                                        style={{
+                                          display: "grid",
+                                          gridTemplateColumns:
+                                            "92px minmax(0, 1fr)",
+                                          gap: 10,
+                                          border: "1px solid #26323a",
+                                          borderRadius: 9,
+                                          background: "#111820",
+                                          padding: 9,
+                                        }}
+                                      >
+                                        {photo.url ? (
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              window.open(
+                                                photo.url,
+                                                "_blank",
+                                                "noopener,noreferrer"
+                                              )
+                                            }
+                                            style={{
+                                              width: 92,
+                                              height: 76,
+                                              border: "1px solid #31495a",
+                                              borderRadius: 8,
+                                              overflow: "hidden",
+                                              padding: 0,
+                                              background: "#0a0f13",
+                                              cursor: "pointer",
+                                            }}
+                                          >
+                                            <img
+                                              src={photo.url}
+                                              alt={
+                                                photo.file_name ||
+                                                "Installer proof"
+                                              }
+                                              style={{
+                                                width: "100%",
+                                                height: "100%",
+                                                objectFit: "cover",
+                                                display: "block",
+                                              }}
+                                            />
+                                          </button>
+                                        ) : (
+                                          <div
+                                            style={{
+                                              width: 92,
+                                              height: 76,
+                                              border: "1px solid #31495a",
+                                              borderRadius: 8,
+                                              display: "grid",
+                                              placeItems: "center",
+                                              color: "#8fa9bc",
+                                              fontSize: 10,
+                                              textAlign: "center",
+                                            }}
+                                          >
+                                            Photo unavailable
+                                          </div>
+                                        )}
+
+                                        <div style={{ minWidth: 0 }}>
+                                          <div
+                                            style={{
+                                              color: "#f3f6f8",
+                                              fontSize: 11,
+                                              fontWeight: 900,
+                                            }}
+                                          >
+                                            {photo.proof_type || "Installer Proof"}
+                                          </div>
+
+                                          <div
+                                            style={{
+                                              color: "#9ca8b2",
+                                              fontSize: 10,
+                                              marginTop: 3,
+                                              overflowWrap: "anywhere",
+                                            }}
+                                          >
+                                            {photo.file_name || `Photo ${index + 1}`}
+                                          </div>
+
+                                          {photo.uploaded_at ? (
+                                            <div
+                                              style={{
+                                                color: "#72838f",
+                                                fontSize: 9,
+                                                marginTop: 3,
+                                              }}
+                                            >
+                                              {new Date(
+                                                photo.uploaded_at
+                                              ).toLocaleString()}
+                                            </div>
+                                          ) : null}
+
+                                          {photo.bucking_notes ? (
+                                            <div
+                                              style={{
+                                                marginTop: 7,
+                                                color: "#d7dde2",
+                                                fontSize: 10,
+                                              }}
+                                            >
+                                              <strong>Bucking:</strong>{" "}
+                                              {photo.bucking_notes}
+                                            </div>
+                                          ) : null}
+
+                                          {photo.measurement_notes ? (
+                                            <div
+                                              style={{
+                                                marginTop: 4,
+                                                color: "#d7dde2",
+                                                fontSize: 10,
+                                              }}
+                                            >
+                                              <strong>Measurements:</strong>{" "}
+                                              {photo.measurement_notes}
+                                            </div>
+                                          ) : null}
+
+                                          {photo.material_issue_notes ? (
+                                            <div
+                                              style={{
+                                                marginTop: 4,
+                                                color: "#efb39a",
+                                                fontSize: 10,
+                                              }}
+                                            >
+                                              <strong>Material Issue:</strong>{" "}
+                                              {photo.material_issue_notes}
+                                            </div>
+                                          ) : null}
+                                        </div>
+                                      </div>
+                                    )
+                                  )}
+                                </div>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      ) : null}
+                      <div
+                        style={{
+                          marginTop: 8,
+                          border: "1px solid #31495a",
+                          borderRadius: 10,
+                          background: "#0c1116",
+                          padding: 10,
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: 12,
+                            fontWeight: 900,
+                            color: "#f3f6f8",
+                            marginBottom: 7,
+                          }}
+                        >
+                          Install Schedule
+                        </div>
+
+                        <div
+                          style={{
+                            color: "#9ca8b2",
+                            fontSize: 11,
+                            marginBottom: 8,
+                          }}
+                        >
+                          {job.scheduled_for
+                            ? `Currently: ${new Date(job.scheduled_for).toLocaleString()}`
+                            : "No installation date scheduled yet."}
+                        </div>
+
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "minmax(0, 1fr) auto",
+                            gap: 8,
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns:
+                                "repeat(2, minmax(0, 1fr))",
+                              gap: 8,
+                            }}
+                          >
+                            <div style={{ display: "grid", gap: 5 }}>
+                              <label
+                                style={{
+                                  color: "#8fa9bc",
+                                  fontSize: 10,
+                                  fontWeight: 900,
+                                  textTransform: "uppercase",
+                                }}
+                              >
+                                Install Date
+                              </label>
+
+                              <div
+                                style={{
+                                  display: "grid",
+                                  gridTemplateColumns: "minmax(0, 1fr) 46px",
+                                  gap: 6,
+                                }}
+                              >
+                                <input
+                                  type="text"
+                                  inputMode="numeric"
+                                  placeholder="MM/DD/YYYY"
+                                  value={
+                                    installDateTextDrafts[job.id] ??
+                                    formatInstallDateText(
+                                      installScheduleDrafts[job.id] ?? ""
+                                    )
+                                  }
+                                  disabled={
+                                    installScheduleSavingJobId === job.id
+                                  }
+                                  onChange={(event) => {
+                                    const digits = event.target.value
+                                      .replace(/\D/g, "")
+                                      .slice(0, 8);
+
+                                    let value = digits;
+
+                                    if (digits.length > 4) {
+                                      value = `${digits.slice(0, 2)}/${digits.slice(
+                                        2,
+                                        4
+                                      )}/${digits.slice(4)}`;
+                                    } else if (digits.length > 2) {
+                                      value = `${digits.slice(0, 2)}/${digits.slice(
+                                        2
+                                      )}`;
+                                    }
+
+                                    setInstallDateTextDrafts((current) => ({
+                                      ...current,
+                                      [job.id]: value,
+                                    }));
+
+                                    const parsedDate =
+                                      parseInstallDateText(value);
+
+                                    if (parsedDate) {
+                                      const currentDraft =
+                                        installScheduleDrafts[job.id] ?? "";
+
+                                      const currentTime =
+                                        currentDraft.includes("T")
+                                          ? currentDraft.split("T")[1] ?? ""
+                                          : "";
+
+                                      setInstallScheduleDrafts((current) => ({
+                                        ...current,
+                                        [job.id]: currentTime
+                                          ? `${parsedDate}T${currentTime}`
+                                          : parsedDate,
+                                      }));
+                                    }
+
+                                    setInstallScheduleErrors((current) => ({
+                                      ...current,
+                                      [job.id]: "",
+                                    }));
+                                  }}
+                                  style={{
+                                    width: "100%",
+                                    minHeight: 42,
+                                    boxSizing: "border-box",
+                                    border: "1px solid #31495a",
+                                    borderRadius: 9,
+                                    background: "#0a0f13",
+                                    color: "#f3f6f8",
+                                    padding: "0 10px",
+                                    fontWeight: 700,
+                                  }}
+                                />
+
+                                <button
+                                  type="button"
+                                  aria-label="Open install date calendar"
+                                  onClick={() => {
+                                    const picker = document.getElementById(
+                                      `premier-install-date-${job.id}`
+                                    ) as HTMLInputElement | null;
+
+                                    if (!picker) return;
+
+                                    if (typeof picker.showPicker === "function") {
+                                      picker.showPicker();
+                                    } else {
+                                      picker.click();
+                                    }
+                                  }}
+                                  style={{
+                                    minHeight: 42,
+                                    border: "1px solid #6f9fbd",
+                                    borderRadius: 9,
+                                    background: "#162630",
+                                    color: "#ffffff",
+                                    fontSize: 18,
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  📅
+                                </button>
+
+                                <input
+                                  id={`premier-install-date-${job.id}`}
+                                  type="date"
+                                  tabIndex={-1}
+                                  value={
+                                    parseInstallDateText(
+                                      installDateTextDrafts[job.id] ??
+                                        formatInstallDateText(
+                                          installScheduleDrafts[job.id] ?? ""
+                                        )
+                                    ) ?? ""
+                                  }
+                                  onChange={(event) => {
+                                    const parsedDate = event.target.value;
+
+                                    if (!parsedDate) return;
+
+                                    const [year, month, day] =
+                                      parsedDate.split("-");
+
+                                    setInstallDateTextDrafts((current) => ({
+                                      ...current,
+                                      [job.id]: `${month}/${day}/${year}`,
+                                    }));
+
+                                    const currentDraft =
+                                      installScheduleDrafts[job.id] ?? "";
+
+                                    const currentTime =
+                                      currentDraft.includes("T")
+                                        ? currentDraft.split("T")[1] ?? ""
+                                        : "";
+
+                                    setInstallScheduleDrafts((current) => ({
+                                      ...current,
+                                      [job.id]: currentTime
+                                        ? `${parsedDate}T${currentTime}`
+                                        : parsedDate,
+                                    }));
+                                  }}
+                                  style={{
+                                    position: "absolute",
+                                    width: 1,
+                                    height: 1,
+                                    opacity: 0,
+                                    pointerEvents: "none",
+                                  }}
+                                />
+                              </div>
+                            </div>
+
+                            <div style={{ display: "grid", gap: 5 }}>
+                              <label
+                                style={{
+                                  color: "#8fa9bc",
+                                  fontSize: 10,
+                                  fontWeight: 900,
+                                  textTransform: "uppercase",
+                                }}
+                              >
+                                Install Time
+                              </label>
+
+                              <div
+                                style={{
+                                  display: "grid",
+                                  gridTemplateColumns: "minmax(0, 1fr) 46px",
+                                  gap: 6,
+                                }}
+                              >
+                                <input
+                                  type="text"
+                                  placeholder="8:05 AM"
+                                  value={
+                                    installTimeTextDrafts[job.id] ??
+                                    formatInstallTimeText(
+                                      installScheduleDrafts[job.id] ?? ""
+                                    )
+                                  }
+                                  disabled={
+                                    installScheduleSavingJobId === job.id
+                                  }
+                                  onChange={(event) => {
+                                    const raw = event.target.value.toUpperCase();
+
+                                    const periodKey = raw
+                                      .replace(/[^AP]/g, "")
+                                      .slice(-1);
+
+                                    const digits = raw
+                                      .replace(/\D/g, "")
+                                      .slice(0, 4);
+
+                                    let value = digits;
+
+                                    if (digits.length === 3) {
+                                      value = `${digits.slice(0, 1)}:${digits.slice(1)}`;
+                                    } else if (digits.length === 4) {
+                                      value = `${digits.slice(0, 2)}:${digits.slice(2)}`;
+                                    }
+
+                                    if (
+                                      periodKey &&
+                                      (digits.length === 3 || digits.length === 4)
+                                    ) {
+                                      value = `${value} ${
+                                        periodKey === "A" ? "AM" : "PM"
+                                      }`;
+                                    }
+
+                                    setInstallTimeTextDrafts((current) => ({
+                                      ...current,
+                                      [job.id]: value,
+                                    }));
+
+                                    const parsedTime =
+                                      parseInstallTimeText(value);
+
+                                    if (parsedTime) {
+                                      const currentDraft =
+                                        installScheduleDrafts[job.id] ?? "";
+
+                                      const currentDate =
+                                        currentDraft.includes("T")
+                                          ? currentDraft.split("T")[0] ?? ""
+                                          : currentDraft;
+
+                                      if (currentDate) {
+                                        setInstallScheduleDrafts((current) => ({
+                                          ...current,
+                                          [job.id]: `${currentDate}T${parsedTime}`,
+                                        }));
+                                      }
+                                    }
+
+                                    setInstallScheduleErrors((current) => ({
+                                      ...current,
+                                      [job.id]: "",
+                                    }));
+                                  }}
+                                  style={{
+                                    width: "100%",
+                                    minHeight: 42,
+                                    boxSizing: "border-box",
+                                    border: "1px solid #31495a",
+                                    borderRadius: 9,
+                                    background: "#0a0f13",
+                                    color: "#f3f6f8",
+                                    padding: "0 10px",
+                                    fontWeight: 700,
+                                  }}
+                                />
+
+                                <button
+                                  type="button"
+                                  aria-label="Open install time picker"
+                                  onClick={() => {
+                                    const picker = document.getElementById(
+                                      `premier-install-time-${job.id}`
+                                    ) as HTMLInputElement | null;
+
+                                    if (!picker) return;
+
+                                    if (typeof picker.showPicker === "function") {
+                                      picker.showPicker();
+                                    } else {
+                                      picker.click();
+                                    }
+                                  }}
+                                  style={{
+                                    minHeight: 42,
+                                    border: "1px solid #6f9fbd",
+                                    borderRadius: 9,
+                                    background: "#162630",
+                                    color: "#ffffff",
+                                    fontSize: 18,
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  🕒
+                                </button>
+
+                                <input
+                                  id={`premier-install-time-${job.id}`}
+                                  type="time"
+                                  tabIndex={-1}
+                                  value={
+                                    parseInstallTimeText(
+                                      installTimeTextDrafts[job.id] ??
+                                        formatInstallTimeText(
+                                          installScheduleDrafts[job.id] ?? ""
+                                        )
+                                    ) ?? ""
+                                  }
+                                  onChange={(event) => {
+                                    const parsedTime = event.target.value;
+
+                                    if (!parsedTime) return;
+
+                                    const [hourText, minute] =
+                                      parsedTime.split(":");
+
+                                    const hour24 = Number(hourText);
+                                    const period =
+                                      hour24 >= 12 ? "PM" : "AM";
+
+                                    const hour12 =
+                                      hour24 === 0
+                                        ? 12
+                                        : hour24 > 12
+                                          ? hour24 - 12
+                                          : hour24;
+
+                                    setInstallTimeTextDrafts((current) => ({
+                                      ...current,
+                                      [job.id]: `${hour12}:${minute} ${period}`,
+                                    }));
+
+                                    const currentDraft =
+                                      installScheduleDrafts[job.id] ?? "";
+
+                                    const currentDate =
+                                      currentDraft.includes("T")
+                                        ? currentDraft.split("T")[0] ?? ""
+                                        : currentDraft;
+
+                                    if (currentDate) {
+                                      setInstallScheduleDrafts((current) => ({
+                                        ...current,
+                                        [job.id]: `${currentDate}T${parsedTime}`,
+                                      }));
+                                    }
+                                  }}
+                                  style={{
+                                    position: "absolute",
+                                    width: 1,
+                                    height: 1,
+                                    opacity: 0,
+                                    pointerEvents: "none",
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            disabled={
+                              installScheduleSavingJobId === job.id ||
+                              !installScheduleDrafts[job.id]
+                            }
+                            onClick={async () => {
+                              const parsedDate = parseInstallDateText(
+                                installDateTextDrafts[job.id] ??
+                                  formatInstallDateText(
+                                    installScheduleDrafts[job.id] ?? ""
+                                  )
+                              );
+
+                              const parsedTime = parseInstallTimeText(
+                                installTimeTextDrafts[job.id] ??
+                                  formatInstallTimeText(
+                                    installScheduleDrafts[job.id] ?? ""
+                                  )
+                              );
+
+                              const draft =
+                                parsedDate && parsedTime
+                                  ? `${parsedDate}T${parsedTime}`
+                                  : "";
+
+                              if (
+                                !draft ||
+                                !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(draft)
+                              ) {
+                                setInstallScheduleErrors((current) => ({
+                                  ...current,
+                                  [job.id]: "Choose an install date and time first.",
+                                }));
+                                return;
+                              }
+
+                              const accessToken =
+                                getPremierFieldAccessToken();
+
+                              if (!accessToken) {
+                                setInstallScheduleErrors((current) => ({
+                                  ...current,
+                                  [job.id]: "Premier staff access is missing.",
+                                }));
+                                return;
+                              }
+
+                              const scheduledFor =
+                                new Date(draft).toISOString();
+
+                              setInstallScheduleSavingJobId(job.id);
+                              setInstallScheduleErrors((current) => ({
+                                ...current,
+                                [job.id]: "",
+                              }));
+
+                              const { data, error } = await supabase.rpc(
+                                "schedule_premier_install",
+                                {
+                                  p_access_token: accessToken,
+                                  p_job_id: job.id,
+                                  p_scheduled_for: scheduledFor,
+                                }
+                              );
+
+                              if (error || data !== true) {
+                                console.error(
+                                  "Premier install scheduling failed:",
+                                  error
+                                );
+
+                                setInstallScheduleErrors((current) => ({
+                                  ...current,
+                                  [job.id]:
+                                    "Could not save the installation schedule.",
+                                }));
+
+                                setInstallScheduleSavingJobId(null);
+                                return;
+                              }
+
+                              setLiveInstallations((current) =>
+                                current.map((item) =>
+                                  item.id === job.id
+                                    ? {
+                                        ...item,
+                                        scheduled_for: scheduledFor,
+                                        current_stage: "scheduled",
+                                        next_action: item.crew
+                                          ? "Field Operations to prepare crew for installation."
+                                          : "Field Operations to assign installer / crew.",
+                                      }
+                                    : item
+                                )
+                              );
+
+                              setInstallScheduleDrafts((current) => {
+                                const next = { ...current };
+                                delete next[job.id];
+                                return next;
+                              });
+
+                              setInstallScheduleSavingJobId(null);
+                            }}
+                            style={{
+                              minHeight: 42,
+                              padding: "0 14px",
+                              border: "1px solid #6f9fbd",
+                              borderRadius: 9,
+                              background: "#162630",
+                              color: "#ffffff",
+                              fontWeight: 900,
+                              fontSize: 12,
+                              cursor:
+                                installScheduleSavingJobId === job.id ||
+                                !installScheduleDrafts[job.id]
+                                  ? "not-allowed"
+                                  : "pointer",
+                              whiteSpace: "nowrap",
+                              boxShadow:
+                                "0 0 0 1px rgba(111,159,189,0.10), 0 0 12px rgba(111,159,189,0.08)",
+                            }}
+                          >
+                            {installScheduleSavingJobId === job.id
+                              ? "Saving..."
+                              : job.scheduled_for
+                                ? "Change Install"
+                                : "Schedule Install"}
+                          </button>
+                        </div>
+
+                        {installScheduleErrors[job.id] ? (
+                          <div
+                            style={{
+                              color: "#d8a0a0",
+                              fontSize: 11,
+                              marginTop: 7,
+                            }}
+                          >
+                            {installScheduleErrors[job.id]}
+                          </div>
+                        ) : null}
+                      </div>
                       <div><strong>Material:</strong> {job.material_status || "Unknown"}</div>
                       <div><strong>Permit:</strong> {job.permit_status || "Unknown"}</div>
                     </div>
@@ -2967,9 +5086,214 @@ export default function PremierFieldOperationsBoard() {
                                 key={document.id}
                                 style={{
                                   border: "1px solid #26323a",
-                                  borderRadius: 9,
+                                  borderRadius: 10,
                                   background: "#111820",
                                   padding: 10,
+                                  display: "grid",
+                                  gridTemplateColumns: "112px minmax(0, 1fr)",
+                                  gap: 12,
+                                  alignItems: "start",
+                                }}
+                              >
+                                <div>
+                                  {document.url ? (
+                                    <a
+                                      href={document.url}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      title={`Open ${document.file_name || "document"}`}
+                                      style={{
+                                        display: "block",
+                                        width: "100%",
+                                        height: 92,
+                                        borderRadius: 8,
+                                        overflow: "hidden",
+                                        border: "1px solid #31495a",
+                                        background: "#0a0f13",
+                                        textDecoration: "none",
+                                      }}
+                                    >
+                                      {/\.(png|jpe?g|webp|gif)$/i.test(
+                                        document.file_name || ""
+                                      ) ? (
+                                        <img
+                                          src={document.url}
+                                          alt={
+                                            document.note ||
+                                            document.file_name ||
+                                            "Job document"
+                                          }
+                                          style={{
+                                            width: "100%",
+                                            height: "100%",
+                                            objectFit: "cover",
+                                            display: "block",
+                                          }}
+                                        />
+                                      ) : /\.pdf$/i.test(
+                                          document.file_name || ""
+                                        ) ? (
+                                        <div
+                                          style={{
+                                            width: "100%",
+                                            height: "100%",
+                                            overflow: "hidden",
+                                            pointerEvents: "none",
+                                          }}
+                                        >
+                                          <iframe
+                                            src={`${document.url}#page=1&view=FitH&toolbar=0&navpanes=0&scrollbar=0`}
+                                            title={
+                                              document.file_name ||
+                                              "PDF preview"
+                                            }
+                                            style={{
+                                              width: "calc(100% + 18px)",
+                                              height: "calc(100% + 18px)",
+                                              border: 0,
+                                              display: "block",
+                                            }}
+                                          />
+                                        </div>
+                                      ) : (
+                                        <div
+                                          style={{
+                                            width: "100%",
+                                            height: "100%",
+                                            display: "grid",
+                                            placeItems: "center",
+                                            color: "#8fa9bc",
+                                            fontSize: 10,
+                                            fontWeight: 800,
+                                            textAlign: "center",
+                                            padding: 8,
+                                          }}
+                                        >
+                                          Document Preview
+                                        </div>
+                                      )}
+                                    </a>
+                                  ) : (
+                                    <div
+                                      style={{
+                                        width: "100%",
+                                        height: 92,
+                                        borderRadius: 8,
+                                        border: "1px solid #31495a",
+                                        background: "#0a0f13",
+                                        display: "grid",
+                                        placeItems: "center",
+                                        color: "#8fa9bc",
+                                        fontSize: 10,
+                                        textAlign: "center",
+                                        padding: 8,
+                                      }}
+                                    >
+                                      File unavailable
+                                    </div>
+                                  )}
+
+                                  {document.url ? (
+                                    <div
+                                      style={{
+                                        color: "#6f9fbd",
+                                        fontSize: 9,
+                                        marginTop: 5,
+                                        textAlign: "center",
+                                      }}
+                                    >
+                                      Click preview to open
+                                    </div>
+                                  ) : null}
+                                </div>
+
+                                <div style={{ minWidth: 0 }}>
+                                  <div
+                                    style={{
+                                      color: "#8fa9bc",
+                                      fontSize: 10,
+                                      fontWeight: 900,
+                                      letterSpacing: 0.6,
+                                      textTransform: "uppercase",
+                                    }}
+                                  >
+                                    {document.document_type ===
+                                    "Final Measurement Document"
+                                      ? "Supporting Document"
+                                      : document.document_type || "Document"}
+                                  </div>
+
+                                  <div
+                                    style={{
+                                      color: "#f3f6f8",
+                                      fontSize: 13,
+                                      fontWeight: 900,
+                                      marginTop: 4,
+                                      overflowWrap: "anywhere",
+                                    }}
+                                  >
+                                    {document.note ||
+                                      document.document_type ||
+                                      "Document"}
+                                  </div>
+
+                                  <div
+                                    style={{
+                                      color: "#9ca8b2",
+                                      fontSize: 11,
+                                      lineHeight: 1.4,
+                                      marginTop: 5,
+                                      overflowWrap: "anywhere",
+                                    }}
+                                  >
+                                    {document.file_name || "Attached file"}
+                                  </div>
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      ) : null}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setFieldBuckingRecordsOpenId((current) =>
+                          current === job.id ? null : job.id
+                        )
+                      }
+                      style={{
+                        width: "100%",
+                        minHeight: 42,
+                        border: "1px solid #405565",
+                        borderRadius: 9,
+                        background: "#1a2a36",
+                        color: "#ffffff",
+                        fontWeight: 900,
+                        fontSize: 12,
+                        cursor: "pointer",
+                        marginBottom:
+                          fieldBuckingRecordsOpenId === job.id ? 10 : 0,
+                      }}
+                    >
+                      {fieldBuckingRecordsOpenId === job.id
+                        ? "Close Bucking Records"
+                        : "Open Bucking Records"}
+                    </button>
+
+                    {fieldBuckingRecordsOpenId === job.id ? (
+                      <>
+
+
+                    <div
+                                style={{
+                                  border: "1px solid #31495a",
+                                  borderRadius: 10,
+                                  background: "#111820",
+                                  padding: 10,
+                                  marginBottom: 10,
+                                  display: "grid",
+                                  gap: 9,
                                 }}
                               >
                                 <div
@@ -2979,71 +5303,439 @@ export default function PremierFieldOperationsBoard() {
                                     fontWeight: 900,
                                   }}
                                 >
-                                  {document.document_type || "Document"}
+                                  Bucking / Field Record
                                 </div>
 
-                                <div
+                                <label
                                   style={{
-                                    color: "#9ca8b2",
-                                    fontSize: 11,
-                                    marginTop: 3,
-                                    overflowWrap: "anywhere",
+                                    minHeight: 42,
+                                    border: "1px solid #6f9fbd",
+                                    borderRadius: 9,
+                                    background: "#162630",
+                                    color: "#ffffff",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    padding: "0 12px",
+                                    fontSize: 12,
+                                    fontWeight: 900,
+                                    cursor:
+                                      fieldUploadingBuckingJobId === job.id
+                                        ? "wait"
+                                        : "pointer",
                                   }}
                                 >
-                                  {document.file_name || "Attached file"}
-                                </div>
+                                  {fieldUploadingBuckingJobId === job.id
+                                    ? "Uploading Bucking Photo..."
+                                    : "Take / Upload Bucking Photo"}
 
-                                {document.note ? (
-                                  <div
-                                    style={{
-                                      color: "#8fa9bc",
-                                      fontSize: 11,
-                                      marginTop: 4,
-                                    }}
-                                  >
-                                    {document.note}
-                                  </div>
-                                ) : null}
+                                  <input
+                                    type="file"
+                                    accept="image/jpeg,image/png,image/webp"
+                                    capture="environment"
+                                    hidden
+                                    disabled={
+                                      fieldUploadingBuckingJobId === job.id
+                                    }
+                                    onChange={async (event) => {
+                                      const file =
+                                        event.target.files?.[0] ?? null;
 
-                                {document.url ? (
-                                  <a
-                                    href={document.url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    style={{
-                                      display: "inline-flex",
-                                      alignItems: "center",
-                                      justifyContent: "center",
-                                      minHeight: 36,
-                                      marginTop: 8,
-                                      padding: "0 14px",
-                                      borderRadius: 8,
-                                      border: "1px solid #557c64",
-                                      color: "#b7dec4",
-                                      fontSize: 11,
-                                      fontWeight: 900,
-                                      textDecoration: "none",
+                                      event.currentTarget.value = "";
+
+                                      if (!file) return;
+
+                                      if (
+                                        ![
+                                          "image/jpeg",
+                                          "image/png",
+                                          "image/webp",
+                                        ].includes(file.type)
+                                      ) {
+                                        window.alert(
+                                          "Please use a JPG, PNG, or WEBP photo."
+                                        );
+                                        return;
+                                      }
+
+                                      const accessToken =
+                                        getPremierFieldAccessToken();
+
+                                      if (!accessToken) {
+                                        window.alert(
+                                          "Premier staff access is missing."
+                                        );
+                                        return;
+                                      }
+
+                                      setFieldUploadingBuckingJobId(job.id);
+
+                                      try {
+                                        const proofType =
+                                          "Bucking / buck inspection";
+
+                                        const {
+                                          data: uploadAccess,
+                                          error: accessError,
+                                        } =
+                                          await supabase.functions.invoke(
+                                            "premier-installer-proof-photo",
+                                            {
+                                              body: {
+                                                action: "create-upload",
+                                                accessToken,
+                                                jobId: job.id,
+                                                proofType,
+                                                fileName:
+                                                  file.name ||
+                                                  "bucking-proof.jpg",
+                                                mimeType:
+                                                  file.type || "image/jpeg",
+                                              },
+                                            }
+                                          );
+
+                                        if (
+                                          accessError ||
+                                          !uploadAccess?.path ||
+                                          !uploadAccess?.token
+                                        ) {
+                                          throw new Error(
+                                            accessError?.message ||
+                                              "Could not prepare bucking proof upload."
+                                          );
+                                        }
+
+                                        const { error: uploadError } =
+                                          await supabase.storage
+                                            .from(
+                                              "premier-installer-proof-photos"
+                                            )
+                                            .uploadToSignedUrl(
+                                              uploadAccess.path,
+                                              uploadAccess.token,
+                                              file,
+                                              {
+                                                contentType:
+                                                  file.type || "image/jpeg",
+                                              }
+                                            );
+
+                                        if (uploadError) {
+                                          throw uploadError;
+                                        }
+
+                                        const {
+                                          data: finalizeData,
+                                          error: finalizeError,
+                                        } =
+                                          await supabase.functions.invoke(
+                                            "premier-installer-proof-photo",
+                                            {
+                                              body: {
+                                                action: "finalize",
+                                                accessToken,
+                                                jobId: job.id,
+                                                proofType,
+                                                path: uploadAccess.path,
+                                                fileName:
+                                                  file.name ||
+                                                  "bucking-proof.jpg",
+                                                mimeType:
+                                                  file.type || "image/jpeg",
+                                              },
+                                            }
+                                          );
+
+                                        if (
+                                          finalizeError ||
+                                          !finalizeData?.photo
+                                        ) {
+                                          throw new Error(
+                                            finalizeError?.message ||
+                                              "Could not save bucking proof."
+                                          );
+                                        }
+
+                                        await loadFieldInstallerActivity(
+                                          job.id
+                                        );
+                                      } catch (error: any) {
+                                        console.error(
+                                          "RJ bucking proof upload failed:",
+                                          error
+                                        );
+
+                                        window.alert(
+                                          error?.message ||
+                                            "Could not upload bucking photo."
+                                        );
+                                      } finally {
+                                        setFieldUploadingBuckingJobId(null);
+                                      }
                                     }}
-                                  >
-                                    Open
-                                  </a>
-                                ) : (
-                                  <div
-                                    style={{
-                                      color: "#8fa9bc",
-                                      fontSize: 11,
-                                      marginTop: 6,
+                                  />
+                                </label>
+
+                                <textarea
+                                  value={
+                                    fieldBuckingDrafts[job.id]?.buckingNotes ??
+                                    ""
+                                  }
+                                  onChange={(event) => {
+                                    const current =
+                                      fieldBuckingDrafts[job.id];
+
+                                    setFieldBuckingDrafts((drafts) => ({
+                                      ...drafts,
+                                      [job.id]: {
+                                        buckingNotes: event.target.value,
+                                        measurementNotes:
+                                          current?.measurementNotes ?? "",
+                                        materialIssueNotes:
+                                          current?.materialIssueNotes ?? "",
+                                        needsAttention:
+                                          current?.needsAttention ?? false,
+                                        saved: false,
+                                      },
+                                    }));
+                                  }}
+                                  placeholder="Bucking / buck inspection notes"
+                                  rows={3}
+                                  style={{
+                                    width: "100%",
+                                    boxSizing: "border-box",
+                                    borderRadius: 9,
+                                    border: "1px solid #405565",
+                                    background: "#0a0f13",
+                                    color: "#d9e5ee",
+                                    padding: "10px 11px",
+                                    fontSize: 12,
+                                    resize: "vertical",
+                                  }}
+                                />
+
+                                <textarea
+                                  value={
+                                    fieldBuckingDrafts[job.id]
+                                      ?.measurementNotes ?? ""
+                                  }
+                                  onChange={(event) => {
+                                    const current =
+                                      fieldBuckingDrafts[job.id];
+
+                                    setFieldBuckingDrafts((drafts) => ({
+                                      ...drafts,
+                                      [job.id]: {
+                                        buckingNotes:
+                                          current?.buckingNotes ?? "",
+                                        measurementNotes:
+                                          event.target.value,
+                                        materialIssueNotes:
+                                          current?.materialIssueNotes ?? "",
+                                        needsAttention:
+                                          current?.needsAttention ?? false,
+                                        saved: false,
+                                      },
+                                    }));
+                                  }}
+                                  placeholder="Measurement notes"
+                                  rows={3}
+                                  style={{
+                                    width: "100%",
+                                    boxSizing: "border-box",
+                                    borderRadius: 9,
+                                    border: "1px solid #405565",
+                                    background: "#0a0f13",
+                                    color: "#d9e5ee",
+                                    padding: "10px 11px",
+                                    fontSize: 12,
+                                    resize: "vertical",
+                                  }}
+                                />
+
+                                <textarea
+                                  value={
+                                    fieldBuckingDrafts[job.id]
+                                      ?.materialIssueNotes ?? ""
+                                  }
+                                  onChange={(event) => {
+                                    const current =
+                                      fieldBuckingDrafts[job.id];
+
+                                    setFieldBuckingDrafts((drafts) => ({
+                                      ...drafts,
+                                      [job.id]: {
+                                        buckingNotes:
+                                          current?.buckingNotes ?? "",
+                                        measurementNotes:
+                                          current?.measurementNotes ?? "",
+                                        materialIssueNotes:
+                                          event.target.value,
+                                        needsAttention:
+                                          current?.needsAttention ?? false,
+                                        saved: false,
+                                      },
+                                    }));
+                                  }}
+                                  placeholder="Material issue notes"
+                                  rows={3}
+                                  style={{
+                                    width: "100%",
+                                    boxSizing: "border-box",
+                                    borderRadius: 9,
+                                    border: "1px solid #405565",
+                                    background: "#0a0f13",
+                                    color: "#d9e5ee",
+                                    padding: "10px 11px",
+                                    fontSize: 12,
+                                    resize: "vertical",
+                                  }}
+                                />
+
+                                <label
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 8,
+                                    minHeight: 38,
+                                    color: "#d9e5ee",
+                                    fontSize: 12,
+                                    fontWeight: 800,
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={
+                                      fieldBuckingDrafts[job.id]
+                                        ?.needsAttention ?? false
+                                    }
+                                    onChange={(event) => {
+                                      const current =
+                                        fieldBuckingDrafts[job.id];
+
+                                      setFieldBuckingDrafts((drafts) => ({
+                                        ...drafts,
+                                        [job.id]: {
+                                          buckingNotes:
+                                            current?.buckingNotes ?? "",
+                                          measurementNotes:
+                                            current?.measurementNotes ?? "",
+                                          materialIssueNotes:
+                                            current?.materialIssueNotes ?? "",
+                                          needsAttention:
+                                            event.target.checked,
+                                          saved: false,
+                                        },
+                                      }));
                                     }}
-                                  >
-                                    File link unavailable.
-                                  </div>
-                                )}
+                                  />
+                                  Needs Attention
+                                </label>
+
+                                <button
+                                  type="button"
+                                  disabled={
+                                    fieldSavingBuckingJobId === job.id
+                                  }
+                                  onClick={async () => {
+                                    const accessToken =
+                                      getPremierFieldAccessToken();
+
+                                    if (!accessToken) {
+                                      window.alert(
+                                        "Premier staff access is missing."
+                                      );
+                                      return;
+                                    }
+
+                                    const draft =
+                                      fieldBuckingDrafts[job.id] ?? {
+                                        buckingNotes: "",
+                                        measurementNotes: "",
+                                        materialIssueNotes: "",
+                                        needsAttention: false,
+                                        saved: false,
+                                      };
+
+                                    setFieldSavingBuckingJobId(job.id);
+
+                                    try {
+                                      const { data, error } =
+                                        await supabase.rpc(
+                                          "save_premier_installer_bucking_details",
+                                          {
+                                            p_access_token: accessToken,
+                                            p_job_id: job.id,
+                                            p_bucking_notes:
+                                              draft.buckingNotes,
+                                            p_measurement_notes:
+                                              draft.measurementNotes,
+                                            p_material_issue_notes:
+                                              draft.materialIssueNotes,
+                                            p_needs_attention:
+                                              draft.needsAttention,
+                                          }
+                                        );
+
+                                      if (error) {
+                                        throw error;
+                                      }
+
+                                      if (data === true) {
+                                        setFieldBuckingDrafts(
+                                          (drafts) => ({
+                                            ...drafts,
+                                            [job.id]: {
+                                              ...draft,
+                                              saved: true,
+                                            },
+                                          })
+                                        );
+
+                                        await loadFieldInstallerActivity(
+                                          job.id
+                                        );
+                                      }
+                                    } catch (error: any) {
+                                      console.error(
+                                        "RJ save bucking details failed:",
+                                        error
+                                      );
+
+                                      window.alert(
+                                        error?.message ||
+                                          "Could not save bucking details."
+                                      );
+                                    } finally {
+                                      setFieldSavingBuckingJobId(null);
+                                    }
+                                  }}
+                                  style={{
+                                    minHeight: 42,
+                                    border: "1px solid #6f9fbd",
+                                    borderRadius: 9,
+                                    background: "#162630",
+                                    color: "#ffffff",
+                                    fontWeight: 900,
+                                    fontSize: 12,
+                                    cursor:
+                                      fieldSavingBuckingJobId === job.id
+                                        ? "wait"
+                                        : "pointer",
+                                  }}
+                                >
+                                  {fieldSavingBuckingJobId === job.id
+                                    ? "Saving Bucking Record..."
+                                    : fieldBuckingDrafts[job.id]?.saved
+                                      ? "Bucking Record Saved"
+                                      : "Save Bucking Record"}
+                                </button>
                               </div>
-                            ))
-                          )}
-                        </div>
-                      ) : null}
-                    </div>
+                      </>
+                    ) : null}
+
 
                     {job.current_stage === "installation_ready" ? (
                       <div
@@ -3058,6 +5750,7 @@ export default function PremierFieldOperationsBoard() {
                       >
                         <div
                           style={{
+                          display: "none",
                             color: "#b7dec4",
                             fontSize: 11,
                             fontWeight: 900,
@@ -3081,7 +5774,7 @@ export default function PremierFieldOperationsBoard() {
                         >
                           {job.current_stage === "installation_complete"
                             ? "Installation is complete."
-                            : "Installer has this job."}
+                            : "Field Operations owns this job."}
                         </div>
 
                         <div
@@ -3342,7 +6035,7 @@ export default function PremierFieldOperationsBoard() {
                         {job.inspection_scheduled_date
                           ? `${new Date(
                               `${job.inspection_scheduled_date}T12:00:00`
-                            ).toLocaleDateString()} — ${
+                            ).toLocaleDateString()} â€” ${
                               job.inspection_window || "Time TBD"
                             }`
                           : job.inspection_scheduled_for
@@ -3577,6 +6270,30 @@ export default function PremierFieldOperationsBoard() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

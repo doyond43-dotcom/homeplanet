@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 type StaffOption = {
@@ -21,7 +21,11 @@ type LoginResult = {
 
 const STORAGE_KEY = "premier_staff_session";
 
-function destinationForRoles(roles: string[]) {
+function destinationForRoles(displayName: string, roles: string[]) {
+  if (displayName === "Gino Marquez" && roles.includes("sales")) {
+    return "/planet/premier-window-door/sales";
+  }
+
   if (roles.includes("office")) {
     return "/planet/premier-window-door/board";
   }
@@ -34,7 +38,11 @@ function destinationForRoles(roles: string[]) {
     return "/planet/premier-window-door/field";
   }
 
-  return "/planet/premier-window-door/tech";
+  if (roles.includes("installer")) {
+    return "/planet/premier-window-door/tech";
+  }
+
+  return "/planet/premier-window-door/staff";
 }
 
 const nativePasswordRevealStyle = `
@@ -148,14 +156,12 @@ export default function PremierStaffLoginPage() {
       expiresAt: result.expiresAt,
     };
 
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
     window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
 
-    const destination = destinationForRoles(session.roles);
+    const destination = destinationForRoles(session.displayName, session.roles);
 
-    window.location.href =
-      destination +
-      "?access=" +
-      encodeURIComponent(session.accessToken);
+    window.location.href = destination;
   };
 
   return (
@@ -260,7 +266,7 @@ export default function PremierStaffLoginPage() {
                   {person.display_name}
                   {person.company &&
                   person.company !== "Premier Window & Door Design"
-                    ? ` — ${person.company}`
+                    ? ` - ${person.company}`
                     : ""}
                 </option>
               ))}
@@ -296,7 +302,7 @@ export default function PremierStaffLoginPage() {
                   void signIn();
                 }
               }}
-              placeholder="••••"
+              placeholder="PIN"
               style={{
                 minHeight: 48,
                 border: "1px solid #31495a",
@@ -329,7 +335,7 @@ export default function PremierStaffLoginPage() {
                 cursor: "pointer",
               }}
             >
-              {showPin ? "◉" : "👁"}
+              {showPin ? "Hide" : "Show"}
             </button>
             </div>
           </label>
@@ -385,3 +391,6 @@ export default function PremierStaffLoginPage() {
     </>
   );
 }
+
+
+
