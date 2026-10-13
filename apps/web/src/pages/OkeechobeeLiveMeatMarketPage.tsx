@@ -2062,7 +2062,13 @@ export default function OkeechobeeLiveMeatMarketPage({
                 color: "#788078"
               }}
             >
-              Built to help local food stay local.
+              <div>Built to help local food stay local.</div>
+              <div style={{ marginTop: "6px" }}>
+                © 2026 Live Local Markets. All rights reserved.
+              </div>
+              <div style={{ marginTop: "4px" }}>
+                Powered by HomePlanet.
+              </div>
             </div>
           </div>
         </footer>
@@ -2070,6 +2076,7 @@ export default function OkeechobeeLiveMeatMarketPage({
     </main>
   );
 }
+
 
 
 
