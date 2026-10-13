@@ -809,6 +809,8 @@ export default async function handler(
 
       const helperId = String(req.body?.helperId || "").trim();
       const status = String(req.body?.status || "").trim();
+      const communicationNote = req.body?.communicationNote;
+      const lastContactAt = req.body?.lastContactAt;
 
       const allowedStatuses = new Set([
         "new",
@@ -826,13 +828,39 @@ export default async function handler(
         });
       }
 
+      const helperUpdate: Record<string, any> = {
+        status,
+      };
+
+      if (communicationNote !== undefined) {
+        const note = String(communicationNote || "").trim();
+        helperUpdate.communication_note = note || null;
+      }
+
+      if (lastContactAt !== undefined) {
+        if (lastContactAt === null || lastContactAt === "") {
+          helperUpdate.last_contact_at = null;
+        } else {
+          const parsedLastContact = new Date(String(lastContactAt));
+
+          if (Number.isNaN(parsedLastContact.getTime())) {
+            return res.status(400).json({
+              ok: false,
+              error: "Last contact date is invalid.",
+            });
+          }
+
+          helperUpdate.last_contact_at = parsedLastContact.toISOString();
+        }
+      }
+
       const { data: helper, error: helperUpdateError } =
         await supabase
           .from("okeechobee_project_helpers")
-          .update({ status })
+          .update(helperUpdate)
           .eq("id", helperId)
           .select(
-            "id,event_slug,helper_id,name,phone,email,help_type,notes,created_at,status"
+            "id,event_slug,helper_id,name,phone,email,help_type,notes,created_at,status,last_contact_at,communication_note"
           )
           .maybeSingle();
 
@@ -881,7 +909,7 @@ export default async function handler(
 
       supabase
         .from("okeechobee_project_helpers")
-        .select("event_slug,id,helper_id,name,phone,email,help_type,notes,created_at,status"),
+        .select("event_slug,id,helper_id,name,phone,email,help_type,notes,created_at,status,last_contact_at,communication_note"),
 
       supabase
         .from("homeplanet_leads")
