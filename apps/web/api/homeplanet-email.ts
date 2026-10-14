@@ -389,6 +389,116 @@ async function sendHomePlanetContact(requestId: string) {
   };
 }
 
+async function sendFarmSellerInquiry(requestId: string) {
+  const savedLead = await loadSavedRecord(
+    "homeplanet_leads",
+    "id",
+    requestId,
+    "id,name,contact,message,selected_operation,business_name,board_slug,created_at",
+    "okeechobee-meat-market-farm-inquiry",
+    "Farm seller inquiry"
+  );
+
+  if (
+    savedLead.board_slug !== "okeechobee-live-meat-market" ||
+    savedLead.selected_operation !== "Farm Seller Inquiry"
+  ) {
+    throw new HomePlanetEmailError(
+      "Saved request is not eligible for seller inquiry delivery.",
+      { httpStatus: 400 }
+    );
+  }
+
+  const message = String(savedLead.message || "");
+  const sellerSlug = quoteDetail(message, "Listing ID").trim();
+  const sellerName = String(savedLead.business_name || "").trim();
+
+  if (
+    !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(sellerSlug) ||
+    !sellerName ||
+    message.split("\n")[0].trim() !== "Farm Inquiry"
+  ) {
+    throw new HomePlanetEmailError(
+      "Seller inquiry information is incomplete.",
+      { httpStatus: 400 }
+    );
+  }
+
+  const seller = await loadSavedRecord(
+    "okeechobee_meat_market_seller_access",
+    "seller_listing_id",
+    sellerSlug,
+    "seller_listing_id,seller_name,seller_email",
+    "okeechobee-meat-market-farm-inquiry",
+    "Registered Meat Market seller"
+  );
+
+  const registeredName = String(seller.seller_name || "").trim();
+  const recipient = String(seller.seller_email || "").trim();
+
+  const normalizeName = (value: string) =>
+    value.toLowerCase().replace(/\s+llc$/, "").trim();
+
+  if (
+    !recipient ||
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient) ||
+    !registeredName ||
+    normalizeName(sellerName) !== normalizeName(registeredName)
+  ) {
+    throw new HomePlanetEmailError(
+      "Seller email or seller identity could not be verified.",
+      { httpStatus: 400 }
+    );
+  }
+
+  const request = quoteDetail(message, "Request").trim();
+
+  if (!request) {
+    throw new HomePlanetEmailError(
+      "Seller inquiry message is missing.",
+      { httpStatus: 400 }
+    );
+  }
+
+  const buyerName = String(savedLead.name || "").trim();
+  const buyerContact = String(savedLead.contact || "").trim();
+
+  const result = await sendHomePlanetEmail({
+    recipient,
+    project: "okeechobee-meat-market-farm-inquiry",
+    idempotencyKey: `okeechobee-meat-market-farm-inquiry-${requestId}`,
+    subject: `New customer inquiry for ${registeredName}`,
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:680px;margin:auto;padding:24px;color:#18251c;">
+        <h2>New Customer Inquiry</h2>
+        <p>A customer contacted ${escapeEmailHtml(registeredName)} through the Live Meat Market.</p>
+        <div style="padding:20px;border:1px solid #ddd;border-radius:12px;">
+          <p><strong>Customer:</strong> ${escapeEmailHtml(buyerName)}</p>
+          <p><strong>Contact:</strong> ${escapeEmailHtml(buyerContact)}</p>
+          <p><strong>Looking for:</strong></p>
+          <p style="white-space:pre-wrap;">${escapeEmailHtml(request)}</p>
+        </div>
+        <p>Reply directly to the customer using the contact information above.</p>
+        <p style="font-size:12px;color:#666;">Request ID: ${escapeEmailHtml(requestId)}</p>
+      </div>
+    `,
+    text: [
+      "New Customer Inquiry",
+      `Seller: ${registeredName}`,
+      `Customer: ${buyerName}`,
+      `Contact: ${buyerContact}`,
+      "",
+      `Looking for: ${request}`,
+      "",
+      `Request ID: ${requestId}`,
+    ].join("\n"),
+  });
+
+  return {
+    ...result,
+    recordReference: requestId,
+  };
+}
 async function sendOkeechobeeMeatMarketOrder(requestId: string) {
   const savedLead = await loadSavedRecord(
     "homeplanet_leads",
@@ -690,6 +800,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       result = await sendOkeechobeeMeatMarketOrder(requestId);
+    } else if (project === "okeechobee-meat-market-farm-inquiry") {
+      const requestId = String(body.requestId || "").trim();
+
+      if (
+        !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(requestId)
+      ) {
+        return res.status(400).json({
+          ok: false,
+          error: "Invalid Farm Seller Inquiry ID.",
+        });
+      }
+
+      result = await sendFarmSellerInquiry(requestId);
     } else if (project === "homeplanet-contact") {
       const requestId = String(body.requestId || "").trim();
 
