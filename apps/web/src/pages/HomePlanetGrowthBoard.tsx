@@ -20,6 +20,16 @@ const starter = [
 ];
 const errorText = (e: unknown) => e instanceof Error ? e.message : String(e);
 
+function isSystemHistory(item: Interaction): boolean {
+  const text = item.summary || "";
+  return (
+    text.startsWith("Opportunity status changed:") ||
+    text.startsWith("Marked as TEST:") ||
+    text.startsWith("Restored from TEST:") ||
+    text.startsWith("Completed next action:")
+  );
+}
+
 export default function HomePlanetGrowthBoard() {
   const { user, loading: authLoading } = useAuth();
   const [people, setPeople] = useState<Person[]>([]);
@@ -46,6 +56,11 @@ export default function HomePlanetGrowthBoard() {
   const [sourceType, setSourceType] = useState("memory");
   const [dueDate, setDueDate] = useState("");
   const [opportunityId, setOpportunityId] = useState("");
+  const [simpleNote, setSimpleNote] = useState("");
+  const [simpleNext, setSimpleNext] = useState("");
+  const [simpleDue, setSimpleDue] = useState("");
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   const refresh = useCallback(async () => {
     if (!user) { setLoading(false); return; }
@@ -121,6 +136,45 @@ export default function HomePlanetGrowthBoard() {
       if (result.error) throw result.error;
     }, "Record saved to Supabase.");
   }
+  function choosePerson(id: string) {
+    if (id === activeId) return;
+    if ((simpleNote.trim() || simpleNext.trim()) && !window.confirm("You have an unsaved update. Switch people and discard this draft?")) return;
+    setActiveId(id);
+    setSimpleNote(""); setSimpleNext(""); setSimpleDue("");
+    setAdvancedOpen(false); setDetailsOpen(false);
+    setError(""); setMessage("");
+  }
+
+  async function saveSimpleUpdate() {
+    if (!user || !person) return setError("Select a person first.");
+    const note = simpleNote.trim();
+    const next = simpleNext.trim();
+    if (!note && !next) return setError("Write what happened or enter a next step.");
+    setBusy(true); setError(""); setMessage("");
+    let noteSaved = false;
+    try {
+      if (note) {
+        const { error: noteError } = await supabase.from("hp_growth_interactions")
+          .insert({ owner_id: user.id, person_id: person.id, summary: note, kind: "note", source_type: "direct" });
+        if (noteError) throw noteError;
+        noteSaved = true;
+        setSimpleNote("");
+      }
+      if (next) {
+        const { error: actionError } = await supabase.from("hp_growth_actions")
+          .insert({ owner_id: user.id, person_id: person.id, title: next,
+            due_at: simpleDue ? new Date(`${simpleDue}T12:00:00`).toISOString() : null });
+        if (actionError) throw actionError;
+        setSimpleNext(""); setSimpleDue("");
+      }
+      await refresh();
+      setMessage(note && next ? "Note saved to history and follow-up added." : note ? "Note saved to history." : "Follow-up added.");
+    } catch (e) {
+      setError((noteSaved ? "Your note was saved, but the follow-up was NOT saved. " : "Could not save. ") + errorText(e));
+      if (noteSaved) await refresh();
+    } finally { setBusy(false); }
+  }
+
   async function completeAction(action: Action) {
     await work(async () => {
       const { error: e } = await supabase.from("hp_growth_actions").update({ status: "done", completed_at: new Date().toISOString() }).eq("id", action.id);
@@ -190,53 +244,73 @@ export default function HomePlanetGrowthBoard() {
   if (authLoading) return <main style={base}>Checking HomePlanet sign-in...</main>;
   if (!user) return <main style={base}>Sign in to HomePlanet to view the Growth Board.</main>;
   return <main style={base}>
-    <div style={{maxWidth:1050, margin:"0 auto"}}>
-      <div style={{...small,letterSpacing:2}}>HOMEPLANET / INTERNAL</div>
-      <h1 style={{margin:"8px 0",fontSize:30}}>Growth & Relationships</h1>
-      <div style={small}>Person → Connection → Opportunity → Next Action → Outcome</div>
-      {error && <div role="alert" style={{...panel,borderColor:"#ba5151",marginTop:14,color:"#ffbaba"}}>{error}</div>}
-      {message && <div role="status" style={{...panel,borderColor:"#388766",marginTop:14}}>{message}</div>}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(3,minmax(0,1fr))",gap:9,margin:"20px 0"}}>
-        {[["People",people.length],["Opportunities",visibleOpps.length],["Completed Actions",actions.filter(x=>x.status==="done").length]].map(([label,value])=><div key={String(label)} style={{...panel,padding:12}}><b style={{fontSize:26}}>{value}</b><div style={{...small,fontSize:11}}>{label}</div></div>)}
-      </div>
-      <div style={{...panel,marginTop:14,marginBottom:15,borderColor:"#376450"}}>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,flexWrap:"wrap"}}>
-          <div><b style={{fontSize:17}}>Needs your attention</b><div style={small}>Your next moves, sorted by due date</div></div>
-          <button style={btn} onClick={()=>setTab("actions")}>View all actions ({openActions.length})</button>
+    <div style={{maxWidth:900,margin:"0 auto"}}>
+      <div style={{...small,letterSpacing:2,color:"#39ff14"}}>HOMEPLANET / GROWTH</div>
+      <h1 style={{margin:"9px 0 4px",fontSize:32}}>Your relationships, made simple.</h1>
+      <p style={{...small,marginTop:0}}>Remember what happened. Know what to do next.</p>
+      {error && <div role="alert" style={{...panel,borderColor:"#bd5151",color:"#ffbaba",marginBottom:12}}>{error}</div>}
+      {message && <div role="status" style={{...panel,borderColor:"#348062",marginBottom:12}}>{message}</div>}
+
+      <section style={{...panel,marginTop:16,borderColor:"#315b4c"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+          <div><h2 style={{margin:"0 0 4px",fontSize:20}}>Who needs your attention?</h2><div style={small}>Your real follow-ups, sorted by due date.</div></div>
+          <span style={{color:"#39ff14",fontWeight:700}}>{openActions.length} open</span>
         </div>
-        {openActions.length === 0 ? <p style={small}>Nothing waiting for follow-up. Add an action to any relationship.</p> :
-        <div style={{display:"grid",gap:9,marginTop:13}}>{openActions.slice(0,4).map(a=><div key={a.id} style={{borderTop:"1px solid #324257",paddingTop:10,display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}><div><b>{a.title}</b><div style={small}>{nameOf(a.person_id)} · {actionTiming(a)}</div></div><button style={btn} onClick={()=>{setActiveId(a.person_id);setForm(null)}}>Open</button></div>)}</div>}
+        {openActions.length===0 ? <p style={small}>You're caught up. No follow-ups waiting.</p> :
+          <div style={{display:"grid",gap:9,marginTop:14}}>{openActions.map(a=><div key={a.id} style={{borderTop:"1px solid #303c50",paddingTop:12,display:"flex",justifyContent:"space-between",gap:12,alignItems:"center",flexWrap:"wrap"}}>
+            <div style={{flex:1,minWidth:200}}><b>{a.title}</b><div style={small}>{nameOf(a.person_id)} · {actionTiming(a)}</div></div>
+            <button style={btn} onClick={()=>choosePerson(a.person_id)}>Open Person</button>
+          </div>)}</div>}
+      </section>
+
+      <section style={{...panel,marginTop:16}}>
+        <div style={{display:"flex",justifyContent:"space-between",gap:10,alignItems:"center",flexWrap:"wrap",marginBottom:12}}>
+          <h2 style={{margin:0,fontSize:21}}>Your people</h2>
+          <button style={green} onClick={()=>startForm("person")}>+ Add Person</button>
+        </div>
+        <input style={field} aria-label="Find person" placeholder="Find a person or business..." value={search} onChange={e=>setSearch(e.target.value)}/>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:12}}>
+          {shown.map(p=><button key={p.id} style={activeId===p.id?green:btn} onClick={()=>choosePerson(p.id)}>{p.name}</button>)}
+        </div>
+        {shown.length===0 && !loading && <p style={small}>No matches. Add a person to get started.</p>}
+      </section>
+
+      {person ? <section style={{...panel,marginTop:16,borderColor:"#345b4b"}}>
+        <div style={{display:"flex",justifyContent:"space-between",gap:12,alignItems:"center",flexWrap:"wrap"}}>
+          <div><h2 style={{margin:"0 0 4px",fontSize:24}}>{person.name}</h2><div style={small}>{person.lane || "Relationship"} · {person.source || "HomePlanet"}</div></div>
+          <button style={btn} onClick={()=>{setAdvancedOpen(true);setForm(null)}}>More Details</button>
+        </div>
+        <div style={{marginTop:18}}>
+          <label htmlFor="simple-growth-note" style={{display:"block",fontWeight:700,marginBottom:8,fontSize:17}}>What happened?</label>
+          <textarea id="simple-growth-note" rows={4} style={field} value={simpleNote} onChange={e=>setSimpleNote(e.target.value)} placeholder="Write what you discussed, agreed on, or want to remember..."/>
+          <p style={{...small,margin:"6px 0 16px"}}>Your words are saved to this person's dated history. A note is not automatically a new opportunity.</p>
+          <label htmlFor="simple-growth-next" style={{display:"block",fontWeight:700,marginBottom:8}}>What's next? <span style={{...small,fontWeight:400}}>(optional)</span></label>
+          <input id="simple-growth-next" style={field} value={simpleNext} onChange={e=>setSimpleNext(e.target.value)} placeholder="e.g. Call Michelle to schedule a meeting"/>
+          {simpleNext.trim() && <div style={{marginTop:10}}><label htmlFor="simple-growth-due" style={{...small,display:"block",marginBottom:5}}>Follow-up date (optional)</label><input id="simple-growth-due" type="date" style={{...field,maxWidth:220}} value={simpleDue} onChange={e=>setSimpleDue(e.target.value)}/></div>}
+          <button style={{...green,background:"#39ff14",color:"#07100a",fontWeight:800,marginTop:14}} disabled={busy || (!simpleNote.trim() && !simpleNext.trim())} onClick={()=>void saveSimpleUpdate()}>{busy?"Saving...":"Save Update"}</button>
+        </div>
+        <div style={{marginTop:24}}>
+          <h3 style={{fontSize:18,marginBottom:8}}>Next steps</h3>
+          {visibleActions.filter(a=>a.person_id===person.id && a.status==="open").length===0 ? <p style={small}>No open follow-ups for this person.</p> :
+            visibleActions.filter(a=>a.person_id===person.id && a.status==="open").map(a=><div key={a.id} style={{...panel,marginBottom:8,padding:12}}><b>{a.title}</b><div style={small}>{actionTiming(a)}</div><button disabled={busy} style={{...btn,marginTop:9}} onClick={()=>void completeAction(a)}>Mark Done</button></div>)}
+          <h3 style={{fontSize:18,margin:"20px 0 8px"}}>Conversation history</h3>
+          {interactions.filter(i=>i.person_id===person.id && !isSystemHistory(i)).length===0 ? <p style={small}>No history yet. Save your first note above.</p> :
+            interactions.filter(i=>i.person_id===person.id && !isSystemHistory(i)).slice(0,12).map(i=><div key={i.id} style={{borderLeft:"2px solid #348062",paddingLeft:12,marginBottom:14}}><div style={small}>{new Date(i.created_at).toLocaleString()} · {i.kind}</div><div style={{whiteSpace:"pre-wrap",marginTop:3}}>{i.summary}</div></div>)}
+          {(person.notes || person.phone || person.email) && <button style={{...btn,marginTop:8}} onClick={()=>setDetailsOpen(v=>!v)}>{detailsOpen?"Hide":"Show"} saved contact details</button>}
+          {detailsOpen && <div style={{...panel,marginTop:9}}><p style={{whiteSpace:"pre-wrap"}}>{person.notes}</p>{person.phone&&<p>Phone: {person.phone}</p>}{person.email&&<p>Email: {person.email}</p>}</div>}
+        </div>
+      </section> : <section style={{...panel,marginTop:16}}><b>Choose a person above to write a note.</b><p style={small}>No confusing categories. Just a conversation and an optional next step.</p></section>}
+
+      <div style={{margin:"20px 0",display:"flex",gap:12,flexWrap:"wrap",alignItems:"center"}}>
+        <button style={btn} disabled={loading} onClick={()=>void refresh()}>Refresh</button>
+        <label style={{...small,display:"flex",gap:8,alignItems:"center"}}><input type="checkbox" checked={showTestRecords} onChange={e=>setShowTestRecords(e.target.checked)}/> Show Test Records ({opps.filter(o=>o.is_test).length})</label>
+        {people.length===0 && !loading && <button style={btn} disabled={busy} onClick={()=>void importStarter()}>Import Starter Relationships</button>}
       </div>
-      <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:12}}>
-        <button style={green} onClick={()=>startForm("person")}>+ Add Person</button>
-        <button style={btn} onClick={()=>void refresh()} disabled={loading}>Refresh</button>
-        {people.length===0 && !loading && <button style={btn} disabled={busy} onClick={()=>void importStarter()}>Import 3 Starter Records</button>}
-      </div>
-      <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:12}}>{(["people","actions","opportunities"] as Tab[]).map(t=><button key={t} style={tab===t?green:btn} onClick={()=>setTab(t)}>{t === "people" ? "People" : t === "actions" ? "Next Actions" : "Opportunities"}</button>)}</div>
-      <label style={{...small,display:"flex",alignItems:"center",gap:9,marginBottom:14,cursor:"pointer"}}>
-        <input
-          type="checkbox"
-          checked={showTestRecords}
-          onChange={e=>setShowTestRecords(e.target.checked)}
-        />
-        Show Test Records ({opps.filter(o=>o.is_test).length})
-      </label>
-      <input style={{...field,marginBottom:14}} aria-label="Search relationships" placeholder="Search people, relationships, notes..." value={search} onChange={e=>setSearch(e.target.value)}/>
-      {loading ? <p>Loading saved Growth Board...</p> : <div style={{display:"grid",gap:10}}>
-        {tab==="people" && shown.map(p=><section key={p.id} style={panel}><div style={{display:"flex",justifyContent:"space-between",gap:10,alignItems:"center"}}><div><b style={{fontSize:18}}>{p.name}</b><div style={small}>{p.lane} · {p.source}</div><div style={small}>{visibleActions.filter(x=>x.person_id===p.id&&x.status==="open").length} open actions · {visibleOpps.filter(x=>x.person_id===p.id).length} opportunities</div></div><button style={btn} onClick={()=>setActiveId(p.id)}>Open</button></div></section>)}
-        {tab==="actions" && visibleActions.filter(a=>shown.some(p=>p.id===a.person_id)).map(a=><section key={a.id} style={panel}><b>{a.title}</b><div style={small}>{nameOf(a.person_id)} · {a.status === "open" ? actionTiming(a) : a.status}</div><div style={{display:"flex",gap:8,marginTop:10}}><button style={btn} onClick={()=>setActiveId(a.person_id)}>Person</button>{a.status==="open" && <button style={green} disabled={busy} onClick={()=>void completeAction(a)}>Mark Done</button>}</div></section>)}
-        {tab==="opportunities" && visibleOpps.filter(o=>shown.some(p=>p.id===o.person_id)).map(o=><section key={o.id} style={panel}><b>{o.title}</b><div style={small}>{nameOf(o.person_id)} · {o.status}</div><div style={{display:"flex",gap:8,marginTop:10,flexWrap:"wrap"}}><button style={btn} onClick={()=>setActiveId(o.person_id)}>Person</button><select aria-label={`Status for ${o.title}`} style={{...field,width:"auto"}} disabled={busy} value={o.status} onChange={e=>void changeOpp(o,e.target.value)}>{["exploring","contacted","meeting","active","won","lost","on_hold"].map(s=><option key={s} value={s}>{s}</option>)}</select><button
-      style={btn}
-      disabled={busy}
-      onClick={()=>void setTestRecord(o,!o.is_test)}
-    >{o.is_test?"Restore to Active":"Mark as Test"}</button></div></section>)}
-        {tab==="people" && !shown.length && <p style={small}>No people match your search.</p>}
-      </div>}
-      <p style={{...small,marginTop:20}}>Live Supabase records · Signed-in account only · Build 3. A status of “won” is entered manually, not independent proof of revenue.</p>
+      <p style={small}>Existing leads, opportunities, and Truth Chain records are preserved. Use More Details for advanced editing and test-record classification.</p>
     </div>
-    {person && <div style={{position:"fixed",inset:0,zIndex:1000,background:"rgba(0,0,0,.8)",display:"flex",justifyContent:"flex-end"}} onClick={()=>{setActiveId(null);setForm(null)}}>
+    {person && advancedOpen && <div style={{position:"fixed",inset:0,zIndex:1000,background:"rgba(0,0,0,.8)",display:"flex",justifyContent:"flex-end"}} onClick={()=>{setAdvancedOpen(false);setForm(null)}}>
       <section role="dialog" aria-modal="true" aria-label={`${person.name} relationship`} onClick={e=>e.stopPropagation()} style={{background:"#101826",width:"min(100%,520px)",overflowY:"auto",padding:18,boxSizing:"border-box"}}>
-        <button style={btn} onClick={()=>{setActiveId(null);setForm(null)}}>← Close</button>
+        <button style={btn} onClick={()=>{setAdvancedOpen(false);setForm(null)}}>← Close</button>
         <h2>{person.name}</h2><p style={small}>{person.lane} · {person.source}</p>
         <div style={{display:"flex",gap:7,flexWrap:"wrap",marginBottom:18}}><button style={btn} onClick={()=>startForm("edit",person)}>Edit</button><button style={green} onClick={()=>startForm("interaction",person)}>+ Interaction</button><button style={btn} onClick={()=>startForm("opportunity",person)}>+ Opportunity</button><button style={btn} onClick={()=>startForm("action",person)}>+ Action</button></div>
         {form && form!=="person" && <div style={{...panel,marginBottom:14}}><h3 style={{marginTop:0}}>{form==="edit"?"Edit Person":form==="interaction"?"Log what happened":form==="action"?"Set next action":"Add opportunity"}</h3><p style={small}>{form==="interaction"?"Capture the conversation or observation. This becomes a timestamped Truth Chain entry.":form==="action"?"What should happen next? Add a date if one is known.":form==="opportunity"?"What door might this relationship open? Keep possibilities separate from confirmed results.":"Update their contact and relationship details."}</p>{form==="edit" ? <div style={{display:"grid",gap:9}}>
