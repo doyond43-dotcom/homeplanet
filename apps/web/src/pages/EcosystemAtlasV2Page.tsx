@@ -599,6 +599,11 @@ const sections: AtlasSection[] = [
             route: "/planet/okeechobee/meat-market/intelligence",
             access: "working",
           },
+          {
+            label: "Seller Intelligence",
+            route: "/planet/okeechobee/meat-market/sellers",
+            access: "protected",
+          },
         ],
       },
       {
@@ -850,6 +855,20 @@ const sections: AtlasSection[] = [
     description:
       "Fast operational doorways that should not clutter the public systems above.",
     systems: [
+      {
+        id: "homeplanet-growth-board",
+        name: "HomePlanet Growth Board",
+        status: "Internal",
+        description:
+          "Relationships, opportunities, follow-up actions, and interaction history in one working board. Includes Live Meat Market upgrade interest.",
+        doorways: [
+          {
+            label: "Growth Board",
+            route: "/planet/homeplanet/growth",
+            access: "protected",
+          },
+        ],
+      },
       {
         id: "notepad",
         name: "HomePlanet Notepad",
