@@ -1,6 +1,11 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createHash, timingSafeEqual } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
+import {
+  escapeEmailHtml,
+  requiredEmailRecipient,
+  sendHomePlanetEmail,
+} from "../lib/homeplanet-email.js";
 
 function clean(value: unknown, max = 500) {
   return typeof value === "string"
@@ -144,12 +149,6 @@ export default async function handler(
     });
   }
 
-  console.log("[seller-manage-token]", {
-    slug,
-    length: token.length,
-    first4: token.slice(0, 4),
-    last4: token.slice(-4),
-  });
 
   const incomingHash = hashToken(token);
   const storedHash = String(access.manage_token_hash || "");
@@ -312,7 +311,314 @@ export default async function handler(
         pickupNote: access.pickup_note || "",
       },
       analytics,
+      inquiries: [],
       products: products || [],
+    });
+  }
+
+  if (action === "update-inquiry-status") {
+    return res.status(403).json({
+      ok: false,
+      error: "Customer tracking requires a HomePlanet business workspace.",
+    });
+  }
+
+  if (action === "express-interest") {
+    const interest = clean(req.body?.interest, 100);
+    const contact = clean(req.body?.contact, 200);
+    const notes = clean(req.body?.notes, 1000);
+
+    const allowedInterests = [
+      "Complete Business System",
+      "Custom Storefront",
+      "Customer Management",
+      "Marketing and Follow-Ups",
+    ];
+
+    if (!allowedInterests.includes(interest) || !contact) {
+      return res.status(400).json({
+        ok: false,
+        error: "Please choose a service and provide contact details.",
+      });
+    }
+
+    const businessName = String(access.seller_name || slug);
+
+    const message = [
+      "HomePlanet Upgrade Interest",
+      "Listing ID: " + slug,
+      "Business: " + businessName,
+      "Seller Email: " + (access.seller_email || ""),
+      "Interested In: " + interest,
+      "Notes: " + (notes || "None"),
+    ].join("\n");
+
+    // Save first. Notification failure must never erase this lead.
+    const { data: savedLead, error: leadError } = await supabase
+      .from("homeplanet_leads")
+      .insert({
+        board_slug: "okeechobee-live-meat-market",
+        selected_operation: "HomePlanet Upgrade Interest",
+        name: businessName,
+        contact,
+        message,
+      })
+      .select("id")
+      .single();
+
+    if (leadError || !savedLead?.id) {
+      console.error(
+        "Upgrade interest save failed:",
+        leadError?.message || "Missing saved lead ID"
+      );
+
+      return res.status(500).json({
+        ok: false,
+        error: "Could not record your interest. Please try again.",
+      });
+    }
+
+    const leadId = String(savedLead.id);
+    let notificationAccepted = false;
+
+    try {
+      const safeBusiness = escapeEmailHtml(businessName);
+      const safeContact = escapeEmailHtml(contact);
+      const safeInterest = escapeEmailHtml(interest);
+      const safeNotes = escapeEmailHtml(notes || "None");
+      const safeSlug = escapeEmailHtml(slug);
+      const safeLeadId = escapeEmailHtml(leadId);
+
+      const delivery = await sendHomePlanetEmail({
+        recipient: requiredEmailRecipient(
+          "HOMEPLANET_ADMIN_EMAIL"
+        ),
+        project: "homeplanet-upgrade-interest",
+        idempotencyKey: "homeplanet-upgrade-interest-" + leadId,
+        subject:
+          "HomePlanet Upgrade Interest - " + businessName,
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:680px;margin:auto;padding:24px;color:#18251c;">
+            <h2>New HomePlanet Business Opportunity</h2>
+            <p>A Live Meat Market seller wants to grow with HomePlanet.</p>
+
+            <div style="padding:20px;border:1px solid #ddd;border-radius:12px;">
+              <p><strong>Business:</strong> ${safeBusiness}</p>
+              <p><strong>Seller Listing:</strong> ${safeSlug}</p>
+              <p><strong>Contact:</strong> ${safeContact}</p>
+              <p><strong>Interested In:</strong> ${safeInterest}</p>
+
+              <p><strong>Additional Notes:</strong></p>
+              <p style="white-space:pre-wrap;">${safeNotes}</p>
+            </div>
+
+            <p><strong>Next Action:</strong> Contact the seller about their HomePlanet business system.</p>
+
+            <p style="font-size:12px;color:#666;">
+              Saved HomePlanet Lead: ${safeLeadId}
+            </p>
+          </div>
+        `,
+        text: [
+          "NEW HOMEPLANET BUSINESS OPPORTUNITY",
+          "",
+          "Business: " + businessName,
+          "Seller Listing: " + slug,
+          "Contact: " + contact,
+          "Interested In: " + interest,
+          "",
+          "Additional Notes:",
+          notes || "None",
+          "",
+          "Next Action: Contact the seller.",
+          "Saved Lead ID: " + leadId,
+        ].join("\n"),
+      });
+
+      notificationAccepted = delivery.accepted === true;
+
+    } catch (emailError) {
+      // The interest is already safely saved in Supabase.
+      // Do not return a failed lead submission just because email failed.
+      console.error("HomePlanet upgrade notification failed", {
+        leadId,
+        errorType:
+          emailError instanceof Error
+            ? emailError.name
+            : "UnknownError",
+      });
+    }
+
+    // GROWTH_BOARD_UPGRADE_INTEGRATION_V2
+    // Recover missing follow-ups without duplicating existing records.
+    // Original lead saving and email delivery remain independent.
+    let growthLinked = false;
+
+    try {
+      const ownerId = "edca8e9f-ccf5-4aaf-bf01-fbd26adeaab1";
+      const relationshipSource = "Live Meat Market: " + slug;
+
+      const { data: existingOpportunity, error: lookupError } =
+        await supabase
+          .from("hp_growth_opportunities")
+          .select("id, person_id")
+          .eq("source_lead_id", leadId)
+          .maybeSingle();
+
+      if (lookupError) throw lookupError;
+
+      let opportunityId = existingOpportunity?.id;
+      let personId = existingOpportunity?.person_id;
+
+      if (!opportunityId) {
+        const { data: existingPeople, error: personLookupError } =
+          await supabase
+            .from("hp_growth_people")
+            .select("id")
+            .eq("owner_id", ownerId)
+            .eq("source", relationshipSource)
+            .limit(1);
+
+        if (personLookupError) throw personLookupError;
+
+        personId = existingPeople?.[0]?.id;
+
+        if (!personId) {
+          const contactIsEmail = contact.includes("@");
+
+          const { data: newPerson, error: personError } =
+            await supabase
+              .from("hp_growth_people")
+              .insert({
+                owner_id: ownerId,
+                name: businessName,
+                lane: "Business Development",
+                source: relationshipSource,
+                status: "active",
+                notes: "Seller interested in growing with HomePlanet.",
+                email: contactIsEmail ? contact : null,
+                phone: contactIsEmail ? null : contact,
+              })
+              .select("id")
+              .single();
+
+          if (personError) throw personError;
+          personId = newPerson.id;
+        }
+
+        const { data: opportunity, error: opportunityError } =
+          await supabase
+            .from("hp_growth_opportunities")
+            .insert({
+              owner_id: ownerId,
+              person_id: personId,
+              source_lead_id: leadId,
+              title: interest + " - " + businessName,
+              description: [
+                "Source: Okeechobee Live Meat Market",
+                "Seller listing: " + slug,
+                "Contact: " + contact,
+                "Interest: " + interest,
+                "Notes: " + (notes || "None"),
+                "Original lead: " + leadId,
+              ].join("\n"),
+              status: "exploring",
+            })
+            .select("id")
+            .single();
+
+        if (opportunityError) {
+          if (opportunityError.code !== "23505") throw opportunityError;
+
+          const { data: recovered, error: recoveryError } =
+            await supabase
+              .from("hp_growth_opportunities")
+              .select("id, person_id")
+              .eq("source_lead_id", leadId)
+              .single();
+
+          if (recoveryError) throw recoveryError;
+          opportunityId = recovered.id;
+          personId = recovered.person_id;
+        } else {
+          opportunityId = opportunity.id;
+        }
+      }
+
+      if (!personId || !opportunityId) {
+        throw new Error("Growth relationship or opportunity missing.");
+      }
+
+      const { data: existingActions, error: actionLookupError } =
+        await supabase
+          .from("hp_growth_actions")
+          .select("id")
+          .eq("opportunity_id", opportunityId)
+          .limit(1);
+
+      if (actionLookupError) throw actionLookupError;
+
+      if (!existingActions?.length) {
+        const { error: actionError } =
+          await supabase
+            .from("hp_growth_actions")
+            .insert({
+              owner_id: ownerId,
+              person_id: personId,
+              opportunity_id: opportunityId,
+              title: "Contact " + businessName + " about " + interest,
+              status: "open",
+            });
+
+        if (actionError) throw actionError;
+      }
+
+      const { data: existingHistory, error: historyLookupError } =
+        await supabase
+          .from("hp_growth_interactions")
+          .select("id")
+          .eq("person_id", personId)
+          .ilike("summary", "%Saved lead: " + leadId + "%")
+          .limit(1);
+
+      if (historyLookupError) throw historyLookupError;
+
+      if (!existingHistory?.length) {
+        const { error: historyError } =
+          await supabase
+            .from("hp_growth_interactions")
+            .insert({
+              owner_id: ownerId,
+              person_id: personId,
+              kind: "message",
+              source_type: "document",
+              summary:
+                "Seller submitted HomePlanet upgrade interest. " +
+                "Service: " + interest +
+                ". Saved lead: " + leadId +
+                ". Notes: " + (notes || "None"),
+            });
+
+        if (historyError) throw historyError;
+      }
+
+      growthLinked = true;
+    } catch (growthError) {
+      console.error("HomePlanet Growth Board integration failed", {
+        leadId,
+        error:
+          growthError instanceof Error
+            ? growthError.message
+            : "Unknown error",
+      });
+    }
+
+    return res.status(200).json({
+      ok: true,
+      leadId,
+      notificationAccepted,
+      growthLinked,
+      message: "Your interest has been recorded.",
     });
   }
 

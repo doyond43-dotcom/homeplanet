@@ -343,6 +343,7 @@ import PetCareTimelinePanel from "../components/guardian/PetCareTimelinePanel";
 
 import PetTagFulfillmentBoard from "../pages/PetTagFulfillmentBoard";
 
+import HomePlanetGrowthBoard from "../pages/HomePlanetGrowthBoard";
 import { RequireAuth } from "../auth/RequireAuth";
 
 
@@ -407,6 +408,7 @@ import OkeechobeeLiveMeatMarketPage from "../pages/OkeechobeeLiveMeatMarketPage"
 import OkeechobeeMeatMarketRanchResourcesPage from "../pages/OkeechobeeMeatMarketRanchResourcesPage";
 import OkeechobeeMeatMarketSellerPage from "../pages/OkeechobeeMeatMarketSellerPage";
 import OkeechobeeMeatMarketSellerStorefrontPage from "../pages/OkeechobeeMeatMarketSellerStorefrontPage";
+import OkeechobeeMeatMarketSellerIntelligencePage from "../pages/OkeechobeeMeatMarketSellerIntelligencePage";
 import OkeechobeeMeatMarketSellerSetupPage from "../pages/OkeechobeeMeatMarketSellerSetupPage";
 import OkeechobeeMeatMarketCheckoutPage from "../pages/OkeechobeeMeatMarketCheckoutPage";
 import OkeechobeeCreateEventPage from "../pages/OkeechobeeCreateEventPage";
@@ -501,7 +503,8 @@ import IceConstructionLandingPage from "../pages/IceConstructionLandingPage";
 export default function PlanetRoutes() {
   return (
     <Routes>
-        <Route path="builds" element={<HomePlanetBuildDirectory />} />
+        <Route path="homeplanet/growth" element={<RequireAuth><HomePlanetGrowthBoard /></RequireAuth>} />
+<Route path="builds" element={<HomePlanetBuildDirectory />} />
         <Route path="flows" element={<HomePlanetFlowRegistry />} />
         <Route path="swamp-life" element={<SwampLifeExperiencePage />} />
 
@@ -578,7 +581,8 @@ export default function PlanetRoutes() {
       <Route path="okeechobee/meat-market/ranch-resources" element={<OkeechobeeMeatMarketRanchResourcesPage />} />
       <Route path="okeechobee/meat-market/sellers" element={<OkeechobeeLiveMeatMarketPage sellerDirectoryOnly />} />
       <Route path="okeechobee/meat-market/sell" element={<OkeechobeeMeatMarketSellerPage />} />
-      <Route path="okeechobee/meat-market/seller/setup/:slug" element={<OkeechobeeMeatMarketSellerSetupPage />} />
+      <Route path="okeechobee/meat-market/seller/intelligence/:slug" element={<OkeechobeeMeatMarketSellerIntelligencePage />} />
+<Route path="okeechobee/meat-market/seller/setup/:slug" element={<OkeechobeeMeatMarketSellerSetupPage />} />
       <Route path="okeechobee/meat-market/seller/:slug" element={<OkeechobeeMeatMarketSellerStorefrontPage />} />
       <Route path="okeechobee/meat-market/farm-folks" element={<OkeechobeeMeatMarketSellerStorefrontPage />} />
       <Route path="okeechobee/meat-market/checkout" element={<OkeechobeeMeatMarketCheckoutPage />} />

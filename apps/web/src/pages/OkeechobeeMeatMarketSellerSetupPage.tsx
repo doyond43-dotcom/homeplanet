@@ -1,4 +1,4 @@
-﻿import {
+import {
   ChangeEvent,
   useEffect,
   useState,
@@ -167,6 +167,14 @@ type SellerAnalytics = {
   sevenDays: SellerAnalyticsSummary;
   allTime: SellerAnalyticsSummary;
 };
+type SellerInquiry = {
+  id: string;
+  name: string;
+  contact: string;
+  request: string;
+  createdAt: string;
+  status: string;
+};
 export default function OkeechobeeMeatMarketSellerSetupPage() {
   const { slug } = useParams();
 
@@ -176,6 +184,8 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
 
   const [products, setProducts] =
     useState<ProductRow[]>([]);
+  const [inquiries, setInquiries] =
+    useState<SellerInquiry[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -183,6 +193,14 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
   const [error, setError] = useState("");
   const [analytics, setAnalytics] =
     useState<SellerAnalytics | null>(null);
+
+  const [interestOpen, setInterestOpen] = useState(false);
+  const [interestType, setInterestType] = useState("Complete Business System");
+  const [interestContact, setInterestContact] = useState("");
+  const [interestNotes, setInterestNotes] = useState("");
+  const [interestSaving, setInterestSaving] = useState(false);
+  const [interestSent, setInterestSent] = useState(false);
+  const [interestError, setInterestError] = useState("");
 
   const [analyticsWindow, setAnalyticsWindow] =
     useState<"sevenDays" | "allTime">("sevenDays");
@@ -210,6 +228,47 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
 
     void loadSeller(rawToken);
   }, [slug]);
+
+  async function submitHomePlanetInterest() {
+    if (!token || !slug || interestSaving || interestSent) return;
+
+    const contact = interestContact.trim() || seller?.email?.trim() || "";
+
+    if (!contact) {
+      setInterestError("Please enter an email or phone number.");
+      return;
+    }
+
+    setInterestSaving(true);
+    setInterestError("");
+
+    try {
+      const result = await callSellerManage(
+        token,
+        "express-interest",
+        {
+          contact,
+          interest: interestType,
+          notes: interestNotes.trim(),
+        }
+      );
+
+      if (result?.ok !== true) {
+        throw new Error("Your request could not be submitted.");
+      }
+
+      setInterestSent(true);
+      setInterestOpen(false);
+    } catch (err) {
+      setInterestError(
+        err instanceof Error
+          ? err.message
+          : "Could not submit your request."
+      );
+    } finally {
+      setInterestSaving(false);
+    }
+  }
 
   async function callSellerManage(
     rawToken: string,
@@ -276,6 +335,18 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
           : null
       );
 
+      setInquiries(
+        Array.isArray(result.inquiries)
+          ? result.inquiries.map((item: any) => ({
+              id: String(item.id || ""),
+              name: String(item.name || ""),
+              contact: String(item.contact || ""),
+              request: String(item.request || ""),
+              createdAt: String(item.createdAt || ""),
+              status: "New",
+            }))
+          : []
+      );
       setProducts(
         (result.products || []).length
           ? result.products.map((product: any) => ({
@@ -800,69 +871,28 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
               ))}
             </div>
 
-            {analytics[analyticsWindow].topProducts
-              .length ? (
-              <div style={{ marginTop: 20 }}>
-                <div
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 900,
-                    color: "#fff",
-                    marginBottom: 9,
-                  }}
-                >
-                  Products Getting Attention
-                </div>
-
-                <div
-                  style={{
-                    display: "grid",
-                    gap: 7,
-                  }}
-                >
-                  {analytics[
-                    analyticsWindow
-                  ].topProducts.map((product, index) => (
-                    <div
-                      key={`${product.name}-${index}`}
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        gap: 12,
-                        padding: "9px 11px",
-                        borderRadius: 10,
-                        background:
-                          "rgba(255,255,255,.045)",
-                      }}
-                    >
-                      <span
-                        style={{
-                          color: "rgba(255,255,255,.86)",
-                          fontSize: 13,
-                          fontWeight: 800,
-                        }}
-                      >
-                        {index + 1}. {product.name}
-                      </span>
-
-                      <span
-                        style={{
-                          color: "#d8b75f",
-                          fontSize: 12,
-                          fontWeight: 950,
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {product.clicks}{" "}
-                        {product.clicks === 1
-                          ? "click"
-                          : "clicks"}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : null}
+            <a
+              href={
+                "/planet/okeechobee/meat-market/seller/intelligence/" +
+                slug + "#" + token
+              }
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 10,
+                marginTop: 20,
+                padding: "14px 18px",
+                borderRadius: 11,
+                background: "#d8b75f",
+                color: "#17231b",
+                fontWeight: 900,
+                textDecoration: "none",
+                textAlign: "center"
+              }}
+            >
+              Open Seller Intelligence →
+            </a>
 
             <div
               style={{
@@ -886,6 +916,148 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
           </section>
         ) : null}
 
+        <section style={styles.section}>
+          <h2 style={styles.sectionTitle}>Grow With HomePlanet</h2>
+
+          <p style={styles.help}>
+            Your free market listing helps customers discover
+            your products and contact your business.
+          </p>
+
+          <p style={styles.help}>
+            Ready for your own storefront, customer tracking,
+            follow-ups, and marketing tools?
+          </p>
+
+          {interestSent ? (
+            <p role="status" style={{
+              color: "#27653c",
+              fontWeight: 800,
+              marginTop: 16
+            }}>
+              Request received! HomePlanet has your interest on record.
+            </p>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => setInterestOpen(!interestOpen)}
+                style={{
+                  marginTop: 12,
+                  background: "#d8b75f",
+                  color: "#17231b",
+                  border: 0,
+                  borderRadius: 11,
+                  padding: "13px 22px",
+                  fontWeight: 850,
+                  fontSize: 15,
+                  cursor: "pointer"
+                }}
+              >
+                {interestOpen ? "Close Form" : "I'm Interested"}
+              </button>
+
+              {interestOpen && (
+                <div style={{
+                  display: "grid",
+                  gap: 14,
+                  marginTop: 20,
+                  maxWidth: 520
+                }}>
+                  <p style={{ margin: 0, fontWeight: 700 }}>
+                    {seller?.name || "Your Business"}
+                  </p>
+
+                  <label style={{ display: "grid", gap: 7 }}>
+                    What would you like help with?
+                    <select
+                      value={interestType}
+                      onChange={(event) =>
+                        setInterestType(event.target.value)
+                      }
+                      style={{
+                        padding: 12,
+                        borderRadius: 9,
+                        border: "1px solid #ccc",
+                        background: "#fff",
+                        color: "#17231b"
+                      }}
+                    >
+                      <option>Complete Business System</option>
+                      <option>Custom Storefront</option>
+                      <option>Customer Management</option>
+                      <option>Marketing and Follow-Ups</option>
+                    </select>
+                  </label>
+
+                  <label style={{ display: "grid", gap: 7 }}>
+                    Best email or phone number
+                    <input
+                      type="text"
+                      value={interestContact}
+                      onChange={(event) =>
+                        setInterestContact(event.target.value)
+                      }
+                      placeholder={seller?.email || "Email or phone"}
+                      maxLength={200}
+                      style={{
+                        padding: 12,
+                        borderRadius: 9,
+                        border: "1px solid #ccc",
+                        background: "#fff",
+                        color: "#17231b"
+                      }}
+                    />
+                  </label>
+
+                  <label style={{ display: "grid", gap: 7 }}>
+                    Anything else you'd like us to know? (Optional)
+                    <textarea
+                      value={interestNotes}
+                      onChange={(event) =>
+                        setInterestNotes(event.target.value)
+                      }
+                      rows={3}
+                      maxLength={1000}
+                      style={{
+                        padding: 12,
+                        borderRadius: 9,
+                        border: "1px solid #ccc",
+                        background: "#fff",
+                        color: "#17231b"
+                      }}
+                    />
+                  </label>
+
+                  {interestError && (
+                    <p role="alert" style={{ color: "#a32828" }}>
+                      {interestError}
+                    </p>
+                  )}
+
+                  <button
+                    type="button"
+                    disabled={interestSaving}
+                    onClick={() => void submitHomePlanetInterest()}
+                    style={{
+                      background: "#d8b75f",
+                      color: "#17231b",
+                      border: 0,
+                      borderRadius: 10,
+                      padding: 14,
+                      fontWeight: 800,
+                      cursor: interestSaving ? "wait" : "pointer"
+                    }}
+                  >
+                    {interestSaving
+                      ? "Submitting..."
+                      : "Send My Request"}
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </section>
         <section style={styles.section}>
           <h2 style={styles.sectionTitle}>Storefront Photo</h2>
 
