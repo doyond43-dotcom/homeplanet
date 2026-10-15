@@ -3,7 +3,7 @@ import { supabase } from "../lib/supabase";
 import { useAuth } from "../auth/AuthProvider";
 
 type Person = { id: string; owner_id: string; name: string; lane: string; source: string; status: string; notes: string; phone: string | null; email: string | null; created_at: string };
-type Opportunity = { id: string; person_id: string; title: string; description: string; status: string; outcome: string | null; created_at: string };
+type Opportunity = { is_test: boolean; id: string; person_id: string; title: string; description: string; status: string; outcome: string | null; created_at: string };
 type Action = { id: string; person_id: string; opportunity_id: string | null; title: string; status: string; due_at: string | null; created_at: string; completed_at?: string | null };
 type Interaction = { id: string; person_id: string; kind: string; summary: string; source_type: string; occurred_at: string | null; created_at: string };
 type Tab = "people" | "actions" | "opportunities";
@@ -31,6 +31,7 @@ export default function HomePlanetGrowthBoard() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [tab, setTab] = useState<Tab>("people");
+  const [showTestRecords, setShowTestRecords] = useState(false);
   const [search, setSearch] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [form, setForm] = useState<"person" | "interaction" | "opportunity" | "action" | "edit" | null>(null);
@@ -66,7 +67,19 @@ export default function HomePlanetGrowthBoard() {
   const person = people.find(p => p.id === activeId) || null;
   const shown = useMemo(() => people.filter(p => `${p.name} ${p.lane} ${p.source} ${p.notes}`.toLowerCase().includes(search.toLowerCase())), [people,search]);
   const nameOf = (id: string) => people.find(p => p.id === id)?.name || "Unknown person";
-  const openActions = useMemo(() => actions.filter(a => a.status === "open").sort((a,b) => (a.due_at ? new Date(a.due_at).getTime() : Number.MAX_SAFE_INTEGER) - (b.due_at ? new Date(b.due_at).getTime() : Number.MAX_SAFE_INTEGER)),[actions]);
+  const visibleOpps = useMemo(
+    () => opps.filter(o => showTestRecords || !o.is_test),
+    [opps, showTestRecords]
+  );
+  const visibleActions = useMemo(
+    () => actions.filter(a =>
+      !a.opportunity_id ||
+      !opps.some(o => o.id === a.opportunity_id && o.is_test) ||
+      showTestRecords
+    ),
+    [actions, opps, showTestRecords]
+  );
+  const openActions = useMemo(() => visibleActions.filter(a => a.status === "open").sort((a,b) => (a.due_at ? new Date(a.due_at).getTime() : Number.MAX_SAFE_INTEGER) - (b.due_at ? new Date(b.due_at).getTime() : Number.MAX_SAFE_INTEGER)),[visibleActions]);
   const actionTiming = (a: Action) => {
     if (!a.due_at) return "No date set";
     const day = new Date(a.due_at).toLocaleDateString();
@@ -116,6 +129,39 @@ export default function HomePlanetGrowthBoard() {
       if (logError) throw logError;
     }, "Action completed and logged.");
   }
+  async function setTestRecord(opp: Opportunity, isTest: boolean) {
+    if (!user) return;
+
+    if (isTest && !window.confirm(
+      "Mark this opportunity as a test? Its linked actions will be hidden from your active workload. Nothing will be deleted."
+    )) return;
+
+    await work(async () => {
+      const { error: updateError } = await supabase
+        .from("hp_growth_opportunities")
+        .update({ is_test: isTest })
+        .eq("id", opp.id)
+        .eq("owner_id", user.id);
+
+      if (updateError) throw updateError;
+
+      const { error: logError } = await supabase
+        .from("hp_growth_interactions")
+        .insert({
+          owner_id: user.id,
+          person_id: opp.person_id,
+          kind: "observation",
+          source_type: "direct",
+          summary: (isTest ? "Marked as TEST: " : "Restored from TEST: ") +
+            opp.title + ". Original opportunity and follow-up records preserved."
+        });
+
+      if (logError) throw logError;
+    }, isTest
+      ? "Test opportunity preserved and hidden from active work."
+      : "Opportunity restored to active work.");
+  }
+
   async function changeOpp(opp: Opportunity, status: string) {
     if (opp.status === status) return;
     await work(async () => {
@@ -151,7 +197,7 @@ export default function HomePlanetGrowthBoard() {
       {error && <div role="alert" style={{...panel,borderColor:"#ba5151",marginTop:14,color:"#ffbaba"}}>{error}</div>}
       {message && <div role="status" style={{...panel,borderColor:"#388766",marginTop:14}}>{message}</div>}
       <div style={{display:"grid",gridTemplateColumns:"repeat(3,minmax(0,1fr))",gap:9,margin:"20px 0"}}>
-        {[["People",people.length],["Opportunities",opps.length],["Completed Actions",actions.filter(x=>x.status==="done").length]].map(([label,value])=><div key={String(label)} style={{...panel,padding:12}}><b style={{fontSize:26}}>{value}</b><div style={{...small,fontSize:11}}>{label}</div></div>)}
+        {[["People",people.length],["Opportunities",visibleOpps.length],["Completed Actions",actions.filter(x=>x.status==="done").length]].map(([label,value])=><div key={String(label)} style={{...panel,padding:12}}><b style={{fontSize:26}}>{value}</b><div style={{...small,fontSize:11}}>{label}</div></div>)}
       </div>
       <div style={{...panel,marginTop:14,marginBottom:15,borderColor:"#376450"}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,flexWrap:"wrap"}}>
@@ -167,11 +213,23 @@ export default function HomePlanetGrowthBoard() {
         {people.length===0 && !loading && <button style={btn} disabled={busy} onClick={()=>void importStarter()}>Import 3 Starter Records</button>}
       </div>
       <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:12}}>{(["people","actions","opportunities"] as Tab[]).map(t=><button key={t} style={tab===t?green:btn} onClick={()=>setTab(t)}>{t === "people" ? "People" : t === "actions" ? "Next Actions" : "Opportunities"}</button>)}</div>
+      <label style={{...small,display:"flex",alignItems:"center",gap:9,marginBottom:14,cursor:"pointer"}}>
+        <input
+          type="checkbox"
+          checked={showTestRecords}
+          onChange={e=>setShowTestRecords(e.target.checked)}
+        />
+        Show Test Records ({opps.filter(o=>o.is_test).length})
+      </label>
       <input style={{...field,marginBottom:14}} aria-label="Search relationships" placeholder="Search people, relationships, notes..." value={search} onChange={e=>setSearch(e.target.value)}/>
       {loading ? <p>Loading saved Growth Board...</p> : <div style={{display:"grid",gap:10}}>
-        {tab==="people" && shown.map(p=><section key={p.id} style={panel}><div style={{display:"flex",justifyContent:"space-between",gap:10,alignItems:"center"}}><div><b style={{fontSize:18}}>{p.name}</b><div style={small}>{p.lane} · {p.source}</div><div style={small}>{actions.filter(x=>x.person_id===p.id&&x.status==="open").length} open actions · {opps.filter(x=>x.person_id===p.id).length} opportunities</div></div><button style={btn} onClick={()=>setActiveId(p.id)}>Open</button></div></section>)}
-        {tab==="actions" && actions.filter(a=>shown.some(p=>p.id===a.person_id)).map(a=><section key={a.id} style={panel}><b>{a.title}</b><div style={small}>{nameOf(a.person_id)} · {a.status === "open" ? actionTiming(a) : a.status}</div><div style={{display:"flex",gap:8,marginTop:10}}><button style={btn} onClick={()=>setActiveId(a.person_id)}>Person</button>{a.status==="open" && <button style={green} disabled={busy} onClick={()=>void completeAction(a)}>Mark Done</button>}</div></section>)}
-        {tab==="opportunities" && opps.filter(o=>shown.some(p=>p.id===o.person_id)).map(o=><section key={o.id} style={panel}><b>{o.title}</b><div style={small}>{nameOf(o.person_id)} · {o.status}</div><div style={{display:"flex",gap:8,marginTop:10,flexWrap:"wrap"}}><button style={btn} onClick={()=>setActiveId(o.person_id)}>Person</button><select aria-label={`Status for ${o.title}`} style={{...field,width:"auto"}} disabled={busy} value={o.status} onChange={e=>void changeOpp(o,e.target.value)}>{["exploring","contacted","meeting","active","won","lost","on_hold"].map(s=><option key={s} value={s}>{s}</option>)}</select></div></section>)}
+        {tab==="people" && shown.map(p=><section key={p.id} style={panel}><div style={{display:"flex",justifyContent:"space-between",gap:10,alignItems:"center"}}><div><b style={{fontSize:18}}>{p.name}</b><div style={small}>{p.lane} · {p.source}</div><div style={small}>{visibleActions.filter(x=>x.person_id===p.id&&x.status==="open").length} open actions · {visibleOpps.filter(x=>x.person_id===p.id).length} opportunities</div></div><button style={btn} onClick={()=>setActiveId(p.id)}>Open</button></div></section>)}
+        {tab==="actions" && visibleActions.filter(a=>shown.some(p=>p.id===a.person_id)).map(a=><section key={a.id} style={panel}><b>{a.title}</b><div style={small}>{nameOf(a.person_id)} · {a.status === "open" ? actionTiming(a) : a.status}</div><div style={{display:"flex",gap:8,marginTop:10}}><button style={btn} onClick={()=>setActiveId(a.person_id)}>Person</button>{a.status==="open" && <button style={green} disabled={busy} onClick={()=>void completeAction(a)}>Mark Done</button>}</div></section>)}
+        {tab==="opportunities" && visibleOpps.filter(o=>shown.some(p=>p.id===o.person_id)).map(o=><section key={o.id} style={panel}><b>{o.title}</b><div style={small}>{nameOf(o.person_id)} · {o.status}</div><div style={{display:"flex",gap:8,marginTop:10,flexWrap:"wrap"}}><button style={btn} onClick={()=>setActiveId(o.person_id)}>Person</button><select aria-label={`Status for ${o.title}`} style={{...field,width:"auto"}} disabled={busy} value={o.status} onChange={e=>void changeOpp(o,e.target.value)}>{["exploring","contacted","meeting","active","won","lost","on_hold"].map(s=><option key={s} value={s}>{s}</option>)}</select><button
+      style={btn}
+      disabled={busy}
+      onClick={()=>void setTestRecord(o,!o.is_test)}
+    >{o.is_test?"Restore to Active":"Mark as Test"}</button></div></section>)}
         {tab==="people" && !shown.length && <p style={small}>No people match your search.</p>}
       </div>}
       <p style={{...small,marginTop:20}}>Live Supabase records · Signed-in account only · Build 3. A status of “won” is entered manually, not independent proof of revenue.</p>
@@ -191,8 +249,12 @@ export default function HomePlanetGrowthBoard() {
         </div>}
         <div style={{display:"flex",gap:8,marginTop:10}}><button style={green} disabled={busy} onClick={()=>void (form==="edit"?savePerson():saveEntry())}>{busy?"Saving...":"Save to Supabase"}</button><button style={btn} onClick={()=>setForm(null)}>Cancel</button></div></div>}
         <h3>Relationship</h3><p style={small}>{person.notes || "No notes yet."}</p>{person.phone && <p style={small}>Phone: {person.phone}</p>}{person.email && <p style={small}>Email: {person.email}</p>}
-        <h3>Next Actions</h3><p style={small}>Open actions appear first. Use “Mark Done” only after the work actually happened.</p>{actions.filter(x=>x.person_id===person.id).sort((a,b)=>Number(a.status!=="open")-Number(b.status!=="open")).map(a=><div key={a.id} style={{...panel,marginBottom:8}}><b>{a.title}</b><div style={small}>{a.status === "open" ? actionTiming(a) : a.status}</div>{a.status==="open"&&<button style={{...green,marginTop:8}} disabled={busy} onClick={()=>void completeAction(a)}>Mark Done</button>}</div>)}
-        <h3>Opportunities</h3>{opps.filter(x=>x.person_id===person.id).map(o=><div key={o.id} style={{...panel,marginBottom:8}}><b>{o.title}</b><div style={small}>Current stage: {o.status}</div><label style={{...small,display:"block",marginTop:8}}>Update opportunity stage</label><select aria-label={`Stage for ${o.title}`} style={{...field,marginTop:4}} disabled={busy} value={o.status} onChange={e=>void changeOpp(o,e.target.value)}>{["exploring","contacted","meeting","active","won","lost","on_hold"].map(stage=><option key={stage} value={stage}>{stage}</option>)}</select></div>)}
+        <h3>Next Actions</h3><p style={small}>Open actions appear first. Use “Mark Done” only after the work actually happened.</p>{visibleActions.filter(x=>x.person_id===person.id).sort((a,b)=>Number(a.status!=="open")-Number(b.status!=="open")).map(a=><div key={a.id} style={{...panel,marginBottom:8}}><b>{a.title}</b><div style={small}>{a.status === "open" ? actionTiming(a) : a.status}</div>{a.status==="open"&&<button style={{...green,marginTop:8}} disabled={busy} onClick={()=>void completeAction(a)}>Mark Done</button>}</div>)}
+        <h3>Opportunities</h3>{visibleOpps.filter(x=>x.person_id===person.id).map(o=><div key={o.id} style={{...panel,marginBottom:8}}><b>{o.title}</b><div style={small}>Current stage: {o.status}</div><label style={{...small,display:"block",marginTop:8}}>Update opportunity stage</label><select aria-label={`Stage for ${o.title}`} style={{...field,marginTop:4}} disabled={busy} value={o.status} onChange={e=>void changeOpp(o,e.target.value)}>{["exploring","contacted","meeting","active","won","lost","on_hold"].map(stage=><option key={stage} value={stage}>{stage}</option>)}</select><button
+      style={{...btn,marginTop:8}}
+      disabled={busy}
+      onClick={()=>void setTestRecord(o,!o.is_test)}
+    >{o.is_test?"Restore to Active":"Mark as Test"}</button></div>)}
         <h3>Truth Chain — Interaction History</h3>{interactions.filter(x=>x.person_id===person.id).map(i=><div key={i.id} style={{borderLeft:"2px solid #438f6b",paddingLeft:12,marginBottom:15}}><div style={small}>{i.kind} · {i.source_type} · {new Date(i.created_at).toLocaleString()}</div><div>{i.summary}</div></div>)}
       </section></div>}
     {form==="person" && <div style={{position:"fixed",inset:0,zIndex:1200,background:"rgba(0,0,0,.85)",display:"flex",justifyContent:"center",alignItems:"flex-start",overflowY:"auto",padding:18}}><section role="dialog" aria-modal="true" aria-label="Add person" style={{...panel,width:"min(100%,520px)",marginTop:30}}><h2>New Relationship</h2><div style={{display:"grid",gap:10}}><input style={field} value={personName} onChange={e=>setPersonName(e.target.value)} placeholder="Full name *" aria-label="Full name"/><input style={field} value={personLane} onChange={e=>setPersonLane(e.target.value)} placeholder="Growth lane" aria-label="Growth lane"/><input style={field} value={personSource} onChange={e=>setPersonSource(e.target.value)} placeholder="How we connected" aria-label="How we connected"/><input style={field} value={personPhone} onChange={e=>setPersonPhone(e.target.value)} placeholder="Phone" aria-label="Phone"/><input style={field} value={personEmail} onChange={e=>setPersonEmail(e.target.value)} placeholder="Email" aria-label="Email"/><textarea style={field} value={personNotes} onChange={e=>setPersonNotes(e.target.value)} rows={4} placeholder="Relationship notes" aria-label="Relationship notes"/></div><div style={{display:"flex",gap:8,marginTop:12}}><button style={green} disabled={busy} onClick={()=>void savePerson()}>{busy?"Saving...":"Save Person"}</button><button style={btn} onClick={()=>setForm(null)}>Cancel</button></div>{error && <p style={{color:"#ffaaaa"}} role="alert">{error}</p>}</section></div>}
