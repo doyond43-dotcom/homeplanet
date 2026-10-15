@@ -952,11 +952,11 @@ export default function EcosystemAtlasV2Page() {
   }
 
   function openLocal(route: string) {
-    navigate(route);
+    window.open(route, "_blank", "noopener,noreferrer");
   }
 
   function openLive(route: string) {
-    window.location.assign(liveUrl(route));
+    window.open(liveUrl(route), "_blank", "noopener,noreferrer");
   }
 
   async function copyText(id: string, text: string) {
