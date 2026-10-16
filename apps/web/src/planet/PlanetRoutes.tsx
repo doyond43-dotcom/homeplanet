@@ -1,3 +1,5 @@
+import FarmFolksProPreview from "../pages/FarmFolksProPreview";
+import FarmFolksCategoryPage from "../pages/FarmFolksCategoryPage";
 import GuardianPetPrivacyPage from "../pages/GuardianPetPrivacyPage";
 
 import { Routes, Route, Navigate } from "react-router-dom";
@@ -410,6 +412,7 @@ import OkeechobeeMeatMarketSellerPage from "../pages/OkeechobeeMeatMarketSellerP
 import OkeechobeeMeatMarketSellerStorefrontPage from "../pages/OkeechobeeMeatMarketSellerStorefrontPage";
 import OkeechobeeMeatMarketSellerIntelligencePage from "../pages/OkeechobeeMeatMarketSellerIntelligencePage";
 import OkeechobeeMeatMarketSellerSetupPage from "../pages/OkeechobeeMeatMarketSellerSetupPage";
+import OkeechobeeMeatMarketSellerInboxPage from "../pages/OkeechobeeMeatMarketSellerInboxPage";
 import OkeechobeeMeatMarketCheckoutPage from "../pages/OkeechobeeMeatMarketCheckoutPage";
 import OkeechobeeCreateEventPage from "../pages/OkeechobeeCreateEventPage";
 import OkeechobeeCreateEventPageV2 from "../pages/OkeechobeeCreateEventPageV2";
@@ -581,10 +584,13 @@ export default function PlanetRoutes() {
       <Route path="okeechobee/meat-market/ranch-resources" element={<OkeechobeeMeatMarketRanchResourcesPage />} />
       <Route path="okeechobee/meat-market/sellers" element={<OkeechobeeLiveMeatMarketPage sellerDirectoryOnly />} />
       <Route path="okeechobee/meat-market/sell" element={<OkeechobeeMeatMarketSellerPage />} />
+      <Route path="okeechobee/meat-market/seller/inbox/:slug" element={<OkeechobeeMeatMarketSellerInboxPage />} />
       <Route path="okeechobee/meat-market/seller/intelligence/:slug" element={<OkeechobeeMeatMarketSellerIntelligencePage />} />
 <Route path="okeechobee/meat-market/seller/setup/:slug" element={<OkeechobeeMeatMarketSellerSetupPage />} />
       <Route path="okeechobee/meat-market/seller/:slug" element={<OkeechobeeMeatMarketSellerStorefrontPage />} />
       <Route path="okeechobee/meat-market/farm-folks" element={<OkeechobeeMeatMarketSellerStorefrontPage />} />
+      <Route path="okeechobee/meat-market/farm-folks/pro-preview" element={<FarmFolksProPreview />} />
+      <Route path="okeechobee/meat-market/farm-folks/pro-preview/shop/:category" element={<FarmFolksCategoryPage />} />
       <Route path="okeechobee/meat-market/checkout" element={<OkeechobeeMeatMarketCheckoutPage />} />
       <Route path="okeechobee/meat-market/contact" element={<OkeechobeeMeatMarketContactPage />} />
       <Route path="okeechobee/meat-market/intelligence" element={<RequireAuth><OkeechobeeMeatMarketIntelligenceDashboard /></RequireAuth>} />

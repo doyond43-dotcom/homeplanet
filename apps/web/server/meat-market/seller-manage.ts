@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { createHash, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, timingSafeEqual, randomUUID } from "node:crypto";
+import { isIP } from "node:net";
 import { createClient } from "@supabase/supabase-js";
 import {
   escapeEmailHtml,
@@ -123,6 +124,156 @@ export default async function handler(
         fulfillment: publicSeller.fulfillment || "",
         pickupNote: publicSeller.pickup_note || "",
       },
+    });
+  }
+
+
+  if (action === "public-inquiry") {
+    const buyerName = clean(req.body?.buyerName, 160);
+    const buyerContact = clean(req.body?.buyerContact, 250);
+    const buyerMessage = clean(req.body?.buyerMessage, 2000);
+
+    if (!buyerName || !buyerContact || !buyerMessage) {
+      return res.status(400).json({
+        ok: false,
+        error: "Please complete your name, contact and message.",
+      });
+    }
+
+    const { data: verifiedSeller, error: sellerError } =
+      await supabase
+        .from("okeechobee_meat_market_seller_access")
+        .select("seller_listing_id,seller_name")
+        .eq("seller_listing_id", slug)
+        .maybeSingle();
+
+    if (sellerError || !verifiedSeller) {
+      return res.status(404).json({
+        ok: false,
+        error: "This seller is unavailable.",
+      });
+    }
+
+    const { data: activeSeller, error: activeError } =
+      await supabase
+        .from("okeechobee_meat_market_sellers")
+        .select("slug")
+        .eq("slug", slug)
+        .eq("status", "Active")
+        .maybeSingle();
+
+    if (activeError || !activeSeller) {
+      return res.status(404).json({
+        ok: false,
+        error: "This seller is unavailable.",
+      });
+    }
+
+    // HP_SELLER_RATE_LIMIT_V1
+    // A trusted server checks the rate limit BEFORE saving the inquiry.
+    // Never trust an IP address supplied in the request body.
+    const rateSecret =
+      process.env.HP_SELLER_INQUIRY_RATE_SECRET || "";
+
+    if (Buffer.byteLength(rateSecret, "utf8") < 32) {
+      return res.status(503).json({
+        ok: false,
+        error: "Messaging is temporarily unavailable. Please try later.",
+      });
+    }
+
+    const forwarded = req.headers["x-vercel-forwarded-for"];
+    const forwardedIP = Array.isArray(forwarded)
+      ? forwarded[0]
+      : forwarded;
+
+    // On Vercel, use its proxy-managed client IP.
+    // Local development may use the socket address instead.
+    const isLocalDevelopment =
+      process.env.VERCEL_ENV !== "production" &&
+      process.env.VERCEL_ENV !== "preview" &&
+      process.env.VERCEL !== "1";
+
+    const clientIP =
+      forwardedIP ||
+      (isLocalDevelopment ? req.socket?.remoteAddress || "" : "");
+
+    const normalizedIP = String(clientIP).trim();
+
+    if (
+      !normalizedIP ||
+      normalizedIP.includes(",") ||
+      isIP(normalizedIP) === 0
+    ) {
+      return res.status(503).json({
+        ok: false,
+        error: "Messaging is temporarily unavailable. Please try later.",
+      });
+    }
+
+    // Store only a keyed hash, never the raw IP address.
+    const sourceHash = createHmac("sha256", rateSecret)
+      .update("seller-inquiry-source:v1:" + normalizedIP)
+      .digest("hex");
+
+    const { data: allowed, error: limitError } =
+      await supabase.rpc("hp_check_seller_inquiry_limit", {
+        p_seller_listing_id: slug,
+        p_source_hash: sourceHash,
+      });
+
+    if (limitError || typeof allowed !== "boolean") {
+      console.error(
+        "Seller inquiry rate limit check failed",
+        limitError?.message || "Unexpected response"
+      );
+
+      return res.status(503).json({
+        ok: false,
+        error: "Messaging is temporarily unavailable. Please try later.",
+      });
+    }
+
+    if (!allowed) {
+      res.setHeader("Retry-After", "900");
+
+      return res.status(429).json({
+        ok: false,
+        error: "Too many messages. Please try again in about 15 minutes.",
+      });
+    }
+
+    const leadId = randomUUID();
+
+    const { error: leadError } = await supabase
+      .from("homeplanet_leads")
+      .insert({
+        id: leadId,
+        name: buyerName,
+        contact: buyerContact,
+        message: [
+          "Farm Inquiry",
+          "Seller: " + verifiedSeller.seller_name,
+          "Listing ID: " + slug,
+          "Request: " + buyerMessage,
+        ].join("\n"),
+        selected_operation: "Farm Seller Inquiry",
+        business_name: verifiedSeller.seller_name,
+        board_slug: "okeechobee-live-meat-market",
+        seller_listing_id: slug,
+      });
+
+    if (leadError) {
+      console.error("Seller inquiry save failed", leadError.message);
+      return res.status(500).json({
+        ok: false,
+        error: "Could not save your request.",
+      });
+    }
+
+    return res.status(200).json({
+      ok: true,
+      leadId,
     });
   }
 
@@ -295,6 +446,58 @@ export default async function handler(
       ),
       allTime: summarizeSellerActivity(cleanSellerEvents),
     };
+
+    const { data: sellerLeads, error: inquiryError } =
+      await supabase
+        .from("homeplanet_leads")
+        .select("id,name,contact,message,created_at")
+        .eq("seller_listing_id", slug)
+        .eq("selected_operation", "Farm Seller Inquiry")
+        .order("created_at", { ascending: false })
+        .limit(200);
+
+    if (inquiryError) {
+      return res.status(500).json({
+        ok: false,
+        error: "Could not load customer inquiries.",
+      });
+    }
+
+    const inquiryIds = (sellerLeads || []).map((lead: any) => lead.id);
+    let savedStatuses: any[] = [];
+
+    if (inquiryIds.length) {
+      const { data, error: statusError } =
+        await supabase
+          .from("okeechobee_meat_market_inquiry_statuses")
+          .select("inquiry_id,status")
+          .eq("seller_listing_id", slug)
+          .in("inquiry_id", inquiryIds);
+
+      if (statusError) {
+        return res.status(500).json({
+          ok: false,
+          error: "Could not load customer inquiry statuses.",
+        });
+      }
+
+      savedStatuses = data || [];
+    }
+
+    const statusById = new Map(
+      savedStatuses.map((item: any) => [item.inquiry_id, item.status])
+    );
+
+    const sellerInquiries = (sellerLeads || []).map((lead: any) => ({
+      id: lead.id,
+      name: lead.name || "",
+      contact: lead.contact || "",
+      request: String(lead.message || "")
+        .replace(/^Farm Inquiry\nSeller: [^\n]*\nListing ID: [^\n]*\nRequest: /, ""),
+      createdAt: lead.created_at || "",
+      status: statusById.get(lead.id) || "New",
+    }));
+
     return res.status(200).json({
       ok: true,
       seller: {
@@ -311,15 +514,64 @@ export default async function handler(
         pickupNote: access.pickup_note || "",
       },
       analytics,
-      inquiries: [],
+      inquiries: sellerInquiries,
       products: products || [],
     });
   }
 
   if (action === "update-inquiry-status") {
-    return res.status(403).json({
-      ok: false,
-      error: "Customer tracking requires a HomePlanet business workspace.",
+    const inquiryId = clean(req.body?.inquiryId, 80);
+    const status = clean(req.body?.status, 40);
+
+    if (
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(inquiryId) ||
+      !["New", "Contacted", "Completed"].includes(status)
+    ) {
+      return res.status(400).json({
+        ok: false,
+        error: "Invalid inquiry update.",
+      });
+    }
+
+    const { data: ownedInquiry, error: lookupError } =
+      await supabase
+        .from("homeplanet_leads")
+        .select("id")
+        .eq("id", inquiryId)
+        .eq("seller_listing_id", slug)
+        .eq("selected_operation", "Farm Seller Inquiry")
+        .maybeSingle();
+
+    if (lookupError || !ownedInquiry) {
+      return res.status(404).json({
+        ok: false,
+        error: "Customer inquiry not found.",
+      });
+    }
+
+    const { error: updateError } = await supabase
+      .from("okeechobee_meat_market_inquiry_statuses")
+      .upsert(
+        {
+          inquiry_id: inquiryId,
+          seller_listing_id: slug,
+          status,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "inquiry_id,seller_listing_id" }
+      );
+
+    if (updateError) {
+      return res.status(500).json({
+        ok: false,
+        error: "Could not save customer status.",
+      });
+    }
+
+    return res.status(200).json({
+      ok: true,
+      inquiryId,
+      status,
     });
   }
 

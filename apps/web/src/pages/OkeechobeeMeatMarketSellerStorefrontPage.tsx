@@ -17,6 +17,7 @@ type Product = {
   description: string;
   imageUrl: string;
   externalOrderUrl?: string;
+  checkoutPrice?: number | null;
   featured: boolean;
 };
 
@@ -149,6 +150,172 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
   const [selectedProduct, setSelectedProduct] =
     useState<Product | null>(null);
 
+  const [messageOpen, setMessageOpen] = useState(false);
+  const [messageName, setMessageName] = useState("");
+  const [messageContact, setMessageContact] = useState("");
+  const [messageBody, setMessageBody] = useState("");
+  const [messageSaving, setMessageSaving] = useState(false);
+  const [messageDone, setMessageDone] = useState(false);
+  const [messageError, setMessageError] = useState("");
+
+  // Keep keyboard focus inside the open seller-message dialog.
+  useEffect(() => {
+    if (!messageOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const opener = document.querySelector<HTMLButtonElement>(
+      '[data-seller-message-trigger="true"]'
+    );
+
+    document.body.style.overflow = "hidden";
+
+    const dialog = document.querySelector<HTMLElement>(
+      '[data-seller-message-dialog="true"]'
+    );
+
+    const getFocusable = () => {
+      if (!dialog) return [];
+
+      return Array.from(
+        dialog.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
+        )
+      ).filter((element) =>
+        element.getClientRects().length > 0
+      );
+    };
+
+    const initialFocus = getFocusable()[0];
+    initialFocus?.focus();
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const closeButton = dialog?.querySelector<HTMLButtonElement>(
+          'button[aria-label="Close message form"]'
+        );
+        if (!closeButton?.disabled) {
+          setMessageOpen(false);
+        }
+        return;
+      }
+
+      if (event.key !== "Tab") return;
+
+      const focusable = getFocusable();
+
+      if (!focusable.length) {
+        event.preventDefault();
+        dialog?.focus();
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+
+      if (!dialog?.contains(active)) {
+        event.preventDefault();
+        first.focus();
+        return;
+      }
+
+      if (event.shiftKey && active === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", onKeyDown);
+
+
+    };
+  }, [messageOpen]);
+
+
+  // Return keyboard focus to Message Seller when the dialog closes.
+  useEffect(() => {
+    if (!messageOpen) return;
+
+    const opener = document.querySelector<HTMLButtonElement>(
+      '[data-seller-message-trigger="true"]'
+    );
+
+    return () => {
+      if (opener?.isConnected) {
+        opener.focus();
+      }
+    };
+  }, [messageOpen]);
+
+  function closeMessage() {
+    if (messageSaving) return;
+    setMessageOpen(false);
+  }
+
+  async function submitSellerMessage(
+    event: React.FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
+    if (messageSaving || messageDone) return;
+
+    const name = messageName.trim();
+    const contact = messageContact.trim();
+    const message = messageBody.trim();
+
+    if (!name || !contact || !message) {
+      setMessageError("Please complete all three fields.");
+      return;
+    }
+
+    setMessageSaving(true);
+    setMessageError("");
+
+    try {
+      const response = await fetch(
+        "/api/okeechobee-meat-market?route=seller-manage",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "public-inquiry",
+            slug: requestedSlug,
+            buyerName: name,
+            buyerContact: contact,
+            buyerMessage: message,
+          }),
+        }
+      );
+
+      const result = await response.json().catch(() => null);
+
+      if (!response.ok || result?.ok !== true || !result?.leadId) {
+        throw new Error(
+          result?.error || "Could not send your message. Please try again."
+        );
+      }
+
+      setMessageDone(true);
+    } catch (error) {
+      setMessageError(
+        error instanceof Error
+          ? error.message
+          : "Could not send your message. Please try again."
+      );
+    } finally {
+      setMessageSaving(false);
+    }
+  }
+
   useEffect(() => {
     if (!selectedProduct) return;
 
@@ -185,7 +352,14 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
   const [sellerLink, setSellerLink] = useState("");
   const [orderMethod, setOrderMethod] = useState("");
   const [orderDestination, setOrderDestination] = useState("");
-  const [listingPhoto, setListingPhoto] = useState("");
+  const [paymentProvider, setPaymentProvider] =
+    useState("");
+  const [paymentDestination, setPaymentDestination] =
+    useState("");
+  const [checkoutEnabled, setCheckoutEnabled] =
+    useState(false);
+  const [listingPhoto, setListingPhoto] =
+    useState("");
   const [canonicalConfig, setCanonicalConfig] =
     useState<SellerConfig | undefined>(undefined);
   const [loading, setLoading] = useState(true);
@@ -350,29 +524,29 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
               .trim()
           : "");
 
-      if (!seller || !resolvedSellerName) {
+      if ((!seller && !databaseConfig) || !resolvedSellerName) {
         setNotFound(true);
         setLoading(false);
         return;
       }
 
       setSellerName(resolvedSellerName);
-      setListingId(String(seller.id));
+      setListingId(seller ? String(seller.id) : requestedSlug);
 
       setLocation(
-        String(seller.location || "").trim() || "Okeechobee"
+        String(seller?.location || "").trim() || "Okeechobee"
       );
 
       const sellerFulfillment =
         canonicalFulfillment ||
-        listingDetail(seller.description, "Pickup / Delivery") ||
+        listingDetail(seller?.description || "", "Pickup / Delivery") ||
         "Contact seller for pickup details";
 
       setFulfillment(sellerFulfillment);
 
       const submittedSellerLink = usableExternalLink(
         listingDetail(
-          seller.description,
+          seller?.description || "",
           "Website / Facebook / Order Link"
         )
       );
@@ -384,7 +558,7 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
 
       try {
         const sellerPublicResponse = await fetch(
-          `/api/okeechobee-meat-market-seller-manage?slug=${encodeURIComponent(
+          `/api/okeechobee-meat-market?route=seller-manage&slug=${encodeURIComponent(
             requestedSlug
           )}`
         );
@@ -407,6 +581,23 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
             String(publicSeller.orderDestination || "").trim()
           );
 
+
+          setPaymentProvider(
+            String(
+              publicSeller.paymentProvider || ""
+            ).trim()
+          );
+
+          setPaymentDestination(
+            String(
+              publicSeller.paymentDestination || ""
+            ).trim()
+          );
+
+          setCheckoutEnabled(
+            Boolean(publicSeller.checkoutEnabled)
+          );
+
           const managedFulfillment =
             String(publicSeller.fulfillment || "").trim();
 
@@ -424,7 +615,7 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
       setListingPhoto(
         usableExternalLink(
           listingDetail(
-            seller.description,
+            seller?.description || "",
             "Listing Photo"
           )
         )
@@ -434,7 +625,7 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
         await supabase
           .from("okeechobee_meat_market_products")
           .select(
-            "id,seller_listing_id,seller_name,name,category,price,package,market_marker,quantity_available,pickup_timing,fulfillment,availability,status,sort_order,description,image_url,external_order_url,featured"
+            "id,seller_listing_id,seller_name,name,category,price,package,market_marker,quantity_available,pickup_timing,fulfillment,availability,status,sort_order,description,image_url,external_order_url,checkout_price,featured"
           )
           .eq("status", "Active")
           .eq("seller_listing_id", requestedSlug)
@@ -479,6 +670,11 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
           externalOrderUrl: usableExternalLink(
             String(product.external_order_url || "").trim()
           ),
+          checkoutPrice:
+            product.checkout_price === null ||
+            product.checkout_price === undefined
+              ? null
+              : Number(product.checkout_price),
           featured: Boolean(product.featured),
         })
       );
@@ -487,8 +683,7 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
         .sort(
           (a, b) =>
             Number(b.featured) - Number(a.featured)
-        )
-        .slice(0, 10);
+        );
 
       if (visibleProducts.length > 0) {
         setProducts(visibleProducts);
@@ -522,6 +717,17 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
     loadStorefront();
   }, [configuredSeller?.sellerName, requestedSlug]);
 
+
+  function messageSellerHref() {
+    return "/planet/okeechobee/meat-market/contact?" +
+      new URLSearchParams({
+        mode: "question",
+        inquiry: "farm",
+        listingId: requestedSlug,
+        seller: sellerName,
+      }).toString();
+  }
+
   function meatMarketOrderHref(product: Product) {
     return `/planet/okeechobee/meat-market/contact?${new URLSearchParams({
       mode: "order",
@@ -535,11 +741,25 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
 
   function orderHref(product: Product) {
     const method = orderMethod.trim().toLowerCase();
+
     const destination = orderDestination.trim();
 
+    if (
+      checkoutEnabled &&
+      product.id &&
+      product.checkoutPrice !== null &&
+      product.checkoutPrice !== undefined &&
+      product.checkoutPrice > 0
+    ) {
+      return `/planet/okeechobee/meat-market/checkout?${new URLSearchParams({
+        seller: requestedSlug,
+        product: String(product.id),
+      }).toString()}`;
+    }
     if (product.externalOrderUrl) {
       return product.externalOrderUrl;
     }
+
 
     if (config?.catalogHref && !destination) {
       return config.catalogHref;
@@ -595,8 +815,22 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
     });
   }
 
-  function orderLabel() {
+  function orderLabel(product: Product) {
     const method = orderMethod.trim().toLowerCase();
+
+    if (
+      checkoutEnabled &&
+      product.id &&
+      product.checkoutPrice !== null &&
+      product.checkoutPrice !== undefined &&
+      product.checkoutPrice > 0
+    ) {
+      return "Buy Now";
+    }
+
+    if (checkoutEnabled && product.id) {
+      return "Check Price / Order This";
+    }
 
     if (config?.catalogLabel && !orderDestination.trim()) {
       return config.catalogLabel;
@@ -643,7 +877,7 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
               textDecoration: "none",
             }}
           >
-            ← Back to Live Meat Market
+            Back to Live Meat Market
           </a>
 
           <h1
@@ -796,11 +1030,60 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
         }
 
         .intro {
-          padding: 18px 0 26px;
-          display: grid;
-          grid-template-columns: 1.4fr 0.6fr;
-          gap: 18px;
-          align-items: stretch;
+          padding: 18px 0 20px;
+          display: block;
+        }
+
+        .intro .intro-main {
+          padding: 22px 25px;
+        }
+
+        .intro-footer {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 14px;
+          margin-top: 18px;
+        }
+
+        .intro-details {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          gap: 10px;
+          color: #193c2b;
+          font-size: 13px;
+          font-weight: 800;
+        }
+
+        .intro-separator {
+          color: #a9aca2;
+        }
+
+        .intro-message {
+          display: inline-flex;
+          justify-content: center;
+          align-items: center;
+          min-height: 43px;
+          padding: 0 19px;
+          border: 1px solid rgba(25,60,43,0.23);
+          border-radius: 11px;
+          background: #f7f2e8;
+          color: #193c2b;
+          font-size: 13px;
+          font-weight: 850;
+          text-decoration: none;
+          transition: background 0.2s ease;
+        }
+
+        .intro-message:hover {
+          background: #e8e2d5;
+        }
+
+        .intro-message:focus-visible {
+          outline: 3px solid #b88941;
+          outline-offset: 3px;
         }
 
         .intro-main,
@@ -1135,11 +1418,12 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
 
       <div className="store-shell">
         <header className="store-topbar">
+
           <a
             className="back-link"
             href="/planet/okeechobee/meat-market"
           >
-            ← Back to Live Meat Market
+            Back to Live Meat Market
           </a>
 
           {sellerLink ? (
@@ -1172,7 +1456,7 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
                   <h1>{sellerName}</h1>
 
                   <div className="hero-meta">
-                    {location} • {fulfillment}
+                    {location} | {fulfillment}
                   </div>
                 </div>
               </>
@@ -1186,7 +1470,7 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
                   <h1>{sellerName}</h1>
 
                   <div className="hero-meta">
-                    {location} • {fulfillment}
+                    {location} | {fulfillment}
                   </div>
                 </div>
               </div>
@@ -1201,19 +1485,36 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
             </h2>
 
             <p>
-              Browse what {sellerName} currently has listed in the
-              Okeechobee Live Meat Market. Choose a product below and
-              send your order request directly through the market.
+              Browse products from {sellerName}, ask about
+              availability, or arrange an order directly
+              with the seller.
             </p>
-          </div>
 
-          <div className="intro-side">
-            <div className="intro-label">
-              Pickup / Delivery
-            </div>
+            <div className="intro-footer">
+              <div className="intro-details">
+                <span>{location}</span>
+                <span className="intro-separator" aria-hidden="true">
+                  |
+                </span>
+                <span>{fulfillment}</span>
+              </div>
 
-            <div className="intro-value">
-              {fulfillment}
+              <button
+                type="button"
+                className="intro-message"
+                data-seller-message-trigger="true"
+                onClick={() => {
+                  setMessageOpen(true);
+                  setMessageDone(false);
+                  setMessageError("");
+                  setMessageName("");
+                  setMessageContact("");
+                  setMessageBody("");
+                }}
+                style={{ cursor: "pointer", fontFamily: "inherit" }}
+              >
+                Message Seller
+              </button>
             </div>
           </div>
         </section>
@@ -1262,7 +1563,7 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
                     <div className="product-body">
                       <div className="available">
                         {product.category
-                          ? `${product.category} · ${product.availability || "Available now"}`
+                          ? `${product.category} | ${product.availability || "Available now"}`
                           : product.availability || "Available now"}
                       </div>
                       {product.marketMarker ? (
@@ -1312,7 +1613,7 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
                         href={orderHref(product)}
                         onClick={() => trackProductOrderClick(product)}
                       >
-                        {orderLabel()}
+                        {orderLabel(product)}
                       </a>
                     </div>
                   </article>
@@ -1326,6 +1627,251 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
             )}
           </div>
         </section>
+
+
+        {messageOpen ? (
+          <div
+            role="presentation"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) closeMessage();
+            }}
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 2000,
+              background: "rgba(12,26,18,.57)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 16,
+              overflowY: "auto",
+            }}
+          >
+            <section
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="seller-message-title"
+              data-seller-message-dialog="true"
+              tabIndex={-1}
+              style={{
+                width: "min(100%, 480px)",
+                maxHeight: "calc(100dvh - 32px)",
+                overflowY: "auto",
+                background: "#fffdf8",
+                color: "#17231b",
+                border: "1px solid #e2d9ca",
+                borderRadius: 22,
+                padding: "26px 25px",
+                boxShadow: "0 26px 85px rgba(0,0,0,.24)",
+                fontFamily: "inherit",
+              }}
+            >
+              <div style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "flex-start",
+                gap: 12,
+              }}>
+                <div>
+                  <div style={{
+                    color: "#8a6a38",
+                    fontSize: 11,
+                    fontWeight: 900,
+                    letterSpacing: ".1em",
+                    textTransform: "uppercase",
+                  }}>
+                    {sellerName}
+                  </div>
+                  <h2
+                    id="seller-message-title"
+                    style={{
+                      margin: "9px 0 0",
+                      fontSize: 28,
+                      lineHeight: 1.15,
+                      letterSpacing: "-.035em",
+                    }}
+                  >
+                    Message {sellerName}
+                  </h2>
+                </div>
+
+                <button
+                  type="button"
+                  aria-label="Close message form"
+                  disabled={messageSaving}
+                  onClick={closeMessage}
+                  style={{
+                    width: 34,
+                    height: 34,
+                    flexShrink: 0,
+                    border: "1px solid #ded7c9",
+                    borderRadius: 10,
+                    background: "#f7f2e8",
+                    color: "#193c2b",
+                    cursor: "pointer",
+                    fontSize: 20,
+                  }}
+                >
+                  {"\u00d7"}
+                </button>
+              </div>
+
+              {messageDone ? (
+                <div role="status" style={{ marginTop: 22 }}>
+                  <h3 style={{ margin: "0 0 8px", fontSize: 21 }}>
+                    Message received.
+                  </h3>
+                  <p style={{ color: "#59665d", lineHeight: 1.6 }}>
+                    Your message has been saved for {sellerName}.
+                    The seller can review it through HomePlanet.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={closeMessage}
+                    style={{
+                      width: "100%",
+                      minHeight: 48,
+                      border: 0,
+                      borderRadius: 11,
+                      background: "#193c2b",
+                      color: "#fff",
+                      fontWeight: 800,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Continue Browsing
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <p style={{
+                    margin: "12px 0 20px",
+                    color: "#59665d",
+                    fontSize: 14,
+                    lineHeight: 1.55,
+                  }}>
+                    Ask about products, availability, or pickup.
+                    Your message goes directly into this seller's inquiry inbox.
+                  </p>
+
+                  <form
+                    onSubmit={(event) => void submitSellerMessage(event)}
+                    style={{ display: "grid", gap: 15 }}
+                  >
+                    <label style={{
+                      display: "grid",
+                      gap: 7,
+                      fontSize: 13,
+                      fontWeight: 800,
+                    }}>
+                      Your name
+                      <input
+                        autoFocus
+                        required
+                        maxLength={160}
+                        value={messageName}
+                        onChange={(event) => setMessageName(event.target.value)}
+                        style={{
+                          width: "100%",
+                          padding: "13px 12px",
+                          border: "1px solid #d9d2c4",
+                          borderRadius: 10,
+                          background: "#fff",
+                          color: "#17231b",
+                          font: "inherit",
+                          fontWeight: 400,
+                        }}
+                      />
+                    </label>
+
+                    <label style={{
+                      display: "grid",
+                      gap: 7,
+                      fontSize: 13,
+                      fontWeight: 800,
+                    }}>
+                      Phone or email
+                      <input
+                        required
+                        maxLength={250}
+                        value={messageContact}
+                        onChange={(event) => setMessageContact(event.target.value)}
+                        style={{
+                          width: "100%",
+                          padding: "13px 12px",
+                          border: "1px solid #d9d2c4",
+                          borderRadius: 10,
+                          background: "#fff",
+                          color: "#17231b",
+                          font: "inherit",
+                          fontWeight: 400,
+                        }}
+                      />
+                    </label>
+
+                    <label style={{
+                      display: "grid",
+                      gap: 7,
+                      fontSize: 13,
+                      fontWeight: 800,
+                    }}>
+                      Your message
+                      <textarea
+                        required
+                        maxLength={2000}
+                        rows={4}
+                        value={messageBody}
+                        onChange={(event) => setMessageBody(event.target.value)}
+                        placeholder="What would you like to ask?"
+                        style={{
+                          width: "100%",
+                          padding: "13px 12px",
+                          border: "1px solid #d9d2c4",
+                          borderRadius: 10,
+                          background: "#fff",
+                          color: "#17231b",
+                          font: "inherit",
+                          fontWeight: 400,
+                          resize: "vertical",
+                          lineHeight: 1.5,
+                        }}
+                      />
+                    </label>
+
+                    {messageError ? (
+                      <p role="alert" style={{
+                        margin: 0,
+                        color: "#a32828",
+                        fontSize: 13,
+                      }}>
+                        {messageError}
+                      </p>
+                    ) : null}
+
+                    <button
+                      type="submit"
+                      disabled={messageSaving}
+                      style={{
+                        minHeight: 49,
+                        marginTop: 3,
+                        border: 0,
+                        borderRadius: 11,
+                        background: "#193c2b",
+                        color: "#fff",
+                        fontWeight: 850,
+                        fontSize: 14,
+                        cursor: messageSaving ? "wait" : "pointer",
+                        opacity: messageSaving ? 0.7 : 1,
+                      }}
+                    >
+                      {messageSaving ? "Sending..." : "Send Message"}
+                    </button>
+                  </form>
+                </>
+              )}
+            </section>
+          </div>
+        ) : null}
 
         {selectedProduct ? (
           <div
@@ -1345,7 +1891,7 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
                 onClick={() => setSelectedProduct(null)}
                 aria-label="Close product view"
               >
-                ×
+                ÃƒÆ’Ã¢â‚¬â€
               </button>
 
               <img
@@ -1406,20 +1952,9 @@ export default function OkeechobeeMeatMarketSellerStorefrontPage() {
           </div>
         ) : null}
         <footer className="store-footer">
-          {sellerName} • Listed through the Okeechobee Live Meat Market
+          {sellerName} | Listed through the Okeechobee Live Meat Market
         </footer>
       </div>
     </main>
   );
 }
-
-
-
-
-
-
-
-
-
-
-

@@ -4,6 +4,7 @@ import {
   useState,
 } from "react";
 import { useParams } from "react-router-dom";
+import SellerMarketing from "./OkeechobeeMeatMarketSellerMarketingPage";
 
 type ProductRow = {
   id?: string;
@@ -689,6 +690,58 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
           </p>
         </header>
 
+        {/* HP_SELLER_QUICK_LINKS_V1 */}
+        <nav
+          aria-label="Seller dashboard quick links"
+          style={{
+            display: "flex",
+            gap: 10,
+            flexWrap: "wrap",
+            margin: "14px 0 24px",
+          }}
+        >
+          <a
+            href={`/planet/okeechobee/meat-market/seller/inbox/${window.location.pathname.split("/").filter(Boolean).pop() || "farm-folks"}${window.location.hash}`}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              minHeight: 43,
+              padding: "10px 17px",
+              borderRadius: 11,
+              background: "#193c2b",
+              color: "#ffffff",
+              textDecoration: "none",
+              fontSize: 13,
+              fontWeight: 800,
+            }}
+          >
+            Customer Inbox
+          </a>
+
+          <a
+            href={`/planet/okeechobee/meat-market/seller/${window.location.pathname.split("/").filter(Boolean).pop() || "farm-folks"}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              minHeight: 43,
+              padding: "10px 17px",
+              border: "1px solid #d6cebd",
+              borderRadius: 11,
+              background: "#fffdf8",
+              color: "#193c2b",
+              textDecoration: "none",
+              fontSize: 13,
+              fontWeight: 800,
+            }}
+          >
+            View My Storefront
+          </a>
+        </nav>
+
         {analytics ? (
           <section
             style={{
@@ -915,6 +968,12 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
             </div>
           </section>
         ) : null}
+
+        <SellerMarketing
+          slug={seller.slug}
+          sellerName={seller.name}
+          products={products}
+        />
 
         <section style={styles.section}>
           <h2 style={styles.sectionTitle}>Grow With HomePlanet</h2>
