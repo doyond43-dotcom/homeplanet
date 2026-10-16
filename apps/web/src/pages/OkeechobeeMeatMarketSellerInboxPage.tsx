@@ -211,12 +211,12 @@ export default function OkeechobeeMeatMarketSellerInboxPage() {
               style={{
                 display: "grid",
                 gridTemplateColumns:
-                  "repeat(auto-fit, minmax(min(100%, 330px), 1fr))",
+                  "minmax(0, 1fr)",
                 gap: 16,
                 alignItems: "start",
               }}
             >
-              <section style={{ display: "grid", gap: 10 }}>
+              <section style={{ display: "grid", gap: 10, minWidth: 0 }}>
                 {filtered.length === 0 && (
                   <div style={card}>No matching inquiries.</div>
                 )}
@@ -267,7 +267,7 @@ export default function OkeechobeeMeatMarketSellerInboxPage() {
                 ))}
               </section>
 
-              <section style={card}>
+              <section style={{ ...card, minWidth: 0, overflowWrap: "anywhere" }}>
                 {!selected ? (
                   <p style={{ color: "#59665d" }}>
                     Select a customer request to view details.
