@@ -952,7 +952,7 @@ export default function EcosystemAtlasV2Page() {
   }
 
   function openLocal(route: string) {
-    window.open(route, "_blank", "noopener,noreferrer");
+    window.open(`http://localhost:5173${route}`, "_blank", "noopener,noreferrer");
   }
 
   function openLive(route: string) {
