@@ -2,6 +2,38 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
+async function getLoginDestination(from: unknown): Promise<string> {
+  if (typeof from === "string" && from.startsWith("/") && !from.startsWith("//")) {
+    return from;
+  }
+
+  if (
+    from &&
+    typeof from === "object" &&
+    "pathname" in from &&
+    typeof from.pathname === "string" &&
+    from.pathname.startsWith("/")
+  ) {
+    return from.pathname;
+  }
+
+  const { data: authData } = await supabase.auth.getUser();
+
+  if (!authData.user) return "/creator/projects";
+
+  const { data, error } = await supabase
+    .from("homeplanet_businesses")
+    .select("slug")
+    .eq("owner_id", authData.user.id)
+    .eq("workspace_version", "build-a-bear-v1")
+    .limit(2);
+
+  if (!error && data?.length === 1) {
+    return `/planet/system/${encodeURIComponent(data[0].slug)}`;
+  }
+
+  return "/creator/projects";
+}
 export default function Login() {
   const nav = useNavigate();
   const loc = useLocation() as any;
@@ -14,11 +46,11 @@ export default function Login() {
   // If already signed in, go where RequireAuth wanted (or to Projects).
   useEffect(() => {
     let mounted = true;
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(async ({ data }) => {
       if (!mounted) return;
       if (data.session) {
         const from = loc?.state?.from;
-        nav(from || "/creator/projects", { replace: true });
+        nav(await getLoginDestination(from), { replace: true });
       }
     });
     return () => { mounted = false; };
@@ -41,7 +73,7 @@ export default function Login() {
       if (error) throw error;
 
       const from = (loc as any)?.state?.from;
-      nav(from || "/creator/projects", { replace: true });
+      nav(await getLoginDestination(from), { replace: true });
     } catch (e: any) {
       setErr(e?.message ?? "Sign-in failed");
     } finally {
@@ -113,7 +145,7 @@ export default function Login() {
 
             <div style={{ display: "flex", gap: 10, fontSize: 13, opacity: 0.8 }}>
               <Link to="/signup" style={{ color: "#79c8f4", fontWeight: 800 }}>Sign up</Link>
-              <span style={{ opacity: 0.5 }}>·</span>
+              <span style={{ opacity: 0.5 }}>Â·</span>
               <Link to="/reset-password" style={{ color: "#79c8f4", fontWeight: 800 }}>Forgot password?</Link>
             </div>
           </div>

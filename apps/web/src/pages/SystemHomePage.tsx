@@ -1,3 +1,4 @@
+// HOMEPLANET_MODULE_STATUS_V1
 ﻿import {
   ArrowLeft,
   Check,
@@ -8,7 +9,7 @@
   MessageCircle,
   Phone,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { buildMySystemModules } from "../lib/homePlanetRegistry";
 import { getSupabase } from "../lib/supabase";
@@ -141,6 +142,8 @@ export default function SystemHomePage() {
   const [requestsError, setRequestsError] = useState("");
   const [requestSaving, setRequestSaving] = useState(false);
   const [requestSaveNote, setRequestSaveNote] = useState("");
+  const savedRequestsRef = useRef<Record<string, StarterRequest>>({});
+  const statusSaveInFlightRef = useRef(false);
 
   const [starterSubscription, setStarterSubscription] =
     useState<StarterSystemSubscription | null>(null);
@@ -388,6 +391,9 @@ export default function SystemHomePage() {
 
       const nextRequests = (data ?? []) as StarterRequest[];
 
+      savedRequestsRef.current = Object.fromEntries(
+        nextRequests.map((request) => [request.id, { ...request }])
+      );
       setStarterRequests(nextRequests);
       setSelectedRequestId((current) =>
         current && nextRequests.some((request) => request.id === current)
@@ -419,6 +425,113 @@ export default function SystemHomePage() {
           : request
       )
     );
+  }
+
+  function selectRequestSafely(requestId: string) {
+    if (requestId === selectedRequest?.id) return;
+
+    if (requestSaving) {
+      setRequestSaveNote("Wait for the current save to finish.");
+      return;
+    }
+
+    if (selectedRequest) {
+      const saved = savedRequestsRef.current[selectedRequest.id];
+
+      const hasUnsavedEdits =
+        !saved ||
+        selectedRequest.next_step !== saved.next_step ||
+        selectedRequest.internal_notes !== saved.internal_notes;
+
+      if (
+        hasUnsavedEdits &&
+        !window.confirm(
+          "You have unsaved Notes or Next Step changes. Switch customers without saving them?"
+        )
+      ) {
+        return;
+      }
+    }
+
+    setRequestSaveNote("");
+    setSelectedRequestId(requestId);
+    document.getElementById("customer-requests")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }
+
+  async function autoSaveRequestStatus(nextStatus: string) {
+    if (!selectedRequest || !requestSlug || !adminAccessToken) return;
+    if (requestSaving || statusSaveInFlightRef.current) return;
+
+    const requestId = selectedRequest.id;
+    const previouslySaved = savedRequestsRef.current[requestId];
+
+    if (!previouslySaved) {
+      setRequestSaveNote("Could not verify saved request. Refresh and retry.");
+      return;
+    }
+
+    if (nextStatus === previouslySaved.status) {
+      updateSelectedRequest("status", nextStatus);
+      return;
+    }
+
+    statusSaveInFlightRef.current = true;
+    setRequestSaving(true);
+    setRequestSaveNote("Saving status...");
+
+    setStarterRequests((current) =>
+      current.map((request) =>
+        request.id === requestId
+          ? { ...request, status: nextStatus }
+          : request
+      )
+    );
+
+    try {
+      const { error } = await getSupabase().rpc("update_starter_request", {
+        p_live_page_slug: requestSlug,
+        p_admin_access_token: adminAccessToken,
+        p_request_id: requestId,
+        p_status: nextStatus,
+        p_next_step: previouslySaved.next_step,
+        p_internal_notes: previouslySaved.internal_notes,
+      });
+
+      if (error) throw error;
+
+      const updatedAt = new Date().toISOString();
+      savedRequestsRef.current[requestId] = {
+        ...previouslySaved,
+        status: nextStatus,
+        updated_at: updatedAt,
+      };
+
+      setStarterRequests((current) =>
+        current.map((request) =>
+          request.id === requestId
+            ? { ...request, updated_at: updatedAt }
+            : request
+        )
+      );
+      setRequestSaveNote("Status saved automatically");
+    } catch (error) {
+      console.error("[starter_requests] status autosave error:", error);
+
+      setStarterRequests((current) =>
+        current.map((request) =>
+          request.id === requestId
+            ? { ...request, status: previouslySaved.status }
+            : request
+        )
+      );
+      setRequestSaveNote("Status was not saved. Please retry.");
+    } finally {
+      statusSaveInFlightRef.current = false;
+      setRequestSaving(false);
+    }
   }
 
   async function saveSelectedRequest() {
@@ -455,7 +568,11 @@ export default function SystemHomePage() {
       )
     );
 
-    setRequestSaveNote("Saved");
+    savedRequestsRef.current[selectedRequest.id] = {
+      ...selectedRequest,
+      updated_at: updatedAt,
+    };
+    setRequestSaveNote("Updated");
     setRequestSaving(false);
   }
 
@@ -602,8 +719,62 @@ export default function SystemHomePage() {
           </div>
         </section>
 
+        {requestSlug && adminAccessToken && (
+          <section className="mt-6 rounded-[2rem] border border-emerald-300/20 bg-white/[0.04] p-6 sm:p-7">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-300">
+              My HomePlanet
+            </p>
+            <h2 className="mt-3 text-2xl font-black tracking-tight sm:text-3xl">
+              Here's what needs your attention.
+            </h2>
+
+            <div className="mt-5 rounded-2xl border border-white/10 bg-black/20 p-4 sm:p-5">
+              <h3 className="text-lg font-black">Needs My Attention</h3>
+
+              {requestsLoading ? (
+                <p className="mt-3 text-sm text-white/60">Checking customer requests...</p>
+              ) : requestsError ? (
+                <p className="mt-3 text-sm text-red-200">
+                  Could not check requests: {requestsError}
+                </p>
+              ) : starterRequests.filter((request) => request.status === "new").length > 0 ? (
+                <div className="mt-3 space-y-3">
+                  <p className="text-sm font-bold text-emerald-300">
+                    {starterRequests.filter((request) => request.status === "new").length} new customer
+                    {starterRequests.filter((request) => request.status === "new").length === 1 ? " request" : " requests"}
+                  </p>
+
+                  {starterRequests
+                    .filter((request) => request.status === "new")
+                    .map((request) => (
+                      <button
+                        key={request.id}
+                        type="button"
+                        onClick={() => selectRequestSafely(request.id)}
+                        disabled={requestSaving}
+                        className="flex w-full items-center justify-between gap-4 rounded-xl border border-emerald-300/20 bg-emerald-300/[0.07] px-4 py-4 text-left transition hover:bg-emerald-300/[0.12] disabled:cursor-wait disabled:opacity-50"
+                      >
+                        <span className="min-w-0">
+                          <span className="block font-black">{request.customer_name}</span>
+                          <span className="mt-1 block text-sm text-white/60">{request.service}</span>
+                        </span>
+                        <span className="shrink-0 text-sm font-black text-emerald-300">
+                          Open request ?
+                        </span>
+                      </button>
+                    ))}
+                </div>
+              ) : (
+                <p className="mt-3 text-sm text-white/60">
+                  You're all caught up. No new customer requests.
+                </p>
+              )}
+            </div>
+          </section>
+        )}
+
         {requestSlug && adminAccessToken ? (
-          <section className="mt-8">
+          <section id="customer-requests" className="mt-8">
             <div className="mb-4 flex items-end justify-between gap-4">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.22em] text-emerald-300">
@@ -696,7 +867,7 @@ export default function SystemHomePage() {
                       <button
                         key={request.id}
                         type="button"
-                        onClick={() => setSelectedRequestId(request.id)}
+                        onClick={() => selectRequestSafely(request.id)}
                         style={statusStyle}
                         className={`w-full rounded-[1.4rem] border p-4 text-left transition ${
                           active
@@ -810,8 +981,9 @@ export default function SystemHomePage() {
                           <select
                             value={selectedRequest.status || "new"}
                             onChange={(event) =>
-                              updateSelectedRequest("status", event.target.value)
+                              void autoSaveRequestStatus(event.target.value)
                             }
+                            disabled={requestSaving}
                             className="mt-2 w-full rounded-xl border border-white/10 bg-[#101213] px-3 py-3 text-sm font-bold text-white outline-none focus:border-emerald-300/50"
                           >
                             <option value="new">New</option>
@@ -897,7 +1069,7 @@ export default function SystemHomePage() {
                           disabled={requestSaving}
                           className="rounded-xl bg-emerald-300 px-5 py-3 text-sm font-black text-black transition hover:bg-emerald-200 disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                          {requestSaving ? "Saving..." : "Save Changes"}
+                          {requestSaving ? "Saving..." : "Update"}
                         </button>
                       </div>
                     </div>
@@ -916,13 +1088,12 @@ export default function SystemHomePage() {
           </p>
 
           <h2 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">
-            Everything you chose, in one place.
+            Your HomePlanet, ready to grow.
           </h2>
 
           <p className="mt-3 max-w-2xl text-sm leading-6 text-white/50">
-            These are the pieces connected to {businessName}. As each piece
-            becomes operational, this workspace becomes the place to open,
-            manage, and expand it.
+            These are the tools selected for {businessName}. Set up your Live Page
+            first, then connect more tools as your business needs them.
           </p>
         </div>
 
@@ -955,14 +1126,22 @@ export default function SystemHomePage() {
                           </p>
                         </div>
 
-                        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-emerald-300 text-black">
-                          <Check size={17} strokeWidth={3} />
+                        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-emerald-300/30 bg-emerald-300/10 text-emerald-300">
+                          {module.id === "live-page" && livePageSlug ? (
+                            <Check size={17} strokeWidth={3} />
+                          ) : (
+                            <CircleDot size={17} />
+                          )}
                         </div>
                       </div>
 
                       <div className="mt-5 flex items-center justify-between gap-3 border-t border-white/10 pt-4">
                         <span className="text-xs font-black uppercase tracking-[0.16em] text-emerald-300">
-                          Connected
+                          {module.id === "live-page"
+                            ? livePageSlug
+                              ? "Connected"
+                              : "Needs Setup"
+                            : "Setup Pending"}
                         </span>
 
                         {module.id === "live-page" ? (

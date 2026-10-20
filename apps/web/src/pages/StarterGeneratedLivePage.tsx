@@ -77,6 +77,35 @@ const fallbackPhotos = [
   "/images/sebastian-softwash-action-4.jpg",
 ];
 
+/* HP_ADAPTIVE_BUSINESS_LOGO_V1
+   Keep the existing responsive logo layout as the fallback.
+   Wide logos retain approved sizing. Square/tall logos get appropriate limits.
+*/
+function adaptBusinessLogo(
+  image: HTMLImageElement,
+  placement: "header" | "footer"
+) {
+  const width = image.naturalWidth;
+  const height = image.naturalHeight;
+
+  if (!width || !height) return;
+
+  const ratio = width / height;
+  const shape = ratio >= 1.5 ? "wide" : ratio >= 0.8 ? "square" : "tall";
+
+  image.dataset.logoShape = shape;
+
+  if (shape === "wide") {
+    image.style.maxWidth = "";
+    return;
+  }
+
+  if (placement === "header") {
+    image.style.maxWidth = shape === "tall" ? "90px" : "160px";
+  } else {
+    image.style.maxWidth = shape === "tall" ? "120px" : "180px";
+  }
+}
 export default function StarterGeneratedLivePage() {
   const { slug } = useParams();
   const supabase = useMemo(() => getSupabase(), []);
@@ -855,7 +884,7 @@ function serviceLink(service: string) {
                 <img
                   src={data.logoImage}
                   alt={`${data.name} logo`}
-                  className="h-10 max-w-[160px] object-contain object-left sm:h-12 sm:max-w-[210px]"
+                  className="h-auto max-h-14 w-auto max-w-[150px] object-contain object-left sm:max-h-16 sm:max-w-[215px] lg:max-h-20 lg:max-w-[260px]" onLoad={(event) => adaptBusinessLogo(event.currentTarget, "header")}
                 />
                 <div className="hidden min-w-0 md:block">
                   <p className={`truncate text-sm font-black ${surface.text}`}>{data.name}</p>
@@ -990,7 +1019,7 @@ function serviceLink(service: string) {
                   <img
                     src={data.footerLogoImage || data.logoImage}
                     alt={`${data.name} logo`}
-                    className="h-14 max-w-[220px] object-contain object-left"
+                    className="h-auto max-h-20 w-auto max-w-[240px] object-contain object-left sm:max-h-24 sm:max-w-[300px]" onLoad={(event) => adaptBusinessLogo(event.currentTarget, "footer")}
                   />
                 ) : (
                   <p className={`text-xl font-black ${surface.text}`}>{data.name}</p>

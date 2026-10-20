@@ -367,6 +367,7 @@ import OnboardingFlow from "../pages/OnboardingFlow";
 import OnboardingBuildTransition from "../pages/OnboardingBuildTransition";
 
 import SystemHomePage from "../pages/SystemHomePage";
+import HomePlanetSystemWorkspaceRouter from "../pages/HomePlanetSystemWorkspaceRouter";
 
 import CrewTeamBoard from "../pages/CrewTeamBoard";
 
@@ -701,7 +702,7 @@ export default function PlanetRoutes() {
       <Route path="creator/big-dave-eats" element={<BigDaveEatsLive />} />
       <Route path="creator/building" element={<CreatorLaunchSequencePage />} />
       <Route path="system/:slug/building" element={<HomePlanetBuildSequencePage />} />
-      <Route path="system/:slug" element={<SystemHomePage />} />
+      <Route path="system/:slug" element={<HomePlanetSystemWorkspaceRouter />} />
       <Route path="creator/*" element={<Navigate to="/planet/creator" replace />} />
 
       <Route path="experience" element={<ExperiencePlanet />} />
