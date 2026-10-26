@@ -4516,68 +4516,7 @@ export default function PremierFieldOperationsBoard() {
                     </div>
                   ) : null}
 
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      const accessToken = getPremierFieldAccessToken();
-
-                      if (!accessToken) {
-                        window.alert("Premier field access is missing.");
-                        return;
-                      }
-
-                      if (
-                        activeFinalMeasureJobId !== job.id ||
-                        finalMeasureOpenings.length === 0
-                      ) {
-                        window.alert(
-                          "Save at least one final measurement opening before completing this step."
-                        );
-                        return;
-                      }
-
-                      const { data, error } = await supabase.rpc(
-                        "save_premier_final_measurement",
-                        {
-                          p_access_token: accessToken,
-                          p_job_id: job.id,
-                          p_status: "complete",
-                          p_scheduled_for: job.scheduled_for || null,
-                          p_assigned_to: job.assigned_to || null,
-                          p_completed_at: new Date().toISOString(),
-                          p_note: job.note || "Final detailed measurement completed.",
-                        }
-                      );
-
-                      if (error || data !== true) {
-                        console.error(
-                          "Premier field final measurement completion failed:",
-                          error
-                        );
-                        window.alert(
-                          "Could not complete the final measurement. Please try again."
-                        );
-                        return;
-                      }
-
-                      setLiveFinalMeasurements((current) =>
-                        current.filter((item) => item.id !== job.id)
-                      );
-                    }}
-                    style={{
-                      width: "100%",
-                      minHeight: 46,
-                      marginTop: 10,
-                      borderRadius: 10,
-                      border: "1px solid #557c64",
-                      background: "#16232d",
-                      color: "#d9e5ee",
-                      fontWeight: 900,
-                      cursor: "pointer",
-                    }}
-                  >
-                    Complete Final Measurement
-                  </button>
+                  <div style={{marginTop:10,padding:10,border:'1px solid #31495a',borderRadius:10,color:'#b7c9d7',fontSize:12}}>Final Measurement completion belongs to the assigned salesperson. Office reviews it before releasing the job to RJ.</div>
                 </div>
               ))}
             </div>
@@ -4884,6 +4823,11 @@ export default function PremierFieldOperationsBoard() {
                               ...current,
                               [job.id]: nextCrew,
                             }));
+
+                            // On the first Office-to-RJ handoff, crew and date are
+                            // committed together by save_premier_install_schedule.
+                            // reassign_premier_install_crew does not accept production_setup.
+                            if (job.current_stage === "production_setup") return;
 
                             setCrewSaveErrors((current) => ({
                               ...current,
@@ -5871,14 +5815,25 @@ export default function PremierFieldOperationsBoard() {
                                 [job.id]: "",
                               }));
 
-                              const { data, error } = await supabase.rpc(
-                                "schedule_premier_install",
-                                {
-                                  p_access_token: accessToken,
-                                  p_job_id: job.id,
-                                  p_scheduled_for: scheduledFor,
-                                }
-                              );
+                              const isFirstSchedule = job.current_stage === "production_setup";
+                              const chosenCrew = (crewDrafts[job.id] ?? job.crew ?? "").trim();
+                              if (isFirstSchedule && (!chosenCrew || ["not assigned", "unassigned", "none", "tbd"].includes(chosenCrew.toLowerCase()))) {
+                                setInstallScheduleErrors((current) => ({ ...current, [job.id]: "Select an installation crew before scheduling." }));
+                                setInstallScheduleSavingJobId(null);
+                                return;
+                              }
+                              const { data, error } = isFirstSchedule
+                                ? await supabase.rpc("save_premier_install_schedule", {
+                                    p_access_token: accessToken,
+                                    p_job_id: job.id,
+                                    p_crew: chosenCrew,
+                                    p_scheduled_for: scheduledFor,
+                                  })
+                                : await supabase.rpc("schedule_premier_install", {
+                                    p_access_token: accessToken,
+                                    p_job_id: job.id,
+                                    p_scheduled_for: scheduledFor,
+                                  });
 
                               if (error || data !== true) {
                                 console.error(
@@ -5902,15 +5857,21 @@ export default function PremierFieldOperationsBoard() {
                                     ? {
                                         ...item,
                                         scheduled_for: scheduledFor,
+                                        crew: isFirstSchedule ? chosenCrew : item.crew,
                                         current_stage: "scheduled",
-                                        next_action: item.crew
-                                          ? "Field Operations to prepare crew for installation."
-                                          : "Field Operations to assign installer / crew.",
+                                        // The saved crew/date are authoritative after a successful RPC.
+                                        // RJ must explicitly release the scheduled job to Installer.
+                                        next_action: "RJ to verify readiness and deliberately release to Installer.",
                                       }
                                     : item
                                 )
                               );
 
+                              if (isFirstSchedule) setCrewDrafts((current) => {
+                                const next = { ...current };
+                                delete next[job.id];
+                                return next;
+                              });
                               setInstallScheduleDrafts((current) => {
                                 const next = { ...current };
                                 delete next[job.id];

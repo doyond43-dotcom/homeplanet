@@ -271,6 +271,10 @@ export default function PremierWindowDoorBoard() {
     useState(false);
   const [officeApprovedSetupError, setOfficeApprovedSetupError] =
     useState("");
+  const [blueFolderState, setBlueFolderState] = useState<{jobId: string; confirmedAt: string | null; confirmedBy: string | null} | null>(null);
+  const [blueFolderLoading, setBlueFolderLoading] = useState(false);
+  const [blueFolderSaving, setBlueFolderSaving] = useState(false);
+  const [blueFolderError, setBlueFolderError] = useState("");
   const [officeDepositSaving, setOfficeDepositSaving] = useState(false);
   const [officeDepositSaved, setOfficeDepositSaved] = useState(false);
   const [officeDepositDraft, setOfficeDepositDraft] = useState({
@@ -1994,6 +1998,41 @@ export default function PremierWindowDoorBoard() {
     setOfficeWorkView(null);
   };
 
+  const loadBlueFolderConfirmation = async (lead: any) => {
+    setBlueFolderError("");
+    setBlueFolderState(null);
+    if (lead?._sample) return;
+    const token = getPremierOfficeAccessToken();
+    if (!token) { setBlueFolderError("Office staff access is missing."); return; }
+    setBlueFolderLoading(true);
+    const { data, error } = await supabase.rpc("get_premier_blue_folder_confirmation", {
+      p_access_token: token, p_job_id: lead.id,
+    });
+    if (error) setBlueFolderError("Blue Folder status unavailable. Confirm backend installation before proceeding.");
+    else {
+      const result = Array.isArray(data) ? data[0] : data;
+      setBlueFolderState({jobId: lead.id, confirmedAt: result?.confirmed_at ?? null, confirmedBy: result?.confirmed_by ?? null});
+    }
+    setBlueFolderLoading(false);
+  };
+
+  const confirmBlueFolder = async (lead: any) => {
+    setBlueFolderError("");
+    if (lead?._sample) return;
+    const token = getPremierOfficeAccessToken();
+    if (!token) { setBlueFolderError("Office staff access is missing."); return; }
+    setBlueFolderSaving(true);
+    const { data, error } = await supabase.rpc("confirm_premier_blue_folder", {
+      p_access_token: token, p_job_id: lead.id,
+    });
+    setBlueFolderSaving(false);
+    if (error || data !== true) {
+      setBlueFolderError("Could not confirm the Blue Folder. Verify the 50% payment is received and all documents are ready.");
+      return;
+    }
+    await loadBlueFolderConfirmation(lead);
+  };
+
   const startOfficeProductionSetup = async (lead: any) => {
     setOfficeApprovedSetupError("");
 
@@ -2009,6 +2048,11 @@ export default function PremierWindowDoorBoard() {
 
     if (!accessToken) {
       setOfficeApprovedSetupError("Premier staff access is missing.");
+      return;
+    }
+
+    if (blueFolderLoading || blueFolderState?.jobId !== lead.id || !blueFolderState.confirmedAt) {
+      setOfficeApprovedSetupError("Office must confirm the Blue Folder before starting production.");
       return;
     }
 
@@ -4166,6 +4210,11 @@ export default function PremierWindowDoorBoard() {
                         void loadOfficeJobDocuments(officeWorkLead);
                         void loadOfficeProductionSetup(officeWorkLead);
                       }
+                    }
+
+                    if (view === "continue_job") {
+                      void loadBlueFolderConfirmation(officeWorkLead);
+                      void loadOfficePayments(officeWorkLead);
                     }
 
                     if (view === "production_setup") {
@@ -6669,6 +6718,22 @@ export default function PremierWindowDoorBoard() {
                     >
                       Continue Approved Job Setup
                     </strong>
+                    <div style={{border:"1px solid #557c64",borderRadius:10,padding:12,marginBottom:14}}>
+                      <strong style={{display:"block",color:"#d9e5ee",marginBottom:5}}>Blue Folder confirmation</strong>
+                      <div style={{fontSize:12,color:"#b7c9d7",marginBottom:10}}>
+                        {blueFolderLoading ? "Checking confirmation..." : blueFolderState?.jobId === officeWorkLead.id && blueFolderState.confirmedAt
+                          ? `Confirmed by ${blueFolderState.confirmedBy || "Office"}`
+                          : "Office must confirm the job documents after the 50% deposit is received."}
+                      </div>
+                      {blueFolderState?.jobId === officeWorkLead.id && blueFolderState.confirmedAt ? null : (
+                        <button type="button" disabled={blueFolderSaving || blueFolderLoading || blueFolderState?.jobId !== officeWorkLead.id || officePaymentDrafts.deposit_50?.status !== "received"}
+                          onClick={() => void confirmBlueFolder(officeWorkLead)}
+                          style={{minHeight:40,padding:"8px 12px",border:"1px solid #557c64",borderRadius:8,background:"#14271c",color:"#b7dec4",fontWeight:800}}>
+                          {blueFolderSaving ? "Confirming..." : "Confirm Blue Folder Ready"}
+                        </button>
+                      )}
+                      {blueFolderError ? <div style={{color:"#d8b267",marginTop:8,fontSize:12}}>{blueFolderError}</div> : null}
+                    </div>
 
                     {officeApprovedSetupLoading ? (
                       <div
@@ -6813,7 +6878,7 @@ export default function PremierWindowDoorBoard() {
 
                             <button
                               type="button"
-                              disabled={officeProductionStarting}
+                              disabled={officeProductionStarting || blueFolderLoading || blueFolderState?.jobId !== officeWorkLead.id || !blueFolderState.confirmedAt}
                               onClick={() =>
                                 void startOfficeProductionSetup(officeWorkLead)
                               }
