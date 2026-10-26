@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 type JobStatus =
@@ -77,7 +77,7 @@ function CollapsibleSection({
       >
         <strong style={{ fontSize: 17 }}>{title}</strong>
         <span style={{ color: "#8fa9bc", fontSize: 18, lineHeight: 1 }}>
-          {open ? "−" : "+"}
+          {open ? "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¹ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢" : "+"}
         </span>
       </button>
 
@@ -111,25 +111,41 @@ function Pill({ children }: { children: React.ReactNode }) {
 }
 
 function getPremierOfficeAccessToken() {
-  const urlToken = new URLSearchParams(window.location.search).get("access");
-  if (urlToken) return urlToken;
+  const readStoredToken = (storage: Storage) => {
+    try {
+      const rawSession = storage.getItem("premier_staff_session");
+      if (!rawSession) return null;
 
-  try {
-    const rawSession = window.sessionStorage.getItem("premier_staff_session");
-    if (!rawSession) return null;
+      const session = JSON.parse(rawSession);
 
-    const session = JSON.parse(rawSession);
-    const sessionToken = String(session?.accessToken || "").trim();
+      if (
+        session?.expiresAt &&
+        Date.now() >= new Date(session.expiresAt).getTime()
+      ) {
+        storage.removeItem("premier_staff_session");
+        return null;
+      }
 
-    return sessionToken || null;
-  } catch (error) {
-    console.error("Premier staff session read failed:", error);
-    return null;
-  }
+      const sessionToken = String(session?.accessToken || "").trim();
+      return sessionToken || null;
+    } catch (error) {
+      console.error("Premier staff session read failed:", error);
+      return null;
+    }
+  };
+
+  return (
+    readStoredToken(window.sessionStorage) ||
+    readStoredToken(window.localStorage) ||
+    new URLSearchParams(window.location.search).get("access")
+  );
 }
+
 function getPremierOfficeGreeting() {
   try {
-    const rawSession = window.sessionStorage.getItem("premier_staff_session");
+    const rawSession =
+      window.sessionStorage.getItem("premier_staff_session") ||
+      window.localStorage.getItem("premier_staff_session");
     if (!rawSession) return "";
 
     const session = JSON.parse(rawSession);
@@ -154,6 +170,33 @@ export default function PremierWindowDoorBoard() {
   const liveLeadsScrollRef = useRef<HTMLDivElement | null>(null);
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
   const [officeWorkLeadId, setOfficeWorkLeadId] = useState<string | null>(null);
+  const [officeFieldReports, setOfficeFieldReports] = useState<any[]>([]);
+  const [officeIssueStatuses, setOfficeIssueStatuses] = useState<Record<string, any>>({});
+  const [officeIssueStatusError, setOfficeIssueStatusError] = useState("");
+  const [officeIssueNotes, setOfficeIssueNotes] = useState<Record<string, string>>({});
+  const [officeIssueSavingId, setOfficeIssueSavingId] = useState<string | null>(null);
+  const [officeIssueActionError, setOfficeIssueActionError] = useState<Record<string, string>>({});
+  const [officeIssueHistory, setOfficeIssueHistory] = useState<Record<string, any[]>>({});
+  const [officeIssueHistoryOpen, setOfficeIssueHistoryOpen] = useState<Record<string, boolean>>({});
+  const [officeIssueHistoryLoading, setOfficeIssueHistoryLoading] = useState<string | null>(null);
+  const [officeIssueJobIds, setOfficeIssueJobIds] = useState<string[]>([]);
+  const [officeIssueScanLoading, setOfficeIssueScanLoading] = useState(true);
+  const [officeIssueScanError, setOfficeIssueScanError] = useState(false);
+  const [officeProofPhotos, setOfficeProofPhotos] = useState<any[]>([]);
+  const [officeProofLoading, setOfficeProofLoading] = useState(false);
+  const [officeProofError, setOfficeProofError] = useState("");
+  const [officeFieldLoading, setOfficeFieldLoading] = useState(false);
+  const [officeFieldError, setOfficeFieldError] = useState("");
+  const [officeFieldRefresh, setOfficeFieldRefresh] = useState(0);
+  const [officeRjSending, setOfficeRjSending] = useState(false);
+  const [officeRjError, setOfficeRjError] = useState("");
+  const [officeRjSent, setOfficeRjSent] = useState(false);
+  const [officeRjRelease, setOfficeRjRelease] = useState<{
+    jobId: string;
+    releasedAt: string;
+    releasedBy: string;
+  } | null>(null);
+  const [historyOpenJobId, setHistoryOpenJobId] = useState<string | null>(null);
   const [customerEditOpen, setCustomerEditOpen] = useState(false);
   const [customerEditDraft, setCustomerEditDraft] = useState({
     firstName: "",
@@ -176,6 +219,7 @@ export default function PremierWindowDoorBoard() {
   const [officeBeamRecipient, setOfficeBeamRecipient] =
     useState<string>("Gio Richardson");
   const [officeBeamSending, setOfficeBeamSending] = useState(false);
+
   const [officeBeamListening, setOfficeBeamListening] = useState(false);
   const [officePersonalBeamMessages, setOfficePersonalBeamMessages] = useState<any[]>([]);
   const [officePersonalBeamLoading, setOfficePersonalBeamLoading] = useState(false);
@@ -285,9 +329,10 @@ export default function PremierWindowDoorBoard() {
   const [officeInspectionSaving, setOfficeInspectionSaving] = useState(false);
   const [officeInspectionError, setOfficeInspectionError] = useState("");
   const [officeInspectionDraft, setOfficeInspectionDraft] = useState({
-    type: "Final Inspection",
+    type: "Final Walkthrough",
     scheduledDate: "",
     window: "Morning Window",
+    specificTime: "",
     assignedTo: "RJ",
   });
 
@@ -365,7 +410,177 @@ export default function PremierWindowDoorBoard() {
   const previewOfficeLeads = liveLeads;
 
   const officeWorkLead =
+
     previewOfficeLeads.find((lead) => lead.id === officeWorkLeadId) ?? null;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const scanOfficeIssues = async () => {
+      setOfficeIssueScanLoading(true);
+      setOfficeIssueScanError(false);
+
+      const accessToken = getPremierOfficeAccessToken();
+      const jobsToCheck = liveLeads.filter(
+        (job) => job.id && !job._sample
+      );
+
+      if (jobsToCheck.length === 0) {
+        setOfficeIssueJobIds([]);
+        setOfficeIssueScanLoading(false);
+        return;
+      }
+
+      if (!accessToken) {
+        setOfficeIssueScanError(true);
+        setOfficeIssueScanLoading(false);
+        return;
+      }
+
+      const results = await Promise.all(
+        jobsToCheck.map(async (job) => {
+          try {
+            const { data, error } = await supabase.rpc(
+              "get_premier_issue_resolution_state",
+              {
+                p_access_token: accessToken,
+                p_job_id: job.id,
+              }
+            );
+
+            return {
+              id: String(job.id),
+              hasReports: !error && Array.isArray(data) && data.some((issue: any) => issue.resolution_status !== "resolved"),
+              failed: Boolean(error),
+            };
+          } catch {
+            return {
+              id: String(job.id),
+              hasReports: false,
+              failed: true,
+            };
+          }
+        })
+      );
+
+      if (cancelled) return;
+
+      setOfficeIssueJobIds(
+        results.filter((item) => item.hasReports).map((item) => item.id)
+      );
+      setOfficeIssueScanError(results.some((item) => item.failed));
+      setOfficeIssueScanLoading(false);
+    };
+
+    void scanOfficeIssues();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [liveLeads, officeFieldRefresh]);
+
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      if (!officeWorkLead?.id || officeWorkLead._sample) {
+        setOfficeFieldReports([]);
+        setOfficeFieldError("");
+        setOfficeFieldLoading(false);
+        return;
+      }
+
+      const accessToken = getPremierOfficeAccessToken();
+      if (!accessToken) {
+        setOfficeFieldError("Office session required.");
+        setOfficeFieldReports([]);
+        return;
+      }
+
+      setOfficeFieldLoading(true);
+      setOfficeFieldError("");
+      const { data, error } = await supabase.rpc(
+        "get_premier_installer_issue_reports",
+        {
+          p_access_token: accessToken,
+          p_job_id: officeWorkLead.id,
+        }
+      );
+
+      if (cancelled) return;
+      setOfficeFieldReports(error ? [] : data ?? []);
+
+      if (!error) {
+        const { data: statuses, error: statusError } = await supabase.rpc(
+          "get_premier_issue_resolution_state",
+          {
+            p_access_token: accessToken,
+            p_job_id: officeWorkLead.id,
+          }
+        );
+
+        if (cancelled) return;
+
+        if (statusError) {
+          setOfficeIssueStatusError("Could not load issue statuses.");
+        } else {
+          const next: Record<string, any> = {};
+          for (const issue of statuses ?? []) {
+            next[String(issue.issue_id)] = issue;
+          }
+          setOfficeIssueStatuses(next);
+          setOfficeIssueStatusError("");
+        }
+      }
+      setOfficeFieldError(error ? "Could not load field reports." : "");
+      setOfficeFieldLoading(false);
+    };
+
+    void load();
+    return () => { cancelled = true; };
+  }, [officeWorkLead?.id, officeFieldRefresh]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadProof = async () => {
+      setOfficeProofPhotos([]);
+      setOfficeProofError("");
+
+      if (!officeWorkLead?.id || officeWorkLead._sample) {
+        setOfficeProofLoading(false);
+        return;
+      }
+
+      const accessToken = getPremierOfficeAccessToken();
+      if (!accessToken) {
+        setOfficeProofError("Office session required.");
+        return;
+      }
+
+      setOfficeProofLoading(true);
+
+      const { data, error } = await supabase.functions.invoke(
+        "premier-installer-proof-photo",
+        {
+          body: {
+            action: "list",
+            accessToken,
+            jobId: officeWorkLead.id,
+          },
+        }
+      );
+
+      if (cancelled) return;
+
+      setOfficeProofPhotos(error ? [] : data?.photos ?? []);
+      setOfficeProofError(error ? "Could not load Bucking photos." : "");
+      setOfficeProofLoading(false);
+    };
+
+    void loadProof();
+    return () => { cancelled = true; };
+  }, [officeWorkLead?.id, officeFieldRefresh]);
 
   const loadOfficeBeam = async (jobId: string) => {
     const accessToken = getPremierOfficeAccessToken();
@@ -721,8 +936,6 @@ export default function PremierWindowDoorBoard() {
 
     setCustomerEditOpen(false);
   };
-  const [assigningLeadId, setAssigningLeadId] = useState<string | null>(null);
-  const [savingAssignmentId, setSavingAssignmentId] = useState<string | null>(null);
   const [savingLeadDecisionId, setSavingLeadDecisionId] = useState<string | null>(null);
   const [archivingJobId, setArchivingJobId] = useState<string | null>(null);
   const [leadDrafts, setLeadDrafts] = useState<Record<string, {
@@ -779,6 +992,8 @@ export default function PremierWindowDoorBoard() {
   const [officeProductionLoading, setOfficeProductionLoading] = useState(false);
   const [officeProductionSaving, setOfficeProductionSaving] = useState(false);
   const [officeProductionSaved, setOfficeProductionSaved] = useState(false);
+  const [officeProductionConfirmedStatus, setOfficeProductionConfirmedStatus] = useState("Not ordered");
+  const [officePermitConfirmedStatus, setOfficePermitConfirmedStatus] = useState("Not started");
   const [officeProductionError, setOfficeProductionError] = useState("");
   const [officeProductionDraft, setOfficeProductionDraft] = useState({
     materialStatus: "Not ordered",
@@ -1209,10 +1424,195 @@ export default function PremierWindowDoorBoard() {
     setOfficePaymentsLoading(false);
   };
 
+  const [officeWalkthrough, setOfficeWalkthrough] = useState<any>(null);
+  const [officeWalkthroughAssignee, setOfficeWalkthroughAssignee] =
+    useState("RJ");
+  const [officeWalkthroughDate, setOfficeWalkthroughDate] =
+    useState("");
+  const [officeWalkthroughNote, setOfficeWalkthroughNote] =
+    useState("");
+  const [officeWalkthroughOutcomeNote, setOfficeWalkthroughOutcomeNote] =
+    useState("");
+  const [officeWalkthroughBusy, setOfficeWalkthroughBusy] =
+    useState(false);
+  const [officeWalkthroughError, setOfficeWalkthroughError] =
+    useState("");
+
+  const loadOfficeWalkthrough = async (jobId: string) => {
+    const accessToken = getPremierOfficeAccessToken();
+
+    if (!accessToken) {
+      setOfficeWalkthroughError("Office session missing.");
+      return;
+    }
+
+    const { data, error } = await supabase.rpc(
+      "get_premier_customer_walkthrough",
+      {
+        p_access_token: accessToken,
+        p_job_id: jobId,
+      }
+    );
+
+    if (error) {
+      setOfficeWalkthroughError(error.message);
+      return;
+    }
+
+    const record = data?.[0] || null;
+    setOfficeWalkthrough(record);
+
+    if (record) {
+      setOfficeWalkthroughAssignee(record.assigned_to || "RJ");
+      setOfficeWalkthroughNote(record.office_note || "");
+      setOfficeWalkthroughOutcomeNote(record.outcome_note || "");
+
+      if (record.scheduled_at) {
+        const scheduled = new Date(record.scheduled_at);
+        const local = new Date(
+          scheduled.getTime() -
+          scheduled.getTimezoneOffset() * 60000
+        );
+        setOfficeWalkthroughDate(local.toISOString().slice(0, 16));
+      }
+    }
+  };
+
+  useEffect(() => {
+    setOfficeWalkthrough(null);
+    setOfficeWalkthroughError("");
+    setOfficeWalkthroughAssignee("RJ");
+    setOfficeWalkthroughDate("");
+    setOfficeWalkthroughNote("");
+    setOfficeWalkthroughOutcomeNote("");
+
+    if (officeWorkLead?.id) {
+      void loadOfficeWalkthrough(officeWorkLead.id);
+    }
+  }, [officeWorkLead?.id]);
+  const scheduleOfficeWalkthrough = async () => {
+    if (!officeWorkLead || officeWalkthroughBusy) return;
+
+    if (!officeWalkthroughDate) {
+      setOfficeWalkthroughError("Choose a date and time.");
+      return;
+    }
+
+    const scheduled = new Date(officeWalkthroughDate);
+
+    if (Number.isNaN(scheduled.getTime())) {
+      setOfficeWalkthroughError("Invalid date or time.");
+      return;
+    }
+
+    const accessToken = getPremierOfficeAccessToken();
+
+    if (!accessToken) {
+      setOfficeWalkthroughError("Office session missing.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Schedule the final customer walkthrough with ${
+        officeWalkthroughAssignee === "RJ" ? "RJ" : "Gino"
+      } and send the details through Beam?`
+    );
+
+    if (!confirmed) return;
+
+    setOfficeWalkthroughBusy(true);
+    setOfficeWalkthroughError("");
+
+    try {
+      const { data, error } = await supabase.rpc(
+        "schedule_premier_customer_walkthrough",
+        {
+          p_access_token: accessToken,
+          p_job_id: officeWorkLead.id,
+          p_assigned_to: officeWalkthroughAssignee,
+          p_scheduled_at: scheduled.toISOString(),
+          p_note: officeWalkthroughNote,
+        }
+      );
+
+      if (error) throw error;
+      if (data !== true) {
+        throw new Error("Walkthrough scheduling was not saved.");
+      }
+
+      await loadOfficeWalkthrough(officeWorkLead.id);
+      await loadOfficeBeam(officeWorkLead.id);
+    } catch (error: any) {
+      setOfficeWalkthroughError(
+        error?.message || "Could not schedule walkthrough."
+      );
+    } finally {
+      setOfficeWalkthroughBusy(false);
+    }
+  };
+
+  const recordOfficeWalkthroughOutcome = async (
+    status: "approved" | "changes_requested"
+  ) => {
+    if (!officeWorkLead || officeWalkthroughBusy) return;
+
+    if (
+      status === "changes_requested" &&
+      officeWalkthroughOutcomeNote.trim().length < 5
+    ) {
+      setOfficeWalkthroughError(
+        "Describe the changes requested by the customer."
+      );
+      return;
+    }
+
+    const accessToken = getPremierOfficeAccessToken();
+
+    if (!accessToken) {
+      setOfficeWalkthroughError("Office session missing.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      status === "approved"
+        ? "Did RJ or Gino confirm the customer approved the walkthrough?"
+        : "Record customer requested changes? The job will stay open."
+    );
+
+    if (!confirmed) return;
+
+    setOfficeWalkthroughBusy(true);
+    setOfficeWalkthroughError("");
+
+    try {
+      const { data, error } = await supabase.rpc(
+        "record_premier_customer_walkthrough_outcome",
+        {
+          p_access_token: accessToken,
+          p_job_id: officeWorkLead.id,
+          p_status: status,
+          p_note: officeWalkthroughOutcomeNote,
+        }
+      );
+
+      if (error) throw error;
+      if (data !== true) {
+        throw new Error("Walkthrough outcome was not saved.");
+      }
+
+      await loadOfficeWalkthrough(officeWorkLead.id);
+    } catch (error: any) {
+      setOfficeWalkthroughError(
+        error?.message || "Could not record walkthrough outcome."
+      );
+    } finally {
+      setOfficeWalkthroughBusy(false);
+    }
+  };
   const saveOfficePayment = async (
     lead: any,
     paymentStage: "deposit_50" | "delivery_40" | "final_10",
-    options?: { markReceived?: boolean }
+    options?: { markReceived?: boolean; markSent?: boolean }
   ) => {
     setOfficePaymentsError("");
     setOfficePaymentSavedStage(null);
@@ -1227,7 +1627,7 @@ export default function PremierWindowDoorBoard() {
 
     const draft = officePaymentDrafts[paymentStage];
 
-    const paymentStatus = options?.markReceived ? "received" : draft.status;
+    const paymentStatus = options?.markReceived ? "received" : options?.markSent ? "sent" : draft.status;
 
     const invoiceSentAt =
       paymentStatus !== "not_sent" && draft.invoiceSentDate
@@ -1367,15 +1767,28 @@ export default function PremierWindowDoorBoard() {
       }
     );
 
-    if (error || !data?.[0]) {
+    if (error) {
       console.error("Premier production setup load failed:", error);
       setOfficeProductionError("Could not load production setup.");
       setOfficeProductionLoading(false);
       return;
     }
 
+    if (!data?.[0]) {
+      setOfficeProductionDraft({
+        materialStatus: "Not ordered",
+        materialEta: "",
+        permitStatus: "Not started",
+      });
+      setOfficeProductionLoading(false);
+      return;
+    }
+
+
     const row = data[0];
 
+    setOfficeProductionConfirmedStatus(row.material_status || "Not ordered");
+    setOfficePermitConfirmedStatus(row.permit_status || "Not started");
     setOfficeProductionDraft({
       materialStatus: row.material_status || "Not ordered",
       materialEta: row.material_eta || "",
@@ -1426,12 +1839,12 @@ export default function PremierWindowDoorBoard() {
     }
 
     const nextAction =
-      officeProductionDraft.materialStatus === "Received" &&
+      ["Received", "On Hand", "Not Required"].includes(officeProductionDraft.materialStatus) &&
       ["Approved", "Not required"].includes(
         officeProductionDraft.permitStatus
       )
-        ? "Office to schedule installation and assign crew."
-        : officeProductionDraft.materialStatus === "Received"
+        ? "RJ to confirm customer appointment and assign installer / crew."
+        : ["Received", "On Hand", "Not Required"].includes(officeProductionDraft.materialStatus)
         ? "Office to complete permit setup."
         : ["Approved", "Not required"].includes(
             officeProductionDraft.permitStatus
@@ -1451,7 +1864,78 @@ export default function PremierWindowDoorBoard() {
     );
 
     setOfficeProductionSaving(false);
+    setOfficeProductionConfirmedStatus(officeProductionDraft.materialStatus);
+    setOfficePermitConfirmedStatus(officeProductionDraft.permitStatus);
     setOfficeProductionSaved(true);
+  };
+
+  const loadOfficeRjRelease = async (lead: any) => {
+    setOfficeRjRelease(null);
+    setOfficeRjSent(false);
+    setOfficeRjError("");
+
+    const accessToken = getPremierOfficeAccessToken();
+    if (!accessToken || lead?._sample) return;
+
+    const { data, error } = await supabase.rpc(
+      "get_premier_office_rj_release",
+      { p_access_token: accessToken, p_job_id: lead.id }
+    );
+
+    if (error) {
+      setOfficeRjError("Could not check RJ handoff status.");
+      return;
+    }
+
+    const row = data?.[0];
+    if (row?.released_at) {
+      setOfficeRjRelease({
+        jobId: lead.id,
+        releasedAt: row.released_at,
+        releasedBy: row.released_by || "Office",
+      });
+      setOfficeRjSent(true);
+    }
+  };
+
+  const sendOfficeJobToRJ = async (lead: any) => {
+    setOfficeRjError("");
+    setOfficeRjSent(false);
+
+    if (lead?._sample) {
+      setOfficeRjError("Sample jobs cannot be sent.");
+      return;
+    }
+
+    const accessToken = getPremierOfficeAccessToken();
+    if (!accessToken) {
+      setOfficeRjError("Office access is missing.");
+      return;
+    }
+
+    setOfficeRjSending(true);
+
+    try {
+      const { data, error } = await supabase.rpc(
+        "send_premier_job_to_rj",
+        { p_access_token: accessToken, p_job_id: lead.id }
+      );
+
+      if (error || data !== true) {
+        setOfficeRjError(
+          error?.message ||
+          "Could not send to RJ. Check materials, 40% payment, and permit status."
+        );
+        return;
+      }
+
+      setOfficeRjSent(true);
+    } catch (error) {
+      console.error("Office to RJ handoff failed:", error);
+      setOfficeRjError("Could not send to RJ.");
+    } finally {
+      setOfficeRjSending(false);
+    }
   };
 
   const saveOfficeInstallSchedule = async (lead: any) => {
@@ -1572,12 +2056,17 @@ export default function PremierWindowDoorBoard() {
     setOfficeInspectionError("");
 
     if (!officeInspectionDraft.scheduledDate) {
-      setOfficeInspectionError("Choose the inspection date.");
+      setOfficeInspectionError("Choose the final walkthrough date.");
       return;
     }
 
     if (!officeInspectionDraft.window) {
       setOfficeInspectionError("Choose the inspection time window.");
+      return;
+    }
+
+    if (officeInspectionDraft.window === "Specific Time" && !officeInspectionDraft.specificTime) {
+      setOfficeInspectionError("Choose the specific appointment time.");
       return;
     }
 
@@ -1596,29 +2085,38 @@ export default function PremierWindowDoorBoard() {
       {
         p_access_token: accessToken,
         p_job_id: lead.id,
-        p_inspection_type: "Final Inspection",
-        p_assigned_to: "RJ",
+        p_inspection_type: "Final Walkthrough",
+        p_assigned_to: officeInspectionDraft.assignedTo,
         p_scheduled_for: null,
         p_scheduled_date: officeInspectionDraft.scheduledDate,
-        p_inspection_window: officeInspectionDraft.window,
+        p_inspection_window: officeInspectionDraft.window === "Specific Time"
+          ? (() => {
+              const [hourText, minuteText] = officeInspectionDraft.specificTime.split(":");
+              const hour = Number(hourText);
+              return `${hour % 12 || 12}:${minuteText} ${hour >= 12 ? "PM" : "AM"}`;
+            })()
+          : officeInspectionDraft.window,
       }
     );
 
     if (error || data !== true) {
       console.error("Premier inspection scheduling failed:", error);
-      setOfficeInspectionError("Could not schedule inspection.");
+      setOfficeInspectionError("Could not schedule final walkthrough.");
       setOfficeInspectionSaving(false);
       return;
     }
 
-    setLiveLeads((current) =>
-      current.filter((item) => item.id !== lead.id)
-    );
+    // Keep scheduled jobs visible in Office Command Center; update the card in place.
+    setLiveLeads((current) => current.map((item) => item.id === lead.id ? {
+      ...item, current_stage: "inspection_scheduled",
+      next_action: `Final walkthrough scheduled with ${officeInspectionDraft.assignedTo}. Await walkthrough outcome.`,
+    } : item));
 
     setOfficeInspectionDraft({
-      type: "Final Inspection",
+      type: "Final Walkthrough",
       scheduledDate: "",
       window: "Morning Window",
+      specificTime: "",
       assignedTo: "RJ",
     });
 
@@ -1634,57 +2132,91 @@ export default function PremierWindowDoorBoard() {
 
     if (lead?._sample) {
       window.alert(
-        "Sample final measurement saved for preview only. No live data was changed."
+        "Sample final measurement scheduled for preview only. No live data was changed."
       );
       setOfficeFinalMeasureSaved(true);
       return;
     }
 
-    const accessToken =
-      getPremierOfficeAccessToken();
+    const accessToken = getPremierOfficeAccessToken();
 
     if (!accessToken) {
       setOfficeApprovedSetupError("Premier staff access is missing.");
       return;
     }
 
+    const assignedSalesperson = String(
+      lead?.assigned_salesperson || ""
+    ).trim();
+
+    const selectedAssignee = String(
+      officeFinalMeasureDraft.assignedTo || assignedSalesperson
+    ).trim();
+
+    const finalMeasureAssignee =
+      selectedAssignee === "Gino Marquez" || selectedAssignee === "Gino"
+        ? "Gino"
+        : selectedAssignee === "Dennis Dillon" || selectedAssignee === "Dennis"
+        ? "Dennis"
+        : selectedAssignee === "Gio Richardson" || selectedAssignee === "Gio"
+        ? "Gio"
+        : "";
+    if (!finalMeasureAssignee) {
+      setOfficeApprovedSetupError(
+        "This job needs an assigned salesperson before Final Measurement can be scheduled."
+      );
+      return;
+    }
+
+    if (!officeFinalMeasureDraft.scheduledFor) {
+      setOfficeApprovedSetupError(
+        "Choose the Final Measurement date and time."
+      );
+      return;
+    }
+
+    const parsedScheduledFor = new Date(officeFinalMeasureDraft.scheduledFor);
+
+    if (Number.isNaN(parsedScheduledFor.getTime())) {
+      setOfficeApprovedSetupError(
+        "Enter a valid Final Measurement date and time before scheduling."
+      );
+      return;
+    }
+
+    const scheduledFor = parsedScheduledFor.toISOString();
+
+
     setOfficeFinalMeasureSaving(true);
-
-    const scheduledFor =
-      officeFinalMeasureDraft.status !== "not_scheduled" &&
-      officeFinalMeasureDraft.scheduledFor
-        ? new Date(officeFinalMeasureDraft.scheduledFor).toISOString()
-        : null;
-
-    const completedAt =
-      officeFinalMeasureDraft.status === "complete" &&
-      officeFinalMeasureDraft.completedDate
-        ? new Date(
-            `${officeFinalMeasureDraft.completedDate}T12:00:00`
-          ).toISOString()
-        : null;
 
     const { data, error } = await supabase.rpc(
       "save_premier_final_measurement",
       {
         p_access_token: accessToken,
         p_job_id: lead.id,
-        p_status: "complete",
-        p_scheduled_for: null,
-        p_assigned_to: officeFinalMeasureDraft.assignedTo || null,
-        p_completed_at: new Date().toISOString(),
+        p_status: "scheduled",
+        p_scheduled_for: scheduledFor,
+        p_assigned_to: finalMeasureAssignee,
+        p_completed_at: null,
         p_note: officeFinalMeasureDraft.note || null,
       }
     );
 
     if (error || data !== true) {
-      console.error("Premier final measurement save failed:", error);
+      console.error("Premier final measurement scheduling failed:", error);
       setOfficeApprovedSetupError(
-        "Could not save the final measurement."
+        "Could not schedule the Final Measurement."
       );
       setOfficeFinalMeasureSaving(false);
       return;
     }
+
+    setOfficeFinalMeasureDraft((current) => ({
+      ...current,
+      status: "scheduled",
+      assignedTo: finalMeasureAssignee,
+      completedDate: "",
+    }));
 
     setOfficeFinalMeasureSaving(false);
     setOfficeFinalMeasureSaved(true);
@@ -1799,44 +2331,6 @@ export default function PremierWindowDoorBoard() {
     setOfficeMeasurementLoading(false);
   };
 
-  const assignLead = async (leadId: string, salesperson: string) => {
-    const accessToken = getPremierOfficeAccessToken();
-
-    if (!accessToken) {
-      window.alert("Premier staff access is missing.");
-      return;
-    }
-
-    setSavingAssignmentId(leadId);
-
-    const { data, error } = await supabase.rpc("assign_premier_lead", {
-      p_access_token: accessToken,
-      p_job_id: leadId,
-      p_salesperson: salesperson,
-    });
-
-    if (error || data !== true) {
-      console.error("Premier lead assignment failed:", error);
-      window.alert("Could not assign this lead. Please try again.");
-      setSavingAssignmentId(null);
-      return;
-    }
-
-    setLiveLeads((current) =>
-      current.map((lead) =>
-        lead.id === leadId
-          ? {
-              ...lead,
-              assigned_salesperson: salesperson,
-              next_action: `${salesperson} to contact customer and schedule measurement.`,
-            }
-          : lead
-      )
-    );
-
-    setAssigningLeadId(null);
-    setSavingAssignmentId(null);
-  };
   const setLeadDraftField = (
     leadId: string,
     field: string,
@@ -1852,134 +2346,57 @@ export default function PremierWindowDoorBoard() {
   };
 
   const saveLeadDecision = async (lead: any) => {
-    const accessToken = getPremierOfficeAccessToken();
+    if (!lead || savingLeadDecisionId) return;
 
+    const accessToken = getPremierOfficeAccessToken();
     if (!accessToken) {
       window.alert("Premier staff access is missing.");
       return;
     }
 
-    const draft = leadDrafts[lead.id] ?? {};
-
-    const contactStatus =
-      lead.source === "office_call"
-        ? "contacted"
-        : draft.contactStatus ?? lead.contact_status ?? "not_contacted";
-
-    const measurementAppointment =
-      draft.measurementAppointment ??
-      (lead.measurement_appointment
-        ? new Date(lead.measurement_appointment).toISOString().slice(0, 16)
-        : "");
-
-    const latestSalesNote =
-      draft.latestSalesNote ?? lead.latest_sales_note ?? "";
-
-    const salesperson =
-      draft.salesperson ?? lead.assigned_salesperson ?? "";
-
-    const nextStage =
-      draft.nextStage ?? lead.current_stage ?? "new_lead";
-
-    const person = salesperson || "Salesperson";
-
-    let nextAction =
-      `${person} to contact customer and schedule measurement.`;
-
-    if (nextStage === "sales_follow_up") {
-      nextAction = `${person} to follow up with customer.`;
+    if (lead.current_stage !== "new_lead") {
+      window.alert("Only New Leads can be assigned here.");
+      return;
     }
 
-    if (nextStage === "measurement") {
-      nextAction = measurementAppointment
-        ? `${person} measurement scheduled for ${new Date(
-            measurementAppointment
-          ).toLocaleString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-            hour: "numeric",
-            minute: "2-digit",
-          })}.`
-        : `${person} to schedule measurement.`;
-    }
+    const salesperson = (
+      leadDrafts[lead.id]?.salesperson ??
+      lead.assigned_salesperson ??
+      ""
+    ).trim();
 
-    if (nextStage === "proposal") {
-      nextAction = `${person} to prepare or send proposal.`;
-    }
-
-    if (nextStage === "paused") {
-      nextAction = "Lead paused. Follow up when ready.";
-    }
-
-    if (nextStage === "active_job") {
-      nextAction = "Approved. Move into active job workflow.";
+    if (!salesperson) {
+      window.alert("Choose a salesperson before sending this lead.");
+      return;
     }
 
     setSavingLeadDecisionId(lead.id);
 
-    if (salesperson && salesperson !== lead.assigned_salesperson) {
-      const { data: assignmentSaved, error: assignmentError } =
-        await supabase.rpc("assign_premier_lead", {
-          p_access_token: accessToken,
-          p_job_id: lead.id,
-          p_salesperson: salesperson,
-        });
-
-      if (assignmentError || assignmentSaved !== true) {
-        console.error("Premier salesperson save failed:", assignmentError);
-        window.alert("Could not save salesperson. Please try again.");
-        setSavingLeadDecisionId(null);
-        return;
-      }
-    }
-
-    const { data, error } = await supabase.rpc(
-      "save_premier_lead_decision",
-      {
-        p_access_token: accessToken,
-        p_job_id: lead.id,
-        p_contact_status: contactStatus,
-        p_measurement_appointment: measurementAppointment
-          ? new Date(measurementAppointment).toISOString()
-          : null,
-        p_latest_sales_note: latestSalesNote,
-        p_next_action: nextAction,
-        p_next_stage: nextStage,
-      }
-    );
+    const { data, error } = await supabase.rpc("assign_premier_lead", {
+      p_access_token: accessToken,
+      p_job_id: lead.id,
+      p_salesperson: salesperson,
+    });
 
     if (error || data !== true) {
-      console.error("Premier lead decision save failed:", error);
-      window.alert("Could not save the lead update. Please try again.");
+      console.error("Premier salesperson assignment failed:", error);
+      window.alert("Could not assign salesperson. Please try again.");
       setSavingLeadDecisionId(null);
       return;
     }
 
-    if (nextStage === "new_lead") {
-      setLiveLeads((current) =>
-        current.map((item) =>
-          item.id === lead.id
-            ? {
-                ...item,
-                assigned_salesperson: salesperson || null,
-                contact_status: contactStatus,
-                measurement_appointment: measurementAppointment
-                  ? new Date(measurementAppointment).toISOString()
-                  : null,
-                latest_sales_note: latestSalesNote,
-                next_action: nextAction,
-                current_stage: nextStage,
-              }
-            : item
-        )
-      );
-    } else {
-      setLiveLeads((current) =>
-        current.filter((item) => item.id !== lead.id)
-      );
-      setOpenLeadId(null);
-    }
+    setLiveLeads((current) =>
+      current.map((item) =>
+        item.id === lead.id
+          ? {
+              ...item,
+              assigned_salesperson: salesperson,
+              next_action: `${salesperson} to contact customer and schedule measurement.`,
+              current_stage: "new_lead",
+            }
+          : item
+      )
+    );
 
     setLeadDrafts((current) => {
       const next = { ...current };
@@ -1987,6 +2404,7 @@ export default function PremierWindowDoorBoard() {
       return next;
     });
 
+    setOpenLeadId(null);
     setSavingLeadDecisionId(null);
   };
   const relayRevisedProposalToSales = async (lead: any) => {
@@ -2342,7 +2760,7 @@ export default function PremierWindowDoorBoard() {
                   <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
                     <div>
                       <div style={{ color: "#9fd3ae", fontSize: 10, fontWeight: 900, letterSpacing: 1, textTransform: "uppercase" }}>
-                        Beam • New Message
+                        Beam | New Message
                       </div>
 
                       <div style={{ color: "#ffffff", fontSize: 14, fontWeight: 900, marginTop: 4 }}>
@@ -2415,7 +2833,7 @@ export default function PremierWindowDoorBoard() {
                               : "none",
                           }}
                         >
-                          🎤
+                          ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â°ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â½ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¤
                         </button>
                       </div>
 
@@ -2526,7 +2944,18 @@ export default function PremierWindowDoorBoard() {
             }}
           >
             {lanes.map((lane) => {
-              const count = jobs.filter((job) => job.status === lane).length;
+              const count = liveLeads.filter((job) => {
+                const stage = String(job.current_stage || "");
+                if (lane === "Needs Attention") return stage === "proposal_revision" || officeIssueJobIds.includes(String(job.id));
+                if (lane === "Waiting on Material") return stage === "production_setup";
+                if (lane === "Ready to Schedule") return stage === "installation_ready";
+                if (lane === "Scheduled") return stage === "scheduled" || stage === "installation_scheduled";
+                if (lane === "In Progress") return stage === "installation_in_progress" || stage === "installer_finish_back";
+                if (lane === "Inspection") return stage === "installation_complete" || stage === "inspection_complete";
+                if (lane === "Payment") return stage === "hundred_percent_complete";
+                if (lane === "Complete") return stage === "closed" || stage === "completed";
+                return false;
+              }).length;
 
               return (
                 <div
@@ -2633,6 +3062,27 @@ export default function PremierWindowDoorBoard() {
                 gap: 8,
               }}
             >
+              <a
+                href="/planet/premier-window-door/intake"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  minHeight: 40,
+                  boxSizing: "border-box",
+                  padding: "0 14px",
+                  border: "1px solid #557c64",
+                  borderRadius: 10,
+                  background: "#193c2b",
+                  color: "#ffffff",
+                  fontSize: 12,
+                  fontWeight: 900,
+                  textDecoration: "none",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                New Customer Intake
+              </a>
               <button
                 type="button"
                 onClick={() => {
@@ -2692,7 +3142,7 @@ export default function PremierWindowDoorBoard() {
                       cursor: "pointer",
                     }}
                   >
-                    ‹
+                    {"\u2039"}
                   </button>
 
                   <button
@@ -2710,8 +3160,7 @@ export default function PremierWindowDoorBoard() {
                       cursor: "pointer",
                     }}
                   >
-                    ›
-                  </button>
+                    {"\u203A"}</button>
                 </>
               ) : null}
             </div>
@@ -2818,7 +3267,7 @@ export default function PremierWindowDoorBoard() {
                     fontSize: 13,
                   }}
                 >
-                  No archived jobs found.
+                  No work history found.
                 </div>
               ) : (
                 <div style={{ display: "grid", gap: 10 }}>
@@ -2838,7 +3287,7 @@ export default function PremierWindowDoorBoard() {
 
                       <div style={{ color: "#9ca8b2", fontSize: 12, marginTop: 4 }}>
                         {job.phone || "No phone"}
-                        {job.email ? ` • ${job.email}` : ""}
+                        {job.email ? ` | ${job.email}` : ""}
                       </div>
 
                       <div style={{ color: "#b8c4cc", fontSize: 12, marginTop: 4 }}>
@@ -2866,9 +3315,100 @@ export default function PremierWindowDoorBoard() {
                                 ? new Date(job.updated_at).toLocaleString()
                                 : "date unavailable"
                             }`
-                          : "History date unavailable"}
+                          : job.updated_at ? `Updated ${new Date(job.updated_at).toLocaleString()}` : "Date unavailable"}
                       </div>
 
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const opening = historyOpenJobId !== job.id;
+                          setHistoryOpenJobId(opening ? job.id : null);
+                          setOfficeWorkLeadId(null);
+                          setOfficeWorkView(null);
+                          if (opening) void loadOfficeProductionSetup(job);
+                        }}
+                        style={{
+                          width: "100%",
+                          minHeight: 40,
+                          marginTop: 11,
+                          border: "1px solid #8fbea0",
+                          borderRadius: 9,
+                          background: "#2f6842",
+                          color: "#ffffff",
+                          fontWeight: 900,
+                          cursor: "pointer",
+                        }}
+                      >
+                        {historyOpenJobId === job.id ? "Close Job" : "Open Job"}
+                      </button>
+                      {historyOpenJobId === job.id ? (
+                        <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
+                          <div style={{ fontSize: 12, color: "#b8c4cc" }}>
+                            Office production information for this original job.
+                            Opening does not restore or reassign it.
+                          </div>
+                          {officeProductionLoading ? (
+                            <div>Loading production information...</div>
+                          ) : (
+                            <>
+                              <label style={{ display: "grid", gap: 5 }}>
+                                Materials / Order Status
+                                <select
+                                  style={{ background: "#16232d", color: "#ffffff", border: "1px solid #58788e", borderRadius: 8, minHeight: 42, padding: "0 10px" }}
+                                  value={officeProductionDraft.materialStatus}
+                                  disabled={!!job.archived_at || ["completed", "hundred_percent_complete"].includes(job.current_stage)}
+                                  onChange={(e) => {
+                                    setOfficeProductionSaved(false);
+                                    setOfficeProductionDraft((v) => ({ ...v, materialStatus: e.target.value }));
+                                  }}
+                                >
+                                  {['Not ordered', 'Ordered', 'In production', 'Received', 'On Hand', 'Not Required'].map((v) => <option key={v} value={v}>{v === 'In production' ? 'Being Made' : v}</option>)}
+                                </select>
+                              </label>
+                              <label style={{ display: "grid", gap: 5 }}>
+                                Material ETA
+                                <input
+                                  style={{ background: "#16232d", color: "#ffffff", colorScheme: "dark", border: "1px solid #58788e", borderRadius: 8, minHeight: 42, padding: "0 10px" }}
+                                  type="date"
+                                  value={officeProductionDraft.materialEta}
+                                  disabled={!!job.archived_at || ["completed", "hundred_percent_complete"].includes(job.current_stage)}
+                                  onChange={(e) => {
+                                    setOfficeProductionSaved(false);
+                                    setOfficeProductionDraft((v) => ({ ...v, materialEta: e.target.value }));
+                                  }}
+                                />
+                              </label>
+                              <label style={{ display: "grid", gap: 5 }}>
+                                Permit Status
+                                <select
+                                  style={{ background: "#16232d", color: "#ffffff", border: "1px solid #58788e", borderRadius: 8, minHeight: 42, padding: "0 10px" }}
+                                  value={officeProductionDraft.permitStatus}
+                                  disabled={!!job.archived_at || ["completed", "hundred_percent_complete"].includes(job.current_stage)}
+                                  onChange={(e) => {
+                                    setOfficeProductionSaved(false);
+                                    setOfficeProductionDraft((v) => ({ ...v, permitStatus: e.target.value }));
+                                  }}
+                                >
+                                  {['Not started', 'Submitted', 'Approved', 'Not required'].map((v) => <option key={v} value={v}>{v}</option>)}
+                                </select>
+                              </label>
+                              {officeProductionError ? <div style={{ color: "#e1a3a3" }}>{officeProductionError}</div> : null}
+                              {officeProductionSaved ? <div style={{ color: "#9fd3ae" }}>Production information saved.</div> : null}
+                              {!job.archived_at && !["completed", "hundred_percent_complete"].includes(job.current_stage) ? (
+                                <button
+                                  type="button"
+                                  disabled={officeProductionSaving || officeProductionSaved || officeProductionLoading || !!officeProductionError}
+                                  onClick={() => void saveOfficeProductionSetup(job)}
+                                  style={{ minHeight: 42, background: "#2f6842", color: "white", borderRadius: 9, fontWeight: 900 }}
+                                >
+                                  {officeProductionSaving ? "Saving..." : "Save Materials / Permits"}
+                                </button>
+                              ) : <div style={{ fontSize: 12 }}>Archived or completed job. Production fields are read-only.</div>}
+                            </>
+                          )}
+                        </div>
+                      ) : null}
+                      {job.archived_at ? (
                       <button
                         type="button"
                         disabled={restoringJobId === job.id}
@@ -2890,6 +3430,7 @@ export default function PremierWindowDoorBoard() {
                           ? "Restoring..."
                           : "Restore to Active"}
                       </button>
+                      ) : null}
                     </div>
                   ))}
                 </div>
@@ -2978,7 +3519,7 @@ export default function PremierWindowDoorBoard() {
                         whiteSpace: "nowrap",
                       }}
                     >
-                      {lead.current_stage === "proposal_revision"                         ? "Needs Revision"                         : lead.current_stage === "proposal_approved"                         ? "Approved"                         : lead.current_stage === "proposal"                         ? "Measurements Complete"                         : lead.current_stage === "production_setup"                         ? "Production Setup"                         : lead.current_stage === "installation_complete"                         ? "Installation Complete"                         : lead.current_stage === "inspection_complete"                         ? "Inspection Complete"                         : lead.current_stage === "hundred_percent_complete"                         ? "100% Complete"                         : "New Lead"}
+                      {lead.current_stage === "proposal_revision"                         ? "Needs Revision"                         : lead.current_stage === "proposal_approved"                         ? "Approved"                         : lead.current_stage === "proposal"                         ? "Measurements Complete"                         : lead.current_stage === "production_setup"                         ? "Production Setup"                         : lead.current_stage === "installation_in_progress" ? "Installation In Progress" : lead.current_stage === "installer_finish_back" ? "Final Finish Work" : lead.current_stage === "scheduled" ? "Scheduled Installation" : lead.current_stage === "installation_ready" ? "Installation Ready" : lead.current_stage === "installation_complete"                         ? "Installation Complete"                         : lead.current_stage === "inspection_scheduled" ? "Final Walkthrough Scheduled"                         : lead.current_stage === "inspection_complete"                         ? (String(lead.next_action || "").toLowerCase().includes("final walkthrough approved") ? "Final Walkthrough Approved" : "Inspection Complete")                         : lead.current_stage === "hundred_percent_complete"                         ? "100% Complete"                         : lead.current_stage === "completed" ? "Completed" : "New Lead"}
                     </div>
                   </div>
 
@@ -3014,7 +3555,7 @@ export default function PremierWindowDoorBoard() {
                       fontWeight: 700,
                     }}
                   >
-                    Next:{" "}                     {lead.current_stage === "proposal_revision"                       ? "Review requested changes and update proposal"                       : lead.current_stage === "proposal_approved"                       ? (lead.next_action || "Collect deposit and schedule final measurement")                       : lead.current_stage === "proposal"                       ? "Prepare Proposal"                       : lead.next_action ||                         "Assign salesperson and contact customer."}
+                    Next:{" "}                     {lead.current_stage === "proposal_revision"                       ? "Review requested changes and update proposal"                       : lead.current_stage === "proposal_approved"                       ? (lead.next_action || "Collect deposit and schedule final measurement")                       : lead.current_stage === "proposal"                       ? "Prepare Proposal"                       : lead.current_stage === "installation_complete" ? "Office to call the customer and schedule the final walkthrough." : lead.next_action ||                         "Assign salesperson and contact customer."}
                   </div>
 
                   {lead.assigned_salesperson ? (
@@ -3136,203 +3677,6 @@ export default function PremierWindowDoorBoard() {
                           </select>
                         </label>
 
-                        {lead.source !== "office_call" ? (                        <div>
-                          <div
-                            style={{
-                              color: "#9ca8b2",
-                              fontSize: 11,
-                              fontWeight: 700,
-                              marginBottom: 6,
-                            }}
-                          >
-                            Contact Status
-                          </div>
-
-                          <div
-                            style={{
-                              display: "grid",
-                              gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-                              gap: 6,
-                            }}
-                          >
-                            {[
-                              ["not_contacted", "Not Contacted"],
-                              ["attempted", "Attempted"],
-                              ["contacted", "Contacted"],
-                            ].map(([value, label]) => {
-                              const selected =
-                                (leadDrafts[lead.id]?.contactStatus ??
-                                  lead.contact_status ??
-                                  "not_contacted") === value;
-
-                              return (
-                                <button
-                                  key={value}
-                                  type="button"
-                                  onClick={() =>
-                                    setLeadDraftField(
-                                      lead.id,
-                                      "contactStatus",
-                                      value
-                                    )
-                                  }
-                                  style={{
-                                    minHeight: 42,
-                                    border: selected
-                                      ? "1px solid #8fa9bc"
-                                      : "1px solid #31495a",
-                                    borderRadius: 9,
-                                    background: selected
-                                      ? "#20323f"
-                                      : "#0c1116",
-                                    color: selected
-                                      ? "#f3f6f8"
-                                      : "#9ca8b2",
-                                    padding: "7px 5px",
-                                    fontSize: 11,
-                                    fontWeight: 800,
-                                    cursor: "pointer",
-                                  }}
-                                >
-                                  {label}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-
-                        ) : null}
-                        <label>
-                          <div
-                            style={{
-                              color: "#9ca8b2",
-                              fontSize: 11,
-                              fontWeight: 700,
-                              marginBottom: 6,
-                            }}
-                          >
-                            Measurement Appointment
-                          </div>
-
-                          <input
-                            type="datetime-local"
-                            value={
-                              leadDrafts[lead.id]?.measurementAppointment ??
-                              (lead.measurement_appointment
-                                ? new Date(lead.measurement_appointment)
-                                    .toISOString()
-                                    .slice(0, 16)
-                                : "")
-                            }
-                            onChange={(event) =>
-                              setLeadDraftField(
-                                lead.id,
-                                "measurementAppointment",
-                                event.target.value
-                              )
-                            }
-                            style={{
-                              width: "100%",
-                              minHeight: 42,
-                              boxSizing: "border-box",
-                              border: "1px solid #31495a",
-                              borderRadius: 9,
-                              background: "#0c1116",
-                              color: "#f3f6f8",
-                              padding: "0 10px",
-                              fontSize: 13,
-                            }}
-                          />
-                        </label>
-
-                        <label>
-                          <div
-                            style={{
-                              color: "#9ca8b2",
-                              fontSize: 11,
-                              fontWeight: 700,
-                              marginBottom: 6,
-                            }}
-                          >
-                            Sales Note / Latest Update
-                          </div>
-
-                          <textarea
-                            rows={3}
-                            value={
-                              leadDrafts[lead.id]?.latestSalesNote ??
-                              lead.latest_sales_note ??
-                              ""
-                            }
-                            onChange={(event) =>
-                              setLeadDraftField(
-                                lead.id,
-                                "latestSalesNote",
-                                event.target.value
-                              )
-                            }
-                            placeholder="What happened on the call or follow-up?"
-                            style={{
-                              width: "100%",
-                              boxSizing: "border-box",
-                              border: "1px solid #31495a",
-                              borderRadius: 9,
-                              background: "#0c1116",
-                              color: "#f3f6f8",
-                              padding: 10,
-                              fontSize: 13,
-                              fontFamily: "inherit",
-                              resize: "vertical",
-                            }}
-                          />
-                        </label>
-
-
-                        <label>
-                          <div
-                            style={{
-                              color: "#9ca8b2",
-                              fontSize: 11,
-                              fontWeight: 700,
-                              marginBottom: 6,
-                            }}
-                          >
-                            Move To
-                          </div>
-
-                          <select
-                            value={
-                              leadDrafts[lead.id]?.nextStage ??
-                              lead.current_stage ??
-                              "new_lead"
-                            }
-                            onChange={(event) =>
-                              setLeadDraftField(
-                                lead.id,
-                                "nextStage",
-                                event.target.value
-                              )
-                            }
-                            style={{
-                              width: "100%",
-                              minHeight: 42,
-                              border: "1px solid #31495a",
-                              borderRadius: 9,
-                              background: "#0c1116",
-                              color: "#f3f6f8",
-                              padding: "0 10px",
-                              fontSize: 13,
-                            }}
-                          >
-                            <option value="new_lead">Keep in New Leads</option>
-                            <option value="sales_follow_up">Sales Follow-Up</option>
-                            <option value="measurement">Measurement</option>
-                            <option value="proposal">Proposal</option>
-                            <option value="paused">Paused</option>
-                            <option value="active_job">Active Job</option>
-                          </select>
-                        </label>
-
                         <button
                           type="button"
                           disabled={savingLeadDecisionId === lead.id}
@@ -3355,46 +3699,55 @@ export default function PremierWindowDoorBoard() {
                         >
                           {savingLeadDecisionId === lead.id
                             ? "Saving..."
-                            : "Save Lead Update"}
+                            : "Save & Send to Sales"}
                         </button>
-                      </div>
-                    </div>
-                  ) : null}
+                        {!lead._sample ? (
+                          <button
+                            type="button"
+                            disabled={archivingJobId === lead.id || savingLeadDecisionId === lead.id}
+                            onClick={async () => {
+                              if (!window.confirm("Archive this lead? Customer information and history will be preserved.")) return;
 
-                  {assigningLeadId === lead.id ? (
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: 7,
-                        flexWrap: "wrap",
-                        marginTop: 12,
-                      }}
-                    >
-                      {["Dennis Dillon", "Gio Richardson", "Gino Marquez"].map((salesperson) => (
-                        <button
-                          key={salesperson}
-                          type="button"
-                          disabled={savingAssignmentId === lead.id}
-                          onClick={() => assignLead(lead.id, salesperson)}
-                          style={{
-                            border: "1px solid #486578",
-                            borderRadius: 9,
-                            background: "#16232d",
-                            color: "#f3f6f8",
-                            padding: "8px 12px",
-                            fontSize: 12,
-                            fontWeight: 800,
-                            cursor:
-                              savingAssignmentId === lead.id
-                                ? "wait"
-                                : "pointer",
-                          }}
-                        >
-                          {savingAssignmentId === lead.id
-                            ? "Saving..."
-                            : salesperson}
-                        </button>
-                      ))}
+                              const accessToken = getPremierOfficeAccessToken();
+                              if (!accessToken) {
+                                window.alert("Premier staff access is missing.");
+                                return;
+                              }
+
+                              setArchivingJobId(lead.id);
+                              const { data, error } = await supabase.rpc("archive_premier_job", {
+                                p_access_token: accessToken,
+                                p_job_id: lead.id,
+                              });
+                              setArchivingJobId(null);
+
+                              if (error || data !== true) {
+                                console.error("Archive Premier lead failed:", error);
+                                window.alert(error?.message || "Could not archive this lead.");
+                                return;
+                              }
+
+                              setLiveLeads((current) =>
+                                current.filter((item) => item.id !== lead.id)
+                              );
+                              setOpenLeadId(null);
+                            }}
+                            style={{
+                              width: "100%",
+                              minHeight: 44,
+                              border: "1px solid #744548",
+                              borderRadius: 9,
+                              background: "#241416",
+                              color: "#e8b6b9",
+                              fontSize: 13,
+                              fontWeight: 900,
+                              cursor: archivingJobId === lead.id ? "wait" : "pointer",
+                            }}
+                          >
+                            {archivingJobId === lead.id ? "Archiving..." : "Archive Lead"}
+                          </button>
+                        ) : null}
+                      </div>
                     </div>
                   ) : null}
 
@@ -3411,12 +3764,35 @@ export default function PremierWindowDoorBoard() {
                       type="button"
                       onClick={() => {
                         if (                           lead.current_stage === "proposal" ||                           lead.current_stage === "proposal_revision" ||                           lead.current_stage === "proposal_approved" ||                           lead.current_stage === "production_setup" ||
-                          lead.current_stage === "installation_ready" ||                           lead.current_stage === "installation_complete" ||                           lead.current_stage === "inspection_complete" ||                           lead.current_stage === "hundred_percent_complete"                         ) {
+                          lead.current_stage === "installation_ready" || lead.current_stage === "installation_in_progress" || lead.current_stage === "installer_finish_back" || lead.current_stage === "scheduled" ||                           lead.current_stage === "installation_complete" ||                           lead.current_stage === "inspection_complete" ||                           lead.current_stage === "hundred_percent_complete" || lead.current_stage === "completed"                         ) {
+                          setOfficeBeamRecipient(
+                            [
+                              "installation_ready",
+                              "scheduled",
+                              "installation_scheduled",
+                              "installation_in_progress",
+                              "installer_finish_back",
+                              "installation_complete",
+                              "inspection_complete",
+                              "hundred_percent_complete",
+                            ].includes(String(lead.current_stage || ""))
+                              ? "RJ"
+                              : ["Gio Richardson", "Gino Marquez", "Dennis Dillon"].includes(
+                                  String(lead.assigned_salesperson || "")
+                                )
+                                ? String(lead.assigned_salesperson)
+                                : "Gio Richardson"
+                          );
                           setOfficeWorkLeadId((current) =>
                             current === lead.id ? null : lead.id
                           );
                           setOfficeWorkView(null);
                           setOpenLeadId(null);
+                          if (officeWorkLeadId !== lead.id) {
+                            void loadOfficeProductionSetup(lead);
+                            void loadOfficePayments(lead);
+                            void loadOfficeRjRelease(lead);
+                          }
                           return;
                         }
 
@@ -3438,10 +3814,10 @@ export default function PremierWindowDoorBoard() {
                       }}
                     >
                       {lead.current_stage === "proposal" ||                       lead.current_stage === "proposal_revision" ||                       lead.current_stage === "proposal_approved" ||                       lead.current_stage === "production_setup" ||
-                          lead.current_stage === "installation_ready" ||                       lead.current_stage === "installation_complete" ||                       lead.current_stage === "inspection_complete" ||                       lead.current_stage === "hundred_percent_complete"
+                          lead.current_stage === "installation_ready" || lead.current_stage === "installation_in_progress" || lead.current_stage === "installer_finish_back" || lead.current_stage === "scheduled" ||                       lead.current_stage === "installation_complete" ||                       lead.current_stage === "inspection_complete" ||                       lead.current_stage === "hundred_percent_complete" || lead.current_stage === "completed"
                         ? officeWorkLeadId === lead.id
                           ? "Close Work"
-                          : "Open Work"
+                          : lead.current_stage === "completed" ? "View Completed Job" : "Open Work"
                         : openLeadId === lead.id
                         ? "Close Lead"
                         : "Open Lead"}
@@ -3710,7 +4086,7 @@ export default function PremierWindowDoorBoard() {
                   whiteSpace: "nowrap",
                 }}
               >
-                {officeWorkLead.current_stage === "proposal_revision"                   ? "NEEDS REVISION"                   : officeWorkLead.current_stage === "proposal_approved"                   ? "APPROVED"                   : officeWorkLead.current_stage === "production_setup"                   ? "PRODUCTION SETUP"                   : officeWorkLead.current_stage === "installation_complete"                   ? "INSTALLATION COMPLETE"                   : officeWorkLead.current_stage === "inspection_complete"                   ? "INSPECTION COMPLETE"                   : officeWorkLead.current_stage === "hundred_percent_complete"                   ? "100% COMPLETE"                   : "MEASUREMENTS COMPLETE"}
+                {officeWorkLead.current_stage === "completed" ? "COMPLETED" : officeWorkLead.current_stage === "proposal_revision"                   ? "NEEDS REVISION"                   : officeWorkLead.current_stage === "proposal_approved"                   ? "APPROVED"                   : officeWorkLead.current_stage === "production_setup"                   ? "PRODUCTION SETUP"                   : officeWorkLead.current_stage === "installation_complete"                   ? "INSTALLATION COMPLETE"                   : officeWorkLead.current_stage === "inspection_scheduled" ? "FINAL WALKTHROUGH SCHEDULED"                   : officeWorkLead.current_stage === "inspection_complete"                   ? (String(officeWorkLead.next_action || "").toLowerCase().includes("final walkthrough approved") ? "FINAL WALKTHROUGH APPROVED" : "INSPECTION COMPLETE")                   : officeWorkLead.current_stage === "hundred_percent_complete"                   ? "100% COMPLETE"                   : officeWorkLead.current_stage === "installation_in_progress" ? "INSTALLATION IN PROGRESS" : officeWorkLead.current_stage === "installer_finish_back" ? "FINAL FINISH WORK" : officeWorkLead.current_stage === "scheduled" ? "SCHEDULED INSTALLATION" : officeWorkLead.current_stage === "installation_ready" ? "FIELD OPERATIONS" : "MEASUREMENTS COMPLETE"}
               </span>
             </div>
 
@@ -3726,446 +4102,54 @@ export default function PremierWindowDoorBoard() {
                 lineHeight: 1.4,
               }}
             >
-              <strong>Next:</strong>{" "}               {officeWorkLead.current_stage === "proposal_revision"                 ? `Review requested changes, revise the proposal, and return it to ${                     officeWorkLead.assigned_salesperson || "Sales"                   }.`                 : officeWorkLead.current_stage === "proposal_approved"                 ? (officeWorkLead.next_action || "Collect deposit and schedule the final detailed measurement.")                 : officeWorkLead.current_stage === "production_setup"                 ? (officeWorkLead.next_action || "Office to start ordering/materials and permit setup.")                 : officeWorkLead.current_stage === "installation_complete"                 ? (officeWorkLead.next_action || "Office to schedule Final Inspection and relay it to RJ.")                 : officeWorkLead.current_stage === "inspection_complete"                 ? (officeWorkLead.next_action || "Office to complete final closeout.")                 : officeWorkLead.current_stage === "hundred_percent_complete"                 ? (officeWorkLead.next_action || "Office to handle final payment and administrative closeout.")                 : `Prepare proposal and return it to ${                     officeWorkLead.assigned_salesperson || "Sales"                   }.`}
-            </div>
-
-            <div
-              style={{
-                marginBottom: 12,
-                  border: "1px solid #78aa88",
-                  borderRadius: 14,
-                  background:
-                    "linear-gradient(135deg, #173225 0%, #101b16 100%)",
-                  boxShadow:
-                    "0 0 0 1px rgba(139,184,154,0.08), 0 8px 24px rgba(0,0,0,0.18)",
-                  padding: 12,
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: 10,
-                  marginBottom: 10,
-                }}
-              >
-                <div>
-                  <div
-                    style={{
-                      color: "#8fa9bc",
-                      fontSize: 9,
-                      fontWeight: 900,
-                      letterSpacing: 0.8,
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    Beam Quick Message
-                  </div>
-
-                  <div
-                    style={{
-                      color: "#d9e5ee",
-                      fontSize: 13,
-                      fontWeight: 800,
-                      marginTop: 3,
-                    }}
-                  >
-                    Fast job communication
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  disabled={officeBeamLoading}
-                  onClick={() => void loadOfficeBeam(officeWorkLead.id)}
-                  style={{
-                    minHeight: 34,
-                    border: "1px solid #31495a",
-                    borderRadius: 8,
-                    background: "#101820",
-                    color: "#aebbc5",
-                    padding: "0 10px",
-                    fontSize: 10,
-                    fontWeight: 800,
-                    cursor: officeBeamLoading ? "wait" : "pointer",
-                    opacity: officeBeamLoading ? 0.65 : 1,
-                  }}
-                >
-                  {officeBeamLoading ? "Loading..." : "Refresh"}
-                </button>
-              </div>
-
-              <div
-                style={{
-                  border: "1px solid #294a36",
-                  borderRadius: 10,
-                  background: "#0d1711",
-                  padding: 9,
-                  maxHeight: 220,
-                  overflowY: "auto",
-                  marginBottom: 10,
-                }}
-              >
-                {officeBeamLoading && officeBeamMessages.length === 0 ? (
-                  <div style={{ color: "#7f8b95", fontSize: 11 }}>
-                    Loading Beam...
-                  </div>
-                ) : officeBeamMessages.length === 0 ? (
-                  <div style={{ color: "#7f8b95", fontSize: 11 }}>
-                    No Beam messages yet.
-                  </div>
-                ) : (
-                  <div style={{ display: "grid", gap: 8 }}>
-                    {officeBeamMessages.map((message) => (
-                      <div
-                        key={message.id}
-                        style={{
-                          border:
-                            message.recipient_role === "Office" && !message.read_at
-                              ? "1px solid #5d7d91"
-                              : "1px solid #26343e",
-                          borderRadius: 9,
-                          background:
-                            message.sender_role === "Office"
-                              ? "#111d25"
-                              : "#101419",
-                          padding: "9px 10px",
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            gap: 8,
-                            flexWrap: "wrap",
-                            marginBottom: 5,
-                          }}
-                        >
-                          <strong style={{ color: "#d9e5ee", fontSize: 11 }}>
-                            {message.sender_label || message.sender_role}
-                          </strong>
-
-                          <span style={{ color: "#667680", fontSize: 9 }}>
-                            {message.created_at
-                              ? new Date(message.created_at).toLocaleString()
-                              : ""}
-                          </span>
-                        </div>
-
-                        <div style={{ color: "#9db7ca", fontSize: 9, marginBottom: 5 }}>
-                          {message.sender_role} → {message.recipient_role}
-                        </div>
-
-                        <div
-                          style={{
-                            color: "#c8d2d8",
-                            fontSize: 12,
-                            lineHeight: 1.45,
-                            whiteSpace: "pre-wrap",
-                          }}
-                        >
-                          {message.body}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {officeBeamError ? (
-                <div
-                  style={{
-                    color: "#e1a3a3",
-                    fontSize: 10,
-                    marginBottom: 8,
-                  }}
-                >
-                  {officeBeamError}
-                </div>
-              ) : null}
-
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "minmax(120px, 160px) minmax(0, 1fr) 46px",
-                  gap: 8,
-                  marginBottom: 8,
-                }}
-              >
-                <select
-                  value={officeBeamRecipient}
-                  onChange={(event) =>
-                    setOfficeBeamRecipient(
-                      event.target.value as
-                        | "Gio Richardson"
-                        | "Gino Marquez"
-                        | "Dennis Dillon"
-                        | "RJ"
-                        | "Angel"
-                    )
-                  }
-                  style={{
-                    minHeight: 40,
-                    border: "1px solid #31495a",
-                    borderRadius: 9,
-                    background: "#101820",
-                    color: "#d9e5ee",
-                    padding: "0 9px",
-                    fontSize: 11,
-                    fontWeight: 800,
-                  }}
-                >
-                  <option value="Gio Richardson">Gio Richardson</option>
-                  <option value="Gino Marquez">Gino Marquez</option>
-                  <option value="Dennis Dillon">Dennis Dillon</option>
-                  <option value="RJ">RJ</option>
-                  <option value="Angel">Angel</option>
-                </select>
-
-                <textarea
-                  value={officeBeamBody}
-                  onChange={(event) => setOfficeBeamBody(event.target.value)}
-                  placeholder="Send a quick job message..."
-                  rows={2}
-                  style={{
-                    width: "100%",
-                    minHeight: 54,
-                    resize: "vertical",
-                    border: "1px solid #31495a",
-                    borderRadius: 9,
-                    background: "#101820",
-                    color: "#f3f6f8",
-                    padding: "9px 10px",
-                    fontSize: 12,
-                    lineHeight: 1.4,
-                    boxSizing: "border-box",
-                  }}
-                />
-
-                <button
-                  type="button"
-                  onClick={startOfficeBeamVoiceInput}
-                  disabled={officeBeamListening}
-                  title={officeBeamListening ? "Listening..." : "Talk message"}
-                  aria-label={officeBeamListening ? "Listening..." : "Talk message"}
-                  style={{
-                    minHeight: 54,
-                    border: officeBeamListening
-                      ? "1px solid #d98778"
-                      : "1px solid #8fbea0",
-                    borderRadius: 9,
-                    background: officeBeamListening
-                      ? "#7a2d24"
-                      : "#2f6842",
-                    color: "#ffffff",
-                    fontSize: 20,
-                    cursor: officeBeamListening ? "wait" : "pointer",
-                    boxShadow: officeBeamListening
-                      ? "0 0 0 2px rgba(217,135,120,0.18), 0 0 18px rgba(217,135,120,0.22)"
-                      : "none",
-                    transition: "all 160ms ease",
-                  }}
-                >
-                  🎤
-                </button>
-              </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  gap: 6,
-                  flexWrap: "wrap",
-                  marginBottom: 8,
-                }}
-              >
-                {[
-                  "Please review.",
-                  "Call Office when available.",
-                  "Need an update.",
-                  "Issue needs attention.",
-                ].map((reply) => (
-                  <button
-                    key={reply}
-                    type="button"
-                    onClick={() => setOfficeBeamBody(reply)}
-                    style={{
-                      minHeight: 30,
-                      border: "1px solid #477057",
-                      borderRadius: 999,
-                      background: "#173225",
-                      color: "#cce8d4",
-                      padding: "0 9px",
-                      fontSize: 9,
-                      fontWeight: 800,
-                      cursor: "pointer",
-                    }}
-                  >
-                    {reply}
-                  </button>
-                ))}
-              </div>
-
-              <button
-                type="button"
-                disabled={officeBeamSending || !officeBeamBody.trim()}
-                onClick={() => void sendOfficeBeamMessage()}
-                style={{
-                  width: "100%",
-                  minHeight: 40,
-                  border: "1px solid #557c64",
-                  borderRadius: 9,
-                  background: "#14271c",
-                  color: "#b7dec4",
-                  fontWeight: 900,
-                  cursor:
-                    officeBeamSending || !officeBeamBody.trim()
-                      ? "not-allowed"
-                      : "pointer",
-                  opacity:
-                    officeBeamSending || !officeBeamBody.trim() ? 0.55 : 1,
-                }}
-              >
-                {officeBeamSending
-                  ? "Sending..."
-                  : `Send to ${officeBeamRecipient}`}
-              </button>
+              <strong>Next:</strong>{" "}               {officeWorkLead.current_stage === "installation_in_progress"
+  ? "Installation underway. Review field issues, monitor Bucking proof, and coordinate next steps with RJ."
+  : officeWorkLead.current_stage === "installer_finish_back"
+  ? "Installer follow-up required. Coordinate remaining work and reported issues with RJ."
+  : officeWorkLead.current_stage === "scheduled" || officeWorkLead.current_stage === "installation_scheduled"
+  ? "Installation scheduled. Confirm crew readiness and monitor field updates."
+  : officeWorkLead.current_stage === "completed" ? (officeWorkLead.next_action || "Job complete. Office may archive when ready.") : officeWorkLead.current_stage === "proposal_revision"                 ? `Review requested changes, revise the proposal, and return it to ${                     officeWorkLead.assigned_salesperson || "Sales"                   }.`                 : officeWorkLead.current_stage === "proposal_approved"                 ? (officeWorkLead.next_action || "Collect deposit and schedule the final detailed measurement.")                 : officeWorkLead.current_stage === "production_setup"                 ? (officeWorkLead.next_action || "Office to start ordering/materials and permit setup.")                 : officeWorkLead.current_stage === "installation_complete"                 ? "Office to call the customer and schedule the final walkthrough with RJ, Gino, or both."
+  : officeWorkLead.current_stage === "inspection_scheduled" ? (officeWorkLead.next_action || "Await RJ/Gino final walkthrough outcome.")                 : officeWorkLead.current_stage === "inspection_complete"                 ? (officeWorkLead.next_action || "Office to complete final closeout.")                 : officeWorkLead.current_stage === "hundred_percent_complete"                 ? (officeWorkLead.next_action || "Office to handle final payment and administrative closeout.")                 : officeWorkLead.current_stage === "installation_ready" ? "Office to confirm materials, permits, and job readiness. RJ has received the final measurement package." : `Prepare proposal and return it to ${                     officeWorkLead.assigned_salesperson || "Sales"                   }.`}
             </div>
 
             {officeWorkLead.current_stage === "proposal_approved" ? (
-            <div
-              style={{
-                marginBottom: 12,
-                border: "1px solid #557c64",
-                borderRadius: 14,
-                background: "#102018",
-                padding: 14,
-              }}
-            >
-              <div
-                style={{
-                  color: "#92c6a4",
-                  fontSize: 10,
-                  fontWeight: 900,
-                  letterSpacing: 0.9,
-                  textTransform: "uppercase",
-                  marginBottom: 5,
-                }}
-              >
-                START JOB
-              </div>
-
-              <div
-                style={{
-                  color: "#ffffff",
-                  fontSize: 14,
-                  fontWeight: 900,
-                  marginBottom: 7,
-                }}
-              >
-                The customer has chosen Premier. Office now starts the working job file.
-              </div>
-
-              <div
-                style={{
-                  color: "#b9c8c0",
-                  fontSize: 11,
-                  lineHeight: 1.55,
-                  marginBottom: 10,
-                }}
-              >
-                The salesperson stays connected with their customer. Office handles the
-                invoices and keeps the sold-job information moving through production.
-              </div>
-
-              <div
-                style={{
-                  display: "grid",
-                  gap: 7,
-                }}
-              >
-                <div
-                  style={{
-                    border: "1px solid #294a35",
-                    borderRadius: 9,
-                    background: "#0c1711",
-                    padding: "9px 10px",
-                    color: "#d8e7dd",
-                    fontSize: 11,
-                    lineHeight: 1.45,
-                  }}
-                >
-                  <strong>1. First Invoice — 50%</strong>
-                  <div style={{ color: "#9fb3a5", marginTop: 2 }}>
-                    Office sends the 50% deposit invoice. Once received, the material can be ordered.
-                  </div>
+              <div style={{ marginBottom: 12, border: "1px solid #5b9473", borderRadius: 14, background: "linear-gradient(135deg, #163426 0%, #101d17 100%)", padding: 14 }}>
+                <div style={{ color: "#94d7ad", fontSize: 10, fontWeight: 900, letterSpacing: 1, marginBottom: 6 }}>WHAT NEEDS MY ATTENTION</div>
+                <div style={{ color: "#ffffff", fontSize: 19, fontWeight: 900, marginBottom: 6 }}>{officePaymentDrafts.deposit_50?.status === "received" ? "Prepare the Blue Folder" : officePaymentDrafts.deposit_50?.status === "sent" ? "Track the 50% Deposit" : "Send the 50% Deposit Invoice"}</div>
+                <div style={{ color: "#c5d9ce", fontSize: 12, lineHeight: 1.55 }}>
+                  {officePaymentDrafts.deposit_50?.status === "received" ? "Deposit recorded. Prepare the job documents and continue setup." : officePaymentDrafts.deposit_50?.status === "sent" ? "Invoice confirmed sent. Record the deposit only when payment actually arrives; Blue Folder preparation can continue meanwhile." : "Customer approved. Send the deposit invoice first. You can prepare Blue Folder paperwork while waiting for payment."}
                 </div>
-
-                <div
-                  style={{
-                    border: "1px solid #294a35",
-                    borderRadius: 9,
-                    background: "#0c1711",
-                    padding: "9px 10px",
-                    color: "#d8e7dd",
-                    fontSize: 11,
-                    lineHeight: 1.45,
-                  }}
-                >
-                  <strong>2. Material Delivered — 40%</strong>
-                  <div style={{ color: "#9fb3a5", marginTop: 2 }}>
-                    When Premier receives the material, Office sends the second 40% invoice.
-                  </div>
-                </div>
-
-                <div
-                  style={{
-                    border: "1px solid #294a35",
-                    borderRadius: 9,
-                    background: "#0c1711",
-                    padding: "9px 10px",
-                    color: "#d8e7dd",
-                    fontSize: 11,
-                    lineHeight: 1.45,
-                  }}
-                >
-                  <strong>3. Job Complete — Final 10%</strong>
-                  <div style={{ color: "#9fb3a5", marginTop: 2 }}>
-                    Once the job is complete, Office sends the final 10% invoice for closeout.
-                  </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginTop: 11 }}>
+                  {[["Deposit invoice", "50%"], ["Material delivered", "40%"], ["Job complete", "10%"]].map(([label, amount]) => (
+                    <span key={label} style={{ border: "1px solid #39664b", background: "#0c1b13", borderRadius: 8, padding: "7px 9px", color: "#dcece2", fontSize: 11 }}>
+                      <strong>{amount}</strong> {label}
+                    </span>
+                  ))}
                 </div>
               </div>
-
-              <div
-                style={{
-                  marginTop: 10,
-                  color: "#8fa99a",
-                  fontSize: 10,
-                  lineHeight: 1.5,
-                }}
-              >
-                Build the shared job file below: confirm payment status, add the
-                Quote / Order Sheet, Floor Plan and other job documents, then keep
-                material, permit and installation information current.
-              </div>
-            </div>
             ) : null}
 
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                gridTemplateColumns: "1fr",
                 gap: 8,
               }}
             >
-              {(officeWorkLead.current_stage === "proposal_revision"                 ? [                     ["Review Revision Request", "revision_request"],                     ["Proposal Workspace", "proposal"],                     ["Return to Sales", "relay"],                   ]                 : officeWorkLead.current_stage === "proposal_approved"                 ? [                     ["Payment", "deposit"],
-                    ["Final Measurement", "final_measurement"],
-                    ["Prepare Job", "continue_job"],                   ]                 : officeWorkLead.current_stage === "production_setup"                 ? [                     ["Production Setup", "production_setup"],                   ]                 : officeWorkLead.current_stage === "installation_complete"                 ? [["Schedule Final Inspection", "inspection_schedule"]]                 : officeWorkLead.current_stage === "inspection_complete"                 ? [["Final Closeout", "final_closeout"]]                 : officeWorkLead.current_stage === "hundred_percent_complete"                 ? [                     ["Payment", "deposit"],                     ["Final Closeout", "final_closeout"],                   ]                 : [                     ["Review Measurements", "measurements"],                     ["Photos / Proof", "photos"],                     ["Proposal Workspace", "proposal"],                     ["Send Back to Sales", "relay"],                   ]               ).map(([label, view]) => (
+              {(officeWorkLead.current_stage === "proposal_revision"                 ? [                     ["Review Revision Request", "revision_request"],                     ["Proposal Workspace", "proposal"],                     ["Return to Sales", "relay"],                   ]                 : officeWorkLead.current_stage === "proposal_approved"                 ? [                     ["50% Deposit / Payments", "deposit"], ["Prepare Blue Folder", "job_documents"], ["Final Measurement", "final_measurement"], ["Continue Job Setup", "continue_job"],                   ]                 : ["installation_in_progress", "installer_finish_back", "scheduled"].includes(officeWorkLead.current_stage)
+                ? [["Materials & Permit Records", "production_setup"], ["40% Payment Record", "deposit"]]
+                : ["production_setup", "installation_ready", "installation_scheduled"].includes(officeWorkLead.current_stage)
+                ? [["1. Materials & Permits", "production_setup"], ["2. Collect 40% Payment", "deposit"]]                 : officeWorkLead.current_stage === "installation_complete"                 ? [["Schedule Final Walkthrough", "inspection_schedule"]]                 : officeWorkLead.current_stage === "inspection_scheduled" ? [["View Job Documents", "job_documents"]]
+                : officeWorkLead.current_stage === "inspection_complete"                 ? [["Payments / Complete Job", "deposit"]]                 : officeWorkLead.current_stage === "completed" ? [["View Payment History", "deposit"], ["View Job Documents", "job_documents"], ["View Final Closeout", "final_closeout"]] : officeWorkLead.current_stage === "hundred_percent_complete"                 ? [                     ["Payment", "deposit"],                     ["Final Closeout", "final_closeout"],                   ]                 : [                     ["Review Measurements", "measurements"],                     ["Photos / Proof", "photos"],                     ["Proposal Workspace", "proposal"],                     ["Send Back to Sales", "relay"],                   ]               ).map(([label, view]) => (
+                <div key={label}>
                 <button
                   key={label}
                   type="button"
                   onClick={() => {
                     setOfficeWorkView(view as any);
+                    if (view === "job_documents") {
+                      void loadOfficeJobDocuments(officeWorkLead);
+                    }
 
                     if (view === "measurements" || view === "photos") {
                       void loadOfficeMeasurementReview(officeWorkLead);
@@ -4180,6 +4164,7 @@ export default function PremierWindowDoorBoard() {
                       if (view === "deposit") {
                         void loadOfficePayments(officeWorkLead);
                         void loadOfficeJobDocuments(officeWorkLead);
+                        void loadOfficeProductionSetup(officeWorkLead);
                       }
                     }
 
@@ -4197,7 +4182,7 @@ export default function PremierWindowDoorBoard() {
                     border:
                       officeWorkView === view
                         ? "1px solid #6f91a7"
-                        : "1px solid #31495a",
+                        : officeWorkLead.current_stage === "completed" ? "1px solid #3d7459" : "1px solid #31495a",
                     borderRadius: 10,
                     background:
                       officeWorkView === view
@@ -4217,12 +4202,329 @@ export default function PremierWindowDoorBoard() {
                         : "none",
                   }}
                 >
-                  {label}
+                                    {view === "deposit" &&
+                  officeWorkLead.current_stage === "hundred_percent_complete" &&
+                  ["deposit_50", "delivery_40", "final_10"].every(
+                    (key) => officePaymentDrafts[key]?.status === "received"
+                  ) ? (
+                    <span style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 12,
+                      border: "1px solid #3d7459",
+                      borderRadius: 9,
+                      padding: "10px 12px",
+                      textAlign: "left",
+                    }}>
+                      <span style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                      }}>
+                        <span style={{
+                          color: "#81c99b",
+                          fontSize: 20,
+                        }}>
+                          ✓
+                        </span>
+                        <span style={{
+                          display: "grid",
+                          gap: 3,
+                        }}>
+                          <strong style={{
+                            color: "#d9f0df",
+                            fontSize: 13,
+                          }}>
+                            Payment Complete
+                          </strong>
+                          <span style={{
+                            color: "#a9bdaf",
+                            fontSize: 11,
+                            fontWeight: 400,
+                          }}>
+                            View Payment History
+                          </span>
+                        </span>
+                      </span>
+                      <span style={{
+                        color: "#a9bdaf",
+                        fontSize: 20,
+                      }}>
+                        ›
+                      </span>
+                    </span>
+                  ) : (
+                    <span style={{ display: "block" }}>{label}</span>
+                  )}
+                  {["production_setup", "installation_ready", "installation_scheduled", "installation_in_progress"].includes(officeWorkLead.current_stage) && view === "production_setup" ? (
+                    <span style={{ display: "block", marginTop: 6, fontSize: 11, fontWeight: 400, lineHeight: 1.5 }}>
+                      {["Received", "On Hand", "Not Required"].includes(officeProductionDraft.materialStatus)
+                        ? "Materials Received"
+                        : ["Ordered", "In production"].includes(officeProductionDraft.materialStatus)
+                          ? "Materials Ordered"
+                          : "Order Materials"}
+                      <span style={{ display: "block", marginTop: 4 }}>
+                        {["Received", "On Hand", "Not Required"].includes(officeProductionDraft.materialStatus)
+                          ? ["scheduled", "installation_scheduled", "installation_in_progress", "installer_finish_back"].includes(officeWorkLead.current_stage)
+                          ? "Materials received. Review the material and permit records below."
+                          : "Materials ready. Verify the payment terms before sending to RJ."
+                          : ["Ordered", "In production"].includes(officeProductionDraft.materialStatus)
+                            ? "Waiting for delivery. Mark Received when materials arrive."
+                            : "Order materials and mark them Ordered."}
+                      </span>
+                      <span style={{ display: "block", marginTop: 4 }}>
+                        Permit: {officeProductionDraft.permitStatus}
+                      </span>
+                    </span>
+                  ) : null}
+                  {["production_setup", "installation_ready", "installation_scheduled", "installation_in_progress"].includes(officeWorkLead.current_stage) && view === "deposit" ? (
+                    <span style={{ display: "block", marginTop: 6, fontSize: 11, fontWeight: 400, lineHeight: 1.5 }}>
+                      {["scheduled", "installation_scheduled", "installation_in_progress", "installer_finish_back"].includes(officeWorkLead.current_stage)
+                        ? "Review the recorded 40% payment status. Installation is already in the field workflow."
+                        : "Confirm the required payment for this job before releasing scheduling to RJ."}
+                    </span>
+                  ) : null}
                 </button>
+                {view === "production_setup" && officeWorkView === "production_setup" ? (
+                  <div style={{
+                    padding: 12,
+                    border: "1px solid #31495a",
+                    borderTop: "none",
+                    borderRadius: "0 0 10px 10px",
+                    background: "#111820",
+                  }}>
+                {officeWorkView === "production_setup" ? (
+                  <>
+
+                    {officeProductionLoading ? (
+                      <div
+                        style={{
+                          color: "#9ca8b2",
+                          fontSize: 11,
+                        }}
+                      >
+                        Loading production setup...
+                      </div>
+                    ) : (
+                      <>
+                                                <div style={{ display: "grid", gap: 12, marginBottom: 14 }}>
+                          <div style={{ display: "grid", gap: 6 }}>
+                            <div style={{ padding: 10, border: "1px solid #557c64", background: "#102219", borderRadius: 10, display: "grid", gap: 8, marginBottom: 12 }}>
+                              <strong style={{ fontSize: 12, color: "#d8f1df" }}>Materials already available or not needed?</strong>
+                              <span style={{ fontSize: 11, color: "#b8cfbd" }}>Use these only when the office has verified the job's requirements. No order is needed for either choice.</span>
+                              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 8 }}>
+                                {(["On Hand", "Not Required"] as const).map((status) => (
+                                  <button key={status} type="button"
+                                    onClick={() => { setOfficeProductionSaved(false); setOfficeProductionDraft((current) => ({ ...current, materialStatus: status, materialEta: "" })); }}
+                                    style={{ minHeight: 42, borderRadius: 8, border: officeProductionDraft.materialStatus === status ? "2px solid #9cd8af" : "1px solid #557c64", background: officeProductionDraft.materialStatus === status ? "#28583b" : "#16232d", color: "#fff", fontWeight: 800, cursor: "pointer" }}>
+                                    {status}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>                            <strong style={{ fontSize: 13 }}>Step 1. Materials Ordered</strong>
+                            <span style={{ fontSize: 11, color: "#aebbc4" }}>
+                              Order the materials. Once ordered, confirm below and enter the expected delivery date.
+                            </span>
+                            <button
+                              type="button"
+                              disabled={["Received", "On Hand", "Not Required"].includes(officeProductionDraft.materialStatus)}
+                              onClick={() => {
+                                setOfficeProductionSaved(false);
+                                setOfficeProductionDraft((current) => ({
+                                  ...current,
+                                  materialStatus: "Ordered",
+                                }));
+                              }}
+                              style={{
+                                minHeight: 44,
+                                borderRadius: 9,
+                                border: "1px solid #557c64",
+                                background: ["Ordered", "In production", "Received"].includes(officeProductionConfirmedStatus) ? "#193c2b" : "#16232d",
+                                color: "#ffffff",
+                                fontWeight: 800,
+                                cursor: ["Received", "On Hand", "Not Required"].includes(officeProductionDraft.materialStatus) ? "default" : "pointer",
+                              }}
+                            >
+                              {["Ordered", "In production", "Received"].includes(officeProductionConfirmedStatus)
+                                ? "✓ Materials Ordered"
+                                : "Mark Materials Ordered"}
+                            </button>
+                          </div>
+                          
+
+                        <label
+                          style={{
+                            display: "grid",
+                            gap: 5,
+                            marginBottom: 10,
+                          }}
+                        >
+                          <span
+                            style={{
+                              color: "#9ca8b2",
+                              fontSize: 10,
+                              fontWeight: 800,
+                            }}
+                          >
+                            Material ETA
+                          </span>
+
+                          <input
+                            type="date"
+                            value={officeProductionDraft.materialEta}
+                            onChange={(event) => {
+                              setOfficeProductionSaved(false);
+                              setOfficeProductionDraft((current) => ({
+                                ...current,
+                                materialEta: event.target.value,
+                              }));
+                            }}
+                            style={{
+                              width: "100%",
+                              minHeight: 44,
+                              boxSizing: "border-box",
+                              border: "1px solid #31495a",
+                              borderRadius: 9,
+                              background: "#0c1116",
+                              color: "#f3f6f8",
+                              padding: "0 10px",
+                            }}
+                          />
+                        </label>
+                            <div style={{ display: "grid", gap: 6 }}>
+                            <strong style={{ fontSize: 13 }}>Step 2. Materials Received</strong>
+                            <span style={{ fontSize: 11, color: "#aebbc4" }}>
+                              When the materials arrive, confirm they have been received.
+                            </span>
+                            <button
+                              type="button"
+                              disabled={officeProductionDraft.materialStatus === "Not ordered" || ["Received", "On Hand", "Not Required"].includes(officeProductionDraft.materialStatus)}
+                              onClick={() => {
+                                setOfficeProductionSaved(false);
+                                setOfficeProductionDraft((current) => ({
+                                  ...current,
+                                  materialStatus: "Received",
+                                }));
+                              }}
+                              style={{
+                                minHeight: 44,
+                                borderRadius: 9,
+                                border: "1px solid #557c64",
+                                background: officeProductionConfirmedStatus === "Received" ? "#193c2b" : "#16232d",
+                                color: "#ffffff",
+                                fontWeight: 800,
+                                cursor: officeProductionDraft.materialStatus === "Not ordered" || ["Received", "On Hand", "Not Required"].includes(officeProductionDraft.materialStatus) ? "default" : "pointer",
+                              }}
+                            >
+                              {officeProductionConfirmedStatus === "Received"
+                                ? "✓ Materials Received"
+                                : "Mark Materials Received"}
+                            </button>
+                          </div>
+                        </div>
+
+                                                <div style={{ display: "grid", gap: 8, marginBottom: 14 }}>
+                          <strong style={{ fontSize: 13 }}>Permit Status</strong>
+                          <span style={{ fontSize: 11, color: "#aebbc4" }}>
+                            Update the permit status. Approval is required before sending to RJ unless no permit is required.
+                          </span>
+                          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 8 }}>
+                            {["Not started", "Submitted", "Approved", "Not required"].map((status) => (
+                              <button
+                                key={status}
+                                type="button"
+                                onClick={() => {
+                                  setOfficeProductionSaved(false);
+                                  setOfficeProductionDraft((current) => ({
+                                    ...current,
+                                    permitStatus: status,
+                                  }));
+                                }}
+                                style={{
+                                  minHeight: 44,
+                                  padding: "8px",
+                                  borderRadius: 9,
+                                  border: officeProductionDraft.permitStatus === status
+                                    ? "1px solid #8fbea0"
+                                    : "1px solid #31495a",
+                                  background: officeProductionDraft.permitStatus === status
+                                    ? "#193c2b"
+                                    : "#16232d",
+                                  color: "#ffffff",
+                                  fontWeight: 800,
+                                  cursor: "pointer",
+                                }}
+                              >
+                                {officeProductionDraft.permitStatus === status ? "✓ " : ""}
+                                {status === "Not started" ? "Not Started" : status === "Not required" ? "Not Required" : status}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {officeProductionError ? (
+                          <div
+                            style={{
+                              color: "#d8b267",
+                              fontSize: 10,
+                              marginBottom: 8,
+                            }}
+                          >
+                            {officeProductionError}
+                          </div>
+                        ) : null}
+
+                        <button
+                          type="button"
+                          disabled={
+                            officeProductionSaving ||
+                            officeProductionSaved
+                          }
+                          onClick={() =>
+                            void saveOfficeProductionSetup(
+                              officeWorkLead
+                            )
+                          }
+                          style={{
+                            width: "100%",
+                            minHeight: 46,
+                            border: "1px solid #557c64",
+                            borderRadius: 9,
+                            background: "#14271c",
+                            color: "#b7dec4",
+                            fontWeight: 900,
+                            cursor:
+                              officeProductionSaving ||
+                              officeProductionSaved
+                                ? "default"
+                                : "pointer",
+                            opacity:
+                              officeProductionSaving ||
+                              officeProductionSaved
+                                ? 0.72
+                                : 1,
+                          }}
+                        >
+                          {officeProductionSaving
+                            ? "Saving..."
+                            : officeProductionSaved
+                            ? "Materials & Permit Status Saved"
+                            : "Save Materials & Permit Status"}
+                        </button>
+
+                      </>
+                    )}
+                  </>
+                ) : null}
+                  </div>
+                ) : null}
+                </div>
               ))}
 
+
+
               {[
-                "proposal_approved",
                 "production_setup",
                 "installation_complete",
                 "inspection_complete",
@@ -4386,7 +4688,7 @@ export default function PremierWindowDoorBoard() {
                                   fontSize: 11,
                                 }}
                               >
-                                {opening.opening_type || "Opening"} ·{" "}
+                                {opening.opening_type || "Opening"} ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â·{" "}
                                 {opening.location || "Location not entered"}
                               </strong>
 
@@ -4396,8 +4698,8 @@ export default function PremierWindowDoorBoard() {
                                   fontSize: 10,
                                 }}
                               >
-                                {opening.width_text || "—"} ×{" "}
-                                {opening.height_text || "—"}
+                                {opening.width_text || "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â"} ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â{" "}
+                                {opening.height_text || "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â"}
                               </span>
 
                               {opening.notes ? (
@@ -4508,7 +4810,7 @@ export default function PremierWindowDoorBoard() {
                                     fontSize: 11,
                                   }}
                                 >
-                                  Opening {opening.opening_number} ·{" "}
+                                  Opening {opening.opening_number} ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â·{" "}
                                   {opening.location || "Location not entered"}
                                 </strong>
 
@@ -4755,10 +5057,14 @@ export default function PremierWindowDoorBoard() {
                         </div>
                       ) : (
                         <div style={{ display: "grid", gap: 8 }}>
+                          <div style={{ border: "1px solid #395b4b", borderRadius: 10, background: "#102019", padding: 12 }}>
+                            <div style={{ fontSize: 12, fontWeight: 900, color: "#ffffff", marginBottom: 4 }}>Other Documents</div>
+                            <div style={{ fontSize: 11, color: "#b8cfc0", marginBottom: 10 }}>Supplier paperwork, manufacturer PO, contracts or anything else. Enter what the document is before uploading.</div>
+                            <button type="button" onClick={() => { setOfficeJobDocumentType("Other"); setOfficeJobDocumentAddOpen(true); }} style={{ border: "1px solid #557c64", borderRadius: 8, background: "#173225", color: "#ffffff", padding: "9px 12px", fontWeight: 900, cursor: "pointer" }}>+ Add Other Document</button>
+                          </div>
                           {[
                             "Quote / Order Sheet",
                             "Floor Plan",
-                            "Manufacturer PO",
                             "Permit / Inspection",
                           ].map((documentType) => {
                             const document = officeJobDocuments.find(
@@ -4909,6 +5215,7 @@ export default function PremierWindowDoorBoard() {
                                     }}
                                   >
                                     {document.file_name}
+                                    {document.note ? <div style={{ marginTop: 4, color: "#c3decb", fontSize: 11 }}>Description: {document.note}</div> : null}
                                   </div>
                                 </div>
 
@@ -4976,7 +5283,7 @@ export default function PremierWindowDoorBoard() {
                           {officeJobDocumentAddOpen ? "Close Add Document" : "+ Add Document"}
                         </span>
                         <span aria-hidden="true">
-                          {officeJobDocumentAddOpen ? "−" : "+"}
+                          {officeJobDocumentAddOpen ? "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¹ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢" : "+"}
                         </span>
                       </button>
 <div
@@ -5041,6 +5348,11 @@ export default function PremierWindowDoorBoard() {
                             const file = event.target.files?.[0];
 
                             if (!file) return;
+                            if (officeJobDocumentType === "Other" && !officeJobDocumentNote.trim()) {
+                              window.alert("Please describe what this Other Document is before uploading.");
+                              event.currentTarget.value = "";
+                              return;
+                            }
 
                             void uploadOfficeJobDocument(
                               officeWorkLead,
@@ -5071,7 +5383,7 @@ export default function PremierWindowDoorBoard() {
                         marginBottom: 10,
                       }}
                     >
-                      Optional Note
+                      {officeJobDocumentType === "Other" ? "Document name / description (required)" : "Optional Note"}
 
                       <textarea
                         value={officeJobDocumentNote}
@@ -5079,7 +5391,7 @@ export default function PremierWindowDoorBoard() {
                           setOfficeJobDocumentNote(event.target.value)
                         }
                         disabled={officeJobDocumentUploading}
-                        placeholder="Optional note about this document..."
+                        placeholder={officeJobDocumentType === "Other" ? "e.g. Manufacturer PO for sliding door, supplier confirmation" : "Optional note about this document..."}
                         rows={2}
                         style={{
                           width: "100%",
@@ -5246,9 +5558,9 @@ export default function PremierWindowDoorBoard() {
                               number: "2",
                               title: "40% Material Delivery",
                               invoiceType: "40% Delivery Invoice",
-                              trigger: "Material arrives at Premier",
+                              trigger: "Materials ready for installation",
                               instruction:
-                                "When the material is delivered to Premier, Office sends the second 40% invoice.",
+                                "When required materials are ready for installation, follow the customer's agreed payment terms. Confirm the required payment before releasing the job to RJ.",
                             },
                             {
                               key: "final_10",
@@ -5343,7 +5655,7 @@ export default function PremierWindowDoorBoard() {
                                     }}
                                   >
                                     {draft.status === "received"
-                                      ? "RECEIVED ✓"
+                                      ? "RECEIVED"
                                       : draft.status === "sent"
                                       ? "INVOICE SENT"
                                       : "NOT SENT"}
@@ -5530,6 +5842,61 @@ export default function PremierWindowDoorBoard() {
                                 </div>
                                 </div>
 
+                                {draft.status === "not_sent" ? (
+                                  <div style={{ marginBottom: 12 }}>
+                                    <div style={{
+                                      color: "#b9c6ce",
+                                      fontSize: 11,
+                                      marginBottom: 8,
+                                    }}>
+                                      Send the invoice using Premier's normal
+                                      office process, then confirm here.
+                                    </div>
+                                    <button
+                                      type="button"
+                                      disabled={isSaving}
+                                      onClick={() => {
+                                        const confirmed = window.confirm(
+                                          "Have you already sent this invoice to the customer? This records the confirmation only. It does not send an email."
+                                        );
+                                        if (!confirmed) return;
+                                        void saveOfficePayment(
+                                          officeWorkLead,
+                                          payment.key,
+                                          { markSent: true }
+                                        );
+                                      }}
+                                      style={{
+                                        width: "100%",
+                                        minHeight: 42,
+                                        borderRadius: 9,
+                                        border: "1px solid #557c64",
+                                        background: "#173225",
+                                        color: "#eaf5ee",
+                                        fontWeight: 900,
+                                        cursor: isSaving ? "wait" : "pointer",
+                                      }}
+                                    >
+                                      {isSaving
+                                        ? "Saving..."
+                                        : "Confirm Invoice Sent"}
+                                    </button>
+                                  </div>
+                                ) : draft.status === "sent" ? (
+                                  <div style={{
+                                    padding: 10,
+                                    marginBottom: 12,
+                                    borderRadius: 9,
+                                    border: "1px solid #557c64",
+                                    background: "#14271c",
+                                    color: "#a5d3b3",
+                                    fontSize: 12,
+                                    fontWeight: 800,
+                                  }}>
+                                    Invoice Sent — Confirmed by Office
+                                  </div>
+                                ) : null}
+
                                 {draft.status === "received" ? (
                                   <div
                                     style={{
@@ -5576,7 +5943,7 @@ export default function PremierWindowDoorBoard() {
 
                                       <div>
                                         <strong>Method:</strong>{" "}
-                                        {draft.method || "—"}
+                                        {draft.method || "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â"}
                                       </div>
 
                                       <div>
@@ -5586,12 +5953,12 @@ export default function PremierWindowDoorBoard() {
                                               dateStyle: "medium",
                                               timeStyle: "short",
                                             }).format(new Date((draft as any).receivedAt))
-                                          : "—"}
+                                          : "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â"}
                                       </div>
 
                                       <div>
                                         <strong>Recorded by:</strong>{" "}
-                                        {(draft as any).updatedBy || "—"}
+                                        {(draft as any).updatedBy || "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â"}
                                       </div>
 
                                       {draft.note ? (
@@ -5624,8 +5991,12 @@ export default function PremierWindowDoorBoard() {
                                   >
                                     Amount
 
+                                    <div style={{ position: "relative" }}>
+                                      <span aria-hidden="true" style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#ffffff", fontSize: 14, fontWeight: 800, pointerEvents: "none" }}>$</span>
                                     <input
-                                      value={draft.amount}
+                                      inputMode="decimal"
+                                      aria-label="Payment amount in dollars"
+                                      value={String(draft.amount ?? "").replace(/^\$/, "")}
                                       disabled={isSaving || draft.status === "received"}
                                       onChange={(event) => {
                                         setOfficePaymentSavedStage(null);
@@ -5676,16 +6047,19 @@ export default function PremierWindowDoorBoard() {
                                             },
                                           }));
                                         }}
-                                      placeholder="$0.00"
+                                      placeholder="0.00"
                                       style={{
+                                        width: "100%",
+                                        boxSizing: "border-box",
                                         minHeight: 40,
                                         border: "1px solid #405c6d",
                                         borderRadius: 8,
                                         background: "#0a1015",
                                         color: "#ffffff",
-                                        padding: "0 9px",
+                                        padding: "0 9px 0 23px",
                                       }}
                                     />
+                                    </div>
                                   </label>
 
                                   <label
@@ -5786,7 +6160,7 @@ export default function PremierWindowDoorBoard() {
                                       marginTop: 8,
                                     }}
                                   >
-                                    Payment received ✓
+                                    Payment received
                                   </div>
                                 ) : null}
 
@@ -5832,9 +6206,115 @@ export default function PremierWindowDoorBoard() {
                                   {isSaving
                                     ? "Recording Payment..."
                                     : draft.status === "received"
-                                      ? "Payment Received ✓"
+                                      ? "Payment Received"
                                       : `Mark ${payment.title} Payment Received`}
                                 </button>
+
+                                {payment.key === "delivery_40" &&
+                                draft.status === "received" ? (
+                                  <div
+                                    style={{
+                                      marginTop: 14,
+                                      padding: 14,
+                                      border: "2px solid #8fbea0",
+                                      borderRadius: 12,
+                                      background: "#14271c",
+                                    }}
+                                  >
+                                    <div
+                                      style={{
+                                        color: "#a6e0b8",
+                                        fontSize: 11,
+                                        fontWeight: 900,
+                                        letterSpacing: 0.7,
+                                        marginBottom: 6,
+                                      }}
+                                    >
+                                      NEXT ACTION
+                                    </div>
+                                    <strong
+                                      style={{
+                                        display: "block",
+                                        color: "#ffffff",
+                                        fontSize: 16,
+                                        marginBottom: 8,
+                                      }}
+                                    >
+                                      {officeRjSent || officeRjRelease?.jobId === officeWorkLead.id
+  ? "Sent to RJ"
+  : officeProductionLoading || officePaymentsLoading
+  ? "Checking Job Requirements"
+  : !(["Received", "On Hand", "Not Required"].includes(officeProductionConfirmedStatus))
+  ? "Waiting for Materials"
+  : !["Approved", "Not required"].includes(officePermitConfirmedStatus)
+  ? "Waiting for Permit Approval"
+  : officePaymentDrafts.delivery_40?.status !== "received"
+  ? "Collect 40% Payment"
+  : "READY TO SEND TO RJ"}
+                                    </strong>
+                                    <div
+                                      style={{
+                                        color: "#c4d6ca",
+                                        fontSize: 12,
+                                        marginBottom: 12,
+                                      }}
+                                    >
+                                      {officeRjSent || officeRjRelease?.jobId === officeWorkLead.id
+  ? "The job has been handed off to RJ."
+  : officeProductionLoading || officePaymentsLoading
+  ? "Checking saved materials, permit, and payment records."
+  : !(["Received", "On Hand", "Not Required"].includes(officeProductionConfirmedStatus))
+  ? "Office must save materials as Received, On Hand, or Not Required before sending."
+  : !["Approved", "Not required"].includes(officePermitConfirmedStatus)
+  ? "Permit approval or Not Required must be saved before sending."
+  : officePaymentDrafts.delivery_40?.status !== "received"
+  ? "Record the 40% material delivery payment before sending."
+  : "Materials ready. Permit cleared. 40% payment recorded. This job is ready for RJ."}
+                                    </div>
+              {["production_setup", "installation_ready"].includes(officeWorkLead.current_stage) ? (
+                <button
+                  type="button"
+                  disabled={
+                    officeRjSending ||
+                    officeRjSent ||
+                    officeRjRelease?.jobId === officeWorkLead.id ||
+                    officeProductionLoading ||
+                    officePaymentsLoading ||
+                    !(["Received", "On Hand", "Not Required"].includes(officeProductionConfirmedStatus)) ||
+                    !["Approved", "Not required"].includes(officePermitConfirmedStatus) ||
+                    officePaymentDrafts.delivery_40?.status !== "received"
+                  }
+                  onClick={() => void sendOfficeJobToRJ(officeWorkLead)}
+                  style={{
+                    width: "100%",
+                    minHeight: 72,
+                    padding: 12,
+                    border: "2px solid #86c99b",
+                    borderRadius: 10,
+                    background: officeRjSent || officeRjRelease?.jobId === officeWorkLead.id ? "#204631" : "#287447",
+                    color: "#ffffff",
+                    boxShadow: "0 4px 16px rgba(36, 127, 74, 0.22)",
+                    fontWeight: 800,
+                    textAlign: "center",
+                    cursor: "pointer",
+                    opacity: officeRjSending ? 0.6 : 1,
+                  }}
+                >
+                  <strong style={{ display: "block", fontSize: 13 }}>
+                    {officeRjSent || officeRjRelease?.jobId === officeWorkLead.id ? "Sent to RJ ✓" : officeRjSending ? "Sending to RJ..." : "Send Job to RJ →"}
+                  </strong>
+                  {officeRjRelease?.jobId === officeWorkLead.id ? (
+                    <span style={{ display: "block", fontSize: 11, marginTop: 6 }}>
+                      Sent by {officeRjRelease.releasedBy} · {new Date(officeRjRelease.releasedAt).toLocaleString()}
+                    </span>
+                  ) : null}
+                </button>
+              ) : null}
+              {officeRjError ? (
+                <div style={{ color: "#e4a7a7", fontSize: 12 }}>{officeRjError}</div>
+              ) : null}
+                                  </div>
+                                ) : null}
                               </div>
                             );
                           })}
@@ -5855,9 +6335,44 @@ export default function PremierWindowDoorBoard() {
                           {["deposit_50", "delivery_40", "final_10"].every(
                             (key) => officePaymentDrafts[key]?.status === "received"
                           )
-                            ? "All scheduled payments have been received. Office can proceed to Final Closeout."
-                            : "Scheduled payments are still outstanding. Complete the remaining payments before Final Closeout."}
+                            ? "All scheduled payments received. Complete Job is available below."
+                            : "Scheduled payments are still outstanding. Record payments before completing this job."}
                         </div>
+                        {officeWorkLead.current_stage === "inspection_complete" &&
+                        officeWorkLead.inspection_type === "Final Walkthrough" &&
+                        officeWorkLead.inspection_status === "Approved" ? (
+                          <button
+                            type="button"
+                            disabled={officePaymentsLoading || !["deposit_50", "delivery_40", "final_10"].every(
+                              (key) => officePaymentDrafts[key]?.status === "received"
+                            )}
+                            onClick={async () => {
+                              if (!window.confirm("Complete this job and keep its payment and work history?")) return;
+                              const token = getPremierOfficeAccessToken();
+                              if (!token) { window.alert("Office access required."); return; }
+                              const { data, error } = await supabase.rpc("complete_premier_job_closeout", {
+                                p_access_token: token,
+                                p_job_id: officeWorkLead.id,
+                              });
+                              if (error || data !== true) {
+                                window.alert(error?.message || "Unable to complete job. Refresh and verify requirements.");
+                                return;
+                              }
+                              setLiveLeads((current) => current.map((item) => item.id === officeWorkLead.id
+                                ? { ...item, current_stage: "completed", status: "completed", next_action: "Job complete. Office may archive when ready." }
+                                : item));
+                              setOfficeWorkLeadId(null);
+                              setOfficeWorkView(null);
+                              setOpenLeadId(null);
+                            }}
+                            style={{ width: "100%", minHeight: 48, marginTop: 12, borderRadius: 10,
+                              border: "1px solid #557c64", background: "#244934", color: "#fff",
+                              fontSize: 14, fontWeight: 900,
+                              cursor: officePaymentsLoading ? "wait" : "pointer" }}
+                          >
+                            Complete Job
+                          </button>
+                        ) : null}
                       </>
                     )}
                   </>
@@ -5896,7 +6411,9 @@ export default function PremierWindowDoorBoard() {
                         marginBottom: 10,
                       }}
                     >
-                      Upload the completed final measurement for this job.
+                      Schedule the Final Measurement for the salesperson who sold
+                      this job. The completed measurement package will be handled
+                      from the Sales Board and then sent to RJ.
                     </div>
 
                     {officeApprovedSetupLoading ? (
@@ -5911,6 +6428,85 @@ export default function PremierWindowDoorBoard() {
                       </div>
                     ) : (
                       <>
+                        <div
+                          style={{
+                            border: "1px solid #405c6d",
+                            borderRadius: 10,
+                            background: "#0d141a",
+                            padding: 11,
+                            marginBottom: 10,
+                          }}
+                        >
+                          <div
+                            style={{
+                              color: "#9db7ca",
+                              fontSize: 9,
+                              fontWeight: 900,
+                              textTransform: "uppercase",
+                              letterSpacing: 0.7,
+                            }}
+                          >
+                            Assigned Salesperson
+                          </div>
+
+                          <div
+                            style={{
+                              color: "#ffffff",
+                              fontSize: 13,
+                              fontWeight: 900,
+                              marginTop: 4,
+                            }}
+                          >
+                            {officeWorkLead?.assigned_salesperson || "Not assigned"}
+                          </div>
+                        </div>
+
+                        <label
+                          style={{
+                            display: "grid",
+                            gap: 5,
+                            color: "#9ca8b2",
+                            fontSize: 10,
+                            fontWeight: 800,
+                            marginBottom: 10,
+                          }}
+                        >
+                          Final Measurement Assigned To
+                          <select
+                            value={
+                              officeFinalMeasureDraft.assignedTo ||
+                              (officeWorkLead?.assigned_salesperson?.startsWith("Dennis")
+                                ? "Dennis"
+                                : officeWorkLead?.assigned_salesperson?.startsWith("Gio ")
+                                ? "Gio"
+                                : officeWorkLead?.assigned_salesperson?.startsWith("Gino")
+                                ? "Gino"
+                                : "")
+                            }
+                            onChange={(event) => {
+                              setOfficeFinalMeasureSaved(false);
+                              setOfficeFinalMeasureDraft((current) => ({
+                                ...current,
+                                assignedTo: event.target.value,
+                              }));
+                            }}
+                            style={{
+                              width: "100%",
+                              minHeight: 42,
+                              border: "1px solid #405c6d",
+                              borderRadius: 9,
+                              background: "#0d141a",
+                              color: "#ffffff",
+                              padding: "0 10px",
+                              boxSizing: "border-box",
+                            }}
+                          >
+                            <option value="">Choose salesperson</option>
+                            <option value="Dennis">Dennis Dillon</option>
+                            <option value="Gio">Gio Richardson</option>
+                            <option value="Gino">Gino Marquez</option>
+                          </select>
+                        </label>
                         <label
                           style={{
                             display: "grid",
@@ -5920,22 +6516,17 @@ export default function PremierWindowDoorBoard() {
                             fontWeight: 800,
                           }}
                         >
-                          Final Measurement File
+                          Final Measurement Date / Time
                           <input
-                            type="file"
-                            accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx"
-                            disabled={officeJobDocumentUploading}
-                            onChange={async (event) => {
-                              const file = event.target.files?.[0];
-                              if (!file) return;
-
-                              await uploadOfficeJobDocument(
-                                officeWorkLead,
-                                file,
-                                "Final Measurement"
-                              );
-
-                              event.currentTarget.value = "";
+                            type="datetime-local"
+                            value={officeFinalMeasureDraft.scheduledFor}
+                            onChange={(event) => {
+                              setOfficeFinalMeasureSaved(false);
+                              setOfficeFinalMeasureDraft((current) => ({
+                                ...current,
+                                status: "scheduled",
+                                scheduledFor: event.target.value,
+                              }));
                             }}
                             style={{
                               width: "100%",
@@ -5944,166 +6535,11 @@ export default function PremierWindowDoorBoard() {
                               borderRadius: 9,
                               background: "#0d141a",
                               color: "#ffffff",
-                              padding: 9,
+                              padding: "0 10px",
                               boxSizing: "border-box",
                             }}
                           />
                         </label>
-
-                        {(() => {
-                          const finalMeasurementDocument =
-                            officeJobDocuments.find(
-                              (document) =>
-                                document.document_type === "Final Measurement"
-                            );
-
-                          if (!finalMeasurementDocument) return null;
-
-                          return (
-                            <div
-                              style={{
-                                marginTop: 9,
-                                border: "1px solid #3f5b6b",
-                                borderRadius: 10,
-                                background: "#0d141a",
-                                padding: 11,
-                              }}
-                            >
-                              <div
-                                style={{
-                                  color: "#9db7ca",
-                                  fontSize: 9,
-                                  fontWeight: 900,
-                                  textTransform: "uppercase",
-                                  letterSpacing: 0.7,
-                                }}
-                              >
-                                Final Measurement Attached
-                              </div>
-
-                              <div
-                                style={{
-                                  color: "#ffffff",
-                                  fontSize: 11,
-                                  fontWeight: 900,
-                                  marginTop: 4,
-                                  overflowWrap: "anywhere",
-                                }}
-                              >
-                                {finalMeasurementDocument.file_name}
-                              </div>
-
-                              <div
-                                style={{
-                                  display: "flex",
-                                  flexWrap: "wrap",
-                                  gap: 8,
-                                  marginTop: 10,
-                                }}
-                              >
-                                {finalMeasurementDocument.url ? (
-                                  <a
-                                    href={finalMeasurementDocument.url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    style={{
-                                      display: "inline-flex",
-                                      minHeight: 34,
-                                      alignItems: "center",
-                                      justifyContent: "center",
-                                      border: "1px solid #47785a",
-                                      borderRadius: 8,
-                                      background: "#14271c",
-                                      color: "#c9ead2",
-                                      padding: "0 12px",
-                                      fontSize: 10,
-                                      fontWeight: 900,
-                                      textDecoration: "none",
-                                    }}
-                                  >
-                                    View
-                                  </a>
-                                ) : null}
-
-                                <label
-                                  style={{
-                                    display: "inline-flex",
-                                    minHeight: 34,
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    border: "1px solid #526f83",
-                                    borderRadius: 8,
-                                    background: "#15212a",
-                                    color: "#c5d8e5",
-                                    padding: "0 12px",
-                                    fontSize: 10,
-                                    fontWeight: 900,
-                                    cursor: officeJobDocumentUploading
-                                      ? "wait"
-                                      : "pointer",
-                                    opacity: officeJobDocumentUploading
-                                      ? 0.65
-                                      : 1,
-                                  }}
-                                >
-                                  Replace
-                                  <input
-                                    type="file"
-                                    accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx"
-                                    disabled={officeJobDocumentUploading}
-                                    onChange={async (event) => {
-                                      const file = event.target.files?.[0];
-                                      if (!file) return;
-
-                                      await replaceOfficeJobDocument(
-                                        officeWorkLead,
-                                        finalMeasurementDocument,
-                                        file,
-                                        "Final Measurement"
-                                      );
-
-                                      event.currentTarget.value = "";
-                                    }}
-                                    style={{ display: "none" }}
-                                  />
-                                </label>
-
-                                <button
-                                  type="button"
-                                  disabled={officeJobDocumentUploading}
-                                  onClick={() =>
-                                    void removeOfficeJobDocument(
-                                      officeWorkLead,
-                                      finalMeasurementDocument
-                                    )
-                                  }
-                                  style={{
-                                    display: "inline-flex",
-                                    minHeight: 34,
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    border: "1px solid #805050",
-                                    borderRadius: 8,
-                                    background: "#241516",
-                                    color: "#e5a5a5",
-                                    padding: "0 12px",
-                                    fontSize: 10,
-                                    fontWeight: 900,
-                                    cursor: officeJobDocumentUploading
-                                      ? "wait"
-                                      : "pointer",
-                                    opacity: officeJobDocumentUploading
-                                      ? 0.65
-                                      : 1,
-                                  }}
-                                >
-                                  Remove
-                                </button>
-                              </div>
-                            </div>
-                          );
-                        })()}
-
 
                         <label
                           style={{
@@ -6115,7 +6551,7 @@ export default function PremierWindowDoorBoard() {
                             fontWeight: 800,
                           }}
                         >
-                          Note
+                          Office Note
                           <textarea
                             value={officeFinalMeasureDraft.note}
                             onChange={(event) => {
@@ -6125,7 +6561,7 @@ export default function PremierWindowDoorBoard() {
                                 note: event.target.value,
                               }));
                             }}
-                            placeholder="Optional final-measure note..."
+                            placeholder="Optional note for the salesperson..."
                             rows={3}
                             style={{
                               width: "100%",
@@ -6161,7 +6597,7 @@ export default function PremierWindowDoorBoard() {
                               marginTop: 8,
                             }}
                           >
-                            Final measurement complete.
+                            Final Measurement scheduled and sent to Sales.
                           </div>
                         ) : null}
 
@@ -6171,43 +6607,38 @@ export default function PremierWindowDoorBoard() {
                             officeFinalMeasureSaving ||
                             officeFinalMeasureSaved
                           }
-                          onClick={() => {
-                            setOfficeFinalMeasureDraft((current) => ({
-                              ...current,
-                              status: "complete",
-                              scheduledFor: "",
-                              assignedTo:
-                                current.assignedTo ||
-                                officeWorkLead?.assigned_salesperson ||
-                                "",
-                              completedDate: new Date()
-                                .toISOString()
-                                .slice(0, 10),
-                            }));
-
-                            setTimeout(() => {
-                              void saveOfficeFinalMeasurement(
-                                officeWorkLead
-                              );
-                            }, 0);
-                          }}
+                          onClick={() =>
+                            void saveOfficeFinalMeasurement(officeWorkLead)
+                          }
                           style={{
                             width: "100%",
                             minHeight: 44,
                             marginTop: 10,
-                            border: officeFinalMeasureSaved ? "1px solid #6fa982" : "1px solid #557c64",
+                            border: officeFinalMeasureSaved
+                              ? "1px solid #6fa982"
+                              : "1px solid #557c64",
                             borderRadius: 10,
-                            background: officeFinalMeasureSaved ? "#203f2b" : "#16271d",
-                            color: officeFinalMeasureSaved ? "#c9f2d3" : "#dff5e5",
+                            background: officeFinalMeasureSaved
+                              ? "#203f2b"
+                              : "#16271d",
+                            color: officeFinalMeasureSaved
+                              ? "#c9f2d3"
+                              : "#dff5e5",
                             fontWeight: 900,
-                            cursor: officeFinalMeasureSaving || officeFinalMeasureSaved ? "default" : "pointer",
+                            cursor:
+                              officeFinalMeasureSaving ||
+                              officeFinalMeasureSaved
+                                ? "default"
+                                : "pointer",
                           }}
                         >
                           {officeFinalMeasureSaving
-                            ? "Completing..."
+                            ? "Scheduling..."
                             : officeFinalMeasureSaved
-                              ? "FINAL MEASUREMENT COMPLETE ✓"
-                              : "Complete Final Measurement"}
+                              ? "SCHEDULED"
+                              : `Schedule & Send to ${
+                                  (officeFinalMeasureDraft.assignedTo === "Gio" ? "Gio Richardson" : officeFinalMeasureDraft.assignedTo === "Gino" ? "Gino Marquez" : officeFinalMeasureDraft.assignedTo === "Dennis" ? "Dennis Dillon" : officeFinalMeasureDraft.assignedTo) || officeWorkLead?.assigned_salesperson || "Salesperson"
+                                }`}
                         </button>
                       </>
                     )}
@@ -6290,7 +6721,7 @@ export default function PremierWindowDoorBoard() {
                               }}
                             >
                               {officeDepositDraft.status === "received"
-                                ? "Received ✓"
+                                ? "Received"
                                 : "Still Needed"}
                             </strong>
                           </div>
@@ -6327,7 +6758,7 @@ export default function PremierWindowDoorBoard() {
                               }}
                             >
                               {officeFinalMeasureDraft.status === "complete"
-                                ? "Complete ✓"
+                                ? "Complete ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œ"
                                 : "Still Needed"}
                             </strong>
                           </div>
@@ -6438,6 +6869,266 @@ export default function PremierWindowDoorBoard() {
 
                 {officeWorkView === "final_closeout" ? (
                   <>
+                    {officeWorkLead.current_stage === "inspection_complete" && String(officeWorkLead.next_action || "").toLowerCase().includes("final walkthrough approved") ? (
+                      <div style={{ border: "1px solid #557c64", borderRadius: 11, padding: 14, background: "#12241c", color: "#d9e5ee", marginBottom: 18, fontSize: 13 }}>
+                        <strong>Final Walkthrough Approved</strong>
+                        <div style={{ marginTop: 8 }}>The walkthrough has already been approved. No second walkthrough needs scheduling. Office should review final payment and administrative closeout below.</div>
+                      </div>
+                    ) : null}
+                    <div style={{
+                      border: "1px solid #557c64",
+                      borderRadius: 11,
+                      padding: 14,
+                      background: "#12241c",
+                      display: officeWorkLead.current_stage === "inspection_complete" && String(officeWorkLead.next_action || "").toLowerCase().includes("final walkthrough approved") ? "none" : "grid",
+                      gap: 12,
+                      marginBottom: 18,
+                    }}>
+                      <strong style={{ fontSize: 15 }}>
+                        Final Customer Walkthrough
+                      </strong>
+
+                      <div style={{
+                        color: "#b9c6ce",
+                        fontSize: 12,
+                      }}>
+                        Schedule with RJ or Gino. They reply through
+                        Beam. Office records the customer's response.
+                      </div>
+
+                      {officeWalkthrough ? (
+                        <div style={{
+                          border: "1px solid #456a52",
+                          borderRadius: 9,
+                          padding: 11,
+                          display: "grid",
+                          gap: 5,
+                          fontSize: 12,
+                        }}>
+                          <strong>
+                            {officeWalkthrough.status === "approved"
+                              ? "Customer Approved"
+                              : officeWalkthrough.status ===
+                                  "changes_requested"
+                              ? "Customer Requested Changes"
+                              : "Walkthrough Scheduled"}
+                          </strong>
+                          {officeWalkthrough.status === "scheduled" ? (
+                            <div style={{
+                              color: "#b9c6ce",
+                              fontSize: 12,
+                            }}>
+                              Waiting for {
+                                officeWalkthrough.assigned_to === "RJ"
+                                  ? "RJ's"
+                                  : "Gino's"
+                              } Response
+                            </div>
+                          ) : null}
+                          <div>
+                            Assigned to: {
+                              officeWalkthrough.assigned_to === "RJ"
+                                ? "RJ"
+                                : "Gino"
+                            }
+                          </div>
+                          <div>
+                            {new Date(
+                              officeWalkthrough.scheduled_at
+                            ).toLocaleString()}
+                          </div>
+                          {officeWalkthrough.outcome_recorded_by ? (
+                            <div>
+                              Recorded by {
+                                officeWalkthrough.outcome_recorded_by
+                              }
+                            </div>
+                          ) : null}
+                          {officeWalkthrough.outcome_note ? (
+                            <div>
+                              {officeWalkthrough.outcome_note}
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : null}
+
+                      {officeWalkthrough?.status !== "approved" ? (
+                        <>
+                          <label style={{
+                            display: "grid",
+                            gap: 5,
+                            fontSize: 12,
+                          }}>
+                            Assigned To
+                            <select
+                              value={officeWalkthroughAssignee}
+                              onChange={(event) =>
+                                setOfficeWalkthroughAssignee(
+                                  event.target.value
+                                )
+                              }
+                              style={{
+                                minHeight: 42,
+                                borderRadius: 8,
+                                padding: 9,
+                                background: "#0a1015",
+                                color: "#fff",
+                              }}
+                            >
+                              <option value="RJ">RJ</option>
+                              <option value="Gino Marquez">Gino</option>
+                            </select>
+                          </label>
+
+                          <label style={{
+                            display: "grid",
+                            gap: 5,
+                            fontSize: 12,
+                          }}>
+                            Date and Time
+                            <input
+                              type="datetime-local"
+                              value={officeWalkthroughDate}
+                              onChange={(event) =>
+                                setOfficeWalkthroughDate(
+                                  event.target.value
+                                )
+                              }
+                              style={{
+                                minHeight: 42,
+                                borderRadius: 8,
+                                padding: 9,
+                                background: "#0a1015",
+                                color: "#fff",
+                              }}
+                            />
+                          </label>
+
+                          <textarea
+                            value={officeWalkthroughNote}
+                            onChange={(event) =>
+                              setOfficeWalkthroughNote(
+                                event.target.value
+                              )
+                            }
+                            placeholder="Scheduling note (optional)"
+                            style={{
+                              minHeight: 65,
+                              borderRadius: 8,
+                              padding: 9,
+                              background: "#0a1015",
+                              color: "#fff",
+                            }}
+                          />
+
+                          <button
+                            type="button"
+                            disabled={officeWalkthroughBusy}
+                            onClick={() =>
+                              void scheduleOfficeWalkthrough()
+                            }
+                            style={{
+                              minHeight: 44,
+                              borderRadius: 9,
+                              background: "#173225",
+                              border: "1px solid #557c64",
+                              color: "#fff",
+                              fontWeight: 900,
+                            }}
+                          >
+                            {officeWalkthroughBusy
+                              ? "Saving..."
+                              : officeWalkthrough
+                              ? "Reschedule Walkthrough"
+                              : "Schedule Walkthrough"}
+                          </button>
+                        </>
+                      ) : null}
+
+                      {officeWalkthrough &&
+                      officeWalkthrough.status !== "approved" ? (
+                        <div style={{
+                          display: "grid",
+                          gap: 9,
+                          borderTop: "1px solid #456a52",
+                          paddingTop: 12,
+                        }}>
+                          <strong style={{ fontSize: 12 }}>
+                            Customer Walkthrough Result
+                          </strong>
+                          <div style={{
+                            color: "#b9c6ce",
+                            fontSize: 11,
+                          }}>
+                            After RJ or Gino confirms the outcome
+                            through Beam, record it here.
+                          </div>
+                          <textarea
+                            value={officeWalkthroughOutcomeNote}
+                            onChange={(event) =>
+                              setOfficeWalkthroughOutcomeNote(
+                                event.target.value
+                              )
+                            }
+                            placeholder="Outcome note (optional for approval)"
+                            style={{
+                              minHeight: 65,
+                              borderRadius: 8,
+                              padding: 9,
+                              background: "#0a1015",
+                              color: "#fff",
+                            }}
+                          />
+                          <button
+                            type="button"
+                            disabled={officeWalkthroughBusy}
+                            onClick={() =>
+                              void recordOfficeWalkthroughOutcome(
+                                "approved"
+                              )
+                            }
+                            style={{
+                              minHeight: 44,
+                              borderRadius: 9,
+                              background: "#173225",
+                              border: "1px solid #557c64",
+                              color: "#fff",
+                              fontWeight: 900,
+                            }}
+                          >
+                            Confirm Customer Approved
+                          </button>
+                          <button
+                            type="button"
+                            disabled={officeWalkthroughBusy}
+                            onClick={() =>
+                              void recordOfficeWalkthroughOutcome(
+                                "changes_requested"
+                              )
+                            }
+                            style={{
+                              minHeight: 42,
+                              borderRadius: 9,
+                              background: "#282017",
+                              border: "1px solid #715441",
+                              color: "#fff",
+                              fontWeight: 900,
+                            }}
+                          >
+                            Customer Requested Changes
+                          </button>
+                        </div>
+                      ) : null}
+
+                      {officeWalkthroughError ? (
+                        <div style={{
+                          color: "#f0aaaa",
+                          fontSize: 12,
+                        }}>
+                          {officeWalkthroughError}
+                        </div>
+                      ) : null}
+                    </div>
                     <div
                       style={{
                         color: "#9db7ca",
@@ -6458,8 +7149,18 @@ export default function PremierWindowDoorBoard() {
                         marginBottom: 10,
                       }}
                     >
-                      Ready to Close Job
+                      {officePaymentDrafts.final_10?.status === "received" ? "Final Payment Received" : "Collect Final 10% to Close Job"}
                     </strong>
+                    <div style={{ display: "grid", gap: 8, marginBottom: 12, fontSize: 12, color: "#d9e5ee" }}>
+                      <div>50% Deposit: <strong>{officePaymentDrafts.deposit_50?.status === "received" ? "Received" : "Outstanding"}</strong>{officePaymentDrafts.deposit_50?.amount ? ` - ${officePaymentDrafts.deposit_50.amount}` : ""}</div>
+                      <div>40% Material Payment: <strong>{officePaymentDrafts.delivery_40?.status === "received" ? "Received" : "Outstanding"}</strong>{officePaymentDrafts.delivery_40?.amount ? ` - ${officePaymentDrafts.delivery_40.amount}` : ""}</div>
+                      <div>Final 10%: <strong>{officePaymentDrafts.final_10?.status === "received" ? "Received" : "Outstanding"}</strong>{officePaymentDrafts.final_10?.amount ? ` - ${officePaymentDrafts.final_10.amount}` : ""}</div>
+                      <button type="button" onClick={() => { setOfficeWorkView("deposit"); void loadOfficePayments(officeWorkLead); }}
+                        style={{ minHeight: 46, borderRadius: 10, border: "1px solid #557c64", background: "#244934", color: "#ffffff", fontWeight: 900, cursor: "pointer" }}>
+                        {officePaymentDrafts.final_10?.status === "received" ? "View Payment Records" : "Collect Final 10% / Record Payment"}
+                      </button>
+                      <div style={{ fontSize: 11, color: "#aebbc4" }}>Use the existing invoice and receipt records. Mark Received only when payment is actually confirmed.</div>
+                    </div>
 
                     <div
                       style={{
@@ -6516,7 +7217,9 @@ export default function PremierWindowDoorBoard() {
 
                     <button
                       type="button"
+                      disabled={officeWorkLead.current_stage === "completed" || officePaymentsLoading || !["deposit_50", "delivery_40", "final_10"].every((key) => officePaymentDrafts[key]?.status === "received")}
                       onClick={async () => {
+                        if (officeWorkLead.current_stage === "completed") return;
                         const accessToken =
                           getPremierOfficeAccessToken();
 
@@ -6547,7 +7250,17 @@ export default function PremierWindowDoorBoard() {
                           setOpenLeadId(null);
 
                           setLiveLeads((current) =>
-                            current.filter((item) => item.id !== officeWorkLead.id)
+                            current.map((item) =>
+                              item.id === officeWorkLead.id
+                                ? {
+                                    ...item,
+                                    current_stage: "completed",
+                                    status: "completed",
+                                    next_action:
+                                      "Job complete. Office may archive when ready.",
+                                  }
+                                : item
+                            )
                           );
                         }
                       }}
@@ -6563,7 +7276,9 @@ export default function PremierWindowDoorBoard() {
                         cursor: "pointer",
                       }}
                     >
-                      Complete Job
+                      {officeWorkLead.current_stage === "completed"
+                        ? "Job Completed"
+                        : "Complete Job"}
                     </button>
                   </>
                 ) : null}
@@ -6580,7 +7295,7 @@ export default function PremierWindowDoorBoard() {
                         marginBottom: 4,
                       }}
                     >
-                      Final Inspection
+                      Final Walkthrough
                     </div>
 
                     <strong
@@ -6590,14 +7305,14 @@ export default function PremierWindowDoorBoard() {
                         marginBottom: 10,
                       }}
                     >
-                      Office Final Inspection Scheduling
+                      Office Final Walkthrough Scheduling
                     </strong>
 
                     <div style={{ display: "grid", gap: 10 }}>
 
                       <label style={{ display: "grid", gap: 5 }}>
                         <span style={{ color: "#9ca8b2", fontSize: 10 }}>
-                          Inspection Date
+                          Walkthrough Date
                         </span>
                         <input
                           type="date"
@@ -6643,28 +7358,29 @@ export default function PremierWindowDoorBoard() {
                           <option>Morning Window</option>
                           <option>Afternoon Window</option>
                           <option>All Day / Time TBD</option>
+                          <option>Specific Time</option>
                         </select>
+                        {officeInspectionDraft.window === "Specific Time" ? (
+                          <label style={{ display: "grid", gap: 5, marginTop: 8 }}>
+                            <span style={{ color: "#9ca8b2", fontSize: 10 }}>Appointment Time</span>
+                            <input type="time" required value={officeInspectionDraft.specificTime}
+                              onChange={(event) => setOfficeInspectionDraft((current) => ({ ...current, specificTime: event.target.value }))}
+                              style={{ minHeight: 44, border: "1px solid #31495a", borderRadius: 9, background: "#0c1116", color: "#f3f6f8", padding: "0 10px" }} />
+                          </label>
+                        ) : null}
                       </label>
 
                       <label style={{ display: "grid", gap: 5 }}>
                         <span style={{ color: "#9ca8b2", fontSize: 10 }}>
                           Assigned To
                         </span>
-                        <div
-                          style={{
-                            minHeight: 44,
-                            border: "1px solid #31495a",
-                            borderRadius: 9,
-                            background: "#0c1116",
-                            color: "#f3f6f8",
-                            padding: "0 10px",
-                            display: "flex",
-                            alignItems: "center",
-                            fontWeight: 800,
-                          }}
-                        >
-                          RJ
-                        </div>
+                        <select value={officeInspectionDraft.assignedTo}
+                          onChange={(event) => setOfficeInspectionDraft((current) => ({ ...current, assignedTo: event.target.value }))}
+                          style={{ minHeight: 44, border: "1px solid #31495a", borderRadius: 9, background: "#0c1116", color: "#f3f6f8", padding: "0 10px", fontWeight: 800 }}>
+                          <option value="RJ">RJ</option>
+                          <option value="Gino">Gino</option>
+                          <option value="RJ + Gino">RJ + Gino</option>
+                        </select>
                       </label>
 
                       <button
@@ -6698,376 +7414,6 @@ export default function PremierWindowDoorBoard() {
                         </div>
                       ) : null}
                     </div>
-                  </>
-                ) : null}
-
-                {officeWorkView === "production_setup" ? (
-                  <>
-                    <div
-                      style={{
-                        color: "#9db7ca",
-                        fontSize: 9,
-                        fontWeight: 900,
-                        letterSpacing: 0.8,
-                        textTransform: "uppercase",
-                        marginBottom: 4,
-                      }}
-                    >
-                      Production Setup
-                    </div>
-
-                    <strong
-                      style={{
-                        display: "block",
-                        fontSize: 14,
-                        marginBottom: 10,
-                      }}
-                    >
-                      Office Production Setup
-                    </strong>
-
-                    {officeProductionLoading ? (
-                      <div
-                        style={{
-                          color: "#9ca8b2",
-                          fontSize: 11,
-                        }}
-                      >
-                        Loading production setup...
-                      </div>
-                    ) : (
-                      <>
-                        <label
-                          style={{
-                            display: "grid",
-                            gap: 5,
-                            marginBottom: 10,
-                          }}
-                        >
-                          <span
-                            style={{
-                              color: "#9ca8b2",
-                              fontSize: 10,
-                              fontWeight: 800,
-                            }}
-                          >
-                            Materials / Order Status
-                          </span>
-
-                          <select
-                            value={officeProductionDraft.materialStatus}
-                            onChange={(event) => {
-                              setOfficeProductionSaved(false);
-                              setOfficeProductionDraft((current) => ({
-                                ...current,
-                                materialStatus: event.target.value,
-                              }));
-                            }}
-                            style={{
-                              width: "100%",
-                              minHeight: 44,
-                              border: "1px solid #31495a",
-                              borderRadius: 9,
-                              background: "#0c1116",
-                              color: "#f3f6f8",
-                              padding: "0 10px",
-                            }}
-                          >
-                            <option value="Not ordered">Not ordered</option>
-                            <option value="Ordered">Ordered</option>
-                            <option value="In production">In production</option>
-                            <option value="Received">Received</option>
-                          </select>
-                        </label>
-
-                        <label
-                          style={{
-                            display: "grid",
-                            gap: 5,
-                            marginBottom: 10,
-                          }}
-                        >
-                          <span
-                            style={{
-                              color: "#9ca8b2",
-                              fontSize: 10,
-                              fontWeight: 800,
-                            }}
-                          >
-                            Material ETA
-                          </span>
-
-                          <input
-                            type="date"
-                            value={officeProductionDraft.materialEta}
-                            onChange={(event) => {
-                              setOfficeProductionSaved(false);
-                              setOfficeProductionDraft((current) => ({
-                                ...current,
-                                materialEta: event.target.value,
-                              }));
-                            }}
-                            style={{
-                              width: "100%",
-                              minHeight: 44,
-                              boxSizing: "border-box",
-                              border: "1px solid #31495a",
-                              borderRadius: 9,
-                              background: "#0c1116",
-                              color: "#f3f6f8",
-                              padding: "0 10px",
-                            }}
-                          />
-                        </label>
-
-                        <label
-                          style={{
-                            display: "grid",
-                            gap: 5,
-                            marginBottom: 10,
-                          }}
-                        >
-                          <span
-                            style={{
-                              color: "#9ca8b2",
-                              fontSize: 10,
-                              fontWeight: 800,
-                            }}
-                          >
-                            Permit Status
-                          </span>
-
-                          <select
-                            value={officeProductionDraft.permitStatus}
-                            onChange={(event) => {
-                              setOfficeProductionSaved(false);
-                              setOfficeProductionDraft((current) => ({
-                                ...current,
-                                permitStatus: event.target.value,
-                              }));
-                            }}
-                            style={{
-                              width: "100%",
-                              minHeight: 44,
-                              border: "1px solid #31495a",
-                              borderRadius: 9,
-                              background: "#0c1116",
-                              color: "#f3f6f8",
-                              padding: "0 10px",
-                            }}
-                          >
-                            <option value="Not started">Not started</option>
-                            <option value="Submitted">Submitted</option>
-                            <option value="Approved">Approved</option>
-                            <option value="Not required">Not required</option>
-                          </select>
-                        </label>
-
-                        {officeProductionError ? (
-                          <div
-                            style={{
-                              color: "#d8b267",
-                              fontSize: 10,
-                              marginBottom: 8,
-                            }}
-                          >
-                            {officeProductionError}
-                          </div>
-                        ) : null}
-
-                        <button
-                          type="button"
-                          disabled={
-                            officeProductionSaving ||
-                            officeProductionSaved
-                          }
-                          onClick={() =>
-                            void saveOfficeProductionSetup(
-                              officeWorkLead
-                            )
-                          }
-                          style={{
-                            width: "100%",
-                            minHeight: 46,
-                            border: "1px solid #557c64",
-                            borderRadius: 9,
-                            background: "#14271c",
-                            color: "#b7dec4",
-                            fontWeight: 900,
-                            cursor:
-                              officeProductionSaving ||
-                              officeProductionSaved
-                                ? "default"
-                                : "pointer",
-                            opacity:
-                              officeProductionSaving ||
-                              officeProductionSaved
-                                ? 0.72
-                                : 1,
-                          }}
-                        >
-                          {officeProductionSaving
-                            ? "Saving..."
-                            : officeProductionSaved
-                            ? "Production Setup Saved ✓"
-                            : "Save Production Setup"}
-                        </button>
-
-                        {officeProductionDraft.materialStatus === "Received" &&
-                        ["Approved", "Not required"].includes(
-                          officeProductionDraft.permitStatus
-                        ) ? (
-                          <div
-                            style={{
-                              marginTop: 14,
-                              paddingTop: 14,
-                              borderTop: "1px solid #26313a",
-                            }}
-                          >
-                            <div
-                              style={{
-                                color: "#9db7ca",
-                                fontSize: 10,
-                                fontWeight: 900,
-                                letterSpacing: 0.8,
-                                textTransform: "uppercase",
-                                marginBottom: 10,
-                              }}
-                            >
-                              Installation Scheduling
-                            </div>
-
-                            <label
-                              style={{
-                                display: "grid",
-                                gap: 5,
-                                marginBottom: 10,
-                              }}
-                            >
-                              <span
-                                style={{
-                                  color: "#9ca8b2",
-                                  fontSize: 10,
-                                  fontWeight: 800,
-                                }}
-                              >
-                                Crew
-                              </span>
-
-                              <select
-                                value={officeInstallDraft.crew}
-                                onChange={(event) => {
-                                  setOfficeInstallSaved(false);
-                                  setOfficeInstallDraft((current) => ({
-                                    ...current,
-                                    crew: event.target.value,
-                                  }));
-                                }}
-                                style={{
-                                  width: "100%",
-                                  minHeight: 44,
-                                  border: "1px solid #31495a",
-                                  borderRadius: 9,
-                                  background: "#0c1116",
-                                  color: "#f3f6f8",
-                                  padding: "0 10px",
-                                }}
-                              >
-                                <option value="">Choose crew</option>
-                                <option value="RJ">RJ</option>
-                                <option value="Exquisite Windows & Doors — Angel">Exquisite Windows & Doors — Angel</option>
-                                <option value="Riveras Impact Windows and Doors — Jose">Riveras Impact Windows and Doors — Jose</option>
-                                <option value="OGR Windows and Doors — Obelio">OGR Windows and Doors — Obelio</option>
-                                <option value="Elite Impact Solutions — Joseph">Elite Impact Solutions — Joseph</option>
-                              </select>
-                            </label>
-
-                            <label
-                              style={{
-                                display: "grid",
-                                gap: 5,
-                                marginBottom: 10,
-                              }}
-                            >
-                              <span
-                                style={{
-                                  color: "#9ca8b2",
-                                  fontSize: 10,
-                                  fontWeight: 800,
-                                }}
-                              >
-                                Install Date / Time
-                              </span>
-
-                              <input
-                                type="datetime-local"
-                                value={officeInstallDraft.scheduledFor}
-                                onChange={(event) => {
-                                  setOfficeInstallSaved(false);
-                                  setOfficeInstallDraft((current) => ({
-                                    ...current,
-                                    scheduledFor: event.target.value,
-                                  }));
-                                }}
-                                style={{
-                                  width: "100%",
-                                  minHeight: 44,
-                                  boxSizing: "border-box",
-                                  border: "1px solid #31495a",
-                                  borderRadius: 9,
-                                  background: "#0c1116",
-                                  color: "#f3f6f8",
-                                  padding: "0 10px",
-                                }}
-                              />
-                            </label>
-
-                            {officeInstallError ? (
-                              <div
-                                style={{
-                                  color: "#d8b267",
-                                  fontSize: 10,
-                                  marginBottom: 8,
-                                }}
-                              >
-                                {officeInstallError}
-                              </div>
-                            ) : null}
-
-                            <button
-                              type="button"
-                              disabled={officeInstallSaving || officeInstallSaved}
-                              onClick={() =>
-                                void saveOfficeInstallSchedule(officeWorkLead)
-                              }
-                              style={{
-                                width: "100%",
-                                minHeight: 46,
-                                border: "1px solid #557c64",
-                                borderRadius: 9,
-                                background: "#14271c",
-                                color: "#b7dec4",
-                                fontWeight: 900,
-                                cursor:
-                                  officeInstallSaving || officeInstallSaved
-                                    ? "default"
-                                    : "pointer",
-                                opacity:
-                                  officeInstallSaving || officeInstallSaved
-                                    ? 0.72
-                                    : 1,
-                              }}
-                            >
-                              {officeInstallSaving
-                                ? "Saving..."
-                                : officeInstallSaved
-                                ? "Installation Scheduled ✓"
-                                : "Save Schedule"}
-                            </button>
-                          </div>
-                        ) : null}
-                      </>
-                    )}
                   </>
                 ) : null}
 
@@ -7133,6 +7479,798 @@ export default function PremierWindowDoorBoard() {
                 ) : null}
               </div>
             ) : null}
+
+            <details
+              defaultOpen={["installation_in_progress", "installer_finish_back", "installation_complete", "inspection_complete", "scheduled", "installation_scheduled"].includes(officeWorkLead.current_stage)}
+              style={{ marginTop: 14, marginBottom: 10, border: "1px solid #31495a", borderRadius: 12, padding: 10, background: "#101820" }}
+            >
+              <summary style={{ cursor: "pointer", color: "#d9e5ee", fontWeight: 900, padding: "8px 5px" }}>
+                Field Activity, Inspection Proof &amp; Beam Messages
+              </summary>
+              <div style={{ marginTop: 12 }}>
+            <section style={{
+              border: "1px solid #456174",
+              borderRadius: 12,
+              padding: 14,
+              marginBottom: 12,
+              background: "#101b23",
+              color: "#edf4f8",
+            }}>
+              <div style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: 10,
+                flexWrap: "wrap",
+              }}>
+                <strong>Field Activity &amp; Issues</strong>
+                <button
+                  type="button"
+                  onClick={() => setOfficeFieldRefresh(v => v + 1)}
+                  style={{
+                    padding: "8px 12px",
+                    border: "1px solid #456174",
+                    borderRadius: 8,
+                    background: "#182a36",
+                    color: "#edf4f8",
+                    cursor: "pointer",
+                  }}
+                >Refresh</button>
+              </div>
+              <div style={{
+                marginTop: 14,
+                marginBottom: 14,
+                borderTop: "1px solid #31495a",
+                paddingTop: 12,
+              }}>
+                <strong>Bucking Photos & Inspection Records</strong>
+
+                {officeProofLoading ? (
+                  <p>Loading Bucking evidence...</p>
+                ) : officeProofError ? (
+                  <p style={{ color: "#f3b6a9" }}>{officeProofError}</p>
+                ) : officeProofPhotos.length === 0 ? (
+                  <p style={{ color: "#a4b5c0", fontSize: 12 }}>
+                    No installer proof received yet.
+                  </p>
+                ) : (
+                  <div style={{
+                    display: "grid",
+                    gap: 12,
+                    marginTop: 12,
+                  }}>
+                    {officeProofPhotos.map((photo: any, index: number) => {
+                      const imageUrl =
+                        photo.signed_url ||
+                        photo.signedUrl ||
+                        photo.photo_url ||
+                        photo.url ||
+                        photo.image_url ||
+                        "";
+
+                      return (
+                        <div key={photo.id || index} style={{
+                          border: "1px solid #31495a",
+                          borderRadius: 10,
+                          padding: 12,
+                          background: "#111820",
+                          display: "grid",
+                          gap: 8,
+                        }}>
+                          <strong>
+  {(() => {
+    const type = String(photo.proof_type || "");
+    if (!type.startsWith("Repair / ")) {
+      return type || "Installation Proof";
+    }
+
+    const issueId = type.slice("Repair / ".length);
+    const issue = officeFieldReports.find(
+      (report: any) => String(report.id) === issueId
+    );
+
+    if (!issue) return "Repair Photo";
+
+    const categories = (issue.categories || [])
+      .join(" ")
+      .toLowerCase();
+    const details = String(issue.details || "").toLowerCase();
+
+    if (categories.includes("brake metal")) {
+      return "Brake Metal - Repair Photo";
+    }
+
+    if (details.includes("window 6") ||
+        details.includes("windows 6")) {
+      return "Window 6 - Repair Photo";
+    }
+
+    return "Reported Damage - Repair Photo";
+  })()}
+</strong>
+
+                          {imageUrl ? (
+                            <img
+                              src={imageUrl}
+                              alt="Installer proof"
+                              style={{
+                                width: "100%",
+                                maxHeight: 280,
+                                objectFit: "contain",
+                                borderRadius: 8,
+                              }}
+                            />
+                          ) : (
+                            <span style={{ fontSize: 12, color: "#b7c5cc" }}>
+                              Photo record received.
+                            </span>
+                          )}
+
+                          {photo.bucking_notes ? (
+                            <div><strong>Bucking:</strong> {photo.bucking_notes}</div>
+                          ) : null}
+
+                          {photo.measurement_notes ? (
+                            <div><strong>Measurements:</strong> {photo.measurement_notes}</div>
+                          ) : null}
+
+                          {photo.material_issue_notes ? (
+                            <div><strong>Materials:</strong> {photo.material_issue_notes}</div>
+                          ) : null}
+
+                          {photo.needs_attention ? (
+                            <div style={{
+                              display: "grid",
+                              gap: 5,
+                              fontSize: 12,
+                            }}>
+                              <strong style={{ color: "#f0c77b" }}>
+                                Flagged at Original Inspection
+                              </strong>
+                              <span style={{ color: "#b7c5cc" }}>
+                                Historical inspection record. See reported
+                                problems below for current repair status.
+                              </span>
+                            </div>
+                          ) : null}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {officeFieldLoading ? (
+                <p>Loading field reports...</p>
+              ) : officeFieldError ? (
+                <p style={{ color: "#f3b6a9" }}>{officeFieldError}</p>
+              ) : officeFieldReports.length === 0 ? (
+                <p style={{ color: "#a4b5c0", fontSize: 12 }}>
+                  No field issues reported for this job.
+                </p>
+              ) : (
+                <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
+                  <strong style={{ color: "#f0c77b" }}>
+                    {(() => {
+                      const openCount = officeFieldReports.filter(
+                        (report: any) =>
+                          officeIssueStatuses[String(report.id)]?.resolution_status !== "resolved"
+                      ).length;
+
+                      return openCount === 0
+                        ? "All reported problems resolved"
+                        : openCount === 1
+                        ? "Needs Attention: 1 problem still needs attention"
+                        : `Needs Attention: ${openCount} problems still need attention`;
+                    })()}
+                  </strong>
+                  {officeFieldReports.map((report: any) => (
+                    <div key={report.id} style={{
+                      border: "1px solid #6d5235",
+                      borderRadius: 9,
+                      padding: 11,
+                      background: "#251e17",
+                    }}>
+                      <strong>{(report.categories ?? []).join(", ") || "Field Issue"}</strong>
+                      <p style={{ margin: "7px 0", whiteSpace: "pre-wrap" }}>
+                        {report.details || "No additional notes."}
+                      </p>
+                      <div style={{ fontSize: 11, color: "#b7c5cc" }}>
+                        {String(report.reporter_label || "Field Team").split(":").pop()}
+                        {" · "}
+                        {report.reported_at
+                          ? new Date(report.reported_at).toLocaleString()
+                          : "Time unavailable"}
+                      </div>
+
+                      <div style={{
+                        borderTop: "1px solid #6d5235",
+                        marginTop: 12,
+                        paddingTop: 12,
+                        display: "grid",
+                        gap: 9,
+                      }}>
+                        <strong style={{ color: "#f0c77b", fontSize: 12 }}>
+                          Status: {
+                            officeIssueStatuses[String(report.id)]?.resolution_status === "resolved"
+                              ? "Resolved"
+                              : officeIssueStatuses[String(report.id)]?.resolution_status === "under_review"
+                              ? "Being Handled"
+                              : "Needs Review"
+                          }
+                        </strong>
+
+                        {officeIssueStatusError ? (
+                          <span style={{ color: "#f3b6a9", fontSize: 11 }}>
+                            {officeIssueStatusError}
+                          </span>
+                        ) : null}
+
+                        {officeIssueStatuses[String(report.id)]?.resolution_updated_by ? (
+                          <span style={{ color: "#b7c5cc", fontSize: 11 }}>
+                            Last updated by {
+                              String(officeIssueStatuses[String(report.id)].resolution_updated_by)
+                                .split(":").pop()
+                            }
+                            {" · "}
+                            {officeIssueStatuses[String(report.id)].resolution_updated_at
+                              ? new Date(
+                                  officeIssueStatuses[String(report.id)].resolution_updated_at
+                                ).toLocaleString()
+                              : ""}
+                          </span>
+                        ) : null}
+
+                        {officeIssueStatuses[String(report.id)]?.resolution_note ? (
+                          <div style={{ color: "#c8d2d8", fontSize: 11 }}>
+                            Latest note: {
+                              officeIssueStatuses[String(report.id)].resolution_note
+                            }
+                          </div>
+                        ) : null}
+
+                        <div style={{
+                          fontSize: 12,
+                          color: "#c8d2d8",
+                          lineHeight: 1.5,
+                        }}>
+                          {officeIssueStatuses[String(report.id)]?.resolution_status === "resolved"
+                            ? "This problem was marked fixed. The report and its updates are saved. Reopen it if the problem returns."
+                            : officeIssueStatuses[String(report.id)]?.resolution_status === "under_review"
+                            ? "This problem is still open. Follow up with RJ or the installer. Once the fix is confirmed, describe what was done and click Problem Fixed."
+                            : "A problem was reported. Click I've Seen This to acknowledge it. The problem will remain open until the fix is confirmed."}
+                        </div>
+                        <textarea
+                          value={officeIssueNotes[String(report.id)] ?? ""}
+                          onChange={(event) =>
+                            setOfficeIssueNotes((current) => ({
+                              ...current,
+                              [String(report.id)]: event.target.value,
+                            }))
+                          }
+                          placeholder="What is happening with this problem? Add a note here..."
+                          rows={2}
+                          style={{
+                            width: "100%",
+                            boxSizing: "border-box",
+                            border: "1px solid #6d5235",
+                            borderRadius: 8,
+                            background: "#101820",
+                            color: "#edf4f8",
+                            padding: 10,
+                            fontSize: 12,
+                            resize: "vertical",
+                          }}
+                        />
+
+                        {officeIssueActionError[String(report.id)] ? (
+                          <span style={{ color: "#f3b6a9", fontSize: 11 }}>
+                            {officeIssueActionError[String(report.id)]}
+                          </span>
+                        ) : null}
+
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                          {(
+                            officeIssueStatuses[String(report.id)]?.resolution_status === "resolved"
+                              ? [["Reopen Issue", "needs_review"]]
+                              : officeIssueStatuses[String(report.id)]?.resolution_status === "under_review"
+                              ? [["Problem Fixed", "resolved"]]
+                              : [["I've Seen This", "under_review"]]
+                          ).map(([label, nextStatus]) => (
+                            <button
+                              key={nextStatus}
+                              type="button"
+                              disabled={
+                                officeIssueSavingId !== null ||
+                                Boolean(officeIssueStatusError)
+                              }
+                              onClick={async () => {
+                                const id = String(report.id);
+                                const note = (officeIssueNotes[id] ?? "").trim();
+
+                                if (nextStatus === "resolved" && note.length < 5) {
+                                  setOfficeIssueActionError((current) => ({
+                                    ...current,
+                                    [id]: "Describe what was fixed before closing this problem.",
+                                  }));
+                                  return;
+                                }
+
+                                const token = getPremierOfficeAccessToken();
+                                if (!token) {
+                                  setOfficeIssueActionError((current) => ({
+                                    ...current,
+                                    [id]: "Office session required.",
+                                  }));
+                                  return;
+                                }
+
+                                setOfficeIssueSavingId(id);
+                                setOfficeIssueActionError((current) => ({
+                                  ...current,
+                                  [id]: "",
+                                }));
+
+                                try {
+                                  const { error } = await supabase.rpc(
+                                    "update_premier_issue_resolution",
+                                    {
+                                      p_access_token: token,
+                                      p_issue_id: id,
+                                      p_new_status: nextStatus,
+                                      p_note: note,
+                                    }
+                                  );
+
+                                  if (error) throw error;
+
+                                  setOfficeIssueNotes((current) => ({
+                                    ...current,
+                                    [id]: "",
+                                  }));
+                                  setOfficeIssueHistory((current) => ({
+                                    ...current,
+                                    [id]: [],
+                                  }));
+                                  setOfficeIssueHistoryOpen((current) => ({
+                                    ...current,
+                                    [id]: false,
+                                  }));
+                                  setOfficeFieldRefresh((current) => current + 1);
+                                } catch {
+                                  setOfficeIssueActionError((current) => ({
+                                    ...current,
+                                    [id]: "Could not save the status. Please retry.",
+                                  }));
+                                } finally {
+                                  setOfficeIssueSavingId(null);
+                                }
+                              }}
+                              style={{
+                                border: "1px solid #78aa88",
+                                borderRadius: 8,
+                                padding: "9px 12px",
+                                background: "#173225",
+                                color: "#e0f0e4",
+                                fontWeight: 800,
+                                cursor: "pointer",
+                              }}
+                            >
+                              {officeIssueSavingId === String(report.id)
+                                ? "Saving..."
+                                : label}
+                            </button>
+                          ))}
+
+                          <button
+                            type="button"
+                            disabled={officeIssueHistoryLoading === String(report.id)}
+                            onClick={async () => {
+                              const id = String(report.id);
+
+                              if (officeIssueHistoryOpen[id]) {
+                                setOfficeIssueHistoryOpen((current) => ({
+                                  ...current,
+                                  [id]: false,
+                                }));
+                                return;
+                              }
+
+                              const token = getPremierOfficeAccessToken();
+                              if (!token) return;
+
+                              setOfficeIssueHistoryLoading(id);
+
+                              try {
+                                const { data, error } = await supabase.rpc(
+                                  "get_premier_issue_history",
+                                  {
+                                    p_access_token: token,
+                                    p_issue_id: id,
+                                  }
+                                );
+
+                                if (error) throw error;
+
+                                setOfficeIssueHistory((current) => ({
+                                  ...current,
+                                  [id]: data ?? [],
+                                }));
+                                setOfficeIssueHistoryOpen((current) => ({
+                                  ...current,
+                                  [id]: true,
+                                }));
+                              } catch {
+                                setOfficeIssueActionError((current) => ({
+                                  ...current,
+                                  [id]: "Could not load issue history.",
+                                }));
+                              } finally {
+                                setOfficeIssueHistoryLoading(null);
+                              }
+                            }}
+                            style={{
+                              border: "1px solid #456174",
+                              borderRadius: 8,
+                              padding: "9px 12px",
+                              background: "#182a36",
+                              color: "#edf4f8",
+                              cursor: "pointer",
+                            }}
+                          >
+                            {officeIssueHistoryLoading === String(report.id)
+                              ? "Loading..."
+                              : officeIssueHistoryOpen[String(report.id)]
+                              ? "Hide Updates"
+                              : "See Updates"}
+                          </button>
+                        </div>
+
+                        {officeIssueHistoryOpen[String(report.id)] ? (
+                          <div style={{ display: "grid", gap: 8 }}>
+                            {(officeIssueHistory[String(report.id)] ?? []).length === 0 ? (
+                              <span style={{ fontSize: 11, color: "#a4b5c0" }}>
+                                No status changes recorded yet.
+                              </span>
+                            ) : (
+                              (officeIssueHistory[String(report.id)] ?? []).map(
+                                (entry: any, index: number) => (
+                                  <div key={index} style={{
+                                    border: "1px solid #31495a",
+                                    borderRadius: 8,
+                                    padding: 9,
+                                    fontSize: 11,
+                                  }}>
+                                    <strong>
+                                      {String(entry.old_status).replaceAll("_", " ")}
+                                      {" → "}
+                                      {String(entry.new_status).replaceAll("_", " ")}
+                                    </strong>
+                                    <div>{entry.note || "No note provided."}</div>
+                                    <div style={{ color: "#a4b5c0", marginTop: 4 }}>
+                                      {String(entry.actor_label || "").split(":").pop()}
+                                      {" · "}
+                                      {entry.changed_at
+                                        ? new Date(entry.changed_at).toLocaleString()
+                                        : ""}
+                                    </div>
+                                  </div>
+                                )
+                              )
+                            )}
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <div
+              style={{
+                marginBottom: 12,
+                  border: "1px solid #78aa88",
+                  borderRadius: 14,
+                  background:
+                    "linear-gradient(135deg, #173225 0%, #101b16 100%)",
+                  boxShadow:
+                    "0 0 0 1px rgba(139,184,154,0.08), 0 8px 24px rgba(0,0,0,0.18)",
+                  padding: 12,
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: 10,
+                  marginBottom: 10,
+                }}
+              >
+                <div>
+                  <div
+                    style={{
+                      color: "#8fa9bc",
+                      fontSize: 9,
+                      fontWeight: 900,
+                      letterSpacing: 0.8,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Beam Quick Message
+                  </div>
+
+                  <div
+                    style={{
+                      color: "#d9e5ee",
+                      fontSize: 13,
+                      fontWeight: 800,
+                      marginTop: 3,
+                    }}
+                  >
+                    Fast job communication
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  disabled={officeBeamLoading}
+                  onClick={() => void loadOfficeBeam(officeWorkLead.id)}
+                  style={{
+                    minHeight: 34,
+                    border: "1px solid #31495a",
+                    borderRadius: 8,
+                    background: "#101820",
+                    color: "#aebbc5",
+                    padding: "0 10px",
+                    fontSize: 10,
+                    fontWeight: 800,
+                    cursor: officeBeamLoading ? "wait" : "pointer",
+                    opacity: officeBeamLoading ? 0.65 : 1,
+                  }}
+                >
+                  {officeBeamLoading ? "Loading..." : "Refresh"}
+                </button>
+              </div>
+
+              <div
+                style={{
+                  border: "1px solid #294a36",
+                  borderRadius: 10,
+                  background: "#0d1711",
+                  padding: 9,
+                  maxHeight: 220,
+                  overflowY: "auto",
+                  marginBottom: 10,
+                }}
+              >
+                {officeBeamLoading && officeBeamMessages.length === 0 ? (
+                  <div style={{ color: "#7f8b95", fontSize: 11 }}>
+                    Loading Beam...
+                  </div>
+                ) : officeBeamMessages.length === 0 ? (
+                  <div style={{ color: "#7f8b95", fontSize: 11 }}>
+                    No Beam messages yet.
+                  </div>
+                ) : (
+                  <div style={{ display: "grid", gap: 8 }}>
+                    {officeBeamMessages.map((message) => (
+                      <div
+                        key={message.id}
+                        style={{
+                          border:
+                            message.recipient_role === "Office" && !message.read_at
+                              ? "1px solid #5d7d91"
+                              : "1px solid #26343e",
+                          borderRadius: 9,
+                          background:
+                            message.sender_role === "Office"
+                              ? "#111d25"
+                              : "#101419",
+                          padding: "9px 10px",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            gap: 8,
+                            flexWrap: "wrap",
+                            marginBottom: 5,
+                          }}
+                        >
+                          <strong style={{ color: "#d9e5ee", fontSize: 11 }}>
+                            {message.sender_label || message.sender_role}
+                          </strong>
+
+                          <span style={{ color: "#667680", fontSize: 9 }}>
+                            {message.created_at
+                              ? new Date(message.created_at).toLocaleString()
+                              : ""}
+                          </span>
+                        </div>
+
+                        <div style={{ color: "#9db7ca", fontSize: 9, marginBottom: 5 }}>
+                          {message.sender_role} {" → "} {message.recipient_role}
+                        </div>
+
+                        <div
+                          style={{
+                            color: "#c8d2d8",
+                            fontSize: 12,
+                            lineHeight: 1.45,
+                            whiteSpace: "pre-wrap",
+                          }}
+                        >
+                          {String(message.body ?? "").trim() === "," ? "" : message.body}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {officeBeamError ? (
+                <div
+                  style={{
+                    color: "#e1a3a3",
+                    fontSize: 10,
+                    marginBottom: 8,
+                  }}
+                >
+                  {officeBeamError}
+                </div>
+              ) : null}
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "minmax(120px, 160px) minmax(0, 1fr) 46px",
+                  gap: 8,
+                  marginBottom: 8,
+                }}
+              >
+                <select
+                  value={officeBeamRecipient}
+                  onChange={(event) =>
+                    setOfficeBeamRecipient(
+                      event.target.value as
+                        | "Gio Richardson"
+                        | "Gino Marquez"
+                        | "Dennis Dillon"
+                        | "RJ"
+                        | "Angel"
+                    )
+                  }
+                  style={{
+                    minHeight: 40,
+                    border: "1px solid #31495a",
+                    borderRadius: 9,
+                    background: "#101820",
+                    color: "#d9e5ee",
+                    padding: "0 9px",
+                    fontSize: 11,
+                    fontWeight: 800,
+                  }}
+                >
+                  <option value="Gio Richardson">Gio Richardson</option>
+                  <option value="Gino Marquez">Gino Marquez</option>
+                  <option value="Dennis Dillon">Dennis Dillon</option>
+                  <option value="RJ">RJ</option>
+                  <option value="Angel">Angel</option>
+                </select>
+
+                <textarea
+                  value={officeBeamBody}
+                  onChange={(event) => setOfficeBeamBody(event.target.value)}
+                  placeholder="Send a quick job message..."
+                  rows={2}
+                  style={{
+                    width: "100%",
+                    minHeight: 54,
+                    resize: "vertical",
+                    border: "1px solid #31495a",
+                    borderRadius: 9,
+                    background: "#101820",
+                    color: "#f3f6f8",
+                    padding: "9px 10px",
+                    fontSize: 12,
+                    lineHeight: 1.4,
+                    boxSizing: "border-box",
+                  }}
+                />
+
+                <button
+                  type="button"
+                  onClick={startOfficeBeamVoiceInput}
+                  disabled={officeBeamListening}
+                  title={officeBeamListening ? "Listening..." : "Talk message"}
+                  aria-label={officeBeamListening ? "Listening..." : "Talk message"}
+                  style={{
+                    minHeight: 54,
+                    border: officeBeamListening
+                      ? "1px solid #d98778"
+                      : "1px solid #8fbea0",
+                    borderRadius: 9,
+                    background: officeBeamListening
+                      ? "#7a2d24"
+                      : "#2f6842",
+                    color: "#ffffff",
+                    fontSize: 20,
+                    cursor: officeBeamListening ? "wait" : "pointer",
+                    boxShadow: officeBeamListening
+                      ? "0 0 0 2px rgba(217,135,120,0.18), 0 0 18px rgba(217,135,120,0.22)"
+                      : "none",
+                    transition: "all 160ms ease",
+                  }}
+                >
+                  Mic</button>
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  gap: 6,
+                  flexWrap: "wrap",
+                  marginBottom: 8,
+                }}
+              >
+                {[
+                  "Please review.",
+                  "Call Office when available.",
+                  "Need an update.",
+                  "Issue needs attention.",
+                ].map((reply) => (
+                  <button
+                    key={reply}
+                    type="button"
+                    onClick={() => setOfficeBeamBody(reply)}
+                    style={{
+                      minHeight: 30,
+                      border: "1px solid #477057",
+                      borderRadius: 999,
+                      background: "#173225",
+                      color: "#cce8d4",
+                      padding: "0 9px",
+                      fontSize: 9,
+                      fontWeight: 800,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {reply}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                disabled={officeBeamSending || !officeBeamBody.trim()}
+                onClick={() => void sendOfficeBeamMessage()}
+                style={{
+                  width: "100%",
+                  minHeight: 40,
+                  border: "1px solid #557c64",
+                  borderRadius: 9,
+                  background: "#14271c",
+                  color: "#b7dec4",
+                  fontWeight: 900,
+                  cursor:
+                    officeBeamSending || !officeBeamBody.trim()
+                      ? "not-allowed"
+                      : "pointer",
+                  opacity:
+                    officeBeamSending || !officeBeamBody.trim() ? 0.55 : 1,
+                }}
+              >
+                {officeBeamSending
+                  ? "Sending..."
+                  : `Send to ${officeBeamRecipient}`}
+              </button>
+            </div>
+
+              </div>
+            </details>
 
             {!officeWorkLead._sample ? (
               <button
@@ -7942,13 +9080,13 @@ export default function PremierWindowDoorBoard() {
                       color: "#d0d6db",
                     }}
                   >
-                    <div>✓ Owner signature</div>
-                    <div>✓ Contractor signature</div>
-                    <div>✓ Application</div>
-                    <div>✓ Product approvals</div>
-                    <div>✓ Permit approved</div>
-                    <div>○ In-progress inspection</div>
-                    <div>○ Final inspection</div>
+                    <div>ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œ Owner signature</div>
+                    <div>ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œ Contractor signature</div>
+                    <div>ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œ Application</div>
+                    <div>ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œ Product approvals</div>
+                    <div>ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œ Permit approved</div>
+                    <div>ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¹ In-progress inspection</div>
+                    <div>ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¹ Final inspection</div>
                   </div>
                 </CollapsibleSection>
 
@@ -8132,42 +9270,6 @@ export default function PremierWindowDoorBoard() {
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

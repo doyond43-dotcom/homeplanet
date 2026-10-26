@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 type SalesStage =
@@ -225,8 +225,8 @@ export default function PremierSalesBoard() {
     };
 
     return (
-      readStoredToken(window.localStorage) ||
       readStoredToken(window.sessionStorage) ||
+      readStoredToken(window.localStorage) ||
       new URLSearchParams(window.location.search).get("access")
     );
   };
@@ -269,6 +269,12 @@ export default function PremierSalesBoard() {
     useState(false);
   const [liveMeasurementSheetError, setLiveMeasurementSheetError] =
     useState("");
+  const [savedRoughMeasurementDocs, setSavedRoughMeasurementDocs] =
+    useState<any[]>([]);
+  const [savedRoughMeasurementDocsLoading, setSavedRoughMeasurementDocsLoading] =
+    useState(false);
+  const [savedRoughMeasurementDocsError, setSavedRoughMeasurementDocsError] =
+    useState("");
 
 
   const [finalMeasurementDocuments, setFinalMeasurementDocuments] =
@@ -285,6 +291,8 @@ export default function PremierSalesBoard() {
     useState("");
   const [finalMeasurementPackageNote, setFinalMeasurementPackageNote] =
     useState("");
+  const [finalMeasurementNoteSaved, setFinalMeasurementNoteSaved] = useState("");
+  const [finalMeasurementNoteSaving, setFinalMeasurementNoteSaving] = useState(false);
   const [
     finalMeasurementDocumentTitles,
     setFinalMeasurementDocumentTitles,
@@ -658,8 +666,8 @@ export default function PremierSalesBoard() {
 
       try {
         const rawSession =
-          window.localStorage.getItem("premier_staff_session") ||
-          window.sessionStorage.getItem("premier_staff_session");
+          window.sessionStorage.getItem("premier_staff_session") ||
+          window.localStorage.getItem("premier_staff_session");
 
         if (rawSession) {
           const session = JSON.parse(rawSession);
@@ -942,6 +950,27 @@ export default function PremierSalesBoard() {
     setSelectedLiveLeadId(null);
     setSavingLiveLeadAction(false);
   };
+  const saveLiveFinalHandoffNote = async () => {
+    if (!selectedLiveLead || selectedLiveLead.current_stage !== "final_measurement") return;
+    const accessToken = getPremierAccessToken();
+    if (!accessToken) { setFinalMeasurementPackageError("Premier sales access is missing."); return; }
+    setFinalMeasurementNoteSaving(true);
+    setFinalMeasurementNoteSaved("");
+    const { data, error } = await supabase.rpc("save_premier_final_handoff_note", {
+      p_access_token: accessToken,
+      p_job_id: selectedLiveLead.id,
+      p_note: finalMeasurementPackageNote,
+    });
+    setFinalMeasurementNoteSaving(false);
+    if (error || data !== true) {
+      console.error("Premier handoff note save failed:", error);
+      setFinalMeasurementPackageError("Could not save the handoff note. Please try again.");
+      return;
+    }
+    setFinalMeasurementPackageError("");
+    setFinalMeasurementNoteSaved("Handoff note saved. It will remain after refresh.");
+  };
+
   const completeLiveFinalMeasurement = async () => {
     if (
       !selectedLiveLead ||
@@ -1058,8 +1087,8 @@ export default function PremierSalesBoard() {
   const completeLiveRoughMeasurement = async () => {
     if (!selectedLiveLead) return;
 
-    if (liveOpenings.length === 0) {
-      window.alert("Save at least one opening before completing the rough measurement.");
+    if (liveOpenings.length === 0 && !liveMeasurementSheetUploaded && savedRoughMeasurementDocs.length === 0) {
+      window.alert("Add at least one opening or upload a measurement sheet before completing the rough measurement.");
       return;
     }
 
@@ -1075,24 +1104,10 @@ export default function PremierSalesBoard() {
       setLiveMeasurementOpen(false);
     }
   };
-  const handleLiveCustomerCall = async () => {
+  const handleLiveCustomerCall = () => {
     if (!selectedLiveLead?.phone) return;
-
     const phone = String(selectedLiveLead.phone).replace(/[^\d+]/g, "");
-    const mobileDevice =
-      /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-    if (mobileDevice) {
-      window.location.href = `tel:${phone}`;
-      return;
-    }
-
-    try {
-      await navigator.clipboard.writeText(phone);
-      window.alert(`Phone number copied: ${selectedLiveLead.phone}`);
-    } catch {
-      window.prompt("Copy customer phone number:", selectedLiveLead.phone);
-    }
+    window.location.href = `tel:${phone}`;
   };
 
   const loadFinalMeasurementDocuments = async (jobId: string) => {
@@ -1146,7 +1161,7 @@ export default function PremierSalesBoard() {
   ) => {
     if (!file || !selectedLiveLead?.id) return;
 
-    const cleanTitle = documentTitle.trim();
+    const cleanTitle = documentTitle.trim() || (["Final Measurement", "Floor Plan"].includes(documentType) ? documentType : "");
 
     if (!cleanTitle) {
       setFinalMeasurementPackageError(
@@ -1333,6 +1348,102 @@ export default function PremierSalesBoard() {
       setFinalMeasurementDocumentUploading(null);
     }
   };
+  const loadSavedRoughMeasurementDocs = async (jobId: string) => {
+    const accessToken = getPremierAccessToken();
+    if (!accessToken) {
+      setSavedRoughMeasurementDocs([]);
+      setSavedRoughMeasurementDocsError("Premier staff access is missing.");
+      return;
+    }
+    setSavedRoughMeasurementDocsLoading(true);
+    setSavedRoughMeasurementDocsError("");
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        "premier-job-document",
+        { body: { action: "list", accessToken, jobId } }
+      );
+      if (error || data?.error) {
+        throw new Error(data?.error || error?.message || "Could not load files.");
+      }
+      setSavedRoughMeasurementDocs(
+        (data?.documents || []).filter(
+          (doc: any) => doc.document_type === "Measurement Sheet"
+        )
+      );
+    } catch (error) {
+      console.error("Could not load rough measurement documents:", error);
+      setSavedRoughMeasurementDocs([]);
+      setSavedRoughMeasurementDocsError("Could not open saved measurements. Try reopening this customer.");
+    } finally {
+      setSavedRoughMeasurementDocsLoading(false);
+    }
+  };
+
+  const removeRoughMeasurementDocument = async (doc: any, confirmRemoval = true) => {
+    if (!selectedLiveLead?.id || !doc?.id) return false;
+    if (confirmRemoval && !window.confirm(`Remove ${doc.file_name || "this measurement sheet"}?`)) return false;
+    const accessToken = getPremierAccessToken();
+    if (!accessToken) {
+      setSavedRoughMeasurementDocsError("Premier staff access is missing.");
+      return false;
+    }
+    setSavedRoughMeasurementDocsLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("premier-job-document", {
+        body: { action: "remove", accessToken, jobId: selectedLiveLead.id, documentId: doc.id },
+      });
+      if (error || data?.error || data?.removed !== true) {
+        throw new Error(data?.error || error?.message || "Could not remove measurement sheet.");
+      }
+      await loadSavedRoughMeasurementDocs(selectedLiveLead.id);
+      setLiveMeasurementSheetUploaded(
+        savedRoughMeasurementDocs.filter((item: any) => item.id !== doc.id).length > 0
+      );
+      return true;
+    } catch (error) {
+      setSavedRoughMeasurementDocsError(error instanceof Error ? error.message : "Could not remove measurement sheet.");
+      return false;
+    } finally {
+      setSavedRoughMeasurementDocsLoading(false);
+    }
+  };
+
+  const renderRoughMeasurementDocuments = () => (
+    <div style={{ display: "grid", gap: 10, marginTop: 9, marginBottom: 10 }}>
+      {savedRoughMeasurementDocs.map((doc: any) => {
+        const isPdf = String(doc.mime_type || doc.file_name || "").toLowerCase().includes("pdf");
+        const isImage = String(doc.mime_type || "").startsWith("image/") || /\.(png|jpe?g|webp)$/i.test(String(doc.file_name || ""));
+        return (
+          <div key={doc.id} style={{ border: "1px solid #365844", background: "#132119", borderRadius: 11, padding: 10, display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
+            <div style={{ width: 122, height: 150, flexShrink: 0, borderRadius: 8, overflow: "hidden", border: "1px solid #48644f", background: "#eff2ea", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {doc.url && isImage ? (
+                <img src={doc.url} alt={doc.file_name || "Measurement photo"} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+              ) : doc.url && isPdf ? (
+                <iframe src={`${doc.url}#page=1&toolbar=0&navpanes=0`} title={`Preview of ${doc.file_name || "measurement PDF"}`} style={{ width: "100%", height: "100%", border: 0, pointerEvents: "none" }} />
+              ) : (
+                <div style={{ color: "#254333", fontWeight: 900, fontSize: 15 }}>{isPdf ? "PDF" : "FILE"}</div>
+              )}
+            </div>
+            <div style={{ flex: "1 1 180px", minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 850, color: "#e3f4e7", overflowWrap: "anywhere", marginBottom: 5 }}>{doc.file_name || "Rough Measurement"}</div>
+              <div style={{ color: "#9fc9aa", fontSize: 11, marginBottom: 10 }}>Saved to Green Folder</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+                <a href={doc.url || undefined} target="_blank" rel="noopener noreferrer" onClick={(event) => { if (!doc.url) event.preventDefault(); }} style={{ border: "1px solid #668876", padding: "9px 12px", borderRadius: 8, color: "#e1f4e6", textDecoration: "none", background: "#23543a", fontSize: 12, fontWeight: 850, opacity: doc.url ? 1 : 0.5 }}>View</a>
+                <label style={{ display: "inline-flex", alignItems: "center", border: "1px solid #668876", padding: "9px 12px", borderRadius: 8, color: "#e1f4e6", background: "#203e30", cursor: liveMeasurementSheetUploading ? "wait" : "pointer", fontSize: 12, fontWeight: 850, opacity: liveMeasurementSheetUploading ? 0.5 : 1 }}>
+                  Replace
+                  <input type="file" accept=".pdf,application/pdf,image/jpeg,image/png,image/webp" disabled={liveMeasurementSheetUploading || savedRoughMeasurementDocsLoading} style={{ display: "none" }} onChange={(event) => { const file = event.currentTarget.files?.[0] ?? null; event.currentTarget.value = ""; if (file) void uploadLiveMeasurementSheet(file, doc); }} />
+                </label>
+                <button type="button" disabled={savedRoughMeasurementDocsLoading || liveMeasurementSheetUploading} onClick={() => { void removeRoughMeasurementDocument(doc); }} style={{ border: "1px solid #b77171", padding: "9px 12px", borderRadius: 8, color: "#ffd9d9", background: "#422727", cursor: "pointer", fontSize: 12, fontWeight: 850 }}>Remove</button>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+      {savedRoughMeasurementDocsLoading && <div style={{ color: "#bcd0c1", fontSize: 12 }}>Loading measurements...</div>}
+      {savedRoughMeasurementDocsError && <div role="alert" style={{ color: "#ffbbbb", fontSize: 12 }}>{savedRoughMeasurementDocsError}</div>}
+    </div>
+  );
+
   const loadLiveMeasurementOpenings = async (jobId: string) => {
     const accessToken = getPremierAccessToken();
 
@@ -1356,7 +1467,7 @@ export default function PremierSalesBoard() {
 
     const openings = data ?? [];
     setLiveOpenings(openings);
-    setLiveOpeningFormOpen(openings.length === 0);
+    setLiveOpeningFormOpen(false);
     await loadLiveOpeningPhotos(openings);
   };
 
@@ -1364,6 +1475,8 @@ export default function PremierSalesBoard() {
     if (!selectedLiveLead?.id) {
       setLiveOpenings([]);
       setLiveMeasurementOpen(false);
+      setSavedRoughMeasurementDocs([]);
+      setSavedRoughMeasurementDocsError("");
       setFinalMeasurementDocuments([]);
       setFinalMeasurementPackageError("");
       setFinalMeasurementPackageNote("");
@@ -1371,22 +1484,32 @@ export default function PremierSalesBoard() {
     }
 
     loadLiveMeasurementOpenings(selectedLiveLead.id);
+    void loadSavedRoughMeasurementDocs(selectedLiveLead.id);
 
     if (selectedLiveLead.current_stage === "final_measurement") {
       void loadFinalMeasurementDocuments(selectedLiveLead.id);
+      setFinalMeasurementPackageNote("");
+      setFinalMeasurementNoteSaved("");
+      const loadedJobId = selectedLiveLead.id;
+      const noteToken = getPremierAccessToken();
+      if (noteToken) {
+        void supabase.rpc("get_premier_final_handoff_note", {
+          p_access_token: noteToken,
+          p_job_id: loadedJobId,
+        }).then(({data,error}) => {
+          if (error) { console.error("Could not load RJ handoff note:",error); return; }
+          setFinalMeasurementPackageNote(typeof data === "string" ? data : "");
+        });
+      }
     } else {
       setFinalMeasurementDocuments([]);
       setFinalMeasurementPackageError("");
       setFinalMeasurementPackageNote("");
     }
 
-    if (
-      String(selectedLiveLead.next_action || "").includes(
-        "Complete field measurements"
-      )
-    ) {
-      setLiveMeasurementOpen(true);
-    }
+    setLiveMeasurementOpen(
+      ["new_lead", "measurement"].includes(selectedLiveLead.current_stage)
+    );
   }, [selectedLiveLeadId]);
 
   const nextLiveOpeningNumber =
@@ -1569,11 +1692,10 @@ export default function PremierSalesBoard() {
     }, 50);
   };
 
-  const uploadLiveMeasurementSheet = async (file: File | null) => {
+  const uploadLiveMeasurementSheet = async (file: File | null, replaceDocument?: any) => {
     if (!file || !selectedLiveLead?.id) return;
 
     setLiveMeasurementSheetError("");
-    setLiveMeasurementSheetUploaded(false);
     setLiveMeasurementSheetUploading(true);
 
     const accessToken =
@@ -1627,35 +1749,56 @@ export default function PremierSalesBoard() {
         return;
       }
 
-      const { error: finalizeError } =
+      const { data: finalized, error: finalizeError } =
         await supabase.functions.invoke("premier-job-document", {
           body: {
             action: "finalize",
             accessToken,
             jobId: selectedLiveLead.id,
             documentType: "Measurement Sheet",
-            storagePath: createData.path,
+            path: createData.path,
             fileName: file.name,
             mimeType,
             note: "Sales measurement sheet",
           },
         });
 
-      if (finalizeError) {
-        console.error(
-          "Measurement sheet finalize failed:",
-          finalizeError
-        );
+      if (finalizeError || finalized?.error || !finalized?.document?.id) {
+        let serverMessage = String(finalized?.error || "").trim();
+        if (!serverMessage && finalizeError && "context" in finalizeError) {
+          try {
+            const details = await (finalizeError as any).context?.clone?.().json();
+            serverMessage = String(details?.error || details?.message || "").trim();
+          } catch {
+            // Keep the original error message when the response is not JSON.
+          }
+        }
+        console.error("Measurement sheet finalize failed:", {
+          error: finalizeError,
+          response: finalized,
+          serverMessage,
+        });
         setLiveMeasurementSheetError(
-          "The file uploaded, but HomePlanet could not attach it to the job."
+          `File uploaded but not attached: ${serverMessage || finalizeError?.message || "Server rejected the attachment."}`
         );
         setLiveMeasurementSheetUploading(false);
         return;
       }
 
       setLiveMeasurementSheetUploaded(true);
+      if (replaceDocument?.id) {
+        const accessTokenForCleanup = getPremierAccessToken();
+        const { data: removed, error: removeError } = await supabase.functions.invoke("premier-job-document", {
+          body: { action: "remove", accessToken: accessTokenForCleanup, jobId: selectedLiveLead.id, documentId: replaceDocument.id },
+        });
+        if (removeError || removed?.error || removed?.removed !== true) {
+          setSavedRoughMeasurementDocsError("New file saved, but the old one could not be removed. Both are available below.");
+        }
+      }
+      await loadSavedRoughMeasurementDocs(selectedLiveLead.id);
 
       await saveLiveLeadUpdate({
+        measurementAppointment: selectedLiveLead.measurement_appointment || null,
         latestSalesNote: `Measurement sheet uploaded: ${file.name}`,
         nextAction:
           "Review measurement sheet, then finish measurement and move to proposal.",
@@ -1722,6 +1865,13 @@ export default function PremierSalesBoard() {
     }
 
     await loadLiveMeasurementOpenings(selectedLiveLead.id);
+    if (selectedLiveLead.current_stage === "new_lead") {
+      await saveLiveLeadUpdate({
+        measurementAppointment: selectedLiveLead.measurement_appointment || null,
+        latestSalesNote: "Rough measurement recorded.",
+        nextAction: "Mark rough measurement complete.",
+      });
+    }
 
     resetLiveOpeningForm();
     setLiveOpeningFormOpen(false);
@@ -2662,19 +2812,19 @@ export default function PremierSalesBoard() {
                     );
                   }}
                   style={{
-                    flex: "0 0 min(285px, 86vw)",
+                    flex: "0 0 min(345px, 88vw)",
                     textAlign: "left",
                     border: proposalReady
                       ? "1px solid #b58b3a"
                       : selectedLiveLeadId === lead.id
                       ? "1px solid #9db7ca"
-                      : "1px solid #31495a",
+                      : "1px solid #476275",
                     borderRadius: 13,
                     background:
                       selectedLiveLeadId === lead.id
-                        ? "#16232d"
-                        : "#111820",
-                    padding: 12,
+                        ? "#20313e"
+                        : "#17232d",
+                    padding: "16px 17px",
                     color: "#ffffff",
                     cursor: "pointer",
                   }}
@@ -2687,7 +2837,7 @@ export default function PremierSalesBoard() {
                       alignItems: "flex-start",
                     }}
                   >
-                    <strong style={{ fontSize: 14 }}>
+                    <strong style={{ fontSize: 16, lineHeight: 1.3 }}>
                       {lead.first_name} {lead.last_name}
                     </strong>
 
@@ -2696,7 +2846,7 @@ export default function PremierSalesBoard() {
                         color: proposalReady
                           ? "#e0bd72"
                           : "#9db7ca",
-                        fontSize: 9,
+                        fontSize: 10,
                         fontWeight: 900,
                         whiteSpace: "nowrap",
                       }}
@@ -2707,9 +2857,9 @@ export default function PremierSalesBoard() {
 
                   <div
                     style={{
-                      color: "#8e9ca5",
-                      fontSize: 11,
-                      marginTop: 5,
+                      color: "#b0bdc6",
+                      fontSize: 12,
+                      marginTop: 8,
                     }}
                   >
                     {lead.project_address}
@@ -2719,7 +2869,7 @@ export default function PremierSalesBoard() {
                     <div
                       style={{
                         color: "#b8c4cc",
-                        fontSize: 11,
+                        fontSize: 12,
                         marginTop: 7,
                       }}
                     >
@@ -2729,15 +2879,15 @@ export default function PremierSalesBoard() {
 
                   <div
                     style={{
-                      marginTop: 9,
-                      paddingTop: 8,
-                      borderTop: "1px solid #263846",
+                      marginTop: 12,
+                      paddingTop: 11,
+                      borderTop: "1px solid #385165",
                       color: "#d9e5ee",
-                      fontSize: 11,
+                      fontSize: 12,
                       lineHeight: 1.45,
                     }}
                   >
-                    <span style={{ color: "#7f8d96" }}>
+                    <span style={{ color: "#9eb4c4" }}>
                       Next:{" "}
                     </span>
 
@@ -5084,281 +5234,50 @@ export default function PremierSalesBoard() {
               </span>
             </div>
 
-            <div
-              style={{
-                border: "1px solid #78aa88",
-                borderRadius: 14,
-                background: "linear-gradient(135deg, #173225 0%, #101b16 100%)",
-                padding: 12,
-                marginBottom: 12,
-                boxShadow: "0 0 0 1px rgba(139,184,154,0.08), 0 8px 24px rgba(0,0,0,0.18)",
-              }}
-            >
-              <div style={{ marginBottom: 9 }}>
-                <div
-                  style={{
-                    color: "#9fd3ae",
-                    fontSize: 10,
-                    fontWeight: 900,
-                    letterSpacing: 1,
-                    textTransform: "uppercase",
-                  }}
-                >
-                  Beam Quick Message
-                </div>
-
-                <div style={{ color: "#d9e5ee", fontSize: 11, fontWeight: 800, marginTop: 3 }}>
-                  Fast job communication
-                </div>
+            <div style={{ border: "1px solid #334852", background: "#111a20", borderRadius: 13, padding: 14, marginBottom: 10 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: "13px 16px", marginBottom: 13 }}>
+                <div><div style={{ color: "#9caeb7", fontSize: 11, marginBottom: 4 }}>Phone</div>
+                  <strong style={{ fontSize: 14 }}>{selectedLiveLead.phone || "Not provided"}</strong></div>
+                <div><div style={{ color: "#9caeb7", fontSize: 11, marginBottom: 4 }}>Salesperson</div>
+                  <strong style={{ fontSize: 14 }}>{selectedLiveLead.assigned_salesperson || "Not assigned"}</strong></div>
+                <div><div style={{ color: "#9caeb7", fontSize: 11, marginBottom: 4 }}>Appointment</div>
+                  <strong style={{ fontSize: 13 }}>{selectedLiveLead.measurement_appointment
+                    ? new Date(selectedLiveLead.measurement_appointment).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
+                    : "Not scheduled"}</strong></div>
+                <div><div style={{ color: "#9caeb7", fontSize: 11, marginBottom: 4 }}>Email</div>
+                  <strong style={{ fontSize: 12, overflowWrap: "anywhere" }}>{selectedLiveLead.email || "Not provided"}</strong></div>
               </div>
-
-              <select
-                value={salesBeamRecipient}
-                onChange={(event) => setSalesBeamRecipient(event.target.value)}
-                style={{
-                  width: "100%",
-                  minHeight: 40,
-                  border: "1px solid #477057",
-                  borderRadius: 9,
-                  background: "#0d1711",
-                  color: "#e5eee8",
-                  padding: "0 9px",
-                  fontSize: 11,
-                  fontWeight: 800,
-                  marginBottom: 8,
-                }}
-              >
-                <option value="">Choose staff member</option>
-
-                {availableSalesBeamRecipients.map((name) => (
-                  <option key={name} value={name}>
-                    {name}
-                  </option>
-                ))}
-              </select>
-
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "minmax(0, 1fr) 48px",
-                  gap: 8,
-                }}
-              >
-                <textarea
-                  value={salesBeamBody}
-                  onChange={(event) => setSalesBeamBody(event.target.value)}
-                  placeholder={salesBeamListening ? "Listening..." : "Type or tap the mic and talk..."}
-                  rows={2}
-                  style={{
-                    width: "100%",
-                    minHeight: 54,
-                    boxSizing: "border-box",
-                    resize: "vertical",
-                    border: "1px solid #477057",
-                    borderRadius: 9,
-                    background: "#0d1711",
-                    color: "#e5eee8",
-                    padding: "9px 10px",
-                    fontSize: 12,
-                  }}
-                />
-
-                <button
-                  type="button"
-                  onClick={startSalesBeamVoiceInput}
-                  disabled={salesBeamListening}
-                  title={salesBeamListening ? "Listening..." : "Talk message"}
-                  style={{
-                    border: salesBeamListening
-                      ? "1px solid #d98778"
-                      : "1px solid #8fbea0",
-                    borderRadius: 9,
-                    background: salesBeamListening
-                      ? "#7a2d24"
-                      : "#2f6842",
-                    color: "#ffffff",
-                    fontSize: 20,
-                    cursor: salesBeamListening ? "wait" : "pointer",
-                    boxShadow: salesBeamListening
-                      ? "0 0 0 2px rgba(217,135,120,0.18), 0 0 18px rgba(217,135,120,0.22)"
-                      : "none",
-                  }}
-                >
-                  Mic
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: 9 }}>
+                <button type="button" onClick={handleLiveCustomerCall} disabled={!selectedLiveLead.phone}
+                  style={{ minHeight: 44, border: "1px solid #628e71", borderRadius: 9, background: "#214833", color: "#fff", fontWeight: 900, cursor: "pointer" }}>Call Customer</button>
+                <button type="button" onClick={() => {
+                  const address = encodeURIComponent(selectedLiveLead.project_address || "");
+                  window.open(`https://www.google.com/maps/search/?api=1&query=${address}`, "_blank", "noopener,noreferrer");
+                }} style={{ minHeight: 44, border: "1px solid #64869b", borderRadius: 9, background: "#1a394e", color: "#fff", fontWeight: 900, cursor: "pointer" }}>Navigation</button>
+              </div>
+              {["new_lead", "measurement"].includes(selectedLiveLead.current_stage) ? (
+                <button type="button" onClick={() => {
+                  setLiveAppointmentDraft(toLocalDateTimeInputValue(selectedLiveLead.measurement_appointment));
+                  setEditingLiveAppointment(true);
+                }} style={{ background: "transparent", border: "none", color: "#b4d5e7", cursor: "pointer", padding: "9px 0 0", fontWeight: 800, textDecoration: "underline" }}>
+                  {selectedLiveLead.measurement_appointment ? "Change Appointment" : "Schedule Appointment"}
                 </button>
-              </div>
+              ) : null}
+            </div>
 
-              {salesBeamError ? (
-                <div style={{ color: "#d8b267", fontSize: 10, marginTop: 7 }}>
-                  {salesBeamError}
+            {["new_lead", "measurement"].includes(selectedLiveLead.current_stage) ? (
+              <div style={{ marginBottom: 7 }}>
+                <strong style={{ fontSize: 19, color: "#d8f1de" }}>Prepare Green Folder</strong>
+                <div style={{ color: "#a9bcb1", fontSize: 12, marginTop: 3 }}>Rough Measurements</div>
+              </div>
+            ) : ["proposal", "proposal_ready", "sales_follow_up"].includes(selectedLiveLead.current_stage) ? (
+              <div style={{ marginBottom: 10 }}>
+                <div style={{ color: "#a6d7b4", fontWeight: 900, marginBottom: 8 }}>
+                  Rough Measurement Completed
                 </div>
-              ) : null}
-
-              <button
-                type="button"
-                disabled={salesBeamSending || !salesBeamBody.trim()}
-                onClick={() => void sendSalesBeamMessage()}
-                style={{
-                  width: "100%",
-                  minHeight: 40,
-                  marginTop: 8,
-                  border: "1px solid #8fbea0",
-                  borderRadius: 9,
-                  background: "#2f6842",
-                  color: "#ffffff",
-                  fontWeight: 900,
-                  cursor:
-                    salesBeamSending || !salesBeamBody.trim()
-                      ? "not-allowed"
-                      : "pointer",
-                  opacity:
-                    salesBeamSending || !salesBeamBody.trim() ? 0.55 : 1,
-                }}
-              >
-                {salesBeamSending
-                  ? "Sending..."
-                  : `Send to ${salesBeamRecipient}`}
-              </button>
-            </div>
-
-
-            <div
-              style={{
-                border: "1px solid #2d3d47",
-                background: "#14202a",
-                borderRadius: 14,
-                padding: 14,
-                marginBottom: 12,
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 11,
-                  color: "#8fa9bc",
-                  fontWeight: 900,
-                  textTransform: "uppercase",
-                  letterSpacing: 1,
-                  marginBottom: 5,
-                }}
-              >
-                Next Action
+                {renderRoughMeasurementDocuments()}
               </div>
-
-              <strong>
-                {selectedLiveLead.next_action || "No next action set."}
-              </strong>
-            </div>
-
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-                gap: 8,
-                marginBottom: 12,
-              }}
-            >
-              <button
-                type="button"
-                onClick={handleLiveCustomerCall}
-                disabled={!selectedLiveLead.phone}
-                style={{
-                  minHeight: 44,
-                  border: "1px solid #6f9fbd",
-                  borderRadius: 10,
-                  background: "#162630",
-                  color: "#ffffff",
-                  fontWeight: 900,
-                  fontSize: 13,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  cursor: selectedLiveLead.phone ? "pointer" : "not-allowed",
-                  boxShadow:
-                    "0 0 0 1px rgba(111,159,189,0.10), 0 0 12px rgba(111,159,189,0.08)",
-                }}
-              >
-                Call Customer
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  const destination = encodeURIComponent(
-                    selectedLiveLead.project_address || ""
-                  );
-
-                  window.open(
-                    `https://www.google.com/maps/search/?api=1&query=${destination}`,
-                    "_blank",
-                    "noopener,noreferrer"
-                  );
-                }}
-                style={{
-                  minHeight: 44,
-                  border: "1px solid #6f9fbd",
-                  borderRadius: 10,
-                  background: "#162630",
-                  color: "#ffffff",
-                  fontWeight: 900,
-                  fontSize: 13,
-                  cursor: "pointer",
-                  boxShadow:
-                    "0 0 0 1px rgba(111,159,189,0.10), 0 0 12px rgba(111,159,189,0.08)",
-                }}
-              >
-                Navigation
-              </button>
-
-              {selectedLiveLead.current_stage === "measurement" ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setLiveAppointmentDraft(
-                        toLocalDateTimeInputValue(
-                          selectedLiveLead.measurement_appointment
-                        )
-                      );
-                      setEditingLiveAppointment((current) => !current);
-                    }}
-                    style={{
-                      minHeight: 44,
-                      border: "1px solid #31495a",
-                      borderRadius: 10,
-                      background: "#101820",
-                      color: "#d9e5ee",
-                      fontWeight: 900,
-                      fontSize: 13,
-                      cursor: "pointer",
-                    }}
-                  >
-                    Appointment
-                  </button>
-
-                  <button
-                    type="button"
-                    disabled={savingLiveLeadAction}
-                    onClick={startLiveMeasurement}
-                    style={{
-                      minHeight: 44,
-                      border: "1px solid #58788e",
-                      borderRadius: 10,
-                      background: "#1a2a36",
-                      color: "#ffffff",
-                      fontWeight: 900,
-                      fontSize: 13,
-                      cursor: savingLiveLeadAction ? "wait" : "pointer",
-                    }}
-                  >
-                    {savingLiveLeadAction
-                      ? "Opening..."
-                      : liveMeasurementOpen
-                      ? "Measurements Open"
-                      : "Open Measurements"}
-                  </button>
-                </>
-              ) : null}
-            </div>
+            ) : null}
 
             {selectedLiveLead.current_stage === "proposal" ? (
               <div
@@ -5434,6 +5353,49 @@ export default function PremierSalesBoard() {
                 >
                   {savingLiveLeadAction ? "Saving..." : "Mark Proposal Ready"}
                 </button>
+              </div>
+            ) : null}
+            {selectedLiveLead.current_stage === "sales_follow_up" ? (
+              <div style={{ border: "1px solid #416250", background: "#101c17", borderRadius: 13, padding: 14, marginBottom: 12 }}>
+                <div style={{ fontSize: 11, letterSpacing: 1, color: "#a8d9b7", fontWeight: 900, marginBottom: 5 }}>NEXT ACTION</div>
+                <strong style={{ display: "block", fontSize: 17, marginBottom: 7 }}>Follow up with customer</strong>
+                <div style={{ color: "#c0cfc5", fontSize: 12, marginBottom: 12 }}>Customer is thinking about the proposal. Contact them and record what happened.</div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: 9 }}>
+                  <button type="button" disabled={savingLiveLeadAction} onClick={async () => {
+                    const note = window.prompt("What happened during the follow-up?", "");
+                    if (note === null || !note.trim()) return;
+                    await saveLiveLeadUpdate({
+                      measurementAppointment: selectedLiveLead.measurement_appointment || null,
+                      latestSalesNote: `Follow-up: ${note.trim()}`,
+                      nextAction: "Follow up with customer about proposal.",
+                      nextStage: "sales_follow_up",
+                    });
+                  }} style={{ border: "1px solid #567964", background: "#214733", color: "#fff", borderRadius: 9, minHeight: 44, fontWeight: 850, cursor: "pointer" }}>Save Follow-Up Note</button>
+                  <button type="button" disabled={savingLiveLeadAction} onClick={async () => {
+                    await saveLiveLeadUpdate({
+                      measurementAppointment: selectedLiveLead.measurement_appointment || null,
+                      latestSalesNote: "Customer ready to discuss proposal decision.",
+                      nextAction: "Record customer decision on proposal.",
+                      nextStage: "proposal_ready",
+                    });
+                  }} style={{ border: "1px solid #617d90", background: "#1b3443", color: "#fff", borderRadius: 9, minHeight: 44, fontWeight: 850, cursor: "pointer" }}>Record Customer Decision</button>
+                </div>
+              </div>
+            ) : null}
+            {["proposal_ready", "sales_follow_up"].includes(selectedLiveLead.current_stage) ? (
+              <div style={{ border: "1px solid #304450", borderRadius: 12, padding: 13, marginBottom: 12, background: "#10171b" }}>
+                <div style={{ fontSize: 11, letterSpacing: 1, color: "#a8bac6", fontWeight: 900, marginBottom: 9 }}>JOB HISTORY</div>
+                <div style={{ display: "grid", gap: 9, color: "#e0e9e4", fontSize: 12 }}>
+                  <div>✓ Rough measurement completed</div>
+                  {savedRoughMeasurementDocs.length > 0 ? (
+                    <div style={{ color: "#a8d9b7" }}>✓ {savedRoughMeasurementDocs.length} measurement {savedRoughMeasurementDocs.length === 1 ? "file" : "files"} saved in Green Folder</div>
+                  ) : null}
+                  <div>✓ Proposal marked ready for customer</div>
+                  {selectedLiveLead.current_stage === "sales_follow_up" ? (
+                    <div style={{ color: "#efca86" }}>● Customer thinking · Follow-up needed</div>
+                  ) : <div>● Awaiting customer decision</div>}
+                  {selectedLiveLead.latest_sales_note ? <div style={{ borderTop: "1px solid #293940", paddingTop: 8, color: "#afc1c7" }}>Latest: {selectedLiveLead.latest_sales_note}</div> : null}
+                </div>
               </div>
             ) : null}
             {selectedLiveLead.current_stage === "proposal_ready" ? (
@@ -5640,238 +5602,77 @@ export default function PremierSalesBoard() {
               </div>
             ) : null}
 
-            <div
-              style={{
-                border: "1px solid #27333b",
-                borderRadius: 12,
-                background: "#101419",
-                padding: "10px 11px",
-                marginBottom: 12,
-              }}
-            >
-              <div
-                style={{
-                  color: "#929ba2",
-                  fontSize: 9,
-                  fontWeight: 900,
-                  letterSpacing: 0.7,
-                  textTransform: "uppercase",
-                  marginBottom: 8,
-                }}
-              >
-                Customer Details
-              </div>
-
-              <div
-                style={{
-                  display: "grid",
-                  gap: 7,
-                }}
-              >
-                {[
-                  [
-                    "Salesperson",
-                    selectedLiveLead.assigned_salesperson || "Not assigned",
-                  ],
-                  [
-                    selectedLiveLead.current_stage === "final_measurement"                       ? "Scheduled"                       : "Appointment",
-                    selectedLiveLead.measurement_appointment
-                      ? new Date(
-                          selectedLiveLead.measurement_appointment
-                        ).toLocaleString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                          hour: "numeric",
-                          minute: "2-digit",
-                        })
-                      : "Not scheduled",
-                  ],
-                  ["Phone", selectedLiveLead.phone || "Not provided"],
-                  ["Email", selectedLiveLead.email || "Not provided"],
-                ].map(([label, value]) => (
-                  <div
-                    key={label}
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "92px minmax(0, 1fr)",
-                      gap: 8,
-                      alignItems: "start",
-                    }}
-                  >
-                    <span
-                      style={{
-                        color: "#7f8d96",
-                        fontSize: 10,
-                      }}
-                    >
-                      {label}
-                    </span>
-
-                    <strong
-                      style={{
-                        color: "#d9e5ee",
-                        fontSize: 11,
-                        lineHeight: 1.35,
-                        overflowWrap: "anywhere",
-                      }}
-                    >
-                      {value}
-                    </strong>
-                  </div>
-                ))}
-              </div>
-            </div>
             {liveMeasurementOpen ? (
-              <div
-                id="live-field-measurement"
-                style={{
-                  border: "1px solid #58788e",
-                  borderRadius: 16,
-                  background: "#111b22",
-                  padding: 14,
-                  marginBottom: 12,
-                  scrollMarginTop: 18,
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "flex-start",
-                    gap: 12,
-                    marginBottom: 14,
-                  }}
-                >
-                  <div>
-                    <div
-                      style={{
-                        color: "#9db7ca",
-                        fontSize: 10,
-                        fontWeight: 900,
-                        letterSpacing: 1,
-                        textTransform: "uppercase",
-                        marginBottom: 5,
-                      }}
-                    >
-                      On Site
-                    </div>
+              <div id="live-field-measurement" style={{ border: "1px solid #3a5546", borderRadius: 13, background: "#111c16", padding: 12, marginBottom: 12 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }}>
+  <label style={{
+    minHeight: 90,
+    border: "1px solid #557c64",
+    borderRadius: 12,
+    background: "#14271c",
+    color: "#d6f3dd",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7,
+    cursor: liveMeasurementSheetUploading ? "wait" : "pointer",
+    opacity: liveMeasurementSheetUploading ? 0.6 : 1,
+    textAlign: "center",
+    padding: 10,
+    fontWeight: 900,
+    fontSize: 14,
+  }}>
+    <span style={{ fontSize: 26 }}>📷</span>
+    Snap a Pic
+    <input
+      type="file"
+      accept="image/jpeg,image/png,image/webp"
+      capture="environment"
+      disabled={liveMeasurementSheetUploading}
+      onChange={(event) => {
+        const file = event.target.files?.[0] ?? null;
+        void uploadLiveMeasurementSheet(file);
+        event.currentTarget.value = "";
+      }}
+      style={{ display: "none" }}
+    />
+  </label>
 
-                    <h3
-                      style={{
-                        margin: 0,
-                        fontSize: 22,
-                      }}
-                    >
-                      Field Measurement
-                    </h3>
-
-                    <div
-                      style={{
-                        color: "#9ca8b2",
-                        fontSize: 12,
-                        lineHeight: 1.5,
-                        marginTop: 5,
-                      }}
-                    >
-                      Choose how you want to record measurements.
-                    </div>
-
-                    <div
-                      style={{
-                        marginTop: 12,
-                        marginBottom: 14,
-                        border: "1px solid #344854",
-                        borderRadius: 12,
-                        background: "#0d151b",
-                        padding: 11,
-                      }}
-                    >
-                      <div
-                        style={{
-                          color: "#9db7ca",
-                          fontSize: 9,
-                          fontWeight: 900,
-                          letterSpacing: 0.8,
-                          textTransform: "uppercase",
-                          marginBottom: 4,
-                        }}
-                      >
-                        Measurement Options
-                      </div>
-
-                      <strong
-                        style={{
-                          display: "block",
-                          color: "#ffffff",
-                          fontSize: 13,
-                          marginBottom: 5,
-                        }}
-                      >
-                        Option 1 - Enter Openings Here
-                      </strong>
-
-                      <div
-                        style={{
-                          color: "#9ca8b2",
-                          fontSize: 10,
-                          lineHeight: 1.5,
-                          marginBottom: 9,
-                        }}
-                      >
-                        If you measured on paper or created a PDF afterward,
-                        attach it here instead of re-entering every opening.
-                      </div>
-
-                      <label
-                        style={{
-                          minHeight: 42,
-                          border: "1px solid #557c64",
-                          borderRadius: 9,
-                          background: "#14271c",
-                          color: "#b7dec4",
-                          fontSize: 11,
-                          fontWeight: 900,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          padding: "0 12px",
-                          cursor: liveMeasurementSheetUploading
-                            ? "wait"
-                            : "pointer",
-                          opacity: liveMeasurementSheetUploading ? 0.7 : 1,
-                        }}
-                      >
-                        {liveMeasurementSheetUploading
-                          ? "Uploading Measurement Sheet..."
-                          : "Option 2 - Upload Measurement Sheet / PDF"}
-
-                        <input
-                          type="file"
-                          accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,application/pdf,image/jpeg,image/png,image/webp"
-                          disabled={liveMeasurementSheetUploading}
-                          onChange={(event) => {
-                            const file = event.target.files?.[0] ?? null;
-                            void uploadLiveMeasurementSheet(file);
-                            event.currentTarget.value = "";
-                          }}
-                          style={{ display: "none" }}
-                        />
-                      </label>
-
-                      {liveMeasurementSheetUploaded ? (
-                        <div
-                          style={{
-                            color: "#92c6a4",
-                            fontSize: 10,
-                            fontWeight: 900,
-                            marginTop: 7,
-                          }}
-                        >
-                          Measurement sheet attached to this job - OK
-                        </div>
-                      ) : null}
-
+  <label style={{
+    minHeight: 90,
+    border: "1px solid #557c64",
+    borderRadius: 12,
+    background: "#14271c",
+    color: "#d6f3dd",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7,
+    cursor: liveMeasurementSheetUploading ? "wait" : "pointer",
+    opacity: liveMeasurementSheetUploading ? 0.6 : 1,
+    textAlign: "center",
+    padding: 10,
+    fontWeight: 900,
+    fontSize: 14,
+  }}>
+    <span style={{ fontSize: 26 }}>📄</span>
+    Upload PDF
+    <input
+      type="file"
+      accept=".pdf,application/pdf"
+      disabled={liveMeasurementSheetUploading}
+      onChange={(event) => {
+        const file = event.target.files?.[0] ?? null;
+        void uploadLiveMeasurementSheet(file);
+        event.currentTarget.value = "";
+      }}
+      style={{ display: "none" }}
+    />
+  </label>
+</div>
+                      {renderRoughMeasurementDocuments()}
                       {liveMeasurementSheetError ? (
                         <div
                           style={{
@@ -5884,25 +5685,13 @@ export default function PremierSalesBoard() {
                           {liveMeasurementSheetError}
                         </div>
                       ) : null}
-                    </div>
-
-                  </div>
-
-                  <span
-                    style={{
-                      border: "1px solid #456476",
-                      borderRadius: 999,
-                      padding: "5px 8px",
-                      color: "#d9e5ee",
-                      fontSize: 10,
-                      fontWeight: 900,
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    In Progress
-                  </span>
-                </div>
-
+                <button type="button" onClick={() => {
+                  setLiveOpeningFormOpen((value) => !value);
+                  if (editingLiveOpeningId) setEditingLiveOpeningId(null);
+                }} style={{ width: "100%", minHeight: 44, marginTop: 10, marginBottom: 12, border: "1px solid #587a62", borderRadius: 10,
+                  background: "#203627", color: "#e3f2e7", fontWeight: 900, cursor: "pointer" }}>
+                  {liveOpeningFormOpen ? "Hide Manual Measurements" : "Enter Measurements Manually"}
+                </button>
                 {liveOpenings.length > 0 ? (
                   <div
                     style={{
@@ -6334,7 +6123,29 @@ export default function PremierSalesBoard() {
                     </div>
                   ) : null}
 
-                  <label
+                  <div style={{
+  border: "1px solid #477b5a",
+  borderRadius: 14,
+  background: "rgba(34, 95, 65, 0.16)",
+  padding: 14,
+  marginTop: 16,
+}}>
+  <div style={{
+    color: "#c0e8cc",
+    fontWeight: 900,
+    fontSize: 15,
+    marginBottom: 5,
+  }}>
+    Measurement Notes
+  </div>
+  <div style={{
+    color: "#b0c7b8",
+    fontSize: 12,
+    marginBottom: 10,
+  }}>
+    Type your notes or speak them.
+  </div>
+<label
                     style={{
                       display: "grid",
                       gap: 5,
@@ -6343,7 +6154,7 @@ export default function PremierSalesBoard() {
                       color: "#929ba2",
                     }}
                   >
-                    NOTES
+                    MEASUREMENT NOTES
                     <textarea
                       rows={4}
                       placeholder="Frame condition, trim, access, customer request, special details..."
@@ -6355,7 +6166,7 @@ export default function PremierSalesBoard() {
                         width: "100%",
                         boxSizing: "border-box",
                         resize: "vertical",
-                        border: "1px solid #31495a",
+                        border: "1px solid #65a477",
                         borderRadius: 10,
                         background: "#111820",
                         color: "#ffffff",
@@ -6376,22 +6187,34 @@ export default function PremierSalesBoard() {
                       marginTop: 7,
                       border:
                         liveSpeechListening === "notes"
-                          ? "1px solid #6ea87a"
-                          : "1px solid #31495a",
+                          ? "1px solid #d98778"
+                          : "1px solid #65a477",
                       borderRadius: 10,
                       background:
                         liveSpeechListening === "notes"
-                          ? "#245c31"
-                          : "#101820",
+                          ? "#9a3830"
+                          : "#246a42",
                       color: "#ffffff",
                       fontWeight: 900,
                       cursor: "pointer",
                     }}
                   >
                     {liveSpeechListening === "notes"
-                      ? "Mic Listening... Tap to Stop"
-                      : "Mic Speak Notes"}
+                      ? "Stop Listening"
+                      : "Speak Notes"}
                   </button>
+  {liveSpeechListening === "notes" ? (
+    <div role="status" aria-live="polite" style={{
+      marginTop: 10,
+      color: "#ffb2a8",
+      fontSize: 13,
+      fontWeight: 900,
+      textAlign: "center",
+    }}>
+      ● Listening... Speak now
+    </div>
+  ) : null}
+</div>
 
                   <button
                     type="button"
@@ -6508,7 +6331,7 @@ export default function PremierSalesBoard() {
                   >
                     {savingLiveLeadAction
                       ? "Saving..."
-                      : "Measurements Complete -> Move to Proposal"}
+                      : "Mark Rough Measurement Complete"}
                   </button>
                 ) : null}
 
@@ -6660,9 +6483,10 @@ export default function PremierSalesBoard() {
                   Handoff Note for RJ
                   <textarea
                     value={finalMeasurementPackageNote}
-                    onChange={(event) =>
-                      setFinalMeasurementPackageNote(event.target.value)
-                    }
+                    onChange={(event) => {
+                      setFinalMeasurementPackageNote(event.target.value);
+                      setFinalMeasurementNoteSaved("");
+                    }}
                     placeholder="Anything RJ needs to know before installation planning..."
                     rows={3}
                     style={{
@@ -6680,6 +6504,16 @@ export default function PremierSalesBoard() {
                     }}
                   />
                 </label>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 18 }}>
+                  <button type="button" onClick={() => void saveLiveFinalHandoffNote()}
+                    disabled={finalMeasurementNoteSaving || savingLiveLeadAction}
+                    style={{ background: "#214d35", color: "#fff", border: "1px solid #56866a", borderRadius: 9, padding: "11px 16px", fontWeight: 800, cursor: "pointer" }}>
+                    {finalMeasurementNoteSaving ? "Saving..." : "Save Handoff Note"}
+                  </button>
+                  <span role="status" style={{ color: "#bce2c8", fontSize: 13 }}>
+                    {finalMeasurementNoteSaved || "Save your note before sending to RJ."}
+                  </span>
+                </div>
 
                 <div
                   style={{
@@ -6965,31 +6799,6 @@ export default function PremierSalesBoard() {
                             paddingTop: 12,
                           }}
                         >
-                          <input
-                            type="text"
-                            value={
-                              finalMeasurementDocumentTitles[item.type] || ""
-                            }
-                            onChange={(event) =>
-                              setFinalMeasurementDocumentTitles((current) => ({
-                                ...current,
-                                [item.type]: event.target.value,
-                              }))
-                            }
-                            placeholder={item.placeholder}
-                            style={{
-                              width: "100%",
-                              minHeight: 44,
-                              boxSizing: "border-box",
-                              border: "1px solid #405c6d",
-                              borderRadius: 9,
-                              background: "#0d141a",
-                              color: "#ffffff",
-                              padding: "10px 12px",
-                              fontSize: 14,
-                              marginBottom: 9,
-                            }}
-                          />
 
                           <label
                             style={{
@@ -7382,6 +7191,104 @@ export default function PremierSalesBoard() {
                     </div>
                   );
                 })}
+                <div
+                  style={{
+                    marginTop: 20,
+                    padding: 16,
+                    border: "1px solid #405c6d",
+                    borderRadius: 12,
+                    background: "#111820",
+                  }}
+                >
+                  <div
+                    style={{
+                      color: "#f3f6f8",
+                      fontSize: 16,
+                      fontWeight: 900,
+                      marginBottom: 8,
+                    }}
+                  >
+                    Job Documents
+                  </div>
+                  <div
+                    style={{
+                      color: "#b6c1c8",
+                      fontSize: 13,
+                      marginBottom: 12,
+                    }}
+                  >
+                    Existing documents attached to this job, including Office Blue Folder files.
+                  </div>
+
+                  {finalMeasurementDocuments.filter(
+                    (document: any) =>
+                      !["Final Measurement", "Floor Plan"].includes(
+                        document.document_type
+                      )
+                  ).length === 0 ? (
+                    <div style={{ color: "#b6c1c8", fontSize: 13 }}>
+                      No additional documents were returned for this job.
+                    </div>
+                  ) : (
+                    <div style={{ display: "grid", gap: 10 }}>
+                      {finalMeasurementDocuments
+                        .filter(
+                          (document: any) =>
+                            !["Final Measurement", "Floor Plan"].includes(
+                              document.document_type
+                            )
+                        )
+                        .map((document: any) => (
+                          <div
+                            key={document.id}
+                            style={{
+                              padding: 12,
+                              border: "1px solid #344650",
+                              borderRadius: 9,
+                              background: "#0d141a",
+                            }}
+                          >
+                            <div
+                              style={{
+                                color: "#f3f6f8",
+                                fontWeight: 800,
+                                overflowWrap: "anywhere",
+                              }}
+                            >
+                              {document.note ||
+                                document.document_type ||
+                                "Job Document"}
+                            </div>
+                            <div
+                              style={{
+                                color: "#b6c1c8",
+                                fontSize: 13,
+                                marginTop: 4,
+                                overflowWrap: "anywhere",
+                              }}
+                            >
+                              {document.file_name || "Attached file"}
+                            </div>
+                            {document.url ? (
+                              <a
+                                href={document.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                style={{
+                                  display: "inline-block",
+                                  color: "#a9d6f5",
+                                  fontWeight: 800,
+                                  marginTop: 9,
+                                }}
+                              >
+                                Open Document
+                              </a>
+                            ) : null}
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                </div>
 
                 {finalMeasurementDocumentsLoading ? (
                   <div
@@ -8303,26 +8210,3 @@ export default function PremierSalesBoard() {
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

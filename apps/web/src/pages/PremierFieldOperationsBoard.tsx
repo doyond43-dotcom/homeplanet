@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 type FieldJob = {
@@ -279,6 +279,128 @@ const lanes = [
   "Service Calls",
   "Upcoming",
 ] as const;
+
+// premier-rj-issue-verification-v1: review an individual issue independently of installation approval.
+function PremierFieldIssueReview({issueId,jobId,followups,onSaved,issues}:{issueId:string;jobId:string;followups:any[];onSaved:()=>Promise<void>;issues:any[]}) {
+  const [open,setOpen]=useState(false);
+  const [action,setAction]=useState('under_review');
+  const [note,setNote]=useState('');
+  const [busy,setBusy]=useState(false);
+  const [error,setError]=useState('');
+  const [history,setHistory]=useState<any[]>([]);
+  const [historyError,setHistoryError]=useState('');
+  // premier-rj-review-visible-v2
+  const [savedReview,setSavedReview]=useState<any|null>(null);
+  const [savedReviewError,setSavedReviewError]=useState('');
+  // premier-rj-duplicate-v1: independent duplicate closing, never a repair verification
+  const [duplicateOpen,setDuplicateOpen]=useState(false);
+  const [duplicateTarget,setDuplicateTarget]=useState('');
+  const [duplicateReason,setDuplicateReason]=useState('');
+  const [duplicateConfirmed,setDuplicateConfirmed]=useState(false);
+  const [duplicateBusy,setDuplicateBusy]=useState(false);
+  const [duplicateError,setDuplicateError]=useState('');
+  const candidateIssues=issues.filter((x:any)=>x.id!==issueId);
+  const closeDuplicate=async()=>{
+    if(duplicateBusy||!duplicateConfirmed||!duplicateTarget||duplicateReason.trim().length<15)return;
+    const token=getPremierFieldAccessToken();
+    if(!token){setDuplicateError('RJ field access unavailable');return;}
+    setDuplicateBusy(true);setDuplicateError('');
+    try{
+      const explanation='Confirmed duplicate of '+duplicateTarget+'. '+duplicateReason.trim();
+      const {data,error}=await supabase.rpc('mark_premier_issue_duplicate',{
+        p_access_token:token,p_issue_id:issueId,p_original_issue_id:duplicateTarget,p_note:explanation
+      });
+      if(error)throw error;
+      if(data!==true)throw new Error('Duplicate was not recorded.');
+      setDuplicateOpen(false);setDuplicateTarget('');setDuplicateReason('');setDuplicateConfirmed(false);
+      await onSaved();await reloadSavedReview();
+    }catch(e:any){setDuplicateError(e?.message||'Could not close duplicate report');}
+    finally{setDuplicateBusy(false);}
+  };
+  const reloadSavedReview=async()=>{
+    const token=getPremierFieldAccessToken();
+    if(!token){setSavedReviewError('Review history unavailable.');return;}
+    const {data,error}=await supabase.rpc('get_premier_issue_history',{p_access_token:token,p_issue_id:issueId});
+    if(error){setSavedReviewError('Could not load saved review.');return;}
+    setSavedReviewError('');setHistory(data??[]);setSavedReview((data??[])[0]??null);
+  };
+  useEffect(()=>{void reloadSavedReview()},[issueId]);
+  const latest=followups.find((item:any)=>item.issue_id===issueId);
+  const canVerify=latest?.action==='fix_documented';
+  const openReview=async()=>{
+    if(open){setOpen(false);return;}
+    setOpen(true);setError('');setHistoryError('');
+    const token=getPremierFieldAccessToken();
+    if(!token){setHistoryError('Field access unavailable');return;}
+    const {data,error:readError}=await supabase.rpc('get_premier_issue_history',{p_access_token:token,p_issue_id:issueId});
+    if(readError){setHistoryError('Issue history unavailable. Refresh before verifying.');return;}
+    setHistory(data??[]);
+  };
+  const save=async()=>{
+    if(busy||note.trim().length<5)return;
+    if(action==='resolved'&&!canVerify){setError('Angel must document the fix before RJ can verify resolution.');return;}
+    const token=getPremierFieldAccessToken();
+    if(!token){setError('Field access unavailable');return;}
+    setBusy(true);setError('');
+    try {
+      const {data,error:saveError}=await supabase.rpc('update_premier_issue_resolution',{
+        p_access_token:token,p_issue_id:issueId,p_new_status:action,p_note:note.trim()
+      });
+      if(saveError)throw saveError;
+      if(data!==true)throw new Error('Issue status did not change. Refresh and review its current status.');
+      setNote('');setOpen(false);
+      await onSaved();
+      await reloadSavedReview();
+    } catch(e:any){setError(e?.message||'Could not save RJ review.');}
+    finally{setBusy(false);}
+  };
+  return <div style={{marginTop:9}}>
+    {savedReviewError?<div role="alert" style={{color:'#ffc7a3',fontSize:11}}>{savedReviewError}</div>:null}
+    {savedReview?<div style={{marginBottom:9,padding:10,border:'1px solid #5b775f',borderRadius:8,background:'#18271f',color:'#e8f2e9'}}>
+      <div style={{fontSize:11,fontWeight:900}}>RJ's Latest Review: {savedReview.new_status==='under_review'?'Under Review':savedReview.new_status==='resolved'?'Verified Resolved':savedReview.new_status==='duplicate'?'Closed as Duplicate':'Needs Follow-Up'}</div>
+      <div style={{fontSize:11,marginTop:5,whiteSpace:'pre-wrap'}}>{savedReview.note}</div>
+      <div style={{fontSize:10,marginTop:5,color:'#b2cbb9'}}>RJ / Office | {new Date(savedReview.changed_at).toLocaleString()}</div>
+    </div>:null}
+    {savedReview?.new_status!=='duplicate'?<>
+      <button type="button" onClick={()=>{setDuplicateOpen(!duplicateOpen);setDuplicateError('');}} style={{marginBottom:6,marginRight:8,background:'#3f3825',border:'1px solid #8a784d',borderRadius:7,padding:'8px 10px',color:'#f4e8d0',fontSize:11,fontWeight:900,cursor:'pointer'}}> {duplicateOpen?'Cancel Duplicate Review':'Close as Duplicate'} </button>
+      {duplicateOpen?<div style={{border:'1px solid #89754f',borderRadius:9,padding:11,marginTop:5,marginBottom:8,background:'#242116',display:'grid',gap:9}}>
+        <strong style={{fontSize:12,color:'#fff1d6'}}>Confirm This Is the Same Issue</strong>
+        <div style={{fontSize:11,color:'#f4dec0'}}>Use only after confirming both reports describe the same missing or damaged part. The original issue remains open. This does not verify a repair.</div>
+        <label style={{fontSize:11,color:'#f4e5c9'}}>Original report to keep open
+          <select value={duplicateTarget} onChange={e=>setDuplicateTarget(e.target.value)} style={{display:'block',marginTop:5,width:'100%',padding:9,background:'#141711',border:'1px solid #95815b',borderRadius:6,color:'#fff3dd'}}>
+            <option value="">Select original issue...</option>
+            {candidateIssues.map((x:any)=><option key={x.id} value={x.id}>{(x.categories??[]).join(', ')||'Reported Issue'} Ã¢â‚¬â€ {String(x.details||'').slice(0,105)} [{x.id.slice(0,8)}]</option>)}
+          </select>
+        </label>
+        <label style={{fontSize:11,color:'#f4e5c9'}}>RJ's duplicate confirmation note
+          <textarea rows={3} value={duplicateReason} onChange={e=>setDuplicateReason(e.target.value)} placeholder="How did you confirm both reports refer to the same problem?" style={{display:'block',width:'100%',boxSizing:'border-box',marginTop:5,padding:9,background:'#141711',border:'1px solid #95815b',borderRadius:6,color:'#fff3dd'}} />
+        </label>
+        <label style={{display:'flex',gap:7,alignItems:'start',fontSize:11,color:'#fff0d6'}}><input type="checkbox" checked={duplicateConfirmed} onChange={e=>setDuplicateConfirmed(e.target.checked)}/>I confirmed this report is a duplicate, not a separate issue. Keep the original issue open.</label>
+        {duplicateError?<div role="alert" style={{color:'#ffc5aa',fontSize:11}}>{duplicateError}</div>:null}
+        <button type="button" disabled={duplicateBusy||!duplicateConfirmed||!duplicateTarget||duplicateReason.trim().length<15} onClick={()=>void closeDuplicate()} style={{padding:10,border:'1px solid #b09665',borderRadius:7,color:'#fff',background:'#68502c',fontWeight:900,opacity:duplicateBusy||!duplicateConfirmed||!duplicateTarget||duplicateReason.trim().length<15?0.55:1}}>{duplicateBusy?'Saving...':'Confirm Close as Duplicate'}</button>
+      </div>:null}
+      <button type="button" onClick={()=>void openReview()} style={{background:'#213b30',border:'1px solid #648770',borderRadius:7,padding:'8px 10px',color:'#e3f4e8',fontSize:11,fontWeight:900,cursor:'pointer'}}>{open?'Close Review':'Review Issue'}</button>
+    {open?<div style={{border:'1px solid #527460',borderRadius:9,padding:11,marginTop:8,background:'#101e19',display:'grid',gap:8}}>
+      <strong style={{fontSize:12,color:'#ecf6ec'}}>RJ Issue Review</strong>
+      {latest?<div style={{fontSize:11,color:'#b9d7c5'}}>Angel's latest update: {latest.action.replaceAll('_',' ')} â€” {latest.note||'No note'}</div>:<div style={{fontSize:11,color:'#e2b59c'}}>No installer follow-up documented.</div>}
+      <label style={{fontSize:11,color:'#dce9e0'}}>Decision
+        <select value={action} onChange={e=>setAction(e.target.value)} style={{display:'block',marginTop:5,width:'100%',background:'#0d1715',color:'#e8f2eb',padding:9,border:'1px solid #627f6c',borderRadius:7}}>
+          <option value="needs_review">Return for More Work / Office Follow-up</option>
+          <option value="under_review">Under RJ Review</option>
+          <option value="resolved" disabled={!canVerify}>Verify Resolved{canVerify?'':' (fix not documented)'}</option>
+        </select>
+      </label>
+      <label style={{fontSize:11,color:'#dce9e0'}}>RJ's Review Note
+        <textarea value={note} onChange={e=>setNote(e.target.value)} rows={3} placeholder="Record the decision and who is responsible for the next action" style={{display:'block',boxSizing:'border-box',marginTop:5,width:'100%',resize:'vertical',background:'#0d1715',color:'#e8f2eb',padding:9,border:'1px solid #627f6c',borderRadius:7}} />
+      </label>
+      {historyError?<div role="alert" style={{color:'#ffc7a3',fontSize:11}}>{historyError}</div>:null}
+      {history.length>0?<details><summary style={{cursor:'pointer',fontSize:11}}>RJ / Office Review History ({history.length})</summary>{history.map((h:any,i:number)=><div key={i} style={{fontSize:10,color:'#c3d7cd',padding:6}}>{h.new_status} â€” {h.note} â€” {h.actor_label} â€” {new Date(h.changed_at).toLocaleString()}</div>)}</details>:null}
+      {error?<div role="alert" style={{color:'#ffc7a3',fontSize:11}}>{error}</div>:null}
+      <button type="button" disabled={busy||note.trim().length<5||Boolean(historyError)||(action==='resolved'&&!canVerify)} onClick={()=>void save()} style={{padding:10,border:'1px solid #83ad92',borderRadius:7,color:'#fff',background:'#28613f',fontWeight:900,opacity:busy||note.trim().length<5?0.55:1}}>{busy?'Saving...':'Save RJ Review'}</button>
+    </div>:null}
+    </>:null}
+  </div>;
+}
 
 function FieldBeamComposer({ job }: { job: any }) {
   const [recipient, setRecipient] = useState<string>("Angel");
@@ -561,10 +683,19 @@ function getPremierFieldAccessToken() {
   );
 }
 
+type PremierPendingReturn = {job_id:string;review_id:string;reason:string;returned_at:string;acknowledged:boolean};
 export default function PremierFieldOperationsBoard() {
+  // premier-return-visibility-v1: read saved latest return decision.
+  const [pendingReturns,setPendingReturns]=useState<Record<string,PremierPendingReturn>>({});
+  useEffect(()=>{let active=true;const token=getPremierFieldAccessToken();if(!token)return;
+    void supabase.rpc('get_premier_pending_installation_returns',{p_access_token:token}).then(({data,error})=>{
+      if(!active)return;if(error){console.error('RJ return status unavailable',error);return;}
+      const found:Record<string,PremierPendingReturn>={};for(const item of (data??[]) as PremierPendingReturn[])found[item.job_id]=item;setPendingReturns(found);
+    });return()=>{active=false};},[]);
   const [activeJobId, setActiveJobId] = useState("PW-1037");
   const [selectedFieldJobId, setSelectedFieldJobId] = useState<string | null>(null);
   const [fieldMonitoringOpen, setFieldMonitoringOpen] = useState(false);
+  const [fieldMonitoringDrawerOpen, setFieldMonitoringDrawerOpen] = useState(false);
   const [fieldMonitoringJobId, setFieldMonitoringJobId] =
     useState<string | null>(null);
   const [staffGreeting, setStaffGreeting] = useState<{ headline: string; detail: string } | null>(null);
@@ -602,6 +733,12 @@ export default function PremierFieldOperationsBoard() {
   const [savingFinalOpening, setSavingFinalOpening] = useState(false);
 
   const [liveInstallations, setLiveInstallations] = useState<any[]>([]);
+  const [rjInstallReady, setRjInstallReady] = useState<Record<string, boolean>>({});
+
+  // premier-rj-readiness-focus-v1: new Office-to-RJ events; separate from readiness itself.
+  const [rjReadinessEvents, setRjReadinessEvents] = useState<Record<string, any[]>>({});
+  const [rjReadinessError, setRjReadinessError] = useState<Record<string, string>>({});
+  const [rjReadinessAckSaving, setRjReadinessAckSaving] = useState<string | null>(null);
   const [installScheduleDrafts, setInstallScheduleDrafts] = useState<
     Record<string, string>
   >({});
@@ -718,6 +855,83 @@ export default function PremierFieldOperationsBoard() {
     return null;
   };
 
+  // RJ installer completion review: compact decision, full proof remains in View Activity.
+  const [installationReviewReports, setInstallationReviewReports] = useState<Record<string, any[]>>({});
+  const [installationReviewErrors, setInstallationReviewErrors] = useState<Record<string, string>>({});
+  const [installationReviewLoading, setInstallationReviewLoading] = useState<string | null>(null);
+  const [installationReviewSaving, setInstallationReviewSaving] = useState(false);
+  const [installationReturnOpen, setInstallationReturnOpen] = useState(false);
+  const [installationReturnReason, setInstallationReturnReason] = useState("");
+
+  useEffect(() => {
+    if (!selectedFieldJobId) return;
+    const match = liveInstallations.find((item) => item.id === selectedFieldJobId);
+    if (!match || match.current_stage !== "installation_complete") return;
+    let active = true;
+    const jobId = match.id;
+    const token = getPremierFieldAccessToken();
+    setInstallationReviewLoading(jobId);
+    setInstallationReviewErrors((current) => ({ ...current, [jobId]: "" }));
+    if (!token) {
+      setInstallationReviewErrors((current) => ({ ...current, [jobId]: "Staff session missing" }));
+      setInstallationReviewLoading(null);
+      return;
+    }
+    // premier-rj-final-issue-status-v1: same saved RJ decisions Angel sees.
+    void Promise.all([
+      supabase.rpc("get_premier_installer_issue_reports", { p_access_token: token, p_job_id: jobId }),
+      supabase.rpc("get_premier_installer_issue_decisions", { p_access_token: token, p_job_id: jobId }),
+    ]).then(([reportsResult, decisionsResult]) => {
+      if (!active) return;
+      if (reportsResult.error || decisionsResult.error) {
+        setInstallationReviewErrors((current) => ({ ...current, [jobId]: "Could not verify issue statuses. Review is paused." }));
+        setInstallationReviewReports((current) => { const next = { ...current }; delete next[jobId]; return next; });
+      } else {
+        const decisions = (decisionsResult.data ?? []) as any[];
+        const merged = (reportsResult.data ?? []).map((report: any) => {
+          const decision = decisions.find((entry: any) => entry.issue_id === report.id);
+          return { ...report, resolution_status: decision?.resolution_status ?? report.resolution_status ?? "needs_review" };
+        });
+        setInstallationReviewReports((current) => ({ ...current, [jobId]: merged }));
+        setInstallationReviewErrors((current) => ({ ...current, [jobId]: "" }));
+      }
+      setInstallationReviewLoading(null);
+    }).catch(() => {
+      if (!active) return;
+      setInstallationReviewErrors((current) => ({ ...current, [jobId]: "Could not verify issue statuses. Review is paused." }));
+      setInstallationReviewLoading(null);
+    });
+    return () => { active = false; };
+  }, [selectedFieldJobId, liveInstallations]);
+
+  const submitInstallationReview = async (jobId: string, decision: "approved" | "returned") => {
+    if (installationReviewSaving || installationReviewLoading === jobId || installationReviewErrors[jobId]) return;
+    if (!Object.prototype.hasOwnProperty.call(installationReviewReports, jobId)) return;
+    const reason = installationReturnReason.trim();
+    if (decision === "returned" && reason.length < 5) {
+      setInstallationReviewErrors((current) => ({ ...current, [jobId]: "Enter a short reason for the installer." }));
+      return;
+    }
+    const token = getPremierFieldAccessToken();
+    if (!token) return;
+    const openReports = (installationReviewReports[jobId] ?? []).filter((item: any) => !["resolved", "duplicate"].includes(item.resolution_status));
+    const message = decision === "approved"
+      ? `Approve installation review? ${openReports.length === 0 ? "No unresolved reported issues." : `${openReports.length} unresolved reported issue(s) remain for Office follow-up.`}`
+      : `Send job back to installer with this reason?\n\n${reason}`;
+    if (!window.confirm(message)) return;
+    setInstallationReviewSaving(true);
+    setInstallationReviewErrors((current) => ({ ...current, [jobId]: "" }));
+    const { data, error } = await supabase.rpc("review_premier_installation", {
+      p_access_token: token, p_job_id: jobId, p_decision: decision, p_reason: decision === "returned" ? reason : "",
+    });
+    setInstallationReviewSaving(false);
+    if (error || data !== true) {
+      setInstallationReviewErrors((current) => ({ ...current, [jobId]: error?.message || "Review did not save." }));
+      return;
+    }
+    window.location.reload();
+  };
+
   const [fieldInstallerActivityJobId, setFieldInstallerActivityJobId] =
     useState<string | null>(null);
 
@@ -752,6 +966,36 @@ export default function PremierFieldOperationsBoard() {
   const [fieldUploadingBuckingJobId, setFieldUploadingBuckingJobId] =
     useState<string | null>(null);
 
+  // premier-rj-followup-display-v1: saved installer issue updates, by job and issue.
+  const [fieldIssueFollowups, setFieldIssueFollowups] = useState<Record<string, any[]>>({});
+  const [fieldFollowupsErrors, setFieldFollowupsErrors] = useState<Record<string, string>>({});
+  const renderFieldFollowup = (jobId: string, issueId: string) => {
+    const entries=(fieldIssueFollowups[jobId] ?? []).filter((e:any)=>e.issue_id===issueId);
+    if(!entries.length)return null;
+    const latest=entries[0];
+    const label: Record<string,string>={reviewed:'Reviewed',waiting_materials:'Waiting on Materials',needs_office:'Needs RJ / Office',fix_documented:'Fix Documented - Needs Verification'};
+    return (
+      <div style={{border:'1px solid #55745a',background:'#14241d',borderRadius:8,padding:10,marginTop:9,color:'#dcefe1',fontSize:11}}>
+        <div style={{fontWeight:900,marginBottom:5}}>Latest Follow-Up: {label[latest.action] ?? latest.action}</div>
+        <div style={{whiteSpace:'pre-wrap'}}>{latest.note || 'Reviewed by installer'}</div>
+        <div style={{color:'#aac3b2',fontSize:10,marginTop:5}}>{latest.actor_label} - {new Date(latest.created_at).toLocaleString()}</div>
+        {entries.length>1 ? <details style={{marginTop:7}}><summary style={{cursor:'pointer'}}>View follow-up history ({entries.length})</summary>{entries.map((e:any,i:number)=><div key={i} style={{borderTop:'1px solid #385347',paddingTop:6,marginTop:6}}>{label[e.action] ?? e.action}: {e.note} ({new Date(e.created_at).toLocaleString()})</div>)}</details>:null}
+      </div>
+    );
+  };
+  const [fieldIssueReports, setFieldIssueReports] = useState<
+    Record<
+      string,
+      Array<{
+        id: string;
+        job_id: string;
+        reporter_label: string;
+        categories: string[];
+        details: string;
+        reported_at: string;
+      }>
+    >
+  >({});
   const loadFieldInstallerActivity = async (jobId: string) => {
     const accessToken = getPremierFieldAccessToken();
 
@@ -832,6 +1076,35 @@ export default function PremierFieldOperationsBoard() {
       }));
     }
 
+    const { data: reports, error: reportsError } = await supabase.rpc(
+      "get_premier_installer_issue_reports",
+      {
+        p_access_token: accessToken,
+        p_job_id: jobId,
+      }
+    );
+
+    if (reportsError) {
+      console.error("Premier issue reports load failed:", reportsError);
+      setFieldInstallerProofErrors((current) => ({
+        ...current,
+        [jobId]: "Installer photos loaded, but issue reports could not load.",
+      }));
+    } else {
+      setFieldIssueReports((current) => ({
+        ...current,
+        [jobId]: reports ?? [],
+      }));
+    }
+
+    const {data:followups,error:followupsError}=await supabase.rpc('get_premier_installer_issue_followups',{p_access_token:accessToken,p_job_id:jobId});
+    if(followupsError){
+      setFieldFollowupsErrors(current=>({...current,[jobId]:'Issue follow-ups could not load. Refresh before reviewing.'}));
+      setFieldIssueFollowups(current=>({...current,[jobId]:[]}));
+    } else {
+      setFieldFollowupsErrors(current=>({...current,[jobId]:''}));
+      setFieldIssueFollowups(current=>({...current,[jobId]:followups ?? []}));
+    }
     setFieldInstallerProofLoading((current) => ({
       ...current,
       [jobId]: false,
@@ -854,8 +1127,201 @@ export default function PremierFieldOperationsBoard() {
 
   const [fieldBuckingRecordsOpenId, setFieldBuckingRecordsOpenId] =
     useState<string | null>(null);
+  const [fieldIssueFormOpenId, setFieldIssueFormOpenId] =
+    useState<string | null>(null);
+  const [preInstallSavedNotes, setPreInstallSavedNotes] = useState<Record<string, any[]>>({});
+  const [preInstallNotesMessage, setPreInstallNotesMessage] = useState<string | null>(null);
+  const loadPreInstallSavedNotes = async (jobId: string) => {
+    const token = getPremierFieldAccessToken();
+    if (!token) return;
+    const { data, error } = await supabase.rpc("get_premier_preinstallation_notes", {
+      p_access_token: token,
+      p_job_id: jobId,
+    });
+    if (error) {
+      console.error("Could not load RJ pre-installation notes:", error);
+      setPreInstallNotesMessage("Could not load saved notes. Please refresh.");
+      return;
+    }
+    setPreInstallSavedNotes((current) => ({ ...current, [jobId]: data ?? [] }));
+  };
+  useEffect(() => {
+    if (!selectedFieldJobId) return;
+    void loadPreInstallSavedNotes(selectedFieldJobId);
+  }, [selectedFieldJobId]);
+
+  const [fieldIssueCategories, setFieldIssueCategories] =
+    useState<Record<string, string[]>>({});
+
+  const [fieldIssueDetails, setFieldIssueDetails] =
+    useState<Record<string, string>>({});
+
+  const [fieldIssueSavingJobId, setFieldIssueSavingJobId] =
+    useState<string | null>(null);
+
+  const [fieldIssueListeningJobId, setFieldIssueListeningJobId] =
+    useState<string | null>(null);
+  const startFieldIssueVoice = (jobId: string) => {
+    if (fieldIssueListeningJobId) return;
+
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      window.alert("Speech-to-text is not supported in this browser.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onstart = () => setFieldIssueListeningJobId(jobId);
+
+    recognition.onresult = (event: any) => {
+      const transcript =
+        event.results?.[0]?.[0]?.transcript?.trim() || "";
+
+      if (!transcript) return;
+
+      setFieldIssueDetails((current) => ({
+        ...current,
+        [jobId]: current[jobId]?.trim()
+          ? `${current[jobId].trim()} ${transcript}`
+          : transcript,
+      }));
+    };
+
+    recognition.onerror = () => {
+      window.alert("Could not capture voice notes.");
+    };
+
+    recognition.onend = () => setFieldIssueListeningJobId(null);
+    recognition.start();
+  };
+  const saveFieldIssueReport = async (jobId: string) => {
+    if (fieldIssueSavingJobId) return;
+
+    const categories = fieldIssueCategories[jobId] ?? [];
+    const details = (fieldIssueDetails[jobId] ?? "").trim();
+    const isPreInstall = liveInstallations.some(
+      (item) => item.id === jobId && item.current_stage === "scheduled"
+    );
+    if (isPreInstall) {
+      if (categories.length === 0) {
+        window.alert("Choose at least one pre-installation category.");
+        return;
+      }
+      if (!details) {
+        window.alert("Add a short note for the installer.");
+        return;
+      }
+      const accessToken = getPremierFieldAccessToken();
+      if (!accessToken) {
+        window.alert("Premier staff access is missing.");
+        return;
+      }
+      setFieldIssueSavingJobId(jobId);
+      try {
+        const { error } = await supabase.rpc("save_premier_preinstallation_note", {
+          p_access_token: accessToken,
+          p_job_id: jobId,
+          p_categories: categories,
+          p_details: details,
+        });
+        if (error) throw error;
+        setFieldIssueCategories((current) => ({ ...current, [jobId]: [] }));
+        setFieldIssueDetails((current) => ({ ...current, [jobId]: "" }));
+        setFieldIssueFormOpenId(null);
+        setPreInstallNotesMessage("Saved. The note is now in the job record.");
+        await loadPreInstallSavedNotes(jobId);
+      } catch (error: any) {
+        console.error("RJ pre-installation note failed:", error);
+        window.alert(error?.message || "Could not save pre-installation note.");
+      } finally {
+        setFieldIssueSavingJobId(null);
+      }
+      return;
+    }
+
+    if (categories.length === 0) {
+      window.alert("Select at least one issue category.");
+      return;
+    }
+
+    if (categories.includes("Other") && !details) {
+      window.alert("Describe the issue when selecting Other.");
+      return;
+    }
+
+    const accessToken = getPremierFieldAccessToken();
+
+    if (!accessToken) {
+      window.alert("Premier staff access is missing.");
+      return;
+    }
+
+    setFieldIssueSavingJobId(jobId);
+
+    try {
+      const { error } = await supabase.rpc(
+        "report_premier_installer_issue",
+        {
+          p_access_token: accessToken,
+          p_job_id: jobId,
+          p_categories: categories,
+          p_details: details,
+        }
+      );
+
+      if (error) throw error;
+
+      setFieldIssueCategories((current) => ({
+        ...current,
+        [jobId]: [],
+      }));
+
+      setFieldIssueDetails((current) => ({
+        ...current,
+        [jobId]: "",
+      }));
+
+      setFieldIssueFormOpenId(null);
+
+      await loadFieldInstallerActivity(jobId);
+
+      window.alert("Field issue reported successfully.");
+    } catch (error: any) {
+      console.error("RJ issue report failed:", error);
+      window.alert(error?.message || "Could not save field issue.");
+    } finally {
+      setFieldIssueSavingJobId(null);
+    }
+  };
 
   const [liveInspections, setLiveInspections] = useState<any[]>([]);
+  // Premier final-walkthrough issue statuses; read only. Original reports remain unchanged.
+  const [walkthroughIssueStates, setWalkthroughIssueStates] = useState<Record<string, any[]>>({});
+  const [walkthroughIssueErrors, setWalkthroughIssueErrors] = useState<Record<string, string>>({});
+  useEffect(() => {
+    if (!selectedFieldJobId || !liveInspections.some((j: any) => j.id === selectedFieldJobId)) return;
+    const jobId = selectedFieldJobId;
+    const token = getPremierFieldAccessToken();
+    if (!token) return;
+    let active = true;
+    void supabase.rpc("get_premier_issue_resolution_state", { p_access_token: token, p_job_id: jobId })
+      .then(({ data, error }) => {
+        if (!active) return;
+        if (error) setWalkthroughIssueErrors(prev => ({ ...prev, [jobId]: "Issue status unavailable. Refresh before reviewing." }));
+        else {
+          setWalkthroughIssueStates(prev => ({ ...prev, [jobId]: data ?? [] }));
+          setWalkthroughIssueErrors(prev => ({ ...prev, [jobId]: "" }));
+        }
+      });
+    return () => { active = false; };
+  }, [selectedFieldJobId, liveInspections]);
   const [liveInspectionsLoading, setLiveInspectionsLoading] =
     useState(false);
 
@@ -863,8 +1329,55 @@ export default function PremierFieldOperationsBoard() {
     useState<Record<string, any[]>>({});
   const [inspectionPunchDrafts, setInspectionPunchDrafts] =
     useState<Record<string, string>>({});
+  const [walkthroughOpening, setWalkthroughOpening] = useState<Record<string, string>>({});
+  const [walkthroughIssueType, setWalkthroughIssueType] = useState<Record<string, string>>({});
+  const [walkthroughListening, setWalkthroughListening] = useState<string | null>(null);
+  const startWalkthroughDictation = (jobId: string) => {
+    if (walkthroughListening) return;
+    const Recognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!Recognition) { window.alert("Voice input is unavailable in this browser. You can still type notes."); return; }
+    const recognition = new Recognition();
+    recognition.lang = "en-US";
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.onstart = () => setWalkthroughListening(jobId);
+    recognition.onresult = (event: any) => {
+      const spoken = String(event.results?.[0]?.[0]?.transcript || "").trim();
+      if (spoken) setInspectionPunchDrafts((current) => ({ ...current, [jobId]: [current[jobId], spoken].filter(Boolean).join(" ") }));
+    };
+    recognition.onerror = () => window.alert("Could not capture voice notes. You can type instead.");
+    recognition.onend = () => setWalkthroughListening(null);
+    recognition.start();
+  };
   const [inspectionPunchSaving, setInspectionPunchSaving] =
     useState<Record<string, boolean>>({});
+  const [walkthroughSavedOnce, setWalkthroughSavedOnce] = useState<Record<string, boolean>>({});
+  const [walkthroughOutcomeBusy, setWalkthroughOutcomeBusy] = useState<Record<string, boolean>>({});
+  const [walkthroughOutcomeNotes, setWalkthroughOutcomeNotes] = useState<Record<string, string>>({});
+  const [walkthroughOutcomeError, setWalkthroughOutcomeError] = useState<Record<string, string>>({});
+  const submitWalkthroughOutcome = async (job: any, outcome: "approved" | "corrections_needed") => {
+    const token = getPremierFieldAccessToken();
+    if (!token || walkthroughOutcomeBusy[job.id]) return;
+    const note = (walkthroughOutcomeNotes[job.id] || "").trim();
+    if (outcome === "corrections_needed" && note.length < 5) {
+      setWalkthroughOutcomeError(current => ({ ...current, [job.id]: "Describe the corrections or findings before sending to Office." }));
+      return;
+    }
+    if (!window.confirm(outcome === "approved" ? "Approve this final walkthrough and notify Office for closeout?" : "Send these corrections to Office for installer coordination?")) return;
+    setWalkthroughOutcomeBusy(current => ({ ...current, [job.id]: true }));
+    setWalkthroughOutcomeError(current => ({ ...current, [job.id]: "" }));
+    const { data, error } = await supabase.rpc("record_premier_final_walkthrough", {
+      p_access_token: token, p_job_id: job.id, p_outcome: outcome, p_note: note,
+    });
+    if (error || data !== true) {
+      setWalkthroughOutcomeError(current => ({ ...current, [job.id]: error?.message || "Could not record walkthrough outcome. Please retry." }));
+    } else {
+      setLiveInspections(current => current.filter(item => item.id !== job.id));
+      setSelectedFieldJobId(null);
+      window.alert(outcome === "approved" ? "Walkthrough approved. Office notified for final closeout." : "Corrections recorded. Office notified to coordinate installer follow-up.");
+    }
+    setWalkthroughOutcomeBusy(current => ({ ...current, [job.id]: false }));
+  };
   const [inspectionPunchErrors, setInspectionPunchErrors] =
     useState<Record<string, string>>({});
 
@@ -1116,6 +1629,79 @@ export default function PremierFieldOperationsBoard() {
     };
   }, []);
 
+  // Read only the selected job's readiness updates. Failed/unavailable RPCs never block the board.
+  useEffect(() => {
+    if (!selectedFieldJobId) return;
+    let active = true;
+    let busy = false;
+    const jobId = selectedFieldJobId;
+
+    const refreshReadiness = async () => {
+      if (busy || !active) return;
+      const accessToken = getPremierFieldAccessToken();
+      if (!accessToken) return;
+      busy = true;
+      try {
+        const { data, error } = await supabase.rpc("get_premier_rj_readiness_events", {
+          p_access_token: accessToken,
+          p_job_id: jobId,
+        });
+        if (!active) return;
+        if (error) {
+          // Database migration may not be installed yet; keep every existing RJ feature usable.
+          setRjReadinessError((current) => ({ ...current, [jobId]: "Readiness notifications unavailable" }));
+        } else {
+          setRjReadinessError((current) => ({ ...current, [jobId]: "" }));
+          setRjReadinessEvents((current) => ({ ...current, [jobId]: Array.isArray(data) ? data : [] }));
+        }
+      } catch {
+        if (active) setRjReadinessError((current) => ({ ...current, [jobId]: "Readiness notifications unavailable" }));
+      } finally {
+        busy = false;
+      }
+    };
+
+    void refreshReadiness();
+    const timer = window.setInterval(() => void refreshReadiness(), 30000);
+    const onFocus = () => void refreshReadiness();
+    const onVisibility = () => { if (document.visibilityState === "visible") void refreshReadiness(); };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [selectedFieldJobId]);
+
+  const acknowledgeRjReadinessEvent = async (jobId: string, eventId: string) => {
+    const accessToken = getPremierFieldAccessToken();
+    if (!accessToken || rjReadinessAckSaving) return;
+    setRjReadinessAckSaving(eventId);
+    try {
+      const { data, error } = await supabase.rpc("acknowledge_premier_rj_readiness_event", {
+        p_access_token: accessToken,
+        p_job_id: jobId,
+        p_event_id: eventId,
+      });
+      if (error || data !== true) {
+        setRjReadinessError((current) => ({ ...current, [jobId]: "Could not acknowledge update. Try again." }));
+        return;
+      }
+      setRjReadinessError((current) => ({ ...current, [jobId]: "" }));
+      setRjReadinessEvents((current) => ({
+        ...current,
+        [jobId]: (current[jobId] ?? []).map((event) =>
+          event.event_id === eventId ? { ...event, acknowledged_at: new Date().toISOString() } : event
+        ),
+      }));
+    } catch {
+      setRjReadinessError((current) => ({ ...current, [jobId]: "Could not acknowledge update. Try again." }));
+    } finally {
+      setRjReadinessAckSaving(null);
+    }
+  };
   useEffect(() => {
     let active = true;
 
@@ -1158,6 +1744,27 @@ export default function PremierFieldOperationsBoard() {
       active = false;
     };
   }, []);
+
+  // Server is authoritative. Unknown/error means scheduling stays locked.
+  useEffect(() => {
+    if (!selectedFieldJobId) return;
+    const jobId = selectedFieldJobId;
+    let active = true;
+    const refresh = async () => {
+      const token = getPremierFieldAccessToken();
+      if (!token) return;
+      const { data, error } = await supabase.rpc("get_premier_rj_install_readiness", {
+        p_access_token: token,
+        p_job_id: jobId,
+      });
+      if (active) setRjInstallReady((current) => ({ ...current, [jobId]: !error && data === true }));
+    };
+    void refresh();
+    const timer = window.setInterval(() => void refresh(), 15000);
+    const onFocus = () => void refresh();
+    window.addEventListener("focus", onFocus);
+    return () => { active = false; window.clearInterval(timer); window.removeEventListener("focus", onFocus); };
+  }, [selectedFieldJobId]);
 
   useEffect(() => {
     let active = true;
@@ -1236,8 +1843,15 @@ export default function PremierFieldOperationsBoard() {
   };
 
   const saveInspectionPunchItem = async (job: any) => {
-    const issue = (inspectionPunchDrafts[job.id] || "").trim();
+    const notes = (inspectionPunchDrafts[job.id] || "").trim();
+    const opening = (walkthroughOpening[job.id] || "").trim();
+    const category = (walkthroughIssueType[job.id] || "").trim();
+    const issue = [category, notes].filter(Boolean).join(": ");
 
+    if (!opening || !category) {
+      setInspectionPunchErrors((current) => ({ ...current, [job.id]: "Choose an opening/location and issue type first." }));
+      return;
+    }
     if (!issue) {
       setInspectionPunchErrors((current) => ({
         ...current,
@@ -1265,8 +1879,8 @@ export default function PremierFieldOperationsBoard() {
       {
         p_access_token: accessToken,
         p_job_id: job.id,
-        p_opening: "General / Unknown",
-        p_item_type: "Final Inspection",
+        p_opening: opening,
+        p_item_type: job.inspection_type === "Final Walkthrough" ? "Final Walkthrough" : "Final Inspection",
         p_issue: issue,
         p_owner: null,
       }
@@ -1285,11 +1899,11 @@ export default function PremierFieldOperationsBoard() {
       return;
     }
 
-    setInspectionPunchDrafts((current) => ({
-      ...current,
-      [job.id]: "",
-    }));
+    setInspectionPunchDrafts((current) => ({ ...current, [job.id]: "" }));
+    setWalkthroughOpening((current) => ({ ...current, [job.id]: "" }));
+    setWalkthroughIssueType((current) => ({ ...current, [job.id]: "" }));
 
+    setWalkthroughSavedOnce((current) => ({ ...current, [job.id]: true }));
     await loadInspectionPunchItems(job.id);
 
     setInspectionPunchSaving((current) => ({
@@ -1298,6 +1912,12 @@ export default function PremierFieldOperationsBoard() {
     }));
   };
 
+
+  useEffect(() => {
+    if (!selectedFieldJobId) return;
+    if (!liveInspections.some((item) => item.id === selectedFieldJobId)) return;
+    void loadInspectionPunchItems(selectedFieldJobId);
+  }, [selectedFieldJobId]);
   const activeJob = useMemo(
     () => jobs.find((job) => job.id === activeJobId) ?? jobs[0],
     [activeJobId]
@@ -1826,9 +2446,13 @@ export default function PremierFieldOperationsBoard() {
                       const photos =
                         fieldInstallerProofPhotos[monitorJob.id] ?? [];
 
-                      const needsAttention = photos.some(
-                        (photo: any) => photo.needs_attention
-                      );
+                      const reports =
+                        fieldIssueReports[monitorJob.id] ?? [];
+
+                      const needsAttention =
+                        photos.some(
+                          (photo: any) => photo.needs_attention
+                        ) || reports.length > 0;
 
                       const buckReceived = photos.some(
                         (photo: any) =>
@@ -1858,6 +2482,7 @@ export default function PremierFieldOperationsBoard() {
                           type="button"
                           onClick={async () => {
                             setFieldMonitoringJobId(monitorJob.id);
+                            setSelectedFieldJobId(monitorJob.id);
                             setFieldInstallerActivityJobId(monitorJob.id);
                             await loadFieldInstallerActivity(monitorJob.id);
                           }}
@@ -1892,7 +2517,11 @@ export default function PremierFieldOperationsBoard() {
                           >
                             {monitorJob.current_stage === "scheduled"
                               ? "Scheduled"
-                              : "Installation Ready"}
+                              : monitorJob.current_stage === "installation_in_progress"
+                                ? "Installation In Progress"
+                                : monitorJob.current_stage === "installer_finish_back"
+                                  ? "Final Finish Work"
+                                  : "Installation Ready"}
                           </div>
 
                           <div
@@ -1968,7 +2597,7 @@ export default function PremierFieldOperationsBoard() {
                               }}
                             >
                               {needsAttention
-                                ? `⚠ ${fieldProgress.toUpperCase()}`
+                                ? `âš  ${fieldProgress.toUpperCase()}`
                                 : `Progress: ${fieldProgress}`}
                             </div>
 
@@ -2055,9 +2684,13 @@ export default function PremierFieldOperationsBoard() {
                         "Bucking / buck inspection"
                     );
 
-                    const needsAttention = photos.some(
-                      (photo: any) => photo.needs_attention
-                    );
+                    const reports =
+                      fieldIssueReports[monitorJob.id] ?? [];
+
+                    const needsAttention =
+                      photos.some(
+                        (photo: any) => photo.needs_attention
+                      ) || reports.length > 0;
 
                     const customerName =
                       `${monitorJob.first_name || ""} ${
@@ -2122,6 +2755,29 @@ export default function PremierFieldOperationsBoard() {
                           >
                             {monitorJob.crew}
                           </div>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedFieldJobId(monitorJob.id);
+                              setFieldInstallerActivityJobId(monitorJob.id);
+                              setFieldMonitoringDrawerOpen(true);
+                            }}
+                            style={{
+                              minHeight: 42,
+                              marginTop: 14,
+                              padding: "0 16px",
+                              border: "1px solid #8fc59f",
+                              borderRadius: 9,
+                              background: "#234735",
+                              color: "#ffffff",
+                              fontSize: 12,
+                              fontWeight: 900,
+                              cursor: "pointer",
+                            }}
+                          >
+                            Open Full Job Workspace
+                          </button>
                         </div>
 
                         {fieldInstallerProofLoading[monitorJob.id] ? (
@@ -2248,6 +2904,81 @@ export default function PremierFieldOperationsBoard() {
                               </div>
                             </div>
 
+                            {reports.length > 0 ? (
+                              <div
+                                style={{
+                                  border: "1px solid #8a5f4a",
+                                  borderRadius: 10,
+                                  background: "#211713",
+                                  padding: 14,
+                                  display: "grid",
+                                  gap: 10,
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    color: "#efb39a",
+                                    fontSize: 13,
+                                    fontWeight: 900,
+                                  }}
+                                >
+                                  Reported Issues ({reports.length})
+                                  {fieldFollowupsErrors[monitorJob.id] ? <div role="alert" style={{fontSize:10,color:'#ffc7a3'}}>{fieldFollowupsErrors[monitorJob.id]}</div> : null}
+                                </div>
+
+                                {reports.map((report) => (
+                                  <div
+                                    key={report.id}
+                                    style={{
+                                      border: "1px solid #65483b",
+                                      borderRadius: 8,
+                                      background: "#172027",
+                                      padding: 12,
+                                    }}
+                                  >
+                                    <div
+                                      style={{
+                                        color: "#ffffff",
+                                        fontSize: 12,
+                                        fontWeight: 900,
+                                      }}
+                                    >
+                                      {(report.categories ?? []).join(", ")}
+                                    </div>
+
+                                    <div
+                                      style={{
+                                        color: "#b9c6ce",
+                                        fontSize: 10,
+                                        marginTop: 6,
+                                      }}
+                                    >
+                                      Reported by{" "}
+                                      {report.reporter_label.split(":").pop() ||
+                                        report.reporter_label}
+                                      {" â€¢ "}
+                                      {new Date(report.reported_at).toLocaleString()}
+                                    </div>
+
+                                    {report.details ? (
+                                      <div
+                                        style={{
+                                          color: "#f0d8c8",
+                                          fontSize: 11,
+                                          lineHeight: 1.5,
+                                          whiteSpace: "pre-wrap",
+                                          marginTop: 8,
+                                        }}
+                                      >
+                                        {report.details}
+                                        {renderFieldFollowup(report.job_id ?? monitorJob.id, report.id)}
+                                        <PremierFieldIssueReview issueId={report.id} jobId={monitorJob.id} issues={fieldIssueReports[monitorJob.id] ?? []} followups={fieldIssueFollowups[monitorJob.id] ?? []} onSaved={async()=>{await loadFieldInstallerActivity(monitorJob.id)}} />
+                                      </div>
+                                    ) : null}
+                                  </div>
+                                ))}
+                              </div>
+                            ) : null}
                             {photos.length === 0 ? (
                               <div
                                 style={{
@@ -2546,7 +3277,7 @@ export default function PremierFieldOperationsBoard() {
                   textTransform: "uppercase",
                 }}
               >
-                Scheduled Inspections
+                Scheduled Walkthroughs / Inspections
               </div>
 
               <div
@@ -3082,17 +3813,7 @@ export default function PremierFieldOperationsBoard() {
                 </button>
               ))}
 
-              {liveInstallations
-                .filter((job) => {
-                  const crew = String(job?.crew || "").trim().toLowerCase();
-                  const handedOffToExternalInstaller =
-                    job.current_stage === "scheduled" &&
-                    crew &&
-                    crew !== "rj";
-
-                  return !handedOffToExternalInstaller;
-                })
-                .map((job) => (
+              {liveInstallations.map((job) => (
                 <button
                   key={`rail-install-${job.id}`}
                   type="button"
@@ -3136,7 +3857,7 @@ export default function PremierFieldOperationsBoard() {
                         ? "Installation Complete"
                         : job.current_stage === "installation_ready"
                           ? "Installation Ready"
-                          : "Scheduled Install"}
+                          : pendingReturns[job.id] ? "Returned to Installer" : "Scheduled Install"}
                     </div>
 
                     <span
@@ -3150,7 +3871,7 @@ export default function PremierFieldOperationsBoard() {
                         ? "INSPECTION PREP"
                         : job.current_stage === "installation_ready"
                           ? "WITH INSTALLER"
-                          : "SCHEDULED"}
+                          : pendingReturns[job.id] ? "NEEDS ATTENTION" : "SCHEDULED"}
                     </span>
                   </div>
 
@@ -3203,7 +3924,14 @@ export default function PremierFieldOperationsBoard() {
                 <button
                   key={`rail-inspection-${job.id}`}
                   type="button"
-                  onClick={() => setSelectedFieldJobId(job.id)}
+                  onClick={() => {
+                    setSelectedFieldJobId(job.id);
+                    setFieldIssueReports((current) => ({
+                      ...current,
+                      [job.id]: [],
+                    }));
+                    void loadFieldInstallerActivity(job.id);
+                  }}
                   style={{
                     width: "100%",
                     textAlign: "left",
@@ -3232,7 +3960,7 @@ export default function PremierFieldOperationsBoard() {
                       marginBottom: 4,
                     }}
                   >
-                    Inspection
+                    {job.inspection_type === "Final Walkthrough" ? "Final Walkthrough" : "Inspection"}
                   </div>
 
                   <strong style={{ fontSize: 16, lineHeight: 1.2 }}>
@@ -3310,6 +4038,19 @@ export default function PremierFieldOperationsBoard() {
         <section
           style={{
             display: selectedFieldJobId ? "block" : "none",
+            position: fieldMonitoringDrawerOpen ? "fixed" : "static",
+            top: fieldMonitoringDrawerOpen ? 0 : undefined,
+            right: fieldMonitoringDrawerOpen ? 0 : undefined,
+            bottom: fieldMonitoringDrawerOpen ? 0 : undefined,
+            width: fieldMonitoringDrawerOpen ? "min(720px, 100vw)" : undefined,
+            maxWidth: fieldMonitoringDrawerOpen ? "100vw" : undefined,
+            height: fieldMonitoringDrawerOpen ? "100dvh" : undefined,
+            overflowY: fieldMonitoringDrawerOpen ? "auto" : undefined,
+            boxSizing: "border-box",
+            zIndex: fieldMonitoringDrawerOpen ? 9600 : undefined,
+            boxShadow: fieldMonitoringDrawerOpen
+              ? "-20px 0 60px rgba(0,0,0,0.65)"
+              : undefined,
             border: "1px solid #31495a",
             borderRadius: 16,
             background: "#0f151b",
@@ -3355,7 +4096,10 @@ export default function PremierFieldOperationsBoard() {
 
             <button
               type="button"
-              onClick={() => setSelectedFieldJobId(null)}
+              onClick={() => {
+                setFieldMonitoringDrawerOpen(false);
+                setSelectedFieldJobId(null);
+              }}
               style={{
                 minHeight: 36,
                 border: "1px solid #46545e",
@@ -3854,10 +4598,11 @@ export default function PremierFieldOperationsBoard() {
                 {liveInstallations.find((job) => job.id === selectedFieldJobId)?.current_stage ===
                 "installation_complete"
                   ? "Installation Complete"
-                  : liveInstallations.find((job) => job.id === selectedFieldJobId)?.current_stage ===
-                      "installation_ready"
-                    ? "Installation Ready"
-                    : "Scheduled Installation"}
+                  : liveInstallations.find((job) => job.id === selectedFieldJobId)?.current_stage === "installation_in_progress"
+                    ? "Installation In Progress"
+                    : liveInstallations.find((job) => job.id === selectedFieldJobId)?.current_stage === "installation_ready"
+                      ? "Installation Ready"
+                      : "Scheduled Installation"}
               </strong>
               <span style={{ fontSize: 12, fontWeight: 900, color: "#d9e5ee" }}>
                 {liveInstallations.some((job) => job.id === selectedFieldJobId) ? 1 : 0}
@@ -3871,8 +4616,54 @@ export default function PremierFieldOperationsBoard() {
             ) : (
               <div style={{ display: "grid", gap: 9 }}>
                 {liveInstallations.filter((job) => job.id === selectedFieldJobId).map((job) => (
-                  <div key={job.id} style={{ border: "1px solid #557c64", borderRadius: 13, background: "#111820", padding: 12 }}>
-                    <FieldBeamComposer job={job} />
+                  <div
+  key={job.id}
+  style={{
+    border: (() => {
+      const unread = (rjReadinessEvents[job.id] ?? []).filter((event) => !event.acknowledged_at);
+      if (!unread.length) return "1px solid #557c64";
+      return unread.some((event) => event.signal_type === "attention")
+        ? "3px solid #d49b40"
+        : "3px solid #3fbf79";
+    })(),
+    boxShadow: (() => {
+      const unread = (rjReadinessEvents[job.id] ?? []).filter((event) => !event.acknowledged_at);
+      if (!unread.length) return "none";
+      return unread.some((event) => event.signal_type === "attention")
+        ? "0 0 0 3px rgba(212,155,64,0.20)"
+        : "0 0 0 3px rgba(63,191,121,0.20)";
+    })(),
+    borderRadius: 13,
+    background: "#111820",
+    padding: 12,
+  }}
+>
+                    {(rjReadinessEvents[job.id] ?? []).filter((event) => !event.acknowledged_at).length > 0 ? (
+                      <div style={{ display: "grid", gap: 8, marginBottom: 12 }} aria-label="New Office readiness updates">
+                        {(rjReadinessEvents[job.id] ?? []).filter((event) => !event.acknowledged_at).slice(0, 5).map((event) => (
+                          <div key={event.event_id} style={{ border: `1px solid ${event.signal_type === "attention" ? "#be8c3e" : "#45996b"}`, background: event.signal_type === "attention" ? "#322615" : "#102b1e", borderRadius: 10, padding: 11, display: "grid", gap: 6 }}>
+                            <div style={{ fontWeight: 900, color: event.signal_type === "attention" ? "#f3cf91" : "#a9ecc3", fontSize: 12 }}>
+                              {event.signal_type === "attention" ? "New issue Ã‚Â· Needs attention" : "New positive Office update"}
+                            </div>
+                            <div style={{ fontSize: 12, color: "#f2f5f7" }}>{event.event_message}</div>
+                            <div style={{ fontSize: 11, color: "#b8c7cf" }}>
+                              {event.created_by_name || "Office"}{event.created_at ? ` Ã‚Â· ${new Date(event.created_at).toLocaleString()}` : ""}
+                            </div>
+                            <button
+                              type="button"
+                              disabled={rjReadinessAckSaving === event.event_id}
+                              onClick={() => void acknowledgeRjReadinessEvent(job.id, event.event_id)}
+                              style={{ justifySelf: "start", minHeight: 36, borderRadius: 8, padding: "7px 12px", border: "1px solid #77949e", background: "#1e3440", color: "#fff", fontWeight: 800, cursor: "pointer" }}
+                            >
+                              {rjReadinessAckSaving === event.event_id ? "Acknowledging..." : "I've Seen This"}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
+                    {rjReadinessError[job.id] && rjReadinessError[job.id] !== "Readiness notifications unavailable" ? (
+                      <div role="alert" style={{ color: "#f1c58a", fontSize: 11, marginBottom: 8 }}>{rjReadinessError[job.id]}</div>
+                    ) : null}                    <FieldBeamComposer job={job} />
 
                     <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginBottom: 6 }}>
                       <strong>{job.first_name} {job.last_name}</strong>
@@ -3886,12 +4677,88 @@ export default function PremierFieldOperationsBoard() {
                       >
                         {job.current_stage === "installation_complete"
                           ? "Inspection Prep"
-                          : job.current_stage === "installation_ready"
-                            ? "Installation Ready"
-                            : "Scheduled"}
+                          : job.current_stage === "installation_in_progress"
+                            ? "Installation In Progress"
+                            : job.current_stage === "installation_ready"
+                              ? "Installation Ready"
+                              : "Scheduled"}
                       </span>
                     </div>
                     <div style={{ color: "#9ca8b2", fontSize: 12, marginBottom: 8 }}>{job.project_address}</div>
+                    {pendingReturns[job.id] ? (
+                      <div role="status" style={{marginBottom:12,padding:11,border:'1px solid #cead64',borderRadius:10,background:'#32291c',color:'#ffe2a0'}}>
+                        <strong>RETURNED TO INSTALLER Ã‚Â· NEEDS ATTENTION</strong>
+                        <div style={{marginTop:6,fontSize:12,whiteSpace:'pre-wrap'}}>{pendingReturns[job.id].reason}</div>
+                      </div>
+                    ) : null}
+                    {job.current_stage === "installation_complete" ? (
+                      <section style={{ border: "1px solid #59846b", borderRadius: 11, background: "#12231b", padding: 12, marginBottom: 12, display: "grid", gap: 9 }}>
+                        <strong style={{ color: "#d6f3e0", fontSize: 14 }}>Review Installation</strong>
+                        <div style={{ color: "#b8d1c1", fontSize: 12 }}>Review installer proof, notes, and issue resolutions before deciding.</div>
+                        <button type="button" onClick={() => {
+                          setFieldInstallerActivityJobId(job.id);
+                          void loadFieldInstallerActivity(job.id);
+                        }} style={{ minHeight: 38, border: "1px solid #477b60", borderRadius: 8, background: "#183927", color: "#ffffff", fontWeight: 800 }}>
+                          View Installer Activity
+                        </button>
+                        {installationReviewLoading === job.id ? <span style={{ fontSize: 12 }}>Loading reported issues...</span> : null}
+                        {installationReviewErrors[job.id] ? <span role="alert" style={{ color: "#ffd19d", fontSize: 12 }}>{installationReviewErrors[job.id]}</span> : null}
+                        {Object.prototype.hasOwnProperty.call(installationReviewReports, job.id) ? (
+                          <div style={{ display: "grid", gap: 5, borderRadius: 8, background: "#101b18", padding: 10 }}>
+                            <strong style={{ fontSize: 12 }}>Reported Issues ({(installationReviewReports[job.id] ?? []).filter((r: any) => !["resolved", "duplicate"].includes(r.resolution_status)).length} open)</strong>
+                            {(installationReviewReports[job.id] ?? []).length > 0 ? (
+                              <div style={{ fontSize: 11, color: "#b8d1c1" }}>
+                                {(installationReviewReports[job.id] ?? []).filter((r: any) => r.resolution_status === "resolved").length} verified resolved Â· {(installationReviewReports[job.id] ?? []).filter((r: any) => r.resolution_status === "duplicate").length} closed as duplicate
+                              </div>
+                            ) : null}
+                            {(installationReviewReports[job.id] ?? []).filter((r: any) => !["resolved", "duplicate"].includes(r.resolution_status)).map((r: any) => (
+                              <div key={r.id} style={{ fontSize: 11, color: "#e0e8e2", overflowWrap: "anywhere" }}>
+                                {(r.categories ?? []).join(", ")}: {r.details}
+                              </div>
+                            ))}
+                            {(installationReviewReports[job.id] ?? []).filter((r: any) => !["resolved", "duplicate"].includes(r.resolution_status)).length === 0 ? <span style={{ fontSize: 11, color: "#b8d1c1" }}>No unresolved issues. All reports remain in the job history.</span> : null}
+                          </div>
+                        ) : null}
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(165px,1fr))", gap: 8 }}>
+                          <button type="button" disabled={installationReviewSaving || installationReviewLoading === job.id || !installationReviewReports[job.id] || Boolean(installationReviewErrors[job.id])} onClick={() => void submitInstallationReview(job.id, "approved")} style={{ minHeight: 44, borderRadius: 9, border: "1px solid #80b495", background: "#276443", color: "white", fontWeight: 900, opacity: installationReviewSaving ? .5 : 1 }}>Approve Installation</button>
+                          <button type="button" onClick={() => { setInstallationReturnOpen((v) => !v); setInstallationReviewErrors((current) => ({ ...current, [job.id]: "" })); }} style={{ minHeight: 44, borderRadius: 9, border: "1px solid #7b8790", background: "#21303a", color: "white", fontWeight: 900 }}>Send Back to Installer</button>
+                        </div>
+                        {installationReturnOpen ? <div style={{ display: "grid", gap: 7 }}>
+                          <label style={{ fontSize: 12 }}>Reason for installer</label>
+                          <textarea rows={2} maxLength={1500} value={installationReturnReason} onChange={(e) => setInstallationReturnReason(e.target.value)} placeholder="What needs correcting?" style={{ background: "#0e171b", color: "white", border: "1px solid #566d75", borderRadius: 8, padding: 10, width: "100%", boxSizing: "border-box" }} />
+                          <button type="button" disabled={installationReviewSaving || installationReviewLoading === job.id || !installationReviewReports[job.id] || Boolean(installationReviewErrors[job.id])} onClick={() => void submitInstallationReview(job.id, "returned")} style={{ minHeight: 42, borderRadius: 8, border: "1px solid #a6b3bb", background: "#304652", color: "white", fontWeight: 900 }}>Confirm Return to Installer</button>
+                        </div> : null}
+                      </section>
+                    ) : null}
+                    {job.current_stage === "scheduled" ? (
+                      <div style={{ border: "1px solid #668b78", borderRadius: 12, background: "#13251d", padding: 13, marginBottom: 12, display: "grid", gap: 9 }}>
+                        <strong style={{ color: "#e1f4e6", fontSize: 14 }}>RJ's Next Steps</strong>
+                        <div style={{ color: "#c7e5d0", fontSize: 12 }}>1. Review Job File. Check measurements, photos, and job details.</div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFieldJobFileOpenId(job.id);
+                            void loadFieldJobDocuments(job.id);
+                            window.setTimeout(() => {
+                              document.getElementById(`premier-field-job-file-${job.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+                            }, 0);
+                          }}
+                          style={{ minHeight: 44, padding: "10px 14px", borderRadius: 9, border: "1px solid #86b99b", background: "#24543b", color: "#ffffff", fontWeight: 900, cursor: "pointer", textAlign: "left" }}
+                        >
+                          Review Job File
+                        </button>
+                        <div style={{ color: "#c7e5d0", fontSize: 12 }}>2. {rjInstallReady[job.id] === true ? "Job Ready" : "Waiting for Readiness"}</div>
+                        <div style={{ border: "1px solid #547760", borderRadius: 9, padding: 10, display: "grid", gap: 5, background: "#102017" }}>
+                          <div style={{ color: "#e1f4e6", fontWeight: 800, fontSize: 12 }}>{rjInstallReady[job.id] === true ? "Office Approved" : "Readiness Pending"}</div>
+                          <div style={{ color: "#c7e5d0", fontSize: 12 }}>Materials: {job.material_status || "Unknown / Not confirmed"}</div>
+                          <div style={{ color: "#c7e5d0", fontSize: 12 }}>Permit: {job.permit_status || "Unknown / Not confirmed"}</div>
+                          <div style={{ color: "#e9cf98", fontSize: 11 }}>{rjInstallReady[job.id] === true ? "Ready for scheduling." : "Office approval and installer assignment required."}</div>
+                        </div>
+                        <div style={{ color: "#c7e5d0", fontSize: 12 }}>3. Schedule Installation</div>
+                        <div style={{ color: "#a9c4b5", fontSize: 11 }}>Confirm the date with the customer, assign an installer, and schedule.</div>
+                      </div>
+                    ) : null}
+
                                         <div
                       style={{
                         display: "grid",
@@ -3989,7 +4856,7 @@ export default function PremierFieldOperationsBoard() {
                           >
                             {fieldInstallerActivityJobId === job.id
                               ? `Close ${job.crew} Activity`
-                              : `${job.crew} — View Activity`}
+                              : `${job.crew} â€” View Activity`}
                           </button>
                         ) : (
                           <div
@@ -4001,6 +4868,7 @@ export default function PremierFieldOperationsBoard() {
                             No installer assigned yet.
                           </div>
                         )}
+                        {job.current_stage !== "installation_complete" ? (<>
                         <select
                           value={crewDrafts[job.id] ?? job.crew ?? ""}
                           disabled={crewSavingJobId === job.id}
@@ -4106,6 +4974,7 @@ export default function PremierFieldOperationsBoard() {
                             {crewSaveErrors[job.id]}
                           </span>
                         ) : null}
+                        </>) : null}
                       </div>
 
                       {fieldInstallerActivityJobId === job.id ? (
@@ -4261,6 +5130,83 @@ export default function PremierFieldOperationsBoard() {
                                 </div>
                               </div>
 
+                              {(fieldIssueReports[job.id] ?? []).length > 0 ? (
+                                <div
+                                  style={{
+                                    border: "1px solid #8a5f4a",
+                                    borderRadius: 10,
+                                    background: "#211713",
+                                    padding: 12,
+                                    marginBottom: 12,
+                                  }}
+                                >
+                                  <div
+                                    style={{
+                                      color: "#efb39a",
+                                      fontSize: 12,
+                                      fontWeight: 900,
+                                      marginBottom: 10,
+                                    }}
+                                  >
+                                    Reported Issues ({fieldIssueReports[job.id].length})
+                                    {fieldFollowupsErrors[job.id] ? <div role="alert" style={{fontSize:10,color:'#ffc7a3'}}>{fieldFollowupsErrors[job.id]}</div> : null}
+                                  </div>
+
+                                  <div style={{ display: "grid", gap: 10 }}>
+                                    {fieldIssueReports[job.id].map((report) => (
+                                      <div
+                                        key={report.id}
+                                        style={{
+                                          border: "1px solid #65483b",
+                                          borderRadius: 8,
+                                          padding: 10,
+                                          background: "#172027",
+                                        }}
+                                      >
+                                        <div
+                                          style={{
+                                            color: "#ffffff",
+                                            fontSize: 12,
+                                            fontWeight: 900,
+                                          }}
+                                        >
+                                          {(report.categories ?? []).join(", ")}
+                                        </div>
+
+                                        <div
+                                          style={{
+                                            color: "#b9c6ce",
+                                            fontSize: 10,
+                                            marginTop: 5,
+                                          }}
+                                        >
+                                          Reported by{" "}
+                                          {report.reporter_label.split(":").pop() ||
+                                            report.reporter_label}
+                                          {" â€¢ "}
+                                          {new Date(report.reported_at).toLocaleString()}
+                                        </div>
+
+                                        {report.details ? (
+                                          <div
+                                            style={{
+                                              color: "#f0d8c8",
+                                              fontSize: 11,
+                                              lineHeight: 1.5,
+                                              marginTop: 8,
+                                              whiteSpace: "pre-wrap",
+                                            }}
+                                          >
+                                            {report.details}
+                                        {renderFieldFollowup(report.job_id ?? job.id, report.id)}
+                                        <PremierFieldIssueReview issueId={report.id} jobId={job.id} issues={fieldIssueReports[job.id] ?? []} followups={fieldIssueFollowups[job.id] ?? []} onSaved={async()=>{await loadFieldInstallerActivity(job.id)}} />
+                                          </div>
+                                        ) : null}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              ) : null}
                               {(fieldInstallerProofPhotos[job.id] ?? []).some(
                                 (photo: any) => photo.needs_attention
                               ) ? (
@@ -4276,7 +5222,7 @@ export default function PremierFieldOperationsBoard() {
                                     marginBottom: 10,
                                   }}
                                 >
-                                  NEEDS ATTENTION — installer flagged a field issue.
+                                  NEEDS ATTENTION â€” installer flagged a field issue.
                                 </div>
                               ) : null}
 
@@ -4442,6 +5388,11 @@ export default function PremierFieldOperationsBoard() {
                           )}
                         </div>
                       ) : null}
+                      {job.current_stage !== "installation_complete" ? (
+                      <details open={job.current_stage !== "installation_ready"} style={{ marginTop: 8, border: "1px solid #31495a", borderRadius: 10, background: "#0c1116" }}>
+                        <summary style={{ cursor: "pointer", padding: 12, fontSize: 12, fontWeight: 900, color: "#f3f6f8" }}>
+                          {job.current_stage === "installation_ready" ? "Installation Ready" : job.scheduled_for ? "Installation Scheduled" : "Assign & Schedule Installation"}
+                        </summary>
                       <div
                         style={{
                           marginTop: 8,
@@ -4461,6 +5412,12 @@ export default function PremierFieldOperationsBoard() {
                         >
                           Install Schedule
                         </div>
+
+                        {job.current_stage === "installation_ready" && !job.scheduled_for ? (
+                          <div style={{ color: "#e9cf98", fontSize: 11, padding: "8px 0" }}>
+                            {rjInstallReady[job.id] === true ? "Office requirements verified. Installer assigned. Confirm the installation date and time with the customer, then click Schedule Install." : "Scheduling is locked until Office verifies the job requirements and an installer is assigned. Check the readiness status before scheduling."}
+                          </div>
+                        ) : null}
 
                         <div
                           style={{
@@ -4608,7 +5565,7 @@ export default function PremierFieldOperationsBoard() {
                                     cursor: "pointer",
                                   }}
                                 >
-                                  📅
+                                  ðŸ“…
                                 </button>
 
                                 <input
@@ -4790,7 +5747,7 @@ export default function PremierFieldOperationsBoard() {
                                     cursor: "pointer",
                                   }}
                                 >
-                                  🕒
+                                  ðŸ•’
                                 </button>
 
                                 <input
@@ -4859,6 +5816,7 @@ export default function PremierFieldOperationsBoard() {
                           <button
                             type="button"
                             disabled={
+                              (job.current_stage === "installation_ready" && rjInstallReady[job.id] !== true) ||
                               installScheduleSavingJobId === job.id ||
                               !installScheduleDrafts[job.id]
                             }
@@ -4971,6 +5929,7 @@ export default function PremierFieldOperationsBoard() {
                               fontWeight: 900,
                               fontSize: 12,
                               cursor:
+                                (job.current_stage === "installation_ready" && rjInstallReady[job.id] !== true) ||
                                 installScheduleSavingJobId === job.id ||
                                 !installScheduleDrafts[job.id]
                                   ? "not-allowed"
@@ -4982,9 +5941,11 @@ export default function PremierFieldOperationsBoard() {
                           >
                             {installScheduleSavingJobId === job.id
                               ? "Saving..."
-                              : job.scheduled_for
-                                ? "Change Install"
-                                : "Schedule Install"}
+                              : job.current_stage === "installation_ready" && rjInstallReady[job.id] !== true
+                                ? "Waiting on Office"
+                                : job.scheduled_for
+                                  ? "Change Install"
+                                  : "Schedule Install"}
                           </button>
                         </div>
 
@@ -5000,21 +5961,27 @@ export default function PremierFieldOperationsBoard() {
                           </div>
                         ) : null}
                       </div>
+                      </details>
+                      ) : null}
                       <div><strong>Material:</strong> {job.material_status || "Unknown"}</div>
                       <div><strong>Permit:</strong> {job.permit_status || "Unknown"}</div>
                     </div>
                     <div style={{ borderTop: "1px solid #26323a", marginTop: 9, paddingTop: 9, fontSize: 12, color: "#d9e5ee" }}>
                       <span style={{ color: "#8fa9bc" }}>Next:</span>{" "}
-                      {job.next_action || "Field Operations to prepare crew for installation."}
+                      {job.current_stage === "installation_complete"
+                        ? "Review submitted installation proof and make the final approval or return decision."
+                        : job.next_action || "Field Operations to prepare crew for installation."}
                     </div>
 
                     <div
+                      id={`premier-field-job-file-${job.id}`}
                       style={{
                         border: "1px solid #31495a",
                         borderRadius: 12,
                         background: "#0d1318",
                         padding: 12,
                         marginTop: 12,
+                        scrollMarginTop: 24,
                       }}
                     >
                       <div
@@ -5258,11 +6225,208 @@ export default function PremierFieldOperationsBoard() {
                     <button
                       type="button"
                       onClick={() =>
+                        setFieldIssueFormOpenId((current) =>
+                          current === job.id ? null : job.id
+                        )
+                      }
+                      style={{
+                        display: job.current_stage === "installation_ready" ? "none" : undefined,
+                        width: "100%",
+                        minHeight: 42,
+                        border: "1px solid #b77a5f",
+                        borderRadius: 9,
+                        background: "#39241e",
+                        color: "#ffe1d0",
+                        fontWeight: 900,
+                        fontSize: 12,
+                        cursor: "pointer",
+                        marginBottom: 10,
+                      }}
+                    >
+                      {fieldIssueFormOpenId === job.id
+                        ? (job.current_stage === "scheduled" ? "Close Pre-Installation Notes & Concerns" : "Close Report Field Issue")
+                        : (job.current_stage === "scheduled" ? "Pre-Installation Notes & Concerns" : "Report Field Issue")}
+                    </button>
+
+                    {job.current_stage === "scheduled" && (preInstallSavedNotes[job.id]?.length || preInstallNotesMessage) ? (
+                      <div style={{ marginBottom: 10, padding: 12, background: "#11291f", border: "1px solid #397e56", borderRadius: 10, display: "grid", gap: 8 }}>
+                        <div style={{ fontSize: 12, fontWeight: 900, color: "#9fdfb2" }}>
+                          Saved Pre-Installation Notes ({preInstallSavedNotes[job.id]?.length ?? 0})
+                        </div>
+                        {preInstallNotesMessage ? <div style={{ fontSize: 12, color: "#d4edda" }}>{preInstallNotesMessage}</div> : null}
+                        {(preInstallSavedNotes[job.id] ?? []).map((note: any) => (
+                          <div key={note.id} style={{ borderTop: "1px solid #315e46", paddingTop: 8, fontSize: 12, color: "#ffffff", display: "grid", gap: 4 }}>
+                            <div style={{ fontWeight: 800 }}>{Array.isArray(note.categories) ? note.categories.join(", ") : "Pre-installation note"}</div>
+                            <div style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{note.details}</div>
+                            <div style={{ color: "#acbcb0", fontSize: 11 }}>{note.created_at ? new Date(note.created_at).toLocaleString() : "Saved"}</div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
+                    {fieldIssueFormOpenId === job.id && job.current_stage !== "installation_ready" ? (
+                      <div
+                        style={{
+                          border: "1px solid #8a5f4a",
+                          borderRadius: 10,
+                          background: "#211713",
+                          padding: 12,
+                          display: "grid",
+                          gap: 12,
+                          marginBottom: 12,
+                        }}
+                      >
+                        <div
+                          style={{
+                            color: "#ffe1d0",
+                            fontSize: 12,
+                            fontWeight: 900,
+                          }}
+                        >
+                          {job.current_stage === "scheduled" ? "What should the installer know before arriving?" : "What needs attention?"}
+                        </div>
+
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+                          {(job.current_stage === "scheduled"
+                            ? [
+                                "Access / Parking",
+                                "Customer Request",
+                                "Special Instructions",
+                                "Materials to Check",
+                                "Known Existing Conditions",
+                                "Other",
+                              ]
+                            : [
+                                "Scratches / Damage",
+                                "Brake Metal",
+                                "Broken Glass",
+                                "Missing Parts",
+                                "Wrong Measurement",
+                                "Installation / Fit",
+                                "Other",
+                              ]).map((category) => {
+                            const selected = (
+                              fieldIssueCategories[job.id] ?? []
+                            ).includes(category);
+
+                            return (
+                              <button
+                                key={category}
+                                type="button"
+                                onClick={() =>
+                                  setFieldIssueCategories((current) => {
+                                    const existing = current[job.id] ?? [];
+
+                                    return {
+                                      ...current,
+                                      [job.id]: selected
+                                        ? existing.filter((item) => item !== category)
+                                        : [...existing, category],
+                                    };
+                                  })
+                                }
+                                style={{
+                                  minHeight: 34,
+                                  padding: "6px 10px",
+                                  border: selected
+                                    ? "1px solid #e5ab8d"
+                                    : "1px solid #65483b",
+                                  borderRadius: 8,
+                                  background: selected ? "#754333" : "#172027",
+                                  color: "#ffffff",
+                                  fontSize: 11,
+                                  fontWeight: 800,
+                                  cursor: "pointer",
+                                }}
+                              >
+                                {selected ? "âœ“ " : ""}
+                                {category}
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        <textarea
+                          value={fieldIssueDetails[job.id] ?? ""}
+                          onChange={(event) =>
+                            setFieldIssueDetails((current) => ({
+                              ...current,
+                              [job.id]: event.target.value,
+                            }))
+                          }
+                          placeholder={job.current_stage === "scheduled" ? "What should the installer know before arriving?" : "Describe what you found during the walkthrough..."}
+                          rows={3}
+                          style={{
+                            width: "100%",
+                            boxSizing: "border-box",
+                            minHeight: 80,
+                            border: "1px solid #65483b",
+                            borderRadius: 9,
+                            background: "#101820",
+                            color: "#ffffff",
+                            padding: 10,
+                            fontSize: 12,
+                            resize: "vertical",
+                          }}
+                        />
+
+                        <button
+                          type="button"
+                          onClick={() => startFieldIssueVoice(job.id)}
+                          disabled={fieldIssueListeningJobId !== null}
+                          style={{
+                            minHeight: 38,
+                            border: "1px solid #8fbea0",
+                            borderRadius: 9,
+                            background:
+                              fieldIssueListeningJobId === job.id
+                                ? "#7a2d24"
+                                : "#2f6842",
+                            color: "#ffffff",
+                            fontSize: 12,
+                            fontWeight: 900,
+                            cursor:
+                              fieldIssueListeningJobId !== null
+                                ? "wait"
+                                : "pointer",
+                          }}
+                        >
+                          {fieldIssueListeningJobId === job.id
+                            ? "Listening..."
+                            : "Mic - Speak Notes"}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={fieldIssueSavingJobId === job.id}
+                          onClick={() => void saveFieldIssueReport(job.id)}
+                          style={{
+                            minHeight: 42,
+                            border: "1px solid #e5ab8d",
+                            borderRadius: 9,
+                            background: "#754333",
+                            color: "#ffffff",
+                            fontSize: 12,
+                            fontWeight: 900,
+                            cursor:
+                              fieldIssueSavingJobId === job.id
+                                ? "wait"
+                                : "pointer",
+                          }}
+                        >
+                          {fieldIssueSavingJobId === job.id
+                            ? (job.current_stage === "scheduled" ? "Saving Note..." : "Saving Issue...")
+                            : (job.current_stage === "scheduled" ? "Save Pre-Installation Concern" : "Save & Report Issue")}
+                        </button>
+                      </div>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={() =>
                         setFieldBuckingRecordsOpenId((current) =>
                           current === job.id ? null : job.id
                         )
                       }
                       style={{
+                        display: ["scheduled", "installation_ready"].includes(job.current_stage) ? "none" : undefined,
                         width: "100%",
                         minHeight: 42,
                         border: "1px solid #405565",
@@ -5281,7 +6445,7 @@ export default function PremierFieldOperationsBoard() {
                         : "Open Bucking Records"}
                     </button>
 
-                    {fieldBuckingRecordsOpenId === job.id ? (
+                    {fieldBuckingRecordsOpenId === job.id && !["scheduled", "installation_ready"].includes(job.current_stage) ? (
                       <>
 
 
@@ -5738,69 +6902,17 @@ export default function PremierFieldOperationsBoard() {
 
 
                     {job.current_stage === "installation_ready" ? (
-                      <div
-                        style={{
-                          border: "1px solid #557c64",
-                          borderRadius: 12,
-                          background: "#111c18",
-                          padding: 12,
-                          marginTop: 12,
-                          marginBottom: 10,
-                        }}
-                      >
-                        <div
-                          style={{
-                          display: "none",
-                            color: "#b7dec4",
-                            fontSize: 11,
-                            fontWeight: 900,
-                            letterSpacing: 0.8,
-                            textTransform: "uppercase",
-                            marginBottom: 8,
-                          }}
-                        >
-                          {job.current_stage === "installation_complete"
-                            ? "Inspection Prep"
-                            : "Field Monitoring"}
-                        </div>
-
-                        <div
-                          style={{
-                            color: "#f3f6f8",
-                            fontSize: 13,
-                            fontWeight: 800,
-                            marginBottom: 8,
-                          }}
-                        >
-                          {job.current_stage === "installation_complete"
-                            ? "Installation is complete."
-                            : "Field Operations owns this job."}
-                        </div>
-
-                        <div
-                          style={{
-                            color: "#d7dde2",
-                            fontSize: 12,
-                            lineHeight: 1.5,
-                          }}
-                        >
-                          {job.current_stage === "installation_complete" ? (
-                            <>
-                              Installer work is complete. Review proof, job notes,
-                              and the job file, then prepare the required inspection
-                              and final walkthrough.
-                            </>
-                          ) : (
-                            <>
-                              Monitor installer photos, notes, material issues,
-                              Needs Attention items, and field progress here.
-                              Keep the job file and Beam available while work moves forward.
-                            </>
-                          )}
+                      <div style={{ border: "1px solid #67ae83", borderRadius: 12, background: "#11291e", padding: 16, marginTop: 12, marginBottom: 10, display: "grid", gap: 10 }}>
+                        <div style={{ color: "#b7dec4", fontSize: 11, fontWeight: 900, letterSpacing: 0.8, textTransform: "uppercase" }}>HANDOFF COMPLETE</div>
+                        <div style={{ color: "#f2fff5", fontSize: 18, fontWeight: 900 }}>Job Sent to {job.crew || "Installer"}</div>
+                        <div style={{ color: "#9fdfb2", fontSize: 12, fontWeight: 800 }}>Installation Ready</div>
+                        <div style={{ color: "#d7e5dc", fontSize: 12 }}>Installation handoff recorded. Installer receipt or acknowledgement has not yet been verified.</div>
+                        <div style={{ color: "#f3f6f8", fontSize: 12 }}>Scheduled: {job.scheduled_for ? new Date(job.scheduled_for).toLocaleString([], { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }) : "Date pending"}</div>
+                        <div style={{ borderTop: "1px solid #39694c", paddingTop: 10, color: "#e3f0e7", fontSize: 12 }}>
+                          <strong>RJ's Next Action:</strong> Monitor installation progress, photos, and issues reported by the installer in Field Monitoring.
                         </div>
                       </div>
                     ) : null}
-
                     <div
                       style={{
                         display: job.current_stage === "scheduled" ? "block" : "none",
@@ -5822,51 +6934,33 @@ export default function PremierFieldOperationsBoard() {
                           marginBottom: 8,
                         }}
                       >
-                        Your Assignment
+                        Next Action
                       </div>
-
                       <div
                         style={{
                           color: "#f3f6f8",
-                          fontSize: 13,
-                          fontWeight: 800,
+                          fontSize: 16,
+                          fontWeight: 900,
                           marginBottom: 10,
                         }}
                       >
-                        Prepare this sold job for the installer.
+                        Send Job to {job.crew || "Installer"}
                       </div>
-
-                      <div
-                        style={{
-                          display: "grid",
-                          gap: 10,
-                          color: "#d7dde2",
-                          fontSize: 12,
-                          lineHeight: 1.5,
-                        }}
-                      >
+                      <div style={{ color: "#d7dde2", fontSize: 12, lineHeight: 1.6 }}>
                         <div>
-                          <strong style={{ color: "#f3f6f8" }}>
-                            Before sending:
-                          </strong>{" "}
-                          Confirm the installer, install date, material status,
-                          permit status, and that the job information is ready.
+                          Installation scheduled for{" "}
+                          {job.scheduled_for
+                            ? new Date(job.scheduled_for).toLocaleString([], {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                                hour: "numeric",
+                                minute: "2-digit",
+                              })
+                            : "date pending"}.
                         </div>
-
                         <div>
-                          <strong style={{ color: "#f3f6f8" }}>
-                            Then:
-                          </strong>{" "}
-                          Mark the job Installation Ready to send it to the installer.
-                        </div>
-
-                        <div>
-                          <strong style={{ color: "#f3f6f8" }}>
-                            After handoff:
-                          </strong>{" "}
-                          Installer photos, notes, material issues, and anything
-                          needing attention stay connected to this job for Field
-                          Operations to review.
+                          Installer assigned. Materials and permit cleared.
                         </div>
                       </div>
                     </div>
@@ -5913,14 +7007,14 @@ export default function PremierFieldOperationsBoard() {
                         minHeight: 46,
                         marginTop: 10,
                         borderRadius: 10,
-                        border: "1px solid #557c64",
-                        background: "#16232d",
-                        color: "#d9e5ee",
+                        border: "1px solid #78bb91",
+                        background: "#204b35",
+                        color: "#ffffff",
                         fontWeight: 900,
                         cursor: "pointer",
                       }}
                     >
-                      Mark Installation Ready
+                      Send Job to {job.crew || "Installer"} â†’
                     </button>
                   </div>
                 ))}
@@ -5946,7 +7040,7 @@ export default function PremierFieldOperationsBoard() {
                 marginBottom: 10,
               }}
             >
-              <strong style={{ fontSize: 16 }}>Scheduled Inspections</strong>
+              <strong style={{ fontSize: 16 }}>Scheduled Walkthroughs / Inspections</strong>
               <span
                 style={{
                   fontSize: 12,
@@ -6031,11 +7125,11 @@ export default function PremierFieldOperationsBoard() {
                         {job.inspection_assigned_to || "Not assigned"}
                       </div>
                       <div>
-                        <strong>Final Inspection:</strong>{" "}
+                        <strong>{job.inspection_type === "Final Walkthrough" ? "Final Walkthrough:" : "Final Inspection:"}</strong>{" "}
                         {job.inspection_scheduled_date
                           ? `${new Date(
                               `${job.inspection_scheduled_date}T12:00:00`
-                            ).toLocaleDateString()} â€” ${
+                            ).toLocaleDateString()}  - ${
                               job.inspection_window || "Time TBD"
                             }`
                           : job.inspection_scheduled_for
@@ -6057,7 +7151,7 @@ export default function PremierFieldOperationsBoard() {
                     >
                       <span style={{ color: "#8fa9bc" }}>Next:</span>{" "}
                       {job.next_action ||
-                        "Field Operations to complete inspection."}
+                        (job.inspection_type === "Final Walkthrough" ? "Complete customer walkthrough and record its outcome." : "Field Operations to complete inspection.")}
                     </div>
                     <div
                       style={{
@@ -6079,6 +7173,79 @@ export default function PremierFieldOperationsBoard() {
                         What needs attention?
                       </div>
 
+                      <div style={{
+                        border: "1px solid #5a4831",
+                        borderRadius: 10,
+                        background: "#1b1916",
+                        padding: 11,
+                        marginBottom: 12
+                      }}>
+                        <strong>Existing Field Reports</strong>
+
+                        {fieldInstallerProofLoading[job.id] ? (
+                          <div>Loading reported issues...</div>
+                        ) : fieldInstallerProofErrors[job.id] || walkthroughIssueErrors[job.id] ? (
+                          <div role="alert" style={{ color: "#f0aaaa" }}>
+                            {fieldInstallerProofErrors[job.id] || walkthroughIssueErrors[job.id]}
+                          </div>
+                        ) : !Object.prototype.hasOwnProperty.call(fieldIssueReports, job.id) || !Object.prototype.hasOwnProperty.call(walkthroughIssueStates, job.id) ? (
+                          <div>Loading issue statuses...</div>
+                        ) : (fieldIssueReports[job.id] || []).length === 0 ? (
+                          <div>No field reports found.</div>
+                        ) : (() => {
+                          const statusById = new Map<string, string>((walkthroughIssueStates[job.id] || []).map((s: any) => [String(s.issue_id), String(s.resolution_status)]));
+                          const reports = fieldIssueReports[job.id] || [];
+                          const open = reports.filter((r: any) => !["resolved", "duplicate"].includes(statusById.get(String(r.id)) || "needs_review"));
+                          const closed = reports.filter((r: any) => ["resolved", "duplicate"].includes(statusById.get(String(r.id)) || ""));
+                          return <div style={{ display: "grid", gap: 9, marginTop: 9 }}>
+                            <strong>{open.length} Open Issues {"\u00B7"} {closed.length} Handled Reports</strong>
+                            {open.length === 0 ? <div style={{ color: "#a5e4b9" }}>No unresolved issues.</div> : open.map((report: any) => <div key={report.id} style={{ borderTop: "1px solid #514536", paddingTop: 8 }}>
+                              <strong>{(report.categories || []).join(", ") || "Field Issue"}</strong>
+                              <div style={{ whiteSpace: "pre-wrap", marginTop: 4 }}>{report.details || "No description provided."}</div>
+                            </div>)}
+                            {closed.length > 0 && <details><summary style={{ cursor: "pointer" }}>Work History {"\u2014"} Handled Reports ({closed.length})</summary>
+                              {closed.map((report: any) => <div key={report.id} style={{ borderTop: "1px solid #514536", paddingTop: 8 }}>
+                                <strong>{(report.categories || []).join(", ") || "Field Issue"} - {statusById.get(String(report.id)) === "duplicate" ? "Closed as Duplicate" : "Verified Resolved"}</strong>
+                                <div style={{ whiteSpace: "pre-wrap", marginTop: 4 }}>{report.details || "No description provided."}</div>
+                              </div>)}
+                            </details>}
+                            <div style={{ fontSize: 11, color: "#d5bd80" }}>Original reports remain saved. Record only new walkthrough findings as finish items.</div>
+                          </div>;
+                        })()}
+                      </div>
+
+                      {job.inspection_type === "Final Walkthrough" && (
+                        <div style={{ display: "grid", gap: 9, marginBottom: 10 }}>
+                          <strong style={{ fontSize: 13 }}>Add Walkthrough Finding</strong>
+                          <label style={{ fontSize: 12 }}>Opening / location
+                            <input
+                              autoComplete="off"
+                              value={walkthroughOpening[job.id] || ""}
+                              onChange={(event) => setWalkthroughOpening((current) => ({ ...current, [job.id]: event.target.value }))}
+                              placeholder="e.g. Kitchen W3, Sliding Door D1"
+                              style={{ display: "block", width: "100%", boxSizing: "border-box", padding: 10, marginTop: 4, borderRadius: 8, border: "1px solid #415563", background: "#0a0f13", color: "#f3f6f8" }}
+                            />
+                          </label>
+                          <label style={{ fontSize: 12 }}>What needs attention?
+                            <select
+                              value={walkthroughIssueType[job.id] || ""}
+                              onChange={(event) => setWalkthroughIssueType((current) => ({ ...current, [job.id]: event.target.value }))}
+                              style={{ display: "block", width: "100%", padding: 10, marginTop: 4, borderRadius: 8, border: "1px solid #415563", background: "#0a0f13", color: "#f3f6f8" }}
+                            >
+                              <option value="">Select issue</option>
+                              <option>Missing Part</option><option>Damage</option><option>Operation Issue</option>
+                              <option>Finish / Trim</option><option>Caulking / Seal</option><option>Cleaning</option><option>Other</option>
+                            </select>
+                          </label>
+                        </div>
+                      )}
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                        <span style={{ fontSize: 12 }}>Additional details (optional)</span>
+                        <button type="button" onClick={() => startWalkthroughDictation(job.id)} disabled={Boolean(walkthroughListening)}
+                          style={{ border: "1px solid #557c64", borderRadius: 9, padding: "8px 14px", background: "#173225", color: "#eaf5ee", cursor: "pointer" }}>
+                          {walkthroughListening === job.id ? "Listening..." : "\uD83C\uDFA4 Mic"}
+                        </button>
+                      </div>
                       <textarea
                         value={inspectionPunchDrafts[job.id] || ""}
                         onFocus={() => {
@@ -6092,7 +7259,7 @@ export default function PremierFieldOperationsBoard() {
                             [job.id]: event.target.value,
                           }))
                         }
-                        placeholder="Example: Rear bedroom window needs interior caulking finished."
+                        placeholder="Optional: Describe what needs correction, or tap Mic to dictate."
                         style={{
                           width: "100%",
                           minHeight: 86,
@@ -6131,7 +7298,7 @@ export default function PremierFieldOperationsBoard() {
                       >
                         {inspectionPunchSaving[job.id] === true
                           ? "Saving..."
-                          : "Add Finish Item"}
+                          : (job.inspection_type === "Final Walkthrough" ? (walkthroughSavedOnce[job.id] ? "Add Another Finding" : "Save Walkthrough Finding") : "Add Finish Item")}
                       </button>
 
                       {inspectionPunchErrors[job.id] ? (
@@ -6191,10 +7358,43 @@ export default function PremierFieldOperationsBoard() {
                       ) : null}
                     </div>
 
+                    {job.inspection_type === "Final Walkthrough" ? (
+                      <div style={{ display: "grid", gap: 9, marginTop: 13 }}>
+                        <strong style={{ color: "#d9e5ee", fontSize: 14 }}>Final Walkthrough Outcome</strong>
+                        <textarea
+                          rows={3}
+                          value={walkthroughOutcomeNotes[job.id] || ""}
+                          onChange={event => setWalkthroughOutcomeNotes(current => ({ ...current, [job.id]: event.target.value }))}
+                          placeholder="Optional approval note, or describe corrections needed"
+                          style={{ background: "#101820", border: "1px solid #41505d", borderRadius: 9, color: "#fff", padding: 10, width: "100%", boxSizing: "border-box" }}
+                        />
+                        <button type="button" disabled={!!walkthroughOutcomeBusy[job.id]}
+                          onClick={() => void submitWalkthroughOutcome(job, "approved")}
+                          style={{ minHeight: 44, background: "#286d45", border: "1px solid #7ac394", borderRadius: 9, color: "white", fontWeight: 900 }}>
+                          Walkthrough Approved - Notify Office
+                        </button>
+                        <button type="button" disabled={!!walkthroughOutcomeBusy[job.id]}
+                          onClick={() => void submitWalkthroughOutcome(job, "corrections_needed")}
+                          style={{ minHeight: 44, background: "#47341d", border: "1px solid #b5945d", borderRadius: 9, color: "white", fontWeight: 900 }}>
+                          Corrections Needed - Notify Office
+                        </button>
+                        {walkthroughOutcomeError[job.id] ? <div style={{ color: "#e8a6a6", fontSize: 12 }}>{walkthroughOutcomeError[job.id]}</div> : null}
+                        <div style={{ color: "#a5b6c4", fontSize: 11 }}>Approval is blocked if any saved walkthrough findings are unresolved. Office handles closeout; this does not close the job.</div>
+                      </div>
+                    ) : (
                     <button
                       type="button"
+                      disabled={job.inspection_type === "Final Walkthrough"}
                       onClick={async () => {
-                        const accessToken =
+                        // The existing RPC always returns the job for installer finish work.
+                        // Do not use it to certify a customer Final Walkthrough.
+                        if (job.inspection_type === "Final Walkthrough") return;
+                        const proceed = window.confirm(
+                          "Complete this Final Inspection and send the job to installer finish work? Existing damage reports will remain open until their repairs are confirmed."
+                        );
+                        if (!proceed) return;
+
+const accessToken =
                           getPremierFieldAccessToken();
 
                         if (!accessToken) return;
@@ -6230,8 +7430,9 @@ export default function PremierFieldOperationsBoard() {
                         cursor: "pointer",
                       }}
                     >
-                      Complete Inspection
+                      {job.inspection_type === "Final Walkthrough" ? "Final Walkthrough Completion - Pending Verification" : "Complete Inspection"}
                     </button>
+                    )}
                   </div>
                 ))}
               </div>
