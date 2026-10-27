@@ -4190,7 +4190,7 @@ export default function PremierWindowDoorBoard() {
   ? officePaymentDrafts.deposit_50?.status === "received"
     ? blueFolderState?.jobId === officeWorkLead.id && blueFolderState.confirmedAt
       ? "Blue Folder confirmed. Continue with the final measurement and job setup."
-      : "Deposit received. Prepare the Blue Folder and confirm it ready in Continue Job Setup."
+      : "Deposit received. Open Prepare Blue Folder and confirm the documents there."
     : (officeWorkLead.next_action || "Collect deposit and schedule the final detailed measurement.")                 : officeWorkLead.current_stage === "production_setup"                 ? (officeWorkLead.next_action || "Office to start ordering/materials and permit setup.")                 : officeWorkLead.current_stage === "installation_complete"                 ? "Office to call the customer and schedule the final walkthrough with RJ, Gino, or both."
   : officeWorkLead.current_stage === "inspection_scheduled" ? (officeWorkLead.next_action || "Await RJ/Gino final walkthrough outcome.")                 : officeWorkLead.current_stage === "inspection_complete"                 ? (officeWorkLead.next_action || "Office to complete final closeout.")                 : officeWorkLead.current_stage === "hundred_percent_complete"                 ? (officeWorkLead.next_action || "Office to handle final payment and administrative closeout.")                 : officeWorkLead.current_stage === "installation_ready" ? "Office to confirm materials, permits, and job readiness. RJ has received the final measurement package." : `Prepare proposal and return it to ${                     officeWorkLead.assigned_salesperson || "Sales"                   }.`}
             </div>
@@ -4198,9 +4198,9 @@ export default function PremierWindowDoorBoard() {
             {officeWorkLead.current_stage === "proposal_approved" ? (
               <div style={{ marginBottom: 12, border: "1px solid #5b9473", borderRadius: 14, background: "linear-gradient(135deg, #163426 0%, #101d17 100%)", padding: 14 }}>
                 <div style={{ color: "#94d7ad", fontSize: 10, fontWeight: 900, letterSpacing: 1, marginBottom: 6 }}>WHAT NEEDS MY ATTENTION</div>
-                <div style={{ color: "#ffffff", fontSize: 19, fontWeight: 900, marginBottom: 6 }}>{officePaymentDrafts.deposit_50?.status === "received" ? "Prepare the Blue Folder" : officePaymentDrafts.deposit_50?.status === "sent" ? "Track the 50% Deposit" : "Send the 50% Deposit Invoice"}</div>
+                <div style={{ color: "#ffffff", fontSize: 19, fontWeight: 900, marginBottom: 6 }}>{officePaymentDrafts.deposit_50?.status === "received" ? (blueFolderState?.jobId === officeWorkLead.id && blueFolderState.confirmedAt ? "Continue Final Measurement" : "Prepare the Blue Folder") : officePaymentDrafts.deposit_50?.status === "sent" ? "Track the 50% Deposit" : "Send the 50% Deposit Invoice"}</div>
                 <div style={{ color: "#c5d9ce", fontSize: 12, lineHeight: 1.55 }}>
-                  {officePaymentDrafts.deposit_50?.status === "received" ? "Deposit recorded. Prepare the job documents and continue setup." : officePaymentDrafts.deposit_50?.status === "sent" ? "Invoice confirmed sent. Record the deposit only when payment actually arrives; Blue Folder preparation can continue meanwhile." : "Customer approved. Send the deposit invoice first. You can prepare Blue Folder paperwork while waiting for payment."}
+                  {officePaymentDrafts.deposit_50?.status === "received" ? (blueFolderState?.jobId === officeWorkLead.id && blueFolderState.confirmedAt ? "Blue Folder confirmed. Continue with the final measurement and approved job setup." : "Deposit recorded. Prepare the job documents and confirm the Blue Folder in this section.") : officePaymentDrafts.deposit_50?.status === "sent" ? "Invoice confirmed sent. Record the deposit only when payment actually arrives; Blue Folder preparation can continue meanwhile." : "Customer approved. Send the deposit invoice first. You can prepare Blue Folder paperwork while waiting for payment."}
                 </div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginTop: 11 }}>
                   {[["Deposit invoice", "50%"], ["Material delivered", "40%"], ["Job complete", "10%"]].map(([label, amount]) => (
@@ -5546,6 +5546,26 @@ export default function PremierWindowDoorBoard() {
                     ) : null}
 
                     </div>
+                    {officeWorkLead.current_stage === "proposal_approved" ? (
+                      <div style={{ marginTop: 12 }}>
+                        <div style={{border:"1px solid #557c64",borderRadius:10,padding:12,marginBottom:14}}>
+                      <strong style={{display:"block",color:"#d9e5ee",marginBottom:5}}>Blue Folder confirmation</strong>
+                      <div style={{fontSize:12,color:"#b7c9d7",marginBottom:10}}>
+                        {blueFolderLoading ? "Checking confirmation..." : blueFolderState?.jobId === officeWorkLead.id && blueFolderState.confirmedAt
+                          ? `Confirmed by ${blueFolderState.confirmedBy || "Office"}`
+                          : "Office must confirm the job documents after the 50% deposit is received."}
+                      </div>
+                      {blueFolderState?.jobId === officeWorkLead.id && blueFolderState.confirmedAt ? null : (
+                        <button type="button" disabled={blueFolderSaving || blueFolderLoading || blueFolderState?.jobId !== officeWorkLead.id || officePaymentDrafts.deposit_50?.status !== "received"}
+                          onClick={() => void confirmBlueFolder(officeWorkLead)}
+                          style={{minHeight:40,padding:"8px 12px",border:"1px solid #557c64",borderRadius:8,background:"#14271c",color:"#b7dec4",fontWeight:800}}>
+                          {blueFolderSaving ? "Confirming..." : "Confirm Blue Folder Ready"}
+                        </button>
+                      )}
+                      {blueFolderError ? <div style={{color:"#d8b267",marginTop:8,fontSize:12}}>{blueFolderError}</div> : null}
+                    </div>
+                      </div>
+                    ) : null}
                   </>
                 ) : null}
 
@@ -6808,23 +6828,6 @@ export default function PremierWindowDoorBoard() {
                     >
                       Continue Approved Job Setup
                     </strong>
-                    <div style={{border:"1px solid #557c64",borderRadius:10,padding:12,marginBottom:14}}>
-                      <strong style={{display:"block",color:"#d9e5ee",marginBottom:5}}>Blue Folder confirmation</strong>
-                      <div style={{fontSize:12,color:"#b7c9d7",marginBottom:10}}>
-                        {blueFolderLoading ? "Checking confirmation..." : blueFolderState?.jobId === officeWorkLead.id && blueFolderState.confirmedAt
-                          ? `Confirmed by ${blueFolderState.confirmedBy || "Office"}`
-                          : "Office must confirm the job documents after the 50% deposit is received."}
-                      </div>
-                      {blueFolderState?.jobId === officeWorkLead.id && blueFolderState.confirmedAt ? null : (
-                        <button type="button" disabled={blueFolderSaving || blueFolderLoading || blueFolderState?.jobId !== officeWorkLead.id || officePaymentDrafts.deposit_50?.status !== "received"}
-                          onClick={() => void confirmBlueFolder(officeWorkLead)}
-                          style={{minHeight:40,padding:"8px 12px",border:"1px solid #557c64",borderRadius:8,background:"#14271c",color:"#b7dec4",fontWeight:800}}>
-                          {blueFolderSaving ? "Confirming..." : "Confirm Blue Folder Ready"}
-                        </button>
-                      )}
-                      {blueFolderError ? <div style={{color:"#d8b267",marginTop:8,fontSize:12}}>{blueFolderError}</div> : null}
-                    </div>
-
                     {officeApprovedSetupLoading ? (
                       <div
                         style={{
