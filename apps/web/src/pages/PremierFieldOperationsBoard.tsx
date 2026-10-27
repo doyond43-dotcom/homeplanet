@@ -5335,7 +5335,7 @@ export default function PremierFieldOperationsBoard() {
                       {job.current_stage !== "installation_complete" ? (
                       <details open={job.current_stage !== "installation_ready"} style={{ marginTop: 8, border: "1px solid #31495a", borderRadius: 10, background: "#0c1116" }}>
                         <summary style={{ cursor: "pointer", padding: 12, fontSize: 12, fontWeight: 900, color: "#f3f6f8" }}>
-                          {job.current_stage === "installation_ready" ? "Installation Ready" : job.scheduled_for ? "Installation Scheduled" : "Assign & Schedule Installation"}
+                          {job.current_stage === "installation_ready" ? "Installation Ready" : job.scheduled_for ? "Installation Scheduled - View" : "Assign & Schedule Installation"}
                         </summary>
                       <div
                         style={{
@@ -5509,7 +5509,7 @@ export default function PremierFieldOperationsBoard() {
                                     cursor: "pointer",
                                   }}
                                 >
-                                  ðŸ“…
+                                  Calendar
                                 </button>
 
                                 <input
@@ -5691,7 +5691,7 @@ export default function PremierFieldOperationsBoard() {
                                     cursor: "pointer",
                                   }}
                                 >
-                                  ðŸ•’
+                                  Time
                                 </button>
 
                                 <input
@@ -5905,8 +5905,8 @@ export default function PremierFieldOperationsBoard() {
                               : job.current_stage === "installation_ready" && rjInstallReady[job.id] !== true
                                 ? "Waiting on Office"
                                 : job.scheduled_for
-                                  ? "Change Install"
-                                  : "Schedule Install"}
+                                  ? "Saved - Change Install"
+                                  : "Save Installation Schedule"}
                           </button>
                         </div>
 
@@ -5931,7 +5931,9 @@ export default function PremierFieldOperationsBoard() {
                       <span style={{ color: "#8fa9bc" }}>Next:</span>{" "}
                       {job.current_stage === "installation_complete"
                         ? "Review submitted installation proof and make the final approval or return decision."
-                        : job.next_action || "Field Operations to prepare crew for installation."}
+                        : job.current_stage === "production_setup"
+                          ? "Office released this job to RJ. Review the job file, choose a crew, and coordinate the installation appointment."
+                          : job.next_action || "Field Operations to prepare crew for installation."}
                     </div>
 
                     <div
