@@ -867,7 +867,7 @@ export default function PremierFieldOperationsBoard() {
   useEffect(() => {
     if (!selectedFieldJobId) return;
     const match = liveInstallations.find((item) => item.id === selectedFieldJobId);
-    if (!match || match.current_stage !== "installation_complete") return;
+    if (!match || match.current_stage !== "installation_complete" || match.next_action?.startsWith("RJ approved installation review.")) return;
     let active = true;
     const jobId = match.id;
     const token = getPremierFieldAccessToken();
@@ -907,6 +907,8 @@ export default function PremierFieldOperationsBoard() {
 
   const submitInstallationReview = async (jobId: string, decision: "approved" | "returned") => {
     if (installationReviewSaving || installationReviewLoading === jobId || installationReviewErrors[jobId]) return;
+    const selected = liveInstallations.find((item) => item.id === jobId);
+    if (!selected || selected.current_stage !== "installation_complete" || selected.next_action?.startsWith("RJ approved installation review.")) return;
     if (!Object.prototype.hasOwnProperty.call(installationReviewReports, jobId)) return;
     const reason = installationReturnReason.trim();
     if (decision === "returned" && reason.length < 5) {
@@ -3869,7 +3871,7 @@ export default function PremierFieldOperationsBoard() {
                       }}
                     >
                       {job.current_stage === "installation_complete"
-                        ? "INSPECTION PREP"
+                        ? job.next_action?.startsWith("RJ approved installation review.") ? "RJ APPROVED" : "INSPECTION PREP"
                         : job.current_stage === "installation_ready"
                           ? "WITH INSTALLER"
                           : pendingReturns[job.id] ? "NEEDS ATTENTION" : job.scheduled_for ? "SCHEDULED" : "PENDING"}
@@ -4616,7 +4618,7 @@ export default function PremierFieldOperationsBoard() {
                         }}
                       >
                         {job.current_stage === "installation_complete"
-                          ? "Inspection Prep"
+                          ? job.next_action?.startsWith("RJ approved installation review.") ? "Approved - Office Follow-up" : "Inspection Prep"
                           : job.current_stage === "installation_in_progress"
                             ? "Installation In Progress"
                             : job.current_stage === "installation_ready"
@@ -4631,7 +4633,12 @@ export default function PremierFieldOperationsBoard() {
                         <div style={{marginTop:6,fontSize:12,whiteSpace:'pre-wrap'}}>{pendingReturns[job.id].reason}</div>
                       </div>
                     ) : null}
-                    {job.current_stage === "installation_complete" ? (
+                    {job.current_stage === "installation_complete" && job.next_action?.startsWith("RJ approved installation review.") ? (
+                      <div role="status" style={{ border: "1px solid #59846b", borderRadius: 11, background: "#12231b", padding: 12, marginBottom: 12, color: "#d6f3e0", display: "grid", gap: 5 }}>
+                        <strong>Installation Approved by RJ</strong>
+                        <span style={{ fontSize: 12 }}>{job.next_action}</span>
+                      </div>
+                    ) : job.current_stage === "installation_complete" ? (
                       <section style={{ border: "1px solid #59846b", borderRadius: 11, background: "#12231b", padding: 12, marginBottom: 12, display: "grid", gap: 9 }}>
                         <strong style={{ color: "#d6f3e0", fontSize: 14 }}>Review Installation</strong>
                         <div style={{ color: "#b8d1c1", fontSize: 12 }}>Review installer proof, notes, and issue resolutions before deciding.</div>
