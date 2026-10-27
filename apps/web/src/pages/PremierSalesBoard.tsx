@@ -1050,16 +1050,32 @@ export default function PremierSalesBoard() {
     const salesperson =
       selectedLiveLead.assigned_salesperson || "Salesperson";
 
+    if (selectedLiveLead.current_stage === "final_measurement") {
+      const token = getPremierAccessToken();
+      if (!token) { window.alert("Premier sales access is missing."); return; }
+      setSavingLiveLeadAction(true);
+      const assignee = salesperson.startsWith("Dennis") ? "Dennis" : salesperson.startsWith("Gio") ? "Gio" : "Gino";
+      const { data, error } = await supabase.rpc("save_premier_final_measurement", {
+        p_access_token: token, p_job_id: selectedLiveLead.id, p_status: "scheduled",
+        p_scheduled_for: appointmentIso, p_assigned_to: assignee,
+        p_completed_at: null,
+        p_note: [selectedLiveLead.latest_sales_note || "", `Appointment confirmed with customer for ${formatted}.`].filter(Boolean).join("\n"),
+      });
+      setSavingLiveLeadAction(false);
+      if (error || data !== true) { window.alert("Could not confirm Final Measurement appointment."); return; }
+      setLiveSalesLeads((current) => current.map((lead) => lead.id === selectedLiveLead.id
+        ? { ...lead, measurement_appointment: appointmentIso, latest_sales_note: `Appointment confirmed with customer for ${formatted}.` }
+        : lead));
+      setEditingLiveAppointment(false);
+      setLiveAppointmentDraft("");
+      return;
+    }
     const saved = await saveLiveLeadUpdate({
       measurementAppointment: appointmentIso,
       latestSalesNote: `Measurement appointment set for ${formatted}.`,
       nextAction: `${salesperson} measurement scheduled for ${formatted}.`,
     });
-
-    if (saved) {
-      setEditingLiveAppointment(false);
-      setLiveAppointmentDraft("");
-    }
+    if (saved) { setEditingLiveAppointment(false); setLiveAppointmentDraft(""); }
   };
 
   const startLiveMeasurement = async () => {
@@ -5243,7 +5259,7 @@ export default function PremierSalesBoard() {
                 <div><div style={{ color: "#9caeb7", fontSize: 11, marginBottom: 4 }}>Appointment</div>
                   <strong style={{ fontSize: 13 }}>{selectedLiveLead.measurement_appointment
                     ? new Date(selectedLiveLead.measurement_appointment).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
-                    : "Not scheduled"}</strong></div>
+                    : selectedLiveLead.current_stage === "final_measurement" ? "Pending coordination" : "Not scheduled"}</strong></div>
                 <div><div style={{ color: "#9caeb7", fontSize: 11, marginBottom: 4 }}>Email</div>
                   <strong style={{ fontSize: 12, overflowWrap: "anywhere" }}>{selectedLiveLead.email || "Not provided"}</strong></div>
               </div>
@@ -5255,7 +5271,7 @@ export default function PremierSalesBoard() {
                   window.open(`https://www.google.com/maps/search/?api=1&query=${address}`, "_blank", "noopener,noreferrer");
                 }} style={{ minHeight: 44, border: "1px solid #64869b", borderRadius: 9, background: "#1a394e", color: "#fff", fontWeight: 900, cursor: "pointer" }}>Navigation</button>
               </div>
-              {["new_lead", "measurement"].includes(selectedLiveLead.current_stage) ? (
+              {["new_lead", "measurement", "final_measurement"].includes(selectedLiveLead.current_stage) ? (
                 <button type="button" onClick={() => {
                   setLiveAppointmentDraft(toLocalDateTimeInputValue(selectedLiveLead.measurement_appointment));
                   setEditingLiveAppointment(true);

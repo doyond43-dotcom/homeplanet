@@ -340,6 +340,8 @@ export default function PremierWindowDoorBoard() {
     assignedTo: "RJ",
   });
 
+  const [finalMeasureSchedulingMode, setFinalMeasureSchedulingMode] = useState("coordinate");
+  const [finalMeasureWindowDate, setFinalMeasureWindowDate] = useState("");
   const [officeFinalMeasureSaving, setOfficeFinalMeasureSaving] =
     useState(false);
   const [officeFinalMeasureSaved, setOfficeFinalMeasureSaved] =
@@ -2212,23 +2214,30 @@ export default function PremierWindowDoorBoard() {
       return;
     }
 
-    if (!officeFinalMeasureDraft.scheduledFor) {
-      setOfficeApprovedSetupError(
-        "Choose the Final Measurement date and time."
-      );
+    if (finalMeasureSchedulingMode !== "coordinate" && finalMeasureSchedulingMode !== "specific" && !finalMeasureWindowDate) {
+      setOfficeApprovedSetupError("Choose the requested date for the measurement window.");
       return;
     }
-
-    const parsedScheduledFor = new Date(officeFinalMeasureDraft.scheduledFor);
-
-    if (Number.isNaN(parsedScheduledFor.getTime())) {
-      setOfficeApprovedSetupError(
-        "Enter a valid Final Measurement date and time before scheduling."
-      );
+    if (finalMeasureSchedulingMode === "specific" && !officeFinalMeasureDraft.scheduledFor) {
+      setOfficeApprovedSetupError("Choose the confirmed date and time.");
       return;
     }
-
-    const scheduledFor = parsedScheduledFor.toISOString();
+    const parsedScheduledFor = finalMeasureSchedulingMode === "specific"
+      ? new Date(officeFinalMeasureDraft.scheduledFor) : null;
+    if (parsedScheduledFor && Number.isNaN(parsedScheduledFor.getTime())) {
+      setOfficeApprovedSetupError("Enter a valid final measurement date and time.");
+      return;
+    }
+    // Window/coordination requests do NOT invent an appointment timestamp.
+    const scheduledFor = parsedScheduledFor ? parsedScheduledFor.toISOString() : null;
+    const requestLabel = finalMeasureSchedulingMode === "coordinate"
+      ? "Leave scheduling to salesperson — coordinate with customer; appointment not confirmed."
+      : finalMeasureSchedulingMode === "morning"
+      ? `Requested morning window on ${finalMeasureWindowDate}; exact appointment not confirmed.`
+      : finalMeasureSchedulingMode === "afternoon"
+      ? `Requested afternoon window on ${finalMeasureWindowDate}; exact appointment not confirmed.`
+      : "Specific appointment confirmed by Office.";
+    const finalMeasureNote = [requestLabel, officeFinalMeasureDraft.note.trim()].filter(Boolean).join("\n");
 
 
     setOfficeFinalMeasureSaving(true);
@@ -2242,7 +2251,7 @@ export default function PremierWindowDoorBoard() {
         p_scheduled_for: scheduledFor,
         p_assigned_to: finalMeasureAssignee,
         p_completed_at: null,
-        p_note: officeFinalMeasureDraft.note || null,
+        p_note: finalMeasureNote,
       }
     );
 
@@ -2258,6 +2267,7 @@ export default function PremierWindowDoorBoard() {
     setOfficeFinalMeasureDraft((current) => ({
       ...current,
       status: "scheduled",
+      scheduledFor: finalMeasureSchedulingMode === "specific" ? current.scheduledFor : "",
       assignedTo: finalMeasureAssignee,
       completedDate: "",
     }));
@@ -6556,7 +6566,25 @@ export default function PremierWindowDoorBoard() {
                             <option value="Gino">Gino Marquez</option>
                           </select>
                         </label>
-                        <label
+                        <label style={{ display: "grid", gap: 5, color: "#9ca8b2", fontSize: 10, fontWeight: 800, marginBottom: 10 }}>
+                          How should Final Measurement be scheduled?
+                          <select value={finalMeasureSchedulingMode} onChange={(event) => {
+                            setFinalMeasureSchedulingMode(event.target.value);
+                            setOfficeFinalMeasureSaved(false);
+                          }} style={{ minHeight: 42, background: "#0d141a", color: "#fff", border: "1px solid #405c6d", borderRadius: 9, padding: "0 10px" }}>
+                            <option value="coordinate">Leave Scheduling to Salesperson</option>
+                            <option value="morning">Morning Window</option>
+                            <option value="afternoon">Afternoon Window</option>
+                            <option value="specific">Specific Time (confirmed)</option>
+                          </select>
+                        </label>
+                        {(finalMeasureSchedulingMode === "morning" || finalMeasureSchedulingMode === "afternoon") ? (
+                          <label style={{ display: "grid", gap: 5, color: "#9ca8b2", fontSize: 10, marginBottom: 10 }}>
+                            Requested Date (time to be confirmed by Sales)
+                            <input type="date" value={finalMeasureWindowDate} onChange={(event) => { setFinalMeasureWindowDate(event.target.value); setOfficeFinalMeasureSaved(false); }} style={{ minHeight: 42, background: "#0d141a", color: "#fff", border: "1px solid #405c6d", borderRadius: 9, padding: "0 10px" }} />
+                          </label>
+                        ) : null}
+                        {finalMeasureSchedulingMode === "specific" ? (<label
                           style={{
                             display: "grid",
                             gap: 5,
@@ -6588,7 +6616,7 @@ export default function PremierWindowDoorBoard() {
                               boxSizing: "border-box",
                             }}
                           />
-                        </label>
+                        </label>) : null}
 
                         <label
                           style={{
@@ -6646,7 +6674,7 @@ export default function PremierWindowDoorBoard() {
                               marginTop: 8,
                             }}
                           >
-                            Final Measurement scheduled and sent to Sales.
+                            Final Measurement assignment saved and sent to Sales.
                           </div>
                         ) : null}
 
@@ -6682,10 +6710,10 @@ export default function PremierWindowDoorBoard() {
                           }}
                         >
                           {officeFinalMeasureSaving
-                            ? "Scheduling..."
+                            ? "Saving..."
                             : officeFinalMeasureSaved
-                              ? "SCHEDULED"
-                              : `Schedule & Send to ${
+                              ? "SENT TO SALES"
+                              : `Send Final Measurement to ${
                                   (officeFinalMeasureDraft.assignedTo === "Gio" ? "Gio Richardson" : officeFinalMeasureDraft.assignedTo === "Gino" ? "Gino Marquez" : officeFinalMeasureDraft.assignedTo === "Dennis" ? "Dennis Dillon" : officeFinalMeasureDraft.assignedTo) || officeWorkLead?.assigned_salesperson || "Salesperson"
                                 }`}
                         </button>
