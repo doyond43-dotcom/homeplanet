@@ -3868,6 +3868,7 @@ export default function PremierWindowDoorBoard() {
                           if (officeWorkLeadId !== lead.id) {
                             void loadOfficeProductionSetup(lead);
                             void loadOfficePayments(lead);
+                            void loadBlueFolderConfirmation(lead);
                             void loadOfficeRjRelease(lead);
                           }
                           return;
@@ -4217,7 +4218,21 @@ export default function PremierWindowDoorBoard() {
                 ? [["Materials & Permit Records", "production_setup"], ["40% Payment Record", "deposit"]]
                 : ["production_setup", "installation_ready", "installation_scheduled"].includes(officeWorkLead.current_stage)
                 ? [["1. Materials & Permits", "production_setup"], ["2. Collect 40% Payment", "deposit"]]                 : officeWorkLead.current_stage === "installation_complete"                 ? [["Schedule Final Walkthrough", "inspection_schedule"]]                 : officeWorkLead.current_stage === "inspection_scheduled" ? [["View Job Documents", "job_documents"]]
-                : officeWorkLead.current_stage === "inspection_complete"                 ? [["Payments / Complete Job", "deposit"]]                 : officeWorkLead.current_stage === "completed" ? [["View Payment History", "deposit"], ["View Job Documents", "job_documents"], ["View Final Closeout", "final_closeout"]] : officeWorkLead.current_stage === "hundred_percent_complete"                 ? [                     ["Payment", "deposit"],                     ["Final Closeout", "final_closeout"],                   ]                 : [                     ["Review Measurements", "measurements"],                     ["Photos / Proof", "photos"],                     ["Proposal Workspace", "proposal"],                     ["Send Back to Sales", "relay"],                   ]               ).map(([label, view]) => (
+                : officeWorkLead.current_stage === "inspection_complete"                 ? [["Payments / Complete Job", "deposit"]]                 : officeWorkLead.current_stage === "completed" ? [["View Payment History", "deposit"], ["View Job Documents", "job_documents"], ["View Final Closeout", "final_closeout"]] : officeWorkLead.current_stage === "hundred_percent_complete"                 ? [                     ["Payment", "deposit"],                     ["Final Closeout", "final_closeout"],                   ]                 : [                     ["Review Measurements", "measurements"],                     ["Photos / Proof", "photos"],                     ["Proposal Workspace", "proposal"],                     ["Send Back to Sales", "relay"],                   ]               ).map(([label, view]) => {
+                const isApprovedSetup = officeWorkLead.current_stage === "proposal_approved";
+                const depositComplete = isApprovedSetup && officePaymentDrafts.deposit_50?.status === "received";
+                const blueFolderComplete = isApprovedSetup && blueFolderState?.jobId === officeWorkLead.id && Boolean(blueFolderState.confirmedAt);
+                const isDepositDone = depositComplete && view === "deposit";
+                const isBlueFolderDone = blueFolderComplete && view === "job_documents";
+                const isBlueFolderNext = depositComplete && !blueFolderComplete && !blueFolderLoading && view === "job_documents";
+                const displayLabel = isDepositDone
+                  ? "50% Deposit Complete"
+                  : isBlueFolderDone
+                  ? "Blue Folder Complete"
+                  : isBlueFolderNext
+                  ? "Prepare Blue Folder"
+                  : label;
+                return (
                 <div key={label}>
                 <button
                   key={label}
@@ -4264,7 +4279,7 @@ export default function PremierWindowDoorBoard() {
                     border:
                       officeWorkView === view
                         ? "1px solid #6f91a7"
-                        : officeWorkLead.current_stage === "completed" ? "1px solid #3d7459" : "1px solid #31495a",
+                        : isDepositDone || isBlueFolderDone ? "1px solid #3d7459" : isBlueFolderNext ? "1px solid #81b998" : officeWorkLead.current_stage === "completed" ? "1px solid #3d7459" : "1px solid #31495a",
                     borderRadius: 10,
                     background:
                       officeWorkView === view
@@ -4337,7 +4352,14 @@ export default function PremierWindowDoorBoard() {
                       </span>
                     </span>
                   ) : (
-                    <span style={{ display: "block" }}>{label}</span>
+                    <span style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                      <span>{isDepositDone || isBlueFolderDone ? "✓ " : ""}{displayLabel}</span>
+                      {(isDepositDone || isBlueFolderDone || isBlueFolderNext) && (
+                        <span style={{ color: isBlueFolderNext ? "#a6d9b8" : "#a9bdaf", whiteSpace: "nowrap", fontSize: 12 }}>
+                          {isBlueFolderNext ? "Next ›" : "View ›"}
+                        </span>
+                      )}
+                    </span>
                   )}
                   {["production_setup", "installation_ready", "installation_scheduled", "installation_in_progress"].includes(officeWorkLead.current_stage) && view === "production_setup" ? (
                     <span style={{ display: "block", marginTop: 6, fontSize: 11, fontWeight: 400, lineHeight: 1.5 }}>
@@ -4602,7 +4624,8 @@ export default function PremierWindowDoorBoard() {
                   </div>
                 ) : null}
                 </div>
-              ))}
+                );
+              })}
 
 
 
@@ -6506,7 +6529,7 @@ export default function PremierWindowDoorBoard() {
                     >
                       Schedule the Final Measurement for the salesperson who sold
                       this job. The completed measurement package will be handled
-                      from the Sales Board and then sent to RJ.
+                      from the Sales Board and returned to Office for job setup before RJ release.
                     </div>
 
                     {officeApprovedSetupLoading ? (
