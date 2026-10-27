@@ -2117,7 +2117,7 @@ export default function PremierInstallerTechBoard() {
                     <span style={{ color: "#8fa9bc" }}>Next:</span>{" "}
                     {job.current_stage === "scheduled"
                       ? "Installer to begin the scheduled installation. Add photos or notes if needed."
-                      : <PremierInstallerCurrentNext jobId={job.id} returned={Boolean(pendingReturns[job.id])} fallback={job.next_action || "Installer to begin installation. Add photos or notes if needed."} />}
+                      : <PremierInstallerCurrentNext jobId={job.id} returned={Boolean(pendingReturns[job.id])} fallback={job.current_stage === "installation_in_progress" && /upload required proof/i.test(job.next_action || "") ? "Complete the installation, document any issues, and submit the job to RJ for review. Add photos or notes when applicable." : (job.next_action || "Installer to begin installation. Add photos or notes if needed.")} />}
                   </div>
 
 
