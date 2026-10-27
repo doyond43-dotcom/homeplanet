@@ -2615,6 +2615,8 @@ export default function PremierWindowDoorBoard() {
       ];
     });
   };
+  const officeWorkLeadIdRef = useRef(officeWorkLeadId);
+  officeWorkLeadIdRef.current = officeWorkLeadId;
   useEffect(() => {
     let active = true;
 
@@ -2649,9 +2651,14 @@ export default function PremierWindowDoorBoard() {
     };
 
     loadLiveLeads();
+    // Poll only while the Office work drawer is closed, preserving unsaved form inputs.
+    const refreshTimer = window.setInterval(() => {
+      if (!document.hidden && !officeWorkLeadIdRef.current) loadLiveLeads();
+    }, 30000);
 
     return () => {
       active = false;
+      window.clearInterval(refreshTimer);
     };
   }, []);
   const [activeJobId, setActiveJobId] = useState<string | null>("PW-1048");

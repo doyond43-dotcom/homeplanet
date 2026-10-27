@@ -408,6 +408,8 @@ export default function PremierSalesBoard() {
     ...(beamCardAdds[activeJob.id] ?? []),
   ];
 
+  const selectedLiveLeadIdRef = useRef(selectedLiveLeadId);
+  selectedLiveLeadIdRef.current = selectedLiveLeadId;
   useEffect(() => {
     let active = true;
 
@@ -477,9 +479,16 @@ export default function PremierSalesBoard() {
     };
 
     loadLiveSalesPipeline();
+    // Refresh the board without overwriting an open customer form.
+    const refreshTimer = window.setInterval(() => {
+      if (!document.hidden && !selectedLiveLeadIdRef.current) {
+        loadLiveSalesPipeline();
+      }
+    }, 30000);
 
     return () => {
       active = false;
+      window.clearInterval(refreshTimer);
     };
   }, []);
 
@@ -987,7 +996,7 @@ export default function PremierSalesBoard() {
     }
 
     const confirmed = window.confirm(
-      "Send this completed Final Measurement package to RJ?"
+      "Send the completed Final Measurement package back to Office for production setup?"
     );
 
     if (!confirmed) return;
@@ -1007,7 +1016,7 @@ export default function PremierSalesBoard() {
         p_completed_at: new Date().toISOString(),
         p_note:
           finalMeasurementPackageNote.trim() ||
-          "Final detailed measurement package completed for RJ.",
+          "Final detailed measurement package completed for Office review.",
       }
     );
 
@@ -6471,7 +6480,7 @@ export default function PremierSalesBoard() {
                     marginBottom: 7,
                   }}
                 >
-                  Before sending this job to RJ
+                  Before returning this job to Office
                 </div>
 
                 <div
@@ -6483,7 +6492,7 @@ export default function PremierSalesBoard() {
                   }}
                 >
                   Complete the two required items below. When both are attached,
-                  the package is ready for Field Operations.
+                  return the package to Office for materials, permits, and production setup.
                 </div>
 
                 <label
@@ -6503,7 +6512,7 @@ export default function PremierSalesBoard() {
                       setFinalMeasurementPackageNote(event.target.value);
                       setFinalMeasurementNoteSaved("");
                     }}
-                    placeholder="Anything RJ needs to know before installation planning..."
+                    placeholder="Notes for Office and RJ before production and installation planning..."
                     rows={3}
                     style={{
                       width: "100%",
@@ -6527,7 +6536,7 @@ export default function PremierSalesBoard() {
                     {finalMeasurementNoteSaving ? "Saving..." : "Save Handoff Note"}
                   </button>
                   <span role="status" style={{ color: "#bce2c8", fontSize: 13 }}>
-                    {finalMeasurementNoteSaved || "Save your note before sending to RJ."}
+                    {finalMeasurementNoteSaved || "Save your note before sending to Office."}
                   </span>
                 </div>
 
@@ -7349,7 +7358,7 @@ export default function PremierSalesBoard() {
                       marginBottom: 8,
                     }}
                   >
-                    Ready for RJ
+                    Ready for Office
                   </div>
 
                   <div
@@ -7433,8 +7442,8 @@ export default function PremierSalesBoard() {
                   }}
                 >
                   {savingLiveLeadAction
-                    ? "Sending to RJ..."
-                    : "Send Complete Package to RJ"}
+                    ? "Sending to Office..."
+                    : "Send Completed Measurement to Office"}
                 </button>
               </div>
             ) : null}
