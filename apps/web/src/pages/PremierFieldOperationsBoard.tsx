@@ -4621,7 +4621,7 @@ export default function PremierFieldOperationsBoard() {
                             ? "Installation In Progress"
                             : job.current_stage === "installation_ready"
                               ? "Installation Ready"
-                              : "Scheduled"}
+                              : job.scheduled_for ? "Scheduled" : job.next_action?.startsWith("RJ install plan:") ? "Pending Coordination" : "Ready to Schedule"}
                       </span>
                     </div>
                     <div style={{ color: "#9ca8b2", fontSize: 12, marginBottom: 8 }}>{job.project_address}</div>
@@ -4796,7 +4796,7 @@ export default function PremierFieldOperationsBoard() {
                           >
                             {fieldInstallerActivityJobId === job.id
                               ? `Close ${job.crew} Activity`
-                              : `${job.crew} â€” View Activity`}
+                              : `${job.crew} - View Activity`}
                           </button>
                         ) : (
                           <div
@@ -5784,7 +5784,7 @@ export default function PremierFieldOperationsBoard() {
                             disabled={
                               (job.current_stage === "installation_ready" && rjInstallReady[job.id] !== true) ||
                               installScheduleSavingJobId === job.id ||
-                              ((installScheduleModes[job.id] ?? "specific") !== "coordinate" && !installScheduleDrafts[job.id])
+                              ((installScheduleModes[job.id] ?? (job.next_action?.includes("Morning Window") ? "morning" : job.next_action?.includes("Afternoon Window") ? "afternoon" : job.next_action?.startsWith("RJ install plan:") ? "coordinate" : "specific")) !== "coordinate" && !installScheduleDrafts[job.id])
                             }
                             onClick={async () => {
                               const mode = installScheduleModes[job.id] ?? (job.next_action?.includes("Morning Window") ? "morning" : job.next_action?.includes("Afternoon Window") ? "afternoon" : job.next_action?.startsWith("RJ install plan:") ? "coordinate" : "specific");
@@ -5940,7 +5940,7 @@ export default function PremierFieldOperationsBoard() {
                               cursor:
                                 (job.current_stage === "installation_ready" && rjInstallReady[job.id] !== true) ||
                                 installScheduleSavingJobId === job.id ||
-                                ((installScheduleModes[job.id] ?? "specific") !== "coordinate" && !installScheduleDrafts[job.id])
+                                ((installScheduleModes[job.id] ?? (job.next_action?.includes("Morning Window") ? "morning" : job.next_action?.includes("Afternoon Window") ? "afternoon" : job.next_action?.startsWith("RJ install plan:") ? "coordinate" : "specific")) !== "coordinate" && !installScheduleDrafts[job.id])
                                   ? "not-allowed"
                                   : "pointer",
                               whiteSpace: "nowrap",
@@ -5954,7 +5954,11 @@ export default function PremierFieldOperationsBoard() {
                                 ? "Waiting on Office"
                                 : job.scheduled_for
                                   ? "Saved - Change Install"
-                                  : (installScheduleModes[job.id] ?? "specific") === "specific" ? "Confirm Installation Schedule" : "Save Proposed / Pending Plan"}
+                                  : (installScheduleModes[job.id] ?? (job.next_action?.includes("Morning Window") ? "morning" : job.next_action?.includes("Afternoon Window") ? "afternoon" : job.next_action?.startsWith("RJ install plan:") ? "coordinate" : "specific")) === "specific"
+                                    ? "Confirm Installation Schedule"
+                                    : job.next_action?.startsWith("RJ install plan:")
+                                      ? "Pending / Proposed Plan Saved - Update"
+                                      : "Save Proposed / Pending Plan"}
                           </button>
                         </div>
 
