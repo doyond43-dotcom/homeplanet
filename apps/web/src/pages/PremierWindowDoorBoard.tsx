@@ -4233,12 +4233,18 @@ export default function PremierWindowDoorBoard() {
                 const isDepositDone = depositComplete && view === "deposit";
                 const isBlueFolderDone = blueFolderComplete && view === "job_documents";
                 const isBlueFolderNext = depositComplete && !blueFolderComplete && !blueFolderLoading && view === "job_documents";
+                const finalMeasureSent = isApprovedSetup && view === "final_measurement" && officeFinalMeasureDraft.status === "scheduled";
+                const finalMeasureDone = isApprovedSetup && view === "final_measurement" && officeFinalMeasureDraft.status === "complete";
                 const displayLabel = isDepositDone
                   ? "50% Deposit Complete"
                   : isBlueFolderDone
                   ? "Blue Folder Complete"
                   : isBlueFolderNext
                   ? "Prepare Blue Folder"
+                  : finalMeasureDone
+                  ? "Final Measurement Complete"
+                  : finalMeasureSent
+                  ? `Sent to ${officeFinalMeasureDraft.assignedTo || "Sales"}`
                   : label;
                 return (
                 <div key={label}>
@@ -4361,8 +4367,8 @@ export default function PremierWindowDoorBoard() {
                     </span>
                   ) : (
                     <span style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-                      <span>{isDepositDone || isBlueFolderDone ? "✓ " : ""}{displayLabel}</span>
-                      {(isDepositDone || isBlueFolderDone || isBlueFolderNext) && (
+                      <span>{isDepositDone || isBlueFolderDone || finalMeasureDone ? "✓ " : ""}{displayLabel}</span>
+                      {(isDepositDone || isBlueFolderDone || isBlueFolderNext || finalMeasureSent || finalMeasureDone) && (
                         <span style={{ color: isBlueFolderNext ? "#a6d9b8" : "#a9bdaf", whiteSpace: "nowrap", fontSize: 12 }}>
                           {isBlueFolderNext ? "Next ›" : "View ›"}
                         </span>
@@ -6605,6 +6611,12 @@ export default function PremierWindowDoorBoard() {
                           </div>
                         </div>
 
+                        {officeFinalMeasureDraft.status === "scheduled" ? (
+                          <div style={{ color: "#92c6a4", fontWeight: 900, fontSize: 12, marginBottom: 10 }}>
+                            SENT TO SALES — Awaiting detailed measurements from {officeFinalMeasureDraft.assignedTo || "Sales"}.
+                          </div>
+                        ) : null}
+                        <fieldset disabled={officeFinalMeasureDraft.status === "scheduled" || officeFinalMeasureDraft.status === "complete"} style={{ border: 0, margin: 0, padding: 0, minWidth: 0 }}>
                         <label
                           style={{
                             display: "grid",
@@ -6750,6 +6762,7 @@ export default function PremierWindowDoorBoard() {
                           </div>
                         ) : null}
 
+                        </fieldset>
                         {officeFinalMeasureSaved ? (
                           <div
                             style={{
@@ -6767,7 +6780,9 @@ export default function PremierWindowDoorBoard() {
                           type="button"
                           disabled={
                             officeFinalMeasureSaving ||
-                            officeFinalMeasureSaved
+                            officeFinalMeasureSaved ||
+                            officeFinalMeasureDraft.status === "scheduled" ||
+                            officeFinalMeasureDraft.status === "complete"
                           }
                           onClick={() =>
                             void saveOfficeFinalMeasurement(officeWorkLead)
@@ -6776,28 +6791,30 @@ export default function PremierWindowDoorBoard() {
                             width: "100%",
                             minHeight: 44,
                             marginTop: 10,
-                            border: officeFinalMeasureSaved
+                            border: officeFinalMeasureSaved || officeFinalMeasureDraft.status === "scheduled" || officeFinalMeasureDraft.status === "complete"
                               ? "1px solid #6fa982"
                               : "1px solid #557c64",
                             borderRadius: 10,
-                            background: officeFinalMeasureSaved
+                            background: officeFinalMeasureSaved || officeFinalMeasureDraft.status === "scheduled" || officeFinalMeasureDraft.status === "complete"
                               ? "#203f2b"
                               : "#16271d",
-                            color: officeFinalMeasureSaved
+                            color: officeFinalMeasureSaved || officeFinalMeasureDraft.status === "scheduled" || officeFinalMeasureDraft.status === "complete"
                               ? "#c9f2d3"
                               : "#dff5e5",
                             fontWeight: 900,
                             cursor:
                               officeFinalMeasureSaving ||
-                              officeFinalMeasureSaved
+                              officeFinalMeasureSaved || officeFinalMeasureDraft.status === "scheduled" || officeFinalMeasureDraft.status === "complete"
                                 ? "default"
                                 : "pointer",
                           }}
                         >
                           {officeFinalMeasureSaving
                             ? "Saving..."
-                            : officeFinalMeasureSaved
+                            : officeFinalMeasureSaved || officeFinalMeasureDraft.status === "scheduled"
                               ? "SENT TO SALES"
+                              : officeFinalMeasureDraft.status === "complete"
+                              ? "FINAL MEASUREMENT COMPLETE"
                               : `Send Final Measurement to ${
                                   (officeFinalMeasureDraft.assignedTo === "Gio" ? "Gio Richardson" : officeFinalMeasureDraft.assignedTo === "Gino" ? "Gino Marquez" : officeFinalMeasureDraft.assignedTo === "Dennis" ? "Dennis Dillon" : officeFinalMeasureDraft.assignedTo) || officeWorkLead?.assigned_salesperson || "Salesperson"
                                 }`}
