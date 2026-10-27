@@ -744,6 +744,7 @@ export default function PremierFieldOperationsBoard() {
   >({});
   const [installScheduleSavingJobId, setInstallScheduleSavingJobId] =
     useState<string | null>(null);
+  const [installScheduleModes, setInstallScheduleModes] = useState<Record<string, string>>({});
   const [installScheduleErrors, setInstallScheduleErrors] = useState<
     Record<string, string>
   >({});
@@ -3857,7 +3858,7 @@ export default function PremierFieldOperationsBoard() {
                         ? "Installation Complete"
                         : job.current_stage === "installation_ready"
                           ? "Installation Ready"
-                          : pendingReturns[job.id] ? "Returned to Installer" : "Scheduled Install"}
+                          : pendingReturns[job.id] ? "Returned to Installer" : job.scheduled_for ? "Scheduled Install" : "Ready to Schedule"}
                     </div>
 
                     <span
@@ -3871,7 +3872,7 @@ export default function PremierFieldOperationsBoard() {
                         ? "INSPECTION PREP"
                         : job.current_stage === "installation_ready"
                           ? "WITH INSTALLER"
-                          : pendingReturns[job.id] ? "NEEDS ATTENTION" : "SCHEDULED"}
+                          : pendingReturns[job.id] ? "NEEDS ATTENTION" : job.scheduled_for ? "SCHEDULED" : "PENDING"}
                     </span>
                   </div>
 
@@ -5375,13 +5376,33 @@ export default function PremierFieldOperationsBoard() {
                             : "No installation date scheduled yet."}
                         </div>
 
-                        <div
+                        <label style={{ display: "grid", gap: 6, marginBottom: 12, color: "#dfebf5", fontSize: 12, fontWeight: 800 }}>
+                          How should installation be scheduled?
+                          <select
+                            value={installScheduleModes[job.id] ?? (job.next_action?.startsWith("RJ install plan:") ? (job.next_action.includes("Morning Window") ? "morning" : job.next_action.includes("Afternoon Window") ? "afternoon" : "coordinate") : "specific")}
+                            onChange={(event) => setInstallScheduleModes((current) => ({...current, [job.id]: event.target.value}))}
+                            disabled={installScheduleSavingJobId === job.id}
+                            style={{ minHeight: 44, border: "1px solid #6f9fbd", borderRadius: 9, background: "#162630", color: "white", padding: "0 10px" }}
+                          >
+                            <option value="coordinate">Coordinate Date With Customer — Pending</option>
+                            <option value="morning">Morning Window — Proposed</option>
+                            <option value="afternoon">Afternoon Window — Proposed</option>
+                            <option value="specific">Specific Time — Confirmed With Customer</option>
+                          </select>
+                        </label>
+                        {job.next_action?.startsWith("RJ install plan:") && !job.scheduled_for ? (
+                          <div style={{ color: "#e9cf98", fontSize: 12, marginBottom: 10 }} role="status">
+                            {job.next_action.replace("RJ install plan:", "Saved — ")}
+                          </div>
+                        ) : null}
+                                                <div
                           style={{
                             display: "grid",
                             gridTemplateColumns: "minmax(0, 1fr) auto",
                             gap: 8,
                           }}
                         >
+                          {(installScheduleModes[job.id] ?? (job.next_action?.includes("Morning Window") ? "morning" : job.next_action?.includes("Afternoon Window") ? "afternoon" : job.next_action?.startsWith("RJ install plan:") ? "coordinate" : "specific")) !== "coordinate" ? (
                           <div
                             style={{
                               display: "grid",
@@ -5509,7 +5530,7 @@ export default function PremierFieldOperationsBoard() {
                                     cursor: "pointer",
                                   }}
                                 >
-                                  Calendar
+                                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>
                                 </button>
 
                                 <input
@@ -5563,7 +5584,7 @@ export default function PremierFieldOperationsBoard() {
                               </div>
                             </div>
 
-                            <div style={{ display: "grid", gap: 5 }}>
+                            <div style={{ display: (installScheduleModes[job.id] ?? "specific") === "specific" ? "grid" : "none", gap: 5 }}>
                               <label
                                 style={{
                                   color: "#8fa9bc",
@@ -5691,7 +5712,7 @@ export default function PremierFieldOperationsBoard() {
                                     cursor: "pointer",
                                   }}
                                 >
-                                  Time
+                                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
                                 </button>
 
                                 <input
@@ -5757,14 +5778,41 @@ export default function PremierFieldOperationsBoard() {
                             </div>
                           </div>
 
+                        ) : null}
                           <button
                             type="button"
                             disabled={
                               (job.current_stage === "installation_ready" && rjInstallReady[job.id] !== true) ||
                               installScheduleSavingJobId === job.id ||
-                              !installScheduleDrafts[job.id]
+                              ((installScheduleModes[job.id] ?? "specific") !== "coordinate" && !installScheduleDrafts[job.id])
                             }
                             onClick={async () => {
+                              const mode = installScheduleModes[job.id] ?? (job.next_action?.includes("Morning Window") ? "morning" : job.next_action?.includes("Afternoon Window") ? "afternoon" : job.next_action?.startsWith("RJ install plan:") ? "coordinate" : "specific");
+                              if (mode !== "specific") {
+                                const token = getPremierFieldAccessToken();
+                                const crew = (crewDrafts[job.id] ?? job.crew ?? "").trim();
+                                const proposedDate = mode === "coordinate" ? null : parseInstallDateText(installDateTextDrafts[job.id] ?? formatInstallDateText(installScheduleDrafts[job.id] ?? ""));
+                                if (!token || !crew || ["not assigned", "unassigned", "none", "tbd"].includes(crew.toLowerCase())) {
+                                  setInstallScheduleErrors((current) => ({...current, [job.id]: "Choose an installer / crew first."})); return;
+                                }
+                                if (mode !== "coordinate" && !proposedDate) {
+                                  setInstallScheduleErrors((current) => ({...current, [job.id]: "Choose the proposed installation date first."})); return;
+                                }
+                                setInstallScheduleSavingJobId(job.id);
+                                const { data, error } = await supabase.rpc("save_premier_install_plan", {
+                                  p_access_token: token, p_job_id: job.id, p_crew: crew,
+                                  p_mode: mode, p_proposed_date: proposedDate,
+                                });
+                                if (error || data !== true) {
+                                  setInstallScheduleErrors((current) => ({...current, [job.id]: "Could not save proposed installation plan. Check that the matching SQL function was installed."}));
+                                } else {
+                                  const description = mode === "coordinate" ? "Coordinate Date With Customer — pending confirmation" : `${mode === "morning" ? "Morning Window" : "Afternoon Window"} proposed for ${proposedDate} — pending confirmation`;
+                                  setLiveInstallations((current) => current.map((item) => item.id === job.id ? {...item, crew, scheduled_for: null, next_action: `RJ install plan: ${description}`} : item));
+                                  setInstallScheduleErrors((current) => ({...current, [job.id]: "Saved — proposed/pending only. Installer has NOT been released."}));
+                                }
+                                setInstallScheduleSavingJobId(null);
+                                return;
+                              }
                               const parsedDate = parseInstallDateText(
                                 installDateTextDrafts[job.id] ??
                                   formatInstallDateText(
@@ -5892,7 +5940,7 @@ export default function PremierFieldOperationsBoard() {
                               cursor:
                                 (job.current_stage === "installation_ready" && rjInstallReady[job.id] !== true) ||
                                 installScheduleSavingJobId === job.id ||
-                                !installScheduleDrafts[job.id]
+                                ((installScheduleModes[job.id] ?? "specific") !== "coordinate" && !installScheduleDrafts[job.id])
                                   ? "not-allowed"
                                   : "pointer",
                               whiteSpace: "nowrap",
@@ -5906,7 +5954,7 @@ export default function PremierFieldOperationsBoard() {
                                 ? "Waiting on Office"
                                 : job.scheduled_for
                                   ? "Saved - Change Install"
-                                  : "Save Installation Schedule"}
+                                  : (installScheduleModes[job.id] ?? "specific") === "specific" ? "Confirm Installation Schedule" : "Save Proposed / Pending Plan"}
                           </button>
                         </div>
 
