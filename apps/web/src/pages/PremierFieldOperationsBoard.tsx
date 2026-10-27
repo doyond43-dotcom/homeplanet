@@ -4639,7 +4639,7 @@ export default function PremierFieldOperationsBoard() {
                           setFieldInstallerActivityJobId(job.id);
                           void loadFieldInstallerActivity(job.id);
                         }} style={{ minHeight: 38, border: "1px solid #477b60", borderRadius: 8, background: "#183927", color: "#ffffff", fontWeight: 800 }}>
-                          View Installer Activity
+                          Installer's Work Summary
                         </button>
                         {installationReviewLoading === job.id ? <span style={{ fontSize: 12 }}>Loading reported issues...</span> : null}
                         {installationReviewErrors[job.id] ? <span role="alert" style={{ color: "#ffd19d", fontSize: 12 }}>{installationReviewErrors[job.id]}</span> : null}
