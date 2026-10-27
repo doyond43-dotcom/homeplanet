@@ -6303,7 +6303,8 @@ export default function PremierWindowDoorBoard() {
                                 </button>
 
                                 {payment.key === "delivery_40" &&
-                                draft.status === "received" ? (
+                                draft.status === "received" &&
+                                ["production_setup", "installation_ready"].includes(officeWorkLead.current_stage) ? (
                                   <div
                                     style={{
                                       marginTop: 14,
