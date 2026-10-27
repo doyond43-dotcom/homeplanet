@@ -1632,6 +1632,22 @@ export default function PremierWindowDoorBoard() {
     }
 
     const draft = officePaymentDrafts[paymentStage];
+    if (paymentStage === "final_10") {
+      const hasFinalInvoice = officeJobDocuments.some(
+        (document) => document.document_type === "Final 10% Invoice"
+      );
+      if ((options?.markSent || options?.markReceived) && !hasFinalInvoice) {
+        setOfficePaymentsError("Attach the final 10% invoice before confirming it was sent or recording payment.");
+        return;
+      }
+      if ((options?.markSent || options?.markReceived) &&
+          !["inspection_complete", "completed"].includes(lead.current_stage)) {
+        setOfficePaymentsError("Final payment is available after the final walkthrough is approved.");
+        return;
+      }
+      if (options?.markSent && draft.status !== "not_sent") return;
+      if (options?.markReceived && draft.status === "received") return;
+    }
 
     const paymentStatus = options?.markReceived ? "received" : options?.markSent ? "sent" : draft.status;
 
@@ -5920,8 +5936,12 @@ export default function PremierWindowDoorBoard() {
                                     </div>
                                     <button
                                       type="button"
-                                      disabled={isSaving}
+                                      disabled={isSaving || (payment.key === "final_10" && !paymentInvoice)}
                                       onClick={() => {
+                                        if (payment.key === "final_10" && !paymentInvoice) {
+                                          setOfficePaymentsError("Attach the final 10% invoice first.");
+                                          return;
+                                        }
                                         const confirmed = window.confirm(
                                           "Have you already sent this invoice to the customer? This records the confirmation only. It does not send an email."
                                         );
@@ -5945,6 +5965,8 @@ export default function PremierWindowDoorBoard() {
                                     >
                                       {isSaving
                                         ? "Saving..."
+                                        : payment.key === "final_10" && !paymentInvoice
+                                        ? "Attach Invoice Before Confirming"
                                         : "Confirm Invoice Sent"}
                                     </button>
                                   </div>
@@ -6234,6 +6256,10 @@ export default function PremierWindowDoorBoard() {
                                   type="button"
                                   disabled={isSaving}
                                   onClick={() => {
+                                    if (payment.key === "final_10" && !paymentInvoice) {
+                                      setOfficePaymentsError("Attach the final 10% invoice before recording payment.");
+                                      return;
+                                    }
                                     if (!draft.amount.trim()) {
                                       setOfficePaymentsError("Enter the payment amount first.");
                                       return;
