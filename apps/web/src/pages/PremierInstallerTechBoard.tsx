@@ -203,7 +203,7 @@ function InstallerBeamCard({ jobId, defaultRecipient = "Gino Marquez" }: { jobId
     setError("");
 
     const { data, error: loadError } = await supabase.rpc(
-      "get_premier_beam_messages",
+      "get_premier_installer_beam_messages",
       {
         p_access_token: accessToken,
         p_job_id: jobId,
@@ -2116,8 +2116,8 @@ export default function PremierInstallerTechBoard() {
                   >
                     <span style={{ color: "#8fa9bc" }}>Next:</span>{" "}
                     {job.current_stage === "scheduled"
-                      ? "Installer to begin the scheduled installation and upload required proof."
-                      : <PremierInstallerCurrentNext jobId={job.id} returned={Boolean(pendingReturns[job.id])} fallback={job.next_action || "Installer to begin installation and upload required proof."} />}
+                      ? "Installer to begin the scheduled installation. Add photos or notes if needed."
+                      : <PremierInstallerCurrentNext jobId={job.id} returned={Boolean(pendingReturns[job.id])} fallback={job.next_action || "Installer to begin installation. Add photos or notes if needed."} />}
                   </div>
 
 
@@ -2129,7 +2129,7 @@ export default function PremierInstallerTechBoard() {
                       <div style={{ color: "#f3f6f8", fontSize: 13, fontWeight: 800 }}>1. Review Job File</div>
                       <div style={{ color: "#b5c6bb", fontSize: 12, marginTop: 3 }}>Measurements, documents, and installation details.</div>
                       <InstallerPreinstallationNotes jobId={job.id} />
-                      <div style={{ color: "#f3f6f8", fontSize: 13, fontWeight: 800, marginTop: 12 }}>3. Start Installation</div>
+                      <div style={{ color: "#f3f6f8", fontSize: 13, fontWeight: 800, marginTop: 12 }}>2. Start Installation</div>
                       <div style={{ color: "#b5c6bb", fontSize: 12, marginTop: 3 }}>Begin work when you are ready.</div>
                     </div>
                   ) : job.current_stage === "installation_in_progress" ? (
@@ -2469,7 +2469,7 @@ export default function PremierInstallerTechBoard() {
                         marginBottom: 7,
                       }}
                     >
-                      Required Proof
+                      Photos & Inspection Notes (Optional)
                     </div>
 
 
@@ -3005,7 +3005,7 @@ export default function PremierInstallerTechBoard() {
                                     ...item,
                                     current_stage: "installation_in_progress",
                                     next_action:
-                                      "Installer to complete installation and upload required proof.",
+                                      "Installer to complete installation and document any outstanding issues.",
                                   }
                                 : item
                             )
@@ -3552,9 +3552,8 @@ export default function PremierInstallerTechBoard() {
                             marginTop: 5,
                           }}
                         >
-                          Work is active. Upload required proof and report or
-                          resolve anything needing attention before completing
-                          this installation.
+                          Work is active. Add photos or notes if applicable, and report
+                          outstanding issues before submitting the installation.
                         </div>
                       </div>
 
@@ -3644,7 +3643,8 @@ export default function PremierInstallerTechBoard() {
                             margin: "18px 0",
                           }}>
                             <strong>Before submitting, confirm:</strong>
-                            <p>Required installation photos and Bucking inspection records have been submitted.</p>
+                            <p>Installation work is complete.</p>
+                            <p>Photos and inspection notes have been added if applicable.</p>
                             <p>Missing, damaged, or unfinished items have been reported.</p>
                             <p>Any remaining issues are documented for RJ and Office.</p>
                           </div>
@@ -3683,7 +3683,7 @@ export default function PremierInstallerTechBoard() {
                               onChange={(e) => setCompletionAcknowledged(e.target.checked)}
                               style={{ width: 22, height: 22, flexShrink: 0 }}
                             />
-                            I have reviewed this installation and submitted all required proof.
+                            I confirm the installation work is complete and any outstanding issues have been reported.
                           </label>
 
                           {pendingReturns[job.id] ? (
@@ -3734,7 +3734,7 @@ export default function PremierInstallerTechBoard() {
                                   { p_access_token: accessToken, p_job_id: job.id }
                                 );
                                 if (error || data !== true) {
-                                  window.alert(error?.message || "Completion blocked. Check required proof and Bucking records.");
+                                  window.alert(error?.message || "Completion blocked. Review the job status and any outstanding follow-up.");
                                   return;
                                 }
                                 const completedJobName =
