@@ -3869,6 +3869,7 @@ export default function PremierWindowDoorBoard() {
                             void loadOfficeProductionSetup(lead);
                             void loadOfficePayments(lead);
                             void loadBlueFolderConfirmation(lead);
+                            void loadOfficeApprovedSetup(lead);
                             void loadOfficeRjRelease(lead);
                           }
                           return;
