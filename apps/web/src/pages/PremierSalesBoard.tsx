@@ -6505,14 +6505,14 @@ export default function PremierSalesBoard() {
                     marginBottom: 18,
                   }}
                 >
-                  Handoff Note for RJ
+                  Handoff Note for Office
                   <textarea
                     value={finalMeasurementPackageNote}
                     onChange={(event) => {
                       setFinalMeasurementPackageNote(event.target.value);
                       setFinalMeasurementNoteSaved("");
                     }}
-                    placeholder="Notes for Office and RJ before production and installation planning..."
+                    placeholder="Notes for Office to review before production setup..."
                     rows={3}
                     style={{
                       width: "100%",
