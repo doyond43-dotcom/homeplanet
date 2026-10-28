@@ -6936,7 +6936,7 @@ export default function PremierWindowDoorBoard() {
                               }}
                             >
                               {officeFinalMeasureDraft.status === "complete"
-                                ? "Complete ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œ"
+                                ? "Complete"
                                 : "Still Needed"}
                             </strong>
                           </div>
@@ -6974,7 +6974,7 @@ export default function PremierWindowDoorBoard() {
                                   fontSize: 12,
                                 }}
                               >
-                                Deposit received and final measurement complete.
+                                Final measurements received from Sales. Office can review the completed package and prepare job setup.
                               </strong>
                             </div>
 
@@ -6985,8 +6985,7 @@ export default function PremierWindowDoorBoard() {
                                 lineHeight: 1.45,
                               }}
                             >
-                              Next: begin ordering, materials, permitting,
-                              scheduling, and field setup.
+                              Next: Office confirms materials, permit requirements, and job documents before releasing the job to RJ.
                             </div>
 
                             <button
