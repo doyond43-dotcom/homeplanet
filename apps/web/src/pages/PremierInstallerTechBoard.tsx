@@ -730,7 +730,7 @@ function hasPremierInstallerAccess() {
 type PremierPendingReturn = {job_id:string;review_id:string;reason:string;returned_at:string;acknowledged:boolean};
 
 // premier-issue-followup-v1: timestamped, independent updates to original issue records.
-function InstallerIssueFollowUp({jobId}:{jobId:string}) {
+function InstallerIssueFollowUp({jobId,refreshKey=0}:{jobId:string;refreshKey?:number}) {
   const [reports,setReports]=useState<any[]>([]);
   // premier-angel-rj-decisions-v1: read-only RJ/Office decisions on each issue
   const [decisions,setDecisions]=useState<any[]>([]);
@@ -755,7 +755,7 @@ function InstallerIssueFollowUp({jobId}:{jobId:string}) {
     else{setReports(r.data??[]);setEvents(e.data??[]);setDecisions(d.data??[]);}
     setLoading(false);
   };
-  useEffect(()=>{void load();},[jobId]);
+  useEffect(()=>{void load();},[jobId,refreshKey]);
   const save=async(issueId:string)=>{
     const action=actions[issueId]||'reviewed';
     const note=(notes[issueId]||'').trim();
@@ -982,6 +982,7 @@ export default function PremierInstallerTechBoard() {
 
   const [installerIssueListeningJobId, setInstallerIssueListeningJobId] =
     useState<string | null>(null);
+  const [installerIssueRefreshKey, setInstallerIssueRefreshKey] = useState(0);
   const [installerIssueSavingJobId, setInstallerIssueSavingJobId] =
     useState<string | null>(null);
   const startInstallerIssueVoice = (jobId: string) => {
@@ -2259,6 +2260,7 @@ export default function PremierInstallerTechBoard() {
           return;
         }
 
+        setInstallerIssueRefreshKey((current) => current + 1);
         window.alert("Issue report saved successfully.");
       } catch (error) {
         console.error("Premier issue report failed:", error);
@@ -2291,7 +2293,7 @@ export default function PremierInstallerTechBoard() {
 
                       </details>
                     </InstallerMaterialAttention>
-                    <InstallerIssueFollowUp key={job.id} jobId={job.id} />
+                    <InstallerIssueFollowUp key={job.id} jobId={job.id} refreshKey={installerIssueRefreshKey} />
                     </>
                   ) : null}                  <div
                     style={{
