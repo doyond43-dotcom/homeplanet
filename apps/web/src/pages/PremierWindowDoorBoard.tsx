@@ -1649,6 +1649,11 @@ export default function PremierWindowDoorBoard() {
       if (options?.markReceived && draft.status === "received") return;
     }
 
+    if (options?.markReceived && (!Number.isFinite(Number(draft.amount.replace(/[$,\s]/g, ""))) || Number(draft.amount.replace(/[$,\s]/g, "")) <= 0)) {
+      setOfficePaymentsError("Payment amount must be greater than $0.00.");
+      return;
+    }
+
     const paymentStatus = options?.markReceived ? "received" : options?.markSent ? "sent" : draft.status;
 
     const invoiceSentAt =
@@ -2109,9 +2114,7 @@ export default function PremierWindowDoorBoard() {
     );
 
     setOfficeProductionStarting(false);
-    setOfficeWorkLeadId(null);
-    setOfficeWorkView(null);
-    setOpenLeadId(null);
+    // Keep the Office working drawer open when production starts.
   };
 
   const saveOfficeInspectionSchedule = async (lead: any) => {
@@ -6324,7 +6327,11 @@ export default function PremierWindowDoorBoard() {
                                       return;
                                     }
 
-                                    if (!draft.method) {
+                                    if (!Number.isFinite(Number(draft.amount.replace(/[$,\s]/g, ""))) || Number(draft.amount.replace(/[$,\s]/g, "")) <= 0) {
+                                      setOfficePaymentsError("Payment amount must be greater than $0.00.");
+                                       return;
+                                     }
+                                     if (!draft.method) {
                                       setOfficePaymentsError("Choose the payment method first.");
                                       return;
                                     }

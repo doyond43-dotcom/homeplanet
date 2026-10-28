@@ -800,7 +800,7 @@ function InstallerIssueFollowUp({jobId,refreshKey=0}:{jobId:string;refreshKey?:n
       return <div key={report.id} style={{padding:10,border:'1px solid #554d43',borderRadius:9,background:'#121b1e',marginTop:8}}>
         <div style={{display:'flex',justifyContent:'space-between',gap:8,flexWrap:'wrap'}}><strong style={{fontSize:12}}>{(report.categories||[]).join(', ')||'Other Issue'}</strong><span style={{fontSize:10,color:verified?'#a5e4b9':'#f2d19b'}}>{status}</span></div>
         <div style={{fontSize:12,marginTop:5,whiteSpace:'pre-wrap'}}>{report.details}</div>
-        {latest?<div style={{fontSize:11,color:'#b5c9d2',marginTop:7}}>Angel's Latest: {latest.note||'Reviewed'} ({new Date(latest.created_at).toLocaleString()})</div>:null}
+        {latest?<div style={{fontSize:11,color:'#b5c9d2',marginTop:7}}>Installer's Latest: {latest.note||'Reviewed'} ({new Date(latest.created_at).toLocaleString()})</div>:null}
         {decision?.resolution_updated_at?<div style={{marginTop:8,padding:9,border:'1px solid #4c6959',borderRadius:8,background:'#193027',fontSize:11}}>
           <strong>RJ / Office Latest Decision: {duplicate?'Closed as Duplicate':verified?'Verified Resolved':decision.resolution_status==='under_review'?'Under Review':'Needs Review'}</strong>
           <div style={{whiteSpace:'pre-wrap',marginTop:5}}>{decision.resolution_note||'No review note provided.'}</div>

@@ -338,7 +338,7 @@ function PremierFieldIssueReview({issueId,jobId,followups,onSaved,issues}:{issue
   };
   const save=async()=>{
     if(busy||note.trim().length<5)return;
-    if(action==='resolved'&&!canVerify){setError('Angel must document the fix before RJ can verify resolution.');return;}
+    if(action==='resolved'&&!canVerify){setError('Installer must document the fix before RJ can verify resolution.');return;}
     const token=getPremierFieldAccessToken();
     if(!token){setError('Field access unavailable');return;}
     setBusy(true);setError('');
@@ -369,7 +369,7 @@ function PremierFieldIssueReview({issueId,jobId,followups,onSaved,issues}:{issue
         <label style={{fontSize:11,color:'#f4e5c9'}}>Original report to keep open
           <select value={duplicateTarget} onChange={e=>setDuplicateTarget(e.target.value)} style={{display:'block',marginTop:5,width:'100%',padding:9,background:'#141711',border:'1px solid #95815b',borderRadius:6,color:'#fff3dd'}}>
             <option value="">Select original issue...</option>
-            {candidateIssues.map((x:any)=><option key={x.id} value={x.id}>{(x.categories??[]).join(', ')||'Reported Issue'} Ã¢â‚¬â€ {String(x.details||'').slice(0,105)} [{x.id.slice(0,8)}]</option>)}
+            {candidateIssues.map((x:any)=><option key={x.id} value={x.id}>{(x.categories??[]).join(', ')||'Reported Issue'} — {String(x.details||'').slice(0,105)} [{x.id.slice(0,8)}]</option>)}
           </select>
         </label>
         <label style={{fontSize:11,color:'#f4e5c9'}}>RJ's duplicate confirmation note
@@ -382,7 +382,7 @@ function PremierFieldIssueReview({issueId,jobId,followups,onSaved,issues}:{issue
       <button type="button" onClick={()=>void openReview()} style={{background:'#213b30',border:'1px solid #648770',borderRadius:7,padding:'8px 10px',color:'#e3f4e8',fontSize:11,fontWeight:900,cursor:'pointer'}}>{open?'Close Review':'Review Issue'}</button>
     {open?<div style={{border:'1px solid #527460',borderRadius:9,padding:11,marginTop:8,background:'#101e19',display:'grid',gap:8}}>
       <strong style={{fontSize:12,color:'#ecf6ec'}}>RJ Issue Review</strong>
-      {latest?<div style={{fontSize:11,color:'#b9d7c5'}}>Angel's latest update: {latest.action.replaceAll('_',' ')} â€” {latest.note||'No note'}</div>:<div style={{fontSize:11,color:'#e2b59c'}}>No installer follow-up documented.</div>}
+      {latest?<div style={{fontSize:11,color:'#b9d7c5'}}>Installer's latest update: {latest.action.replaceAll('_',' ')} — {latest.note||'No note'}</div>:<div style={{fontSize:11,color:'#e2b59c'}}>No installer follow-up documented.</div>}
       <label style={{fontSize:11,color:'#dce9e0'}}>Decision
         <select value={action} onChange={e=>setAction(e.target.value)} style={{display:'block',marginTop:5,width:'100%',background:'#0d1715',color:'#e8f2eb',padding:9,border:'1px solid #627f6c',borderRadius:7}}>
           <option value="needs_review">Return for More Work / Office Follow-up</option>
@@ -390,11 +390,11 @@ function PremierFieldIssueReview({issueId,jobId,followups,onSaved,issues}:{issue
           <option value="resolved" disabled={!canVerify}>Verify Resolved{canVerify?'':' (fix not documented)'}</option>
         </select>
       </label>
-      <label style={{fontSize:11,color:'#dce9e0'}}>RJ's Review Note
+      <label style={{fontSize:11,color:'#dce9e0'}}>RJ's Review Note (required, at least 5 characters)
         <textarea value={note} onChange={e=>setNote(e.target.value)} rows={3} placeholder="Record the decision and who is responsible for the next action" style={{display:'block',boxSizing:'border-box',marginTop:5,width:'100%',resize:'vertical',background:'#0d1715',color:'#e8f2eb',padding:9,border:'1px solid #627f6c',borderRadius:7}} />
       </label>
       {historyError?<div role="alert" style={{color:'#ffc7a3',fontSize:11}}>{historyError}</div>:null}
-      {history.length>0?<details><summary style={{cursor:'pointer',fontSize:11}}>RJ / Office Review History ({history.length})</summary>{history.map((h:any,i:number)=><div key={i} style={{fontSize:10,color:'#c3d7cd',padding:6}}>{h.new_status} â€” {h.note} â€” {h.actor_label} â€” {new Date(h.changed_at).toLocaleString()}</div>)}</details>:null}
+      {history.length>0?<details><summary style={{cursor:'pointer',fontSize:11}}>RJ / Office Review History ({history.length})</summary>{history.map((h:any,i:number)=><div key={i} style={{fontSize:10,color:'#c3d7cd',padding:6}}>{h.new_status} — {h.note} — {h.actor_label} — {new Date(h.changed_at).toLocaleString()}</div>)}</details>:null}
       {error?<div role="alert" style={{color:'#ffc7a3',fontSize:11}}>{error}</div>:null}
       <button type="button" disabled={busy||note.trim().length<5||Boolean(historyError)||(action==='resolved'&&!canVerify)} onClick={()=>void save()} style={{padding:10,border:'1px solid #83ad92',borderRadius:7,color:'#fff',background:'#28613f',fontWeight:900,opacity:busy||note.trim().length<5?0.55:1}}>{busy?'Saving...':'Save RJ Review'}</button>
     </div>:null}
@@ -2600,7 +2600,7 @@ export default function PremierFieldOperationsBoard() {
                               }}
                             >
                               {needsAttention
-                                ? `âš  ${fieldProgress.toUpperCase()}`
+                                ? `⚠ ${fieldProgress.toUpperCase()}`
                                 : `Progress: ${fieldProgress}`}
                             </div>
 
@@ -2959,7 +2959,7 @@ export default function PremierFieldOperationsBoard() {
                                       Reported by{" "}
                                       {report.reporter_label.split(":").pop() ||
                                         report.reporter_label}
-                                      {" â€¢ "}
+                                      {" • "}
                                       {new Date(report.reported_at).toLocaleString()}
                                     </div>
 
@@ -4585,11 +4585,11 @@ export default function PremierFieldOperationsBoard() {
                         {(rjReadinessEvents[job.id] ?? []).filter((event) => !event.acknowledged_at).slice(0, 5).map((event) => (
                           <div key={event.event_id} style={{ border: `1px solid ${event.signal_type === "attention" ? "#be8c3e" : "#45996b"}`, background: event.signal_type === "attention" ? "#322615" : "#102b1e", borderRadius: 10, padding: 11, display: "grid", gap: 6 }}>
                             <div style={{ fontWeight: 900, color: event.signal_type === "attention" ? "#f3cf91" : "#a9ecc3", fontSize: 12 }}>
-                              {event.signal_type === "attention" ? "New issue Ã‚Â· Needs attention" : "New positive Office update"}
+                              {event.signal_type === "attention" ? "New issue · Needs attention" : "New positive Office update"}
                             </div>
                             <div style={{ fontSize: 12, color: "#f2f5f7" }}>{event.event_message}</div>
                             <div style={{ fontSize: 11, color: "#b8c7cf" }}>
-                              {event.created_by_name || "Office"}{event.created_at ? ` Ã‚Â· ${new Date(event.created_at).toLocaleString()}` : ""}
+                              {event.created_by_name || "Office"}{event.created_at ? ` · ${new Date(event.created_at).toLocaleString()}` : ""}
                             </div>
                             <button
                               type="button"
@@ -4629,7 +4629,7 @@ export default function PremierFieldOperationsBoard() {
                     <div style={{ color: "#9ca8b2", fontSize: 12, marginBottom: 8 }}>{job.project_address}</div>
                     {pendingReturns[job.id] ? (
                       <div role="status" style={{marginBottom:12,padding:11,border:'1px solid #cead64',borderRadius:10,background:'#32291c',color:'#ffe2a0'}}>
-                        <strong>RETURNED TO INSTALLER Ã‚Â· NEEDS ATTENTION</strong>
+                        <strong>RETURNED TO INSTALLER · NEEDS ATTENTION</strong>
                         <div style={{marginTop:6,fontSize:12,whiteSpace:'pre-wrap'}}>{pendingReturns[job.id].reason}</div>
                       </div>
                     ) : null}
@@ -4655,7 +4655,7 @@ export default function PremierFieldOperationsBoard() {
                             <strong style={{ fontSize: 12 }}>Reported Issues ({(installationReviewReports[job.id] ?? []).filter((r: any) => !["resolved", "duplicate"].includes(r.resolution_status)).length} open)</strong>
                             {(installationReviewReports[job.id] ?? []).length > 0 ? (
                               <div style={{ fontSize: 11, color: "#b8d1c1" }}>
-                                {(installationReviewReports[job.id] ?? []).filter((r: any) => r.resolution_status === "resolved").length} verified resolved Â· {(installationReviewReports[job.id] ?? []).filter((r: any) => r.resolution_status === "duplicate").length} closed as duplicate
+                                {(installationReviewReports[job.id] ?? []).filter((r: any) => r.resolution_status === "resolved").length} verified resolved · {(installationReviewReports[job.id] ?? []).filter((r: any) => r.resolution_status === "duplicate").length} closed as duplicate
                               </div>
                             ) : null}
                             {(installationReviewReports[job.id] ?? []).filter((r: any) => !["resolved", "duplicate"].includes(r.resolution_status)).map((r: any) => (
@@ -5135,7 +5135,7 @@ export default function PremierFieldOperationsBoard() {
                                           Reported by{" "}
                                           {report.reporter_label.split(":").pop() ||
                                             report.reporter_label}
-                                          {" â€¢ "}
+                                          {" • "}
                                           {new Date(report.reported_at).toLocaleString()}
                                         </div>
 
@@ -5174,7 +5174,7 @@ export default function PremierFieldOperationsBoard() {
                                     marginBottom: 10,
                                   }}
                                 >
-                                  NEEDS ATTENTION â€” installer flagged a field issue.
+                                  NEEDS ATTENTION — installer flagged a field issue.
                                 </div>
                               ) : null}
 
@@ -5989,7 +5989,7 @@ export default function PremierFieldOperationsBoard() {
                     <div style={{ borderTop: "1px solid #26323a", marginTop: 9, paddingTop: 9, fontSize: 12, color: "#d9e5ee" }}>
                       <span style={{ color: "#8fa9bc" }}>Next:</span>{" "}
                       {job.current_stage === "installation_complete"
-                        ? "Review submitted installation proof and make the final approval or return decision."
+                        ? (job.next_action?.startsWith("RJ approved installation review.") ? "Installation approved by RJ. Office to coordinate inspection and final walkthrough." : "Review submitted installation proof and make the final approval or return decision.")
                         : job.current_stage === "production_setup"
                           ? "Office released this job to RJ. Review the job file, choose a crew, and coordinate the installation appointment."
                           : job.next_action || "Field Operations to prepare crew for installation."}
@@ -6360,7 +6360,7 @@ export default function PremierFieldOperationsBoard() {
                                   cursor: "pointer",
                                 }}
                               >
-                                {selected ? "âœ“ " : ""}
+                                {selected ? "✓ " : ""}
                                 {category}
                               </button>
                             );
@@ -7036,7 +7036,7 @@ export default function PremierFieldOperationsBoard() {
                         cursor: "pointer",
                       }}
                     >
-                      Send Job to {job.crew || "Installer"} â†’
+                      Send Job to {job.crew || "Installer"} →
                     </button>
                   </div>
                 ))}
