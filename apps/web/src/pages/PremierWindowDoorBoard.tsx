@@ -4460,13 +4460,13 @@ export default function PremierWindowDoorBoard() {
                                 minHeight: 44,
                                 borderRadius: 9,
                                 border: "1px solid #557c64",
-                                background: ["Ordered", "In production", "Received"].includes(officeProductionConfirmedStatus) ? "#193c2b" : "#16232d",
+                                background: ["Ordered", "In production", "Received"].includes(officeProductionDraft.materialStatus) ? "#193c2b" : "#16232d",
                                 color: "#ffffff",
                                 fontWeight: 800,
                                 cursor: ["Received", "On Hand", "Not Required"].includes(officeProductionDraft.materialStatus) ? "default" : "pointer",
                               }}
                             >
-                              {["Ordered", "In production", "Received"].includes(officeProductionConfirmedStatus)
+                              {["Ordered", "In production", "Received"].includes(officeProductionDraft.materialStatus)
                                 ? "✓ Materials Ordered"
                                 : "Mark Materials Ordered"}
                             </button>
@@ -4531,13 +4531,13 @@ export default function PremierWindowDoorBoard() {
                                 minHeight: 44,
                                 borderRadius: 9,
                                 border: "1px solid #557c64",
-                                background: officeProductionConfirmedStatus === "Received" ? "#193c2b" : "#16232d",
+                                background: officeProductionDraft.materialStatus === "Received" ? "#193c2b" : "#16232d",
                                 color: "#ffffff",
                                 fontWeight: 800,
                                 cursor: officeProductionDraft.materialStatus === "Not ordered" || ["Received", "On Hand", "Not Required"].includes(officeProductionDraft.materialStatus) ? "default" : "pointer",
                               }}
                             >
-                              {officeProductionConfirmedStatus === "Received"
+                              {officeProductionDraft.materialStatus === "Received"
                                 ? "✓ Materials Received"
                                 : "Mark Materials Received"}
                             </button>
