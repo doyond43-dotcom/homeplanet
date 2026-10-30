@@ -2913,8 +2913,7 @@ export default function PremierWindowDoorBoard() {
                               : "none",
                           }}
                         >
-                          ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â°ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â½ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¤
-                        </button>
+                          Mic</button>
                       </div>
 
                       {officePersonalBeamReplyError ? (
@@ -8469,9 +8468,7 @@ export default function PremierWindowDoorBoard() {
 
                   if (!confirmed) return;
 
-                  const accessToken = new URLSearchParams(
-                    window.location.search
-                  ).get("access");
+                  const accessToken = getPremierOfficeAccessToken();
 
                   if (!accessToken) {
                     window.alert("Premier staff access token missing.");
