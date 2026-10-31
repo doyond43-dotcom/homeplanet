@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+﻿import { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import {
   LiveKitRoom,
@@ -143,11 +143,11 @@ function ViewerControls() {
 
   return (
     <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
-      <button disabled={controlBusy} onClick={toggleMic} style={micOn ? viewerActiveButton : actionButton}>
+      <button disabled={controlBusy} onClick={toggleMic} style={actionButton}>
         {micOn ? "Mic On" : "Mic Off"}
       </button>
 
-      <button disabled={controlBusy} onClick={toggleCam} style={camOn ? viewerActiveButton : actionButton}>
+      <button disabled={controlBusy} onClick={toggleCam} style={actionButton}>
         {camOn ? "Camera On" : "Camera Off"}
       </button>
 
@@ -582,6 +582,7 @@ const timelineItem: React.CSSProperties = {
   padding: 10,
   background: "rgba(0,0,0,0.25)",
 };
+
 
 
 

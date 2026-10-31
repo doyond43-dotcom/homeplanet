@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+﻿import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   LiveKitRoom,
@@ -69,7 +69,7 @@ function pulseLabel(type: PulseType) {
   if (type === "Hot") return "\uD83D\uDD25";
   if (type === "Marker") return "\uD83D\uDCCD";
   if (type === "Comment") return "\uD83D\uDCAC";
-  return "•";
+  return "â€¢";
 }
 
 function pulseText(type: PulseType, actor: string, customText?: string) {
@@ -85,6 +85,58 @@ function timeFrom(ms: number) {
   return new Date(ms).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
+function LiveConnectionDiagnostic() {
+  const room = useRoomContext();
+  const [status, setStatus] = useState("Checking...");
+  const [participants, setParticipants] = useState(0);
+
+  useEffect(() => {
+    const update = () => {
+      setStatus(String(room.state));
+      setParticipants(room.remoteParticipants.size);
+      console.log("[Live Studio Diagnostic]", {
+        connection: room.state,
+        remoteParticipants: room.remoteParticipants.size,
+        localPublications: room.localParticipant.trackPublications.size,
+      });
+    };
+
+    update();
+
+    room.on(RoomEvent.Connected, update);
+    room.on(RoomEvent.Disconnected, update);
+    room.on(RoomEvent.ParticipantConnected, update);
+    room.on(RoomEvent.ParticipantDisconnected, update);
+    room.on(RoomEvent.LocalTrackPublished, update);
+    room.on(RoomEvent.TrackSubscribed, update);
+
+    return () => {
+      room.off(RoomEvent.Connected, update);
+      room.off(RoomEvent.Disconnected, update);
+      room.off(RoomEvent.ParticipantConnected, update);
+      room.off(RoomEvent.ParticipantDisconnected, update);
+      room.off(RoomEvent.LocalTrackPublished, update);
+      room.off(RoomEvent.TrackSubscribed, update);
+    };
+  }, [room]);
+
+  return (
+    <div style={{
+      position: "absolute",
+      top: 10,
+      right: 10,
+      zIndex: 9999,
+      background: "rgba(0,0,0,.85)",
+      color: "#79d9ff",
+      padding: 10,
+      borderRadius: 8,
+      fontSize: 12,
+      pointerEvents: "none",
+    }}>
+      Connection: {status} | Remote participants: {participants}
+    </div>
+  );
+}
 function HostStage() {
   const tracks = useTracks([
     { source: Track.Source.Camera, withPlaceholder: true },
@@ -114,7 +166,7 @@ function HostTimelineLayer({
   const [floatPulse, setFloatPulse] = useState<FloatPulse[]>([]);
 
   const launchFloat = useCallback((label: string) => {
-    if (label === "•") return;
+    if (label === "â€¢") return;
 
     const id = `${Date.now()}-${Math.random()}`;
     const left = 18 + Math.floor(Math.random() * 64);
@@ -428,6 +480,7 @@ export default function CreatorLive() {
           }
         `}</style>
 
+        <LiveConnectionDiagnostic />
         <RoomAudioRenderer />
         <HostStage />
         <HostTimelineLayer
@@ -559,3 +612,5 @@ const hostPulseItem: React.CSSProperties = {
   padding: 8,
   background: "rgba(255,255,255,0.05)",
 };
+
+
