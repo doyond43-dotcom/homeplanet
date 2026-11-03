@@ -49,6 +49,7 @@ export async function createLiveStudioInvitation(
   const maxUses = input.maxUses ?? 1;
 
   if (
+    typeof expiresMinutes !== "number" ||
     !Number.isInteger(expiresMinutes) ||
     expiresMinutes < 5 ||
     expiresMinutes > 1440
@@ -60,6 +61,7 @@ export async function createLiveStudioInvitation(
   }
 
   if (
+    typeof maxUses !== "number" ||
     !Number.isInteger(maxUses) ||
     maxUses < 1 ||
     maxUses > 10

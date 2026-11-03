@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { AccessToken } from "livekit-server-sdk";
 import { randomUUID } from "node:crypto";
-import { verifyStudioHost, StudioAuthError } from "../server/lib/live-studio-auth";
-import { issueBroadcastInvite, verifyBroadcastInvite } from "../server/lib/live-studio-broadcast-invite";
+import { verifyStudioHost, StudioAuthError } from "../server/lib/live-studio-auth.js";
+import { issueBroadcastInvite, verifyBroadcastInvite } from "../server/lib/live-studio-broadcast-invite.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader("Cache-Control", "no-store");

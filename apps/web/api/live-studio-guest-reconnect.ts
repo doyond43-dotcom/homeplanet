@@ -3,24 +3,24 @@ import type {
   VercelResponse,
 } from "@vercel/node";
 
-import { getActiveInvitationRoom } from "../server/lib/live-studio-invitation-room";
+import { getActiveInvitationRoom } from "../server/lib/live-studio-invitation-room.js";
 import {
   reconnectLiveStudioGuest,
-} from "../server/lib/live-studio-guest-reconnect";
+} from "../server/lib/live-studio-guest-reconnect.js";
 
 import {
   createGuestSessionCookie,
   readGuestSessionCookie,
-} from "../server/lib/live-studio-guest-cookie";
+} from "../server/lib/live-studio-guest-cookie.js";
 
 import {
   checkLiveStudioGuestRateLimit,
   GuestRateLimitError,
-} from "../server/lib/live-studio-guest-rate-limit";
+} from "../server/lib/live-studio-guest-rate-limit.js";
 
 import {
   GuestSessionError,
-} from "../server/lib/live-studio-guest-session-service";
+} from "../server/lib/live-studio-guest-session-service.js";
 
 export default async function handler(
   req: VercelRequest,

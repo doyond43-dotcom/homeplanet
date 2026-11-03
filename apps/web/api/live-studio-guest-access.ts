@@ -3,20 +3,20 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import {
   enterLiveStudioGuest,
   GuestEntryError,
-} from "../server/lib/live-studio-guest-entry";
+} from "../server/lib/live-studio-guest-entry.js";
 
 import {
   createGuestSessionCookie,
-} from "../server/lib/live-studio-guest-cookie";
+} from "../server/lib/live-studio-guest-cookie.js";
 
 import {
   checkLiveStudioGuestRateLimit,
   GuestRateLimitError,
-} from "../server/lib/live-studio-guest-rate-limit";
+} from "../server/lib/live-studio-guest-rate-limit.js";
 
 import {
   isLiveStudioProductionOriginAllowed,
-} from "../server/lib/live-studio-origin";
+} from "../server/lib/live-studio-origin.js";
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse

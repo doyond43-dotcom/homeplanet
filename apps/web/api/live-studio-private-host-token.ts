@@ -3,16 +3,16 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import {
   verifyStudioHost,
   StudioAuthError,
-} from "../server/lib/live-studio-auth";
+} from "../server/lib/live-studio-auth.js";
 
 import {
   createPrivateHostToken,
   PrivateHostError,
-} from "../server/lib/live-studio-private-host";
+} from "../server/lib/live-studio-private-host.js";
 
 import {
   isLiveStudioProductionOriginAllowed,
-} from "../server/lib/live-studio-origin";
+} from "../server/lib/live-studio-origin.js";
 
 export default async function handler(
   req: VercelRequest,

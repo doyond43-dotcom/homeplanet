@@ -2,16 +2,16 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import {
   verifyStudioHost,
   StudioAuthError,
-} from "../server/lib/live-studio-auth";
+} from "../server/lib/live-studio-auth.js";
 import {
   createLiveStudioMeeting,
   listLiveStudioHostMeetings,
   MeetingRequestError,
-} from "../server/lib/live-studio-meeting-service";
+} from "../server/lib/live-studio-meeting-service.js";
 
 import {
   isLiveStudioProductionOriginAllowed,
-} from "../server/lib/live-studio-origin";
+} from "../server/lib/live-studio-origin.js";
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse

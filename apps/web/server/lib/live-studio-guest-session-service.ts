@@ -1,10 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
 import {
   createGuestReconnectCredential,
-} from "./live-studio-session-crypto";
+} from "./live-studio-session-crypto.js";
 import {
   deriveGuestReconnectReplacement,
-} from "./live-studio-reconnect-recovery";
+} from "./live-studio-reconnect-recovery.js";
 
 export class GuestSessionError extends Error {
   constructor(message: string, public readonly status: number) {

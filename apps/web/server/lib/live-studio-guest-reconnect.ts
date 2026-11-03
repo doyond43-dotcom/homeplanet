@@ -3,11 +3,11 @@ import { AccessToken } from "livekit-server-sdk";
 
 import {
   rotateGuestSession,
-} from "./live-studio-guest-session-service";
+} from "./live-studio-guest-session-service.js";
 
 import {
   createLiveStudioGuestToken,
-} from "./live-studio-guest-token";
+} from "./live-studio-guest-token.js";
 
 type ReconnectInput = {
   reconnectSecret: unknown;
