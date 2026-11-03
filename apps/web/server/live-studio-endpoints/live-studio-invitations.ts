@@ -1,24 +1,25 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+
 import {
   verifyStudioHost,
   StudioAuthError,
-} from "../server/lib/live-studio-auth.js";
+} from "../lib/live-studio-auth.js";
+
 import {
-  createLiveStudioMeeting,
-  listLiveStudioHostMeetings,
-  MeetingRequestError,
-} from "../server/lib/live-studio-meeting-service.js";
+  createLiveStudioInvitation,
+  InvitationRequestError,
+} from "../lib/live-studio-invitation-service.js";
 
 import {
   isLiveStudioProductionOriginAllowed,
-} from "../server/lib/live-studio-origin.js";
+} from "../lib/live-studio-origin.js";
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ) {
   res.setHeader("Cache-Control", "no-store");
 
-  if (req.method !== "POST" && req.method !== "GET") {
+  if (req.method !== "POST") {
     return res.status(405).json({
       error: "Method not allowed",
     });
@@ -62,25 +63,12 @@ export default async function handler(
     });
   }
 
-  if (req.method === "GET") {
-    try {
-      const result = await listLiveStudioHostMeetings({
-        verifiedUserId: verifiedUser.id,
-        supabaseUrl,
-        serviceKey: process.env.SUPABASE_SERVICE_ROLE_KEY || "",
-      });
-      return res.status(200).json(result);
-    } catch (error) {
-      return res.status(error instanceof MeetingRequestError ? error.status : 503).json({
-        error: error instanceof MeetingRequestError ? error.message : "Meeting list unavailable",
-      });
-    }
-  }
-
-  // Keep meeting creation disabled until security testing.
-  if (process.env.LIVE_STUDIO_MEETING_CREATION_ENABLED !== "true") {
+  // Invitation creation stays OFF until security testing.
+  if (
+    process.env.LIVE_STUDIO_INVITATION_CREATION_ENABLED !== "true"
+  ) {
     return res.status(503).json({
-      error: "Private meeting creation is not enabled yet",
+      error: "Private invitations are not enabled yet",
     });
   }
 
@@ -93,24 +81,27 @@ export default async function handler(
   }
 
   try {
-    const meeting = await createLiveStudioMeeting({
+    const invitation = await createLiveStudioInvitation({
       verifiedUserId: verifiedUser.id,
-      title: body.title,
-      businessId: body.businessId,
+      meetingId: body.meetingId,
+      guestRole: body.guestRole,
+      invitedEmail: body.invitedEmail,
+      expiresMinutes: body.expiresMinutes,
+      maxUses: body.maxUses,
       supabaseUrl,
       serviceKey: process.env.SUPABASE_SERVICE_ROLE_KEY || "",
     });
 
-    return res.status(201).json(meeting);
+    return res.status(201).json(invitation);
   } catch (error) {
-    if (error instanceof MeetingRequestError) {
+    if (error instanceof InvitationRequestError) {
       return res.status(error.status).json({
         error: error.message,
       });
     }
 
     return res.status(503).json({
-      error: "Meeting service unavailable",
+      error: "Invitation service unavailable",
     });
   }
 }

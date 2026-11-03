@@ -1,6 +1,38 @@
 {
     "rewrites":  [
                      {
+                         "source":  "/api/live-studio-end-meeting",
+                         "destination":  "/api/live-studio?route=live-studio-end-meeting"
+                     },
+                     {
+                         "source":  "/api/live-studio-guest-access",
+                         "destination":  "/api/live-studio?route=live-studio-guest-access"
+                     },
+                     {
+                         "source":  "/api/live-studio-guest-reconnect",
+                         "destination":  "/api/live-studio?route=live-studio-guest-reconnect"
+                     },
+                     {
+                         "source":  "/api/live-studio-invitations",
+                         "destination":  "/api/live-studio?route=live-studio-invitations"
+                     },
+                     {
+                         "source":  "/api/live-studio-meetings",
+                         "destination":  "/api/live-studio?route=live-studio-meetings"
+                     },
+                     {
+                         "source":  "/api/live-studio-private-host-token",
+                         "destination":  "/api/live-studio?route=live-studio-private-host-token"
+                     },
+                     {
+                         "source":  "/api/live-studio-start-meeting",
+                         "destination":  "/api/live-studio?route=live-studio-start-meeting"
+                     },
+                     {
+                         "source":  "/api/livekit-token",
+                         "destination":  "/api/live-studio?route=livekit-token"
+                     },
+                     {
                          "source":  "/planet/performance-powerboats/project/:id",
                          "destination":  "/index.html"
                      },

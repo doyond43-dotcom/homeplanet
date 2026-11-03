@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { verifyStudioHost, StudioAuthError } from "../server/lib/live-studio-auth.js";
-import { recordPrivateHostStart, StartMeetingError } from "../server/lib/live-studio-start-meeting.js";
-import { isLiveStudioProductionOriginAllowed } from "../server/lib/live-studio-origin.js";
+import { verifyStudioHost, StudioAuthError } from "../lib/live-studio-auth.js";
+import { recordPrivateHostStart, StartMeetingError } from "../lib/live-studio-start-meeting.js";
+import { isLiveStudioProductionOriginAllowed } from "../lib/live-studio-origin.js";
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader("Cache-Control", "no-store");
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });

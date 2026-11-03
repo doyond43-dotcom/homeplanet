@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { verifyStudioHost, StudioAuthError } from "../server/lib/live-studio-auth.js";
-import { endLiveStudioMeeting, EndMeetingError } from "../server/lib/live-studio-end-meeting.js";
-import { isLiveStudioProductionOriginAllowed } from "../server/lib/live-studio-origin.js";
+import { verifyStudioHost, StudioAuthError } from "../lib/live-studio-auth.js";
+import { endLiveStudioMeeting, EndMeetingError } from "../lib/live-studio-end-meeting.js";
+import { isLiveStudioProductionOriginAllowed } from "../lib/live-studio-origin.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader("Cache-Control", "no-store");
