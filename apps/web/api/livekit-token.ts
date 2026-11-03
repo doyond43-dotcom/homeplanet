@@ -1,58 +1,63 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { AccessToken } from "livekit-server-sdk";
+import { randomUUID } from "node:crypto";
+import { verifyStudioHost, StudioAuthError } from "../server/lib/live-studio-auth";
+import { issueBroadcastInvite, verifyBroadcastInvite } from "../server/lib/live-studio-broadcast-invite";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  try {
-    const room = String(req.query.room || "creator-live").trim();
-    const role = String(req.query.role || "viewer").trim();
-    const identityFromQuery = String(req.query.identity || "").trim();
-
-    const livekitUrl = process.env.LIVEKIT_URL || process.env.VITE_LIVEKIT_URL;
-    const apiKey = process.env.LIVEKIT_API_KEY || process.env.VITE_LIVEKIT_API_KEY;
-    const apiSecret = process.env.LIVEKIT_API_SECRET || process.env.VITE_LIVEKIT_API_SECRET;
-
-    if (!livekitUrl || !apiKey || !apiSecret) {
-      return res.status(501).json({
-        error: "LiveKit not configured",
-        need: ["LIVEKIT_URL", "LIVEKIT_API_KEY", "LIVEKIT_API_SECRET"],
-        got: {
-          LIVEKIT_URL: !!livekitUrl,
-          LIVEKIT_API_KEY: !!apiKey,
-          LIVEKIT_API_SECRET: !!apiSecret,
-        },
-      });
+  res.setHeader("Cache-Control", "no-store");
+  if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
+  const room = String(req.query.room || "").trim();
+  const role = String(req.query.role || "").trim();
+  if (room !== "creator-live" || !["host", "viewer", "invite"].includes(role)) {
+    return res.status(403).json({ error: "Broadcast access denied" });
+  }
+  const signingSecret = process.env.LIVE_STUDIO_BROADCAST_INVITE_SECRET || "";
+  if (role === "viewer") {
+    try {
+      if (!verifyBroadcastInvite(req.query.invite, signingSecret)) {
+        return res.status(403).json({ error: "A valid private broadcast invitation is required" });
+      }
+    } catch {
+      return res.status(503).json({ error: "Broadcast invitation service unavailable" });
     }
-
-    const identity =
-      identityFromQuery ||
-      (role === "host"
-        ? `host-${Math.random().toString(16).slice(2)}`
-        : `viewer-${Math.random().toString(16).slice(2)}`);
-
-    const name = role === "host" ? "Host" : "Viewer";
-
+  } else {
+    try {
+      await verifyStudioHost(
+        String(req.headers.authorization || ""),
+        process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "",
+        process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || "",
+        process.env.LIVE_STUDIO_HOST_EMAILS || ""
+      );
+    } catch (error) {
+      if (error instanceof StudioAuthError) return res.status(error.status).json({ error: error.message });
+      return res.status(503).json({ error: "Authentication service unavailable" });
+    }
+  }
+  if (role === "invite") {
+    try {
+      return res.status(200).json({ invite: issueBroadcastInvite(signingSecret), expiresMinutes: 60 });
+    } catch {
+      return res.status(503).json({ error: "Broadcast invitation service unavailable" });
+    }
+  }
+  const url = process.env.LIVEKIT_URL || process.env.VITE_LIVEKIT_URL || "";
+  const apiKey = process.env.LIVEKIT_API_KEY || process.env.VITE_LIVEKIT_API_KEY || "";
+  const apiSecret = process.env.LIVEKIT_API_SECRET || "";
+  if (!url || !apiKey || !apiSecret) return res.status(503).json({ error: "LiveKit not configured" });
+  try {
+    const viewer = role === "viewer";
     const at = new AccessToken(apiKey, apiSecret, {
-      identity,
-      name,
+      identity: `${viewer ? "broadcast-viewer" : "broadcast-host"}-${randomUUID()}`,
+      name: viewer ? "Viewer" : "Host",
+      ttl: "15m",
     });
-
     at.addGrant({
-      roomJoin: true,
-      room,
-      canPublish: true,
-      canSubscribe: true,
-      canPublishData: true,
+      roomJoin: true, room: "creator-live", canPublish: !viewer,
+      canSubscribe: true, canPublishData: true,
     });
-
-    const token = await at.toJwt();
-
-    return res.status(200).json({
-      token,
-      url: livekitUrl,
-      room,
-    });
-  } catch (e) {
-    return res.status(500).json({ error: String(e) });
+    return res.status(200).json({ token: await at.toJwt(), url, room });
+  } catch {
+    return res.status(503).json({ error: "Broadcast connection unavailable" });
   }
 }
-

@@ -1,5 +1,6 @@
-﻿import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "../lib/supabase";
 import {
   LiveKitRoom,
   RoomAudioRenderer,
@@ -45,9 +46,17 @@ async function fetchLiveKitToken(room: string, identity: string) {
     room
   )}&identity=${encodeURIComponent(identity)}&role=host`;
 
+  const { data: sessionData, error } = await supabase.auth.getSession();
+  if (error || !sessionData.session?.access_token) {
+    throw new Error("Please sign in to HomePlanet before going live.");
+  }
+
   const res = await fetch(endpoint, {
     method: "GET",
-    headers: { Accept: "application/json" },
+    headers: {
+      Accept: "application/json",
+      Authorization: `Bearer ${sessionData.session.access_token}`,
+    },
   });
 
   if (!res.ok) {
@@ -405,6 +414,27 @@ export default function CreatorLive() {
   const [token, setToken] = useState("");
   const [phase, setPhase] = useState<"idle" | "loading" | "live" | "error">("idle");
   const [error, setError] = useState("");
+  const [broadcastInvite, setBroadcastInvite] = useState("");
+  const [broadcastInviteStatus, setBroadcastInviteStatus] = useState("");
+
+  const copyBroadcastInvite = useCallback(async () => {
+    try {
+      const { data } = await supabase.auth.getSession();
+      const accessToken = data.session?.access_token;
+      if (!accessToken) throw new Error("Sign in to invite a viewer.");
+      const response = await fetch("/api/livekit-token?room=creator-live&role=invite", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const result = await response.json();
+      if (!response.ok || typeof result.invite !== "string") throw new Error(result.error || "Unable to create invitation");
+      const link = `${window.location.origin}/planet/live-studio/view/creator-live?invite=${encodeURIComponent(result.invite)}`;
+      setBroadcastInvite(link);
+      await navigator.clipboard.writeText(link);
+      setBroadcastInviteStatus("Private viewer link copied. Valid for 60 minutes.");
+    } catch (cause) {
+      setBroadcastInviteStatus(cause instanceof Error ? cause.message : "Unable to copy invitation. Select the link below.");
+    }
+  }, []);
   const [hostEventFn, setHostEventFn] =
     useState<(type: PulseType, text?: string) => void>(() => () => {});
 
@@ -480,6 +510,11 @@ export default function CreatorLive() {
           }
         `}</style>
 
+        <div style={{ position: "absolute", zIndex: 40, top: 12, right: 12, maxWidth: 380, display: "grid", gap: 6 }}>
+          <button type="button" onClick={() => void copyBroadcastInvite()} style={goLiveButton}>Invite a Viewer</button>
+          {broadcastInviteStatus && <span style={{ background: "#172538", padding: 6, color: "white", fontSize: 12 }}>{broadcastInviteStatus}</span>}
+          {broadcastInvite && <input aria-label="Broadcast invitation" readOnly value={broadcastInvite} onFocus={event => event.currentTarget.select()} style={{ width: "100%", color: "#142039", background: "white", padding: 5 }} />}
+        </div>
         <LiveConnectionDiagnostic />
         <RoomAudioRenderer />
         <HostStage />
@@ -612,5 +647,3 @@ const hostPulseItem: React.CSSProperties = {
   padding: 8,
   background: "rgba(255,255,255,0.05)",
 };
-
-

@@ -1,4 +1,4 @@
-﻿import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation, useSearchParams } from "react-router-dom";
 import { RequireAuth } from "./auth/RequireAuth";
 
@@ -39,6 +39,7 @@ const TaylorCreekSite = lazy(() => import("./routes/TaylorCreekSite"));
 const PressPage = lazy(() => import("./routes/PressPage"));
 const PressKitTaylorCreek = lazy(() => import("./routes/PressKitTaylorCreek"));
 const PlanetRoutes = lazy(() => import("./planet/PlanetRoutes"));
+const LiveStudioPrivateMeeting = lazy(() => import("./pages/LiveStudioPrivateMeeting"));
 const OnlyTheEssentialsLandingV2 = lazy(() => import("./pages/OnlyTheEssentialsLandingV2"));
 const YardSaleLandingPage = lazy(() => import("./pages/YardSaleLandingPage"));
 const YardSaleStartPage = lazy(() => import("./pages/YardSaleStartPage"));
@@ -419,6 +420,7 @@ export default function App() {
         <Route path="/onlytheessentials" element={<OnlyTheEssentialsLandingV2 />} />
 <Route path="/essentials" element={<OnlyTheEssentialsLandingV2 />} />
 
+        <Route path="/live-studio/join/:invitationToken" element={<LiveStudioPrivateMeeting mode="guest" />} />
         <Route path="/:slug/*" element={<TenantPublicPage />} />
 
         <Route path="/" element={<OkeechobeeDomainHomeRedirect />} />

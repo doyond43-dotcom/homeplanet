@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import {
   LiveKitRoom,
@@ -91,71 +91,6 @@ function StartAudioButton() {
         {status === "ok" && "Audio enabled."}
         {status === "fail" && "Audio blocked. Check browser/site sound permissions."}
       </div>
-    </div>
-  );
-}
-
-function ViewerControls() {
-  const room = useRoomContext();
-
-  const [micOn, setMicOn] = useState(false);
-  const [camOn, setCamOn] = useState(false);
-  const [controlError, setControlError] = useState("");
-  const [controlBusy, setControlBusy] = useState(false);
-
-  const toggleMic = async () => {
-    if (controlBusy) return;
-
-    const next = !micOn;
-    setControlBusy(true);
-    setControlError("");
-
-    try {
-      await room.localParticipant.setMicrophoneEnabled(next);
-      setMicOn(next);
-    } catch (e: any) {
-      console.error("Viewer mic toggle failed:", e);
-      setMicOn(false);
-      setControlError(e?.message || "Microphone blocked. Try opening this link in Safari/Chrome instead of Messenger.");
-    } finally {
-      setControlBusy(false);
-    }
-  };
-
-  const toggleCam = async () => {
-    if (controlBusy) return;
-
-    const next = !camOn;
-    setControlBusy(true);
-    setControlError("");
-
-    try {
-      await room.localParticipant.setCameraEnabled(next);
-      setCamOn(next);
-    } catch (e: any) {
-      console.error("Viewer camera toggle failed:", e);
-      setCamOn(false);
-      setControlError(e?.message || "Camera blocked. Try opening this link in Safari/Chrome instead of Messenger.");
-    } finally {
-      setControlBusy(false);
-    }
-  };
-
-  return (
-    <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
-      <button disabled={controlBusy} onClick={toggleMic} style={actionButton}>
-        {micOn ? "Mic On" : "Mic Off"}
-      </button>
-
-      <button disabled={controlBusy} onClick={toggleCam} style={actionButton}>
-        {camOn ? "Camera On" : "Camera Off"}
-      </button>
-
-      {controlError && (
-        <div style={{ width: "100%", fontSize: 12, color: "#ffb4b4", marginTop: 6 }}>
-          {controlError}
-        </div>
-      )}
     </div>
   );
 }
@@ -382,7 +317,8 @@ export default function LiveViewer() {
       const r = String(room || "").trim();
       if (!r) return;
 
-      const res = await fetch(`/api/livekit-token?room=${encodeURIComponent(r)}&role=viewer`, {
+      const invitation = new URLSearchParams(window.location.search).get("invite") || "";
+      const res = await fetch(`/api/livekit-token?room=${encodeURIComponent(r)}&role=viewer&invite=${encodeURIComponent(invitation)}`, {
         method: "GET",
         headers: { Accept: "application/json" },
       });
@@ -448,7 +384,7 @@ export default function LiveViewer() {
       >
         <RoomAudioRenderer />
         <StartAudioButton />
-        <ViewerControls />
+        <div style={{ marginBottom: 12, opacity: 0.75, fontSize: 12 }}>Private broadcast · view-only audio/video · reactions enabled</div>
         <ViewerStage />
         <ViewerActions roomName={roomName} actorName={actorName} />
       </LiveKitRoom>

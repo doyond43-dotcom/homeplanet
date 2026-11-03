@@ -1,3 +1,5 @@
+import CreatorCityLiveStudio from "../pages/CreatorCityLiveStudio";
+import LiveStudioPrivateMeeting from "../pages/LiveStudioPrivateMeeting";
 import GuardianPetPrivacyPage from "../pages/GuardianPetPrivacyPage";
 
 import { Routes, Route, Navigate } from "react-router-dom";
@@ -692,6 +694,8 @@ export default function PlanetRoutes() {
       <Route path="activate/:boardSlug" element={<ActivationPage />} />
       <Route path="creator/:slug/moment" element={<CreatorMomentPage />} />
       <Route path="creator/studio-board" element={<CreatorStudioBoard />} />
+      <Route path="live-studio/meeting/:meetingId" element={<LiveStudioPrivateMeeting mode="host" />} />
+      <Route path="creator-city/live-studio" element={<CreatorCityLiveStudio />} />
       <Route path="live-studio/host" element={<CreatorLive />} />
       <Route path="live-studio/view" element={<LiveViewer />} />
       <Route path="live-studio/view/:room" element={<LiveViewer />} />
