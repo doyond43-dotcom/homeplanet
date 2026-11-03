@@ -25,6 +25,8 @@ export default async function handler(
   }
 
   if (
+    !(req.method === "GET" &&
+      typeof req.headers.origin === "undefined") &&
     !isLiveStudioProductionOriginAllowed(
       req.headers.origin,
       req.headers.host
