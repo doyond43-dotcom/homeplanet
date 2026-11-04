@@ -281,16 +281,16 @@ export default function FarmFolksProPreview() {
         <section className="section" id="farm-story">
           <div className="section-grid">
             <div className="section-copy">
-              <div className="eyebrow" style={{ color: "#9a7340" }}>A real farm brand experience</div>
-              <h2>This should feel like Farm Folks' own landing page.</h2>
+              <div className="eyebrow" style={{ color: "#9a7340" }}>Get to know Farm Folks</div>
+              <h2>Good food. Real connections. Farm Folks.</h2>
               <p>
-                The goal is not to dress up a marketplace page. The goal is to give Farm Folks a distinct online presence that feels premium, trustworthy, and clearly different from the standard seller pages inside the Live Meat Market.
+                Discover the products, people, and local connections behind Farm Folks. From fresh eggs and dairy to beef and other farm favorites, explore what's offered and connect directly with the seller.
               </p>
               <p>
-                That means leading with story, atmosphere, and product collections first â€” then guiding buyers into a cleaner shopping flow.
+                Browse the collections, learn about the products, and reach out to confirm availability and pickup arrangements.
               </p>
             </div>
-            <div className="story-card" aria-label="Farm Folks brand image" />
+<div className="story-card" aria-label="Farm Folks brand image" />
           </div>
         </section>
 
@@ -305,7 +305,12 @@ export default function FarmFolksProPreview() {
 
           <div className="collections-grid">
             {collections.map((collection) => (
-              <article className="collection-card" key={collection.title}>
+              <Link
+                className="collection-card"
+                key={collection.title}
+                to={`/planet/okeechobee/meat-market/farm-folks/pro-preview/shop/${collection.title.toLowerCase().replace(/\s+/g, "-")}`}
+                style={{ textDecoration: "none", color: "inherit" }}
+              >
                 <img src={collection.image} alt={collection.title} />
                 <div className="collection-card-body">
                   <h3>{collection.title}</h3>
@@ -314,7 +319,7 @@ export default function FarmFolksProPreview() {
                     {collection.count > 0 ? `${collection.count} current listings` : "Collection preview"}
                   </div>
                 </div>
-              </article>
+              </Link>
             ))}
           </div>
         </section>
@@ -322,9 +327,9 @@ export default function FarmFolksProPreview() {
         <section className="section">
           <div className="process-head" id="ordering-steps">
             <div className="eyebrow" style={{ color: "#9a7340" }}>Ordering made simpler</div>
-            <h2>Built around how Farm Folks actually sells.</h2>
+            <h2>Farm-fresh shopping, made simple.</h2>
             <p>
-              This custom landing page is meant to support the real farm workflow: farm-direct ordering, reserve-and-pickup flow, variable-weight products, deposits when needed, and remaining balances at pickup.
+              Browse what the farm has to offer, explore product details, and connect directly with Farm Folks to ask about ordering and pickup.
             </p>
           </div>
 
@@ -332,19 +337,19 @@ export default function FarmFolksProPreview() {
             <article className="process-step">
               <div className="step-number">1</div>
               <h3>Explore what's available</h3>
-              <p>Customers browse a cleaner curated storefront with better product presentation and clearer product details.</p>
+              <p>Explore farm products, discover current offerings, and find the information you need.</p>
             </article>
 
             <article className="process-step">
               <div className="step-number">2</div>
               <h3>Reserve with confidence</h3>
-              <p>For some products, buyers can reserve online, place deposits where appropriate, and confirm pickup arrangements directly with the farm.</p>
+              <p>Contact Farm Folks about availability, quantities, reservations, and pickup arrangements.</p>
             </article>
 
             <article className="process-step">
               <div className="step-number">3</div>
               <h3>Finish at pickup</h3>
-              <p>Variable-weight products can support estimated totals first, then settle the remaining balance at pickup once actual package weight is known.</p>
+              <p>Confirm final pricing, payment arrangements, and pickup details directly with the farm.</p>
             </article>
           </div>
         </section>
@@ -352,9 +357,9 @@ export default function FarmFolksProPreview() {
         <section className="section" id="shop-preview">
           <div className="shop-head">
             <div className="eyebrow" style={{ color: "#9a7340" }}>Signature picks</div>
-            <h2>Available from the farm right now.</h2>
+            <h2>Explore Farm Folks products.</h2>
             <p>
-              These items come from Farm Folks' current live product records, but they are presented here as part of a custom storefront experience rather than a standard marketplace listing.
+              Discover products from Farm Folks. Contact the farm to confirm current availability, pricing, and ordering details.
             </p>
           </div>
 
@@ -368,7 +373,7 @@ export default function FarmFolksProPreview() {
                 const image = productImage(product);
                 const details = [clean(product.package), clean(product.quantity_available), clean(product.pickup_timing), clean(product.availability)]
                   .filter(Boolean)
-                  .join(" â€¢ ");
+                  .join(" | ");
 
                 return (
                   <article className="product-card" key={product.id}>
@@ -400,19 +405,19 @@ export default function FarmFolksProPreview() {
             <img src="/images/farm-folks-owner.jpg" alt="Farm Folks owner or farm representative" />
             <div className="story-band-copy">
               <div className="eyebrow" style={{ color: "#9a7340" }}>Why this matters</div>
-              <h2>From market listing to real farm operating system.</h2>
+              <h2>Rooted in the farm. Built around the people.</h2>
               <p>
-                The long-term HomePlanet goal is not just a better-looking page. It is a better farm system: clearer product presentation, ordering, pickup coordination, customer history, and an experience Farm Folks can be proud to send customers to directly.
+                Farm Folks brings together the people, products, and traditions behind the farm. Explore what they offer and connect directly with the people who make it possible.
               </p>
               <p>
-                This page is the visual shift that helps customers instantly feel the difference.
+                From everyday favorites to special farm offerings, discover what's available and get to know the farm.
               </p>
             </div>
           </div>
         </section>
 
         <footer className="footer">
-          Farm Folks LLC â€¢ Custom HomePlanet storefront preview â€¢ Powered by HomePlanet and connected to the Okeechobee Live Meat Market
+          Farm Folks LLC | Custom storefront concept by HomePlanet | Part of the Okeechobee Live Market
         </footer>
       </div>
     </main>
