@@ -333,6 +333,7 @@ export default async function handler(
           "id,name,category,price,package,checkout_price,market_marker,quantity_available,pickup_timing,fulfillment,availability,status,sort_order,description,image_url,external_order_url,featured"
         )
         .eq("seller_listing_id", slug)
+        .eq("status", "Active")
         .order("sort_order", { ascending: true });
 
     if (productError) {
@@ -874,6 +875,73 @@ export default async function handler(
     });
   }
 
+  if (action === "deactivate-product") {
+    const productId = clean(req.body?.productId, 100);
+
+    if (!productId) {
+      return res.status(400).json({
+        ok: false,
+        error: "A product ID is required.",
+      });
+    }
+
+    const uuidPattern =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+    if (!uuidPattern.test(productId)) {
+      return res.status(400).json({
+        ok: false,
+        error: "Invalid product ID.",
+      });
+    }
+
+    const { data: result, error: deactivateError } =
+      await supabase.rpc(
+        "meat_market_deactivate_seller_product",
+        {
+          p_seller_listing_id: slug,
+          p_product_id: productId,
+        }
+      );
+
+    if (deactivateError) {
+      console.error(
+        "Meat market product deactivation failed:",
+        deactivateError.code
+      );
+
+      return res.status(500).json({
+        ok: false,
+        error: "Could not deactivate this product.",
+      });
+    }
+
+    if (result === "last_active_product") {
+      return res.status(400).json({
+        ok: false,
+        error: "Keep at least one active product. Save a replacement before removing this one.",
+      });
+    }
+
+    if (result === "not_found") {
+      return res.status(404).json({
+        ok: false,
+        error: "Active product not found for this seller.",
+      });
+    }
+
+    if (result !== "deactivated") {
+      return res.status(500).json({
+        ok: false,
+        error: "Could not deactivate this product.",
+      });
+    }
+
+    return res.status(200).json({
+      ok: true,
+      message: "Product deactivated.",
+    });
+  }
   if (action === "save") {
     const heroImage = clean(req.body?.heroImage, 1500000);
 
@@ -1058,6 +1126,7 @@ export default async function handler(
           "id,name,category,price,package,checkout_price,market_marker,quantity_available,pickup_timing,fulfillment,availability,status,sort_order,description,image_url,external_order_url,featured"
         )
         .eq("seller_listing_id", slug)
+        .eq("status", "Active")
         .order("sort_order", { ascending: true });
 
     if (savedProductsError) {

@@ -422,18 +422,23 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
     setSaved(false);
   }
 
-  function removeProduct(index: number) {
-    if (
-      products.length === 1 &&
-      !products[0].name.trim()
-    ) {
+  async function removeProduct(index: number) {
+    if (saving) return;
+
+    const product = products[index];
+    if (!product) return;
+
+    if (products.length === 1 && !product.name.trim()) {
       return;
     }
 
-    const product = products[index];
+    if (products.length === 1 && product.id) {
+      setError("Please keep at least one active product. Add and save a replacement before removing this one.");
+      return;
+    }
 
     if (
-      product?.name.trim() &&
+      product.name.trim() &&
       !window.confirm(
         `Remove ${product.name} from your products?`
       )
@@ -441,9 +446,36 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
       return;
     }
 
+    if (product.id) {
+      if (!token) {
+        setError("Your private seller access is required.");
+        return;
+      }
+
+      try {
+        setSaving(true);
+        setError("");
+
+        await callSellerManage(
+          token,
+          "deactivate-product",
+          { productId: product.id }
+        );
+      } catch (removeError) {
+        setError(
+          removeError instanceof Error
+            ? removeError.message
+            : "Could not remove this product."
+        );
+        return;
+      } finally {
+        setSaving(false);
+      }
+    }
+
     setProducts((current) => {
       const next = current.filter(
-        (_, productIndex) => productIndex !== index
+        (item) => item !== product
       );
 
       return next.length ? next : [emptyProduct()];
@@ -451,7 +483,6 @@ export default function OkeechobeeMeatMarketSellerSetupPage() {
 
     setSaved(false);
   }
-
   async function chooseProductPhoto(
     index: number,
     event: ChangeEvent<HTMLInputElement>
