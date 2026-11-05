@@ -1,4 +1,5 @@
 import FarmFolksProPreview from "../pages/FarmFolksProPreview";
+import TrinityRanchProPreview from "../pages/TrinityRanchProPreview";
 import FarmFolksCategoryPage from "../pages/FarmFolksCategoryPage";
 import CreatorCityLiveStudio from "../pages/CreatorCityLiveStudio";
 import LiveStudioPrivateMeeting from "../pages/LiveStudioPrivateMeeting";
@@ -592,6 +593,7 @@ export default function PlanetRoutes() {
       <Route path="okeechobee/meat-market/seller/:slug" element={<OkeechobeeMeatMarketSellerStorefrontPage />} />
       <Route path="okeechobee/meat-market/farm-folks" element={<OkeechobeeMeatMarketSellerStorefrontPage />} />
       <Route path="okeechobee/meat-market/farm-folks/pro-preview" element={<FarmFolksProPreview />} />
+      <Route path="okeechobee/meat-market/trinity-ranch-beef/pro-preview" element={<TrinityRanchProPreview />} />
       <Route path="okeechobee/meat-market/farm-folks/pro-preview/shop/:category" element={<FarmFolksCategoryPage />} />
       <Route path="okeechobee/meat-market/checkout" element={<OkeechobeeMeatMarketCheckoutPage />} />
       <Route path="okeechobee/meat-market/contact" element={<OkeechobeeMeatMarketContactPage />} />
