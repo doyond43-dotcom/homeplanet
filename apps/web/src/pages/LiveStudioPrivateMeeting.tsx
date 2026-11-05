@@ -305,6 +305,11 @@ export default function LiveStudioPrivateMeeting({
       )}
       <div style={{ flex: 1, minHeight: 0 }}>
         <style>{`
+  /* Hide technical LiveKit participant IDs from video tiles. */
+  .lk-participant-name {
+    display: none !important;
+  }
+
   /* homeplanet-video-layout-fix */
   .lk-video-conference,
   .lk-video-conference-inner,
@@ -365,20 +370,6 @@ export default function LiveStudioPrivateMeeting({
           }}
           style={{ height: "100%" }}
         >
-          <div style={{
-            position: "absolute",
-            top: 110,
-            left: 18,
-            zIndex: 20,
-            background: "#152235",
-            color: "#ffffff",
-            padding: "8px 12px",
-            borderRadius: 8,
-            fontSize: 12,
-          }}>
-            Room: {connection.room}
-          </div>
-          <ParticipantCounter />
           <VideoConference />
           <RoomAudioRenderer />
         </LiveKitRoom>
