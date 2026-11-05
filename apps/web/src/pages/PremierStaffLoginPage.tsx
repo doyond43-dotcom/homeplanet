@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 type StaffOption = {
@@ -385,6 +385,57 @@ export default function PremierStaffLoginPage() {
           >
             {signingIn ? "Signing In..." : "Continue"}
           </button>
+        </div>
+      </div>
+      {/* Home Planet Systems signature */}
+      <div style={{ maxWidth: 430, margin: "58px auto 30px", textAlign: "center" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 14, color: "#b6a080" }}>
+          <span style={{ width: 48, height: 1, background: "#746b60" }} />
+          <svg
+            width="28"
+            height="20"
+            viewBox="0 0 28 20"
+            aria-hidden="true"
+            style={{ display: "block" }}
+          >
+            <ellipse
+              cx="14"
+              cy="10"
+              rx="9"
+              ry="3.6"
+              transform="rotate(-22 14 10)"
+              fill="none"
+              stroke="#b6a080"
+              strokeWidth="1.3"
+              opacity="0.9"
+            />
+            <circle
+              cx="14"
+              cy="10"
+              r="5.2"
+              fill="none"
+              stroke="#b6a080"
+              strokeWidth="1.3"
+            />
+            <path
+              d="M11.3 7.9 L14.2 6.5 L15.5 8.8 L13.3 10.1 L15.9 11.8"
+              fill="none"
+              stroke="#b6a080"
+              strokeWidth="1"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          <span style={{ width: 48, height: 1, background: "#746b60" }} />
+        </div>
+        <div style={{ color: "#b6a080", fontSize: 17, fontWeight: 800, letterSpacing: 2.5 }}>
+          HOME PLANET SYSTEMS
+        </div>
+        <div style={{ color: "#aeb7bf", fontSize: 12, marginTop: 12 }}>
+          Powerful underneath. Simple in your hands.
+        </div>
+        <div style={{ color: "#778693", fontSize: 11, marginTop: 6 }}>
+          The system behind your business.
         </div>
       </div>
     </main>

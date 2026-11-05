@@ -204,6 +204,28 @@ export default function PremierQuickIntakePage() {
                 {form.firstName.trim()} {form.lastName.trim()} is now in the Premier workflow.
               </p>
 
+              <a
+                href="/planet/premier-window-door/board"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "100%",
+                  minHeight: 54,
+                  boxSizing: "border-box",
+                  marginBottom: 10,
+                  border: "1px solid #557c64",
+                  borderRadius: 10,
+                  background: "#193c2b",
+                  color: "#ffffff",
+                  fontSize: 16,
+                  fontWeight: 800,
+                  textDecoration: "none",
+                  textAlign: "center",
+                }}
+              >
+                Back to Office Command Center
+              </a>
               <button
                 type="button"
                 onClick={startAnother}
