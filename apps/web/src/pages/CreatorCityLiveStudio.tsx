@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
 export default function CreatorCityLiveStudio() {
@@ -314,7 +315,21 @@ export default function CreatorCityLiveStudio() {
           <div style={{ fontSize: 13, letterSpacing: "0.16em", fontWeight: 800, color: "#a9d7ff" }}>
             HOMEPLANET <span style={{ color: "#839ac4" }}> / CREATOR CITY</span>
           </div>
-          <div style={{ fontSize: 12, color: "#9db4d5" }}>POWERFUL UNDERNEATH. SIMPLE IN YOUR HANDS.</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap" }}>
+            <div style={{ fontSize: 12, color: "#9db4d5" }}>POWERFUL UNDERNEATH. SIMPLE IN YOUR HANDS.</div>
+            <Link
+              to="/login"
+              state={{ from: "/planet/creator-city/live-studio" }}
+              style={{
+                display: "inline-flex", alignItems: "center", justifyContent: "center",
+                padding: "10px 18px", borderRadius: 10,
+                background: "#92ddff", color: "#091b35",
+                fontWeight: 750, fontSize: 13, textDecoration: "none"
+              }}
+            >
+              Sign In
+            </Link>
+          </div>
         </header>
         <section style={{ position: "relative", overflow: "hidden", minHeight: 390, borderRadius: 28,
           border: "1px solid rgba(169,206,255,0.22)", boxShadow: "0 25px 90px rgba(0,0,0,.26)",
