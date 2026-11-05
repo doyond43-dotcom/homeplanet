@@ -243,7 +243,7 @@ export default function TrinityRanchProPreview() {
           .trinity-home .tr-hero-nav .nav-link { font-size: 11px; }
           .trinity-home .tr-nav-shop { padding: 10px 13px; font-size: 11px; }
           .trinity-home .hero { min-height: 630px; background-position: 37% center; }
-          .trinity-home .hero-content { top: 26px; left: 5%; width: 90%; min-height: 0; padding: 12px 8px; }
+          .trinity-home .hero-content { top: 86px; left: 5%; width: 90%; min-height: 0; padding: 12px 8px; }
           .trinity-home .hero h1 { font-size: clamp(40px, 9vw, 58px); white-space: normal; }
           .trinity-home .hero p { font-size: 17px; }
           .trinity-home .tr-hero-location { font-size: 10px; }
