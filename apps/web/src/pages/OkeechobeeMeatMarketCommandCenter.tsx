@@ -30,6 +30,72 @@ function descriptionLine(description: string, label: string) {
   return line.slice(line.indexOf(":") + 1).trim();
 }
 
+function submissionReadiness(value: string, clearDetail: RegExp) {
+  if (!value || /^(?:not provided|none|n\/?a|[-—]+)$/i.test(value)) {
+    return "Missing";
+  }
+
+  return clearDetail.test(value) ? "Provided" : "Needs clarification";
+}
+
+function SubmissionReadiness({ description }: { description: string }) {
+  const observations = [
+    {
+      label: "Listing photo",
+      field: "Listing Photo",
+      clearDetail: /^https?:\/\/[^/\s]+\/\S+$/i,
+    },
+    {
+      label: "Price / package",
+      field: "Price / Package",
+      clearDetail: /\$\s*\d|^\d+(?:\.\d{1,2})?$|^free$|\b\d+(?:\.\d+)?\s*(?:\/\s*)?(?:usd|dollars?|lbs?|pounds?|oz|dozen|packs?|boxes?|bundles?)\b/i,
+    },
+    {
+      label: "Pickup / delivery",
+      field: "Pickup / Delivery",
+      clearDetail: /^(?!.*\b(?:ask|call|contact|tbd|unknown|unsure)\b).*(?<!\b(?:no|not)\s+)\b(?:pick[ -]?up|delivery)\b(?!\s+(?:is\s+)?(?:not available|unavailable)\b)/i,
+    },
+  ];
+
+  return (
+    <section
+      aria-labelledby="submission-readiness-heading"
+      style={{
+        marginTop: "14px",
+        padding: "12px",
+        border: "1px solid #ded8c8",
+        borderRadius: "12px",
+        background: "#faf8f1",
+      }}
+    >
+      <h3 id="submission-readiness-heading" style={{ margin: 0, fontSize: "15px" }}>
+        Submission readiness
+      </h3>
+      <p style={{ margin: "4px 0 9px", fontSize: "12px", color: "#6b665a" }}>
+        This reflects the original seller application. The seller’s current catalog may be different.
+      </p>
+      <dl
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))",
+          gap: "6px 12px",
+          margin: 0,
+          fontSize: "12px",
+        }}
+      >
+        {observations.map(({ label, field, clearDetail }) => (
+          <div key={field}>
+            <dt>{label}</dt>
+            <dd style={{ margin: 0, fontWeight: 700 }}>
+              {submissionReadiness(descriptionLine(description, field), clearDetail)}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  );
+}
+
 function statusKey(status: string): FilterMode {
   const value = String(status || "").toLowerCase();
 
@@ -1459,6 +1525,7 @@ export default function OkeechobeeMeatMarketCommandCenter() {
                       "No listing details provided."}
                   </div>
                 </div>
+                <SubmissionReadiness description={selectedListing.description} />
               </>
             )}
 
