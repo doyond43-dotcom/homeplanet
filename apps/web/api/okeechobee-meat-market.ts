@@ -3,6 +3,7 @@ import type {
   VercelResponse,
 } from "@vercel/node";
 
+import publicListingsHandler from "../server/meat-market/public-listings.js";
 import orderHandler from "../server/meat-market/order.js";
 import sellerManageHandler from "../server/meat-market/seller-manage.js";
 import squareConnectHandler from "../server/meat-market/square-connect.js";
@@ -13,6 +14,10 @@ export default async function handler(
   res: VercelResponse
 ) {
   const route = String(req.query?.route || "").trim();
+
+  if (route === "public-listings") {
+    return publicListingsHandler(req, res);
+  }
 
   if (route === "order") {
     return orderHandler(req, res);

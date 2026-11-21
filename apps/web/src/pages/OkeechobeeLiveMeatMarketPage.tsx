@@ -18,7 +18,6 @@ type MarketItem = {
   location: string;
   fulfillment: string;
   badge?: string;
-  phone?: string;
   orderHref?: string;
   sellerHref?: string;
   sellerImage?: string;
@@ -71,17 +70,27 @@ const previewItems: MarketItem[] = [
 ];
 
 
-function listingDetail(description: string, label: string) {
-  const lines = String(description || "").split(/\r?\n/);
-  const prefix = `${label}:`.toLowerCase();
+type PublicMarketListing = {
+  id: string;
+  businessName: string;
+  location: string | null;
+  selling: string;
+  pricePackage: string;
+  pickupDelivery: string;
+  listingPhoto: string;
+};
 
-  const match = lines.find((line) =>
-    line.trim().toLowerCase().startsWith(prefix)
-  );
+async function loadPublicMarketListings(): Promise<PublicMarketListing[]> {
+  const response = await fetch("/api/okeechobee-meat-market?route=public-listings");
+  if (!response.ok) {
+    throw new Error("Could not load public Meat Market listings.");
+  }
 
-  return match
-    ? match.slice(match.indexOf(":") + 1).trim()
-    : "";
+  const { listings } = await response.json();
+  if (!Array.isArray(listings)) {
+    throw new Error("Invalid public Meat Market listings response.");
+  }
+  return listings;
 }
 
 function marketCategory(selling: string) {
@@ -237,24 +246,6 @@ function usableImageSrc(value: string) {
   return "";
 }
 
-function usablePhone(value: string) {
-  const clean = String(value || "").trim();
-
-  if (!clean || clean.includes("@")) return "";
-
-  const digits = clean.replace(/\D/g, "");
-
-  return digits.length >= 7 ? clean : "";
-}
-
-function phoneHref(value: string, mode: "call" | "text") {
-  const digits = String(value || "").replace(/[^\d+]/g, "");
-
-  return mode === "text"
-    ? `sms:${digits}`
-    : `tel:${digits}`;
-}
-
 function sellerStorefrontHref(seller: string) {
   const normalizedSeller = String(seller || "").trim().toLowerCase();
 
@@ -338,16 +329,13 @@ export default function OkeechobeeLiveMeatMarketPage({
   useEffect(() => {
     async function loadLiveMarket() {
       const [
-        { data: sellerData, error: sellerError },
+        sellerResult,
         { data: productData, error: productError },
       ] = await Promise.all([
-        supabase
-          .from("okeechobee_events")
-          .select("id,title,description,location,contact,status,created_at")
-          .eq("type", "Live Meat Market Seller")
-          .eq("status", "Active")
-          .order("created_at", { ascending: false }),
-
+        loadPublicMarketListings().then(
+          (listings) => ({ ok: true as const, listings }),
+          (error: unknown) => ({ ok: false as const, error })
+        ),
         supabase
           .from("okeechobee_meat_market_products")
           .select(
@@ -357,10 +345,10 @@ export default function OkeechobeeLiveMeatMarketPage({
           .order("sort_order", { ascending: true }),
       ]);
 
-      if (sellerError) {
+      if (!sellerResult.ok) {
         console.error(
           "Could not load live Meat Market sellers:",
-          sellerError
+          sellerResult.error
         );
         setLiveItems([]);
         setMarketLoading(false);
@@ -376,36 +364,14 @@ export default function OkeechobeeLiveMeatMarketPage({
 
       const products = productError ? [] : productData || [];
 
-      const mapped: MarketItem[] = (sellerData || []).flatMap(
-        (listing: any) => {
-          const selling =
-            listingDetail(listing.description, "Selling") ||
-            "Local food available";
-
-          const sellerPrice =
-            listingDetail(listing.description, "Price / Package") ||
-            "Contact seller";
-
+      const mapped: MarketItem[] = sellerResult.listings.flatMap(
+        (listing) => {
+          const selling = listing.selling || "Local food available";
+          const sellerPrice = listing.pricePackage || "Contact seller";
           const sellerFulfillment =
-            listingDetail(listing.description, "Pickup / Delivery") ||
-            "Contact seller for pickup or delivery";
-
-          const submittedLink =
-            listingDetail(
-              listing.description,
-              "Website / Facebook / Order Link"
-            );
-
-          const submittedPhoto =
-            listingDetail(
-              listing.description,
-              "Listing Photo"
-            );
-
-          const seller =
-            String(listing.title || "")
-              .replace(/^Live Meat Market Seller:\s*/i, "")
-              .trim() || "Local Seller";
+            listing.pickupDelivery || "Contact seller for pickup or delivery";
+          const submittedPhoto = listing.listingPhoto;
+          const seller = listing.businessName;
 
           const sellerProducts = products.filter(
             (product: any) =>
@@ -443,7 +409,6 @@ export default function OkeechobeeLiveMeatMarketPage({
                 location: listing.location || "Okeechobee area",
                 fulfillment: productFulfillment,
                 badge: "AVAILABLE NOW",
-                phone: usablePhone(String(listing.contact || "")),
                 orderHref: `/planet/okeechobee/meat-market/contact?${new URLSearchParams(
                   {
                     mode: "order",
@@ -479,7 +444,6 @@ export default function OkeechobeeLiveMeatMarketPage({
               location: listing.location || "Okeechobee area",
               fulfillment: sellerFulfillment,
               badge: "AVAILABLE NOW",
-              phone: usablePhone(String(listing.contact || "")),
               orderHref: "https://lollisbeef.com/collections",
               sellerHref: sellerStorefrontHref(seller),
               sellerImage: usableOrderHref(submittedPhoto),
@@ -497,7 +461,6 @@ export default function OkeechobeeLiveMeatMarketPage({
               location: listing.location || "Okeechobee area",
               fulfillment: sellerFulfillment,
               badge: "AVAILABLE NOW",
-              phone: usablePhone(String(listing.contact || "")),
               orderHref: `/planet/okeechobee/meat-market/contact?${new URLSearchParams(
                 {
                   mode: "order",
@@ -572,7 +535,6 @@ export default function OkeechobeeLiveMeatMarketPage({
         seller: item.seller,
         location: item.location,
         fulfillment: item.fulfillment,
-        phone: item.phone,
         sellerHref: item.sellerHref,
         image: item.sellerImage || sellerImage(item.seller),
         items: [item],
