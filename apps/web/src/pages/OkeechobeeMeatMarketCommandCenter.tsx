@@ -66,6 +66,7 @@ function SubmissionReadiness({ description }: { description: string }) {
         border: "1px solid #ded8c8",
         borderRadius: "12px",
         background: "#faf8f1",
+        color: "#302b22",
       }}
     >
       <h3 id="submission-readiness-heading" style={{ margin: 0, fontSize: "15px" }}>
@@ -85,8 +86,8 @@ function SubmissionReadiness({ description }: { description: string }) {
       >
         {observations.map(({ label, field, clearDetail }) => (
           <div key={field}>
-            <dt>{label}</dt>
-            <dd style={{ margin: 0, fontWeight: 700 }}>
+            <dt style={{ color: "#51483b" }}>{label}</dt>
+            <dd style={{ margin: 0, fontWeight: 800 }}>
               {submissionReadiness(descriptionLine(description, field), clearDetail)}
             </dd>
           </div>
